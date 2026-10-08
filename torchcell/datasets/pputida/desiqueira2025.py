@@ -8,13 +8,53 @@ de Siqueira et al. 2025 (Appl Environ Microbiol, doi:10.1128/aem.02123-24) evolv
 isoprenol-catabolism-deficient strain ``PT`` on acetate, recovered five tolerized
 ``Sigma``-class isolates, resequenced four of them plus the parent, and measured a
 global proteome and plasmid-based isoprenol titers. This module serves the two released
-numeric readouts as two dataset classes, because ``ExperimentDataset.transform_item``
-validates against ONE ``experiment_class``:
+numeric readouts as four dataset classes: two because
+``ExperimentDataset.transform_item`` validates against ONE ``experiment_class``, and
+three of the four because the proteome is released on THREE normalizations and the
+shared ``verify_protein_dataset`` asserts one ``measurement_type`` per dataset ("no
+silent cross-assay mixing"):
 
 - :class:`ProteomeDeSiqueira2025Dataset` -- ``BacterialProteinAbundanceExperiment``, one
   record per released Top3 proteome sample of a WRITABLE strain.
+- :class:`ProteomePercentDeSiqueira2025Dataset` -- the same five samples as percent of
+  each sample's total abundance, the scale the paper's own analysis runs on.
+- :class:`ProteomeLog10PercentDeSiqueira2025Dataset` -- the same five samples as the
+  mean of the three replicates' log10 percent.
 - :class:`IsoprenolTiterDeSiqueira2025Dataset` -- ``ProductTiterExperiment``, one record
   per released Table S2 titer of a WRITABLE strain in a medium the library holds.
+
+THREE NORMALIZATIONS, AND NEITHER OF THE TWO NEW ONES IS RECOVERABLE FROM THE FIRST.
+Data Set S1's 15 columns carry the same (protein, sample) cell on three scales, each as
+its own mean + SD pair (:data:`PROTEOME_NORMALIZATIONS`). The first build asserted all
+15 header cells but read only ``row[7]`` and ``row[8]``, so columns 9 to 14 were parsed
+past. Storing a second and third normalization of one proteome is only worth doing if
+they cannot be re-derived from the first, and that was MEASURED over every one of the
+34,600 released cells rather than argued:
+
+- **Percent of total is not percent of the stored mean.** Against
+  ``100 * top3_mean / sum(top3_mean)`` within the sample, ZERO of 34,600 cells agree
+  exactly, 9,322 agree to 5e-4 relative, and the per-cell ratio runs 0.914506 to
+  1.083554 with a median of 1.000007. Each sample's released percents do sum to 100.000,
+  so this is not a scaling error: it is a replicate-wise mean of per-replicate
+  percentages, each replicate normalized by its OWN total. There is no way back to it
+  from a mean of counts.
+- **Log10 percent is the mean of logs, not the log of the mean.** Against
+  ``log10(released percent)``, 33,914 of 34,600 cells sit STRICTLY BELOW the released
+  value, 686 agree to within 5e-5, and ZERO sit above it. A one-sided result over 34,600
+  cells is Jensen's inequality for a mean of logarithms, with equality only where the
+  three replicates coincide; the largest gap is 1.378950 in log10 units. The first
+  released row (protein ``Csda``) gives -2.23385590492606 against a log10 of the mean of
+  -2.19547. Its SD is likewise not the delta-method transform of the percent SD
+  (``pct_sd / (pct_mean * ln 10)`` disagrees on 34,496 of 34,600 cells).
+
+THE TWO DERIVED COLUMNS ARE ORACLES, NOT PHENOTYPES, AND THAT IS ALSO MEASURED.
+``CV%_of_%_protein_abundance`` is exactly ``100 * pct_sd / pct_mean`` (zero of 34,600
+cells disagree, :func:`assert_percent_cv_is_derived`), so it carries nothing the stored
+percent pair does not. ``%_of protein_abundance_Top3_rep_mean_sem`` does not vary with
+the sample: 1,728 of 1,729 proteins carry a single value
+(:func:`assert_sem_is_constant_per_protein`), so a per-sample record has nothing to put
+in it. Both are read and asserted at build time rather than stored, which is what keeps
+every asserted header cell from being parsed past.
 
 THE GENOTYPE FINDING, WHICH DECIDES WHAT IS LOADED. This study's strains are an
 evolution experiment plus whole-genome resequencing, so an evolved clone's genotype IS
@@ -138,7 +178,7 @@ from typing import Any, ClassVar, Literal
 
 import openpyxl
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -279,6 +319,13 @@ PT_PARTIAL_DELETION = "PP_2676"
 
 #: What one stored proteome number is, named so heterogeneous proteomics never mixes.
 PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_peptide_signal_replicate_mean"
+#: The two FURTHER normalizations Data Set S1 releases of the same five samples, each
+#: its own ``measurement_type`` and so its own dataset class: the shared protein
+#: verifier's L3 ``measurement_type_consistent`` row requires one per dataset.
+PERCENT_MEASUREMENT_TYPE = "dia_nn_top3_percent_of_total_abundance_replicate_mean"
+LOG10_PERCENT_MEASUREMENT_TYPE = (
+    "dia_nn_top3_log10_percent_of_total_abundance_replicate_mean"
+)
 
 #: Data Set S1 ``Condition`` labels, and the carbon regime each one means.
 CONDITION_ACETATE = "Acetate"
@@ -296,7 +343,8 @@ PROTEOME_REFERENCE_STRAIN = WT_LABEL
 #: Released proteome samples that become records. Measured on the pinned workbook: 20
 #: samples are released, 7 strains times 3 conditions less the PT mixed-carbon sample,
 #: which was never taken (PT "often fails to grow in glucose-acetate medium"). Five of
-#: the 20 are of a writable strain.
+#: the 20 are of a writable strain. One record per writable sample per normalization, so
+#: each of the three proteome dataset classes holds exactly this many.
 EXPECTED_PROTEOME_RECORDS = 5
 
 #: This module's labels for Table S2's four media columns, in released order. The
@@ -356,6 +404,24 @@ def _si(value: Any, quote: str, *, page: str, note: str | None = None) -> Source
             citation_key=CITATION_KEY,
             sha256=SI3_MD_SHA256,
             method="MinerU OCR of the Supplemental Material PDF (mirror)",
+            page=page,
+        ),
+    )
+
+
+def _data_s1(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim cell of the pinned Data Set S1 workbook bytes."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=PROTEOME_REL,
+            citation_key=CITATION_KEY,
+            sha256=PROTEOME_SHA256,
+            method="openpyxl read of the deposited Data Set S1 workbook (raw mirror)",
             page=page,
         ),
     )
@@ -437,6 +503,13 @@ _Q_DIANN_DB = (
     "The databases used in the DIA-NN search (library-free mode) were $P .$ putida "
     "KT2440 latest Uniprot proteome FASTA sequences (generated in March 2024) and "
     "common proteomic contaminants."
+)
+_Q_RELATIVE_ABUNDANCE_RELEASED = (
+    "Mean protein counts and relative protein abundances for each sample, as well as "
+    "other summary statistics for the proteomics data set, are available in File S1."
+)
+_Q_RELATIVE_ABUNDANCE_USED = (
+    "Relative protein abundances of proteins were used for dimensionality reduction."
 )
 _Q_REFERENCE_CONDITION = (
     "For both panels, protein levels in the glucose as a sole carbon source medium "
@@ -615,6 +688,25 @@ TOP3 = _paper(
     page=_METHODS_PROTEOMICS,
     note="what one stored abundance IS: the mean, over a sample's three replicates, of "
     "the Top3 signal",
+)
+PERCENT_OF_TOTAL = _paper(
+    PERCENT_MEASUREMENT_TYPE,
+    _Q_RELATIVE_ABUNDANCE_RELEASED,
+    page="Results, 'Proteomics reveals different paths for acetate and glucose "
+    "assimilation in tolerized and naive P. putida strains'",
+    note="the paper's own name for the released percent-of-total column is 'relative "
+    "protein abundances', and it names File S1 (the pinned Data Set S1) as where they "
+    "are. It is the column the paper's OWN analysis runs on "
+    f"('{_Q_RELATIVE_ABUNDANCE_USED}'), and it is not recoverable from the Top3 pair",
+)
+LOG10_PERCENT_OF_TOTAL = _data_s1(
+    LOG10_PERCENT_MEASUREMENT_TYPE,
+    "log10_%_abundance_rep_mean",
+    page="Data Set S1, sheet 'Sheet1', column 12",
+    note="the released header is the only statement of this scale: the paper names "
+    "'other summary statistics for the proteomics data set' in File S1 and never "
+    "describes this column in prose. Measured over all 34,600 cells, it is the MEAN of "
+    "the three replicates' log10 percent rather than the log10 of the released percent",
 )
 DIANN_DATABASE = _paper(
     "P. putida KT2440 UniProt proteome + common proteomic contaminants",
@@ -949,8 +1041,70 @@ def _sheet_rows(path: str) -> tuple[tuple[Any, ...], list[tuple[Any, ...]]]:
         book.close()
 
 
+class ProteomeNormalization(BaseModel):
+    """One released normalization of the same Top3 proteome, and what it IS.
+
+    Data Set S1 releases the same five writable samples on three scales, each as its own
+    mean + SD pair. ``measurement_type`` is what a record stores, so each normalization
+    is its own dataset class: the shared ``verify_protein_dataset`` asserts one
+    ``measurement_type`` per dataset ("no silent cross-assay mixing").
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    measurement_type: str
+    mean_column: str
+    sd_column: str
+    #: ``data/torchcell/<root_slug>``, the dev-tree root of the class that stores it.
+    root_slug: str
+    #: Whether this scale can be RE-DERIVED from the Top3 columns the first build
+    #: already stored. Measured, not assumed; see the module docstring.
+    recoverable_from_top3: bool
+    note: str
+
+
+#: The three released normalizations, in released column order.
+PROTEOME_NORMALIZATIONS: tuple[ProteomeNormalization, ...] = (
+    ProteomeNormalization(
+        measurement_type=PROTEOME_MEASUREMENT_TYPE,
+        mean_column="Top_3pep_counts_rep_mean",
+        sd_column="Top_3pep_counts_rep_std",
+        root_slug="proteome_desiqueira2025",
+        recoverable_from_top3=True,
+        note="the Top3 peptide signal itself, the scale the first build stored",
+    ),
+    ProteomeNormalization(
+        measurement_type=PERCENT_MEASUREMENT_TYPE,
+        mean_column="%_of protein_abundance_Top3_rep_mean",
+        sd_column="%_of protein_abundance_Top3-rep_std",
+        root_slug="proteome_percent_desiqueira2025",
+        recoverable_from_top3=False,
+        note="percent of a sample's total abundance, averaged over the three "
+        "replicates. NOT the released percent of the released mean: measured over all "
+        "34,600 cells, zero agree exactly and the per-cell ratio runs 0.914506 to "
+        "1.083554, which is a replicate-wise mean of per-replicate percentages",
+    ),
+    ProteomeNormalization(
+        measurement_type=LOG10_PERCENT_MEASUREMENT_TYPE,
+        mean_column="log10_%_abundance_rep_mean",
+        sd_column="log10_%_abundance_rep_std",
+        root_slug="proteome_log10_percent_desiqueira2025",
+        recoverable_from_top3=False,
+        note="the mean of the three replicates' log10 percent. NOT the log10 of the "
+        "released percent: measured over all 34,600 cells, 33,914 disagree, 686 agree "
+        "to 5e-5 and ZERO exceed it, which is Jensen's inequality for a mean of logs",
+    ),
+)
+
+
 class ProteomeRow(BaseModel):
-    """One released (protein, strain, condition) cell of Data Set S1."""
+    """One released (protein, strain, condition) cell of Data Set S1, all 15 columns.
+
+    Every asserted column is read. The six beyond the Top3 pair are the two further
+    normalizations plus the two derived columns the build uses as oracles
+    (:func:`assert_percent_cv_is_derived`, :func:`assert_sem_is_constant_per_protein`),
+    so no column is asserted and then parsed past.
+    """
 
     accession: str
     entry_name: str
@@ -961,6 +1115,20 @@ class ProteomeRow(BaseModel):
     sample: str
     top3_mean: float
     top3_sd: float
+    pct_mean: float
+    pct_sd: float
+    log10_pct_mean: float
+    log10_pct_sd: float
+    cv_percent: float
+    constant_sem: float
+
+    def normalized(self, normalization: ProteomeNormalization) -> tuple[float, float]:
+        """``(mean, sd)`` of one released normalization for this cell."""
+        return {
+            PROTEOME_MEASUREMENT_TYPE: (self.top3_mean, self.top3_sd),
+            PERCENT_MEASUREMENT_TYPE: (self.pct_mean, self.pct_sd),
+            LOG10_PERCENT_MEASUREMENT_TYPE: (self.log10_pct_mean, self.log10_pct_sd),
+        }[normalization.measurement_type]
 
 
 PROTEOME_HEADER: tuple[str, ...] = (
@@ -973,7 +1141,34 @@ PROTEOME_HEADER: tuple[str, ...] = (
     "Sample",
     "Top_3pep_counts_rep_mean",
     "Top_3pep_counts_rep_std",
+    "%_of protein_abundance_Top3_rep_mean",
+    "%_of protein_abundance_Top3-rep_std",
+    "log10_%_abundance_rep_mean",
+    "log10_%_abundance_rep_std",
+    "CV%_of_%_protein_abundance",
+    "%_of protein_abundance_Top3_rep_mean_sem",
 )
+_NORMALIZATION_COLUMNS = {n.mean_column for n in PROTEOME_NORMALIZATIONS} | {
+    n.sd_column for n in PROTEOME_NORMALIZATIONS
+}
+if _NORMALIZATION_COLUMNS - set(PROTEOME_HEADER):
+    raise RuntimeError(
+        "a normalization names a column Data Set S1's asserted header does not carry"
+    )
+if [n.measurement_type for n in PROTEOME_NORMALIZATIONS] != [
+    str(TOP3.value),
+    str(PERCENT_OF_TOTAL.value),
+    str(LOG10_PERCENT_OF_TOTAL.value),
+]:
+    raise RuntimeError(
+        "a normalization's measurement_type is no longer the one its SourcedValue binds"
+    )
+#: How far the released CV may sit from ``100 * pct_sd / pct_mean``. Measured on the
+#: pinned workbook: zero of 34,600 cells disagree beyond floating-point noise.
+_CV_TOL = 1e-6
+#: Proteins whose constant per-protein SEM column is NOT single-valued. Measured on the
+#: pinned workbook: exactly one of 1,729.
+SEM_MULTIVALUED_PROTEINS = 1
 
 
 def read_proteome_rows(path: str) -> list[ProteomeRow]:
@@ -992,9 +1187,52 @@ def read_proteome_rows(path: str) -> list[ProteomeRow]:
             sample=str(row[6]).strip(),
             top3_mean=float(row[7]),
             top3_sd=float(row[8]),
+            pct_mean=float(row[9]),
+            pct_sd=float(row[10]),
+            log10_pct_mean=float(row[11]),
+            log10_pct_sd=float(row[12]),
+            cv_percent=float(row[13]),
+            constant_sem=float(row[14]),
         )
         for row in rows
     ]
+
+
+def assert_percent_cv_is_derived(rows: Sequence[ProteomeRow]) -> None:
+    """Oracle: the released CV column IS ``100 * pct_sd / pct_mean``.
+
+    Which is why the CV is not a phenotype: it carries no information the stored percent
+    pair does not. Measured on the pinned workbook: zero of 34,600 cells disagree.
+    """
+    for row in rows:
+        if row.pct_mean == 0.0:
+            continue
+        derived = 100.0 * row.pct_sd / row.pct_mean
+        if abs(derived - row.cv_percent) > _CV_TOL * max(1.0, abs(row.cv_percent)):
+            raise RuntimeError(
+                f"{row.sample}/{row.protein}: 100 * pct_sd / pct_mean is {derived} and "
+                f"the released CV column reads {row.cv_percent}; the CV is not derived "
+                "from the pair this loader stores"
+            )
+
+
+def assert_sem_is_constant_per_protein(rows: Sequence[ProteomeRow]) -> None:
+    """Oracle: the released SEM column is one value per PROTEIN, not per sample.
+
+    Which is why it is not a phenotype: a per-sample record cannot carry a number that
+    does not vary with the sample. Measured on the pinned workbook: 1,728 of 1,729
+    proteins carry a single value, so exactly :data:`SEM_MULTIVALUED_PROTEINS` does not.
+    """
+    per_protein: dict[str, set[float]] = defaultdict(set)
+    for row in rows:
+        per_protein[row.protein].add(row.constant_sem)
+    multivalued = sorted(key for key, seen in per_protein.items() if len(seen) > 1)
+    if len(multivalued) != SEM_MULTIVALUED_PROTEINS:
+        raise RuntimeError(
+            f"{len(multivalued)} of {len(per_protein)} proteins carry more than one SEM "
+            f"value ({multivalued[:3]}), not the {SEM_MULTIVALUED_PROTEINS} the pinned "
+            "workbook holds; the column is no longer the constant per-protein SEM"
+        )
 
 
 class CalledVariant(BaseModel):
@@ -1703,13 +1941,21 @@ def _standard_names(genome: PPutidaKT2440Genome, tags: Iterable[str]) -> dict[st
 
 
 # --------------------------------------------------------------------------- #
-# Family 1: the released Top3 proteome
+# Family 1: the released proteome, one class per released normalization
 # --------------------------------------------------------------------------- #
 @register_dataset
 class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
-    """de Siqueira 2025 Top3 proteome of the writable KT2440 and PT strains."""
+    """de Siqueira 2025 Top3 proteome of the writable KT2440 and PT strains.
+
+    The base of the three normalization classes and the Top3 one itself. A subclass
+    changes exactly two things: :attr:`NORMALIZATION` (the released column pair it reads
+    and the ``measurement_type`` it stores) and its own dev-tree ``root`` default.
+    """
 
     REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
+    #: The released normalization this class stores. One per class, because the shared
+    #: ``verify_protein_dataset`` asserts a single ``measurement_type`` per dataset.
+    NORMALIZATION: ClassVar[ProteomeNormalization] = PROTEOME_NORMALIZATIONS[0]
     #: Measured on the pinned workbook: 1,532 of 1,729 protein keys (0.8872) resolve to
     #: a locus of this assembly. The threshold sits just below that. The 197 that do not
     #: are keys the GenBank annotation carries no symbol for plus the five contaminants
@@ -1761,11 +2007,16 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             self.pputida_genome = bacterial_genome("pputida", self.REFERENCE_STRAIN)
         return self.pputida_genome
 
-    @staticmethod
+    @classmethod
     def _phenotype(
-        cells: dict[str, tuple[float, float]], n_replicates: int
+        cls, cells: dict[str, tuple[float, float]], n_replicates: int
     ) -> ProteinAbundancePhenotype:
-        """One sample's abundances with SE = SD / sqrt(n) per protein."""
+        """One sample's abundances with SE = SD / sqrt(n) per protein.
+
+        The released SD is the sample SD over the three replicates on THIS class's
+        scale, so the SE is that SD over sqrt(n) on the same scale. A log10 SD divided
+        by sqrt(n) is the SE of the log10 mean, which is the quantity the record stores.
+        """
         if not cells:
             raise RuntimeError("a proteome sample carries no measured protein")
         root_n = math.sqrt(n_replicates)
@@ -1773,7 +2024,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             protein_abundance={tag: mean for tag, (mean, _) in cells.items()},
             protein_abundance_se={tag: sd / root_n for tag, (_, sd) in cells.items()},
             n_replicates=dict.fromkeys(cells, n_replicates),
-            measurement_type=str(TOP3.value),
+            measurement_type=cls.NORMALIZATION.measurement_type,
         )
 
     @post_process
@@ -1784,6 +2035,8 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             {PROTEOME_FILENAME: PROTEOME_SHA256, VARIANTS_FILENAME: VARIANTS_SHA256},
         )
         rows = read_proteome_rows(osp.join(self.raw_dir, PROTEOME_FILENAME))
+        assert_percent_cv_is_derived(rows)
+        assert_sem_is_constant_per_protein(rows)
         ledger = _write_variant_ledger(
             self.preprocess_dir, osp.join(self.raw_dir, VARIANTS_FILENAME)
         )
@@ -1823,7 +2076,9 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                     f"{(row.strain, row.condition)}/{tag} appears twice; a repeated "
                     "cell would change the stored mean"
                 )
-            samples[(row.strain, row.condition)][tag] = (row.top3_mean, row.top3_sd)
+            samples[(row.strain, row.condition)][tag] = row.normalized(
+                self.NORMALIZATION
+            )
 
         if len(samples) != EXPECTED_PROTEOME_RECORDS:
             raise RuntimeError(
@@ -1875,6 +2130,9 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                         "condition": condition,
                         "n_proteins": len(cells),
                         "n_replicates": n_replicates,
+                        "measurement_type": self.NORMALIZATION.measurement_type,
+                        "mean_column": self.NORMALIZATION.mean_column,
+                        "sd_column": self.NORMALIZATION.sd_column,
                     }
                 )
                 idx += 1
@@ -1958,6 +2216,18 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                     "not missing fields, so they are in preprocess/called_variants.json "
                     "rather than a ProvenanceGap",
                     f"{ledger.unsequenced_strains} were never sequenced at all",
+                    f"this class stores the {self.NORMALIZATION.measurement_type!r} "
+                    f"scale, read from {self.NORMALIZATION.mean_column!r} with its SD "
+                    f"{self.NORMALIZATION.sd_column!r}: "
+                    f"{self.NORMALIZATION.note}. The other "
+                    f"{len(PROTEOME_NORMALIZATIONS) - 1} released normalizations of "
+                    "these same samples are their own dataset classes, because "
+                    "verify_protein_dataset asserts one measurement_type per dataset",
+                    "the released CV%_of_%_protein_abundance and the constant "
+                    "%_of protein_abundance_Top3_rep_mean_sem columns are read and used "
+                    "as build oracles rather than stored: the CV is exactly "
+                    "100 * pct_sd / pct_mean over all released cells, and the SEM does "
+                    "not vary with the sample, so neither is a per-sample phenotype",
                 ],
             ),
             self.preprocess_dir,
@@ -1983,6 +2253,81 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
     def create_experiment(self) -> None:
         """Experiment construction is handled inline in process() for this dataset."""
         raise NotImplementedError
+
+
+@register_dataset
+class ProteomePercentDeSiqueira2025Dataset(ProteomeDeSiqueira2025Dataset):
+    """de Siqueira 2025 percent-of-total relative abundance, the paper's own scale.
+
+    The same five writable samples as :class:`ProteomeDeSiqueira2025Dataset`, read from
+    ``%_of protein_abundance_Top3_rep_mean`` with its ``_rep_std`` as the SD. This is
+    the column the paper's OWN analysis runs on ("Relative protein abundances of
+    proteins were used for dimensionality reduction."), and it is not recoverable from
+    the Top3 pair: measured over all 34,600 released cells, zero equal the percent of
+    the released mean and the per-cell ratio runs 0.914506 to 1.083554, which is the
+    signature of a replicate-wise mean of per-replicate percentages.
+    """
+
+    NORMALIZATION: ClassVar[ProteomeNormalization] = PROTEOME_NORMALIZATIONS[1]
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/proteome_percent_desiqueira2025",
+        io_workers: int = 0,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize with this normalization's own dev-tree root."""
+        super().__init__(
+            root, io_workers, pputida_genome, transform, pre_transform, **kwargs
+        )
+
+
+@register_dataset
+class ProteomeLog10PercentDeSiqueira2025Dataset(ProteomeDeSiqueira2025Dataset):
+    """de Siqueira 2025 mean log10 percent-of-total abundance, the third released scale.
+
+    Read from ``log10_%_abundance_rep_mean`` with its ``_rep_std``. It is the MEAN of
+    the three replicates' log10, not the log10 of the mean: measured over all 34,600
+    released cells, 33,914 sit strictly below ``log10`` of the released percent, 686
+    agree to within 5e-5 and ZERO sit above it, which is exactly Jensen's inequality for
+    a mean of logs. Its SD is likewise not the delta-method transform of the percent SD
+    (34,496 of 34,600 cells disagree), so neither column is recoverable from a stored
+    sibling.
+    """
+
+    NORMALIZATION: ClassVar[ProteomeNormalization] = PROTEOME_NORMALIZATIONS[2]
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/proteome_log10_percent_desiqueira2025",
+        io_workers: int = 0,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize with this normalization's own dev-tree root."""
+        super().__init__(
+            root, io_workers, pputida_genome, transform, pre_transform, **kwargs
+        )
+
+
+#: Each proteome class keyed by the normalization it stores, so the verifier and the
+#: module entry point can walk the family rather than naming the three classes twice.
+PROTEOME_CLASSES: dict[str, type[ProteomeDeSiqueira2025Dataset]] = {
+    PROTEOME_MEASUREMENT_TYPE: ProteomeDeSiqueira2025Dataset,
+    PERCENT_MEASUREMENT_TYPE: ProteomePercentDeSiqueira2025Dataset,
+    LOG10_PERCENT_MEASUREMENT_TYPE: ProteomeLog10PercentDeSiqueira2025Dataset,
+}
+if {cls.NORMALIZATION.measurement_type for cls in PROTEOME_CLASSES.values()} != set(
+    PROTEOME_CLASSES
+):
+    raise RuntimeError(
+        "a proteome class is keyed by a measurement_type it does not store"
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -2220,6 +2565,43 @@ def strain_condition_uniqueness(records: Sequence[dict[str, Any]]) -> LevelResul
     )
 
 
+def stored_normalization_rule(
+    records: Sequence[dict[str, Any]], normalization: ProteomeNormalization
+) -> LevelResult:
+    """SUPPLEMENTARY L3: every record stores THIS normalization and names its column.
+
+    The shared verifier's ``measurement_type_consistent`` row proves the records agree
+    with EACH OTHER; this one proves they agree with the released column the class reads,
+    which is what keeps three dataset classes over one workbook from swapping scales.
+    """
+    stored = {
+        str(rec["experiment"]["phenotype"]["measurement_type"]) for rec in records
+    }
+    references = {
+        str(rec["reference"]["phenotype_reference"]["measurement_type"])
+        for rec in records
+    }
+    expected = {normalization.measurement_type}
+    return LevelResult(
+        level=Level.L3,
+        name="stored_scale_is_the_released_column_this_class_reads",
+        passed=stored == expected and references == expected,
+        message=(
+            f"SUPPLEMENTARY: {len(records)} records on "
+            f"{normalization.measurement_type!r}, read from "
+            f"{normalization.mean_column!r} + {normalization.sd_column!r}"
+        ),
+        details={
+            "expected": normalization.measurement_type,
+            "experiment_measurement_types": sorted(stored),
+            "reference_measurement_types": sorted(references),
+            "mean_column": normalization.mean_column,
+            "sd_column": normalization.sd_column,
+            "recoverable_from_top3": normalization.recoverable_from_top3,
+        },
+    )
+
+
 def assembly_pin_rule(records: Sequence[dict[str, Any]]) -> LevelResult:
     """SUPPLEMENTARY L3: every record pins the KT2440 GenBank assembly."""
     pins = {
@@ -2348,16 +2730,26 @@ def titer_levels(
     return report
 
 
+#: ``family`` -> the proteome class it verifies. ``"proteome"`` stays the Top3 family's
+#: name so an existing caller (the runner registry, the note, a by-hand verify) is
+#: unchanged.
+PROTEOME_FAMILIES: dict[str, type[ProteomeDeSiqueira2025Dataset]] = {
+    "proteome": ProteomeDeSiqueira2025Dataset,
+    "proteome_percent": ProteomePercentDeSiqueira2025Dataset,
+    "proteome_log10_percent": ProteomeLog10PercentDeSiqueira2025Dataset,
+}
+
+
 def verify_build(
     dataset_root: str, data_root: str | None = None, *, family: str = "proteome"
 ) -> VerificationReport:
     """Run this module's L0-L4 gate over a built tree and write the report.
 
-    ``family`` is ``"proteome"`` or ``"titer"``. The proteome family runs the shared
-    ``verify_protein_dataset`` with ``allow_duplicate_orfs=True`` (PT appears once per
-    condition by design) plus three SUPPLEMENTARY rows; the titer family has no shared
-    verifier, so :func:`titer_levels` builds its battery. The report is written to
-    ``preprocess/verification_report.json``.
+    ``family`` is ``"titer"`` or one of :data:`PROTEOME_FAMILIES`. A proteome family
+    runs the shared ``verify_protein_dataset`` with ``allow_duplicate_orfs=True`` (PT
+    appears once per condition by design) plus three SUPPLEMENTARY rows; the titer
+    family has no shared verifier, so :func:`titer_levels` builds its battery. The
+    report is written to ``preprocess/verification_report.json``.
     """
     from torchcell.verification.runners import load_records
 
@@ -2366,18 +2758,20 @@ def verify_build(
     if family == "titer":
         report = titer_levels(records, expected_count=len(TITER_COLUMNS_LOADED))
         report.add(gene_containment_rule(records, set(genome.genbank.loci)))
-    elif family == "proteome":
+    elif family in PROTEOME_FAMILIES:
         from torchcell.verification.protein import verify_protein_dataset
 
+        dataset_cls = PROTEOME_FAMILIES[family]
+        normalization = dataset_cls.NORMALIZATION
         report = verify_protein_dataset(
             records,
-            dataset_name="proteome_desiqueira2025",
+            dataset_name=normalization.root_slug,
             provenance=_provenance(
                 PROTEOME_REL,
                 PROTEOME_SHA256,
-                "Data Set S1 Top_3pep_counts_rep_mean (the mean over three biological "
-                "replicates of the DIA-NN Top3 signal), with SE = "
-                "Top_3pep_counts_rep_std / sqrt(3)",
+                f"Data Set S1 {normalization.mean_column} (the replicate-wise mean over "
+                f"three biological replicates), with SE = {normalization.sd_column} / "
+                "sqrt(3)",
                 "Data Set S1, sheet 'Sheet1'",
             ),
             expected_count=EXPECTED_PROTEOME_RECORDS,
@@ -2386,8 +2780,11 @@ def verify_build(
         report.add(strain_condition_uniqueness(records))
         report.add(assembly_pin_rule(records))
         report.add(gene_containment_rule(records, set(genome.genbank.loci)))
+        report.add(stored_normalization_rule(records, normalization))
     else:
-        raise RuntimeError(f"{family!r} is neither 'proteome' nor 'titer'")
+        raise RuntimeError(
+            f"{family!r} is neither 'titer' nor one of {sorted(PROTEOME_FAMILIES)}"
+        )
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     os.makedirs(osp.dirname(out), exist_ok=True)
     with open(out, "w") as handle:
@@ -2402,18 +2799,25 @@ def main() -> None:
     load_dotenv()
     data_root = _data_root()
     genome = bacterial_genome("pputida", "KT2440", data_root)
-    for cls, rel, family in (
-        (
-            ProteomeDeSiqueira2025Dataset,
-            "data/torchcell/proteome_desiqueira2025",
-            "proteome",
-        ),
+    families: list[
+        tuple[
+            type[ProteomeDeSiqueira2025Dataset]
+            | type[IsoprenolTiterDeSiqueira2025Dataset],
+            str,
+            str,
+        ]
+    ] = [
+        (cls, f"data/torchcell/{cls.NORMALIZATION.root_slug}", family)
+        for family, cls in PROTEOME_FAMILIES.items()
+    ]
+    families.append(
         (
             IsoprenolTiterDeSiqueira2025Dataset,
             "data/torchcell/isoprenol_titer_desiqueira2025",
             "titer",
-        ),
-    ):
+        )
+    )
+    for cls, rel, family in families:
         root = osp.join(data_root, rel)
         dataset = cls(root=root, pputida_genome=genome)
         print(f"{cls.__name__}: len = {len(dataset)}")

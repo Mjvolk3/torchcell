@@ -63,8 +63,10 @@ from torchcell.adapters import (
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeLim2025Adapter,
+    ProteomeLog10PercentDeSiqueira2025Adapter,
     ProteomeMessner2023Adapter,
     ProteomeMori2021Adapter,
+    ProteomePercentDeSiqueira2025Adapter,
     ProteomeSchmidt2016Adapter,
     ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Adapter,
@@ -143,6 +145,8 @@ from torchcell.datasets.pputida.carruthers2025 import (
 from torchcell.datasets.pputida.desiqueira2025 import (
     IsoprenolTiterDeSiqueira2025Dataset,
     ProteomeDeSiqueira2025Dataset,
+    ProteomeLog10PercentDeSiqueira2025Dataset,
+    ProteomePercentDeSiqueira2025Dataset,
 )
 from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dataset
 from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
@@ -319,6 +323,10 @@ dataset_adapter_map = {
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,
     ProteomeCarruthers2025Dataset: ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Dataset: ProteomeDeSiqueira2025Adapter,
+    ProteomePercentDeSiqueira2025Dataset: ProteomePercentDeSiqueira2025Adapter,
+    ProteomeLog10PercentDeSiqueira2025Dataset: (
+        ProteomeLog10PercentDeSiqueira2025Adapter
+    ),
     IsoprenolTiterDeSiqueira2025Dataset: IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenylAcetateTiterKang2026Dataset: IsoprenylAcetateTiterKang2026Adapter,
     PutidaPrecise321Lim2022Dataset: PutidaPrecise321Lim2022Adapter,

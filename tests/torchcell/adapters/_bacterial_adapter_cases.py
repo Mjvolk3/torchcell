@@ -87,7 +87,9 @@ from torchcell.adapters import (
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeLim2025Adapter,
+    ProteomeLog10PercentDeSiqueira2025Adapter,
     ProteomeMori2021Adapter,
+    ProteomePercentDeSiqueira2025Adapter,
     ProteomeSchmidt2016Adapter,
     ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Adapter,
@@ -151,6 +153,8 @@ from torchcell.datasets.pputida.carruthers2025 import (
 from torchcell.datasets.pputida.desiqueira2025 import (
     IsoprenolTiterDeSiqueira2025Dataset,
     ProteomeDeSiqueira2025Dataset,
+    ProteomeLog10PercentDeSiqueira2025Dataset,
+    ProteomePercentDeSiqueira2025Dataset,
 )
 from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dataset
 from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
@@ -488,6 +492,20 @@ BACTERIAL: list[Bacterial] = [
         "desiqueira2025_proteome",
         "proteome_desiqueira2025",
         ProteomeDeSiqueira2025Dataset,
+        PROTEOME,
+    ),
+    _case(
+        ProteomePercentDeSiqueira2025Adapter,
+        "desiqueira2025_proteome_percent",
+        "proteome_percent_desiqueira2025",
+        ProteomePercentDeSiqueira2025Dataset,
+        PROTEOME,
+    ),
+    _case(
+        ProteomeLog10PercentDeSiqueira2025Adapter,
+        "desiqueira2025_proteome_log10_percent",
+        "proteome_log10_percent_desiqueira2025",
+        ProteomeLog10PercentDeSiqueira2025Dataset,
         PROTEOME,
     ),
     _case(

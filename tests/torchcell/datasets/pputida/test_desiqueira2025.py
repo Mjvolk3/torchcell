@@ -751,8 +751,20 @@ def synthetic_kt2440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     return PPutidaKT2440Genome(genome_root=str(root), overwrite=False)
 
 
+#: The one synthetic protein whose constant-SEM column is NOT single-valued, which is
+#: the pinned workbook's own shape (1,728 of 1,729 proteins carry one value).
+PROTEOME_SEM_MULTIVALUED_KEY = PROTEOME_KEYS[0]
+
+
 def _write_proteome(path: Path) -> None:
-    """A synthetic Data Set S1 over :data:`PROTEOME_SAMPLES` and :data:`PROTEOME_KEYS`."""
+    """A synthetic Data Set S1 over :data:`PROTEOME_SAMPLES` and :data:`PROTEOME_KEYS`.
+
+    All 15 released columns, and the two derived ones satisfy the build oracles the way
+    the pinned workbook does: the CV is exactly ``100 * pct_sd / pct_mean``, and the SEM
+    is one value per protein for every key but
+    :data:`PROTEOME_SEM_MULTIVALUED_KEY`. The log10 column is a MEAN OF LOGS, so it sits
+    strictly below ``log10`` of the released percent, as it does in the real bytes.
+    """
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.append([*ds.PROTEOME_HEADER, "extra"])
@@ -763,6 +775,11 @@ def _write_proteome(path: Path) -> None:
                 if key == PROTEOME_MERGED_KEY
                 else (f"Q{index:05d}",)
             )
+            pct_mean = 0.5 + index / 100.0
+            pct_sd = 0.01 * (index + 1)
+            sem = 0.004 * (index + 1)
+            if key == PROTEOME_SEM_MULTIVALUED_KEY:
+                sem += len(condition) / 1000.0
             for accession in accessions:
                 sheet.append(
                     [
@@ -775,6 +792,12 @@ def _write_proteome(path: Path) -> None:
                         f"{strain}_{condition}",
                         1000.0 + index + len(strain) + len(condition),
                         30.0 + index,
+                        pct_mean,
+                        pct_sd,
+                        math.log10(pct_mean) - 0.02,
+                        0.003 * (index + 1),
+                        100.0 * pct_sd / pct_mean,
+                        sem,
                         None,
                     ]
                 )
@@ -908,7 +931,7 @@ def test_manifest_sha256_refuses_a_path_the_manifest_does_not_hold(
 
 # --- the proteome reader --------------------------------------------------- #
 def test_read_proteome_rows_types_every_released_cell(tmp_path: Path) -> None:
-    """The nine consumed columns, typed; extra columns are ignored."""
+    """All 15 consumed columns, typed; extra columns are ignored."""
     path = tmp_path / "p.xlsx"
     _write_proteome(path)
     rows = ds.read_proteome_rows(str(path))
@@ -920,6 +943,83 @@ def test_read_proteome_rows_types_every_released_cell(tmp_path: Path) -> None:
     }
     assert rows[0].top3_mean > 0
     assert rows[0].top3_sd > 0
+    assert rows[0].pct_mean == 0.5
+    assert rows[0].pct_sd == 0.01
+    assert rows[0].log10_pct_mean == pytest.approx(math.log10(0.5) - 0.02)
+    assert rows[0].log10_pct_sd == pytest.approx(0.003)
+    assert rows[0].cv_percent == pytest.approx(2.0)
+    assert len(ds.PROTEOME_HEADER) == 15
+
+
+def test_every_asserted_header_cell_is_read_by_a_row_or_an_oracle() -> None:
+    """The finding this revision closes: no column is asserted and then parsed past."""
+    normalized = {n.mean_column for n in ds.PROTEOME_NORMALIZATIONS} | {
+        n.sd_column for n in ds.PROTEOME_NORMALIZATIONS
+    }
+    oracles = {"CV%_of_%_protein_abundance", "%_of protein_abundance_Top3_rep_mean_sem"}
+    keys = {
+        "Protein.Group",
+        "Protein.Names",
+        "Protein",
+        "Protein.Description",
+        "Strain",
+        "Condition",
+        "Sample",
+    }
+    assert normalized | oracles | keys == set(ds.PROTEOME_HEADER)
+    assert len(normalized) == 6
+    assert [n.measurement_type for n in ds.PROTEOME_NORMALIZATIONS] == [
+        ds.PROTEOME_MEASUREMENT_TYPE,
+        ds.PERCENT_MEASUREMENT_TYPE,
+        ds.LOG10_PERCENT_MEASUREMENT_TYPE,
+    ]
+    assert [n.recoverable_from_top3 for n in ds.PROTEOME_NORMALIZATIONS] == [
+        True,
+        False,
+        False,
+    ]
+
+
+def test_a_row_serves_the_pair_of_the_normalization_it_is_asked_for(
+    tmp_path: Path,
+) -> None:
+    """``normalized`` is the only place a class's scale reaches a record."""
+    path = tmp_path / "p.xlsx"
+    _write_proteome(path)
+    row = ds.read_proteome_rows(str(path))[0]
+    top3, percent, log10 = ds.PROTEOME_NORMALIZATIONS
+    assert row.normalized(top3) == (row.top3_mean, row.top3_sd)
+    assert row.normalized(percent) == (row.pct_mean, row.pct_sd)
+    assert row.normalized(log10) == (row.log10_pct_mean, row.log10_pct_sd)
+
+
+def test_a_cv_column_the_percent_pair_cannot_reproduce_is_refused(
+    tmp_path: Path,
+) -> None:
+    """The oracle that makes the CV a derived column rather than a phenotype."""
+    path = tmp_path / "p.xlsx"
+    _write_proteome(path)
+    rows = ds.read_proteome_rows(str(path))
+    ds.assert_percent_cv_is_derived(rows)
+    rows[3] = rows[3].model_copy(update={"cv_percent": 42.0})
+    with pytest.raises(RuntimeError, match="the CV is not derived"):
+        ds.assert_percent_cv_is_derived(rows)
+
+
+def test_a_sem_column_that_varies_with_the_sample_is_refused(tmp_path: Path) -> None:
+    """The oracle that keeps the constant per-protein SEM out of a per-sample record."""
+    path = tmp_path / "p.xlsx"
+    _write_proteome(path)
+    rows = ds.read_proteome_rows(str(path))
+    ds.assert_sem_is_constant_per_protein(rows)
+    assert ds.SEM_MULTIVALUED_PROTEINS == 1
+    assert rows[0].protein == PROTEOME_SEM_MULTIVALUED_KEY
+    index = next(
+        i for i, row in enumerate(rows) if row.protein != PROTEOME_SEM_MULTIVALUED_KEY
+    )
+    rows[index] = rows[index].model_copy(update={"constant_sem": 999.0})
+    with pytest.raises(RuntimeError, match="carry more than one SEM value"):
+        ds.assert_sem_is_constant_per_protein(rows)
 
 
 def test_read_proteome_rows_refuses_a_changed_header(tmp_path: Path) -> None:
@@ -942,6 +1042,22 @@ def built_proteome(
     """The proteome loader built over the synthetic mirror and annotation."""
     return ds.ProteomeDeSiqueira2025Dataset(
         root=str(tmp_path / "build" / "proteome"), pputida_genome=synthetic_kt2440
+    )
+
+
+@pytest.fixture
+def built_percent(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
+    """The percent-of-total normalization built over the same synthetic mirror."""
+    return ds.ProteomePercentDeSiqueira2025Dataset(
+        root=str(tmp_path / "build" / "percent"), pputida_genome=synthetic_kt2440
+    )
+
+
+@pytest.fixture
+def built_log10(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
+    """The mean-log10-percent normalization built over the same synthetic mirror."""
+    return ds.ProteomeLog10PercentDeSiqueira2025Dataset(
+        root=str(tmp_path / "build" / "log10"), pputida_genome=synthetic_kt2440
     )
 
 
@@ -999,6 +1115,69 @@ def test_the_proteome_se_is_the_released_sd_over_the_root_of_three(
     assert phenotype["protein_abundance_se"]["PP_0154"] == pytest.approx(
         (30.0 + index) / math.sqrt(3)
     )
+
+
+def test_each_normalization_class_stores_its_own_released_column(
+    built_proteome: Any, built_percent: Any, built_log10: Any
+) -> None:
+    """Three classes over one workbook, each on the pair its NORMALIZATION names."""
+    assert built_percent.NORMALIZATION.measurement_type == ds.PERCENT_MEASUREMENT_TYPE
+    assert (
+        built_log10.NORMALIZATION.measurement_type == ds.LOG10_PERCENT_MEASUREMENT_TYPE
+    )
+    assert len(built_percent) == len(built_log10) == ds.EXPECTED_PROTEOME_RECORDS
+    index = PROTEOME_RESOLVING_TAGS.index("PP_0154")
+    pct_mean = 0.5 + index / 100.0
+    for dataset, expected_mean, expected_sd in (
+        (built_percent, pct_mean, 0.01 * (index + 1)),
+        (built_log10, math.log10(pct_mean) - 0.02, 0.003 * (index + 1)),
+    ):
+        phenotype = dataset[0]["experiment"]["phenotype"]
+        assert phenotype["measurement_type"] == dataset.NORMALIZATION.measurement_type
+        assert phenotype["protein_abundance"]["PP_0154"] == pytest.approx(expected_mean)
+        assert phenotype["protein_abundance_se"]["PP_0154"] == pytest.approx(
+            expected_sd / math.sqrt(3)
+        )
+        reference = dataset[0]["reference"]["phenotype_reference"]
+        assert reference["measurement_type"] == dataset.NORMALIZATION.measurement_type
+    top3 = built_proteome[0]["experiment"]["phenotype"]
+    assert top3["measurement_type"] == ds.PROTEOME_MEASUREMENT_TYPE
+    assert top3["protein_abundance"]["PP_0154"] > 100.0
+
+
+def test_each_normalization_class_has_its_own_dataset_name_and_root(
+    built_proteome: Any, built_percent: Any, built_log10: Any
+) -> None:
+    """A record names the class that wrote it, so the three scales never merge."""
+    names = {
+        dataset[0]["experiment"]["dataset_name"]
+        for dataset in (built_proteome, built_percent, built_log10)
+    }
+    assert names == {
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+    }
+    assert {cls.__name__ for cls in ds.PROTEOME_CLASSES.values()} == names
+    assert {cls.NORMALIZATION.root_slug for cls in ds.PROTEOME_CLASSES.values()} == {
+        "proteome_desiqueira2025",
+        "proteome_percent_desiqueira2025",
+        "proteome_log10_percent_desiqueira2025",
+    }
+
+
+def test_the_normalization_level_refuses_a_record_on_another_scale(
+    built_percent: Any,
+) -> None:
+    """The supplementary L3 that pairs a store to the column its class reads."""
+    records = [built_percent[index] for index in range(len(built_percent))]
+    percent = ds.PROTEOME_NORMALIZATIONS[1]
+    passing = ds.stored_normalization_rule(records, percent)
+    assert passing.passed
+    assert passing.details["mean_column"] == percent.mean_column
+    assert passing.details["recoverable_from_top3"] is False
+    failing = ds.stored_normalization_rule(records, ds.PROTEOME_NORMALIZATIONS[0])
+    assert not failing.passed
 
 
 def test_the_proteome_loader_writes_its_accounting_and_its_variant_ledger(
@@ -1102,11 +1281,16 @@ def test_both_loaders_pass_their_level_batteries_on_the_synthetic_build(
 def test_verify_build_refuses_a_family_it_does_not_know(
     built_titer: Any, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Only the two released families exist."""
+    """Only the titer family and the three released normalizations exist."""
     monkeypatch.setattr(
         ds, "bacterial_genome", lambda *a, **k: built_titer.pputida_genome
     )
-    with pytest.raises(RuntimeError, match="is neither 'proteome' nor 'titer'"):
+    assert sorted(ds.PROTEOME_FAMILIES) == [
+        "proteome",
+        "proteome_log10_percent",
+        "proteome_percent",
+    ]
+    with pytest.raises(RuntimeError, match="is neither 'titer' nor one of"):
         ds.verify_build(built_titer.root, family="growth")
 
 
@@ -1342,6 +1526,12 @@ def test_the_built_stores_pass_l0_to_l4() -> None:
     data_root = os.environ["DATA_ROOT"]
     for rel, family, expected in (
         ("data/torchcell/proteome_desiqueira2025", "proteome", 5),
+        ("data/torchcell/proteome_percent_desiqueira2025", "proteome_percent", 5),
+        (
+            "data/torchcell/proteome_log10_percent_desiqueira2025",
+            "proteome_log10_percent",
+            5,
+        ),
         ("data/torchcell/isoprenol_titer_desiqueira2025", "titer", 2),
     ):
         root = osp.join(data_root, rel)
@@ -1352,3 +1542,72 @@ def test_the_built_stores_pass_l0_to_l4() -> None:
         from torchcell.verification.runners import load_records
 
         assert len(load_records(root)) == expected
+
+
+@pytest.mark.data
+def test_the_two_new_normalizations_are_not_recoverable_from_the_stored_top3() -> None:
+    """The whole justification for storing a second and third scale, re-measured here.
+
+    Over every one of the 34,600 released cells of the sha256-pinned Data Set S1, not a
+    sample of them. Two independent findings, each the reason one class exists:
+
+    1. the released percent is NOT ``100 * top3_mean / sum(top3_mean)`` for ANY cell,
+       and the per-cell ratio spans 0.914506 to 1.083554, so it is a replicate-wise mean
+       of per-replicate percentages;
+    2. the released log10 is at or below ``log10`` of the released percent for every
+       cell and strictly below it for 33,914, which is Jensen's inequality for a mean of
+       logarithms and rules out the log of the mean.
+    """
+    if "DATA_ROOT" not in os.environ:
+        pytest.skip("DATA_ROOT is not set")
+    path = Path(os.environ["DATA_ROOT"], ds.RAW_DIR_REL, "si", ds.PROTEOME_FILENAME)
+    if not path.exists():
+        pytest.skip("the de Siqueira 2025 raw mirror is not deposited under $DATA_ROOT")
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == ds.PROTEOME_SHA256
+    rows = ds.read_proteome_rows(str(path))
+    assert len(rows) == 34_600
+    assert len({row.protein for row in rows}) == 1_729
+    assert len({(row.strain, row.condition) for row in rows}) == 20
+
+    by_sample: dict[tuple[str, str], list[Any]] = {}
+    for row in rows:
+        by_sample.setdefault((row.strain, row.condition), []).append(row)
+    assert len(by_sample) == 20
+    ratios: list[float] = []
+    for group in by_sample.values():
+        total = sum(row.top3_mean for row in group)
+        assert sum(row.pct_mean for row in group) == pytest.approx(100.0, abs=1e-3)
+        ratios.extend(
+            row.pct_mean / (100.0 * row.top3_mean / total)
+            for row in group
+            if row.top3_mean > 0
+        )
+    assert len(ratios) == 34_600
+    assert sum(1 for r in ratios if abs(r - 1.0) <= 1e-9) == 0
+    assert min(ratios) == pytest.approx(0.914506, abs=5e-7)
+    assert max(ratios) == pytest.approx(1.083554, abs=5e-7)
+
+    below = above = equal = 0
+    for row in rows:
+        gap = row.log10_pct_mean - math.log10(row.pct_mean)
+        if abs(gap) <= 5e-5:
+            equal += 1
+        elif gap < 0:
+            below += 1
+        else:
+            above += 1
+    assert (below, equal, above) == (33_914, 686, 0)
+    assert rows[0].protein == "Csda"
+    assert rows[0].log10_pct_mean == pytest.approx(-2.23385590492606)
+    assert math.log10(rows[0].pct_mean) == pytest.approx(-2.19547, abs=5e-6)
+
+    delta_method = sum(
+        1
+        for row in rows
+        if abs(row.pct_sd / (row.pct_mean * math.log(10)) - row.log10_pct_sd)
+        > 1e-6 * max(1.0, abs(row.log10_pct_sd))
+    )
+    assert delta_method == 34_496
+
+    ds.assert_percent_cv_is_derived(rows)
+    ds.assert_sem_is_constant_per_protein(rows)

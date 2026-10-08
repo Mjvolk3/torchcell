@@ -90,6 +90,8 @@ datasets:
   - IsoprenolTiterCarruthers2025Dataset
   - ProteomeCarruthers2025Dataset
   - ProteomeDeSiqueira2025Dataset
+  - ProteomePercentDeSiqueira2025Dataset
+  - ProteomeLog10PercentDeSiqueira2025Dataset
   - IsoprenolTiterDeSiqueira2025Dataset
   - IsoprenylAcetateTiterKang2026Dataset
   - PutidaPrecise321Lim2022Dataset

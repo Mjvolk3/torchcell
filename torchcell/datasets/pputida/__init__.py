@@ -14,8 +14,10 @@ What this package holds:
   ``ProteomeCarruthers2025Dataset``: the CRISPRi isoprenol production campaign, 465
   product-titer strains on the IY1449b chassis plus the released 19-sample Top3 proteome
   panel.
-- ``desiqueira2025`` -- ``IsoprenolTiterDeSiqueira2025Dataset`` and
-  ``ProteomeDeSiqueira2025Dataset``: the acetate-tolerization panel, loaded only where
+- ``desiqueira2025`` -- ``IsoprenolTiterDeSiqueira2025Dataset``,
+  ``ProteomeDeSiqueira2025Dataset``, ``ProteomePercentDeSiqueira2025Dataset`` and
+  ``ProteomeLog10PercentDeSiqueira2025Dataset``: the acetate-tolerization panel, whose
+  proteome is released on three normalizations, loaded only where
   the genotype is representable (the wild type and the pre-tolerized parent).
 - ``kang2026`` -- ``IsoprenylAcetateTiterKang2026Dataset``: the isoprenyl acetate
   production campaign on the PIPA chassis, across the paper's three titer columns.
@@ -38,6 +40,12 @@ from .desiqueira2025 import (
 )
 from .desiqueira2025 import (
     ProteomeDeSiqueira2025Dataset as ProteomeDeSiqueira2025Dataset,
+)
+from .desiqueira2025 import (
+    ProteomeLog10PercentDeSiqueira2025Dataset as ProteomeLog10PercentDeSiqueira2025Dataset,
+)
+from .desiqueira2025 import (
+    ProteomePercentDeSiqueira2025Dataset as ProteomePercentDeSiqueira2025Dataset,
 )
 from .kang2026 import (
     IsoprenylAcetateTiterKang2026Dataset as IsoprenylAcetateTiterKang2026Dataset,

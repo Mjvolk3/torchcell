@@ -51,6 +51,12 @@ from .dasilveira2014_adapter import (
 from .desiqueira2025_proteome_adapter import (
     ProteomeDeSiqueira2025Adapter as ProteomeDeSiqueira2025Adapter,
 )
+from .desiqueira2025_proteome_log10_percent_adapter import (
+    ProteomeLog10PercentDeSiqueira2025Adapter as ProteomeLog10PercentDeSiqueira2025Adapter,
+)
+from .desiqueira2025_proteome_percent_adapter import (
+    ProteomePercentDeSiqueira2025Adapter as ProteomePercentDeSiqueira2025Adapter,
+)
 from .desiqueira2025_titer_adapter import (
     IsoprenolTiterDeSiqueira2025Adapter as IsoprenolTiterDeSiqueira2025Adapter,
 )
@@ -331,6 +337,8 @@ pputida_adapters = [
     "IsoprenolTiterCarruthers2025Adapter",
     "ProteomeCarruthers2025Adapter",
     "ProteomeDeSiqueira2025Adapter",
+    "ProteomeLog10PercentDeSiqueira2025Adapter",
+    "ProteomePercentDeSiqueira2025Adapter",
     "IsoprenolTiterDeSiqueira2025Adapter",
     "IsoprenylAcetateTiterKang2026Adapter",
     "PutidaPrecise321Lim2022Adapter",

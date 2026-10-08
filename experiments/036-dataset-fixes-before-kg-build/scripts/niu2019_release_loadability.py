@@ -657,6 +657,13 @@ def loadable_slice(targets: list[dict[str, Any]]) -> dict[str, Any]:
         "released_censored_cells_total": censored,
         "storable_with_existing_classes_today": storable,
         "storable_share": round(storable / total, 4),
+        "refusals_overlap_by_design": (
+            "a cell can be blocked for more than one reason, so these counts are NOT "
+            "disjoint and must not be summed: the activation arm's 33 pinene cells are "
+            "counted both under the missing activation leaf and under the missing "
+            "product fold-change phenotype. The disjoint figure is "
+            "storable_with_existing_classes_today against released_numeric_cells_total."
+        ),
         "refusals": [
             {
                 "what": "all 374 called variants of the evolved isolate YZFP",

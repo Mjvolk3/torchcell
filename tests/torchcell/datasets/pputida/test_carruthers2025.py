@@ -778,7 +778,10 @@ LOCUS_SPECS: tuple[tuple[str, str | None], ...] = (
     ("PP_5004", "phaB"),
     ("PP_0368", None),
     ("PP_0378", None),
+    ("PP_0528", None),
     ("PP_0812", None),
+    ("PP_0813", None),
+    ("PP_0814", None),
     ("PP_0815", None),
     ("PP_0977", None),
     ("PP_1593", None),
@@ -786,11 +789,43 @@ LOCUS_SPECS: tuple[tuple[str, str | None], ...] = (
     ("PP_3379", None),
     ("PP_5313", None),
     ("PP_5424", "apha"),
+    # The overexpression panel's two operons. PP_2208 is annotated phnX and PP_2209
+    # phnW, as the pinned assembly annotates them, so the fixture reproduces the one
+    # crosswalk the Source Data's own Protein.Description column contradicts.
+    ("PP_2208", "phnX"),
+    ("PP_2209", "phnW"),
+    ("PP_2791", None),
+    ("PP_2792", None),
+    ("PP_2793", None),
+    ("PP_2794", None),
 )
-#: The seventeen keys the synthetic proteome sheet uses as locus tags; ``PP_5424``
-#: is reached only through the symbol ``Apha``, so the two never collide.
+#: The loci the overexpression panel quantifies, and the KEYS the released sheet files
+#: them under. They are excluded from :data:`PROTEOME_TAGS` so no literal ``PP_`` key
+#: collides with the symbol or locus-tag layer that reaches the same locus.
+OVEREXPRESSION_LOCI: tuple[str, ...] = (
+    "PP_2208",
+    "PP_2209",
+    "PP_2791",
+    "PP_2792",
+    "PP_2793",
+    "PP_2794",
+)
+OVEREXPRESSION_KEYS: tuple[str, ...] = (
+    "Phnw",
+    "Phnx",
+    "Pp_2791",
+    "Pp_2792",
+    "Pp_2793",
+    "Pp_2794",
+)
+#: What the released ``Supplementary Figure 12ac`` puts in ``Protein.Description`` for
+#: the two Phn keys: the locus tag, and the WRONG one of the pair.
+OVEREXPRESSION_KEY_DESCRIPTIONS: dict[str, str] = {"Phnw": "PP_2208", "Phnx": "PP_2209"}
+#: The keys the synthetic proteome sheet uses as locus tags; ``PP_5424`` is reached
+#: only through the symbol ``Apha`` and the overexpression loci only through their own
+#: keys, so none of them ever collides.
 PROTEOME_TAGS: tuple[str, ...] = tuple(
-    tag for tag, _ in LOCUS_SPECS if tag != "PP_5424"
+    tag for tag, _ in LOCUS_SPECS if tag != "PP_5424" and tag not in OVEREXPRESSION_LOCI
 )
 #: One key no layer resolves and one the sheet files under two accessions.
 PROTEOME_UNRESOLVED = "Krt1"
@@ -810,7 +845,7 @@ FILLER_CONSTRUCT = "PP_3073_NT1"
 #: Multi-guide constructs, one per later cycle.
 COMBINATION_CONSTRUCTS: dict[int, tuple[str, ...]] = {
     1: ("PP_0815_PP_0812", "PP_0368_PP_0815"),
-    2: ("PP_0378_PP_0815",),
+    2: ("PP_0378_PP_0815", "PP_0528_PP_0815"),
     3: ("PP_0812_PP_0977",),
     4: ("PP_0368_PP_0378_PP_0815",),
     5: ("PP_1593_PP_2664",),
@@ -824,6 +859,20 @@ PROTEOME_SAMPLES: tuple[str, ...] = (
     "JBEI_OTS_PP_0378_48hr",
     "JBEI_OTS_PP_0977_1_P4_48hr",
 )
+#: The KO backgrounds of the synthetic ``Figure 6a``: one single-gene deletion with a
+#: CRISPRi analogue in ``Figure 4b``, and the one multi-gene designation whose Target
+#: sgRNA only the Results text names.
+KO_PANEL_BACKGROUNDS: tuple[str, ...] = ("PP_0815", "PP_0812-15")
+#: The synthetic ``Supplementary Figure 13d`` off-target samples; ``PP_0977`` appears
+#: twice as a repeated culture, so the panel screens two distinct genes.
+OFFTARGET_SAMPLES: tuple[str, ...] = ("PP_0378", "PP_0977_1", "PP_0977_2")
+OFFTARGET_DISTINCT_TARGETS = 2
+#: The ``Figure 6d`` line the Results sentence prints a titer for, and its cultures.
+KO_ARRAY_PROSE_LINE = "PP_0368_PP_0812-15_KO with PP_0528_PP_0815"
+KO_ARRAY_PROSE_TITERS: tuple[float, ...] = (980.0, 981.0, 982.0)
+#: What the four synthetic panels build: 2 Figure 6a + 2 Figure 6d + 4 off-target +
+#: 2 uninduced overexpression strains.
+SYNTHETIC_PANEL_TITER_RECORDS = 2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2
 
 ASSEMBLY_REPORT = """# Assembly name:  ASM756v2
 # Organism name:  Pseudomonas putida KT2440 (g-proteobacteria)
@@ -1016,6 +1065,10 @@ def _write_source_data(path: Path) -> None:
     keys: list[tuple[str, tuple[str, ...]]] = [
         (tag, (f"Q{tag}",)) for tag in PROTEOME_TAGS
     ]
+    # The overexpression panel's keys are in BOTH matrices, as they are in the release:
+    # the loader refuses a key one sheet carries and the other does not, so the two
+    # panels can never key one protein two ways.
+    keys.extend((key, (f"Q{key}",)) for key in OVEREXPRESSION_KEYS)
     keys.append((PROTEOME_UNRESOLVED, ("P04264",)))
     keys.append((PROTEOME_MERGED, ("P0AE22", "Q88C43")))
     for sample_index, sample in enumerate(PROTEOME_SAMPLES):
@@ -1042,7 +1095,184 @@ def _write_source_data(path: Path) -> None:
                             -5,
                         ]
                     )
+
+    _write_source_data_panels(book, rows)
     book.save(path)
+
+
+def _figure_4b_values(
+    rows: list[tuple[str, int, str, float, str]], base: str, cycle: int
+) -> list[float]:
+    """The synthetic ``Figure 4b`` titers of one construct in one cycle."""
+    out = [
+        titer
+        for line, row_cycle, _, titer, _ in rows
+        if row_cycle == cycle
+        and (match := c25.REPLICATE_RE.match(line)) is not None
+        and match.group("base") == base
+    ]
+    assert out, f"{base} has no cycle {cycle} rows in the synthetic Figure 4b"
+    return out
+
+
+def _write_source_data_panels(
+    book: Any, rows: list[tuple[str, int, str, float, str]]
+) -> None:
+    """The four unstored titer panels and the overexpression proteome, in released shape.
+
+    Every arm the loader reads as a re-export carries a verbatim ``Figure 4b`` titer and
+    every arm it reads as new carries a value no other sheet holds, so the partition
+    proof is exercised in both directions. The ``PP_0815`` arms are wired so the two
+    documented duplications are reproduced: the non-targeting triplicate is identical
+    across the two sheets and the targeting triplicates share exactly one value.
+    """
+    ko_panel = book.create_sheet(c25.SHEET_KO_PANEL)
+    ko_alt = book.create_sheet(c25.SHEET_KO_PANEL_ALT)
+    panel_rows: list[list[Any]] = [["Strain", "Type", "Titer"]]
+    crispri = _figure_4b_values(rows, "PP_0815", 0)
+    target = {"PP_0815": [900.0, 901.0, 902.0], "PP_0812-15": [910.0, 911.0, 912.0]}
+    non_target = {"PP_0815": [920.0, 921.0, 922.0], "PP_0812-15": [930.0, 931.0, 932.0]}
+    for value in crispri:
+        panel_rows.append(["PP_0815", c25.ARM_CRISPRI, value])
+    for background in KO_PANEL_BACKGROUNDS:
+        for value in target[background]:
+            panel_rows.append([background, c25.ARM_KO_TARGET, value])
+        for value in non_target[background]:
+            panel_rows.append([background, c25.ARM_KO_NONTARGET, value])
+    for row in panel_rows:
+        ko_panel.append(row)
+        ko_alt.append(row)
+
+    arrays = book.create_sheet(c25.SHEET_KO_ARRAYS)
+    arrays.append(["Line Name", "Type", "Replicate", "Isoprenol"])
+    control_cycle = _figure_4b_values(rows, "Control", c25.KO_ARRAY_CONTROL_CYCLE)[:3]
+    for index, value in enumerate(control_cycle, start=1):
+        arrays.append([c25.KO_ARRAY_CONTROL_LINE, c25.ARM_CRISPRI, f"R{index}", value])
+    reexported_array = COMBINATION_CONSTRUCTS[1][1]
+    for index, value in enumerate(_figure_4b_values(rows, reexported_array, 1), 1):
+        arrays.append([reexported_array, c25.ARM_CRISPRI, f"R{index}", value])
+    for index, value in enumerate((940.0, 941.0, 942.0), start=1):
+        arrays.append(["PP_0812-15_KO", c25.ARM_KO_ONLY, f"R{index}", value])
+    for index, value in enumerate((950.0, 951.0, 952.0), start=1):
+        arrays.append(
+            ["PP_0812-15_KO with PP_0815", c25.ARM_KO_PLUS_CRISPRI, f"R{index}", value]
+        )
+    # The exact genotype the Results sentence prints a titer for, so the prose L4 runs
+    # against a real record rather than being skipped on the fixture.
+    for index, value in enumerate(KO_ARRAY_PROSE_TITERS, start=1):
+        arrays.append(
+            [KO_ARRAY_PROSE_LINE, c25.ARM_KO_PLUS_CRISPRI, f"R{index}", value]
+        )
+
+    offtarget = book.create_sheet(c25.SHEET_OFFTARGET_TITER)
+    offtarget.append(["Sample", "Replicate", "titer"])
+    # The reference arm is bit-identical to Figure 6a's, and the targeting arm shares
+    # exactly its first value: both of the release's own internal duplications.
+    offtarget_target = [target["PP_0815"][0], 960.0, 961.0]
+    for index in range(3):
+        offtarget.append(
+            [
+                c25.OFFTARGET_REFERENCE_SAMPLE,
+                f"R{index + 1}",
+                non_target["PP_0815"][index],
+            ]
+        )
+        offtarget.append(
+            [c25.OFFTARGET_TARGET_SAMPLE, f"R{index + 1}", offtarget_target[index]]
+        )
+        for sample_index, sample in enumerate(OFFTARGET_SAMPLES):
+            offtarget.append(
+                [sample, f"R{index + 1}", 970.0 + sample_index * 10 + index]
+            )
+
+    titer_panel = book.create_sheet(c25.SHEET_OVEREXPRESSION_TITER)
+    titer_panel.append(["Strain", "Replicate", "Inducer concentration", "Isoprenol"])
+    levels = (c25.OVEREXPRESSION_UNINDUCED_LEVEL, *c25.OVEREXPRESSION_INDUCED_LEVELS)
+    for label_index, label in enumerate(c25.OVEREXPRESSION_SHEET_LABELS.values()):
+        for level_index, level in enumerate(levels):
+            for replicate in (1, 2, 3):
+                titer_panel.append(
+                    [
+                        label,
+                        f"R{replicate}",
+                        level,
+                        1000.0 + label_index * 100 + level_index * 10 + replicate,
+                    ]
+                )
+        # The sheet releases the control as two uninduced blocks under one name.
+        for replicate in (1, 2, 3):
+            titer_panel.append(
+                [
+                    c25.OVEREXPRESSION_CONTROL_STRAIN,
+                    f"R{replicate}",
+                    c25.OVEREXPRESSION_UNINDUCED_LEVEL,
+                    1200.0 + label_index * 10 + replicate,
+                ]
+            )
+
+    proteome_panel = book.create_sheet(c25.SHEET_OVEREXPRESSION_PROTEOME)
+    proteome_panel.append(
+        [
+            "Protein.Group",
+            "Protein.Names",
+            "Protein",
+            "Protein.Description",
+            "Sample",
+            "Strain",
+            "Inducer concentration",
+            "Replicate",
+            "Top_3pep_counts_mean",
+            "%_of protein_abundance_Top3-method",
+            "log10_%_abundance",
+        ]
+    )
+    operons = {
+        "pSTABL1": ("Phnw", "Phnx"),
+        "pSTABL2": ("Pp_2791", "Pp_2792", "Pp_2793", "Pp_2794"),
+    }
+    for label, keys in operons.items():
+        samples = [
+            (
+                f"{label}_Condition_{index + 1}",
+                level,
+                c25.OVEREXPRESSION_SHEET_LABELS[label],
+            )
+            for index, level in enumerate(reversed(c25.OVEREXPRESSION_INDUCED_LEVELS))
+        ]
+        samples.append(
+            (
+                f"{label}_Condition_{len(c25.OVEREXPRESSION_INDUCED_LEVELS) + 1}",
+                c25.OVEREXPRESSION_UNINDUCED_LEVEL,
+                c25.OVEREXPRESSION_SHEET_LABELS[label],
+            )
+        )
+        samples.append(
+            (
+                f"{label}_Control",
+                c25.OVEREXPRESSION_UNINDUCED_LEVEL,
+                c25.OVEREXPRESSION_CONTROL_STRAIN,
+            )
+        )
+        for sample_index, (sample, level, strain) in enumerate(samples):
+            for key_index, key in enumerate(keys):
+                for replicate in (1, 2, 3):
+                    proteome_panel.append(
+                        [
+                            f"Q{key}",
+                            f"Q{key}_PSEPK",
+                            key,
+                            OVEREXPRESSION_KEY_DESCRIPTIONS.get(
+                                key, f"synthetic {key}"
+                            ),
+                            sample,
+                            strain,
+                            level,
+                            f"R{replicate}",
+                            2000.0 + sample_index * 100 + key_index * 10 + replicate,
+                            1e-05,
+                            -5,
+                        ]
+                    )
 
 
 def _write_targets(path: Path, means: dict[str, float]) -> None:
@@ -1102,6 +1332,13 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     _write_targets(targets, _target_means(_titer_rows()))
     monkeypatch.setattr(c25, "SOURCE_DATA_SHA256", _sha256_bytes(source_data))
     monkeypatch.setattr(c25, "TARGETS_SHA256", _sha256_bytes(targets))
+    # The two counts the module pins to the REAL workbook. The fixture is a miniature
+    # of the released shape, not of its size, so the pins are re-pointed at what it
+    # holds; the released numbers are asserted by the dev-tree build and its report.
+    monkeypatch.setattr(c25, "OFFTARGET_CANDIDATE_TARGETS", OFFTARGET_DISTINCT_TARGETS)
+    monkeypatch.setattr(
+        c25, "EXPECTED_PANEL_TITER_RECORDS", SYNTHETIC_PANEL_TITER_RECORDS
+    )
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     root = c25.deposit_raw_mirror(
@@ -1241,7 +1478,11 @@ def test_read_proteome_rows_types_every_released_cell(tmp_path: Path) -> None:
     path = tmp_path / "source.xlsx"
     _write_source_data(path)
     rows = c25.read_proteome_rows(str(path))
-    expected = len(PROTEOME_SAMPLES) * 3 * (len(PROTEOME_TAGS) + 1 + 2)
+    expected = (
+        len(PROTEOME_SAMPLES)
+        * 3
+        * (len(PROTEOME_TAGS) + len(OVEREXPRESSION_KEYS) + 1 + 2)
+    )
     assert len(rows) == expected
     first = rows[0]
     assert first.sample == c25.PROTEOME_REFERENCE_SAMPLE
@@ -1364,7 +1605,7 @@ def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
         + 2
         + sum(len(v) for v in COMBINATION_CONSTRUCTS.values())
     )
-    assert len(built_titer) == expected
+    assert len(built_titer) == expected + SYNTHETIC_PANEL_TITER_RECORDS
     assert built_titer.experiment_class is ProductTiterExperiment
     assert built_titer.reference_class is ProductTiterExperimentReference
     assert built_titer.raw_file_names == [
@@ -1383,18 +1624,28 @@ def test_the_titer_loader_writes_one_record_per_construct_and_cycle(
 def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     built_titer: Any,
 ) -> None:
-    """Zero drops, one reference per cycle, and the two side tables."""
+    """One reference per cycle, the panels' drops, and the two side tables."""
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(built_titer.root, "preprocess/build_accounting.json")).read_text()
     )
     accounting.check()
     assert accounting.source_rows == len(_titer_rows())
     assert accounting.control_rows == 90
-    assert accounting.dropped_records == 0
+    # The only drops are the induced overexpression groups, whose dose has no unit.
+    assert accounting.dropped_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
+        c25.OVEREXPRESSION_SHEET_LABELS
+    )
+    assert [rule.rule for rule in accounting.rules] == [
+        "inducer_concentration_has_no_released_unit"
+    ]
     assert accounting.kept_records == len(built_titer)
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction == 1.0
-    assert len(accounting.notes) == 3
+    assert len(accounting.notes) == 4 + len(
+        json.loads(
+            Path(osp.join(built_titer.root, "preprocess/panel_proofs.json")).read_text()
+        )
+    )
 
     controls = pd.read_csv(osp.join(built_titer.root, "preprocess/cycle_controls.csv"))
     assert controls["cycle"].tolist() == list(range(7))
@@ -1402,7 +1653,17 @@ def test_the_titer_loader_writes_its_accounting_the_controls_and_the_filter(
     assert (controls["cv_percent"] > 0).all()
 
     passes = pd.read_csv(osp.join(built_titer.root, "preprocess/pass_filter.csv"))
-    assert len(passes) == len(built_titer)
+    assert len(passes) == len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS
+    panels = pd.read_csv(
+        osp.join(built_titer.root, "preprocess/source_data_panels.csv")
+    )
+    assert len(panels) == SYNTHETIC_PANEL_TITER_RECORDS
+    assert set(panels["sheet"]) == {
+        c25.SHEET_KO_PANEL,
+        c25.SHEET_KO_ARRAYS,
+        c25.SHEET_OFFTARGET_TITER,
+        c25.SHEET_OVEREXPRESSION_TITER,
+    }
     assert passes["n_replicates"].max() == 6
     filler = passes.loc[passes["construct"] == FILLER_CONSTRUCT].iloc[0]
     assert filler["non_targeting_tokens"] == "NT1"
@@ -1427,30 +1688,40 @@ def test_the_titer_loader_keeps_a_six_replicate_strain_as_one_record(
 
 
 def test_the_titer_loader_builds_one_reference_per_cycle(built_titer: Any) -> None:
-    """Seven cycles, seven control phenotypes, each with its own replicate count."""
+    """Seven cycle controls plus the panels' own, each with its own replicate count.
+
+    The panels add one reference per ``Figure 6a`` KO background and one for the
+    overexpression RFP control, whose six uninduced cultures the sheet releases as two
+    blocks under one name. ``Figure 6d`` adds none: its control rows are DBTL6 cultures
+    already stored, so those records reuse the DBTL6 reference.
+    """
     index = json.loads(
         Path(
             osp.join(built_titer.root, "preprocess/experiment_reference_index.json")
         ).read_text()
     )
-    assert len(index) == 7
+    assert len(index) == 7 + len(KO_PANEL_BACKGROUNDS) + 1
     counts = sorted(
         entry["reference"]["phenotype_reference"]["n_samples"] for entry in index
     )
-    assert counts == [12] * 6 + [18]
+    assert counts == [3] * len(KO_PANEL_BACKGROUNDS) + [6] + [12] * 6 + [18]
 
 
 def test_the_proteome_loader_writes_one_record_per_sample_and_drops_two_keys(
     built_proteome: Any,
 ) -> None:
-    """Three records (the non-targeting control is the reference) over 17 keys."""
-    assert len(built_proteome) == len(PROTEOME_SAMPLES) - 1
+    """The PP_0815 panel's records plus the two uninduced overexpression samples."""
+    assert len(built_proteome) == (
+        len(PROTEOME_SAMPLES) - 1 + c25.EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
+    )
     assert built_proteome.raw_file_names == [c25.SOURCE_DATA_FILENAME]
     record = built_proteome[0]
     experiment = record["experiment"]
     dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
     abundance = dumped["phenotype"]["protein_abundance"]
-    assert set(abundance) == set(PROTEOME_TAGS)
+    assert set(abundance) == set(PROTEOME_TAGS) | set(
+        c25.OVEREXPRESSION_OPERONS["pSTABL1"]
+    ) | set(c25.OVEREXPRESSION_OPERONS["pSTABL2"])
     assert dumped["phenotype"]["measurement_type"] == c25.PROTEOME_MEASUREMENT_TYPE
     assert set(dumped["phenotype"]["n_replicates"].values()) == {3}
     kinds = Counter(
@@ -1486,8 +1757,27 @@ def test_the_proteome_loader_records_the_target_control_and_the_off_target_sampl
         )
     assert sorted(targets) == ["PP_0378", "PP_0815", "PP_0977"]
     samples = pd.read_csv(osp.join(built_proteome.root, "preprocess/samples.csv"))
-    assert sorted(samples["sample"]) == sorted(PROTEOME_SAMPLES[1:])
-    assert set(samples["n_proteins"]) == {len(PROTEOME_TAGS)}
+    assert sorted(samples["sample"]) == sorted(
+        [*PROTEOME_SAMPLES[1:], "pSTABL1_Condition_7", "pSTABL2_Condition_7"]
+    )
+    by_sheet = dict(zip(samples["sample"], samples["sheet"], strict=True))
+    assert by_sheet["pSTABL1_Condition_7"] == c25.SHEET_OVEREXPRESSION_PROTEOME
+    n_keys = len(PROTEOME_TAGS) + len(OVEREXPRESSION_KEYS)
+    assert set(samples["n_proteins"]) == {n_keys, 2, 4}
+    # The overexpression records carry only the operon their own strain adds, and the
+    # extra native copies are typed as gene additions rather than pathway genes.
+    additions: list[str] = []
+    for index in range(len(built_proteome)):
+        experiment = built_proteome[index]["experiment"]
+        dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+        additions.extend(
+            pert["systematic_gene_name"]
+            for pert in dumped["genotype"]["perturbations"]
+            if pert["perturbation_type"] == "gene_addition"
+        )
+    assert sorted(additions) == sorted(
+        [*c25.OVEREXPRESSION_OPERONS["pSTABL1"], *c25.OVEREXPRESSION_OPERONS["pSTABL2"]]
+    )
 
 
 def test_the_proteome_loaders_accounting_names_both_drop_rules(
@@ -1500,15 +1790,37 @@ def test_the_proteome_loaders_accounting_names_both_drop_rules(
         ).read_text()
     )
     accounting.check()
-    assert accounting.dropped_records == 0
+    # The only dropped SAMPLES are the induced overexpression ones.
+    assert accounting.dropped_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
+        c25.OVEREXPRESSION_SHEET_LABELS
+    )
     by_rule = {rule.rule: rule for rule in accounting.rules}
     assert by_rule["protein_key_is_not_a_locus_of_the_pinned_assembly"].items == [
         PROTEOME_UNRESOLVED
     ]
     assert by_rule["protein_key_merges_two_accessions"].items == [PROTEOME_MERGED]
+    assert by_rule["inducer_concentration_has_no_released_unit"].n_records == len(
+        by_rule["inducer_concentration_has_no_released_unit"].items
+    )
     assert accounting.reconciliation is not None
     assert accounting.reconciliation.resolved_fraction >= 0.94
-    assert len(accounting.notes) == 4
+    assert len(accounting.notes) == 6 + len(
+        json.loads(
+            Path(
+                osp.join(built_proteome.root, "preprocess/panel_proofs.json")
+            ).read_text()
+        )
+    )
+
+
+def _synthetic_key_set_sizes(built_proteome: Any) -> tuple[int, ...]:
+    """The fixture's own per-record protein key-set sizes, in record order."""
+    sizes: list[int] = []
+    for index in range(len(built_proteome)):
+        experiment = built_proteome[index]["experiment"]
+        dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+        sizes.append(len(dumped["phenotype"]["protein_abundance"]))
+    return tuple(sizes)
 
 
 def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
@@ -1530,9 +1842,37 @@ def test_both_loaders_pass_their_full_level_batteries_on_the_synthetic_build(
     monkeypatch.setattr(c25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
     monkeypatch.setattr(c25, "EXPECTED_TITER_RECORDS", len(built_titer))
     monkeypatch.setattr(c25, "EXPECTED_PROTEOME_RECORDS", len(built_proteome))
-    monkeypatch.setattr(c25, "PROTEOME_KEYS_PER_RECORD", len(PROTEOME_TAGS))
-    monkeypatch.setattr(c25, "PAPER_STRAIN_COUNT", len(built_titer) + 1)
+    monkeypatch.setattr(
+        c25, "PROTEOME_KEY_SET_SIZES", _synthetic_key_set_sizes(built_proteome)
+    )
+    monkeypatch.setattr(
+        c25,
+        "EXPECTED_CRISPRI_TITER_RECORDS",
+        len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS,
+    )
+    monkeypatch.setattr(
+        c25, "PAPER_STRAIN_COUNT", len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS + 1
+    )
     monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
+    monkeypatch.setattr(
+        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", 1 + 1 + len(OFFTARGET_SAMPLES)
+    )
+    monkeypatch.setattr(
+        c25,
+        "KO_ARRAY_RESULT",
+        c25.KO_ARRAY_RESULT.model_copy(
+            update={
+                "value": {
+                    KO_ARRAY_PROSE_LINE: sum(KO_ARRAY_PROSE_TITERS)
+                    / len(KO_ARRAY_PROSE_TITERS),
+                    "PP_0528_PP_0815": sum(
+                        _figure_4b_values(_titer_rows(), "PP_0528_PP_0815", 2)
+                    )
+                    / 3,
+                }
+            }
+        ),
+    )
     families: tuple[tuple[str, c25.Family], ...] = (
         (built_titer.root, "titer"),
         (built_proteome.root, "proteome"),
@@ -1588,12 +1928,42 @@ def test_the_proteome_l4_refuses_a_stored_protein_the_sheet_does_not_carry(
 def test_the_titer_battery_fails_a_store_whose_se_is_not_sd_over_sqrt_n(
     built_titer: Any, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The derived standard error is checked, not assumed: break one and L2 fails."""
+    """The derived standard error is checked, not assumed: break one and L2 fails.
+
+    Only the SE rule may fail: breaking a derived statistic must not disturb the counts,
+    the partition or either cross-source join, all of which read other fields.
+    """
     from torchcell.verification.runners import load_records
 
     monkeypatch.setattr(c25, "EXPECTED_TITER_RECORDS", len(built_titer))
-    monkeypatch.setattr(c25, "PAPER_STRAIN_COUNT", len(built_titer) + 1)
+    monkeypatch.setattr(
+        c25,
+        "EXPECTED_CRISPRI_TITER_RECORDS",
+        len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS,
+    )
+    monkeypatch.setattr(
+        c25, "PAPER_STRAIN_COUNT", len(built_titer) - SYNTHETIC_PANEL_TITER_RECORDS + 1
+    )
     monkeypatch.setattr(c25, "SI_TARGET_OVERLAP", len(SINGLE_GUIDE_TARGETS) + 1)
+    monkeypatch.setattr(
+        c25, "OFFTARGET_SHARED_REFERENCE_RECORDS", 1 + 1 + len(OFFTARGET_SAMPLES)
+    )
+    monkeypatch.setattr(
+        c25,
+        "KO_ARRAY_RESULT",
+        c25.KO_ARRAY_RESULT.model_copy(
+            update={
+                "value": {
+                    KO_ARRAY_PROSE_LINE: sum(KO_ARRAY_PROSE_TITERS)
+                    / len(KO_ARRAY_PROSE_TITERS),
+                    "PP_0528_PP_0815": sum(
+                        _figure_4b_values(_titer_rows(), "PP_0528_PP_0815", 2)
+                    )
+                    / 3,
+                }
+            }
+        ),
+    )
     records = load_records(built_titer.root)
     records[0]["experiment"]["phenotype"]["titer_se"] += 1.0
     report = c25.titer_report(records, str(synthetic_mirror))
@@ -1819,4 +2189,560 @@ def test_main_builds_both_families_and_prints_their_accounting(
     out = capsys.readouterr().out
     assert "IsoprenolTiterCarruthers2025Dataset: len =" in out
     assert "ProteomeCarruthers2025Dataset: len =" in out
-    assert '"dropped_records": 0' in out
+    # Both families drop exactly the induced overexpression groups, so both print it.
+    dropped = len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
+        c25.OVEREXPRESSION_SHEET_LABELS
+    )
+    assert out.count(f'"dropped_records": {dropped}') == 2
+
+
+# --- the four Source Data panels: parsers, proofs and refusals ------------- #
+def test_a_locus_designation_expands_to_the_inclusive_range_it_names() -> None:
+    """``PP_0812-15`` is four loci; a bare tag is itself; a bad range refuses."""
+    assert c25.expand_locus_designation("PP_0815") == ("PP_0815",)
+    assert c25.expand_locus_designation("PP_0812-15") == (
+        "PP_0812",
+        "PP_0813",
+        "PP_0814",
+        "PP_0815",
+    )
+    with pytest.raises(RuntimeError, match="does not ascend"):
+        c25.expand_locus_designation("PP_0815-12")
+    with pytest.raises(RuntimeError, match="neither a PP_ locus tag nor"):
+        c25.expand_locus_designation("PP_0812-0815")
+
+
+def test_a_ko_array_line_splits_into_its_deletions_and_its_knockdowns() -> None:
+    """Both released shapes parse, and anything else refuses rather than guessing."""
+    assert c25.parse_ko_array_line("PP_0812-15_KO") == (("PP_0812-15",), ())
+    assert c25.parse_ko_array_line("PP_0368_PP_0812-15_KO with PP_0528_PP_0815") == (
+        ("PP_0368", "PP_0812-15"),
+        ("PP_0528", "PP_0815"),
+    )
+    with pytest.raises(RuntimeError, match="is neither '<designations>_KO'"):
+        c25.parse_ko_array_line("PP_0815")
+    with pytest.raises(RuntimeError, match="is not PP_ designations joined"):
+        c25.parse_ko_array_line("PP_0368-and-PP_0815_KO")
+
+
+def test_the_partition_proof_refuses_a_reexport_that_is_no_longer_stored() -> None:
+    """A ``CRISPRi`` culture missing from ``Figure 4b`` means the sheets diverged."""
+    with pytest.raises(RuntimeError, match="are NOT Figure 4b values"):
+        c25._assert_panel_partition(
+            reexported={c25.SHEET_KO_PANEL: [1.0, 2.0]}, novel={}, stored={1.0}
+        )
+
+
+def test_the_partition_proof_refuses_a_new_culture_that_is_already_stored() -> None:
+    """A KO culture that matches a stored titer would store one measurement twice."""
+    with pytest.raises(RuntimeError, match="would store a titer twice"):
+        c25._assert_panel_partition(
+            reexported={}, novel={c25.SHEET_OFFTARGET_TITER: [5.0]}, stored={5.0}
+        )
+
+
+def _ko_panel_row(background: str, arm: Any, titer: float) -> Any:
+    return c25.KoPanelRow(background=background, arm=arm, titer_mg_per_l=titer)
+
+
+def test_the_ko_panel_refuses_a_multi_gene_background_with_no_sourced_sgrna() -> None:
+    """A new multi-gene KO background stops the build instead of getting a guess."""
+    rows = [
+        _ko_panel_row("PP_0812-13", arm, value)
+        for arm, value in ((c25.ARM_KO_TARGET, 1.0), (c25.ARM_KO_NONTARGET, 2.0))
+    ]
+    with pytest.raises(RuntimeError, match="KO_MULTI_GENE_GUIDE must gain a sourced"):
+        c25._ko_panel_groups(rows)
+
+
+def test_the_ko_panel_refuses_a_background_that_is_not_a_pair() -> None:
+    """The panel is pairs: a Target arm with no Non-target arm has no reference."""
+    with pytest.raises(RuntimeError, match="the panel is pairs"):
+        c25._ko_panel_groups([_ko_panel_row("PP_0815", c25.ARM_KO_TARGET, 1.0)])
+
+
+def test_the_ko_panel_names_the_deleted_gene_as_its_own_target_sgrna() -> None:
+    """A single-gene background's Target arm knocks down the gene it deleted."""
+    rows = [
+        _ko_panel_row("PP_0815", c25.ARM_KO_TARGET, 1.0),
+        _ko_panel_row("PP_0815", c25.ARM_KO_NONTARGET, 2.0),
+    ]
+    records, references, proofs = c25._ko_panel_groups(rows)
+    assert [(r.deletions, r.knockdowns) for r in records] == [
+        (("PP_0815",), ("PP_0815",))
+    ]
+    assert references[0].key == "non_target:PP_0815"
+    assert references[0].titers_mg_per_l == (2.0,)
+    assert proofs == []
+
+
+def _ko_array_row(line: str, arm: Any, replicate: str, titer: float) -> Any:
+    return c25.KoArrayRow(
+        line_name=line, arm=arm, replicate=replicate, titer_mg_per_l=titer
+    )
+
+
+def test_the_ko_array_panel_refuses_a_control_that_is_not_a_stored_cycle_culture() -> (
+    None
+):
+    """The panel's reference must BE the stored per-cycle one, not a copy of part of it."""
+    rows = [_ko_array_row(c25.KO_ARRAY_CONTROL_LINE, c25.ARM_CRISPRI, "R1", 7.0)]
+    with pytest.raises(RuntimeError, match="are not DBTL6 control titers"):
+        c25._ko_array_groups(rows, {c25.KO_ARRAY_CONTROL_CYCLE: [1.0, 2.0]})
+
+
+def test_the_ko_array_panel_refuses_a_missing_control_row() -> None:
+    """With no control row the records have no reference to point at."""
+    with pytest.raises(RuntimeError, match="has no 'Control' / 'CRISPRi' row"):
+        c25._ko_array_groups([], {c25.KO_ARRAY_CONTROL_CYCLE: [1.0]})
+
+
+def test_the_ko_array_panel_refuses_an_arm_its_line_name_contradicts() -> None:
+    """A ``KO Only`` line that parses to a knockdown is a mislabeled release."""
+    rows = [
+        _ko_array_row(c25.KO_ARRAY_CONTROL_LINE, c25.ARM_CRISPRI, "R1", 1.0),
+        _ko_array_row("PP_0812-15_KO with PP_0815", c25.ARM_KO_ONLY, "R1", 9.0),
+    ]
+    with pytest.raises(RuntimeError, match="but parses to 1 knockdowns"):
+        c25._ko_array_groups(rows, {c25.KO_ARRAY_CONTROL_CYCLE: [1.0]})
+
+
+def _offtarget_reference(values: tuple[float, ...]) -> Any:
+    return c25.PanelTiterReference(
+        key=f"non_target:{c25.PROTEOME_BACKGROUND_DELETION}",
+        sheets=(c25.SHEET_KO_PANEL,),
+        group=f"{c25.PROTEOME_BACKGROUND_DELETION}/{c25.ARM_KO_NONTARGET}",
+        titers_mg_per_l=values,
+        note="the fixture's non-targeting arm",
+    )
+
+
+def _offtarget_rows(pairs: tuple[tuple[str, float], ...]) -> list[Any]:
+    return [
+        c25.OffTargetTiterRow(sample=sample, replicate="R1", titer_mg_per_l=value)
+        for sample, value in pairs
+    ]
+
+
+def test_the_off_target_panel_refuses_a_reference_that_is_not_bit_identical() -> None:
+    """The documented deduplication is asserted, not assumed."""
+    rows = _offtarget_rows(
+        ((c25.OFFTARGET_REFERENCE_SAMPLE, 1.0), (c25.OFFTARGET_TARGET_SAMPLE, 2.0))
+    )
+    with pytest.raises(RuntimeError, match="is not bit-identical to Figure 6a"):
+        c25._offtarget_groups(rows, _offtarget_reference((9.0,)), [2.0])
+
+
+def test_the_off_target_panel_refuses_a_changed_target_disagreement() -> None:
+    """Two triplicates sharing no value, or two, is a different finding to re-decide."""
+    rows = _offtarget_rows(
+        ((c25.OFFTARGET_REFERENCE_SAMPLE, 1.0), (c25.OFFTARGET_TARGET_SAMPLE, 2.0))
+    )
+    with pytest.raises(RuntimeError, match="share 0 values, not the 1 this loader"):
+        c25._offtarget_groups(rows, _offtarget_reference((1.0,)), [5.0])
+
+
+def test_the_off_target_panel_refuses_a_sample_it_cannot_read() -> None:
+    """An off-target sample must be a locus tag with an optional culture index."""
+    rows = _offtarget_rows(
+        (
+            (c25.OFFTARGET_REFERENCE_SAMPLE, 1.0),
+            (c25.OFFTARGET_TARGET_SAMPLE, 2.0),
+            ("PP_0378_extra_suffix", 3.0),
+        )
+    )
+    with pytest.raises(RuntimeError, match="nor a PP_xxxx\\[_n\\] off-target"):
+        c25._offtarget_groups(rows, _offtarget_reference((1.0,)), [2.0])
+
+
+def test_the_off_target_panel_refuses_a_changed_candidate_count(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The screened gene count is Supplementary Table 1's, and it is checked."""
+    rows = _offtarget_rows(
+        (
+            (c25.OFFTARGET_REFERENCE_SAMPLE, 1.0),
+            (c25.OFFTARGET_TARGET_SAMPLE, 2.0),
+            ("PP_0378", 3.0),
+        )
+    )
+    monkeypatch.setattr(c25, "OFFTARGET_CANDIDATE_TARGETS", 14)
+    with pytest.raises(RuntimeError, match="screens 1 distinct off-target genes"):
+        c25._offtarget_groups(rows, _offtarget_reference((1.0,)), [2.0])
+
+
+def test_the_off_target_panel_shares_one_reference_and_keeps_both_triplicates(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The dedup and the disagreement, on the arms the release actually ships."""
+    monkeypatch.setattr(c25, "OFFTARGET_CANDIDATE_TARGETS", 1)
+    non_target = (293.9713, 298.0681, 309.4453)
+    ko_target = [422.4448, 464.3335, 495.3173]
+    rows = _offtarget_rows(
+        tuple((c25.OFFTARGET_REFERENCE_SAMPLE, value) for value in non_target)
+        + (
+            (c25.OFFTARGET_TARGET_SAMPLE, 464.3335),
+            (c25.OFFTARGET_TARGET_SAMPLE, 450.0),
+        )
+        + (("PP_0378", 1.0),)
+    )
+    records, reference, proofs = c25._offtarget_groups(
+        rows, _offtarget_reference(non_target), ko_target
+    )
+    assert reference.sheets == (c25.SHEET_KO_PANEL, c25.SHEET_OFFTARGET_TITER)
+    assert all(record.reference_key == reference.key for record in records)
+    target = next(r for r in records if r.group == c25.OFFTARGET_TARGET_SAMPLE)
+    assert target.titers_mg_per_l == (464.3335, 450.0)
+    assert target.note is not None
+    assert "neither triplicate is stored as the other" in target.note
+    assert any("1 shared value (464.3335)" in proof for proof in proofs)
+
+
+def _overexpression_titer_rows(
+    levels: tuple[float, ...], labels: tuple[str, ...]
+) -> list[Any]:
+    rows = [
+        c25.OverexpressionTiterRow(
+            strain=label, replicate="R1", inducer_level=level, titer_mg_per_l=1.0
+        )
+        for label in labels
+        for level in levels
+    ]
+    rows.append(
+        c25.OverexpressionTiterRow(
+            strain=c25.OVEREXPRESSION_CONTROL_STRAIN,
+            replicate="R1",
+            inducer_level=c25.OVEREXPRESSION_UNINDUCED_LEVEL,
+            titer_mg_per_l=2.0,
+        )
+    )
+    return rows
+
+
+def test_the_overexpression_panel_refuses_a_changed_induction_series() -> None:
+    """A level this loader was not written against stops the build."""
+    labels = tuple(c25.OVEREXPRESSION_SHEET_LABELS.values())
+    rows = _overexpression_titer_rows((0.0, 2000.0), labels)
+    with pytest.raises(RuntimeError, match="releases levels"):
+        c25._overexpression_titer_groups(rows)
+
+
+def test_the_overexpression_panel_refuses_a_changed_strain_label() -> None:
+    """The two plotting labels are pinned, because the operon map is keyed on them."""
+    levels = (c25.OVEREXPRESSION_UNINDUCED_LEVEL, *c25.OVEREXPRESSION_INDUCED_LEVELS)
+    rows = _overexpression_titer_rows(levels, ("pSTABL3 (PP_9999)",))
+    with pytest.raises(RuntimeError, match="strain labels .* are not the pinned"):
+        c25._overexpression_titer_groups(rows)
+
+
+def test_the_overexpression_panel_keeps_only_the_uninduced_arm() -> None:
+    """One record per label at level 0, and the induced groups in a typed drop rule."""
+    levels = (c25.OVEREXPRESSION_UNINDUCED_LEVEL, *c25.OVEREXPRESSION_INDUCED_LEVELS)
+    labels = tuple(c25.OVEREXPRESSION_SHEET_LABELS.values())
+    records, reference, proofs, drops = c25._overexpression_titer_groups(
+        _overexpression_titer_rows(levels, labels)
+    )
+    assert len(records) == len(labels)
+    assert {record.group.split("/")[1] for record in records} == {"0"}
+    assert all(record.overexpression_environment for record in records)
+    assert {record.native_copies for record in records} == {
+        c25.OVEREXPRESSION_OPERONS["pSTABL1"],
+        c25.OVEREXPRESSION_OPERONS["pSTABL2"],
+    }
+    assert reference.key == "overexpression_control"
+    assert drops[0].rule == "inducer_concentration_has_no_released_unit"
+    assert drops[0].n_records == len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(labels)
+    assert any("uninduced records kept" in proof for proof in proofs)
+
+
+def _overexpression_proteome_row(
+    sample: str, key: str, level: float, description: str, strain: str
+) -> Any:
+    return c25.OverexpressionProteomeRow(
+        sample=sample,
+        strain=strain,
+        inducer_level=level,
+        replicate="R1",
+        protein=key,
+        accession=f"Q{key}",
+        entry_name=f"Q{key}_PSEPK",
+        description=description,
+        top3_signal=1.0,
+    )
+
+
+def test_the_phn_crosswalk_refuses_a_changed_resolution() -> None:
+    """The function-backed crosswalk is asserted, so a swap can never go unnoticed."""
+    rows = [
+        _overexpression_proteome_row(
+            "pSTABL1_Condition_7", key, 0.0, description, "pSTABL1 (PP_2208-09)"
+        )
+        for key, description in c25.PHN_SHEET_DESCRIPTION.items()
+    ]
+    with pytest.raises(RuntimeError, match="its FUNCTION puts it at"):
+        c25.assert_phn_crosswalk(rows, {"Phnw": "PP_2208", "Phnx": "PP_2209"})
+
+
+def test_the_phn_crosswalk_refuses_a_corrected_sheet_cell() -> None:
+    """If the sheet stops contradicting the assembly, the decision is re-made by hand."""
+    rows = [
+        _overexpression_proteome_row(
+            "pSTABL1_Condition_7", key, 0.0, locus, "pSTABL1 (PP_2208-09)"
+        )
+        for key, locus in c25.PHN_FUNCTION_CROSSWALK.items()
+    ]
+    with pytest.raises(RuntimeError, match="not the 'PP_2208' this loader records"):
+        c25.assert_phn_crosswalk(rows, dict(c25.PHN_FUNCTION_CROSSWALK))
+
+
+def test_the_operon_proof_refuses_samples_that_quantify_another_operon() -> None:
+    """The overexpressed operon is proved from the proteome of its own samples."""
+    rows = [
+        _overexpression_proteome_row(
+            "pSTABL1_Condition_7", "Phnw", 0.0, "PP_2208", "pSTABL1 (PP_2208-09)"
+        )
+    ]
+    with pytest.raises(RuntimeError, match="samples quantify"):
+        c25.assert_overexpression_operons(rows, {"Phnw": "PP_9999"})
+
+
+def test_the_operon_proof_refuses_a_sample_name_it_cannot_read() -> None:
+    """A sample outside the released naming would be silently unattributed."""
+    rows = [
+        _overexpression_proteome_row(
+            "pSTABL1_Round_7", "Phnw", 0.0, "PP_2208", "pSTABL1 (PP_2208-09)"
+        )
+    ]
+    with pytest.raises(RuntimeError, match="is neither '<label>_Condition_<n>'"):
+        c25.assert_overexpression_operons(rows, {"Phnw": "PP_2209"})
+
+
+def test_the_overexpression_proteome_pairs_each_record_with_its_own_control() -> None:
+    """Each uninduced sample is referenced against its own label's Control sample."""
+    rows: list[Any] = []
+    for label, keys in (("pSTABL1", ("Phnw",)), ("pSTABL2", ("Pp_2791",))):
+        for sample, level, strain in (
+            (f"{label}_Condition_1", 1000.0, f"{label} (x)"),
+            (f"{label}_Condition_7", 0.0, f"{label} (x)"),
+            (f"{label}_Control", 0.0, c25.OVEREXPRESSION_CONTROL_STRAIN),
+        ):
+            rows.extend(
+                _overexpression_proteome_row(sample, key, level, "d", strain)
+                for key in keys
+            )
+    pairs, proofs = c25.overexpression_proteome_samples(rows)
+    assert pairs == {
+        "pSTABL1_Condition_7": "pSTABL1_Control",
+        "pSTABL2_Condition_7": "pSTABL2_Control",
+    }
+    assert any("12 induced samples dropped" not in proof for proof in proofs)
+
+
+def test_the_overexpression_proteome_refuses_a_sample_with_two_inducer_levels() -> None:
+    """One sample is one condition; two levels under one name is unreadable."""
+    rows = [
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s"),
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 500.0, "d", "s"),
+    ]
+    with pytest.raises(RuntimeError, match="carries two"):
+        c25.overexpression_proteome_samples(rows)
+
+
+def test_the_overexpression_proteome_refuses_a_control_that_is_induced() -> None:
+    """A Control at a nonzero level is not the uninduced reference these records need."""
+    rows = [
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s"),
+        _overexpression_proteome_row(
+            "pSTABL1_Control", "Phnw", 500.0, "d", c25.OVEREXPRESSION_CONTROL_STRAIN
+        ),
+    ]
+    with pytest.raises(RuntimeError, match="is at inducer level"):
+        c25.overexpression_proteome_samples(rows)
+
+
+def test_the_overexpression_proteome_refuses_a_control_of_the_wrong_strain() -> None:
+    """The reference sample must be the RFP control, not another overexpression arm."""
+    rows = [
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s"),
+        _overexpression_proteome_row(
+            "pSTABL1_Control", "Phnw", 0.0, "d", "pSTABL1 (x)"
+        ),
+    ]
+    with pytest.raises(RuntimeError, match="is strain"):
+        c25.overexpression_proteome_samples(rows)
+
+
+def test_the_overexpression_proteome_refuses_a_missing_control(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A record with no control sample has no reference, so the build stops."""
+    rows = [_overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s")]
+    with pytest.raises(RuntimeError, match="has no 'pSTABL1_Control'"):
+        c25.overexpression_proteome_samples(rows)
+
+
+def test_the_overexpression_cells_refuse_a_repeated_replicate() -> None:
+    """A doubled replicate would shrink the standard error the record carries."""
+    rows = [
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s")
+        for _ in range(2)
+    ]
+    with pytest.raises(RuntimeError, match="appears twice"):
+        c25._overexpression_cells(rows, "pSTABL1_Condition_7", {"Phnw": "PP_2209"})
+
+
+def test_the_overexpression_cells_refuse_a_sample_the_sheet_does_not_carry() -> None:
+    """An empty aggregation is a lookup error, not an empty record."""
+    with pytest.raises(RuntimeError, match="has no rows for sample"):
+        c25._overexpression_cells([], "pSTABL1_Condition_7", {})
+
+
+def test_the_overexpression_environment_gaps_its_endpoint_and_keeps_the_rest() -> None:
+    """The one slot the panel's own Methods sentence contradicts is a typed gap."""
+    base = c25.production_environment()
+    panel = c25.overexpression_environment()
+    assert base.duration_hours == 48.0
+    assert panel.duration_hours is None
+    assert [gap.field for gap in panel.provenance_gaps] == ["duration_hours"]
+    assert panel.media == base.media
+    assert panel.temperature == base.temperature
+    assert panel.culture_format == base.culture_format
+    assert len(panel.perturbations) == len(base.perturbations)
+
+
+def test_a_native_extra_copy_is_a_gene_addition_of_the_host_species() -> None:
+    """``source_organism`` is the host's, so the containment gate checks the locus."""
+    addition = c25.native_copy_perturbation("PP_2208", "phnX")
+    assert addition.perturbation_type == "gene_addition"
+    assert addition.is_heterologous is False
+    assert addition.source_organism == c25.SPECIES
+    assert addition.construct_name is None
+    deletion = c25.deletion_perturbation("PP_0815", "PP_0815")
+    assert deletion.perturbation_type == "bacterial_deletion"
+    assert deletion.gene_namespace == c25.KT2440_NAMESPACE
+    assert deletion.collection is None
+
+
+def test_the_two_panel_sheets_must_be_one_export_of_one_panel(tmp_path: Path) -> None:
+    """``Supplementary Figure 11`` and ``Figure 6a`` are the same rows, and that holds."""
+    path = tmp_path / "book.xlsx"
+    book = openpyxl.Workbook()
+    panel = book.active
+    panel.title = c25.SHEET_KO_PANEL
+    panel.append(["Strain", "Type", "Titer"])
+    panel.append(["PP_0815", c25.ARM_KO_TARGET, 1.0])
+    alt = book.create_sheet(c25.SHEET_KO_PANEL_ALT)
+    alt.append(["Strain", "Type", "Titer"])
+    alt.append(["PP_0815", c25.ARM_KO_TARGET, 2.0])
+    book.save(path)
+    with pytest.raises(RuntimeError, match="are not the same rows"):
+        c25.read_ko_panel_rows(str(path))
+
+
+def test_each_new_panel_reader_refuses_a_changed_header(tmp_path: Path) -> None:
+    """Every panel reader asserts its released header before it reads a value."""
+    cases: tuple[tuple[str, Any, str], ...] = (
+        (c25.SHEET_KO_ARRAYS, c25.read_ko_array_rows, "header changed"),
+        (c25.SHEET_OFFTARGET_TITER, c25.read_offtarget_titer_rows, "header changed"),
+        (
+            c25.SHEET_OVEREXPRESSION_TITER,
+            c25.read_overexpression_titer_rows,
+            "header changed",
+        ),
+        (
+            c25.SHEET_OVEREXPRESSION_PROTEOME,
+            c25.read_overexpression_proteome_rows,
+            "header changed",
+        ),
+    )
+    for sheet, reader, message in cases:
+        path = tmp_path / f"{sheet}.xlsx"
+        book = openpyxl.Workbook()
+        active = book.active
+        active.title = sheet
+        active.append(["wrong", "header", "cells", "here"])
+        active.append([1, 2, 3, 4])
+        book.save(path)
+        with pytest.raises(RuntimeError, match=message):
+            reader(str(path))
+
+
+def test_the_ko_panel_reader_refuses_a_changed_header(tmp_path: Path) -> None:
+    """The KO panel's own header check covers both of its two sheets."""
+    path = tmp_path / "ko.xlsx"
+    book = openpyxl.Workbook()
+    panel = book.active
+    panel.title = c25.SHEET_KO_PANEL
+    panel.append(["wrong", "header", "cells"])
+    panel.append([1, 2, 3])
+    alt = book.create_sheet(c25.SHEET_KO_PANEL_ALT)
+    alt.append(["wrong", "header", "cells"])
+    alt.append([1, 2, 3])
+    book.save(path)
+    with pytest.raises(RuntimeError, match="header changed"):
+        c25.read_ko_panel_rows(str(path))
+
+
+def test_the_off_target_panel_refuses_a_missing_arm() -> None:
+    """Both anchors are required: each one carries one of the two duplications."""
+    reference = _offtarget_reference((1.0,))
+    with pytest.raises(RuntimeError, match="has no 'Non-Target' arm"):
+        c25._offtarget_groups(_offtarget_rows((("PP_0378", 1.0),)), reference, [2.0])
+    with pytest.raises(RuntimeError, match="has no 'Target' arm"):
+        c25._offtarget_groups(
+            _offtarget_rows(((c25.OFFTARGET_REFERENCE_SAMPLE, 1.0),)), reference, [2.0]
+        )
+
+
+def test_the_overexpression_proteome_refuses_a_changed_record_count() -> None:
+    """The uninduced arm is two samples on the pinned bytes, and that is asserted."""
+    rows = [
+        _overexpression_proteome_row("pSTABL1_Condition_7", "Phnw", 0.0, "d", "s"),
+        _overexpression_proteome_row(
+            "pSTABL1_Control", "Phnw", 0.0, "d", c25.OVEREXPRESSION_CONTROL_STRAIN
+        ),
+    ]
+    with pytest.raises(RuntimeError, match="yields 1 uninduced records"):
+        c25.overexpression_proteome_samples(rows)
+
+
+def test_the_proteome_build_refuses_a_panel_key_the_other_sheet_lacks(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One protein must key one way across both matrices, so a stray key refuses."""
+    _doctor(
+        synthetic_mirror,
+        lambda book: book[c25.SHEET_OVEREXPRESSION_PROTEOME].cell(
+            row=2, column=3, value="Phnz"
+        ),
+    )
+    monkeypatch.setattr(
+        c25,
+        "SOURCE_DATA_SHA256",
+        c25.manifest_sha256(
+            c25.load_manifest(str(synthetic_mirror)), c25.SOURCE_DATA_REL
+        ),
+    )
+    with pytest.raises(RuntimeError, match="which Supplementary Figure 13abc does not"):
+        c25.ProteomeCarruthers2025Dataset(
+            root=str(tmp_path / "refuse" / "proteome"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_prose_l4_refuses_a_genotype_the_store_does_not_hold_uniquely(
+    built_titer: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The sentence names two exact strains; a store without them cannot be joined."""
+    from torchcell.verification.runners import load_records
+
+    records = load_records(built_titer.root)
+    monkeypatch.setattr(
+        c25,
+        "KO_ARRAY_RESULT",
+        c25.KO_ARRAY_RESULT.model_copy(update={"value": {"PP_9999_PP_9998": 1.0}}),
+    )
+    with pytest.raises(AssertionError, match="each must be unique"):
+        c25._l4_ko_array_titer_vs_results_text(records)

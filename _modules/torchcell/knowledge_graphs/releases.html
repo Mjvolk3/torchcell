@@ -152,6 +152,13 @@
 <span class="sd">.release_snapshot``) carry them, so ``scripts/kg_compat_page.py`` can say which package</span>
 <span class="sd">tags read which release without the machine-local manifest.</span>
 
+<span class="sd">**The files the graph points at.** A release also records its artifact pointer set</span>
+<span class="sd">(``artifact_refs``, dataset -&gt; file-level ``ArtifactRef``; recorded by ``kg_manifest</span>
+<span class="sd">artifact-refs`` before the stamp, None on a release that predates the recording).</span>
+<span class="sd">``artifacts`` reads it from a store's node and asks tc-data whether every pointed file is</span>
+<span class="sd">listed with the sha256 the pointer pins, printing one ``STATE&lt;TAB&gt;CODE&lt;TAB&gt;DETAIL`` line</span>
+<span class="sd">for ``scripts/ops.sh``.</span>
+
 <span class="sd">    python -m torchcell.knowledge_graphs.releases status --label gilahyper</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases datasets --version latest</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest</span>
@@ -164,6 +171,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">csv</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
@@ -172,11 +180,14 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArtifactPointer</span><span class="p">,</span>
     <span class="n">KgBuildManifest</span><span class="p">,</span>
     <span class="n">checkout_package_version</span><span class="p">,</span>
+    <span class="n">manifest_artifact_refs</span><span class="p">,</span>
     <span class="n">surface_in_worktree</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">SchemaSurface</span>
@@ -187,6 +198,9 @@
 <span class="n">DEFAULT_VERSION</span> <span class="o">=</span> <span class="n">LATEST_ALIAS</span>
 <span class="n">SYSTEM_DATABASES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"system"</span><span class="p">,)</span>
 <span class="n">_COMMIT_CHARS</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span> <span class="o">=</span> <span class="s2">"TC_DATA_API_KEY"</span>
+<span class="c1">#: How many failing pointers the one-line ``artifacts`` verdict names.</span>
+<span class="n">_FAILING_SHOWN</span> <span class="o">=</span> <span class="mi">3</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- models</span>
@@ -224,6 +238,9 @@
     <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ReleaseDataset</span><span class="p">]</span>
     <span class="c1"># dataset -&gt; schema symbol -&gt; contract fingerprint at build; the compatibility check</span>
     <span class="n">closures</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># dataset -&gt; the file-level artifact pointers its records carry; None on a node</span>
+    <span class="c1"># written before pointer recording, or from a manifest with an unrecorded entry</span>
+    <span class="n">artifact_refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -250,6 +267,17 @@
                 <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">),</span>
             <span class="p">),</span>
             <span class="s2">"closures_json"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">closures</span><span class="p">,</span> <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">)),</span>
+            <span class="s2">"artifact_refs_json"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="kc">None</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">artifact_refs</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="n">name</span><span class="p">:</span> <span class="p">[</span><span class="n">ref</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(</span><span class="n">exclude_none</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">refs</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">artifact_refs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                    <span class="p">},</span>
+                    <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">}</span></div>
 
 
@@ -262,6 +290,15 @@
             <span class="n">k</span><span class="p">:</span> <span class="n">ReleaseDataset</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">props</span><span class="p">[</span><span class="s2">"datasets_json"</span><span class="p">])</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">}</span>
+        <span class="n">refs_json</span> <span class="o">=</span> <span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"artifact_refs_json"</span><span class="p">)</span>
+        <span class="n">artifact_refs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">refs_json</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">name</span><span class="p">:</span> <span class="p">[</span><span class="n">ArtifactPointer</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span> <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">refs</span> <span class="ow">in</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">refs_json</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
             <span class="n">release</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"release"</span><span class="p">],</span>
             <span class="n">version</span><span class="o">=</span><span class="n">props</span><span class="p">[</span><span class="s2">"version"</span><span class="p">],</span>
@@ -274,6 +311,7 @@
             <span class="n">n_nodes</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_nodes"</span><span class="p">),</span>
             <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
             <span class="n">closures</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"closures_json"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">"</span><span class="p">),</span>
+            <span class="n">artifact_refs</span><span class="o">=</span><span class="n">artifact_refs</span><span class="p">,</span>
         <span class="p">)</span></div>
 </div>
 
@@ -531,6 +569,7 @@
         <span class="n">closures</span><span class="o">=</span><span class="p">{</span>
             <span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">},</span>
+        <span class="n">artifact_refs</span><span class="o">=</span><span class="n">manifest_artifact_refs</span><span class="p">(</span><span class="n">manifest</span><span class="p">),</span>
     <span class="p">)</span></div>
 
 
@@ -1013,7 +1052,206 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- artifacts</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PointerCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One distinct pointed file and what tc-data's manifest says about it."""</span>
+
+    <span class="n">ref</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># what the pointer pins</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"listed"</span><span class="p">,</span> <span class="s2">"sha256_mismatch"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">]</span>
+    <span class="n">listed_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># what the manifest lists, when it lists the path</span>
+    <span class="n">datasets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>  <span class="c1"># the served datasets whose records point at the file</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ArtifactProbe</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The verdict of ``artifacts``: one ops line plus the full classification."""</span>
+
+    <span class="n">state</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"ok"</span><span class="p">,</span> <span class="s2">"warn"</span><span class="p">,</span> <span class="s2">"fail"</span><span class="p">]</span>
+    <span class="n">code</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">release</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PointerCheck</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">line</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``STATE&lt;TAB&gt;CODE&lt;TAB&gt;DETAIL``, the form ``scripts/ops.sh`` renders."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">code</span><span class="si">}</span><span class="se">\t</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">detail</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">read_release_bounded</span><span class="p">(</span>
+    <span class="n">uri</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">database</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">timeout_s</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">""":func:`read_release` with a wall-clock bound; ``TimeoutError`` past it.</span>
+
+<span class="sd">    The read runs on a daemon thread: a driver call that never returns (a host that</span>
+<span class="sd">    accepts the TCP connection and then hangs) must not hold the interpreter open at</span>
+<span class="sd">    exit, or the verdict printed after the bound would never reach the panel, whose</span>
+<span class="sd">    outer ``timeout`` would fire first.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
+
+    <span class="n">box</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">box</span><span class="p">[</span><span class="s2">"value"</span><span class="p">]</span> <span class="o">=</span> <span class="n">read_release</span><span class="p">(</span><span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">database</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># noqa: BLE001 -- re-raised on the caller's thread</span>
+            <span class="n">box</span><span class="p">[</span><span class="s2">"error"</span><span class="p">]</span> <span class="o">=</span> <span class="n">exc</span>
+
+    <span class="n">thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">run</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"read-release"</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+    <span class="n">thread</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">timeout_s</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">thread</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">TimeoutError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"read_release did not answer within </span><span class="si">{</span><span class="n">timeout_s</span><span class="si">}</span><span class="s2"> s"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">"error"</span> <span class="ow">in</span> <span class="n">box</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">box</span><span class="p">[</span><span class="s2">"error"</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">box</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"value"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">classify_pointers</span><span class="p">(</span>
+    <span class="n">artifact_refs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]],</span> <span class="n">source</span><span class="p">:</span> <span class="n">Any</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PointerCheck</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Each distinct pointed file, classified against ``source``'s manifests.</span>
+
+<span class="sd">    Pointers are deduplicated across datasets by ``(tier, key, path, sha256)`` and grouped by ``(tier, key)``,</span>
+<span class="sd">    so each key's manifest is fetched once. A file is ``listed`` when the manifest lists</span>
+<span class="sd">    its path with the pinned sha256, ``sha256_mismatch`` when it lists the path with</span>
+<span class="sd">    another, and ``missing`` when the path is absent or the source has no such key (a</span>
+<span class="sd">    ``RemoteMissError``, which includes a tier tc-data does not serve). Any other error</span>
+<span class="sd">    of the source propagates.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.resolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteMissError</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.tiers</span><span class="w"> </span><span class="kn">import</span> <span class="n">find_record</span>
+
+    <span class="n">pointed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">artifact_refs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">artifact_refs</span><span class="p">[</span><span class="n">name</span><span class="p">]:</span>
+            <span class="n">entry</span> <span class="o">=</span> <span class="n">pointed</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">ref</span><span class="o">.</span><span class="n">sort_key</span><span class="p">(),</span> <span class="p">(</span><span class="n">ref</span><span class="p">,</span> <span class="p">[]))</span>
+            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="n">entry</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">by_key</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">file_key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">pointed</span><span class="p">):</span>
+        <span class="n">ref</span><span class="p">,</span> <span class="n">names</span> <span class="o">=</span> <span class="n">pointed</span><span class="p">[</span><span class="n">file_key</span><span class="p">]</span>
+        <span class="n">by_key</span><span class="p">[(</span><span class="n">ref</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span> <span class="n">ref</span><span class="o">.</span><span class="n">key</span><span class="p">)]</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">ref</span><span class="p">,</span> <span class="n">names</span><span class="p">))</span>
+    <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PointerCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">tier</span><span class="p">,</span> <span class="n">tier_key</span><span class="p">),</span> <span class="n">members</span> <span class="ow">in</span> <span class="n">by_key</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">records</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">manifest</span><span class="p">(</span><span class="n">tier</span><span class="p">,</span> <span class="n">tier_key</span><span class="p">)</span><span class="o">.</span><span class="n">files</span>
+        <span class="k">except</span> <span class="n">RemoteMissError</span><span class="p">:</span>
+            <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">ref</span><span class="p">,</span> <span class="n">names</span> <span class="ow">in</span> <span class="n">members</span><span class="p">:</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">find_record</span><span class="p">(</span><span class="n">records</span><span class="p">,</span> <span class="n">ref</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">state</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"listed"</span><span class="p">,</span> <span class="s2">"sha256_mismatch"</span><span class="p">,</span> <span class="s2">"missing"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"missing"</span>
+            <span class="k">elif</span> <span class="n">record</span><span class="o">.</span><span class="n">sha256</span> <span class="o">==</span> <span class="n">ref</span><span class="o">.</span><span class="n">sha256</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="s2">"listed"</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">state</span> <span class="o">=</span> <span class="s2">"sha256_mismatch"</span>
+            <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">PointerCheck</span><span class="p">(</span>
+                    <span class="n">ref</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span>
+                    <span class="n">sha256</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+                    <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                    <span class="n">listed_sha256</span><span class="o">=</span><span class="kc">None</span> <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">record</span><span class="o">.</span><span class="n">sha256</span><span class="p">,</span>
+                    <span class="n">datasets</span><span class="o">=</span><span class="n">names</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">checks</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">artifact_probe</span><span class="p">(</span>
+    <span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">tc_data_url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">api_key_env</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span><span class="p">,</span>
+    <span class="n">http</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">timeout_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactProbe</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Whether tc-data lists every file ``release`` points at, with its sha256.</span>
+
+<span class="sd">    The checks run in the order that needs the least: a store without a release node or</span>
+<span class="sd">    a release that predates pointer recording is a warning (nothing to check), a release</span>
+<span class="sd">    pointing at no file is ok without asking tc-data, and only then are the key and the</span>
+<span class="sd">    endpoint required. ``http`` injects the client (tests).</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">httpx</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.resolve</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteEndpointError</span><span class="p">,</span> <span class="n">TcDataSource</span>
+
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span><span class="n">state</span><span class="o">=</span><span class="s2">"warn"</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="s2">"no release node"</span><span class="p">)</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">release</span><span class="o">.</span><span class="n">release</span>
+    <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">artifact_refs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"warn"</span><span class="p">,</span>
+            <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"release predates pointer recording"</span><span class="p">,</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span><span class="n">release</span><span class="o">.</span><span class="n">artifact_refs</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"ok"</span><span class="p">,</span>
+            <span class="n">code</span><span class="o">=</span><span class="s2">"0"</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"the release points at no artifact file"</span><span class="p">,</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">api_key</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span> <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">api_key_env</span><span class="si">}</span><span class="s2"> unset"</span><span class="p">,</span> <span class="n">release</span><span class="o">=</span><span class="n">tag</span>
+        <span class="p">)</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">TcDataSource</span><span class="p">(</span><span class="n">tc_data_url</span><span class="p">,</span> <span class="n">api_key</span><span class="p">,</span> <span class="n">http</span><span class="o">=</span><span class="n">http</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="n">timeout_s</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">checks</span> <span class="o">=</span> <span class="n">classify_pointers</span><span class="p">(</span><span class="n">release</span><span class="o">.</span><span class="n">artifact_refs</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="n">RemoteEndpointError</span><span class="p">,</span> <span class="n">httpx</span><span class="o">.</span><span class="n">HTTPError</span><span class="p">)</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span>
+            <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"tc-data unreachable: </span><span class="si">{</span><span class="n">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span>
+    <span class="n">listed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"listed"</span> <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">listed</span> <span class="o">==</span> <span class="n">n_total</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"ok"</span><span class="p">,</span>
+            <span class="n">code</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">detail</span><span class="o">=</span><span class="s2">"every pointer listed by tc-data with its sha256"</span><span class="p">,</span>
+            <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+            <span class="n">checks</span><span class="o">=</span><span class="n">checks</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="n">failing</span> <span class="o">=</span> <span class="p">[</span><span class="n">check</span> <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">"listed"</span><span class="p">]</span>
+    <span class="n">missing</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"missing"</span> <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">failing</span><span class="p">)</span>
+    <span class="n">shown</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">check</span><span class="o">.</span><span class="n">ref</span> <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">failing</span><span class="p">[:</span><span class="n">_FAILING_SHOWN</span><span class="p">])</span>
+    <span class="n">more</span> <span class="o">=</span> <span class="s2">", ..."</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">failing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_FAILING_SHOWN</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+        <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span>
+        <span class="n">code</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">listed</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="n">detail</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> missing, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failing</span><span class="p">)</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">missing</span><span class="si">}</span><span class="s2"> sha256 mismatch: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">shown</span><span class="si">}{</span><span class="n">more</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">),</span>
+        <span class="n">release</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
+        <span class="n">checks</span><span class="o">=</span><span class="n">checks</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- CLI</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_host_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">password</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""``LABEL=URI[|USER|PASSWORD]`` as ``(label, uri, user, password)``; missing parts inherit."""</span>
+    <span class="n">label</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">label</span><span class="p">,</span>
+        <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">user</span><span class="p">,</span>
+        <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">password</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_connection</span><span class="p">(</span><span class="n">args</span><span class="p">:</span> <span class="n">argparse</span><span class="o">.</span><span class="n">Namespace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
@@ -1157,6 +1395,26 @@
     <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--built-at"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">p_node</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--n-nodes"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">int</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 
+    <span class="n">p_art</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"artifacts"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"whether tc-data lists every file a served release points at, with its "</span>
+        <span class="s2">"sha256; one STATE&lt;TAB&gt;CODE&lt;TAB&gt;DETAIL line (exit 0 always)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--host"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"LABEL=URI[|USER|PASSWORD]"</span><span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--database"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--tc-data-url"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--host-timeout"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">20.0</span><span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--tc-data-timeout"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="mf">5.0</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"seconds per tc-data request"</span>
+    <span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--api-key-env"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">DEFAULT_TC_DATA_API_KEY_ENV</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"the environment variable holding the tc-data key (read after the repo "</span>
+        <span class="s2">".env is loaded; the key itself is never printed)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_art</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--json"</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">)</span>
+
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">repo</span> <span class="k">else</span> <span class="kc">None</span>
 
@@ -1295,21 +1553,47 @@
         <span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"artifacts"</span><span class="p">:</span>
+        <span class="n">load_dotenv</span><span class="p">()</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">host_uri</span><span class="p">,</span> <span class="n">host_user</span><span class="p">,</span> <span class="n">host_password</span> <span class="o">=</span> <span class="n">_host_spec</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">served</span> <span class="o">=</span> <span class="n">read_release_bounded</span><span class="p">(</span>
+                <span class="n">host_uri</span><span class="p">,</span>
+                <span class="n">host_user</span><span class="p">,</span>
+                <span class="n">host_password</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">database</span><span class="p">,</span>
+                <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">host_timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TimeoutError</span><span class="p">:</span>
+            <span class="n">probe</span> <span class="o">=</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+                <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"host unreachable within </span><span class="si">{</span><span class="n">args</span><span class="o">.</span><span class="n">host_timeout</span><span class="si">:</span><span class="s2">g</span><span class="si">}</span><span class="s2"> s"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>  <span class="c1"># a reporter: refusal, auth or a store fault is a line</span>
+            <span class="n">probe</span> <span class="o">=</span> <span class="n">ArtifactProbe</span><span class="p">(</span>
+                <span class="n">state</span><span class="o">=</span><span class="s2">"fail"</span><span class="p">,</span>
+                <span class="n">code</span><span class="o">=</span><span class="s2">"n/a"</span><span class="p">,</span>
+                <span class="n">detail</span><span class="o">=</span><span class="sa">f</span><span class="s2">"release read failed: </span><span class="si">{</span><span class="n">_fault_text</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">probe</span> <span class="o">=</span> <span class="n">artifact_probe</span><span class="p">(</span>
+                <span class="n">served</span><span class="p">,</span>
+                <span class="n">tc_data_url</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_url</span><span class="p">,</span>
+                <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">api_key_env</span><span class="p">),</span>
+                <span class="n">api_key_env</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">api_key_env</span><span class="p">,</span>
+                <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">tc_data_timeout</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># flushed: ops.sh bounds this process, and a hung driver thread can hold exit</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="n">probe</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">json</span> <span class="k">else</span> <span class="n">probe</span><span class="o">.</span><span class="n">line</span><span class="p">(),</span> <span class="n">flush</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
+
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"status"</span><span class="p">:</span>
         <span class="n">hosts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[(</span><span class="n">args</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">uri</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)]</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
-            <span class="n">hosts</span> <span class="o">=</span> <span class="p">[]</span>
-            <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">:</span>
-                <span class="n">label</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">rest</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">partition</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span>
-                <span class="n">parts</span> <span class="o">=</span> <span class="n">rest</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
-                <span class="n">hosts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">(</span>
-                        <span class="n">label</span><span class="p">,</span>
-                        <span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                        <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">user</span><span class="p">,</span>
-                        <span class="n">parts</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">password</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="p">)</span>
+            <span class="n">hosts</span> <span class="o">=</span> <span class="p">[</span><span class="n">_host_spec</span><span class="p">(</span><span class="n">spec</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span> <span class="k">for</span> <span class="n">spec</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">host</span><span class="p">]</span>
         <span class="n">by_host</span> <span class="o">=</span> <span class="p">{</span>
             <span class="n">label</span><span class="p">:</span> <span class="n">list_databases_bounded</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">pw</span><span class="p">,</span> <span class="n">timeout_s</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">host_timeout</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">usr</span><span class="p">,</span> <span class="n">pw</span> <span class="ow">in</span> <span class="n">hosts</span>

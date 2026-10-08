@@ -181,6 +181,14 @@
 <span class="sd">new ``CellAdapter`` method) can be shown ADDED-only against the served manifest before any</span>
 <span class="sd">dataset that uses it exists.</span>
 
+<span class="sd">**The pointer set.** Records may carry ``ArtifactRef`` pointers to files kept off the</span>
+<span class="sd">graph (Caudal's ``sequence_ref``, Bloom's ``assembly_ref``, a ``CrisprConstruct``'s</span>
+<span class="sd">``effector_plasmid_ref``). The served store is too large to scan for them, so</span>
+<span class="sd">``record_artifact_refs`` (``artifact-refs``) walks each dataset whose closure names</span>
+<span class="sd">``ArtifactRef`` once per release and writes the distinct FILE-level refs into</span>
+<span class="sd">``KgDatasetEntry.artifact_refs``; the release node and the snapshot carry the set from</span>
+<span class="sd">there, and ``releases artifacts`` checks it against tc-data.</span>
+
 <span class="sd">The manifest lives beside the store (a machine-local file under the build tree), never</span>
 <span class="sd">in git: it describes one physical database.</span>
 <span class="sd">"""</span>
@@ -197,7 +205,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">socket</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
@@ -272,6 +280,12 @@
     <span class="s2">"format_batch_report"</span><span class="p">,</span>
     <span class="s2">"split_dataset_args"</span><span class="p">,</span>
     <span class="s2">"parse_n_experiments"</span><span class="p">,</span>
+    <span class="s2">"ARTIFACT_REF_SYMBOL"</span><span class="p">,</span>
+    <span class="s2">"ArtifactPointer"</span><span class="p">,</span>
+    <span class="s2">"file_level_refs"</span><span class="p">,</span>
+    <span class="s2">"dataset_artifact_refs"</span><span class="p">,</span>
+    <span class="s2">"record_artifact_refs"</span><span class="p">,</span>
+    <span class="s2">"manifest_artifact_refs"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">KG_MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
@@ -289,6 +303,38 @@
     <span class="s2">"torchcell/datamodels/compound_identity.py"</span><span class="p">,</span>
     <span class="s2">"torchcell/datamodels/compound_identity_table.json"</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="c1">#: The closure key that marks a dataset whose records can carry artifact pointers.</span>
+<span class="n">ARTIFACT_REF_SYMBOL</span> <span class="o">=</span> <span class="s2">"ArtifactRef"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ArtifactPointer</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""An ``ArtifactRef`` reduced to the file it pins: member, bytes and media_type dropped.</span>
+
+<span class="sd">    The shape the release records and the ops probe checks. A local model rather than</span>
+<span class="sd">    ``ArtifactRef`` itself, because this module (and ``releases``, ``release_snapshot``)</span>
+<span class="sd">    must import with only pydantic, PyYAML and python-dotenv installed (the docs</span>
+<span class="sd">    workflow's query-drift job), and ``torchcell.datamodels.schema`` pulls in lmdb</span>
+<span class="sd">    through the datamodels package.</span>
+<span class="sd">    """</span>
+
+    <span class="n">tier</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">uri</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``tc://&lt;tier&gt;/&lt;key&gt;/&lt;path&gt;``."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"tc://</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">tier</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_ref</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">ref</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArtifactPointer</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The pointer of an ``ArtifactRef`` (duck-typed: tier, key, path, sha256)."""</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">tier</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">sha256</span><span class="o">=</span><span class="n">ref</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">sort_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""``(tier, key, path, sha256)``, the order recorded sets are kept in."""</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tier</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="GraphSchemaEntry">
@@ -359,7 +405,12 @@
     <span class="n">content_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="c1"># Set when this entry was admitted as a superset of an entry already served: the</span>
     <span class="c1"># previous entry's identity and how many records the increment added to it.</span>
-    <span class="n">superset_of</span><span class="p">:</span> <span class="n">SupersetLineage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">superset_of</span><span class="p">:</span> <span class="n">SupersetLineage</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The distinct FILE-level artifact pointers the dataset's records carry (``member``,</span>
+    <span class="c1"># ``bytes`` and ``media_type`` stripped; sorted by ``ref_key``), written by</span>
+    <span class="c1"># ``record_artifact_refs``. None: never recorded (a manifest written before pointer</span>
+    <span class="c1"># recording, or an entry admitted since); ``[]``: recorded, and there are none.</span>
+    <span class="n">artifact_refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -1126,6 +1177,82 @@
     <span class="n">dataset</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">ids</span></div>
 
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">file_level_refs</span><span class="p">(</span><span class="n">refs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The distinct files ``refs`` (``ArtifactRef``s) name, sorted by ``(tier, key, path,</span>
+<span class="sd">    sha256)``, as ``ArtifactPointer``s.</span>
+
+<span class="sd">    Two members of one file (and two refs differing only in ``bytes`` or ``media_type``)</span>
+<span class="sd">    collapse to one entry.</span>
+<span class="sd">    """</span>
+    <span class="n">files</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">ArtifactPointer</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">refs</span><span class="p">:</span>
+        <span class="n">pointer</span> <span class="o">=</span> <span class="n">ArtifactPointer</span><span class="o">.</span><span class="n">from_ref</span><span class="p">(</span><span class="n">ref</span><span class="p">)</span>
+        <span class="n">files</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">pointer</span><span class="o">.</span><span class="n">sort_key</span><span class="p">(),</span> <span class="n">pointer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">files</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">files</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_artifact_refs</span><span class="p">(</span>
+    <span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The file-level refs every record of the dev-tree LMDB of ``dataset_class`` carries.</span>
+
+<span class="sd">    Opens the dataset read-only as ``dev_experiment_ids`` does and walks the pydantic</span>
+<span class="sd">    models of each ``transform_item`` (the experiment and the reference) with</span>
+<span class="sd">    ``distinct_refs``.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.artifacts.walk</span><span class="w"> </span><span class="kn">import</span> <span class="n">distinct_refs</span>
+
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset_class</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">data_root</span> <span class="o">/</span> <span class="n">_dataset_default_root</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)))</span>
+    <span class="n">found</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)):</span>
+        <span class="n">item</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">transform_item</span><span class="p">(</span><span class="n">dataset</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="p">[</span><span class="n">value</span> <span class="k">for</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">item</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">ref</span> <span class="ow">in</span> <span class="n">distinct_refs</span><span class="p">(</span><span class="n">models</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">found</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">ref</span><span class="p">)</span>
+    <span class="n">dataset</span><span class="o">.</span><span class="n">close_lmdb</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">file_level_refs</span><span class="p">(</span><span class="n">found</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">record_artifact_refs</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">only</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Write each entry's ``artifact_refs`` from its dev-tree LMDB; ``{dataset: n_refs}``.</span>
+
+<span class="sd">    Every entry, or the ``only`` subset (each must be served), is recorded. An entry</span>
+<span class="sd">    whose closure has no ``ArtifactRef`` key gets ``[]`` without its dataset being</span>
+<span class="sd">    opened: none of its record classes can carry a pointer.</span>
+<span class="sd">    """</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span> <span class="k">if</span> <span class="n">only</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">list</span><span class="p">(</span><span class="n">only</span><span class="p">)</span>
+    <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">unknown</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"datasets not in the manifest: </span><span class="si">{</span><span class="n">unknown</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+        <span class="n">entry</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+        <span class="n">refs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">ARTIFACT_REF_SYMBOL</span> <span class="ow">in</span> <span class="n">entry</span><span class="o">.</span><span class="n">closure</span><span class="p">:</span>
+            <span class="n">refs</span> <span class="o">=</span> <span class="n">dataset_artifact_refs</span><span class="p">(</span><span class="n">_dataset_class</span><span class="p">(</span><span class="n">name</span><span class="p">),</span> <span class="n">data_root</span><span class="p">)</span>
+        <span class="n">entry</span><span class="o">.</span><span class="n">artifact_refs</span> <span class="o">=</span> <span class="n">refs</span>
+        <span class="n">counts</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">refs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">counts</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">manifest_artifact_refs</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``dataset -&gt; refs`` for a release, or None when ANY entry was never recorded.</span>
+
+<span class="sd">    A half-recorded manifest never reads as complete: one None entry makes the whole</span>
+<span class="sd">    pointer set unknown.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">artifact_refs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">artifact_refs</span> <span class="ow">or</span> <span class="p">[])</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+    <span class="p">}</span>
 
 
 <div class="viewcode-block" id="superset_check">
@@ -2090,6 +2217,20 @@
     <span class="n">p_drift</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--report"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"write the JSON report here"</span><span class="p">)</span>
 
     <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"show"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"print the manifest summary"</span><span class="p">)</span>
+
+    <span class="n">p_refs</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s2">"artifact-refs"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"record the artifact pointers each served dataset's records carry, read "</span>
+        <span class="s2">"from the dev-tree LMDBs (datasets whose closure names ArtifactRef are walked)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_refs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--data-root"</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"dev tree holding the LMDBs"</span><span class="p">)</span>
+    <span class="n">p_refs</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--dataset"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"append"</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"record only this dataset; repeat the flag or pass a comma-separated list "</span>
+        <span class="s2">"(default: every served dataset)"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
     <span class="n">repo_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">repo</span> <span class="ow">or</span> <span class="s2">"."</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
@@ -2128,6 +2269,16 @@
                 <span class="n">surface_drift</span><span class="o">.</span><span class="n">model_dump_json</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">),</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="n">surface_drift</span><span class="o">.</span><span class="n">changes_served</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"artifact-refs"</span><span class="p">:</span>
+        <span class="n">only</span> <span class="o">=</span> <span class="n">split_dataset_args</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">counts</span> <span class="o">=</span> <span class="n">record_artifact_refs</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_root</span><span class="p">),</span> <span class="n">only</span><span class="o">=</span><span class="n">only</span><span class="p">)</span>
+        <span class="n">save_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">manifest_path</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">n_refs</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">ARTIFACT_REF_SYMBOL</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">closure</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">n_refs</span><span class="si">}</span><span class="s2"> pointer(s)"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: no ref-bearing class in its closure"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="mi">0</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"show"</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">database</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">store_host</span><span class="si">}</span><span class="s2">: neo4j </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">neo4j_version</span><span class="si">}</span><span class="s2">, "</span>

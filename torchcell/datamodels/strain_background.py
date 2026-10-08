@@ -23,6 +23,9 @@ state the same BY strain build the same alleles:
   takes one ``provenance`` list for every element or gaps every element.
 - ``KANMX4_CASSETTE``: the YKO cassette, sourced to Giaever 2014 (mirrored).
 - ``BRACHMANN_1998`` / ``GIAEVER_2002``: ``resolve_with`` targets for the gaps.
+- ``baid_background()`` / ``BAID_STRAIN``: the CRISPR-AID host bAID, shared by every
+  dataset screened in it (Lian 2019 and the in-house Bioscreen dataset), so the two
+  join on one typed background rather than two spellings of the same strain.
 
 Design + worked examples per dataset: ``[[torchcell.datamodels.strain-background]]``.
 """
@@ -35,6 +38,7 @@ from torchcell.datamodels.pydant import ModelStrict
 from torchcell.datamodels.schema import (
     AlleleEdit,
     BackgroundAllele,
+    IntegratedCassette,
     MatingType,
     StrainBackground,
     Zygosity,
@@ -48,13 +52,20 @@ from torchcell.verification.sourced import (
 
 __all__ = [
     "AlleleSpec",
+    "BAID_CONSTRUCTION",
+    "BAID_GENOTYPE",
+    "BAID_PARENT_GENOTYPE",
+    "BAID_STRAIN",
     "BRACHMANN_1998",
     "GIAEVER_2002",
     "KANMX4_CASSETTE",
+    "LIAN_2019_METHODS",
+    "LIAN_2019_SI1",
     "R64_GFF",
     "STANDARD_ALLELES",
     "STANDARD_BY_GENOTYPES",
     "ByGenotype",
+    "baid_background",
     "pending_source_review",
     "standard_allele",
     "standard_background",
@@ -339,4 +350,114 @@ def standard_background(
         alleles=[*alleles, *(extra_alleles or [])],
         provenance=provenance,
         provenance_gaps=gaps,
+    )
+
+
+# --------------------------------------------------------------------------- #
+# bAID: the CRISPR-AID host, shared by every dataset screened in it
+# --------------------------------------------------------------------------- #
+#: The CRISPR-AID host strain, as Lian 2019 names it. The in-house Bioscreen dataset was
+#: run on the same strain under the thesis name ``BY4742-iAID6``, so both datasets join
+#: on ``baid_background()`` rather than on two spellings of one strain.
+BAID_STRAIN = "bAID"
+
+LIAN_2019_SI1 = Provenance(
+    source_uri="si/si1.md",
+    citation_key="lianMultifunctionalGenomewideCRISPR2019",
+    sha256="b2bcfe2e672674438216472e3e06903c93d4ee54cd8b6fd9b5f964ad2a3d32db",
+    method="MinerU OCR of the publisher Supplementary Information PDF "
+    "(torchcell-library mirror)",
+    page="Supplementary Table 11, 'Strains constructed in this study' (si1.md line 104)",
+)
+"""Lian 2019's Supplementary Information 1 OCR, which carries the strain table."""
+
+LIAN_2019_METHODS = Provenance(
+    source_uri="paper.md",
+    citation_key="lianMultifunctionalGenomewideCRISPR2019",
+    sha256="63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c",
+    method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
+    page="Methods, 'Plasmid and strain construction'",
+)
+"""Lian 2019's paper OCR, which carries bAID's construction sentence."""
+
+BAID_PARENT_GENOTYPE = SourcedValue(
+    value="MATα his3∆1 leu2∆0 lys2∆0 ura3∆0",
+    quote="<td rowspan=1 colspan=1>BY4742</td><td rowspan=1 colspan=1>MATα his3∆1 "
+    "leu2∆0 lys2∆0 ura3∆0</td>",
+    provenance=LIAN_2019_SI1,
+    note="bAID's parent genotype as the strain table states it; the stored alleles are "
+    "the STANDARD_ALLELES spellings his3Δ1, leu2Δ0, lys2Δ0, ura3Δ0 (the OCR writes the "
+    "delta as the mathematical operator ∆)",
+)
+BAID_GENOTYPE = SourcedValue(
+    value="BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
+    quote="<td rowspan=1 colspan=1>bAID</td><td rowspan=1 colspan=1>BY4742-Delta::KanMX-"
+    "[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]</td>",
+    provenance=LIAN_2019_SI1,
+    note="the integration SITE of the CRISPR-AID cassette: the strain table writes it as "
+    "the Delta site (the Ty1 delta repeat family), carrying KanMX plus the four "
+    "orthogonal effector cassettes",
+)
+BAID_CONSTRUCTION = SourcedValue(
+    value=BAID_STRAIN,
+    quote="The CRISPR-AID strain (bAID) was constructed by integrating PmeI-digested "
+    "$\\mathrm { \\ p A I D } 6 ^ { 8 }$ into the genome of BY4742 and selection for "
+    "G418 resistance.",
+    provenance=LIAN_2019_METHODS,
+    note="how the host was made: pAID6 integrated into BY4742, selected on G418. The "
+    "in-house Bioscreen dataset's thesis strain BY4742-iAID6 is this same construction",
+)
+
+_BAID_ALLELE_NOTE = (
+    "Supplementary Table 11 states BY4742's genotype string ('MATα his3∆1 leu2∆0 "
+    "lys2∆0 ura3∆0', BAID_PARENT_GENOTYPE), so WHICH alleles the strain carries is "
+    "sourced; how each was constructed (the delta0 designer deletions vs the "
+    "his3-delta1 internal deletion, which is what STANDARD_ALLELES encodes as an "
+    "AlleleEdit) is stated only by Brachmann 1998, which is not mirrored"
+)
+
+
+def baid_background() -> StrainBackground:
+    """The CRISPR-AID host bAID as a typed ``StrainBackground``.
+
+    BY4742's four auxotrophies as ``BackgroundAllele``s plus the one cassette the host
+    carries integrated: ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``,
+    at the Delta site (the Ty1 delta repeat family). ``locus_systematic_gene_name``
+    stays None, because a delta repeat family is not an R64 ORF.
+
+    One helper, so every dataset screened in this strain joins on one background: Lian
+    2019's genome-wide MAGIC screen, and the in-house Bioscreen dataset, whose thesis
+    strain **BY4742-iAID6** is this strain (pAID6 integrated into BY4742, selected on
+    G418 resistance).
+
+    The auxotrophies are asserted with a ``deferred_pending_source_review`` gap naming
+    Brachmann 1998 even though the strain table states the genotype string: the SI says
+    WHICH alleles BY4742 carries, not how any of them was made, and ``STANDARD_ALLELES``
+    reads each designation as a specific edit kind (``his3Δ1`` partial, the three ``Δ0``
+    alleles full) that only Brachmann 1998 states.
+    """
+    genotype = STANDARD_BY_GENOTYPES["BY4742"]
+    alleles = [
+        standard_allele(
+            allele_name, zygosity, resolve_with=BRACHMANN_1998, note=_BAID_ALLELE_NOTE
+        )
+        for allele_name, zygosity in genotype.alleles.items()
+    ]
+    cassette = IntegratedCassette(
+        name="Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
+        locus="Delta",
+        elements=["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
+        marker="KanMX",
+        zygosity=Zygosity.haploid,
+        provenance=[BAID_GENOTYPE, BAID_CONSTRUCTION],
+    )
+    return StrainBackground(
+        name=BAID_STRAIN,
+        parents=["BY4742"],
+        construction=BAID_CONSTRUCTION.quote,
+        mating_type=genotype.mating_type,
+        ploidy=genotype.ploidy,
+        alleles=alleles,
+        integrations=[cassette],
+        provenance=[BAID_PARENT_GENOTYPE, BAID_GENOTYPE, BAID_CONSTRUCTION],
     )

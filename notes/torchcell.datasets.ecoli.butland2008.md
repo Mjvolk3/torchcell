@@ -153,11 +153,15 @@ exactly-zero-score are dropped (rule 5), because there the release contradicts i
 The matrix's query header names `b1922` `rpoF` while the array roster names it `fliA`. Both
 resolve to `b1922` in the pinned annotation, so neither is wrong, but storing both would
 split one locus into two perturbation identities and fail the shared
-`canonical_gene_names` rule over 7,663 records. The ROSTER spelling wins, because the
+`canonical_gene_names` rule, which reported it over the 7,663 stored records that touch
+`b1922`. The ROSTER spelling wins, because the
 roster is the release's own per-strain name column and the matrix's recipient block IS that
 roster (asserted at build time), while the header is one cell per screen. The disagreement
-is recorded in `preprocess/gene_name_disagreements.json`. The 155 rows the roster leaves
-unnamed (`*`) are asserted to be dropped by an identifier rule, so no record stores `*`.
+is recorded in `preprocess/gene_name_disagreements.json`, where
+`n_records_renamed` is **7,587**: the records whose QUERY is `b1922`, the other 76 of the
+7,663 already carrying the roster name because `b1922` is their recipient. The 155 rows the
+roster leaves unnamed (`*`) are asserted to be dropped by an identifier rule, so no record
+stores `*`.
 
 ### Verification, measured on the dev store
 

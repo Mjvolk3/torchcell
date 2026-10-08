@@ -315,6 +315,35 @@ def test_strain_resolved_records_emit_the_expected_nodes(tiny: Any) -> None:
     )
     names = {node.get_properties()["compound_name"] for node in dmso}
     assert names == {"dimethyl sulfoxide", "hydrochloric acid"}
+    # #764 (revising #501 finding 3): the DMSO condition node carries Table S1's 2.50%,
+    # v/v by the paper's DMSO convention, under the IC30 basis
+    (dmso_node,) = [
+        node
+        for node in dmso
+        if node.get_properties()["compound_name"] == "dimethyl sulfoxide"
+    ]
+    props = dmso_node.get_properties()
+    assert (props["concentration_value"], props["concentration_unit"]) == (
+        2.5,
+        "percent_v/v",
+    )
+
+
+def test_a_basis_free_percent_dose_projects_its_reported_number() -> None:
+    """#764: Table S1's bare 'Ethanol 4%' reaches the node as 4.0 'percent'."""
+    dataset = loader.EnvChemgenVanacloig2022Dataset.__new__(
+        loader.EnvChemgenVanacloig2022Dataset
+    )
+    dataset.name = "EnvChemgenVanacloig2022Dataset"
+    ethanol = dataset._environment("EtOH").perturbations[0]
+    assert isinstance(ethanol, SmallMoleculePerturbation)
+    assert ethanol.concentration.basis is DoseBasis.IC30
+    props = CellAdapter._environment_perturbation_node_from(ethanol).get_properties()
+    assert props["compound_name"] == "ethanol"
+    assert (props["concentration_value"], props["concentration_unit"]) == (
+        4.0,
+        "percent",
+    )
 
 
 # 2026.10.06, Phase 21: the constructor (exact conf content, wiring, refusal); the

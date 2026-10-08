@@ -38,16 +38,22 @@ CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``
 batch, because the paper's design is paired and its comparison is "to the paired SynBase
 medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its
 control is the mean of all 16 control columns (its ``units`` string records that). DMSO
-is served as a condition (1% v/v) paired the same way.
+is served as a condition paired the same way, at its Table S1 dose (below).
 
 DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP
 supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),
 stored as ``si/si2.pdf`` and OCR'd to ``si/si2.md``. Each served condition's row is a
-``SourcedValue`` in ``TABLE_S1_DOSES``: a mM / uM / ug/mL IC30 is stored as the
-``Concentration`` value; a percent IC30 (MBO, EtOH, IBA, GVL) keeps ``value=None`` under
-the IC30 basis because the table writes no v/v or w/v; Benomyl, MMS and DMSO keep their
-fixed doses. The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is DMSO at the
-paper's final 1% v/v, "No" is ``None`` (dissolved directly).
+``SourcedValue`` in ``TABLE_S1_DOSES``, and every dose is the number that row reports
+(#764): a mM / uM / ug/mL IC30 is stored with that unit; a percent IC30 (MBO 1.50%, EtOH
+4%, IBA 0.75%, GVL 1.5%) and MMS's fixed 0.01% are stored with the basis-free
+``ConcentrationUnit.percent``, because the table writes no v/v or w/v for them. A molar
+conversion of those five needs a basis and a density the paper does not report, so a
+consumer computing a log10 molar dose leaves them None. DMSO's own condition is Table
+S1's "2.50%" as ``percent_v_v`` under the IC30 basis: the paper's only DMSO fraction
+statement that names a basis ("the final concentration of DMSO in SynBase medium was 1%
+(v/v)") fixes v/v as its convention for DMSO. Benomyl keeps Piotrowski 2017's 34.4 uM
+(fixed). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is the DMSO vehicle at
+that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).
 
 STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA
 cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-
@@ -57,10 +63,24 @@ each record's ``Genotype`` holds the ONE screened deletion.
 
 RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11
 matrix tokens Fig 1B does not list (the paper never reports them); compounds with no
-resolvable structure identifier; library rows whose ORF is not a barcoded ORF with
-counts, is a locus the SGA selections fix in every strain, is not a current R64 gene, or
-is the legacy spelling of an ORF already in the pool (those carry a typed
-``ConstructedOrf`` in the ledger); and cells whose three replicate counts are ALL zero.
+resolvable structure identifier; library rows whose gene column is not a systematic ORF
+or whose EVERY count column is missing, whose ORF is a locus the SGA selections fix in
+every strain, is not a current R64 gene, or is the legacy spelling of an ORF already in
+the pool (those carry a typed ``ConstructedOrf`` in the ledger), or that carry no barcode
+while another row of the release carries the same ORF with one; cells one of whose
+counts (a replicate or a paired control) is missing; and cells whose three replicate
+counts are ALL zero.
+
+MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,
+never the strain's row: the paper's per-compound edgeR fit permits no NA count and its
+design is three replicates against the paired controls, so a cell with a missing member
+count has no value the method defines, while the strain's other cells are untouched. TMM
+for a condition runs over the rows complete in that condition's own columns. A row whose
+gene column carries no ``_<barcode>`` suffix is served only when no other row names its
+ORF (the matrix is the release's only barcode source, so the barcode is absent from the
+release): ``barcode=None`` with a typed ``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never
+an empty string. GSE186866 itself has no row with a partly missing count and no row
+without a barcode (2 rows miss every count), so neither rule changes the served build.
 """
 
 from __future__ import annotations
@@ -340,8 +360,8 @@ IC30_BASIS = _paper(
     "SynBase medium with the inhibitor relative to growth in SynBase medium lacking the "
     "inhibitor (Table S1, Supporting Information).",
     note="the per-compound IC30 values are Table S1's rows (TABLE_S1_DOSES, quoted from "
-    "si/si2.md); a percent IC30 states no v/v or w/v, so those compounds keep "
-    "Concentration.value None and the IC30 basis carries the dose",
+    "si/si2.md); a percent IC30 states no v/v or w/v, so it is stored with the "
+    "basis-free ConcentrationUnit.percent (#764)",
 )
 BENOMYL_MMS_DOSE = _paper(
     {"benomyl_ug_per_ml": 10.0, "mms_percent": 0.01},
@@ -350,9 +370,10 @@ BENOMYL_MMS_DOSE = _paper(
     note="both doses were taken from Piotrowski 2017 rather than set to an IC30, so "
     "their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "
     "(BENOMYL_MOLAR), which is the stored value; Table S1 confirms the 10 ug/mL "
-    "(TABLE_S1_DOSES['Benomyl']). The MMS percent is stored as a basis only: neither "
-    "paper nor Table S1 writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "
-    "MMS dose), so the unit would be a guess",
+    "(TABLE_S1_DOSES['Benomyl']). The MMS 0.01 is stored with the basis-free "
+    "ConcentrationUnit.percent (#764): neither paper nor Table S1 writes v/v or w/v for "
+    "it (Piotrowski 2017 names no MMS dose), and the stored number is Table S1's "
+    "(TABLE_S1_DOSES['MMS']), which equals this sentence's",
 )
 BENOMYL_MOLAR = _piotrowski(
     34.4,
@@ -410,13 +431,16 @@ VEHICLE_CONTROL = _paper(
     "{ v / v } )$ .",
     note="Table S1's 'Dissolved in DMSO?' column names the compounds this covers "
     "(TABLE_S1_DOSES); each 'Yes' compound carries Solvent(DMSO, 1% v/v) from this "
-    "sentence, and DMSO itself is served as a condition (DMSO_DOSE)",
+    "sentence (DMSO_VEHICLE_PERCENT). It is also the paper's only DMSO fraction "
+    "statement that names a basis, so it fixes v/v as the paper's convention for DMSO "
+    "and sets the unit of DMSO's own condition dose (TABLE_S1_DOSES['DMSO'], 2.50%)",
 )
-DMSO_DOSE = _paper(
+DMSO_VEHICLE_PERCENT = _paper(
     1.0,
     VEHICLE_CONTROL.quote,
-    note="DMSO's own condition columns are the vehicle at its final 1% v/v with no "
-    "inhibitor; Fig 1B lists DMSO as one of the 34 analyzed conditions (FIG_1B_CONDITIONS)",
+    note="the final DMSO fraction of the VEHICLE the DMSO-dissolved inhibitors were "
+    "delivered in (Solvent.percent); DMSO's own condition, one of the 34 Fig 1B "
+    "conditions (FIG_1B_CONDITIONS), is dosed at Table S1's 2.50% instead (#764)",
 )
 FIG_1B_CONDITIONS = _paper(
     34,
@@ -531,6 +555,22 @@ PSEUDOCOUNT_GAP = ProvenanceGap(
     "inhibitor/control ratio' and states no pseudocount; the loader adds 1 CPM "
     "(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "
     "1 CPM has a pseudocount-dominated denominator and a large replicate SD",
+)
+
+#: The typed absence a library row with no ``_<barcode>`` suffix is served with (#524):
+#: the GSE186866 gene column is the release's only barcode source.
+BARCODE_ABSENT_GAP = ProvenanceGap(
+    field="barcode",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=Provenance(
+        source_uri=f"{RAW_DIR_REL}/{DATA_REL}",
+        citation_key=CITATION_KEY,
+        sha256=DATA_SHA256,
+        page="gene column ('<ORF>_<barcode>')",
+    ),
+    note="this row's gene column names the ORF with no '_<barcode>' suffix, no other "
+    "row names the ORF, and the count matrix is the only file the release carries "
+    "barcodes in, so the strain's UPTAG is absent from the release",
 )
 
 
@@ -692,7 +732,7 @@ _CONTROL_RE = re.compile(r"^Control\d+_CG(?P<batch>\d+)$")
 #: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.
 UNPAIRED_COMPOUND_TOKENS = frozenset({"MMS"})
 
-#: The vehicle served as its own condition (1% v/v, DMSO_DOSE).
+#: The vehicle, also served as its own condition (Table S1's 2.50% v/v).
 DMSO_TOKEN = "DMSO"
 
 
@@ -723,7 +763,7 @@ _TABLE_S1_ROW = re.compile(
     r"<td>(?P<dmso>Yes|No)</td>"
 )
 _TABLE_S1_AMOUNT = re.compile(r"(?P<number>\d+(?:\.\d+)?) (?P<unit>mM|uM|ug/mL)")
-_TABLE_S1_PERCENT = re.compile(r"\d+(?:\.\d+)?%")
+_TABLE_S1_PERCENT = re.compile(r"(?P<number>\d+(?:\.\d+)?)%")
 _TABLE_S1_UNITS = {
     "mM": ConcentrationUnit.millimolar,
     "uM": ConcentrationUnit.micromolar,
@@ -731,8 +771,10 @@ _TABLE_S1_UNITS = {
 }
 
 _PERCENT_NOTE = (
-    "Table S1 writes this IC30 as a bare percent with no v/v or w/v, and the schema has "
-    "no basis-free percent unit, so Concentration.value stays None under the IC30 basis"
+    "Table S1 writes this dose as a bare percent with no v/v or w/v, so the reported "
+    "number is stored with the basis-free ConcentrationUnit.percent (#764); a molar "
+    "conversion needs that basis and a density, neither reported, so no log10 molar dose "
+    "exists for it"
 )
 _OCR_CL_NOTE = "the OCR reads the chloride 'Cl' as 'CI'"
 
@@ -837,16 +879,20 @@ TABLE_S1_DOSES: dict[str, SourcedValue] = {
     ),
     "DMSO": _row(
         "<tr><td>DMSO</td><td>2.50%</td><td>No</td><td>67-68-5</td><td>Sigma-Aldrich</td><td>D-8779</td></tr>",
-        note="Table S1 lists DMSO at 2.50% under the IC30 column, which conflicts with "
-        "the paper's vehicle sentence (VEHICLE_CONTROL: final DMSO 1% v/v) that the "
-        "served DMSO_DOSE quotes. Left for review; the served DMSO record stays 1.0 "
-        "percent_v/v, fixed",
+        note="IC30 '2.50%', the dose of DMSO's own condition (#764: the reported value "
+        "is served). Table S1 writes '2.50%' without v/v or w/v; the paper's only DMSO "
+        "fraction statement that names a basis, 'the final concentration of DMSO in "
+        "SynBase medium was 1% (v/v)' (VEHICLE_CONTROL), fixes v/v as the paper's "
+        "convention for DMSO, so the dose is 2.5 percent_v/v under the IC30 basis. The "
+        "1% v/v of that sentence is the vehicle fraction of the DMSO-dissolved "
+        "inhibitors (DMSO_VEHICLE_PERCENT), a different quantity",
     ),
     "GVL": _row(
         "<tr><td>Gamma valerolactone (GVL)</td><td></td><td>No</td><td>108-29-2</td><td>Acros Organics</td><td></td></tr>",
         note="the OCR leaves GVL's IC30 cell empty; the '1.5%' (and the catalog number "
         "140795000) landed on the next row, the 'OTHER COMPOUNDS' section header "
-        "(GVL_TABLE_S1_DISPLACED). A percent either way: " + _PERCENT_NOTE,
+        "(GVL_TABLE_S1_DISPLACED), and the dose is parsed from that row. "
+        + _PERCENT_NOTE,
     ),
     "AzelaicAcid": _row(
         "<tr><td>Azelaic Acid</td><td>10 mM</td><td>Yes</td><td>123-99-9</td><td>Sigma-Aldrich</td><td>246379</td></tr>"
@@ -861,8 +907,8 @@ TABLE_S1_DOSES: dict[str, SourcedValue] = {
     ),
     "MMS": _row(
         "<tr><td>Methylmethane sulphonate (MMS)</td><td>0.01%</td><td>No</td><td>66-27-3</td><td>Sigma-Aldrich</td><td>129925</td></tr>",
-        note="IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE); no v/v or "
-        "w/v, so value None under the fixed basis",
+        note="IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE), served "
+        "under the fixed basis. " + _PERCENT_NOTE,
     ),
     "Acetamide": _row(
         "<tr><td>Acetamide</td><td>250 mM</td><td>No</td><td>60-35-5</td><td>Sigma-Aldrich</td><td>00160</td></tr>"
@@ -875,47 +921,87 @@ TABLE_S1_DOSES: dict[str, SourcedValue] = {
         "<tr><td>2,6-Dimethylpyrazine</td><td>38 mM</td><td>No</td><td>108-50-9</td><td>Sigma-Aldrich</td><td>W327301</td></tr>"
     ),
 }
-GVL_TABLE_S1_DISPLACED = _table_s1(
-    "1.5%",
+_SECTION_ROW = re.compile(r"<tr><td>(?P<header>[A-Z ]+)</td><td>(?P<ic30>[^<]*)</td>")
+
+
+def _section_row_cell(quote: str, *, note: str) -> SourcedValue:
+    """A Table S1 section-header row that carries a displaced IC30 cell, parsed."""
+    match = _SECTION_ROW.match(quote)
+    if match is None:
+        raise ValueError(f"not a Table S1 section-header row: {quote!r}")
+    return _table_s1(match["ic30"], quote, note=note)
+
+
+GVL_TABLE_S1_DISPLACED = _section_row_cell(
     "<tr><td>OTHER COMPOUNDS</td><td>1.5%</td><td></td><td></td><td></td><td>140795000</td></tr>",
     note="the row after GVL's: a section header carrying an IC30 and a catalog number, "
-    "which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); "
-    "recorded so the GVL percent is quoted, not typed",
+    "which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); the "
+    "GVL dose is parsed from this quote, not typed. The PDF's own text layer agrees: "
+    "'pdftotext -layout si/si2.pdf' (sha256 " + SI2_PDF_SHA256 + ") prints '1.5%' and "
+    "'140795000' on the 'Gamma valerolactone (GVL)' line and nothing else on the "
+    "'OTHER COMPOUNDS' line",
 )
 
+#: The one Fig 1B token whose IC30 cell the OCR left empty, and the row its cell is on.
+_DISPLACED_IC30 = {"GVL": GVL_TABLE_S1_DISPLACED}
 
-def table_s1_ic30(token: str) -> Concentration:
-    """The IC30 dose Table S1 states for ``token``, as a typed ``Concentration``.
 
-    A mM / uM / ug/mL cell is the value and unit; a percent cell (or GVL's cell, which
-    the OCR left empty) is the IC30 basis alone (``_PERCENT_NOTE``). Any other cell
-    text raises: it is a row the loader has not been taught to read.
-    """
+def _table_s1_cell(token: str) -> str:
+    """``token``'s IC30 cell text: its own row's, or the displaced row's for GVL."""
     row: TableS1Row = TABLE_S1_DOSES[token].value
-    amount = _TABLE_S1_AMOUNT.fullmatch(row.ic30)
+    if row.ic30 == "" and token in _DISPLACED_IC30:
+        cell: str = _DISPLACED_IC30[token].value
+        return cell
+    return row.ic30
+
+
+def table_s1_percent(token: str) -> float:
+    """The number of ``token``'s percent cell in Table S1 (e.g. '2.50%' -> 2.5)."""
+    cell = _table_s1_cell(token)
+    percent = _TABLE_S1_PERCENT.fullmatch(cell)
+    if percent is None:
+        raise ValueError(f"{token}: Table S1 IC30 cell {cell!r} is not a percent")
+    return float(percent["number"])
+
+
+def table_s1_ic30(token: str, basis: DoseBasis = DoseBasis.IC30) -> Concentration:
+    """The dose Table S1 states for ``token``, as a typed ``Concentration``.
+
+    A mM / uM / ug/mL cell is the value and unit; a percent cell is the reported number
+    in the basis-free ``ConcentrationUnit.percent`` (``_PERCENT_NOTE``). ``basis`` is
+    IC30 for the column's own meaning and ``fixed`` for MMS, whose published dose the
+    column repeats. Any other cell text (an empty cell included) raises: it is a row the
+    loader has not been taught to read.
+    """
+    cell = _table_s1_cell(token)
+    amount = _TABLE_S1_AMOUNT.fullmatch(cell)
     if amount is not None:
         return Concentration(
             value=float(amount["number"]),
             unit=_TABLE_S1_UNITS[amount["unit"]],
-            basis=DoseBasis.IC30,
+            basis=basis,
         )
-    if row.ic30 == "" or _TABLE_S1_PERCENT.fullmatch(row.ic30):
-        return Concentration(basis=IC30_BASIS.value)
-    raise ValueError(f"{token}: unreadable Table S1 IC30 cell {row.ic30!r}")
+    if _TABLE_S1_PERCENT.fullmatch(cell):
+        return Concentration(
+            value=table_s1_percent(token), unit=ConcentrationUnit.percent, basis=basis
+        )
+    raise ValueError(f"{token}: unreadable Table S1 IC30 cell {cell!r}")
 
 
 def table_s1_solvent(token: str) -> Solvent | None:
     """The vehicle Table S1's "Dissolved in DMSO?" column states for ``token``.
 
-    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence (DMSO_DOSE,
-    quoting VEHICLE_CONTROL); "No" is ``None``, which the schema defines as dissolved
-    directly.
+    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence
+    (DMSO_VEHICLE_PERCENT, quoting VEHICLE_CONTROL); "No" is ``None``, which the schema
+    defines as dissolved directly.
     """
     row: TableS1Row = TABLE_S1_DOSES[token].value
     if not row.dissolved_in_dmso:
         return None
     return Solvent(
-        name=DMSO_TOKEN, percent=DMSO_DOSE.value, compound=resolved_compound(DMSO_TOKEN)
+        name=DMSO_TOKEN,
+        percent=DMSO_VEHICLE_PERCENT.value,
+        compound=resolved_compound(DMSO_TOKEN),
     )
 
 
@@ -1151,7 +1237,7 @@ class LegacyOrfStrain(BaseModel):
 
     source_orf: str
     current_orf: str
-    barcode: str
+    barcode: str | None
     constructed_orf: ConstructedOrf
 
 
@@ -1172,7 +1258,7 @@ class LibraryRows(BaseModel):
     keep_mask: list[bool]
     systematic: list[str]
     common: list[str]
-    barcode: list[str]
+    barcode: list[str | None]
     dropped_retired: list[str]
     dropped_legacy_duplicate: list[str]
     legacy_target: dict[str, str] = {}
@@ -1225,7 +1311,7 @@ def resolve_library_rows(
     keep_mask: list[bool] = []
     systematic: list[str] = []
     common: list[str] = []
-    kept_barcodes: list[str] = []
+    kept_barcodes: list[str | None] = []
     legacy_set = set(legacy)
     for orf, barcode in zip(orfs, barcodes, strict=True):
         mapped = target.get(orf)
@@ -1254,7 +1340,7 @@ def resolve_library_rows(
 
 
 def legacy_orf_strain(
-    source_orf: str, current_orf: str, barcode: str
+    source_orf: str, current_orf: str, barcode: str | None
 ) -> LegacyOrfStrain:
     """The typed ledger entry for a dropped legacy-spelling strain."""
     return LegacyOrfStrain(
@@ -1340,7 +1426,12 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
 
     # ---- environment / phenotype builders ------------------------------------ #
     def _concentration(self, compound: str) -> Concentration:
-        """The dose as the paper SET it: an IC30 target, or a published fixed dose."""
+        """The dose as the paper SET it: an IC30 target, or a published fixed dose.
+
+        Every value is the one Table S1 reports (#764), except Benomyl, whose fixed
+        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. DMSO's percent
+        is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).
+        """
         if compound == "Benomyl":
             return Concentration(
                 value=BENOMYL_MOLAR.value,
@@ -1348,12 +1439,12 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 basis=DoseBasis.fixed,
             )
         if compound == "MMS":
-            return Concentration(basis=DoseBasis.fixed)
+            return table_s1_ic30(compound, basis=DoseBasis.fixed)
         if compound == DMSO_TOKEN:
             return Concentration(
-                value=DMSO_DOSE.value,
+                value=table_s1_percent(DMSO_TOKEN),
                 unit=ConcentrationUnit.percent_v_v,
-                basis=DoseBasis.fixed,
+                basis=DoseBasis.IC30,
             )
         return table_s1_ic30(compound)
 
@@ -1467,8 +1558,12 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             units=self._units(compound),
         )
 
-    def _genotype(self, systematic: str, common: str, barcode: str) -> Genotype:
-        """The ONE screened deletion; the constant background is on the reference."""
+    def _genotype(self, systematic: str, common: str, barcode: str | None) -> Genotype:
+        """The ONE screened deletion; the constant background is on the reference.
+
+        ``barcode`` None is a row the release carries no barcode for; it is served with
+        ``BARCODE_ABSENT_GAP`` so the absence is typed.
+        """
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
@@ -1477,6 +1572,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                     barcode=barcode,
                     collection=LIBRARY_COLLECTION.value,
                     cassette=ARRAY_KANMX.value,
+                    provenance_gaps=[] if barcode is not None else [BARCODE_ABSENT_GAP],
                 )
             ]
         )
@@ -1520,14 +1616,24 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         # --- library-row retention --------------------------------------------- #
         split = df["gene"].astype(str).str.split("_", n=1)
         orfs = split.str[0]
-        barcodes = split.str[1].fillna("")
+        # No suffix, or an empty one, is a barcode the release does not carry: None.
+        barcodes = split.str[1].map(
+            lambda tag: tag if isinstance(tag, str) and tag != "" else None
+        )
         is_orf = orfs.map(lambda gene: bool(_SYSTEMATIC_RE.match(gene)))
-        has_counts = ~df[sample_cols].isna().any(axis=1)
+        # A row is dropped whole only when EVERY count is missing; a partly missing row
+        # loses just the cells that use a missing count (the cell rule below).
+        has_counts = ~df[sample_cols].isna().all(axis=1)
         not_background = ~orfs.isin(SELECTED_BACKGROUND_LOCI)
-        prefilter = is_orf & has_counts & not_background
+        candidate = is_orf & has_counts & not_background
+        barcoded_orfs = set(orfs[candidate & barcodes.notna()])
+        shadowed = candidate & barcodes.isna() & orfs.isin(barcoded_orfs)
+        prefilter = candidate & ~shadowed
         n_non_orf = int((~is_orf).sum())
         n_all_nan = int((is_orf & ~has_counts).sum())
         background_rows = sorted(orfs[is_orf & has_counts & ~not_background])
+        shadowed_rows = sorted(orfs[shadowed])
+        n_barcodeless_served = int((prefilter & barcodes.isna()).sum())
 
         genome = default_genome()
         library = resolve_library_rows(
@@ -1579,8 +1685,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 rule="row_is_not_a_barcoded_orf_or_carries_no_counts",
                 scope="library_row",
                 description=(
-                    "the gene column is not '<systematic ORF>_<barcode>', or every count "
-                    "column is missing (a QC-dropped barcode)"
+                    "the gene column does not name a systematic ORF (before any "
+                    "'_<barcode>' suffix), or every count column is missing (a "
+                    "QC-dropped barcode); a row missing only some counts is kept and "
+                    "loses just the cells that use them "
+                    "(a_count_the_cell_uses_is_missing)"
                 ),
                 n_records=(n_non_orf + n_all_nan) * n_kept_compounds,
                 items=[],
@@ -1598,6 +1707,21 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 ),
                 n_records=len(background_rows) * n_kept_compounds,
                 items=background_rows,
+            )
+        )
+        rules.append(
+            DropRule(
+                rule="barcodeless_row_of_an_orf_another_row_carries_with_a_barcode",
+                scope="library_row",
+                description=(
+                    "the gene column names the ORF with no '_<barcode>' suffix while "
+                    "another row of the release carries the same ORF with a barcode, so "
+                    "the barcode is not absent from the release and this row cannot be "
+                    "told apart from that strain; a barcodeless row whose ORF no other "
+                    "row names is served with barcode None and BARCODE_ABSENT_GAP"
+                ),
+                n_records=len(shadowed_rows) * n_kept_compounds,
+                items=shadowed_rows,
             )
         )
         rules.append(
@@ -1633,15 +1757,18 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         ]
         log.info(
             "Vanacloig: %d conditions kept (%d unreported, %d unidentified dropped); "
-            "%d library rows kept (%d non-ORF, %d all-NaN, %d background loci, %d "
-            "retired, %d legacy duplicates dropped)",
+            "%d library rows kept, %d of them without a barcode (%d non-ORF, %d "
+            "all-NaN, %d background loci, %d barcodeless duplicates, %d retired, %d "
+            "legacy duplicates dropped)",
             n_kept_compounds,
             len(unreported),
             len(unidentified),
             n_rows,
+            n_barcodeless_served,
             n_non_orf,
             n_all_nan,
             len(background_rows),
+            len(shadowed_rows),
             len(library.dropped_retired),
             len(library.dropped_legacy_duplicate),
         )
@@ -1649,11 +1776,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         # --- normalization ----------------------------------------------------- #
         # The library size is a property of the SEQUENCED SAMPLE, so it is summed over
         # EVERY released barcode (NaN = a QC-dropped barcode contributing no reads)
-        # BEFORE any retention rule is applied, and TMM runs over every complete row.
+        # BEFORE any retention rule is applied. TMM for a condition runs over every row
+        # complete in that condition's own columns (edgeR permits no NA count).
         col_idx = {column: i for i, column in enumerate(sample_cols)}
         all_counts = df[sample_cols].to_numpy(dtype=np.float64)
         library_sizes = np.nansum(all_counts, axis=0)
-        complete = ~np.isnan(all_counts).any(axis=1)
         kept_counts = df.loc[keep, sample_cols].to_numpy(dtype=np.float64)
 
         publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
@@ -1662,6 +1789,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
         n_all_zero_cells = 0
+        missing_cells: list[str] = []
         normalization: dict[str, TmmFactors] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for compound in tqdm(kept_compounds, desc="Vanacloig conditions"):
@@ -1681,6 +1809,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 control_set = sorted({c for group in paired.values() for c in group})
                 members = control_set + cols
                 member_idx = [col_idx[c] for c in members]
+                complete = ~np.isnan(all_counts[:, member_idx]).any(axis=1)
                 factors = tmm_factors(
                     all_counts[np.ix_(complete, member_idx)],
                     library_sizes[member_idx],
@@ -1705,12 +1834,21 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 )
                 response = log_rep.mean(axis=1)
                 sd = log_rep.std(axis=1, ddof=1)
-                all_zero = (kept_counts[:, [col_idx[c] for c in cols]] == 0).all(axis=1)
+                # A cell with a missing replicate or paired-control count has no value
+                # the method defines; it is dropped first, so each cell counts once.
+                missing = np.isnan(kept_counts[:, member_idx]).any(axis=1)
+                missing_cells.extend(
+                    f"{library.systematic[row]}:{compound}"
+                    for row in np.flatnonzero(missing)
+                )
+                all_zero = (kept_counts[:, [col_idx[c] for c in cols]] == 0).all(
+                    axis=1
+                ) & ~missing
                 n_all_zero_cells += int(all_zero.sum())
                 environment = self._environment(compound)
                 reference = self._reference(compound)
                 for row in range(n_rows):
-                    if all_zero[row]:
+                    if missing[row] or all_zero[row]:
                         continue
                     experiment = StrainEnvironmentResponseExperiment(
                         dataset_name=self.name,
@@ -1732,6 +1870,22 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         env.close()
         interned_env.close()
 
+        rules.append(
+            DropRule(
+                rule="a_count_the_cell_uses_is_missing",
+                scope="cell",
+                description=(
+                    "one of the counts this (strain, compound) cell is computed from, a "
+                    "replicate or one of its paired controls, is missing (NaN) in the "
+                    "release; the paper's per-compound edgeR fit permits no NA count and "
+                    "its design is three replicates against the paired controls, so the "
+                    "cell has no value the method defines and is dropped, while the "
+                    "strain's other cells are kept. Items are '<ORF>:<token>'"
+                ),
+                n_records=len(missing_cells),
+                items=missing_cells,
+            )
+        )
         rules.append(
             DropRule(
                 rule="all_three_replicate_counts_are_zero",

@@ -40,10 +40,14 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.strain_background import (
+    BAID_CONSTRUCTION,
+    BAID_GENOTYPE,
+    BAID_STRAIN,
     BRACHMANN_1998,
     KANMX4_CASSETTE,
     STANDARD_ALLELES,
     STANDARD_BY_GENOTYPES,
+    baid_background,
     pending_source_review,
     standard_allele,
     standard_background,
@@ -829,3 +833,62 @@ def test_two_strains_differing_only_in_an_integration_are_not_the_same_strain() 
         }
     )
     assert strain_background_identity(base) == strain_background_identity(gapped)
+
+
+# ------------------------------------------------------- baid_background (shared host)
+
+
+def test_baid_background_is_by4742_plus_the_delta_site_crispr_aid_cassette() -> None:
+    """The shared bAID host: four BY4742 alleles and one integration at Delta.
+
+    One helper, because two datasets were run in this strain: Lian 2019's MAGIC screen
+    and the in-house Bioscreen dataset (thesis strain BY4742-iAID6). They join on this
+    object, so its name, parents, alleles and cassette are pinned here.
+    """
+    background = baid_background()
+    assert background.name == BAID_STRAIN == "bAID"
+    assert background.parents == ["BY4742"]
+    assert background.reference_strain == "S288C"
+    assert background.ploidy == "haploid"
+    assert background.mating_type is s.MatingType.alpha
+    assert background.construction == BAID_CONSTRUCTION.quote
+    assert {allele.allele_name for allele in background.alleles} == {
+        "his3Δ1",
+        "leu2Δ0",
+        "lys2Δ0",
+        "ura3Δ0",
+    }
+    assert len(background.alleles) == 4
+    # Which alleles BY4742 carries is sourced (the Lian SI strain table); how each was
+    # made is only in Brachmann 1998, which is not mirrored, so each allele is asserted
+    # with a pending-review gap on provenance.
+    for allele in background.alleles:
+        assert allele.zygosity is s.Zygosity.haploid
+        assert allele.gapped_fields() == {"provenance"}
+    assert len(background.integrations) == 1
+    cassette = background.integrations[0]
+    assert cassette.name == "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
+    assert cassette.locus == "Delta"
+    assert cassette.locus_systematic_gene_name is None
+    assert cassette.elements == [
+        "KanMX",
+        "dLbCpf1-VP",
+        "Csy4",
+        "dSpCas9-RD1152",
+        "SaCas9",
+    ]
+    assert cassette.marker == "KanMX"
+    assert cassette.zygosity is s.Zygosity.haploid
+    assert cassette.is_sourced
+    assert cassette.provenance == [BAID_GENOTYPE, BAID_CONSTRUCTION]
+
+
+def test_baid_background_round_trips_through_json_unchanged() -> None:
+    """It is embedded in stored records, so it has to survive the JSON round trip."""
+    background = baid_background()
+    restored = s.StrainBackground.model_validate_json(background.model_dump_json())
+    assert restored == background
+    assert restored.model_dump() == background.model_dump()
+    assert json.loads(background.model_dump_json()) == json.loads(
+        restored.model_dump_json()
+    )

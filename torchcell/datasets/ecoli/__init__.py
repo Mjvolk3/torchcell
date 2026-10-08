@@ -73,6 +73,10 @@ sourcing layer.
   ``TargetedMetabolomeRapp2026Dataset`` (the targeted LC-MS/MS screen, a second
   platform) and ``MetaboliteIntensityRapp2026Dataset`` (the absolute FI-MS intensity of
   each accumulating feature, with its per-replicate standard error).
+- ``rachwalski2024`` -- ``CrispriCrossRachwalski2024Dataset``: the mobile CRISPRi
+  collection's normalized colony growth, crossed into the lpp deletion and into the whole
+  Keio collection, so a record can carry an essential-gene knockdown and a cataloged
+  deletion at once.
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported; and
   ``GeneEssentialityPrice2018EcoliDataset``, its Supplementary Table 1 likely-essential
@@ -148,6 +152,9 @@ from .price2018 import (
     GeneEssentialityPrice2018EcoliDataset as GeneEssentialityPrice2018EcoliDataset,
 )
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
+from .rachwalski2024 import (
+    CrispriCrossRachwalski2024Dataset as CrispriCrossRachwalski2024Dataset,
+)
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .rapp2026_platforms import GrowthAucRapp2026Dataset as GrowthAucRapp2026Dataset
 from .rapp2026_platforms import (

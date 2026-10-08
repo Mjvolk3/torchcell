@@ -43,27 +43,39 @@ Record = dict[str, Any]
 
 def _genotype_signature(
     experiment: dict[str, Any],
-) -> tuple[tuple[str | None, str | None, str | None, str | None], ...]:
+) -> tuple[tuple[str | None, ...], ...]:
     """Canonical STRAIN identity: the sorted set of perturbations, each keyed by
-    ``(systematic_gene_name, perturbation_type, perturbed_gene_name, strain_id)``.
+    ``(systematic_gene_name, perturbation_type, perturbed_gene_name, strain_id)`` plus
+    the guide-library discriminators of a CRISPR construct.
 
     ``strain_id`` (present on SGA perturbation variants, else None) distinguishes an allelic
     SERIES that shares gene + type -- e.g. Baryshnikova 2010 has 58 genes with more than one
     temperature-sensitive allele (YAL041W x4); without it they collide as duplicates. It is
     None for non-SGA perturbations, so adding it only ever REFINES the key -- pre-existing
     fitness datasets keep their (already-unique) signatures.
+
+    The CRISPR fields are here for the same reason and on the same terms as in
+    :func:`environment_response._genotype_signature`: a guide library has MANY strains per
+    (gene, mode), so the spacer (``crispr.guide_sequence``) is part of the strain, and the
+    SAME spacer screened in two library pools is two pool-relative measurements, so the
+    pool (``crispr.library_pool``) is too. Both are ``None`` on a non-CRISPR leaf and on a
+    construct that names neither, which leaves every pre-existing key unchanged; a field
+    added to this tuple can only SPLIT a group, never merge two.
     """
-    return tuple(
-        sorted(
-            (
-                p.get("systematic_gene_name"),
-                p.get("perturbation_type"),
-                p.get("perturbed_gene_name"),
-                p.get("strain_id"),
-            )
-            for p in experiment["genotype"]["perturbations"]
+
+    def _identity(p: dict[str, Any]) -> tuple[str | None, ...]:
+        payload = p.get("crispr")
+        crispr: dict[str, Any] = payload if isinstance(payload, dict) else {}
+        return (
+            p.get("systematic_gene_name"),
+            p.get("perturbation_type"),
+            p.get("perturbed_gene_name"),
+            p.get("strain_id"),
+            crispr.get("guide_sequence"),
+            crispr.get("library_pool"),
         )
-    )
+
+    return tuple(sorted(_identity(p) for p in experiment["genotype"]["perturbations"]))
 
 
 def _environment_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
@@ -80,6 +92,14 @@ def _environment_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     value, unit, basis)``, the same tuple :func:`environment_response._condition_signature`
     uses, so the two verifiers agree on what makes two conditions different. Elements are
     stringified for a total order (mixed None / str / float never breaks the sort).
+
+    A study that screened the SAME strains in the SAME medium at the SAME dose twice
+    measured two conditions, not one: the screens are normalized independently, so the
+    phenotype's ``screen_id`` joins the signature, exactly as it does in
+    :func:`environment_response._condition_signature`. Rachwalski 2024 releases its
+    whole CRISPRi collection on MOPS minimal at six doses in BOTH Table S2A and Table
+    S3, and none of the 2,262 overlapping cells agree. ``.get`` keeps the signature
+    identical for every dataset that carries no screen label.
 
     A yeast fitness dataset carries no environment perturbations, so its key gains an
     empty tuple and its (already unique) signatures are unchanged.
@@ -116,6 +136,7 @@ def _environment_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
         media,
         env.get("duration_hours"),
         env.get("duration_generations"),
+        experiment["phenotype"].get("screen_id"),
     )
 
 

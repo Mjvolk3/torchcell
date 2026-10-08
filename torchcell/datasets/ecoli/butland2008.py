@@ -1778,6 +1778,12 @@ def read_served_babu(served_root: str) -> tuple[dict[tuple[str, str], str], int]
     The generator is fully consumed, so ``stream_records`` closes the environment before
     this returns; a held handle makes the next open of the same path fail with "already
     open in this process", and that surfaces only in a full-suite run.
+
+    A repeated oriented pair raises rather than overwriting, because the partition counts
+    served RECORDS against served PAIRS and a collapsed duplicate would make the two
+    disagree silently. The served store cannot hold one today (its loader drops the
+    contradictory duplicate pairs outright), so this is the invariant the arithmetic rests
+    on rather than a tolerated case.
     """
     from torchcell.verification.runners import stream_records
 
@@ -1789,9 +1795,14 @@ def read_served_babu(served_root: str) -> tuple[dict[tuple[str, str], str], int]
             str(leaf["cassette"]): str(leaf["systematic_gene_name"])
             for leaf in experiment["genotype"]["perturbations"]
         }
-        pairs[(by_cassette[QUERY_CASSETTE], by_cassette[RECIPIENT_CASSETTE])] = str(
-            experiment["phenotype"]["screen_id"]
-        )
+        pair = (by_cassette[QUERY_CASSETTE], by_cassette[RECIPIENT_CASSETTE])
+        if pair in pairs:
+            raise RuntimeError(
+                f"{served_root} holds two records for the oriented pair "
+                f"{pair[0]} -> {pair[1]}, so served records and served pairs would "
+                "no longer be the same count"
+            )
+        pairs[pair] = str(experiment["phenotype"]["screen_id"])
         records += 1
     return pairs, records
 
@@ -1824,6 +1835,12 @@ def assert_served_partition(
             f"them would duplicate a record: {shared[:5]}"
         )
     butland = {pair for pair, screen in served.items() if screen == BABU_SCREEN_TAG}
+    if len(butland) != SERVED_BUTLAND_RECORDS:
+        raise RuntimeError(
+            f"{served_root} holds {len(butland)} records under screen_id "
+            f"{BABU_SCREEN_TAG!r}, this build was measured against "
+            f"{SERVED_BUTLAND_RECORDS}"
+        )
     if len(butland) != SERVED_BUTLAND_PAIRS:
         raise RuntimeError(
             f"{served_root} holds {len(butland)} oriented pairs under screen_id "

@@ -340,6 +340,7 @@ def synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
         sum(1 for row in SYNTHETIC_ARRAY if row[0] == m.LABEL_SPA_TAG),
     )
     monkeypatch.setattr(m, "N_HIGH_CONFIDENCE_PAIRS", len(SYNTHETIC_HIGH_CONFIDENCE))
+    monkeypatch.setattr(m, "SERVED_BUTLAND_RECORDS", 2)
     monkeypatch.setattr(m, "SERVED_BUTLAND_PAIRS", 2)
     monkeypatch.setattr(m, "SERVED_OVERLAP_CELLS", 1)
     monkeypatch.setattr(m, "SERVED_PAIRS_NOT_IN_THIS_RELEASE", ("b0005 -> b4486",))
@@ -885,8 +886,8 @@ def test_the_partition_refuses_a_stored_pair_the_served_store_holds() -> None:
 def test_the_partition_refuses_a_served_butland_count_it_was_not_measured_against(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(m, "SERVED_BUTLAND_PAIRS", 727)
-    with pytest.raises(RuntimeError, match="oriented pairs under screen_id"):
+    monkeypatch.setattr(m, "SERVED_BUTLAND_RECORDS", 727)
+    with pytest.raises(RuntimeError, match="records under screen_id"):
         m.assert_served_partition(
             "stubbed",
             dict(SERVED_STUB),
@@ -897,6 +898,34 @@ def test_the_partition_refuses_a_served_butland_count_it_was_not_measured_agains
             released_cells=18,
             overlap_cells=0,
         )
+
+
+def test_reading_the_served_store_refuses_two_records_of_one_oriented_pair(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The partition counts served records against served pairs, so they must agree."""
+
+    def two_of_one_pair(root: str) -> Iterator[dict[str, Any]]:
+        leaves = [
+            {"cassette": "cat", "systematic_gene_name": "b0005"},
+            {"cassette": "kan", "systematic_gene_name": "b0002"},
+        ]
+        for score in (-1.0, -2.0):
+            yield {
+                "experiment": {
+                    "genotype": {"perturbations": leaves},
+                    "phenotype": {
+                        "screen_id": m.BABU_SCREEN_TAG,
+                        "gene_interaction": score,
+                    },
+                }
+            }
+
+    monkeypatch.setattr(
+        "torchcell.verification.runners.stream_records", two_of_one_pair
+    )
+    with pytest.raises(RuntimeError, match="two records for the oriented pair"):
+        m.read_served_babu("stubbed")
 
 
 # --------------------------------------------------------------------------- #

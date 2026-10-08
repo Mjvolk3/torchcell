@@ -4311,8 +4311,37 @@ CANDIDATES: list[Candidate] = [
         "construct has a JBEI registry number. The paper's own target count is "
         "self-inconsistent, 21 genes in the introduction against 18 guides in "
         "the results and 15 in the abstract, and one printed symbol, arcC, is "
-        "not a K-12 gene name.",
-        accession="JBEI public registry (https://public-registry.jbei.org), JPUB numbers per plasmid in Table 1; no sequence-data or value accession",
+        "not a K-12 gene name. RE-MEASURED 2026-10-08 "
+        "(experiments/036-dataset-fixes-before-kg-build/scripts/"
+        "tian2019_release_loadability.py): STILL BLOCKED, and the reason is now exact. "
+        "The paper has NO Supporting Information at all, which is a property of the "
+        "release and not a gap in the mirror: the library manifest records "
+        "si_expected as empty with provenance_complete true, and the PDF carries no "
+        "ACS ASSOCIATED CONTENT block and no occurrence of the string ``Supporting "
+        "Information``. The release holds 3 OCR'd table blocks, all of them Table 1 and "
+        "its two continuations, and across their 452 cells exactly ONE is a bare number, "
+        "the bibliography reference on the KG1R10 row, so the measurement count is "
+        "zero: every other digit belongs to an identifier. The 86 absolute isopentenol "
+        "values in mg/L are bar heights in Figures 6B and 7, with 60 matching OD600 "
+        "values and 10 acetate values beside them, and no figure caption says what its "
+        "error bars represent. Exactly 4 (strain, condition) pairs carry a figure-free "
+        "number, every one of them a PERCENTAGE IMPROVEMENT over the base strain rather "
+        "than a titer, with no unit, no uncertainty and, for 2 of the 4, no stated "
+        "timepoint; admitting the shared 18 to 24 percent interval as three per-strain "
+        "intervals raises that to 7. The replicate count is genuinely absent, read "
+        "twice from the OCR and from the PDF text layer. Zero gRNA spacer sequences are "
+        "published anywhere, which is why arcC cannot be resolved rather than merely "
+        "looking odd. Three corrections to this row's own description: the 3 induction "
+        "levels apply to only 4 of the 24 genotypes, since the 18 singles and the "
+        "poxB-ackA-pta triple ran at 10 nM alone; the 24 and 48 h sampling is Figure 7 "
+        "only, against 24/48/72 h in the Results and 24/48/76 h in the Methods; and the "
+        "15/18/21 target counts are three different SETS that reconcile as 15 + 3 = 18 "
+        "and 18 + 3 = 21, so the defensible finding is narrower, that the abstract and "
+        "conclusion call the delivered library 15 when 18 single-guide strains were "
+        "built and measured. An OCR caveat for any later reader: paper.md's Table 1 "
+        "misassigns JPUB numbers for five rows and drops JBEI-18656's plasmid row, so "
+        "that table must be read from the PDF text layer.",
+        accession="JBEI public registry (https://public-registry.jbei.org), JPUB numbers per plasmid in Table 1; no sequence-data or value accession. The paper's whole availability text is one Table 1 footnote, quoted 2026-10-08: ``Strains with JBEI plasmid are available at the JBEI public registry (https://public-registry.jbei.org) and searchable using the JPUB number.``",
         accession_confirmed=False,
         status="blocked",
         confidence="sourced",

@@ -1,0 +1,8 @@
+genotype,condition,value,unit,absolute,quote
+C5-poxB-ackA-pta,"10 nM aTc, timepoint not stated",37.0,percent improvement vs the base strain,False,We found that the strain harboring the triple-gRNA plasmid targeting the acetate formation pathway improved isopentenol production by $3 7 \%$ .
+C5-asnA-gldA-prpE,"0 nM aTc, timepoint not stated",98.0,percent improvement vs the base strain,False,We observed $9 8 \%$ improvement in isopentenol production from C5-asnA-gldAprpE at $\mathbf { 0 } \ \mathbf { \mathrm { n M } }$ aTc compared to the base strain
+C5-asnA-prpE,5 nM aTc,90.0,percent improvement vs the base strain,False,"we observed $9 0 \%$ and $6 9 \%$ improvement, respectively, in strain C5-asnA-prpE and C5-gldA-prpE with 5 nM aTc"
+C5-gldA-prpE,5 nM aTc,69.0,percent improvement vs the base strain,False,"we observed $9 0 \%$ and $6 9 \%$ improvement, respectively, in strain C5-asnA-prpE and C5-gldA-prpE with 5 nM aTc"
+C5-asnA,10 nM aTc,,"percent improvement in [18, 24], one interval shared by three strains and never split",False,"Strains C5-asnA, C5-gldA, and C5-prpE bearing single-gRNA also improved isopentenol production by $1 8 - 2 4 \%$"
+C5-gldA,10 nM aTc,,"percent improvement in [18, 24], one interval shared by three strains and never split",False,"Strains C5-asnA, C5-gldA, and C5-prpE bearing single-gRNA also improved isopentenol production by $1 8 - 2 4 \%$"
+C5-prpE,10 nM aTc,,"percent improvement in [18, 24], one interval shared by three strains and never split",False,"Strains C5-asnA, C5-gldA, and C5-prpE bearing single-gRNA also improved isopentenol production by $1 8 - 2 4 \%$"

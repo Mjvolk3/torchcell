@@ -1,0 +1,154 @@
+{
+  "row": 17,
+  "row_name": "Tian 2019 isopentenol CRISPRi",
+  "doi": "10.1021/acssynbio.8b00429",
+  "citation_key": "tianRedirectingMetabolicFlux2019",
+  "mirror": {
+    "doi": "10.1021/acssynbio.8b00429",
+    "title": "Redirecting Metabolic Flux via Combinatorial Multiplex CRISPRi-Mediated Repression for Isopentenol Production in Escherichia coli",
+    "paper_md_sha256": "6eb6dd45b69924f8cb0730d09f5228fa23eba3ed12cdfa4b26ca0376767735e4",
+    "paper_md_bytes": 63286,
+    "si_paths_in_manifest": [],
+    "si_data_sources": [],
+    "si_expected": [],
+    "provenance_complete": true,
+    "si_directory_exists": false
+  },
+  "supporting_information_probe": {
+    "probed": true,
+    "pdf_sha256": "b917322d712df1dcc21cef5e8bd031cc5a48fb1840073db696188396ea415526",
+    "text_layer_chars": 82054,
+    "markers_found": {
+      "ASSOCIATED CONTENT": false,
+      "Supporting Information": false
+    },
+    "spacer_runs_in_pdf_text": 0
+  },
+  "release_has_no_supporting_information": true,
+  "tables": [
+    {
+      "table_index": 0,
+      "n_rows": 61,
+      "n_cells": 183,
+      "n_bare_number_cells": 0,
+      "bare_numbers": []
+    },
+    {
+      "table_index": 1,
+      "n_rows": 61,
+      "n_cells": 242,
+      "n_bare_number_cells": 1,
+      "bare_numbers": [
+        "36"
+      ]
+    },
+    {
+      "table_index": 2,
+      "n_rows": 9,
+      "n_cells": 27,
+      "n_bare_number_cells": 0,
+      "bare_numbers": []
+    }
+  ],
+  "n_tables": 3,
+  "n_bare_number_cells_over_all_tables": 1,
+  "prose_values": [
+    {
+      "genotype": "C5-poxB-ackA-pta",
+      "condition": "10 nM aTc, timepoint not stated",
+      "value": 37.0,
+      "unit": "percent improvement vs the base strain",
+      "absolute": false,
+      "quote": "We found that the strain harboring the triple-gRNA plasmid targeting the acetate formation pathway improved isopentenol production by $3 7 \\%$ ."
+    },
+    {
+      "genotype": "C5-asnA-gldA-prpE",
+      "condition": "0 nM aTc, timepoint not stated",
+      "value": 98.0,
+      "unit": "percent improvement vs the base strain",
+      "absolute": false,
+      "quote": "We observed $9 8 \\%$ improvement in isopentenol production from C5-asnA-gldAprpE at $\\mathbf { 0 } \\ \\mathbf { \\mathrm { n M } }$ aTc compared to the base strain"
+    },
+    {
+      "genotype": "C5-asnA-prpE",
+      "condition": "5 nM aTc",
+      "value": 90.0,
+      "unit": "percent improvement vs the base strain",
+      "absolute": false,
+      "quote": "we observed $9 0 \\%$ and $6 9 \\%$ improvement, respectively, in strain C5-asnA-prpE and C5-gldA-prpE with 5 nM aTc"
+    },
+    {
+      "genotype": "C5-gldA-prpE",
+      "condition": "5 nM aTc",
+      "value": 69.0,
+      "unit": "percent improvement vs the base strain",
+      "absolute": false,
+      "quote": "we observed $9 0 \\%$ and $6 9 \\%$ improvement, respectively, in strain C5-asnA-prpE and C5-gldA-prpE with 5 nM aTc"
+    }
+  ],
+  "n_prose_values_with_a_point_estimate": 4,
+  "n_prose_values_with_an_interval_only": 3,
+  "n_prose_values_that_are_absolute_titers": 0,
+  "figure_only_values": [
+    {
+      "figure": "Figure 6B",
+      "axis": "Isopentenol (mg/L)",
+      "series": "24 hr / 48 hr / 72 hr",
+      "values": 60,
+      "note": "20 bar groups, 18 single-guide plus poxB-ackA-pta plus the base strain, times 3 timepoints; a matching 60 OD600 values sit below"
+    },
+    {
+      "figure": "Figure 7",
+      "axis": "Isopentenol (mg/L)",
+      "series": "48 hour / 24 hour",
+      "values": 26,
+      "note": "4 combinatorial strains over 3 aTc levels plus the base strain at one condition, times 2 timepoints; a matching 26 OD600 values sit below"
+    },
+    {
+      "figure": "Figure 5C",
+      "axis": "Acetate (g/L)",
+      "series": "one condition",
+      "values": 10,
+      "note": "the acetate panel on DH1"
+    }
+  ],
+  "n_figure_only_values": 96,
+  "target_counts": [
+    {
+      "where": "abstract",
+      "count": 15,
+      "quote": "we first designed a single-gRNA library with 15 individual targets"
+    },
+    {
+      "where": "introduction",
+      "count": 21,
+      "quote": "We targeted 21 individual endogenous genes in competing pathways to divert carbon flux toward IPP precursor synthesis."
+    },
+    {
+      "where": "results",
+      "count": 18,
+      "quote": "All together, we constructed 18 single-gRNA based on the C5 version of plasmid"
+    }
+  ],
+  "time_axis_statements": [
+    {
+      "where": "results",
+      "quote": "Samples were taken for isopentenol production measurement at 24, 48, and $^ { 7 2 \\mathrm { ~ h ~ } }$ ."
+    },
+    {
+      "where": "methods",
+      "quote": "At 24, 48, and $^ { 7 6 \\mathrm { ~ h ~ } }$ postinduction, $2 5 0 \\mu \\mathrm { L }$ of culture was sampled"
+    },
+    {
+      "where": "figure 7 caption",
+      "quote": "Isopentenol production (top) and cell density data (bottom) after 24 and $4 8 \\mathrm { ~ h ~ }$ ."
+    }
+  ],
+  "spacers": {
+    "spacer_runs_in_paper_md": 0,
+    "longest": 0
+  },
+  "availability_quote": "a Strains with JBEI plasmid are available at the JBEI public registry (https://public-registry.jbei.org) and searchable using the JPUB number.",
+  "blocking_claim_still_true": true,
+  "accession_claim_still_true": true
+}

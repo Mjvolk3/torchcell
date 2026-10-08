@@ -1,6 +1,6 @@
 ---
 name: paper-edit
-description: Edit the Nature Biotech manuscript (paper/nature-biotech) respecting the section status stoplight, then rebuild editing.pdf. Use for any change to the paper body, sections, or SI.
+description: Edit the Nature Biotech manuscript (paper/nature-biotech) respecting the section status stoplight, then rebuild editing-nature-biotech.pdf. Use for any change to the paper body, sections, or SI.
 ---
 
 Workflow for editing the Nature Biotechnology manuscript in `paper/nature-biotech/`. The
@@ -9,7 +9,8 @@ edit-then-rebuild loop so the author can look at the PDF directly. Follow this e
 ## Step 0: Edit the shared body, never the wrappers
 
 Edit `content.tex` and `sections/*.tex` (the shared body). Do NOT put content in
-`editing.tex`, `submission.tex`, or `twocolumn.tex` — those are thin per-view wrappers.
+`editing-nature-biotech.tex`, `submission.tex`, or `twocolumn.tex` — those are thin per-view
+wrappers.
 Figures come from assets → draw.io → `figures/` (see CLAUDE.md); never write image data.
 
 ## Step 1: Check the section status BEFORE editing (stoplight policy)
@@ -46,11 +47,11 @@ to change a status, update BOTH the inline `\secstatus{...}` and the matching li
 make -C paper/nature-biotech editing
 ```
 
-This regenerates `editing.pdf` (the drafting view with the stoplight chips + outline board).
-Then verify the build is clean:
+This regenerates `editing-nature-biotech.pdf` (the drafting view with the stoplight chips +
+outline board). Then verify the build is clean:
 
 ```bash
-grep -iE 'undefined control sequence|! LaTeX Error|! Undefined' paper/nature-biotech/editing.log | grep -iv warning | head
+grep -iE 'undefined control sequence|! LaTeX Error|! Undefined' paper/nature-biotech/editing-nature-biotech.log | grep -iv warning | head
 ```
 
 Empty output = clean. The `Object @figure.N already defined` / `PDF version 1.7` warnings
@@ -62,5 +63,5 @@ To also refresh the submission / two-column views: `make -C paper/nature-biotech
 ## Step 4: Report
 
 State which sections changed, their status (and whether any `tent`/`final` edit was
-author-approved), and that `editing.pdf` rebuilt clean. Do not commit unless asked; if
+author-approved), and that `editing-nature-biotech.pdf` rebuilt clean. Do not commit unless asked; if
 asked, follow `/stage` + `/commit` (scratch notes are never committed).

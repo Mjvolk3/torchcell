@@ -57,7 +57,7 @@ PAIRS=(
   "content.tex:content.tex"
   "preamble.tex:preamble.tex"
   "references.bib:references.bib"
-  "editing.tex:editing.tex"
+  "editing-nature-biotech.tex:editing-nature-biotech.tex"
   "twocolumn.tex:twocolumn.tex"
   "sn-jnl.cls:sn-jnl.cls"
   "sn-nature.bst:sn-nature.bst"

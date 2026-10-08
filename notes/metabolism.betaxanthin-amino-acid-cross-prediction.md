@@ -22,7 +22,7 @@ collection:
 A model trained on one should transfer signal to the other (shikimate flux, tyrosine
 availability, amine pools are shared latent causes). The supervised-learning notation
 below is the formal setup for that cross-prediction study; it is the same notation used
-in the manuscript (`paper/nature-biotech/editing.pdf`, Methods).
+in the manuscript (`paper/nature-biotech/editing-nature-biotech.pdf`, Methods).
 
 ## 2026.08.02 - Supervised Learning Notation (slide version)
 

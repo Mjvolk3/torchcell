@@ -8,8 +8,8 @@
 #   Shared   (Overleaf)      = $OVERLEAF_DIR                         <- colleagues see this
 #
 # submission.tex is published AS main.tex (Overleaf's default main document);
-# editing.tex and twocolumn.tex are shared as alternate views (switch Menu ->
-# Main document in Overleaf). sections/ and figures/ are copied whole. Workshop-
+# editing-nature-biotech.tex and twocolumn.tex are shared as alternate views (switch
+# Menu -> Main document in Overleaf). sections/ and figures/ are copied whole. Workshop-
 # only files (figure-proto.tex, *.pdf views, READMEs, this script, sn-article.tex,
 # flatten_tex.py, Makefile) are intentionally NOT shared.
 #
@@ -37,9 +37,12 @@ SHARE_FILES=(
   sn-jnl.cls
   sn-nature.bst
   references.bib
-  editing.tex
+  editing-nature-biotech.tex
   twocolumn.tex
 )
+# The editing view was `editing.tex` until 2026-10-08. The manifest-driven deletion below
+# removes the old name from Overleaf on the first sync after the rename; a collaborator who
+# had set it as the Overleaf main document picks the new name from Menu -> Main document.
 # submission.tex -> main.tex (handled below); sections/ and figures/ copied whole.
 
 [ -d "$DST/.git" ] || { echo "ERROR: $DST is not a git repo. Clone the Overleaf project there first." >&2; exit 1; }

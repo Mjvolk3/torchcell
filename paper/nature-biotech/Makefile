@@ -2,8 +2,15 @@
 #
 #   make paper       -> the 3 journal/typeset views (submission, editing, twocolumn)
 #   make submission  -> submission.pdf  (journal submission; official sn-nature, single column)
-#   make editing     -> editing.pdf     (our drafting/typeset look; print-approx margins, char budgets)
+#   make editing     -> editing-nature-biotech.pdf (our drafting/typeset look; print-approx
+#                       margins, char budgets)
 #   make twocolumn   -> twocolumn.pdf   (published-like Nature double column)
+#
+# The editing view carries the document name in its filename on purpose. Every
+# notes-tex document also builds an "editing" view, so a bare `editing.pdf` is the
+# one name that cannot be found by name in an editor's file search or in a Zotero
+# attachment list; `editing-nature-biotech.pdf` can. The make target stays
+# `editing` so the commands in the skills and notes do not change.
 #   make figproto    -> figure-proto.pdf (true-scale figure-sizing canvas)
 #   make all         -> paper + figproto
 #   make bib-pull    -> pull the sha256-pinned group `paper` bibliography from tc-lit
@@ -30,7 +37,8 @@ else
 endif
 
 SHARED := content.tex preamble.tex references.bib sn-jnl.cls sn-nature.bst $(wildcard sections/*.tex)
-VIEWS  := submission editing twocolumn
+EDITING := editing-nature-biotech
+VIEWS  := submission $(EDITING) twocolumn
 
 # Reproducible builds, mirroring notes-tex/common/Makefile.common. Without this,
 # hyperref writes a wall-clock /CreationDate into a compressed object stream, so
@@ -90,7 +98,7 @@ paper: $(addsuffix .pdf,$(VIEWS))
 all: paper figproto figlimits
 
 submission: submission.pdf
-editing: editing.pdf
+editing: $(EDITING).pdf
 twocolumn: twocolumn.pdf
 figproto: figure-proto.pdf
 figlimits: figure-limits.pdf
@@ -111,25 +119,28 @@ wordcount:
 # stock sn-article.tex sample carries a placeholder title, so "find the file with
 # \title" would have two answers here.
 #
-# editing.pdf on purpose: it is the view with the status chips and the \cb word
+# The editing view on purpose: it is the view with the status chips and the \cb word
 # budgets, which is what a reviewer is commenting against. `make publish-submission`
-# is the same thing for the clean submission view.
+# is the same thing for the clean submission view. zotero_publish.py strips the
+# `-nature-biotech` suffix from the stem, so the attachment is still named
+# `nature-biotech-editing_<built>_<sha8>.pdf` and the version history stays one sequence
+# across the rename.
 ZOTERO_PUBLISH := ../../notes-tex/common/zotero_publish.py
 ZOTERO_PUBLISH_ARGS := paper/nature-biotech --tex sections/frontmatter.tex
-publish: editing.pdf
-	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing
-publish-dry: editing.pdf
-	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing --dry-run
+publish: $(EDITING).pdf
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf $(EDITING)
+publish-dry: $(EDITING).pdf
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf $(EDITING) --dry-run
 publish-list:
-	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf editing --list
+	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf $(EDITING) --list
 publish-submission: submission.pdf
 	@$(PYTHON) $(ZOTERO_PUBLISH) $(ZOTERO_PUBLISH_ARGS) --pdf submission
 
 # The EDITING view embeds a per-section word-budget table on a final page. wordcount.tex is
-# regenerated from the sources whenever they (or the script) change, and editing.pdf depends
-# on it so the embedded counts always match the compiled draft. submission/twocolumn define
-# \cb as a no-op and do NOT include it, so only the editing view carries the report.
-editing.pdf: wordcount.tex
+# regenerated from the sources whenever they (or the script) change, and the editing PDF
+# depends on it so the embedded counts always match the compiled draft. submission/twocolumn
+# define \cb as a no-op and do NOT include it, so only the editing view carries the report.
+$(EDITING).pdf: wordcount.tex
 wordcount.tex: wordcount.py $(wildcard sections/*.tex)
 	@$(PYTHON) wordcount.py --tex $@
 
@@ -140,7 +151,7 @@ wordcount.tex: wordcount.py $(wildcard sections/*.tex)
 # checkfigs is .PHONY, so it runs on every build and aborts before Tectonic if a figure
 # is over 180x240 mm or scaled. Read the `make checkfigs` report to see which figure is
 # over and by how much (figproto is a sizing tool, not a view, so it stays ungated).
-submission.pdf editing.pdf twocolumn.pdf: %.pdf: %.tex $(SHARED) checkfigs
+$(addsuffix .pdf,$(VIEWS)): %.pdf: %.tex $(SHARED) checkfigs
 	$(TECTONIC) -X compile $<
 
 figure-proto.pdf: figure-proto.tex preamble.tex
@@ -251,4 +262,4 @@ flat: submission.tex $(SHARED)
 	python3 flatten_tex.py submission.tex submission-flat.tex
 
 clean:
-	rm -f submission.pdf editing.pdf twocolumn.pdf figure-proto.pdf figure-limits.pdf submission-flat.tex wordcount.tex
+	rm -f $(addsuffix .pdf,$(VIEWS)) figure-proto.pdf figure-limits.pdf submission-flat.tex wordcount.tex

@@ -14,7 +14,7 @@ through three wrappers, and only the drafting view goes to Zotero.}{fig:paper}
 
 \notesec{One body, three views}
 \texttt{content.tex} holds the manuscript. \texttt{submission.tex},
-\texttt{editing.tex} and \texttt{twocolumn.tex} each include it and differ only in
+\texttt{editing-nature-biotech.tex} and \texttt{twocolumn.tex} each include it and differ only in
 class options and in what the editing-only macros expand to: \texttt{\textbackslash
 secstatus} draws a chip in the editing view and nothing in the other two, and the
 word-budget tags are counted only there. So \texttt{make paper} produces three PDFs
@@ -32,7 +32,7 @@ out of spec stops all three builds before Tectonic runs.}
 \toprule
 Target & Produces \\
 \midrule
-\texttt{make paper} & \texttt{submission.pdf}, \texttt{editing.pdf}, \texttt{twocolumn.pdf}, then the word-count report \\
+\texttt{make paper} & \texttt{submission.pdf}, \texttt{editing-nature-biotech.pdf}, \texttt{twocolumn.pdf}, then the word-count report \\
 \texttt{make submission}, \texttt{editing}, \texttt{twocolumn} & one view \\
 \texttt{make figproto} & \texttt{figure-proto.pdf}, the true-scale figure-sizing canvas \\
 \texttt{make figlimits} & \texttt{figure-limits.pdf}, the Nature print-box card for collaborators \\
@@ -42,7 +42,7 @@ Target & Produces \\
 \texttt{make checkfigs} & the size and scale gate on \texttt{figures/*.pdf}, exit non-zero on a violation \\
 \texttt{make wordcount} & \texttt{wordcount.tex}, the per-section counts against the budgets \\
 \texttt{make bib-pull} & \texttt{references.bib} from the served \texttt{paper} bibliography \\
-\texttt{make publish} & \texttt{editing.pdf} into Zotero; \texttt{publish-dry}, \texttt{publish-list}, \texttt{publish-submission} \\
+\texttt{make publish} & \texttt{editing-nature-biotech.pdf} into Zotero; \texttt{publish-dry}, \texttt{publish-list}, \texttt{publish-submission} \\
 \texttt{make flat} & \texttt{submission-flat.tex}, one file for the journal's upload \\
 \bottomrule
 \end{tabular}
@@ -64,7 +64,7 @@ a PDF.
 \notesec{Word budgets}
 \texttt{wordcount.py} strips figure and table environments and the budget tags,
 counts the rest with \texttt{texcount}, and writes \texttt{wordcount.tex}, which the
-editing view embeds on its last page. \texttt{editing.pdf} depends on that file, so
+editing view embeds on its last page. \texttt{editing-nature-biotech.pdf} depends on that file, so
 the embedded counts always match the compiled draft.
 
 \notesec{Two copies}

@@ -161,12 +161,12 @@ and mark it as a candidate for measurement.
 
 ## 2026.09.02 - The canonical look for a note PDF
 
-**A note rendered to PDF must look like `paper/nature-biotech/editing.pdf`.** The paper's
+**A note rendered to PDF must look like `paper/nature-biotech/editing-nature-biotech.pdf`.** The paper's
 drafting view is the house style for every `notes-tex` document, so a note and the
 manuscript read as one document family rather than as two unrelated PDFs. This is not a
 per-note choice, and it is not a matter of taste.
 
-The settings live in two shared files and are copied FROM `editing.tex`, never invented:
+The settings live in two shared files and are copied FROM `editing-nature-biotech.tex`, never invented:
 
 | what | value | where |
 | --- | --- | --- |
@@ -231,7 +231,7 @@ the styling, never take down the build.
 ## 2026.09.03 - Provenance chips on note sections
 
 The note PDF now carries the same three-symbol stoplight as
-`paper/nature-biotech/editing.pdf`, which was the last piece of that look still missing.
+`paper/nature-biotech/editing-nature-biotech.pdf`, which was the last piece of that look still missing.
 The symbols and colors are shared with the paper so the two read as one family. **The
 meaning is different**, because the question a note has to answer is not "is this
 publication ready" but "did a person check this".

@@ -1,8 +1,8 @@
 % ---------------------------------------------------------------------------
-% CANONICAL NOTE STYLE, matched to paper/nature-biotech/editing.pdf.
+% CANONICAL NOTE STYLE, matched to paper/nature-biotech/editing-nature-biotech.pdf.
 % The paper's drafting view is the house look for notes-tex, so the heading shapes,
 % paragraph handling and contents styling below are copied from sn-jnl.cls +
-% editing.tex rather than invented. See bib_tex_pdf.sh for the page geometry half.
+% editing-nature-biotech.tex rather than invented. See bib_tex_pdf.sh for the page geometry half.
 % ---------------------------------------------------------------------------
 
 % Section headings. sn-jnl sets \section bold roman at 12bp and \subsection bold at
@@ -18,11 +18,11 @@
 \titlespacing*{\subsubsection}{0pt}{1.2ex plus .2ex}{0.5em}
 
 % Block paragraphs: no first-line indent, a real gap between paragraphs. This is
-% editing.tex's drafting choice, and it is what makes a dense note readable.
+% editing-nature-biotech.tex's drafting choice, and it is what makes a dense note readable.
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.5\baselineskip plus 0.1\baselineskip}
 
-% Contents page, styled as editing.tex styles the paper's. Links are BLACK here: a
+% Contents page, styled as editing-nature-biotech.tex styles the paper's. Links are BLACK here: a
 % contents page rendered in link-blue becomes one blue block and nothing stands out.
 % Scoped so citations and cross-references keep their colours in the body.
 % tocloft is GUARDED because it is not in every TeX installation, and notes are built
@@ -90,8 +90,8 @@
 \usepackage{xcolor}
 
 % ---------------------------------------------------------------------------
-% PROVENANCE CHIPS, the note counterpart of editing.tex's section stoplight.
-% Same three symbols and the same colours as paper/nature-biotech/editing.tex, so a
+% PROVENANCE CHIPS, the note counterpart of editing-nature-biotech.tex's section stoplight.
+% Same three symbols and the same colours as paper/nature-biotech/editing-nature-biotech.tex, so a
 % note and the manuscript read as one family. The MEANING is note-specific: the paper
 % asks "is this publication ready", a note has to answer "did a person check this".
 %   ai   = red X      -- written by an agent, not yet read by the author
@@ -123,7 +123,7 @@
 \definecolor{urlblue}{RGB}{100,149,237}    % Cornflower Blue for URLs
 
 \usepackage{hyperref}
-% linkcolor is BLACK on purpose, matching editing.tex. `linkcolor` drives the contents
+% linkcolor is BLACK on purpose, matching editing-nature-biotech.tex. `linkcolor` drives the contents
 % page as well as internal cross-references, and a coloured contents page renders as one
 % solid block of colour in which nothing stands out. Citations and external URLs keep
 % their colours, where colour actually carries meaning.

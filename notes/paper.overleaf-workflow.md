@@ -44,7 +44,7 @@ compile/preview + co-author surface.
   results,discussion,methods,backmatter}.tex`. Edit the section files.
 - Build wrappers (each `\input{preamble}` + `\input{content}`):
   - `submission.tex` -- official Springer Nature single-column (journal upload).
-  - `editing.tex` -- single-column, print-approx margins + visible char-budget tags
+  - `editing-nature-biotech.tex` -- single-column, print-approx margins + visible char-budget tags
     (`\cb{}`). Our drafting/typeset look.
   - `twocolumn.tex` -- `iicol`, published-like Nature double column.
   - `figure-proto.tex` -- true-scale (180x170 mm) figure-sizing canvas.
@@ -72,7 +72,7 @@ compile/preview + co-author surface.
 2. Removes files **we** previously published but no longer do (manifest diff) --
    our own deletions propagate.
 3. Copies the curated set: `submission.tex` -> `main.tex`, plus `content.tex`,
-   `preamble.tex`, `sn-jnl.cls`, `sn-nature.bst`, `references.bib`, `editing.tex`,
+   `preamble.tex`, `sn-jnl.cls`, `sn-nature.bst`, `references.bib`, `editing-nature-biotech.tex`,
    `twocolumn.tex`, `sections/*`, `figures/*`.
 4. Commits + pushes to Overleaf.
 
@@ -136,7 +136,7 @@ we pull them in; no collaborator-owned-section split needed.]**
   `make paper-figures` survives a reboot. Runs headless via `xvfb-run` (Electron
   needs a display, even to export).
 - **Overleaf main document:** set in Overleaf to `main.tex` (default), or switch to
-  `editing.tex` / `twocolumn.tex` to compile those views.
+  `editing-nature-biotech.tex` / `twocolumn.tex` to compile those views.
 - **VS Code:** `torchcell-overleaf` is in the workspace; the "Overleaf Workshop"
   extension (cookie login) edits the Overleaf project directly; "LaTeX Workshop"
   has a two-page spread view (`tomoki1207.pdf` does not).
@@ -145,6 +145,7 @@ we pull them in; no collaborator-owned-section split needed.]**
   corresponding authors.
 - **Local `main`** has been running ahead of `origin/main` -- remember to
   `git push origin main` to land the paper work on GitHub.
+
 ## 2026.06.15 - Bidirectional pull-back implemented (`make paper-pull`)
 
 Collaborators now **edit managed files directly in Overleaf** (`content.tex`,

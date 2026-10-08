@@ -18,7 +18,7 @@ Layout, which is DERIVED from the repo path rather than invented::
 
     notes-tex/wet-lab/024-perturb-seq-costing/024-perturb-seq-costing.pdf
       -> torchcell / notes-tex / wet-lab / 024-perturb-seq-costing
-    paper/nature-biotech/editing.pdf
+    paper/nature-biotech/editing-nature-biotech.pdf
       -> torchcell / paper / nature-biotech
 
 so there is never a question of which Zotero collection a document belongs in.
@@ -98,7 +98,7 @@ Usage::
     # the manuscript: a repo-relative directory, a named PDF, and the tex that
     # actually declares the title
     python notes-tex/common/zotero_publish.py paper/nature-biotech \\
-        --pdf editing --tex sections/frontmatter.tex
+        --pdf editing-nature-biotech --tex sections/frontmatter.tex
 
 ``--tex`` is explicit rather than discovered. Searching the directory for the one
 file containing ``\\title`` finds two in paper/nature-biotech, because the stock
@@ -147,7 +147,7 @@ class BuiltDoc(BaseModel):
     """A built PDF and everything needed to identify it later."""
 
     doc_dir: str  # repo-relative, e.g. "notes-tex/024-..." or "paper/nature-biotech"
-    pdf_stem: str  # "<doc>", "<doc>-clean", "editing", "submission", ...
+    pdf_stem: str  # "<doc>", "<doc>-clean", "editing-<doc>", "submission", ...
     pdf_path: str
     title: str
     subtitle: str | None
@@ -194,6 +194,16 @@ class BuiltDoc(BaseModel):
             if stem.startswith(f"{base}-"):
                 # Slicing off only the base keeps the hyphen that followed it.
                 stem = stem[len(base):]
+                break
+            if stem.endswith(f"-{base}"):
+                # The manuscript's editing view is `editing-nature-biotech.pdf`: the
+                # document name rides in the filename so the PDF can be found by
+                # name among the many `editing.pdf` builds in notes-tex. Dropping
+                # the suffix here keeps the attachment named
+                # `nature-biotech-editing_...`, byte-identical to the names
+                # published before the rename, so the version history stays one
+                # sequence.
+                stem = stem[: -len(base) - 1]
                 break
         # A stem that is neither the default build nor prefixed by it survives
         # whole and still needs its own separator. The manuscript is the case
@@ -353,7 +363,7 @@ def load_built_doc(repo: str, rel_dir: str, pdf_stem: str, tex_rel: str) -> Buil
 
     ``<doc>.pdf`` carries the status chips and provenance flags and is the right
     thing to review in-group; ``<doc>-clean.pdf`` is what leaves the group. For the
-    manuscript the same distinction is ``editing`` against ``submission``.
+    manuscript the same distinction is ``editing-nature-biotech`` against ``submission``.
     """
     doc_dir = osp.join(repo, rel_dir)
     if not osp.isdir(doc_dir):
@@ -517,7 +527,8 @@ def main() -> None:
                                 "a bare name is found under notes-tex/*/<name>")
     ap.add_argument("--pdf", default=None, metavar="STEM",
                     help="PDF stem to publish (default: the document directory's "
-                         "own name, which is what its Makefile builds). e.g. editing")
+                         "own name, which is what its Makefile builds). "
+                         "e.g. editing-nature-biotech")
     ap.add_argument("--tex", default=None, metavar="PATH",
                     help="document-relative tex declaring \\title (default: "
                          "<STEM>.tex). e.g. sections/frontmatter.tex")

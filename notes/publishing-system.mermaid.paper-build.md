@@ -22,7 +22,7 @@ flowchart TB
   subgraph inputs [sources]
     direction LR
     content["content.tex<br/>one shared body"]:::src
-    wrappers["submission.tex<br/>editing.tex<br/>twocolumn.tex<br/>thin wrappers"]:::src
+    wrappers["submission.tex<br/>editing-nature-biotech.tex<br/>twocolumn.tex<br/>thin wrappers"]:::src
     drawio["notes/assets/drawio/<br/>NAME.drawio.svg"]:::src
     group["Zotero group<br/>collection paper<br/>served by tc-lit"]:::ext
   end
@@ -36,13 +36,13 @@ flowchart TB
   figproto["make figproto"]:::tgt
 
   sub["submission.pdf<br/>journal view, single column"]:::out
-  edit["editing.pdf<br/>drafting view, status chips,<br/>word budgets"]:::out
+  edit["editing-nature-biotech.pdf<br/>drafting view, status chips,<br/>word budgets"]:::out
   two["twocolumn.pdf<br/>published-like double column"]:::out
   proto["figure-proto.pdf<br/>true-scale sizing canvas"]:::out
 
   publish["make publish"]:::tgt
   sync["sync-overleaf.sh"]:::tgt
-  zot["Zotero: torchcell / paper / nature-biotech<br/>editing.pdf as a hashed version"]:::pub
+  zot["Zotero: torchcell / paper / nature-biotech<br/>editing-nature-biotech.pdf as a hashed version"]:::pub
   overleaf["Overleaf, the shared copy<br/>submission.tex as main.tex"]:::pub
 
   drawio --> figures --> figpdf

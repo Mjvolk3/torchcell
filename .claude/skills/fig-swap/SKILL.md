@@ -1,6 +1,6 @@
 ---
 name: fig-swap
-description: Audit and refresh the matplotlib SVG panels embedded in a draw.io figure (notes/assets/drawio/*.drawio.svg) without opening the GUI -- swap regenerated panels in at true size, rebuild the preview/PDF, and rebuild editing.pdf if it is a paper figure. Use after re-running plot scripts, or to check which panels of a figure are stale.
+description: Audit and refresh the matplotlib SVG panels embedded in a draw.io figure (notes/assets/drawio/*.drawio.svg) without opening the GUI -- swap regenerated panels in at true size, rebuild the preview/PDF, and rebuild editing-nature-biotech.pdf if it is a paper figure. Use after re-running plot scripts, or to check which panels of a figure are stale.
 ---
 
 Scripted panel maintenance for draw.io figures. The engine is
@@ -92,7 +92,7 @@ make -C paper/nature-biotech editing
 2. Render + look: `qlmanage -t -s 1200 -o <scratchpad-dir> <FIG>.drawio.svg`, then
    Read the PNG and visually confirm the panels (right plot, right labels, nothing
    clipped).
-3. If the paper build ran: check `editing.log` for LaTeX errors
+3. If the paper build ran: check `editing-nature-biotech.log` for LaTeX errors
    (`grep -iE '! LaTeX Error|Undefined' ... | grep -iv warning`).
 4. Report figure page size if it changed (parse the exported PDF MediaBox). Width
    over the slot is a blocker; height overage is currently advisory (author policy,

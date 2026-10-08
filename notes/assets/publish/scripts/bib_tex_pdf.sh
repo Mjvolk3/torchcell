@@ -29,10 +29,10 @@
 # puppeteer times out -- see CLAUDE.md); pre-render mermaid diagrams with
 # mermaid_pdf.sh and reference the produced image instead.
 #
-# CANONICAL STYLE: this build is matched to paper/nature-biotech/editing.pdf.
+# CANONICAL STYLE: this build is matched to paper/nature-biotech/editing-nature-biotech.pdf.
 # The paper's drafting view is the house look for every notes-tex document, so the
 # geometry, page size, type size, numbered sections and contents page below are copied
-# from editing.tex rather than chosen here:
+# from editing-nature-biotech.tex rather than chosen here:
 #   A4, left/right 14 mm, top 15 mm, bottom 22 mm  -> a 182 mm text block, so a true
 #   180 mm figure sits flush at 1:1, the same as in the paper.
 #   10 pt on 12 pt leading, matching sn-jnl's 10bp/12bp \normalsize.

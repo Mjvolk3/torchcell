@@ -302,3 +302,31 @@ def test_doc_key_rewrite_touches_only_the_marker_line(
     assert regroup._rewrite_doc_key(extra, "notes-tex/g/a") == (
         "Doc Key: notes-tex/g/a\nGit Commit: abc\nGit Branch: main"
     )
+
+
+@pytest.mark.parametrize(
+    ("doc_dir", "pdf_stem", "expected"),
+    [
+        # the default build of a notes-tex document: no stem in the name
+        ("notes-tex/trigenic/010-index-defect", "010-index-defect", "010-index-defect"),
+        ("notes-tex/trigenic/010-index-defect", "main", "010-index-defect"),
+        # the share view: the suffix survives with its hyphen
+        (
+            "notes-tex/trigenic/010-index-defect",
+            "010-index-defect-clean",
+            "010-index-defect-clean",
+        ),
+        # the manuscript's views: a stem that is neither the document nor prefixed by it
+        ("paper/nature-biotech", "submission", "nature-biotech-submission"),
+        ("paper/nature-biotech", "editing", "nature-biotech-editing"),
+        # the renamed editing view (2026-10-08): the `-nature-biotech` suffix is dropped so
+        # the attachment name is byte-identical to the ones published before the rename
+        ("paper/nature-biotech", "editing-nature-biotech", "nature-biotech-editing"),
+    ],
+)
+def test_attachment_filename_drops_the_document_name_wherever_it_sits(
+    scripts: tuple[ModuleType, ModuleType], doc_dir: str, pdf_stem: str, expected: str
+) -> None:
+    publish, _ = scripts
+    built = _built(publish, doc_dir).model_copy(update={"pdf_stem": pdf_stem})
+    assert built.filename == f"{expected}_2026-01-01-00-00-00_00000000.pdf"

@@ -13,11 +13,13 @@ Two maintained versions share ONE body so edits never drift:
 - `preamble.tex` -- shared `\usepackage` block (edit packages once).
 - `submission.tex` -- **single-column, official Nature Portfolio format. Upload
   this.** Wrapper: `\documentclass[pdflatex,sn-nature,Numbered]{sn-jnl}` + `\input`s.
-- `editing.tex` -- **single-column with print-approximate margins** (~170 mm text
-  block), readable for drafting while sizing figures realistically. NOT the
-  submission format. In this layout `\textwidth` ~ full-page print figure and
+- `editing-nature-biotech.tex` -- **single-column with print-approximate margins**
+  (~170 mm text block), readable for drafting while sizing figures realistically. NOT
+  the submission format. In this layout `\textwidth` ~ full-page print figure and
   ~`0.49\textwidth` ~ one print column; add `,iicol` to its documentclass to see
-  the true two-column print typeset instead.
+  the true two-column print typeset instead. The document name is part of the
+  filename because every notes-tex document also builds an `editing.pdf`, and a
+  bare `editing.pdf` cannot be found by name; `make editing` builds it.
 - `figure-proto.tex` -- **figure-prototyping sandbox at true Nature print scale**
   (`iicol` geometry = real 160 mm x 216 mm text block). Lay out multi-panel
   figures here at 1:1 with print: `\textwidth` = full figure width (~160 mm),
@@ -28,11 +30,12 @@ Two maintained versions share ONE body so edits never drift:
 - `references.bib` -- seeded bibliography (keep <= 50 refs).
 - `figures/` -- drop exported vector figures here (create as needed).
 
-Build: `tectonic -X compile submission.tex` and/or `tectonic -X compile editing.tex`.
+Build: `make paper`, or one view with `make submission` / `make editing` /
+`make twocolumn` (Tectonic underneath: `tectonic -X compile editing-nature-biotech.tex`).
 `pdflatex` option = compiles under pdflatex/xelatex/Tectonic; `sn-nature` = Nature
 reference style; `Numbered` = superscript numbered citations. Big main figures use
 `figure*` (full width / spans both columns) so they don't overflow a column in
-`editing.tex`.
+`editing-nature-biotech.tex`.
 
 ## Get this into Overleaf (three options)
 

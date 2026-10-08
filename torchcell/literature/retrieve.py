@@ -206,6 +206,31 @@ def elsevier_mmc(pii: str, filename: str) -> bytes:
     return _get(elsevier_mmc_url(pii, filename))
 
 
+class ArchiveHashMismatchError(ValueError):
+    """A local-archive file's bytes no longer hash to the sha256 its record pins."""
+
+
+def local_archive(path: str, sha256: str) -> bytes:
+    """Read one file out of a local archive, refusing bytes that do not hash to ``sha256``.
+
+    For in-house material with no public URL (the thesis archive on ``/bulk``): the
+    archive keeps its own manifest of where every file originally lived, and the
+    record pins the sha256 that manifest lists. A rebuild re-reads the archive copy; a
+    file edited, replaced or truncated since raises :class:`ArchiveHashMismatchError`
+    instead of being followed, and a missing file raises ``FileNotFoundError``.
+    """
+    import hashlib
+    from pathlib import Path
+
+    data = Path(path).read_bytes()
+    got = hashlib.sha256(data).hexdigest()
+    if got != sha256:
+        raise ArchiveHashMismatchError(
+            f"local archive sha256 mismatch for {path}: got {got}, expected {sha256}"
+        )
+    return data
+
+
 # Registry: dotted path -> retriever. RetrievalRecord.retriever names a key here.
 # The ``radiant_endpoint`` RetrievalMethod slot (issue #20) is intentionally left
 # without a retriever here: it is reserved for the Radiant VM serving library-rebuild
@@ -220,4 +245,5 @@ RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.pmc_cloud_object": pmc_cloud_object,
     "torchcell.literature.retrieve.plos_supplementary": plos_supplementary,
     "torchcell.literature.retrieve.elsevier_mmc": elsevier_mmc,
+    "torchcell.literature.retrieve.local_archive": local_archive,
 }

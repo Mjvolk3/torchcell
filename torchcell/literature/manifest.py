@@ -82,7 +82,10 @@ class RetrievalMethod(StrEnum):
     carries the human recipe as its command and the deposited bytes are what every
     rebuild reads; re-checking the source is not scriptable for it. ``pmc_cloud`` is
     one object of the PMC Article Datasets bucket on AWS, which replaced the retired
-    ``pmc_oa_api`` package service.
+    ``pmc_oa_api`` package service. ``local_archive`` is a sha256-verified copy of a
+    file out of a local archive whose own manifest records where the file originally
+    lived (the thesis archive's ``MANIFEST.tsv``); the record's ``source_url`` names
+    that original location and the retriever reads the archive copy.
     """
 
     springer_esm = "springer_esm"
@@ -94,6 +97,7 @@ class RetrievalMethod(StrEnum):
     radiant_endpoint = "radiant_endpoint"
     pubchem_api = "pubchem_api"
     manual_browser = "manual_browser"
+    local_archive = "local_archive"
 
 
 class SourceCheck(BaseModel):

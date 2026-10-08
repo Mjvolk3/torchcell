@@ -76,7 +76,35 @@ def test_registry_maps_dotted_paths_to_the_functions() -> None:
         "torchcell.literature.retrieve.pmc_cloud_object": retrieve.pmc_cloud_object,
         "torchcell.literature.retrieve.plos_supplementary": retrieve.plos_supplementary,
         "torchcell.literature.retrieve.elsevier_mmc": retrieve.elsevier_mmc,
+        "torchcell.literature.retrieve.local_archive": retrieve.local_archive,
     }
+
+
+def test_local_archive_returns_the_bytes_whose_hash_is_pinned(tmp_path: Any) -> None:
+    payload = b"Time,Blank,1,2\r\n00:01:43,0.000,0.131,0.134\r\n"
+    path = tmp_path / "MV_ex21.csv"
+    path.write_bytes(payload)
+    pinned = hashlib.sha256(payload).hexdigest()
+    assert retrieve.local_archive(str(path), pinned) == payload
+
+
+def test_local_archive_refuses_bytes_that_changed(tmp_path: Any) -> None:
+    path = tmp_path / "inhibitors.xlsx"
+    path.write_bytes(b"edited after the manifest was written")
+    pinned = hashlib.sha256(b"the bytes the manifest recorded").hexdigest()
+    with pytest.raises(retrieve.ArchiveHashMismatchError, match=pinned):
+        retrieve.local_archive(str(path), pinned)
+
+
+def test_local_archive_raises_on_a_missing_file(tmp_path: Any) -> None:
+    with pytest.raises(FileNotFoundError):
+        retrieve.local_archive(str(tmp_path / "gone.bsm"), "0" * 64)
+
+
+def test_local_archive_is_a_retrieval_method() -> None:
+    from torchcell.literature.manifest import RetrievalMethod
+
+    assert RetrievalMethod("local_archive") is RetrievalMethod.local_archive
 
 
 @pytest.mark.parametrize(

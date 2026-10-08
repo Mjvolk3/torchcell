@@ -2815,6 +2815,9 @@ class ConcentrationUnit(StrEnum):
 
     A typed enum (never a free string) so 'uM' / 'µM' / 'micromolar' can never
     silently coexist across datasets. Temperature units live on ``TemperatureUnit``.
+
+    ``percent`` is a percent the source reports WITHOUT stating v/v or w/v; never a
+    substitute for ``percent_v_v`` / ``percent_w_v`` when the source states the basis.
     """
 
     molar = "M"
@@ -2823,6 +2826,9 @@ class ConcentrationUnit(StrEnum):
     nanomolar = "nM"
     percent_v_v = "percent_v/v"
     percent_w_v = "percent_w/v"
+    # no molar conversion exists for a basis-free percent (the basis and a density are
+    # not reported), so a consumer computing a log10 molar leaves it None
+    percent = "percent"
     ug_per_ml = "ug/mL"
     g_per_l = "g/L"
     ph = "pH"  # dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit

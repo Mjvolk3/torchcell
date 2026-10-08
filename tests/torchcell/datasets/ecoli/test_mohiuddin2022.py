@@ -737,7 +737,9 @@ def test_the_real_store_reproduces_every_released_fold_change() -> None:
 
 @pytest.mark.data
 def test_the_real_stores_verification_report_passes_every_row() -> None:
-    """The report the real `verify` run wrote, read row by row."""
+    """The report the real `verify` run wrote, read row by row: 24 rows, 10 named
+    once and 14 provenance audits, one per SOURCED_VALUES entry.
+    """
     report = json.loads(
         Path(
             os.environ["DATA_ROOT"],
@@ -747,9 +749,20 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
         ).read_text()
     )
     assert report["dataset_name"] == "PromoterReporterMohiuddin2022Dataset"
-    # ``Level`` serializes as its int value, so L1 is 1.
-    rows = {(Level(row["level"]), row["name"]): row for row in report["results"]}
-    assert [key for key, row in rows.items() if not row["passed"]] == []
+    results = report["results"]
+    assert [(row["level"], row["name"]) for row in results if not row["passed"]] == []
+    # Fourteen rows share the name ``provenance_audit``, one per SOURCED_VALUES entry,
+    # so they are counted on the list and the rest are keyed. ``Level`` serializes as
+    # its int value, so L1 is 1.
+    assert sum(1 for row in results if row["name"] == "provenance_audit") == len(
+        m.SOURCED_VALUES
+    )
+    rows = {
+        (Level(row["level"]), row["name"]): row
+        for row in results
+        if row["name"] != "provenance_audit"
+    }
+    assert len(rows) == len(results) - len(m.SOURCED_VALUES) == 10
     assert rows[(Level.L1, "count")]["details"] == {
         "observed": 69480,
         "expected": 69480,
@@ -770,4 +783,9 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
     # 106 of the 1,930 wells carry one of the 48 unresolved labels (Empty, U66 and U139
     # alone occupy 60), and each well is 4 arms x 9 reads.
     assert gene["n_null_records"] == 106 * 36 == 3816
-    assert len([k for k in rows if k[1] == "provenance_audit"]) == len(m.SOURCED_VALUES)
+    assert (
+        rows[(Level.L4, "promoter_genes_in_the_host_gene_universe")]["details"][
+            "n_genes"
+        ]
+        == 1761
+    )

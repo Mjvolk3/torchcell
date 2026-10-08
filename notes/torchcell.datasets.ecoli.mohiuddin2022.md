@@ -181,7 +181,7 @@ property into an edge, and this dataset is the first that would use one.
 
 ### Verification, row by row
 
-`python -m torchcell.datasets.ecoli.mohiuddin2022 verify` on the dev store, all 25 rows
+`python -m torchcell.datasets.ecoli.mohiuddin2022 verify` on the dev store, all 24 rows
 PASS:
 
 | level | row | result |

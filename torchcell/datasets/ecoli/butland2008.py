@@ -184,7 +184,7 @@ import os.path as osp
 import re
 import shutil
 from collections import Counter
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Final
@@ -285,9 +285,7 @@ TABLE_S3 = "si4.xls"
 TABLE_S4 = "si5.xls"
 #: When the literature mirror captured this paper's SI (from its ``manifest.json``).
 DATA_RETRIEVED_AT = "2026-10-07T09:58:24.878215+00:00"
-_ESM = (
-    "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects"
-)
+_ESM = "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects"
 
 _ASSEMBLY_SET: TypeAdapter[BacterialAssemblySet] = TypeAdapter(BacterialAssemblySet)
 REFERENCE_STRAIN_NAME: Final[EcoliK12StrainName] = "MG1655"
@@ -443,7 +441,12 @@ def _paper(
 ) -> SourcedValue:
     """A value bound to a verbatim quote in the pinned ``paper.md``."""
     return _sourced(
-        value, quote, uri=PAPER_MD, sha256=PAPER_MD_SHA256, method=_OCR, page=page,
+        value,
+        quote,
+        uri=PAPER_MD,
+        sha256=PAPER_MD_SHA256,
+        method=_OCR,
+        page=page,
         note=note,
     )
 
@@ -453,7 +456,12 @@ def _methods(
 ) -> SourcedValue:
     """A value bound to a verbatim quote in the pinned Supplementary Methods OCR."""
     return _sourced(
-        value, quote, uri=METHODS_MD, sha256=METHODS_MD_SHA256, method=_OCR, page=page,
+        value,
+        quote,
+        uri=METHODS_MD,
+        sha256=METHODS_MD_SHA256,
+        method=_OCR,
+        page=page,
         note=note,
     )
 
@@ -462,8 +470,9 @@ def _workbook(
     value: Any, quote: str, *, uri: str, sha256: str, page: str, note: str | None = None
 ) -> SourcedValue:
     """A value bound to a verbatim cell of one pinned released workbook."""
-    return _sourced(value, quote, uri=uri, sha256=sha256, method=_SHEET, page=page,
-                    note=note)
+    return _sourced(
+        value, quote, uri=uri, sha256=sha256, method=_SHEET, page=page, note=note
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -488,18 +497,23 @@ _Q_UNFILTERED = (
     "filtering parameters."
 )
 _Q_BANNER = "Number of Keio deletion strains = 7924\nSPA-tag essential genes = 149"
-_Q_S_SCORE = (
+#: Sheet 4's footnote f and Table 3's footnote g, which differ only in that letter. Each
+#: is split over two consecutive cells of the footnote block, so the quote is their
+#: newline join, verbatim down to the footnote letter and the trailing space.
+_Q_S_SCORE_TAIL = (
     "A quantitative interaction score (S), is calculated to quantify the strength and "
     "confidence of epistasis determined for each mutant gene pair based on an algorithm "
     "\nimplemented for yeast SGA (Collins et al., 2006). Negative S-scores correspond "
     "to aggravating interactions, while positive S-scores to alleviating interactions. "
 )
+_Q_S_SCORE = f"f{_Q_S_SCORE_TAIL}"
+_Q_S_SCORE_S3 = f"g{_Q_S_SCORE_TAIL}"
 _Q_REPLICATES = (
-    'In the genome-wide screen, each recipient deletion mutant is pinned twice leaving '
-    'four replicate recipient colonies representing two "Isolate 1" and two "Isolate 2" '
-    'versions of the strain. The number "1" \nrepresent the first replicate of the '
-    'genome-wide screen, while the number "2" represent the second replicate of the '
-    "same screen. "
+    "g In the genome-wide screen, each recipient deletion mutant is pinned twice "
+    'leaving four replicate recipient colonies representing two "Isolate 1" and two '
+    '"Isolate 2" versions of the strain. The number "1" \nrepresent the first replicate '
+    'of the genome-wide screen, while the number "2" represent the second replicate of '
+    "the same screen. "
 )
 _Q_ISOLATES = (
     "dAn in house ID given for the two independent isolates of the mutant strains from "
@@ -633,7 +647,7 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
     "score_definition_table_s3": _workbook(
         "interaction score (S), signed",
-        _Q_S_SCORE,
+        _Q_S_SCORE_S3,
         uri=f"si/{TABLE_S3}",
         sha256=DATA_SHA256[TABLE_S3],
         page="Supplementary Table 3, footnote g",
@@ -1014,12 +1028,7 @@ SHEET_RAW = "Raw Colony Sizes"
 SHEET_NORMALIZED = "Normalized Colony Sizes"
 SHEET_Z = "Z scores"
 SHEET_S = "S scores"
-MATRIX_SHEETS: Final[tuple[str, ...]] = (
-    SHEET_RAW,
-    SHEET_NORMALIZED,
-    SHEET_Z,
-    SHEET_S,
-)
+MATRIX_SHEETS: Final[tuple[str, ...]] = (SHEET_RAW, SHEET_NORMALIZED, SHEET_Z, SHEET_S)
 ROSTER_SHEET = "st1"
 QUERY_SHEET = "donor_st2"
 HIGH_CONFIDENCE_SHEET = "st3"
@@ -1107,7 +1116,9 @@ def _check_quote(text: str, name: str, what: str) -> None:
     """A sheet cell must still read exactly as the sourced quote says it does."""
     quote = str(SOURCED_VALUES[name].quote).strip()
     if text.strip() != quote:
-        raise SheetFormatError(f"{what} reads {text.strip()!r}, the quote says {quote!r}")
+        raise SheetFormatError(
+            f"{what} reads {text.strip()!r}, the quote says {quote!r}"
+        )
 
 
 def read_s_scores(path: str | Path) -> Matrix:
@@ -1117,6 +1128,11 @@ def read_s_scores(path: str | Path) -> Matrix:
     is the array census, so both sourced values are re-checked against the bytes they
     were taken from before any number is read.
     """
+    sheets = tuple(str(name) for name in pd.ExcelFile(path).sheet_names)
+    if sheets != MATRIX_SHEETS:
+        raise SheetFormatError(
+            f"{TABLE_S4}: sheets {list(sheets)}, not {MATRIX_SHEETS}"
+        )
     matrix = read_matrix_sheet(path, SHEET_S)
     _check_quote(matrix.title, "unfiltered_matrix", f"{SHEET_S} title")
     _check_quote(matrix.banner, "spa_tag_recipients", f"{SHEET_S} banner")
@@ -1178,8 +1194,6 @@ def colony_counts(matrix: Matrix) -> tuple[Any, Any, Any]:
     stored, because torchcell has no colony-size phenotype class. A cell that does not
     parse raises, so a re-released sheet cannot silently produce a count of zero.
     """
-    import numpy as np
-
     values = matrix.values
     total = np.zeros(values.shape, dtype=np.int32)
     zeros = np.zeros(values.shape, dtype=np.int32)
@@ -1205,9 +1219,7 @@ def read_query_roster(path: str | Path) -> dict[str, str]:
     frame = pd.read_excel(path, sheet_name=QUERY_SHEET, header=None)
     rows = frame.iloc[3:, :]
     rows = rows[rows.iloc[:, 1].astype(str).str.match(B_NUMBER_PATTERN)]
-    roster = {
-        str(row.iloc[1]): str(row.iloc[0]) for _, row in rows.iterrows()
-    }
+    roster = {str(row.iloc[1]): str(row.iloc[0]) for _, row in rows.iterrows()}
     if len(roster) != N_SCREENS:
         raise ReleaseContentError(
             f"{TABLE_S2}: {len(roster)} query strains, the paper states {N_SCREENS}"
@@ -1260,6 +1272,138 @@ def read_high_confidence(path: str | Path) -> pd.DataFrame:
 
 
 # --------------------------------------------------------------------------- #
+# Auditing a quote that lives in a workbook cell rather than in OCR text
+# --------------------------------------------------------------------------- #
+class WorkbookQuote(BaseModel):
+    """One ``SOURCED_VALUES`` entry whose quote is a cell of a released workbook.
+
+    ``audit_sourced_value`` reads its artifact as UTF-8 text, which an OLE2 ``.xls``
+    is not, so a value quoted from a spreadsheet needs its own audit: the same two
+    checks (the pinned sha256 still matches, and the quote is still present) against
+    the cells instead of against the bytes. ``join`` is how the workbook splits the
+    sentence: a footnote runs over consecutive cells of column A and is read with a
+    newline between them, while the sheet title is two cells read with one space.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    name: str
+    file: str
+    sheet: str
+    join: str
+    strip: bool
+    where: str
+
+
+WORKBOOK_QUOTES: tuple[WorkbookQuote, ...] = (
+    WorkbookQuote(
+        name="unfiltered_matrix",
+        file=TABLE_S4,
+        sheet=SHEET_S,
+        join=" ",
+        strip=True,
+        where="title cells A1 and A2",
+    ),
+    WorkbookQuote(
+        name="spa_tag_recipients",
+        file=TABLE_S4,
+        sheet=SHEET_S,
+        join="\n",
+        strip=False,
+        where="banner cell A3",
+    ),
+    WorkbookQuote(
+        name="spa_tag_definition",
+        file=TABLE_S4,
+        sheet=SHEET_S,
+        join="\n",
+        strip=False,
+        where="footnote a of the block below the matrix",
+    ),
+    WorkbookQuote(
+        name="score_definition",
+        file=TABLE_S4,
+        sheet=SHEET_S,
+        join="\n",
+        strip=False,
+        where="footnote f, over two consecutive cells",
+    ),
+    WorkbookQuote(
+        name="replicate_design",
+        file=TABLE_S4,
+        sheet=SHEET_RAW,
+        join="\n",
+        strip=False,
+        where="footnote g, over two consecutive cells",
+    ),
+    WorkbookQuote(
+        name="score_definition_table_s3",
+        file=TABLE_S3,
+        sheet=HIGH_CONFIDENCE_SHEET,
+        join="\n",
+        strip=False,
+        where="footnote g, over two consecutive cells",
+    ),
+    WorkbookQuote(
+        name="isolate_is_a_strain",
+        file=TABLE_S1,
+        sheet=ROSTER_SHEET,
+        join="\n",
+        strip=False,
+        where="footnote d of the block below the roster",
+    ),
+)
+"""Every sourced value quoted from a spreadsheet cell, with how its cells are joined."""
+
+TEXT_QUOTED: tuple[str, ...] = tuple(
+    name
+    for name in SOURCED_VALUES
+    if name not in {entry.name for entry in WORKBOOK_QUOTES}
+)
+"""Every sourced value quoted from OCR text, which ``audit_sourced_value`` can read."""
+
+
+def audit_workbook_quote(
+    entry: WorkbookQuote, data_root: str | None = None
+) -> LevelResult:
+    """Verify one workbook-quoted value: the file's sha256, then the quote's presence."""
+    path = raw_mirror_dir(data_root) / f"data/{entry.file}"
+    if not path.exists():
+        raise FileNotFoundError(f"source artifact not found: {path}")
+    sourced = SOURCED_VALUES[entry.name]
+    integrity = _sha256(path) == DATA_SHA256[entry.file]
+    present = False
+    if integrity:
+        column = pd.read_excel(path, sheet_name=entry.sheet, header=None).iloc[:, 0]
+        cells = [
+            str(value).strip() if entry.strip else str(value)
+            for value in column
+            if isinstance(value, str)
+        ]
+        present = str(sourced.quote) in entry.join.join(cells)
+    if not integrity:
+        message = f"sha256 drift: workbook re-released or edited ({entry.file})"
+    elif not present:
+        message = f"quote no longer found in {entry.file} sheet {entry.sheet!r}"
+    else:
+        message = f"value backed by verbatim cells of {entry.file} ({entry.where})"
+    return LevelResult(
+        level=Level.L3,
+        name="provenance_audit",
+        passed=integrity and present,
+        message=message,
+        details={
+            "citation_key": CITATION_KEY,
+            "source": sourced.provenance.source_uri,
+            "value": repr(sourced.value),
+            "sha256_ok": integrity,
+            "quote_present": present,
+            "where": entry.where,
+        },
+    )
+
+
+# --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
 RULE_SPA_TAG = "spa_tag_recipient_has_no_bacterial_perturbation_leaf"
@@ -1268,6 +1412,10 @@ RULE_REMAPPED = "b_number_remapped_by_the_annotation"
 RULE_SELF_PAIR = "self_pair_is_not_a_digenic_genotype"
 RULE_CONTRADICTION = "released_score_contradicts_its_own_raw_colonies"
 RULE_SERVED = "already_served_by_gene_interaction_babu2014"
+#: Not a drop rule: how the one locus this release names twice is stored.
+RULE_ROSTER_NAME_WINS = "common_name_comes_from_the_array_roster_not_the_query_header"
+#: The roster's token for a strain whose gene name Genobase ver. 6 does not carry.
+UNNAMED_IN_GENOBASE = "*"
 
 #: The rules in the order the build applies them; each counts only the cells no earlier
 #: rule removed, which is what makes the six counts sum to the dropped total.
@@ -1394,6 +1542,27 @@ class HighConfidenceLedger(BaseModel):
     pairs: list[str]
 
 
+class GeneNameLedger(BaseModel):
+    """Which spelling of a common name each locus is stored under, and why.
+
+    A gene is one entity, so one locus carries one spelling (the shared
+    ``canonical_gene_names`` rule). This release prints two for one locus: the matrix's
+    query header names ``b1922`` ``rpoF`` while the recipient roster names it ``fliA``,
+    and both resolve to ``b1922`` in the pinned annotation, so neither is wrong and
+    picking by hand would be arbitrary. The ROSTER spelling wins, because the roster is
+    the release's own per-strain name column and the matrix's recipient block IS that
+    roster (asserted at build time), while the header is one cell per screen.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    rule: str
+    disagreements: dict[str, dict[str, str]]
+    n_records_renamed: int
+    unnamed_rows_dropped: int
+    unnamed_note: str
+
+
 class ServedPartition(BaseModel):
     """The partition against the served Babu 2014 store, proved in both directions."""
 
@@ -1469,7 +1638,10 @@ def recipient_perturbation(
 
 
 def pair_genotype(
-    query_tag: str, query_gene: str, recipient_tag: str, recipient_gene: str,
+    query_tag: str,
+    query_gene: str,
+    recipient_tag: str,
+    recipient_gene: str,
     version: str,
 ) -> Genotype:
     """The double mutant of one matrix cell: the query allele and one recipient isolate."""
@@ -1600,9 +1772,7 @@ SERVED_PAIRS_NOT_IN_THIS_RELEASE: Final[tuple[str, ...]] = (
 )
 
 
-def read_served_babu(
-    served_root: str,
-) -> tuple[dict[tuple[str, str], str], int]:
+def read_served_babu(served_root: str) -> tuple[dict[tuple[str, str], str], int]:
     """Stream the served Babu 2014 LMDB once: its oriented pairs and its record count.
 
     The generator is fully consumed, so ``stream_records`` closes the environment before
@@ -1706,6 +1876,7 @@ class Retention(BaseModel):
     drop_log: DropLog
     reconciliation: LocusTagReconciliation
     replicate_structure: ReplicateStructure
+    gene_names: GeneNameLedger
     partition: ServedPartition
 
 
@@ -1756,6 +1927,44 @@ def retain(
             "every query strain of this release is a locus tag of the pinned "
             f"annotation in its own right, but {bad_queries} are not"
         )
+    roster_names: dict[str, str] = {}
+    unnamed = 0
+    for row, tag in enumerate(scores.recipient_tags):
+        name = scores.recipient_genes[row]
+        if name == UNNAMED_IN_GENOBASE:
+            unnamed += 1
+            continue
+        held = roster_names.setdefault(tag, name)
+        if held != name:
+            raise ReleaseContentError(
+                f"the roster gives locus {tag} two names, {held!r} and {name!r}, so "
+                "the stored common name of one gene would depend on the row"
+            )
+    stored_unnamed = sorted(
+        tag
+        for row, tag in enumerate(scores.recipient_tags)
+        if scores.recipient_genes[row] == UNNAMED_IN_GENOBASE
+        and scores.labels[row] == LABEL_NON_ESSENTIAL
+        and tag not in not_a_tag
+        and tag not in remapped
+    )
+    if stored_unnamed:
+        raise ReleaseContentError(
+            f"{len(stored_unnamed)} rows the identifier rules keep carry no gene name "
+            f"({UNNAMED_IN_GENOBASE!r}), so a record would store one: {stored_unnamed[:5]}"
+        )
+    query_names = {
+        tag: roster_names.get(tag, scores.query_genes[column])
+        for column, tag in enumerate(scores.query_tags)
+    }
+    disagreements = {
+        tag: {
+            "query_header": scores.query_genes[column],
+            "array_roster": query_names[tag],
+        }
+        for column, tag in enumerate(scores.query_tags)
+        if query_names[tag] != scores.query_genes[column]
+    }
 
     dropped: dict[str, list[str]] = {rule: [] for rule in DROP_RULES}
     cells: list[StoredCell] = []
@@ -1792,7 +2001,7 @@ def retain(
             cells.append(
                 StoredCell(
                     query_tag=query_tag,
-                    query_gene=scores.query_genes[column],
+                    query_gene=query_names[query_tag],
                     recipient_tag=recipient_tag,
                     recipient_gene=recipient_gene,
                     version=version,
@@ -1872,6 +2081,18 @@ def retain(
         drop_log=drop_log,
         reconciliation=reconciliation,
         replicate_structure=_replicate_structure(sample_counts, screen_counts),
+        gene_names=GeneNameLedger(
+            rule=RULE_ROSTER_NAME_WINS,
+            disagreements=disagreements,
+            n_records_renamed=sum(
+                1 for cell in cells if cell.query_tag in disagreements
+            ),
+            unnamed_rows_dropped=unnamed,
+            unnamed_note="the roster writes '*' for a strain whose gene name Genobase "
+            "ver. 6 does not carry (footnote of every sheet). Every such row is already "
+            "dropped by an identifier rule, which is asserted rather than assumed, so "
+            "no record stores '*' as a common name",
+        ),
         partition=partition,
     )
 
@@ -1940,14 +2161,21 @@ def high_confidence_ledger(
             )
         located += 1
         cell = float(block[index[key], column_of[str(row.query_tag)]])
-        if cell != float(row.s_score):
+        released = float(str(row.s_score))
+        if cell != released:
             raise ReleaseContentError(
                 f"{TABLE_S3} row {row.query_tag} -> {row.recipient_tag} scores "
-                f"{row.s_score}, the matrix cell reads {cell}"
+                f"{released}, the matrix cell reads {cell}"
             )
         identical += 1
-        label = _cell_label(str(row.query_tag), str(row.recipient_tag), str(row.version))
-        if (str(row.query_tag), str(row.recipient_tag), str(row.version)) in stored_keys:
+        label = _cell_label(
+            str(row.query_tag), str(row.recipient_tag), str(row.version)
+        )
+        if (
+            str(row.query_tag),
+            str(row.recipient_tag),
+            str(row.version),
+        ) in stored_keys:
             selected.append(label)
     ordered = table_s3.drop_duplicates(["query_tag", "recipient_tag"])
     essentiality = Counter(ordered["essentiality"])
@@ -2038,7 +2266,9 @@ class GeneInteractionButland2008Dataset(ExperimentDataset):
         os.makedirs(self.raw_dir, exist_ok=True)
         for raw in RAW_FILES:
             link_verified(found[raw.name], osp.join(self.raw_dir, raw.name), raw.sha256)
-        log.info("Butland 2008 raw files linked into %s (sha256 verified)", self.raw_dir)
+        log.info(
+            "Butland 2008 raw files linked into %s (sha256 verified)", self.raw_dir
+        )
 
     def _genome(self) -> EcoliK12Genome:
         """The injected genome, or the reference strain's default cache."""
@@ -2170,10 +2400,15 @@ class GeneInteractionButland2008Dataset(ExperimentDataset):
         (out / "replicate_structure.json").write_text(
             retention.replicate_structure.model_dump_json(indent=2)
         )
+        (out / "gene_name_disagreements.json").write_text(
+            retention.gene_names.model_dump_json(indent=2)
+        )
         (out / "served_partition.json").write_text(
             retention.partition.model_dump_json(indent=2)
         )
-        (out / "high_confidence_pairs.json").write_text(ledger.model_dump_json(indent=2))
+        (out / "high_confidence_pairs.json").write_text(
+            ledger.model_dump_json(indent=2)
+        )
         (out / "files_not_loaded.json").write_text(
             json.dumps(list(NOT_LOADED), indent=2)
         )
@@ -2454,8 +2689,10 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         expected_count=drops.kept_records,
     )
     library_root = Path(base) / "torchcell-library"
-    for value in SOURCED_VALUES.values():
-        report.add(audit_sourced_value(value, library_root))
+    for name in TEXT_QUOTED:
+        report.add(audit_sourced_value(SOURCED_VALUES[name], library_root))
+    for entry in WORKBOOK_QUOTES:
+        report.add(audit_workbook_quote(entry, base))
     _write_report(report, osp.join(abs_root, "preprocess"))
     return report
 

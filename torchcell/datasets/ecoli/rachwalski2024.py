@@ -90,11 +90,14 @@ RECORDS DROPPED (rule, counts and items in ``preprocess/dropped_records.json``):
 3. ``label_is_a_fragment_of_a_merged_bw25113_locus``: ``ispU`` and ``uppS``, two target
    symbols of ONE BW25113 locus, and 46 Keio labels.
 4. ``label_is_ambiguous_in_bw25113``: 10 Keio labels matching more than one locus.
-5. ``construct_sits_in_more_than_one_collection_well`` (8 rows x 2 tables): ``rbfA``,
-   ``rplK``, ``rplX`` and ``ydfO`` each head two Table S1 wells, and MEASURED, the two
-   wells carry the SAME 20 nt spacer -- so they are one construct pinned twice, not two
-   guides. Two records of one strain in one condition cannot both be written, and keeping
-   one would be arbitrary (the rule Campos 2018 and Shiver 2016 already apply).
+5. ``construct_sits_in_more_than_one_collection_well`` (10 wells x 2 tables = 20 rows):
+   MEASURED, the 360 guide wells carry only 355 distinct spacers. ``rbfA``, ``rplK``,
+   ``rplX`` and ``ydfO`` each head two wells whose 20 nt spacers are IDENTICAL, so they
+   are one construct pinned twice rather than two guides; the fifth repeated spacer is
+   shared by ``ispU`` and ``uppS``, which are two names for one gene (rule 3 removes
+   those two anyway). Two records of one strain in one condition cannot both be written,
+   and keeping one would be arbitrary (the rule Campos 2018 and Shiver 2016 already
+   apply).
 6. ``label_heads_more_than_one_row`` (951 rows of Table S4A): 458 Keio deletion labels
    head 2 to 5 rows after resolution. Table S4A releases no plate, well or clone key, so
    two rows naming one deletion are two measurements of a strain identity the release

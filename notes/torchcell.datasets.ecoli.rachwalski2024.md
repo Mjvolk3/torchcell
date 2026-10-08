@@ -127,9 +127,11 @@ would be our statistic, not theirs. Neither absence is ever a zero.
    labels; after resolution, 458 labels head 2 to 5 rows each. No plate, well or clone key
    is released, so two rows naming one deletion cannot be told apart. Baba 2006's plate
    layout would separate them and the mirror does not hold it.
-6. **Four target symbols sit in two collection wells each with the SAME spacer.** `rbfA`,
-   `rplK`, `rplX` and `ydfO`. Table S1's guide sequences are identical between the two
-   wells, so these are one construct pinned twice, not two guides.
+6. **The 360 guide wells carry only 355 distinct spacers.** `rbfA`, `rplK`, `rplX` and
+   `ydfO` each head two wells whose 20 nt guide sequences are identical, so these are one
+   construct pinned twice and not two guides. The fifth repeated spacer is shared by
+   `ispU` and `uppS`, two names for one BW25113 locus, which the merged-locus rule removes
+   anyway. 10 wells in all, so 20 rows across Tables S2A and S3.
 
 ### Which Table S2A block is which medium, measured rather than read
 
@@ -163,7 +165,7 @@ never merge two, so no dataset that passed L1 before can start failing.
 | `label_is_not_in_the_bw25113_annotation` | `lapA` and `lapB` among the targets; 124 Keio labels (JW strain ids, small RNAs, non-gene labels) |
 | `label_is_a_fragment_of_a_merged_bw25113_locus` | `ispU` and `uppS`, two target symbols of one locus; 46 Keio labels |
 | `label_is_ambiguous_in_bw25113` | 10 Keio labels matching more than one locus |
-| `construct_sits_in_more_than_one_collection_well` | `rbfA`, `rplK`, `rplX`, `ydfO`: 8 rows in each of Tables S2A and S3 |
+| `construct_sits_in_more_than_one_collection_well` | 6 labels over 5 repeated spacers at 10 wells, so 10 rows in each of Tables S2A and S3 |
 | `label_heads_more_than_one_row` | 951 rows of Table S4A over 458 labels |
 
 Dropping the whole duplicate group rather than keeping one is the rule Campos 2018 and

@@ -875,12 +875,17 @@ def test_every_sourced_value_is_a_verbatim_quote_in_the_pinned_mirror() -> None:
 
 
 @pytest.mark.data
-def test_the_raw_mirror_holds_exactly_the_pinned_members() -> None:
+def test_the_raw_mirror_pins_every_member_this_loader_consumes() -> None:
+    """The mirror is SHARED with the Public K-12 arm of the same release.
+
+    ``data/k12_modulome/*`` and ``data/annotation/gene_info.csv`` are deposited by
+    ``RnaseqPublicK12Lamoureux2023Dataset`` into this same citation key, so the manifest
+    is a superset of this loader's four members rather than exactly them.
+    """
     root = L.raw_mirror_dir(_data_root())
     manifest = L.load_manifest(_data_root())
-    assert [(f.path, f.sha256) for f in manifest.files] == [
-        (raw.relpath, raw.sha256) for raw in L.RAW_FILES
-    ]
+    pinned = {f.path: f.sha256 for f in manifest.files}
+    assert {raw.relpath: raw.sha256 for raw in L.RAW_FILES}.items() <= pinned.items()
     for raw in L.RAW_FILES:
         digest = hashlib.sha256((root / raw.relpath).read_bytes()).hexdigest()
         assert digest == raw.sha256

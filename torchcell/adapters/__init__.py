@@ -94,6 +94,9 @@ from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
 from .lamoureux2023_adapter import (
     RnaseqLamoureux2023Adapter as RnaseqLamoureux2023Adapter,
 )
+from .lamoureux2023_public_k12_adapter import (
+    RnaseqPublicK12Lamoureux2023Adapter as RnaseqPublicK12Lamoureux2023Adapter,
+)
 from .lian2019_adapter import Lian2019Adapter as Lian2019Adapter
 from .lim2022_adapter import (
     PutidaPrecise321Lim2022Adapter as PutidaPrecise321Lim2022Adapter,

@@ -1851,20 +1851,29 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "caudal_pantranscriptome2024": 943,
         "nadal_ribelles_perturbseq2025": 6188,
         "rnaseq_lamoureux2023": 241,
+        "rnaseq_public_k12_lamoureux2023": 240,
         "putida_precise321_lim2022": 180,
     }
-    # The two bacterial compendia release one row per LIBRARY, so their L1 is the
+    # The three bacterial compendia release one row per LIBRARY, so their L1 is the
     # replicate-group rule; the yeast rows keep one record per (strain, condition).
     assert {
         name
         for name, spec in runners.RNASEQ_DATASETS.items()
         if spec.get("replicate_aware")
-    } == {"rnaseq_lamoureux2023", "putida_precise321_lim2022"}
+    } == {
+        "rnaseq_lamoureux2023",
+        "rnaseq_public_k12_lamoureux2023",
+        "putida_precise321_lim2022",
+    }
     assert {
         name: spec["min_containment"]
         for name, spec in runners.RNASEQ_DATASETS.items()
         if "min_containment" in spec
-    } == {"rnaseq_lamoureux2023": 0.99, "putida_precise321_lim2022": 1.0}
+    } == {
+        "rnaseq_lamoureux2023": 0.99,
+        "rnaseq_public_k12_lamoureux2023": 0.99,
+        "putida_precise321_lim2022": 1.0,
+    }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 296777,
         "env_chemgen_vanacloig2022": 118662,
@@ -1926,7 +1935,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 37  # 3 + 1 + 11 + 2 + 4 + 13 + 2 + 1
+    assert len(roots) == 38  # 3 + 1 + 11 + 2 + 5 + 13 + 2 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

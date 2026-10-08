@@ -651,7 +651,7 @@ _AMOUNT = re.compile(r"^(?P<value>\d*\.?\d+)\s*(?P<unit>[A-Za-z%/]+)?$")
 #: Unit token -> (typed unit, factor to that unit). mg/mL and mg/L are restated in ug/mL
 #: (x1000 and x1), the enum's mass-per-volume unit, in decimal arithmetic so the restated
 #: number is exact. A bare "%" is recorded as w/v, the media library's convention.
-UNIT_TOKENS: dict[str, tuple[ConcentrationUnit, int]] = {
+UNIT_TOKENS: dict[str, tuple[ConcentrationUnit, float]] = {
     "uM": (ConcentrationUnit.micromolar, 1),
     "mM": (ConcentrationUnit.millimolar, 1),
     "M": (ConcentrationUnit.molar, 1),
@@ -675,13 +675,22 @@ class Amount(BaseModel):
     unitless_value: str | None = None
 
 
-def parse_amount(cell: str, *, default_unit: ConcentrationUnit | None) -> Amount:
+def parse_amount(
+    cell: str,
+    *,
+    default_unit: ConcentrationUnit | None,
+    extra_units: Mapping[str, tuple[ConcentrationUnit, float]] | None = None,
+) -> Amount:
     """Parse ``name(amount)`` (or a bare ``name``) from one metadata cell part.
 
     ``default_unit`` is the column's unit (``g/L`` for the carbon and nitrogen columns,
     whose headers say so); a number with no unit in a column without one is kept as
-    ``unitless_value`` and never given a unit.
+    ``unitless_value`` and never given a unit. ``extra_units`` adds unit tokens for a
+    sibling release arm whose cells use spellings PRECISE-1K's own cells never do
+    (measured: no PRECISE-1K cell of a parsed column carries one), each as
+    ``(typed unit, factor to that unit)``.
     """
+    units = {**UNIT_TOKENS, **(extra_units or {})}
     match = _AMOUNT_CELL.match(cell.strip())
     if match is None:
         raise ValueError(f"unparseable amount cell {cell!r}")
@@ -701,11 +710,14 @@ def parse_amount(cell: str, *, default_unit: ConcentrationUnit | None) -> Amount
         return Amount(
             label=cell.strip(), name=name, value=float(number), unit=default_unit
         )
-    if token not in UNIT_TOKENS:
+    if token not in units:
         raise ValueError(f"unknown unit {token!r} in {cell!r}")
-    unit, factor = UNIT_TOKENS[token]
+    unit, factor = units[token]
     return Amount(
-        label=cell.strip(), name=name, value=float(number * factor), unit=unit
+        label=cell.strip(),
+        name=name,
+        value=float(number * Decimal(str(factor))),
+        unit=unit,
     )
 
 

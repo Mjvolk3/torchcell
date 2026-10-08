@@ -863,6 +863,33 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "rnaseq_public_k12_lamoureux2023": {
+        "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
+        # 1,675 curated public samples - 1,435 dropped by the genotype and environment
+        # rules (the curation kept 15 K-12 substrains; only MG1655 can be written
+        # against the MG1655 pin).
+        "expected_count": 240,
+        "replicate_aware": True,
+        "min_containment": 0.99,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.5281/zenodo.8284223",
+            citation_key="lamoureuxMultiscaleExpressionRegulation2023",
+            sha256="7c7008f2c8bcd66aebecbdb97b8c1a0314637e3873ec09e12c26d0ccaaa35172",
+            method=(
+                "Public K-12: one record per reprocessed public RNA-seq library of "
+                "E. coli K-12 MG1655 (wild type or whole-gene deletions), keyed by its "
+                "SRA experiment accession; expression_count read from "
+                "k12_modulome/counts.csv and expression_tpm computed here from it and "
+                "the release's own gene spans, because the Public K-12 log2[TPM] matrix "
+                "the paper's Data Availability names is not in the release"
+            ),
+            page=(
+                "Nucleic Acids Res. 51:10184; Zenodo SBRG/precise1k-v1.0.zip, "
+                "data/k12_modulome/{counts,metadata_qc,multiqc_stats} + "
+                "data/annotation/gene_info.csv"
+            ),
+        ),
+    },
     "putida_precise321_lim2022": {
         "root": "data/torchcell/putida_precise321_lim2022",
         # 321 compendium samples - 141 dropped (engineered, evolved, plasmid-bearing,

@@ -3786,3 +3786,55 @@ growth rate) and rank 13 (Schmidt Table S23) are blocked by the same `reference_
 and would hit the same "is a matched reference released for every condition?" question that
 sinks the Caglar ratio form. Worth measuring per paper before either is called storable as
 a ratio.
+
+## 2026.10.08 - Rank 3 landed, and two corrections to this audit
+
+Rank 3 (Lamoureux 2023 Public K-12) is loaded as its own dataset. Full record in
+[[torchcell.datasets.ecoli.lamoureux2023_public_k12]]; the two corrections belong here,
+because both revise statements above.
+
+**Correction 1: the Public K-12 log2[TPM] matrix is not released.** The "Not checked"
+section above says it is "presumably inside `k12_modulome.json.gz`, since the tree shows no
+`k12_modulome/log_tpm*.csv`". Checked: the archive has no such member, the live
+`SBRG/precise1k` tree at HEAD has none either, and all three packaged `IcaData` objects
+(`k12_modulome.json.gz`, `k12_only_p1k_ctrl.json.gz`, `k12_only_proj_ref.json.gz`) carry
+`X: null` and `log_tpm: null`, as do `precise1k.json.gz` and `precise.json.gz`. So the
+paper's Data Availability sentence overstates what was deposited: the counts, the MultiQC
+table and the metadata are there and the expression matrix is not. The loader therefore
+computes TPM from the released counts and the release's own gene spans (the Caglar 2017
+convention) under a distinct `measurement_type`, `rnaseq_tpm_from_released_counts`, because
+the derivation does NOT reproduce the paper's own released TPM where both are published:
+on PRECISE-1K the maximum absolute difference is 9.48 log2 units and no sample agrees to
+within 0.01 across all genes.
+
+**Correction 2: rank 3's record count is 1,675 ROWS, not 1,675 records.** The table above
+reads "**1,675** | measured: 1,675 non-`p1k_` rows", and that row count is right. The
+dataset built from them holds **240 records**, because the same genotype and environment
+discipline the PRECISE-1K arm applies drops 1,435: 669 for a strain other than MG1655 (the
+curation deliberately kept 15 K-12 substrains, and the expression is keyed by MG1655
+b-numbers), 175 plasmid-borne constructs, 250 for a base medium with no `MEDIA_LIBRARY`
+key, 164 non-batch cultures, and nine smaller rules. The audit's number was an upper bound
+on the arm, not a projection through the loader, and it did not say so.
+
+**Rank 19 split in two.** `aerobicity` is loaded: the `Electron Acceptor` column PRECISE-1K
+reads is blank on every public row, and the `aerobicity` column replaces it (`aerobic`
+1,135, blank 250, `O2` 206, `aerobic(30% DO)` 52, `anaerobic` 17, `transition` 15; the last
+two are named drop rules, since `Environment.aerobicity` holds neither a dissolved-oxygen
+setpoint nor a regime that changes). `time` is NOT loaded, exactly as this audit warned: it
+has no unit in its header, neither `paper.md` nor `si/si1.md` mentions the column, and its
+13 distinct values on the kept rows mix bare numbers (`12`, `0.25`, `0.08`) with an H:MM:SS
+clock (`12:00:00`, `0:00:30`). `duration_hours` is a typed `not_reported_by_primary` gap on
+every record and the note records the measurement.
+
+**The dedup policy rank 3 asked for, measured and asserted.** The record identity is the SRA
+experiment accession: the 1,675 rows carry 1,675 distinct experiment and 1,675 distinct run
+accessions. `BioSample` is NOT the key, and the release proves it: the rows map to 1,568
+distinct BioSamples, 38 of which carry 2 to 12 rows apiece (145 rows), and 7 of those span
+several conditions or strains under one BioSample. The value-level rule is profile identity,
+and both measurements are zero: no public count column repeats another, and none is
+identical to any of the 1,055 `data/precise1k/counts.csv` columns the PRECISE-1K dataset
+serves. Against our own store, `PRJNA645443` is the one overlapping identifier (12
+`phage_resist` BW25113 RNA-seq samples here; `PhageRbTnseqMutalik2020Dataset`'s manifest
+records it as holding that paper's raw reads, and that dataset serves RB-TnSeq fitness), and
+none of the 38 PMIDs or 30 GEO series matches any other *E. coli* or *P. putida* loader.
+That is the measured negative the #760 pattern asked for.

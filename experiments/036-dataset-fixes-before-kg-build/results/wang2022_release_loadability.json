@@ -1,0 +1,173 @@
+{
+  "row": 19,
+  "row_name": "Wang 2022 P. putida isoprenoids",
+  "doi": "10.1186/s13068-022-02235-6",
+  "citation_key": "wangEngineeringIsoprenoidsProduction2022",
+  "mirror": {
+    "doi": "10.1186/s13068-022-02235-6",
+    "title": "Engineering isoprenoids production in metabolically versatile microbial host Pseudomonas putida",
+    "paper.md": {
+      "bytes": 62711,
+      "sha256": "86396d8aea378df190a2d29bc7f995b861a82442f223267dc177409d6c5104c3",
+      "retrieval_method": null,
+      "source_url": null
+    },
+    "si/si1.docx": {
+      "bytes": 1397323,
+      "sha256": "57ddd9267ea6bce373aaf1866cbe41d482b18e7ab29f4729767e69851a825f72",
+      "retrieval_method": "pmc_cloud",
+      "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC9743605.1/13068_2022_2235_MOESM1_ESM.docx"
+    }
+  },
+  "si_container": {
+    "n_paragraphs": 28,
+    "n_tables": 2,
+    "embedded_workbooks": [],
+    "chart_parts": [],
+    "textbox_parts": []
+  },
+  "tables": [
+    {
+      "source": "si/si1.docx",
+      "table": "Table S1",
+      "caption": "Table S1 Identified 8 amino acids from the EZ-rich medium and their working concentrations",
+      "headers": [
+        "No.",
+        "Amino acid",
+        "Concentration"
+      ],
+      "n_rows": 9,
+      "n_data_rows": 8,
+      "n_bare_number_cells": 8
+    },
+    {
+      "source": "si/si1.docx",
+      "table": "Table S2",
+      "caption": "Table S2 Strains and plasmids used in monoterpene production",
+      "headers": [
+        "Strains",
+        "Description",
+        "Reference"
+      ],
+      "n_rows": 6,
+      "n_data_rows": 5,
+      "n_bare_number_cells": 0
+    },
+    {
+      "source": "paper.md",
+      "table": "paper table 1",
+      "caption": "",
+      "headers": [
+        "Strains",
+        "Description",
+        "References"
+      ],
+      "n_rows": 35,
+      "n_data_rows": 34,
+      "n_bare_number_cells": 0
+    },
+    {
+      "source": "paper.md",
+      "table": "paper table 2",
+      "caption": "",
+      "headers": [
+        "Strain",
+        "JPUB_019968",
+        "JPUB_019973",
+        "JPUB_019974",
+        "JPUB_019975",
+        "JPUB_019976",
+        "JPUB_019977"
+      ],
+      "n_rows": 5,
+      "n_data_rows": 4,
+      "n_bare_number_cells": 0
+    }
+  ],
+  "n_tables": 4,
+  "n_tables_with_a_bare_number_cell": 1,
+  "replicate_word_counts": {
+    "paper_md": {
+      "triplicate": 7,
+      "standard deviation": 7,
+      "error bar": 7,
+      "replicate": 0,
+      "independent": 0,
+      "biological": 3,
+      "standard error": 0,
+      "duplicate": 0,
+      "n =": 0
+    },
+    "si1_docx": {
+      "triplicate": 9,
+      "standard deviation": 9,
+      "error bar": 9,
+      "replicate": 0,
+      "independent": 0,
+      "biological": 2,
+      "standard error": 0,
+      "duplicate": 0,
+      "n =": 0
+    }
+  },
+  "endpoint_probe": [
+    {
+      "url": "https://public-registry.jbei.org/",
+      "outcome": "http",
+      "status": 200,
+      "content_type": "text/html",
+      "body_head": "<!doctype html>\n<html lang=\"en\" data-ng-app=\"iceApp\">\n<head>\n    <base href=\"/\">\n\n    <meta charset=\"utf-8\">\n    <title>ICE - Inventory of Composable Elements</title>\n\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"scripts/lib/open-vector-editor/main.css\">\n    <link href=\"css/font-awesome.min.css\" rel=\"stylesheet\">\n    <link rel=\"stylesheet\" href=\"scripts/lib/handsontable-7.1.0/pikaday.css\">\n   "
+    },
+    {
+      "url": "https://public-registry.jbei.org/entry/019914",
+      "outcome": "http",
+      "status": 404,
+      "content_type": "text/html",
+      "body_head": "<!doctype html>\n<html lang=\"en\" data-ng-app=\"iceApp\">\n<head>\n    <base href=\"/\">\n\n    <meta charset=\"utf-8\">\n    <title>ICE - Inventory of Composable Elements</title>\n\n    <link rel=\"stylesheet\" type=\"text/css\" href=\"scripts/lib/open-vector-editor/main.css\">\n    <link href=\"css/font-awesome.min.css\" rel=\"stylesheet\">\n    <link rel=\"stylesheet\" href=\"scripts/lib/handsontable-7.1.0/pikaday.css\">\n   "
+    },
+    {
+      "url": "https://public-registry.jbei.org/rest/parts/JPUB_019914",
+      "outcome": "http",
+      "status": 403,
+      "content_type": "text/html;charset=utf-8",
+      "body_head": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 403 \u2013 Forbidden</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 403 \ufffd"
+    },
+    {
+      "url": "https://public-registry.jbei.org/rest/config",
+      "outcome": "http",
+      "status": 401,
+      "content_type": "text/html;charset=utf-8",
+      "body_head": "<!doctype html><html lang=\"en\"><head><title>HTTP Status 401 \u2013 Unauthorized</title><style type=\"text/css\">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 40"
+    },
+    {
+      "url": "https://edd.jbei.org/",
+      "outcome": "http",
+      "status": 502,
+      "content_type": "text/plain; charset=UTF-8",
+      "body_head": "error code: 502\n"
+    },
+    {
+      "url": "https://public-edd.jbei.org/",
+      "outcome": "http",
+      "status": 502,
+      "content_type": "text/plain; charset=UTF-8",
+      "body_head": "error code: 502\n"
+    },
+    {
+      "url": "https://public-edd.jbei.org/rest/measurements/",
+      "outcome": "http",
+      "status": 403,
+      "content_type": "application/json",
+      "body_head": "{\"detail\":\"Authentication credentials were not provided.\"}"
+    }
+  ],
+  "endpoint_probe_ran": true,
+  "quotes": {
+    "availability": "The dataset supporting the conclusions of this article is available in the JBEI's Experiment Data Depot (https://edd.jbei.org/) and the strain information is available in the public version of the JBEI Registry (https://public-registry.jbei. org).",
+    "registry_range": "Strains and plasmids along with their associated information have been deposited in the public version of the JBEI Registry (https://public-registry.jbei.org; entries JPUB_019914 to JPUB_019988) and are available from the authors upon request.",
+    "replicates": "Error bars indicate one standard deviation of triplicates.",
+    "crc_overexpression_genotype": "Fig. S6 Isoprenol production with crc overexpression by P. putida phaABC strain (JPUB_019964) with plasmid JPUB_019949 from 2% glucose."
+  },
+  "blocking_claim_still_true": true,
+  "accession_claim_still_true": true
+}

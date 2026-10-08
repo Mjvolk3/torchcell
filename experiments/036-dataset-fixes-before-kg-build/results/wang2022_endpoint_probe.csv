@@ -1,0 +1,32 @@
+url,outcome,status,content_type,body_head
+https://public-registry.jbei.org/,http,200,text/html,"<!doctype html>
+<html lang=""en"" data-ng-app=""iceApp"">
+<head>
+    <base href=""/"">
+
+    <meta charset=""utf-8"">
+    <title>ICE - Inventory of Composable Elements</title>
+
+    <link rel=""stylesheet"" type=""text/css"" href=""scripts/lib/open-vector-editor/main.css"">
+    <link href=""css/font-awesome.min.css"" rel=""stylesheet"">
+    <link rel=""stylesheet"" href=""scripts/lib/handsontable-7.1.0/pikaday.css"">
+   "
+https://public-registry.jbei.org/entry/019914,http,404,text/html,"<!doctype html>
+<html lang=""en"" data-ng-app=""iceApp"">
+<head>
+    <base href=""/"">
+
+    <meta charset=""utf-8"">
+    <title>ICE - Inventory of Composable Elements</title>
+
+    <link rel=""stylesheet"" type=""text/css"" href=""scripts/lib/open-vector-editor/main.css"">
+    <link href=""css/font-awesome.min.css"" rel=""stylesheet"">
+    <link rel=""stylesheet"" href=""scripts/lib/handsontable-7.1.0/pikaday.css"">
+   "
+https://public-registry.jbei.org/rest/parts/JPUB_019914,http,403,text/html;charset=utf-8,"<!doctype html><html lang=""en""><head><title>HTTP Status 403 – Forbidden</title><style type=""text/css"">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 403 �"
+https://public-registry.jbei.org/rest/config,http,401,text/html;charset=utf-8,"<!doctype html><html lang=""en""><head><title>HTTP Status 401 – Unauthorized</title><style type=""text/css"">body {font-family:Tahoma,Arial,sans-serif;} h1, h2, h3, b {color:white;background-color:#525D76;} h1 {font-size:22px;} h2 {font-size:16px;} h3 {font-size:14px;} p {font-size:12px;} a {color:black;} .line {height:1px;background-color:#525D76;border:none;}</style></head><body><h1>HTTP Status 40"
+https://edd.jbei.org/,http,502,text/plain; charset=UTF-8,"error code: 502
+"
+https://public-edd.jbei.org/,http,502,text/plain; charset=UTF-8,"error code: 502
+"
+https://public-edd.jbei.org/rest/measurements/,http,403,application/json,"{""detail"":""Authentication credentials were not provided.""}"

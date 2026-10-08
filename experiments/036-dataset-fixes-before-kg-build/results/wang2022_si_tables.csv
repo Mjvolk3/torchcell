@@ -1,0 +1,5 @@
+source,table,caption,headers,n_rows,n_data_rows,n_bare_number_cells
+si/si1.docx,Table S1,Table S1 Identified 8 amino acids from the EZ-rich medium and their working concentrations,No. | Amino acid | Concentration,9,8,8
+si/si1.docx,Table S2,Table S2 Strains and plasmids used in monoterpene production,Strains | Description | Reference,6,5,0
+paper.md,paper table 1,,Strains | Description | References,35,34,0
+paper.md,paper table 2,,Strain | JPUB_019968 | JPUB_019973 | JPUB_019974 | JPUB_019975 | JPUB_019976 | JPUB_019977,5,4,0

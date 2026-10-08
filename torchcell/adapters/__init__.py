@@ -3,13 +3,11 @@
 from .auesukaree2009_adapter import (
     EnvChemgenAuesukaree2009Adapter as EnvChemgenAuesukaree2009Adapter,
 )
-<<<<<<< HEAD
 from .babu2014_adapter import (
     GeneInteractionBabu2014Adapter as GeneInteractionBabu2014Adapter,
-=======
+)
 from .banerjee2025_proteome_adapter import (
     ProteomeBanerjee2025Adapter as ProteomeBanerjee2025Adapter,
->>>>>>> b4ab54040 (feat(adapters): serve the Banerjee 2025 proteome, and re-derive every pin it moves)
 )
 from .baryshnikova2010_adapter import (
     SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,

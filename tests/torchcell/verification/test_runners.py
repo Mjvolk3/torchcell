@@ -2530,8 +2530,6 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     assert runners._verify_caglar_proteome("/root", "/data").dataset_name == "caglar"
     assert calls == [
         ("foo", ("/root", "/data"), {}),
-    ),
-    _case(
         ("banerjee", ("/root", "/data"), {}),
         ("carruthers", ("/root", "/data"), {"family": "titer"}),
         ("carruthers", ("/root", "/data"), {"family": "proteome"}),

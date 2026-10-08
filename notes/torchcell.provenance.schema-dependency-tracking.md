@@ -172,7 +172,10 @@ to every recorded closure; new symbols are not, because every stored-closure che
 (`build_manifest.check_manifest`, `releases.closure_compatibility`, the supported-query check)
 iterates the STORED symbols.
 
-### Measured movement (2026.10.08, branch tip on #778, old rule vs this rule on the same tree)
+### Measured movement (2026.10.08, old rule vs this rule on the same tree)
+
+Measured on #778's branch tip and again on `origin/main` at `24a5f30e4` after #778 landed; the
+numbers are the same on both.
 
 - 169 surface classes, 41 bindings; class fingerprints moved: 0.
 - Served store (`/scratch/projects/torchcell/database/kg_manifest.json`, read-only, 51 datasets):

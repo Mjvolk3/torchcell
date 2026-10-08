@@ -1,0 +1,78 @@
+arm,category,target,protein,growth_cell,growth_ratio,growth_pm,growth_censored,pinene_cell,pinene_ratio,pinene_pm,pinene_censored
+crispr_activation,Carbohydrate metabolism,acnB,conitate hydratase 2; aconitase B; 2-methyl-cis-aconitate hydratase,-,,,True,-,,,True
+crispr_activation,Carbohydrate metabolism,ulaE,L-xylulose 5-phosphate 3-epimerase,1.24 ± 0.01,1.24,0.01,False,1.06 ± 0.02,1.06,0.02,False
+crispr_activation,Carbohydrate metabolism,pflD,putative glycine radical domain-containing pyruvate formate-lyase,-,,,True,1.23 ± 0.02,1.23,0.02,False
+crispr_activation,Nucleotide metabolism,mazG,nucleoside triphosphate pyrophosphohydrolase,-,,,True,-,,,True
+crispr_activation,Xenobiotics biodegradation and metabolism,phnJ,"carbon-phosphorus lyase, SAM-dependent",-,,,True,1.35 ± 0.02,1.35,0.02,False
+crispr_activation,Glycan biosynthesis and metabolism,waaA,3-deoxy-D-manno-octulosonic-acid transferase (KDO transferase),-,,,True,1.02 ± 0.01,1.02,0.01,False
+crispr_activation,Metabolism of terpenoids and polyketides,ispH,"4-hydroxy-3-methylbut-2-enyl diphosphate reductase, 4Fe-4S protein",1.07 ± 0.01,1.07,0.01,False,1.19 ± 0.01,1.19,0.01,False
+crispr_activation,Metabolism of terpenoids and polyketides,dxr,1-deoxy-D-xylulose 5-phosphate reductoisomerase,-,,,True,1.34 ± 0.02,1.34,0.02,False
+crispr_activation,Metabolism of terpenoids and polyketides,dxs,"1-deoxyxylulose-5-phosphate synthase, thiamine triphosphate-binding, FAD-requiring",-,,,True,1.39 ± 0.02,1.39,0.02,False
+crispr_activation,Metabolism of terpenoids and polyketides,ispU,1deoxyDxylulose 5phosphate reductoisomerase/undecaprenyl pyrophosphate synthase,-,,,True,1.28 ± 0.01,1.28,0.01,False
+crispr_activation,Genetic Information Processing,rpoA,"RNA polymerase, alpha subunit",1.50 ± 0.01,1.5,0.01,False,1.09 ± 0.01,1.09,0.01,False
+crispr_activation,Genetic Information Processing,dosP,"oxygen sensor, c-di-GMP phosphodiesterase,",1.56 ± 0.02,1.56,0.02,False,1.07 ± 0.01,1.07,0.01,False
+crispr_activation,Genetic Information Processing,dnaK,"chaperone Hsp70, with co-chaperone DnaJ",-,,,True,1.16 ± 0.01,1.16,0.01,False
+crispr_activation,Genetic Information Processing,muts,methyl-directed mismatch repair protein,1.10 ± 0.01,1.1,0.01,False,1.29 ± 0.01,1.29,0.01,False
+crispr_activation,Genetic Information Processing,cbpA,DnaK cochaperone; curved DNAbinding protein/uncharacterized protein,1.30 ± 0.01,1.3,0.01,False,1.04 ± 0.01,1.04,0.01,False
+crispr_activation,Genetic Information Processing,dusB,methyltransferase for 50S ribosomal subunit protein L11/tRNAdihydrouridine synthase B,1.46 ± 0.02,1.46,0.02,False,1.23 ± 0.01,1.23,0.01,False
+crispr_activation,Membrane protein transport Processing,nagE,"N-acetyl glucosamine specific PTS enzyme IIC, IIB, and IIA components",-,,,True,-,,,True
+crispr_activation,Membrane protein transport Processing,gsiA,glutathione ABC transporter ATPase,1.09 ± 0.01,1.09,0.01,False,1.05 ± 0.01,1.05,0.01,False
+crispr_activation,Membrane protein transport Processing,nlpA,cytoplasmic membrane lipoprotein-28,1.64 ± 0.02,1.64,0.02,False,1.03 ± 0.02,1.03,0.02,False
+crispr_activation,Membrane protein transport Processing,sufBCDS,SufBCD Fe-S cluster assembly protein,1.48 ± 0.02,1.48,0.02,False,1.32 ± 0.01,1.32,0.01,False
+crispr_activation,Membrane protein transport Processing,lptD,"LPS assembly OM complex LptDE, beta-barrel component",-,,,True,1.14 ± 0.01,1.14,0.01,False
+crispr_activation,Membrane protein transport Processing,pfkA,ferrous iron and zinc transporter/6phosphofructokinase I,-,,,True,1.19 ± 0.01,1.19,0.01,False
+crispr_activation,Membrane protein transport Processing,opgB,OPG periplasmic biosynthetic phosphoglycerol transferases I,1.10 ± 0.01,1.1,0.01,False,1.06 ± 0.01,1.06,0.01,False
+crispr_activation,Membrane protein transport Processing,yjfF,putative sugar ABC transporter permease,2.50 ± 0.01,2.5,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,setC,putative arabinose efflux transporter,1.14 ± 0.02,1.14,0.02,False,1.10 ± 0.01,1.1,0.01,False
+crispr_activation,Membrane protein transport Processing,tauB,taurine ABC transporter ATPase,1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,oppF,oligopeptide ABC transporter ATPase,1.14 ± 0.01,1.14,0.01,False,1.13 ± 0.01,1.13,0.01,False
+crispr_activation,Membrane protein transport Processing,yhbE,EamA family inner membrane putative transporter,1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,ydiM,"putative MFS transporter, membrane protein",1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,ydiN,"putative MFS transporter, membrane protein",1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,fixB,"putative electron transfer flavoprotein, NAD/FAD-binding domain and ETFP adenine nucleotide-binding domain-like protein",-,,,True,-,,,True
+crispr_activation,Membrane protein transport Processing,yfdV,putative transporter,1.03 ± 0.02,1.03,0.02,False,-,,,True
+crispr_activation,Membrane protein transport Processing,ysaA,"putative hydrogenase, 4F-4S ferredoxin-type component",1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,yahC,putative inner membrane protein,1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,yncE,"ATP-binding protein, periplasmic, function unknown",1.03 ± 0.01,1.03,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,yfcO,DUF2544 family putative outer membrane protein,1.13 ± 0.02,1.13,0.02,False,-,,,True
+crispr_activation,Membrane protein transport Processing,ypjK,CP4-57 prophage; putative inner membrane protein,1.16 ± 0.01,1.16,0.01,False,1.10 ± 0.02,1.1,0.02,False
+crispr_activation,Membrane protein transport Processing,tfaQ,Qin prophage; putative tail fibre assembly protein,1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,yeeE,UPF0394 family inner membrane protein,-,,,True,-,,,True
+crispr_activation,Membrane protein transport Processing,cydD,glutathione/cysteine ABC transporter export permease/ATPase,1.04 ± 0.01,1.04,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,yghR,putative ATP-binding protein,1.05 ± 0.02,1.05,0.02,False,-,,,True
+crispr_activation,Membrane protein transport Processing,gntT,"gluconate transporter, high-affinity GNT I system",1.11 ± 0.03,1.11,0.03,False,-,,,True
+crispr_activation,Membrane protein transport Processing,btuB,vitamin B12/cobalamin outer membrane transporter,1.05 ± 0.02,1.05,0.02,False,1.11 ± 0.01,1.11,0.01,False
+crispr_activation,Membrane protein transport Processing,mdtF,"anaerobic multidrug efflux transporter, ArcA-regulated",1.02 ± 0.02,1.02,0.02,False,-,,,True
+crispr_activation,Membrane protein transport Processing,pitA,"phosphate transporter, low-affinity; tellurite importer",1.15 ± 0.01,1.15,0.01,False,1.17 ± 0.01,1.17,0.01,False
+crispr_activation,Membrane protein transport Processing,glpF,glycerol facilitator,1.06 ± 0.02,1.06,0.02,False,-,,,True
+crispr_activation,Membrane protein transport Processing,gspE,"general secretory pathway component, cryptic",1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,gspL,"general secretory pathway component, cryptic",1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,cusA,"copper/silver efflux system, membrane component",1.15 ± 0.01,1.15,0.01,False,1.05 ± 0.01,1.05,0.01,False
+crispr_activation,Membrane protein transport Processing,rstB,sensory histidine kinase of RstAB two-component system,1.02 ± 0.01,1.02,0.01,False,-,,,True
+crispr_activation,Membrane protein transport Processing,ydeE,putative transporter,1.20 ± 0.01,1.2,0.01,False,-,,,True
+crispr_activation,Cellular Processes,yehA,putative fimbrial-like adhesin protein,1.48 ± 0.03,1.48,0.03,False,1.24 ± 0.02,1.24,0.02,False
+crispr_activation,Cellular Processes,motB,protein that enables flagellar motor rotation,1.17 ± 0.02,1.17,0.02,False,1.16 ± 0.01,1.16,0.01,False
+crispr_activation,Cellular Processes,flgFGH,flagellar protein,1.56 ± 0.03,1.56,0.03,False,1.41 ± 0.03,1.41,0.03,False
+crispr_activation,Cellular Processes,ypjA,adhesin-like autotransporter,1.12 ± 0.02,1.12,0.02,False,1.07 ± 0.01,1.07,0.01,False
+crispr_activation,Cellular Processes,tabA,"transcriptional repressor for divergent bdcA/biofilm modulator regulated by toxins; DUF386 family protein, cupin superfamily protein",1.05 ± 0.01,1.05,0.01,False,1.05 ± 0.01,1.05,0.01,False
+crispr_activation,Stress response,hslU,molecular chaperone and ATPase component of HslUV protease,1.53 ± 0.03,1.53,0.03,False,1.29 ± 0.02,1.29,0.02,False
+crispr_interference,Carbohydrate metabolism,aceF,Dihydrolipoyllysine-residue acetyltransferase component of pyruvate dehydrogenase complex,-,,,True,-,,,True
+crispr_interference,Carbohydrate metabolism,mhpF,"acetaldehyde-CoA dehydrogenase II, NAD-binding",-,,,True,-,,,True
+crispr_interference,Energy metabolism,narG,"nitrate reductase 1, alpha subunit",1.08 ± 0.01,1.08,0.01,False,-,,,True
+crispr_interference,Lipid metabolism,ydiJ,putative FAD-linked oxidoreductase,1.07 ± 0.01,1.07,0.01,False,1.06 ± 0.02,1.06,0.02,False
+crispr_interference,Nucleotide metabolism,rpoC,"RNA polymerase, beta prime subunit",-,,,True,-,,,True
+crispr_interference,Nucleotide metabolism,cyaA,adenylate cyclase,-,,,True,-,,,True
+crispr_interference,Metabolism of cofactors and vitamins,yjbQ,thiamine phosphate synthase,1.08 ± 0.02,1.08,0.02,False,1.08 ± 0.02,1.08,0.02,False
+crispr_interference,Metabolism of cofactors and vitamins,fmt,10-formyltetrahydrofolate: L-methionyl-tRNA(fMet) N-formyltransferas,-,,,True,-,,,True
+crispr_interference,Xenobiotics biodegradation and metabolism,mhpD,2-keto-4-pentenoate hydratase,-,,,True,-,,,True
+crispr_interference,Genetic Information Processing,prpR,propionate catabolism operon regulatory protein,1.06 ± 0.01,1.06,0.01,False,1.07 ± 0.01,1.07,0.01,False
+crispr_interference,Genetic Information Processing,marR,transcriptional repressor of multiple antibiotic resistance,1.22 ± 0.02,1.22,0.02,False,1.09 ± 0.01,1.09,0.01,False
+crispr_interference,Genetic Information Processing,fabR,transcriptional repressor of fabA and fabB,1.09 ± 0.01,1.09,0.01,False,1.07 ± 0.02,1.07,0.02,False
+crispr_interference,Genetic Information Processing,yhbQ,GIY-YIG nuclease superfamily protein,-,,,True,-,,,True
+crispr_interference,Membrane protein transport Processing,tehA,potassium-tellurite ethidium and proflavin transporter,-,,,True,-,,,True
+crispr_interference,Cellular Processes,hlyE,hemolysin E,-,,,True,-,,,True
+crispr_interference,Cellular Processes,cedA,"cell division modulator/catalase HPII, heme dcontaining",1.07 ± 0.01,1.07,0.01,False,1.07 ± 0.02,1.07,0.02,False
+crispr_interference,Human Diseases,marA,multiple antibiotic resistance transcriptional regulator,1.07 ± 0.01,1.07,0.01,False,-,,,True
+crispr_interference,Stress response,sspA,"stringent starvation protein A, phage P1 late gene activator, RNAP-associated acid-resistance protein, inactive glutathione S-transferase homolog",-,,,True,-,,,True
+crispr_interference,Stress response,efeO,inactive ferrous ion transporter EfeUOB,-,,,True,-,,,True
+crispr_interference,Stress response,ychF,"catalase inhibitor protein; ATPase, K+-dependent, ribosome-associated",1.06 ± 0.02,1.06,0.02,False,-,,,True

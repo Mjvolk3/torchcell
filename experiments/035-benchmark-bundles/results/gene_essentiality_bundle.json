@@ -1,12 +1,20 @@
 {
   "script": "experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py",
-  "built_at": "2026-10-04T18:44:07.514983Z",
-  "label_rule": "1 if the gene is in the GeneEssentialitySgdDataset gene set; 0 if it is not and has a KanMX or NatMX deletion strain in SmfCostanzo2016Dataset; otherwise excluded",
+  "built_at": "2026-10-08T08:38:41.613531Z",
+  "label_rule": "1 if the gene is in the served GeneEssentialitySgdDataset gene set (an SGD null mutant in S288C annotated inviable); 0 if it is an SGD ORF not in that set with an SGD null mutant in S288C annotated viable; otherwise excluded. Both labels come from SGD; no fitness dataset is used.",
+  "split_rule": "within each class, genes sorted, shuffled with random.Random(0), cut 80/10/10 into train, validation, test",
   "seed": 0,
   "fractions": {
     "train": 0.8,
     "val": 0.1,
     "test": 0.1
+  },
+  "mirror_provenance_sha256": "338abbe57c0525229fb4bb71d8074efd943660bc940130fa5d96c693806fc5dd",
+  "universe": 6613,
+  "universe_by_qualifier": {
+    "Dubious": 683,
+    "Uncharacterized": 147,
+    "Verified": 5783
   },
   "archives": [
     {
@@ -28,43 +36,102 @@
       "member_sha256": "e91160edd1cab23452b80353ff6a4c8495d253ce58d04ad8d6c3d0b8984d43cf"
     }
   ],
+  "drift": {
+    "fresh_inviable": 1161,
+    "in_served_set_not_fresh": 0,
+    "fresh_not_in_served_set": 21,
+    "both_viable_and_inviable": 54
+  },
   "n_essential": 1140,
-  "n_nonessential": 4557,
-  "n_essential_with_a_deletion_strain": 24,
+  "n_essential_outside_universe": 0,
+  "n_nonessential": 4790,
+  "n_excluded": 683,
   "n_per_split": {
     "train": {
       "essential": 912,
-      "nonessential": 3645
+      "nonessential": 3832
     },
     "val": {
       "essential": 114,
-      "nonessential": 456
+      "nonessential": 479
     },
     "test": {
       "essential": 114,
-      "nonessential": 456
+      "nonessential": 479
     }
+  },
+  "baseline": {
+    "scored_genes": 1186,
+    "with_deletion_fitness": 855,
+    "without": 331,
+    "missing_score": 1.0,
+    "predictions_sha256": "1a8915f375514766d59aecd6616c9a67f8ba78a644f8218ae87e100b5ecd409d"
   },
   "dataset": {
     "slug": "gene-essentiality-sgd",
     "title": "Gene essentiality (SGD)",
-    "description": "Predict whether the null mutant of a gene is inviable. Essential genes are those SGD annotates as inviable; non-essential genes are those with a deletion strain measured in the Costanzo 2016 single-mutant fitness screens. A prediction is a score, larger meaning more likely essential.",
+    "description": "Predict whether the null mutant of a gene is inviable. Both labels come from SGD: essential genes are those with a null mutant annotated inviable in S288C, non-essential genes those with a null mutant annotated viable. A prediction is a score, larger meaning more likely essential.",
     "loader_class": "GeneEssentialitySgdDataset",
     "citation_key": "cherrySGDSaccharomycesGenome1998",
-    "version": "1",
+    "version": "2",
     "task": "binary",
     "targets": [
       "is_essential"
     ],
-    "n_train": 4557,
-    "n_val": 570,
-    "n_test": 570,
+    "n_train": 4744,
+    "n_val": 593,
+    "n_test": 593,
     "primary_metric": "auroc",
     "docs_url": "https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html",
     "tc_data_slug": "gene_essentiality_sgd",
-    "splits_sha256": "fa4b367c42ad0e2edc6fe9da860acaaf57f221c72b292d0c39880ecd4a6bd0e5",
-    "template_sha256": "529c4f0b05cfb5f768101313f0a9fd79d89fcbc52efd254f3d1d9593c9c8c4ef",
-    "labels_sha256": "bfa211ab01fcdfd21ebbeab8bae16629cd89b38b4fc11fc53c758d2ce10af93a",
-    "built_at": "2026-10-04T18:44:07.514983Z"
+    "splits_sha256": "53fc11e1efd3396ca53ca9fd3c951cba9ae9c4893a616d77f07dcdb7f149abf9",
+    "template_sha256": "dabc1cf9a0084271ab0419aaa5940b1f4ce1094871dad2bea24295088b9eb9d4",
+    "provenance": {
+      "script": "experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py",
+      "label_rule": "1 if the gene is in the served GeneEssentialitySgdDataset gene set (an SGD null mutant in S288C annotated inviable); 0 if it is an SGD ORF not in that set with an SGD null mutant in S288C annotated viable; otherwise excluded. Both labels come from SGD; no fitness dataset is used.",
+      "split_rule": "within each class, genes sorted, shuffled with random.Random(0), cut 80/10/10 into train, validation, test",
+      "sources": [
+        {
+          "name": "SGD_features.tab, the SGD chromosomal feature table",
+          "role": "universe",
+          "source_url": "http://sgd-archive.yeastgenome.org/curation/chromosomal_feature/SGD_features.tab",
+          "retrieval_method": "direct_url",
+          "retrieved_at": "2026-10-08T05:41:30.805986Z",
+          "sha256": "08866f4b093de34cb495606fada5cab11015049e96569853e5f9043ac81e4cfd",
+          "bytes": 3384142,
+          "n_files": null,
+          "note": "6613 ORFs: 683 Dubious, 147 Uncharacterized, 5783 Verified"
+        },
+        {
+          "name": "SGD locus phenotype annotations, one file per ORF",
+          "role": "label 0 (viable)",
+          "source_url": "https://www.yeastgenome.org/backend/locus/{ORF}/phenotype_details",
+          "retrieval_method": "direct_url",
+          "retrieved_at": "2026-10-08T05:55:27.441330Z",
+          "sha256": "3a892fa45e6ee03ac02c8f692969c54d04ca924a42e2a72110d1bb301ae6e708",
+          "bytes": null,
+          "n_files": 6613,
+          "note": "mirrored with experiments/035-benchmark-bundles/scripts/sgd_phenotype_mirror.py; per-file hashes in the mirror's provenance.json (sha256 338abbe57c05)"
+        },
+        {
+          "name": "tc-data archive gene_essentiality_sgd-1.5.0-b31114d6.tar.xz of GeneEssentialitySgdDataset",
+          "role": "label 1 (inviable)",
+          "source_url": null,
+          "retrieval_method": "tc_data_archive",
+          "retrieved_at": null,
+          "sha256": "b31114d648903a2a3687392b94650136aab8acc5ba068ce77864f9c30b6c85ad",
+          "bytes": null,
+          "n_files": null,
+          "note": "preprocess/gene_set.json, sha256 f3c2ec54b69f, torchcell 1.5.0; the gene set the knowledge graph serves"
+        }
+      ],
+      "notes": [
+        "54 genes carry both a viable and an inviable SGD call; labeled 1.",
+        "Fresh SGD read: 1161 inviable; 21 not in the served set, 0 in the served set no longer inviable.",
+        "683 ORFs excluded: no viable or inviable null call in S288C."
+      ]
+    },
+    "labels_sha256": "aceebdf269fc268ef3b9b68952eb6b4f468a5c4b58d402c376e175cf629124e9",
+    "built_at": "2026-10-08T08:38:41.613531Z"
   }
 }

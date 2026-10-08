@@ -316,3 +316,84 @@ def test_regression_bundle_refuses_a_binary_metric(tmp_path: Path) -> None:
             values=GOOD_VALUES,
         )
     assert not (tmp_path / "bad").exists()
+
+
+def test_provenance_is_written_served_publicly_and_round_trips(tmp_path: Path) -> None:
+    """A bundle written with a provenance block carries it in ``benchmark.json`` and in
+    the public record (it is for readers), with the aggregate source's ``n_files`` and
+    its hash intact; a bundle written without one has ``provenance: null``.
+    """
+    from datetime import UTC, datetime
+
+    from torchcell.benchmark.bundle import BundleProvenance, SourceRecord
+
+    provenance = BundleProvenance(
+        script="experiments/x/scripts/build.py",
+        label_rule="1 if inviable in SGD; 0 if viable and not inviable; else excluded",
+        split_rule="per class 80/10/10, random.Random(0)",
+        sources=[
+            SourceRecord(
+                name="SGD phenotype annotations",
+                role="label 0",
+                source_url="https://www.yeastgenome.org/backend/locus/{orf}/phenotype_details",
+                retrieval_method="direct_url",
+                retrieved_at=datetime(2026, 10, 8, tzinfo=UTC),
+                sha256="a" * 64,
+                n_files=6613,
+            ),
+            SourceRecord(
+                name="tc-data archive gene_essentiality_sgd-1.5.0-b31114d6.tar.xz",
+                role="label 1",
+                retrieval_method="tc_data_archive",
+                sha256="b" * 64,
+                bytes=44080,
+            ),
+        ],
+        notes=["3 genes are both viable and inviable in SGD; labeled 1"],
+    )
+    splits = {Split.TRAIN: ["t1"], Split.VAL: ["v1", "v2"], Split.TEST: ["s1", "s2"]}
+    values = {("v1", "y"): 0.0, ("v2", "y"): 1.0, ("s1", "y"): 1.0, ("s2", "y"): 0.0}
+    with_prov = write_bundle(
+        tmp_path / "a",
+        slug="with-prov",
+        title="t",
+        description="d",
+        loader_class="L",
+        citation_key="c",
+        version="1",
+        primary_metric="auroc",
+        splits=splits,
+        values=values,
+        task="binary",
+        provenance=provenance,
+    )
+    without = write_bundle(
+        tmp_path / "b",
+        slug="without",
+        title="t",
+        description="d",
+        loader_class="L",
+        citation_key="c",
+        version="1",
+        primary_metric="auroc",
+        splits=splits,
+        values=values,
+        task="binary",
+    )
+    assert with_prov.provenance == provenance
+    assert with_prov.public().provenance == provenance
+    assert without.provenance is None
+    written = json.loads((tmp_path / "a" / "with-prov" / "benchmark.json").read_text())
+    assert written["provenance"]["sources"][0]["n_files"] == 6613
+    assert written["provenance"]["sources"][0]["sha256"] == "a" * 64
+    assert written["provenance"]["notes"] == [
+        "3 genes are both viable and inviable in SGD; labeled 1"
+    ]
+    assert (
+        json.loads((tmp_path / "b" / "without" / "benchmark.json").read_text())[
+            "provenance"
+        ]
+        is None
+    )
+    loaded = load_bundles(tmp_path / "a")
+    assert loaded["with-prov"].dataset.provenance == provenance

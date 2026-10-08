@@ -28,6 +28,27 @@ export type SplitScores = {
   per_target: Record<string, MetricSet>;
 };
 
+/** One source a bundle was built from, pinned by hash (see torchcell.benchmark.bundle). */
+export type SourceRecord = {
+  name: string;
+  role: string;
+  source_url: string | null;
+  retrieval_method: string;
+  retrieved_at: string | null;
+  sha256: string;
+  bytes: number | null;
+  n_files: number | null;
+  note: string | null;
+};
+
+export type BundleProvenance = {
+  script: string;
+  label_rule: string;
+  split_rule: string;
+  sources: SourceRecord[];
+  notes: string[];
+};
+
 export type BenchmarkDatasetPublic = {
   slug: string;
   title: string;
@@ -43,6 +64,8 @@ export type BenchmarkDatasetPublic = {
   primary_metric: MetricName;
   docs_url: string | null;
   tc_data_slug: string | null;
+  /** Absent on bundles written before 2026-10-08 and in the mock fixtures. */
+  provenance?: BundleProvenance | null;
 };
 
 export type SubmissionStatus = 'rejected' | 'provisional' | 'verified' | 'withdrawn';

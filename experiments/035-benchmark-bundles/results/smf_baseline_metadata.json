@@ -1,0 +1,14 @@
+{
+  "method_name": "Costanzo 2016 deletion fitness",
+  "description": "A lookup, not a model: the gene's single-mutant fitness in the Costanzo 2016 screens at 30 C, minimum over its KanMX and NatMX deletion strains, scored as 1 - fitness. A gene with no deletion strain measured scores 1: the deletion collection lacks the genes whose deletion did not live.",
+  "model_family": "lookup",
+  "encoding": "none",
+  "code_url": "https://github.com/Mjvolk3/torchcell/blob/main/experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py",
+  "uses_external_data": true,
+  "external_data_description": "SmfCostanzo2016Dataset via tc-data archive smf_costanzo2016-1.5.0-d8a0f06c.tar.xz (sha256 d8a0f06cb534), preprocess/data.csv",
+  "hyperparameters": {
+    "temperature_c": 30,
+    "aggregate": "min over deletion strains",
+    "missing_score": 1.0
+  }
+}

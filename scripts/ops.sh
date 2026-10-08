@@ -28,6 +28,9 @@
 #   NEO4J_URI / NEO4J_USER / NEO4J_PASSWORD    the GilaHyper store (bolt://localhost:7687)
 #   OPS_RADIANT_URI                            default neo4j+s://torchcell-database.ncsa.illinois.edu:7687
 #   OPS_RADIANT_USER / OPS_RADIANT_PASSWORD    default torchcell / torchcell
+#   OPS_RADIANT_WEB                            default https://torchcell-database.ncsa.illinois.edu
+#                                              (the Caddy proxy: staging site + API, production API)
+#   OPS_RADIANT_TC_DATA                        default http://torchcell-database.ncsa.illinois.edu:8724
 #   OPS_TC_LIT_URL                             default http://localhost:8723
 #   OPS_BROWSER_URL                            default http://localhost:7474
 #   OPS_TIMEOUT_SECONDS                        default 5 (curl); the bolt probes get 4x
@@ -67,6 +70,10 @@ RADIANT_URI="${OPS_RADIANT_URI:-neo4j+s://torchcell-database.ncsa.illinois.edu:7
 RADIANT_USER="${OPS_RADIANT_USER:-torchcell}"
 RADIANT_PASSWORD="${OPS_RADIANT_PASSWORD:-torchcell}"
 RADIANT_HTTPS="${OPS_RADIANT_HTTPS:-https://torchcell-database.ncsa.illinois.edu:7473}"
+# The Caddy proxy on the same host (docker-compose.tc-proxy.yml): the staging site and
+# API under /staging/, the production API under /api/, 443 only.
+RADIANT_WEB="${OPS_RADIANT_WEB:-https://torchcell-database.ncsa.illinois.edu}"
+RADIANT_TC_DATA="${OPS_RADIANT_TC_DATA:-http://torchcell-database.ncsa.illinois.edu:8724}"
 TC_LIT_URL="${OPS_TC_LIT_URL:-http://localhost:8723}"
 BROWSER_URL="${OPS_BROWSER_URL:-http://localhost:7474}"
 TIMEOUT="${OPS_TIMEOUT_SECONDS:-5}"
@@ -103,6 +110,31 @@ probe_browser() {
         line "✓" "$GREEN" "neo4j browser" "200" "$BROWSER_URL/browser/ (styling seed present)"
     else
         line "!" "$YELLOW" "neo4j browser" "200" "$BROWSER_URL/browser/ (NO styling seed: unseeded image?)"
+    fi
+}
+
+# A tc-bench tier: /health answers {status, tier, build, n_datasets}; the row shows
+# what the service says it is, so a staging image promoted to production, or a tier
+# serving zero bundles, is visible at a glance. 502 is the proxy saying the tier is not
+# running behind it.
+probe_bench() {  # name url
+    local name="$1" url="$2" body code tier build n
+    body=$(curl --silent --max-time "$TIMEOUT" --write-out '\n%{http_code}' "$url" 2>/dev/null)
+    code="${body##*$'\n'}"; body="${body%$'\n'*}"
+    code="${code:-000}"
+    if [[ "$code" == 200 ]]; then
+        tier=$(sed -n 's/.*"tier": *"\([^"]*\)".*/\1/p' <<<"$body")
+        build=$(sed -n 's/.*"build": *"\([^"]*\)".*/\1/p' <<<"$body")
+        n=$(sed -n 's/.*"n_datasets": *\([0-9]*\).*/\1/p' <<<"$body")
+        if [[ "${n:-0}" -gt 0 ]]; then
+            line "✓" "$GREEN" "$name" "$code" "tier=$tier build=$build datasets=$n  $url"
+        else
+            line "!" "$YELLOW" "$name" "$code" "tier=$tier build=$build datasets=0 (no bundle loaded)  $url"
+        fi
+    elif [[ "$code" == 502 ]]; then
+        line "!" "$YELLOW" "$name" "$code" "proxy up, tier not running  $url"
+    else
+        line "✗" "$RED" "$name" "$code" "$url"
     fi
 }
 
@@ -223,6 +255,16 @@ print_health() {
     if wants_host radiant; then
         echo "== health (radiant) =="
         probe_http "radiant https" "$RADIANT_HTTPS/" -k
+        # 8724 is closed by the VM's security group, so the data endpoint answers only
+        # on the host itself; off-host the row says so instead of showing a false ✗.
+        if [[ "$(hostname)" == torchcell-database* ]]; then
+            probe_http "tc-data" "http://127.0.0.1:8724/health"
+        else
+            line "·" "$YELLOW" "tc-data" "n/a" "$RADIANT_TC_DATA/health (8724 closed by the security group; probe on the host)"
+        fi
+        probe_http "staging site" "$RADIANT_WEB/staging/"
+        probe_bench "staging api" "$RADIANT_WEB/staging/api/v1/health"
+        probe_bench "production api" "$RADIANT_WEB/api/v1/health"
     fi
 }
 

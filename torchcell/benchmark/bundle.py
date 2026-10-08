@@ -60,6 +60,47 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+class SourceRecord(BaseModel):
+    """One source the bundle's records or labels were built from, pinned by hash.
+
+    A set of files retrieved the same way (one SGD phenotype file per gene, say) is one
+    record with ``n_files`` set and ``sha256`` over the sorted per-file hashes,
+    newline-joined with a trailing newline, the rule ``releases.content_sha256`` uses.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    name: str = Field(description="What the source is, for a reader.")
+    role: str = Field(
+        description="What it contributed: universe, label 1, label 0, ..."
+    )
+    source_url: str | None = Field(
+        default=None, description="Where it was retrieved from; historical, not live."
+    )
+    retrieval_method: str = Field(description="direct_url, tc_data_archive, ...")
+    retrieved_at: datetime | None = None
+    sha256: str
+    bytes: int | None = None
+    n_files: int | None = None
+    note: str | None = None
+
+
+class BundleProvenance(BaseModel):
+    """Where a bundle's records and labels came from and how they were derived.
+
+    Public: served with the dataset and shown at the top of its page, so a reader can
+    answer "where did this come from and how was it done" without asking.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    script: str = Field(description="Repo path of the script that built the bundle.")
+    label_rule: str
+    split_rule: str
+    sources: list[SourceRecord]
+    notes: list[str] = Field(default_factory=list)
+
+
 class BenchmarkDatasetPublic(BaseModel):
     """The public description of a benchmark dataset (what ``/datasets`` returns)."""
 
@@ -91,6 +132,9 @@ class BenchmarkDatasetPublic(BaseModel):
     )
     splits_sha256: str
     template_sha256: str
+    provenance: BundleProvenance | None = Field(
+        default=None, description="Sources, label rule and split rule of this bundle."
+    )
 
     @model_validator(mode="after")
     def _primary_metric_belongs_to_the_task(self) -> Self:
@@ -207,6 +251,7 @@ def write_bundle(
     docs_url: str | None = None,
     tc_data_slug: str | None = None,
     built_at: datetime | None = None,
+    provenance: BundleProvenance | None = None,
 ) -> BenchmarkDataset:
     """Write ``<datasets_root>/<slug>/`` from split id lists and a label map.
 
@@ -285,6 +330,7 @@ def write_bundle(
         template_sha256=sha256_bytes(template_bytes),
         labels_sha256=sha256_bytes(labels_bytes),
         built_at=built_at or datetime.now(UTC),
+        provenance=provenance,
     )
     root = datasets_root / dataset.slug
     root.mkdir(parents=True, exist_ok=False)

@@ -10,6 +10,7 @@ import {
   metricValue,
   type BenchApi,
   type BenchmarkDatasetPublic,
+  type BundleProvenance,
   type LeaderboardRow,
   type MetricName,
 } from '@site/src/lib/benchApi';
@@ -402,6 +403,60 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
 // Page
 // ---------------------------------------------------------------------------
 
+const GITHUB_TREE = 'https://github.com/Mjvolk3/torchcell/blob/main/';
+
+/**
+ * Where the bundle's records and labels came from, first in the panel: every source
+ * with its retrieval and hash, then the label and split rules, then the script.
+ */
+function Provenance({provenance}: {provenance: BundleProvenance}): ReactNode {
+  return (
+    <div className={styles.provenance}>
+      <p className={styles.panelTitle}>Provenance</p>
+      <ul className={styles.facts}>
+        {provenance.sources.map((s) => (
+          <li key={s.name}>
+            <span className={styles.factLabel}>{s.role}</span>
+            {s.name}
+            {s.n_files !== null ? `, ${s.n_files.toLocaleString('en-US')} files` : ''}
+            {s.retrieved_at ? `, retrieved ${s.retrieved_at.slice(0, 10)}` : ''}
+            {' '}({s.retrieval_method}
+            {s.source_url && isHttpUrl(s.source_url) ? (
+              <>
+                {', '}
+                <a href={s.source_url} target="_blank" rel="noopener noreferrer">
+                  source
+                </a>
+              </>
+            ) : null}
+            ), sha256 <code title={s.sha256}>{s.sha256.slice(0, 12)}</code>
+            {s.note ? <span className={styles.muted}> {s.note}</span> : null}
+          </li>
+        ))}
+        <li>
+          <span className={styles.factLabel}>Label rule</span>
+          {provenance.label_rule}
+        </li>
+        <li>
+          <span className={styles.factLabel}>Split rule</span>
+          {provenance.split_rule}
+        </li>
+        <li>
+          <span className={styles.factLabel}>Built by</span>
+          <a href={GITHUB_TREE + provenance.script} target="_blank" rel="noopener noreferrer">
+            <code>{provenance.script}</code>
+          </a>
+        </li>
+        {provenance.notes.map((note) => (
+          <li key={note} className={styles.muted}>
+            {note}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function DatasetPanel({dataset, api}: {dataset: BenchmarkDatasetPublic; api: BenchApi}): ReactNode {
   const splitsUrl = api.splitsUrl(dataset.slug);
   const templateUrl = api.templateUrl(dataset.slug);
@@ -409,6 +464,7 @@ export function DatasetPanel({dataset, api}: {dataset: BenchmarkDatasetPublic; a
     <div className={styles.panel}>
       <p className={styles.panelTitle}>{dataset.title}</p>
       <p>{dataset.description}</p>
+      {dataset.provenance ? <Provenance provenance={dataset.provenance} /> : null}
       <ul className={styles.facts}>
         <li>
           <span className={styles.factLabel}>Loader</span>

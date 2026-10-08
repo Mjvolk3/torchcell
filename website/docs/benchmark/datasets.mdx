@@ -7,28 +7,60 @@ description: The seed benchmark datasets and their split files.
 Every dataset in TorchCell is planned to get a board. The first board is gene
 essentiality; three regression datasets are planned to follow.
 
+## Provenance
+
+Every benchmark dataset page begins here: where each source file came from, how it was
+retrieved, and the hash of the bytes used. The same record is served with the dataset
+(`provenance` in `GET /datasets`) and shown at the top of its panel on the
+[leaderboard](./leaderboard.mdx). The rule is the project's: a stored file and its
+sha256 are canonical, a URL is retrieval history, and a rebuild re-runs the recorded
+retrieval and verifies the hash rather than trusting the live site.
+
+| Source | Role | Retrieval | Where the bytes live |
+| :-- | :-- | :-- | :-- |
+| `SGD_features.tab`, the SGD chromosomal feature table | gene universe: every ORF (Verified, Uncharacterized, Dubious) | `direct_url` from `sgd-archive.yeastgenome.org` | raw mirror `torchcell-raw/cherrySGDSaccharomycesGenome1998/`, hash in its `provenance.json` |
+| SGD locus phenotype annotations, one JSON per ORF | label 0: a `null` mutant in `S288C` annotated `viable` | `direct_url` from `yeastgenome.org/backend/locus/<ORF>/phenotype_details`, the endpoint the served dataset was built from | same mirror, `phenotype_details/<ORF>.json`, one hash per file plus one over the set |
+| tc-data archive of `GeneEssentialitySgdDataset` | label 1: the gene set the knowledge graph serves (`null` mutant in `S288C` annotated `inviable`) | `tc_data_archive`, verified against the store's `index.json` | the tc-data store; archive and member hashes in the bundle |
+
+Both labels come from SGD. No fitness dataset is spent on the labels, so a method may
+use single-mutant fitness, or any other TorchCell dataset, as input. The scripts are
+`experiments/035-benchmark-bundles/scripts/sgd_phenotype_mirror.py` (the mirror, with
+`provenance.json`) and `gene_essentiality_bundle.py` (the bundle, its public provenance
+block, and the build record in `experiments/035-benchmark-bundles/results/`).
+
 ## Gene essentiality
 
-| Slug | Task | Records | Label 1 | Label 0 |
-| :-- | :-- | --: | --: | --: |
-| `gene-essentiality-sgd` | binary, target `is_essential` | 5,697 genes | 1,140 | 4,557 |
+| Slug | Version | Task | Records | Label 1 | Label 0 |
+| :-- | :-- | :-- | --: | --: | --: |
+| `gene-essentiality-sgd` | 2 | binary, target `is_essential` | 5,930 genes | 1,140 | 4,790 |
 
-- **Essential (1):** the gene has a null-mutant record that SGD annotates as inviable
-  (`GeneEssentialitySgdDataset`).
-- **Non-essential (0):** the gene is not in that set and has a KanMX or NatMX deletion
-  strain with a measured fitness in the Costanzo 2016 screens
-  (`SmfCostanzo2016Dataset`), so its deletion mutant grew.
-- **Excluded:** genes in neither group. 24 genes are in both and are labeled essential.
+Built 2026-10-08 from 6,613 SGD ORFs (5,783 Verified, 147 Uncharacterized, 683
+Dubious): 1,140 essential, 4,790 non-essential, 683 excluded with neither call. Splits:
+4,744 train, 593 validation, 593 test, each 19% essential. The fresh SGD read had 1,161
+inviable genes, 21 more than the served set and none fewer; the served set is what is
+labeled, and the difference is recorded. 54 genes carry both calls and are labeled
+essential.
+
+- **Essential (1):** the gene is in the gene set of the served
+  `GeneEssentialitySgdDataset`: SGD annotates a null mutant in S288C as inviable.
+- **Non-essential (0):** the gene is an SGD ORF, not in that set, and SGD annotates a
+  null mutant in S288C as viable.
+- **Excluded:** ORFs with neither call. A gene with both calls is labeled essential and
+  the count is recorded in the provenance notes.
 - **Split:** within each class, 80% train, 10% validation, 10% test, drawn with a fixed
-  seed: 4,557 train, 570 validation, 570 test records, each 20% essential.
+  seed, so each split keeps the class ratio.
 - **Record id:** the systematic gene name, for example `YAL001C`.
+- **First entry on the board:** a lookup, not a model. The gene's Costanzo 2016
+  single-mutant fitness at 30 C, minimum over its KanMX and NatMX deletion strains,
+  scored as one minus fitness; a gene with no deletion strain measured scores one,
+  since the deletion collection lacks the genes whose deletion did not live. It is the
+  upload test case of the board and is labeled as external data.
 
-:::caution[Provisional rule, public labels]
+:::caution[Public labels]
 
-The rule for label 0 is provisional. The labels of this dataset are also public
-knowledge: SGD publishes which genes are inviable. The test split measures a method
-only when it was not trained on the test genes' labels, which the
-[training protocol](./training-protocol.mdx) requires and verification checks.
+The labels of this dataset are public knowledge: SGD publishes which genes are inviable.
+The test split measures a method only when it was not trained on the test genes' labels,
+which the [training protocol](./training-protocol.mdx) requires and verification checks.
 
 :::
 

@@ -18,6 +18,10 @@ sourcing layer.
 - ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
+- ``campos2018`` -- ``GrowthRateCampos2018Dataset``: the imaged Keio collection. Its
+  released phenotype is 26 features of ONE medium (19 morphological, 2 growth, 5 cell
+  cycle), of which only the Gompertz maximal growth rate has a phenotype class, served
+  as a ko/wt growth-rate ratio; the module records the exact mismatch for the other 25.
 - ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
   FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
 - ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
@@ -54,6 +58,7 @@ sourcing layer.
 
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
+from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .goodall2018 import (

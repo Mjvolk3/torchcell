@@ -59,6 +59,17 @@ A supplement shipped inside a recorded archive is promoted to a file of its own 
 :func:`store_zip_member` (``--zip-member si/si1.zip:Table_S1.pdf``): the member becomes
 the next ``si/si<N>`` file with a ``zip_member`` retrieval over the archive's recorded
 URL and sha256, so a loader can quote its OCR text.
+
+``--ocr`` OCRs only the SI PDFs captured in the same run. SI that is already recorded
+without OCR (an earlier run without ``--ocr``, a manual deposit) is OCR'd with
+``--ocr-recorded`` (:func:`ocr_recorded_keys`, issue #709): for each key, every
+recorded ``si/si<N>.pdf`` with no recorded ``si/si<N>.md`` is checked against its
+sha256, OCR'd and recorded one PDF at a time through the same path a capture uses,
+and a PDF whose markdown is recorded is skipped, so a rerun is a no-op. The report
+(``si_ocr_<stamp>.json``) lists per key what was OCR'd and what was skipped. Unlike
+:mod:`torchcell.literature.reocr_si`, it never re-OCRs a PDF or retires figures.
+``ocr_pdf`` needs ``HF_HOME`` or ``DATA_ROOT`` in the calling environment
+(``scripts/lit_capture_si.py`` loads ``.env``).
 """
 
 from __future__ import annotations
@@ -165,6 +176,7 @@ _ESM_LINK = re.compile(
 )
 _PII = re.compile(r"S[0-9]{4}[0-9X]{4}[0-9]{2}[0-9]{5}[0-9X]")
 _SI_INDEX = re.compile(r"si(\d+)(?:[._].*)?")
+_SI_PDF = re.compile(r"si/si\d+\.pdf")
 
 
 class SiOutcome(StrEnum):
@@ -278,6 +290,45 @@ class SiCaptureReport(BaseModel):
         """One-line ``outcome=count`` tally for logs."""
         tally = " ".join(f"{k}={v}" for k, v in self.tally().items())
         return f"{len(self.results)} keys | {tally}"
+
+
+class KeyOcrResult(BaseModel):
+    """Per-key outcome of an ``--ocr-recorded`` pass over already-recorded SI PDFs."""
+
+    citation_key: str | None
+    doi: str | None = None
+    pending: list[str] = Field(
+        default_factory=list,
+        description="Recorded si/si<N>.pdf with no recorded si/si<N>.md at the start.",
+    )
+    ocr: list[str] = Field(
+        default_factory=list, description="Markdown written and recorded, per PDF."
+    )
+    skipped: list[str] = Field(
+        default_factory=list,
+        description="Recorded si/si<N>.pdf whose markdown is already recorded.",
+    )
+    error: str | None = None
+
+
+class SiOcrReport(BaseModel):
+    """One ``--ocr-recorded`` pass over a set of keys."""
+
+    generated_at: str
+    mirror_root: str
+    dry_run: bool
+    results: list[KeyOcrResult]
+
+    def summary(self) -> str:
+        """One-line tally for logs."""
+        ocr = sum(len(r.ocr) for r in self.results)
+        pending = sum(len(r.pending) for r in self.results)
+        skipped = sum(len(r.skipped) for r in self.results)
+        errors = sum(r.error is not None for r in self.results)
+        return (
+            f"{len(self.results)} keys | pending={pending} ocr={ocr} "
+            f"skipped={skipped} errors={errors}"
+        )
 
 
 class KeyRequest(BaseModel):
@@ -933,10 +984,14 @@ def _record_ocr_outputs(key_dir: Path, manifest: Manifest, stems: list[str]) -> 
 
     Roles, the ``mineru-ocr`` source and the processing record come from
     :func:`build_manifest`'s scan, so they match what a full rebuild would write.
+    A stem is matched only up to a ``.`` or ``_`` boundary, so OCR'ing ``si1`` never
+    records an unrecorded ``si/si10.md``.
     """
     recorded = {r.path for r in manifest.files}
-    prefixes = tuple(f"si/{stem}" for stem in stems) + tuple(
-        f"si/images/{stem}/" for stem in stems
+    prefixes = tuple(
+        prefix
+        for stem in stems
+        for prefix in (f"si/{stem}.", f"si/{stem}_", f"si/images/{stem}/")
     )
     scan = build_manifest(key_dir, citation_key=manifest.citation_key)
     for record in scan.files:
@@ -1037,6 +1092,94 @@ def ocr_stored_pdfs(
     _record_ocr_outputs(key_dir, manifest, [p.stem for p in pdfs])
     write_manifest(key_dir, manifest)
     return written
+
+
+def recorded_si_pdfs(manifest: Manifest) -> tuple[list[str], list[str]]:
+    """Recorded ``si/si<N>.pdf`` paths split by whether ``si/si<N>.md`` is recorded.
+
+    Returns ``(pending, done)``, each in ``N`` order: ``pending`` has no recorded
+    markdown, ``done`` has one. A markdown on disk that the manifest does not record
+    (an OCR killed before its record was written) leaves its PDF pending.
+    """
+    recorded = {r.path for r in manifest.files}
+    pdfs = sorted(
+        (r.path for r in manifest.files if _SI_PDF.fullmatch(r.path)),
+        key=lambda rel: int(rel[len("si/si") : -len(".pdf")]),
+    )
+    pending = [rel for rel in pdfs if f"{rel[: -len('.pdf')]}.md" not in recorded]
+    done = [rel for rel in pdfs if rel not in pending]
+    return pending, done
+
+
+def ocr_recorded_key(root: Path, key: str, *, dry_run: bool = False) -> KeyOcrResult:
+    """OCR every recorded ``si/si<N>.pdf`` of one key that has no recorded markdown.
+
+    Each PDF's bytes are checked against its recorded sha256, then it is OCR'd with
+    :func:`ocr_stored_pdfs` (``ocr_pdf`` + :func:`_record_ocr_outputs` +
+    ``write_manifest``, the recording path :func:`capture_key` uses), one PDF at a
+    time, so a run that dies mid-key keeps the records of the PDFs it finished and a
+    rerun OCRs only the rest. A PDF whose markdown is recorded is never re-OCR'd. The
+    device follows :func:`ocr_pdf` (``$MINERU_DEVICE_MODE``).
+
+    Args:
+        root: The ``torchcell-library`` directory.
+        key: Citation key (mirror directory).
+        dry_run: List the PDFs that would be OCR'd; OCR and write nothing.
+    """
+    key_dir = root / key
+    manifest_path = key_dir / MANIFEST_FILENAME
+    if not manifest_path.is_file():
+        return KeyOcrResult(citation_key=key, error=f"{key}/{MANIFEST_FILENAME} absent")
+    manifest = Manifest.model_validate_json(manifest_path.read_text())
+    pending, done = recorded_si_pdfs(manifest)
+    result = KeyOcrResult(citation_key=key, pending=pending, skipped=done)
+    if dry_run:
+        return result
+    sha_by_path = {r.path: r.sha256 for r in manifest.files}
+    try:
+        for rel in pending:
+            got = sha256_file(key_dir / rel)
+            if got != sha_by_path[rel]:
+                raise ValueError(
+                    f"{key_dir / rel} sha256 {got} does not match its record "
+                    f"{sha_by_path[rel]}"
+                )
+            result.ocr.extend(ocr_stored_pdfs(key_dir, manifest, [rel]))
+    except Exception as exc:  # noqa: BLE001 -- report the key, keep the batch going
+        log.exception("capture_si: OCR of recorded SI of %s failed", key)
+        result.error = f"{type(exc).__name__}: {exc}"
+    return result
+
+
+def ocr_recorded_keys(
+    requests: Sequence[KeyRequest], root: Path, *, dry_run: bool = False
+) -> SiOcrReport:
+    """:func:`ocr_recorded_key` over every request; a DOI with no key is an error."""
+    results = []
+    for request in requests:
+        if request.citation_key is None:
+            result = KeyOcrResult(
+                citation_key=None,
+                doi=request.doi,
+                error="no mirror directory with this DOI",
+            )
+        else:
+            result = ocr_recorded_key(root, request.citation_key, dry_run=dry_run)
+            result.doi = request.doi
+        log.info(
+            "capture_si: %-48s ocr=%d skipped=%d%s",
+            result.citation_key or result.doi,
+            len(result.ocr),
+            len(result.skipped),
+            f" error={result.error}" if result.error else "",
+        )
+        results.append(result)
+    return SiOcrReport(
+        generated_at=datetime.now(UTC).isoformat(),
+        mirror_root=str(root),
+        dry_run=dry_run,
+        results=results,
+    )
 
 
 def capture_key(
@@ -1259,11 +1402,12 @@ def dedupe(requests: Sequence[KeyRequest]) -> list[KeyRequest]:
     return out
 
 
-def write_report(report: SiCaptureReport, report_dir: Path) -> Path:
-    """Write ``si_[dryrun_]<UTC stamp>.json`` under ``report_dir``."""
+def write_report(report: SiCaptureReport | SiOcrReport, report_dir: Path) -> Path:
+    """Write ``si_[dryrun_]<UTC stamp>.json`` (``si_ocr_...`` for an OCR pass)."""
     report_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-    prefix = "si_dryrun_" if report.dry_run else "si_"
+    base = "si_ocr_" if isinstance(report, SiOcrReport) else "si_"
+    prefix = f"{base}dryrun_" if report.dry_run else base
     path = report_dir / f"{prefix}{stamp}.json"
     path.write_text(report.model_dump_json(indent=2))
     return path
@@ -1311,9 +1455,18 @@ def main(argv: list[str] | None = None) -> int:
         "no publisher resolution runs. With --ocr, stored PDFs are OCR'd (device "
         "from $MINERU_DEVICE_MODE).",
     )
+    parser.add_argument(
+        "--ocr-recorded",
+        action="store_true",
+        help="No publisher resolution: OCR every recorded si/si<N>.pdf of the keys "
+        "that has no recorded si/si<N>.md, record the outputs, and skip the rest "
+        "(device from $MINERU_DEVICE_MODE). With --dry-run, list them only.",
+    )
     args = parser.parse_args(argv)
     if not (args.keys or args.collection or args.doi):
         parser.error("give citation keys, --collection or --doi")
+    if args.ocr_recorded and (args.ocr or args.zip_member):
+        parser.error("--ocr-recorded takes neither --ocr nor --zip-member")
     root = args.mirror_root or library_root(os.environ["DATA_ROOT"])
     if args.zip_member:
         if len(args.keys) != 1 or args.collection or args.doi or args.dry_run:
@@ -1342,6 +1495,20 @@ def main(argv: list[str] | None = None) -> int:
     for collection in args.collection:
         requests.extend(requests_for_collection(collection))
     requests.extend(requests_for_dois(root, args.doi))
+    if args.ocr_recorded:
+        ocr_report = ocr_recorded_keys(dedupe(requests), root, dry_run=args.dry_run)
+        for res in ocr_report.results:
+            line = (
+                f"{res.citation_key or '-'} ({res.doi}) pending={res.pending} "
+                f"ocr={res.ocr} skipped={res.skipped}"
+            )
+            if res.error:
+                line += f" error={res.error}"
+            print(line)
+        ocr_path = write_report(ocr_report, args.report_dir or root / REPORTS_SUBDIR)
+        print(ocr_report.summary())
+        print(f"report -> {ocr_path}")
+        return 1 if any(r.error for r in ocr_report.results) else 0
     report = capture_keys(dedupe(requests), root, dry_run=args.dry_run, do_ocr=args.ocr)
     for result in report.results:
         line = f"{result.outcome:<13} {result.citation_key or '-'} ({result.doi})"

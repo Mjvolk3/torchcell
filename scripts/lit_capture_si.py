@@ -24,6 +24,10 @@ Usage, from the repo root::
     python scripts/lit_capture_si.py hawkinsMismatchCRISPRiReveals2020 --ocr
     python scripts/lit_capture_si.py --doi 10.1016/j.cels.2020.09.009
 
+    # OCR SI already recorded without OCR (each si/si<N>.pdf lacking si/si<N>.md);
+    # skips PDFs whose markdown is recorded; --dry-run lists them only
+    python scripts/lit_capture_si.py --collection Escherichia-coli --ocr-recorded
+
     # a scratch copy of the mirror
     python scripts/lit_capture_si.py someKey --mirror-root /scratch/.../torchcell-library
 

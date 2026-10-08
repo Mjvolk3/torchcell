@@ -31,6 +31,7 @@ from torchcell.literature.manifest import (
     Manifest,
     RetrievalMethod,
     RetrievalRecord,
+    _role_for,
     write_manifest,
 )
 from torchcell.literature.retrieve import RETRIEVERS
@@ -875,3 +876,185 @@ def test_main_zip_member_needs_exactly_one_key(tmp_path: Path) -> None:
         cs.main(["a", "b", "--zip-member", "si/si1.zip:x.pdf"])
     with pytest.raises(SystemExit):
         cs.main(["a", "--zip-member", "si/si1.zip"])
+
+
+def _si_record(rel: str, data: bytes) -> ArtifactRecord:
+    """A recorded SI file with no retrieval (a manual deposit or a Zotero attachment)."""
+    return ArtifactRecord(
+        path=rel, role=_role_for(rel), bytes=len(data), sha256=_sha(data)
+    )
+
+
+def _stub_ocr(calls: list[str]) -> Any:
+    """Fake ``ocr_pdf``: the markdown and processing record ``ocr_pdf`` writes."""
+
+    def fake_ocr(pdf: Path) -> Path:
+        calls.append(pdf.name)
+        md = pdf.with_suffix(".md")
+        md.write_text(f"# {pdf.stem}\n")
+        (pdf.parent / f"{pdf.stem}_ocr_provenance.json").write_text(
+            json.dumps(
+                {
+                    "processor": "torchcell.literature.ocr.ocr_pdf",
+                    "tool": "mineru",
+                    "version": "2.5.4",
+                    "params": {"dpi": 200},
+                    "input_sha256": [_sha(pdf.read_bytes())],
+                }
+            )
+        )
+        return md
+
+    return fake_ocr
+
+
+def _recorded_si_key(root: Path) -> Path:
+    """A key recording ``si/si1.pdf`` (with markdown), ``si/si2.pdf`` and
+    ``si/si10.pdf`` (no markdown) and ``si/si3.xlsx``.
+
+    ``si/si10.md`` sits on disk unrecorded, as an OCR killed before its record was
+    written leaves it.
+    """
+    files = {
+        "si/si1.pdf": b"%PDF one",
+        "si/si1.md": b"# si1\n",
+        "si/si2.pdf": b"%PDF two",
+        "si/si3.xlsx": b"PK xlsx",
+        "si/si10.pdf": b"%PDF ten",
+    }
+    key_dir = _key(
+        root,
+        "smith2020",
+        "10.1000/abc",
+        extra=[_si_record(rel, data) for rel, data in files.items()],
+    )
+    (key_dir / "si").mkdir()
+    for rel, data in files.items():
+        (key_dir / rel).write_bytes(data)
+    (key_dir / "si" / "si10.md").write_text("# stale\n")
+    return key_dir
+
+
+def test_recorded_si_pdfs_splits_by_recorded_markdown_in_index_order(
+    tmp_path: Path,
+) -> None:
+    key_dir = _recorded_si_key(tmp_path)
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    assert cs.recorded_si_pdfs(manifest) == (
+        ["si/si2.pdf", "si/si10.pdf"],
+        ["si/si1.pdf"],
+    )
+
+
+def test_ocr_recorded_records_markdown_and_a_rerun_is_a_no_op(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    key_dir = _recorded_si_key(tmp_path)
+    calls: list[str] = []
+    monkeypatch.setattr(cs, "ocr_pdf", _stub_ocr(calls))
+    result = cs.ocr_recorded_key(tmp_path, "smith2020")
+    assert result.error is None
+    assert result.pending == ["si/si2.pdf", "si/si10.pdf"]
+    assert result.ocr == ["si/si2.md", "si/si10.md"]
+    assert result.skipped == ["si/si1.pdf"]
+    assert calls == ["si2.pdf", "si10.pdf"]
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    by_path = {r.path: r for r in manifest.files}
+    assert sorted(by_path) == [
+        "paper.pdf",
+        "si/si1.md",
+        "si/si1.pdf",
+        "si/si10.md",
+        "si/si10.pdf",
+        "si/si10_ocr_provenance.json",
+        "si/si2.md",
+        "si/si2.pdf",
+        "si/si2_ocr_provenance.json",
+        "si/si3.xlsx",
+    ]
+    for stem, pdf_bytes in (("si2", b"%PDF two"), ("si10", b"%PDF ten")):
+        md = by_path[f"si/{stem}.md"]
+        assert (md.role, md.source, md.sha256) == (
+            "si_ocr",
+            "mineru-ocr",
+            _sha(f"# {stem}\n".encode()),
+        )
+        assert md.processing is not None
+        assert md.processing.input_sha256 == [_sha(pdf_bytes)]
+        assert by_path[f"si/{stem}_ocr_provenance.json"].role == "ocr_provenance"
+    # the stale si10.md was overwritten by the OCR, not recorded as found
+    assert (key_dir / "si" / "si10.md").read_text() == "# si10\n"
+    before = (key_dir / "manifest.json").read_bytes()
+    rerun = cs.ocr_recorded_key(tmp_path, "smith2020")
+    assert (rerun.pending, rerun.ocr, rerun.error) == ([], [], None)
+    assert rerun.skipped == ["si/si1.pdf", "si/si2.pdf", "si/si10.pdf"]
+    assert calls == ["si2.pdf", "si10.pdf"]
+    assert (key_dir / "manifest.json").read_bytes() == before
+
+
+def test_ocr_recorded_refuses_a_pdf_that_differs_from_its_record(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    key_dir = _recorded_si_key(tmp_path)
+    (key_dir / "si" / "si10.pdf").write_bytes(b"%PDF swapped")
+    calls: list[str] = []
+    monkeypatch.setattr(cs, "ocr_pdf", _stub_ocr(calls))
+    result = cs.ocr_recorded_key(tmp_path, "smith2020")
+    # si2 is OCR'd and recorded before si10 is refused
+    assert calls == ["si2.pdf"]
+    assert result.ocr == ["si/si2.md"]
+    assert result.error is not None
+    assert result.error.startswith("ValueError: ") and "si10.pdf sha256" in result.error
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    recorded = {r.path for r in manifest.files}
+    assert "si/si2.md" in recorded and "si/si10.md" not in recorded
+
+
+def test_record_ocr_outputs_matches_a_stem_only_at_a_boundary(tmp_path: Path) -> None:
+    key_dir = _recorded_si_key(tmp_path)
+    (key_dir / "si" / "si1_content_list.json").write_text("[]")
+    manifest = Manifest.model_validate_json((key_dir / "manifest.json").read_text())
+    cs._record_ocr_outputs(key_dir, manifest, ["si1"])
+    recorded = {r.path for r in manifest.files}
+    assert "si/si1_content_list.json" in recorded
+    assert "si/si10.md" not in recorded
+
+
+def test_main_ocr_recorded_reports_per_key_and_dry_run_writes_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    mirror = tmp_path / "torchcell-library"
+    key_dir = _recorded_si_key(mirror)
+    reports = tmp_path / "reports"
+    calls: list[str] = []
+    monkeypatch.setattr(cs, "ocr_pdf", _stub_ocr(calls))
+    common = ["--ocr-recorded", "--mirror-root", str(mirror)]
+    before = (key_dir / "manifest.json").read_bytes()
+    dry = cs.main(["smith2020", *common, "--dry-run", "--report-dir", str(reports)])
+    assert dry == 0
+    assert calls == []
+    assert (key_dir / "manifest.json").read_bytes() == before
+    [dry_path] = list(reports.iterdir())
+    assert dry_path.name.startswith("si_ocr_dryrun_")
+    code = cs.main(["smith2020", "absent2026", *common, "--report-dir", str(reports)])
+    assert code == 1
+    assert calls == ["si2.pdf", "si10.pdf"]
+    out = capsys.readouterr().out
+    assert (
+        "smith2020 (None) pending=['si/si2.pdf', 'si/si10.pdf'] "
+        "ocr=['si/si2.md', 'si/si10.md'] skipped=['si/si1.pdf']"
+    ) in out
+    assert "absent2026 (None) pending=[] ocr=[] skipped=[] error=absent2026/" in out
+    assert "2 keys | pending=2 ocr=2 skipped=1 errors=1" in out
+    [path] = [p for p in reports.iterdir() if p != dry_path]
+    assert path.name.startswith("si_ocr_") and "dryrun" not in path.name
+    report = cs.SiOcrReport.model_validate_json(path.read_text())
+    assert [r.citation_key for r in report.results] == ["smith2020", "absent2026"]
+    assert report.results[0].ocr == ["si/si2.md", "si/si10.md"]
+
+
+def test_main_ocr_recorded_refuses_ocr_and_zip_member() -> None:
+    with pytest.raises(SystemExit):
+        cs.main(["a", "--ocr-recorded", "--ocr"])
+    with pytest.raises(SystemExit):
+        cs.main(["a", "--ocr-recorded", "--zip-member", "si/si1.zip:x.pdf"])

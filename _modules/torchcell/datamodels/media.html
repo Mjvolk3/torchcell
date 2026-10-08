@@ -1959,11 +1959,6 @@
     <span class="n">sha256</span><span class="o">=</span><span class="s2">"b24baad46bdf488cf93a7e59c51eceb2af9ba4ad565459130897a6201cd62407"</span><span class="p">,</span>
     <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">_BANERJEE2025</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
-    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"banerjeeAddressingGenomeScale2025"</span><span class="p">,</span>
-    <span class="n">sha256</span><span class="o">=</span><span class="s2">"74d7040a0a7ec721f18e5fc49d855a5c9c6eaeee9ff7bf166ec675824e27c489"</span><span class="p">,</span>
-    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="n">_CARRUTHERS2025</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
     <span class="n">citation_key</span><span class="o">=</span><span class="s2">"carruthersAutomationMachineLearning2025"</span><span class="p">,</span>
     <span class="n">sha256</span><span class="o">=</span><span class="s2">"ca9a8a2593d2ae3ab3bacfb767e797ece2bdaa0228a4f798f1c38e1af73ef88d"</span><span class="p">,</span>
@@ -3682,80 +3677,6 @@
 <span class="p">)</span>
 <span class="sd">"""Menasalvas 2025's P. putida isoprenol medium, NREL M9 with MOPS (row 20)."""</span>
 
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1"># Banerjee 2025 (row 39, P. putida KT2440): the one bacterial medium in this library</span>
-<span class="c1"># whose SALTS are a composition DEFERRED, not a stated recipe. The Methods name the</span>
-<span class="c1"># formulation and hand its amounts to an earlier paper -- "Engineered strains were grown</span>
-<span class="c1"># in a modified M9 minimal medium as previously described21" -- and reference 21 (Eng</span>
-<span class="c1"># et al. 2023, Cell Rep. 42, 113087) is not mirrored. The three carbon sources it</span>
-<span class="c1"># DOES state are handed to the figure legends, so they are not components either: the loader carries each</span>
-<span class="c1"># condition's carbon regime as an EnvironmentPhysicalPerturbation(factor=carbon_source),</span>
-<span class="c1"># which is the de Siqueira 2025 convention. What is left is one honest object: M9-based,</span>
-<span class="c1"># salts unstated, carbon-free.</span>
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="n">_Q_BANERJEE_M9</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"Engineered strains were grown in a modified M9 minimal medium as previously "</span>
-    <span class="s2">"described21, and $</span><span class="se">\\</span><span class="s2">boldsymbol { p }$ - CA (Sigma-Aldrich, Product No. C9008), "</span>
-    <span class="s2">"L-malic acid sodium salt (Sigma-Aldrich, Product No. M1125) and D-alanine "</span>
-    <span class="s2">"(Sigma-Aldrich, Product No. A7377) were used at the concentrations indicated in "</span>
-    <span class="s2">"the figure legends."</span>
-<span class="p">)</span>
-<span class="n">_Q_BANERJEE_PROTEOMICS_MEDIA</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"The D1b_gf strains designed in this study were grown in triplicates in M9 "</span>
-    <span class="s2">"$6 0 </span><span class="se">\\</span><span class="s2"> : </span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2"> : p – </span><span class="se">\\</span><span class="s2">mathrm { C } A$ , or M9 50 mM "</span>
-    <span class="s2">"$</span><span class="se">\\</span><span class="s2">boldsymbol { p }$ -CA supplemented with $7 0 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ D-alanine and "</span>
-    <span class="s2">"$7 0 </span><span class="se">\\</span><span class="s2">mathrm { m M L }$ -malate when indicated, using $1 0 </span><span class="se">\\</span><span class="s2">mathrm { m L }$ "</span>
-    <span class="s2">"culture tubes."</span>
-<span class="p">)</span>
-<span class="n">_ENG_BANERJEE2023</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="s2">"Eng et al. 2023, Cell Rep. 42, 113087 (the paper's reference 21, which its own "</span>
-    <span class="s2">"Supplementary Table 1 cites as 'Eng andBanerjee,2023'); not mirrored"</span>
-<span class="p">)</span>
-
-<span class="n">M9_DEFERRED_BANERJEE2025</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
-    <span class="n">name</span><span class="o">=</span><span class="s2">"modified M9 minimal medium, composition deferred to Eng et al. 2023, "</span>
-    <span class="s2">"no carbon source (Banerjee 2025)"</span><span class="p">,</span>
-    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
-    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">,</span>
-    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">_mixture</span><span class="p">(</span>
-            <span class="s2">"modified M9 minimal medium (amounts deferred to Eng et al. 2023)"</span><span class="p">,</span>
-            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
-            <span class="n">_DEFERRED</span><span class="p">,</span>
-            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">_cite</span><span class="p">(</span>
-                    <span class="n">_BANERJEE2025</span><span class="p">,</span>
-                    <span class="s2">"composition deferred to reference 21 (Eng et al. 2023)"</span><span class="p">,</span>
-                    <span class="n">_Q_BANERJEE_M9</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">],</span>
-            <span class="n">note</span><span class="o">=</span><span class="s2">"the source states that the medium is a MODIFIED M9 and gives no "</span>
-            <span class="s2">"amounts for any of its salts, so no gram or millimolar figure is copied "</span>
-            <span class="s2">"in from another paper's M9. It is therefore its OWN base rather than a "</span>
-            <span class="s2">"derivative of the stated M9 salts (the SM_DEFERRED treatment): a "</span>
-            <span class="s2">"derivative must restate or drop every base component, and this medium can "</span>
-            <span class="s2">"do neither without asserting amounts the source withheld. The PRODUCTION "</span>
-            <span class="s2">"runs add 30 mM MOPS at pH 7 and 1.5 percent w/v L-arabinose on top of the "</span>
-            <span class="s2">"same base; no medium object carries them because this paper releases no "</span>
-            <span class="s2">"titer and no growth rate, so nothing is served from a production run"</span><span class="p">,</span>
-            <span class="n">defers_to</span><span class="o">=</span><span class="p">[</span><span class="n">_ENG_BANERJEE2023</span><span class="p">],</span>
-        <span class="p">)</span>
-    <span class="p">],</span>
-    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2025</span><span class="p">,</span> <span class="s2">"modified M9 minimal medium"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9</span><span class="p">),</span>
-        <span class="n">_cite</span><span class="p">(</span>
-            <span class="n">_BANERJEE2025</span><span class="p">,</span>
-            <span class="s2">"the carbon source is the variable"</span><span class="p">,</span>
-            <span class="n">_Q_BANERJEE_PROTEOMICS_MEDIA</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="s2">"60 mM p-CA for the promoter-variant proteomes and 50 mM p-CA + 70 mM "</span>
-            <span class="s2">"D-alanine + 70 mM L-malate for the cross-feeding proteomes; the loader "</span>
-            <span class="s2">"carries each as EnvironmentPhysicalPerturbation(factor=carbon_source)"</span><span class="p">,</span>
-        <span class="p">),</span>
-    <span class="p">],</span>
-<span class="p">)</span>
-<span class="sd">"""Banerjee 2025's carbon-free P. putida M9, salts deferred to Eng 2023 (row 39)."""</span>
-
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Foo 2014 (E. coli DH1): "1x M9 salt (Difco)" is a commercial salts powder whose</span>
@@ -4159,9 +4080,6 @@
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'modified M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9-MOPS'"</span><span class="p">,),</span>
-    <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="p">(</span>
-        <span class="s2">"39 Banerjee 2025: the shotgun-proteomics cultures; names a modified M9 and defers its amounts to reference 21"</span><span class="p">,</span>
-    <span class="p">),</span>
     <span class="s2">"M9_NREL_CARRUTHERS2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"6 Carruthers 2025: isoprenol production"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_MOPS_MENASALVAS2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"20 Menasalvas 2025: isoprenol production"</span><span class="p">,),</span>
     <span class="s2">"M9_DIFCO"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"12 Foo 2014: base of both Foo media"</span><span class="p">,),</span>
@@ -4245,7 +4163,6 @@
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_HIGH_N_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="n">M9_MOPS_KANG2026</span><span class="p">,</span>
-    <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="n">M9_DEFERRED_BANERJEE2025</span><span class="p">,</span>
     <span class="s2">"M9_NREL_CARRUTHERS2025"</span><span class="p">:</span> <span class="n">M9_NREL_CARRUTHERS2025</span><span class="p">,</span>
     <span class="s2">"M9_NREL_MOPS_MENASALVAS2025"</span><span class="p">:</span> <span class="n">M9_NREL_MOPS_MENASALVAS2025</span><span class="p">,</span>
     <span class="s2">"M9_DIFCO"</span><span class="p">:</span> <span class="n">M9_DIFCO</span><span class="p">,</span>
@@ -4288,8 +4205,6 @@
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="s2">"the carbon source is the variable across the eleven carbon-source "</span>
     <span class="s2">"conditions"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="s2">"acetate or glucose, varied per condition"</span><span class="p">,</span>
-    <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="s2">"p-CA alone, or p-CA with D-alanine and L-malate, "</span>
-    <span class="s2">"varied per condition; the Methods hand the amounts to the figure legends"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_NOCARBON_LIM2022"</span><span class="p">:</span> <span class="s2">"the aromatic project varies the carbon source "</span>
     <span class="s2">"(p-coumarate, ferulate, both, or glucose) at 2.5 g/L"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="s2">"glucose alone or a glucose:xylose mixture, varied per condition"</span><span class="p">,</span>

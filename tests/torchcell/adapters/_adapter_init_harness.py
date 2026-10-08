@@ -85,6 +85,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.ProteinAbundancePhenotype: "protein abundance phenotype",
     s.EnvironmentResponsePhenotype: "environment response phenotype",
     s.ProductTiterPhenotype: "product titer phenotype",
+    s.PromoterActivityPhenotype: "promoter activity phenotype",
     s.ProteinTurnoverPhenotype: "protein turnover phenotype",
     s.FluxPhenotype: "flux phenotype",
 }

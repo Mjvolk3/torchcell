@@ -75,6 +75,7 @@ from torchcell.adapters import (
     NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
+    PromoterReporterMohiuddin2022Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
@@ -148,6 +149,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
+from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import (
@@ -355,6 +357,7 @@ dataset_adapter_map: dict[type, type] = {
     FluxIshii2007Dataset: FluxIshii2007Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,
+    PromoterReporterMohiuddin2022Dataset: (PromoterReporterMohiuddin2022Adapter),
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,

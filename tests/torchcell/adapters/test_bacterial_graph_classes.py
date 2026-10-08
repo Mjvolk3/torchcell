@@ -1,10 +1,11 @@
 # tests/torchcell/adapters/test_bacterial_graph_classes.py
 # [[tests.torchcell.adapters.test_bacterial_graph_classes]]
-"""The four graph classes the bacterial schema needs, and the yeast output they leave alone.
+"""The graph classes the bacterial schema needs, and the yeast output they leave alone.
 
-``bacterial perturbation``, ``product titer phenotype``, ``protein turnover phenotype``
-and ``flux phenotype`` are NEW node classes, emitted by NEW ``CellAdapter`` methods, so a
-served dataset's nodes cannot move. Three things are pinned here:
+``bacterial perturbation``, ``product titer phenotype``, ``protein turnover phenotype``,
+``flux phenotype`` and ``promoter activity phenotype`` are NEW node classes, emitted by
+NEW ``CellAdapter`` methods, so a served dataset's nodes cannot move. Three things are
+pinned here:
 
 - Each new method emits the class it declares, with the id rule every sub-object node
   uses (sha256 of the json-dumped ``model_dump``), the declared property set exactly, and
@@ -593,6 +594,10 @@ NEW_CLASSES = {
         s.ProteinTurnoverPhenotype,
     ),
     "flux phenotype": ("flux phenotype (chunked)", s.FluxPhenotype),
+    "promoter activity phenotype": (
+        "promoter activity phenotype (chunked)",
+        s.PromoterActivityPhenotype,
+    ),
 }
 
 
@@ -655,6 +660,10 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
             "_get_protein_turnover_phenotype_reference_nodes"
         ),
         "flux phenotype reference": "_get_flux_phenotype_reference_nodes",
+        "promoter activity phenotype (chunked)": ("_promoter_activity_phenotype_node"),
+        "promoter activity phenotype reference": (
+            "_get_promoter_activity_phenotype_reference_nodes"
+        ),
     }.items():
         assert table[name] == fn
     assert SCHEMA["perturbation member of"]["source"] == [
@@ -664,10 +673,11 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
     sources = SCHEMA["phenotype member of"]["source"]
-    assert sources[-3:] == [
+    assert sources[-4:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "flux phenotype",
+        "promoter activity phenotype",
     ]
 
 

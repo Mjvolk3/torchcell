@@ -24,6 +24,15 @@ MANIFEST_FILENAME = "manifest.json"
 # Roles a file in an artifact directory can play.
 ROLE_PAPER_PDF = "paper_pdf"
 ROLE_PAPER_OCR = "paper_ocr"
+# The publisher's own plain text of an article (PMC's .txt rendering), which is NOT
+# OCR: it is the source of record for a verbatim quote when a paper has no Zotero
+# item, and therefore no OCR'd literature mirror, to quote from.
+ROLE_PAPER_TEXT = "paper_text"
+# A deterministic TEXT rendering of a supplementary file that is not itself text (a
+# workbook's legend rows, a table dumped to TSV). Its ProcessingRecord names the
+# reader and pins the input's sha256, so a quote in it is auditable although the
+# artifact it came from is binary.
+ROLE_SI_TEXT = "si_text"
 ROLE_SI_PDF = "si_pdf"
 ROLE_SI_OCR = "si_ocr"
 ROLE_SI_DATA = "si_data"
@@ -53,8 +62,9 @@ class FileRecord(BaseModel):
 
     path: str = Field(description="Path relative to the artifact directory.")
     role: str = Field(
-        description="paper_pdf | paper_ocr | si_pdf | si_ocr | si_data | raw_data | "
-        "ocr_image | ocr_layout | ocr_provenance | annotations"
+        description="paper_pdf | paper_ocr | paper_text | si_pdf | si_ocr | "
+        "si_text | si_data | raw_data | ocr_image | ocr_layout | ocr_provenance | "
+        "annotations"
     )
     bytes: int
     sha256: str

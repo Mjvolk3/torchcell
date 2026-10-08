@@ -520,6 +520,7 @@ BACTERIAL_DATASETS = {
     "ProteomeIshii2007Dataset",
     "ProteomeLim2025Dataset",
     "ProteomeLog10PercentDeSiqueira2025Dataset",
+    "PromoterReporterMohiuddin2022Dataset",
     "ProteomeMori2021Dataset",
     "ProteomePercentDeSiqueira2025Dataset",
     "ProteomeSchmidt2016Dataset",

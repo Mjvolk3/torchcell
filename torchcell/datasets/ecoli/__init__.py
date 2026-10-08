@@ -109,6 +109,13 @@ sourcing layer.
   S24, the only gene-perturbation phenotype it releases. Six records: the KEIO ``rimI``,
   ``rimJ`` and ``rimL`` deletions in glucose and in acetate, each a ``FitnessPhenotype``
   ratio to the wild-type row of its own medium.
+- ``mohiuddin2022`` -- ``PromoterReporterMohiuddin2022Dataset``: the promoter-GFP
+  reporter library, one ``PromoterActivityPhenotype`` record per (arm, plate, well, read
+  hour) over 1,930 wells, four arms and nine hourly reads. The only expression-side
+  antibiotic-response set for this host: the three drugs are read as induced
+  transcription rather than as a fitness cost, and the untreated arm is stored as data
+  because it is the divisor the released fold changes use. Its environment carries the
+  drug only from hour five, when the dose went in.
 - ``mori2021`` -- ``ProteomeMori2021Dataset``: the DIA/SWATH absolute proteome, one
   record per loaded MG1655 (EQ353) calibration sample in protein mass fractions. Seven of
   its 66 released samples are loaded; the other 59 are dropped on their medium and
@@ -154,6 +161,9 @@ from .gupta2024 import (
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset as RnaseqPublicK12Lamoureux2023Dataset,
+)
+from .mohiuddin2022 import (
+    PromoterReporterMohiuddin2022Dataset as PromoterReporterMohiuddin2022Dataset,
 )
 from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .mutalik2020 import (

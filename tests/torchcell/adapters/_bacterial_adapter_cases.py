@@ -90,6 +90,7 @@ from torchcell.adapters import (
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
     PhageRbTnseqMutalik2020Adapter,
+    PromoterReporterMohiuddin2022Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
@@ -143,6 +144,7 @@ from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
+from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import (
@@ -252,6 +254,7 @@ RESPONSE = "environment response phenotype"
 TURNOVER = "protein turnover phenotype"
 INTERACTION = "gene interaction phenotype"
 FLUX = "flux phenotype"
+PROMOTER_ACTIVITY = "promoter activity phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -268,6 +271,10 @@ FLUX = "flux phenotype"
 # part of the medium; the CRISPRi leaves of Carruthers, Choe, Cui, Menasalvas, Wang 2018 and
 # Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
+# Mohiuddin 2022 carries both pairs: every record's genotype holds the episomal
+# promoter-GFP reporter, and its three treated arms carry the antibiotic on their
+# reads from hour five on (34,740 of 69,480 records), while the untreated arm and
+# the pre-dose reads of a treated well carry none.
 BACTERIAL: list[Bacterial] = [
     _case(
         GeneInteractionBabu2014Adapter,
@@ -557,6 +564,13 @@ BACTERIAL: list[Bacterial] = [
         CrispriGuideFitnessWang2018Dataset,
         RESPONSE,
         crispr=True,
+    ),
+    _case(
+        PromoterReporterMohiuddin2022Adapter,
+        "mohiuddin2022",
+        "promoter_reporter_mohiuddin2022",
+        PromoterReporterMohiuddin2022Dataset,
+        PROMOTER_ACTIVITY,
     ),
     _case(
         RbTnseqBorchert2023Adapter,

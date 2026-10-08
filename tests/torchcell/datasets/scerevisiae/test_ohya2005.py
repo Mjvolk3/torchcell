@@ -353,6 +353,10 @@ def test_publication_is_ohya_2005_although_the_matrix_is_the_suzuki_reanalysis(
         "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/16365294/",
         "doi": "10.1073/pnas.0509436102",
         "doi_url": "https://www.pnas.org/doi/10.1073/pnas.0509436102",
+        "source_type": "journal_article",
+        "title": None,
+        "identifier": None,
+        "identifier_url": None,
     }
 
 

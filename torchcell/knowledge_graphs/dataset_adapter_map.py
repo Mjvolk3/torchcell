@@ -113,11 +113,11 @@ from torchcell.adapters import (
     TranscriptionFactorKnockoutChoe2019Adapter,
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
-from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
     InhibitorBioscreenVolk2021Adapter,
 )
 from torchcell.data.experiment_dataset import Visibility
+from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,

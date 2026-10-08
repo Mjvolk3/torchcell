@@ -460,17 +460,25 @@ def test_side_files_gene_set_reference_index_and_strain_list(
     assert manifest["dataset_name"] == "caudal"
     assert manifest["loader_class"] == _DATASET
     assert sorted(manifest["closure"]) == [
+        "ARTIFACT_MEMBER_SEPARATOR",
+        "ARTIFACT_TIERS",
+        "ARTIFACT_URI_SCHEME",
         "ArtifactRef",
+        "ArtifactTier",
+        "CHEBI_ID_PATTERN",
         "ComponentDefinition",
         "Compound",
         "Concentration",
         "ConcentrationUnit",
         "DoseBasis",
         "Environment",
+        "EnvironmentPerturbationType",
         "Experiment",
         "ExperimentReference",
         "GenePerturbation",
+        "GenePerturbationType",
         "Genotype",
+        "INCHIKEY_PATTERN",
         "Media",
         "MediaComponent",
         "MediaComponentRole",
@@ -485,10 +493,15 @@ def test_side_files_gene_set_reference_index_and_strain_list(
         "RNASeqExpressionExperimentReference",
         "RNASeqExpressionPhenotype",
         "ReferenceGenome",
+        "SO_ID_PATTERN",
         "SequencePerturbation",
         "SequenceVariantPerturbation",
+        "SgaPerturbationType",
+        "SourceType",
         "Temperature",
         "TemperatureUnit",
+        "_ARTIFACT_SHA256",
+        "_validate_so_id",
     ]
     assert dataset.experiment_class is RNASeqExpressionExperiment
     assert dataset.reference_class is RNASeqExpressionExperimentReference

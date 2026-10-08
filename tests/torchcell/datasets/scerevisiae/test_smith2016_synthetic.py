@@ -327,6 +327,10 @@ def test_build_keeps_four_records_in_row_order_with_exact_records(
         "pubmed_url": None,
         "doi": "10.1186/s13059-016-0900-9",
         "doi_url": "https://doi.org/10.1186/s13059-016-0900-9",
+        "source_type": "journal_article",
+        "title": None,
+        "identifier": None,
+        "identifier_url": None,
     }
 
 

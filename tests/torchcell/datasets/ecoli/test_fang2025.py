@@ -65,11 +65,13 @@ from torchcell.datamodels.media import M9_MODIFIED_FANG2025
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
+    BacterialCrisprInterferencePerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
     ConcentrationUnit,
     MeasurementType,
     SampleUnit,
+    SmallMoleculePerturbation,
 )
 from torchcell.datasets.ecoli.wang2018 import CLUSTER_COLUMNS, LIBRARY_COLUMNS
 from torchcell.literature.manifest import (
@@ -485,10 +487,11 @@ def test_screen_environment_is_the_one_culture_both_arms_share() -> None:
     """One environment: BS and AS differ by the sort gate, not by the medium."""
     environment = m.screen_environment()
     assert environment.media == M9_MODIFIED_FANG2025
-    assert environment.temperature.value == 30.0
+    assert environment.temperature is not None and environment.temperature.value == 30.0
     assert environment.duration_hours == 40.0
     assert environment.aerobicity == "aerobic"
     (inducer,) = environment.perturbations
+    assert isinstance(inducer, SmallMoleculePerturbation)
     # IPTG is not in the shared compound table, so it carries a typed InChIKey gap. It
     # is deliberately NOT added: the resolver returns the TABLE's canonical name, so a
     # row for it would rename the IPTG compound node of the already-served Foo 2014
@@ -530,6 +533,7 @@ def test_host_background_keeps_the_lesion_as_a_verbatim_statement() -> None:
     background = m.host_background()
     assert background.name == "CF"
     assert background.alleles == []
+    assert background.genotype_statement is not None
     assert "fadE deletion" in background.genotype_statement
     assert background.parents == ["E. coli MG1655(DE3)"]
     assert background.provenance is not None
@@ -549,8 +553,17 @@ def test_build_genotype_adds_the_background_knockdown_only_when_asked() -> None:
         "b0006",
         "b0143",
     ]
-    assert doubled.perturbations[-1].crispr.guide_sequence == "CAGTGGGTACCAGAACATGG"
-    assert all(p.crispr.effector == "dCas9" for p in doubled.perturbations)
+    knockdowns = [
+        p
+        for p in doubled.perturbations
+        if isinstance(p, BacterialCrisprInterferencePerturbation)
+    ]
+    assert len(knockdowns) == len(doubled.perturbations)
+    assert knockdowns[-1].crispr is not None
+    assert knockdowns[-1].crispr.guide_sequence == "CAGTGGGTACCAGAACATGG"
+    assert all(
+        p.crispr is not None and p.crispr.effector == "dCas9" for p in knockdowns
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -839,9 +852,12 @@ def test_deposit_writes_the_mirror_and_its_manifest_from_a_staged_source(
     assert manifest.provenance_complete is True
     assert m.manifest_sha256(manifest, staged.relpath) == staged.sha256
     # Idempotent: a second deposit of identical bytes leaves the mirror alone.
-    assert m.deposit_raw_mirror(
-        {staged.relpath: workbook}, data_root=str(tmp_path / "root")
-    ) == root
+    assert (
+        m.deposit_raw_mirror(
+            {staged.relpath: workbook}, data_root=str(tmp_path / "root")
+        )
+        == root
+    )
 
 
 def test_deposit_refuses_to_overwrite_a_mirror_file_that_differs(

@@ -19,6 +19,7 @@ import math
 import os
 import os.path as osp
 import pickle
+from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -49,10 +50,13 @@ from torchcell.datamodels.media import (
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
+    BacterialGeneEssentialityExperiment,
+    BacterialGeneEssentialityExperimentReference,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     Genotype,
     MeasurementType,
+    MediaComponentRole,
     PhysicalFactor,
     SmallMoleculePerturbation,
     TransposonInsertionPerturbation,
@@ -177,6 +181,15 @@ ROWS = [
 ]
 CARRIED = frozenset({"set1IT003", "set1IT007", "set1IT067", "set1IT071"})
 
+#: Supplementary Table 4's ``Solvent`` keyed as :func:`read_solvents` keys it, over the
+#: compounds these rows name plus the two non-water vehicles of the real sheet.
+SOLVENTS = {
+    "cephalothin sodium salt": "water",
+    "dimethyl sulfoxide": "water",
+    "chloramphenicol": "Ethanol",
+    "vanillin": "Dimethyl Sulfoxide",
+}
+
 
 def _specs(rows: list[dict[str, Any]] | None = None) -> dict[str, p.SampleSpec]:
     table = pd.DataFrame(ROWS if rows is None else rows)
@@ -300,7 +313,7 @@ def test_repeated_names_and_unknown_carried_samples_are_refused() -> None:
 
 
 def test_a_carbon_source_is_the_varied_factor_of_a_carbon_free_medium() -> None:
-    environment = p.build_environment(_specs()["set1IT003"])
+    environment = p.build_environment(_specs()["set1IT003"], SOLVENTS)
     assert environment.media == M9_NOCARBON_PRICE2018
     assert environment.temperature is not None
     assert environment.temperature.value == 37.0
@@ -320,17 +333,17 @@ def test_a_carbon_source_is_the_varied_factor_of_a_carbon_free_medium() -> None:
 
 def test_a_nitrogen_source_and_the_mops_medium_map_to_their_library_entries() -> None:
     specs = _specs()
-    nitrogen = p.build_environment(specs["set1IT071"])
+    nitrogen = p.build_environment(specs["set1IT071"], SOLVENTS)
     assert nitrogen.media == M9_NONITROGEN_PRICE2018
     (perturbation,) = nitrogen.perturbations
     assert isinstance(perturbation, EnvironmentPhysicalPerturbation)
     assert perturbation.factor is PhysicalFactor.nitrogen_source
-    assert p.build_environment(specs["set2IT094"]).media == MOPS_MINIMAL
+    assert p.build_environment(specs["set2IT094"], SOLVENTS).media == MOPS_MINIMAL
 
 
-def test_a_stress_compound_keeps_its_printed_dose_and_gaps_its_vehicle() -> None:
+def test_a_stress_compound_keeps_its_printed_dose_and_table_s4s_vehicle() -> None:
     specs = _specs()
-    environment = p.build_environment(specs["set2IT026"])
+    environment = p.build_environment(specs["set2IT026"], SOLVENTS)
     assert environment.media == LB_LENNOX
     (perturbation,) = environment.perturbations
     assert isinstance(perturbation, SmallMoleculePerturbation)
@@ -338,29 +351,62 @@ def test_a_stress_compound_keeps_its_printed_dose_and_gaps_its_vehicle() -> None
         0.01,
         ConcentrationUnit.g_per_l,
     )
-    assert perturbation.solvent is None
-    assert [g.field for g in perturbation.provenance_gaps] == ["solvent"]
+    assert perturbation.solvent is not None
+    # water is not in the pinned identity table, so the vehicle carries the typed gap
+    assert perturbation.solvent.name == "water"
+    assert perturbation.solvent.percent is None
+    assert perturbation.solvent.compound is not None
+    assert [g.field for g in perturbation.solvent.compound.provenance_gaps] == [
+        "inchikey"
+    ]
+    assert perturbation.provenance_gaps == []
+    assert perturbation.description == p.STRESS_DESCRIPTION
+    assert "wild-type IC50 prescreen" in perturbation.description
     assert perturbation.compound.name == "Cephalothin sodium salt"
     assert [g.field for g in perturbation.compound.provenance_gaps] == ["inchikey"]
-    (dmso,) = p.build_environment(specs["set2IT053"]).perturbations
+    (dmso,) = p.build_environment(specs["set2IT053"], SOLVENTS).perturbations
     assert isinstance(dmso, SmallMoleculePerturbation)
     assert (dmso.concentration.value, dmso.concentration.unit) == (
         7.5,
         ConcentrationUnit.percent_v_v,
     )
+    assert dmso.solvent is not None and dmso.solvent.name == "water"
+
+
+def test_an_identified_vehicle_carries_its_structure() -> None:
+    spec = _specs()["set2IT026"].model_copy(update={"condition": "Chloramphenicol"})
+    solvent = p.stress_solvent(spec, SOLVENTS)
+    assert solvent.name == "Ethanol"
+    assert solvent.compound is not None
+    assert solvent.compound.name == "ethanol"
+    assert solvent.compound.inchikey == "LFQSCWFLJHTTHZ-UHFFFAOYSA-N"
+    assert solvent.compound.provenance_gaps == []
+
+
+def test_a_stress_compound_outside_table_s4_is_refused() -> None:
+    spec = _specs()["set2IT026"].model_copy(update={"condition": "Unobtainium"})
+    with pytest.raises(ValueError, match="is not a TableS4_Stress compound"):
+        p.stress_solvent(spec, SOLVENTS)
+    plain = _specs()["set2IT045"]
+    with pytest.raises(ValueError, match="a stress sample names no condition"):
+        p.stress_solvent(plain, SOLVENTS)
 
 
 def test_plain_lb_carries_no_perturbation_and_drops_build_nothing() -> None:
     specs = _specs()
-    plain = p.build_environment(specs["set2IT045"])
+    plain = p.build_environment(specs["set2IT045"], SOLVENTS)
     assert plain.perturbations == []
     assert plain.media == LB_LENNOX
     with pytest.raises(ValueError, match=r"set1IT007 is dropped"):
-        p.build_environment(specs["set1IT007"])
+        p.build_environment(specs["set1IT007"], SOLVENTS)
     with pytest.raises(ValueError, match="a plain sample names 'Agar'"):
-        p.build_environment(specs["set2IT045"].model_copy(update={"condition": "Agar"}))
+        p.build_environment(
+            specs["set2IT045"].model_copy(update={"condition": "Agar"}), SOLVENTS
+        )
     with pytest.raises(ValueError, match="unknown unit 'uL'"):
-        p.build_environment(specs["set2IT026"].model_copy(update={"units": "uL"}))
+        p.build_environment(
+            specs["set2IT026"].model_copy(update={"units": "uL"}), SOLVENTS
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -550,9 +596,12 @@ def test_records_run_sample_by_sample_with_each_samples_publication() -> None:
         p.SampleRecords(
             spec=spec,
             column=columns[spec.name],
-            environment=p.build_environment(spec),
+            environment=p.build_environment(spec, SOLVENTS),
             reference=p.build_reference(
-                "D", p.build_environment(spec), reference_genome, spec.screen_id
+                "D",
+                p.build_environment(spec, SOLVENTS),
+                reference_genome,
+                spec.screen_id,
             ),
             publication=p.PUBLICATIONS[spec.source],
         )
@@ -610,7 +659,7 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
         n_symbol_names=8,
         n_tag_names=0,
     )
-    counts = p.inventory(specs, identifiers)
+    counts = p.inventory(specs, identifiers, SOLVENTS)
     assert counts.table_s5_samples == 9
     assert counts.samples_by_source == {
         p.SampleSource.wetmore2015.value: 4,
@@ -631,6 +680,10 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
         d.n_records for d in counts.drops
     )
     assert counts.unidentified_compounds == {"Cephalothin sodium salt": 1}
+    # two kept stress samples, both on a water stock (Table S4), so both counts are the
+    # same here; on the real sheet they differ (45 / 7 / 3 samples, 29 / 5 / 1 compounds)
+    assert counts.stress_solvent_by_sample == {"water": 2}
+    assert counts.stress_solvent_by_compound == {"water": 2}
 
 
 def _resolution(
@@ -947,6 +1000,134 @@ def _pin() -> AssemblyReferenceGenome:
     )
 
 
+#: Supplementary Table 1 Keio rows for the synthetic workbook: b0001 and b0002 map, b0003
+#: maps but names a RefSeq tag the annotation does not carry, b0006 and b0007 have no
+#: BW25113 locus (ECK0006 / ECK0007 are absent) and so carry no locus_tag, exactly as the
+#: real sheet leaves the deleted araBAD and rhaBAD rows blank.
+SYNTHETIC_ESSENTIAL_ROWS = [
+    ("b0001", "BW25113_RS00005", "thrL", "thr operon leader peptide", "Arole"),
+    ("b0002", "BW25113_RS00010", "thrA", "aspartokinase I", "Bspecific"),
+    ("b0003", "BW25113_RS09999", "thrW", "tRNA-Thr", "Cvague"),
+    ("b0006", None, "araC", "L-arabinose transcriptional regulator", "Dhypo"),
+    ("b0007", None, "rhaD", "rhamnulose-1-phosphate aldolase", "Dhypo"),
+]
+#: The synthetic ``Solvent`` column; the stress samples of ``ROWS`` name the first two.
+SYNTHETIC_SOLVENT_ROWS = [
+    ("Cephalothin sodium salt", "water"),
+    ("Dimethyl Sulfoxide", "water"),
+    ("Chloramphenicol", "Ethanol"),
+    ("Vanillin", "Dimethyl Sulfoxide"),
+]
+
+
+def _write_workbook(path: Path) -> Path:
+    """A workbook with real Table S1 and Table S4 sheets, each under a preamble.
+
+    Both sheets are read by the header-finding reader, so the preamble rows above the
+    header are part of what is under test; Table S1 also carries a non-Keio organism, to
+    pin the orgId filter.
+    """
+    workbook = openpyxl.Workbook()
+    s1 = workbook.active
+    assert s1 is not None
+    s1.title = p.TABLE_S1_SHEET
+    s1.append(["This table lists all of the likely-essential protein-coding genes"])
+    s1.append(["organism -- which bacterium the gene is from"])
+    s1.append([None])
+    s1.append(
+        [
+            "organism",
+            "orgId",
+            "locusId",
+            "sysName",
+            "locus_tag",
+            "protein_id",
+            "uniprotId",
+            "scaffoldId",
+            "begin",
+            "end",
+            "strand",
+            "name",
+            "desc",
+            "GC",
+            "nReads",
+            "normreads",
+            "nPosCentral",
+            "dens",
+            "geneClass",
+        ]
+    )
+    for i, (b, tag, name, desc, gene_class) in enumerate(SYNTHETIC_ESSENTIAL_ROWS):
+        s1.append(
+            [
+                "Escherichia coli BW25113",
+                "Keio",
+                14000 + i,
+                b,
+                tag,
+                "WP_000000000.1",
+                f"sp|P0000{i}|X_ECOLI",
+                7023,
+                100 + i,
+                200 + i,
+                "+",
+                name,
+                desc,
+                0.5,
+                i,
+                0.01 * i,
+                0,
+                0.0,
+                gene_class,
+            ]
+        )
+    s1.append(
+        [
+            "Shewanella oneidensis MR-1",
+            "MR1",
+            9001,
+            "SO0001",
+            "SO_RS00005",
+            "WP_111111111.1",
+            "sp|Q00001|Y_SHEON",
+            7000,
+            1,
+            2,
+            "+",
+            "soA",
+            "a gene of another organism",
+            0.5,
+            0,
+            0.0,
+            0,
+            0.0,
+            "Arole",
+        ]
+    )
+    s4 = workbook.create_sheet(p.TABLE_S4_SHEET)
+    s4.append(["The values reported are the half-maximum inhibitory concentrations"])
+    s4.append(["Microbe", "Media used for stress experiments"])
+    s4.append(["Escherichia coli BW25113", "LB"])
+    s4.append([None])
+    s4.append(
+        [
+            "Compound",
+            "CAS",
+            "CoreSet_forMutantFitnessAssays",
+            "Stock solution",
+            "Stock solution units",
+            "Solvent",
+            "Maximum concentration tested",
+            "Minimum concentration tested",
+            "Escherichia coli BW25113",
+        ]
+    )
+    for compound, solvent in SYNTHETIC_SOLVENT_ROWS:
+        s4.append([compound, "1-00-0", "no", 10, "mg/ml", solvent, 1, 0.001, 0.5])
+    workbook.save(path)
+    return path
+
+
 @pytest.fixture
 def mirrored(
     tmp_path: Path,
@@ -958,7 +1139,7 @@ def mirrored(
     source.mkdir()
     for name, frame in _release_frames(SYNTHETIC_SAMPLES).items():
         frame.to_csv(source / name, sep="\t", index=False)
-    (source / "si3.xlsx").write_bytes(b"synthetic workbook")
+    _write_workbook(source / "si3.xlsx")
     monkeypatch.setattr(
         p,
         "RAW_FILE_NAMES",
@@ -1121,10 +1302,18 @@ def test_the_command_line_dispatches_each_command(
     monkeypatch.setattr(
         p, "verify", lambda: SimpleNamespace(summary=lambda: "verified")
     )
+    monkeypatch.setattr(p, "essentiality_report", lambda: {"genes": 320})
+    monkeypatch.setattr(
+        p,
+        "verify_essentiality",
+        lambda: SimpleNamespace(summary=lambda: "essentiality verified"),
+    )
     p.main(["retrieve", "--dest", "/d"])
     p.main(["deposit", "--source-dir", "/s"])
     p.main(["report"])
     p.main(["verify"])
+    p.main(["essentiality-report"])
+    p.main(["essentiality-verify"])
     assert capsys.readouterr().out.split("\n") == [
         "retrieved /d",
         "deposited /s",
@@ -1132,6 +1321,10 @@ def test_the_command_line_dispatches_each_command(
         '  "records": 8',
         "}",
         "verified",
+        "{",
+        '  "genes": 320',
+        "}",
+        "essentiality verified",
         "",
     ]
 
@@ -1140,9 +1333,9 @@ def test_a_sample_whose_group_needs_a_condition_names_one() -> None:
     specs = _specs()
     carbon = specs["set1IT003"]
     with pytest.raises(ValueError, match="a carbon source sample names no condition"):
-        p.build_environment(carbon.model_copy(update={"condition": None}))
+        p.build_environment(carbon.model_copy(update={"condition": None}), SOLVENTS)
     with pytest.raises(ValueError, match="'D-Glucose' has no dose"):
-        p.build_environment(carbon.model_copy(update={"concentration": None}))
+        p.build_environment(carbon.model_copy(update={"concentration": None}), SOLVENTS)
 
 
 def test_an_eck_that_is_neither_paired_absent_nor_shared_is_refused() -> None:
@@ -1155,6 +1348,552 @@ def test_a_table_missing_a_sample_is_refused() -> None:
     tables["se_naive"] = tables["se_naive"].drop(columns=["set1IT004 D-Glucose (C)"])
     with pytest.raises(ValueError, match=r"se_naive: samples absent \['set1IT004'\]"):
         p.align_release(**tables, samples=["set1IT003", "set1IT004"], sigma=0.1)
+
+
+# --------------------------------------------------------------------------- #
+# Supplementary Table 1: the likely-essential genes
+# --------------------------------------------------------------------------- #
+def test_the_essentiality_loader_is_registered_against_bw25113() -> None:
+    cls = p.GeneEssentialityPrice2018EcoliDataset
+    assert dataset_registry["GeneEssentialityPrice2018EcoliDataset"] is cls
+    assert declared_reference_strain(cls) == "BW25113"
+    params = inspect.signature(cls.__init__).parameters
+    assert "ecoli_genome" in params
+    assert params["root"].default == "data/torchcell/gene_essentiality_price2018_ecoli"
+    shell = cls.__new__(cls)
+    assert shell.raw_file_names == ["si3.xlsx", "fit_logratios_good.tab"]
+    assert shell.experiment_class is BacterialGeneEssentialityExperiment
+    assert shell.reference_class is BacterialGeneEssentialityExperimentReference
+    assert (p.ESSENTIAL_SOURCE_GENES, p.ESSENTIAL_EXPECTED_RECORDS) == (324, 320)
+    assert p.MIN_ESSENTIAL_ECK_ROUTE_FRACTION < p.MIN_ECK_ROUTE_FRACTION
+
+
+def test_a_sheet_is_read_under_its_own_header_row(tmp_path: Path) -> None:
+    workbook = _write_workbook(tmp_path / "si3.xlsx")
+    table = p.read_below_header(workbook, p.TABLE_S4_SHEET)
+    assert list(table["Compound"]) == [c for c, _ in SYNTHETIC_SOLVENT_ROWS]
+    assert "Microbe" not in list(table.columns)
+
+
+def test_a_sheet_without_exactly_one_header_row_is_refused(tmp_path: Path) -> None:
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = p.TABLE_S4_SHEET
+    sheet.append(["Compound", "Solvent"])
+    sheet.append(["Compound", "Solvent"])
+    path = tmp_path / "two.xlsx"
+    book.save(path)
+    with pytest.raises(ValueError, match="expected one 'Compound' header row, found 2"):
+        p.read_below_header(path, p.TABLE_S4_SHEET)
+
+
+def test_read_solvents_keys_table_s4_by_lowercased_compound(tmp_path: Path) -> None:
+    solvents = p.read_solvents(_write_workbook(tmp_path / "si3.xlsx"))
+    assert solvents == {
+        "cephalothin sodium salt": "water",
+        "dimethyl sulfoxide": "water",
+        "chloramphenicol": "Ethanol",
+        "vanillin": "Dimethyl Sulfoxide",
+    }
+
+
+def test_read_solvents_refuses_an_empty_or_repeated_compound(tmp_path: Path) -> None:
+    def sheet(rows: list[list[Any]]) -> Path:
+        book = openpyxl.Workbook()
+        active = book.active
+        assert active is not None
+        active.title = p.TABLE_S4_SHEET
+        active.append(["preamble"])
+        active.append(["Compound", "Solvent"])
+        for row in rows:
+            active.append(row)
+        path = tmp_path / f"{len(rows)}-{rows[0][1]}.xlsx"
+        book.save(path)
+        return path
+
+    with pytest.raises(ValueError, match=r"'Vanillin' has no Solvent"):
+        p.read_solvents(sheet([["Vanillin", None]]))
+    with pytest.raises(ValueError, match="two rows name 'vanillin'"):
+        p.read_solvents(sheet([["Vanillin", "water"], ["vanillin", "water"]]))
+
+
+def test_read_essential_genes_keeps_the_keio_rows_and_their_coverage(
+    tmp_path: Path,
+) -> None:
+    genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
+    assert [g.b_number for g in genes] == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
+    assert [g.refseq_locus_tag for g in genes] == [
+        t for _, t, *_ in (SYNTHETIC_ESSENTIAL_ROWS)
+    ]
+    assert [g.row for g in genes] == [1, 2, 3, 4, 5]
+    first = genes[0]
+    assert (first.name, first.gene_class, first.locus_id) == ("thrL", "Arole", "14000")
+    assert (first.n_reads, first.n_pos_central, first.dens) == (0, 0, 0.0)
+    assert genes[1].normreads == pytest.approx(0.01)
+
+
+def test_a_table_s1_row_that_is_not_a_b_number_is_refused(tmp_path: Path) -> None:
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = p.TABLE_S1_SHEET
+    sheet.append(["preamble"])
+    header = [
+        "organism",
+        "orgId",
+        "locusId",
+        "sysName",
+        "locus_tag",
+        "name",
+        "desc",
+        "GC",
+        "nReads",
+        "normreads",
+        "nPosCentral",
+        "dens",
+        "geneClass",
+    ]
+    sheet.append(header)
+    sheet.append(
+        [
+            "E. coli",
+            "Keio",
+            1,
+            "BW25113_0001",
+            None,
+            "thrL",
+            "d",
+            0.5,
+            0,
+            0.0,
+            0,
+            0.0,
+            "Arole",
+        ]
+    )
+    path = tmp_path / "bad.xlsx"
+    book.save(path)
+    with pytest.raises(ValueError, match="'BW25113_0001' is no b-number"):
+        p.read_essential_genes(path)
+    empty = openpyxl.Workbook()
+    other = empty.active
+    assert other is not None
+    other.title = p.TABLE_S1_SHEET
+    other.append(["preamble"])
+    other.append(header)
+    other.append(
+        [
+            "S. oneidensis",
+            "MR1",
+            1,
+            "b0001",
+            None,
+            "x",
+            "d",
+            0.5,
+            0,
+            0.0,
+            0,
+            0.0,
+            "Arole",
+        ]
+    )
+    no_keio = tmp_path / "nokeio.xlsx"
+    empty.save(no_keio)
+    with pytest.raises(ValueError, match="no Keio rows"):
+        p.read_essential_genes(no_keio)
+
+
+def test_the_selection_medium_is_lb_lennox_agar_with_kanamycin() -> None:
+    medium = p.selection_medium()
+    assert medium.state == "solid"
+    assert medium.base_medium == "LB"
+    assert medium.is_synthetic is False
+    added = {c.compound.name: c for c in medium.components[len(LB_LENNOX.components) :]}
+    assert sorted(added) == ["agar", "kanamycin"]
+    assert added["agar"].role is MediaComponentRole.gelling_agent
+    # LB_AGAR's 2% is another paper's bench value, so no agar amount is asserted
+    assert added["agar"].concentration is None
+    assert added["kanamycin"].role is MediaComponentRole.selection_agent
+    assert added["kanamycin"].concentration is not None
+    assert (
+        added["kanamycin"].concentration.value,
+        added["kanamycin"].concentration.unit,
+    ) == (50.0, ConcentrationUnit.ug_per_ml)
+    assert medium.components[: len(LB_LENNOX.components)] == LB_LENNOX.components
+
+
+def test_the_essentiality_environment_is_the_library_selection_condition() -> None:
+    environment = p.essentiality_environment()
+    assert environment.media == p.selection_medium()
+    assert environment.temperature is not None
+    assert environment.temperature.value == 37.0
+    assert environment.perturbations == []
+    assert environment.aerobicity == "aerobic"
+    assert [g.field for g in environment.provenance_gaps] == [
+        "duration_hours",
+        "duration_generations",
+    ]
+    assert environment != p.build_environment(_specs()["set2IT045"], SOLVENTS)
+
+
+def _essential_identifiers(
+    mapped: int, unmapped: tuple[str, ...]
+) -> p.IdentifierReport:
+    return p.IdentifierReport(
+        n_source_genes=mapped + len(unmapped),
+        n_mapped=mapped,
+        mapped_fraction=mapped / (mapped + len(unmapped)),
+        min_fraction=0.5,
+        numeric_disagreements=(),
+        unmapped=tuple(
+            p.UnmappedGene(b_number=b, reason="eck_absent_from_bw25113", eck=())
+            for b in unmapped
+        ),
+        unmapped_by_reason={"eck_absent_from_bw25113": len(unmapped)},
+        reconcile_status_histogram={},
+        reconcile_layer_histogram={},
+        n_symbol_names=mapped,
+        n_tag_names=0,
+    )
+
+
+def test_the_essentiality_inventory_counts_rows_and_proves_disjointness(
+    tmp_path: Path,
+) -> None:
+    genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
+    counts = p.essentiality_inventory(
+        genes, _essential_identifiers(3, ("b0006", "b0007")), ["b0004", "b0005"]
+    )
+    assert (counts.source_genes, counts.kept_genes) == (5, 3)
+    assert counts.dropped_genes == ("b0006", "b0007")
+    assert counts.dropped_gene_names == ("araC", "rhaD")
+    # the drop reason is tied to the pinned BW25113 genotype, not asserted from memory
+    assert counts.dropped_genes_explained_by_background == {
+        "araC": "(araBAD)567",
+        "rhaD": "(rhaBAD)568",
+    }
+    assert counts.drop_rule == p.DROP_NO_ECK_PAIR
+    assert counts.rows_without_a_refseq_locus_tag == ("b0006", "b0007")
+    assert counts.shared_with_fitness == ()
+    assert counts.fitness_genes == 2
+    assert counts.gene_class_histogram == {
+        "Arole": 1,
+        "Bspecific": 1,
+        "Cvague": 1,
+        "Dhypo": 2,
+    }
+    # the three quantities the one boolean cannot hold travel with the records
+    assert set(counts.unencodable_quantities) == {
+        "the label is 'nearly essential' too",
+        "the condition is the library isolation, not an assay",
+        "the list's own false-discovery rate",
+        "the naive rate against the PEC and Keio list",
+        "the call rule and its threshold",
+        "the coverage evidence behind each call",
+    }
+    assert (
+        "nearly essential"
+        in counts.unencodable_quantities["the label is 'nearly essential' too"]
+    )
+    assert (
+        r"between $6 \%$ and $16 \%$"
+        in counts.unencodable_quantities["the list's own false-discovery rate"]
+    )
+
+
+def test_a_gene_in_both_releases_or_a_lost_mapping_is_refused(tmp_path: Path) -> None:
+    genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
+    with pytest.raises(ValueError, match="both likely-essential and valued"):
+        p.essentiality_inventory(
+            genes, _essential_identifiers(3, ("b0006", "b0007")), ["b0001", "b0004"]
+        )
+    with pytest.raises(ValueError, match="are not the rows Table S1 leaves without"):
+        p.essentiality_inventory(
+            genes, _essential_identifiers(4, ("b0007",)), ["b0004"]
+        )
+
+
+def test_an_essentiality_record_carries_the_label_caveat() -> None:
+    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    environment = p.essentiality_environment()
+    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    assert experiment.phenotype.is_essential is True
+    assert experiment.phenotype.label_name == "is_essential"
+    assert isinstance(experiment.genotype, Genotype)
+    (perturbation,) = experiment.genotype.perturbations
+    assert isinstance(perturbation, TransposonInsertionPerturbation)
+    assert perturbation.systematic_gene_name == "BW25113_0001"
+    assert perturbation.perturbed_gene_name == "thrL"
+    assert (perturbation.transposon, perturbation.library_pool) == ("Tn5", "KEIO_ML9")
+    assert perturbation.barcode is None
+    assert "nearly essential" in perturbation.description
+    assert "6% to 16%" in perturbation.description
+    assert "DERIVED" in perturbation.description
+    reference = p.build_essentiality_reference("D", _pin(), environment)
+    assert reference.phenotype_reference.is_essential is False
+    assert reference.environment_reference == environment
+
+
+# --------------------------------------------------------------------------- #
+# The essentiality build, its verifier and its report
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def essentiality_mirrored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> Path:
+    """A tmp ``DATA_ROOT`` whose mirror holds a synthetic Table S1; returns it.
+
+    The fitness table beside it names only ``b0004`` and ``b0005``, so it is disjoint
+    from the five essential rows, as the release's own rule requires.
+    """
+    source = tmp_path / "source"
+    source.mkdir()
+    _write_workbook(source / "si3.xlsx")
+    pd.DataFrame(
+        {
+            "locusId": [104, 105],
+            "sysName": ["b0004", "b0005"],
+            "set1IT003 x": [0.0, 1.0],
+        }
+    ).to_csv(source / "fit_logratios_good.tab", sep="\t", index=False)
+    monkeypatch.setattr(
+        p,
+        "RAW_FILE_NAMES",
+        {
+            name: (
+                "price",
+                f"data/{name}",
+                hashlib.sha256((source / name).read_bytes()).hexdigest(),
+            )
+            for name in ("si3.xlsx", "fit_logratios_good.tab")
+        },
+    )
+    monkeypatch.setattr(p, "source_path", lambda name, data_root=None: source / name)
+    genomes = dict(zip(("MG1655", "BW25113"), k12, strict=True))
+    monkeypatch.setattr(
+        p, "bacterial_genome", lambda host, strain, data_root=None: genomes[strain]
+    )
+    monkeypatch.setattr(p, "assembly_reference", lambda strain: _pin())
+    monkeypatch.setattr(p, "load_dotenv", lambda: None)
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    return data_root
+
+
+def _essentiality_root(data_root: Path) -> Path:
+    return data_root / p.ESSENTIAL_DATASET_ROOT_REL
+
+
+def test_the_essentiality_loader_builds_the_synthetic_table_end_to_end(
+    essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
+    root = _essentiality_root(essentiality_mirrored)
+    dataset = p.GeneEssentialityPrice2018EcoliDataset(root=str(root))
+    assert len(dataset) == 3
+    assert sorted(dataset.gene_set) == ["BW25113_0001", "BW25113_0002", "BW25113_4412"]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    assert len(references) == 1
+    first = dataset[0]
+    assert first["experiment"]["phenotype"]["is_essential"] is True
+    assert first["reference"]["phenotype_reference"]["is_essential"] is False
+    assert first["publication"]["doi"] == p.PAPER_DOI
+    assert first["experiment"]["environment"]["media"]["state"] == "solid"
+    drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (drops["source_genes"], drops["kept_genes"]) == (5, 3)
+    assert drops["dropped_genes"] == ["b0006", "b0007"]
+    assert drops["shared_with_fitness"] == []
+    label = json.loads((root / "preprocess" / "essentiality_label.json").read_text())
+    assert sorted(label) == sorted(p.ESSENTIALITY_LABEL_VALUES)
+    assert label["ESSENTIAL_FDR"]["provenance"]["source_uri"] == p.SUPPLEMENTARY_NOTES
+    assert "nearly essential" in label["ESSENTIAL_LABEL"]["quote"]
+    rows = pd.read_csv(root / "preprocess" / "essential_genes.csv")
+    assert list(rows["b_number"]) == [b for b, *_ in SYNTHETIC_ESSENTIAL_ROWS]
+    assert list(rows["record"].astype("Int64")) == [0, 1, 2, pd.NA, pd.NA]
+    assert list(rows["locus_tag"].fillna("")) == [
+        "BW25113_0001",
+        "BW25113_0002",
+        "BW25113_4412",
+        "",
+        "",
+    ]
+    assert (root / "preprocess" / "build_manifest.json").is_file()
+
+
+def test_the_essentiality_build_refuses_an_overlap_with_the_fitness_genes(
+    essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
+    source = p.source_path("fit_logratios_good.tab")
+    pd.DataFrame({"locusId": [101], "sysName": ["b0001"], "set1IT003 x": [0.0]}).to_csv(
+        source, sep="\t", index=False
+    )
+    monkeypatch.setitem(
+        p.RAW_FILE_NAMES,
+        "fit_logratios_good.tab",
+        (
+            "price",
+            "data/fit_logratios_good.tab",
+            hashlib.sha256(Path(source).read_bytes()).hexdigest(),
+        ),
+    )
+    with pytest.raises(ValueError, match="both likely-essential and valued"):
+        p.GeneEssentialityPrice2018EcoliDataset(
+            root=str(_essentiality_root(essentiality_mirrored))
+        )
+
+
+def test_the_essentiality_route_floor_stops_a_wrong_annotation(
+    essentiality_mirrored: Path,
+) -> None:
+    with pytest.raises(LocusTagResolutionError, match="places 3 of 5 genes"):
+        p.GeneEssentialityPrice2018EcoliDataset(
+            root=str(_essentiality_root(essentiality_mirrored))
+        )
+
+
+def test_an_essentiality_genome_of_the_wrong_strain_is_refused(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> None:
+    cls = p.GeneEssentialityPrice2018EcoliDataset
+    dataset = cls.__new__(cls)
+    dataset.ecoli_genome = k12[0]
+    with pytest.raises(TypeError, match="expected the BW25113 genome"):
+        dataset._bw25113()
+    dataset.ecoli_genome = k12[1]
+    assert dataset._bw25113() is k12[1]
+    with pytest.raises(NotImplementedError, match="builds its records in process"):
+        dataset.create_experiment()
+    frame = pd.DataFrame({"a": [1]})
+    assert dataset.preprocess_raw(frame) is frame
+
+
+def test_verify_essentiality_runs_every_row_over_the_built_store(
+    essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
+    p.GeneEssentialityPrice2018EcoliDataset(
+        root=str(_essentiality_root(essentiality_mirrored))
+    )
+    monkeypatch.setattr(p, "ESSENTIAL_EXPECTED_RECORDS", 3)
+    report = p.verify_essentiality(str(essentiality_mirrored))
+    results = {r.name: r.passed for r in report.results}
+    assert results["structural"] is True
+    assert results["count"] is True
+    assert results["calls_match_table_s1"] is True
+    assert results["disjoint_from_the_fitness_genes"] is True
+    assert results["label_caveat_on_every_record"] is True
+    assert results["media_membership"] is True
+    # the shared containment row keeps its name and names the universe in its message
+    containment = next(r for r in report.results if r.name == "gene_containment_sgd")
+    assert containment.passed is True
+    assert "BW25113 genes" in containment.message
+    assert results["current_genome_genes"] is True
+    assert results["stored_tags_are_loci_of_the_pinned_assembly"] is True
+    # BW25113_0004 is the fixture's pseudogene and is not in this gene set, so unlike
+    # the fitness dataset every row of the essentiality report passes
+    assert [r.name for r in report.results if not r.passed] == []
+    written = json.loads(
+        (
+            _essentiality_root(essentiality_mirrored)
+            / "preprocess"
+            / "verification_report.json"
+        ).read_text()
+    )
+    assert written["dataset_name"] == "GeneEssentialityPrice2018EcoliDataset"
+
+
+def test_the_essentiality_rows_fail_on_a_record_that_misstates_the_call() -> None:
+    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    environment = p.essentiality_environment()
+    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    reference = p.build_essentiality_reference("D", _pin(), environment)
+    record = {
+        "experiment": experiment.model_dump(),
+        "reference": reference.model_dump(),
+    }
+    assert p.essentiality_calls_match_table([record, record], []).passed is False
+    assert p.essentiality_label_is_qualified([record]).passed is True
+    stripped = json.loads(json.dumps(record))
+    stripped["experiment"]["genotype"]["perturbations"][0]["description"] = "x"
+    assert p.essentiality_label_is_qualified([stripped]).passed is False
+    flipped = json.loads(json.dumps(record))
+    flipped["experiment"]["phenotype"]["is_essential"] = False
+    result = p.essentiality_calls_match_table([flipped], [])
+    assert result.passed is False
+    assert "is_essential=False" in result.message
+
+
+def test_the_call_row_names_a_multi_perturbation_or_a_live_reference() -> None:
+    mapping = _mapping("b0001", "BW25113_0001", "thrL")
+    environment = p.essentiality_environment()
+    experiment = p.build_essentiality_experiment("D", mapping, environment)
+    reference = p.build_essentiality_reference("D", _pin(), environment)
+    record = {
+        "experiment": experiment.model_dump(),
+        "reference": reference.model_dump(),
+    }
+    doubled = json.loads(json.dumps(record))
+    perturbations = doubled["experiment"]["genotype"]["perturbations"]
+    perturbations.append(json.loads(json.dumps(perturbations[0])))
+    result = p.essentiality_calls_match_table([doubled], [])
+    assert result.passed is False
+    assert "more than one perturbation" in result.message
+    live = json.loads(json.dumps(record))
+    live["reference"]["phenotype_reference"]["is_essential"] = True
+    result = p.essentiality_calls_match_table([live], [])
+    assert result.passed is False
+    assert "expected viable" in result.message
+
+
+def test_the_refseq_route_reports_a_tag_that_names_another_locus() -> None:
+    gene = p.EssentialGene(
+        row=1,
+        locus_id="1",
+        b_number="b0001",
+        refseq_locus_tag="BW25113_RS00005",
+        name="thrL",
+        desc="d",
+        gene_class="Arole",
+        gc=0.5,
+        n_reads=0,
+        normreads=0.0,
+        n_pos_central=0,
+        dens=0.0,
+    )
+    mapping = {"b0001": _mapping("b0001", "BW25113_0001", "thrL")}
+    elsewhere = _resolution("BW25113_RS00005", GeneNameStatus.RENAMED, "BW25113_9999")
+    out = p.refseq_route_agreement([gene], mapping, lambda name: elsewhere)
+    assert out["n_agree"] == 0
+    assert out["disagree"] == [("b0001", "BW25113_9999", "BW25113_0001")]
+
+
+def test_the_disjointness_row_names_the_genes_that_break_it(tmp_path: Path) -> None:
+    genes = p.read_essential_genes(_write_workbook(tmp_path / "si3.xlsx"))
+    assert p.essential_genes_are_not_fitness_genes(genes, ["b0004"]).passed is True
+    broken = p.essential_genes_are_not_fitness_genes(genes, ["b0001", "b0004"])
+    assert broken.passed is False
+    assert broken.details["shared"] == ["b0001"]
+
+
+def test_the_essentiality_report_recomputes_the_notes_numbers(
+    essentiality_mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(p, "MIN_ESSENTIAL_ECK_ROUTE_FRACTION", 0.5)
+    out = p.essentiality_report(str(essentiality_mirrored))
+    assert out["inventory"]["kept_genes"] == 3
+    assert out["identifiers"]["n_mapped"] == 3
+    # b0001 and b0002 carry a RefSeq tag the annotation knows; b0003's is unknown there
+    assert out["refseq_route_agreement"]["n_agree"] == 2
+    assert out["refseq_route_agreement"]["unresolved"] == ["b0003"]
+    assert out["refseq_route_agreement"]["disagree"] == []
+    assert out["table_s1_names_differing_from_the_genome"] == ["b0003 thrW -> hokC"]
 
 
 # --------------------------------------------------------------------------- #
@@ -1324,3 +2063,142 @@ def test_the_dev_build_holds_every_expected_record() -> None:
     assert perturbation["perturbation_type"] == "transposon_insertion"
     assert perturbation["gene_namespace"] == "ecoli_k12_bw25113_locus_tag"
     assert experiment["phenotype"]["screen_id"] == "Keio:set1IT003"
+
+
+@pytest.mark.data
+@needs_mirrors
+def test_the_stress_vehicles_of_every_kept_sample(
+    real_specs: tuple[p.SampleSpec, ...],
+) -> None:
+    """Every kept stress sample's Condition_1 is a Table S4 compound (measured)."""
+    solvents = p.read_solvents(p.source_path("si3.xlsx", DATA_ROOT))
+    assert len(solvents) == 55
+    assert sorted(set(solvents.values())) == ["Dimethyl Sulfoxide", "Ethanol", "water"]
+    stress = [s for s in real_specs if s.drop_rule is None and s.group == "stress"]
+    assert len(stress) == 55
+    assert len({s.condition for s in stress}) == 35
+    assert all(
+        s.condition is not None and s.condition.strip().lower() in solvents
+        for s in stress
+    )
+    by_sample = Counter(p.stress_solvent(s, solvents).name for s in stress)
+    assert by_sample == {"water": 45, "Dimethyl Sulfoxide": 7, "Ethanol": 3}
+    by_compound = Counter(
+        solvents[c.strip().lower()]
+        for c in {s.condition for s in stress if s.condition is not None}
+    )
+    assert by_compound == {"water": 29, "Dimethyl Sulfoxide": 5, "Ethanol": 1}
+
+
+@pytest.mark.data
+@needs_mirrors
+def test_table_s1s_keio_rows_and_their_disjointness_from_the_fitness_genes() -> None:
+    """324 released rows, 320 records, intersection 0 with the 3,789 fitness genes."""
+    genes = p.read_essential_genes(p.source_path("si3.xlsx", DATA_ROOT))
+    assert len(genes) == p.ESSENTIAL_SOURCE_GENES
+    assert all(g.gene_class in {"Arole", "Bspecific", "Cvague", "Dhypo"} for g in genes)
+    fitness = pd.read_csv(
+        p.source_path("fit_logratios_good.tab", DATA_ROOT),
+        sep="\t",
+        usecols=["sysName"],
+    )
+    b_numbers = [str(v) for v in fitness["sysName"]]
+    assert len(b_numbers) == 3789
+    assert {g.b_number for g in genes} & set(b_numbers) == set()
+    mg1655 = bacterial_genome("ecoli", "MG1655", DATA_ROOT)
+    bw25113 = bacterial_genome("ecoli", "BW25113", DATA_ROOT)
+    assert isinstance(mg1655, EcoliK12MG1655Genome)
+    assert isinstance(bw25113, EcoliK12BW25113Genome)
+    mapping, report = p.map_genes(
+        [g.b_number for g in genes],
+        mg1655,
+        bw25113,
+        label="test",
+        min_fraction=p.MIN_ESSENTIAL_ECK_ROUTE_FRACTION,
+    )
+    assert (report.n_source_genes, report.n_mapped) == (324, 320)
+    assert report.unmapped_by_reason == {"eck_absent_from_bw25113": 4}
+    counts = p.essentiality_inventory(genes, report, b_numbers)
+    assert counts.kept_genes == p.ESSENTIAL_EXPECTED_RECORDS
+    assert sorted(counts.dropped_genes) == sorted(p.DELETED_OPERON_B_NUMBERS)
+    assert sorted(counts.dropped_gene_names) == ["araA", "araB", "rhaA", "rhaB"]
+    assert counts.gene_class_histogram == {
+        "Arole": 200,
+        "Bspecific": 98,
+        "Cvague": 7,
+        "Dhypo": 19,
+    }
+    # a second, independent identifier route: Table S1's own RefSeq locus_tag
+    agreement = p.refseq_route_agreement(genes, mapping, bw25113.resolve_gene_name)
+    assert agreement["n_agree"] == 318
+    assert agreement["unresolved"] == ["b1457", "b4047"]
+    assert agreement["disagree"] == []
+
+
+ESSENTIAL_LMDB = osp.join(DATA_ROOT, p.ESSENTIAL_DATASET_ROOT_REL, "processed/lmdb")
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isdir(ESSENTIAL_LMDB), reason="requires the essentiality LMDB build"
+)
+def test_the_essentiality_dev_build_holds_every_expected_record() -> None:
+    env = lmdb.open(ESSENTIAL_LMDB, readonly=True, lock=False)
+    try:
+        assert env.stat()["entries"] == p.ESSENTIAL_EXPECTED_RECORDS
+        with env.begin() as txn:
+            payload: bytes | None = txn.get(b"0")
+        assert payload is not None, "record 0 is absent from the built LMDB"
+        first: dict[str, Any] = pickle.loads(payload)
+    finally:
+        env.close()
+    experiment = first["experiment"]
+    assert experiment["experiment_type"] == "bacterial_gene_essentiality"
+    assert experiment["phenotype"]["is_essential"] is True
+
+
+def test_a_gene_bw25113_lacks_for_an_unstated_reason_is_refused(tmp_path: Path) -> None:
+    """A drop the pinned background genotype cannot account for stops the build.
+
+    The four real drops are araA, araB, rhaA and rhaB, which ``(araBAD)567`` and
+    ``(rhaBAD)568`` of ``BW25113_BACKGROUND_LESIONS`` explain. A fifth gene the ECK route
+    could not place would mean something else is wrong with the mapping, so it raises
+    rather than being dropped quietly.
+    """
+    rows = [
+        *SYNTHETIC_ESSENTIAL_ROWS,
+        ("b0005", None, "proB", "glutamate 5-kinase", "Arole"),
+    ]
+    book = openpyxl.Workbook()
+    sheet = book.active
+    assert sheet is not None
+    sheet.title = p.TABLE_S1_SHEET
+    sheet.append(["preamble"])
+    sheet.append(
+        [
+            "organism",
+            "orgId",
+            "locusId",
+            "sysName",
+            "locus_tag",
+            "name",
+            "desc",
+            "GC",
+            "nReads",
+            "normreads",
+            "nPosCentral",
+            "dens",
+            "geneClass",
+        ]
+    )
+    for b, tag, name, desc, gene_class in rows:
+        sheet.append(
+            ["E. coli", "Keio", 1, b, tag, name, desc, 0.5, 0, 0.0, 0, 0.0, gene_class]
+        )
+    path = tmp_path / "extra.xlsx"
+    book.save(path)
+    genes = p.read_essential_genes(path)
+    with pytest.raises(ValueError, match=r"\['proB'\] are absent from BW25113"):
+        p.essentiality_inventory(
+            genes, _essential_identifiers(3, ("b0005", "b0006", "b0007")), ["b0004"]
+        )

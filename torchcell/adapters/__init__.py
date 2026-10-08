@@ -139,6 +139,9 @@ from .ozaydin2013_adapter import (
 from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
+from .price2018_ecoli_essentiality_adapter import (
+    GeneEssentialityPrice2018EcoliAdapter as GeneEssentialityPrice2018EcoliAdapter,
+)
 from .rapp2026_adapter import MetabolomeRapp2026Adapter as MetabolomeRapp2026Adapter
 from .rapp2026_growth_adapter import (
     GrowthAucRapp2026Adapter as GrowthAucRapp2026Adapter,
@@ -304,6 +307,7 @@ ecoli_adapters = [
     "MetabolomeFuhrer2017Adapter",
     "EnvChemgenGirgis2009Adapter",
     "GeneEssentialityGoodall2018Adapter",
+    "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",
     "ProteomeMori2021Adapter",

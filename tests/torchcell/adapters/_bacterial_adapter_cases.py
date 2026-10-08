@@ -68,6 +68,7 @@ from torchcell.adapters import (
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
+    GeneEssentialityPrice2018EcoliAdapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateSchmidt2016Adapter,
@@ -118,7 +119,10 @@ from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
 )
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
-from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
+from torchcell.datasets.ecoli.price2018 import (
+    GeneEssentialityPrice2018EcoliDataset,
+    RbTnseqPrice2018EcoliDataset,
+)
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rapp2026_platforms import (
     GrowthAucRapp2026Dataset,
@@ -221,8 +225,10 @@ TURNOVER = "protein turnover phenotype"
 # perturbation in any record, and so are Schmidt 2016 and its two SRM arms, whose
 # paper's three deletion strains carry no abundance data and are served instead as the
 # six Table S24 fitness records, and Mori 2021, whose engineered
-# NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
-# Goodall 2018 carry no environment perturbation, and neither do Campos 2018, whose
+# NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017, Goodall
+# 2018 and Price 2018's Table S1 essentiality calls (one library-selection
+# environment, measured 2026-10-08) carry no environment perturbation, and neither
+# do Campos 2018, whose
 # screen is one medium at one temperature, nor Schastnaya 2021, whose carbon source is
 # part of the medium; the CRISPRi leaves of Carruthers, Choe, Cui, Menasalvas, Wang 2018 and
 # Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
@@ -335,6 +341,14 @@ BACTERIAL: list[Bacterial] = [
         "rbtnseq_price2018_ecoli",
         RbTnseqPrice2018EcoliDataset,
         RESPONSE,
+    ),
+    _case(
+        GeneEssentialityPrice2018EcoliAdapter,
+        "price2018_ecoli_essentiality",
+        "gene_essentiality_price2018_ecoli",
+        GeneEssentialityPrice2018EcoliDataset,
+        "gene essentiality phenotype",
+        env_perturbation=False,
     ),
     _case(
         MetabolomeRapp2026Adapter,

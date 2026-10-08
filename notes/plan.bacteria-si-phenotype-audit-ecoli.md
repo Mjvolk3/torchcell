@@ -3877,3 +3877,36 @@ the same 1,256 1:1-joined pairs) and the build now refuses any other answer. Two
 measurements on that join: rank correlation 0.5533, and log2 fold change > 1 on 1,062 of
 1,256 rows (0.8455), which is the paper's "85% of the tested pairs" -- the second platform
 agrees on the CALL and not on the number.
+
+## 2026.10.08 - Ranks 9 and 18 landed; rank 10 confirmed not loadable
+
+Two of the four Price 2018 opportunities are in the dev tree. Details, measured counts and
+the verifier reports: [[torchcell.datasets.ecoli.price2018]], the two 2026.10.08 sections.
+
+| rank | opportunity | audit's count | what landed |
+|---|---|---|---|
+| 9 | Table S1 likely-essential genes | 324 | **320 records** in `GeneEssentialityPrice2018EcoliDataset`; the 4 the audit's count includes are araA, araB, rhaA and rhaB, whose operons BW25113 deletes, so no BW25113 locus exists to store them against |
+| 18 | Table S4 `Solvent` | 0 new, enriches 207,240 | **207,240 stress records** rebuilt with the vehicle filled; 553,896 records in all, counts unchanged |
+| 10 | Tables S2 and S3 growth calls | 192 | **not loaded, agreed** |
+
+**The audit's measurements reproduced, independently.** 324 `orgId == "Keio"` rows of
+`TableS1_LikelyEssentialGenes`; intersection with the 3,789 `fit_logratios_good.tab` genes
+**0** on `sysName` and on `locusId`; 55 Table S4 rows each with a `Solvent`; all 35 distinct
+kept-stress `Condition_1` labels matching a Table S4 `Compound` case-insensitively, covering
+55 of 55 kept stress samples; solvents water 29 / Dimethyl Sulfoxide 5 / Ethanol 1 by
+compound (water 45 / 7 / 3 by sample, which the audit did not state).
+
+**One correction to the audit's rank 9 count.** 324 is the released ROW count and is right;
+it is not the record count. Four rows carry no BW25113 `locus_tag` in Table S1 itself, and
+those four are exactly the four the ECK route cannot place, which is now a build-time
+invariant.
+
+**Rank 10, read at the source.** The legend quotes in the audit are accurate, and two more
+lines in the same legend strengthen the conclusion: a FALSE is sometimes a curation override
+("We set this compound to FALSE for all organisms except Pseudomonas stutzeri RCH2") and the
+sheet names an uncorrected false-negative mechanism ("In some experiments the ethanol
+evaporated in the stock compound plate, which may result in false negative growth calls").
+Three kinds of statement share one boolean column, and no field distinguishes them.
+
+**Rank 1 (per-strain fitness) is untouched**: not mirrored, and its 24,626,916 is an upper
+bound rather than a count.

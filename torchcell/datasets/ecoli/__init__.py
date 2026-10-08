@@ -15,6 +15,12 @@ sourcing layer.
 
 - ``cui2018`` -- ``CrispriKnockdownCui2018Dataset``: the genome-wide dCas9 knockdown
   screen, one record per (guide, screened strain) over the two dCas9-dose regimes.
+- ``babu2014`` -- ``GeneInteractionBabu2014Dataset``: the genome-wide eSGA digenic
+  interaction map, one record per released (donor, recipient) pair with its signed
+  colony-size S score. The first consumer of ``BacterialGeneInteractionExperiment``,
+  and the loader that SUBSUMES Butland 2008's 39 screens (every record names its
+  screen set in ``screen_id``). Its 3,420 hypomorph-involving pairs are dropped: a
+  3'-UTR cassette hypomorph has no bacterial gene-perturbation leaf.
 - ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
@@ -99,6 +105,7 @@ sourcing layer.
   Price 2018 compendium above, which is the loader that serves them.
 """
 
+from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset

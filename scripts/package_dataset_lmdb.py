@@ -16,10 +16,11 @@ bytes, the same sha256 and the same file name. Compression is xz through the std
 
 Refusals, none of them overridable: no ``preprocess/build_manifest.json`` (an
 unmanifested build has no schema contract to publish), no ``processed/lmdb``, a
-manifest whose ``dataset_name`` differs from the directory name, and a manifest that is
-STALE against the local schema surface (the artifact would claim the packager's
-``torchcell.__version__`` for an LMDB the local schema would serialize differently;
-rebuild it first).
+manifest whose ``dataset_name`` differs from the directory name, a manifest naming a
+PRIVATE loader class (``visibility = Visibility.private``, in-house data that is never
+published), and a manifest that is STALE against the local schema surface (the artifact
+would claim the packager's ``torchcell.__version__`` for an LMDB the local schema would
+serialize differently; rebuild it first).
 
 Usage (from the repo root, in the torchcell environment)::
 
@@ -98,6 +99,33 @@ def load_manifest(dataset_dir: Path) -> BuildManifest:
     if not (dataset_dir / "processed" / "lmdb").is_dir():
         raise PackagingRefused(f"no processed/lmdb under {dataset_dir}")
     return manifest
+
+
+def refuse_if_private(manifest: BuildManifest) -> None:
+    """Refuse a build whose loader class is private (``visibility = private``).
+
+    The release store is public, so an in-house dataset has no business in it. The check
+    reads ``visibility`` off the loader CLASS named by the build manifest, not off a
+    config or a path, so there is no spelling of the command that publishes one. A
+    ``loader_class`` absent from the registry is left alone: it is not private, it is
+    unregistered, which is a different (and pre-existing) condition.
+    """
+    from torchcell.data.experiment_dataset import Visibility
+    from torchcell.datasets.dataset_registry import dataset_registry
+
+    import torchcell.datasets.ecoli  # noqa: F401  # populates the registry
+    import torchcell.datasets.private_torchcell  # noqa: F401
+    import torchcell.datasets.pputida  # noqa: F401
+    import torchcell.datasets.scerevisiae  # noqa: F401
+
+    cls = dataset_registry.get(manifest.loader_class)
+    if cls is None:
+        return
+    if getattr(cls, "visibility", Visibility.public) is Visibility.private:
+        raise PackagingRefused(
+            f"{manifest.loader_class} is PRIVATE (visibility=private): in-house data is "
+            "never published in a tc-data release"
+        )
 
 
 def refuse_if_stale(manifest: BuildManifest, dataset_dir: Path) -> None:
@@ -199,6 +227,7 @@ def package_dataset(
     """Package ``dataset_dir`` into ``store`` and record it in the store's index."""
     dataset_dir = dataset_dir.resolve()
     manifest = load_manifest(dataset_dir)
+    refuse_if_private(manifest)
     refuse_if_stale(manifest, dataset_dir)
     processed_dir = dataset_dir / "processed"
 

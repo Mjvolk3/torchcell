@@ -3,7 +3,15 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/knowledge_graphs/create_scerevisiae_kg
 # Test file: tests/torchcell/knowledge_graphs/test_create_scerevisiae_kg.py
 
-"""Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets."""
+"""Build the S. cerevisiae BioCypher knowledge graph from torchcell datasets.
+
+PRIVATE datasets (``visibility = Visibility.private``) are refused before any dataset is
+instantiated, unless the build is run with ``--include-private``
+(``create_kg.take_include_private_flag`` removes the flag from ``sys.argv`` first,
+because hydra parses the same argv). This build's dataset list is hardcoded below rather
+than read from a config, so the gate here guards against a private loader being added to
+that list, which is the way one would reach this entry point.
+"""
 
 import hashlib
 import json
@@ -12,6 +20,7 @@ import math
 import multiprocessing as mp
 import os
 import os.path as osp
+import sys
 import time
 import uuid
 from datetime import datetime
@@ -41,12 +50,18 @@ from torchcell.datasets.scerevisiae.kuzmin2018 import (
     SmfKuzmin2018Dataset,
     TmfKuzmin2018Dataset,
 )
+from torchcell.knowledge_graphs.create_kg import take_include_private_flag
+from torchcell.knowledge_graphs.dataset_adapter_map import refuse_private_datasets
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
 logging.captureWarnings(True)
 
 os.environ["SSL_CERT_FILE"] = certifi.where()
+
+
+#: ``--include-private`` was passed on the command line (set in ``__main__`` below).
+INCLUDE_PRIVATE = False
 
 
 def get_num_workers() -> int:
@@ -145,6 +160,11 @@ def main(cfg: DictConfig) -> None:
         }
     ]
 
+    # Visibility gate, before anything is instantiated.
+    refuse_private_datasets(
+        [cast(type, config["class"]) for config in dataset_configs], INCLUDE_PRIVATE
+    )
+
     # Instantiate datasets
     datasets = []
     for config in dataset_configs:
@@ -213,6 +233,7 @@ def main(cfg: DictConfig) -> None:
 
 
 if __name__ == "__main__":
+    INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

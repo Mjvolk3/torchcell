@@ -1,4 +1,13 @@
-"""Mapping from yeast and bacterial dataset classes to their BioCypher adapters."""
+"""Mapping from yeast and bacterial dataset classes to their BioCypher adapters.
+
+Two maps, because the public graph and the in-house data are different stores:
+``dataset_adapter_map`` holds the PUBLIC datasets, and ``PRIVATE_DATASET_ADAPTER_MAP``
+holds the private ones (``torchcell/datasets/private_torchcell/``). The build reads the
+public map by default and only unions the private one when run with
+``--include-private``, so a private dataset cannot be served by being listed in a
+config: the class's own ``visibility`` decides, and the gate lives in
+``build_adapter_map`` below.
+"""
 
 from torchcell.adapters import (
     AminoAcidCooper2010Adapter,
@@ -105,6 +114,7 @@ from torchcell.adapters import (
 )
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.data.experiment_dataset import Visibility
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
@@ -255,7 +265,10 @@ from torchcell.datasets.scerevisiae.zelezniak2018 import (
     ProteomeZelezniak2018Dataset,
 )
 
-dataset_adapter_map = {
+#: The PUBLIC datasets' adapters. Annotated ``dict[type, type]`` rather than left to
+#: inference: the keys are ABCMeta instances (``ExperimentDataset`` is an ABC), and the
+#: inferred ``dict[ABCMeta, ...]`` cannot be unioned with the private map below.
+dataset_adapter_map: dict[type, type] = {
     SmfCostanzo2016Dataset: SmfCostanzo2016Adapter,
     DmfCostanzo2016Dataset: DmfCostanzo2016Adapter,
     DmiCostanzo2016Dataset: DmiCostanzo2016Adapter,
@@ -364,3 +377,50 @@ dataset_adapter_map = {
     ),
     CrispriKnockdownYunus2026Dataset: CrispriKnockdownYunus2026Adapter,
 }
+
+#: The PRIVATE datasets' adapters (``torchcell/datasets/private_torchcell/``). Empty
+#: until the first in-house loader lands; a private dataset registers HERE, never in
+#: ``dataset_adapter_map``, so the public build cannot reach it even by name. Keeping
+#: the two maps separate is what makes the public map readable as "what the served graph
+#: contains".
+PRIVATE_DATASET_ADAPTER_MAP: dict[type, type] = {}
+
+
+class PrivateDatasetRefused(RuntimeError):
+    """A private dataset was asked for in a build that did not opt into private data."""
+
+
+def build_adapter_map(include_private: bool = False) -> dict[type, type]:
+    """The dataset -> adapter map a build may use.
+
+    Without ``include_private`` this is the public map alone. With it, the private map
+    is unioned in, which is the ONLY way a private dataset reaches an adapter.
+    """
+    if not include_private:
+        return dict(dataset_adapter_map)
+    return {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
+
+
+def refuse_private_datasets(
+    dataset_classes: list[type], include_private: bool = False
+) -> None:
+    """Raise unless every class may be built, reading ``visibility`` off each class.
+
+    The check is on the CLASS, not on the config: a private loader listed in a public
+    build's yaml is refused here, named, with the flag that would permit it. Nothing is
+    silently dropped, because a build that quietly omitted a requested dataset would
+    produce a store that does not match its config.
+    """
+    if include_private:
+        return
+    private = [
+        cls.__name__
+        for cls in dataset_classes
+        if getattr(cls, "visibility", Visibility.public) is Visibility.private
+    ]
+    if private:
+        raise PrivateDatasetRefused(
+            "these datasets are private (visibility=private) and are never served on "
+            f"the public graph: {', '.join(sorted(private))}. Pass --include-private to "
+            "build an in-house graph that contains them."
+        )

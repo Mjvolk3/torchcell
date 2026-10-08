@@ -7,6 +7,7 @@ from .experiment_dataset import (
     ExperimentDataset,
     ManifestPinMismatchError,
     RawSha256MismatchError,
+    Visibility,
     check_manifest_pin,
     compute_experiment_reference_index_parallel,
     compute_experiment_reference_index_sequential,
@@ -34,6 +35,7 @@ from .neo4j_cell import Neo4jCellDataset  # FLAG
 
 __all__ = [
     "ExperimentReferenceIndex",
+    "Visibility",
     "ReferenceIndex",
     "compute_sha256_hash",
     "Deduplicator",

@@ -221,3 +221,49 @@ def test_main_exits_zero_and_reports_or_one_on_refusal(
     bare = build_fake_dataset(tmp_path / "bare", manifest=None)
     assert pkg.main(["--dataset-dir", str(bare), "--store", str(store)]) == 1
     assert capsys.readouterr().err.startswith("refused: no build_manifest.json")
+
+
+def test_refuses_a_private_loader_class(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A dataset whose loader class is private is never published in a release.
+
+    The gate reads ``visibility`` off the CLASS named by the build manifest, so no
+    spelling of the command publishes in-house data. ``loader_class`` is registered here
+    under its own name, which is how a real private loader reaches the registry.
+    """
+    from torchcell.data.experiment_dataset import Visibility
+    from torchcell.datasets.dataset_registry import dataset_registry
+
+    class PrivateFakeDataset:
+        visibility = Visibility.private
+
+    monkeypatch.setitem(dataset_registry, "SmfFakeDataset", PrivateFakeDataset)
+    dataset_dir = build_fake_dataset(tmp_path, manifest=_manifest("smf_fake"))
+    with pytest.raises(
+        pkg.PackagingRefused, match="SmfFakeDataset is PRIVATE .visibility=private."
+    ):
+        pkg.package_dataset(dataset_dir, tmp_path / "store")
+    assert not (tmp_path / "store").exists()
+
+
+def test_a_public_or_unregistered_loader_class_packages_normally(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``public`` passes, and so does a class the registry does not hold at all.
+
+    An unregistered ``loader_class`` is not private, it is unregistered, which is a
+    different and pre-existing condition; the visibility gate must not start refusing it.
+    """
+    from torchcell.data.experiment_dataset import Visibility
+    from torchcell.datasets.dataset_registry import dataset_registry
+
+    class PublicFakeDataset:
+        visibility = Visibility.public
+
+    monkeypatch.setitem(dataset_registry, "SmfFakeDataset", PublicFakeDataset)
+    public_dir = build_fake_dataset(tmp_path / "public", manifest=_manifest("smf_fake"))
+    assert pkg.package_dataset(public_dir, tmp_path / "store").slug == "smf_fake"
+    monkeypatch.delitem(dataset_registry, "SmfFakeDataset", raising=False)
+    bare_dir = build_fake_dataset(tmp_path / "bare", manifest=_manifest("smf_fake"))
+    assert pkg.package_dataset(bare_dir, tmp_path / "store2").slug == "smf_fake"

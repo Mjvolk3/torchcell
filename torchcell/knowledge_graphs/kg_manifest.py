@@ -269,6 +269,11 @@ class KgDatasetEntry(BaseModel):
     loader_relpath: str  # repo-relative loader module path
     adapter_files: list[str]  # repo-relative adapter module + conf yaml
     closure: dict[str, str]  # schema symbol -> contract fingerprint at admission
+    # Whether the loader is public or private (``ExperimentDataset.visibility``), read
+    # off the class when the entry is written. Recorded per dataset so a store states
+    # plainly whether it holds in-house data; "public" for an entry written before this
+    # field existed, which is correct, since a private dataset could never be served.
+    visibility: Literal["public", "private"] = "public"
     n_experiments: int | None = None
     biocypher_out: str  # the biocypher-out/<timestamp> that produced its CSVs
     import_mode: Literal["full", "incremental"]
@@ -820,6 +825,18 @@ def _dataset_default_root(dataset_class: type) -> str:
     return str(params["root"].default)
 
 
+def dataset_visibility(dataset_class: type) -> Literal["public", "private"]:
+    """``public`` or ``private``, read off the loader class's ``visibility``.
+
+    The manifest records a string rather than the enum so the JSON is readable without
+    importing torchcell; the enum is the authority.
+    """
+    from torchcell.data.experiment_dataset import Visibility
+
+    value = getattr(dataset_class, "visibility", Visibility.public)
+    return "private" if value is Visibility.private else "public"
+
+
 # --------------------------------------------------------------------------- manifest
 
 
@@ -865,6 +882,7 @@ def bootstrap_manifest(
             loader_relpath=rel,
             adapter_files=dataset_adapter_files(cls, repo_root),
             closure=closure_at_ref(repo_root, commit, rel, surface),
+            visibility=dataset_visibility(cls),
             n_experiments=n_experiments.get(name),
             biocypher_out=biocypher_out,
             import_mode="full",
@@ -1278,6 +1296,12 @@ def check_admission(
 
     # 5. the new dataset itself
     dataset_class = _dataset_class(dataset_class_name)
+    if dataset_visibility(dataset_class) == "private":
+        reasons.append(
+            f"{dataset_class_name} is PRIVATE (visibility=private): in-house data is "
+            "never admitted to the public served graph, so there is no incremental "
+            "path for it"
+        )
     in_map = dataset_class in dataset_adapter_map
     if not in_map:
         reasons.append(f"{dataset_class_name} is not in dataset_adapter_map")
@@ -1490,6 +1514,7 @@ def _dataset_entry(
         loader_relpath=loader_relpath(dataset_class, repo_root),
         adapter_files=dataset_adapter_files(dataset_class, repo_root),
         closure=report.new_dataset_closure,
+        visibility=dataset_visibility(dataset_class),
         n_experiments=n_experiments,
         biocypher_out=biocypher_out,
         import_mode="incremental",

@@ -934,3 +934,40 @@ def test_manifest_entry_without_artifact_refs_loads_as_unrecorded() -> None:
         }
     )
     assert entry.artifact_refs is None
+
+
+def test_a_dataset_entry_records_its_visibility_defaulting_to_public() -> None:
+    """The manifest states, per dataset, whether the store holds in-house data.
+
+    The default is ``public`` for an entry written before the field existed, which is
+    correct rather than merely convenient: a private dataset could never have been
+    served, so no pre-existing entry can be private.
+    """
+    entry = _served_entry("TmiKuzmin2018Dataset", 91000)
+    assert entry.visibility == "public"
+    private = entry.model_copy(update={"visibility": "private"})
+    assert KgDatasetEntry.model_validate_json(private.model_dump_json()).visibility == (
+        "private"
+    )
+    # The field is a closed vocabulary, so a typo is a refusal, not a third state.
+    with pytest.raises(ValueError, match="visibility"):
+        KgDatasetEntry.model_validate({**entry.model_dump(), "visibility": "secret"})
+
+
+def test_dataset_visibility_reads_the_loader_class() -> None:
+    """``dataset_visibility`` projects the enum onto the JSON-readable string."""
+    from torchcell.data.experiment_dataset import Visibility
+    from torchcell.knowledge_graphs.kg_manifest import dataset_visibility
+
+    class _Public:
+        visibility = Visibility.public
+
+    class _Private:
+        visibility = Visibility.private
+
+    class _Undeclared:
+        pass
+
+    assert dataset_visibility(_Public) == "public"
+    assert dataset_visibility(_Private) == "private"
+    assert dataset_visibility(_Undeclared) == "public"

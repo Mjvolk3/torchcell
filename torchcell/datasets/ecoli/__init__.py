@@ -49,6 +49,12 @@ sourcing layer.
   isoprenol tolerance.
 - ``rapp2026`` -- ``MetabolomeRapp2026Dataset``: the metabolome of a CRISPRi library
   covering every iML1515 gene, FI-MS feature fold changes per MG1655 b-number.
+- ``rapp2026_platforms`` -- the same release's three other per-strain families, each on
+  its own scale and so its own dataset: ``GrowthAucRapp2026Dataset`` (the paper's
+  trapezoid AUC over the released OD600 curves, against the control strains),
+  ``TargetedMetabolomeRapp2026Dataset`` (the targeted LC-MS/MS screen, a second
+  platform) and ``MetaboliteIntensityRapp2026Dataset`` (the absolute FI-MS intensity of
+  each accumulating feature, with its per-replicate standard error).
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
   the loader that serves the experiments Wetmore 2015 first reported.
 - ``rousset2018`` -- ``CrispriScreenRousset2018Dataset``: per-sgRNA dCas9 knockdown
@@ -113,6 +119,13 @@ from .mutalik2020 import (
 )
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
+from .rapp2026_platforms import GrowthAucRapp2026Dataset as GrowthAucRapp2026Dataset
+from .rapp2026_platforms import (
+    MetaboliteIntensityRapp2026Dataset as MetaboliteIntensityRapp2026Dataset,
+)
+from .rapp2026_platforms import (
+    TargetedMetabolomeRapp2026Dataset as TargetedMetabolomeRapp2026Dataset,
+)
 from .rousset2018 import (
     CrispriScreenRousset2018Dataset as CrispriScreenRousset2018Dataset,
 )

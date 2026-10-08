@@ -140,6 +140,15 @@ from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
 from .rapp2026_adapter import MetabolomeRapp2026Adapter as MetabolomeRapp2026Adapter
+from .rapp2026_growth_adapter import (
+    GrowthAucRapp2026Adapter as GrowthAucRapp2026Adapter,
+)
+from .rapp2026_intensity_adapter import (
+    MetaboliteIntensityRapp2026Adapter as MetaboliteIntensityRapp2026Adapter,
+)
+from .rapp2026_targeted_adapter import (
+    TargetedMetabolomeRapp2026Adapter as TargetedMetabolomeRapp2026Adapter,
+)
 from .rousset2018_adapter import (
     CrispriScreenRousset2018Adapter as CrispriScreenRousset2018Adapter,
 )
@@ -301,6 +310,9 @@ ecoli_adapters = [
     "PhageRbTnseqMutalik2020Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "MetabolomeRapp2026Adapter",
+    "GrowthAucRapp2026Adapter",
+    "MetaboliteIntensityRapp2026Adapter",
+    "TargetedMetabolomeRapp2026Adapter",
     "CrispriScreenRousset2018Adapter",
     "MetabolomeSchastnaya2021Adapter",
     "EnvChemgenShiver2016Adapter",

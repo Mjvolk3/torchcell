@@ -1821,6 +1821,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "ffa_xue2025": 176,
         "metabolome_fuhrer2017": 3735,
         "metabolome_rapp2026": 1496,
+        "targeted_metabolome_rapp2026": 406,
+        "metabolite_intensity_rapp2026": 406,
     }
     assert {
         name
@@ -1832,8 +1834,13 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert {
         name
         for name, spec in runners.METABOLITE_DATASETS.items()
-        if name.startswith("metabolome_")
-    } == {"metabolome_fuhrer2017", "metabolome_rapp2026"}
+        if "fuhrer" in name or "rapp" in name
+    } == {
+        "metabolome_fuhrer2017",
+        "metabolome_rapp2026",
+        "targeted_metabolome_rapp2026",
+        "metabolite_intensity_rapp2026",
+    }
     # Issue #595: only Zelezniak releases several protocols, verified per protocol.
     assert {
         name
@@ -1908,6 +1915,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.FITNESS_DATASETS) == {
         "smf_oduibhir2014": 1312,
         "smf_baryshnikova2010": 5993,
+        "growth_auc_rapp2026": 1514,
     }
     assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
     assert (runners.MIN_GENE_OVERLAP, runners.MIN_RNASEQ_GENE_CONTAINMENT) == (

@@ -20,3 +20,7 @@ created: 1791256185172
 - [x] `feat/bacterial-genome-hard-tests` worktree: cross-source tests of the four bacterial genomes against the feature table, GFF, FASTAs and NCBI's GAF for every locus; two findings pinned (wrapped-product spaces from Biopython, obsolete GO ids in the RefSeq inline route) [[tests.torchcell.sequence.genome.test_bacterial_tier]]
 - [x] `docs/ecoli-si-phenotype-audit` worktree: audited all 14 loaded *E. coli* papers' SI for released phenotypes our loaders do not store; 21 loadable-now opportunities worth 840,752 records with a measured count, the largest being Shiver's 235 Nichols conditions at 835,337, and three new duplication risks [[plan.bacteria-si-phenotype-audit-ecoli]]
 - [x] `feat/ecoli-caglar2017-doubling-time` worktree: settled the two audits' contradiction over Caglar 2017's Table S5 doubling times by measurement; nothing is loadable (asymmetric interval in 55 of 55 rows, `reference_zero` plus two more verifier rules reject the absolute form), both audit notes corrected, and Table S1's doubling time measured to be a second fit rather than Table S5's mean [[torchcell.datasets.ecoli.caglar2017]]
+
+## 2026.10.08
+
+- [x] `feat/ecoli-rapp2026-platforms` worktree: the E. coli audit's ranks 4, 5 and 6 landed as three Rapp 2026 datasets (growth AUC 1,514 records, targeted LC-MS/MS 406 / 1,244 values, absolute FI-MS intensity 406 / 1,373 values), each on its own scale; the audit's non-duplication statistics reproduce to the digit and three of its counts are corrected [[torchcell.datasets.ecoli.rapp2026_platforms]]

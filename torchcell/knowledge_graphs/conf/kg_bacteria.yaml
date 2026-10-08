@@ -71,6 +71,9 @@ datasets:
   - PhageRbTnseqMutalik2020Dataset
   - RbTnseqPrice2018EcoliDataset
   - MetabolomeRapp2026Dataset
+  - GrowthAucRapp2026Dataset
+  - MetaboliteIntensityRapp2026Dataset
+  - TargetedMetabolomeRapp2026Dataset
   - CrispriScreenRousset2018Dataset
   - MetabolomeSchastnaya2021Dataset
   - EnvChemgenShiver2016Dataset

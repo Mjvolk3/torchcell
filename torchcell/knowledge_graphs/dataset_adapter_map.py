@@ -33,6 +33,7 @@ from torchcell.adapters import (
     FattyAcidXue2025Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialitySgdAdapter,
+    GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateSchmidt2016Adapter,
     HetHillenmeyer2008Adapter,
@@ -46,6 +47,7 @@ from torchcell.adapters import (
     IsoprenylAcetateTiterKang2026Adapter,
     Lian2019Adapter,
     MetaboliteDaSilveira2014Adapter,
+    MetaboliteIntensityRapp2026Adapter,
     MetaboliteZelezniak2018Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeRapp2026Adapter,
@@ -84,6 +86,7 @@ from torchcell.adapters import (
     SmMicroarraySameith2015Adapter,
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
+    TargetedMetabolomeRapp2026Adapter,
     TmfKuzmin2018Adapter,
     TmfKuzmin2020Adapter,
     TmiKuzmin2018Adapter,
@@ -109,6 +112,11 @@ from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
+from torchcell.datasets.ecoli.rapp2026_platforms import (
+    GrowthAucRapp2026Dataset,
+    MetaboliteIntensityRapp2026Dataset,
+    TargetedMetabolomeRapp2026Dataset,
+)
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
 from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Dataset
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
@@ -289,6 +297,9 @@ dataset_adapter_map = {
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
+    GrowthAucRapp2026Dataset: GrowthAucRapp2026Adapter,
+    MetaboliteIntensityRapp2026Dataset: MetaboliteIntensityRapp2026Adapter,
+    TargetedMetabolomeRapp2026Dataset: TargetedMetabolomeRapp2026Adapter,
     CrispriScreenRousset2018Dataset: CrispriScreenRousset2018Adapter,
     MetabolomeSchastnaya2021Dataset: MetabolomeSchastnaya2021Adapter,
     EnvChemgenShiver2016Dataset: EnvChemgenShiver2016Adapter,

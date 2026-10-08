@@ -688,6 +688,52 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Cell Syst 2026 Table S4 (mmc5.xlsx, sheet Table_S4)",
         ),
     },
+    # The same CRISPRi library's targeted LC-MS/MS screen, a SECOND PLATFORM: its
+    # measurement_type keeps its values from being compared with the FI-MS ones, and the
+    # reference is 1.0, the library median the released fold change divides by.
+    "targeted_metabolome_rapp2026": {
+        "root": "data/torchcell/targeted_metabolome_rapp2026",
+        # 411 Table S6 strain tokens - 4 control tokens (ctrl4, ctrl7, ctrl8, ctrl11) -
+        # 1 b-number the annotation remaps (phnE b4104) = 406 kept records.
+        "expected_count": 406,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si7.xlsx",
+            citation_key="rappMetabolomeColiCRISPRi2026",
+            sha256=("c4957a1d7966e47bf2f1ab5863aa06e87a8620199db1c2f86075a51e868162de"),
+            method=(
+                "targeted LC-MS/MS EIC peak-height fold change against the library "
+                "median, one injection per strain-metabolite pair and no released "
+                "uncertainty; reference = 1.0, that median on the released scale. "
+                "MEASURED distinct from the stored FI-MS fold changes (Pearson r "
+                "0.6722, median absolute log2 difference 1.1649), so this is a second "
+                "platform rather than a copy"
+            ),
+            page="Cell Syst 2026 Table S6 (mmc7.xlsx, sheet Table_S6)",
+        ),
+    },
+    # The same screen's ABSOLUTE intensities, a different scale from the stored fold
+    # change; the reference is the per-batch median intensity that fold change is a
+    # ratio to, back-solved as Mean_Int / Mean_FC.
+    "metabolite_intensity_rapp2026": {
+        "root": "data/torchcell/metabolite_intensity_rapp2026",
+        # 411 Table S5 strain tokens - 4 control tokens - phnE = 406 kept records.
+        "expected_count": 406,
+        "reference_centered": False,
+        "provenance": Provenance(
+            source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si6.xlsx",
+            citation_key="rappMetabolomeColiCRISPRi2026",
+            sha256=("f3a03ddce7b413f5d10ed1ebe8ba4f20c0d32904acd29a1e08edd007893ad62c"),
+            method=(
+                "absolute FI-MS intensity of each accumulating annotated m/z feature, "
+                "the mean of the strain's two plates (Mean_Int) with "
+                "|R1_Int - R2_Int| / 2 as its standard error; reference = the "
+                "per-batch median intensity, MEASURED constant across the strains of a "
+                "batch"
+            ),
+            page="Cell Syst 2026 Table S5 (mmc6.xlsx, sheet TableS5)",
+        ),
+    },
 }
 
 
@@ -2074,6 +2120,29 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
             ),
             page="Nat Methods 7:1017; Supplementary Data 1 sheet 'S1_SMF_standard_100209'",
             sha256="086bfadf2684f28940500dd87e3be74c53a957448d2016f7a02370540da8a04e",
+        ),
+    },
+    # The first BACTERIAL fitness dataset in this registry: its L4 universe and its
+    # canonical-name resolver come from the MG1655 assembly its own records pin, not
+    # from S288C (``_host_for_dataset``).
+    "growth_auc_rapp2026": {
+        "root": "data/torchcell/growth_auc_rapp2026",
+        # Table S2's 1,515 library genes minus phnE, whose released b4104 the pinned
+        # MG1655 annotation carries as a /gene_synonym of the pseudogene b4583.
+        "expected_count": 1514,
+        "provenance": Provenance(
+            source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si3.xlsx",
+            citation_key="rappMetabolomeColiCRISPRi2026",
+            sha256=("bc7ff53a40a51c955eb599062f3da05cf8ad906b31d45f2acdca89e8bfca7239"),
+            method=(
+                "trapezoid area under the released 181-point OD600 curve (0-30 h at 10 "
+                "min spacing), the mean of the strain's three cultures over the grand "
+                "mean of the 48 control cultures; the paper's own statistic (MATLAB "
+                "trapz.m), whose AUC < 18 growth-defect split reproduces to within one "
+                "strain (measured 490/1,025 against the reported 489/1,026); "
+                "uncertainty = the sample SD of the three replicate ratios"
+            ),
+            page="Cell Syst 2026 Table S2 (mmc3.xlsx, sheet Table_S2)",
         ),
     },
 }

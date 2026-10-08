@@ -1,0 +1,491 @@
+{
+  "schedule_row": 50,
+  "dataset": "Li 2021 mevalonate flux",
+  "citation_key": "liFineTuningGlycolytic2021",
+  "pinned_si": {
+    "citation_key": "liFineTuningGlycolytic2021",
+    "files": [
+      {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/liFineTuningGlycolytic2021/si/si1.docx",
+        "relpath": "si/si1.docx",
+        "sha256": "14250d74f8e7bb60335635d51d406e3da6756df185228a6b861af896fa2f5094",
+        "bytes": 106886,
+        "original_filename": "12934_2021_1526_MOESM1_ESM.docx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7852082.1/12934_2021_1526_MOESM1_ESM.docx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC7852082.1/12934_2021_1526_MOESM1_ESM.docx"
+        }
+      },
+      {
+        "path": "/scratch/projects/torchcell-scratch/torchcell-library/liFineTuningGlycolytic2021/si/si2.xlsx",
+        "relpath": "si/si2.xlsx",
+        "sha256": "24c836f8459e5cce4f6a322477a7554e1f7dd16e8bb6b7cdd0ac4890b24c585a",
+        "bytes": 64022,
+        "original_filename": "12934_2021_1526_MOESM2_ESM.xlsx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC7852082.1/12934_2021_1526_MOESM2_ESM.xlsx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC7852082.1/12934_2021_1526_MOESM2_ESM.xlsx"
+        }
+      }
+    ],
+    "si_data_sources": [
+      "https://pmc-oa-opendata.s3.amazonaws.com/PMC7852082.1/12934_2021_1526_MOESM1_ESM.docx",
+      "https://pmc-oa-opendata.s3.amazonaws.com/PMC7852082.1/12934_2021_1526_MOESM2_ESM.xlsx"
+    ]
+  },
+  "q1_is_it_a_fit": {
+    "quote_methods": "Metabolic fluxes were estimated by minimizing the residual sum of squares between experimentally measured and model predicted 13C-enrichment using 13C-Flux software obtained from Dr. Wiechert [33].",
+    "quote_the_file_name_the_paper_gives_it": "Additional file 2. MFA simulated result.",
+    "quote_tracer": "13C-MFA was performed using 100% 1-13C1 glucose as the feeding substrate was added to a concentration of 10 g/L.",
+    "quote_instrument": "The resulting proteinogenic acids were derivatized with N-(tert-butyldimethylsilyl)-N-methyl-trifluoroacetamide containing tert-butyldimethylchlorosilane in acetonitrile at 105 C for 1 h, and then analyzed by a GC-MS [Agilent 7890 A GC and 5975 C Mass Selective Detector (Agilent Technologies, Santa Clara, USA)] equipped with a DB-1column (Agilent Technologies).",
+    "quote_correction": "The data obtained from GC-MS were corrected by reduction of the natural abundance ratio of C, H, O, N, and Si isotopes [30].",
+    "quote_harvest": "Cells at the exponential growth phase were harvested by centrifugation at 7000 g for 5 min at 4 C.",
+    "software": "13CFLUX2, named only through reference [33] (Weitzel 2013); no version, no solver settings, no weighting scheme",
+    "objective": "least squares on measured minus model-predicted 13C enrichment",
+    "interval_procedure_stated": false,
+    "column_headers_that_state_the_level": [
+      "LB90",
+      "UB90",
+      "\u03c72 90%"
+    ],
+    "fit_diagnostics_by_strain": {
+      "BW-P08": {
+        "Number of fitted measurements :": 126,
+        "Freedom of flux": 85,
+        "\u03c72 90%": 102.8,
+        "SSR :": 70.79
+      },
+      "BW-P04": {
+        "Number of fitted measurements :": 126,
+        "Freedom of flux": 85,
+        "\u03c72 90%": 102.08,
+        "SSR :": 61.49
+      },
+      "BW-P10": {
+        "Number of fitted measurements :": 126,
+        "Freedom of flux": 85,
+        "\u03c72 90%": 102.08,
+        "SSR :": 48
+      }
+    },
+    "chi_square_check": {
+      "chi_square_90_by_strain": {
+        "BW-P08": 102.8,
+        "BW-P04": 102.08,
+        "BW-P10": 102.08
+      },
+      "distinct_values": [
+        102.08,
+        102.8
+      ],
+      "agrees_across_strains": false,
+      "note": "the three fits share a degrees-of-freedom row (85) and so must share one chi-square quantile, yet one cell reads 102.8 against 102.08 in the other two. The sheet contradicts itself; which value is intended is not stated, and no sentence in the paper interprets SSR or this quantile at all."
+    },
+    "verdict": "a MODEL FIT, not a measurement: a least-squares best fit of a whole reaction network to GC-MS labeling data from a single [1-13C]glucose experiment. The paper's own one-line name for the file is 'MFA simulated result', and the procedure behind LB90/UB90 is never stated anywhere, so only the LEVEL is sourced, not the method."
+  },
+  "q2_what_was_measured": {
+    "label_measurements": {
+      "strain_columns": {
+        "PB108": "D",
+        "PB104": "E",
+        "PB100": "F"
+      },
+      "n_constraint_rows_per_strain": 134,
+      "n_metabolites": 13,
+      "metabolites": [
+        "ALA",
+        "GLY",
+        "VAL",
+        "LEU",
+        "ILE",
+        "SER",
+        "THR",
+        "ASX",
+        "GLX",
+        "LYS",
+        "TYR",
+        "HIS",
+        "MET"
+      ],
+      "n_mdv_groups_approx": 23,
+      "correction_note_cell": "after correction ",
+      "columns_g_to_k_empty": [
+        "G",
+        "H",
+        "I",
+        "J",
+        "K"
+      ],
+      "carries_any_uncertainty_column": false,
+      "note": "columns G to K are entirely empty: the fitting inputs carry NO standard deviation, standard error or weight, so the least-squares objective was unweighted or weighted by an undisclosed constant. The paper states no replicate count for the labeling experiment."
+    },
+    "released_byproduct_yields": {
+      "PB10": {
+        "Acetate (g/g.cdw)": 0,
+        "Lactate (g/g.cdw)": 0.176704525719843,
+        "Ethanol (g/g.cdw)": 0.00824910562328505,
+        "Citrate (g/g.cdw)": 0.00868326907714216,
+        "Glucose (g/g.cdw)": 3.47330763085686
+      },
+      "PB04": {
+        "Acetate (g/g.cdw)": 0,
+        "Lactate (g/g.cdw)": 0.214970880438506,
+        "Ethanol (g/g.cdw)": 0,
+        "Citrate (g/g.cdw)": 0,
+        "Glucose (g/g.cdw)": 3.34018499486125
+      },
+      "PB08": {
+        "Acetate (g/g.cdw)": 0.40879763863856,
+        "Lactate (g/g.cdw)": 0.200480631089518,
+        "Ethanol (g/g.cdw)": 0,
+        "Citrate (g/g.cdw)": 0.0339576313246088,
+        "Glucose (g/g.cdw)": 3.19985372097275
+      }
+    },
+    "fitted_measurements_claimed_by_the_sheet": {
+      "BW-P08": 126,
+      "BW-P04": 126,
+      "BW-P10": 126
+    },
+    "note": "the fitting inputs are the labeling data of 13 proteinogenic amino acids plus the released byproduct yields and the biomass composition, all in this same file, which is what makes the fit reproducible. The measured extracellular rates appear ONLY as unitless yields in a sheet the paper never references, and no growth rate is reported anywhere."
+  },
+  "q3_shape_of_the_release": {
+    "sheet_shape": {
+      "n_reaction_rows": 99,
+      "n_atom_transition_rows": 99,
+      "n_section_comment_rows": 22,
+      "column_c_nonblank_cells": 272,
+      "schedule_row_claim": 198,
+      "where_198_comes_from": "column C holds 272 non-blank cells = 1 header ('Reactions') + 99 reaction equations + 99 atom-transition lines. 198 is the reaction rows PLUS their atom-transition rows, which double-counts every reaction. The reaction count is 99.",
+      "columns_expected_empty_that_are_empty": [
+        "A",
+        "J",
+        "Q",
+        "X",
+        "Y",
+        "Z",
+        "AA",
+        "AB"
+      ],
+      "n_strain_blocks": 3,
+      "fourth_strain_block_present": false
+    },
+    "pinned_vs_fitted": {
+      "BW-P08": {
+        "n_pinned_absolute": 46,
+        "n_interval_absolute": 53,
+        "n_pinned_normalized": 27,
+        "pinned_reactions": [
+          "vUPTU",
+          "vUPT",
+          "vCAR",
+          "vCARout",
+          "vCO2_out",
+          "vCIT_out",
+          "vSer",
+          "vC1_out",
+          "vHis",
+          "vHis_out",
+          "vAr",
+          "vPhe",
+          "vPhe_out",
+          "vTyr",
+          "vTyr_out",
+          "vLeu",
+          "vLeu_out",
+          "vThr",
+          "vThr_out",
+          "vAsx",
+          "vLys_a",
+          "vLys_b",
+          "vLys_out",
+          "vMETS",
+          "vMet_out",
+          "vPros",
+          "vPro_out",
+          "vCTRS",
+          "vARGS",
+          "vArg_out",
+          "vFas",
+          "vFas_out",
+          "vACAC",
+          "vMVA",
+          "vMVAout",
+          "vLDH",
+          "vLACout",
+          "vETH",
+          "vETHout",
+          "vDRNA2",
+          "vDRNA3",
+          "vDRNA5",
+          "vDRNAa_out",
+          "vDRNAg_out",
+          "vDRNAc_out",
+          "vDRNAu_out"
+        ]
+      },
+      "BW-P04": {
+        "n_pinned_absolute": 54,
+        "n_interval_absolute": 45,
+        "n_pinned_normalized": 39,
+        "pinned_reactions": [
+          "vUPTU",
+          "vUPT",
+          "vSer",
+          "vSer_out",
+          "vSerGly",
+          "vGly_out",
+          "vAr",
+          "vPhe",
+          "vPhe_out",
+          "vaKIV",
+          "vVal",
+          "vVal_out",
+          "vLeu",
+          "vLeu_out",
+          "vIle",
+          "vIle_out",
+          "vThr",
+          "vThr_out",
+          "vAsx",
+          "vAsx_out",
+          "vLys_a",
+          "vLys_b",
+          "vLys_out",
+          "vMETS",
+          "vMet_out",
+          "vGlu_out",
+          "vPros",
+          "vPro_out",
+          "vCTRS",
+          "vARGS",
+          "vArg_out",
+          "vAat",
+          "vAla_out",
+          "vFas",
+          "vFas_out",
+          "vACAC",
+          "vMVA",
+          "vMVAout",
+          "vETH",
+          "vETHout",
+          "vDRNA1a",
+          "vDRNA1b",
+          "vDRNA1c",
+          "vDRNA1d",
+          "vDRNA1e",
+          "vDRNA2",
+          "vDRNA3",
+          "vDRNA4a",
+          "vDRNA4b",
+          "vDRNA5",
+          "vDRNAa_out",
+          "vDRNAg_out",
+          "vDRNAc_out",
+          "vDRNAu_out"
+        ]
+      },
+      "BW-P10": {
+        "n_pinned_absolute": 50,
+        "n_interval_absolute": 49,
+        "n_pinned_normalized": 34,
+        "pinned_reactions": [
+          "vUPTU",
+          "vUPT",
+          "vSer_out",
+          "vHis",
+          "vHis_out",
+          "vAr",
+          "vPhe",
+          "vPhe_out",
+          "vTyr",
+          "vTyr_out",
+          "vaKIV",
+          "vVal",
+          "vVal_out",
+          "vLeu",
+          "vLeu_out",
+          "vIle",
+          "vIle_out",
+          "vAsx",
+          "vAsx_out",
+          "vLys_a",
+          "vLys_b",
+          "vLys_out",
+          "vMETS",
+          "vMet_out",
+          "vGlu_out",
+          "vPros",
+          "vPro_out",
+          "vCTRS",
+          "vARGS",
+          "vArg_out",
+          "vAat",
+          "vAla_out",
+          "vFas",
+          "vFas_out",
+          "vLDH",
+          "vLACout",
+          "vDRNA1a",
+          "vDRNA1b",
+          "vDRNA1c",
+          "vDRNA1d",
+          "vDRNA1e",
+          "vDRNA2",
+          "vDRNA3",
+          "vDRNA4a",
+          "vDRNA4b",
+          "vDRNA5",
+          "vDRNAa_out",
+          "vDRNAg_out",
+          "vDRNAc_out",
+          "vDRNAu_out"
+        ]
+      },
+      "note": "a pinned row is a constraint, not a fitted flux: the pinned sets are the measured uptake and secretion rates plus the biomass-stoichiometry drains. The three fits did not pin the SAME reactions, which is itself a finding."
+    },
+    "pairwise_identical_blocks": {
+      "BW-P08 vs BW-P04": {
+        "n_identical_rows": 2,
+        "of_n_reactions": 99,
+        "uptake_flux_equal": false
+      },
+      "BW-P08 vs BW-P10": {
+        "n_identical_rows": 0,
+        "of_n_reactions": 99,
+        "uptake_flux_equal": false
+      },
+      "BW-P04 vs BW-P10": {
+        "n_identical_rows": 50,
+        "of_n_reactions": 99,
+        "uptake_flux_equal": true
+      }
+    },
+    "strain_keying": {
+      "flux_molar_ratios": {
+        "BW-P08": {
+          "Acetate (g/g.cdw)": 0.38326562389411845,
+          "Lactate (g/g.cdw)": 0.1253061080048128,
+          "Ethanol (g/g.cdw)": 7.077641729775638e-05,
+          "Citrate (g/g.cdw)": 0.00968009059381414
+        },
+        "BW-P04": {
+          "Acetate (g/g.cdw)": 0.0006343648105152311,
+          "Lactate (g/g.cdw)": 0.1287176949720245,
+          "Ethanol (g/g.cdw)": 6.343648105152311e-05,
+          "Citrate (g/g.cdw)": 0.0006343648105152311
+        },
+        "BW-P10": {
+          "Acetate (g/g.cdw)": 0.0006343648105152311,
+          "Lactate (g/g.cdw)": 0.1287176949720245,
+          "Ethanol (g/g.cdw)": 6.343648105152311e-05,
+          "Citrate (g/g.cdw)": 0.0006343648105152311
+        }
+      },
+      "yield_molar_ratios": {
+        "PB10": {
+          "Acetate (g/g.cdw)": 0.0,
+          "Lactate (g/g.cdw)": 0.10175000000000015,
+          "Ethanol (g/g.cdw)": 0.009287802813232621,
+          "Citrate (g/g.cdw)": 0.0023442794459799217
+        },
+        "PB04": {
+          "Acetate (g/g.cdw)": 0.0,
+          "Lactate (g/g.cdw)": 0.12871794871794867,
+          "Ethanol (g/g.cdw)": 0.0,
+          "Citrate (g/g.cdw)": 0.0
+        },
+        "PB08": {
+          "Acetate (g/g.cdw)": 0.38326530612244947,
+          "Lactate (g/g.cdw)": 0.1253061224489801,
+          "Ethanol (g/g.cdw)": 0.0,
+          "Citrate (g/g.cdw)": 0.009951227035996399
+        }
+      },
+      "matches": {
+        "BW-P08": {
+          "best_match": "PB08",
+          "scores": {
+            "PB10": 0.4233745694427002,
+            "PB04": 0.3964283316183662,
+            "PB08": 0.00034224507531629923
+          },
+          "margin_over_runner_up": 0.39608608654304994,
+          "label_implies": "PB08",
+          "constraints_agree_with_the_label": true
+        },
+        "BW-P04": {
+          "best_match": "PB04",
+          "scores": {
+            "PB10": 0.03853634075018538,
+            "PB04": 0.0013324198480061467,
+            "PB08": 0.39542281254151135
+          },
+          "margin_over_runner_up": 0.037203920902179236,
+          "label_implies": "PB04",
+          "constraints_agree_with_the_label": true
+        },
+        "BW-P10": {
+          "best_match": "PB04",
+          "scores": {
+            "PB10": 0.03853634075018538,
+            "PB04": 0.0013324198480061467,
+            "PB08": 0.39542281254151135
+          },
+          "margin_over_runner_up": 0.037203920902179236,
+          "label_implies": "PB10",
+          "constraints_agree_with_the_label": false
+        }
+      }
+    }
+  },
+  "q4_can_an_existing_class_carry_it": {
+    "classes_that_already_exist_and_have_no_consumer": [
+      "FluxPhenotype",
+      "FluxExperiment",
+      "FluxExperimentReference"
+    ],
+    "graph_class_already_declared": "flux phenotype",
+    "adapter_methods_already_landed": [
+      "_flux_properties",
+      "_flux_phenotype_node",
+      "_get_flux_phenotype_reference_nodes"
+    ],
+    "built_phenotype": {
+      "strain": "BW-P08",
+      "accepted": true,
+      "n_reactions_stored": 99,
+      "n_signed_negative": 1,
+      "example_negative": {
+        "vGPI": -0.445077375
+      },
+      "label_statistic_name": null,
+      "graph_level": "metabolism",
+      "fit_diagnostics_that_have_no_field": {
+        "Number of fitted measurements :": 126,
+        "Freedom of flux": 85,
+        "\u03c72 90%": 102.8,
+        "SSR :": 70.79
+      },
+      "note": "FluxPhenotype takes the released column WHOLE: signed net fluxes, bounds that equal the best fit where the row was pinned, and the stated 90 percent level, with label_statistic_name None by the class's own design. The four fit diagnostics have no field on it and would live in the loader's ledger."
+    },
+    "reference": {
+      "maps_released": [
+        "BW-P08",
+        "BW-P04",
+        "BW-P10"
+      ],
+      "control_strain_named_by_the_text": "BW-P BF",
+      "control_map_released": false,
+      "quote_naming_the_control_as_analyzed": "13C-MFA was performed to detect the metabolic flux distribution in strains BW-P08 BF and BW-P10 BF (which had high MVA titers) and the control strain BW-P BF.",
+      "quote_fig5_rows": "Fig. 5 Metabolic flux diagram of zwf-strengthened EP-bifido strains. The metabolic flux shown for strains from top to bottom are BW-P10 BF, BW-P08 BF, BW-P BF",
+      "empty_net_flux_accepted": false,
+      "empty_net_flux_error": "1 validation error for FluxPhenotype Value error, net_flux cannot be empty [type=value_error, input_value={'net_flux': {}, 'measure...ux_mmol_per_gdcw_per_h'}, input_type=dict] For further information visit https://errors.pydantic.dev/2.12/v/value_error",
+      "conclusion": "no reference can be built. The text says 13C-MFA covered BW-P08 BF, BW-P10 BF and the control BW-P BF, and Fig. 5 prints three rows naming those three strains, but Additional file 2 holds maps for BW-P08, BW-P04 and BW-P10 -- the control's map is absent and BW-P04's is present without ever being mentioned. FluxExperimentReference.phenotype_reference is required and FluxPhenotype.net_flux must be non-empty, so there is nothing to put in it, and an absolute flux has no definitional zero the way a log ratio does. This blocks every record, including the one strain whose column is cleanly identified."
+    }
+  }
+}

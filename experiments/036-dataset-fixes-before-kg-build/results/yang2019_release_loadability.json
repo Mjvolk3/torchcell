@@ -1,0 +1,239 @@
+{
+  "row": 49,
+  "row_name": "Yang 2019 mevalonate from ethanol",
+  "doi": "10.1186/s12934-019-1213-y",
+  "citation_key": "yangMevalonateProductionEthanol2019",
+  "mirror": {
+    "doi": "10.1186/s12934-019-1213-y",
+    "title": "Mevalonate production from ethanol by direct conversion through acetyl-CoA using recombinant Pseudomonas putida, a novel biocatalyst for terpenoid production",
+    "paper.md": {
+      "bytes": 56049,
+      "sha256": "693be53e3a9b10697723df15d04f487e2959c93cb795d6af869c9f10f1acb2da",
+      "original_filename": null
+    },
+    "si/si1.docx": {
+      "bytes": 22502,
+      "sha256": "829419a065e2b6f59a8a3493131f912212bd767547c882a71e173d97f8d93014",
+      "original_filename": "12934_2019_1213_MOESM1_ESM.docx"
+    },
+    "si/si2.docx": {
+      "bytes": 21435,
+      "sha256": "862b6df03ed2f80ea68199e3b17ab26fc80653902dd17851ae746e5757128560",
+      "original_filename": "12934_2019_1213_MOESM2_ESM.docx"
+    }
+  },
+  "si_containers": {
+    "si/si1.docx": {
+      "n_paragraphs": 2,
+      "n_tables": 1,
+      "embedded_workbooks": []
+    },
+    "si/si2.docx": {
+      "n_paragraphs": 12,
+      "n_tables": 0,
+      "embedded_workbooks": []
+    }
+  },
+  "tables": [
+    {
+      "source": "si/si1.docx",
+      "table": "table 1",
+      "headers": [
+        "Primer",
+        "Sequence"
+      ],
+      "n_rows": 66,
+      "n_data_rows": 65,
+      "n_bare_number_cells": 0
+    },
+    {
+      "source": "paper.md",
+      "table": "table 1",
+      "headers": [
+        "Strain, plasmid",
+        "Genotype or properties",
+        "Source"
+      ],
+      "n_rows": 31,
+      "n_data_rows": 30,
+      "n_bare_number_cells": 0
+    }
+  ],
+  "n_tables": 2,
+  "sequences": [
+    {
+      "header": "mvaE_opti (Acetyl-CoA acetyltransferase / Hydroxymethylglutaryl-CoA reductase) from Enterococcus faecalis",
+      "gene": "mvaE_opti",
+      "released_bases": 2430,
+      "leader_bases": 18,
+      "cds_bases": 2412,
+      "cds_in_frame": true,
+      "stop_codon": "TAA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "e0136503f8a7163d0b4974b09d18caac5ac9d1c6ad4f9b1b13fba7661738ecf1"
+    },
+    {
+      "header": "mvaS_opti (Hydroxymethylglutaryl-CoA synthase) from Enterococcus faecalis",
+      "gene": "mvaS_opti",
+      "released_bases": 1185,
+      "leader_bases": 33,
+      "cds_bases": 1152,
+      "cds_in_frame": true,
+      "stop_codon": "TAA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "e57255aba50147d731343ad513f6ccd43b3cb82b2695029374d2d3a68593d233"
+    },
+    {
+      "header": "atoB_opti (Acetyl-CoA acetyltransferase) from Escherichia coli MG1655",
+      "gene": "atoB_opti",
+      "released_bases": 1216,
+      "leader_bases": 31,
+      "cds_bases": 1185,
+      "cds_in_frame": true,
+      "stop_codon": "TGA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "6d6fa8c11ba1742820a092765ca45f7f0944266e6994445d46e9663fb63fafe0"
+    },
+    {
+      "header": "acs_opti (Acetyl-CoA synthetase) from Escherichia coli MG1655",
+      "gene": "acs_opti",
+      "released_bases": 1994,
+      "leader_bases": 35,
+      "cds_bases": 1959,
+      "cds_in_frame": true,
+      "stop_codon": "TGA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "1c76f728a262f9595b5fbeb1000407385fd641bc6aa76147cf612f6c6ccb8fe5"
+    },
+    {
+      "header": "eutE_opti (Putative aldehyde dehydrogenase / ethanolamine utilization protein) from Escherichia coli MG1655",
+      "gene": "eutE_opti",
+      "released_bases": 1432,
+      "leader_bases": 28,
+      "cds_bases": 1404,
+      "cds_in_frame": true,
+      "stop_codon": "TGA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "97d612442f33bff6d628a17b06e7a0d146bd7fc3cac6e36aa4cdc0c7db102512"
+    },
+    {
+      "header": "nphT7_opti (Acetyl-CoA:malonyl-CoA acyltransferase) from Streptomyces sp. CL190",
+      "gene": "nphT7_opti",
+      "released_bases": 1026,
+      "leader_bases": 36,
+      "cds_bases": 990,
+      "cds_in_frame": true,
+      "stop_codon": "TGA",
+      "leader_has_shine_dalgarno": true,
+      "sha256": "fe8111f44ee6392ec4787ed9ce9d5c3f273b4e51024112fd43933b200efc031f"
+    }
+  ],
+  "n_sequences": 6,
+  "claimed_sequence_bases": 9283,
+  "measured_sequence_bases": 9283,
+  "sequence_total_confirmed": true,
+  "measured_leader_bases": 181,
+  "measured_cds_bases": 9102,
+  "every_cds_in_frame_and_stopped": true,
+  "every_leader_has_shine_dalgarno": true,
+  "gene_accessions": {
+    "mvaE_opti": "AAO81155.1",
+    "mvaS_opti": "AAO81154.1",
+    "atoB_opti": "946727",
+    "acs_opti": "948572",
+    "eutE_opti": "946943",
+    "nphT7_opti": "AB540131.1"
+  },
+  "deleted_loci": {
+    "endA": "1047019",
+    "endX": "1045620",
+    "qedH-I": "1046117",
+    "qedH-II": "1046129",
+    "phaG": "1046114"
+  },
+  "locus_tag_search": {
+    "pp_underscore_hits": {
+      "paper.md": 0,
+      "paper_content_list.json": 0,
+      "si/si1.docx": 0,
+      "si/si2.docx": 0
+    },
+    "derived_tags_found": {
+      "PP_3375": false,
+      "PP_2451": false,
+      "PP_2674": false,
+      "PP_2679": false,
+      "PP_1408": false
+    }
+  },
+  "deposit_word_counts": {
+    "deposit": 0,
+    "repositor": 0,
+    "accession": 0,
+    "supplementary data": 0,
+    "raw data": 0,
+    "dataset": 0
+  },
+  "prose_titers": [
+    {
+      "strain": "ELPP010",
+      "condition": "flask, modified M9 + 10 g/L ethanol, 27 h",
+      "analyte": "mevalonate",
+      "value_g_per_l": 1.7,
+      "sd_g_per_l": 0.55,
+      "quote": "the ELPP010 strain, into which the upper mevalonate pathway was introduced, produced $1 . 7 0 { \\pm } 0 . 5 5 \\ \\mathrm { \\ g / L }$ of mevalonate after $2 7 \\ \\mathrm { h } ,$"
+    },
+    {
+      "strain": "ELPP110",
+      "condition": "flask, modified M9 + 10 g/L ethanol, 27 h",
+      "analyte": "mevalonate",
+      "value_g_per_l": 2.43,
+      "sd_g_per_l": 1.34,
+      "quote": "After fuorescence analysis, $2 . 4 3 \\pm 1 . 3 4 ~ \\mathrm { g / L }$ of mevalonate was produced by a $2 7 \\mathrm { h }$ fask scale fermentation of"
+    },
+    {
+      "strain": "ELPP111",
+      "condition": "flask, modified M9 + 10 g/L ethanol, 27 h",
+      "analyte": "mevalonate",
+      "value_g_per_l": 2.88,
+      "sd_g_per_l": 1.16,
+      "quote": "ELPP111, acs gene expressed in ELPP110, produced $2 . 8 8 \\pm 1 . 1 6 ~ \\mathrm { \\ g / L }$ of mevalonate in $2 7 \\ \\mathrm { h }$ fask fermentation"
+    },
+    {
+      "strain": "ELPP211",
+      "condition": "flask, modified M9 + 10 g/L ethanol, 27 h",
+      "analyte": "mevalonate",
+      "value_g_per_l": 4.07,
+      "sd_g_per_l": 0.29,
+      "quote": "ELPP211, qedH-I and qedH-II deleted strain from ELPP111, produced $4 . 0 7 { \\pm } 0 . 2 9 \\mathrm { \\textrm { g } / L }$ of mevalonate without acetate accumulation"
+    },
+    {
+      "strain": "ELPP311",
+      "condition": "2.5 L batch fermenter, 300 mM ethanol, pH 7.0, 24 h",
+      "analyte": "mevalonate",
+      "value_g_per_l": 4.18,
+      "sd_g_per_l": null,
+      "quote": "At $\\mathrm { p H } 7 . 0$ control culture, $4 . 1 8 ~ \\mathrm { g / L }$ of mevalonate was produced from $1 3 . 6 ~ \\mathrm { g / L }$ of ethanol in $2 4 \\mathrm { ~ h ~ }$ culture time"
+    },
+    {
+      "strain": "ELPP311",
+      "condition": "2.5 L batch fermenter, 300 mM ethanol, pH 6.75",
+      "analyte": "mevalonate",
+      "value_g_per_l": 4.6,
+      "sd_g_per_l": null,
+      "quote": "$4 . 6 0 ~ \\mathrm { g / L }$ of mevalonate was produced from $1 4 . 3 ~ \\mathrm { g / L }$ of ethanol (about $3 0 0 ~ \\mathrm { m M }$ ) with a production yield of $0 . 3 2 { \\mathrm { g } }$ mevalonate/g ethanol."
+    }
+  ],
+  "n_prose_titers": 6,
+  "n_prose_titers_with_an_sd": 4,
+  "reference_strain": "ELPP000",
+  "reference_titer_released": false,
+  "quotes": {
+    "availability": "Availability of data and materials Not applicable.",
+    "deletions": "endA (Endonuclease I, GenBank ID: 1047019) and endX (Extracellular DNA endonuclease, GenBank ID: 1045620) for genetic stability improvement, qedH-I (Quinoprotein ethanol dehydrogenase, GenBank ID: 1046117) and qedH-II (Quinoprotein ethanol dehydrogenase, GenBank",
+    "replicates_methods": "All strains were cultured under the above conditions and in triplet for reproducibility confrmation.",
+    "replicates_legend": "All the experiments were performed in triplicates and standard deviations of triplet culture were shown in the form of error bars"
+  },
+  "blocking_claim_still_true": true,
+  "accession_claim_still_true": true
+}

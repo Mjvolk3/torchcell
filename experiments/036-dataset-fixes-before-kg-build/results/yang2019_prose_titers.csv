@@ -1,0 +1,7 @@
+strain,condition,analyte,value_g_per_l,sd_g_per_l,quote
+ELPP010,"flask, modified M9 + 10 g/L ethanol, 27 h",mevalonate,1.7,0.55,"the ELPP010 strain, into which the upper mevalonate pathway was introduced, produced $1 . 7 0 { \pm } 0 . 5 5 \ \mathrm { \ g / L }$ of mevalonate after $2 7 \ \mathrm { h } ,$"
+ELPP110,"flask, modified M9 + 10 g/L ethanol, 27 h",mevalonate,2.43,1.34,"After fuorescence analysis, $2 . 4 3 \pm 1 . 3 4 ~ \mathrm { g / L }$ of mevalonate was produced by a $2 7 \mathrm { h }$ fask scale fermentation of"
+ELPP111,"flask, modified M9 + 10 g/L ethanol, 27 h",mevalonate,2.88,1.16,"ELPP111, acs gene expressed in ELPP110, produced $2 . 8 8 \pm 1 . 1 6 ~ \mathrm { \ g / L }$ of mevalonate in $2 7 \ \mathrm { h }$ fask fermentation"
+ELPP211,"flask, modified M9 + 10 g/L ethanol, 27 h",mevalonate,4.07,0.29,"ELPP211, qedH-I and qedH-II deleted strain from ELPP111, produced $4 . 0 7 { \pm } 0 . 2 9 \mathrm { \textrm { g } / L }$ of mevalonate without acetate accumulation"
+ELPP311,"2.5 L batch fermenter, 300 mM ethanol, pH 7.0, 24 h",mevalonate,4.18,,"At $\mathrm { p H } 7 . 0$ control culture, $4 . 1 8 ~ \mathrm { g / L }$ of mevalonate was produced from $1 3 . 6 ~ \mathrm { g / L }$ of ethanol in $2 4 \mathrm { ~ h ~ }$ culture time"
+ELPP311,"2.5 L batch fermenter, 300 mM ethanol, pH 6.75",mevalonate,4.6,,$4 . 6 0 ~ \mathrm { g / L }$ of mevalonate was produced from $1 4 . 3 ~ \mathrm { g / L }$ of ethanol (about $3 0 0 ~ \mathrm { m M }$ ) with a production yield of $0 . 3 2 { \mathrm { g } }$ mevalonate/g ethanol.

@@ -1,0 +1,7 @@
+header,gene,released_bases,leader_bases,cds_bases,cds_in_frame,stop_codon,leader_has_shine_dalgarno,sha256
+mvaE_opti (Acetyl-CoA acetyltransferase / Hydroxymethylglutaryl-CoA reductase) from Enterococcus faecalis,mvaE_opti,2430,18,2412,True,TAA,True,e0136503f8a7163d0b4974b09d18caac5ac9d1c6ad4f9b1b13fba7661738ecf1
+mvaS_opti (Hydroxymethylglutaryl-CoA synthase) from Enterococcus faecalis,mvaS_opti,1185,33,1152,True,TAA,True,e57255aba50147d731343ad513f6ccd43b3cb82b2695029374d2d3a68593d233
+atoB_opti (Acetyl-CoA acetyltransferase) from Escherichia coli MG1655,atoB_opti,1216,31,1185,True,TGA,True,6d6fa8c11ba1742820a092765ca45f7f0944266e6994445d46e9663fb63fafe0
+acs_opti (Acetyl-CoA synthetase) from Escherichia coli MG1655,acs_opti,1994,35,1959,True,TGA,True,1c76f728a262f9595b5fbeb1000407385fd641bc6aa76147cf612f6c6ccb8fe5
+eutE_opti (Putative aldehyde dehydrogenase / ethanolamine utilization protein) from Escherichia coli MG1655,eutE_opti,1432,28,1404,True,TGA,True,97d612442f33bff6d628a17b06e7a0d146bd7fc3cac6e36aa4cdc0c7db102512
+nphT7_opti (Acetyl-CoA:malonyl-CoA acyltransferase) from Streptomyces sp. CL190,nphT7_opti,1026,36,990,True,TGA,True,fe8111f44ee6392ec4787ed9ce9d5c3f273b4e51024112fd43933b200efc031f

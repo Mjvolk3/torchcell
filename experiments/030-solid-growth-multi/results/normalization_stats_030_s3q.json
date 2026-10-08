@@ -1,0 +1,32 @@
+{
+  "build": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/001-multi-build",
+  "entries_parquet": "/scratch/projects/torchcell-scratch/data/torchcell/experiments/030-solid-growth-multi/closure/entries.parquet",
+  "subset_name": "subset_S3Q_indices_030.json.gz",
+  "split_file": "query_pair_disjoint_splits_030.json.gz",
+  "exclude_name": null,
+  "unpinned_to_train": true,
+  "n_train_records": 1046078,
+  "train_index_sha256": "49d7232b4af5efc4daf83ded8d8f56a74a61eda257482b974cf0220a3ce7b077",
+  "n_rows": {
+    "gene_interaction": 2340771,
+    "fitness": 2365257
+  },
+  "stats": {
+    "gene_interaction": {
+      "mean": -0.003448821001285474,
+      "std": 0.05075104469613692,
+      "min": -1.0816,
+      "max": 1.128043,
+      "q25": -0.02336,
+      "q75": 0.0204
+    },
+    "fitness": {
+      "mean": 0.8854785868216436,
+      "std": 0.15877341471416886,
+      "min": 0.0,
+      "max": 1.5681,
+      "q25": 0.8086,
+      "q75": 0.9987
+    }
+  }
+}

@@ -35,13 +35,23 @@ X = "epoch"
 EXCLUDED_RUN_IDS: set[str] = set()
 KEEP_STATES = {"finished", "running"}
 
-# config tag -> arm label. The epoch budget is appended from each run's own config.
+# config tag -> arm label. The split is read from the run's split_R / split_Q tag and
+# written to config["split"]; the R view filters on it, so Q arms never appear there.
 ARMS = {
     "cgt_030_s3_r_tok_fit_000": "s3_holdout_table_token",
     "cgt_030_s3_r_tok_embfit_001": "s3_holdout_composite_token",
     "cgt_030_s3_r_tok_fit_002": "s3_table_token",
     "cgt_030_s3_r_tok_embfit_003": "s3_composite_token",
+    "cgt_030_s3_q_tok_embfit_004": "s3q_composite_token",
 }
+# The Q split gets its own saved view: Q and R are different questions and are never
+# compared in one panel. Pinned after the first save_as_new_view().
+Q_VIEW_NAME = "030 query-pair-disjoint: closure with the token"
+Q_VIEW_ID: str | None = None
+
+
+def _split_of(run: wandb.apis.public.Run) -> str:
+    return "Q" if "split_Q" in run.tags else "R"
 
 # The Kuzmin screens are the validation and test sources (the pinned triples); the
 # Costanzo tokens carry most of the training rows.
@@ -280,7 +290,7 @@ def label_runs(api: wandb.Api) -> int:
             run.group = arm
             run.config["arm"] = arm
             run.config["seed_"] = seed
-            run.config["split"] = "R"
+            run.config["split"] = _split_of(run)
             run.config["rank0"] = rank0
             run.config["continuation"] = (
                 rank0_runs.index(run) if rank0 else None
@@ -331,10 +341,52 @@ def populate_view() -> str:
     return view.url
 
 
+def populate_q_view() -> str:
+    """Overwrite (or create) the saved view of the query-pair-disjoint arms."""
+    sections = [
+        ws.Section(
+            name=name,
+            is_open=True,
+            layout_settings=ws.SectionLayoutSettings(columns=4, rows=1),
+            panel_settings=ws.SectionPanelSettings(x_axis=X, smoothing_type="none"),
+            panels=[_line(y, title) for y, title in panels],
+        )
+        for name, panels in SECTIONS
+    ]
+    settings = ws.WorkspaceSettings(
+        x_axis=X, smoothing_type="none", max_runs=60, sort_panels_alphabetically=False
+    )
+    runset_settings = ws.RunsetSettings(
+        filters=[ws.Config("split") == "Q"],
+        groupby=[ws.Config("arm")],
+        order=[ws.Ordering(ws.Metric("Name"), ascending=True)],
+    )
+    if Q_VIEW_ID is None:
+        view = ws.Workspace(
+            entity=ENTITY,
+            project=PROJECT,
+            name=Q_VIEW_NAME,
+            sections=sections,
+            settings=settings,
+            runset_settings=runset_settings,
+        )
+        view.save_as_new_view()
+        print(f"NEW saved Q view: {view.url}\n  pin its nw= id into Q_VIEW_ID")
+        return view.url
+    view = ws.Workspace.from_url(f"https://wandb.ai/{ENTITY}/{PROJECT}?nw={Q_VIEW_ID}")
+    view.name = Q_VIEW_NAME
+    view.sections = sections
+    view.settings = settings
+    view.runset_settings = runset_settings
+    view.save()
+    return view.url
+
+
 def main() -> None:
     api = wandb.Api()
     print(f"labeled {label_runs(api)} runs")
     print(populate_view())
+    print(populate_q_view())
 
 
 if __name__ == "__main__":

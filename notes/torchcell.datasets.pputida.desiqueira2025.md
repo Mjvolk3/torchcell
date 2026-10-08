@@ -337,9 +337,11 @@ no shared verifier, so `titer_levels` builds its own battery. Both reports land 
 
 ## 2026.10.08 - The two further released normalizations, and the measurement that justifies them
 
-Data Set S1 releases 15 columns. The first build asserted all 15 header cells but read
-only `row[7]` and `row[8]`, so columns 9 to 14 were parsed past: two further mean + SD
-pairs and two derived columns. All 15 are now read.
+Data Set S1 releases 15 columns. The first build asserted the first NINE
+(`header[: len(PROTEOME_HEADER)]` against a nine-name tuple) and read `row[7]` and
+`row[8]`, so columns 9 to 14 were neither asserted nor read: two further mean + SD pairs
+and two derived columns. `PROTEOME_HEADER` now names all 15 and every one of them reaches
+a row field or a build oracle.
 
 | released column | what it is | where it goes now |
 |---|---|---|

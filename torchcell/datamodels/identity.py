@@ -65,6 +65,7 @@ from torchcell.datamodels.schema import (
     Environment,
     EnvironmentPhysicalPerturbation,
     GenomicSpan,
+    IntegratedCassette,
     Media,
     MediaComponent,
     PhagePerturbation,
@@ -83,6 +84,7 @@ __all__ = [
     "CULTURE_FORMAT_IDENTITY_FIELDS",
     "ENVIRONMENT_IDENTITY_FIELDS",
     "ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS",
+    "INTEGRATED_CASSETTE_IDENTITY_FIELDS",
     "MEDIA_COMPONENT_IDENTITY_FIELDS",
     "MEDIA_IDENTITY_FIELDS",
     "PHAGE_PERTURBATION_IDENTITY_FIELDS",
@@ -213,6 +215,15 @@ STRAIN_BACKGROUND_IDENTITY_FIELDS: tuple[str, ...] = (
     "mating_type",
     "ploidy",
     "alleles",
+    "integrations",
+)
+INTEGRATED_CASSETTE_IDENTITY_FIELDS: tuple[str, ...] = (
+    "name",
+    "locus",
+    "locus_systematic_gene_name",
+    "elements",
+    "marker",
+    "zygosity",
 )
 
 
@@ -457,15 +468,30 @@ def _background_allele_identity(allele: BackgroundAllele) -> dict[str, Any]:
     }
 
 
+def _integrated_cassette_identity(cassette: IntegratedCassette) -> dict[str, Any]:
+    """Project a cassette onto its site, designation, element list and zygosity."""
+    return {
+        "name": cassette.name,
+        "locus": cassette.locus,
+        "locus_systematic_gene_name": cassette.locus_systematic_gene_name,
+        "elements": list(cassette.elements),
+        "marker": cassette.marker,
+        "zygosity": None if cassette.zygosity is None else cassette.zygosity.value,
+    }
+
+
 def strain_background_identity(background: StrainBackground) -> dict[str, Any]:
     """Project a strain background onto its genome content, dropping who stated it.
 
     Two datasets that both state BY4741 (one quoting its paper, one carrying a
     pending-review gap) produce different ``model_dump``s and so different ``genome``
     node ids; this projection is the join key that says they state the same strain:
-    name, reference, mating type, ploidy and the sorted allele set. ``parents``,
-    ``construction``, provenance and gaps are dropped. Not used for node ids (the
-    ``genome`` node id is unchanged); it is the cross-dataset comparison key.
+    name, reference, mating type, ploidy, the sorted allele set and the sorted set of
+    integrated cassettes. ``parents``, ``construction``, provenance and gaps are
+    dropped. Integrations are IN, because a cassette at a named site is genome content
+    exactly as an allele is: bAID and bAID-X3::SIZ1i carry the same alleles and are not
+    the same strain. Not used for node ids (the ``genome`` node id is unchanged); it is
+    the cross-dataset comparison key.
     """
     return {
         "name": background.name,
@@ -476,6 +502,12 @@ def strain_background_identity(background: StrainBackground) -> dict[str, Any]:
         "ploidy": background.ploidy,
         "alleles": _sorted_identities(
             [_background_allele_identity(allele) for allele in background.alleles]
+        ),
+        "integrations": _sorted_identities(
+            [
+                _integrated_cassette_identity(cassette)
+                for cassette in background.integrations
+            ]
         ),
     }
 

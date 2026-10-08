@@ -678,3 +678,154 @@ def test_strain_background_identity_ignores_who_stated_it() -> None:
     )
     by4742 = standard_background("BY4742", resolve_with=BRACHMANN_1998)
     assert strain_background_identity(by4742) != strain_background_identity(quoted)
+
+
+# ------------------------------------------------- integrated cassettes (bAID, #507)
+
+
+def _cassette(**overrides: Any) -> s.IntegratedCassette:
+    """BAID's CRISPR-AID cassette, sourced, with fields overridable."""
+    kwargs: dict[str, Any] = {
+        "name": "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
+        "locus": "Delta",
+        "elements": ["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
+        "marker": "KanMX",
+        "zygosity": s.Zygosity.haploid,
+        "provenance": [WILDENHAIN_BY4741],
+    }
+    kwargs.update(overrides)
+    return s.IntegratedCassette(**kwargs)
+
+
+def test_an_integrated_cassette_states_its_site_elements_and_marker() -> None:
+    """A cassette is an INSERTION at a named site, with its parts verbatim in order."""
+    cassette = _cassette()
+    assert cassette.locus == "Delta"
+    assert cassette.locus_systematic_gene_name is None
+    assert cassette.elements[0] == "KanMX"
+    assert cassette.marker == "KanMX"
+    assert cassette.mechanism_so == ("SO:0000667", "insertion")
+    assert cassette.mechanism_so == s.CASSETTE_INTEGRATION_SO
+    assert cassette.is_sourced
+
+
+def test_a_cassette_provenance_and_zygosity_are_sourced_or_typed_gaps() -> None:
+    """The ``BackgroundAllele`` contract, on the insertion axis: never a silent None."""
+    with pytest.raises(ValueError, match="provenance is unset"):
+        _cassette(provenance=None)
+    with pytest.raises(ValueError, match="zygosity is unset"):
+        _cassette(zygosity=None)
+    gapped = _cassette(
+        provenance=None,
+        zygosity=None,
+        provenance_gaps=[_gap("provenance"), _gap("zygosity")],
+    )
+    assert gapped.gapped_fields() == {"provenance", "zygosity"}
+    assert not gapped.is_sourced
+    with pytest.raises(ValueError, match="is not None"):
+        _cassette(provenance_gaps=[_gap("provenance")])
+
+
+def test_a_cassette_refuses_an_empty_name_locus_or_element_list() -> None:
+    """Each of the three stated facts must actually be stated."""
+    with pytest.raises(ValueError, match="name cannot be empty"):
+        _cassette(name="  ")
+    with pytest.raises(ValueError, match="locus cannot be empty"):
+        _cassette(locus="")
+    with pytest.raises(ValueError, match="at least one non-empty element"):
+        _cassette(elements=[])
+    with pytest.raises(ValueError, match="at least one non-empty element"):
+        _cassette(elements=["KanMX", " "])
+
+
+def test_a_cassette_locus_given_as_an_orf_is_regex_validated() -> None:
+    """A landing pad stays a free string; an ORF site is checked like any other name."""
+    assert _cassette(locus="X4").locus_systematic_gene_name is None
+    assert (
+        _cassette(
+            locus="NTH1", locus_systematic_gene_name="YDR001C"
+        ).locus_systematic_gene_name
+        == "YDR001C"
+    )
+    with pytest.raises(ValueError, match="Invalid systematic gene name"):
+        _cassette(locus="NTH1", locus_systematic_gene_name="X4")
+
+
+def test_a_background_carries_integrations_and_checks_their_zygosity() -> None:
+    """Integrations default to empty and obey the ploidy check the alleles obey."""
+    plain = standard_background("BY4742", resolve_with=BRACHMANN_1998)
+    assert plain.integrations == []
+    assert plain.integrations_at("Delta") == []
+    with_cassette = s.StrainBackground(
+        name="bAID",
+        parents=["BY4742"],
+        mating_type=s.MatingType.alpha,
+        ploidy="haploid",
+        alleles=plain.alleles,
+        integrations=[_cassette()],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    assert [c.name for c in with_cassette.integrations_at("Delta")] == [
+        "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
+    ]
+    assert not with_cassette.is_fully_sourced  # the BY alleles are pending review
+    with pytest.raises(ValueError, match="does not fit a haploid background"):
+        s.StrainBackground(
+            name="bAID",
+            mating_type=s.MatingType.alpha,
+            ploidy="haploid",
+            integrations=[_cassette(zygosity=s.Zygosity.homozygous)],
+            provenance=[WILDENHAIN_BY4741],
+        )
+
+
+def test_is_fully_sourced_reads_the_integrations_too() -> None:
+    """A gapped cassette makes the background not fully sourced, like a gapped allele."""
+    sourced = s.StrainBackground(
+        name="bAID",
+        mating_type=s.MatingType.alpha,
+        ploidy="haploid",
+        integrations=[_cassette()],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    assert sourced.is_fully_sourced
+    gapped = s.StrainBackground(
+        name="bAID",
+        mating_type=s.MatingType.alpha,
+        ploidy="haploid",
+        integrations=[_cassette(provenance=None, provenance_gaps=[_gap("provenance")])],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    assert not gapped.is_fully_sourced
+
+
+def test_two_strains_differing_only_in_an_integration_are_not_the_same_strain() -> None:
+    """The cross-dataset identity projection reads integrations as genome content."""
+    base = s.StrainBackground(
+        name="bAID",
+        mating_type=s.MatingType.alpha,
+        ploidy="haploid",
+        integrations=[_cassette()],
+        provenance=[WILDENHAIN_BY4741],
+    )
+    extra = s.IntegratedCassette(
+        name="X3::SIZ1i",
+        locus="X3",
+        elements=["SIZ1i"],
+        zygosity=s.Zygosity.haploid,
+        provenance=[WILDENHAIN_BY4741],
+    )
+    engineered = base.model_copy(update={"integrations": [*base.integrations, extra]})
+    assert set(strain_background_identity(base)) == set(
+        STRAIN_BACKGROUND_IDENTITY_FIELDS
+    )
+    assert strain_background_identity(base) != strain_background_identity(engineered)
+    # Who stated it is still dropped: a gapped cassette and a quoted one project equal.
+    gapped = base.model_copy(
+        update={
+            "integrations": [
+                _cassette(provenance=None, provenance_gaps=[_gap("provenance")])
+            ]
+        }
+    )
+    assert strain_background_identity(base) == strain_background_identity(gapped)

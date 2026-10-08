@@ -626,6 +626,103 @@ class BackgroundAllele(ProvenanceGapMixin):
         return not self.provenance_gaps
 
 
+#: Sequence Ontology mechanism of a cassette INTEGRATION. The pair is the one the
+#: gene-addition leaves already pin (``GeneAdditionPerturbation``,
+#: ``NaturalGenePresencePerturbation``), reused here rather than restated: an integrated
+#: cassette is an insertion of sequence absent from R64. ``ALLELE_EDIT_SO`` has no
+#: insertion member, because every ``AlleleEdit`` is a deletion or an in-place variant.
+CASSETTE_INTEGRATION_SO: tuple[str, str] = ("SO:0000667", "insertion")
+
+
+class IntegratedCassette(ProvenanceGapMixin):
+    """One cassette a strain background carries INTEGRATED at a named genomic site.
+
+    The counterpart of ``BackgroundAllele`` on the insertion axis: an allele is an edit
+    AT an R64 locus, a cassette is sequence absent from R64 placed INTO one. The
+    CRISPR-AID host bAID carries
+    ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``, which no
+    ``AlleleEdit`` describes: nothing at the Ty1 delta site is deleted, four effector
+    cassettes and a marker are added.
+
+    ``name`` is the designation verbatim as the source writes it; ``locus`` is the named
+    integration site verbatim (``"Delta"`` for a Ty1 delta site, ``"X3"`` / ``"X4"`` /
+    ``"XI1"`` for a pre-selected intergenic landing pad), which is what the source states
+    and is frequently NOT an ORF. ``locus_systematic_gene_name`` is set only when the site
+    IS an R64 ORF, and is then regex-validated like every other systematic name, so a
+    landing-pad label never masquerades as a gene.
+
+    ``elements`` are the cassette's parts verbatim and IN ORDER, so the composition is
+    queryable without parsing ``name``. ``marker`` is the selection marker when the
+    integration carries one (``KanMX``), ``None`` for a marker-less integration, which
+    the MAGIC gRNA cassettes are.
+
+    Sourcing contract, the same ``_require_value_or_gap`` one ``BackgroundAllele`` has:
+    ``provenance`` (quote + sha256) and ``zygosity`` are each set or carry a typed
+    ``ProvenanceGap``, never a silent ``None``.
+    """
+
+    name: str = Field(
+        description="cassette designation verbatim, as the source writes it"
+    )
+    locus: str = Field(
+        description="the named integration site verbatim (e.g. 'Delta', 'X4'); a landing "
+        "pad label, not necessarily a gene"
+    )
+    locus_systematic_gene_name: str | None = Field(
+        default=None,
+        description="the R64 ORF the cassette sits in, when the site IS an ORF; None for "
+        "an intergenic landing pad or a repeat family",
+    )
+    elements: list[str] = Field(
+        description="the cassette's elements verbatim, in the order the source writes them"
+    )
+    marker: str | None = Field(
+        default=None,
+        description="selection marker the integration carries, verbatim (e.g. 'KanMX'); "
+        "None for a marker-less integration",
+    )
+    zygosity: Zygosity | None = Field(
+        description="copies of the background carrying it; None only with a gap"
+    )
+    provenance: list[SourcedValue] | None = Field(
+        default=None,
+        description="quotes that state this cassette; None only with a gap on "
+        "'provenance'",
+    )
+
+    @field_validator("locus_systematic_gene_name", mode="after")
+    @classmethod
+    def _validate_locus_systematic(cls, v: str | None) -> str | None:
+        """When the integration site is given as an ORF, it is a real R64 feature."""
+        if v is not None and not re.match(SGD_SYSTEMATIC_GENE_PATTERN, v):
+            raise ValueError(f"Invalid systematic gene name {v!r}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_cassette(self) -> "IntegratedCassette":
+        """Name, locus and elements are stated; provenance and zygosity set or gapped."""
+        if not self.name.strip():
+            raise ValueError("IntegratedCassette.name cannot be empty")
+        if not self.locus.strip():
+            raise ValueError("IntegratedCassette.locus cannot be empty")
+        if not self.elements or any(not e.strip() for e in self.elements):
+            raise ValueError(
+                "IntegratedCassette.elements must name at least one non-empty element"
+            )
+        _require_value_or_gap(self, ("provenance", "zygosity"))
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of a cassette integration: ``SO:0000667``, insertion."""
+        return CASSETTE_INTEGRATION_SO
+
+    @property
+    def is_sourced(self) -> bool:
+        """True when neither the cassette nor its zygosity is a declared gap."""
+        return not self.provenance_gaps
+
+
 class StrainBackground(ProvenanceGapMixin):
     """The genome content a strain carries beyond R64, constant across a collection.
 
@@ -642,8 +739,14 @@ class StrainBackground(ProvenanceGapMixin):
     ``mating_type`` and ``provenance`` are set or gapped (a typed absence, never a
     silent None). A haploid background is MATa or MATalpha; every allele's zygosity
     must fit the ploidy (``haploid`` in a haploid, ``homozygous``/``heterozygous`` in a
-    diploid). A gene carries one allele entry, or two heterozygous entries for a
-    compound heterozygote.
+    diploid), and so must every integration's. A gene carries one allele entry, or two
+    heterozygous entries for a compound heterozygote.
+
+    ``integrations`` carries the cassettes the strain has INTEGRATED (an engineered host
+    such as bAID, whose Cas effectors sit at a Ty1 delta site). It is separate from
+    ``alleles`` because an insertion at a landing pad is not an edit to an R64 ORF and
+    has no ``AlleleEdit``; it defaults to empty, so every background written before it
+    existed reads exactly as before.
     """
 
     name: str
@@ -661,6 +764,11 @@ class StrainBackground(ProvenanceGapMixin):
     alleles: list[BackgroundAllele] = Field(
         default_factory=list,
         description="every non-R64 allele of the background, each sourced or gapped",
+    )
+    integrations: list[IntegratedCassette] = Field(
+        default_factory=list,
+        description="every cassette the background carries integrated at a named site, "
+        "each sourced or gapped; empty for a strain that carries none",
     )
     provenance: list[SourcedValue] | None = Field(
         default=None,
@@ -681,6 +789,12 @@ class StrainBackground(ProvenanceGapMixin):
             if self.ploidy == "haploid"
             else {Zygosity.homozygous, Zygosity.heterozygous}
         )
+        for cassette in self.integrations:
+            if cassette.zygosity is not None and cassette.zygosity not in allowed:
+                raise ValueError(
+                    f"{cassette.name}: zygosity {cassette.zygosity.value} does not fit "
+                    f"a {self.ploidy} background"
+                )
         by_gene: dict[str, list[BackgroundAllele]] = {}
         for allele in self.alleles:
             if allele.zygosity is not None and allele.zygosity not in allowed:
@@ -729,8 +843,16 @@ class StrainBackground(ProvenanceGapMixin):
 
     @property
     def is_fully_sourced(self) -> bool:
-        """True when the background and every allele carry no declared gap."""
-        return not self.provenance_gaps and all(a.is_sourced for a in self.alleles)
+        """True when the background, every allele and every integration carry no gap."""
+        return (
+            not self.provenance_gaps
+            and all(a.is_sourced for a in self.alleles)
+            and all(c.is_sourced for c in self.integrations)
+        )
+
+    def integrations_at(self, locus: str) -> list[IntegratedCassette]:
+        """The cassettes integrated at one named site (empty = nothing integrated)."""
+        return [c for c in self.integrations if c.locus == locus]
 
 
 class ReferenceGenome(ModelStrict):
@@ -3771,21 +3893,93 @@ class CalMorphPhenotype(Phenotype, ModelStrict):
         return v
 
 
+class SourceType(StrEnum):
+    """What KIND of document a record's source is.
+
+    A DOI plus a URL is the right identity for a journal article and the wrong one for
+    every other kind of source torchcell ingests: a dissertation, a preliminary-exam
+    report and an in-house measurement have no DOI and no citable URL, so demanding one
+    would either block the record or invite a fabricated identifier. Each non-journal
+    source is identified instead by its TITLE plus the deposited document's
+    mirror-relative path and sha256, which is the identity the provenance principle
+    already treats as canonical.
+
+    - ``journal_article``: a peer-reviewed article identified by DOI and/or PubMed ID.
+    - ``dissertation``: a thesis deposited in an institutional repository or in-house.
+    - ``preliminary_report``: a preliminary-exam / qualifier report, not published.
+    - ``in_house``: a measurement recorded in-house with no document beyond the
+      deposited data record itself.
+    """
+
+    journal_article = "journal_article"
+    dissertation = "dissertation"
+    preliminary_report = "preliminary_report"
+    in_house = "in_house"
+
+
 class Publication(ModelStrict):
-    """Publication reference identified by PubMed ID and/or DOI."""
+    """The source document a record's values come from.
+
+    ``source_type`` says what kind of document it is, and the identity rule follows
+    from it:
+
+    - ``journal_article`` (the default, so every record written before this field
+      existed reads exactly as before) keeps the original rule: a DOI and/or a PubMed
+      ID, plus at least one URL.
+    - every other ``source_type`` requires ``title`` and ``identifier``, and makes
+      doi/pubmed optional, because a dissertation or an in-house report has neither.
+      ``identifier`` is the DEPOSITED document: its mirror-relative path plus
+      ``sha256:<hex>``, e.g.
+      ``"si/prelim-report.pdf sha256:<64 hex>"``. That pair is what the provenance
+      principle calls canonical, and it is resolvable from our own mirror without a
+      live URL. ``identifier_url`` is optional retrieval metadata, never the identity.
+    """
 
     pubmed_id: str | None = None
     pubmed_url: str | None = None
     doi: str | None = None
     doi_url: str | None = None
+    source_type: SourceType = Field(
+        default=SourceType.journal_article,
+        description="what kind of document the source is; the identity rule follows it",
+    )
+    title: str | None = Field(
+        default=None,
+        description="the document's title verbatim; required for a non-journal source, "
+        "which has no DOI to name it by",
+    )
+    identifier: str | None = Field(
+        default=None,
+        description="for a non-journal source, the deposited document's mirror-relative "
+        "path plus 'sha256:<hex>'; the canonical identity when there is no DOI",
+    )
+    identifier_url: str | None = Field(
+        default=None,
+        description="optional retrieval metadata for the deposited document; never the "
+        "identity (the stored artifact plus its sha256 is)",
+    )
 
     @model_validator(mode="after")
     def check_pub_info(self) -> "Publication":
-        """Require at least one of PubMed ID/DOI and at least one URL."""
-        if self.pubmed_id is None and self.doi is None:
-            raise ValueError("At least one of PubMed ID or DOI must be provided")
-        if self.pubmed_url is None and self.doi_url is None:
-            raise ValueError("At least one of PubMed URL or DOI URL must be provided")
+        """A journal article needs a DOI/PMID and a URL; any other source a title + id."""
+        if self.source_type is SourceType.journal_article:
+            if self.pubmed_id is None and self.doi is None:
+                raise ValueError("At least one of PubMed ID or DOI must be provided")
+            if self.pubmed_url is None and self.doi_url is None:
+                raise ValueError(
+                    "At least one of PubMed URL or DOI URL must be provided"
+                )
+            return self
+        if self.title is None or not self.title.strip():
+            raise ValueError(
+                f"a {self.source_type.value} source requires a title (it has no DOI to "
+                "name it by)"
+            )
+        if self.identifier is None or not self.identifier.strip():
+            raise ValueError(
+                f"a {self.source_type.value} source requires an identifier: the "
+                "deposited document's mirror-relative path plus 'sha256:<hex>'"
+            )
         return self
 
 
@@ -4637,6 +4831,12 @@ class MeasurementType(StrEnum):
       comparing it to a z-score is meaningless. Like ``categorical``, it requires
       ``category``; unlike it, ``environment_response`` may carry the rank itself.
     - ``growth_rate``: absolute or normalized growth rate / doubling time.
+    - ``relative_growth_rate``: the RUN's wild-type generation time divided by the well's
+      generation time, so 1.0 = grows like the wild type, below 1.0 = slower, above 1.0 =
+      faster. Distinct from ``growth_rate``, which is an absolute rate in the assay's own
+      units: this number is a dimensionless ratio against a wild-type control measured in
+      the SAME run, so it is comparable across runs where a raw rate is not. Its
+      denominator is the well, which is why a slower strain scores below 1.0.
     - ``differential_fitness``: SIGNED difference of normalized colony-size fitness in a
       test condition minus the matched reference condition (Costanzo 2021 condition-SGA:
       "the difference in colony size measured in a particular test condition versus the
@@ -4660,6 +4860,7 @@ class MeasurementType(StrEnum):
     categorical = "categorical"
     ordinal = "ordinal"
     growth_rate = "growth_rate"
+    relative_growth_rate = "relative_growth_rate"
     differential_fitness = "differential_fitness"
     control_regression_residual = "control_regression_residual"
     colony_size = "colony_size"

@@ -1097,17 +1097,132 @@ def test_the_dev_store_records_validate_as_the_schema_pair() -> None:
 
 
 # --------------------------------------------------------------------------- #
+# Auditing a quote that lives in a workbook cell
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def workbook_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    """A raw mirror holding the four synthetic workbooks, pinned to their own bytes."""
+    root = tmp_path / "root"
+    mirror = root / m.RAW_DIR_REL / "data"
+    write_raw(mirror)
+    pins = {raw.name: m._sha256(mirror / raw.name) for raw in m.RAW_FILES}  # noqa: SLF001
+    monkeypatch.setattr(
+        m,
+        "RAW_FILES",
+        tuple(
+            raw.model_copy(
+                update={
+                    "sha256": pins[raw.name],
+                    "bytes": (mirror / raw.name).stat().st_size,
+                    "retrieval": raw.retrieval.model_copy(
+                        update={"sha256": pins[raw.name]}
+                    ),
+                }
+            )
+            for raw in m.RAW_FILES
+        ),
+    )
+    monkeypatch.setattr(m, "DATA_SHA256", pins)
+    return root
+
+
+@pytest.mark.parametrize("entry", m.WORKBOOK_QUOTES, ids=lambda e: e.name)
+def test_a_workbook_quote_audits_against_the_synthetic_cells(
+    entry: Any, workbook_mirror: Path
+) -> None:
+    result = m.audit_workbook_quote(entry, str(workbook_mirror))
+    assert result.passed, result.message
+    assert result.name == "provenance_audit"
+    assert result.details["sha256_ok"] is True
+    assert result.details["quote_present"] is True
+    assert result.details["where"] == entry.where
+
+
+def test_a_workbook_quote_fails_on_a_sha256_drift(
+    workbook_mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setitem(m.DATA_SHA256, m.TABLE_S4, "0" * 64)
+    result = m.audit_workbook_quote(m.WORKBOOK_QUOTES[0], str(workbook_mirror))
+    assert not result.passed
+    assert "sha256 drift" in result.message
+    assert result.details["sha256_ok"] is False
+    assert result.details["quote_present"] is False
+
+
+def test_a_workbook_quote_fails_when_the_cells_no_longer_carry_it(
+    workbook_mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    entry = next(e for e in m.WORKBOOK_QUOTES if e.name == "score_definition")
+    monkeypatch.setitem(
+        m.SOURCED_VALUES,
+        "score_definition",
+        m.SOURCED_VALUES["score_definition"].model_copy(
+            update={"quote": "a sentence this workbook does not print"}
+        ),
+    )
+    result = m.audit_workbook_quote(entry, str(workbook_mirror))
+    assert not result.passed
+    assert "quote no longer found" in result.message
+    assert result.details["sha256_ok"] is True
+
+
+def test_a_workbook_quote_raises_on_an_absent_artifact(tmp_path: Path) -> None:
+    with pytest.raises(FileNotFoundError, match="source artifact not found"):
+        m.audit_workbook_quote(m.WORKBOOK_QUOTES[0], str(tmp_path))
+
+
+# --------------------------------------------------------------------------- #
+# Linking the mirror into raw/
+# --------------------------------------------------------------------------- #
+def test_download_links_every_pinned_workbook_from_the_mirror(
+    workbook_mirror: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DATA_ROOT", str(workbook_mirror))
+    mirror = workbook_mirror / m.RAW_DIR_REL
+    m.deposit_raw_mirror(
+        sources=dict(sources_map(mirror / "data")), data_root=str(workbook_mirror)
+    )
+    dataset = m.GeneInteractionButland2008Dataset.__new__(
+        m.GeneInteractionButland2008Dataset
+    )
+    raw = tmp_path / "linked"
+    monkeypatch.setattr(
+        type(dataset), "raw_dir", property(lambda self: str(raw)), raising=False
+    )
+    dataset.download()
+    assert sorted(path.name for path in raw.iterdir()) == [
+        raw_file.name for raw_file in m.RAW_FILES
+    ]
+
+
+def test_download_refuses_a_mirror_missing_a_pinned_workbook(
+    workbook_mirror: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("DATA_ROOT", str(workbook_mirror))
+    mirror = workbook_mirror / m.RAW_DIR_REL
+    m.deposit_raw_mirror(
+        sources=dict(sources_map(mirror / "data")), data_root=str(workbook_mirror)
+    )
+    (mirror / "data" / m.TABLE_S3).unlink()
+    dataset = m.GeneInteractionButland2008Dataset.__new__(
+        m.GeneInteractionButland2008Dataset
+    )
+    monkeypatch.setattr(
+        type(dataset),
+        "raw_dir",
+        property(lambda self: str(tmp_path / "linked")),
+        raising=False,
+    )
+    with pytest.raises(RuntimeError, match="required raw artifact missing"):
+        dataset.download()
+    assert not (tmp_path / "linked").exists()
+
+
+# --------------------------------------------------------------------------- #
 # Depositing the raw mirror
 # --------------------------------------------------------------------------- #
-def test_deposit_extends_a_manifest_another_run_wrote(tmp_path: Path) -> None:
-    sources = tmp_path / "sources"
-    sources.mkdir()
-    for raw in m.RAW_FILES:
-        (sources / raw.name).write_bytes(b"")
-    pins = {raw.name: m._sha256(sources / raw.name) for raw in m.RAW_FILES}  # noqa: SLF001
-    root = tmp_path / "root"
-    mirror = root / m.RAW_DIR_REL
-    mirror.mkdir(parents=True)
+def test_deposit_extends_a_manifest_another_run_wrote(workbook_mirror: Path) -> None:
+    mirror = workbook_mirror / m.RAW_DIR_REL
     (mirror / "manifest.json").write_text(
         json.dumps(
             {
@@ -1121,26 +1236,31 @@ def test_deposit_extends_a_manifest_another_run_wrote(tmp_path: Path) -> None:
             }
         )
     )
-    import pytest as _pytest
-
-    with _pytest.MonkeyPatch.context() as patch:
-        patch.setattr(m, "DATA_SHA256", pins)
-        for raw in m.RAW_FILES:
-            patch.setattr(raw.__class__, "model_config", raw.model_config)
-        patch.setattr(
-            m,
-            "RAW_FILES",
-            tuple(
-                raw.model_copy(update={"sha256": pins[raw.name]}) for raw in m.RAW_FILES
-            ),
-        )
-        m.deposit_raw_mirror(sources=dict(sources_map(sources)), data_root=str(root))
+    m.deposit_raw_mirror(
+        sources=dict(sources_map(mirror / "data")), data_root=str(workbook_mirror)
+    )
     manifest = json.loads((mirror / "manifest.json").read_text())
     assert [record["path"] for record in manifest["files"]] == [
         f"data/{raw.name}" for raw in m.RAW_FILES
     ]
     assert "another run's sentence" in manifest["si_expected"]
     assert m.MIRROR_EXPECTATION in manifest["si_expected"]
+    assert manifest["provenance_complete"] is True
+
+
+def test_deposit_refuses_to_overwrite_a_mirror_file_of_another_hash(
+    workbook_mirror: Path, tmp_path: Path
+) -> None:
+    mirror = workbook_mirror / m.RAW_DIR_REL / "data"
+    other = tmp_path / "other"
+    other.mkdir()
+    for raw in m.RAW_FILES:
+        (other / raw.name).write_bytes((mirror / raw.name).read_bytes())
+    (mirror / m.TABLE_S1).write_bytes(b"a different release")
+    with pytest.raises(RuntimeError, match="exists with a different sha256"):
+        m.deposit_raw_mirror(
+            sources=dict(sources_map(other)), data_root=str(workbook_mirror)
+        )
 
 
 def sources_map(directory: Path) -> dict[str, Path]:

@@ -72,6 +72,9 @@ from .desiqueira2025_proteome_percent_adapter import (
 from .desiqueira2025_titer_adapter import (
     IsoprenolTiterDeSiqueira2025Adapter as IsoprenolTiterDeSiqueira2025Adapter,
 )
+from .foo2014_adapter import (
+    IsopentenolTiterFoo2014Adapter as IsopentenolTiterFoo2014Adapter,
+)
 from .fuhrer2017_adapter import (
     MetabolomeFuhrer2017Adapter as MetabolomeFuhrer2017Adapter,
 )
@@ -327,6 +330,7 @@ ecoli_adapters = [
     "CrispriKnockdownCui2018Adapter",
     "GrowthRateCampos2018Adapter",
     "GrowthRateChoe2019Adapter",
+    "IsopentenolTiterFoo2014Adapter",
     "TranscriptionFactorKnockoutChoe2019Adapter",
     "MetabolomeFuhrer2017Adapter",
     "EnvChemgenGirgis2009Adapter",

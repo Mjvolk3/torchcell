@@ -44,6 +44,7 @@ from torchcell.adapters import (
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
+    IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
@@ -113,6 +114,7 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
+from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
@@ -309,6 +311,7 @@ dataset_adapter_map = {
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Dataset: GrowthRateChoe2019Adapter,
+    IsopentenolTiterFoo2014Dataset: IsopentenolTiterFoo2014Adapter,
     TranscriptionFactorKnockoutChoe2019Dataset: TranscriptionFactorKnockoutChoe2019Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,

@@ -37,6 +37,11 @@ sourcing layer.
   genotypes, and no perturbation leaf holds a called bacterial variant.
 - ``choe2025`` -- ``CrispriChemgenChoe2025Dataset``: the genome-scale MG1655 CRISPRi
   guide library scored against twelve antibiotics, one record per (guide, drug).
+- ``foo2014`` -- ``IsopentenolTiterFoo2014Dataset``: the nine released isopentenol
+  titers of the tolerance-engineering campaign, one per production strain on the PS
+  chassis. Isopentenol is isoprenol under its older name, so these are the only
+  released E. coli isoprenol titers; its GEO series is one strain under two
+  isopentenol doses and so belongs to a separate class, not this one.
 - ``fuhrer2017`` -- ``MetabolomeFuhrer2017Dataset``: the Keio deletion metabolome,
   FIA-TOF-MS ion z-scores per BW25113 strain (BioStudies S-BSST5).
 - ``girgis2009`` -- ``EnvChemgenGirgis2009Dataset``: the 17-antibiotic transposon
@@ -122,6 +127,7 @@ from .choe2019_growth_rate import (
 )
 from .choe2025 import CrispriChemgenChoe2025Dataset as CrispriChemgenChoe2025Dataset
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
+from .foo2014 import IsopentenolTiterFoo2014Dataset as IsopentenolTiterFoo2014Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .girgis2009 import EnvChemgenGirgis2009Dataset as EnvChemgenGirgis2009Dataset
 from .goodall2018 import (

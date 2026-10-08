@@ -64,6 +64,7 @@ datasets:
   - TranscriptionFactorKnockoutChoe2019Dataset
   - CrispriChemgenChoe2025Dataset
   - CrispriKnockdownCui2018Dataset
+  - IsopentenolTiterFoo2014Dataset
   - MetabolomeFuhrer2017Dataset
   - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset

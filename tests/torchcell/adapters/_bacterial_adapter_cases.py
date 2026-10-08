@@ -75,6 +75,7 @@ from torchcell.adapters import (
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
     GrowthRateSchmidt2016Adapter,
+    IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
@@ -121,6 +122,7 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
+from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
@@ -315,6 +317,13 @@ BACTERIAL: list[Bacterial] = [
         CrispriKnockdownCui2018Dataset,
         RESPONSE,
         crispr=True,
+    ),
+    _case(
+        IsopentenolTiterFoo2014Adapter,
+        "foo2014",
+        "isopentenol_titer_foo2014",
+        IsopentenolTiterFoo2014Dataset,
+        TITER,
     ),
     _case(
         MetabolomeFuhrer2017Adapter,

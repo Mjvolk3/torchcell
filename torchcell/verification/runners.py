@@ -2320,6 +2320,13 @@ def _verify_desiqueira_proteome_log10_percent(
     )
 
 
+def _verify_foo_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Foo 2014: the Table 1 titers and the two L4 joins that re-derive them."""
+    from torchcell.datasets.ecoli import foo2014
+
+    return foo2014.verify_build(dataset_root, data_root)
+
+
 def _verify_kang_titer(dataset_root: str, data_root: str) -> VerificationReport:
     """Kang 2026: the Table 1 / Table S4 / Table S9 titers and their two L4 joins."""
     from torchcell.datasets.pputida import kang2026
@@ -2351,6 +2358,10 @@ def _verify_caglar_proteome(dataset_root: str, data_root: str) -> VerificationRe
 
 #: Every landed ``ProductTiterExperiment`` dataset, with the entry point that verifies it.
 PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
+    "isopentenol_titer_foo2014": {
+        "root": "data/torchcell/isopentenol_titer_foo2014",
+        "verify": _verify_foo_titer,
+    },
     "isoprenol_titer_carruthers2025": {
         "root": "data/torchcell/isoprenol_titer_carruthers2025",
         "verify": _verify_carruthers_titer,

@@ -497,6 +497,7 @@ BACTERIAL_DATASETS = {
     "GrowthRateCampos2018Dataset",
     "GrowthRateChoe2019Dataset",
     "GrowthRateSchmidt2016Dataset",
+    "IsopentenolTiterFoo2014Dataset",
     "IsoprenolSelectionMenasalvas2025Dataset",
     "IsoprenolTiterCarruthers2025Dataset",
     "IsoprenolTiterDeSiqueira2025Dataset",

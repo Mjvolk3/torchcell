@@ -30,7 +30,7 @@ from torchcell.adapters.cell_adapter import CellAdapter
 from torchcell.datamodels.schema import StrainReferenceGenome
 from torchcell.datasets.private_torchcell import bioscreen as b
 from torchcell.datasets.private_torchcell import volk2021_inhibitor_bioscreen as v
-from torchcell.knowledge_graphs.kg_manifest import _adapter_conf_name
+from torchcell.knowledge_graphs.kg_manifest import adapter_conf_name
 
 CONF = osp.join(
     osp.dirname(osp.abspath(adapter_module.__file__)),
@@ -57,9 +57,11 @@ def _conf() -> tuple[list[str], list[str]]:
     )
 
 
-def test_the_adapter_module_names_its_conf() -> None:
-    source = inspect.getsource(adapter_module)
-    assert _adapter_conf_name(source) == "inhibitor_bioscreen_volk2021_adapter.yaml"
+def test_the_adapter_class_names_its_conf() -> None:
+    assert (
+        adapter_conf_name(adapter_module.InhibitorBioscreenVolk2021Adapter)
+        == "inhibitor_bioscreen_volk2021_adapter.yaml"
+    )
     assert osp.isfile(CONF)
 
 

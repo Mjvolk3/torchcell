@@ -13,7 +13,8 @@ files the manifest reads.
   closure is {Media, ModelStrict}; ``toy_loader.py`` (``ToyDataset``) imports
   ``Experiment`` and ``Solvent``, so its closure is {Experiment, Media, ModelStrict,
   Solvent}: two symbols shared with the served dataset, two novel.
-- One adapter module + conf per dataset, a toy ``cell_adapter.py`` whose table maps
+- One adapter module + conf per dataset (the adapter class names its conf in its own
+  body, which is where the gate reads it), a toy ``cell_adapter.py`` whose table maps
   ``experiment (chunked)``, ``fitness phenotype (chunked)`` and ``genotype to experiment
   (chunked)``, a toy graph schema, the three value-surface files, and
   ``torchcell/__version__.py`` at ``1.2.0``; the stub git says the commit is tagged
@@ -151,11 +152,8 @@ class {cls}:
     def close_lmdb(self):
         pass
 """
-ADAPTER_TEMPLATE = """CONF = "{slug}_adapter.yaml"
-
-
-class {cls}:
-    pass
+ADAPTER_TEMPLATE = """class {cls}:
+    CONF = "{slug}_adapter.yaml"
 """
 CONF_YAML = """cell_adapter:
   node_methods:
@@ -687,6 +685,36 @@ def test_a_recorded_adapter_file_that_vanished_is_drift(toy: _Toy) -> None:
     drift, added = km.adapter_drift_against(manifest, toy.repo)
     assert drift == km.AdapterDrift(served_files={retired: ["ServedDataset"]})
     assert added == []
+
+
+def test_a_mis_recorded_conf_still_leaves_the_bound_conf_watched(toy: _Toy) -> None:
+    """Issue #743 against a manifest written before the fix.
+
+    Such a manifest recorded another class's conf for the dataset. An edit to the conf
+    the dataset's adapter class really binds must still block (it was missed before the
+    fix: a wrong ADMISSIBLE), and the recorded conf stays watched as well, so nothing the
+    old manifest promised to watch is dropped.
+    """
+    manifest = _bootstrap(toy)
+    entry = manifest.datasets["ServedDataset"]
+    assert entry.adapter_files == [
+        "torchcell/adapters/served_adapter.py",
+        "torchcell/adapters/conf/served_adapter.yaml",
+    ]
+    entry.adapter_files[1] = "torchcell/adapters/conf/toy_adapter.yaml"
+    toy.write("torchcell/adapters/conf/served_adapter.yaml", CONF_YAML + "# edited\n")
+    drift, _ = km.adapter_drift_against(manifest, toy.repo)
+    assert drift == km.AdapterDrift(
+        served_files={"torchcell/adapters/conf/served_adapter.yaml": ["ServedDataset"]}
+    )
+    toy.write("torchcell/adapters/conf/toy_adapter.yaml", CONF_YAML + "# edited\n")
+    drift, _ = km.adapter_drift_against(manifest, toy.repo)
+    assert drift == km.AdapterDrift(
+        served_files={
+            "torchcell/adapters/conf/served_adapter.yaml": ["ServedDataset"],
+            "torchcell/adapters/conf/toy_adapter.yaml": ["ServedDataset"],
+        }
+    )
 
 
 def test_value_surface_change_blocks_and_the_ack_admits(toy: _Toy) -> None:
@@ -1393,12 +1421,134 @@ def test_graph_schema_skips_entries_that_are_not_classes() -> None:
     }
 
 
-def test_an_adapter_module_without_a_conf_name_is_refused() -> None:
+def test_conf_names_are_scoped_to_one_class_and_must_be_whole_literals() -> None:
+    """Only literals that ARE a conf file name, inside the named class, count.
+
+    ``toy.yaml`` lacks the ``_adapter.yaml`` suffix, a docstring that mentions a conf in
+    a sentence is not a whole literal, and a module-level constant belongs to no class.
+    """
+    source = (
+        'MODULE_CONF = "module_adapter.yaml"\n\n\n'
+        "class ToyAdapter:\n"
+        '    """Loads toy_adapter.yaml from conf/."""\n\n'
+        "    CONF = 'toy.yaml'\n\n\n"
+        "class OtherAdapter:\n"
+        "    def __init__(self):\n"
+        '        self.path = ("conf", "other_adapter.yaml")\n'
+    )
+    assert km.class_conf_names(source, "ToyAdapter") == []
+    assert km.class_conf_names(source, "OtherAdapter") == ["other_adapter.yaml"]
     with pytest.raises(
-        ValueError, match="^adapter module does not name its conf yaml$"
+        ValueError,
+        match="^expected exactly one module-level class MissingAdapter, found 0$",
     ):
-        km._adapter_conf_name("class ToyAdapter:\n    CONF = 'toy.yaml'\n")
-    assert km._adapter_conf_name('CONF = "toy_adapter.yaml"') == "toy_adapter.yaml"
+        km.class_conf_names(source, "MissingAdapter")
+
+
+MULTI_CLASS_ADAPTER_PY = '''"""Two dataset classes served by one module, as Costanzo 2016 is served by three.
+
+The module names ``first_multi_adapter.yaml`` first, so resolving by module text would
+hand the second class the first class's enable-list.
+"""
+
+import os.path as osp
+
+FIRST = "first_multi_adapter.yaml"
+
+
+class FirstMultiAdapter:
+    def __init__(self):
+        self.config_path = osp.join("conf", "first_multi_adapter.yaml")
+
+
+class SecondMultiAdapter:
+    def __init__(self):
+        self.config_path = osp.join("conf", "second_multi_adapter.yaml")
+
+
+class ConflessMultiAdapter:
+    def __init__(self):
+        self.config_path = osp.join("conf", FIRST)
+
+
+class TwoConfMultiAdapter:
+    def __init__(self, het):
+        name = "first_multi_adapter.yaml" if het else "second_multi_adapter.yaml"
+        self.config_path = osp.join("conf", name)
+'''
+
+
+@pytest.fixture
+def multi_class_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, dict[str, type]]:
+    """A repo whose one adapter module serves four datasets, each mapped in the map.
+
+    Returns the repo root and ``dataset class name -> dataset class``. Each dataset is a
+    bare class registered in ``dataset_adapter_map`` for the test only.
+    """
+    monkeypatch.setattr(sys, "dont_write_bytecode", True)
+    repo = tmp_path.resolve() / "repo"
+    module_path = repo / "torchcell/adapters/multi_adapter.py"
+    module_path.parent.mkdir(parents=True)
+    module_path.write_text(MULTI_CLASS_ADAPTER_PY, encoding="utf-8")
+    module = _import("toy_multi_adapter", module_path, monkeypatch)
+    datasets: dict[str, type] = {}
+    for stem in ("First", "Second", "Confless", "TwoConf"):
+        dataset_cls = type(f"{stem}MultiDataset", (), {})
+        datasets[dataset_cls.__name__] = dataset_cls
+        monkeypatch.setitem(
+            dataset_adapter_map, dataset_cls, getattr(module, f"{stem}MultiAdapter")
+        )
+    return repo, datasets
+
+
+def test_each_class_of_a_multi_class_module_resolves_to_its_own_conf(
+    multi_class_module: tuple[Path, dict[str, type]],
+) -> None:
+    """Issue #743: the second class gets ITS conf, not the module's first."""
+    repo, datasets = multi_class_module
+    assert km.dataset_adapter_files(datasets["FirstMultiDataset"], repo) == [
+        "torchcell/adapters/multi_adapter.py",
+        "torchcell/adapters/conf/first_multi_adapter.yaml",
+    ]
+    assert km.dataset_adapter_files(datasets["SecondMultiDataset"], repo) == [
+        "torchcell/adapters/multi_adapter.py",
+        "torchcell/adapters/conf/second_multi_adapter.yaml",
+    ]
+
+
+def test_an_adapter_class_that_binds_no_conf_is_refused(
+    multi_class_module: tuple[Path, dict[str, type]],
+) -> None:
+    """A conf reached only through a module constant is not bound by the class body.
+
+    Refused rather than resolved to the constant's value: the gate reads the class body
+    and nothing else, so there is exactly one place a binding can be and no guess.
+    """
+    repo, datasets = multi_class_module
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "ConflessMultiAdapter (multi_adapter.py) binds no conf yaml in its own "
+            "class body"
+        ),
+    ):
+        km.dataset_adapter_files(datasets["ConflessMultiDataset"], repo)
+
+
+def test_an_adapter_class_that_names_two_confs_is_refused(
+    multi_class_module: tuple[Path, dict[str, type]],
+) -> None:
+    repo, datasets = multi_class_module
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "TwoConfMultiAdapter (multi_adapter.py) names more than one conf yaml: "
+            "['first_multi_adapter.yaml', 'second_multi_adapter.yaml']"
+        ),
+    ):
+        km.dataset_adapter_files(datasets["TwoConfMultiDataset"], repo)
 
 
 def test_n_experiments_named_twice_is_refused() -> None:

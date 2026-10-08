@@ -145,6 +145,8 @@ __all__ = [
     "format_surface_drift",
     "cell_adapter_surface",
     "adapter_file_relpaths",
+    "class_conf_names",
+    "adapter_conf_name",
     "loader_relpath",
     "closure_at_ref",
     "closure_in_worktree",
@@ -637,18 +639,64 @@ def adapter_file_relpaths(repo_root: Path) -> list[str]:
     return [str(p.relative_to(repo_root)) for p in paths if p.name != "cell_adapter.py"]
 
 
-_CONF_RE = re.compile(r'"([A-Za-z0-9_]+_adapter\.yaml)"')
+_CONF_NAME_RE = re.compile(r"[A-Za-z0-9_]+_adapter\.yaml")
 
 
-def _adapter_conf_name(adapter_source: str) -> str:
-    match = _CONF_RE.search(adapter_source)
-    if match is None:
-        raise ValueError("adapter module does not name its conf yaml")
-    return match.group(1)
+def class_conf_names(adapter_source: str, class_name: str) -> list[str]:
+    """Sorted conf yaml names written as string literals inside ONE class's body.
+
+    An adapter binds its enable-list by naming the conf file in its own ``__init__``
+    (``osp.join(current_dir, "conf", "<name>_adapter.yaml")`` or ``_config("<name>")``).
+    Several adapter classes share one module (Costanzo 2016 holds three), so the search
+    is scoped to the class named ``class_name`` at module level, never to the module
+    text: the first conf a module mentions belongs to its first class only. A literal
+    counts only when it IS a conf file name in full, so a docstring that mentions one
+    in a sentence does not.
+    """
+    tree = ast.parse(adapter_source)
+    matches = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef) and node.name == class_name
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            f"expected exactly one module-level class {class_name}, found {len(matches)}"
+        )
+    return sorted(
+        {
+            node.value
+            for node in ast.walk(matches[0])
+            if isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and _CONF_NAME_RE.fullmatch(node.value)
+        }
+    )
+
+
+def adapter_conf_name(adapter_class: type) -> str:
+    """The conf yaml ``adapter_class`` binds, read from that class's own source.
+
+    Refuses rather than guesses: a class whose body names no conf yaml, or more than
+    one, raises ``ValueError`` naming the class and its module, since either way the
+    gate cannot say which enable-list the served dataset was built with.
+    """
+    source_file = inspect.getsourcefile(adapter_class)
+    if source_file is None:
+        raise ValueError(f"{adapter_class.__qualname__} has no source file")
+    names = class_conf_names(
+        Path(source_file).read_text(encoding="utf-8"), adapter_class.__name__
+    )
+    where = f"{adapter_class.__name__} ({Path(source_file).name})"
+    if not names:
+        raise ValueError(f"{where} binds no conf yaml in its own class body")
+    if len(names) > 1:
+        raise ValueError(f"{where} names more than one conf yaml: {names}")
+    return names[0]
 
 
 def dataset_adapter_files(dataset_class: type, repo_root: Path) -> list[str]:
-    """Repo-relative adapter module + conf yaml serving ``dataset_class``.
+    """Repo-relative adapter module + the conf yaml its adapter CLASS binds.
 
     Looked up in the public and private maps together: this resolves the files of a
     dataset already in (or entering) a store, and whether a private dataset may be
@@ -659,7 +707,7 @@ def dataset_adapter_files(dataset_class: type, repo_root: Path) -> list[str]:
     adapter_class = build_adapter_map(include_private=True)[cast(Any, dataset_class)]
     adapter_file = Path(inspect.getsourcefile(adapter_class) or "").resolve()
     rel = str(adapter_file.relative_to(repo_root.resolve()))
-    conf = _adapter_conf_name(adapter_file.read_text(encoding="utf-8"))
+    conf = adapter_conf_name(adapter_class)
     return [rel, f"{ADAPTER_DIR_RELPATH}/conf/{conf}"]
 
 
@@ -1128,7 +1176,15 @@ def adapter_drift_against(
                 served_methods.setdefault(f"table[{conf_name}]", []).append(name)
             elif fn in changed_fns:
                 served_methods.setdefault(fn, []).append(name)
-        for rel in entry.adapter_files:
+        # the files the entry recorded AND the files its adapter class binds now: a
+        # manifest written before issue #743 was fixed recorded the module's FIRST conf
+        # for every class of a multi-class module, so its entries alone would leave the
+        # conf the dataset was really built with unwatched. ``manifest.adapter_files``
+        # hashes every adapter file at build time, so that conf has its baseline there.
+        watched = sorted(
+            set(entry.adapter_files) | set(dataset_adapter_files(cls, repo_root))
+        )
+        for rel in watched:
             stored = manifest.adapter_files.get(rel)
             path = repo_root / rel
             current = (

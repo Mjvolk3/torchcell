@@ -1,0 +1,5 @@
+dataset_class,citation_key,doi,paper_year_from_key,in_mcf2chem_window
+IsopentenolTiterFoo2014Dataset,fooImprovingMicrobialBiogasoline2014,10.1128/mbio.01932-14,2014,True
+IsoprenolTiterCarruthers2025Dataset,carruthersAutomationMachineLearning2025,10.1038/s41467-025-66304-8,2025,False
+IsoprenolTiterDeSiqueira2025Dataset,desiqueiraAlternateRoutesAcetate2025,10.1128/aem.02123-24,2025,False
+IsoprenylAcetateTiterKang2026Dataset,kangMultilayeredMetabolicRemodeling2026,10.1016/j.mec.2026.e00274,2026,False

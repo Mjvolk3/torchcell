@@ -1,0 +1,76 @@
+{
+  "accession_url": "https://mcf.lifesynther.com",
+  "probed_at": "2026-10-08T21:12:12.627801+00:00",
+  "paths": [
+    {
+      "path": "/",
+      "url": "https://mcf.lifesynther.com",
+      "status": 200,
+      "bytes": 3821,
+      "reason": null
+    },
+    {
+      "path": "/openapi.json",
+      "url": "https://mcf.lifesynther.com/openapi.json",
+      "status": 502,
+      "bytes": 166,
+      "reason": null
+    },
+    {
+      "path": "/download",
+      "url": "https://mcf.lifesynther.com/download",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/api/download",
+      "url": "https://mcf.lifesynther.com/api/download",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/data",
+      "url": "https://mcf.lifesynther.com/data",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/api/data",
+      "url": "https://mcf.lifesynther.com/api/data",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/browse",
+      "url": "https://mcf.lifesynther.com/browse",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/api/browse",
+      "url": "https://mcf.lifesynther.com/api/browse",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/docs",
+      "url": "https://mcf.lifesynther.com/docs",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    },
+    {
+      "path": "/redoc",
+      "url": "https://mcf.lifesynther.com/redoc",
+      "status": 404,
+      "bytes": 162,
+      "reason": null
+    }
+  ]
+}

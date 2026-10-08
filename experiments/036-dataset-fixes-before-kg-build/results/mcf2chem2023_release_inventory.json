@@ -1,0 +1,148 @@
+{
+  "citation_key": "caiMCF2ChemManuallyCurated2023",
+  "measured_at": "2026-10-08T21:18:49.057230+00:00",
+  "release": {
+    "citation_key": "caiMCF2ChemManuallyCurated2023",
+    "accession_url": "https://mcf.lifesynther.com",
+    "si_files": [
+      {
+        "relpath": "si/si1.docx",
+        "sha256": "88cb9cc3a1a2eead147e11d570050f388d38996be9fdc028f036bac8cc3fd826",
+        "n_bytes": 40017,
+        "role": "Additional file 1: Table S1",
+        "holds": "one table, 268 review rows of (Review_title, Review_doi)",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10625697.1/13068_2023_2419_MOESM1_ESM.docx"
+      },
+      {
+        "relpath": "si/si2.docx",
+        "sha256": "e698595306f5c8c47a0256e2a4672c9ef0230c337d17b0fe952cf0443bf8dfa8",
+        "n_bytes": 20723784,
+        "role": "Additional file 2: Figs. S1-S9 and Table S2",
+        "holds": "nine figure captions and one table, the Metabolic Engineering coverage analysis for 2016-2018 (66%, 65%, 60%; 63% average)",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10625697.1/13068_2023_2419_MOESM2_ESM.docx"
+      },
+      {
+        "relpath": "si/si3.docx",
+        "sha256": "2c79046955b54ca54aa69d8c9256faf91c0002025444e6b538dab1c1849cbc0c",
+        "n_bytes": 20343,
+        "role": "Additional file 3",
+        "holds": "the two recommendation scoring equations and one table of six (Route, Score) rows",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC10625697.1/13068_2023_2419_MOESM3_ESM.docx"
+      }
+    ],
+    "n_tables": 3,
+    "table_shapes": {
+      "si1": [
+        [
+          269,
+          2
+        ]
+      ],
+      "si2": [
+        [
+          5,
+          4
+        ]
+      ],
+      "si3": [
+        [
+          7,
+          2
+        ]
+      ]
+    },
+    "n_production_tables": 0,
+    "per_record_artifact_released": false
+  },
+  "si_tables": [
+    {
+      "si_file": "si1",
+      "relpath": "si/si1.docx",
+      "table_index": 0,
+      "n_rows": 268,
+      "n_columns": 2,
+      "header": [
+        "Review_title",
+        "Review_doi"
+      ],
+      "production_header_terms": []
+    },
+    {
+      "si_file": "si2",
+      "relpath": "si/si2.docx",
+      "table_index": 0,
+      "n_rows": 4,
+      "n_columns": 4,
+      "header": [
+        "Year",
+        "2016",
+        "2017",
+        "2018"
+      ],
+      "production_header_terms": []
+    },
+    {
+      "si_file": "si3",
+      "relpath": "si/si3.docx",
+      "table_index": 0,
+      "n_rows": 6,
+      "n_columns": 2,
+      "header": [
+        "Route",
+        "Score"
+      ],
+      "production_header_terms": []
+    }
+  ],
+  "table_s1": {
+    "n_reviews": 268,
+    "n_distinct_dois": 268
+  },
+  "source_corpus_overlap": {
+    "n_review_dois": 268,
+    "n_served_bacterial_dois": 34,
+    "n_candidate_table_dois": 95,
+    "review_dois_in_served": [],
+    "review_dois_in_candidate_table": []
+  },
+  "titer_surface": {
+    "n_served_bacterial_classes": 51,
+    "n_product_titer_classes": 4,
+    "window_start": "2017-08-01",
+    "window_end": "2022-07-31",
+    "n_in_window": 1,
+    "in_window": [
+      "IsopentenolTiterFoo2014Dataset"
+    ],
+    "rows": [
+      {
+        "dataset_class": "IsopentenolTiterFoo2014Dataset",
+        "citation_key": "fooImprovingMicrobialBiogasoline2014",
+        "doi": "10.1128/mbio.01932-14",
+        "paper_year_from_key": 2014,
+        "in_mcf2chem_window": true
+      },
+      {
+        "dataset_class": "IsoprenolTiterCarruthers2025Dataset",
+        "citation_key": "carruthersAutomationMachineLearning2025",
+        "doi": "10.1038/s41467-025-66304-8",
+        "paper_year_from_key": 2025,
+        "in_mcf2chem_window": false
+      },
+      {
+        "dataset_class": "IsoprenolTiterDeSiqueira2025Dataset",
+        "citation_key": "desiqueiraAlternateRoutesAcetate2025",
+        "doi": "10.1128/aem.02123-24",
+        "paper_year_from_key": 2025,
+        "in_mcf2chem_window": false
+      },
+      {
+        "dataset_class": "IsoprenylAcetateTiterKang2026Dataset",
+        "citation_key": "kangMultilayeredMetabolicRemodeling2026",
+        "doi": "10.1016/j.mec.2026.e00274",
+        "paper_year_from_key": 2026,
+        "in_mcf2chem_window": false
+      }
+    ]
+  }
+}

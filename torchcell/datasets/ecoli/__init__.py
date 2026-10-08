@@ -119,6 +119,11 @@ sourcing layer.
   the S13 Table states.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
   Price 2018 compendium above, which is the loader that serves them.
+- ``cai2023`` -- the MCF2Chem record: an aggregation NOT admitted. Its 8,888 production
+  records are transcriptions of review tables, not measurements, and they are released
+  only through a web server whose API answered 502 the day the row was settled, so there
+  is no artifact to hash. The module holds the inventory, the quotes and the five
+  required titer fields the release cannot fill.
 """
 
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset

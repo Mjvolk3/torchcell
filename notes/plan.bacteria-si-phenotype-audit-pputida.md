@@ -905,3 +905,162 @@ over the line. That contradiction is the decision, and it gates five of the rows
 - **No build, loader, slurm job or dataset process was run**, and nothing outside this note
   was modified. The only code executed was read-only `openpyxl`, `csv` and `zipfile`
   inspection of the two mirrors.
+
+## 2026.10.07 - Correction: Caglar 2017 Table S5 is NOT loadable now, and si2 is not its mean
+
+This section corrects the "Caglar 2017" table row above and rank 1 of "Loadable now". Both
+said the doubling times are **loadable now** as `BacterialEnvironmentResponseExperiment` /
+`EnvironmentResponsePhenotype` with `measurement_type = growth_rate`, `assay_type =
+liquid_od_growth`, `environment_response_uncertainty_type = UncertaintyType.ci95`,
+`sample_unit = biological_replicate`, for 55 records.
+`[[plan.bacteria-si-phenotype-audit-ecoli]]` rank 15 said the same quantity is blocked by
+its gap 1 and gap 9, for 19 records. The E. coli note has the verdict right. The original
+text above is left in place.
+
+Everything below is measured by
+`experiments/036-dataset-fixes-before-kg-build/scripts/caglar2017_doubling_time_loadability.py`,
+which sha256-verifies both SI files against the library mirror's `manifest.json`, then
+builds each candidate record form as real pydantic records with the Caglar loader's own
+environment helpers and scores it with the environment-response family's own rules.
+Results: `experiments/036-dataset-fixes-before-kg-build/results/caglar2017_doubling_time_loadability.json`
+and `..._conditions.csv`.
+
+- `si/si6.csv`, sha256 `76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60`
+- `si/si2.csv`, sha256 `1486290bf6a340ae64ee20c915435c0a00ff5eede489de1f56b62733b66f8940`
+
+### The 55-versus-19 half is not a disagreement
+
+Both counts are right at their own grain, measured: `si6.csv` holds **55 data rows over 19
+distinct `name` values**, and the per-condition replicate counts are 3 for 17 conditions
+and 2 for exactly `Gluconate.tab` and `Lactate.tab`. That matches the loader's already
+sourced `DOUBLING_TIME_REPLICATES` quote verbatim, Methods, Cell Growth: "Means and
+confidence intervals were calculated from three replicate growth curves for all conditions
+except for gluconate and lactate, which had measurements for only two replicates." So 55 is
+the per-replicate row count and 19 is the condition count. Neither note miscounted.
+
+### What the file actually is, and the reading error above
+
+The row above describes `si6.csv` as holding "the mean, +/-95% confidence interval". It does
+not. Its columns are `name,replicate,doubling.time.minutes,doubling.time.minutes.95m,
+doubling.time.minutes.95p,r.squared` and **every row is one replicate's own linear fit**,
+carrying that fit's own `r.squared`. Methods, Cell Growth, verbatim: "Doubling times were
+calculated as $\log_{\mathrm{e}} 2$ divided by the fit slope for each biological replicate
+separately." The file holds no condition mean and no confidence interval of a mean; the
+mean and the interval of the mean are what Fig. 2 draws ("error bars represents $95\%$
+confidence intervals of the mean"), and they are not released as numbers.
+
+### Blocker 1: the interval is asymmetric in 55 of 55 rows, so `ci95` would falsify it
+
+`UncertaintyType.ci95` is defined in `torchcell/datamodels/schema.py` as "95% CI
+half-width -> SE = hw / 1.96", a single symmetric number. Measured over the 55 rows:
+
+| statistic | value |
+|---|---|
+| rows whose interval is symmetric about the value | **0 of 55** |
+| upper half-width wider / lower wider | 54 / 1 |
+| ratio of upper to lower half-width, min / median / max | -26.3920 / **1.3187** / 10.1066 |
+| absolute asymmetry in minutes, median / max | 2.5783 / **1150.7309** |
+| rows whose upper bound is not above the value | **1** |
+
+The one row is `Glycerol.tab` replicate 1: value 80.95212424, `95m` 38.94241445, `95p`
+**-1027.769034**. A negative doubling-time upper bound is what a slope confidence interval
+that straddles zero becomes under `DT = log_e 2 / slope`, so that row has no half-width at
+all. Passing either side as `ci95` is accepted silently: the lower half-width derives
+`environment_response_se` = 21.4339, the upper derives **-565.6845**, a negative standard
+error. So the field as the row above proposes it does not merely round the interval, it can
+record a number that is not a standard error.
+
+The repo already has the lossless pattern and says why it is required.
+`FluxPhenotype` carries `net_flux_lower` / `net_flux_upper` / `confidence_level` with
+`label_statistic_name = None`, docstring verbatim: "a two-sided confidence bound is not a
+single number, and naming one of the two bounds as "the" statistic would misreport it."
+`EnvironmentResponsePhenotype` has no such pair. That is exactly the E. coli note's gap 9.
+
+### Blocker 2: three verifier rules reject the absolute form, not one
+
+Each form below was built as real records and scored by
+`torchcell.verification.environment_response`'s own `_l1_pair_uniqueness`,
+`_l3_environment_perturbed` and `_l3_reference_zero`.
+
+| form | records | `pair_uniqueness` | `environment_perturbed` | `reference_zero` |
+|---|---|---|---|---|
+| A absolute, per replicate (this note's proposal) | 55 | FAIL, 39 duplicates, 16 unique triples | FAIL, 9 records | FAIL, max&#124;v&#124; = 53.3 |
+| B absolute, per condition (the E. coli note's grain) | 19 | FAIL, 3 duplicates, 16 unique | FAIL, 3 records | FAIL, max&#124;v&#124; = 53.3 |
+| C log2 ratio, all 19 conditions, `screen_id` set | 19 | PASS | FAIL, 3 records | PASS |
+| D log2 ratio, in-experiment base only, `screen_id` set | **11** | PASS | PASS | PASS |
+
+- `reference_zero` is the E. coli note's gap 1, confirmed: the reference record's
+  `environment_response` must be 0 for a numeric readout, and the reference's absolute
+  doubling time is 53.25 min. An absolute rate cannot satisfy it, and the phenotype
+  validator forbids a `None` response for a non-categorical `measurement_type`, so the
+  reference cannot decline to carry a number.
+- `environment_perturbed` and `pair_uniqueness` are blockers neither note named. Three of
+  the 19 conditions ARE the base condition measured in three separate experiments
+  (`Glucose.tab`, `MgSO4_000.800_mM.tab`, `NaCl_005_mM.tab`): glucose, 0.8 mM Mg2+, 5 mM
+  Na+, so they carry no environmental edit and collide on the condition signature. A fourth
+  collision is `MgSO4_000.080_mM` against `MgSO4-2_000.080_mM`, the same 0.08 mM Mg2+ run in
+  two experiments. `screen_id` is the honest discriminator for the latter (Table S1's own
+  `experiment` column names the run), and it is what makes forms C and D unique.
+
+### Blocker 3: the ratio form is available for 11 of 19 conditions, and the base is a choice
+
+Form D passes every rule, but it stores 11 records: the three base rows become references,
+and **the whole `MgSO4_stress_low` series has no base-condition row of its own** --
+`si6.csv` releases no 0.8 mM Mg2+ curve under the `MgSO4-2` prefix, so five conditions
+(15 of the 55 rows) have no in-experiment reference. Borrowing another experiment's base is
+not harmless: the three released base measurements are 53.2538, 61.9140 and 58.3515 min, a
+**0.2174 log2** spread, which is larger than several of the effects being described. And a
+ratio of doubling times is a quantity the paper never releases, so storing it would record
+11 derived numbers, drop 8 of 19 conditions, and gap every uncertainty.
+
+### Verdict
+
+**Nothing from Table S5 is loadable today.** The released measurement is an absolute
+doubling time with an asymmetric per-replicate interval; `EnvironmentResponsePhenotype` can
+hold neither. The two capabilities needed are small and already exist in spirit elsewhere
+in the schema, but both would add fields to `EnvironmentResponsePhenotype`, which moves the
+schema closure of every served environment-response dataset and so forces a FULL KG
+rebuild. That is the driver's call, not a loader's. Filed as #776; rank 1 of "Loadable
+now" above should be read as blocked, and the firm total of 157 records drops to 102.
+
+### Duplication risk 7 was right on the grain and wrong on the value
+
+The risk-7 row above says `si2.csv`'s `doublingTimeMinutes` holds "19 distinct values over
+165 non-NA rows, i.e. the Table S5 condition mean repeated per sample". The grain is
+confirmed and the join is exact; the characterization of the value is wrong.
+
+Measured. `si2.csv` has 171 rows, 165 with a doubling time (the 6 blanks are the
+`pilot_24_hour` and `pilot_mid-log` samples), and those 165 rows hold **19 distinct
+`(doublingTimeMinutes, .95m, _95p, rSquared)` tuples**, not merely 19 distinct values. Each
+tuple's condition joins **1:1** onto one of Table S5's 19 `name` values on
+`(experiment, carbonSource, Mg_mM, Na_mM)`, covering all 165 rows; the join raises if any
+condition selects more or fewer than one value, so the correspondence is measured. So yes:
+Table S1 repeats one condition-level fit across that condition's samples, and the two
+sources must be loaded once, not twice.
+
+But Table S1's value is **not** an aggregate of Table S5's replicate values:
+
+| aggregate of Table S5's replicates | exact matches to Table S1 (< 1e-6) | median &#124;difference&#124; | max &#124;difference&#124; |
+|---|---|---|---|
+| arithmetic mean | **0 of 19** | 0.5571 min | 6.5763 min |
+| geometric mean | 0 of 19 | 0.5902 min | 6.9147 min |
+| harmonic mean | 5 of 19 | 0.7582 min | 7.2351 min |
+
+Table S1 also carries one `rSquared` per condition where Table S5 carries one per
+replicate, and its interval is only mildly asymmetric (half-width ratio 1.0981 to 1.4632
+over 165 rows) against Table S5's -26.3920 to 10.1066. So Table S1 holds a **separate
+condition-level fit of the same OD600 curves**, not a summary of Table S5. Hypothesis
+(untested): it is one linear fit to the pooled exponential-phase points of all replicate
+curves, which equals the harmonic mean of the per-replicate doubling times exactly when the
+replicates share a time grid, and 5 of 19 conditions match that exactly. Consequence for a
+future revision: the two tables are two fits of one experiment, so the duplication is real
+at the level of the EXPERIMENT even though 14 of 19 numbers differ. Pick the per-replicate
+table, which is the finer grain.
+
+### One further finding neither note recorded
+
+Table S5 contains an internal duplicate: `MgSO4-2_000.020_mM.tab` replicate 3 and
+`MgSO4-2_000.040_mM.tab` replicate 3 are identical in all four numeric columns
+(64.6719153, 58.70481327, 71.98933404, 0.994667398). One fit appears under two different
+Mg2+ concentrations, so the 55 rows hold 54 distinct fits. A per-replicate load would store
+one growth curve twice under two different environments.

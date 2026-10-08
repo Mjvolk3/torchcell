@@ -1,0 +1,234 @@
+{
+  "citation_key": "caglarColiMolecularPhenotype2017",
+  "table_s5": {
+    "path": "si/si6.csv",
+    "sha256": "76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60",
+    "n_data_rows": 55,
+    "n_conditions": 19,
+    "replicates_per_condition": {
+      "Gluconate.tab": 2,
+      "Glucose.tab": 3,
+      "Glycerol.tab": 3,
+      "Lactate.tab": 2,
+      "MgSO4-2_000.005_mM.tab": 3,
+      "MgSO4-2_000.010_mM.tab": 3,
+      "MgSO4-2_000.020_mM.tab": 3,
+      "MgSO4-2_000.040_mM.tab": 3,
+      "MgSO4-2_000.080_mM.tab": 3,
+      "MgSO4_000.080_mM.tab": 3,
+      "MgSO4_000.800_mM.tab": 3,
+      "MgSO4_008.000_mM.tab": 3,
+      "MgSO4_050.000_mM.tab": 3,
+      "MgSO4_200.000_mM.tab": 3,
+      "MgSO4_400.000_mM.tab": 3,
+      "NaCl_005_mM.tab": 3,
+      "NaCl_100_mM.tab": 3,
+      "NaCl_200_mM.tab": 3,
+      "NaCl_300_mM.tab": 3
+    },
+    "replicate_count_distribution": {
+      "2": 2,
+      "3": 17
+    },
+    "conditions_not_in_triplicate": {
+      "Gluconate.tab": 2,
+      "Lactate.tab": 2
+    },
+    "n_rows_repeating_another_rows_numbers": 2,
+    "repeated_rows": [
+      {
+        "condition": "MgSO4-2_000.020_mM.tab",
+        "replicate": 3,
+        "minutes": 64.6719153,
+        "lower_95": 58.70481327,
+        "upper_95": 71.98933404,
+        "r_squared": 0.994667398
+      },
+      {
+        "condition": "MgSO4-2_000.040_mM.tab",
+        "replicate": 3,
+        "minutes": 64.6719153,
+        "lower_95": 58.70481327,
+        "upper_95": 71.98933404,
+        "r_squared": 0.994667398
+      }
+    ],
+    "interval_census": {
+      "n_rows": 55,
+      "n_symmetric": 0,
+      "n_upper_wider": 54,
+      "n_lower_wider": 1,
+      "n_upper_bound_not_above_value": 1,
+      "half_width_ratio_min": -26.39202136321161,
+      "half_width_ratio_median": 1.3186637987818022,
+      "half_width_ratio_max": 10.106576237271923,
+      "abs_asymmetry_minutes_median": 2.578328920000004,
+      "abs_asymmetry_minutes_max": 1150.73086803
+    },
+    "most_asymmetric_row": {
+      "condition": "Glycerol.tab",
+      "replicate": 1,
+      "minutes": 80.95212424,
+      "lower_95": 38.94241445,
+      "upper_95": -1027.769034,
+      "r_squared": 0.992843467
+    },
+    "se_if_lower_half_width_passed_as_ci95": 21.43391925635738,
+    "se_if_upper_half_width_passed_as_ci95": -565.6844549111366
+  },
+  "table_s1": {
+    "path": "si/si2.csv",
+    "sha256": "1486290bf6a340ae64ee20c915435c0a00ff5eede489de1f56b62733b66f8940",
+    "n_rows_with_a_doubling_time": 165,
+    "n_distinct_value_interval_r2_tuples": 19,
+    "interval_census": {
+      "n_rows": 165,
+      "n_symmetric": 0,
+      "n_upper_wider": 165,
+      "n_lower_wider": 0,
+      "n_upper_bound_not_above_value": 0,
+      "half_width_ratio_min": 1.0980504636498085,
+      "half_width_ratio_median": 1.2057318133184822,
+      "half_width_ratio_max": 1.4632495792760034,
+      "abs_asymmetry_minutes_median": 0.9421809600000017,
+      "abs_asymmetry_minutes_max": 5.950395229999998
+    }
+  },
+  "table_s1_versus_table_s5": {
+    "join": "1:1 on (experiment, carbonSource, Mg_mM, Na_mM); raises otherwise",
+    "n_conditions_joined": 19,
+    "n_table_s1_rows_covered": 165,
+    "n_exact_matches": {
+      "arithmetic": 0,
+      "geometric": 0,
+      "harmonic": 5
+    },
+    "abs_difference_minutes": {
+      "arithmetic": {
+        "median": 0.5571043199999934,
+        "max": 6.5763103366666655
+      },
+      "geometric": {
+        "median": 0.5902334798708324,
+        "max": 6.914707079276305
+      },
+      "harmonic": {
+        "median": 0.7582155401055388,
+        "max": 7.235140537223636
+      }
+    }
+  },
+  "base_condition_choice": {
+    "table_s5_rows_that_are_a_base_condition": [
+      "Glucose.tab",
+      "MgSO4_000.800_mM.tab",
+      "NaCl_005_mM.tab"
+    ],
+    "arithmetic_mean_minutes": {
+      "Glucose.tab": 53.25383340666667,
+      "MgSO4_000.800_mM.tab": 61.913965960000006,
+      "NaCl_005_mM.tab": 58.35152739666666
+    },
+    "log2_spread_of_the_choice": 0.21737949592297673,
+    "experiments_with_no_base_row": [
+      "MgSO4_stress_low"
+    ],
+    "conditions_with_no_base_row": [
+      "MgSO4-2_000.005_mM.tab",
+      "MgSO4-2_000.010_mM.tab",
+      "MgSO4-2_000.020_mM.tab",
+      "MgSO4-2_000.040_mM.tab",
+      "MgSO4-2_000.080_mM.tab"
+    ]
+  },
+  "candidate_forms": [
+    {
+      "form": "A_absolute_per_replicate",
+      "description": "the P. putida audit's 55 records: Table S5's per-replicate doubling time in minutes as the environment response, reference = the base condition's absolute doubling time",
+      "n_records": 55,
+      "rules": [
+        {
+          "name": "pair_uniqueness",
+          "passed": false,
+          "message": "39 records duplicate an earlier (study, strain, condition) triple; 16 unique triples"
+        },
+        {
+          "name": "environment_perturbed",
+          "passed": false,
+          "message": "9 experiments have no environmental edit (no perturbation, baseline temperature 37.0, baseline media)"
+        },
+        {
+          "name": "reference_zero",
+          "passed": false,
+          "message": "numeric rule: reference response not identically 0: max|v|=53.3"
+        }
+      ]
+    },
+    {
+      "form": "B_absolute_per_condition",
+      "description": "the E. coli audit's 19 records: the per-condition mean doubling time in minutes, reference = the base condition's absolute doubling time",
+      "n_records": 19,
+      "rules": [
+        {
+          "name": "pair_uniqueness",
+          "passed": false,
+          "message": "3 records duplicate an earlier (study, strain, condition) triple; 16 unique triples"
+        },
+        {
+          "name": "environment_perturbed",
+          "passed": false,
+          "message": "3 experiments have no environmental edit (no perturbation, baseline temperature 37.0, baseline media)"
+        },
+        {
+          "name": "reference_zero",
+          "passed": false,
+          "message": "numeric rule: reference response not identically 0: max|v|=53.3"
+        }
+      ]
+    },
+    {
+      "form": "C_log2_ratio_all_conditions",
+      "description": "all 19 conditions as log2(doubling time / Glucose.tab doubling time), screen_id = the Table S1 experiment",
+      "n_records": 19,
+      "rules": [
+        {
+          "name": "pair_uniqueness",
+          "passed": true,
+          "message": "19 unique (study, strain, condition) records, one each"
+        },
+        {
+          "name": "environment_perturbed",
+          "passed": false,
+          "message": "3 experiments have no environmental edit (no perturbation, baseline temperature 37.0, baseline media)"
+        },
+        {
+          "name": "reference_zero",
+          "passed": true,
+          "message": "numeric rule: reference response == 0 for all 19 records"
+        }
+      ]
+    },
+    {
+      "form": "D_log2_ratio_in_series_base_only",
+      "description": "log2 ratio for only the conditions whose own Table S1 experiment released a base-condition Table S5 row, with screen_id = that experiment",
+      "n_records": 11,
+      "rules": [
+        {
+          "name": "pair_uniqueness",
+          "passed": true,
+          "message": "11 unique (study, strain, condition) records, one each"
+        },
+        {
+          "name": "environment_perturbed",
+          "passed": true,
+          "message": "all 11 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='DM500 (Davis Minimal + 500 mg/L glucose; Caglar 2017)')"
+        },
+        {
+          "name": "reference_zero",
+          "passed": true,
+          "message": "numeric rule: reference response == 0 for all 11 records"
+        }
+      ]
+    }
+  ]
+}

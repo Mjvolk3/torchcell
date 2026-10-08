@@ -484,3 +484,92 @@ replicate-level records by design), both PASS:
    stated.
 6. `ProvenanceGapReason` still has no member for a genome missing from the tier (gap 5 of
    the first section; moot now that REL606 is deposited).
+
+## 2026.10.07 - Tables S5 to S14, and why the doubling times are not loaded
+
+The loader pins `SI_TABLES` for S1 to S4 only, and nothing in this note or the loader
+addressed Tables S5 to S14. The SI phenotype audits
+(`[[plan.bacteria-si-phenotype-audit-ecoli]]`, `[[plan.bacteria-si-phenotype-audit-pputida]]`)
+enumerated all fourteen; this section records the Table S5 decision, which is the only one
+of the ten that looked loadable.
+
+Measured by
+`experiments/036-dataset-fixes-before-kg-build/scripts/caglar2017_doubling_time_loadability.py`,
+results under that experiment's `results/`. Both inputs are sha256-verified against the
+library mirror manifest before being read:
+
+- `si/si6.csv` = Supplementary Table S5, sha256
+  `76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60`, PMC object
+  `srep45303-s6.csv`. Not in the raw mirror, which holds `-s2.csv` to `-s5.csv` only.
+- `si/si2.csv` = Supplementary Table S1, sha256
+  `1486290bf6a340ae64ee20c915435c0a00ff5eede489de1f56b62733b66f8940`, already pinned as
+  `SI_TABLES["S1"]`.
+
+### What Table S5 holds
+
+Caption, `si/si1.md:174`, verbatim: "Supplementary Table S5: Doubling time measurements in
+exponential phase. Includes the mean, $\pm 9 5 \%$ confidence interval, and $r ^ { 2 }$
+from the linear fit to OD600 values."
+
+The file is **per replicate**, not per condition: columns
+`name,replicate,doubling.time.minutes,doubling.time.minutes.95m,doubling.time.minutes.95p,r.squared`,
+**55 data rows over 19 conditions**, each row carrying its own `r.squared`. Methods, Cell
+Growth, verbatim: "Doubling times were calculated as $\log _ { \mathrm { e } } 2$ divided
+by the fit slope for each biological replicate separately. Means and confidence intervals
+were calculated from three replicate growth curves for all conditions except for gluconate
+and lactate, which had measurements for only two replicates." Replicate counts in the file
+are 3 for 17 conditions and 2 for exactly `Gluconate.tab` and `Lactate.tab`, so the
+loader's existing `DOUBLING_TIME_REPLICATES` quote is verified against the data.
+
+The condition mean and the confidence interval OF that mean are not released as numbers;
+they are what Fig. 2 draws. `si6.csv` also holds an internal duplicate:
+`MgSO4-2_000.020_mM.tab` replicate 3 and `MgSO4-2_000.040_mM.tab` replicate 3 are identical
+in all four numeric columns (64.6719153, 58.70481327, 71.98933404, 0.994667398), so 55 rows
+hold 54 distinct fits.
+
+### Why it is not loaded
+
+1. **The interval is asymmetric in 55 of 55 rows.** Upper-to-lower half-width ratio runs
+   -26.3920 to 10.1066, median 1.3187; median absolute asymmetry 2.5783 min. `Glycerol.tab`
+   replicate 1 reports `95p` = -1027.769034, a negative doubling-time upper bound, which is
+   what a slope interval straddling zero becomes under `DT = log_e 2 / slope`.
+   `UncertaintyType.ci95` is a single half-width, so recording either side would falsify the
+   source; the upper side derives `environment_response_se` = -565.6845.
+   `FluxPhenotype` is the in-repo precedent for the lossless shape
+   (`net_flux_lower` / `net_flux_upper` / `confidence_level`, `label_statistic_name = None`);
+   `EnvironmentResponsePhenotype` has no equivalent.
+2. **The absolute value has no home that verifies.** `MeasurementType.growth_rate` covers
+   "absolute or normalized growth rate / doubling time", but the environment-response
+   verifier's L3 `reference_zero` requires the reference's `environment_response` to be 0,
+   and the base condition's doubling time is 53.25 min. Measured FAIL at both grains, plus
+   `environment_perturbed` (3 of 19 conditions ARE the unperturbed base condition, run in
+   three separate experiments) and `pair_uniqueness` (those 3, plus `MgSO4_000.080_mM`
+   against `MgSO4-2_000.080_mM`).
+3. **The ratio form would store 11 of 19 conditions.** The `MgSO4_stress_low` series
+   releases no base-Mg2+ curve, so 5 conditions have no in-experiment reference, and the
+   three released base measurements span 0.2174 log2 (53.2538, 61.9140, 58.3515 min), so
+   borrowing one is not neutral. A doubling-time ratio is also a quantity the paper never
+   released.
+
+Both missing capabilities are fields on `EnvironmentResponsePhenotype`, which moves the
+schema closure of every served environment-response dataset, so the fix is a full KG
+rebuild and not an incremental admission. Filed as #776; nothing was loaded.
+
+### Table S1's doubling time is a second fit, not a summary of Table S5
+
+`si2.csv`'s 171 rows carry a doubling time on 165 (the 6 blanks are `pilot_24_hour` and
+`pilot_mid-log`), and those 165 rows hold **19 distinct
+`(doublingTimeMinutes, .95m, _95p, rSquared)` tuples** that join **1:1** onto Table S5's 19
+conditions on `(experiment, carbonSource, Mg_mM, Na_mM)` and cover all 165 rows. So the
+sample-level column is one condition-level fit repeated per sample, and Tables S1 and S5
+must never both be loaded as phenotypes.
+
+It is not an aggregate of Table S5, however: 0 of 19 values equal the arithmetic mean of
+that condition's replicates (median absolute difference 0.5571 min, max 6.5763), 0 of 19
+the geometric mean, and 5 of 19 the harmonic mean. Table S1 also carries one `rSquared` per
+condition and a much milder asymmetry (half-width ratio 1.0981 to 1.4632). Hypothesis
+(untested): Table S1 is one linear fit to the pooled exponential-phase points of all of
+that condition's replicate curves, which equals the harmonic mean of the per-replicate
+doubling times exactly when the replicates share a time grid. Either way the two tables are
+two fits of one OD600 experiment, so the duplication is at the level of the experiment even
+though 14 of 19 numbers differ; the per-replicate table is the finer grain.

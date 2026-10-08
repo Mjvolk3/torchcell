@@ -3706,3 +3706,83 @@ Both were superseded by #760 and by commit `c80b0088d`, after which the loader s
 - The analysis code at `gitlab.pasteur.fr/dbikard/dCas9_genome_wide_screen`, which the note
   names as the thing that would define `gamma`. Not fetched; this audit reads only the
   mirror.
+
+## 2026.10.07 - Caglar 2017 doubling time: rank 15's verdict holds, gap 1's first half does not
+
+Rank 15 above and the "Caglar 2017" section of
+`[[plan.bacteria-si-phenotype-audit-pputida]]` disagreed about whether Caglar's Table S5
+doubling times are loadable. **Rank 15's verdict is correct and the P. putida note is
+wrong**; that note now carries the full measurement and a dated correction. Two details
+here need fixing, and three blockers were found that rank 15 does not list. The original
+text above is left in place.
+
+Everything below is measured by
+`experiments/036-dataset-fixes-before-kg-build/scripts/caglar2017_doubling_time_loadability.py`
+(results under the same experiment's `results/`), which sha256-verifies `si/si6.csv`
+(`76411acc...`) and `si/si2.csv` (`1486290b...`) against the library mirror manifest.
+
+**The 19-versus-55 count was never a disagreement.** `si6.csv` holds 55 data rows over 19
+conditions; rank 15 counted conditions, the P. putida note counted per-replicate rows. Both
+are right. Per-condition replicate counts are 3 for 17 conditions and 2 for exactly
+`Gluconate.tab` and `Lactate.tab`, verifying the loader's sourced
+`DOUBLING_TIME_REPLICATES` quote.
+
+**Gap 9 is confirmed, and is stronger than stated.** 0 of 55 rows have a symmetric
+interval; the upper-to-lower half-width ratio runs -26.3920 to 10.1066 with median 1.3187,
+and `Glycerol.tab` replicate 1 has `95p` = **-1027.769034**, a negative doubling-time upper
+bound, so that row has no half-width to give. `UncertaintyType.ci95` accepts either side
+silently: the upper half-width derives a standard error of **-565.6845**. The repo already
+holds the lossless pattern gap 9 asks for, on a different phenotype --
+`FluxPhenotype.net_flux_lower` / `net_flux_upper` / `confidence_level` with
+`label_statistic_name = None`, whose docstring states the principle verbatim: "a two-sided
+confidence bound is not a single number, and naming one of the two bounds as "the"
+statistic would misreport it."
+
+**Gap 1's first half is wrong: the enum member exists.** `MeasurementType.growth_rate` is
+documented in `torchcell/datamodels/schema.py` as "``growth_rate``: absolute or normalized
+growth rate / doubling time", so `MeasurementType` is not missing a member for an absolute
+growth RATE. What gap 1 gets right is its second half, and that is the whole of the
+blocker: the environment-response verifier's L3 `reference_zero` requires the reference
+record's `environment_response` to be 0 for a numeric readout, and
+`EnvironmentResponsePhenotype`'s own validator forbids a `None` response for a
+non-categorical `measurement_type`, so the reference must carry a number and that number
+must be 0. Caglar's base-condition doubling time is 53.25 min. Measured: the absolute form
+fails `reference_zero` with max|v| = 53.3 at both the 55-row and the 19-condition grain.
+Gap 1 should be restated as **relief from `reference_zero` for an absolute readout** plus,
+separately, a `MeasurementType` member for optical density, which genuinely has none. That
+re-split does not change which papers gap 1 blocks.
+
+**Three blockers rank 15 does not list**, all measured on real records:
+
+| form | records | `pair_uniqueness` | `environment_perturbed` | `reference_zero` |
+|---|---|---|---|---|
+| absolute, per replicate | 55 | FAIL, 39 duplicates | FAIL, 9 | FAIL |
+| absolute, per condition | 19 | FAIL, 3 duplicates | FAIL, 3 | FAIL |
+| log2 ratio, all 19, `screen_id` set | 19 | PASS | FAIL, 3 | PASS |
+| log2 ratio, in-experiment base only | **11** | PASS | PASS | PASS |
+
+1. Three of the 19 conditions ARE the base condition (glucose, 0.8 mM Mg2+, 5 mM Na+) run
+   in three separate experiments, so they carry no environmental edit and collide on the
+   condition signature.
+2. `MgSO4_000.080_mM` and `MgSO4-2_000.080_mM` are the same 0.08 mM Mg2+ condition in two
+   experiments. `screen_id` resolves this honestly, because Table S1's own `experiment`
+   column names the run.
+3. The `MgSO4_stress_low` series has NO base-condition row in `si6.csv` (no 0.8 mM Mg2+
+   curve under the `MgSO4-2` prefix), so 5 conditions and 15 of the 55 rows have no
+   in-experiment reference. The three released base measurements are 53.2538, 61.9140 and
+   58.3515 min, a 0.2174 log2 spread, so borrowing a base from another experiment is not a
+   neutral choice.
+
+**Verdict: nothing is loadable, and the fix forces a full rebuild.** The only verifiable
+form stores 11 derived log2 ratios the paper never released, drops 8 of 19 conditions and
+gaps every uncertainty, so it is worse than storing nothing. Both missing capabilities
+would add fields to `EnvironmentResponsePhenotype`, which moves the schema closure of every
+served environment-response dataset and so requires a full KG rebuild rather than an
+incremental admission. Filed as #776. Rank 15's record count should read **0 loadable,
+19 conditions / 55 rows blocked**.
+
+**One further finding about rank 11 and rank 13's shape.** Rank 11 (Lamoureux per-sample
+growth rate) and rank 13 (Schmidt Table S23) are blocked by the same `reference_zero` rule
+and would hit the same "is a matched reference released for every condition?" question that
+sinks the Caglar ratio form. Worth measuring per paper before either is called storable as
+a ratio.

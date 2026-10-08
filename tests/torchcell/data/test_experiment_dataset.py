@@ -356,12 +356,29 @@ def test_gene_set_file_is_authoritative_and_an_empty_set_is_refused(
     path = Path(dataset.preprocess_dir) / "gene_set.json"
     path.write_text(json.dumps(["YAL001C"]))
     assert dataset.gene_set == GeneSet(["YAL001C"])
-    with pytest.raises(ValueError, match="Cannot set an empty or None value"):
+    with pytest.raises(ValueError, match="Cannot set an empty gene_set"):
         dataset.gene_set = GeneSet()
     assert json.loads(path.read_text()) == ["YAL001C"]
     path.unlink()
     assert dataset.gene_set == GeneSet(["YAL001C", "YAL002W", "YBR001C"])
     assert not path.exists()
+
+
+def test_a_loader_without_gene_perturbations_may_declare_an_empty_gene_set(
+    tmp_path: Path, no_git: None, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``has_gene_perturbations = False`` is the one way an empty gene set is accepted;
+    ``None`` is refused either way, and the declaration is a class-level fact.
+    """
+    dataset = _build(tmp_path)
+    assert ToyDataset.has_gene_perturbations is True
+    monkeypatch.setattr(ToyDataset, "has_gene_perturbations", False)
+    dataset.gene_set = GeneSet()
+    path = Path(dataset.preprocess_dir) / "gene_set.json"
+    assert json.loads(path.read_text()) == []
+    assert dataset.gene_set == GeneSet()
+    with pytest.raises(ValueError, match="Cannot set None"):
+        dataset.gene_set = None  # type: ignore[assignment]
 
 
 def test_df_is_none_until_preprocess_holds_data_csv(

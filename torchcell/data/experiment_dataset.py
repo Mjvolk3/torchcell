@@ -373,6 +373,14 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
     #: the build and release gates read it off the class without instantiating it.
     visibility: ClassVar[Visibility] = Visibility.public
 
+    #: Whether the records carry gene-keyed perturbations. True for every screen of
+    #: edited strains, where an empty gene set after a build is a broken build and the
+    #: ``gene_set`` setter refuses it. A dataset whose every record is the unedited host
+    #: in a varied environment (the in-house Bioscreen runs, ``Genotype(perturbations=[])``
+    #: on a typed background) declares False here, in code, and its gene set is legitimately
+    #: empty: the edits that define the strain live on the reference's background.
+    has_gene_perturbations: ClassVar[bool] = True
+
     def __init__(
         self,
         root: str,
@@ -830,9 +838,19 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
 
     @gene_set.setter
     def gene_set(self, value: GeneSet) -> None:
-        """Persist the sorted gene set to JSON and cache it in memory."""
-        if not value:
-            raise ValueError("Cannot set an empty or None value for gene_set")
+        """Persist the sorted gene set to JSON and cache it in memory.
+
+        An empty set is refused unless the loader declares ``has_gene_perturbations =
+        False``; ``None`` is always refused.
+        """
+        if value is None:
+            raise ValueError("Cannot set None as gene_set")
+        if not value and self.has_gene_perturbations:
+            raise ValueError(
+                "Cannot set an empty gene_set: every record of a dataset with "
+                "has_gene_perturbations=True carries gene perturbations, so an empty "
+                "set is a broken build"
+            )
         with open(osp.join(self.preprocess_dir, "gene_set.json"), "w") as f:
             json.dump(list(sorted(value)), f, indent=0)
         self._gene_set = value

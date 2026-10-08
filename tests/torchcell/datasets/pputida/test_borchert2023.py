@@ -846,7 +846,9 @@ def test_built_lmdb_record_count() -> None:
     env = lmdb.open(lmdb_dir, readonly=True, lock=False)
     with env.begin() as txn:
         assert txn.stat()["entries"] == b23.EXPECTED_RECORDS
-        first = pickle.loads(txn.get(b"0"))
+        payload = txn.get(b"0")
+        assert payload is not None
+        first = pickle.loads(payload)
     env.close()
     assert first["experiment"]["experiment_type"] == "bacterial_environment_response"
     partition = json.loads(

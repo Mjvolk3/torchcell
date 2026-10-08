@@ -70,6 +70,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
+    GeneInteractionBabu2014Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateSchmidt2016Adapter,
@@ -105,6 +106,7 @@ from torchcell.adapters import (
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
+from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
@@ -224,6 +226,7 @@ PROTEOME = "protein abundance phenotype"
 TITER = "product titer phenotype"
 RESPONSE = "environment response phenotype"
 TURNOVER = "protein turnover phenotype"
+INTERACTION = "gene interaction phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -240,6 +243,14 @@ TURNOVER = "protein turnover phenotype"
 # Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
+    _case(
+        GeneInteractionBabu2014Adapter,
+        "babu2014",
+        "gene_interaction_babu2014",
+        GeneInteractionBabu2014Dataset,
+        INTERACTION,
+        env_perturbation=False,
+    ),
     _case(
         RnaseqCaglar2017Adapter,
         "caglar2017_rnaseq",

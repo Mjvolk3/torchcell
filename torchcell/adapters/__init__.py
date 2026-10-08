@@ -3,6 +3,9 @@
 from .auesukaree2009_adapter import (
     EnvChemgenAuesukaree2009Adapter as EnvChemgenAuesukaree2009Adapter,
 )
+from .babu2014_adapter import (
+    GeneInteractionBabu2014Adapter as GeneInteractionBabu2014Adapter,
+)
 from .baryshnikova2010_adapter import (
     SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,
 )
@@ -308,6 +311,7 @@ environment_adapters = [
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 
 ecoli_adapters = [
+    "GeneInteractionBabu2014Adapter",
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
     "CrispriChemgenChoe2025Adapter",

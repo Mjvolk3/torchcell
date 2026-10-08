@@ -1,0 +1,58 @@
+# Babu 2014 eSGA digenic interaction map: 38,579 (donor, recipient) records from Table
+# S2's GI score, BacterialGeneInteractionExperiment. Two gene-level
+# BacterialDeletionPerturbation leaves per record, served as `bacterial perturbation`
+# (never the yeast `perturbation` class), and the signed S score as the served
+# `gene interaction phenotype` -- no new graph class: the yeast interaction datasets
+# already declare that one. The screen is ONE condition, so the environment is a single
+# entity every record joins on: the two marker drugs are selection_agent components of
+# the medium, not SmallMoleculePerturbations, so the environment-perturbation pair stays
+# off. No phage and no CRISPRi construct appears in any record, so those pairs stay off.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "bacterial perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "gene interaction phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "gene interaction phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

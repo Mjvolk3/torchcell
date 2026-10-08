@@ -945,8 +945,8 @@ def test_released_scores_is_keyed_on_the_isolate(synthetic: Path) -> None:
 # --------------------------------------------------------------------------- #
 def _data_root() -> str:
     root = os.environ.get("DATA_ROOT")
-    if not root:
-        pytest.skip("DATA_ROOT is not set")
+    if root is None or not osp.isdir(osp.join(root, "torchcell-raw")):
+        pytest.skip("no DATA_ROOT with a raw mirror")
     return root
 
 

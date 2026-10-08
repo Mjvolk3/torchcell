@@ -50,6 +50,13 @@ sourcing layer.
   retention ledger rather than stored twice.
 - ``schmidt2016`` -- ``ProteomeSchmidt2016Dataset``: the condition-dependent BW25113
   proteome, one record per loaded growth condition in absolute protein copies per cell.
+- ``mori2021`` -- ``ProteomeMori2021Dataset``: the DIA/SWATH absolute proteome, one
+  record per loaded MG1655 (EQ353) calibration sample in protein mass fractions. Seven of
+  its 66 released samples are loaded; the other 59 are dropped on their medium and
+  ledgered, because only the calibration samples' Neidhardt MOPS minimal is an object
+  ``MEDIA_LIBRARY`` states. Its values are an independent measurement of Schmidt 2016's
+  quantity, not a re-release: zero of the 1,812 proteins their nearest conditions share
+  agree to 1e-6, at Pearson r 0.796 on log10 mass fraction.
 - ``mutalik2020`` -- the phage-resistance RB-TnSeq raw mirror and sourcing layer; the
   dataset class waits on a loader using the ``PhagePerturbation`` environment leaf.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
@@ -68,6 +75,7 @@ from .gupta2024 import (
     ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
 )
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
+from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset
 from .rousset2018 import (

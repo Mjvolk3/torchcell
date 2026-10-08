@@ -64,6 +64,7 @@ datasets:
   - GeneEssentialityGoodall2018Dataset
   - ProteinTurnoverGupta2024Dataset
   - RnaseqLamoureux2023Dataset
+  - ProteomeMori2021Dataset
   - RbTnseqPrice2018EcoliDataset
   - MetabolomeRapp2026Dataset
   - CrispriScreenRousset2018Dataset

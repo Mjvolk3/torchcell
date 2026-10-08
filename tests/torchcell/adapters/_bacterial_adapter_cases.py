@@ -75,6 +75,7 @@ from torchcell.adapters import (
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeLim2025Adapter,
+    ProteomeMori2021Adapter,
     ProteomeSchmidt2016Adapter,
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2024Adapter,
@@ -94,6 +95,7 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.price2018 import RbTnseqPrice2018EcoliDataset
 from torchcell.datasets.ecoli.rapp2026 import MetabolomeRapp2026Dataset
 from torchcell.datasets.ecoli.rousset2018 import CrispriScreenRousset2018Dataset
@@ -181,10 +183,12 @@ TURNOVER = "protein turnover phenotype"
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
 # `build_environment` in the loader). Caglar 2017 is a wild-type panel with no
-# perturbation in any record, and so is Schmidt 2016, whose paper's three deletion
-# strains carry no abundance data and are not loaded; Fuhrer 2017 and Goodall 2018 carry
-# no environment perturbation, and so does Campos 2018, whose screen is one medium at
-# one temperature; the CRISPRi leaves of Carruthers, Cui, Menasalvas, Wang
+# perturbation in any record, and so are Schmidt 2016, whose paper's three deletion
+# strains carry no abundance data and are not loaded, and Mori 2021, whose engineered
+# NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017 and
+# Goodall 2018 carry no environment perturbation, and so does Campos 2018, whose screen
+# is one medium at one temperature; the CRISPRi leaves of Carruthers, Cui, Menasalvas,
+# Wang
 # 2018 and Yunus carry a CrisprConstruct. Shiver 2016's three temperature-only conditions
 # carry no environment perturbation, but its other 54 do, so its pair is enabled.
 BACTERIAL: list[Bacterial] = [
@@ -249,6 +253,14 @@ BACTERIAL: list[Bacterial] = [
         "rnaseq_lamoureux2023",
         RnaseqLamoureux2023Dataset,
         RNASEQ,
+    ),
+    _case(
+        ProteomeMori2021Adapter,
+        "mori2021",
+        "proteome_mori2021",
+        ProteomeMori2021Dataset,
+        PROTEOME,
+        perturbation=False,
     ),
     _case(
         RbTnseqPrice2018EcoliAdapter,

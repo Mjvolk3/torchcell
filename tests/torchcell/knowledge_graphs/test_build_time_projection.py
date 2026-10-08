@@ -497,6 +497,7 @@ BACTERIAL_DATASETS = {
     "MetabolomeFuhrer2017Dataset",
     "MetabolomeRapp2026Dataset",
     "ProteinTurnoverGupta2024Dataset",
+    "ProteomeMori2021Dataset",
     "ProteomeCaglar2017Dataset",
     "ProteomeCarruthers2025Dataset",
     "ProteomeDeSiqueira2025Dataset",

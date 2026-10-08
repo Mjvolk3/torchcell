@@ -108,6 +108,7 @@ from .menasalvas2025_adapter import (
 from .messner2023_adapter import (
     ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
 )
+from .mori2021_adapter import ProteomeMori2021Adapter as ProteomeMori2021Adapter
 from .mormino2022_adapter import Mormino2022Adapter as Mormino2022Adapter
 from .mota2024_adapter import EnvChemgenMota2024Adapter as EnvChemgenMota2024Adapter
 from .mulleder2016_adapter import (
@@ -270,6 +271,7 @@ ecoli_adapters = [
     "GeneEssentialityGoodall2018Adapter",
     "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",
+    "ProteomeMori2021Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "MetabolomeRapp2026Adapter",
     "CrispriScreenRousset2018Adapter",

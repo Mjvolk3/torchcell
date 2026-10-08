@@ -17,3 +17,4 @@ created: 1791256185172
 
 - [x] `chore/notes-tex-groups` worktree: a group layer for `notes-tex/` and its Zotero tree, with the existing collections moved under their groups [[user.Mjvolk3.torchcell.tasks.weekly.2026.41.notes-tex-groups]]
 - [x] `feat/bacteria-queue-table` worktree: the bacterial expansion document gains the 281-row discovery queue less the fifty recommended builds (whose papers are now filed in Zotero), and both generators write to the moved `notes-tex/database/` path again [[experiments.database.expansion-bacteria]]
+- [x] `feat/bacterial-genome-hard-tests` worktree: cross-source tests of the four bacterial genomes against the feature table, GFF, FASTAs and NCBI's GAF for every locus; two findings pinned (wrapped-product spaces from Biopython, obsolete GO ids in the RefSeq inline route) [[tests.torchcell.sequence.genome.test_bacterial_tier]]

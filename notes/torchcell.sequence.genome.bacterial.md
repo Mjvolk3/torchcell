@@ -75,3 +75,23 @@ the gene lookup, `compute_gene_set`, `feature_index` and `drop_empty_go`;
 `GenomeReleaseFiles.cds_fasta` may be `None` (NCBI GCA sets ship no CDS FASTA); and the
 `_read_sequences` hook (the GCA FASTAs are gzipped and the proteins keyed by accession).
 See the dated section in [[torchcell.sequence.genome.base]].
+
+## 2026.10.07 - Two findings from the cross-source tests
+
+[[tests.torchcell.sequence.genome.test_bacterial_tier]] checks the ingest against the
+feature table, the GFF, the FASTAs and NCBI's own GAF for every locus of the four
+genomes. Two discrepancies are pinned there as measured and are NOT yet fixed here:
+
+- **`product` carries a space the flat file wrapped in.** NCBI breaks a long `/product`
+  after a hyphen or a comma, and Biopython's GenBank scanner joins continuation lines with
+  a space, so 14 MG1655, 11 REL606 and 8 KT2440 coding loci store
+  `phospho-N-acetylmuramoyl-pentapeptide- transferase` where the GFF and the feature
+  table carry `phospho-N-acetylmuramoyl-pentapeptide-transferase`. Candidate fix: read the
+  product from the GFF the genome already loads into `data.db` (the GFF and the feature
+  table agree on every coding product) and refuse a non-whitespace disagreement by name;
+  `ECB_00636` would then be the one refused, because NCBI's derived files carry a stray
+  space before a comma that the flat file lacks.
+- **The RefSeq inline GO route stores obsolete ids.** 49 BW25113 and 50 REL606 ids are
+  obsolete in the pinned GO release, 31 of each with a `replaced_by` successor.
+  `remove_deprecated_go_terms` drops them rather than remapping, which empties three
+  BW25113 loci and two REL606 loci. The GAF routes carry none.

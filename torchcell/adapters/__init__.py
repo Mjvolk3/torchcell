@@ -212,6 +212,9 @@ from .yoshida2012_adapter import (
 from .yunus2026_array_adapter import (
     CrispriArrayYunus2026Adapter as CrispriArrayYunus2026Adapter,
 )
+from .yunus2026_differential_adapter import (
+    CrispriDifferentialProteomeYunus2026Adapter as CrispriDifferentialProteomeYunus2026Adapter,
+)
 from .yunus2026_knockdown_adapter import (
     CrispriKnockdownYunus2026Adapter as CrispriKnockdownYunus2026Adapter,
 )
@@ -346,6 +349,7 @@ pputida_adapters = [
     "ProteomeLim2025Adapter",
     "IsoprenolSelectionMenasalvas2025Adapter",
     "CrispriArrayYunus2026Adapter",
+    "CrispriDifferentialProteomeYunus2026Adapter",
     "CrispriKnockdownYunus2026Adapter",
 ]
 

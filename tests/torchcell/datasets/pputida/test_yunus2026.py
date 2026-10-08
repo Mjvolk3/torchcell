@@ -32,6 +32,7 @@ import zipfile
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import pytest
 from pydantic import ValidationError
 
@@ -218,6 +219,50 @@ def _array_rows(protein: str) -> list[list[str]]:
     return rows
 
 
+#: The synthetic Tables S4 and S5, as ``(protein key, fold change, p-value)``. Keys that
+#: resolve to a locus of the synthetic assembly, plus one that resolves to nothing, which
+#: is the shape the pinned docx has (305 of 338 resolve). The knocked-down gene
+#: ``PP_0100`` is deliberately ABSENT from both, as ``PP_4188`` is in the real tables.
+DIFFERENTIAL_DOWN: tuple[tuple[str, float, float], ...] = (
+    ("PP_0101", 0.05, 0.0001),
+    ("PP_0102", 0.1, 0.001),
+    ("PP_0103", 0.25, 0.01),
+    ("PP_0106", 0.3, 0.015),
+    ("PP_0107", 0.45, 0.04),
+    ("Notagene", 0.4, 0.02),
+)
+DIFFERENTIAL_UP: tuple[tuple[str, float, float], ...] = (
+    ("PP_0104", 8.0, 0.0005),
+    ("PP_0105", 2.5, 0.03),
+    ("PP_0108", 4.0, 0.002),
+    ("PP_0109", 3.0, 0.004),
+    ("PP_0110", 2.25, 0.045),
+)
+
+
+def _differential_rows(
+    specs: tuple[tuple[str, float, float], ...], *, descending: bool
+) -> list[list[str]]:
+    """A synthetic Table S4 or S5 whose derived columns satisfy every build oracle."""
+    rows = [list(y26.TABLE_S4_S5_HEADER)]
+    ordered = sorted(specs, key=lambda spec: spec[1], reverse=descending)
+    for rank, (key, fold_change, p_value) in enumerate(ordered, start=1):
+        rows.append(
+            [
+                f"Q{rank:05d}",
+                f"{key.upper()}_PSEPK",
+                key,
+                f"synthetic {key}",
+                repr(fold_change),
+                repr(math.log2(fold_change)),
+                repr(p_value),
+                repr(-math.log10(p_value)),
+                str(rank),
+            ]
+        )
+    return rows
+
+
 def synthetic_tables() -> list[list[list[str]]]:
     """The 14 tables of the synthetic supplementary file, in document order."""
     screen = [list(y26.TABLE_S3_HEADER)] + [list(row) for row in SCREEN_ROWS]
@@ -225,8 +270,8 @@ def synthetic_tables() -> list[list[list[str]]]:
         _target_list_rows(y26.TABLE_S1_HEADER, [tag for tag, _ in SCREEN_LOCI[:6]]),
         _target_list_rows(y26.TABLE_S2_HEADER, [tag for tag, _ in SCREEN_LOCI[6:]]),
         screen,
-        [["Protein", "Fold Change"], ["Rbsb", "0.003"]],
-        [["Protein", "Fold Change"], ["Pp_2686", "459.0"]],
+        _differential_rows(DIFFERENTIAL_DOWN, descending=False),
+        _differential_rows(DIFFERENTIAL_UP, descending=True),
         [["Plasmid No.", "Plasmid description"], ["pIY989", "pRSF1010-Gm-dCas9"]],
         _oligo_rows(),
     ]
@@ -371,6 +416,15 @@ def synthetic_docx(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(y26, "TABLE_S3_ROWS", len(SCREEN_ROWS))
     monkeypatch.setattr(y26, "SCREEN_SAMPLES", len(SCREEN_ROWS))
     monkeypatch.setattr(y26, "NOT_DETECTED_COUNT", SCREEN_ND)
+    monkeypatch.setattr(
+        y26,
+        "DIFFERENTIAL_PANELS",
+        (
+            ("S4", "downregulated", len(DIFFERENTIAL_DOWN)),
+            ("S5", "upregulated", len(DIFFERENTIAL_UP)),
+        ),
+    )
+    monkeypatch.setattr(y26, "DIFFERENTIAL_STRAIN_TARGET", SCREEN_LOCI[0][0])
     tables = y26.read_docx_tables(path)
     monkeypatch.setattr(
         y26,
@@ -1576,6 +1630,107 @@ def test_real_screened_targets_all_resolve_to_kt2440_loci() -> None:
 
 
 @pytest.mark.data
+def test_real_differential_tables_hold_the_counts_and_the_oracles() -> None:
+    """Tables S4 and S5 on the real bytes: 145 + 193 rows, 305 of 338 keys resolving."""
+    root = _data_root_or_skip()
+    path = y26.raw_mirror_dir(root) / y26.SI_MIRROR_RELPATH
+    if not path.exists():
+        pytest.skip("the raw mirror is not deposited")
+    tables = y26.supplementary_tables(path)
+    rows = y26.read_differential(tables)
+    assert len(rows) == 338
+    assert sum(1 for row in rows if row.direction == "downregulated") == 145
+    assert sum(1 for row in rows if row.direction == "upregulated") == 193
+    assert len({row.protein for row in rows}) == 338
+    assert rows[0].protein == "Rbsb"
+    assert rows[0].fold_change == pytest.approx(0.003286423)
+    assert rows[145].protein == "Pp_2686"
+    assert rows[145].fold_change == pytest.approx(459.0034538)
+    assert max(abs(math.log2(r.fold_change) - r.log2_fold_change) for r in rows) < 1e-6
+    printed = [row[6].strip() for name in ("S4", "S5") for row in tables[name][1:]]
+    assert len(printed) == 338
+    assert sum(1 for cell in printed if "E" in cell.upper()) == 23
+    worst = max(
+        abs(10.0**-row.neg_log10_p_value - row.p_value) / row.p_value for row in rows
+    )
+    assert worst == pytest.approx(3.2488e-3, rel=1e-3)
+    assert worst < y26._P_VALUE_TOL
+
+
+@pytest.mark.data
+def test_the_knocked_down_gene_is_absent_from_both_real_tables() -> None:
+    """The audit's claim, re-measured, plus the reason it holds: Kgdb is PP_4188."""
+    root = _data_root_or_skip()
+    path = y26.raw_mirror_dir(root) / y26.SI_MIRROR_RELPATH
+    if not path.exists():
+        pytest.skip("the raw mirror is not deposited")
+    tables = y26.supplementary_tables(path)
+    rows = y26.read_differential(tables)
+    assert y26.DIFFERENTIAL_STRAIN_TARGET == "PP_4188"
+    assert not any(row.protein == "PP_4188" for row in rows)
+    assert not any("4188" in row.protein for row in rows)
+    kgdb = next(row for row in rows if row.protein == "Kgdb")
+    assert kgdb.accession == "Q88FB0"
+    assert kgdb.description == (
+        "Dihydrolipoyllysine-residue succinyltransferase component of 2-oxoglutarate "
+        "dehydrogenase complex"
+    )
+    assert kgdb.fold_change == pytest.approx(0.238537433)
+    kgda = next(row for row in rows if row.protein == "Kgda")
+    assert kgda.accession == "Q88FA9"
+    assert kgda.description == "2-oxoglutarate dehydrogenase, E1 component"
+
+    from torchcell.datasets.bacteria_common import (
+        bacterial_genome,
+        reconcile_locus_tags,
+    )
+
+    genome = bacterial_genome("pputida", "KT2440", root)
+    exact, _ = genome.feature_index["symbol"]
+    assert exact.get("sucB") == ["PP_4188"]
+    assert exact.get("sucA") == ["PP_4189"]
+    assert exact.get("kgdB") is None
+    keys = sorted({row.protein for row in rows})
+    stored, report = reconcile_locus_tags(
+        genome, pd.Series(keys, dtype=object), label="yunus_differential"
+    )
+    assert report.unique_names == 338
+    assert report.resolved == 305
+    assert report.resolved_fraction == pytest.approx(305 / 338)
+    assert report.resolved_fraction >= (
+        y26.CrispriDifferentialProteomeYunus2026Dataset.MIN_RESOLVED_FRACTION
+    )
+    outside = set(report.outside_namespace)
+    assert len(outside) == 33
+    assert {"Kgda", "Kgdb"} <= outside
+    resolved = dict(zip(keys, stored.tolist(), strict=True))
+    assert not [key for key, tag in resolved.items() if tag == "PP_4188"]
+
+
+@pytest.mark.data
+def test_every_docx_sourced_quote_is_verbatim_in_the_pinned_bytes() -> None:
+    """The three values quoted from the docx, audited against the parsed docx itself."""
+    root = _data_root_or_skip()
+    path = y26.raw_mirror_dir(root) / y26.SI_MIRROR_RELPATH
+    if not path.exists():
+        pytest.skip("the raw mirror is not deposited")
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == y26.SI_DOCX_SHA256
+    with zipfile.ZipFile(path) as archive:
+        document = archive.read("word/document.xml")
+    import xml.etree.ElementTree as ElementTree
+
+    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    body = ElementTree.fromstring(document).find(f"{namespace}body")
+    assert body is not None
+    text = {
+        "".join(node.text or "" for node in child.iter(f"{namespace}t")).strip()
+        for child in body
+    }
+    for name, value in y26.SI_SOURCED_VALUES.items():
+        assert value.quote in text, name
+
+
+@pytest.mark.data
 def test_real_builds_pass_l0_to_l4() -> None:
     """Both built dev-tree LMDBs pass the protein family gate and both L4 rules."""
     root = _data_root_or_skip()
@@ -1584,6 +1739,188 @@ def test_real_builds_pass_l0_to_l4() -> None:
             pytest.skip(f"{name} is not built in the dev tree")
         report = y26.run_verification(name, root)
         assert report.passed, report.summary()
+
+
+# --------------------------------------------------------------------------- #
+# Synthetic: the PP_4188 differential (Tables S4 and S5)
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def built_differential(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> Any:
+    """The differential family built over the synthetic mirror and annotation."""
+    return y26.CrispriDifferentialProteomeYunus2026Dataset(
+        root=str(tmp_path / "build" / "differential"), pputida_genome=synthetic_kt2440
+    )
+
+
+def test_the_differential_parser_types_every_released_column(
+    synthetic_docx: Path,
+) -> None:
+    """Nine columns, both halves, and the keys of the two tables are disjoint."""
+    tables = y26.supplementary_tables(synthetic_docx)
+    rows = y26.read_differential(tables)
+    assert len(rows) == len(DIFFERENTIAL_DOWN) + len(DIFFERENTIAL_UP)
+    down = [row for row in rows if row.direction == "downregulated"]
+    up = [row for row in rows if row.direction == "upregulated"]
+    assert {row.protein for row in down} == {key for key, _, _ in DIFFERENTIAL_DOWN}
+    assert {row.protein for row in up} == {key for key, _, _ in DIFFERENTIAL_UP}
+    assert all(row.fold_change < 1.0 for row in down)
+    assert all(row.fold_change > 1.0 for row in up)
+    assert [row.rank for row in down] == list(range(1, len(down) + 1))
+    assert [row.fold_change for row in down] == sorted(row.fold_change for row in down)
+    assert [row.fold_change for row in up] == sorted(
+        (row.fold_change for row in up), reverse=True
+    )
+
+
+@pytest.mark.parametrize(
+    ("column", "value", "match"),
+    [
+        (5, "0.0", "are not one quantity"),
+        (6, "0.9", "beyond the printed precision"),
+        (8, "99", "is not 1.."),
+    ],
+)
+def test_a_differential_column_that_lost_its_relation_is_refused(
+    synthetic_docx: Path, column: int, value: str, match: str
+) -> None:
+    """Each derived column is an oracle on the released bytes, not decoration."""
+    rows = [list(row) for row in y26.supplementary_tables(synthetic_docx)["S4"]]
+    rows[1][column] = value
+    with pytest.raises(y26.TableExtractionError, match=match):
+        y26.parse_differential(rows, table="S4", direction="downregulated")
+
+
+def test_a_differential_row_on_the_wrong_side_of_one_is_refused(
+    synthetic_docx: Path,
+) -> None:
+    """A fold change above 1 cannot be in the downregulated table."""
+    rows = [list(row) for row in y26.supplementary_tables(synthetic_docx)["S4"]]
+    rows[1][4] = "4.0"
+    rows[1][5] = repr(math.log2(4.0))
+    with pytest.raises(y26.TableExtractionError, match="in the downregulated table"):
+        y26.parse_differential(rows, table="S4", direction="downregulated")
+
+
+def test_a_panel_row_count_that_moved_is_refused(synthetic_docx: Path) -> None:
+    """The pinned per-panel row count is asserted before a record is written."""
+    tables = y26.supplementary_tables(synthetic_docx)
+    with pytest.raises(y26.TableExtractionError, match="holds 6 rows, pinned 99"):
+        y26.read_differential(
+            tables, (("S4", "downregulated", 99), ("S5", "upregulated", 5))
+        )
+
+
+def test_the_differential_record_is_one_profile_on_its_own_scale(
+    built_differential: Any,
+) -> None:
+    """One record, the resolvable keys only, on a measurement_type of its own."""
+    assert len(built_differential) == 1
+    record = built_differential[0]
+    phenotype = record["experiment"]["phenotype"]
+    assert phenotype["measurement_type"] == y26.DIFFERENTIAL_MEASUREMENT_TYPE
+    assert phenotype["measurement_type"] != y26.MEASUREMENT_TYPE
+    expected = {
+        key
+        for key, _, _ in (*DIFFERENTIAL_DOWN, *DIFFERENTIAL_UP)
+        if key.startswith("PP_")
+    }
+    assert set(phenotype["protein_abundance"]) == expected
+    assert phenotype["protein_abundance"]["PP_0101"] == pytest.approx(0.05)
+    assert phenotype["protein_abundance"]["PP_0104"] == pytest.approx(8.0)
+    assert set(phenotype["n_replicates"].values()) == {y26.DIFFERENTIAL_N_REPLICATES}
+    assert phenotype["protein_abundance_se"] is None
+    assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
+        "protein_abundance_se"
+    ]
+    reference = record["reference"]["phenotype_reference"]
+    assert set(reference["protein_abundance"].values()) == {
+        y26.REFERENCE_RELATIVE_EXPRESSION
+    }
+    assert reference["measurement_type"] == y26.DIFFERENTIAL_MEASUREMENT_TYPE
+
+
+def test_the_differential_genotype_is_the_knocked_down_gene_with_its_spacer(
+    built_differential: Any,
+) -> None:
+    """One CRISPRi perturbation, and the knocked-down gene is NOT a measured key."""
+    record = built_differential[0]
+    perturbations = record["experiment"]["genotype"]["perturbations"]
+    assert len(perturbations) == 1
+    assert perturbations[0]["perturbation_type"] == "bacterial_crispr_interference"
+    assert perturbations[0]["systematic_gene_name"] == SCREEN_LOCI[0][0]
+    assert perturbations[0]["crispr"]["guide_sequence"] == OLIGO_SPECS[0][1]
+    assert (
+        SCREEN_LOCI[0][0] not in record["experiment"]["phenotype"]["protein_abundance"]
+    )
+
+
+def test_a_differential_table_that_measures_the_knocked_down_gene_is_refused(
+    synthetic_docx: Path,
+) -> None:
+    """A strain's own target cannot also be one of its measured fold changes."""
+    tables = y26.supplementary_tables(synthetic_docx)
+    rows = y26.read_differential(tables)
+    screen = y26.parse_table_s3(tables["S3"])
+    cls = y26.CrispriDifferentialProteomeYunus2026Dataset
+    cls._assert_the_knocked_down_gene_is_not_a_measured_key(rows, screen)
+    clashing = [
+        *rows,
+        rows[0].model_copy(update={"protein": y26.DIFFERENTIAL_STRAIN_TARGET}),
+    ]
+    with pytest.raises(y26.TableExtractionError, match="is this record's genotype"):
+        cls._assert_the_knocked_down_gene_is_not_a_measured_key(clashing, screen)
+    with pytest.raises(y26.TableExtractionError, match="no longer screens"):
+        cls._assert_the_knocked_down_gene_is_not_a_measured_key(rows, [])
+
+
+def test_the_differential_drop_log_accounts_for_the_unresolvable_keys(
+    built_differential: Any,
+) -> None:
+    """Every released row is either in the profile or in the ledger with stored=False."""
+    preprocess = Path(built_differential.preprocess_dir)
+    drops = json.loads((preprocess / "dropped_records.json").read_text())
+    assert drops["source_rows"] == len(DIFFERENTIAL_DOWN) + len(DIFFERENTIAL_UP)
+    assert drops["candidate_records"] == 1
+    assert drops["kept_records"] == 1
+    assert drops["dropped_records"] == 0
+    ledger = pd.read_csv(preprocess / "differential.csv")
+    assert len(ledger) == drops["source_rows"]
+    assert set(ledger.loc[~ledger["stored"], "protein"]) == {"Notagene"}
+    assert set(ledger.columns) >= {"p_value", "neg_log10_p_value", "rank"}
+    for note in y26.DIFFERENTIAL_NOT_STORED:
+        assert note in drops["notes"]
+
+
+def test_the_two_columns_blocked_on_gap_r_are_read_and_never_stored(
+    built_differential: Any,
+) -> None:
+    """The p-value and the rank reach the ledger and no record field."""
+    record = built_differential[0]
+    phenotype = record["experiment"]["phenotype"]
+    assert set(phenotype) & {"p_value", "rank", "protein_abundance_p_value"} == set()
+    ledger = pd.read_csv(Path(built_differential.preprocess_dir) / "differential.csv")
+    assert ledger["p_value"].notna().all()
+    assert "p-value" in y26.DIFFERENTIAL_NOT_STORED[0].lower()
+    assert "Rank" in y26.DIFFERENTIAL_NOT_STORED[1]
+
+
+def test_the_docx_sourced_values_are_kept_out_of_the_text_audit_loop() -> None:
+    """``audit_sourced_value`` reads its artifact as text, so a docx quote cannot be
+    found there; the three docx-quoted values live in their own dict.
+    """
+    assert set(y26.SI_SOURCED_VALUES) == {
+        "differential_replicates",
+        "differential_down_caption",
+        "differential_up_caption",
+    }
+    assert set(y26.SI_SOURCED_VALUES) & set(y26.SOURCED_VALUES) == set()
+    for value in y26.SI_SOURCED_VALUES.values():
+        assert value.provenance.sha256 == y26.SI_DOCX_SHA256
+        assert value.provenance.source_uri == y26.SI_MIRROR_RELPATH
+    for value in y26.SOURCED_VALUES.values():
+        assert value.provenance.source_uri == y26.PAPER_MD
 
 
 # --------------------------------------------------------------------------- #
@@ -1642,6 +1979,7 @@ def test_main_build_then_verify_runs_both_families(
     roots = {
         "crispri_knockdown_yunus2026": "data/torchcell/knockdown",
         "crispri_array_yunus2026": "data/torchcell/array",
+        "crispri_differential_proteome_yunus2026": "data/torchcell/differential",
     }
     for name, rel in roots.items():
         monkeypatch.setitem(y26.DATASETS[name], "root", rel)
@@ -1649,6 +1987,7 @@ def test_main_build_then_verify_runs_both_families(
     out = capsys.readouterr().out
     assert "CrispriKnockdownYunus2026Dataset: len = " in out
     assert "CrispriArrayYunus2026Dataset: len = " in out
+    assert "CrispriDifferentialProteomeYunus2026Dataset: len = 1" in out
     assert y26.main(["verify"]) == 0
     assert "PASS" in capsys.readouterr().out
 

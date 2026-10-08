@@ -10,6 +10,7 @@ from torchcell.adapters import (
     CaudalPanTranscriptome2024Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
+    CrispriDifferentialProteomeYunus2026Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
@@ -159,6 +160,7 @@ from torchcell.datasets.pputida.menasalvas2025 import (
 )
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
+    CrispriDifferentialProteomeYunus2026Dataset,
     CrispriKnockdownYunus2026Dataset,
 )
 from torchcell.datasets.scerevisiae.auesukaree2009 import (
@@ -334,5 +336,8 @@ dataset_adapter_map = {
     ProteomeLim2025Dataset: ProteomeLim2025Adapter,
     IsoprenolSelectionMenasalvas2025Dataset: IsoprenolSelectionMenasalvas2025Adapter,
     CrispriArrayYunus2026Dataset: CrispriArrayYunus2026Adapter,
+    CrispriDifferentialProteomeYunus2026Dataset: (
+        CrispriDifferentialProteomeYunus2026Adapter
+    ),
     CrispriKnockdownYunus2026Dataset: CrispriKnockdownYunus2026Adapter,
 }

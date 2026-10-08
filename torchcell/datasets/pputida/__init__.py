@@ -60,5 +60,8 @@ from .menasalvas2025 import (
 )
 from .yunus2026 import CrispriArrayYunus2026Dataset as CrispriArrayYunus2026Dataset
 from .yunus2026 import (
+    CrispriDifferentialProteomeYunus2026Dataset as CrispriDifferentialProteomeYunus2026Dataset,
+)
+from .yunus2026 import (
     CrispriKnockdownYunus2026Dataset as CrispriKnockdownYunus2026Dataset,
 )

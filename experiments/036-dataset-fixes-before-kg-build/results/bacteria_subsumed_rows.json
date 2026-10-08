@@ -1,0 +1,293 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
+  "measured_at": "2026-10-08T21:39:22.276587+00:00",
+  "rows": {
+    "Butland 2008": {
+      "citation_key": "butlandESGAColiSynthetic2008",
+      "doi": "10.1038/nmeth.1239",
+      "title": "eSGA: E. coli synthetic genetic array analysis",
+      "row_name": "Butland 2008",
+      "row_rank": 33,
+      "decision": "partly_subsumed_loader_warranted",
+      "served_coverage": {
+        "served_dataset": "GeneInteractionBabu2014Dataset",
+        "served_store": "$DATA_ROOT/data/torchcell/gene_interaction_babu2014",
+        "served_records": 38579,
+        "records_from_this_paper": 727,
+        "released_instances": 314847,
+        "released_instances_basis": "the S scores of Supplementary Table 4, one per (query strain, recipient strain), which the workbook releases unfiltered",
+        "attribution_field": "GeneInteractionPhenotype.screen_id",
+        "attribution_value": "Butland et al.",
+        "served_fraction": 0.0023090580504181394
+      },
+      "release_files": [
+        {
+          "relpath": "paper.md",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "paper_ocr",
+          "bytes": 36906,
+          "sha256": "a3da20a90b56b85e1cd7e23e784c318e78cec115b5bc3e94afcd89a5f94f8eef",
+          "source_url": "https://doi.org/10.1038/nmeth.1239",
+          "retrieval_method": "zotero_attachment",
+          "retrieval_command": "torchcell.literature.ocr.ocr_pdf(paper.pdf) over the Zotero attachment captured by torchcell.literature.capture",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "the paper's own statement of the array, the 39 screens and the 1,288 high-confidence interactions"
+        },
+        {
+          "relpath": "si/si1.md",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "si_ocr",
+          "bytes": 64216,
+          "sha256": "a5e1648bea298f26ab23cb80de96c1c68f7aa7d5d6420aa56608991bc65aa278",
+          "source_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM305_ESM.pdf",
+          "retrieval_method": "springer_esm",
+          "retrieval_command": "torchcell.literature.ocr.ocr_pdf(si/si1.pdf) over the springer_esm capture",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "Supplementary Methods: the batch scoring of the 39 screens"
+        },
+        {
+          "relpath": "si/si2.xls",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "si_data",
+          "bytes": 717824,
+          "sha256": "7e088873d486307183fbc0eff98b2a29b452c3e3abe8a636979966fd7b49deea",
+          "source_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM306_ESM.xls",
+          "retrieval_method": "springer_esm",
+          "retrieval_command": "torchcell.literature.retrieve.springer_esm(url='https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM306_ESM.xls')",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "Supplementary Table 1: the recipient array, one row per strain with its b-number and its non-essential / SPA-tag essential label"
+        },
+        {
+          "relpath": "si/si3.xls",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "si_data",
+          "bytes": 32768,
+          "sha256": "67886f46c2b6561d40f9c7fc24b56b6e6cfdf199d1c13cfa4acfa59fd75d9ef1",
+          "source_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM307_ESM.xls",
+          "retrieval_method": "springer_esm",
+          "retrieval_command": "torchcell.literature.retrieve.springer_esm(url='https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM307_ESM.xls')",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "Supplementary Table 2: the query deletion strains of the 39 screens"
+        },
+        {
+          "relpath": "si/si4.xls",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "si_data",
+          "bytes": 290816,
+          "sha256": "a2ecd1071d665af77d4f7ae32c10b335b1f5ed8616de0ceb95f0f53c9ad24024",
+          "source_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM308_ESM.xls",
+          "retrieval_method": "springer_esm",
+          "retrieval_command": "torchcell.literature.retrieve.springer_esm(url='https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM308_ESM.xls')",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "Supplementary Table 3: the high-confidence interactions with their S-score, |Z score| and Log2(Q/R)"
+        },
+        {
+          "relpath": "si/si5.xls",
+          "mirror": "torchcell-library",
+          "citation_key": "butlandESGAColiSynthetic2008",
+          "role": "si_data",
+          "bytes": 36617216,
+          "sha256": "74a6ea3a0373fa6e1776b0becb4212f29b9876647b96327db5222dcd68a8822b",
+          "source_url": "https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM309_ESM.xls",
+          "retrieval_method": "springer_esm",
+          "retrieval_command": "torchcell.literature.retrieve.springer_esm(url='https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/41592_2008_BFnmeth1239_MOESM309_ESM.xls')",
+          "retrieved_at": "2026-10-07T09:58:24.878215+00:00",
+          "purpose": "Supplementary Table 4: the unfiltered 39-screen matrix in four layers, raw colony sizes, normalized median colony sizes, |Z scores| and S scores"
+        },
+        {
+          "relpath": "data/si22.xls",
+          "mirror": "torchcell-raw",
+          "citation_key": "babuQuantitativeGenomeWideGenetic2014",
+          "role": "raw_data",
+          "bytes": 63488,
+          "sha256": "7506c2edc9975d0e331d152e47fa17d4ef7203999b5a8f6a6cd136ef76f7dda7",
+          "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC3930520.1/pgen.1004120.s022.xls",
+          "retrieval_method": "pmc_cloud",
+          "retrieval_command": "torchcell.literature.retrieve.pmc_cloud(url='https://pmc-oa-opendata.s3.amazonaws.com/PMC3930520.1/pgen.1004120.s022.xls')",
+          "retrieved_at": "2026-10-07T09:17:40.083033+00:00",
+          "purpose": "Babu 2014 Table S1: which screen set each donor came from, and how many pairs that donor was tested against"
+        },
+        {
+          "relpath": "data/si23.xls",
+          "mirror": "torchcell-raw",
+          "citation_key": "babuQuantitativeGenomeWideGenetic2014",
+          "role": "raw_data",
+          "bytes": 3015168,
+          "sha256": "0789563ada0db3e349bb7e5396311f9d705ea165090733803c009acfa7c95b96",
+          "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC3930520.1/pgen.1004120.s023.xls",
+          "retrieval_method": "pmc_cloud",
+          "retrieval_command": "torchcell.literature.retrieve.pmc_cloud(url='https://pmc-oa-opendata.s3.amazonaws.com/PMC3930520.1/pgen.1004120.s023.xls')",
+          "retrieved_at": "2026-10-07T09:17:40.083033+00:00",
+          "purpose": "Babu 2014 Table S2: the released high-confidence pairs the served GeneInteractionBabu2014Dataset is built from"
+        }
+      ],
+      "release_probes": [],
+      "sourced_values": {
+        "recipient_array": {
+          "value": {
+            "non_essential_genes": 3968,
+            "isolate_2": 3956,
+            "strains": 7924
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "butlandESGAColiSynthetic2008",
+            "sha256": "a3da20a90b56b85e1cd7e23e784c318e78cec115b5bc3e94afcd89a5f94f8eef",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Results, 'Global profiling with 39 genome-wide screens'",
+            "retrieved": null
+          },
+          "quote": "The recipient mutant strains (Supplementary Table 1 online) arrayed in twenty-five 384-well plates included the Keio single gene deletion mutant strain collection8 covering 3,968 nonessential single gene replacements marked with a kanamycin-resistance cassette (kan). Of these, 3,956 were represented by two independent single gene deletion isolates, for a total of 7,924 single gene deletion mutants8.",
+          "note": null
+        },
+        "spa_tag_essential_recipients": {
+          "value": 149,
+          "provenance": {
+            "source_uri": "si/si5.xls",
+            "citation_key": "butlandESGAColiSynthetic2008",
+            "sha256": "74a6ea3a0373fa6e1776b0becb4212f29b9876647b96327db5222dcd68a8822b",
+            "method": "spreadsheet cell of the publisher's released workbook",
+            "page": "Supplementary Table 4, every sheet, header cell A3",
+            "retrieved": null
+          },
+          "quote": "Number of Keio deletion strains = 7924\nSPA-tag essential genes = 149",
+          "note": null
+        },
+        "screens": {
+          "value": 39,
+          "provenance": {
+            "source_uri": "si/si1.md",
+            "citation_key": "butlandESGAColiSynthetic2008",
+            "sha256": "a5e1648bea298f26ab23cb80de96c1c68f7aa7d5d6420aa56608991bc65aa278",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Supplementary Methods, colony scoring",
+            "retrieved": null
+          },
+          "quote": "Thirty-nine $E$ . coli genome-wide screens are processed in batch scoring mode using colony scorer program4.",
+          "note": null
+        },
+        "high_confidence_set": {
+          "value": {
+            "pairs": 1288,
+            "non_essential": 799,
+            "aggravating": 730,
+            "alleviating": 69
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "butlandESGAColiSynthetic2008",
+            "sha256": "a3da20a90b56b85e1cd7e23e784c318e78cec115b5bc3e94afcd89a5f94f8eef",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Results, clustering and the high-confidence dataset",
+            "retrieved": null
+          },
+          "quote": "we reclustered the profiles after accounting for linkage (30-kbp window) and used a stringent |Z score| cut-off of $\\geq 4$ $P < 0 . 0 0 0 1$ to create a high-confidence dataset of 1,288 genetic interactions (Fig. 4b and Supplementary Table 3 online). Among these, we detected 799 genetic interactions for nonessential genes, with 730 categorized as aggravating interactions and only 69 as alleviating interactions.",
+          "note": null
+        },
+        "unfiltered_matrix": {
+          "value": {
+            "sheets": 4,
+            "screens": 39
+          },
+          "provenance": {
+            "source_uri": "si/si5.xls",
+            "citation_key": "butlandESGAColiSynthetic2008",
+            "sha256": "74a6ea3a0373fa6e1776b0becb4212f29b9876647b96327db5222dcd68a8822b",
+            "method": "spreadsheet cell of the publisher's released workbook",
+            "page": "Supplementary Table 4, every sheet, title cells A1 and A2 joined by one space",
+            "retrieved": null
+          },
+          "quote": "Supplementary Table 4. Raw colony sizes (see Sheet 1), normalized median colony sizes (see Sheet 2), |Z scores| (see Sheet 3) and interaction (S) scores (see Sheet 4) of each mutant gene pair from 39 genome-wide screens without any filtering parameters.",
+          "note": null
+        },
+        "superset_combines_these_screens": {
+          "value": 39,
+          "provenance": {
+            "source_uri": "si/si7.md",
+            "citation_key": "babuQuantitativeGenomeWideGenetic2014",
+            "sha256": "b060ce3f5277f708675e7f26239d5ee2d357ffb2306a04da326417caad135db9",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Babu 2014 Protocol S2 (pgen.1004120.s007.pdf)",
+            "retrieved": null
+          },
+          "quote": "combined with our previously published GI datasets from 39 genome-wide screens to generate a comprehensive GI network.",
+          "note": null
+        }
+      },
+      "conclusion": "NOT SUBSUMED, and the retrieval blocker is resolved. The served GeneInteractionBabu2014Dataset carries 727 of this paper's measurements under GeneInteractionPhenotype.screen_id == 'Butland et al.', which is 0.23 percent of the 314847 interaction scores Supplementary Table 4 releases without any filtering, over 160563 distinct gene pairs once the two Keio isolates of a gene are collapsed. Babu's release is the high-confidence tail of a re-analysis, not a superset of this one: it re-publishes 1129 rows over these 39 donors, and leaves 490 of this paper's own 1270 high-confidence gene pairs out.",
+      "loadable_slice": "321 of the 799 non-essential high-confidence pairs are absent from Babu's released Table S2 altogether, and the unfiltered Supplementary Table 4 matrix holds 314847 S scores against 727 served records. Both slices load against the existing GeneInteractionPhenotype with no schema change, because Babu's own GI score IS this S score for the pairs the two releases share (793 of 873 matched rows are identical). The 489 SPA-tag essential pairs stay blocked on the hypomorph perturbation leaf the Babu loader already filed.",
+      "measured_at": "2026-10-08T21:39:22.276587+00:00",
+      "script": "experiments/036-dataset-fixes-before-kg-build/scripts/bacteria_subsumed_rows.py",
+      "release": {
+        "array_rows": 8073,
+        "array_non_essential_strains": 7924,
+        "array_isolate_1": 3968,
+        "array_isolate_2": 3956,
+        "array_spa_tag_essential": 149,
+        "array_distinct_recipient_genes": 4117,
+        "query_strains": 39,
+        "matrix_sheets": [
+          "Raw Colony Sizes",
+          "Normalized Colony Sizes",
+          "Z scores",
+          "S scores"
+        ],
+        "matrix_query_columns": 39,
+        "matrix_recipient_rows": 8073,
+        "matrix_cells": 314847,
+        "matrix_populated_cells": 314847,
+        "matrix_distinct_gene_pairs": 160563,
+        "high_confidence_rows": 1379,
+        "high_confidence_ordered_pairs": 1288,
+        "high_confidence_unordered_pairs": 1270,
+        "high_confidence_non_essential_pairs": 799,
+        "high_confidence_non_essential_aggravating": 730,
+        "high_confidence_non_essential_alleviating": 69,
+        "high_confidence_spa_tag_pairs": 489
+      },
+      "versus_superset": {
+        "babu_donors_attributed_to_butland": 39,
+        "babu_tested_pairs_over_those_donors": 151027,
+        "babu_released_rows_over_those_donors": 1129,
+        "babu_released_aggravating": 1045,
+        "babu_released_alleviating": 84,
+        "served_butland_records": 727,
+        "served_butland_unordered_pairs": 697,
+        "served_butland_donors": 38,
+        "butland_query_genes_with_no_served_record": [
+          "b0130"
+        ],
+        "hc_pairs_in_babu_release": 780,
+        "hc_pairs_absent_from_babu_release": 490,
+        "hc_non_essential_pairs_absent": 321,
+        "hc_spa_tag_pairs_absent": 169,
+        "hc_pairs_in_served_store": 460,
+        "hc_pairs_served_under_butland_tag": 451,
+        "hc_rows_matched_same_orientation": 873,
+        "hc_rows_with_identical_score": 793,
+        "hc_rows_with_rescored_value": 80,
+        "hc_rows_max_abs_score_difference": 9.93036,
+        "hc_rows_matched_only_reversed": 65
+      }
+    }
+  },
+  "quote_audit": {
+    "Butland 2008": {
+      "recipient_array": "value backed by verbatim quote in paper.md",
+      "spa_tag_essential_recipients": "checked against the pinned spreadsheet cell of the publisher's released workbook by the row's own measurement, not by the text audit",
+      "screens": "value backed by verbatim quote in si1.md",
+      "high_confidence_set": "value backed by verbatim quote in paper.md",
+      "unfiltered_matrix": "checked against the pinned spreadsheet cell of the publisher's released workbook by the row's own measurement, not by the text audit",
+      "superset_combines_these_screens": "value backed by verbatim quote in si7.md"
+    }
+  },
+  "written": [
+    "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/manifest.json",
+    "/scratch/projects/torchcell-scratch/torchcell-raw/butlandESGAColiSynthetic2008/subsumption_record.json"
+  ]
+}

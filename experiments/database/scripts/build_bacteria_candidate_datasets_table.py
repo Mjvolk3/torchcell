@@ -999,32 +999,54 @@ CANDIDATES: list[Candidate] = [
         url="https://doi.org/10.1038/nmeth.1239",
         klass="Genetic interaction",
         tier=1,
-        genotypes_n=155415,
-        genotypes="155,415 double mutants",
+        genotypes_n=314847,
+        genotypes="314,847 double mutants",
         env_n=1,
         env="1 condition",
-        instances_n=155415,
-        instances_basis="estimate",
+        instances_n=314847,
+        instances_basis="reported",
         phenotype="colony size interaction (S) score",
         dim=1,
-        dim_basis="estimate",
+        dim_basis="reported",
         seq_basis="K-12-KO x KO",
         modality="double deletion",
-        why="Only the citation fields and the abstract-level method description "
-        "could be confirmed: a quantitative screening procedure based on "
-        "conjugation of E. coli deletion or hypomorphic strains to create "
-        "double mutants on a genome-wide scale. The article is closed access "
-        "with no PMC deposit, and nature.com, Springer static content and "
-        "mirror sites all refused fetching, so the number of query genes, "
-        "array strains and screened pairs are all unconfirmed. A search "
-        "snippet suggesting 39 genome-wide screens, which would give roughly "
-        "39 by 3985 or 155415 pairs, could not be verified on any fetched "
-        "page, so the counts above are an unverified estimate and the row is "
-        "marked blocked pending a paywalled retrieval.",
-        accession="",
-        accession_confirmed=False,
-        status="blocked",
-        confidence="recall",
+        why="MEASURED 2026-10-08 and NO LONGER BLOCKED. The retrieval blocker is "
+        "gone: the paper and five SI files are in the mirror, so every count "
+        "this row used to call an unverified estimate is now read from pinned "
+        "bytes by experiments/036-dataset-fixes-before-kg-build/scripts/"
+        "bacteria_subsumed_rows.py (issue #794). Supplementary Table 2 lists "
+        "exactly 39 query strains. Supplementary Table 1 lists the recipient "
+        "array as 7,924 Keio deletion strains, two isolates of 3,968 genes, "
+        "plus 149 SPA-tag essential hypomorphs: 8,073 rows over 4,117 "
+        "distinct genes. Supplementary Table 4 then releases the whole 39 by "
+        "8,073 matrix in four layers, raw colony sizes, normalized median "
+        "colony sizes, absolute Z scores and S scores, and says it does so "
+        "without any filtering parameters: all 314,847 cells are populated in "
+        "every layer, which collapses to 160,563 distinct gene pairs. "
+        "Supplementary Table 3's high-confidence set is 1,288 distinct "
+        "ordered pairs, of which 799 are non-essential and split 730 "
+        "aggravating and 69 alleviating exactly as the Results state, plus "
+        "489 whose recipient is a SPA-tag hypomorph. THE SUBSUMPTION IS "
+        "MEASURED AND IT IS SMALL, which is the opposite of the triage this "
+        "row inherited: the served GeneInteractionBabu2014Dataset carries 727 "
+        "records tagged screen_id Butland et al., 0.23 percent of the "
+        "released matrix, because Babu's Table S2 is the high-confidence tail "
+        "of a re-analysis and not a superset of this release. Babu "
+        "re-publishes 1,129 rows over these same 39 donors and omits 490 of "
+        "this paper's own 1,270 high-confidence gene pairs, 321 of them "
+        "non-essential; where the two releases share a pair the number is the "
+        "same number, 793 of 873 same-orientation rows identical, so loading "
+        "this release adds records rather than a second score definition. A "
+        "loader is therefore warranted and the row stays on the schedule. The "
+        "489 SPA-tag pairs stay blocked on the hypomorph perturbation leaf "
+        "the Babu loader already filed, and the raw and normalized colony "
+        "sizes need a colony-size phenotype class that does not exist. "
+        "Provenance record: $DATA_ROOT/torchcell-raw/"
+        "butlandESGAColiSynthetic2008/subsumption_record.json.",
+        accession="https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1239/MediaObjects/",
+        accession_confirmed=True,
+        status="candidate",
+        confidence="sourced",
         analog=Analog(
             dataset="Costanzo 2016 SGA", why="conjugation analog of yeast SGA"
         ),

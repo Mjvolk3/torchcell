@@ -4,7 +4,7 @@
 arm & change against the reference & \shortstack[r]{split\\seeds\\run} & \shortstack[r]{collapsed\\or never\\launched} & \shortstack[r]{complete\\at 1{,}200\\epochs} & \shortstack[r]{mean val Pearson\\per feature, epochs\\1{,}000 to 1{,}200\\(complete runs)} & \shortstack[r]{mean paired\\difference vs F\_ref\\($n$ shared split seeds)} & \shortstack[r]{s per\\epoch} \\
 \midrule
 F\_ref & the v21 reference: batch 32, lr $3\times10^{-4}$, six layers, width 90 & 3 & 0 & 3 & 0.062 & +0.000 (3) & 24.0 \\
-F\_b128lr1 & batch 128, lr $3\times10^{-4}$ & 3 & 0 & 3 & \textbf{0.075} & +0.013 (3) $\uparrow$ & 11.4 \\
+F\_b128lr1 & batch 128, lr $3\times10^{-4}$ & 11 & 0 & 11 & \textbf{0.082} & +0.013 (3) $\uparrow$ & 13.5 \\
 F\_b128 & batch 128, lr $6\times10^{-4}$ & 3 & 2 & 1 & 0.059 & +0.000 (1) & 10.2 \\
 F\_b128wu & batch 128, lr $6\times10^{-4}$ after a 50-epoch warmup & 3 & 0 & 3 & 0.067 & +0.005 (3) & 11.4 \\
 F\_b128lr4 & batch 128, lr $1.2\times10^{-3}$ & 3 & 3 & 0 &  &  & 12.0 \\

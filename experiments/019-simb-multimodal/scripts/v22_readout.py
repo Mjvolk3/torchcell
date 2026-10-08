@@ -180,18 +180,33 @@ def main() -> None:
             }
             if not diffs:
                 continue
+            # The healthy pairs: neither run collapsed (dead stretch under 50 epochs).
+            healthy = {
+                s: d
+                for s, d in diffs.items()
+                if runs[arm][s]["longest_dead_stretch"] < 50 and runs[ref][s]["longest_dead_stretch"] < 50
+            }
             vals = list(diffs.values())
+            hv = list(healthy.values())
             contrasts[f"{arm} - {ref}"] = {
                 "per_split": diffs,
                 "mean": st.mean(vals),
                 "sd": st.stdev(vals) if len(vals) > 1 else None,
                 "n_positive": sum(v > 0 for v in vals),
                 "n": len(vals),
+                "healthy": {
+                    "per_split": healthy,
+                    "mean": st.mean(hv) if hv else None,
+                    "sd": st.stdev(hv) if len(hv) > 1 else None,
+                    "n_positive": sum(v > 0 for v in hv),
+                    "n": len(hv),
+                },
             }
             print(
                 f"{arm} - {ref}: mean {st.mean(vals):+.4f} over {len(vals)} split seeds, "
                 f"{sum(v > 0 for v in vals)} positive, per split "
                 + ", ".join(f"{s}: {v:+.4f}" for s, v in diffs.items())
+                + (f"; healthy pairs {st.mean(hv):+.4f} over {len(hv)}, {sum(v > 0 for v in hv)} positive" if hv else "")
             )
     for arm, ref, score in EXTRA_CONTRASTS:
         if arm not in runs or ref not in runs:

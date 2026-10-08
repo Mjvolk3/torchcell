@@ -43,10 +43,11 @@ own command line and would never have fired. The relaunched packs end with
 \cref{tab:collapse-census} counts every dead stretch of the two small-trunk rounds. The
 spread ratio falls from 0.1 to 0.3 to below 0.01 between consecutive epochs, and the
 validation loss is equal or lower afterwards, so the per-gene-mean predictor is a stable
-basin rather than a divergence. Of 54 stretches of 50 epochs or more, 10 later returned to a
-spread of 0.05, and of the 29 of 100 or more, 3. Gradient clipping (threshold 10) never
-fired in any run; the per-epoch gradient norm at the collapse epoch is a median 1.14 times
-the mean of the 50 epochs before (quartiles 0.96 to 1.48, 5 of 54 at 2 or more), so a
+basin rather than a divergence. At the 01:50 read, of 54 stretches of 50 epochs or more, 10
+later returned to a spread of 0.05, and of the 29 of 100 or more, 3 (the table is regenerated
+on the finished rounds; \cref{sec:round-complete} gives the final counts). Gradient clipping
+(threshold 10) never fired in any run; the per-epoch gradient norm at the collapse epoch is a
+median 1.14 times the mean of the 50 epochs before (quartiles 0.96 to 1.48, 5 of 54 at 2 or more), so a
 gradient spike is NOT the general trigger, which corrects the reading of three cases on the
 evening of 2026-10-06. Onsets concentrate between epochs 150 and 350, right after launch. By
 arm, on the relaunched v21 round at epochs 491 to 663: Hadamard 8 of 12 collapsed, no

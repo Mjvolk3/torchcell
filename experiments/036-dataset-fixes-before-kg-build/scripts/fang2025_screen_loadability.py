@@ -93,9 +93,7 @@ WANG_CITATION_KEY = "wangPooledCRISPRInterference2018"
 WANG_LIBRARY_REL = (
     f"torchcell-raw/{WANG_CITATION_KEY}/si/si_data/41467_2018_4899_MOESM6_ESM.xlsx"
 )
-WANG_LIBRARY_SHA256 = (
-    "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62"
-)
+WANG_LIBRARY_SHA256 = "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62"
 #: The five screen ids ``CrispriGuideFitnessWang2018Dataset`` serves, in Table 2's order.
 WANG_SCREEN_IDS = (
     "essentiality",
@@ -115,11 +113,7 @@ ROUNDS: tuple[dict[str, Any], ...] = (
         "sheet": "Figure 1",
         "panel": "Figure 1d",
         "id_col": 10,
-        "read_cols": {
-            "transformation": 11,
-            "before_sorting": 12,
-            "after_sorting": 13,
-        },
+        "read_cols": {"transformation": 11, "before_sorting": 12, "after_sorting": 13},
         "normalized": {"before_sorting": 14, "after_sorting": 15},
         "fitness_col": 16,
         "excluded_cols": {
@@ -377,8 +371,7 @@ def measure_round(path: str, spec: dict[str, Any]) -> dict[str, Any]:
             abs(after - released_after),
         )
         max_fitness_error = max(
-            max_fitness_error,
-            abs(math.log2(after / before) - fitness_all[index]),
+            max_fitness_error, abs(math.log2(after / before) - fitness_all[index])
         )
 
     floor = Counter()
@@ -400,7 +393,8 @@ def measure_round(path: str, spec: dict[str, Any]) -> dict[str, Any]:
         "max_equation_1_error": max_normalized_error,
         "max_equation_2_error": max_fitness_error,
         "floor_cross_tab": {
-            f"passes={p},fitness_populated={f}": n for (p, f), n in sorted(floor.items())
+            f"passes={p},fitness_populated={f}": n
+            for (p, f), n in sorted(floor.items())
         },
         "floor_explains_fitness_column": set(floor) <= {(True, True), (False, False)},
         "n_kept": n_kept,
@@ -436,9 +430,7 @@ def read_wang_library(path: str) -> dict[str, str]:
     )
 
 
-def measure_subsumption(
-    data_root: str, rounds: list[dict[str, Any]]
-) -> dict[str, Any]:
+def measure_subsumption(data_root: str, rounds: list[dict[str, Any]]) -> dict[str, Any]:
     """Match the screened ids against the served Wang 2018 library, id for id."""
     path = osp.join(data_root, WANG_LIBRARY_REL)
     observed = sha256_of(path)
@@ -535,9 +527,11 @@ def main() -> None:
     titers = measure_titer_blocks(si8)
 
     pd.DataFrame(
-        [{k: v for k, v in s.items() if k != "headers"} | {
-            "headers": " | ".join(s["headers"])
-        } for s in sheets]
+        [
+            {k: v for k, v in s.items() if k != "headers"}
+            | {"headers": " | ".join(s["headers"])}
+            for s in sheets
+        ]
     ).to_csv(osp.join(results, "fang2025_screen_sheets.csv"), index=False)
     pd.DataFrame(
         [{k: v for k, v in r.items() if k != "guide_ids"} for r in rounds]

@@ -25,9 +25,11 @@ silent cross-assay mixing"):
 
 THREE NORMALIZATIONS, AND NEITHER OF THE TWO NEW ONES IS RECOVERABLE FROM THE FIRST.
 Data Set S1's 15 columns carry the same (protein, sample) cell on three scales, each as
-its own mean + SD pair (:data:`PROTEOME_NORMALIZATIONS`). The first build asserted all
-15 header cells but read only ``row[7]`` and ``row[8]``, so columns 9 to 14 were parsed
-past. Storing a second and third normalization of one proteome is only worth doing if
+its own mean + SD pair (:data:`PROTEOME_NORMALIZATIONS`). The first build asserted the
+first NINE header cells (``header[: len(PROTEOME_HEADER)]`` against a nine-name tuple) and
+read ``row[7]`` and ``row[8]``, so columns 9 to 14 were neither asserted nor read.
+``PROTEOME_HEADER`` now names all 15 and every one of them reaches a row field or an
+oracle. Storing a second and third normalization of one proteome is only worth doing if
 they cannot be re-derived from the first, and that was MEASURED over every one of the
 34,600 released cells rather than argued:
 

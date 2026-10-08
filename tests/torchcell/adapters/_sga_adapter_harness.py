@@ -371,6 +371,10 @@ def expected_nodes(
                 "pubmed_url": publication.pubmed_url,
                 "doi": publication.doi,
                 "doi_url": publication.doi_url,
+                "source_type": publication.source_type.value,
+                "title": publication.title,
+                "identifier": publication.identifier,
+                "identifier_url": publication.identifier_url,
                 "serialized_data": json.dumps(publication.model_dump()),
             },
         )

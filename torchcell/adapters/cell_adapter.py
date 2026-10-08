@@ -815,6 +815,15 @@ class CellAdapter:
         return nodes
 
     def _get_genome_nodes(self) -> list[BioCypherNode]:
+        """One genome node per distinct reference genome.
+
+        ``serialized_data`` is the whole ``genome_reference.model_dump()``, so a
+        ``StrainReferenceGenome``'s typed ``background`` rides along in full: its
+        ``alleles`` AND its ``integrations`` (the cassettes an engineered host carries at
+        a named site) are in the blob with no per-field adapter change, which is how the
+        background has always reached the graph. ``species`` and ``strain`` stay the
+        queryable scalars.
+        """
         nodes = []
         seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
@@ -2321,16 +2330,27 @@ class CellAdapter:
         publication_id = hashlib.sha256(
             json.dumps(publication.model_dump()).encode("utf-8")
         ).hexdigest()
+        # A non-journal source (a dissertation, a preliminary-exam report, an in-house
+        # measurement) has no PubMed id and no DOI, so the preferred id falls back to
+        # the DOI and then to the deposited document's identifier (path + sha256). The
+        # fallback order is pubmed -> doi -> identifier, and a source carrying none of
+        # the three cannot exist: Publication's validator requires a doi/pmid for a
+        # journal article and an identifier for every other source type.
+        preferred = publication.pubmed_id or publication.doi or publication.identifier
 
         return BioCypherNode(
             node_id=publication_id,
-            preferred_id=f"publication_{publication.pubmed_id}",
+            preferred_id=f"publication_{preferred}",
             node_label="publication",
             properties={
                 "pubmed_id": publication.pubmed_id,
                 "pubmed_url": publication.pubmed_url,
                 "doi": publication.doi,
                 "doi_url": publication.doi_url,
+                "source_type": publication.source_type.value,
+                "title": publication.title,
+                "identifier": publication.identifier,
+                "identifier_url": publication.identifier_url,
                 "serialized_data": json.dumps(publication.model_dump()),
             },
         )

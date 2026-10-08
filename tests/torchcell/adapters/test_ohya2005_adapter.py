@@ -325,6 +325,10 @@ def _expected_nodes() -> list[BioCypherNode]:
             "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/16365294/",
             "doi": "10.1073/pnas.0509436102",
             "doi_url": "https://www.pnas.org/doi/10.1073/pnas.0509436102",
+            "source_type": "journal_article",
+            "title": None,
+            "identifier": None,
+            "identifier_url": None,
             **_serialized(PUBLICATION),
         },
     )

@@ -514,6 +514,10 @@ def test_experiment_genotype_and_publication_nodes_are_content_addressed() -> No
             "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/27708008",
             "doi": "10.1126/science.aaf1420",
             "doi_url": "https://doi.org/10.1126/science.aaf1420",
+            "source_type": "journal_article",
+            "title": None,
+            "identifier": None,
+            "identifier_url": None,
             "serialized_data": json.dumps(PUBLICATION.model_dump()),
         },
     )
@@ -2214,3 +2218,41 @@ def test_shipped_costanzo_edge_factors_never_reach_the_loader_batch(
         _sha(_experiment(0.25)),
     ]
     assert _RecordingLoader.built == [(2, 1)]
+
+
+def test_publication_preferred_id_falls_back_from_pubmed_to_doi_to_identifier() -> None:
+    """A non-journal source has no PubMed id, so the preferred id must not say ``None``.
+
+    The fallback order is pubmed -> doi -> identifier. A source with none of the three
+    cannot exist: ``Publication`` requires a doi/pmid for a journal article and an
+    identifier for every other source type.
+    """
+    adapter = _bare()
+    build = _undecorated(CellAdapter._publication_node)
+
+    doi_only = s.Publication(doi="10.1/x", doi_url="https://doi.org/10.1/x")
+    node = build(adapter, {"publication": doi_only}, "publication (chunked)")
+    assert node.get_preferred_id() == "publication_10.1/x"
+    assert node.get_properties()["source_type"] == "journal_article"
+
+    identifier = "si/prelim-report.pdf sha256:" + "b" * 64
+    report = s.Publication(
+        source_type=s.SourceType.preliminary_report,
+        title="Preliminary examination report",
+        identifier=identifier,
+        identifier_url="https://example.invalid/report.pdf",
+    )
+    node = build(adapter, {"publication": report}, "publication (chunked)")
+    assert node.get_preferred_id() == f"publication_{identifier}"
+    properties = node.get_properties()
+    assert properties["pubmed_id"] is None
+    assert properties["doi"] is None
+    assert properties["source_type"] == "preliminary_report"
+    assert properties["title"] == "Preliminary examination report"
+    assert properties["identifier"] == identifier
+    assert properties["identifier_url"] == "https://example.invalid/report.pdf"
+    back = s.Publication.model_validate_json(properties["serialized_data"])
+    assert back == report
+    # The node id is content-addressed, so two source kinds never collide.
+    assert node.get_id() == _sha(report)
+    assert node.get_id() != _sha(doi_only)

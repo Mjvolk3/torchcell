@@ -22,6 +22,7 @@ from torchcell.adapters import (
     DmMicroarraySameith2015Adapter,
     EnvChemgenAuesukaree2009Adapter,
     EnvChemgenCostanzo2021Adapter,
+    EnvChemgenGirgis2009Adapter,
     EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
     EnvChemgenShiver2016Adapter,
@@ -89,6 +90,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
+from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
@@ -257,6 +259,7 @@ dataset_adapter_map = {
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
+    EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,

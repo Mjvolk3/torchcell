@@ -61,6 +61,7 @@ datasets:
   - GrowthRateCampos2018Dataset
   - CrispriKnockdownCui2018Dataset
   - MetabolomeFuhrer2017Dataset
+  - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset
   - ProteinTurnoverGupta2024Dataset
   - RnaseqLamoureux2023Dataset

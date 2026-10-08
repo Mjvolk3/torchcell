@@ -59,6 +59,7 @@ from torchcell.adapters import (
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     CrispriScreenRousset2018Adapter,
+    EnvChemgenGirgis2009Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -92,6 +93,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
+from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
@@ -230,6 +232,13 @@ BACTERIAL: list[Bacterial] = [
         MetabolomeFuhrer2017Dataset,
         "metabolite phenotype",
         env_perturbation=False,
+    ),
+    _case(
+        EnvChemgenGirgis2009Adapter,
+        "girgis2009",
+        "ecoli_env_chemgen_girgis2009",
+        EnvChemgenGirgis2009Dataset,
+        RESPONSE,
     ),
     _case(
         GeneEssentialityGoodall2018Adapter,

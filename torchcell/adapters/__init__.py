@@ -54,6 +54,9 @@ from .desiqueira2025_titer_adapter import (
 from .fuhrer2017_adapter import (
     MetabolomeFuhrer2017Adapter as MetabolomeFuhrer2017Adapter,
 )
+from .girgis2009_adapter import (
+    EnvChemgenGirgis2009Adapter as EnvChemgenGirgis2009Adapter,
+)
 from .goodall2018_adapter import (
     GeneEssentialityGoodall2018Adapter as GeneEssentialityGoodall2018Adapter,
 )
@@ -268,6 +271,7 @@ ecoli_adapters = [
     "GrowthRateCampos2018Adapter",
     "CrispriKnockdownCui2018Adapter",
     "MetabolomeFuhrer2017Adapter",
+    "EnvChemgenGirgis2009Adapter",
     "GeneEssentialityGoodall2018Adapter",
     "ProteinTurnoverGupta2024Adapter",
     "RnaseqLamoureux2023Adapter",

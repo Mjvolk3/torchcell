@@ -382,3 +382,47 @@ deep inside the background's provenance. `ROUND_STRAIN_GENOTYPES` is therefore a
 round order, with `ROUND_STRAIN` as the derived round-keyed lookup for code. Any
 `SourcedValue` that is embedded in a record (rather than only read at build time, like
 `FURFURAL_MM`) has to be JSON-stable.
+
+## 2026.10.08 - Correction: the round edits stay in the genotype, bAID is a shared helper
+
+The move described in the section above went too far in one respect and not far enough in
+another, and both are corrected in this build. The corrected locus claim stands, and so
+does everything else that section records (the strain-resolved family, the typed
+`CultureEnvironment`, the `IntegratedCassette`, the JSON-stability lesson).
+
+**The round's accumulated edits go back INTO the record's `Genotype`.** Round-2 records
+carry 2 perturbations and round-3 records carry 3, the screened guide plus the accumulated
+CRISPR perturbations, exactly as `crispr_perturbation(...)` built them before the move. A
+round-2 record is the 2-perturbation strain in the tube, and the genotype is where that
+belongs. `ROUND_BACKGROUND` is back to `(ORF, common name, mode)` entries, which is also
+what the `guide_targets_its_own_round_background` drop rule reads. The SI's integration
+loci (SIZ1i at X3, NAT1a at X4), the marker-less integration sentence, the pre-selected
+landing pads and the round-to-host legends are kept as a documentation comment on
+`ROUND_BACKGROUND` rather than as reference-background content, so the sourcing is still
+in the module and can be promoted later if the loci become record content.
+
+**Every round's reference uses ONE typed background named `bAID`**: BY4742's four
+auxotrophies plus the single Delta-site `IntegratedCassette`
+`Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]`, marker KanMX. The per-round
+strain strings (`bAID-X3::SIZ1i`, `bAID-X3::SIZ1i-X4::NAT1a`) and `ROUND_STRAIN_GENOTYPES`
+are gone; the strain is `bAID` for all three rounds.
+
+**The background is now a shared helper, `strain_background.baid_background()`**, with
+`BAID_STRAIN = "bAID"`, because the in-house Bioscreen dataset
+(`torchcell/datasets/private_torchcell/`, coming next) was run on the same strain under
+the thesis name **BY4742-iAID6** (pAID6 integrated into BY4742, G418 selection). Both
+datasets therefore join on one typed background rather than on two spellings of one
+strain. The helper carries its own provenance: `BAID_PARENT_GENOTYPE` and `BAID_GENOTYPE`
+quote Supplementary Table 11 against the pinned `si/si1.md`, and `BAID_CONSTRUCTION`
+quotes the paper's construction sentence against the pinned `paper.md`. The loader binds
+them as `HOST`, `HOST_GENOTYPE` and `HOST_PARENT_GENOTYPE`, which keeps them in the
+module's own `SourcedValue` audit, so the quotes are still verified against the mirror by
+`test_every_sourced_value_is_backed_by_its_verbatim_quote`.
+
+Tests: `test_the_reference_genome_is_the_one_shared_baid_background` in
+[[tests.torchcell.datasets.scerevisiae.test_lian2019]] (one background, one cassette), the
+1/2/3 perturbation counts in
+[[tests.torchcell.datasets.scerevisiae.test_lian2019_synthetic]], and
+`test_baid_background_is_by4742_plus_the_delta_site_crispr_aid_cassette` plus
+`test_baid_background_round_trips_through_json_unchanged` in
+[[tests.torchcell.datamodels.test_strain_background]].

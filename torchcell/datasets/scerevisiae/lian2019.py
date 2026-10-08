@@ -14,31 +14,27 @@ pooled CRISPR-AID host, so a single cell carries exactly one guide of exactly on
 
 The unique guide is a genetic barcode; furfural tolerance is mapped by tracking each
 guide's enrichment (furfural-selected vs untreated) by NGS. Screening is ITERATIVE in
-accumulating integrated host strains: round 1 is screened in bAID (5 mM furfural), round
-2 in R1 = bAID-X3::SIZ1i (10 mM), round 3 in R2 = bAID-X3::SIZ1i-X4::NAT1a (15 mM). The
-round's accumulated cassettes are the HOST's, constant across every record of that round
-and shared with its reference strain, so they ride on the reference's typed
-``StrainBackground`` as ``IntegratedCassette`` entries and the record's ``Genotype``
-holds the one screened guide. A round-2/3 record is still the strain actually in the
-tube: the background states what else it carries, and at which locus.
+accumulating integrated backgrounds: round 1 = bAID host (5 mM furfural); round 2 = +SIZ1i
+(10 mM); round 3 = +SIZ1i +NAT1a (15 mM). The accumulated edits stay IN the record's
+``Genotype``, so a round-2/3 record is a genuine 2-/3-perturbation mixed-modality combo,
+the strain actually in the tube.
 
 RECORD = one (guide x round) ``StrainEnvironmentResponseExperiment``:
 
 - GENOTYPE: the library member as a ``CrisprActivation`` / ``CrisprInterference`` /
-  ``CrisprDeletion`` perturbation (target gene, this guide's spacer, its effector), and
-  nothing else. The common name is the GENOME's own standard name for the resolved ORF,
-  so one gene carries one spelling across datasets.
+  ``CrisprDeletion`` perturbation (target gene, this guide's spacer, its effector), plus
+  the round's accumulated integrated perturbations. The common name is the GENOME's own
+  standard name for the resolved ORF, so one gene carries one spelling across datasets.
 - ENVIRONMENT: a ``CultureEnvironment`` over the shared ``media.SED_URA_G418`` object
   carrying furfural (5/10/15 mM by round) as a ``SmallMoleculePerturbation``, 30 C,
   aerobic, 50 mL in a shaken 250 mL baffled flask.
-- REFERENCE GENOME: a ``StrainReferenceGenome`` whose ``StrainBackground`` is the round's
-  host (BY4742's four auxotrophies + bAID's Delta-site CRISPR-AID cassette + the round's
-  integrated gRNA cassettes), each element sourced or a typed gap.
+- REFERENCE GENOME: a ``StrainReferenceGenome`` on ONE typed background for every round,
+  the bAID host (``strain_background.baid_background()``): BY4742's four auxotrophies plus
+  bAID's Delta-site CRISPR-AID cassette, each element sourced or a typed gap.
 - PHENOTYPE: ``measurement_type=log2_ratio``,
   ``assay_type=pooled_competitive_growth_barcode``, ``environment_response`` = mean
   log2(after/before) over 3 biological triplicates, uncertainty = SD (``sample_sd``,
-  n=3 -> SE = SD/sqrt(3)). Reference = no-enrichment baseline (log2FC 0) in the round's
-  host.
+  n=3 -> SE = SD/sqrt(3)). Reference = no-enrichment baseline (log2FC 0) in the bAID host.
 
 THE MEDIUM IS SED-URA/G418, NOT SED/G418 (corrected this build, all records). Methods,
 verbatim: "The iMAGIC libraries in triplicates were inoculated into 50 mL SED-URA/G418
@@ -99,19 +95,21 @@ THE INTEGRATION LOCUS IS STATED, and the previous build's docstring was wrong to
     bAID   | BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]
 
 So bAID is BY4742 with the CRISPR-AID cassette integrated at the DELTA site (the Ty1
-delta repeat family), carrying KanMX plus four orthogonal effector cassettes. The same
-table gives the round strains (``R1`` = bAID-X3::SIZ1i, ``R2`` =
-bAID-X3::SIZ1i-X4::NAT1a), and the pre-selected landing pads X2-XII5 are named in the
-Results. Every one of those is an INTEGRATION at a named site, which no ``AlleleEdit``
-describes, so each is a typed ``IntegratedCassette`` on the background:
-``locus`` is the site verbatim and ``locus_systematic_gene_name`` stays None, because a
-delta repeat family and an intergenic landing pad are not R64 ORFs.
+delta repeat family), carrying KanMX plus four orthogonal effector cassettes. That is an
+INTEGRATION at a named site, which no ``AlleleEdit`` describes, so it is a typed
+``IntegratedCassette`` on the host's ``StrainBackground``: ``locus`` is the site verbatim
+and ``locus_systematic_gene_name`` stays None, because a delta repeat family is not an
+R64 ORF.
 
-The strain string is the SI's own genotype column (``bAID``,
-``bAID-X3::SIZ1i``, ``bAID-X3::SIZ1i-X4::NAT1a``) rather than its terse ``R1`` / ``R2``
-label, so the join key says what the strain is. It still does not join the BY4742
-datasets, which is correct: these strains are not BY4742, and the background now states
-the difference allele by allele and cassette by cassette.
+THE HOST IS ONE SHARED BACKGROUND, ``strain_background.baid_background()``, named
+``bAID`` for every round. It is shared because the in-house Bioscreen dataset was run on
+the same strain (thesis name ``BY4742-iAID6``, pAID6 integrated into BY4742 and selected
+on G418), so the two datasets join on one typed background rather than on two spellings
+of one strain. The round's accumulated SIZ1i / NAT1a edits are NOT in the background:
+they stay in each record's ``Genotype``, which is the strain actually in the tube. The
+strain string ``bAID`` does not join the BY4742 datasets, which is correct: this strain
+is not BY4742, and the background states the difference allele by allele plus the
+cassette.
 
 Exposure duration is a typed ``ProvenanceGap`` on both ``duration_hours`` and
 ``duration_generations``: the pooled cultures were harvested at mid-log ("1 OD of the
@@ -177,24 +175,22 @@ from torchcell.datamodels.schema import (
     Experiment,
     ExperimentReference,
     Genotype,
-    IntegratedCassette,
-    MatingType,
     MeasurementType,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
-    StrainBackground,
     StrainEnvironmentResponseExperiment,
     StrainEnvironmentResponseExperimentReference,
     StrainReferenceGenome,
     Temperature,
     UncertaintyType,
-    Zygosity,
 )
 from torchcell.datamodels.strain_background import (
-    BRACHMANN_1998,
-    STANDARD_BY_GENOTYPES,
-    standard_allele,
+    BAID_CONSTRUCTION,
+    BAID_GENOTYPE,
+    BAID_PARENT_GENOTYPE,
+    BAID_STRAIN,
+    baid_background,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
@@ -244,12 +240,6 @@ SI_RETRIEVED_AT = "2026-09-12"
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "63fe2b7101fc48feb297f9e34b83d108b74f03f28bbc280e08c7219bc975086c"
 
-#: Supplementary Information 1 as MinerU extracted it from the publisher PDF. It carries
-#: Supplementary Table 11 ("Strains constructed in this study"), which is where bAID's
-#: integration site and every round strain's genotype are stated.
-SI1_MD = "si/si1.md"
-SI1_MD_SHA256 = "b2bcfe2e672674438216472e3e06903c93d4ee54cd8b6fd9b5f964ad2a3d32db"
-
 #: The amplicon barcode the reprocessing counted for a CRISPRd guide: read[27:71].
 D_BARCODE_LEN = 44
 #: SaCas9 spacer length, measured against the genome (see the module docstring).
@@ -269,23 +259,6 @@ def _paper(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
             method="MinerU OCR of the publisher PDF (torchcell-library mirror)",
             page="Methods, 'iMAGIC screening of furfural tolerance' / 'Design and "
             "construction of the MAGIC libraries' / 'Strains and media'",
-        ),
-    )
-
-
-def _si1(value: Any, quote: str, *, page: str, note: str | None = None) -> SourcedValue:
-    """Bind a value to a verbatim quote in the sha256-pinned SI 1 OCR mirror."""
-    return SourcedValue(
-        value=value,
-        quote=quote,
-        note=note,
-        provenance=Provenance(
-            source_uri=SI1_MD,
-            citation_key=CITATION_KEY,
-            sha256=SI1_MD_SHA256,
-            method="MinerU OCR of the publisher Supplementary Information PDF "
-            "(torchcell-library mirror)",
-            page=page,
         ),
     )
 
@@ -337,96 +310,13 @@ ASSAY = _paper(
     note="a pooled library grown competitively and read out by amplifying each strain's "
     "unique guide sequence as a barcode",
 )
-HOST = _paper(
-    "bAID",
-    "The CRISPR-AID strain (bAID) was constructed by integrating PmeI-digested $\\mathrm "
-    "{ \\ p A I D } 6 ^ { 8 }$ into the genome of BY4742 and selection for G418 resistance.",
-    note="the host's construction sentence: BY4742 plus an integrated pAID6. The "
-    "integration SITE is stated in Supplementary Table 11 (BAID_GENOTYPE), so the "
-    "cassette is carried as a typed IntegratedCassette on the reference's "
-    "StrainBackground",
-)
-BY4742_GENOTYPE = _si1(
-    "MATα his3∆1 leu2∆0 lys2∆0 ura3∆0",
-    "<td rowspan=1 colspan=1>BY4742</td><td rowspan=1 colspan=1>MATα his3∆1 leu2∆0 "
-    "lys2∆0 ura3∆0</td>",
-    page="Supplementary Table 11, 'Strains constructed in this study' (si1.md line 104)",
-    note="the parent strain's genotype as the SI states it; the stored alleles are the "
-    "STANDARD_ALLELES spellings his3Δ1, leu2Δ0, lys2Δ0, ura3Δ0 (the OCR writes the "
-    "delta as the mathematical operator ∆)",
-)
-BAID_GENOTYPE = _si1(
-    "BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
-    "<td rowspan=1 colspan=1>bAID</td><td rowspan=1 colspan=1>BY4742-Delta::KanMX-"
-    "[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]</td>",
-    page="Supplementary Table 11, 'Strains constructed in this study' (si1.md line 104)",
-    note="the integration SITE of the CRISPR-AID cassette, which the previous build's "
-    "docstring wrongly called unstated: the SI's strain table writes it as the Delta "
-    "site (the Ty1 delta repeat family), carrying KanMX plus the four orthogonal "
-    "effector cassettes",
-)
-ROUND_STRAIN_GENOTYPES = _si1(
-    ["bAID", "bAID-X3::SIZ1i", "bAID-X3::SIZ1i-X4::NAT1a"],
-    "<td rowspan=1 colspan=1>R1</td><td rowspan=1 colspan=1>bAID-X3::SIZ1i</td></tr>"
-    "<tr><td rowspan=1 colspan=1>R2</td><td rowspan=1 colspan=1>"
-    "bAID-X3::SIZ1i-X4::NAT1a</td>",
-    page="Supplementary Table 11, 'Strains constructed in this study' (si1.md line 104)",
-    note="the three round HOSTS in round order (ROUND_STRAIN). The SI names the second "
-    "and third R1 and R2: they are the strains obtained AFTER rounds 1 and 2 and are "
-    "therefore the hosts of rounds 2 and 3 (ROUND_PARENT). The stored strain string is "
-    "the SI's own genotype column, which is self-describing, rather than the terse "
-    "'R1' / 'R2' label. A LIST in round order, not a round-keyed dict: this value is "
-    "embedded in every record's background provenance, and a dict with integer keys "
-    "would come back from JSON with string keys, so the record would not round-trip",
-)
+#: The host strain, its parent's genotype and its construction sentence, all shared with
+#: the in-house Bioscreen dataset through ``strain_background.baid_background()``. They
+#: stay module-level here so the loader's own SourcedValue audit covers their quotes.
+HOST = BAID_CONSTRUCTION
+HOST_GENOTYPE = BAID_GENOTYPE
+HOST_PARENT_GENOTYPE = BAID_PARENT_GENOTYPE
 
-#: The strain each round is screened in, by round (``ROUND_STRAIN_GENOTYPES`` indexed).
-ROUND_STRAIN: dict[int, str] = {
-    rnd: name for rnd, name in enumerate(ROUND_STRAIN_GENOTYPES.value, start=1)
-}
-ROUND_PARENT = _paper(
-    {2: "R1", 3: "R2"},
-    "Then we used the NAT1a and SIZ1i-integrated strain (R2) as the parent strain for "
-    "the third round of genome-wide screening and continued to observe highly enriched "
-    "guide sequences (Fig. 2e).",
-    note="round 3 was screened in R2 (SIZ1i + NAT1a). The round-2 host is stated in the "
-    "SI figure legends: 'the second round iMAGIC screening identified targets when "
-    "integrated into the X4 locus of R1 strain (SIZ1i)' (ROUND2_HOST)",
-)
-ROUND2_HOST = _si1(
-    {"host": "R1", "integration_locus": "X4"},
-    "Supplementary Figure 4. Verification of the second round iMAGIC screening "
-    "identified targets when integrated into the X4 locus of R1 strain (SIZ1i).",
-    page="Supplementary Figure 4 legend (si1.md line 21)",
-    note="round 2 was screened in R1, whose only integration is SIZ1i; the X4 locus "
-    "named here is where the round-2 HITS were then integrated, which is why NAT1a sits "
-    "at X4 in R2",
-)
-ROUND3_HOST = _si1(
-    {"host": "R2", "integration_locus": "XI1"},
-    "Supplementary Figure 6. Verification of the third round iMAGIC screening identified "
-    "targets when integrated into the XI1 locus of the R2 strain (SIZ1i-NAT1a).",
-    page="Supplementary Figure 6 legend (si1.md line 28)",
-    note="round 3 was screened in R2 (SIZ1i at X3 + NAT1a at X4); XI1 is where the "
-    "round-3 hit PDR1i was then integrated, which is R3 and is not screened here",
-)
-MARKERLESS_INTEGRATION = _paper(
-    "marker-less",
-    "The gRNA expression cassettes identified by MAGIC screening were integrated into "
-    "the predefined loci (Supplementary Table 1) in a CRISPR-assisted and marker-less "
-    "manner.",
-    note="the round gRNA cassettes carry NO selection marker, so IntegratedCassette."
-    "marker is None for them; bAID's own cassette does carry one (KanMX)",
-)
-INTEGRATION_LOCI = _paper(
-    ["X2", "X3", "X4", "XI1", "XI2", "XI3", "XII1", "XII2", "XII4", "XII5"],
-    "Ten gRNA plasmids based on SaCas9 were constructed to integrate heterologous "
-    "cassettes into X2, X3, X4, XI1, XI2, XI3, XII1, XII2, XII4, and XII5 loci, "
-    "respectively (Supplementary Table 1).",
-    note="the pre-selected landing pads, 'flanked by highly expressed essential genes'; "
-    "they are intergenic sites, not ORFs, so IntegratedCassette."
-    "locus_systematic_gene_name is None for every one of them",
-)
 DONOR_LAYOUT = _paper(
     {"donor_nt": 100, "spacer_nt": D_SPACER_LEN, "deleted_bp": 28},
     "the homologous recombination donor was integrated to the $5 ^ { \\prime }$ -end of "
@@ -542,109 +432,27 @@ PERT_CLASS: dict[str, Any] = {
     "i": CrisprInterferencePerturbation,
     "d": CrisprDeletionPerturbation,
 }
-#: Integrated gRNA cassettes the round's HOST strain already carries, accumulated per
-#: round: round 1 is screened in bAID (none), round 2 in R1 (SIZ1i at X3), round 3 in R2
-#: (SIZ1i at X3 + NAT1a at X4). Each entry is ``(designation, locus, target ORF)``; the
-#: designation and the locus are the SI's own (ROUND_STRAIN_GENOTYPES), and the ORF is
-#: recorded so a guide that targets its own round background is still detectable
-#: (SIZ1 = YDR409W, NAT1 = YDL040C).
+#: Integrated backgrounds accumulated per round, each entry ``(ORF, common name, mode)``:
+#: round 1 = bAID (none); round 2 = +SIZ1i; round 3 = +SIZ1i +NAT1a. SIZ1 = YDR409W,
+#: NAT1 = YDL040C. They are CRISPR perturbations the strain carries integrated, so they
+#: sit in each record's Genotype beside the screened guide, not on the reference's
+#: background: the background is the bAID host, which every round shares.
+#:
+#: The SI states the integration SITE of each, which is documentation rather than record
+#: content: Supplementary Table 11 writes the round strains as ``R1 | bAID-X3::SIZ1i``
+#: and ``R2 | bAID-X3::SIZ1i-X4::NAT1a``, so SIZ1i sits at X3 and NAT1a at X4. The
+#: landing pads are the pre-selected loci of the Results ("integrate heterologous
+#: cassettes into X2, X3, X4, XI1, XI2, XI3, XII1, XII2, XII4, and XII5 loci"), and the
+#: integrations are marker-less ("in a CRISPR-assisted and marker-less manner"). The
+#: round-to-host mapping is sourced too: round 2 was screened in R1 ("the second round
+#: iMAGIC screening identified targets when integrated into the X4 locus of R1 strain
+#: (SIZ1i)", Supplementary Figure 4) and round 3 in R2 ("the XI1 locus of the R2 strain
+#: (SIZ1i-NAT1a)", Supplementary Figure 6; the Results says the same).
 ROUND_BACKGROUND: dict[int, list[tuple[str, str, str]]] = {
     1: [],
-    2: [("SIZ1i", "X3", "YDR409W")],
-    3: [("SIZ1i", "X3", "YDR409W"), ("NAT1a", "X4", "YDL040C")],
+    2: [("YDR409W", "SIZ1", "i")],
+    3: [("YDR409W", "SIZ1", "i"), ("YDL040C", "NAT1", "a")],
 }
-
-
-_BY4742_ALLELE_NOTE = (
-    "Supplementary Table 11 states BY4742's genotype string ('MATα his3∆1 leu2∆0 "
-    "lys2∆0 ura3∆0', BY4742_GENOTYPE), so WHICH alleles the strain carries is sourced; "
-    "how each was constructed (the delta0 designer deletions vs the his3-delta1 "
-    "internal deletion, which is what STANDARD_ALLELES encodes as an AlleleEdit) is "
-    "stated only by Brachmann 1998, which is not mirrored"
-)
-
-
-def _baid_cassette() -> IntegratedCassette:
-    """BAID's integrated CRISPR-AID cassette, at the Delta site, carrying KanMX.
-
-    The site and the element list are read from Supplementary Table 11's bAID row
-    (``BAID_GENOTYPE``), which the previous build's docstring wrongly called unstated.
-    ``locus_systematic_gene_name`` stays None: the Delta site is the Ty1 delta repeat
-    family, not an R64 ORF, so there is no systematic name to give it.
-    """
-    return IntegratedCassette(
-        name="Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
-        locus="Delta",
-        elements=["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"],
-        marker="KanMX",
-        zygosity=Zygosity.haploid,
-        provenance=[BAID_GENOTYPE, HOST],
-    )
-
-
-def _round_cassette(designation: str, locus: str) -> IntegratedCassette:
-    """One round's integrated gRNA expression cassette, marker-less, at a landing pad.
-
-    ``elements`` is the single designation the source writes (``"SIZ1i"``), not a
-    decomposition into promoter / spacer / terminator: the SI states the cassette by
-    this name only, and naming parts it does not would be invention.
-    """
-    return IntegratedCassette(
-        name=f"{locus}::{designation}",
-        locus=locus,
-        elements=[designation],
-        marker=None,
-        zygosity=Zygosity.haploid,
-        provenance=[ROUND_STRAIN_GENOTYPES, MARKERLESS_INTEGRATION, INTEGRATION_LOCI],
-    )
-
-
-#: The strain each round's host was built FROM, as the SI's accumulating genotype column
-#: shows it: bAID is built from BY4742, R1 from bAID, R2 from R1.
-ROUND_PARENT_STRAIN: dict[int, str] = {1: "BY4742", 2: "bAID", 3: "bAID-X3::SIZ1i"}
-
-
-def round_background(rnd: int) -> StrainBackground:
-    """The typed background of the strain round ``rnd`` was screened in.
-
-    BY4742's four auxotrophies plus every cassette the host carries integrated: bAID's
-    CRISPR-AID cassette at the Delta site in all three rounds, and the round's
-    accumulated gRNA cassettes (``ROUND_BACKGROUND``) on top.
-
-    The auxotrophies are asserted with a ``deferred_pending_source_review`` gap naming
-    Brachmann 1998 even though Supplementary Table 11 states the genotype string
-    (``BY4742_GENOTYPE``): the SI states WHICH alleles BY4742 carries, not how any of
-    them was made, and ``STANDARD_ALLELES`` reads each designation as a specific edit
-    kind (``his3Δ1`` partial, the three ``Δ0`` alleles full) that only Brachmann 1998
-    states. The strain name is the SI's own genotype column, not its terse ``R1`` /
-    ``R2`` label, so the string says what the strain is.
-    """
-    alleles = [
-        standard_allele(
-            allele_name, zygosity, resolve_with=BRACHMANN_1998, note=_BY4742_ALLELE_NOTE
-        )
-        for allele_name, zygosity in STANDARD_BY_GENOTYPES["BY4742"].alleles.items()
-    ]
-    integrations = [_baid_cassette()] + [
-        _round_cassette(designation, locus)
-        for designation, locus, _ in ROUND_BACKGROUND[rnd]
-    ]
-    construction = HOST.quote
-    if rnd > 1:
-        construction = (
-            f"{HOST.quote} {MARKERLESS_INTEGRATION.quote} Integrated here: "
-            + ", ".join(c.name for c in integrations[1:])
-        )
-    return StrainBackground(
-        name=ROUND_STRAIN[rnd],
-        parents=[ROUND_PARENT_STRAIN[rnd]],
-        construction=construction,
-        mating_type=MatingType.alpha,
-        ploidy="haploid",
-        alleles=alleles,
-        integrations=integrations,
-        provenance=[BY4742_GENOTYPE, BAID_GENOTYPE, HOST],
-    )
 
 
 def crispr_perturbation(
@@ -995,23 +803,26 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
             provenance_gaps=[*DURATION_GAPS, PRE_CULTURE_GAP, AUXOTROPH_SUPPLEMENT_GAP],
         )
 
-    def _genome_reference(self, rnd: int) -> StrainReferenceGenome:
-        """The typed background of the strain round ``rnd`` was screened in."""
-        background = round_background(rnd)
+    def _genome_reference(self) -> StrainReferenceGenome:
+        """The bAID host, typed: BY4742's alleles plus the Delta-site CRISPR-AID cassette.
+
+        One background for every round, and the same object the in-house Bioscreen
+        dataset builds, so both datasets join on one strain.
+        """
         return StrainReferenceGenome(
             species="Saccharomyces cerevisiae",
-            strain=background.name,
+            strain=BAID_STRAIN,
             ploidy="haploid",
-            background=background,
+            background=baid_background(),
         )
 
     def _reference(
-        self, rnd: int, environment: CultureEnvironment
+        self, environment: CultureEnvironment
     ) -> StrainEnvironmentResponseExperimentReference:
         """No-enrichment baseline: a guide that neither enriches nor depletes -> log2FC 0."""
         return StrainEnvironmentResponseExperimentReference(
             dataset_name=self.name,
-            genome_reference=self._genome_reference(rnd),
+            genome_reference=self._genome_reference(),
             environment_reference=environment.model_copy(),
             phenotype_reference=EnvironmentResponsePhenotype(
                 measurement_type=MeasurementType.log2_ratio,
@@ -1049,7 +860,7 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
         )
 
         background_orfs = {
-            rnd: {orf for _, _, orf in ROUND_BACKGROUND[rnd]} for rnd in (1, 2, 3)
+            rnd: {orf for orf, _, _ in ROUND_BACKGROUND[rnd]} for rnd in (1, 2, 3)
         }
         rounds = (1, 2, 3)
 
@@ -1071,18 +882,20 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
             doi=DOI,
             doi_url=f"https://doi.org/{DOI}",
         )
-        # One environment and one strain-resolved reference per round. The round's
-        # accumulated integrated gRNA cassettes are on the reference's typed background
-        # (round_background), NOT in the record's Genotype: they are constant across
-        # every record of that round and shared with its reference strain, which is the
-        # line the schema draws between a background and a genotype. The Genotype
-        # therefore holds exactly the ONE screened guide.
+        # One environment and one strain-resolved reference per round, every round on the
+        # SAME typed bAID background. The round's accumulated integrated edits stay in
+        # the record's Genotype, so a round-2/3 record is the 2-/3-perturbation strain
+        # actually in the tube.
         prepared: dict[int, dict[str, Any]] = {}
         for rnd in rounds:
             environment = self._environment(FURFURAL_MM.value[rnd])
             prepared[rnd] = {
                 "environment": environment,
-                "reference": self._reference(rnd, environment),
+                "reference": self._reference(environment),
+                "background": [
+                    crispr_perturbation(orf, canonical.get(orf, common), mod, None)
+                    for orf, common, mod in ROUND_BACKGROUND[rnd]
+                ],
             }
 
         # --- pass 2: write ------------------------------------------------------- #
@@ -1126,7 +939,8 @@ class CrisprMagicLian2019Dataset(ExperimentDataset):
                         dataset_name=self.name,
                         genotype=Genotype(
                             perturbations=[
-                                crispr_perturbation(orf, common, mod, spacer, donor)
+                                crispr_perturbation(orf, common, mod, spacer, donor),
+                                *item["background"],
                             ]
                         ),
                         environment=item["environment"],

@@ -26,6 +26,7 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     Zygosity,
 )
+from torchcell.datamodels.strain_background import BAID_STRAIN, baid_background
 from torchcell.datasets.scerevisiae import lian2019 as ln
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
@@ -172,11 +173,11 @@ def test_the_environment_is_sed_ura_g418_with_typed_duration_gaps() -> None:
 
 
 def test_the_round_furfural_ladder_and_backgrounds_are_sourced() -> None:
-    """Each round's accumulated cassettes carry their SI-stated designation and locus."""
+    """The round's accumulated edits are CRISPR perturbations, not background cassettes."""
     assert ln.FURFURAL_MM.value == {1: 5.0, 2: 10.0, 3: 15.0}
     assert ln.ROUND_BACKGROUND[1] == []
-    assert ln.ROUND_BACKGROUND[2] == [("SIZ1i", "X3", "YDR409W")]
-    assert ln.ROUND_BACKGROUND[3][1] == ("NAT1a", "X4", "YDL040C")
+    assert ln.ROUND_BACKGROUND[2] == [("YDR409W", "SIZ1", "i")]
+    assert ln.ROUND_BACKGROUND[3][1] == ("YDL040C", "NAT1", "a")
 
 
 def test_the_strain_table_states_the_integration_locus_the_old_build_called_unstated() -> (
@@ -184,36 +185,33 @@ def test_the_strain_table_states_the_integration_locus_the_old_build_called_unst
 ):
     """Supplementary Table 11 names bAID's integration site, verbatim.
 
-    The previous build's docstring claimed the locus "is not stated anywhere in the
+    An earlier build's docstring claimed the locus "is not stated anywhere in the
     release". The SI's strain table states it: bAID is BY4742 with the CRISPR-AID
     cassette at the Delta site.
     """
     assert (
-        ln.BAID_GENOTYPE.value
+        ln.HOST_GENOTYPE.value
         == "BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
     )
-    assert ln.BAID_GENOTYPE.provenance.source_uri == "si/si1.md"
-    assert ln.BAID_GENOTYPE.provenance.sha256 == ln.SI1_MD_SHA256
-    assert ln.BY4742_GENOTYPE.value == "MATα his3∆1 leu2∆0 lys2∆0 ura3∆0"
-    assert ln.ROUND_STRAIN_GENOTYPES.value == [
-        "bAID",
-        "bAID-X3::SIZ1i",
-        "bAID-X3::SIZ1i-X4::NAT1a",
-    ]
-    assert ln.ROUND_STRAIN == {
-        1: "bAID",
-        2: "bAID-X3::SIZ1i",
-        3: "bAID-X3::SIZ1i-X4::NAT1a",
-    }
+    assert ln.HOST_GENOTYPE.provenance.source_uri == "si/si1.md"
+    assert ln.HOST_GENOTYPE.provenance.citation_key == ln.CITATION_KEY
+    assert ln.HOST_PARENT_GENOTYPE.value == "MATα his3∆1 leu2∆0 lys2∆0 ura3∆0"
+    assert ln.HOST.value == BAID_STRAIN == "bAID"
 
 
-@pytest.mark.parametrize("rnd", [1, 2, 3])
-def test_each_round_background_is_by4742_plus_its_integrated_cassettes(
-    rnd: int,
-) -> None:
-    """The host of each round, typed: BY4742's alleles plus the accumulated cassettes."""
-    background = ln.round_background(rnd)
-    assert background.name == ln.ROUND_STRAIN[rnd]
+def test_the_reference_genome_is_the_one_shared_baid_background() -> None:
+    """Every round's reference is the same typed bAID host, the shared helper's object.
+
+    The in-house Bioscreen dataset was run on this strain too (thesis name
+    BY4742-iAID6), so the join key is one background rather than a per-round strain.
+    """
+    dataset = ln.CrisprMagicLian2019Dataset.__new__(ln.CrisprMagicLian2019Dataset)
+    genome = ln.CrisprMagicLian2019Dataset._genome_reference(dataset)
+    assert genome.strain == "bAID"
+    background = genome.background
+    assert background == baid_background()
+    assert background.name == "bAID"
+    assert background.parents == ["BY4742"]
     assert background.ploidy == "haploid"
     assert background.mating_type is MatingType.alpha
     assert {allele.allele_name for allele in background.alleles} == {
@@ -228,24 +226,22 @@ def test_each_round_background_is_by4742_plus_its_integrated_cassettes(
     assert all(
         allele.gapped_fields() == {"provenance"} for allele in background.alleles
     )
-    assert [cassette.name for cassette in background.integrations] == [
-        "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
-        *(f"{locus}::{name}" for name, locus, _ in ln.ROUND_BACKGROUND[rnd]),
+    assert len(background.integrations) == 1
+    cassette = background.integrations[0]
+    assert cassette.name == "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]"
+    assert cassette.locus == "Delta"
+    assert cassette.locus_systematic_gene_name is None
+    assert cassette.elements == [
+        "KanMX",
+        "dLbCpf1-VP",
+        "Csy4",
+        "dSpCas9-RD1152",
+        "SaCas9",
     ]
-    baid = background.integrations[0]
-    assert baid.locus == "Delta"
-    assert baid.locus_systematic_gene_name is None
-    assert baid.elements == ["KanMX", "dLbCpf1-VP", "Csy4", "dSpCas9-RD1152", "SaCas9"]
-    assert baid.marker == "KanMX"
-    assert baid.zygosity is Zygosity.haploid
-    assert baid.mechanism_so == ("SO:0000667", "insertion")
-    assert baid.is_sourced
-    # The round gRNA cassettes are marker-less, at a pre-selected intergenic landing pad.
-    for cassette in background.integrations[1:]:
-        assert cassette.marker is None
-        assert cassette.locus in ln.INTEGRATION_LOCI.value
-        assert cassette.locus_systematic_gene_name is None
-        assert cassette.is_sourced
+    assert cassette.marker == "KanMX"
+    assert cassette.zygosity is Zygosity.haploid
+    assert cassette.mechanism_so == ("SO:0000667", "insertion")
+    assert cassette.is_sourced
 
 
 def test_the_assay_is_a_pooled_barcode_competition() -> None:

@@ -679,6 +679,7 @@ def _fed_batch_rows() -> list[kang.FedBatchRow]:
             glucose_g_per_l=float(row[1]),
             xylose_g_per_l=float(row[2]),
             total_sugar_g_per_l=float(row[3]),
+            isoprenol_aqueous_mg_per_l=float(row[4]),
             aqueous_mg_per_l=float(row[5]),
             organic_mg_per_l=float(row[6]),
             offgas_mg_per_l=float(row[7]),
@@ -753,6 +754,55 @@ def test_an_empty_table_s9_is_refused() -> None:
     """No sampled times means the table is not the one this loader reads."""
     with pytest.raises(RuntimeError, match="holds no sampled times"):
         kang.IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles([])
+
+
+# --------------------------------------------------------------------------- #
+# Table S9's released aqueous isoprenol: read, ledgered, not a record
+# --------------------------------------------------------------------------- #
+def test_the_released_aqueous_isoprenol_column_is_read(tmp_path: Path) -> None:
+    """The column SI_TABLE9_COLUMNS asserts is now a FedBatchRow field, not parsed past."""
+    rows = kang.read_fed_batch(write_si_docx(tmp_path / "si.docx"))
+    assert kang.SI_TABLE9_ISOPRENOL_COLUMN == "Isoprenol, aqueous (mg/L)"
+    assert kang.SI_TABLE9_ISOPRENOL_COLUMN in kang.SI_TABLE9_COLUMNS
+    assert [row.isoprenol_aqueous_mg_per_l for row in rows] == [
+        190.7,
+        197.0,
+        175.0,
+        231.0,
+        234.7,
+        307.8,
+        254.2,
+    ]
+    assert kang.SI_TABLE9_ISOPRENOL_COLUMN not in kang.SI_TABLE9_PHASES
+
+
+def test_a_non_positive_isoprenol_cell_is_refused() -> None:
+    """Every sampled time carries a positive value in the pinned table."""
+    rows = _fed_batch_rows()
+    rows[2] = rows[2].model_copy(update={"isoprenol_aqueous_mg_per_l": 0.0})
+    with pytest.raises(RuntimeError, match="aqueous isoprenol"):
+        kang.IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles(rows)
+
+
+def test_isoprenol_above_the_ester_sum_is_refused() -> None:
+    """The ester is this run's product, so its three-phase sum has to be the larger."""
+    rows = _fed_batch_rows()
+    rows[5] = rows[5].model_copy(update={"isoprenol_aqueous_mg_per_l": 5000.0})
+    with pytest.raises(RuntimeError, match="has to be the larger of the two"):
+        kang.IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles(rows)
+
+
+def test_the_isoprenol_column_is_declared_not_a_record_with_its_reason() -> None:
+    """The decline is a module constant, not prose in a commit message."""
+    reason = kang.ISOPRENOL_NOT_A_RECORD
+    assert "ProductTiterExperimentReference requires a phenotype_reference" in reason
+    assert "Banerjee" in reason
+    assert kang.ISOPRENOL_BASELINE_SECOND_HAND.value == {
+        "flask_mg_per_l": 762.0,
+        "fedbatch_g_per_l": 3.5,
+    }
+    assert kang.ISOPRENOL_BASELINE_SECOND_HAND.quote in reason
+    assert kang.ISOPRENOL_BASELINE_SECOND_HAND.provenance.sha256 == kang.PAPER_MD_SHA256
 
 
 def _panel_rows() -> list[kang.AatPanelRow]:
@@ -1255,6 +1305,43 @@ def test_the_built_store_passes_l0_to_l4(built_store: str) -> None:
     assert written["provenance"]["citation_key"] == kang.CITATION_KEY
 
 
+def test_the_ledger_carries_the_isoprenol_column_on_the_fed_batch_rows_alone(
+    built_store: str,
+) -> None:
+    """The unstored column reaches the build ledger, and nowhere else."""
+    ledger = pd.read_csv(osp.join(built_store, "preprocess", "titer_rows.csv"))
+    fed_batch = ledger[ledger["source"] == "Table S9"]
+    assert fed_batch["isoprenol_aqueous_mg_per_l"].tolist() == [
+        190.7,
+        197.0,
+        175.0,
+        231.0,
+        234.7,
+        307.8,
+        254.2,
+    ]
+    other = ledger[ledger["source"] != "Table S9"]
+    assert other["isoprenol_aqueous_mg_per_l"].isna().all()
+    assert len(other) == 12
+
+
+def test_the_isoprenol_l4_refuses_a_ledger_that_lost_the_column(
+    built_store: str,
+) -> None:
+    """The L4 joins the LEDGER to the deposited bytes, because there is no record to join."""
+    ledger = pd.read_csv(osp.join(built_store, "preprocess", "titer_rows.csv"))
+    result = kang._isoprenol_column_l4(ledger, os.environ["DATA_ROOT"])
+    assert result.passed
+    assert result.name == "ledgered_aqueous_isoprenol_vs_table_s9"
+    drifted = ledger.copy()
+    drifted.loc[drifted["source"] == "Table S9", "isoprenol_aqueous_mg_per_l"] = 1.0
+    assert not kang._isoprenol_column_l4(drifted, os.environ["DATA_ROOT"]).passed
+    leaked = ledger.copy()
+    leaked.loc[leaked["source"] == "Table 1", "isoprenol_aqueous_mg_per_l"] = 190.7
+    with pytest.raises(AssertionError, match="released by Table S9 alone"):
+        kang._isoprenol_column_l4(leaked, os.environ["DATA_ROOT"])
+
+
 def test_the_build_accounting_records_zero_drops(built_store: str) -> None:
     """Every released isoprenyl acetate number in the mirror is a record."""
     accounting = json.loads(
@@ -1264,6 +1351,7 @@ def test_the_build_accounting_records_zero_drops(built_store: str) -> None:
     assert accounting["kept_records"] == kang.EXPECTED_RECORDS
     assert accounting["dropped_records"] == 0
     assert accounting["rules"] == []
+    assert kang.ISOPRENOL_NOT_A_RECORD in accounting["notes"]
     histogram = accounting["reconciliation"]["status_histogram"]
     assert histogram["current"] == 13
     assert sum(histogram.values()) == 13
@@ -1448,7 +1536,7 @@ def test_the_real_built_store_passes_l0_to_l4() -> None:
     counts = {result.level.name: 0 for result in report.results}
     for result in report.results:
         counts[result.level.name] += 1
-    assert counts == {"L0": 1, "L1": 1, "L2": 2, "L3": 4, "L4": 2}
+    assert counts == {"L0": 1, "L1": 1, "L2": 2, "L3": 4, "L4": 3}
 
 
 @pytest.mark.data

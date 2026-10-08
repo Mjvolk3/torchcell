@@ -393,3 +393,86 @@ Diff coverage on `origin/main`: **96.4%** on `kang2026.py`, 100% on the package
 6. `Environment` has no slot for a mid-culture feed event (the 48 h pulse) and no slot for
    a continuous feed (the fed-batch 266.7 g/L glucose + 133.3 g/L xylose solution). Both
    are carried in `preprocess/` today.
+
+## 2026.10.08 - Table S9's released aqueous isoprenol: read, ledgered, declined as a record
+
+`SI_TABLE9_COLUMNS` asserted `Isoprenol, aqueous (mg/L)` while `FedBatchRow` declared no
+field for it, so the value was parsed past and never read. That is now fixed:
+`FedBatchRow.isoprenol_aqueous_mg_per_l` reads it, `preprocess/titer_rows.csv` carries it
+per record beside the three ester phases, `_assert_fed_batch_oracles` checks it, and a new
+verification level `L4 ledgered_aqueous_isoprenol_vs_table_s9` re-reads the deposited docx
+and joins the ledger back to it.
+
+The seven released values, verbatim from the pinned `si/si1.docx` (sha256
+`c7d4567fae037c7392e39b855cc71f83b7b4a5d96699c3f18b991a25c57f09e0`), Table S9 captioned
+"Table S9. Time-course analysis of sugar consumption and isoprenyl acetate partitioning in
+fed-batch fermentation":
+
+| time (h) | 21.4 | 45.4 | 69.4 | 93.4 | 117.4 | 141.4 | 165.4 |
+|---|---|---|---|---|---|---|---|
+| isoprenol, aqueous (mg/L) | 190.7 | 197.0 | 175.0 | 231.0 | 234.7 | 307.8 | 254.2 |
+
+### Why they are NOT seven records
+
+`ProductTiterExperimentReference` requires a `phenotype_reference` and
+`ProductTiterPhenotype.titer` is a required float, so an isoprenol record needs an
+isoprenol REFERENCE titer. Measured on the pinned mirror: Table S9 is the only place any
+isoprenol number is released at all. Table S1 is a physicochemical property comparison,
+Table S4's only titer column is `IPA titer (mg/L)` (the ester), Tables S2, S3, S5 to S8
+release no titer, and Fig. 2b's isoprenol bars have no companion table. So there is no
+second isoprenol measurement anywhere in this paper to be the denominator.
+
+The one isoprenol baseline the paper states is second-hand, and the module carries it as
+`ISOPRENOL_BASELINE_SECOND_HAND` for the record rather than as a reference, quote verbatim
+from Results 3.1 of the pinned `paper.md`:
+
+> In the previously reported engineered P. putida KT2440 background, this strain supported
+> isoprenol titers of up to 762 mg/L in shake flasks and $3 . 5 ~ \mathrm { g } / \mathrm
+> { L }$ in fed-batch cultures (Banerjee et al., 2024).
+
+Three things disqualify it as this run's reference. The measurement is Banerjee 2024's, not
+this study's; the strain is the background PIPA was ADAPTED FROM rather than PIPA itself
+("Our base strain, PIPA, incorporated the GSMM-guided deletions of six genes ... from that
+study"); and no medium, sugar load, vessel or replicate count travels with either number.
+Banerjee 2024 is also not in the literature mirror, so the chain cannot be closed from our
+own documentation. Writing it as `phenotype_reference` would state a measurement nobody
+made in this study.
+
+The sibling [[torchcell.datasets.pputida.yunus2026]] loader refuses its entire titer family
+for exactly this shape of gap ("no control titer is stated anywhere, which is why no
+ProductTiter family is built"), and that precedent is followed here. The decline, with its
+reason, is `ISOPRENOL_NOT_A_RECORD` and is written into
+`preprocess/build_accounting.json`'s notes, so it is auditable from the built tree rather
+than only from this note.
+
+### What would make them records
+
+Any ONE of: (a) Banerjee 2024 mirrored, so its own fed-batch isoprenol titer for the named
+strain becomes a sourced reference with its own conditions and replicate design; (b) a
+released isoprenol number for PIPA or any Kang strain under a stated condition, which would
+be the denominator; or (c) a schema decision that a `ProductTiterExperimentReference` may
+carry a typed-absent titer, which is a served-closure change and not a loader decision.
+
+### No other Table S9 column changed
+
+The stored titer is still the sum of the three isoprenyl acetate phases, the record count
+is still 19 (7 Table 1 + 5 Table S4 + 7 Table S9), and the two existing build oracles are
+untouched. The two added isoprenol oracles are: the column is positive at every sampled
+time (measured 175.0 to 307.8 mg/L, so it is never a blank or zero placeholder), and its
+maximum is below the maximum three-phase ester sum (307.8 against 1909.4), which is what
+makes the ester and not the precursor this run's product.
+
+### Still not stored, unchanged from the first build
+
+The residual-sugar columns (`Glucose (g/L)`, `Xylose (g/L)`, 7 time points each) stay out
+of `MetabolitePhenotype`. Two independent blockers, both measured. `MetabolitePhenotype`
+has no units field, so `g/L` would sit inside the free-text `measurement_type`; and
+`n_replicates: dict[str, int]` is required with a `>= 1` validator, so it cannot be a
+`ProvenanceGap` (a gap must name a field that is `None`). The replicate count for this run
+is not stated ANYWHERE in the mirror: `replicate` occurs once in `paper.md` and that hit is
+"To replicate this composition, glucose and xylose are commonly added in a 2:1 ratio",
+every other figure caption says "Error bars indicate the standard deviation of biological
+triplicates" while Fig. 8's caption says only "Cultivations were performed with 1 L medium
+and 200 mL overlay with sampling approximately every 12 h", and the Table S9 caption states
+no replicate count. So `n = 1` would be an assumption, not a reading, which is why
+`titer_phenotype` already gaps `n_samples` and `sample_unit` for the fed-batch rows.

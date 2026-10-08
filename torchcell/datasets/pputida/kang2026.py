@@ -30,6 +30,30 @@ the same GC-FID method:
    reached a final titer of 1.9 g/L isoprenyl acetate". The three phases are kept
    per-record in ``preprocess/titer_rows.csv``.
 
+TABLE S9's FOURTH COLUMN IS A SECOND PRODUCT, AND IT IS READ BUT NOT STORED. The same
+table releases ``Isoprenol, aqueous (mg/L)`` at all seven sampled times (190.7, 197.0,
+175.0, 231.0, 234.7, 307.8, 254.2), the un-esterified precursor left in the broth. Until
+this revision ``SI_TABLE9_COLUMNS`` asserted that header while ``FedBatchRow`` declared
+no field for it, so the value was parsed past and never read. It is now read, carried in
+``preprocess/titer_rows.csv`` beside the three ester phases, oracle-checked (positive at
+every sampled time; its maximum below the maximum ester sum, which is what makes the
+ester this run's product) and re-joined to the deposited bytes by a verification L4.
+
+It is NOT a record, and the reason is a missing DENOMINATOR, not a missing field.
+``ProductTiterExperimentReference`` requires a ``phenotype_reference`` and
+``ProductTiterPhenotype.titer`` is a required float, so an isoprenol record needs an
+isoprenol reference titer. Measured on the pinned mirror, Table S9 is the only place any
+isoprenol NUMBER appears: Table S1 is a compound-property comparison, Table S4 releases
+only the ester, Tables S2, S3, S5 to S8 release no titer at all, and Fig. 2b's isoprenol
+bars have no companion table. The single isoprenol baseline the paper states is
+second-hand (:data:`ISOPRENOL_BASELINE_SECOND_HAND`): 762 mg/L in flasks and 3.5 g/L in
+fed-batch are Banerjee 2024's measurements on the background PIPA was ADAPTED FROM, with
+no culture conditions and no replicate count carried across, and Banerjee 2024 is not in
+the literature mirror. Writing that as this run's reference would state a measurement
+nobody made in this study. The sibling Yunus 2026 loader refuses its whole titer family
+for the same reason ("no control titer is stated anywhere"), and that precedent is
+followed here; :data:`ISOPRENOL_NOT_A_RECORD` states it in the build accounting.
+
 Nineteen records: 7 + 5 + 7. Nothing is dropped. The Table 1 strains that carry no titer
 (``PIPAxyl``, ``PIPAxyl-O2``, ``PIPAxyl-O6``, ``PIPAxyl-O7`` and the integration variant
 whose name the OCR renders ``014``) are not records; they are written to
@@ -632,6 +656,15 @@ _Q_OFFGAS = (
     "trap at the end of the 168-h cultivation, despite the inclusion of a $2 0 \\%$ "
     "Durasyn overlay in the culture (Table S9)."
 )
+#: The ONLY isoprenol baseline stated anywhere in this mirror, and it is second-hand:
+#: the number is Banerjee 2024's, measured on the background PIPA was adapted from,
+#: with no culture conditions and no replicate count given here. See
+#: :data:`ISOPRENOL_NOT_A_RECORD`.
+_Q_ISOPRENOL_BASELINE = (
+    "In the previously reported engineered P. putida KT2440 background, this strain "
+    "supported isoprenol titers of up to 762 mg/L in shake flasks and $3 . 5 ~ \\mathrm "
+    "{ g } / \\mathrm { L }$ in fed-batch cultures (Banerjee et al., 2024)."
+)
 
 
 #: The strain-description cell each strain's genotype is read from, verbatim. Table 1
@@ -806,6 +839,41 @@ OFFGAS_FRACTION_PERCENT = _paper(
     page="Results 3.6, 'Isoprenyl acetate production in fed-batch cultivation'",
     note="Table S9's own 'Off-gas fraction (%)' column reads 51.9 at 165.4 h; that "
     "column is the independent oracle for the three-phase sum this loader stores",
+)
+#: The chassis isoprenol titers Kang's Results 3.1 states. Carried as EVIDENCE for
+#: :data:`ISOPRENOL_NOT_A_RECORD`, never as a ``phenotype_reference``: the measurement
+#: is Banerjee 2024's, on the background PIPA was adapted from rather than on PIPA, and
+#: this paper restates it without culture conditions or a replicate count.
+ISOPRENOL_BASELINE_SECOND_HAND = _paper(
+    {"flask_mg_per_l": 762.0, "fedbatch_g_per_l": 3.5},
+    _Q_ISOPRENOL_BASELINE,
+    page="Results 3.1, 'Production of isoprenyl acetate in P. putida'",
+    note="Banerjee 2024's numbers, restated here. Banerjee 2024 is not in the "
+    "literature mirror, the strain is the background PIPA was ADAPTED FROM rather than "
+    "PIPA, and no medium, sugar load or replicate count travels with either number, so "
+    "neither can be a reference titer for a record of this study",
+)
+#: Why Table S9's released aqueous isoprenol column is read, ledgered and oracle-checked
+#: but is NOT a record. Written into the build accounting so the decision is auditable
+#: from the built tree.
+ISOPRENOL_NOT_A_RECORD = (
+    "Table S9's 'Isoprenol, aqueous (mg/L)' column (7 values, 175.0 to 307.8 mg/L) is "
+    "read into FedBatchRow, oracle-checked and carried per record in "
+    "preprocess/titer_rows.csv, and it is NOT a ProductTiterExperiment. "
+    "ProductTiterExperimentReference requires a phenotype_reference and "
+    "ProductTiterPhenotype.titer is a required float, so an isoprenol record needs an "
+    "isoprenol reference titer. Measured on the pinned mirror: Table S9 is the ONLY "
+    "place any isoprenol number is released (Tables S1 to S8 carry none, Table S4 "
+    "releases only the ester, and Fig. 2b's isoprenol bars have no companion table), "
+    "so there is no second isoprenol measurement to be the denominator. The one "
+    "isoprenol baseline the paper states is second-hand "
+    f"(ISOPRENOL_BASELINE_SECOND_HAND, '{_Q_ISOPRENOL_BASELINE}'): it is Banerjee "
+    "2024's measurement, on the background PIPA was adapted from rather than on PIPA, "
+    "with no stated culture conditions and no replicate count, and Banerjee 2024 is "
+    "not in the literature mirror. Writing it as this run's reference would state a "
+    "measurement nobody made in this study. The sibling Yunus 2026 loader refuses its "
+    "titer family for the same reason (no control titer is stated), and that precedent "
+    "is followed here"
 )
 PIY670_PARTS = _si(
     _Q_PIY670_PARTS,
@@ -2054,12 +2122,17 @@ TABLE1_ROWS: tuple[Table1Row, ...] = (
 
 #: The column header of each consumed SI table, asserted before any value is read.
 SI_TABLE4_COLUMN = "IPA titer (mg/L)"
+#: Table S9's released aqueous ISOPRENOL column: the un-esterified precursor left in the
+#: broth. Read into :class:`FedBatchRow`, oracle-checked and carried per record in
+#: ``preprocess/titer_rows.csv``; NOT a record, for the reason
+#: :data:`ISOPRENOL_NOT_A_RECORD` states.
+SI_TABLE9_ISOPRENOL_COLUMN = "Isoprenol, aqueous (mg/L)"
 SI_TABLE9_COLUMNS: tuple[str, ...] = (
     "Time (h)",
     "Glucose (g/L)",
     "Xylose (g/L)",
     "Total sugar (g/L)",
-    "Isoprenol, aqueous (mg/L)",
+    SI_TABLE9_ISOPRENOL_COLUMN,
     "Isoprenyl acetate, aqueous (mg/L)",
     "Isoprenyl acetate, organic (mg/L)",
     "Isoprenyl acetate, off-gas (mg/L)",
@@ -2247,12 +2320,20 @@ def read_aat_panel(path: str | Path) -> list[AatPanelRow]:
 
 
 class FedBatchRow(BaseModel):
-    """One sampled time of Table S9, with the three isoprenyl acetate phases."""
+    """One sampled time of Table S9: the sugars, the isoprenol, the three ester phases.
+
+    ``isoprenol_aqueous_mg_per_l`` is the released aqueous isoprenol, the precursor the
+    AAT did not esterify. It is read here, oracle-checked by
+    :meth:`IsoprenylAcetateTiterKang2026Dataset._assert_fed_batch_oracles` and written
+    per record to ``preprocess/titer_rows.csv``; it is not a record, and
+    :data:`ISOPRENOL_NOT_A_RECORD` is the reason.
+    """
 
     time_hours: float
     glucose_g_per_l: float
     xylose_g_per_l: float
     total_sugar_g_per_l: float
+    isoprenol_aqueous_mg_per_l: float
     aqueous_mg_per_l: float
     organic_mg_per_l: float
     offgas_mg_per_l: float
@@ -2277,6 +2358,7 @@ def read_fed_batch(path: str | Path) -> list[FedBatchRow]:
             glucose_g_per_l=float(row[index["Glucose (g/L)"]]),
             xylose_g_per_l=float(row[index["Xylose (g/L)"]]),
             total_sugar_g_per_l=float(row[index["Total sugar (g/L)"]]),
+            isoprenol_aqueous_mg_per_l=float(row[index[SI_TABLE9_ISOPRENOL_COLUMN]]),
             aqueous_mg_per_l=float(row[index[SI_TABLE9_PHASES[0]]]),
             organic_mg_per_l=float(row[index[SI_TABLE9_PHASES[1]]]),
             offgas_mg_per_l=float(row[index[SI_TABLE9_PHASES[2]]]),
@@ -2561,6 +2643,7 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                     "product_yield_g_per_g": None,
                     "pulse_at_48h": CONDITIONS[row.condition].pulse_at_48h,
                     "reference": TABLE1_REFERENCE[row.strain],
+                    "isoprenol_aqueous_mg_per_l": None,
                     "aqueous_mg_per_l": None,
                     "organic_mg_per_l": None,
                     "offgas_mg_per_l": None,
@@ -2580,6 +2663,7 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                     "product_yield_g_per_g": None,
                     "pulse_at_48h": False,
                     "reference": "tube_pipa",
+                    "isoprenol_aqueous_mg_per_l": None,
                     "aqueous_mg_per_l": None,
                     "organic_mg_per_l": None,
                     "offgas_mg_per_l": None,
@@ -2604,6 +2688,7 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                     ),
                     "pulse_at_48h": False,
                     "reference": "fedbatch",
+                    "isoprenol_aqueous_mg_per_l": point.isoprenol_aqueous_mg_per_l,
                     "aqueous_mg_per_l": point.aqueous_mg_per_l,
                     "organic_mg_per_l": point.organic_mg_per_l,
                     "offgas_mg_per_l": point.offgas_mg_per_l,
@@ -2680,6 +2765,7 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
                 notes=[
                     "nothing is dropped: every released isoprenyl acetate number in the "
                     "mirror is a record, from all three columns",
+                    ISOPRENOL_NOT_A_RECORD,
                     "the Table 1 strains with no titer are not records and are listed "
                     "in preprocess/strains_without_a_titer.csv",
                     f"{n_quotes} Table 1 quotes were re-read verbatim from the pinned "
@@ -2720,10 +2806,25 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
         can disagree by :data:`_SUGAR_ROUNDING_TOL`; measured, one row does (93.4 h,
         2.1 + 3.2 = 5.3 against a released 5.2). The off-gas fraction is printed to one
         decimal on a percent scale, where the same rounding is far below 0.05.
+
+        The isoprenol column gets the two checks its own bytes support. It is positive
+        at every sampled time (measured: 175.0 to 307.8 mg/L, so the column is never a
+        blank or a zero placeholder), and its maximum is below the maximum three-phase
+        ester sum, which is what makes the ESTER and not the precursor this run's
+        product ("reached a final titer of 1.9 g/L isoprenyl acetate"). It has no
+        arithmetic relation to any other released column, so there is nothing else to
+        cross-check it against.
         """
         if not rows:
             raise RuntimeError("Table S9 holds no sampled times")
         for row in rows:
+            if not row.isoprenol_aqueous_mg_per_l > 0.0:
+                raise RuntimeError(
+                    f"Table S9 at {row.time_hours} h releases "
+                    f"{row.isoprenol_aqueous_mg_per_l} mg/L aqueous isoprenol; every "
+                    "sampled time carries a positive value in the pinned table, so a "
+                    "zero or negative cell means the column moved"
+                )
             total = row.titer_mg_per_l
             expected = 0.0 if total == 0 else row.offgas_mg_per_l / total * 100.0
             if abs(expected - row.released_offgas_fraction_percent) > 0.05:
@@ -2745,6 +2846,13 @@ class IsoprenylAcetateTiterKang2026Dataset(ExperimentDataset):
             raise RuntimeError(
                 f"the maximum three-phase sum is {peak} mg/L and the Results state "
                 f"{stated} mg/L for the same run"
+            )
+        isoprenol_peak = max(row.isoprenol_aqueous_mg_per_l for row in rows)
+        if isoprenol_peak >= peak:
+            raise RuntimeError(
+                f"the maximum aqueous isoprenol is {isoprenol_peak} mg/L and the "
+                f"maximum three-phase ester sum is {peak} mg/L; the ester is this run's "
+                "product and has to be the larger of the two"
             )
 
     @staticmethod
@@ -2977,6 +3085,7 @@ def verify_build(dataset_root: str, data_root: str | None = None) -> Verificatio
         )
     )
     report.add(_fed_batch_l4(grouped["Table S9"], data_root))
+    report.add(_isoprenol_column_l4(ledger, data_root))
     report.add(_table1_l4(grouped["Table 1"], data_root))
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     with open(out, "w") as handle:
@@ -3004,6 +3113,44 @@ def _fed_batch_l4(records: Sequence[dict[str, Any]], data_root: str | None) -> A
         )
     return l4_cross_source(shared, tol=1e-9).model_copy(
         update={"name": "fed_batch_titer_vs_table_s9_phases"}
+    )
+
+
+def _isoprenol_column_l4(ledger: pd.DataFrame, data_root: str | None) -> Any:
+    """L4: the ledgered aqueous isoprenol against Table S9, re-read from the mirror.
+
+    The column is not a record (:data:`ISOPRENOL_NOT_A_RECORD`), so this joins the BUILD
+    LEDGER rather than the store: every fed-batch row must carry the released isoprenol
+    value and every other row must carry none, which is what keeps a read-but-unstored
+    column from drifting unnoticed.
+    """
+    path = raw_mirror_dir(data_root) / SI_DOCX_REL
+    released = {
+        row.time_hours: row.isoprenol_aqueous_mg_per_l for row in read_fed_batch(path)
+    }
+    fed_batch = ledger[ledger["source"] == "Table S9"]
+    other = ledger[ledger["source"] != "Table S9"]
+    if not other["isoprenol_aqueous_mg_per_l"].isna().all():
+        raise AssertionError(
+            "a Table 1 or Table S4 ledger row carries an isoprenol value; the column is "
+            "released by Table S9 alone"
+        )
+    shared = []
+    for _, row in fed_batch.iterrows():
+        hours = float(row["time_hours"])
+        if hours not in released:
+            raise AssertionError(
+                f"a fed-batch ledger row is at {hours} h, which Table S9 does not sample"
+            )
+        shared.append(
+            (hours, float(row["isoprenol_aqueous_mg_per_l"]), released[hours])
+        )
+    if len(shared) != len(released):
+        raise AssertionError(
+            f"{len(shared)} ledgered isoprenol values for {len(released)} sampled times"
+        )
+    return l4_cross_source(shared, tol=1e-9).model_copy(
+        update={"name": "ledgered_aqueous_isoprenol_vs_table_s9"}
     )
 
 

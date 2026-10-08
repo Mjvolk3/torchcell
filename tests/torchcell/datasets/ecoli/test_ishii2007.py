@@ -1006,8 +1006,9 @@ def test_the_zwf_flux_record_matches_the_released_column_by_hand() -> None:
 
 @pytest.mark.data
 def test_the_rpe_metabolite_record_matches_the_released_column_by_hand() -> None:
-    """One hand-checked metabolome record: rpe, the disruptant with the highest
-    metabolite AEI. Values read off the Metabolite sheet's column T.
+    """One hand-checked metabolome record: rpe, which the paper singles out for "a
+    particularly high AEI for metabolites". Values read off the Metabolite sheet's
+    column T.
     """
     records = _records("metabolome_ishii2007")
     (rpe,) = [

@@ -29,7 +29,7 @@ from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
 def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     expected = {b.case.dataset_cls: b.case.adapter_cls for b in BACTERIAL}
-    assert len(expected) == len(BACTERIAL) == 32
+    assert len(expected) == len(BACTERIAL) == 33
     assert registered_bacterial_classes() == set(expected)
     mapped = {
         ds: ad
@@ -42,7 +42,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
 def test_each_adapter_has_its_own_module() -> None:
     """One class per module, so ``kg_manifest`` reads each dataset's own conf."""
     modules = [b.case.adapter_cls.__module__ for b in BACTERIAL]
-    assert len(set(modules)) == 32
+    assert len(set(modules)) == 33
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
 
@@ -57,7 +57,7 @@ def test_each_conf_is_named_after_the_dataset_root_slug() -> None:
 def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
     conf = yaml.safe_load(KG_BACTERIA.read_text(encoding="utf-8"))
     names = conf["datasets"]
-    assert len(names) == len(set(names)) == 32
+    assert len(names) == len(set(names)) == 33
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)
     assert set(classes) == registered_bacterial_classes()

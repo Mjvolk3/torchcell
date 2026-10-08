@@ -19,6 +19,9 @@ from .caglar2017_proteome_adapter import (
 from .caglar2017_rnaseq_adapter import (
     RnaseqCaglar2017Adapter as RnaseqCaglar2017Adapter,
 )
+from .campos2018_adapter import (
+    GrowthRateCampos2018Adapter as GrowthRateCampos2018Adapter,
+)
 from .carruthers2025_proteome_adapter import (
     ProteomeCarruthers2025Adapter as ProteomeCarruthers2025Adapter,
 )
@@ -261,6 +264,7 @@ baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 ecoli_adapters = [
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
+    "GrowthRateCampos2018Adapter",
     "CrispriKnockdownCui2018Adapter",
     "MetabolomeFuhrer2017Adapter",
     "GeneEssentialityGoodall2018Adapter",

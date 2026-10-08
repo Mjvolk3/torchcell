@@ -58,6 +58,7 @@ datasets:
   # E. coli
   - RnaseqCaglar2017Dataset
   - ProteomeCaglar2017Dataset
+  - GrowthRateCampos2018Dataset
   - CrispriKnockdownCui2018Dataset
   - MetabolomeFuhrer2017Dataset
   - GeneEssentialityGoodall2018Dataset

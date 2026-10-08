@@ -31,6 +31,7 @@ from torchcell.adapters import (
     FattyAcidXue2025Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialitySgdAdapter,
+    GrowthRateCampos2018Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
@@ -84,6 +85,7 @@ from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
 )
+from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
@@ -250,6 +252,7 @@ dataset_adapter_map = {
     # Bacteria (plan.bacteria-ontology-genome step 9): E. coli, then P. putida.
     RnaseqCaglar2017Dataset: RnaseqCaglar2017Adapter,
     ProteomeCaglar2017Dataset: ProteomeCaglar2017Adapter,
+    GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,

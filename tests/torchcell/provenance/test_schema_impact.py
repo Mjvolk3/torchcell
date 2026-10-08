@@ -809,3 +809,114 @@ def test_repo_root_inside_and_outside_a_repo(
     outside.mkdir()
     monkeypatch.chdir(outside)
     assert _REAL_REPO_ROOT() == outside.resolve()
+
+
+# 2026.10.08, issue #734: changes to module-level vocabularies a class resolves through.
+VOCAB = """
+import re
+from typing import Literal
+
+Namespace = Literal["mg1655", "bw25113"]
+PATTERNS = {"mg1655": "^b[0-9]{4}$", "bw25113": "^BW25113_[0-9]{4}$"}
+
+
+def _validate_tag(value):
+    return any(re.match(p, value) for p in PATTERNS.values())
+
+
+class Leaf(ModelStrict):
+    namespace: Namespace
+    tag: str
+
+    @field_validator("tag")
+    def _tag(cls, value):
+        return _validate_tag(value)
+"""
+
+
+def test_literal_and_pattern_widening_is_stale() -> None:
+    """The REL606 shape: one namespace and its pattern added, nothing removed."""
+    new = VOCAB.replace('"bw25113"]', '"bw25113", "rel606"]').replace(
+        '"^BW25113_[0-9]{4}$"}', '"^BW25113_[0-9]{4}$", "rel606": "^ECB_[0-9]{5}$"}'
+    )
+    assert _verdict(VOCAB, new, "Leaf") == (
+        S,
+        "modified",
+        [
+            "module-level 'Namespace' gained members [\"'rel606'\"]",
+            "module-level 'PATTERNS' gained members [\"'rel606': '^ECB_[0-9]{5}$'\"]",
+        ],
+    )
+
+
+def test_literal_narrowing_is_breaking() -> None:
+    new = VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["mg1655"]')
+    assert _verdict(VOCAB, new, "Leaf") == (
+        B,
+        "modified",
+        ["module-level 'Namespace' lost members [\"'bw25113'\"]"],
+    )
+
+
+def test_changed_pattern_is_breaking() -> None:
+    new = VOCAB.replace('"^b[0-9]{4}$"', '"^b[0-9]{5}$"')
+    assert _verdict(VOCAB, new, "Leaf") == (
+        B,
+        "modified",
+        [
+            "module-level 'PATTERNS' lost members [\"'mg1655': '^b[0-9]{4}$'\"]",
+            "module-level 'PATTERNS' gained members [\"'mg1655': '^b[0-9]{5}$'\"]",
+        ],
+    )
+
+
+def test_changed_helper_function_is_breaking() -> None:
+    new = VOCAB.replace("return any(", "return all(")
+    assert _verdict(VOCAB, new, "Leaf") == (
+        B,
+        "modified",
+        ["module-level '_validate_tag' changed"],
+    )
+
+
+def test_reordered_literal_is_stale() -> None:
+    new = VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["bw25113", "mg1655"]')
+    assert _verdict(VOCAB, new, "Leaf") == (
+        S,
+        "modified",
+        ["module-level 'Namespace' reordered"],
+    )
+
+
+def test_newly_reached_and_dropped_bindings_are_reported() -> None:
+    """Retargeting a field from the alias to ``str`` drops the binding (and changes the
+    type, which is what makes it breaking); the reverse adds it.
+    """
+    plain = VOCAB.replace("    namespace: Namespace\n", "    namespace: str\n")
+    kind, _, reasons = _verdict(VOCAB, plain, "Leaf")
+    assert kind == B
+    assert "no longer resolves through module-level 'Namespace'" in reasons
+    kind, _, reasons = _verdict(plain, VOCAB, "Leaf")
+    assert "now resolves through module-level 'Namespace'" in reasons
+
+
+def test_vocabulary_change_flags_the_loaders_that_reach_the_class(
+    tmp_path: Path,
+) -> None:
+    """A narrowed Literal maps to the loader importing the leaf, as an enum change would."""
+    old_surface = _surface(VOCAB)
+    new_surface = _surface(
+        VOCAB.replace('Literal["mg1655", "bw25113"]', 'Literal["mg1655"]')
+    )
+    leaf_loader = tmp_path / "leaf_loader.py"
+    leaf_loader.write_text("from torchcell.datamodels.schema import Leaf\n")
+    other = tmp_path / "other.py"
+    other.write_text("from torchcell.datamodels.schema import ModelStrict\n")
+    changes = si.diff_surfaces(old_surface, new_surface)
+    assert [c.symbol for c in changes] == ["Leaf"]
+    impacts = si.map_impacts(
+        changes, [leaf_loader, other], old_surface, new_surface, tmp_path
+    )
+    assert [(i.loader, i.changed_symbols, i.kind) for i in impacts] == [
+        ("leaf_loader.py", ["Leaf"], B)
+    ]

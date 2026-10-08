@@ -389,6 +389,7 @@
     "released_censored_cells_total": 64,
     "storable_with_existing_classes_today": 10,
     "storable_share": 0.1064,
+    "refusals_overlap_by_design": "a cell can be blocked for more than one reason, so these counts are NOT disjoint and must not be summed: the activation arm's 33 pinene cells are counted both under the missing activation leaf and under the missing product fold-change phenotype. The disjoint figure is storable_with_existing_classes_today against released_numeric_cells_total.",
     "refusals": [
       {
         "what": "all 374 called variants of the evolved isolate YZFP",

@@ -76,3 +76,17 @@ Typed gaps (`volk2021_sources.GAPS`): shaking (no decoded source; hypothesis tha
 ### Planned record shape for the loader
 
 One record per inoculated well: `StrainEnvironmentResponseExperiment` with a genotype of zero perturbations on the bAID background (BY4742 + the integrated pAID6 cassette as `IntegratedCassette`), a `CultureEnvironment` of YPD with one `SmallMoleculePerturbation` per inhibitor at its g/L dose, and an `EnvironmentResponsePhenotype` with `measurement_type=relative_growth_rate` and `assay_type=liquid_od_growth`, or `category=no_growth` for a well that did not grow. `screen_id` = run and well (e.g. `ex23:well150`). Biological replicate id from the layout (ex21 block, ex23 table, isobole plate). The dataset carries `Visibility` private and the `Publication` source type `preliminary_report`.
+
+## 2026.10.08 - The dataset as built
+
+`InhibitorBioscreenVolk2021Dataset` (`torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py`, adapter `torchcell/adapters/volk2021_inhibitor_bioscreen_adapter.py`) builds from the raw mirror alone: 977 records in 5 s under `$DATA_ROOT/data/torchcell/inhibitor_bioscreen_volk2021` (ex21 180, ex23 197, ex26 200, ex27 200, ex28 200). Dropped: ex23's three uninoculated `blank` wells (80, 87, 157) and ex21's unassigned wells 91 to 100 and 191 to 200.
+
+Two departures from the planned shape above. A well that did not grow is `category=severely_reduced` (the enum's own meaning, "growth or signal essentially abolished") with `category_label` "no growth within <h> h"; no `no_growth` member was added because that one already means it. And the loader declares `has_gene_perturbations = False`: every record is the unedited host, so the dataset's gene set is legitimately empty, and `ExperimentDataset.gene_set`'s setter accepts an empty set only under that class-level declaration (it still refuses `None`, and refuses an empty set for every loader that does carry gene edits).
+
+Records read back from the build (the WT well's rate is its own generation time against the run's WT mean, so WT replicates scatter around 1.0):
+
+- ex23 well with acetic acid 2 g/L + formic acid 1 g/L + levulinic acid 6 g/L (index 214): genotype `[]`; 84.97 h, 30.0 C; `relative_growth_rate` 0.335; reference strain `bAID`, background `bAID` with the integration `Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]`.
+- ex26 well with furfural 1.666 g/L (index 382): `categorical` / `severely_reduced`, "no growth within 96 h", 95.99 h.
+- ex21 WT well (index 0): no perturbation, 71.97 h, `relative_growth_rate` 0.669.
+
+Serving: `visibility = private`. The GilaHyper live-rebuild and increment slurm scripts now default to `INCLUDE_PRIVATE=1` (`--include-private` to the generator and to the admission check); the generator unions `PRIVATE_DATASET_ADAPTER_MAP` only under that flag and refuses a private dataset named without it; `scripts/package_dataset_lmdb.py` (tc-data) refuses it either way. The admission check against the served manifest (store 4b293d34, run 2026-10-08 with `--include-private`) reports the dev LMDB fresh and the dataset BLOCKED for the expected reason: `Publication` and `SourceType` moved the schema closure of all 51 served datasets (PR #778), the `publication` and `crispr construct` graph classes changed, and the compound and media value surfaces changed. So this dataset enters the served store through the next FULL rebuild, not an increment.

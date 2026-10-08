@@ -159,6 +159,33 @@ def _flux(**kw: Any) -> s.FluxPhenotype:
     return s.FluxPhenotype(**fields)
 
 
+def _activity(**kw: Any) -> s.PromoterActivityPhenotype:
+    fields: dict[str, Any] = dict(
+        promoter_activity=12.98,
+        n_samples=1,
+        sample_unit="biological_replicate",
+        promoter_name="thrA",
+        promoter_gene="b0002",
+        readout="plate_reader_fluorescence",
+        reporter_gene="gfp",
+        activity_units="GFP fluorescence in the reader's own units",
+        well_id="Untreated|AZ01|A1",
+    )
+    fields.update(kw)
+    return s.PromoterActivityPhenotype(**fields)
+
+
+def _promoter_activity_record(phenotype: s.PromoterActivityPhenotype) -> dict[str, Any]:
+    return {
+        "experiment": s.PromoterActivityExperiment(
+            dataset_name="BacterialToy",
+            genotype=s.Genotype(perturbations=_bacterial_leaves()),
+            environment=s.Environment(media=_lb()),
+            phenotype=phenotype,
+        )
+    }
+
+
 def _product_titer_record(phenotype: s.ProductTiterPhenotype) -> dict[str, Any]:
     return {
         "experiment": s.ProductTiterExperiment(
@@ -540,6 +567,62 @@ def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:
     assert [bare.get_properties()[k] for k in optional] == [None] * len(optional)
 
 
+def test_promoter_activity_phenotype_node_projects_every_field_as_a_scalar() -> None:
+    """One promoter per record, so nothing is a dict and nothing is JSON-encoded."""
+    phenotype = _activity(
+        promoter_activity_uncertainty=0.4,
+        promoter_activity_uncertainty_type="sample_sd",
+        n_samples=4,
+    )
+    [node] = _run("promoter activity phenotype (chunked)", _phenotype_record(phenotype))
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "promoter activity phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "graph_level": "node",
+        "label_name": "promoter_activity",
+        "label_statistic_name": "promoter_activity_se",
+        "promoter_activity": 12.98,
+        "promoter_activity_se": pytest.approx(0.2),
+        "promoter_activity_uncertainty": 0.4,
+        "promoter_activity_uncertainty_type": "sample_sd",
+        "n_samples": 4,
+        "sample_unit": "biological_replicate",
+        "promoter_name": "thrA",
+        "promoter_gene": "b0002",
+        "readout": "plate_reader_fluorescence",
+        "reporter_gene": "gfp",
+        "activity_units": "GFP fluorescence in the reader's own units",
+        "well_id": "Untreated|AZ01|A1",
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+    }
+    [edge] = _run(
+        "phenotype to experiment (chunked)", _promoter_activity_record(phenotype)
+    )
+    assert edge.get_source_id() == pid
+    assert edge.get_label() == "phenotype member of"
+
+
+def test_promoter_activity_optional_fields_project_as_none() -> None:
+    """A screen run once has no dispersion, and a label naming no gene has no join key."""
+    props = _run(
+        "promoter activity phenotype (chunked)",
+        _phenotype_record(_activity(promoter_gene=None)),
+    )[0].get_properties()
+    optional = (
+        "promoter_activity_se",
+        "promoter_activity_uncertainty",
+        "promoter_activity_uncertainty_type",
+        "promoter_gene",
+    )
+    assert [props[k] for k in optional] == [None] * len(optional)
+    assert props["sample_unit"] == "biological_replicate"
+
+
 @pytest.mark.parametrize(
     "method_name,label,phenotypes",
     [
@@ -557,6 +640,11 @@ def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:
             "flux phenotype reference",
             "flux phenotype",
             [_flux(), _flux(), _flux(net_flux={"PGI": 1.0})],
+        ),
+        (
+            "promoter activity phenotype reference",
+            "promoter activity phenotype",
+            [_activity(), _activity(), _activity(promoter_activity=9.5)],
         ),
     ],
 )

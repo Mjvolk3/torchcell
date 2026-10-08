@@ -6,6 +6,8 @@ import pytest
 
 from torchcell.datamodels.schema import (
     FitnessPhenotype,
+    PromoterActivityPhenotype,
+    ReporterReadout,
     SampleUnit,
     UncertaintyType,
     derive_se,
@@ -110,3 +112,105 @@ def test_round_trip():
     assert ph.fitness_se is not None and not math.isnan(
         ph.fitness_se
     )  # derived, finite
+
+
+# --------------------------------------------------------------------------- #
+# PromoterActivityPhenotype: the same ontology on a reporter signal
+# --------------------------------------------------------------------------- #
+def _activity(**kw: object) -> PromoterActivityPhenotype:
+    """A reporter reading with the fields every record of the family carries."""
+    fields: dict[str, object] = dict(
+        promoter_activity=12.98,
+        promoter_name="thrA",
+        readout=ReporterReadout.plate_reader_fluorescence,
+        reporter_gene="gfp",
+        activity_units="GFP fluorescence in the reader's own units",
+        well_id="Untreated|AZ01|A1",
+    )
+    fields.update(kw)
+    return PromoterActivityPhenotype(**fields)  # type: ignore[arg-type]  # a kwargs table, validated by pydantic
+
+
+def test_promoter_activity_derives_the_se_from_a_reported_sd() -> None:
+    phenotype = _activity(
+        promoter_activity_uncertainty=0.4,
+        promoter_activity_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=4,
+        sample_unit=SampleUnit.biological_replicate,
+    )
+    assert phenotype.promoter_activity_se == pytest.approx(0.2)
+
+
+def test_promoter_activity_keeps_a_supplied_se_over_the_derivation() -> None:
+    phenotype = _activity(
+        promoter_activity_se=0.01,
+        promoter_activity_uncertainty=0.4,
+        promoter_activity_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=4,
+        sample_unit=SampleUnit.biological_replicate,
+    )
+    assert phenotype.promoter_activity_se == 0.01
+
+
+def test_promoter_activity_leaves_the_se_unfilled_when_an_sd_has_no_n() -> None:
+    """sample_sd divides by sqrt(n), so with no n there is nothing to derive."""
+    phenotype = PromoterActivityPhenotype.model_construct(
+        promoter_activity=12.98,
+        promoter_activity_uncertainty=0.4,
+        promoter_activity_uncertainty_type=UncertaintyType.sample_sd,
+        promoter_name="thrA",
+        readout=ReporterReadout.plate_reader_fluorescence,
+        reporter_gene="gfp",
+        activity_units="a.u.",
+        well_id="Untreated|AZ01|A1",
+    )
+    assert phenotype.promoter_activity_se is None
+
+
+def test_promoter_activity_refuses_an_unlabelled_uncertainty() -> None:
+    with pytest.raises(ValueError, match="must both be set or both"):
+        _activity(promoter_activity_uncertainty=0.4)
+    with pytest.raises(ValueError, match="must both be set or both"):
+        _activity(promoter_activity_uncertainty_type=UncertaintyType.sample_sd)
+
+
+def test_promoter_activity_sd_requires_n_and_unit() -> None:
+    with pytest.raises(ValueError, match="n_samples and sample_unit are required"):
+        _activity(
+            promoter_activity_uncertainty=0.4,
+            promoter_activity_uncertainty_type=UncertaintyType.sample_sd,
+            n_samples=4,
+        )
+
+
+def test_promoter_activity_refuses_a_non_finite_signal() -> None:
+    for value in (float("nan"), float("inf"), float("-inf")):
+        with pytest.raises(ValueError, match="must be finite"):
+            _activity(promoter_activity=value)
+
+
+def test_promoter_activity_refuses_a_non_positive_n_samples() -> None:
+    with pytest.raises(ValueError, match="positive integer"):
+        _activity(n_samples=0)
+
+
+@pytest.mark.parametrize(
+    "field", ["promoter_name", "well_id", "reporter_gene", "activity_units"]
+)
+def test_promoter_activity_refuses_a_blank_identifier(field: str) -> None:
+    """A blank identifier is the free-text absence the typed fields replace."""
+    with pytest.raises(ValueError, match=f"{field} cannot be empty"):
+        _activity(**{field: "   "})
+
+
+def test_promoter_activity_round_trips_through_its_dump() -> None:
+    phenotype = _activity(
+        promoter_gene="b0002",
+        promoter_activity_uncertainty=0.4,
+        promoter_activity_uncertainty_type=UncertaintyType.sample_sd,
+        n_samples=4,
+        sample_unit=SampleUnit.biological_replicate,
+    )
+    assert phenotype == PromoterActivityPhenotype(**phenotype.model_dump())
+    assert phenotype.label_name == "promoter_activity"
+    assert phenotype.label_statistic_name == "promoter_activity_se"

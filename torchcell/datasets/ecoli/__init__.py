@@ -56,7 +56,10 @@ sourcing layer.
   platform) and ``MetaboliteIntensityRapp2026Dataset`` (the absolute FI-MS intensity of
   each accumulating feature, with its per-replicate standard error).
 - ``price2018`` -- ``RbTnseqPrice2018EcoliDataset``: the RB-TnSeq fitness compendium,
-  the loader that serves the experiments Wetmore 2015 first reported.
+  the loader that serves the experiments Wetmore 2015 first reported; and
+  ``GeneEssentialityPrice2018EcoliDataset``, its Supplementary Table 1 likely-essential
+  gene list, a TnSeq no-insertion call over the genes the fitness analysis could not
+  value, so the two gene sets are disjoint.
 - ``rousset2018`` -- ``CrispriScreenRousset2018Dataset``: per-sgRNA dCas9 knockdown
   log2FC from the three phage challenges and the lambda transduction assay in FR-E01.
   Its fifth released screen, growth over 17 generations, is Cui 2018's screen released
@@ -116,6 +119,9 @@ from .lamoureux2023_public_k12 import (
 from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .mutalik2020 import (
     PhageRbTnseqMutalik2020Dataset as PhageRbTnseqMutalik2020Dataset,
+)
+from .price2018 import (
+    GeneEssentialityPrice2018EcoliDataset as GeneEssentialityPrice2018EcoliDataset,
 )
 from .price2018 import RbTnseqPrice2018EcoliDataset as RbTnseqPrice2018EcoliDataset
 from .rapp2026 import MetabolomeRapp2026Dataset as MetabolomeRapp2026Dataset

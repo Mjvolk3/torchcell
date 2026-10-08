@@ -70,6 +70,7 @@ datasets:
   - ProteomeMori2021Dataset
   - PhageRbTnseqMutalik2020Dataset
   - RbTnseqPrice2018EcoliDataset
+  - GeneEssentialityPrice2018EcoliDataset
   - MetabolomeRapp2026Dataset
   - GrowthAucRapp2026Dataset
   - MetaboliteIntensityRapp2026Dataset

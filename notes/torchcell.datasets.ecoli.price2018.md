@@ -145,7 +145,7 @@ temperature that the mutant library was grown at"), aerobic (all 162), and Condi
 | `M9 minimal media_noCarbon` | `M9_NOCARBON_PRICE2018` + `EnvironmentPhysicalPerturbation(carbon_source, dose, agent)` |
 | `M9 minimal media_noNitrogen` | `M9_NONITROGEN_PRICE2018` (4 g/L glucose fixed) + `EnvironmentPhysicalPerturbation(nitrogen_source, dose, agent)` |
 | `MOPS minimal media_noCarbon` | `MOPS_MINIMAL` + the carbon-source perturbation |
-| stress on `LB` | `SmallMoleculePerturbation(compound, dose)`, `solvent=None` with a typed gap (no vehicle stated in the paper, Table S4 or Table S5) |
+| stress on `LB` | `SmallMoleculePerturbation(compound, dose, solvent)`, the vehicle from Table S4's `Solvent` (2026.10.08 section below) |
 | `lb` group | `LB_LENNOX`, no perturbation |
 
 Units: `mM` -> `mM`; `mg/ml` -> `g/L` with the printed value (1 mg/mL is 1 g/L); `g/L`;
@@ -252,7 +252,11 @@ numbers and audits every quote against the pinned mirrors.
   resolves every dataset against S288C, so this dataset is verified by its own
   `verify()` (bacterial gene universe and resolver) until the runner selects by the
   record's assembly pin.
-- **Adapter map:** no `dataset_adapter_map` entry yet (KG admission is out of scope here).
+- **Adapter map:** this bullet is stale. `RbTnseqPrice2018EcoliAdapter` (conf
+  `rbtnseq_price2018_ecoli_adapter.yaml`) landed before this note was written, and
+  `GeneEssentialityPrice2018EcoliAdapter` (conf
+  `gene_essentiality_price2018_ecoli_adapter.yaml`) landed 2026.10.08; both are in
+  `dataset_adapter_map` and in `kg_bacteria.yaml`.
 
 ## 2026.10.07 - Rebased onto the REL606 schema: the staleness gate does not see a widened namespace Literal
 
@@ -279,3 +283,257 @@ One CI-only type error was fixed in the same round: `lmdb`'s `txn.get` is `bytes
 where CI resolves its stubs and `Any` locally (no stubs in the env), so the dev-build
 test now binds the payload to an annotated local and asserts it is not None before
 `pickle.loads` (narrowed, never cast).
+
+## 2026.10.08 - Table S4's `Solvent` fills the stress vehicle (SI audit rank 18)
+
+The loader's `SOLVENT_GAP` is gone. `TableS4_Stress` has a column literally named
+`Solvent`, so every stress record now carries
+`SmallMoleculePerturbation.solvent = Solvent(name=<Table S4 value>, percent=None,
+compound=resolved_compound(name))`, matched to Table S5's `Condition_1` by
+case-insensitive exact compound name. The gap's recorded reason ("no vehicle is stated
+per stress compound in the paper, Table S4 or Table S5") was simply false, which
+[[plan.bacteria-si-phenotype-audit-ecoli]] found while auditing.
+
+**Measured on the pinned workbook** (`si/si3.xlsx`, sha256 `e5dbf3d5c97cfc12...`;
+reproduced by `python -m torchcell.datasets.ecoli.price2018 report` and asserted by
+`test_the_stress_vehicles_of_every_kept_sample`):
+
+| quantity | value |
+|---|---|
+| Table S4 data rows | 55, one per stress compound, every `Solvent` cell filled |
+| distinct `Solvent` values | water, Dimethyl Sulfoxide, Ethanol |
+| kept Keio stress samples | 55 of the 147, all matched to a Table S4 compound |
+| distinct `Condition_1` labels among them | 35 |
+| solvent by kept SAMPLE | water 45, Dimethyl Sulfoxide 7, Ethanol 3 |
+| solvent by distinct COMPOUND | water 29, Dimethyl Sulfoxide 5, Ethanol 1 |
+| records that gained a vehicle | 207,240 = 55 x 3,768 |
+
+**The caveat is on the record, not only here.** Table S4 is the WILD-TYPE IC50 prescreen
+("For each compound, we grew the wildtype bacterium across a 1,000-fold range of
+inhibitor concentrations in a rich medium"), so its `Solvent` is the solvent of THAT
+assay's stock. The paper never says the mutant fitness assays drew on those stocks
+(`paper.md` contains none of "stock solution", "dissolved", "solvent", "DMSO" or
+"dimethyl"), and the sheet's own caveat is about concentration only ("The concentrations
+reported here are not necessarily the concentrations used for the mutant fitness
+assays"). Every stress perturbation therefore carries `STRESS_DESCRIPTION`, which says
+the vehicle is DERIVED from the prescreen stock and that the release does not tie it to
+the fitness assays, and `Solvent.percent` stays `None` because the final vehicle fraction
+is never released. There is no field for the percent, and no gap can name it
+(`Solvent` is not a gap carrier), so that absence lives in the same description.
+
+`water` is not in the pinned compound-identity table, so its `Compound` carries the
+resolver's typed `inchikey` gap, the same treatment the 53 unresolved stress labels get.
+Ethanol and dimethyl sulfoxide resolve with an InChIKey. The verifier's deferred-field
+list therefore drops `solvent` and keeps `inchikey`, `n_samples` and `sample_unit`.
+
+**Rebuild, not a migration.** The dev store was retired to
+`/scratch/projects/torchcell-deprecated/2026-10-07_235615__processed` (and
+`...235620__preprocess`) and rebuilt: **553,896 records in 276 s**, gene set 3,768,
+147 references, `build_manifest` fresh. The counts are unchanged; what changed is what
+each stress record says.
+
+## 2026.10.08 - Supplementary Table 1 as a second dataset: likely-essential genes
+
+`GeneEssentialityPrice2018EcoliDataset`, root `data/torchcell/gene_essentiality_price2018_ecoli`,
+adapter `torchcell/adapters/price2018_ecoli_essentiality_adapter.py` with conf
+`gene_essentiality_price2018_ecoli_adapter.yaml`. SI audit rank 9.
+
+### What was built (measured 2026.10.08)
+
+| quantity | value |
+|---|---|
+| Table S1 `orgId == "Keio"` rows | **324** |
+| records (`len(dataset)`) | **320** |
+| dropped (`no_one_to_one_eck_pair`) | 4: `b0062` araA, `b0063` araB, `b3903` rhaA, `b3904` rhaB |
+| intersection with the 3,789 fitness genes | **0** |
+| `geneClass` | Arole 200, Bspecific 98, Dhypo 19, Cvague 7 |
+| ECK route | 320 of 324 (0.98765), all at the gene-synonym layer, status `renamed` 320 |
+| references | 1 (the unperturbed parent on the selection plates) |
+| build time | 5 s |
+
+`python -m torchcell.datasets.ecoli.price2018 essentiality-report` prints every number
+above from the sha256-pinned files; the data-gated
+`test_table_s1s_keio_rows_and_their_disjointness_from_the_fitness_genes` asserts them.
+
+### The label is not plain essentiality, and the records say so
+
+The paper's own label, verbatim (Methods, "Identifying essential or nearly essential
+genes"): "Genes that lack insertions or that have very low coverage in the start samples
+are likely to be essential or important for growth (nearly essential) in rich medium, as
+except for S. elongatus, pools of mutants were produced and recovered in medium that
+contained yeast extract." The rule, verbatim: "Protein-coding genes were considered
+essential or important for growth (nearly essential) if we did not estimate fitness
+values for the gene and both the normalized insertion density and the normalized read
+density were under 0.2."
+
+The false-discovery rate, verbatim from Supplementary Note 1 (`si/si1.md`, sha256
+`1c68b123ebb7516b...`): "So, we expect that the true rate of false positives in our list
+of $E .$ coli proteins that are essential, or nearly so, for growth in rich media is
+somewhere between $6 \%$ and $16 \%$ ." The naive rate against the PEC and Keio-collection
+list is higher, also verbatim: "Our list of essential genes also includes 67
+non-essential genes, which corresponds to a false discovery rate (FDR) of $21 \%$ ." The
+note then argues 15 of those 67 are nearly essential in the library-isolation condition,
+which is how 21% becomes 16%.
+
+The condition is the library-isolation condition, not any fitness assay, verbatim:
+"However, some of these "false positives" are likely to be essential, or nearly so, in
+the condition that we used to isolate our mutant library, namely growth on LB plates."
+and "...nearly-essential for growth on LB plates at $3 7 ^ { \circ } \mathsf { C }$".
+
+`GeneEssentialityPhenotype` is one boolean (`is_essential`) with no slot for "nearly", no
+slot for an FDR and no slot for the coverage the call is computed from. So the caveat is
+carried three ways, and the third is the one that travels with a single record:
+
+1. **`preprocess/essentiality_label.json`** holds eleven `SourcedValue`s verbatim, each
+   with its source uri and sha256: the label, the rule, the barcode-free analysis, the
+   condition, its temperature, both FDR statements, the PEC benchmark, the per-organism
+   range and the fitness set's "non-essential" restriction.
+2. **`preprocess/dropped_records.json`** (`EssentialityInventory`) lists the quantities
+   that have no field at all, each keyed to the quote that states it.
+3. **Every record's `TransposonInsertionPerturbation.description`**
+   (`ESSENTIAL_DESCRIPTION`) says the call is a no-insertion call, not a measurement,
+   names the label "essential or important for growth (nearly essential)", gives the
+   condition as LB plates at 37 C, and states the 6% to 16% FDR. A verifier row,
+   `label_caveat_on_every_record`, fails if any record drops it.
+
+### Why 320 and not 324: BW25113 deletes araBAD and rhaBAD
+
+The four unplaced rows are araA, araB, rhaA and rhaB, whose ECK ids
+(`ECK0063`, `ECK0064`, `ECK3896`, `ECK3897`) no BW25113 locus carries. The reason is not
+asserted from the literature: `BW25113_BACKGROUND_LESIONS` holds `(araBAD)567` and
+`(rhaBAD)568` verbatim from the `source` feature of the sha256-pinned
+`ecoli_K12_BW25113_ASM75055v1` GenBank file, and `schema.py` already records that
+"araB, araA, rhaB, rhaA are absent, which is what being deleted looks like". So a library
+built in BW25113 can have no insertion in genes it does not have, and the release's
+no-insertion rule calls them essential: a false positive by construction of MG1655
+numbering on a BW25113 library.
+
+Three checks, all at build time:
+
+1. `dropped_genes_explained_by_background` ties each dropped gene to the lesion that
+   accounts for it (measured: `araA` and `araB` to `(araBAD)567`, `rhaA` and `rhaB` to
+   `(rhaBAD)568`), and a drop the genotype cannot account for RAISES, because that would
+   mean the mapping lost a gene rather than that BW25113 lacks one.
+2. Table S1 corroborates the absence itself: those four are the **only** Keio rows whose
+   `locus_tag` (its one BW25113 identifier) is empty, and the build refuses a release
+   where the set the ECK route cannot place differs from the set Table S1 leaves blank.
+3. The route floor (`MIN_ESSENTIAL_ECK_ROUTE_FRACTION = 0.98`, below the fitness tables'
+   0.99) still stops a wrong annotation, which would place far fewer than 320 of 324.
+
+### Disjointness is an invariant, checked twice
+
+A gene is called likely-essential only where the fitness analysis produced no value for
+it ("if we did not estimate fitness values for the gene"), and that analysis covers "the
+123,255 different non-essential protein-coding genes for which we collected gene fitness
+data". **Measured: the 324 essential b-numbers and the 3,789 `fit_logratios_good.tab`
+b-numbers intersect in 0**, on `sysName` and on `locusId` alike. `process()` refuses a
+release that breaks it (the gene would otherwise be stored under two contradicting
+phenotypes), and the verifier re-reads both files and proves it again as
+`disjoint_from_the_fitness_genes`.
+
+### Identifiers: a second route corroborates the first
+
+The stored namespace is `ecoli_k12_bw25113_locus_tag` (`^BW25113_\d{4}$`), so Table S1's
+RefSeq `BW25113_RS*` tags cannot be stored as they are; the b-numbers go through the same
+one-to-one ECK pair the fitness dataset uses. Table S1's own `locus_tag` is then a second,
+independent route: **318 of the 320 RefSeq tags resolve to exactly the locus the ECK route
+chose, 2 (`b1457`, `b4047`) are tags this annotation release does not carry, and 0 name a
+different locus.** Reported by `refseq_route_agreement`, not enforced, because the RefSeq
+layer is a second release of the same assembly.
+
+35 of the 320 genes carry a Table S1 `name` that is not the genome's current symbol
+(`imp` -> `lptD`, `yaeT` -> `bamA`, `GroEL` -> `groL`, ...). The stored
+`perturbed_gene_name` is the genome's, so a stored common name always resolves to the
+stored locus tag; the sheet's older name stays in `preprocess/essential_genes.csv`.
+
+### Environment: the selection plates, derived from LB Lennox
+
+`selection_medium()` is a medium DERIVED from `LB_LENNOX` (`base_medium` `LB`, so it joins
+there): solid, with agar at `concentration=None` and kanamycin at 50 ug/mL, at 37 C. The
+sources are Table S20's E. coli row (`Media` `LB`, `Temperature for selecting mutants` 37,
+`Antibiotic; concentration (in ug/mL)` `Kanamycin; 50`), its note 5 ("Media used for for
+both the conjugation ... and for the selection of transposon mutants (with supplemented
+kanamycin)"), and Supplementary Note 1 for the plates being solid. `LB_AGAR`'s 2% agar is
+Menasalvas 2025's and Schmidt 2016's bench value and is NOT asserted here, the same call
+`goodall2018.selection_medium()` makes. `duration_hours` and `duration_generations` are
+typed gaps (`not_reported_by_primary`); `aerobicity` keeps the field default, since plates
+incubated in air are never stated and the field cannot be None.
+
+The reference is the unperturbed BW25113 parent on the same plates, `is_essential=False`:
+the library was built in that parent and isolated there, so its viability is a fact of the
+experiment, not an inference.
+
+### Verifier result (verbatim)
+
+`python -m torchcell.datasets.ecoli.price2018 essentiality-verify`. Report:
+`data/torchcell/gene_essentiality_price2018_ecoli/preprocess/verification_report.json`.
+
+```
+GeneEssentialityPrice2018EcoliDataset: PASS
+  [ok] L0 structural: 320 records validated
+  [ok] L1 count: observed 320, expected 320
+  [ok] L1 provenance_gaps: 1280 documented provenance gaps over 320/320 records; 1 deferred field(s): ['inchikey']; 5760 undeclared None values over 6 carrier fields (top: Compound.inchi x1600, Compound.smiles x1280, Compound.chebi_id x960, Compound.pubchem_cid x960, Compound.inchikey x640)
+  [ok] L1 canonical_gene_names: 320 systematic names, one canonical spelling each, each current in the genome
+  [ok] L1 stored_tags_are_loci_of_the_pinned_assembly: SUPPLEMENTARY: 320 stored tags, statuses {'current': 320}; 0 do not resolve to themselves
+  [ok] L2 calls_match_table_s1: 320 records, one likely-essential locus each, from 324 released Keio rows
+  [ok] L2 uncertainty_sanity: 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty
+  [ok] L3 disjoint_from_the_fitness_genes: 324 likely-essential genes and 3789 genes with fitness values share none
+  [ok] L3 label_caveat_on_every_record: all 320 records carry the 'nearly essential' label and the 6% to 16% FDR on their perturbation description
+  [ok] L3 compound_identity: environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
+  [ok] L3 media_compound_identity: medium components: 640 compound references carry a structure identifier; 320 declare a typed gap (1 distinct compounds, unencodable)
+  [ok] L3 media_membership: 0 records on a shared MEDIA_LIBRARY medium, 320 on a medium deriving from one (1 distinct media)
+  [ok] L4 gene_containment_sgd: 1.000 of 320 measured genes are BW25113 genes (>= 1.0)
+  [ok] L4 current_genome_genes: every one of the 320 measured systematic names is a gene of the current genome
+```
+
+Every row passes, unlike the fitness dataset's `canonical_gene_names`: no essential gene
+is a pseudogene locus, so all 320 stored tags are status `current`. The one unencodable
+medium component is **kanamycin**, which the pinned identity table does not resolve;
+`agar` resolves without an InChIKey, so it is identified with an `inchikey` gap.
+
+### Not loaded, and why
+
+- **Table S1's coverage columns** (`GC`, `nReads`, `normreads`, `nPosCentral`, `dens`):
+  the sequencing evidence the call is computed FROM plus a sequence property, not a
+  phenotype. Kept in `preprocess/essential_genes.csv`.
+- **Tables S2 and S3's wild-type carbon and nitrogen growth calls** (192 rows, SI audit
+  rank 10): NOT loaded. I read both legends at the source rather than taking the audit's
+  word, and they say MORE against loading than the audit reported. Verbatim, Table S2
+  rows 1, 2 and 4 of `TableS2_Carbon`:
+
+  > True | Postitive for growth on the indicated carbon substrate with the wild-type bacterium or a successful genome-wide mutant fitness assay was done.
+  > False | No growth on the indicated carbon substrate with the wild-type bacterium.
+  > Notes: | A call of FALSE does not necessary mean that the bacterium does not grow on a given substrate. Our threshold for TRUE growth is somewhat conservative. In addition, alternative conditions (for example, lower concentrations or different base media) could support growth.
+
+  `TableS3_Nitrogen` repeats it with "at the indicated concentration" added. So TRUE is a
+  disjunction of a growth observation and a data-availability fact, and FALSE is hedged by
+  the sheet itself. **Agreed with the audit: not loadable as they stand.**
+
+  Two further legend lines, not in the audit, make the same point sharper. A FALSE is
+  sometimes a CURATION OVERRIDE, not a reading: "L-tyrosine disodium salt often
+  precipitated out of solution in our growth media which caused high OD600 readings. We
+  set this compound to FALSE for all organisms except Pseudomonas stutzeri RCH2, for which
+  we successfully collected fitness data with this compound as a carbon source." And the
+  sheet names a mechanism for false negatives it did not correct: "In some experiments the
+  ethanol evaporated in the stock compound plate, which may result in false negative growth
+  calls." A loaded record could not say which of the three kinds of statement it is.
+  What would make them loadable is not a schema change but a split of the TRUE column into
+  "grew" and "assayed", which only the authors can give.
+- **The other 31 organisms' essential genes** (13,545 rows): out of scope for an E. coli
+  loader; each needs a host genome tier and an assembly pin.
+- **Per-strain fitness** (SI audit rank 1, upper bound 24.6M records): not mirrored, and
+  the count is an upper bound rather than a count. Untouched here.
+
+### Gaps and open questions
+
+- **Kanamycin needs the curator** before KG admission, alongside the fitness dataset's 53
+  stress labels: one `compound_identity_inputs/price2018.txt` list covers both.
+- **No field for "nearly essential"**, for the 6% to 16% FDR, or for the insertion and read
+  densities. The honest form today is the three-way caveat above; a typed form would be a
+  confidence or call-rule field on `GeneEssentialityPhenotype`, which is a schema change
+  and a full-rebuild trigger.
+- **The PEC / Baba 2006 benchmark is not in the mirror** (its key holds no Supplementary
+  Table 3), so the 78% agreement the note quotes cannot be recomputed here.
+- **`Environment.duration_generations` on the FITNESS records is still an undeclared
+  None.** The essentiality records declare both duration gaps; the fitness records do not,
+  and the audit flagged that. Out of scope here, so it stays open.

@@ -11,6 +11,13 @@ library KEIO_ML9): the 162 successful samples Supplementary Table 5 lists, whose
 fitness is the compendium release's ``fit_logratios_good.tab`` (statistics version 1.0.3).
 The KT2440 arm of the same compendium is the Borchert 2024 loader's.
 
+TWO DATASETS, from two different analyses of the same TnSeq data.
+:class:`RbTnseqPrice2018EcoliDataset` is the BarSeq gene fitness per (gene, sample).
+:class:`GeneEssentialityPrice2018EcoliDataset` is Supplementary Table 1's likely-essential
+gene list, computed from the insertion maps WITHOUT the barcodes ("We did not consider the
+DNA barcodes in this analysis of essential genes") and over the genes the fitness analysis
+could NOT value, so the two gene sets are disjoint by construction and the build proves it.
+
 SUPERSET (plan checklist item 7). The compendium subsumes Wetmore 2015 (rank 2): 92 of the
 162 samples are Wetmore's, named by ``wetmore2015.subsumption_record().carried``, and each
 record of those samples cites Wetmore 2015 as its publication. The other 70 cite Price
@@ -55,14 +62,54 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   Condition_1: a carbon or nitrogen source is
   ``EnvironmentPhysicalPerturbation(factor=carbon_source | nitrogen_source)`` with the
   compound as ``agent``; a stress compound is a ``SmallMoleculePerturbation`` whose
-  vehicle is a typed gap. Compounds the pinned identity table does not resolve carry the
-  resolver's typed ``inchikey`` gap.
+  vehicle is Supplementary Table 4's ``Solvent`` for that compound (water, Dimethyl
+  Sulfoxide or Ethanol), matched to Condition_1 by case-insensitive exact compound name.
+  That solvent is the one Table S4 records for the WILD-TYPE IC50 prescreen, and the
+  paper never says the mutant fitness assays drew on those stocks, so every stress
+  perturbation's ``description`` says so and ``Solvent.percent`` stays ``None`` (the
+  final vehicle fraction is not released). Compounds the pinned identity table does not
+  resolve carry the resolver's typed ``inchikey`` gap, the solvent ``water`` among them.
 
 DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): the four sucrose and
 D-mannitol samples the authors' 2021 note withdraws; the four ``MOPS Rich Defined
 media_noCarbon`` samples (no media-library entry); the seven soft-agar motility samples
 (no media-library entry for 0.3% LB Lennox agar, and the readout is a spatial cut, not
 growth in a condition).
+
+ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Table 1's
+324 ``orgId == "Keio"`` rows, one record each, as
+``GeneEssentialityPhenotype(is_essential=True)`` in
+``BacterialGeneEssentialityExperiment``.
+
+* THE LABEL IS NOT PLAIN ESSENTIALITY, and the records must not be read as though it
+  were. The paper's own label is "essential or important for growth (nearly essential)",
+  the condition is the library-isolation condition ("growth on LB plates" at 37 C, not
+  the fitness assays' conditions), and Supplementary Note 1 puts the E. coli
+  false-discovery rate somewhere between 6% and 16% (21% against the PEC / Keio list
+  before 15 cases the note argues are nearly essential). ``GeneEssentialityPhenotype``
+  has one boolean and no slot for any of that, so the three quotes are
+  ``ESSENTIAL_LABEL`` / ``ESSENTIAL_CONDITION`` / ``ESSENTIAL_FDR``, written verbatim to
+  ``preprocess/essentiality_label.json`` with the quantities that have no field, and the
+  caveat is restated on every record's perturbation ``description``.
+* The call is a no-insertion call, not a measurement: "Protein-coding genes were
+  considered essential or important for growth (nearly essential) if we did not estimate
+  fitness values for the gene and both the normalized insertion density and the
+  normalized read density were under 0.2". Table S1's coverage columns (``GC``,
+  ``nReads``, ``normreads``, ``nPosCentral``, ``dens``) are the evidence the call is
+  computed from, not a phenotype, and are kept in ``preprocess/essential_genes.csv``.
+* 320 of the 324 rows become records. The four dropped are araA, araB, rhaA and rhaB
+  (``b0062``, ``b0063``, ``b3903``, ``b3904``), whose ECK ids no BW25113 locus carries:
+  BW25113 DELETES araBAD and rhaBAD, so a library built in it can have no insertion
+  there and the release's own rule calls them essential. Table S1 corroborates this by
+  leaving their ``locus_tag`` (its only BW25113 identifier) empty, and they are the only
+  four Keio rows without one. The drop rule is the fitness loader's
+  ``no_one_to_one_eck_pair``.
+* Reference: the unperturbed BW25113 parent on the same selection plates, viable
+  (``is_essential=False``) -- the library was built in it and selected there.
+* Environment: a medium DERIVED from ``LB_LENNOX`` (``base_medium`` ``LB``, so it joins
+  there), solid, plus agar at an unstated amount and kanamycin at Table S20's 50 ug/mL,
+  at 37 C. ``LB_AGAR``'s 2% agar is another paper's bench value and is not asserted
+  here. Duration is a typed gap in both forms.
 
 RAW DATA. Four release files are already deposited in the Wetmore 2015 raw mirror
 (``fit_logratios_good.tab``, the Keio page, the compendium page, ``fit_quality.tab``) and
@@ -118,10 +165,14 @@ from torchcell.datamodels.media import (
     MOPS_MINIMAL,
 )
 from torchcell.datamodels.schema import (
+    BW25113_BACKGROUND_GENOTYPE,
+    BW25113_BACKGROUND_LESIONS,
     AssayType,
     AssemblyReferenceGenome,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialGeneEssentialityExperiment,
+    BacterialGeneEssentialityExperimentReference,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -130,17 +181,22 @@ from torchcell.datamodels.schema import (
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
+    GeneEssentialityPhenotype,
     Genotype,
     MeasurementType,
     Media,
+    MediaComponent,
+    MediaComponentRole,
     PhysicalFactor,
     Publication,
     SmallMoleculePerturbation,
+    Solvent,
     Temperature,
     TransposonInsertionPerturbation,
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
+    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
     LocusTagResolutionError,
@@ -167,7 +223,13 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12MG1655Genome,
     EcoliK12StrainName,
 )
-from torchcell.verification.report import Level, LevelResult, Provenance
+from torchcell.verification.levels import l0_structural, l1_count
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -188,14 +250,26 @@ RAW_DIR_REL = f"{RAW_ROOT_REL}/{CITATION_KEY}"
 
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d"
+#: The Supplementary Information OCR: Supplementary Notes 1 to 6, Note 1 being the
+#: essentiality validation (the PEC / Keio benchmark and the E. coli FDR range).
+SUPPLEMENTARY_NOTES = "si/si1.md"
+SUPPLEMENTARY_NOTES_SHA256 = (
+    "1c68b123ebb7516b6c7163985d3c9aee7f17f13651e844c3565f9bddb21b350e"
+)
 #: The Supplementary Tables workbook (Tables S1 to S22, one sheet each).
 SUPPLEMENTARY_TABLES = "si/si3.xlsx"
 SUPPLEMENTARY_TABLES_SHA256 = (
     "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879"
 )
+TABLE_S1_SHEET = "TableS1_LikelyEssentialGenes"
+TABLE_S4_SHEET = "TableS4_Stress"
 TABLE_S5_SHEET = "TableS5_Experiments"
 TABLE_S14_SHEET = "TableS14_RB_TnSeq_Bacteria"
 TABLE_S20_SHEET = "TableS20_Mutagenesis"
+#: First header cell of each sheet read here; every sheet carries a free-text preamble
+#: above its header row, which is FOUND by this cell (``wetmore.read_superset_experiments``
+#: finds Table S5's by ``orgId`` the same way) rather than pinned by row number.
+HEADER_CELLS: dict[str, str] = {TABLE_S1_SHEET: "organism", TABLE_S4_SHEET: "Compound"}
 
 #: The compendium's organism id for E. coli BW25113 (Table S5 ``orgId``).
 ORG_ID: Final = "Keio"
@@ -352,6 +426,24 @@ def _tables(
             citation_key=CITATION_KEY,
             sha256=SUPPLEMENTARY_TABLES_SHA256,
             method=_XLSX_METHOD,
+            page=page,
+        ),
+    )
+
+
+def _notes(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim quote of the pinned Supplementary Information OCR."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=SUPPLEMENTARY_NOTES,
+            citation_key=CITATION_KEY,
+            sha256=SUPPLEMENTARY_NOTES_SHA256,
+            method=_OCR_METHOD,
             page=page,
         ),
     )
@@ -579,6 +671,170 @@ R_IMAGE = _paper(
     page="Methods, 'Data and code availability'",
 )
 
+# The stress compounds' vehicle --------------------------------------------- #
+SOLVENT_COLUMN = _tables(
+    "Solvent",
+    "Compound | CAS | CoreSet_forMutantFitnessAssays | Stock solution | Stock solution "
+    "units | Solvent | Maximum concentration tested | Minimum concentration tested",
+    page="Supplementary Table 4, header row",
+    note="Solvent sits between the stock's units and the tested range, so it is the "
+    "solvent OF THE STOCK SOLUTION; 55 rows, one per stress compound",
+)
+SOLVENT_ROWS = _tables(
+    {"Kanamycin sulfate": "water", "Chloramphenicol": "Ethanol"},
+    "Kanamycin sulfate | 25839-94-0 | no | 100 | mg/ml | water | 2 | 0.00390625",
+    page="Supplementary Table 4, the Kanamycin sulfate row",
+    note="the three values the column takes are water, Dimethyl Sulfoxide and Ethanol; "
+    "Chloramphenicol | 56-75-7 | no | 34 | mg/ml | Ethanol is the one Ethanol row",
+)
+SOLVENT_ROWS_ETHANOL = _tables(
+    "Ethanol",
+    "Chloramphenicol | 56-75-7 | no | 34 | mg/ml | Ethanol | 0.68 | 0.001328125",
+    page="Supplementary Table 4, the Chloramphenicol row",
+)
+SOLVENT_IS_THE_PRESCREEN_STOCK = _paper(
+    "Table S4 is the wild-type IC50 prescreen",
+    "For each compound, we grew the wildtype bacterium across a 1,000-fold range of "
+    "inhibitor concentrations in a rich medium.",
+    page="Methods, 'High-throughput growth assays of wild-type bacteria'",
+    note="so Table S4's stock, its units and its Solvent describe THAT assay's stocks; "
+    "whether the mutant fitness assays drew on the same stocks is never stated "
+    "(paper.md contains none of 'stock solution', 'dissolved', 'solvent', 'DMSO' or "
+    "'dimethyl'), which is what STRESS_DESCRIPTION says on every stress record",
+)
+SOLVENT_CONCENTRATION_CAVEAT = _tables(
+    "the prescreen doses are not the fitness-assay doses",
+    "The concentrations reported here are not necessarily the concentrations used for "
+    "the mutant fitness assays. This may be due to differences in the growth conditions "
+    "used for  the different assays.",
+    page="Supplementary Table 4, preamble",
+    note="the sheet's own caveat is about the CONCENTRATION column, which this loader "
+    "never reads (the dose comes from Table S5's Concentration_1); it is quoted here "
+    "because it is the closest the release comes to saying whether the stocks were "
+    "shared, and it does not say so",
+)
+
+# Supplementary Table 1: the likely-essential genes --------------------------- #
+ESSENTIAL_TABLE = _tables(
+    TABLE_S1_SHEET,
+    "This table lists all of the likely-essential protein-coding genes in the 32 "
+    "bacteria",
+    page="Supplementary Table 1, preamble",
+)
+ESSENTIAL_TABLE_COLUMNS = _tables(
+    "Table S1 columns",
+    "organism | orgId | locusId | sysName | locus_tag | protein_id | uniprotId | "
+    "scaffoldId | begin | end | strand | name | desc | GC | nReads | normreads | "
+    "nPosCentral | dens | geneClass",
+    page="Supplementary Table 1, header row",
+    note="sysName holds the MG1655 b-number (all 324 Keio rows match b\\d{4}), the same "
+    "identifier the fitness tables name, so the stored locus tag comes through the same "
+    "one-to-one ECK pair",
+)
+ESSENTIAL_LABEL = _paper(
+    "essential or important for growth (nearly essential)",
+    "Genes that lack insertions or that have very low coverage in the start samples are "
+    "likely to be essential or important for growth (nearly essential) in rich medium, "
+    "as except for S. elongatus, pools of mutants were produced and recovered in medium "
+    "that contained yeast extract.",
+    page="Methods, 'Identifying essential or nearly essential genes'",
+    note="the label the records carry is THIS, not unconditional essentiality: a gene "
+    "with no insertions in a rich-medium library. GeneEssentialityPhenotype has one "
+    "boolean and no slot for 'nearly', so the distinction lives in this quote, in "
+    "preprocess/essentiality_label.json and in ESSENTIAL_DESCRIPTION",
+)
+ESSENTIAL_RULE = _paper(
+    0.2,
+    "Protein-coding genes were considered essential or important for growth (nearly "
+    "essential) if we did not estimate fitness values for the gene and both the "
+    "normalized insertion density and the normalized read density were under 0.2.",
+    page="Methods, 'Identifying essential or nearly essential genes'",
+    note="a no-insertion call over genes the fitness analysis could not value, which is "
+    "why the essential set and the fitness set are disjoint by construction; the two "
+    "densities are Table S1's dens and normreads, kept in preprocess/essential_genes.csv",
+)
+ESSENTIAL_IGNORES_BARCODES = _paper(
+    "TnSeq only, no barcodes",
+    "We did not consider the DNA barcodes in this analysis of essential genes.",
+    page="Methods, 'Identifying essential or nearly essential genes'",
+    note="so this dataset is NOT a BarSeq measurement and shares no value with the "
+    "fitness dataset, although both come from one library",
+)
+FITNESS_GENES_ARE_NON_ESSENTIAL = _paper(
+    123255,
+    "In this study, we restricted our analysis to the 123,255 different non-essential "
+    "protein-coding genes for which we collected gene fitness data.",
+    page="Methods, 'Computation of fitness values'",
+    note="across the 32 bacteria; the build refuses a release whose essential Keio "
+    "b-numbers meet its fitness Keio b-numbers at all",
+)
+ESSENTIAL_PER_ORGANISM_RANGE = _paper(
+    (289, 614),
+    "We identified 289–614 genes per bacterium that are likely to encode essential "
+    "proteins",
+    page="Results, the 32-bacterium survey",
+    note="E. coli's 324 Keio rows of Table S1 sit inside the stated range; the same "
+    "sentence calls them 'likely to encode essential proteins', never 'essential'",
+)
+ESSENTIAL_CONDITION = _notes(
+    "growth on LB plates",
+    'However, some of these "false positives" are likely to be essential, or nearly so, '
+    "in the condition that we used to isolate our mutant library, namely growth on LB "
+    "plates.",
+    page="Supplementary Note 1, the E. coli validation",
+    note="the condition of the call is the LIBRARY-ISOLATION condition, not any of the "
+    "147 fitness-assay conditions; plates, so the stored medium is solid",
+)
+ESSENTIAL_CONDITION_TEMPERATURE = _notes(
+    37.0,
+    "but there may be other genes in our list that are nearly-essential for growth on "
+    r"LB plates at $3 7 ^ { \circ } \mathsf { C }$ .",
+    page="Supplementary Note 1, the E. coli validation",
+    note="agrees with Table S20's 'Temperature for selecting mutants' of 37 for "
+    "KEIO_ML9 (LIBRARY)",
+)
+ESSENTIAL_FDR = _notes(
+    (0.06, 0.16),
+    "So, we expect that the true rate of false positives in our list of $E .$ coli "
+    r"proteins that are essential, or nearly so, for growth in rich media is somewhere "
+    r"between $6 \%$ and $16 \%$ .",
+    page="Supplementary Note 1, the E. coli validation",
+    note="a DATASET-level false-discovery rate with no per-record slot on "
+    "GeneEssentialityPhenotype; it is written to preprocess/essentiality_label.json "
+    "verbatim and must travel with any use of these 320 records",
+)
+ESSENTIAL_FDR_NAIVE = _notes(
+    0.21,
+    "Our list of essential genes also includes 67 non-essential genes, which "
+    r"corresponds to a false discovery rate (FDR) of $21 \%$ .",
+    page="Supplementary Note 1, the E. coli validation",
+    note="the naive rate against the PEC / Keio list, before the note argues 15 of the "
+    "67 are nearly essential in the library-isolation condition; 21% and 6% are the two "
+    "ends ESSENTIAL_FDR reconciles",
+)
+ESSENTIAL_BENCHMARK = _notes(
+    (330, 257),
+    "By combining the profiling of E. coli chromosome database (PEC) and the results of "
+    r"systematically attempting to delete every gene in E. coli 1,6, we obtained a list "
+    r"of $3 3 0 \ E .$ coli genes that were previously reported to be essential. 257 of "
+    r"these 330 genes $( 7 8 \% )$ were in our list of likely-essential genes from TnSeq "
+    "analysis.",
+    page="Supplementary Note 1, the E. coli validation",
+    note="the external benchmark (Baba 2006 / Yamamoto 2009 / PEC) is NOT in this "
+    "repo's mirror, so the 78% agreement cannot be recomputed here",
+)
+SELECTION_MEDIA_COLUMN = _tables(
+    "LB plates with kanamycin",
+    "5 | Media used for for both the conjugation (with supplemented diaminopimelic "
+    "acid) and for the selection of transposon mutants (with supplemented kanamycin), "
+    "except for Synechococcus elongatus PCC 7942, which was conjugated on LB plates "
+    "with DAP.",
+    page="Supplementary Table 20, note 5",
+    note="E. coli's row gives Media 'LB', 'Temperature for selecting mutants' 37 and "
+    "'Antibiotic; concentration (in ug/mL)' 'Kanamycin; 50' (LIBRARY); delivery was "
+    "electroporation, so no DAP conjugation step applies to KEIO_ML9",
+)
+
 #: Every SourcedValue this module defines, by name (the data tests audit each).
 SOURCED_VALUES: dict[str, SourcedValue] = {
     name: value
@@ -625,17 +881,27 @@ SAMPLE_UNIT_GAP = ProvenanceGap(
     note="travels with n_samples: one unit would be a usable insertion strain, for "
     "which SampleUnit has no member",
 )
-SOLVENT_GAP = ProvenanceGap(
-    field="solvent",
-    reason=ProvenanceGapReason.deferred_pending_source_review,
+ESSENTIAL_DURATION_GAP = ProvenanceGap(
+    field="duration_hours",
+    reason=ProvenanceGapReason.not_reported_by_primary,
     looked_in=Provenance(
-        source_uri=SUPPLEMENTARY_TABLES,
+        source_uri=PAPER_MD,
         citation_key=CITATION_KEY,
-        sha256=SUPPLEMENTARY_TABLES_SHA256,
-        method=_XLSX_METHOD,
-        page="Supplementary Table 5 (Condition_1, Concentration_1, Units_1) and Table 4",
+        sha256=PAPER_MD_SHA256,
+        method=_OCR_METHOD,
+        page="Methods, 'Constructing pools of randomly barcoded transposon mutants' "
+        "(the plate step is 'After growth', with no time); Table S20 gives the medium "
+        "and the temperature, not a duration",
     ),
-    note="no vehicle is stated per stress compound in the paper, Table S4 or Table S5",
+    note="how long the KEIO_ML9 selection plates were incubated is never stated",
+)
+ESSENTIAL_GENERATIONS_GAP = ProvenanceGap(
+    field="duration_generations",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=ESSENTIAL_DURATION_GAP.looked_in,
+    note="travels with duration_hours: colony growth on a selection plate is not "
+    "reported in doublings either, and the paper's generation counts were measured "
+    "for six bacteria, E. coli not among them",
 )
 
 
@@ -658,6 +924,26 @@ def xlsx_text(path: str) -> str:
         ]
         sheets.append(" / ".join(rows))
     return "\n".join(sheets)
+
+
+def read_below_header(path: str | Path, sheet_name: str) -> pd.DataFrame:
+    """One sheet's data rows, the header row FOUND by its first cell (``HEADER_CELLS``).
+
+    Every sheet of the workbook carries a free-text preamble above its header, and some
+    of those preamble lines start in column 0 too, so the row is found by an exact match
+    on the header's own first cell and a second match is refused.
+    """
+    header_cell = HEADER_CELLS[sheet_name]
+    sheet = pd.read_excel(path, sheet_name=sheet_name, header=None)
+    rows = sheet.index[sheet[0] == header_cell]
+    if len(rows) != 1:
+        raise ValueError(
+            f"{sheet_name}: expected one {header_cell!r} header row, found {len(rows)}"
+        )
+    start = int(rows[0])
+    table = sheet.iloc[start + 1 :].copy()
+    table.columns = sheet.iloc[start].tolist()
+    return table.loc[table[header_cell].notna()].reset_index(drop=True)
 
 
 # --------------------------------------------------------------------------- #
@@ -1011,6 +1297,37 @@ UNITS_BY_LABEL: dict[str, ConcentrationUnit] = {
     "g/L": ConcentrationUnit.g_per_l,
     "vol%": ConcentrationUnit.percent_v_v,
 }
+#: What every stress record says about the vehicle it stores (SOLVENT_COLUMN,
+#: SOLVENT_IS_THE_PRESCREEN_STOCK): the solvent is Table S4's, recorded for the
+#: wild-type IC50 prescreen, and the release never ties it to the fitness assays.
+STRESS_DESCRIPTION = (
+    "Stress compound added to LB. Vehicle DERIVED: Supplementary Table 4's Solvent for "
+    "this compound, which is the solvent of the stock used for the wild-type IC50 "
+    "prescreen; the paper does not state that the mutant fitness assays drew on those "
+    "stocks. The final vehicle fraction in the medium is not released, so "
+    "Solvent.percent is None"
+)
+
+
+def read_solvents(table_s4: str | Path) -> dict[str, str]:
+    """Supplementary Table 4's ``Solvent`` per compound, keyed by lowercased name.
+
+    The key is the compound name casefolded and stripped, because Table S5's Condition_1
+    and Table S4's Compound differ in case for 6 of the 35 kept stress labels (``benzoic
+    acid``, ``methylglyoxal``, ...). A sheet with an empty Solvent cell, or with two
+    compounds differing only in case, is refused rather than resolved by a rule.
+    """
+    table = read_below_header(table_s4, TABLE_S4_SHEET)
+    solvents: dict[str, str] = {}
+    for _, row in table.iterrows():
+        compound = str(row["Compound"]).strip()
+        if pd.isna(row["Solvent"]):
+            raise ValueError(f"{TABLE_S4_SHEET}: {compound!r} has no Solvent")
+        key = compound.lower()
+        if key in solvents:
+            raise ValueError(f"{TABLE_S4_SHEET}: two rows name {key!r}")
+        solvents[key] = str(row["Solvent"]).strip()
+    return solvents
 
 
 class SampleSpec(BaseModel):
@@ -1117,13 +1434,33 @@ def _dose(spec: SampleSpec) -> Concentration:
     return Concentration(value=spec.concentration, unit=UNITS_BY_LABEL[spec.units])
 
 
-def build_environment(spec: SampleSpec) -> Environment:
+def stress_solvent(spec: SampleSpec, solvents: Mapping[str, str]) -> Solvent:
+    """The vehicle of a stress sample's compound, from Table S4's ``Solvent``.
+
+    A kept stress sample whose Condition_1 names no Table S4 compound is refused: all 55
+    match by this rule, so a miss means the release changed, not that a vehicle is
+    unknown. ``water`` is not in the pinned compound-identity table, so its ``Compound``
+    carries the resolver's typed ``inchikey`` gap, as the unresolved stress labels do.
+    """
+    if spec.condition is None:
+        raise ValueError(f"{spec.name}: a stress sample names no condition")
+    key = spec.condition.strip().lower()
+    if key not in solvents:
+        raise ValueError(
+            f"{spec.name}: {spec.condition!r} is not a {TABLE_S4_SHEET} compound"
+        )
+    name = solvents[key]
+    return Solvent(name=name, percent=None, compound=resolved_compound(name))
+
+
+def build_environment(spec: SampleSpec, solvents: Mapping[str, str]) -> Environment:
     """The environment of a kept sample: library medium, temperature, Condition_1.
 
     A carbon or nitrogen source is the varied factor of a medium that leaves it out
     (``CARBON_FREE_MEDIA``), so it is an ``EnvironmentPhysicalPerturbation`` with the
     compound as ``agent``; a stress compound is an added ``SmallMoleculePerturbation``
-    whose vehicle is a typed gap; the plain LB samples carry no perturbation.
+    carrying ``solvents``'s vehicle for it (:func:`stress_solvent`); the plain LB samples
+    carry no perturbation.
     """
     if spec.drop_rule is not None:
         raise ValueError(f"{spec.name} is dropped ({spec.drop_rule})")
@@ -1138,10 +1475,10 @@ def build_environment(spec: SampleSpec) -> Environment:
     elif kind == "stress":
         perturbations = [
             SmallMoleculePerturbation(
+                description=STRESS_DESCRIPTION,
                 compound=resolved_compound(spec.condition),
                 concentration=_dose(spec),
-                solvent=None,
-                provenance_gaps=[SOLVENT_GAP],
+                solvent=stress_solvent(spec, solvents),
             )
         ]
     else:
@@ -1292,20 +1629,26 @@ def assemble_mapping(
     name_of: Callable[[str], str],
     *,
     label: str,
+    min_fraction: float | None = None,
 ) -> tuple[dict[str, GeneMapping], IdentifierReport]:
     """Place the release's b-numbers on BW25113 locus tags and report how.
 
     ``reconcile`` runs the placed genes' ECK ids through ``reconcile_locus_tags`` on
     BW25113 and must return the crosswalk's tag for every one; ``name_of`` gives a
-    tag's stored common name. The route must place at least ``MIN_ECK_ROUTE_FRACTION``
-    of the genes, else the build stops (checklist item 4) rather than dropping more.
+    tag's stored common name. The route must place at least ``min_fraction`` of the
+    genes, else the build stops (checklist item 4) rather than dropping more. The
+    essentiality table has its own, lower floor
+    (``MIN_ESSENTIAL_ECK_ROUTE_FRACTION``): four of its 324 genes are the operons
+    BW25113 deletes. ``min_fraction`` defaults to ``MIN_ECK_ROUTE_FRACTION`` READ AT
+    CALL TIME, not bound into the signature, so a test can move the constant.
     """
+    minimum = MIN_ECK_ROUTE_FRACTION if min_fraction is None else min_fraction
     placed, unplaced = eck_route(b_numbers, crosswalk, mg1655_ecks)
     fraction = len(placed) / len(b_numbers)
-    if fraction < MIN_ECK_ROUTE_FRACTION:
+    if fraction < minimum:
         raise LocusTagResolutionError(
             f"{label}: the ECK route places {len(placed)} of {len(b_numbers)} genes "
-            f"({fraction:.4f}), below {MIN_ECK_ROUTE_FRACTION}"
+            f"({fraction:.4f}), below {minimum}"
         )
     order = [b for b in b_numbers if b in placed]
     stored, reconciliation = reconcile(pd.Series([placed[b][0] for b in order]))
@@ -1329,7 +1672,7 @@ def assemble_mapping(
         n_source_genes=len(b_numbers),
         n_mapped=len(mapping),
         mapped_fraction=fraction,
-        min_fraction=MIN_ECK_ROUTE_FRACTION,
+        min_fraction=minimum,
         numeric_disagreements=tuple(
             (m.b_number, m.locus_tag, m.eck)
             for m in mapping.values()
@@ -1353,6 +1696,7 @@ def map_genes(
     bw25113: EcoliK12BW25113Genome,
     *,
     label: str,
+    min_fraction: float | None = None,
 ) -> tuple[dict[str, GeneMapping], IdentifierReport]:
     """:func:`assemble_mapping` on the deposited MG1655 and BW25113 annotations."""
     mg1655_ecks = {
@@ -1371,6 +1715,7 @@ def map_genes(
         reconcile,
         lambda tag: gene_symbol(loci[tag].symbol, tag, bw25113.resolve_gene_name),
         label=label,
+        min_fraction=min_fraction,
     )
 
 
@@ -1463,6 +1808,7 @@ def sample_records(
     specs: Sequence[SampleSpec],
     release: ReleaseTables,
     genome_reference: AssemblyReferenceGenome,
+    solvents: Mapping[str, str],
 ) -> list[SampleRecords]:
     """The kept samples, in Table S5 order, each with its release column."""
     columns = {name: j for j, name in enumerate(release.samples)}
@@ -1470,7 +1816,7 @@ def sample_records(
     for spec in specs:
         if spec.drop_rule is not None:
             continue
-        environment = build_environment(spec)
+        environment = build_environment(spec, solvents)
         out.append(
             SampleRecords(
                 spec=spec,
@@ -1562,11 +1908,27 @@ class Inventory(BaseModel):
         description="Condition_1 labels of kept samples the identity table does not "
         "resolve -> kept samples naming them (records carry the typed inchikey gap)"
     )
+    stress_solvent_by_sample: dict[str, int] = Field(
+        description="Table S4 Solvent -> kept stress samples whose compound names it"
+    )
+    stress_solvent_by_compound: dict[str, int] = Field(
+        description="Table S4 Solvent -> distinct kept stress Condition_1 labels"
+    )
 
 
-def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inventory:
+def inventory(
+    specs: Sequence[SampleSpec],
+    identifiers: IdentifierReport,
+    solvents: Mapping[str, str],
+) -> Inventory:
     """Count samples, genes and records kept and dropped, by rule and by source."""
     kept = [s for s in specs if s.drop_rule is None]
+    stress = [s for s in kept if GROUP_KINDS[s.group] == "stress"]
+    by_sample = Counter(stress_solvent(s, solvents).name for s in stress)
+    by_compound = Counter(
+        solvents[c.strip().lower()]
+        for c in {s.condition for s in stress if s.condition is not None}
+    )
     genes = identifiers.n_mapped
     drops = [
         DropRuleCount(
@@ -1606,6 +1968,8 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
         kept_records=len(kept) * genes,
         drops=tuple(drops),
         unidentified_compounds=dict(sorted(unidentified.items())),
+        stress_solvent_by_sample=dict(sorted(by_sample.items())),
+        stress_solvent_by_compound=dict(sorted(by_compound.items())),
     )
 
 
@@ -1688,10 +2052,11 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
         mapping, identifiers = map_genes(
             release.b_numbers, mg1655, self._bw25113(), label=self.name
         )
+        solvents = read_solvents(osp.join(self.raw_dir, "si3.xlsx"))
         samples = sample_records(
-            self.name, specs, release, assembly_reference(REFERENCE_STRAIN)
+            self.name, specs, release, assembly_reference(REFERENCE_STRAIN), solvents
         )
-        counts = inventory(specs, identifiers)
+        counts = inventory(specs, identifiers, solvents)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1855,6 +2220,7 @@ def report(data_root: str | None = None) -> dict[str, Any]:
     """Every number the dendron note states, recomputed from the pinned files."""
     root = _data_root(data_root)
     table_s5 = wetmore.read_superset_experiments(source_path("si3.xlsx", root))
+    solvents = read_solvents(source_path("si3.xlsx", root))
     subsumption = wetmore.subsumption_record(root)
     specs = classify_samples(table_s5, frozenset(subsumption.carried))
 
@@ -1877,7 +2243,7 @@ def report(data_root: str | None = None) -> dict[str, Any]:
         raise TypeError("the K-12 genomes resolved to the wrong classes")
     _, identifiers = map_genes(release.b_numbers, mg1655, bw25113, label="report")
     return {
-        "inventory": inventory(specs, identifiers).model_dump(mode="json"),
+        "inventory": inventory(specs, identifiers, solvents).model_dump(mode="json"),
         "identifiers": identifiers.model_dump(mode="json"),
         "standard_error": {
             "n_values": release.n_values,
@@ -1889,16 +2255,799 @@ def report(data_root: str | None = None) -> dict[str, Any]:
     }
 
 
+# --------------------------------------------------------------------------- #
+# Supplementary Table 1: the likely-essential genes
+# --------------------------------------------------------------------------- #
+ESSENTIAL_DATASET_ROOT_REL = "data/torchcell/gene_essentiality_price2018_ecoli"
+#: Table S1's ``orgId == "Keio"`` rows, and the records they become (measured
+#: 2026-10-07): 324 released rows, 320 of them on a BW25113 locus.
+ESSENTIAL_SOURCE_GENES = 324
+ESSENTIAL_EXPECTED_RECORDS = 320
+#: The ECK route must place at least this fraction of Table S1's Keio genes. It places
+#: 320 of 324 (0.9877), BELOW the fitness tables' 0.99: the four it cannot place are
+#: araA, araB, rhaA and rhaB, whose operons BW25113 deletes, so they can carry no
+#: insertion and the release's no-insertion rule calls them essential. A floor of 0.98
+#: still stops a wrong annotation while admitting those four.
+MIN_ESSENTIAL_ECK_ROUTE_FRACTION = 0.98
+#: The four Table S1 Keio rows BW25113 has no locus for: the deleted araBAD and rhaBAD
+#: operons (measured; their Table S1 ``name`` values are araA, araB, rhaA and rhaB).
+#: Table S1 leaves their ``locus_tag`` empty and fills it for the other 320, which
+#: :func:`essentiality_inventory` checks against the ECK route's own misses. The reason
+#: is not asserted from the literature: ``BW25113_BACKGROUND_LESIONS`` carries
+#: ``(araBAD)567`` and ``(rhaBAD)568`` verbatim from the ``source`` feature of the
+#: sha256-pinned ``ecoli_K12_BW25113_ASM75055v1`` GenBank file, and the inventory ties
+#: each dropped gene to the lesion that accounts for it.
+DELETED_OPERON_B_NUMBERS: Final = ("b0062", "b0063", "b3903", "b3904")
+
+ESSENTIAL_DESCRIPTION = (
+    "Tn5 transposon library; gene-level TnSeq call, NOT a measured value: this gene got "
+    "no fitness value and both its normalized insertion density and its normalized read "
+    "density were under 0.2 (ESSENTIAL_RULE). The paper's label is 'essential or "
+    "important for growth (nearly essential)' in the library-isolation condition (LB "
+    "plates at 37 C), and its own false-discovery rate for the E. coli list is 6% to "
+    "16% (ESSENTIAL_LABEL, ESSENTIAL_CONDITION, ESSENTIAL_FDR). The barcodes are not "
+    "used in this analysis, so no strain is identified. Locus tag DERIVED: the release "
+    "names an MG1655 b-number, mapped to this BW25113 locus through its one-to-one ECK "
+    "pair (eck_crosswalk)"
+)
+
+
+#: The quotes written verbatim to ``preprocess/essentiality_label.json``: everything the
+#: one stored boolean does not say.
+ESSENTIALITY_LABEL_VALUES: Final = (
+    "ESSENTIAL_TABLE",
+    "ESSENTIAL_LABEL",
+    "ESSENTIAL_RULE",
+    "ESSENTIAL_IGNORES_BARCODES",
+    "ESSENTIAL_CONDITION",
+    "ESSENTIAL_CONDITION_TEMPERATURE",
+    "ESSENTIAL_FDR",
+    "ESSENTIAL_FDR_NAIVE",
+    "ESSENTIAL_BENCHMARK",
+    "ESSENTIAL_PER_ORGANISM_RANGE",
+    "FITNESS_GENES_ARE_NON_ESSENTIAL",
+)
+
+
+class EssentialGene(BaseModel):
+    """One Table S1 ``orgId == "Keio"`` row: the call and the coverage behind it."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    row: int = Field(description="1-based position among the Keio rows")
+    locus_id: str = Field(description="the compendium's internal gene id")
+    b_number: str = Field(description="sysName, an MG1655 b-number")
+    refseq_locus_tag: str | None = Field(
+        description="locus_tag, a BW25113 RefSeq tag; empty for the deleted operons"
+    )
+    name: str
+    desc: str
+    gene_class: str
+    gc: float
+    n_reads: int
+    normreads: float
+    n_pos_central: int
+    dens: float
+
+
+def read_essential_genes(table_s1: str | Path) -> tuple[EssentialGene, ...]:
+    """Table S1's ``Keio`` rows in sheet order, with the coverage columns.
+
+    Every Keio ``sysName`` is an MG1655 b-number (``ESSENTIAL_TABLE_COLUMNS``), so a
+    value that is not raises rather than being placed by some other route. ``GC``,
+    ``nReads``, ``normreads``, ``nPosCentral`` and ``dens`` are the evidence the call is
+    computed from, kept for ``preprocess/essential_genes.csv`` and stored on no record.
+    """
+    table = read_below_header(table_s1, TABLE_S1_SHEET)
+    keio = table.loc[table["orgId"] == ORG_ID]
+    if keio.empty:
+        raise ValueError(f"{TABLE_S1_SHEET}: no {ORG_ID} rows")
+    pattern = LOCUS_TAG_PATTERNS[STRAIN_GENE_NAMESPACES["MG1655"]]
+    genes: list[EssentialGene] = []
+    for row, (_, record) in enumerate(keio.iterrows(), start=1):
+        b_number = str(record["sysName"])
+        if not pattern.match(b_number):
+            raise ValueError(f"{TABLE_S1_SHEET} row {row}: {b_number!r} is no b-number")
+        genes.append(
+            EssentialGene(
+                row=row,
+                locus_id=str(record["locusId"]),
+                b_number=b_number,
+                refseq_locus_tag=_optional_str(record["locus_tag"]),
+                name=str(record["name"]),
+                desc=str(record["desc"]),
+                gene_class=str(record["geneClass"]),
+                gc=float(record["GC"]),
+                n_reads=int(record["nReads"]),
+                normreads=float(record["normreads"]),
+                n_pos_central=int(record["nPosCentral"]),
+                dens=float(record["dens"]),
+            )
+        )
+    return tuple(genes)
+
+
+def selection_medium() -> Media:
+    """The KEIO_ML9 selection plates: Price's LB (Lennox) plus agar and kanamycin.
+
+    Supplementary Note 1 says the E. coli library was isolated by "growth on LB plates",
+    so the medium is SOLID; Table S20 gives the medium (``LB``, which Price's Table S18
+    states at 5 g/L NaCl, hence ``LB_LENNOX``'s components) and the antibiotic with its
+    dose ("Kanamycin; 50", the column's own unit being ug/mL). The agar amount is never
+    stated, so its concentration is ``None``: ``LB_AGAR``'s 2% is Menasalvas 2025's and
+    Schmidt 2016's bench value and asserting it here would fabricate a number. The
+    object derives from the ``LB`` library key, so it joins there.
+    """
+    return Media(
+        name="LB Lennox agar with kanamycin (Price 2018 KEIO_ML9 transposon-mutant "
+        "selection plates; agar amount unstated)",
+        state="solid",
+        is_synthetic=False,
+        base_medium="LB",
+        components=[
+            *LB_LENNOX.components,
+            MediaComponent(
+                compound=resolved_compound("agar"),
+                role=MediaComponentRole.gelling_agent,
+                concentration=None,
+                provenance=[ESSENTIAL_CONDITION],
+                note="the plates are solid ('growth on LB plates'); no agar amount is "
+                "stated in the paper or in Table S18",
+            ),
+            MediaComponent(
+                compound=resolved_compound("kanamycin"),
+                role=MediaComponentRole.selection_agent,
+                concentration=Concentration(
+                    value=50.0, unit=ConcentrationUnit.ug_per_ml
+                ),
+                provenance=[SELECTION_MEDIA_COLUMN, LIBRARY],
+                note="selects for the transposon's kanamycin-resistance marker; Table "
+                "S20's 'Antibiotic; concentration (in ug/mL)' reads 'Kanamycin; 50'",
+            ),
+        ],
+        provenance=[SELECTION_MEDIA_COLUMN, ESSENTIAL_CONDITION, MEDIA_TABLE],
+    )
+
+
+def essentiality_environment() -> Environment:
+    """The library-isolation condition: the selection plates at 37 C.
+
+    This is NOT one of the 147 fitness-assay environments: the call is made on the
+    library as isolated (``ESSENTIAL_CONDITION``). Both durations are typed gaps, and
+    ``aerobicity`` keeps the field default, since plates incubated in air are never
+    stated and the field cannot be ``None``.
+    """
+    return Environment(
+        media=selection_medium(),
+        temperature=Temperature(value=float(ESSENTIAL_CONDITION_TEMPERATURE.value)),
+        perturbations=[],
+        provenance_gaps=[ESSENTIAL_DURATION_GAP, ESSENTIAL_GENERATIONS_GAP],
+    )
+
+
+class EssentialityInventory(BaseModel):
+    """What Table S1 released for E. coli, what became a record, and the disjointness."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    source_genes: int
+    kept_genes: int
+    dropped_genes: tuple[str, ...]
+    dropped_gene_names: tuple[str, ...] = Field(
+        description="Table S1's own `name` for each dropped gene (araA, araB, rhaA, rhaB)"
+    )
+    drop_rule: str
+    drop_description: str
+    gene_class_histogram: dict[str, int]
+    rows_without_a_refseq_locus_tag: tuple[str, ...] = Field(
+        description="Keio rows whose Table S1 locus_tag is empty: the release's own "
+        "corroboration that BW25113 carries no locus for them"
+    )
+    dropped_genes_explained_by_background: dict[str, str] = Field(
+        description="each dropped gene's Table S1 name -> the BW25113 background lesion "
+        "(BW25113_BACKGROUND_LESIONS, verbatim from the pinned assembly's source "
+        "feature) that accounts for the locus being absent"
+    )
+    fitness_genes: int = Field(description="genes of fit_logratios_good.tab")
+    shared_with_fitness: tuple[str, ...] = Field(
+        description="b-numbers in BOTH the essential list and the fitness table; empty "
+        "by the release's own rule (ESSENTIAL_RULE, FITNESS_GENES_ARE_NON_ESSENTIAL)"
+    )
+    unencodable_quantities: dict[str, str] = Field(
+        description="what Table S1 and Supplementary Note 1 state that no field of "
+        "GeneEssentialityPhenotype can hold -> the verbatim quote stating it"
+    )
+
+
+def essentiality_inventory(
+    genes: Sequence[EssentialGene],
+    identifiers: IdentifierReport,
+    fitness_b_numbers: Sequence[str],
+) -> EssentialityInventory:
+    """Count the released rows and the records, and prove the two gene sets disjoint.
+
+    The disjointness is the release's OWN rule read back off the files: a gene is called
+    likely-essential only where the fitness analysis produced no value for it
+    (``ESSENTIAL_RULE``), and that analysis covers "non-essential protein-coding genes"
+    only (``FITNESS_GENES_ARE_NON_ESSENTIAL``). An overlap means the two files
+    disagree, so the build refuses rather than storing one gene under two contradicting
+    phenotypes. The genes the ECK route cannot place must likewise be exactly the rows
+    Table S1 leaves without a BW25113 ``locus_tag``; a difference means the route lost a
+    gene the release does place, which is a mapping bug, not a deleted operon.
+    """
+    essential = {gene.b_number for gene in genes}
+    shared = tuple(sorted(essential & set(fitness_b_numbers)))
+    if shared:
+        raise ValueError(
+            f"{len(shared)} genes are both likely-essential and valued by the fitness "
+            f"release: {shared[:10]}"
+        )
+    unmapped = tuple(u.b_number for u in identifiers.unmapped)
+    without_tag = tuple(g.b_number for g in genes if g.refseq_locus_tag is None)
+    if set(unmapped) != set(without_tag):
+        raise ValueError(
+            f"the genes the ECK route cannot place {sorted(unmapped)} are not the rows "
+            f"Table S1 leaves without a locus_tag {sorted(without_tag)}"
+        )
+    names = {gene.b_number: gene.name for gene in genes}
+    explained = {
+        names[b]: lesion
+        for b in unmapped
+        for lesion in BW25113_BACKGROUND_LESIONS
+        if names[b][:3].lower() in lesion.lower()
+    }
+    unexplained = sorted(set(names[b] for b in unmapped) - set(explained))
+    if unexplained:
+        raise ValueError(
+            f"{unexplained} are absent from BW25113 for a reason its background "
+            f"genotype does not state ({BW25113_BACKGROUND_GENOTYPE})"
+        )
+    return EssentialityInventory(
+        source_genes=len(genes),
+        kept_genes=identifiers.n_mapped,
+        dropped_genes=unmapped,
+        dropped_gene_names=tuple(names[b] for b in unmapped),
+        drop_rule=DROP_NO_ECK_PAIR,
+        drop_description=DROP_RULES[DROP_NO_ECK_PAIR],
+        gene_class_histogram=dict(sorted(Counter(g.gene_class for g in genes).items())),
+        rows_without_a_refseq_locus_tag=without_tag,
+        dropped_genes_explained_by_background=explained,
+        fitness_genes=len(set(fitness_b_numbers)),
+        shared_with_fitness=shared,
+        unencodable_quantities={
+            "the label is 'nearly essential' too": ESSENTIAL_LABEL.quote,
+            "the condition is the library isolation, not an assay": (
+                ESSENTIAL_CONDITION.quote
+            ),
+            "the list's own false-discovery rate": ESSENTIAL_FDR.quote,
+            "the naive rate against the PEC and Keio list": ESSENTIAL_FDR_NAIVE.quote,
+            "the call rule and its threshold": ESSENTIAL_RULE.quote,
+            "the coverage evidence behind each call": ESSENTIAL_TABLE_COLUMNS.quote,
+        },
+    )
+
+
+def build_essentiality_genotype(mapping: GeneMapping) -> Genotype:
+    """A Tn5 insertion in one gene of KEIO_ML9, the call's caveat in its description."""
+    return Genotype(
+        perturbations=[
+            TransposonInsertionPerturbation(
+                systematic_gene_name=mapping.locus_tag,
+                perturbed_gene_name=mapping.perturbed_gene_name,
+                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
+                description=ESSENTIAL_DESCRIPTION,
+                transposon=TRANSPOSON,
+                library_pool=MUTANT_LIBRARY,
+            )
+        ]
+    )
+
+
+def build_essentiality_experiment(
+    dataset_name: str, mapping: GeneMapping, environment: Environment
+) -> BacterialGeneEssentialityExperiment:
+    """One likely-essential gene: ``is_essential=True``, with the label's caveat."""
+    return BacterialGeneEssentialityExperiment(
+        dataset_name=dataset_name,
+        genotype=build_essentiality_genotype(mapping),
+        environment=environment,
+        phenotype=GeneEssentialityPhenotype(is_essential=True),
+    )
+
+
+def build_essentiality_reference(
+    dataset_name: str,
+    genome_reference: AssemblyReferenceGenome,
+    environment: Environment,
+) -> BacterialGeneEssentialityExperimentReference:
+    """The unperturbed BW25113 parent on the same plates: viable, by construction.
+
+    The library was built in that parent and isolated on those plates
+    (``ESSENTIAL_CONDITION``), so its viability there is a fact of the experiment rather
+    than an inference.
+    """
+    return BacterialGeneEssentialityExperimentReference(
+        dataset_name=dataset_name,
+        genome_reference=genome_reference,
+        environment_reference=environment.model_copy(),
+        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+    )
+
+
+@register_dataset
+class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
+    """Price 2018 Supplementary Table 1: E. coli BW25113 likely-essential genes."""
+
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/gene_essentiality_price2018_ecoli",
+        io_workers: int = 0,
+        ecoli_genome: EcoliK12Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; ``ecoli_genome`` is the BW25113 genome the build entry points inject."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialGeneEssentialityExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialGeneEssentialityExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Table S1's workbook and the fitness table the disjointness check reads."""
+        return ["si3.xlsx", "fit_logratios_good.tab"]
+
+    def download(self) -> None:
+        """Link each pinned mirror file into ``raw/`` after verifying its sha256."""
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for name in self.raw_file_names:
+            pin = RAW_FILE_NAMES[name][2]
+            link_verified(source_path(name), osp.join(self.raw_dir, name), pin)
+        log.info("Price 2018 Table S1 raw files linked into %s", self.raw_dir)
+
+    def _bw25113(self) -> EcoliK12BW25113Genome:
+        """The injected genome, or the BW25113 genome reopened read-only (direct runs)."""
+        genome = (
+            bacterial_genome("ecoli", REFERENCE_STRAIN)
+            if self.ecoli_genome is None
+            else self.ecoli_genome
+        )
+        if not isinstance(genome, EcoliK12BW25113Genome):
+            raise TypeError(f"expected the BW25113 genome, got {type(genome).__name__}")
+        self.ecoli_genome = genome
+        return genome
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per mapped Table S1 Keio gene and the preprocess reports."""
+        data_root = _data_root()
+        verify_raw_files(
+            self.raw_dir,
+            {name: RAW_FILE_NAMES[name][2] for name in self.raw_file_names},
+        )
+        genes = read_essential_genes(osp.join(self.raw_dir, "si3.xlsx"))
+        fitness = pd.read_csv(
+            osp.join(self.raw_dir, "fit_logratios_good.tab"),
+            sep="\t",
+            usecols=["sysName"],
+        )
+        mg1655 = bacterial_genome("ecoli", "MG1655", data_root)
+        if not isinstance(mg1655, EcoliK12MG1655Genome):
+            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
+        mapping, identifiers = map_genes(
+            [gene.b_number for gene in genes],
+            mg1655,
+            self._bw25113(),
+            label=self.name,
+            min_fraction=MIN_ESSENTIAL_ECK_ROUTE_FRACTION,
+        )
+        counts = essentiality_inventory(
+            genes, identifiers, [str(v) for v in fitness["sysName"]]
+        )
+
+        environment = essentiality_environment()
+        reference = build_essentiality_reference(
+            self.name, assembly_reference(REFERENCE_STRAIN), environment
+        )
+        publication = PUBLICATIONS[SampleSource.price2018]
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        idx = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for gene in tqdm(genes, desc="Price 2018 Table S1"):
+                placed = mapping.get(gene.b_number)
+                if placed is None:
+                    continue
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(
+                        build_essentiality_experiment(self.name, placed, environment),
+                        reference,
+                        publication,
+                        itxn,
+                    ),
+                )
+                idx += 1
+        env.close()
+        interned_env.close()
+        if idx != counts.kept_genes:
+            raise RuntimeError(
+                f"wrote {idx} records, inventory says {counts.kept_genes}"
+            )
+        self._write_essentiality_reports(genes, mapping, identifiers, counts)
+        log.info("Wrote %d Price 2018 likely-essential gene records", idx)
+
+    def _write_essentiality_reports(
+        self,
+        genes: Sequence[EssentialGene],
+        mapping: Mapping[str, GeneMapping],
+        identifiers: IdentifierReport,
+        counts: EssentialityInventory,
+    ) -> None:
+        """``dropped_records.json``, ``identifier_mapping.json``,
+        ``essentiality_label.json`` and the per-row ``essential_genes.csv``.
+
+        ``essentiality_label.json`` is where the label's caveat lives in full: the
+        verbatim label, condition and FDR quotes with their source and sha256, so a
+        reader of the store can find what the stored boolean does not say.
+        """
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(counts.model_dump_json(indent=2))
+        (out / "identifier_mapping.json").write_text(
+            identifiers.model_dump_json(indent=2)
+        )
+        (out / "essentiality_label.json").write_text(
+            json.dumps(
+                {
+                    name: SOURCED_VALUES[name].model_dump(mode="json")
+                    for name in ESSENTIALITY_LABEL_VALUES
+                },
+                indent=2,
+            )
+        )
+        rows: list[dict[str, Any]] = []
+        record = 0
+        for gene in genes:
+            placed = mapping.get(gene.b_number)
+            rows.append(
+                {
+                    **gene.model_dump(mode="json"),
+                    "locus_tag": None if placed is None else placed.locus_tag,
+                    "eck": None if placed is None else placed.eck,
+                    "perturbed_gene_name": (
+                        None if placed is None else placed.perturbed_gene_name
+                    ),
+                    "drop_rule": None if placed is not None else DROP_NO_ECK_PAIR,
+                    "record": None if placed is None else record,
+                }
+            )
+            if placed is not None:
+                record += 1
+        pd.DataFrame(rows).astype({"record": "Int64"}).to_csv(
+            out / "essential_genes.csv", index=False
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled by ``build_essentiality_experiment``."""
+        raise NotImplementedError(
+            "Price 2018 essentiality builds its records in process()"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# Essentiality verification (L0 to L4) and its evidence report
+# --------------------------------------------------------------------------- #
+ESSENTIAL_VERIFY_PROVENANCE = Provenance(
+    source_uri=SUPPLEMENTARY_TABLES,
+    citation_key=CITATION_KEY,
+    sha256=SUPPLEMENTARY_TABLES_SHA256,
+    method=(
+        "Supplementary Table 1's likely-essential protein-coding genes, orgId Keio: a "
+        "TnSeq no-insertion call ('essential or important for growth (nearly "
+        "essential)'), FDR 6% to 16%; MG1655 b-numbers placed on BW25113 through "
+        "one-to-one ECK pairs"
+    ),
+    page=f"{TABLE_S1_SHEET}, orgId Keio",
+)
+
+
+def essentiality_calls_match_table(
+    records: Sequence[Mapping[str, Any]], genes: Sequence[EssentialGene]
+) -> LevelResult:
+    """L2: one single-insertion ``is_essential=True`` record per stored locus.
+
+    Table S1 lists only likely-essential genes, so there is no False to check against;
+    what the records can get wrong is storing a locus twice, storing a False, carrying
+    more than one perturbation, or a reference that is not the viable parent.
+    """
+    stored = Counter(
+        p["systematic_gene_name"]
+        for r in records
+        for p in r["experiment"]["genotype"]["perturbations"]
+    )
+    problems: list[str] = []
+    repeated = sorted(tag for tag, n in stored.items() if n > 1)
+    if repeated:
+        problems.append(f"{len(repeated)} loci repeat: {repeated[:10]}")
+    not_true = sum(
+        1 for r in records if not r["experiment"]["phenotype"]["is_essential"]
+    )
+    if not_true:
+        problems.append(f"{not_true} records store is_essential=False")
+    multi = sum(
+        1 for r in records if len(r["experiment"]["genotype"]["perturbations"]) != 1
+    )
+    if multi:
+        problems.append(f"{multi} records carry more than one perturbation")
+    references = {
+        r["reference"]["phenotype_reference"]["is_essential"] for r in records
+    }
+    if references != {False}:
+        problems.append(f"the reference phenotype is {references}, expected viable")
+    if len(stored) != len(records):
+        problems.append(f"{len(records)} records over {len(stored)} loci")
+    return LevelResult(
+        level=Level.L2,
+        name="calls_match_table_s1",
+        passed=not problems,
+        message=(
+            f"{len(records)} records, one likely-essential locus each, from "
+            f"{len(genes)} released Keio rows"
+            if not problems
+            else "; ".join(problems)
+        ),
+        details={
+            "n_records": len(records),
+            "n_loci": len(stored),
+            "n_released_rows": len(genes),
+            "problems": problems,
+        },
+    )
+
+
+def essential_genes_are_not_fitness_genes(
+    genes: Sequence[EssentialGene], fitness_b_numbers: Sequence[str]
+) -> LevelResult:
+    """L3: the essential and fitness gene sets are disjoint, as the release's rule says.
+
+    Re-read from the two files rather than from the build's own report, so the row is
+    evidence and not an echo of it.
+    """
+    shared = sorted({g.b_number for g in genes} & set(fitness_b_numbers))
+    return LevelResult(
+        level=Level.L3,
+        name="disjoint_from_the_fitness_genes",
+        passed=not shared,
+        message=(
+            f"{len(genes)} likely-essential genes and {len(set(fitness_b_numbers))} "
+            "genes with fitness values share none"
+            if not shared
+            else f"{len(shared)} genes are in both sets: {shared[:10]}"
+        ),
+        details={
+            "n_essential": len(genes),
+            "n_fitness": len(set(fitness_b_numbers)),
+            "shared": shared[:20],
+            "rule": ESSENTIAL_RULE.quote,
+        },
+    )
+
+
+def essentiality_label_is_qualified(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L3: every record restates the label's caveat on its perturbation description.
+
+    ``GeneEssentialityPhenotype`` is one boolean, so a record read without this text
+    would say "essential" where the paper says "essential or important for growth
+    (nearly essential)" at a 6% to 16% false-discovery rate. The row fails if any record
+    drops it.
+    """
+    missing = sum(
+        1
+        for r in records
+        for p in r["experiment"]["genotype"]["perturbations"]
+        if p["description"] != ESSENTIAL_DESCRIPTION
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="label_caveat_on_every_record",
+        passed=not missing,
+        message=(
+            f"all {len(records)} records carry the 'nearly essential' label and the "
+            "6% to 16% FDR on their perturbation description"
+            if not missing
+            else f"{missing} perturbations do not carry the label caveat"
+        ),
+        details={"n_records": len(records), "n_missing": missing},
+    )
+
+
+def verify_essentiality_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    genes: Sequence[EssentialGene],
+    fitness_b_numbers: Sequence[str],
+    universe: set[str],
+    resolve_gene_name: Callable[[str], GeneNameResolution],
+    expected_count: int,
+    dataset_name: str = "GeneEssentialityPrice2018EcoliDataset",
+) -> VerificationReport:
+    """The L0 to L4 gate over built essentiality records, plus the shared rules."""
+    from torchcell.verification.common import shared_rule_results
+
+    report = VerificationReport(
+        dataset_name=dataset_name, provenance=ESSENTIAL_VERIFY_PROVENANCE
+    )
+    report.add(
+        l0_structural(
+            (r["experiment"] for r in records),
+            BacterialGeneEssentialityExperiment.model_validate,
+        )
+    )
+    report.add(l1_count(len(records), expected_count))
+    report.add(essentiality_calls_match_table(records, genes))
+    report.add(essential_genes_are_not_fitness_genes(genes, fitness_b_numbers))
+    report.add(essentiality_label_is_qualified(records))
+    for result in shared_rule_results(
+        records,
+        resolve_gene_name=resolve_gene_name,
+        sgd_genes=universe,
+        gene_universe_label="BW25113",
+        min_containment=1.0,
+    ):
+        report.add(result)
+    tags = {
+        str(p["systematic_gene_name"])
+        for r in records
+        for p in r["experiment"]["genotype"]["perturbations"]
+    }
+    report.add(stored_tags_are_loci(tags, resolve_gene_name))
+    return report
+
+
+def verify_essentiality(data_root: str | None = None) -> VerificationReport:
+    """Verify the built essentiality LMDB (L0 to L4) and write its report.
+
+    The gene universe and resolver are BW25113's, as for the fitness dataset. Table S1
+    and the fitness table are re-read from this dataset's own ``raw/``, so the L2 and L3
+    rows check the records against the pinned files rather than against the build.
+    """
+    from torchcell.verification.runners import load_records
+
+    root = _data_root(data_root)
+    abs_root = osp.join(root, ESSENTIAL_DATASET_ROOT_REL)
+    genes = read_essential_genes(osp.join(abs_root, "raw", "si3.xlsx"))
+    fitness = pd.read_csv(
+        osp.join(abs_root, "raw", "fit_logratios_good.tab"),
+        sep="\t",
+        usecols=["sysName"],
+    )
+    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
+    report = verify_essentiality_records(
+        load_records(abs_root),
+        genes=genes,
+        fitness_b_numbers=[str(v) for v in fitness["sysName"]],
+        universe=set(genome.genbank.loci),
+        resolve_gene_name=genome.resolve_gene_name,
+        expected_count=ESSENTIAL_EXPECTED_RECORDS,
+    )
+    out = osp.join(abs_root, "preprocess", "verification_report.json")
+    with open(out, "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
+def refseq_route_agreement(
+    genes: Sequence[EssentialGene],
+    mapping: Mapping[str, GeneMapping],
+    resolve_gene_name: Callable[[str], GeneNameResolution],
+) -> dict[str, Any]:
+    """Table S1's own ``locus_tag`` route against the ECK route, gene by gene.
+
+    A second, independent identifier route. Table S1 gives each gene a BW25113 RefSeq
+    locus tag, which the deposited BW25113 annotation carries as its own RefSeq layer,
+    so where that tag resolves it must name the locus the ECK route chose. Where it does
+    not resolve (a tag this annotation release retired) the route is silent rather than
+    contradicting. Reported, not enforced: the RefSeq layer is a second release of the
+    same assembly, and the stored namespace is the GenBank one.
+    """
+    agree: list[str] = []
+    unresolved: list[str] = []
+    disagree: list[tuple[str, str | None, str]] = []
+    for gene in genes:
+        placed = mapping.get(gene.b_number)
+        if placed is None or gene.refseq_locus_tag is None:
+            continue
+        resolution = resolve_gene_name(gene.refseq_locus_tag)
+        if resolution.systematic_name == placed.locus_tag:
+            agree.append(gene.b_number)
+        elif resolution.status is GeneNameStatus.RETIRED:
+            unresolved.append(gene.b_number)
+        else:
+            disagree.append(
+                (gene.b_number, resolution.systematic_name, placed.locus_tag)
+            )
+    return {
+        "n_agree": len(agree),
+        "n_unresolved_refseq_tag": len(unresolved),
+        "unresolved": unresolved,
+        "disagree": disagree,
+    }
+
+
+def essentiality_report(data_root: str | None = None) -> dict[str, Any]:
+    """Every essentiality number the dendron note states, from the pinned files."""
+    root = _data_root(data_root)
+    genes = read_essential_genes(source_path("si3.xlsx", root))
+    fitness = pd.read_csv(
+        source_path("fit_logratios_good.tab", root), sep="\t", usecols=["sysName"]
+    )
+    mg1655 = bacterial_genome("ecoli", "MG1655", root)
+    bw25113 = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
+    if not isinstance(mg1655, EcoliK12MG1655Genome) or not isinstance(
+        bw25113, EcoliK12BW25113Genome
+    ):
+        raise TypeError("the K-12 genomes resolved to the wrong classes")
+    mapping, identifiers = map_genes(
+        [gene.b_number for gene in genes],
+        mg1655,
+        bw25113,
+        label="essentiality report",
+        min_fraction=MIN_ESSENTIAL_ECK_ROUTE_FRACTION,
+    )
+    counts = essentiality_inventory(
+        genes, identifiers, [str(v) for v in fitness["sysName"]]
+    )
+    return {
+        "inventory": counts.model_dump(mode="json"),
+        "identifiers": identifiers.model_dump(mode="json"),
+        "refseq_route_agreement": refseq_route_agreement(
+            genes, mapping, bw25113.resolve_gene_name
+        ),
+        "table_s1_names_differing_from_the_genome": sorted(
+            f"{gene.b_number} {gene.name} -> {mapping[gene.b_number].perturbed_gene_name}"
+            for gene in genes
+            if gene.b_number in mapping
+            and gene.name != mapping[gene.b_number].perturbed_gene_name
+        ),
+    }
+
+
 def main(argv: list[str] | None = None) -> None:
-    """``retrieve`` / ``deposit`` the release files, print the ``report``, or ``verify``."""
+    """``retrieve`` / ``deposit`` the release files, or ``report`` / ``verify`` either
+    dataset (``essentiality-report``, ``essentiality-verify`` for Table S1's).
+    """
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     commands = parser.add_subparsers(dest="command", required=True)
     retrieve = commands.add_parser("retrieve", help="fetch the release files")
     retrieve.add_argument("--dest", required=True)
     deposit = commands.add_parser("deposit", help="deposit fetched files")
     deposit.add_argument("--source-dir", required=True)
-    commands.add_parser("report", help="print the evidence as JSON")
-    commands.add_parser("verify", help="verify the built dev LMDB (L0 to L4)")
+    commands.add_parser("report", help="print the fitness evidence as JSON")
+    commands.add_parser("verify", help="verify the built fitness LMDB (L0 to L4)")
+    commands.add_parser(
+        "essentiality-report", help="print the Table S1 evidence as JSON"
+    )
+    commands.add_parser(
+        "essentiality-verify", help="verify the built essentiality LMDB (L0 to L4)"
+    )
     args = parser.parse_args(argv)
     if args.command == "retrieve":
         print(retrieve_raw_files(args.dest))
@@ -1906,6 +3055,10 @@ def main(argv: list[str] | None = None) -> None:
         print(deposit_raw_mirror(source_dir=args.source_dir))
     elif args.command == "report":
         print(json.dumps(report(), indent=2))
+    elif args.command == "essentiality-report":
+        print(json.dumps(essentiality_report(), indent=2))
+    elif args.command == "essentiality-verify":
+        print(verify_essentiality().summary())
     else:
         print(verify().summary())
 

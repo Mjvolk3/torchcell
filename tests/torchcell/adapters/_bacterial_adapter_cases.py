@@ -74,6 +74,7 @@ from torchcell.adapters import (
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
     GeneInteractionBabu2014Adapter,
+    GeneInteractionButland2008Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
@@ -118,6 +119,7 @@ from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
@@ -281,6 +283,14 @@ BACTERIAL: list[Bacterial] = [
         "babu2014",
         "gene_interaction_babu2014",
         GeneInteractionBabu2014Dataset,
+        INTERACTION,
+        env_perturbation=False,
+    ),
+    _case(
+        GeneInteractionButland2008Adapter,
+        "butland2008",
+        "gene_interaction_butland2008",
+        GeneInteractionButland2008Dataset,
         INTERACTION,
         env_perturbation=False,
     ),

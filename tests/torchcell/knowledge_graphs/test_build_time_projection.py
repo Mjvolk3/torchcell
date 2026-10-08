@@ -496,6 +496,7 @@ BACTERIAL_DATASETS = {
     "GeneEssentialityGoodall2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
     "GeneInteractionBabu2014Dataset",
+    "GeneInteractionButland2008Dataset",
     "GrowthAucRapp2026Dataset",
     "GrowthRateCampos2018Dataset",
     "GrowthRateChoe2019Dataset",

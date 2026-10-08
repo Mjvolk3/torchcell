@@ -19,6 +19,9 @@ from .borchert2023_adapter import (
 from .borchert2024_adapter import (
     RbTnseqBorchert2024Adapter as RbTnseqBorchert2024Adapter,
 )
+from .butland2008_adapter import (
+    GeneInteractionButland2008Adapter as GeneInteractionButland2008Adapter,
+)
 from .cachera2023_adapter import (
     BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
 )
@@ -343,6 +346,7 @@ baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 
 ecoli_adapters = [
     "GeneInteractionBabu2014Adapter",
+    "GeneInteractionButland2008Adapter",
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
     "CrispriChemgenChoe2025Adapter",

@@ -763,5 +763,7 @@ def test_the_real_stores_verification_report_passes_every_row() -> None:
     )
     gene = rows[("L3", "promoter_gene_is_a_locus")]["details"]
     assert gene["n_genes"] == 1761
-    assert gene["n_null_records"] == 48 * 36
+    # 106 of the 1,930 wells carry one of the 48 unresolved labels (Empty, U66 and U139
+    # alone occupy 60), and each well is 4 arms x 9 reads.
+    assert gene["n_null_records"] == 106 * 36 == 3816
     assert len([k for k in rows if k[1] == "provenance_audit"]) == len(m.SOURCED_VALUES)

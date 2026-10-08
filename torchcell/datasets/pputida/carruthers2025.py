@@ -137,7 +137,7 @@ import re
 import shutil
 import statistics
 from collections import Counter, defaultdict
-from collections.abc import Callable, Iterable, Sequence
+from collections.abc import Callable, Collection, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Literal
@@ -176,6 +176,7 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     Experiment,
     ExperimentReference,
+    GeneAdditionPerturbation,
     GenomicSpan,
     Genotype,
     HeterologousPathwayPerturbation,
@@ -275,8 +276,24 @@ SHEET_TITER_ALT = "Figure 1D"
 SHEET_TARGET_MEANS = "Figure 3a"
 SHEET_CONTROLS = "Figure 2c"
 SHEET_PROTEOME = "Supplementary Figure 13abc"
+#: The KO-against-CRISPRi comparison panel, and its row-for-row duplicate sheet.
+SHEET_KO_PANEL = "Figure 6a"
+SHEET_KO_PANEL_ALT = "Supplementary Figure 11"
+#: The KO-plus-array panel: KO-only and CRISPRi-on-a-KO strains.
+SHEET_KO_ARRAYS = "Figure 6d"
+#: The titer arm of the PP_0815 off-target panel whose proteome is ``SHEET_PROTEOME``.
+SHEET_OFFTARGET_TITER = "Supplementary Figure 13d"
+#: The overexpression panel: titer and per-protein abundance across inducer levels.
+SHEET_OVEREXPRESSION_TITER = "Supplementary Figure 12bd"
+SHEET_OVEREXPRESSION_PROTEOME = "Supplementary Figure 12ac"
+#: The per-cycle control proteome. NOT read -- see :data:`CONTROL_PROTEOME_DEFERRAL`.
+SHEET_CONTROL_PROTEOME = "Supplementary Figure 15"
 
 KT2440_NAMESPACE: BacterialGeneNamespace = "pputida_kt2440_locus_tag"
+#: The host species, as the deposited assembly report names it. An extra copy of a
+#: NATIVE gene must declare THIS as its ``source_organism`` or the runner's
+#: ``host_perturbed_gene_set`` would read it as a gene of another genome and skip it.
+SPECIES = "Pseudomonas putida"
 KT2440_ASSEMBLY_SET: BacterialAssemblySet = "pputida_KT2440_ASM756v2"
 #: The single chromosome of GCA_000007565.2, as the assembly report names it.
 KT2440_REPLICON = "AE015451.2"
@@ -300,10 +317,19 @@ REPLICATE_RE = re.compile(r"^(?P<base>.+)-R(?P<replicate>\d+)$")
 Family = Literal["titer", "proteome"]
 #: The product every titer record measures, as the compound layer canonicalizes it.
 PRODUCT_NAME = "isoprenol"
-#: One record per ``(construct, DBTL cycle)`` strain of the released Source Data.
-EXPECTED_TITER_RECORDS = 465
-#: One record per released proteome sample bar the non-targeting reference.
-EXPECTED_PROTEOME_RECORDS = 19
+#: One record per ``(construct, DBTL cycle)`` strain of ``Figure 4b``.
+EXPECTED_CRISPRI_TITER_RECORDS = 465
+#: The four Source Data panels below add 37 more: 12 + 4 + 19 + 2.
+EXPECTED_PANEL_TITER_RECORDS = 37
+#: One record per titer strain the release states a full genotype and environment for.
+EXPECTED_TITER_RECORDS = EXPECTED_CRISPRI_TITER_RECORDS + EXPECTED_PANEL_TITER_RECORDS
+#: One record per released ``SHEET_PROTEOME`` sample bar the non-targeting reference.
+EXPECTED_PP0815_PROTEOME_RECORDS = 19
+#: ``SHEET_OVEREXPRESSION_PROTEOME``'s two uninduced samples.
+EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 2
+EXPECTED_PROTEOME_RECORDS = (
+    EXPECTED_PP0815_PROTEOME_RECORDS + EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
+)
 #: What one Top3 number is, named so heterogeneous proteomics is never silently mixed.
 PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_peptide_signal_mean"
 #: The proteome panel's background: every sample is a derivative of the PP_0815 KO.
@@ -313,6 +339,70 @@ PROTEOME_REFERENCE_SAMPLE = "JBEI_PP_0815_NT_48hr"
 #: The panel's positive control: the same KO carrying the PP_0815 sgRNA.
 PROTEOME_TARGET_SAMPLE = "JBEI_PP_0815_Target_48hr"
 PROTEOME_SAMPLE_RE = re.compile(r"^JBEI_OTS_(?P<tag>PP_\d{4})(?:_\d)?(?:_P4)?_48hr$")
+
+#: ``Figure 6a`` / ``Figure 6d`` arm labels. ``CRISPRi`` is the sgRNA-only strain and is
+#: a re-export of ``Figure 4b``; the other arms are the genuinely new KO cultures.
+ARM_CRISPRI = "CRISPRi"
+ARM_KO_TARGET = "Target"
+ARM_KO_NONTARGET = "Non-target"
+ARM_KO_ONLY = "KO Only"
+ARM_KO_PLUS_CRISPRI = "CRISPRi and KO"
+#: ``Figure 6d``'s control line, measured to be three DBTL6 control cultures.
+KO_ARRAY_CONTROL_LINE = "Control"
+KO_ARRAY_CONTROL_CYCLE = 6
+#: ``Figure 6d``'s ``KO Only`` lines end in ``_KO``; the combined lines add ``with``.
+KO_ARRAY_LINE_RE = re.compile(r"^(?P<deleted>.+?)_KO(?: with (?P<knocked_down>.+))?$")
+#: ``PP_0812-15`` names an inclusive locus-number range, not a single tag.
+LOCUS_RANGE_RE = re.compile(r"^PP_(?P<start>\d{4})-(?P<end>\d{2})$")
+
+#: ``Supplementary Figure 13d``'s reference and positive-control arm labels. The sheet
+#: writes ``Non-Target`` where ``Figure 6a`` writes ``Non-target``.
+OFFTARGET_REFERENCE_SAMPLE = "Non-Target"
+OFFTARGET_TARGET_SAMPLE = "Target"
+#: An off-target sample is a locus tag, optionally with a repeated-culture index.
+OFFTARGET_SAMPLE_RE = re.compile(r"^(?P<tag>PP_\d{4})(?:_(?P<culture>\d))?$")
+#: Supplementary Table 1 lists the off-target sgRNA targets; this is its row count.
+OFFTARGET_CANDIDATE_TARGETS = 14
+#: Cultures the two sheets' ``Target`` triplicates share. Measured: exactly one of six,
+#: which is why neither triplicate is stored as the other (see :func:`_offtarget_groups`).
+OFFTARGET_TARGET_SHARED_CULTURES = 1
+
+#: ``Supplementary Figure 12bd`` / ``12ac`` label the RFP vector control ``Control``.
+OVEREXPRESSION_CONTROL_STRAIN = "Control"
+#: The released induction series. Only the 0 level is loaded: the inducer's UNIT is not
+#: released anywhere in the mirror (see :data:`INDUCER_UNIT_GAP`).
+OVEREXPRESSION_UNINDUCED_LEVEL = 0.0
+OVEREXPRESSION_INDUCED_LEVELS: tuple[float, ...] = (
+    31.25,
+    62.5,
+    125.0,
+    250.0,
+    500.0,
+    1000.0,
+)
+#: ``Supplementary Figure 12ac``'s sample names: ``<label>_Condition_<n>`` / ``_Control``.
+OVEREXPRESSION_SAMPLE_RE = re.compile(
+    r"^(?P<label>pSTABL[12])_(?:Condition_(?P<condition>\d)|Control)$"
+)
+#: The two overexpressed operons, keyed by the plotting label the Source Data uses.
+#: The LOCI are the Methods' and the Results' own, not the label's: the sheet writes
+#: ``pSTABL2 (PP_2971-74)`` while five mirrored statements say ``PP_2791-94``, and
+#: :func:`_assert_overexpression_operons` proves the correction against the measured
+#: proteome of the same samples.
+OVEREXPRESSION_OPERONS: dict[str, tuple[str, ...]] = {
+    "pSTABL1": ("PP_2208", "PP_2209"),
+    "pSTABL2": ("PP_2791", "PP_2792", "PP_2793", "PP_2794"),
+}
+#: The label the Source Data attaches to each, verbatim, typo included.
+OVEREXPRESSION_SHEET_LABELS: dict[str, str] = {
+    "pSTABL1": "pSTABL1 (PP_2208-09)",
+    "pSTABL2": "pSTABL2 (PP_2971-74)",
+}
+#: ``Supplementary Figure 12ac``'s two Phn keys, and the locus each one's FUNCTION puts
+#: it at on the pinned assembly. The sheet's own ``Protein.Description`` says the
+#: opposite for these two rows; :func:`_assert_phn_crosswalk` pins both statements.
+PHN_FUNCTION_CROSSWALK: dict[str, str] = {"Phnw": "PP_2209", "Phnx": "PP_2208"}
+PHN_SHEET_DESCRIPTION: dict[str, str] = {"Phnw": "PP_2208", "Phnx": "PP_2209"}
 
 
 # --------------------------------------------------------------------------- #
@@ -477,6 +567,119 @@ _Q_NO_EXCLUSION = (
     "Data used to train the active learning model was filtered according to the method "
     "above; however, no data was excluded in our analysis."
 )
+# --- the four unstored titer panels and the overexpression proteome ------------
+_Q_KO_PANEL_DESIGN = (
+    "We sought to investigate the presence of off-target gene downregulation amongst "
+    "our best-performing sgRNAs by comparing isoprenol titers between pairs of "
+    "knockout (KO) strains harboring either a non-target sgRNA or the “target” sgRNA "
+    "previously used to downregulate the KO gene"
+)
+_Q_KO_PANEL_FIG6A = (
+    "a Comparison of mean isoprenol production between strains expressing either a "
+    "PP_0815-targeting sgRNA or a non-targeting control sgRNA in a knockout "
+    "background, demonstrating significant off-target effects of the PP_0815 sgRNA "
+    "$\\left( n = 3 \\right)$ ."
+)
+_Q_KO_PANEL_SI11_TITLE = (
+    "Supplementary Figure 11: Comparison of titers between KO strains harboring sgRNAs "
+    "and their CRISPRi analogues."
+)
+_Q_KO_PANEL_SI11 = (
+    "Most KO strains performed similarly with the non-target and target sgRNAs, "
+    "indicating no obvious off-target effects. The ΔPP_2136, ΔPP_0812, and ΔPP_0813 "
+    "strains showed higher performance than their CRISPRi analogues. ΔPP_0815 strains "
+    "harboring the PP_0815 sgRNA showed clear increases in titer compared to the "
+    "non-target sgRNA."
+)
+_Q_KO_0812_15_GUIDE = (
+    "While most KO strains showed similar titers to their CRISPRi counterparts from "
+    "DBTL0 (Supplementary Fig. 11), ΔPP_0815 and ΔPP_0812-15 harboring PP_0815 sgRNA "
+    "produced significantly more isoprenol compared to those with non-targeting "
+    "guides, indicating that an off-target gene was driving isoprenol production "
+    "level (Fig. 6a)."
+)
+_Q_OXIDASE_COMPLEX = "PP_0815 (subunits of a terminal oxidase complex PP_0812-15)"
+_Q_KO_CONSTRUCTION = (
+    "Stable gene knockouts were generated from the parent strain IY1449b via a "
+    "Cpf1-mediated repair63."
+)
+_Q_SI_TABLE2_KO_STRAINS = (
+    "Supplementary Table 2: List of Pseudomonas putida strains constructed in this "
+    "study"
+)
+_Q_KO_ARRAY_RESULT = (
+    "Combining KOs with specific sgRNAs for PP_0528 and PP_0815 further improved titer "
+    "to 4-fold that of the control $( 6 5 1 \\mathrm { m g / L } )$ and $12 \\%$ more "
+    "isoprenol than the two-sgRNA array in a strain without KOs $( 5 8 0 \\mathrm { m "
+    "g / L }$ , $p < 0 . 0 2 )$ , indicating the importance of modulating rather than "
+    "deleting certain genes (e.g., off-target or essential) to recapitulate production "
+    "phenotypes."
+)
+_Q_SI_FIG13D = (
+    "d) Isoprenol titers of off-target sgRNA strains failed to recapitulate the "
+    "observed titer of ΔPP_0815 harboring the PP_0815 sgRNA. At best, the off-target "
+    "strains performed as well as the ΔPP_0815 strain harboring non-target sgRNA."
+)
+_Q_SI_TABLE1_OFFTARGETS = (
+    "Supplementary Table 1: sgRNA targets selected to investigate PP_0815 off-target "
+    "effects."
+)
+_Q_OVEREXPRESSION_OPERONS = (
+    "These operons, PP_2208- PP_2209 and PP_2791-PP_2794, were amplified along with "
+    "the DBTL3 Control Vector using Q5 DNA polymerase (NEB) and oligos with 20 bp ${ } "
+    "^ { 5 ^ { \\prime } }$ overhangs."
+)
+_Q_OVEREXPRESSION_RESULTS = (
+    "Specifically, we overexpressed two operons, PP_2791-94 (lvaA-D; levulinic acid "
+    "degradation) and PP_2208-09 $( p h n W { \\cdot } X ;$ phosphonoacetalaldehyde "
+    "hydrolase) on secondary plasmids and further downregulated 14 potential "
+    "off-target candidates using CRISPRi."
+)
+_Q_OVEREXPRESSION_SALICYLATE = (
+    "The vector amplicons, designed for salicylic acid induction of the inserted "
+    "genes, were digested with dpnI (Thermo Fisher Scientific), assembled (NEBuilder "
+    "HiFi Assembly Cloning Kit, NEB), and, as before, cloned into XL-1-blue competent "
+    "cells."
+)
+_Q_OVEREXPRESSION_CULTURE = (
+    "Strains harboring genes informed by Stabl were adapted to M9 medium and cultured "
+    "for over $4 8 \\mathrm { h }$ in a Biolector Pro with an RFP control (JBx_266188) "
+    "before GC-FID analysis."
+)
+_Q_OVEREXPRESSION_TRANSFORMED = (
+    "Plasmid sequences were verified by whole plasmid sequencing (Primordium Labs) and "
+    "ultimately transformed into IY1449b with pIY670 to evaluate the impact of "
+    "titrated induction on isoprenol titer."
+)
+_Q_SI_FIG12_PANELS = (
+    "a) Top3 protein abundance of PP_2208-09 (PhnW-X; phosphonoacetylaldehyde "
+    "hydrolyase) under various inducer concentrations. Induced expression led to "
+    "exceptionally high protein abundance. b) Uninduced expression of PP_2207-08 "
+    "yielded marginally more isoprenol compared to an RFP control c) Top3 protein "
+    "abundance of PP_2791-94 (levulinic acid degradation pathway LvaA-D) under various "
+    "induction concentrations."
+)
+_Q_SI_FIG12_UNINDUCED = (
+    "Uninduced expression, however, showed a $\\sim 1 0 \\%$ increase in titer "
+    "compared to the RFP control."
+)
+_Q_SI_FIG10_LEVULINATE = (
+    "Finally, phnX is a phosphonoacetaldehyde hydrolase while PP_2793-94 encodes "
+    "proteins in the levulinate degradation pathway."
+)
+_Q_PSTABL1_PLASMID = "pRSF1010-Gm-NagR-PP_2791-94"
+_Q_PSTABL2_PLASMID = "pRSF1010-Gm-NagR-PP_2208-09"
+_Q_RFP_CONTROL_PLASMID = "pRSF1010-Gm-mCherry"
+_Q_SI_FIG15_TITLE = (
+    "Supplementary Figure 15: Levels of heterologous pathway proteins in the controls "
+    "across all DBTL cycles as determined by the Top3 Method"
+)
+_Q_SI_FIG15 = (
+    "Pathway proteins typically followed a similar rank-order trend with PMD\\* being "
+    "the highest expressed followed by mvaE. MvaS was typically the lowest expression "
+    "protein in the pathway. Owing to its toxicity, expression of dCas9 was kept "
+    "comparatively low. Error bars represent standard deviation."
+)
 
 CHASSIS_GENOTYPE = _paper(
     "KT2440 ΔphaABC, ΔmvaB, ΔhbdH, 4,538,575Δ86,812 (Δzwf, ΔglZ, ΔliuC)",
@@ -619,6 +822,169 @@ NO_EXCLUSION = _paper(
     page=_METHODS_STATS,
     note="the authors' pass/fail CRISPRi filter shaped model training only, which is "
     "why every released culture becomes a record and the flag is carried in preprocess/",
+)
+
+KO_PANEL_DESIGN = _paper(
+    {"arms": [ARM_KO_TARGET, ARM_KO_NONTARGET]},
+    _Q_KO_PANEL_DESIGN,
+    page="Results, 'Investigating off-target effects by candidate sgRNAs via gene "
+    "knockout'",
+    note="what the two new Figure 6a arms ARE: a KO strain carrying the sgRNA that "
+    "previously knocked the SAME gene down (Target), and the same KO strain carrying "
+    "a non-targeting sgRNA (Non-target), which perturbs no gene and is the reference. "
+    "The sheet's third arm, CRISPRi, is the un-deleted knockdown strain and is a "
+    "re-export of Figure 4b",
+)
+KO_PANEL_N = _paper(
+    3,
+    _Q_KO_PANEL_FIG6A,
+    page="Fig. 6 caption",
+    note="the Supplementary Fig. 11 caption restates it as "
+    f"'{_Q_SI_TRIPLICATE}', and Supplementary Figure 11 is row-for-row identical to "
+    "Figure 6a on the pinned bytes",
+)
+KO_MULTI_GENE_GUIDE = _paper(
+    {"PP_0812-15": "PP_0815"},
+    _Q_KO_0812_15_GUIDE,
+    page="Results, 'Investigating off-target effects by candidate sgRNAs via gene "
+    "knockout'",
+    note="the ONE multi-gene KO background of Figure 6a whose Target sgRNA the "
+    "released sheet does not name: no plasmid of Supplementary Data 3 carries a "
+    "PP_0812-15 spacer and Supplementary Data 2's only PP_0812-15 entry is the Cpf1 "
+    "PP_0812-15_Repair oligo, so this sentence is the sole statement of it. A new "
+    "multi-gene background absent from this map stops the build",
+)
+OXIDASE_COMPLEX = _paper(
+    {"PP_0812-15": ("PP_0812", "PP_0813", "PP_0814", "PP_0815")},
+    _Q_OXIDASE_COMPLEX,
+    page="Results, 'Rapid characterization of isoprenol production and gene "
+    "downregulation'",
+    note="what the hyphen in a PP_xxxx-yy designation means: an inclusive locus-number "
+    "range. Supplementary Table 5 corroborates the four members by building "
+    "IY1449b ΔPP_0812-15 as PP_0813-15 deleted from IY1449b ΔPP_0812",
+)
+KO_STRAIN_CONSTRUCTION = _paper(
+    "Cpf1-mediated recombineering from IY1449b",
+    _Q_KO_CONSTRUCTION,
+    page="Methods, 'Generation of stable gene knockouts'",
+    note="every KO background of Figure 6a and Figure 6d is a row of Supplementary "
+    f"Table 2 ('{_Q_SI_TABLE2_KO_STRAINS}'); the JBEI part id of each is carried in "
+    "preprocess/ko_backgrounds.csv rather than on the perturbation, so a deletion "
+    "object built here is bit-identical to the PP_0815 deletion the proteome family "
+    "already stores",
+)
+KO_ARRAY_RESULT = _paper(
+    {"PP_0368_PP_0812-15_KO with PP_0528_PP_0815": 651.0, "PP_0528_PP_0815": 580.0},
+    _Q_KO_ARRAY_RESULT,
+    page="Results, 'Investigating off-target effects by candidate sgRNAs via gene "
+    "knockout'",
+    note="the Results text's own integer mg/L for one NEW Figure 6d record and one "
+    "already-stored Figure 4b array, which is the cross-source oracle for this panel",
+)
+OFFTARGET_TITER_SOURCE = _si(
+    OFFTARGET_CANDIDATE_TARGETS,
+    _Q_SI_FIG13D,
+    page="Supplementary Figure 13 caption, panel d",
+    note="the titer arm of exactly the panel whose proteome is "
+    f"{SHEET_PROTEOME}: 20 released groups, 18 off-target sgRNAs over the "
+    f"{OFFTARGET_CANDIDATE_TARGETS} targets of Supplementary Table 1 "
+    f"('{_Q_SI_TABLE1_OFFTARGETS}') plus the Target and Non-Target anchors",
+)
+OVEREXPRESSION_OPERON_SOURCE = _paper(
+    OVEREXPRESSION_OPERONS,
+    _Q_OVEREXPRESSION_OPERONS,
+    page="Methods, 'Overexpression of candidate genes'",
+    note="the loci are PP_2208-PP_2209 and PP_2791-PP_2794. The Source Data labels the "
+    f"second strain '{OVEREXPRESSION_SHEET_LABELS['pSTABL2']}', a digit transposition "
+    "contradicted by five mirrored statements: this sentence, the Results' "
+    f"'{_Q_OVEREXPRESSION_RESULTS}', the Supplementary Fig. 12 caption's panels c and "
+    "d, the Supplementary Fig. 10 caption's levulinate note, and Supplementary Data "
+    "3's own plasmid composition. The measured proteome of the same samples proves it",
+)
+OVEREXPRESSION_NATIVE_COPIES = _paper(
+    PRODUCTION_STRAIN,
+    _Q_OVEREXPRESSION_TRANSFORMED,
+    page="Methods, 'Overexpression of candidate genes'",
+    note="the overexpression strains are IY1449b carrying pIY670 (so the five pathway "
+    "perturbations stand) plus an extra plasmid-borne copy of a NATIVE operon, which "
+    "is a GeneAdditionPerturbation with is_heterologous=False and the locus tag of the "
+    "real gene",
+)
+PSTABL1_PLASMID = _plasmid(
+    _Q_PSTABL1_PLASMID,
+    _Q_PSTABL1_PLASMID,
+    note="Supplementary Data 3 row pSTABL1 / JBx_273326. The plasmid NAMES are swapped "
+    "between this table and the Source Data, which labels its pSTABL1 samples "
+    f"'{OVEREXPRESSION_SHEET_LABELS['pSTABL1']}' and measures PP_2208 and PP_2209 in "
+    "them. Neither name is stored on a perturbation: what is stored is the operon the "
+    "sample's own measured proteome names",
+)
+PSTABL2_PLASMID = _plasmid(
+    _Q_PSTABL2_PLASMID,
+    _Q_PSTABL2_PLASMID,
+    note="Supplementary Data 3 row pSTABL2 / JBx_273327; the mirror image of the "
+    "swap recorded on PSTABL1_PLASMID",
+)
+RFP_CONTROL_PLASMID = _plasmid(
+    _Q_RFP_CONTROL_PLASMID,
+    _Q_RFP_CONTROL_PLASMID,
+    note="Supplementary Data 3 row pTE519 / JBx_266188, the 'RFP control (JBx_266188)' "
+    f"of '{_Q_OVEREXPRESSION_CULTURE}'. It is the overexpression panel's Control "
+    "group, which is a phenotype_reference and therefore carries no genotype, so the "
+    "mCherry marker is recorded here rather than typed as a perturbation",
+)
+OVEREXPRESSION_DURATION_GAP = _paper(
+    None,
+    _Q_OVEREXPRESSION_CULTURE,
+    page="Methods, 'Overexpression of candidate genes'",
+    note="the overexpression panel's own culturing sentence states the endpoint as "
+    "'over 48 h' while the shared culturing Methods state 'Following 48 h of "
+    "production', so duration_hours is a typed ProvenanceGap on these records rather "
+    "than the shared 48.0. Everything else these records carry (M9-NREL, 24 C, the "
+    "flower plate, the L-arabinose induction) the sentence leaves to the shared "
+    "protocol and does not contradict",
+)
+INDUCER_UNIT_GAP = _paper(
+    OVEREXPRESSION_INDUCED_LEVELS,
+    _Q_OVEREXPRESSION_SALICYLATE,
+    page="Methods, 'Overexpression of candidate genes'",
+    note="why only the UNINDUCED arm of Supplementary Figure 12 is loaded. The inducer "
+    "is salicylic acid and its concentrations are released as bare numbers in the "
+    "'Inducer concentration' column with NO unit. Measured over the mirror: 'salicyl' "
+    "occurs once in paper.md (this sentence, with no dose), 'inducer' once in si1.md "
+    "(the Supplementary Fig. 12 caption's 'under various inducer concentrations', with "
+    "no unit), and the dose series appears nowhere else in paper.md, si1.md, si2.md, "
+    "si3.md or si8.md. The deferral was followed: Supplementary Data 3 refers the "
+    "NagR-pNagAa vector to Supplementary Reference 1 (Yunus et al., mirrored as "
+    "yunusPredictiveCRISPRmediatedGene2026), whose Methods state only an L-arabinose "
+    "dose and no salicylate dose. ConcentrationUnit admits no unitless member and a "
+    "Concentration needs a value WITH a unit, so the six induced levels cannot be "
+    "typed; collapsing them to one dose basis would assert that one condition yielded "
+    "six different titers. At level 0 no inducer was added and no unit is needed",
+)
+CONTROL_PROTEOME_DEFERRAL = _si(
+    None,
+    _Q_SI_FIG15,
+    page="Supplementary Figure 15 caption",
+    note=f"why {SHEET_CONTROL_PROTEOME} is NOT loaded here. Its six columns are the "
+    "percent-of-total Top3 basis, established by elimination over the three columns "
+    f"{SHEET_OVEREXPRESSION_PROTEOME} releases from the same pipeline: all 540 of its "
+    "cells lie in 0.00037341..3.43366 with zero negatives, while Top_3pep_counts_mean "
+    "runs 0..1.0027e8 and log10_%_abundance runs -2.5027..1.1373, leaving "
+    "'%_of protein_abundance_Top3-method' (0.0031..13.7169) as the only basis whose "
+    "range contains it; the caption's three rank claims also hold on that reading "
+    "(column means PMD* 2.480 highest, mvaE 1.214 second, mvaS 0.589 lowest of the "
+    "five pathway proteins, dCas9 0.034). That is a DIFFERENT measurement_type from "
+    "the raw Top3 signal every record of this family stores, and "
+    "verify_protein_dataset's measurement_type_consistent rule exists to stop exactly "
+    "that mixing, so serving it needs its own dataset class and the full adapter gate. "
+    "Two further blockers: five of its six keys are the pIY670 pathway tokens, which "
+    "are not loci of the pinned assembly and so fail the runner's "
+    "protein_and_perturbed_locus_containment_assembly, and the sixth names the dCas9 "
+    "effector, which this release carries on CrisprConstruct rather than as a gene "
+    "with a systematic name. Its 90 cultures are the per-cycle controls whose titers "
+    "are already this dataset's phenotype_reference (18, 12, 12, 12, 12, 12, 12 "
+    "measured, matching CONTROL_N), so nothing it holds is lost silently",
 )
 
 #: The five heterologous pIY670 genes. ``token`` is the verbatim part name in the
@@ -968,6 +1334,54 @@ def crispri_perturbation(
     )
 
 
+def deletion_perturbation(
+    locus_tag: str, gene_name: str
+) -> BacterialDeletionPerturbation:
+    """One chromosomal gene deletion of a Cpf1-built KO background.
+
+    Built from exactly the three fields the proteome family's ``PP_0815`` deletion
+    already carries, so the same genotype is the same object in both families: the
+    JBEI registry part id of each background goes to ``preprocess/``, not here.
+    """
+    return BacterialDeletionPerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=gene_name,
+        gene_namespace=KT2440_NAMESPACE,
+    )
+
+
+def native_copy_perturbation(
+    locus_tag: str, gene_name: str
+) -> GeneAdditionPerturbation:
+    """An extra plasmid-borne copy of a NATIVE KT2440 operon member.
+
+    ``is_heterologous`` is False and ``systematic_gene_name`` is the real locus tag, so
+    the runner's ``host_perturbed_gene_set`` keeps it (``source_organism`` is the host's
+    own species) and the containment gate checks it like any other host identifier.
+
+    ``construct_name`` is deliberately ``None``: Supplementary Data 3 and the Source
+    Data name the two overexpression plasmids in the OPPOSITE order (see
+    :data:`PSTABL1_PLASMID`), so no plasmid name is asserted on a perturbation.
+
+    NOT a ``HeterologousPathwayPerturbation``, although that class is the one carrying
+    ``gene_namespace``. These operons are not part of the isoprenol pathway: typing
+    them there would put them in a ``pathway_name`` they do not belong to and would
+    make the family's ``heterologous_pathway_gene_counts`` rule accept 7 or 9 where it
+    accepts 5 today, which is the rule that catches a production strain that lost its
+    pathway. The cost is that ``GeneAdditionPerturbation`` declares no
+    ``gene_namespace``, so the locus tag's namespace is recoverable from the record's
+    ``genome_reference`` rather than stated on the leaf; that gap is raised in the PR.
+    """
+    return GeneAdditionPerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=gene_name,
+        source_organism=SPECIES,
+        is_heterologous=False,
+        localization="episomal_plasmid",
+        construct_name=None,
+    )
+
+
 def production_environment() -> CultureEnvironment:
     """M9-NREL at 24 C for 48 h in the flower plate, with the L-arabinose inducer.
 
@@ -1011,6 +1425,35 @@ def production_environment() -> CultureEnvironment:
         ],
         aerobicity=str(AEROBICITY.value),
         duration_hours=float(DURATION_HOURS.value),
+    )
+
+
+def overexpression_environment() -> CultureEnvironment:
+    """The overexpression panel's environment: the shared protocol, endpoint gapped.
+
+    The panel has its own one-sentence culturing statement, and it states the endpoint
+    as "cultured for over 48 h" where the shared culturing Methods state "Following
+    48 h of production". The two do not agree, so ``duration_hours`` is ``None`` with a
+    typed ``ProvenanceGap`` rather than the shared 48.0. Everything else -- M9-NREL,
+    24 C, the flower plate, the L-arabinose induction of pIY670 -- the sentence leaves
+    to the shared protocol and does not contradict, so it is carried unchanged.
+
+    Only the UNINDUCED cultures reach this environment: the inducer's unit is not
+    released (:data:`INDUCER_UNIT_GAP`), and at level 0 no inducer was added, so the
+    environment carries no salicylate dose and none is invented.
+    """
+    base = production_environment()
+    return base.model_copy(
+        update={
+            "duration_hours": None,
+            "provenance_gaps": [
+                ProvenanceGap(
+                    field="duration_hours",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    note=str(OVEREXPRESSION_DURATION_GAP.note),
+                )
+            ],
+        }
     )
 
 
@@ -1223,6 +1666,229 @@ def read_proteome_rows(path: str) -> list[ProteomeRow]:
     ]
 
 
+class KoPanelRow(BaseModel):
+    """One released culture of ``Figure 6a``: a KO background, an arm and a titer."""
+
+    background: str
+    arm: Literal["CRISPRi", "Target", "Non-target"]
+    titer_mg_per_l: float
+
+
+def read_ko_panel_rows(path: str) -> list[KoPanelRow]:
+    """Every row of ``Figure 6a``, after asserting ``Supplementary Figure 11`` matches.
+
+    The two sheets are one export of one panel: measured on the pinned workbook they
+    are the same 105 rows in the same order, cell for cell. A disagreement means the
+    workbook is not the one this loader was written against, so it refuses.
+    """
+    header, rows = _sheet_rows(path, SHEET_KO_PANEL)
+    alt_header, alt = _sheet_rows(path, SHEET_KO_PANEL_ALT)
+    expected = ["Strain", "Type", "Titer"]
+    if list(header[:3]) != expected or list(alt_header[:3]) != expected:
+        raise RuntimeError(
+            f"{SHEET_KO_PANEL} / {SHEET_KO_PANEL_ALT} header changed: "
+            f"{header!r} / {alt_header!r}"
+        )
+    if [tuple(row) for row in rows] != [tuple(row) for row in alt]:
+        raise RuntimeError(
+            f"{SHEET_KO_PANEL} and {SHEET_KO_PANEL_ALT} are not the same rows; they "
+            "are one export of one panel on the pinned bytes"
+        )
+    return [
+        KoPanelRow(
+            background=str(background).strip(),
+            arm=str(arm).strip(),  # type: ignore[arg-type]
+            titer_mg_per_l=float(titer),
+        )
+        for background, arm, titer in rows
+    ]
+
+
+class KoArrayRow(BaseModel):
+    """One released culture of ``Figure 6d``: a line name, an arm and a titer."""
+
+    line_name: str
+    arm: Literal["CRISPRi", "KO Only", "CRISPRi and KO"]
+    replicate: str
+    titer_mg_per_l: float
+
+
+def read_ko_array_rows(path: str) -> list[KoArrayRow]:
+    """Every row of ``Figure 6d``, the KO-only and CRISPRi-on-a-KO panel."""
+    header, rows = _sheet_rows(path, SHEET_KO_ARRAYS)
+    if list(header[:4]) != ["Line Name", "Type", "Replicate", "Isoprenol"]:
+        raise RuntimeError(f"{SHEET_KO_ARRAYS} header changed: {header!r}")
+    return [
+        KoArrayRow(
+            line_name=str(row[0]).strip(),
+            arm=str(row[1]).strip(),  # type: ignore[arg-type]
+            replicate=str(row[2]).strip(),
+            titer_mg_per_l=float(row[3]),
+        )
+        for row in rows
+    ]
+
+
+class OffTargetTiterRow(BaseModel):
+    """One released culture of ``Supplementary Figure 13d``."""
+
+    sample: str
+    replicate: str
+    titer_mg_per_l: float
+
+
+def read_offtarget_titer_rows(path: str) -> list[OffTargetTiterRow]:
+    """Every row of ``Supplementary Figure 13d``, the off-target panel's titer arm."""
+    header, rows = _sheet_rows(path, SHEET_OFFTARGET_TITER)
+    if list(header[:3]) != ["Sample", "Replicate", "titer"]:
+        raise RuntimeError(f"{SHEET_OFFTARGET_TITER} header changed: {header!r}")
+    return [
+        OffTargetTiterRow(
+            sample=str(sample).strip(),
+            replicate=str(replicate).strip(),
+            titer_mg_per_l=float(titer),
+        )
+        for sample, replicate, titer in rows
+    ]
+
+
+class OverexpressionTiterRow(BaseModel):
+    """One released culture of ``Supplementary Figure 12bd``."""
+
+    strain: str
+    replicate: str
+    inducer_level: float
+    titer_mg_per_l: float
+
+
+def read_overexpression_titer_rows(path: str) -> list[OverexpressionTiterRow]:
+    """Every row of ``Supplementary Figure 12bd``, the overexpression titer panel."""
+    header, rows = _sheet_rows(path, SHEET_OVEREXPRESSION_TITER)
+    if list(header[:4]) != [
+        "Strain",
+        "Replicate",
+        "Inducer concentration",
+        "Isoprenol",
+    ]:
+        raise RuntimeError(f"{SHEET_OVEREXPRESSION_TITER} header changed: {header!r}")
+    return [
+        OverexpressionTiterRow(
+            strain=str(strain).strip(),
+            replicate=str(replicate).strip(),
+            inducer_level=float(inducer),
+            titer_mg_per_l=float(titer),
+        )
+        for strain, replicate, inducer, titer in rows
+    ]
+
+
+class OverexpressionProteomeRow(BaseModel):
+    """One (sample, replicate, protein) cell of ``Supplementary Figure 12ac``."""
+
+    sample: str
+    strain: str
+    inducer_level: float
+    replicate: str
+    protein: str
+    accession: str
+    entry_name: str
+    description: str
+    top3_signal: float
+
+
+def read_overexpression_proteome_rows(path: str) -> list[OverexpressionProteomeRow]:
+    """Every cell of ``Supplementary Figure 12ac``'s Top3 abundance matrix.
+
+    Same column set and same Top3 scale as :data:`SHEET_PROTEOME`, plus the ``Strain``
+    and ``Inducer concentration`` columns the overexpression panel varies. The loader
+    consumes ``Top_3pep_counts_mean``, so both proteome panels store one
+    ``measurement_type``.
+    """
+    header, rows = _sheet_rows(path, SHEET_OVEREXPRESSION_PROTEOME)
+    expected = [
+        "Protein.Group",
+        "Protein.Names",
+        "Protein",
+        "Protein.Description",
+        "Sample",
+        "Strain",
+        "Inducer concentration",
+        "Replicate",
+        "Top_3pep_counts_mean",
+    ]
+    if list(header[:9]) != expected:
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_PROTEOME} header changed: {header!r}"
+        )
+    return [
+        OverexpressionProteomeRow(
+            accession=str(row[0]).strip(),
+            entry_name=str(row[1]).strip(),
+            protein=str(row[2]).strip(),
+            description=str(row[3]).strip(),
+            sample=str(row[4]).strip(),
+            strain=str(row[5]).strip(),
+            inducer_level=float(row[6]),
+            replicate=str(row[7]).strip(),
+            top3_signal=float(row[8]),
+        )
+        for row in rows
+    ]
+
+
+def expand_locus_designation(token: str) -> tuple[str, ...]:
+    """The locus tags one KO designation names, e.g. ``PP_0812-15`` -> four tags.
+
+    A bare ``PP_xxxx`` is itself; ``PP_xxxx-yy`` is the INCLUSIVE locus-number range
+    whose end shares the start's leading digits, which is what the Results' "PP_0815
+    (subunits of a terminal oxidase complex PP_0812-15)" names and what Supplementary
+    Table 5 corroborates by building ``IY1449b ΔPP_0812-15`` as ``PP_0813-15`` deleted
+    from ``IY1449b ΔPP_0812``. A range that does not ascend is a parse error, not a
+    datum to accept.
+    """
+    if LOCUS_TAG_RE.fullmatch(token):
+        return (token,)
+    match = LOCUS_RANGE_RE.match(token)
+    if match is None:
+        raise RuntimeError(
+            f"KO designation {token!r} is neither a PP_ locus tag nor a PP_xxxx-yy "
+            "locus-number range"
+        )
+    start = int(match.group("start"))
+    end = int(f"{match.group('start')[:2]}{match.group('end')}")
+    if end <= start:
+        raise RuntimeError(f"KO designation {token!r} does not ascend: {start}..{end}")
+    return tuple(f"PP_{number:04d}" for number in range(start, end + 1))
+
+
+def parse_ko_array_line(name: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """``(deleted designations, knocked-down designations)`` of a ``Figure 6d`` line.
+
+    ``PP_0812-15_KO`` deletes one designation and knocks nothing down;
+    ``PP_0368_PP_0812-15_KO with PP_0528_PP_0815`` deletes two and knocks two down.
+    Anything else raises: a line name this loader cannot read is a changed release.
+    """
+    match = KO_ARRAY_LINE_RE.match(name)
+    if match is None:
+        raise RuntimeError(
+            f"{SHEET_KO_ARRAYS} line name {name!r} is neither '<designations>_KO' nor "
+            "'<designations>_KO with <designations>'"
+        )
+    deleted = _split_designations(match.group("deleted"))
+    knocked = match.group("knocked_down")
+    return deleted, _split_designations(knocked) if knocked else ()
+
+
+def _split_designations(label: str) -> tuple[str, ...]:
+    """``PP_0368_PP_0812-15`` -> ``('PP_0368', 'PP_0812-15')``."""
+    parts = re.findall(r"PP_\d{4}(?:-\d{2})?", label)
+    if "_".join(parts) != label:
+        raise RuntimeError(
+            f"{label!r} is not PP_ designations joined by '_': parsed {parts!r}"
+        )
+    return tuple(parts)
+
+
 def parse_construct(name: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """``(locus tags, non-tag tokens)`` of a CRISPRi construct's released name.
 
@@ -1312,6 +1978,729 @@ def _standard_names(genome: PPutidaKT2440Genome, tags: Iterable[str]) -> dict[st
         for locus in loci:
             by_tag.setdefault(str(locus), str(symbol))
     return {tag: by_tag.get(tag, tag) for tag in tags}
+
+
+# --------------------------------------------------------------------------- #
+# The four unstored titer panels of the Source Data file
+#
+# ``Figure 4b`` is the CRISPRi campaign and is what the 465 stored records are. Four
+# further sheets release per-replicate titers of strains the campaign does NOT contain:
+# chromosomal KO backgrounds, the off-target sgRNA panel, and the two overexpression
+# strains. Each sheet also re-exports campaign values, so the first thing this section
+# does is prove the partition, in both directions, before a record is built.
+# --------------------------------------------------------------------------- #
+class PanelTiterGroup(BaseModel):
+    """One group of released cultures of a non-``Figure 4b`` panel: one titer record."""
+
+    sheet: str
+    group: str
+    deletions: tuple[str, ...] = ()
+    knockdowns: tuple[str, ...] = ()
+    native_copies: tuple[str, ...] = ()
+    titers_mg_per_l: tuple[float, ...]
+    reference_key: str
+    overexpression_environment: bool = False
+    note: str | None = None
+
+
+class PanelTiterReference(BaseModel):
+    """One reference group of a panel. Two sheets exporting ONE group share one key."""
+
+    key: str
+    sheets: tuple[str, ...]
+    group: str
+    titers_mg_per_l: tuple[float, ...]
+    note: str
+
+
+class PanelTiterPlan(BaseModel):
+    """Every titer record and reference the four panels contribute, with its proofs.
+
+    ``stored_cycle_reference`` maps a reference key to a DBTL cycle of the ALREADY
+    STORED per-cycle controls, for a panel whose own control rows are a measured
+    re-export of those cultures. ``proofs`` are the measured cross-sheet statements the
+    build asserted, written to ``preprocess/`` so the arithmetic stays auditable.
+    """
+
+    records: list[PanelTiterGroup]
+    references: list[PanelTiterReference]
+    stored_cycle_reference: dict[str, int] = {}
+    proofs: list[str] = []
+    drops: list[DropRule] = []
+
+
+def _ordered(values: Iterable[float]) -> tuple[float, ...]:
+    """A group's titers sorted, so a cross-sheet identity test is replicate-order free."""
+    return tuple(sorted(values))
+
+
+def _assert_panel_partition(
+    reexported: Mapping[str, Sequence[float]],
+    novel: Mapping[str, Sequence[float]],
+    stored: Collection[float],
+) -> list[str]:
+    """Prove the partition: the CRISPRi arms are re-exports, the KO arms are new.
+
+    Both directions are asserted, because each is a different failure. A ``CRISPRi``
+    culture that stopped matching ``Figure 4b`` means the sheets have diverged and the
+    re-export reading is wrong; a KO culture that started matching it means the
+    revision is about to store one titer twice. Measured on the pinned workbook: 33 of
+    33 ``Figure 6a`` and 99 of 99 ``Figure 6d`` CRISPRi cultures are stored values, and
+    0 of the 190 cultures of the four new arms are.
+    """
+    proofs: list[str] = []
+    stored_set = set(stored)
+    for label, values in sorted(reexported.items()):
+        missing = [value for value in values if value not in stored_set]
+        if missing:
+            raise RuntimeError(
+                f"{label}: {len(missing)} of {len(values)} {ARM_CRISPRI} cultures are "
+                f"NOT {SHEET_TITER} values, so the sheets have diverged: {missing[:5]}"
+            )
+        proofs.append(
+            f"{label} {ARM_CRISPRI}: {len(values)} of {len(values)} cultures are "
+            f"already-stored {SHEET_TITER} titers, so none is taken"
+        )
+    for label, values in sorted(novel.items()):
+        collisions = [value for value in values if value in stored_set]
+        if collisions:
+            raise RuntimeError(
+                f"{label}: {len(collisions)} of {len(values)} new cultures ALREADY "
+                f"appear in {SHEET_TITER}, so taking them would store a titer twice: "
+                f"{collisions[:5]}"
+            )
+        proofs.append(
+            f"{label}: 0 of {len(values)} cultures appear in {SHEET_TITER}, so all are "
+            "genuinely new"
+        )
+    return proofs
+
+
+def _ko_panel_groups(
+    rows: Sequence[KoPanelRow],
+) -> tuple[list[PanelTiterGroup], list[PanelTiterReference], list[str]]:
+    """``Figure 6a``: one record per KO background, its Non-target arm the reference.
+
+    The design is the Results' own: "pairs of knockout (KO) strains harboring either a
+    non-target sgRNA or the 'target' sgRNA previously used to downregulate the KO
+    gene". So the Target arm is the KO plus a knockdown of the gene it deleted, and the
+    Non-target arm is the same KO carrying a sgRNA that perturbs no gene, which is a
+    ``phenotype_reference`` rather than a record. One background, ``PP_0812-15``,
+    deletes four genes and its sgRNA is named only in the Results text
+    (:data:`KO_MULTI_GENE_GUIDE`); a multi-gene background absent from that sourced map
+    stops the build rather than getting a guessed guide.
+    """
+    arms: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
+    for row in rows:
+        arms[row.background][row.arm].append(row.titer_mg_per_l)
+    guides = dict(KO_MULTI_GENE_GUIDE.value)
+    records: list[PanelTiterGroup] = []
+    references: list[PanelTiterReference] = []
+    proofs: list[str] = []
+    for background, by_arm in sorted(arms.items()):
+        deletions = expand_locus_designation(background)
+        if len(deletions) == 1:
+            knockdown = deletions[0]
+        elif background in guides:
+            knockdown = str(guides[background])
+            proofs.append(
+                f"{SHEET_KO_PANEL} {background}: deletes {len(deletions)} genes "
+                f"{deletions} and its Target arm carries the {knockdown} sgRNA, which "
+                "only the Results text names"
+            )
+        else:
+            raise RuntimeError(
+                f"{SHEET_KO_PANEL} background {background!r} deletes "
+                f"{len(deletions)} genes and no mirrored statement names the sgRNA its "
+                f"{ARM_KO_TARGET} arm carries; KO_MULTI_GENE_GUIDE must gain a sourced "
+                "entry before it can be stored"
+            )
+        target = by_arm[ARM_KO_TARGET]
+        non_target = by_arm[ARM_KO_NONTARGET]
+        if not target or not non_target:
+            raise RuntimeError(
+                f"{SHEET_KO_PANEL} background {background!r} has {len(target)} "
+                f"{ARM_KO_TARGET} and {len(non_target)} {ARM_KO_NONTARGET} cultures; "
+                "the panel is pairs"
+            )
+        key = f"non_target:{background}"
+        records.append(
+            PanelTiterGroup(
+                sheet=SHEET_KO_PANEL,
+                group=f"{background}/{ARM_KO_TARGET}",
+                deletions=deletions,
+                knockdowns=(knockdown,),
+                titers_mg_per_l=tuple(target),
+                reference_key=key,
+            )
+        )
+        references.append(
+            PanelTiterReference(
+                key=key,
+                sheets=(SHEET_KO_PANEL,),
+                group=f"{background}/{ARM_KO_NONTARGET}",
+                titers_mg_per_l=tuple(non_target),
+                note=(
+                    f"the Δ{background} background carrying a NON-targeting sgRNA, "
+                    "which perturbs no gene, so it is this record's reference rather "
+                    "than a record of its own"
+                ),
+            )
+        )
+    return records, references, proofs
+
+
+def _ko_array_groups(
+    rows: Sequence[KoArrayRow], control_titers: Mapping[int, Sequence[float]]
+) -> tuple[list[PanelTiterGroup], list[str]]:
+    """``Figure 6d``: the KO-only and CRISPRi-on-a-KO records, on a STORED reference.
+
+    The sheet's own ``Control`` triplicate is measured to be three of the twelve DBTL6
+    control cultures ``Figure 4b`` already releases, so these records point at the
+    stored DBTL6 ``phenotype_reference`` (n = 12) rather than at a three-culture copy
+    of three of its members.
+    """
+    groups: dict[tuple[str, str], list[float]] = defaultdict(list)
+    for row in rows:
+        groups[(row.line_name, row.arm)].append(row.titer_mg_per_l)
+    control = groups.pop((KO_ARRAY_CONTROL_LINE, ARM_CRISPRI), None)
+    if control is None:
+        raise RuntimeError(
+            f"{SHEET_KO_ARRAYS} has no {KO_ARRAY_CONTROL_LINE!r} / {ARM_CRISPRI!r} "
+            "row, so its reference cannot be matched to a stored cycle"
+        )
+    stored_cycle = set(control_titers[KO_ARRAY_CONTROL_CYCLE])
+    foreign = [value for value in control if value not in stored_cycle]
+    if foreign:
+        raise RuntimeError(
+            f"{SHEET_KO_ARRAYS}'s control cultures {foreign} are not DBTL"
+            f"{KO_ARRAY_CONTROL_CYCLE} control titers of {SHEET_TITER}, so the panel's "
+            "reference cannot be the stored per-cycle one"
+        )
+    proofs = [
+        f"{SHEET_KO_ARRAYS} {KO_ARRAY_CONTROL_LINE}: all {len(control)} cultures are "
+        f"DBTL{KO_ARRAY_CONTROL_CYCLE} control cultures of {SHEET_TITER}, so the "
+        f"records reuse the stored DBTL{KO_ARRAY_CONTROL_CYCLE} reference "
+        f"(n = {len(control_titers[KO_ARRAY_CONTROL_CYCLE])}) instead of storing three "
+        "of its twelve members a second time"
+    ]
+    records: list[PanelTiterGroup] = []
+    for (line, arm), values in sorted(groups.items()):
+        if arm == ARM_CRISPRI:
+            continue
+        deleted, knocked = parse_ko_array_line(line)
+        deletions = tuple(
+            tag for token in deleted for tag in expand_locus_designation(token)
+        )
+        knockdowns = tuple(
+            tag for token in knocked for tag in expand_locus_designation(token)
+        )
+        if (arm == ARM_KO_ONLY) != (not knockdowns):
+            raise RuntimeError(
+                f"{SHEET_KO_ARRAYS} line {line!r} is arm {arm!r} but parses to "
+                f"{len(knockdowns)} knockdowns"
+            )
+        records.append(
+            PanelTiterGroup(
+                sheet=SHEET_KO_ARRAYS,
+                group=f"{line}/{arm}",
+                deletions=deletions,
+                knockdowns=knockdowns,
+                titers_mg_per_l=tuple(values),
+                reference_key=f"stored_cycle:{KO_ARRAY_CONTROL_CYCLE}",
+            )
+        )
+    return records, proofs
+
+
+def _offtarget_groups(
+    rows: Sequence[OffTargetTiterRow],
+    ko_reference: PanelTiterReference,
+    ko_target_arm: Sequence[float],
+) -> tuple[list[PanelTiterGroup], PanelTiterReference, list[str]]:
+    """``Supplementary Figure 13d``: the titer arm of the stored PP_0815 proteome panel.
+
+    This is where the release's two internal duplications are settled, and both are
+    settled by measurement rather than by preference.
+
+    The ``Non-Target`` arm is bit-identical to ``Figure 6a``'s ``PP_0815`` /
+    ``Non-target`` arm, so it is ONE group exported twice: it gets ONE reference
+    object, shared with that sheet's record, and is never stored as two groups.
+
+    The ``Target`` arm is NOT. The two sheets export triplicates that share exactly one
+    of six values, and each of the other four occurs in its own sheet and nowhere else
+    in the 31-sheet workbook. Both captions state ``n = 3``, so neither triplicate is
+    stored as the other, neither is dropped, and the five distinct cultures are not
+    pooled into an ``n = 5`` design no caption states: each sheet's released triplicate
+    is its own record and carries the disagreement on it.
+    """
+    groups: dict[str, list[float]] = defaultdict(list)
+    for row in rows:
+        groups[row.sample].append(row.titer_mg_per_l)
+    reference_values = groups.pop(OFFTARGET_REFERENCE_SAMPLE, None)
+    if reference_values is None:
+        raise RuntimeError(
+            f"{SHEET_OFFTARGET_TITER} has no {OFFTARGET_REFERENCE_SAMPLE!r} arm"
+        )
+    if _ordered(reference_values) != _ordered(ko_reference.titers_mg_per_l):
+        raise RuntimeError(
+            f"{SHEET_OFFTARGET_TITER}'s {OFFTARGET_REFERENCE_SAMPLE} arm "
+            f"{_ordered(reference_values)} is not bit-identical to {SHEET_KO_PANEL}'s "
+            f"Δ{PROTEOME_BACKGROUND_DELETION} {ARM_KO_NONTARGET} arm "
+            f"{_ordered(ko_reference.titers_mg_per_l)}; the deduplication this loader "
+            "documents no longer holds and the two groups must be re-decided"
+        )
+    reference = ko_reference.model_copy(
+        update={
+            "sheets": (SHEET_KO_PANEL, SHEET_OFFTARGET_TITER),
+            "note": (
+                f"{ko_reference.note}; {SHEET_OFFTARGET_TITER} exports the same "
+                "triplicate bit for bit, so the two sheets share this one reference "
+                "object and the group is stored once"
+            ),
+        }
+    )
+    proofs = [
+        f"{SHEET_OFFTARGET_TITER} {OFFTARGET_REFERENCE_SAMPLE} == {SHEET_KO_PANEL} "
+        f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_NONTARGET} bit for bit "
+        f"{_ordered(reference_values)}, stored once as one reference"
+    ]
+    target_values = groups.get(OFFTARGET_TARGET_SAMPLE)
+    if target_values is None:
+        raise RuntimeError(
+            f"{SHEET_OFFTARGET_TITER} has no {OFFTARGET_TARGET_SAMPLE!r} arm"
+        )
+    overlap = sorted(set(target_values) & set(ko_target_arm))
+    if len(overlap) != OFFTARGET_TARGET_SHARED_CULTURES:
+        raise RuntimeError(
+            f"{SHEET_OFFTARGET_TITER}'s {OFFTARGET_TARGET_SAMPLE} arm "
+            f"{_ordered(target_values)} and {SHEET_KO_PANEL}'s "
+            f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_TARGET} arm "
+            f"{_ordered(ko_target_arm)} share {len(overlap)} values, not the "
+            f"{OFFTARGET_TARGET_SHARED_CULTURES} this loader documents; the "
+            "disagreement has changed and must be re-decided before either is stored"
+        )
+    disagreement = (
+        f"{SHEET_KO_PANEL} exports {_ordered(ko_target_arm)} for this strain and "
+        f"{SHEET_OFFTARGET_TITER} exports {_ordered(target_values)}: two triplicates "
+        f"sharing exactly the one value {overlap[0]}, with each of the other four "
+        "occurring in its own sheet and nowhere else in the workbook. Both captions "
+        "state n = 3, so neither triplicate is stored as the other, neither is "
+        "dropped, and the five distinct cultures are not pooled into an n = 5 design "
+        "no caption states"
+    )
+    proofs.append(
+        f"{SHEET_OFFTARGET_TITER} {OFFTARGET_TARGET_SAMPLE} vs {SHEET_KO_PANEL} "
+        f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_TARGET}: {len(overlap)} shared value "
+        f"({overlap[0]}), 2 disagreeing each way; both triplicates kept as their own "
+        "record"
+    )
+    records: list[PanelTiterGroup] = []
+    tags: set[str] = set()
+    for sample, values in sorted(groups.items()):
+        if sample == OFFTARGET_TARGET_SAMPLE:
+            tag = PROTEOME_BACKGROUND_DELETION
+            note: str | None = disagreement
+        else:
+            match = OFFTARGET_SAMPLE_RE.match(sample)
+            if match is None:
+                raise RuntimeError(
+                    f"{SHEET_OFFTARGET_TITER} sample {sample!r} is neither "
+                    f"{OFFTARGET_REFERENCE_SAMPLE!r}, {OFFTARGET_TARGET_SAMPLE!r} nor "
+                    "a PP_xxxx[_n] off-target sgRNA strain"
+                )
+            tag = match.group("tag")
+            note = _Q_SI_THREE_CULTURES if match.group("culture") is not None else None
+            tags.add(tag)
+        records.append(
+            PanelTiterGroup(
+                sheet=SHEET_OFFTARGET_TITER,
+                group=sample,
+                deletions=(PROTEOME_BACKGROUND_DELETION,),
+                knockdowns=(tag,),
+                titers_mg_per_l=tuple(values),
+                reference_key=reference.key,
+                note=note,
+            )
+        )
+    if len(tags) != OFFTARGET_CANDIDATE_TARGETS:
+        raise RuntimeError(
+            f"{SHEET_OFFTARGET_TITER} screens {len(tags)} distinct off-target genes; "
+            f"Supplementary Table 1 lists {OFFTARGET_CANDIDATE_TARGETS}"
+        )
+    proofs.append(
+        f"{SHEET_OFFTARGET_TITER}: {len(records)} records over {len(tags)} distinct "
+        f"off-target genes, which is Supplementary Table 1's "
+        f"{OFFTARGET_CANDIDATE_TARGETS} targets plus the repeated cultures"
+    )
+    return records, reference, proofs
+
+
+def _overexpression_titer_groups(
+    rows: Sequence[OverexpressionTiterRow],
+) -> tuple[list[PanelTiterGroup], PanelTiterReference, list[str], list[DropRule]]:
+    """``Supplementary Figure 12bd``: the UNINDUCED arm only.
+
+    The six induced levels are released as bare numbers whose UNIT appears nowhere in
+    the mirror, so they cannot be typed as a dose and are dropped by a stated rule
+    (:data:`INDUCER_UNIT_GAP`). At level 0 no inducer was added, so those cultures need
+    no unit, and the uninduced arm is the one the paper's own claim rests on:
+    "Uninduced expression, however, showed a ~10% increase in titer compared to the RFP
+    control".
+    """
+    groups: dict[tuple[str, float], list[float]] = defaultdict(list)
+    for row in rows:
+        groups[(row.strain, row.inducer_level)].append(row.titer_mg_per_l)
+    levels = {level for _, level in groups}
+    expected = {OVEREXPRESSION_UNINDUCED_LEVEL, *OVEREXPRESSION_INDUCED_LEVELS}
+    if levels != expected:
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_TITER} releases levels {sorted(levels)}; this "
+            f"loader was written against {sorted(expected)}"
+        )
+    labels = {strain for strain, _ in groups} - {OVEREXPRESSION_CONTROL_STRAIN}
+    if labels != set(OVEREXPRESSION_SHEET_LABELS.values()):
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_TITER} strain labels {sorted(labels)} are not the "
+            f"pinned {sorted(OVEREXPRESSION_SHEET_LABELS.values())}"
+        )
+    by_label = {label: key for key, label in OVEREXPRESSION_SHEET_LABELS.items()}
+    operons = dict(OVEREXPRESSION_OPERON_SOURCE.value)
+    control = groups[(OVEREXPRESSION_CONTROL_STRAIN, OVEREXPRESSION_UNINDUCED_LEVEL)]
+    reference = PanelTiterReference(
+        key="overexpression_control",
+        sheets=(SHEET_OVEREXPRESSION_TITER,),
+        group=f"{OVEREXPRESSION_CONTROL_STRAIN}/{OVEREXPRESSION_UNINDUCED_LEVEL:g}",
+        titers_mg_per_l=tuple(control),
+        note=(
+            f"the RFP vector control of '{_Q_OVEREXPRESSION_CULTURE}', carrying "
+            f"{_Q_RFP_CONTROL_PLASMID} (Supplementary Data 3, pTE519 / JBx_266188). "
+            f"The sheet releases it as one {OVEREXPRESSION_CONTROL_STRAIN!r} group of "
+            f"{len(control)} uninduced cultures in two blocks and names no field that "
+            "assigns a block to a plasmid, so all of them are this one reference"
+        ),
+    )
+    records: list[PanelTiterGroup] = []
+    dropped: list[str] = []
+    for (label, level), values in sorted(groups.items()):
+        if label == OVEREXPRESSION_CONTROL_STRAIN:
+            continue
+        if level != OVEREXPRESSION_UNINDUCED_LEVEL:
+            dropped.append(f"{label}/{level:g}")
+            continue
+        records.append(
+            PanelTiterGroup(
+                sheet=SHEET_OVEREXPRESSION_TITER,
+                group=f"{label}/{level:g}",
+                native_copies=tuple(operons[by_label[label]]),
+                titers_mg_per_l=tuple(values),
+                reference_key=reference.key,
+                overexpression_environment=True,
+                note=_Q_SI_FIG12_UNINDUCED,
+            )
+        )
+    drops = [
+        DropRule(
+            rule="inducer_concentration_has_no_released_unit",
+            scope="strain",
+            description=str(INDUCER_UNIT_GAP.note),
+            n_records=len(dropped),
+            items=sorted(dropped),
+        )
+    ]
+    proofs = [
+        f"{SHEET_OVEREXPRESSION_TITER}: {len(records)} uninduced records kept, "
+        f"{len(dropped)} induced strain-level groups dropped because the inducer's "
+        "unit is not released anywhere in the mirror"
+    ]
+    return records, reference, proofs, drops
+
+
+def assert_phn_crosswalk(
+    rows: Sequence[OverexpressionProteomeRow], stored_by_key: Mapping[str, str]
+) -> list[str]:
+    """Pin the one accession-to-locus crosswalk two pinned sources disagree on.
+
+    ``Supplementary Figure 12ac`` is the only sheet of the release that puts a locus
+    tag in ``Protein.Description``, and for its two Phn rows it puts the WRONG one. The
+    pinned assembly annotates ``PP_2208`` as ``phnX`` with CDS product
+    "phosphonoacetaldehyde hydrolase" and ``PP_2209`` as ``phnW`` with
+    "2-aminoethylphosphonate--pyruvate transaminase"; the Source Data's own
+    ``Protein.Names`` make ``Phnw`` the transaminase (``PHNW_PSEPK``, Q88KT0) and
+    ``Phnx`` the hydrolase (``PHNX_PSEPK``, Q88KT1). Matching on the FUNCTION both
+    files state therefore puts Q88KT0 at ``PP_2209`` and Q88KT1 at ``PP_2208``, which is
+    what the symbol layer resolves and what the already-stored
+    ``Supplementary Figure 13abc`` records are keyed by. This sheet's two description
+    cells say the opposite, and they are the lone outlier.
+
+    Both halves are asserted, so a corrected annotation or a corrected sheet stops the
+    build instead of silently swapping two measurements of one operon.
+    """
+    described: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        described[row.protein].add(row.description)
+    proofs: list[str] = []
+    for key, locus in sorted(PHN_FUNCTION_CROSSWALK.items()):
+        if stored_by_key.get(key) != locus:
+            raise RuntimeError(
+                f"{key!r} reconciles to {stored_by_key.get(key)!r}, not the {locus!r} "
+                "its FUNCTION puts it at on the pinned assembly; the crosswalk this "
+                "loader documents has changed"
+            )
+        sheet_says = PHN_SHEET_DESCRIPTION[key]
+        if described[key] != {sheet_says}:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} now describes {key!r} as "
+                f"{sorted(described[key])}, not the {sheet_says!r} this loader records "
+                "as contradicting the assembly; the disagreement must be re-decided"
+            )
+        proofs.append(
+            f"{SHEET_OVEREXPRESSION_PROTEOME} {key}: keyed to {locus} on the function "
+            f"both files state, while the sheet's Protein.Description cell says "
+            f"{sheet_says}; the stored {SHEET_PROTEOME} records key it the same way"
+        )
+    return proofs
+
+
+def assert_overexpression_operons(
+    rows: Sequence[OverexpressionProteomeRow], stored_by_key: Mapping[str, str]
+) -> list[str]:
+    """Prove each overexpression label's operon from the proteome of its own samples.
+
+    The Source Data labels one strain ``pSTABL2 (PP_2971-74)`` while the Methods, the
+    Results, the Supplementary Fig. 12 caption's panels c and d, the Supplementary
+    Fig. 10 caption and Supplementary Data 3 all say ``PP_2791-94``. The samples' own
+    measured proteins settle it: nothing but an operon's members is quantified for it.
+    """
+    measured: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        match = OVEREXPRESSION_SAMPLE_RE.match(row.sample)
+        if match is None:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} sample {row.sample!r} is neither "
+                "'<label>_Condition_<n>' nor '<label>_Control'"
+            )
+        measured[match.group("label")].add(stored_by_key[row.protein])
+    proofs: list[str] = []
+    for label, operon in sorted(OVEREXPRESSION_OPERONS.items()):
+        if measured[label] != set(operon):
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME}'s {label} samples quantify "
+                f"{sorted(measured[label])}, not the operon {sorted(operon)} the "
+                "Methods and the Results name"
+            )
+        sheet_label = OVEREXPRESSION_SHEET_LABELS[label]
+        designations = re.findall(r"PP_\d{4}(?:-\d{2})?", sheet_label)
+        labelled = {
+            tag
+            for designation in designations
+            for tag in expand_locus_designation(designation)
+        }
+        proofs.append(
+            f"{label}: its samples quantify exactly {sorted(operon)}, the operon the "
+            f"Methods name; the sheet labels it {sheet_label!r}, which names "
+            f"{sorted(labelled)} and so "
+            + (
+                "agrees"
+                if labelled == set(operon)
+                else "does NOT name those loci: it is the transposition the Methods, "
+                "the Results, the Supplementary Fig. 12 caption body, the "
+                "Supplementary Fig. 10 caption and Supplementary Data 3 all correct"
+            )
+        )
+    return proofs
+
+
+def overexpression_proteome_samples(
+    rows: Sequence[OverexpressionProteomeRow],
+) -> tuple[dict[str, str], list[str]]:
+    """``{record sample: its Control sample}`` for the UNINDUCED arm, plus its proofs.
+
+    One record per overexpression label, the uninduced condition, referenced against
+    that label's own ``Control``. The six induced conditions are dropped for the same
+    reason their titers are: the inducer's unit is not released
+    (:data:`INDUCER_UNIT_GAP`).
+    """
+    levels: dict[str, float] = {}
+    strains: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        if row.sample in levels and levels[row.sample] != row.inducer_level:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} sample {row.sample!r} carries two "
+                "inducer levels"
+            )
+        levels[row.sample] = row.inducer_level
+        strains[row.sample].add(row.strain)
+    pairs: dict[str, str] = {}
+    dropped: list[str] = []
+    for sample, level in sorted(levels.items()):
+        match = OVEREXPRESSION_SAMPLE_RE.match(sample)
+        if match is None or match.group("condition") is None:
+            continue
+        if level != OVEREXPRESSION_UNINDUCED_LEVEL:
+            dropped.append(sample)
+            continue
+        control = f"{match.group('label')}_Control"
+        if control not in levels:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} has no {control!r} for {sample!r}"
+            )
+        if levels[control] != OVEREXPRESSION_UNINDUCED_LEVEL:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} control {control!r} is at inducer "
+                f"level {levels[control]}, not {OVEREXPRESSION_UNINDUCED_LEVEL}"
+            )
+        if strains[control] != {OVEREXPRESSION_CONTROL_STRAIN}:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} control {control!r} is strain "
+                f"{sorted(strains[control])}, not {OVEREXPRESSION_CONTROL_STRAIN!r}"
+            )
+        pairs[sample] = control
+    if len(pairs) != EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS:
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_PROTEOME} yields {len(pairs)} uninduced records; "
+            f"this loader was written against "
+            f"{EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS}"
+        )
+    proofs = [
+        f"{SHEET_OVEREXPRESSION_PROTEOME}: {len(pairs)} uninduced records "
+        f"({', '.join(sorted(pairs))}) each against its own Control sample; "
+        f"{len(dropped)} induced samples dropped because the inducer's unit is not "
+        "released anywhere in the mirror"
+    ]
+    return pairs, proofs
+
+
+def _overexpression_induced_samples(
+    rows: Sequence[OverexpressionProteomeRow],
+) -> list[str]:
+    """``Supplementary Figure 12ac``'s induced samples, which carry an untypable dose."""
+    return sorted(
+        {
+            row.sample
+            for row in rows
+            if row.inducer_level != OVEREXPRESSION_UNINDUCED_LEVEL
+        }
+    )
+
+
+def _overexpression_cells(
+    rows: Sequence[OverexpressionProteomeRow],
+    sample: str,
+    stored_by_key: Mapping[str, str],
+) -> dict[str, list[float]]:
+    """``{reconciled locus: its replicate Top3 signals}`` for one released sample.
+
+    A repeated ``(sample, protein, replicate)`` raises: a doubled replicate would
+    shrink the standard error the record carries.
+    """
+    cells: dict[str, list[float]] = defaultdict(list)
+    seen: set[tuple[str, str]] = set()
+    for row in rows:
+        if row.sample != sample:
+            continue
+        identity = (row.protein, row.replicate)
+        if identity in seen:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} {sample} {identity} appears twice; a "
+                "repeated replicate would shrink the SE"
+            )
+        seen.add(identity)
+        cells[stored_by_key[row.protein]].append(row.top3_signal)
+    if not cells:
+        raise RuntimeError(
+            f"{SHEET_OVEREXPRESSION_PROTEOME} has no rows for sample {sample!r}"
+        )
+    return dict(cells)
+
+
+def build_panel_titer_plan(
+    path: str,
+    *,
+    stored_titers: Collection[float],
+    control_titers: Mapping[int, Sequence[float]],
+) -> PanelTiterPlan:
+    """Read the four unstored titer panels and prove every cross-sheet claim.
+
+    ``stored_titers`` is every ``Figure 4b`` value and ``control_titers`` its control
+    cultures by DBTL cycle: the partition proof and the ``Figure 6d`` reference reuse
+    are both joins against the already-stored campaign, so they are passed in rather
+    than re-read.
+
+    The record COUNT is not pinned here. It is pinned in the dataset's ``process()``,
+    beside the sha256 check that makes it meaningful: a count assertion is a statement
+    about one specific workbook, so it belongs where that workbook is verified.
+    """
+    ko_rows = read_ko_panel_rows(path)
+    array_rows = read_ko_array_rows(path)
+    offtarget_rows = read_offtarget_titer_rows(path)
+    overexpression_rows = read_overexpression_titer_rows(path)
+
+    proofs = _assert_panel_partition(
+        reexported={
+            SHEET_KO_PANEL: [
+                row.titer_mg_per_l for row in ko_rows if row.arm == ARM_CRISPRI
+            ],
+            SHEET_KO_ARRAYS: [
+                row.titer_mg_per_l for row in array_rows if row.arm == ARM_CRISPRI
+            ],
+        },
+        novel={
+            SHEET_KO_PANEL: [
+                row.titer_mg_per_l for row in ko_rows if row.arm != ARM_CRISPRI
+            ],
+            SHEET_KO_ARRAYS: [
+                row.titer_mg_per_l for row in array_rows if row.arm != ARM_CRISPRI
+            ],
+            SHEET_OFFTARGET_TITER: [row.titer_mg_per_l for row in offtarget_rows],
+            SHEET_OVEREXPRESSION_TITER: [
+                row.titer_mg_per_l for row in overexpression_rows
+            ],
+        },
+        stored=stored_titers,
+    )
+
+    ko_records, ko_references, ko_proofs = _ko_panel_groups(ko_rows)
+    array_records, array_proofs = _ko_array_groups(array_rows, control_titers)
+    shared_key = f"non_target:{PROTEOME_BACKGROUND_DELETION}"
+    by_key = {reference.key: reference for reference in ko_references}
+    if shared_key not in by_key:
+        raise RuntimeError(
+            f"{SHEET_KO_PANEL} has no Δ{PROTEOME_BACKGROUND_DELETION} "
+            f"{ARM_KO_NONTARGET} arm for {SHEET_OFFTARGET_TITER}'s reference to be "
+            "deduplicated against"
+        )
+    ko_target_group = f"{PROTEOME_BACKGROUND_DELETION}/{ARM_KO_TARGET}"
+    ko_target_arm = next(
+        record.titers_mg_per_l
+        for record in ko_records
+        if record.group == ko_target_group
+    )
+    offtarget_records, shared_reference, offtarget_proofs = _offtarget_groups(
+        offtarget_rows, by_key[shared_key], ko_target_arm
+    )
+    by_key[shared_key] = shared_reference
+    (overexpression_records, overexpression_reference, overexpression_proofs, drops) = (
+        _overexpression_titer_groups(overexpression_rows)
+    )
+    by_key[overexpression_reference.key] = overexpression_reference
+
+    records = [*ko_records, *array_records, *offtarget_records, *overexpression_records]
+    return PanelTiterPlan(
+        records=records,
+        references=[by_key[key] for key in sorted(by_key)],
+        stored_cycle_reference={
+            f"stored_cycle:{KO_ARRAY_CONTROL_CYCLE}": KO_ARRAY_CONTROL_CYCLE
+        },
+        proofs=[
+            *proofs,
+            *ko_proofs,
+            *array_proofs,
+            *offtarget_proofs,
+            *overexpression_proofs,
+        ],
+        drops=drops,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1405,7 +2794,29 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                 f"{N_REPLICATES.value}; the replicate design changed"
             )
 
-        tags = sorted({tag for name, _ in strains for tag in parse_construct(name)[0]})
+        plan = build_panel_titer_plan(
+            source_path,
+            stored_titers={row.titer_mg_per_l for row in rows},
+            control_titers=controls,
+        )
+        if len(plan.records) != EXPECTED_PANEL_TITER_RECORDS:
+            raise RuntimeError(
+                f"the four Source Data panels build {len(plan.records)} records; the "
+                f"sha256-pinned workbook holds {EXPECTED_PANEL_TITER_RECORDS}"
+            )
+
+        tags = sorted(
+            {tag for name, _ in strains for tag in parse_construct(name)[0]}
+            | {
+                tag
+                for record in plan.records
+                for tag in (
+                    *record.deletions,
+                    *record.knockdowns,
+                    *record.native_copies,
+                )
+            }
+        )
         stored, report = reconcile_locus_tags(genome, pd.Series(tags), label=self.name)
         report.require_resolved(self.MIN_RESOLVED_FRACTION)
         if report.outside_namespace:
@@ -1428,6 +2839,29 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
             )
             for cycle, values in sorted(controls.items())
         }
+        if reference_genome.species != SPECIES:
+            raise RuntimeError(
+                f"the pinned assembly's species is {reference_genome.species!r}, not "
+                f"{SPECIES!r}; a native extra copy declaring {SPECIES!r} would be read "
+                "as a gene of another genome by the host-containment gate"
+            )
+        overexpression = overexpression_environment()
+        panel_references: dict[str, ProductTiterExperimentReference] = {
+            key: references[cycle] for key, cycle in plan.stored_cycle_reference.items()
+        }
+        for panel_reference in plan.references:
+            panel_references[panel_reference.key] = ProductTiterExperimentReference(
+                dataset_name=self.name,
+                genome_reference=reference_genome,
+                environment_reference=(
+                    overexpression.model_copy()
+                    if panel_reference.key == "overexpression_control"
+                    else environment.model_copy()
+                ),
+                phenotype_reference=titer_phenotype(
+                    list(panel_reference.titers_mg_per_l), is_reference=True
+                ),
+            )
         pub = publication()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -1467,6 +2901,48 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                     }
                 )
                 idx += 1
+            for record in tqdm(plan.records, desc="carruthers2025-titer-panels"):
+                experiment = ProductTiterExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(
+                        perturbations=[
+                            *pathway,
+                            *(
+                                deletion_perturbation(
+                                    stored_by_tag[tag], common[stored_by_tag[tag]]
+                                )
+                                for tag in record.deletions
+                            ),
+                            *(
+                                native_copy_perturbation(
+                                    stored_by_tag[tag], common[stored_by_tag[tag]]
+                                )
+                                for tag in record.native_copies
+                            ),
+                            *(
+                                crispri_perturbation(
+                                    stored_by_tag[tag], common[stored_by_tag[tag]]
+                                )
+                                for tag in record.knockdowns
+                            ),
+                        ]
+                    ),
+                    environment=(
+                        overexpression
+                        if record.overexpression_environment
+                        else environment
+                    ),
+                    phenotype=titer_phenotype(
+                        list(record.titers_mg_per_l), is_reference=False
+                    ),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(
+                        experiment, panel_references[record.reference_key], pub, itxn
+                    ),
+                )
+                idx += 1
         env.close()
         interned_env.close()
 
@@ -1487,35 +2963,65 @@ class IsoprenolTiterCarruthers2025Dataset(ExperimentDataset):
                 for cycle, values in sorted(controls.items())
             ]
         ).to_csv(osp.join(self.preprocess_dir, "cycle_controls.csv"), index=False)
+        pd.DataFrame(
+            [
+                {
+                    "sheet": record.sheet,
+                    "group": record.group,
+                    "n_replicates": len(record.titers_mg_per_l),
+                    "deletions": ";".join(record.deletions),
+                    "knockdowns": ";".join(record.knockdowns),
+                    "native_copies": ";".join(record.native_copies),
+                    "reference_key": record.reference_key,
+                    "note": record.note or "",
+                }
+                for record in plan.records
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "source_data_panels.csv"), index=False)
+        Path(osp.join(self.preprocess_dir, "panel_proofs.json")).write_text(
+            json.dumps(plan.proofs, indent=2)
+        )
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(rows),
                 control_rows=sum(len(v) for v in controls.values()),
-                candidate_records=len(strains),
+                candidate_records=len(strains)
+                + len(plan.records)
+                + sum(rule.n_records for rule in plan.drops),
                 kept_records=idx,
-                dropped_records=len(strains) - idx,
-                rules=[],
+                dropped_records=sum(rule.n_records for rule in plan.drops),
+                rules=plan.drops,
                 reconciliation=report,
                 notes=[
-                    "nothing is dropped: every non-control culture is in a record, and "
-                    "the paper is explicit that its CRISPRi filter shaped only model "
-                    f"training ({_Q_NO_EXCLUSION})",
+                    "nothing is dropped from the CRISPRi campaign: every non-control "
+                    f"{SHEET_TITER} culture is in a record, and the paper is explicit "
+                    "that its CRISPRi filter shaped only model training "
+                    f"({_Q_NO_EXCLUSION})",
                     "the control cultures are the per-cycle phenotype_reference, not "
                     f"records ({_Q_CONTROL_N})",
                     "the authors' per-strain pass/fail CRISPRi filter is in "
                     "preprocess/pass_filter.csv; it reports whether a designed "
                     "knockdown was realized, which no schema axis can type today",
+                    f"{len(plan.records)} further records come from {SHEET_KO_PANEL}, "
+                    f"{SHEET_KO_ARRAYS}, {SHEET_OFFTARGET_TITER} and "
+                    f"{SHEET_OVEREXPRESSION_TITER}; their cross-sheet proofs are in "
+                    "preprocess/panel_proofs.json and their genotypes in "
+                    "preprocess/source_data_panels.csv",
+                    *plan.proofs,
                 ],
             ),
             self.preprocess_dir,
         )
         log.info(
-            "Carruthers2025 titer: %d (construct, cycle) strains from %d cultures "
-            "(%d control); replicate histogram %s; %d guide targets",
+            "Carruthers2025 titer: %d records = %d (construct, cycle) campaign strains "
+            "from %d cultures (%d control) + %d from the four Source Data panels; "
+            "replicate histogram %s; %d host loci",
             idx,
+            len(strains),
             len(rows),
             sum(len(v) for v in controls.values()),
+            len(plan.records),
             dict(sorted(Counter(len(g) for g in strains.values()).items())),
             len(tags),
         )
@@ -1727,10 +3233,28 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         rows = read_proteome_rows(osp.join(self.raw_dir, SOURCE_DATA_FILENAME))
         genome = self._genome()
 
+        overexpression_rows = read_overexpression_proteome_rows(
+            osp.join(self.raw_dir, SOURCE_DATA_FILENAME)
+        )
         keys = sorted({row.protein for row in rows})
         stored, report = reconcile_locus_tags(genome, pd.Series(keys), label=self.name)
         report.require_resolved(self.MIN_RESOLVED_FRACTION)
         stored_by_key = dict(zip(keys, stored, strict=True))
+        novel = sorted({row.protein for row in overexpression_rows} - set(keys))
+        if novel:
+            raise RuntimeError(
+                f"{SHEET_OVEREXPRESSION_PROTEOME} quantifies {novel}, which "
+                f"{SHEET_PROTEOME} does not, so the two panels would key one protein "
+                "two ways; the reconciliation must cover both sheets"
+            )
+        proofs = [
+            *assert_phn_crosswalk(overexpression_rows, stored_by_key),
+            *assert_overexpression_operons(overexpression_rows, stored_by_key),
+        ]
+        overexpression_pairs, pair_proofs = overexpression_proteome_samples(
+            overexpression_rows
+        )
+        proofs.extend(pair_proofs)
 
         accessions: dict[str, set[str]] = defaultdict(set)
         entries: dict[str, set[str]] = defaultdict(set)
@@ -1831,6 +3355,69 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                 )
                 sample_rows.append(
                     {
+                        "sheet": SHEET_PROTEOME,
+                        "sample": sample,
+                        "n_proteins": len(abundance),
+                        "n_replicates": max(n_reps.values()),
+                    }
+                )
+                idx += 1
+            operons = dict(OVEREXPRESSION_OPERON_SOURCE.value)
+            overexpression = overexpression_environment()
+            for sample, control in tqdm(
+                sorted(overexpression_pairs.items()),
+                desc="carruthers2025-proteome-overexpression",
+            ):
+                label = str(OVEREXPRESSION_SAMPLE_RE.match(sample).group("label"))  # type: ignore[union-attr]
+                abundance, se, n_reps = self._aggregate(
+                    _overexpression_cells(overexpression_rows, sample, stored_by_key),
+                    sample,
+                )
+                control_abundance, control_se, control_n = self._aggregate(
+                    _overexpression_cells(overexpression_rows, control, stored_by_key),
+                    control,
+                )
+                experiment = BacterialProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(
+                        perturbations=[
+                            *pathway,
+                            *(
+                                native_copy_perturbation(tag, common.get(tag, tag))
+                                for tag in operons[label]
+                            ),
+                        ]
+                    ),
+                    environment=overexpression,
+                    phenotype=ProteinAbundancePhenotype(
+                        protein_abundance=abundance,
+                        protein_abundance_se=se,
+                        n_replicates=n_reps,
+                        measurement_type=str(TOP3.value),
+                    ),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(
+                        experiment,
+                        BacterialProteinAbundanceExperimentReference(
+                            dataset_name=self.name,
+                            genome_reference=reference_genome,
+                            environment_reference=overexpression.model_copy(),
+                            phenotype_reference=ProteinAbundancePhenotype(
+                                protein_abundance=control_abundance,
+                                protein_abundance_se=control_se,
+                                n_replicates=control_n,
+                                measurement_type=str(TOP3.value),
+                            ),
+                        ),
+                        pub,
+                        itxn,
+                    ),
+                )
+                sample_rows.append(
+                    {
+                        "sheet": SHEET_OVEREXPRESSION_PROTEOME,
                         "sample": sample,
                         "n_proteins": len(abundance),
                         "n_replicates": max(n_reps.values()),
@@ -1842,6 +3429,9 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 
         pd.DataFrame(sample_rows).to_csv(
             osp.join(self.preprocess_dir, "samples.csv"), index=False
+        )
+        Path(osp.join(self.preprocess_dir, "panel_proofs.json")).write_text(
+            json.dumps(proofs, indent=2)
         )
         pd.DataFrame(
             [
@@ -1862,11 +3452,15 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
-                source_rows=len(rows),
-                control_rows=1,
-                candidate_records=len(samples),
+                source_rows=len(rows) + len(overexpression_rows),
+                control_rows=1 + len(set(overexpression_pairs.values())),
+                candidate_records=len(samples)
+                + len(overexpression_pairs)
+                + len(_overexpression_induced_samples(overexpression_rows)),
                 kept_records=idx,
-                dropped_records=len(samples) - idx,
+                dropped_records=len(
+                    _overexpression_induced_samples(overexpression_rows)
+                ),
                 rules=[
                     DropRule(
                         rule="protein_key_is_not_a_locus_of_the_pinned_assembly",
@@ -1893,6 +3487,15 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                         n_records=0,
                         items=sorted(merged),
                     ),
+                    DropRule(
+                        rule="inducer_concentration_has_no_released_unit",
+                        scope="strain",
+                        description=str(INDUCER_UNIT_GAP.note),
+                        n_records=len(
+                            _overexpression_induced_samples(overexpression_rows)
+                        ),
+                        items=_overexpression_induced_samples(overexpression_rows),
+                    ),
                 ],
                 reconciliation=report,
                 notes=[
@@ -1906,20 +3509,32 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
                     "a released Top3 value of 0 is kept verbatim; the source floors the "
                     "companion percent-abundance column at 1e-05 for those cells, and "
                     "this loader imputes nothing",
+                    f"{len(overexpression_pairs)} further records come from "
+                    f"{SHEET_OVEREXPRESSION_PROTEOME}, the second per-protein "
+                    "per-replicate abundance matrix the Source Data carries. It reads "
+                    "the same Top_3pep_counts_mean column on the same Top3 scale, so "
+                    "both panels store one measurement_type; each record is referenced "
+                    "against its own label's Control sample, whose key set it matches",
+                    f"{SHEET_CONTROL_PROTEOME} is NOT loaded: {CONTROL_PROTEOME_DEFERRAL.note}",
+                    *proofs,
                 ],
             ),
             self.preprocess_dir,
         )
         log.info(
-            "Carruthers2025 proteome: %d samples (+1 non-targeting reference) x %d "
-            "protein keys from %d released cells; %d keys dropped (%d outside the "
-            "namespace, %d merged accessions)",
+            "Carruthers2025 proteome: %d records = %d %s samples (+1 non-targeting "
+            "reference) x %d protein keys + %d uninduced %s samples; %d keys dropped "
+            "(%d outside the namespace, %d merged accessions) from %d released cells",
             idx,
+            len(samples),
+            SHEET_PROTEOME,
             len(kept_keys),
-            len(rows),
+            len(overexpression_pairs),
+            SHEET_OVEREXPRESSION_PROTEOME,
             len(dropped_keys),
             len(outside),
             len(merged),
+            len(rows) + len(overexpression_rows),
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -1945,8 +3560,20 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 #: non-control cultures by three; seven of the 465 ``(construct, cycle)`` strains carry
 #: SIX replicates rather than three, and 465 + 7 == 472.
 PAPER_STRAIN_COUNT = 472
-#: Protein keys every proteome record carries: 1,501 released minus the 77 dropped.
+#: Protein keys a ``SHEET_PROTEOME`` record carries: 1,501 released minus the 77
+#: dropped. A ``SHEET_OVEREXPRESSION_PROTEOME`` record carries only the operon its
+#: strain overexpresses, so the two panels have different, pinned key-set sizes.
 PROTEOME_KEYS_PER_RECORD = 1424
+PROTEOME_KEY_SET_SIZES: tuple[int, ...] = (
+    *(PROTEOME_KEYS_PER_RECORD,) * EXPECTED_PP0815_PROTEOME_RECORDS,
+    *(len(operon) for operon in OVEREXPRESSION_OPERONS.values()),
+)
+#: The Results text prints the KO-plus-array titers to integer mg/L, inconsistently
+#: rounded (651.860 printed 651, 579.534 printed 580), so the tolerance is that unit.
+KO_ARRAY_TITER_TOL = 1.0
+#: Records on the Δ PP_0815 background alone: ``Figure 6a``'s Target arm plus
+#: ``Supplementary Figure 13d``'s 19. All share the one deduplicated reference.
+OFFTARGET_SHARED_REFERENCE_RECORDS = 1 + 19
 #: Tolerance of the derived standard error against ``SD / sqrt(n)``. The loader derives
 #: it in float from the two stored numbers, so the identity holds to float noise.
 TITER_SE_TOL = 1e-9
@@ -1991,6 +3618,114 @@ def _proteome_provenance() -> Provenance:
     )
 
 
+def _perturbation_types(record: Mapping[str, Any]) -> set[str]:
+    """The ``perturbation_type`` values one record's genotype carries."""
+    return {
+        str(perturbation["perturbation_type"])
+        for perturbation in record["experiment"]["genotype"]["perturbations"]
+    }
+
+
+def _is_campaign_record(record: Mapping[str, Any]) -> bool:
+    """True for a ``Figure 4b`` CRISPRi strain: no deletion and no extra native copy.
+
+    The four Source Data panels add chromosomal KO backgrounds and plasmid-borne native
+    copies, and neither exists in the campaign. Every rule written against the
+    campaign's own oracles -- the paper's 472, Supplementary Data 1's per-target means
+    -- is scoped by this predicate, so a panel record can never be joined to an oracle
+    that does not describe it.
+    """
+    return not ({"bacterial_deletion", "gene_addition"} & _perturbation_types(record))
+
+
+def _l1_panel_partition(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L1: the store splits into the campaign's 465 and the panels' 37.
+
+    This is the stored half of the partition the build proves on the released bytes:
+    the campaign records carry only the pathway and CRISPRi perturbations, and every
+    record that carries a deletion or an extra native copy came from one of the four
+    panels.
+    """
+    campaign = sum(1 for record in records if _is_campaign_record(record))
+    panels = len(records) - campaign
+    passed = (
+        campaign == EXPECTED_CRISPRI_TITER_RECORDS
+        and panels == EXPECTED_PANEL_TITER_RECORDS
+    )
+    return LevelResult(
+        level=Level.L1,
+        name="campaign_and_panel_records_partition",
+        passed=passed,
+        message=(
+            f"{campaign} {SHEET_TITER} campaign strains + {panels} Source Data panel "
+            f"strains = {len(records)}"
+        ),
+        details={
+            "n_campaign": campaign,
+            "n_panel": panels,
+            "expected_campaign": EXPECTED_CRISPRI_TITER_RECORDS,
+            "expected_panel": EXPECTED_PANEL_TITER_RECORDS,
+        },
+    )
+
+
+def _l4_ko_array_titer_vs_results_text(
+    records: Sequence[dict[str, Any]],
+) -> LevelResult:
+    """L4: the KO-plus-array record against the titer the Results text prints for it.
+
+    The Results state "Combining KOs with specific sgRNAs for PP_0528 and PP_0815
+    further improved titer to 4-fold that of the control (651 mg/L) and 12% more
+    isoprenol than the two-sgRNA array in a strain without KOs (580 mg/L, p < 0.02)".
+    The first number is the ``Figure 6d`` record this revision adds and the second is a
+    ``Figure 4b`` array already stored, so one prose sentence joins the new panel and
+    the campaign at once. The text prints both to integer mg/L and is not consistent
+    about rounding (651.860 printed 651, 579.534 printed 580), so the tolerance is the
+    integer unit it prints in.
+    """
+    expected = dict(KO_ARRAY_RESULT.value)
+    #: The exact (deleted, knocked down) split of each strain the sentence names, so a
+    #: strain with the same gene UNION but a different split can never satisfy it: the
+    #: whole point of the comparison is deletion against knockdown of the same loci.
+    genotypes: dict[str, tuple[frozenset[str], frozenset[str]]] = {
+        "PP_0368_PP_0812-15_KO with PP_0528_PP_0815": (
+            frozenset({"PP_0368", "PP_0812", "PP_0813", "PP_0814", "PP_0815"}),
+            frozenset({"PP_0528", "PP_0815"}),
+        ),
+        "PP_0528_PP_0815": (frozenset(), frozenset({"PP_0528", "PP_0815"})),
+    }
+    found: dict[str, list[float]] = defaultdict(list)
+    for record in records:
+        experiment = record["experiment"]
+        split = (
+            frozenset(
+                perturbation["systematic_gene_name"]
+                for perturbation in experiment["genotype"]["perturbations"]
+                if perturbation["perturbation_type"] == "bacterial_deletion"
+            ),
+            frozenset(
+                perturbation["systematic_gene_name"]
+                for perturbation in experiment["genotype"]["perturbations"]
+                if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+            ),
+        )
+        for label, genotype in genotypes.items():
+            if split == genotype:
+                found[label].append(float(experiment["phenotype"]["titer"]))
+    wrong = {label: len(found[label]) for label in expected if len(found[label]) != 1}
+    if wrong:
+        raise AssertionError(
+            f"the Results text names {sorted(wrong)} and the store holds {wrong} "
+            "records with that exact deletion / knockdown split; each must be unique"
+        )
+    shared = [
+        (label, found[label][0], float(expected[label])) for label in sorted(expected)
+    ]
+    return l4_cross_source(shared, tol=KO_ARRAY_TITER_TOL).model_copy(
+        update={"name": "ko_array_titer_vs_results_text"}
+    )
+
+
 def _l1_strain_count_reconciles(records: Sequence[dict[str, Any]]) -> LevelResult:
     """L1: the stored strain count plus its six-replicate strains is the paper's 472.
 
@@ -1999,20 +3734,26 @@ def _l1_strain_count_reconciles(records: Sequence[dict[str, Any]]) -> LevelResul
     three. Grouping by ``(construct, DBTL cycle)`` gives 465, because seven strains
     were cultured six times. This asserts the DOCUMENTED reconciliation rather than
     accepting either number: 465 + 7 == 472.
+
+    Scoped to the CAMPAIGN records: the four Source Data panels are KO backgrounds and
+    overexpression strains that the abstract's 472 does not count, so counting them
+    here would silently break a rule about a different experiment.
     """
+    campaign = [record for record in records if _is_campaign_record(record)]
     six = sum(
-        1 for record in records if record["experiment"]["phenotype"]["n_samples"] == 6
+        1 for record in campaign if record["experiment"]["phenotype"]["n_samples"] == 6
     )
-    total = len(records) + six
+    total = len(campaign) + six
     return LevelResult(
         level=Level.L1,
         name="strain_count_reconciles_with_the_papers_472",
         passed=total == PAPER_STRAIN_COUNT,
         message=(
-            f"{len(records)} strains + {six} with six replicates = {total} "
+            f"{len(campaign)} campaign strains + {six} with six replicates = {total} "
             f"(the paper's {PAPER_STRAIN_COUNT})"
         ),
         details={
+            "n_campaign_records": len(campaign),
             "n_records": len(records),
             "n_six_replicate_strains": six,
             "paper_strain_count": PAPER_STRAIN_COUNT,
@@ -2020,27 +3761,34 @@ def _l1_strain_count_reconciles(records: Sequence[dict[str, Any]]) -> LevelResul
     )
 
 
-def _l1_same_protein_keys(records: Sequence[dict[str, Any]]) -> LevelResult:
-    """L1: every proteome record carries the same 1,424 protein keys."""
-    key_sets = {
-        frozenset(record["experiment"]["phenotype"]["protein_abundance"])
+def _l1_protein_key_sets(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L1: each record's protein key set is one of the panels', with the pinned count.
+
+    The release carries TWO per-protein per-replicate matrices and they quantify
+    different things: ``Supplementary Figure 13abc`` profiles 1,424 host loci for every
+    one of its 19 samples, and ``Supplementary Figure 12ac`` quantifies only the operon
+    a sample overexpresses, which is 2 loci for one label and 4 for the other. So the
+    rule is not "one key set" but "the measured key-set sizes are exactly the panels'",
+    which a record that silently lost or gained a protein still fails.
+    """
+    sizes = Counter(
+        len(record["experiment"]["phenotype"]["protein_abundance"])
         for record in records
-    }
-    sizes = sorted({len(keys) for keys in key_sets})
-    passed = len(key_sets) == 1 and sizes == [PROTEOME_KEYS_PER_RECORD]
+    )
+    expected = Counter(PROTEOME_KEY_SET_SIZES)
+    passed = sizes == expected
     return LevelResult(
         level=Level.L1,
-        name="every_record_carries_the_same_protein_keys",
+        name="protein_key_set_sizes_are_the_panels",
         passed=passed,
         message=(
-            f"{len(records)} records share one set of {PROTEOME_KEYS_PER_RECORD} keys"
-            if passed
-            else f"{len(key_sets)} distinct key sets, sizes {sizes}"
+            f"{len(records)} records over key-set sizes {dict(sorted(sizes.items()))}"
+            + ("" if passed else f"; expected {dict(sorted(expected.items()))}")
         ),
         details={
-            "n_key_sets": len(key_sets),
-            "key_set_sizes": sizes,
-            "expected_keys": PROTEOME_KEYS_PER_RECORD,
+            # String keys, so the report round-trips through JSON unchanged.
+            "key_set_sizes": {str(size): n for size, n in sorted(sizes.items())},
+            "expected": {str(size): n for size, n in sorted(expected.items())},
         },
     )
 
@@ -2077,10 +3825,18 @@ def _l4_titer_vs_supplementary_data_1(
     several single-guide records (the same tag screened in more than one cycle) is
     joined on the record closest to the released mean, which is the strain the DBTL0
     table reports.
+
+    Scoped to the CAMPAIGN records. Supplementary Data 1 reports the DBTL0 screen of
+    single-guide CRISPRi strains, and three of the four panels also produce records
+    with exactly one CRISPRi perturbation -- a KO background carrying the sgRNA of the
+    gene it deleted. Those are a different strain with the same guide, so joining them
+    to this oracle would be a false join that the nearest-record rule would then hide.
     """
     released = read_si_target_means(str(raw_mirror_dir(data_root) / TARGETS_REL))
     by_tag: dict[str, list[float]] = {}
     for record in records:
+        if not _is_campaign_record(record):
+            continue
         experiment = record["experiment"]
         targets = [
             perturbation["systematic_gene_name"]
@@ -2147,6 +3903,141 @@ def _l4_proteome_vs_released_sheet(
     )
 
 
+def _l3_panel_reference_is_stored_once(
+    records: Sequence[dict[str, Any]],
+) -> LevelResult:
+    """L3: the Δ PP_0815 non-targeting reference is ONE object, not two copies.
+
+    ``Figure 6a``'s ``PP_0815`` / ``Non-target`` arm and ``Supplementary Figure 13d``'s
+    ``Non-Target`` arm are bit-identical, so the build shares one reference object
+    between the records of both sheets. In the store that shows up as a single distinct
+    reference phenotype across all of them: the ``Figure 6a`` Δ PP_0815 record, the
+    ``Supplementary Figure 13d`` Target record and its 18 off-target records. Two
+    distinct objects with the same numbers would mean the group was stored twice.
+    """
+    deltas = [
+        record
+        for record in records
+        if {
+            perturbation["systematic_gene_name"]
+            for perturbation in record["experiment"]["genotype"]["perturbations"]
+            if perturbation["perturbation_type"] == "bacterial_deletion"
+        }
+        == {PROTEOME_BACKGROUND_DELETION}
+    ]
+    distinct = {
+        (
+            record["reference"]["phenotype_reference"]["titer"],
+            record["reference"]["phenotype_reference"]["titer_uncertainty"],
+            record["reference"]["phenotype_reference"]["n_samples"],
+        )
+        for record in deltas
+    }
+    return l3_convention(
+        "off_target_non_targeting_reference_is_stored_once",
+        len(deltas) == OFFTARGET_SHARED_REFERENCE_RECORDS and len(distinct) == 1,
+        detail=(
+            f"{len(deltas)} records on the Δ{PROTEOME_BACKGROUND_DELETION} background "
+            f"share {len(distinct)} distinct non-targeting reference phenotype(s); "
+            f"{SHEET_KO_PANEL} and {SHEET_OFFTARGET_TITER} export that triplicate "
+            "identically, so there must be exactly one"
+        ),
+    )
+
+
+def _l4_panel_titers_vs_released_sheets(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: every panel record's titer re-derived from the released sheets.
+
+    The four panels are re-read from the deposited workbook and regrouped, so each
+    stored mean is checked against the mean of the cultures the sheet releases for that
+    group. This is what catches a record that drifted from its source, including the
+    one group the two sheets disagree on: both triplicates must still be present, each
+    under its own record.
+    """
+    path = str(raw_mirror_dir(data_root) / SOURCE_DATA_REL)
+    rows = read_titer_rows(path)
+    controls: dict[int, list[float]] = defaultdict(list)
+    for row in rows:
+        if row.is_control:
+            controls[row.cycle].append(row.titer_mg_per_l)
+    plan = build_panel_titer_plan(
+        path,
+        stored_titers={row.titer_mg_per_l for row in rows},
+        control_titers=controls,
+    )
+    stored = Counter(
+        round(float(record["experiment"]["phenotype"]["titer"]), 9)
+        for record in records
+        if not _is_campaign_record(record)
+    )
+    shared: list[tuple[str, float, float]] = []
+    for group in plan.records:
+        released = statistics.fmean(group.titers_mg_per_l)
+        key = round(released, 9)
+        if not stored[key]:
+            raise AssertionError(
+                f"{group.sheet} {group.group}: the released mean {released} is not a "
+                "stored panel titer"
+            )
+        stored[key] -= 1
+        shared.append((f"{group.sheet}:{group.group}", key, released))
+    leftover = {value: count for value, count in stored.items() if count}
+    if leftover:
+        raise AssertionError(
+            f"{sum(leftover.values())} stored panel titers match no released group: "
+            f"{sorted(leftover)[:5]}"
+        )
+    return l4_cross_source(shared, tol=TITER_SE_TOL).model_copy(
+        update={"name": "panel_titers_vs_released_sheets"}
+    )
+
+
+def _l4_overexpression_proteome_vs_released_sheet(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: the overexpression records' abundances re-derived from the released sheet.
+
+    Per protein, so a swapped pair inside an operon is caught: the ``Phnw`` / ``Phnx``
+    crosswalk is the one place in this release where two pinned sources disagree about
+    which locus a measured accession is, and this row re-runs that resolution from the
+    bytes rather than trusting the store.
+    """
+    path = str(raw_mirror_dir(data_root) / SOURCE_DATA_REL)
+    rows = read_overexpression_proteome_rows(path)
+    genome = bacterial_genome("pputida", "KT2440", data_root)
+    keys = sorted({row.protein for row in read_proteome_rows(path)})
+    stored_keys, _ = reconcile_locus_tags(genome, pd.Series(keys), label="l4")
+    key_map = dict(zip(keys, stored_keys, strict=True))
+    assert_phn_crosswalk(rows, key_map)
+    pairs, _ = overexpression_proteome_samples(rows)
+    expected: dict[frozenset[str], dict[str, float]] = {}
+    for sample in sorted(pairs):
+        cells = _overexpression_cells(rows, sample, key_map)
+        expected[frozenset(cells)] = {
+            locus: statistics.fmean(values) for locus, values in cells.items()
+        }
+    shared: list[tuple[str, float, float]] = []
+    for record in records:
+        abundance = record["experiment"]["phenotype"]["protein_abundance"]
+        released = expected.get(frozenset(abundance))
+        if released is None:
+            continue
+        shared.extend(
+            (locus, float(value), released[locus])
+            for locus, value in sorted(abundance.items())
+        )
+    if len(shared) != sum(len(values) for values in expected.values()):
+        raise AssertionError(
+            f"{len(shared)} stored abundances join the {len(expected)} released "
+            "overexpression samples; the panel is not fully represented"
+        )
+    return l4_cross_source(shared, tol=1e-6).model_copy(
+        update={"name": "overexpression_proteome_vs_released_sheet"}
+    )
+
+
 def titer_report(
     records: Sequence[dict[str, Any]], data_root: str | None = None
 ) -> VerificationReport:
@@ -2166,8 +4057,12 @@ def titer_report(
         pathway_gene_counts=(len(PATHWAY_GENES),),
         product_names=(PRODUCT_NAME,),
     )
+    report.add(_l1_panel_partition(records))
     report.add(_l1_strain_count_reconciles(records))
+    report.add(_l3_panel_reference_is_stored_once(records))
     report.add(_l4_titer_vs_supplementary_data_1(records, data_root))
+    report.add(_l4_ko_array_titer_vs_results_text(records))
+    report.add(_l4_panel_titers_vs_released_sheets(records, data_root))
     return report
 
 
@@ -2188,9 +4083,10 @@ def proteome_report(
         # record. Per-record uniqueness is what the L1 count asserts.
         allow_duplicate_orfs=True,
     )
-    report.add(_l1_same_protein_keys(records))
+    report.add(_l1_protein_key_sets(records))
     report.add(_l3_biological_triplicate(records))
     report.add(_l4_proteome_vs_released_sheet(records, data_root))
+    report.add(_l4_overexpression_proteome_vs_released_sheet(records, data_root))
     return report
 
 

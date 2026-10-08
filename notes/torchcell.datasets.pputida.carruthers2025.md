@@ -481,3 +481,317 @@ culture-protocol slots, because the field was annotated `Environment`. It is ann
 `working_volume_ul=1500.0`, `shaking_rpm=1000.0`, `endpoint="fixed_duration"`, with its own
 `provenance` quote attached. Measured by reading the dev store read-only on 2026.10.07.
 Items 1, 3 and 5 stand.
+
+## 2026.10.08 - Four unstored titer panels and the overexpression proteome
+
+Ranks 2 and 3 of [[plan.bacteria-si-phenotype-audit-pputida]]. Both dataset classes are
+EXTENDED rather than joined by new ones, because the records are the same two experiment
+classes and `GeneAdditionPerturbation` and `BacterialDeletionPerturbation` were already in
+both datasets' 49-symbol schema closures (read off
+`preprocess/build_manifest.json`). No adapter module, conf yaml,
+`dataset_adapter_map` entry, `kg_bacteria.yaml` entry or adapter-case row changes, and the
+`len(dataset_adapter_map) == 84` and `len(BACTERIAL) == 33` pins hold untouched. For the
+served graph this is a superset admission, not a rebuild: the schema fingerprints are
+unchanged and every stored record is still produced.
+
+| family | before | added | after |
+|---|---|---|---|
+| `IsoprenolTiterCarruthers2025Dataset` | 465 | **37** | 502 |
+| `ProteomeCarruthers2025Dataset` | 19 | **2** | 21 |
+
+### What each panel contributes
+
+| sheet | records | references | what one record is |
+|---|---|---|---|
+| `Figure 6a` (= `Supplementary Figure 11`) | 12 | 12 | a KO background carrying the sgRNA of the gene it deleted |
+| `Figure 6d` | 4 | 0 new | a KO-only or CRISPRi-on-a-KO array strain |
+| `Supplementary Figure 13d` | 19 | 1 (shared) | the ΔPP_0815 background carrying one off-target sgRNA |
+| `Supplementary Figure 12bd` | 2 | 1 | an uninduced plasmid-borne native operon overexpression |
+| `Supplementary Figure 12ac` | 2 | 2 | the same two strains' operon Top3 abundances |
+
+The `Figure 6a` design is the Results' own, verbatim: "We sought to investigate the
+presence of off-target gene downregulation amongst our best-performing sgRNAs by comparing
+isoprenol titers between pairs of knockout (KO) strains harboring either a non-target sgRNA
+or the "target" sgRNA previously used to downregulate the KO gene". So the Target arm is a
+record and the Non-target arm is its `phenotype_reference`, since a non-targeting sgRNA
+perturbs no gene. All 12 KO backgrounds are rows of Supplementary Table 2.
+
+### The two internal duplications, resolved by measurement
+
+**`Supplementary Figure 13d`'s reference IS `Figure 6a`'s, so it is stored once.** The
+`Non-Target` triplicate (293.9713, 298.0681, 309.4453) is bit-identical to `Figure 6a`'s
+`PP_0815` / `Non-target` triplicate. The build asserts the identity and builds ONE
+reference object, shared by the `Figure 6a` ΔPP_0815 record and all 19
+`Supplementary Figure 13d` records. The L3 row
+`off_target_non_targeting_reference_is_stored_once` re-checks it on the built store: 20
+records on that background, 1 distinct reference phenotype.
+
+**The two `Target` triplicates are NOT the same cultures, and neither is stored as the
+other.** `Figure 6a` gives (422.4448, 464.3335, 495.3173) and
+`Supplementary Figure 13d` gives (450.4693, 464.3335, 477.8291). Measured across all 31
+sheets of the workbook: `464.3335` occurs in both sheets, and each of the other four
+occurs in exactly one sheet and nowhere else. So five distinct cultures exist and the two
+figures plot overlapping draws. Both captions state `n = 3`
+(Fig. 6a: "...demonstrating significant off-target effects of the PP_0815 sgRNA (n = 3)";
+Supplementary Fig. 13: "All strains were cultured in triplicate (n = 3)"), so
+
+- neither triplicate is stored as the other,
+- neither is dropped, which would discard four released cultures, and
+- they are NOT pooled into an `n = 5` design no caption states.
+
+Each sheet's released triplicate is its own record and carries the disagreement in its
+`preprocess/source_data_panels.csv` note. The cost is stated plainly: the one shared
+culture is counted twice. `Supplementary Figure 13d` is the titer arm of the panel whose
+proteome is already stored, and its 20 groups pair with `Supplementary Figure 13abc`'s 20
+samples, so its triplicate is the proteomed batch's; `Figure 6a`'s is the KO-comparison
+panel's. That is the reading, and it does not reach the level of settling which three
+cultures are "the" triplicate, which is why neither is preferred.
+
+**The CRISPRi arms are re-exports and none is taken.** Measured, and asserted in both
+directions at build time: 33 of 33 `Figure 6a` and 99 of 99 `Figure 6d` `CRISPRi` cultures
+are already-stored `Figure 4b` values, and 0 of the 190 cultures of the four new arms are.
+A CRISPRi culture that stopped matching means the sheets diverged; a KO culture that
+started matching means a titer is about to be stored twice. Both stop the build.
+
+**`Figure 6d`'s control triplicate is three DBTL6 control cultures.** 157.9641, 157.7208
+and 156.8139 are `Figure 4b`'s `Control_P1-R1`, `Control_P3-R2` and `Control_P2-R1`, all
+cycle 6. So those four records reuse the stored DBTL6 `phenotype_reference` (n = 12)
+instead of storing three of its twelve members a second time.
+
+### `PP_0812-15` and the sgRNA the sheet does not name
+
+`PP_0812-15` is an inclusive locus-number range: "PP_0815 (subunits of a terminal oxidase
+complex PP_0812-15)", corroborated by Supplementary Table 5 building `IY1449b ΔPP_0812-15`
+as `PP_0813-15` deleted from `IY1449b ΔPP_0812`. Its Target arm's sgRNA is named in exactly
+one place in the mirror, the Results: "While most KO strains showed similar titers to their
+CRISPRi counterparts from DBTL0 (Supplementary Fig. 11), ΔPP_0815 and ΔPP_0812-15 harboring
+PP_0815 sgRNA produced significantly more isoprenol compared to those with non-targeting
+guides, indicating that an off-target gene was driving isoprenol production level
+(Fig. 6a)." No plasmid of Supplementary Data 3 carries a `PP_0812-15` spacer and
+Supplementary Data 2's only `PP_0812-15` entry is the Cpf1 `PP_0812-15_Repair` oligo, so
+`KO_MULTI_GENE_GUIDE` records that sentence and a NEW multi-gene background absent from the
+map stops the build rather than getting a guessed guide.
+
+### The overexpressed operons: a transposition in the sheet, a swap in the plasmid table
+
+The Source Data labels its second overexpression strain `pSTABL2 (PP_2971-74)`. The loci
+are **PP_2791-PP_2794**, stated by five mirrored sources: the Methods ("These operons,
+PP_2208- PP_2209 and PP_2791-PP_2794, were amplified along with the DBTL3 Control
+Vector..."), the Results ("we overexpressed two operons, PP_2791-94 (lvaA-D; levulinic acid
+degradation) and PP_2208-09 (phnW-X; phosphonoacetalaldehyde hydrolase) on secondary
+plasmids"), the Supplementary Fig. 12 caption's panels c and d (both "PP_2791-94"), the
+Supplementary Fig. 10 caption ("PP_2793-94 encodes proteins in the levulinate degradation
+pathway"), and Supplementary Data 3's own plasmid composition. The build PROVES it from the
+samples' own proteome: `assert_overexpression_operons` requires the loci a label's samples
+quantify to equal the operon, and records that the label names PP_2971-PP_2974 instead.
+
+**The two plasmid NAMES are swapped between two pinned files.** Supplementary Data 3 says
+`pSTABL1` is `pRSF1010-Gm-NagR-PP_2791-94` and `pSTABL2` is `pRSF1010-Gm-NagR-PP_2208-09`;
+the Source Data labels its `pSTABL1_*` samples `pSTABL1 (PP_2208-09)` and measures PP_2208
+and PP_2209 in them. Both statements are kept as `provenance` and NO plasmid name is stored
+on a perturbation: `GeneAdditionPerturbation.construct_name` is `None`, and what the record
+carries is the operon the sample's own measured proteome names.
+
+The extra copies are `GeneAdditionPerturbation` with `is_heterologous=False` and
+`source_organism="Pseudomonas putida"`, so the runner's `host_perturbed_gene_set` keeps
+them and the containment gate checks the locus. NOT
+`HeterologousPathwayPerturbation`, although that is the class carrying `gene_namespace`:
+these operons are not part of the isoprenol pathway, and typing them there would make the
+family's `heterologous_pathway_gene_counts` rule accept 7 or 9 where it accepts 5, which is
+the rule that catches a production strain that lost its pathway.
+
+### `Phnw` / `Phnx`: the near-miss that would have swapped two measurements
+
+`Supplementary Figure 12ac` is the only sheet of the release that puts a locus tag in
+`Protein.Description`, and for its two Phn rows it puts the WRONG one.
+
+| statement | source | says |
+|---|---|---|
+| `PP_2208` is `phnX`, CDS product "phosphonoacetaldehyde hydrolase" | `GCA_000007565.2` (AAN67821.1) | PP_2208 is the hydrolase |
+| `PP_2209` is `phnW`, CDS product "2-aminoethylphosphonate--pyruvate transaminase" | `GCA_000007565.2` (AAN67822.1) | PP_2209 is the transaminase |
+| `Phnw` = Q88KT0 = `PHNW_PSEPK` = "2-aminoethylphosphonate--pyruvate transaminase" | Source Data `Supplementary Figure 13abc` | Q88KT0 is the transaminase |
+| `Phnx` = Q88KT1 = `PHNX_PSEPK` = "Phosphonoacetaldehyde hydrolase" | same | Q88KT1 is the hydrolase |
+| `Phnw` -> "PP_2208", `Phnx` -> "PP_2209" | Source Data `Supplementary Figure 12ac` | the opposite |
+
+Matching on the FUNCTION both files state puts Q88KT0 at `PP_2209` and Q88KT1 at
+`PP_2208`, which is what `reconcile_locus_tags`'s symbol layer resolves and what the 19
+already-stored records are keyed by. The lone outlier is that one pair of description
+cells. `assert_phn_crosswalk` asserts BOTH halves, so a corrected annotation or a corrected
+sheet stops the build and the decision is re-made by hand rather than silently swapping two
+measurements of one operon.
+
+### Two things measured and NOT loaded, with the reason
+
+**The six induced levels of `Supplementary Figure 12` (12 titer groups, 12 proteome
+samples).** The inducer is salicylic acid ("The vector amplicons, designed for salicylic
+acid induction of the inserted genes...") and its concentrations are released as bare
+numbers (0, 31.25, 62.5, 125, 250, 500, 1000) in an `Inducer concentration` column with no
+unit. Measured over the mirror: `salicyl` occurs once in `paper.md` (that sentence, with no
+dose), `inducer` once in `si/si1.md` (the caption's "under various inducer concentrations",
+with no unit), and the dose series appears nowhere in `paper.md`, `si/si1.md`, `si/si2.md`,
+`si/si3.md` or `si/si8.md`. The deferral was followed: Supplementary Data 3 refers the
+NagR-pNagAa vector to Supplementary Reference 1, "Yunus, I. S. et al. Predictive
+genome-wide CRISPR-mediated gene downregulation for enhanced bioproduction", mirrored as
+`yunusPredictiveCRISPRmediatedGene2026`, whose Methods state an L-arabinose dose and no
+salicylate dose. `ConcentrationUnit` admits no unitless member and a `Concentration` needs
+a value WITH a unit, so the six levels cannot be typed; collapsing them to one
+`DoseBasis.fixed` would assert that one condition yielded six different titers. At level 0
+no inducer was added, so the uninduced arm needs no unit and is loaded. It is also the arm
+the paper's own claim rests on: "Uninduced expression, however, showed a ~10% increase in
+titer compared to the RFP control."
+
+**`Supplementary Figure 15` (7 records, 450 values).** Its basis is the percent-of-total
+Top3 column, established by elimination over the three columns
+`Supplementary Figure 12ac` releases from the same pipeline: all 540 of its cells lie in
+0.00037341..3.43366 with zero negatives, while `Top_3pep_counts_mean` runs 0..1.0027e8 and
+`log10_%_abundance` runs -2.5027..1.1373, leaving
+`%_of protein_abundance_Top3-method` (0.0031..13.7169) as the only basis whose range
+contains it. The caption's three rank claims also hold on that reading: column means
+PMD\* 2.480 highest, mvaE 1.214 second, mvaS 0.589 lowest of the five pathway proteins,
+dCas9 0.034 ("Pathway proteins typically followed a similar rank-order trend with PMD\*
+being the highest expressed followed by mvaE. MvaS was typically the lowest expression
+protein in the pathway. Owing to its toxicity, expression of dCas9 was kept comparatively
+low.").
+
+That is a DIFFERENT `measurement_type` from the raw Top3 signal every record of this family
+stores, and `verify_protein_dataset`'s `measurement_type_consistent` rule exists to stop
+exactly that mixing. Serving it therefore needs its own dataset class and the full adapter
+gate. Two further blockers: five of its six keys are the pIY670 pathway tokens, which are
+not loci of the pinned assembly and so fail the runner's
+`protein_and_perturbed_locus_containment_assembly`, and the sixth names the dCas9 effector,
+which this release carries on `CrisprConstruct` rather than as a gene with a systematic
+name (the `Cas9` key is one of the 76 already dropped for that reason). Nothing it holds is
+lost silently: its 90 cultures are the per-cycle controls whose titers are already this
+dataset's `phenotype_reference`, with the counts 18, 12, 12, 12, 12, 12, 12 measured and
+matching `CONTROL_N`.
+
+Under the loadable-now arithmetic of the audit the two panels were counted at 49 + 21 = 70.
+The accounting closes at 39: 12 induced titer groups, 12 induced proteome samples and the 7
+`Supplementary Figure 15` records are the 31 difference, each with the reason above.
+
+### Sourced statistics for the new records
+
+- **`n_samples` = 3, uncertainty = sample SD**, for all four titer panels. Fig. 6
+  caption: "a Comparison of mean isoprenol production between strains expressing either a
+  PP_0815-targeting sgRNA or a non-targeting control sgRNA in a knockout background,
+  demonstrating significant off-target effects of the PP_0815 sgRNA $\left( n = 3 \right)$
+  ." Supplementary Figs. 11, 12 and 13 each restate "All strains were cultured in
+  triplicate $( \mathsf { n } = 3 )$ and error bars represent standard deviation." The
+  loader stores the count each group actually has: 3 for every group but the
+  overexpression `Control` (6 cultures, two uninduced blocks under one name) and
+  `Supplementary Figure 13d`'s `PP_0378` and `PP_3416` (2 cultures each).
+- **The KO backgrounds** are "Stable gene knockouts were generated from the parent strain
+  IY1449b via a Cpf1-mediated repair63." Each is a row of "Supplementary Table 2: List of
+  Pseudomonas putida strains constructed in this study". The JBEI part ids stay in
+  `preprocess/`, not on the perturbation, so a deletion object built here is bit-identical
+  to the `PP_0815` deletion the proteome family already stores.
+- **The overexpression strains** are "Plasmid sequences were verified by whole plasmid
+  sequencing (Primordium Labs) and ultimately transformed into IY1449b with pIY670 to
+  evaluate the impact of titrated induction on isoprenol titer", so the five pathway
+  perturbations stand and the extra operon copy is added on top.
+- **The RFP control** is "Strains harboring genes informed by Stabl were adapted to M9
+  medium and cultured for over $4 8 \mathrm { h }$ in a Biolector Pro with an RFP control
+  (JBx_266188) before GC-FID analysis." Supplementary Data 3 row `pTE519` / `JBx_266188` is
+  `pRSF1010-Gm-mCherry`. It is a `phenotype_reference`, which carries no genotype, so the
+  mCherry marker is recorded here rather than typed.
+- **The overexpression endpoint is a typed gap.** That same sentence states the endpoint as
+  "over 48 h" while the shared culturing Methods state "Following $4 8 \mathrm { h }$ of
+  production", so those four records carry `duration_hours=None` with a
+  `ProvenanceGap(field="duration_hours")` rather than the shared 48.0. Everything else the
+  sentence leaves to the shared protocol and does not contradict (M9-NREL, 24 C, the flower
+  plate, the L-arabinose induction) is carried unchanged.
+- **The `Supplementary Figure 13d` panel size** is Supplementary Table 1's: 14 off-target
+  gene targets, 18 released samples with the repeated cultures, which is why
+  "d) Isoprenol titers of off-target sgRNA strains failed to recapitulate the observed
+  titer of ΔPP_0815 harboring the PP_0815 sgRNA." gives 19 records plus the one reference.
+
+### Verification, L0 to L4, on the rebuilt dev stores
+
+```
+isoprenol_titer_carruthers2025: PASS
+  [ok] L0 structural: 502 records validated
+  [ok] L1 count: observed 502, expected 502
+  [ok] L1 campaign_and_panel_records_partition: 465 Figure 4b campaign strains + 37 Source Data panel strains = 502
+  [ok] L1 strain_count_reconciles_with_the_papers_472: 465 campaign strains + 7 with six replicates = 472 (the paper's 472)
+  [ok] L2 value_fidelity: 502 values checked
+  [ok] L2 uncertainty_nonnegative: 502 values checked
+  [ok] L2 se_is_the_uncertainty_over_sqrt_n: 502 pairs agree within 1e-09
+  [ok] L3 titer_unit_is_the_pinned_unit: stored units ['ug/mL']
+  [ok] L3 uncertainty_is_typed_or_gapped
+  [ok] L3 replicate_design_is_sourced_or_gapped
+  [ok] L3 heterologous_pathway_gene_counts: per-record counts [5]; the dataset declares [5]
+  [ok] L3 product_is_the_declared_one: stored products ['isoprenol']
+  [ok] L3 off_target_non_targeting_reference_is_stored_once: 20 records on the ΔPP_0815 background share 1 distinct non-targeting reference phenotype
+  [ok] L4 single_guide_titer_vs_supplementary_data_1: 120 overlapping entities agree within 0.005
+  [ok] L4 ko_array_titer_vs_results_text: 2 overlapping entities agree within 1.0
+  [ok] L4 panel_titers_vs_released_sheets: 37 overlapping entities agree within 1e-09
+  [ok] L4 perturbed_gene_containment_assembly: 1.000 of 141 measured genes are loci of pputida_KT2440_ASM756v2
+proteome_carruthers2025: PASS
+  [ok] L0 structural: 21 records validated
+  [ok] L1 count: observed 21, expected 21
+  [ok] L1 orf_uniqueness: 26 ORFs, 8 with multiple strains (expected)
+  [ok] L1 protein_key_set_sizes_are_the_panels: 21 records over key-set sizes {2: 1, 4: 1, 1424: 19}
+  [ok] L2 value_fidelity: 27062 values checked
+  [ok] L2 se_nonnegative: 27062 values checked
+  [ok] L3 reference_finite: finite + key-matched for all 27062 values
+  [ok] L3 measurement_type_consistent: single measurement_type: 'dia_nn_top3_peptide_signal_mean'
+  [ok] L3 every_sample_is_a_biological_triplicate: stored replicate counts [3]
+  [ok] L4 stored_target_profile_vs_released_sheet: 1424 overlapping entities agree within 1e-06
+  [ok] L4 overexpression_proteome_vs_released_sheet: 6 overlapping entities agree within 1e-06
+  [ok] L4 protein_and_perturbed_locus_containment_assembly: 1.000 of 1425 measured genes are loci of pputida_KT2440_ASM756v2
+```
+
+Three new rules are this revision's own. `campaign_and_panel_records_partition` asserts the
+stored half of the partition the build proves on the released bytes.
+`ko_array_titer_vs_results_text` joins the prose: "Combining KOs with specific sgRNAs for
+PP_0528 and PP_0815 further improved titer to 4-fold that of the control $( 6 5 1 \mathrm {
+m g / L } )$ and $12 \%$ more isoprenol than the two-sgRNA array in a strain without KOs $(
+5 8 0 \mathrm { m g / L }$ , $p < 0 . 0 2 )$" names one NEW `Figure 6d` record and one
+already-stored `Figure 4b` array, so one sentence joins the panel and the campaign at once.
+Stored 651.860 against 651 and 579.534 against 580; the text prints both to integer mg/L
+and is not consistent about rounding, so the tolerance is that unit.
+`panel_titers_vs_released_sheets` re-reads all four panels and re-derives every stored
+mean, in both directions, so a stored panel titer matching no released group fails too.
+
+Two existing rules are now SCOPED to the campaign records, by a predicate that asks whether
+a record carries a deletion or an extra native copy. `strain_count_reconciles_with_the_papers_472`
+must not count KO and overexpression strains the abstract's 472 does not, and
+`single_guide_titer_vs_supplementary_data_1` must not join a ΔPP_0815 strain carrying the
+PP_0815 sgRNA to a DBTL0 single-guide mean: it has exactly one CRISPRi perturbation on the
+same gene, so the nearest-record rule would have hidden a false join.
+`every_record_carries_the_same_protein_keys` is replaced by
+`protein_key_set_sizes_are_the_panels`, because `Supplementary Figure 12ac` quantifies only
+the operon a sample overexpresses: the pinned multiset is 19 x 1,424 plus one 2 and one 4.
+
+### New preprocess artifacts
+
+- `isoprenol_titer_carruthers2025/preprocess/source_data_panels.csv` -- the 37 panel
+  records with their deletions, knockdowns, native copies, reference key and note.
+- `isoprenol_titer_carruthers2025/preprocess/panel_proofs.json` -- the 12 measured
+  cross-sheet statements the build asserted.
+- `proteome_carruthers2025/preprocess/panel_proofs.json` -- the 5 statements of the
+  crosswalk, the operon correction and the uninduced pairing.
+- `proteome_carruthers2025/preprocess/samples.csv` gains a `sheet` column.
+
+### Open items for the owner, added to the five above
+
+6. `GeneAdditionPerturbation` declares no `gene_namespace` (the field lives on
+   `HeterologousPathwayPerturbation`), so a bacterial extra NATIVE copy cannot state the
+   namespace of its locus tag on the leaf; it is recoverable from the record's
+   `genome_reference`. Adding the field is additive but touches a class in every served
+   closure.
+7. `ConcentrationUnit` has no way to carry a released dose whose unit the source never
+   states. Twenty-four of this release's records wait on it, and the honest alternatives
+   (a unitless member, or a relative-level field on the perturbation) are both schema
+   decisions, not loader ones.
+8. Serving `Supplementary Figure 15` needs its own `ProteinAbundance` dataset class for the
+   percent-of-total basis, plus a containment rule that admits a protein key the record's
+   own genotype declares heterologous. The mirror image of the de Siqueira finding (rank 5
+   of the audit), so one decision unblocks both.
+9. **Rank 8 of the audit, the knockdown ratios, is still CONDITIONAL and nothing here
+   changes that.** This branch did not touch it. Working view, unverified by any code
+   written here: the contradiction is real, since `ProteinAbundancePhenotype`'s docstring
+   forbids a ratio while the Yunus loader stores one, and `Figure 3c` must be the authority
+   over Supplementary Data 1 because the audit measured Supplementary Data 1's two
+   expression headers to be swapped. The ratio question is the same one as item 8's: both
+   want a protein phenotype whose value is not an absolute.

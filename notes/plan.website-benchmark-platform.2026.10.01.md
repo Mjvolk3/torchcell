@@ -639,3 +639,36 @@ Staging: `https://torchcell-database.ncsa.illinois.edu/staging/benchmark/leaderb
 shows the one entry; the v1 bundle is kept beside the datasets root under
 `datasets.superseded/`.
 
+## 2026.10.08 - People directory, owner withdrawal, pinned code link
+
+Raised by the project owner: a user's history was reachable only through a link
+carrying the user id; users should be able to remove their own submissions when they
+find a problem; the baseline's code link pointed at `main`, where the script does not
+exist until the branch lands.
+
+- `GET /users` (`UserDirectoryEntry`: the public account fields plus `n_submissions`
+  over the board statuses and `last_submitted_at`), most recent submitter first. The
+  People page (`benchmark/user`, now in the Boards group of the sidebar) lists it, each
+  name opens the public history, and a history page links back to the directory.
+- `POST /submissions/{id}/withdraw` for the owner, with a `note` form field; session
+  token or personal API token. Status becomes `withdrawn`, `reviewed_by` is
+  `owner:<user_id>`, the row and archive stay, the attempt still counts toward the
+  quota. Another account's submission answers 404; an already withdrawn or a rejected
+  one 409. Account page: a Withdraw button per scored row (prompt for the note);
+  `tc-bench withdraw <id> --note ...`; docs on the account and submit pages. The admin
+  route is unchanged.
+- The bundle script pins the baseline's `code_url` to the commit it runs at and records
+  `torchcell_commit` in the build record. Bundle rebuilt at `7860d2c29` (same labels and
+  splits, same hashes), the first baseline withdrawn by admin with a note, the lookup
+  re-uploaded: test AUROC 0.9363 again, one board row, the link answers 200.
+- Verified: 216 benchmark tests pass (three new), ruff, strict mypy, test-quality gate;
+  `tsc` clean; staging rebuilt and redeployed; `ops.sh health` for radiant all as
+  expected. Not verified in a browser: the Withdraw button and the People table.
+
+How the first score got on the board, for the record: through `/admin/baselines`
+with the server-minted admin key, outside any account and quota. A person's path is
+the designed one: sign in with CILogon, create a personal API token on the account
+page, then `tc-bench submit` with `TC_BENCH_URL` and `TC_BENCH_TOKEN`. That path is
+blocked on the CILogon client registration (see the 2026.10.07 section); it has not
+been exercised end to end against CILogon itself.
+

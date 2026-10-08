@@ -62,8 +62,11 @@ stay unused by this loader, deliberately: see "What is not loaded" below.
 
 ### Sourcing
 
-Every statistic below is a verbatim quote against a sha256-pinned mirror artifact, and
-the whole table is written to `preprocess/build_accounting.json` at build time.
+Every statistic below is a verbatim quote against a sha256-pinned mirror artifact. The
+loader carries 27 of them (24 in `paper.md`, 2 in the SI figure-legend OCR `si/si1.md`,
+1 a Table S2C column header), the whole set is written to
+`preprocess/build_accounting.json` at build time, and all 27 audit clean against their
+pinned bytes as a `--data` test. The table below is the subset that fixes a stored value.
 
 | value | source | quote |
 |---|---|---|

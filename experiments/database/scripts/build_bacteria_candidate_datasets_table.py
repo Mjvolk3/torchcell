@@ -968,9 +968,32 @@ CANDIDATES: list[Candidate] = [
         "product, not a released matrix. Status is blocked because no "
         "genome-wide double-mutant score matrix was released. The toolkit "
         "couples the Keio kanamycin deletion library with the ASKA "
-        "chloramphenicol library, about 4000 single-gene deletions each.",
-        accession="Supplementary Tables 2A and 2B via PMC2700713; author manuscript at https://escholarship.org/content/qt0b4526ns/qt0b4526ns.pdf",
-        accession_confirmed=False,
+        "chloramphenicol library, about 4000 single-gene deletions each. "
+        "RE-MEASURED 2026-10-08 (experiments/036-dataset-fixes-before-kg-build/"
+        "scripts/typas2008_release_loadability.py): the ACCESSION claim was STALE and "
+        "the BLOCKING claim was not. The SI IS mirrored, fetched by the scriptable "
+        "pmc_cloud route on 2026-10-07 (si/si1.pdf sha256 bd531ec2ee865506, OCR'd to "
+        "si/si1.md), and enumerating the PMC Article Datasets bucket for PMC2700713 "
+        "returns exactly ONE supplementary object, which is that file, so the deposit "
+        "is mirrored in full and nothing sits behind a paywall. Supplementary Tables "
+        "2A and 2B are readable in those bytes and they carry NO SCORE: 2A lists 23 "
+        "pal partners as the terms ``neg (sick)``, ``neg (lethal)`` and ``pos``, and "
+        "2B lists 15 yraP suppressors over the columns gene name, ECK number, location "
+        "and function, with no value column at all. Of the 42 released pairs exactly 4 "
+        "carry a number, and that statistic is ``% Co-inheritance of both markers`` "
+        "from Supplementary Table 1's co-transduction check, not a colony-size "
+        "interaction score. GeneInteractionPhenotype.gene_interaction is a REQUIRED "
+        "float with no categorical mode, so the term refuses with float_parsing and "
+        "omitting it refuses with Field required. The 12 by 12 cross's 66 distinct "
+        "doubles exist only as the four colour-cell heat maps of Supplementary Figure "
+        "4; its 12 axis genes are recoverable (surA, ybaY, ycbS, ompC, yraI, cpxR, "
+        "degP, pal, ompA, yfgL, yraP, basR) and its numbers are not. NOT SUBSUMED, "
+        "which is the opposite of what Butland 2008 turned out to be: 0 of the 38 "
+        "screen pairs are in Babu 2014 Table S2, neither pal nor yraP is among Babu's "
+        "163 donors, and the only 2 of 42 pairs that overlap are the verification "
+        "pairs degP/surA and pal/ompA.",
+        accession="Supplementary Tables 2A and 2B via PMC2700713, mirrored 2026-10-07 by pmc_cloud (NIHMS95293-supplement-Supp_Info.pdf, the bucket's only supplementary object for this PMCID); author manuscript at https://escholarship.org/content/qt0b4526ns/qt0b4526ns.pdf",
+        accession_confirmed=True,
         status="blocked",
         confidence="sourced",
         analog=Analog(

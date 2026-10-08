@@ -1,0 +1,43 @@
+source_table,query_gene,partner_gene,released_value,released_value_is_numeric,in_babu_table_s2
+Supplementary Table 2A,pal,lpp,neg (sick),False,False
+Supplementary Table 2A,pal,pgm,neg (sick),False,False
+Supplementary Table 2A,pal,mdoG,neg (sick),False,False
+Supplementary Table 2A,pal,tatC,neg (sick),False,False
+Supplementary Table 2A,pal,spr,pos,False,False
+Supplementary Table 2A,pal,oppC,neg (sick),False,False
+Supplementary Table 2A,pal,lpcA,neg (lethal),False,False
+Supplementary Table 2A,pal,rfaD,neg (lethal),False,False
+Supplementary Table 2A,pal,rfaB,neg (lethal),False,False
+Supplementary Table 2A,pal,rfaF,neg (sick),False,False
+Supplementary Table 2A,pal,rfaI,neg (lethal),False,False
+Supplementary Table 2A,pal,rfaG,neg (sick),False,False
+Supplementary Table 2A,pal,rfaP,neg (sick),False,False
+Supplementary Table 2A,pal,rfaQ,neg (sick),False,False
+Supplementary Table 2A,pal,rffA,neg (sick),False,False
+Supplementary Table 2A,pal,rffT,neg (sick),False,False
+Supplementary Table 2A,pal,rffC,neg (sick),False,False
+Supplementary Table 2A,pal,rffD,neg (sick),False,False
+Supplementary Table 2A,pal,rffE,neg (sick),False,False
+Supplementary Table 2A,pal,cmr,neg (sick),False,False
+Supplementary Table 2A,pal,mdtG,neg (sick),False,False
+Supplementary Table 2A,pal,wcaA,neg (sick),False,False
+Supplementary Table 2A,pal,yliE,neg (sick),False,False
+Supplementary Table 2B,yraP,dsbA,,False,False
+Supplementary Table 2B,yraP,dsbB,,False,False
+Supplementary Table 2B,yraP,secB,,False,False
+Supplementary Table 2B,yraP,hlpA,,False,False
+Supplementary Table 2B,yraP,ppiB,,False,False
+Supplementary Table 2B,yraP,asmA,,False,False
+Supplementary Table 2B,yraP,treC,,False,False
+Supplementary Table 2B,yraP,glmM,,False,False
+Supplementary Table 2B,yraP,folP,,False,False
+Supplementary Table 2B,yraP,pqiA,,False,False
+Supplementary Table 2B,yraP,pqiB,,False,False
+Supplementary Table 2B,yraP,ymbA,,False,False
+Supplementary Table 2B,yraP,JW0935,,False,False
+Supplementary Table 2B,yraP,ylcG,,False,False
+Supplementary Table 2B,yraP,lysS,,False,False
+Supplementary Table 1,degP,surA,61.0% / 0.0% (LB),True,True
+Supplementary Table 1,pal,surA,67.0% / 0.0% (LB),True,False
+Supplementary Table 1,pal,yfgL,67.0% / 0.0% (LB-M9 glycerol),True,False
+Supplementary Table 1,pal,ompA,67.0% / 0.0% (M9 glycerol),True,True

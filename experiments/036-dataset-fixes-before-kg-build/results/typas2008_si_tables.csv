@@ -1,0 +1,11 @@
+table_index,n_rows,n_cells,n_numeric_cells,first_row,numeric_sample
+0,3,13,0,surA | ybaY | ycbS | ompC:yral | ompC:yral | cpxR,[]
+1,3,13,0,surA | ybaY | ycbS | ompC | yral | cpxR,[]
+2,3,13,0,surA | ybaY | ycbS | ompC | yral | cpxR,[]
+3,3,13,0,surA | ybaYycbS | ybaYycbS | ompC | yral :cpxR | yral :cpxR,[]
+4,6,26,8,Syntheticlethal pair(SLP) | Medium | Co-transducedmarked mutations(distance in Kb) | % Co-inheritance of both markerswhen host is:,"['61%', '0%', '67%', '0%', '67%', '0%', '67%', '0%']"
+5,25,97,0,(A),[]
+6,16,64,0,Gene name | ECK nr | Location | Function,[]
+7,38,185,0,A.,[]
+8,24,72,0,CAG61009 | BW25113 pseudoHfr::(trp bla (-)) ybaY::cat | this study,[]
+9,12,24,0,Primer | Sequence,[]

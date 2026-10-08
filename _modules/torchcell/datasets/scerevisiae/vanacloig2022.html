@@ -129,8 +129,8 @@
 <span class="sd">logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired</span>
 <span class="sd">treatment to control samples"). GEO GSE186866 releases only the raw barcode-count matrix,</span>
 <span class="sd">which IS scriptable and sha256-pinned; the per-compound logFC table (Dataset2_mclust_cdt)</span>
-<span class="sd">and Table S1 sit behind academic.oup.com, which is not scriptable. This loader recomputes</span>
-<span class="sd">the paper's normalized ratio from the canonical counts:</span>
+<span class="sd">is not used. This loader recomputes the paper's normalized ratio from the canonical</span>
+<span class="sd">counts:</span>
 
 <span class="sd">- TMM scaling factors (``tmm_factors``: edgeR 3.26.8 ``calcNormFactors(method="TMM")``</span>
 <span class="sd">  with its defaults, ``logratioTrim=0.3``, ``sumTrim=0.05``, ``doWeighting=TRUE``,</span>
@@ -152,9 +152,16 @@
 <span class="sd">batch, because the paper's design is paired and its comparison is "to the paired SynBase</span>
 <span class="sd">medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its</span>
 <span class="sd">control is the mean of all 16 control columns (its ``units`` string records that). DMSO</span>
-<span class="sd">is served as a condition (1% v/v) paired the same way; which inhibitors were themselves</span>
-<span class="sd">delivered in DMSO is in the unmirrored Table S1, so each inhibitor's ``solvent`` is a</span>
-<span class="sd">typed gap.</span>
+<span class="sd">is served as a condition (1% v/v) paired the same way.</span>
+
+<span class="sd">DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP</span>
+<span class="sd">supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),</span>
+<span class="sd">stored as ``si/si2.pdf`` and OCR'd to ``si/si2.md``. Each served condition's row is a</span>
+<span class="sd">``SourcedValue`` in ``TABLE_S1_DOSES``: a mM / uM / ug/mL IC30 is stored as the</span>
+<span class="sd">``Concentration`` value; a percent IC30 (MBO, EtOH, IBA, GVL) keeps ``value=None`` under</span>
+<span class="sd">the IC30 basis because the table writes no v/v or w/v; Benomyl, MMS and DMSO keep their</span>
+<span class="sd">fixed doses. The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is DMSO at the</span>
+<span class="sd">paper's final 1% v/v, "No" is ``None`` (dissolved directly).</span>
 
 <span class="sd">STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA</span>
 <span class="sd">cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-</span>
@@ -225,6 +232,7 @@
     <span class="n">Publication</span><span class="p">,</span>
     <span class="n">SampleUnit</span><span class="p">,</span>
     <span class="n">SmallMoleculePerturbation</span><span class="p">,</span>
+    <span class="n">Solvent</span><span class="p">,</span>
     <span class="n">StrainBackground</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
@@ -289,6 +297,14 @@
 <span class="n">OHNUKI_KEY</span> <span class="o">=</span> <span class="s2">"ohnukiHighthroughputPlatformYeast2022"</span>
 <span class="n">OHNUKI_SHA256</span> <span class="o">=</span> <span class="s2">"de2cad9b33c5e0f7e9ce7b7d56feb17a10dbb83de34f65330d6e35846b757ee1"</span>
 
+<span class="c1">#: Table S1: the ``Table_S1.pdf`` member of ``si/si1.zip`` (the OUP supplement zip, PMC</span>
+<span class="c1">#: Article Datasets object PMC9508847.1/foac036_supplemental_files.zip, sha256 707e3ede...)</span>
+<span class="c1">#: stored as ``si/si2.pdf`` by ``capture_si.store_zip_member`` and OCR'd by MinerU 2.7.6</span>
+<span class="c1">#: (pipeline backend, cpu, 200 dpi) to ``si/si2.md``.</span>
+<span class="n">TABLE_S1_MD</span> <span class="o">=</span> <span class="s2">"si/si2.md"</span>
+<span class="n">SI2_PDF_SHA256</span> <span class="o">=</span> <span class="s2">"2712cfdb92569c014a933307973353ec8da0218ba00326d165999f8c0ef96d85"</span>
+<span class="n">SI2_MD_SHA256</span> <span class="o">=</span> <span class="s2">"bad5b060bda2f50470e6a72c4005d48a9ecad8a9fa837a5bd2008307cc35e5d2"</span>
+
 <span class="c1">#: A float64 count / library-size array.</span>
 <span class="n">FloatArray</span> <span class="o">=</span> <span class="n">npt</span><span class="o">.</span><span class="n">NDArray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]</span>
 
@@ -321,6 +337,22 @@
             <span class="n">page</span><span class="o">=</span><span class="n">page</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">)</span>
+
+
+<span class="c1">#: The Table S1 OCR text every ``_table_s1`` value is quoted from.</span>
+<span class="n">TABLE_S1</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="n">TABLE_S1_MD</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">SI2_MD_SHA256</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"MinerU OCR of the Table S1 PDF member (Table_S1.pdf) of si/si1.zip, "</span>
+    <span class="s2">"stored as si/si2.pdf (torchcell-library mirror)"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Table S1"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_table_s1</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Bind a value to a verbatim row of the sha256-pinned Table S1 OCR (si/si2.md)."""</span>
+    <span class="k">return</span> <span class="n">SourcedValue</span><span class="p">(</span><span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">quote</span><span class="o">=</span><span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">TABLE_S1</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_piotrowski</span><span class="p">(</span>
@@ -421,9 +453,9 @@
     <span class="s2">"${ </span><span class="se">\\</span><span class="s2">sim } 3 0 </span><span class="se">\\</span><span class="s2">%$ of growth $</span><span class="se">\\</span><span class="s2">left( </span><span class="se">\\</span><span class="s2">mathrm { I C } _ { 3 0 } </span><span class="se">\\</span><span class="s2">right)$ in "</span>
     <span class="s2">"SynBase medium with the inhibitor relative to growth in SynBase medium lacking the "</span>
     <span class="s2">"inhibitor (Table S1, Supporting Information)."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"the per-compound molar values live in Table S1, which academic.oup.com does "</span>
-    <span class="s2">"not serve to a script and which is therefore not mirrored; Concentration.value "</span>
-    <span class="s2">"stays None and the IC30 basis carries the dose provenance"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the per-compound IC30 values are Table S1's rows (TABLE_S1_DOSES, quoted from "</span>
+    <span class="s2">"si/si2.md); a percent IC30 states no v/v or w/v, so those compounds keep "</span>
+    <span class="s2">"Concentration.value None and the IC30 basis carries the dose"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">BENOMYL_MMS_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="p">{</span><span class="s2">"benomyl_ug_per_ml"</span><span class="p">:</span> <span class="mf">10.0</span><span class="p">,</span> <span class="s2">"mms_percent"</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">},</span>
@@ -431,8 +463,9 @@
     <span class="s2">"2017), $1 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { u g / m L }$ and $0 . 0 1 </span><span class="se">\\</span><span class="s2">%$ , respectively."</span><span class="p">,</span>
     <span class="n">note</span><span class="o">=</span><span class="s2">"both doses were taken from Piotrowski 2017 rather than set to an IC30, so "</span>
     <span class="s2">"their basis is 'fixed'. Piotrowski 2017 (mirrored) states benomyl as 34.4 uM "</span>
-    <span class="s2">"(BENOMYL_MOLAR), which is the stored value. The MMS percent is stored as a basis "</span>
-    <span class="s2">"only: neither paper writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "</span>
+    <span class="s2">"(BENOMYL_MOLAR), which is the stored value; Table S1 confirms the 10 ug/mL "</span>
+    <span class="s2">"(TABLE_S1_DOSES['Benomyl']). The MMS percent is stored as a basis only: neither "</span>
+    <span class="s2">"paper nor Table S1 writes v/v or w/v for this 0.01% (Piotrowski 2017 names no "</span>
     <span class="s2">"MMS dose), so the unit would be a guess"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">BENOMYL_MOLAR</span> <span class="o">=</span> <span class="n">_piotrowski</span><span class="p">(</span>
@@ -489,9 +522,9 @@
     <span class="s2">"Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration "</span>
     <span class="s2">"so that the final concentration of DMSO in SynBase medium was $1 </span><span class="se">\\</span><span class="s2">%$ $( </span><span class="se">\\</span><span class="s2">mathrm "</span>
     <span class="s2">"{ v / v } )$ ."</span><span class="p">,</span>
-    <span class="n">note</span><span class="o">=</span><span class="s2">"which compounds DMSO delivered is in the unmirrored Table S1, so no "</span>
-    <span class="s2">"per-compound Solvent can be asserted; DMSO itself is served as a condition "</span>
-    <span class="s2">"(DMSO_DOSE)"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1's 'Dissolved in DMSO?' column names the compounds this covers "</span>
+    <span class="s2">"(TABLE_S1_DOSES); each 'Yes' compound carries Solvent(DMSO, 1% v/v) from this "</span>
+    <span class="s2">"sentence, and DMSO itself is served as a condition (DMSO_DOSE)"</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">DMSO_DOSE</span> <span class="o">=</span> <span class="n">_paper</span><span class="p">(</span>
     <span class="mf">1.0</span><span class="p">,</span>
@@ -569,21 +602,13 @@
     <span class="s2">"'2-methyl-3-buten-2-ol (MBO)' among the 'biofuel endproducts' (line 103) and is "</span>
     <span class="s2">"called one of 'the two other biofuels included in our screen' (line 131); the "</span>
     <span class="s2">"glossary's '2-Methyl-3-butyn-2-ol' (line 31) is the single contrary statement. "</span>
-    <span class="s2">"Hypothesis (no mirrored source checks it): the glossary line is a typo, since "</span>
+    <span class="s2">"Hypothesis (no mirrored source states it): the glossary line is a typo, since "</span>
     <span class="s2">"2-methyl-3-buten-2-ol is the hemiterpene alcohol produced as a biofuel and the "</span>
-    <span class="s2">"butyn alkynol is not. Table S1 (not mirrored) would settle it. The adjudication "</span>
+    <span class="s2">"butyn alkynol is not. Table S1 (si/si2.md) lists the screened chemical as "</span>
+    <span class="s2">"'2-Methyl-3-buten-2-ol (MBO)' (TABLE_S1_DOSES['MBO']), agreeing with the Results "</span>
+    <span class="s2">"definition, so the glossary line is the single outlier. The adjudication "</span>
     <span class="s2">"is recorded on the identity row's input line "</span>
     <span class="s2">"(compound_identity_inputs/vanacloig2022.txt)."</span>
-<span class="p">)</span>
-
-<span class="c1">#: The one unmirrored artifact that would close this dataset's recoverable gaps: the OUP</span>
-<span class="c1">#: supplement holding the per-compound IC30 molar values AND which compounds were</span>
-<span class="c1">#: delivered in DMSO. academic.oup.com returns 403 to a script, so it is not mirrored.</span>
-<span class="n">TABLE_S1</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
-    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"https://doi.org/10.1093/femsyr/foac036 (Table S1, Supporting Information)"</span><span class="p">,</span>
-    <span class="n">citation_key</span><span class="o">=</span><span class="n">CITATION_KEY</span><span class="p">,</span>
-    <span class="n">method</span><span class="o">=</span><span class="s2">"publisher supplementary table; academic.oup.com is not scriptable"</span><span class="p">,</span>
-    <span class="n">page</span><span class="o">=</span><span class="s2">"Table S1"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1">#: The protocol Vanacloig's chemical-genomic method defers to ("as previously described</span>
@@ -621,28 +646,6 @@
     <span class="s2">"(CPM_PRIOR) to both sides, a loader choice, so a cell whose control mean is near "</span>
     <span class="s2">"1 CPM has a pseudocount-dominated denominator and a large replicate SD"</span><span class="p">,</span>
 <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_solvent_gap</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""The typed absence of a per-compound vehicle.</span>
-
-<span class="sd">    The vehicle is the field that is ACTUALLY ``None`` on the perturbation: the primary</span>
-<span class="sd">    says water-insoluble compounds went in at 1% v/v DMSO but names them only in Table</span>
-<span class="sd">    S1, so for any one compound it is unknown whether a vehicle was used at all. The</span>
-<span class="sd">    DOSE is not a second gap: ``concentration`` is never None (an IC30 or fixed basis is</span>
-<span class="sd">    always known), and ``Concentration`` is not itself a gap carrier, so the missing</span>
-<span class="sd">    molar value is carried by ``basis`` -- the mechanism the schema documents for exactly</span>
-<span class="sd">    this case.</span>
-<span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">ProvenanceGap</span><span class="p">(</span>
-        <span class="n">field</span><span class="o">=</span><span class="s2">"solvent"</span><span class="p">,</span>
-        <span class="n">reason</span><span class="o">=</span><span class="n">ProvenanceGapReason</span><span class="o">.</span><span class="n">deferred_pending_source_review</span><span class="p">,</span>
-        <span class="n">resolve_with</span><span class="o">=</span><span class="n">TABLE_S1</span><span class="p">,</span>
-        <span class="n">note</span><span class="o">=</span><span class="n">VEHICLE_CONTROL</span><span class="o">.</span><span class="n">quote</span>
-        <span class="o">+</span> <span class="s2">" Which compounds that covers is in Table S1, which is not mirrored, so the "</span>
-        <span class="s2">"vehicle of any one compound is unknown rather than absent. The vehicle's own "</span>
-        <span class="s2">"effect is served as the DMSO condition (dimethyl sulfoxide, 1% v/v)."</span><span class="p">,</span>
-    <span class="p">)</span>
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
@@ -805,6 +808,230 @@
 
 <span class="c1">#: The vehicle served as its own condition (1% v/v, DMSO_DOSE).</span>
 <span class="n">DMSO_TOKEN</span> <span class="o">=</span> <span class="s2">"DMSO"</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Table S1: per-compound IC30 dose and vehicle (si/si2.md)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">TABLE_S1_COLUMNS</span> <span class="o">=</span> <span class="n">_table_s1</span><span class="p">(</span>
+    <span class="p">(</span><span class="s2">"Chemical Additive"</span><span class="p">,</span> <span class="s2">"IC30 Concentration"</span><span class="p">,</span> <span class="s2">"Dissolved in DMSO?"</span><span class="p">),</span>
+    <span class="s2">"&lt;tr&gt;&lt;td&gt;Chemical Additive&lt;/td&gt;&lt;td&gt;IC30 Concentration&lt;/td&gt;&lt;td&gt;Dissolved in "</span>
+    <span class="s2">"DMSO?&lt;/td&gt;&lt;td&gt;CAS Number or reference&lt;/td&gt;&lt;td&gt;Vendor/Source&lt;/td&gt;&lt;td&gt;Catalog "</span>
+    <span class="s2">"#&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the header row under the caption 'Table S1. Chemicals and concentrations "</span>
+    <span class="s2">"used in chemical genomic studies'; the second column is the IC30 dose, the third "</span>
+    <span class="s2">"whether the compound was delivered in DMSO"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TableS1Row</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The three Table S1 cells the loader consumes, parsed from the row's quote."""</span>
+
+    <span class="n">chemical</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">ic30</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dissolved_in_dmso</span><span class="p">:</span> <span class="nb">bool</span>
+
+
+<span class="n">_TABLE_S1_ROW</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"&lt;tr&gt;&lt;td&gt;(?P&lt;chemical&gt;[^&lt;]*)&lt;/td&gt;&lt;td&gt;(?P&lt;ic30&gt;[^&lt;]*)&lt;/td&gt;"</span>
+    <span class="sa">r</span><span class="s2">"&lt;td&gt;(?P&lt;dmso&gt;Yes|No)&lt;/td&gt;"</span>
+<span class="p">)</span>
+<span class="n">_TABLE_S1_AMOUNT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"(?P&lt;number&gt;\d+(?:\.\d+)?) (?P&lt;unit&gt;mM|uM|ug/mL)"</span><span class="p">)</span>
+<span class="n">_TABLE_S1_PERCENT</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\d+(?:\.\d+)?%"</span><span class="p">)</span>
+<span class="n">_TABLE_S1_UNITS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"mM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">millimolar</span><span class="p">,</span>
+    <span class="s2">"uM"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">micromolar</span><span class="p">,</span>
+    <span class="s2">"ug/mL"</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">ug_per_ml</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">_PERCENT_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Table S1 writes this IC30 as a bare percent with no v/v or w/v, and the schema has "</span>
+    <span class="s2">"no basis-free percent unit, so Concentration.value stays None under the IC30 basis"</span>
+<span class="p">)</span>
+<span class="n">_OCR_CL_NOTE</span> <span class="o">=</span> <span class="s2">"the OCR reads the chloride 'Cl' as 'CI'"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_row</span><span class="p">(</span><span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One Table S1 row, its three consumed cells parsed from the verbatim quote."""</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_TABLE_S1_ROW</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">quote</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"not a Table S1 row: </span><span class="si">{</span><span class="n">quote</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">row</span> <span class="o">=</span> <span class="n">TableS1Row</span><span class="p">(</span>
+        <span class="n">chemical</span><span class="o">=</span><span class="n">match</span><span class="p">[</span><span class="s2">"chemical"</span><span class="p">],</span>
+        <span class="n">ic30</span><span class="o">=</span><span class="n">match</span><span class="p">[</span><span class="s2">"ic30"</span><span class="p">],</span>
+        <span class="n">dissolved_in_dmso</span><span class="o">=</span><span class="n">match</span><span class="p">[</span><span class="s2">"dmso"</span><span class="p">]</span> <span class="o">==</span> <span class="s2">"Yes"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_table_s1</span><span class="p">(</span><span class="n">row</span><span class="p">,</span> <span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="c1">#: Each served condition's Table S1 row, keyed by matrix token (FIG_1B_TOKENS). The</span>
+<span class="c1">#: quotes are the rows exactly as MinerU wrote them into si/si2.md; the dose and the</span>
+<span class="c1">#: "Dissolved in DMSO?" flag are parsed from those quotes, never typed separately.</span>
+<span class="n">TABLE_S1_DOSES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SourcedValue</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"EMIMCl"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;EMIM-CI / [C2C1im]CI&lt;/td&gt;&lt;td&gt;50 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;65039-09-0&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;272841&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_OCR_CL_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"BMIMCl"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;BMIM-CI / [C4C1im]CI&lt;/td&gt;&lt;td&gt;8 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;79917-90-1&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;94128&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_OCR_CL_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"CV"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Crystal Violet (CV)&lt;/td&gt;&lt;td&gt;15 uM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;548-62-9&lt;/td&gt;&lt;td&gt;Fisher Scientific&lt;/td&gt;&lt;td&gt;C8126&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"NAO"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Nonyl-acridine orange (NAO)&lt;/td&gt;&lt;td&gt;5 uM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;75168-11-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;A7847&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"MBO"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;2-Methyl-3-buten-2-ol (MBO)&lt;/td&gt;&lt;td&gt;1.50%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;115-18-4&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;136816&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 '1.50%'. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span> <span class="o">+</span> <span class="s2">". The chemical name also settles the "</span>
+        <span class="s2">"MBO identity in favor of the Results definition (MBO_IDENTITY_RULE)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"EtOH"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Ethanol&lt;/td&gt;&lt;td&gt;4%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;64-17-5&lt;/td&gt;&lt;td&gt;Various&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 '4%'. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"IBA"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Isobutanol (IBA)&lt;/td&gt;&lt;td&gt;0.75%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;78-83-1&lt;/td&gt;&lt;td&gt;Acros Organics&lt;/td&gt;&lt;td&gt;41265&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 '0.75%'. "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"5HMF"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;5-OH Methylfurfural (5-HMF)&lt;/td&gt;&lt;td&gt;3.3 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;67-47-0&lt;/td&gt;&lt;td&gt;Acros Organics&lt;/td&gt;&lt;td&gt;121460050&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Furfural"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Furfural&lt;/td&gt;&lt;td&gt;8 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;98-01-1&lt;/td&gt;&lt;td&gt;Fisher Scientific&lt;/td&gt;&lt;td&gt;F94-500&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"4OHAcetophenone"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;4-OH Acetophenone&lt;/td&gt;&lt;td&gt;5 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;99-93-4&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;278564&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"4OHBenzaldehyde"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;4-OH Benzaldehyde&lt;/td&gt;&lt;td&gt;4 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;123-08-0&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;144088&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"4OHBenzoicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;4-OH Benzoic Acid&lt;/td&gt;&lt;td&gt;6 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;99-96-7&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;240141&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Acetosyringone"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Acetosyringone&lt;/td&gt;&lt;td&gt;5 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;2478-38-8&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;D134406&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Acetovanillone"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Acetovanillone&lt;/td&gt;&lt;td&gt;3 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;498-02-2&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;W508454&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"BenzoicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Benzoic Acid&lt;/td&gt;&lt;td&gt;0.12 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;65-85-0&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;242381&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"CinnamicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Cinnamic Acid&lt;/td&gt;&lt;td&gt;0.38 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;140-10-3&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;C80857&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"CoumaroylAmide"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Coumaroyl Amide&lt;/td&gt;&lt;td&gt;3 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;Keating et al., 2014&lt;/td&gt;&lt;td&gt;Y. Zhang&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"FerulicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Ferulic Acid&lt;/td&gt;&lt;td&gt;0.94 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;537-98-4&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;W518301&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"FeruloylAmide"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Feruloyl Amide&lt;/td&gt;&lt;td&gt;2 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;Keating et al., 2014&lt;/td&gt;&lt;td&gt;Y. Zhang&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"CoumaricAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;p-Coumaric Acid&lt;/td&gt;&lt;td&gt;3.3 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;501-98-4&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;C9008&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"SinapicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Sinapic Acid&lt;/td&gt;&lt;td&gt;1.5 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;530-59-6&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;D7927&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Syringaldehyde"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Syringaldehyde&lt;/td&gt;&lt;td&gt;2.2 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;134-96-3&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;S1602&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"SyringicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Syringic Acid&lt;/td&gt;&lt;td&gt;15 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;530-57-4&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;S6881&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"VanillicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Vanillic Acid&lt;/td&gt;&lt;td&gt;6.7 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;121-34-6&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;H36001&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Vanillin"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Vanillin&lt;/td&gt;&lt;td&gt;5 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;121-33-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;V1104&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"DMSO"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;DMSO&lt;/td&gt;&lt;td&gt;2.50%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;67-68-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;D-8779&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"Table S1 lists DMSO at 2.50</span><span class="si">% u</span><span class="s2">nder the IC30 column, which conflicts with "</span>
+        <span class="s2">"the paper's vehicle sentence (VEHICLE_CONTROL: final DMSO 1% v/v) that the "</span>
+        <span class="s2">"served DMSO_DOSE quotes. Left for review; the served DMSO record stays 1.0 "</span>
+        <span class="s2">"percent_v/v, fixed"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"GVL"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Gamma valerolactone (GVL)&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;108-29-2&lt;/td&gt;&lt;td&gt;Acros Organics&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the OCR leaves GVL's IC30 cell empty; the '1.5%' (and the catalog number "</span>
+        <span class="s2">"140795000) landed on the next row, the 'OTHER COMPOUNDS' section header "</span>
+        <span class="s2">"(GVL_TABLE_S1_DISPLACED). A percent either way: "</span> <span class="o">+</span> <span class="n">_PERCENT_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"AzelaicAcid"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Azelaic Acid&lt;/td&gt;&lt;td&gt;10 mM&lt;/td&gt;&lt;td&gt;Yes&lt;/td&gt;&lt;td&gt;123-99-9&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;246379&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"22Dipyridyl"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;2,2'-Dipyridyl&lt;/td&gt;&lt;td&gt;18 ug/mL&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;366-18-7&lt;/td&gt;&lt;td&gt;Acros Organics&lt;/td&gt;&lt;td&gt;117500100&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Benomyl"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Benomyl&lt;/td&gt;&lt;td&gt;10 ug/mL&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;17804-35-2&lt;/td&gt;&lt;td&gt;NA&lt;/td&gt;&lt;td&gt;NA&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"confirms the Methods' 10 ug/mL (BENOMYL_MMS_DOSE); the served dose stays "</span>
+        <span class="s2">"Piotrowski 2017's 34.4 uM (BENOMYL_MOLAR) under the fixed basis"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"MMS"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Methylmethane sulphonate (MMS)&lt;/td&gt;&lt;td&gt;0.01%&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;66-27-3&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;129925&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"IC30 column '0.01%', the published fixed dose (BENOMYL_MMS_DOSE); no v/v or "</span>
+        <span class="s2">"w/v, so value None under the fixed basis"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"Acetamide"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;Acetamide&lt;/td&gt;&lt;td&gt;250 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;60-35-5&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;00160&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+    <span class="s2">"Methylglyoxal"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;MethyIglyoxal&lt;/td&gt;&lt;td&gt;7.5 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;78-98-8&lt;/td&gt;&lt;td&gt;MP Biomedicals&lt;/td&gt;&lt;td&gt;1558&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the OCR reads the 'l' of Methylglyoxal as 'I'"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"26Dimethylpyrazine"</span><span class="p">:</span> <span class="n">_row</span><span class="p">(</span>
+        <span class="s2">"&lt;tr&gt;&lt;td&gt;2,6-Dimethylpyrazine&lt;/td&gt;&lt;td&gt;38 mM&lt;/td&gt;&lt;td&gt;No&lt;/td&gt;&lt;td&gt;108-50-9&lt;/td&gt;&lt;td&gt;Sigma-Aldrich&lt;/td&gt;&lt;td&gt;W327301&lt;/td&gt;&lt;/tr&gt;"</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="n">GVL_TABLE_S1_DISPLACED</span> <span class="o">=</span> <span class="n">_table_s1</span><span class="p">(</span>
+    <span class="s2">"1.5%"</span><span class="p">,</span>
+    <span class="s2">"&lt;tr&gt;&lt;td&gt;OTHER COMPOUNDS&lt;/td&gt;&lt;td&gt;1.5%&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;&lt;/td&gt;&lt;td&gt;140795000&lt;/td&gt;&lt;/tr&gt;"</span><span class="p">,</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"the row after GVL's: a section header carrying an IC30 and a catalog number, "</span>
+    <span class="s2">"which the OCR displaced from the GVL row above it (TABLE_S1_DOSES['GVL']); "</span>
+    <span class="s2">"recorded so the GVL percent is quoted, not typed"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">table_s1_ic30</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Concentration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The IC30 dose Table S1 states for ``token``, as a typed ``Concentration``.</span>
+
+<span class="sd">    A mM / uM / ug/mL cell is the value and unit; a percent cell (or GVL's cell, which</span>
+<span class="sd">    the OCR left empty) is the IC30 basis alone (``_PERCENT_NOTE``). Any other cell</span>
+<span class="sd">    text raises: it is a row the loader has not been taught to read.</span>
+<span class="sd">    """</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">TableS1Row</span> <span class="o">=</span> <span class="n">TABLE_S1_DOSES</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="n">amount</span> <span class="o">=</span> <span class="n">_TABLE_S1_AMOUNT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">amount</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span>
+            <span class="n">value</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">amount</span><span class="p">[</span><span class="s2">"number"</span><span class="p">]),</span>
+            <span class="n">unit</span><span class="o">=</span><span class="n">_TABLE_S1_UNITS</span><span class="p">[</span><span class="n">amount</span><span class="p">[</span><span class="s2">"unit"</span><span class="p">]],</span>
+            <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">IC30</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">row</span><span class="o">.</span><span class="n">ic30</span> <span class="o">==</span> <span class="s2">""</span> <span class="ow">or</span> <span class="n">_TABLE_S1_PERCENT</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">IC30_BASIS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">token</span><span class="si">}</span><span class="s2">: unreadable Table S1 IC30 cell </span><span class="si">{</span><span class="n">row</span><span class="o">.</span><span class="n">ic30</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">table_s1_solvent</span><span class="p">(</span><span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solvent</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The vehicle Table S1's "Dissolved in DMSO?" column states for ``token``.</span>
+
+<span class="sd">    "Yes" is DMSO at the final 1% v/v of the paper's vehicle sentence (DMSO_DOSE,</span>
+<span class="sd">    quoting VEHICLE_CONTROL); "No" is ``None``, which the schema defines as dissolved</span>
+<span class="sd">    directly.</span>
+<span class="sd">    """</span>
+    <span class="n">row</span><span class="p">:</span> <span class="n">TableS1Row</span> <span class="o">=</span> <span class="n">TABLE_S1_DOSES</span><span class="p">[</span><span class="n">token</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">row</span><span class="o">.</span><span class="n">dissolved_in_dmso</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">Solvent</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">DMSO_TOKEN</span><span class="p">,</span> <span class="n">percent</span><span class="o">=</span><span class="n">DMSO_DOSE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">DMSO_TOKEN</span><span class="p">)</span>
+    <span class="p">)</span>
+
 
 <span class="n">_PAIRED_UNITS</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized "</span>
@@ -1247,7 +1474,7 @@
                 <span class="n">unit</span><span class="o">=</span><span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">,</span>
                 <span class="n">basis</span><span class="o">=</span><span class="n">DoseBasis</span><span class="o">.</span><span class="n">fixed</span><span class="p">,</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">Concentration</span><span class="p">(</span><span class="n">basis</span><span class="o">=</span><span class="n">IC30_BASIS</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">table_s1_ic30</span><span class="p">(</span><span class="n">compound</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_culture_format</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureFormat</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Static 1.5 mL 24-well cultures inoculated at OD600 0.1, read at fixed times."""</span>
@@ -1302,16 +1529,11 @@
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_compound</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SmallMoleculePerturbation</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The dosed condition: an inhibitor with a typed solvent gap, or DMSO itself."""</span>
-        <span class="k">if</span> <span class="n">compound</span> <span class="o">==</span> <span class="n">DMSO_TOKEN</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
-                <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
-                <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_concentration</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
-            <span class="p">)</span>
+<span class="w">        </span><span class="sd">"""The dosed condition at its dose, in the vehicle Table S1 names (or none)."""</span>
         <span class="k">return</span> <span class="n">SmallMoleculePerturbation</span><span class="p">(</span>
             <span class="n">compound</span><span class="o">=</span><span class="n">resolved_compound</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
             <span class="n">concentration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_concentration</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
-            <span class="n">provenance_gaps</span><span class="o">=</span><span class="p">[</span><span class="n">_solvent_gap</span><span class="p">()],</span>
+            <span class="n">solvent</span><span class="o">=</span><span class="n">table_s1_solvent</span><span class="p">(</span><span class="n">compound</span><span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compound</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CultureEnvironment</span><span class="p">:</span>

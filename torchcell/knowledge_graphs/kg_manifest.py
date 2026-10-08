@@ -99,9 +99,6 @@ from typing import Any, Literal, cast
 import yaml
 from pydantic import BaseModel, Field
 
-# ArtifactRef is defined on the schema surface; importing it from there keeps the
-# artifacts package (fastapi, pandas through the genome registry) off the CLI's import path.
-from torchcell.datamodels.schema import ArtifactRef
 from torchcell.provenance.build_manifest import (
     MANIFEST_FILENAME,
     BuildManifest,
@@ -170,6 +167,7 @@ __all__ = [
     "split_dataset_args",
     "parse_n_experiments",
     "ARTIFACT_REF_SYMBOL",
+    "ArtifactPointer",
     "file_level_refs",
     "dataset_artifact_refs",
     "record_artifact_refs",
@@ -193,6 +191,36 @@ VALUE_SURFACE_RELPATHS = (
 )
 #: The closure key that marks a dataset whose records can carry artifact pointers.
 ARTIFACT_REF_SYMBOL = "ArtifactRef"
+
+
+class ArtifactPointer(BaseModel):
+    """An ``ArtifactRef`` reduced to the file it pins: member, bytes and media_type dropped.
+
+    The shape the release records and the ops probe checks. A local model rather than
+    ``ArtifactRef`` itself, because this module (and ``releases``, ``release_snapshot``)
+    must import with only pydantic, PyYAML and python-dotenv installed (the docs
+    workflow's query-drift job), and ``torchcell.datamodels.schema`` pulls in lmdb
+    through the datamodels package.
+    """
+
+    tier: str
+    key: str
+    path: str
+    sha256: str
+
+    @property
+    def uri(self) -> str:
+        """``tc://<tier>/<key>/<path>``."""
+        return f"tc://{self.tier}/{self.key}/{self.path}"
+
+    @classmethod
+    def from_ref(cls, ref: Any) -> ArtifactPointer:
+        """The pointer of an ``ArtifactRef`` (duck-typed: tier, key, path, sha256)."""
+        return cls(tier=ref.tier, key=ref.key, path=ref.path, sha256=ref.sha256)
+
+    def sort_key(self) -> tuple[str, str, str, str]:
+        """``(tier, key, path, sha256)``, the order recorded sets are kept in."""
+        return (self.tier, self.key, self.path, self.sha256)
 
 
 class GraphSchemaEntry(BaseModel):
@@ -257,7 +285,7 @@ class KgDatasetEntry(BaseModel):
     # ``bytes`` and ``media_type`` stripped; sorted by ``ref_key``), written by
     # ``record_artifact_refs``. None: never recorded (a manifest written before pointer
     # recording, or an entry admitted since); ``[]``: recorded, and there are none.
-    artifact_refs: list[ArtifactRef] | None = None
+    artifact_refs: list[ArtifactPointer] | None = None
 
 
 class KgEvent(BaseModel):
@@ -932,25 +960,23 @@ def dev_experiment_ids(dataset_class: type, data_root: Path) -> list[str]:
     return ids
 
 
-def file_level_refs(refs: Iterable[ArtifactRef]) -> list[ArtifactRef]:
-    """The distinct files ``refs`` name, sorted by ``ref_key``, members stripped.
+def file_level_refs(refs: Iterable[Any]) -> list[ArtifactPointer]:
+    """The distinct files ``refs`` (``ArtifactRef``s) name, sorted by ``(tier, key, path,
+    sha256)``, as ``ArtifactPointer``s.
 
-    A file-level ref keeps ``tier``, ``key``, ``path`` and ``sha256`` only, so two members
-    of one file (and two refs differing only in ``bytes`` or ``media_type``) collapse to
-    one entry.
+    Two members of one file (and two refs differing only in ``bytes`` or ``media_type``)
+    collapse to one entry.
     """
-    from torchcell.artifacts.walk import ref_key
-
-    files: dict[tuple[str, str, str, str], ArtifactRef] = {}
+    files: dict[tuple[str, str, str, str], ArtifactPointer] = {}
     for ref in refs:
-        files.setdefault(
-            ref_key(ref),
-            ArtifactRef(tier=ref.tier, key=ref.key, path=ref.path, sha256=ref.sha256),
-        )
+        pointer = ArtifactPointer.from_ref(ref)
+        files.setdefault(pointer.sort_key(), pointer)
     return [files[key] for key in sorted(files)]
 
 
-def dataset_artifact_refs(dataset_class: type, data_root: Path) -> list[ArtifactRef]:
+def dataset_artifact_refs(
+    dataset_class: type, data_root: Path
+) -> list[ArtifactPointer]:
     """The file-level refs every record of the dev-tree LMDB of ``dataset_class`` carries.
 
     Opens the dataset read-only as ``dev_experiment_ids`` does and walks the pydantic
@@ -960,7 +986,7 @@ def dataset_artifact_refs(dataset_class: type, data_root: Path) -> list[Artifact
     from torchcell.artifacts.walk import distinct_refs
 
     dataset = dataset_class(root=str(data_root / _dataset_default_root(dataset_class)))
-    found: dict[tuple[str, str, str, str], ArtifactRef] = {}
+    found: dict[tuple[str, str, str, str], Any] = {}
     for i in range(len(dataset)):
         item = dataset.transform_item(dataset[i])
         models = [value for value in item.values() if isinstance(value, BaseModel)]
@@ -986,10 +1012,9 @@ def record_artifact_refs(
     counts: dict[str, int] = {}
     for name in names:
         entry = manifest.datasets[name]
+        refs: list[ArtifactPointer] = []
         if ARTIFACT_REF_SYMBOL in entry.closure:
             refs = dataset_artifact_refs(_dataset_class(name), data_root)
-        else:
-            refs = []
         entry.artifact_refs = refs
         counts[name] = len(refs)
     return counts
@@ -997,7 +1022,7 @@ def record_artifact_refs(
 
 def manifest_artifact_refs(
     manifest: KgBuildManifest,
-) -> dict[str, list[ArtifactRef]] | None:
+) -> dict[str, list[ArtifactPointer]] | None:
     """``dataset -> refs`` for a release, or None when ANY entry was never recorded.
 
     A half-recorded manifest never reads as complete: one None entry makes the whole

@@ -44,4 +44,4 @@ Applied 2026-10-06 to the three committed snapshots: `2026.09.21-ab6d8c5d` paire
 
 ## 2026.10.08 - The snapshot carries the pointer set
 
-`KgReleaseSnapshot.artifact_refs: dict[str, list[ArtifactRef]] | None`, filled by `snapshot_from_manifest` through `kg_manifest.manifest_artifact_refs` (None when any entry is unrecorded). The committed snapshots predate it and load with None; a snapshot written from now on carries the key (as `null` until the build records pointers), so its first key is `artifact_refs`. Test: `test_snapshot_carries_the_pointer_set_through_write_and_load`.
+`KgReleaseSnapshot.artifact_refs: dict[str, list[ArtifactPointer]] | None`, filled by `snapshot_from_manifest` through `kg_manifest.manifest_artifact_refs` (None when any entry is unrecorded). The committed snapshots predate it and load with None; a snapshot written from now on carries the key (as `null` until the build records pointers), so its first key is `artifact_refs`. Test: `test_snapshot_carries_the_pointer_set_through_write_and_load`.

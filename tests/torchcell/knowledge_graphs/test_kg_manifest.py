@@ -13,6 +13,7 @@ from torchcell.knowledge_graphs.kg_manifest import (
     VERSION_RELPATH,
     AdapterDrift,
     AdmissionReport,
+    ArtifactPointer,
     GraphSchemaEntry,
     KgBuildManifest,
     KgDatasetEntry,
@@ -847,8 +848,12 @@ def _ref_manifest() -> KgBuildManifest:
 #: The recorded set: two FILE-level refs, sorted by (tier, key, path, sha256), with
 #: member, bytes and media_type stripped.
 FILE_REFS = [
-    ArtifactRef(tier="genomes", key="set_v1", path="genes.tar.gz", sha256=SHA_GENES),
-    ArtifactRef(tier="raw", key="caudal2024", path="data/seqs.fasta", sha256=SHA_FASTA),
+    ArtifactPointer(
+        tier="genomes", key="set_v1", path="genes.tar.gz", sha256=SHA_GENES
+    ),
+    ArtifactPointer(
+        tier="raw", key="caudal2024", path="data/seqs.fasta", sha256=SHA_FASTA
+    ),
 ]
 
 

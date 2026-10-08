@@ -31,8 +31,8 @@ import httpx
 import pytest
 
 import torchcell.knowledge_graphs.releases as releases
-from torchcell.artifacts.ref import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
+    ArtifactPointer,
     KgBuildManifest,
     KgDatasetEntry,
     KgEvent,
@@ -1526,8 +1526,8 @@ def test_cli_compat_requires_a_repo_and_exits_one_on_drift(
 # --------------------------------------------------------------------------- artifacts
 
 
-def _ref(tier: str, key: str, path: str, digit: str) -> ArtifactRef:
-    return ArtifactRef(tier=tier, key=key, path=path, sha256=digit * 64)  # type: ignore[arg-type]
+def _ref(tier: str, key: str, path: str, digit: str) -> ArtifactPointer:
+    return ArtifactPointer(tier=tier, key=key, path=path, sha256=digit * 64)
 
 
 EMB_A = _ref("objects", "esm2", "a.npy", "1")
@@ -1706,7 +1706,7 @@ def _artifacts(*extra: str, database: str = "torchcell") -> list[str]:
     ]
 
 
-def _with_refs(refs: dict[str, list[ArtifactRef]]) -> KgRelease:
+def _with_refs(refs: dict[str, list[ArtifactPointer]]) -> KgRelease:
     return RELEASE.model_copy(update={"artifact_refs": refs})
 
 

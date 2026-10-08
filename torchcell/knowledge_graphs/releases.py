@@ -69,10 +69,8 @@ from typing import Any, Literal
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 
-# ArtifactRef is defined on the schema surface; importing it from there keeps the
-# artifacts package (fastapi, pandas through the genome registry) off the CLI's import path.
-from torchcell.datamodels.schema import ArtifactRef
 from torchcell.knowledge_graphs.kg_manifest import (
+    ArtifactPointer,
     KgBuildManifest,
     checkout_package_version,
     manifest_artifact_refs,
@@ -123,7 +121,7 @@ class KgRelease(BaseModel):
     closures: dict[str, dict[str, str]] = Field(default_factory=dict)
     # dataset -> the file-level artifact pointers its records carry; None on a node
     # written before pointer recording, or from a manifest with an unrecorded entry
-    artifact_refs: dict[str, list[ArtifactRef]] | None = None
+    artifact_refs: dict[str, list[ArtifactPointer]] | None = None
 
     @property
     def n_datasets(self) -> int:
@@ -173,7 +171,7 @@ class KgRelease(BaseModel):
             None
             if refs_json is None
             else {
-                name: [ArtifactRef.model_validate(ref) for ref in refs]
+                name: [ArtifactPointer.model_validate(ref) for ref in refs]
                 for name, refs in json.loads(refs_json).items()
             }
         )
@@ -896,11 +894,11 @@ def read_release_bounded(
 
 
 def classify_pointers(
-    artifact_refs: Mapping[str, list[ArtifactRef]], source: Any
+    artifact_refs: Mapping[str, list[ArtifactPointer]], source: Any
 ) -> list[PointerCheck]:
     """Each distinct pointed file, classified against ``source``'s manifests.
 
-    Refs are deduplicated across datasets by ``ref_key`` and grouped by ``(tier, key)``,
+    Pointers are deduplicated across datasets by ``(tier, key, path, sha256)`` and grouped by ``(tier, key)``,
     so each key's manifest is fetched once. A file is ``listed`` when the manifest lists
     its path with the pinned sha256, ``sha256_mismatch`` when it lists the path with
     another, and ``missing`` when the path is absent or the source has no such key (a
@@ -909,16 +907,15 @@ def classify_pointers(
     """
     from torchcell.artifacts.resolve import RemoteMissError
     from torchcell.artifacts.tiers import find_record
-    from torchcell.artifacts.walk import ref_key
 
-    pointed: dict[tuple[str, str, str, str], tuple[ArtifactRef, list[str]]] = {}
+    pointed: dict[tuple[str, str, str, str], tuple[ArtifactPointer, list[str]]] = {}
     for name in sorted(artifact_refs):
         for ref in artifact_refs[name]:
-            entry = pointed.setdefault(ref_key(ref), (ref, []))
+            entry = pointed.setdefault(ref.sort_key(), (ref, []))
             if name not in entry[1]:
                 entry[1].append(name)
-    by_key: dict[tuple[str, str], list[tuple[ArtifactRef, list[str]]]] = defaultdict(
-        list
+    by_key: dict[tuple[str, str], list[tuple[ArtifactPointer, list[str]]]] = (
+        defaultdict(list)
     )
     for file_key in sorted(pointed):
         ref, names = pointed[file_key]
@@ -939,7 +936,7 @@ def classify_pointers(
                 state = "sha256_mismatch"
             checks.append(
                 PointerCheck(
-                    ref=str(ref),
+                    ref=ref.uri,
                     sha256=ref.sha256,
                     state=state,
                     listed_sha256=None if record is None else record.sha256,

@@ -484,6 +484,7 @@ BACTERIAL_DATASETS = {
     "CrispriChemgenChoe2025Dataset",
     "CrispriCrossRachwalski2024Dataset",
     "CrispriDifferentialProteomeYunus2026Dataset",
+    "CrispriGuideFfaEnrichmentFang2025Dataset",
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",

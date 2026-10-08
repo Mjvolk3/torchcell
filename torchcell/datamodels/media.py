@@ -3638,6 +3638,155 @@ M9_DEFERRED_BANERJEE2025 = Media(
 
 
 # --------------------------------------------------------------------------- #
+# Fang 2025 (row 43, E. coli MG1655(DE3)): the "modified M9" of the CRISPRi-FACS screen
+# and of every flask fermentation. Stated in full, which is why it is a recipe and not a
+# deferral, and distinctive on three counts: 2 g/L yeast extract makes it SEMI-defined
+# rather than minimal, 30 g/L glycerol is the screen's carbon source, and 0.1% (v/v)
+# Triton X-100 is a surfactant no other medium in this library carries. The glucose
+# variant the same sentence offers ("or 30 g/L glucose, specifically used in Fig. 4") is
+# NOT a second object: no screen record uses it, and the one figure that does is a
+# titer panel this loader does not read.
+#
+# The phosphate is weighed as the DODECAHYDRATE, a different reagent with its own
+# InChIKey, so this medium does not derive from ``M9`` by dropout; it states its own
+# salts against the ``M9`` label. The trace solution is a 1000-fold dilution of a stock
+# whose five salts the Methods DO print, but the diluted amounts are a derivation rather
+# than a stated value, so it is carried as one mixture at the stated 1 mL/L with the
+# stock recipe in its note -- the Menasalvas convention for a trace mixture, without
+# that row's open gap, because here the composition is published.
+# --------------------------------------------------------------------------- #
+_FANG2025 = Provenance(
+    citation_key="fangGenomescaleCRISPRiScreen2025",
+    sha256="93d4303ce7aad2cec712ad09fd41319e08f4b735dc8dfc69659d55e590f2ee3d",
+    source_uri="paper.md",
+)
+_Q_FANG_M9 = (
+    "Modified M9 medium58 $\\mathrm { ( pH } 7 . 2 \\mathrm { ) }$ for tube and flask "
+    "fermentation was prepared as follows: $1 7 . 1 \\mathrm { g } \\mathrm { L } ^ { -1 "
+    "}$ $\\mathrm { N a _ { 2 } H P O _ { 4 } } { \\cdot } 1 2 \\mathrm { H } _ { 2 } O$ "
+    ", $3 { \\bf g } { \\bf L } ^ { -1 } { \\bf \\ K H } _ { 2 } { \\bf P O } _ { 4 } ,$ "
+    "$0 . 5 \\mathrm { g L } ^ { -1 }$ NaCl, $2 { \\bf g } { \\bf L } ^ { -1 } \\ { \\sf "
+    "N H } _ { 4 } { \\bf C } { \\bf l }$ , $2 { \\tt g } { \\tt L } ^ { -1 }$ yeast "
+    "extract, $3 0 { \\bf g } { \\bf L } ^ { -1 }$ glycerol (or $3 0 { \\bf g } { \\bf L "
+    "} ^ { -1 }$ glucose, specifically used in Fig. 4), $0 . 2 5 { \\bf g } { \\bf L } ^ "
+    "{ -1 }$ $\\mathrm { M g S O _ { 4 } } { \\cdot } 7 \\mathrm { H } _ { 2 } \\mathrm "
+    "{ O }$ , $\\mathrm { 1 1 . 1 m g L ^ { -1 } \\ C a C l _ { 2 } } ,$ $1 0 \\mathrm { "
+    "m g L ^ { -1 } }$ thiamine,"
+)
+_Q_FANG_TRACE = (
+    "$0 . 1 \\%$ (v/v) Triton-X100, and $1 \\mathsf { m L L } ^ { -1 }$ metal trace "
+    "stock solution."
+)
+_FANG_TRACE_STOCK = (
+    "a 1 mL/L dilution of the stock the same Methods paragraph states: 27 g/L "
+    "FeCl3.6H2O, 2 g/L ZnCl2, 2 g/L Na2MoO4.2H2O, 1.9 g/L CuSO4.5H2O and 0.5 g/L "
+    "H3BO3. The five salts are published, so this is not a composition gap; the "
+    "DILUTED amounts would be a derivation, so the component carries the stated 1 mL/L "
+    "and the stock recipe stays verbatim here"
+)
+
+M9_MODIFIED_FANG2025 = Media(
+    name="modified M9 + 2 g/L yeast extract + 30 g/L glycerol + 0.1% Triton X-100 "
+    "(pH 7.2; Fang 2025)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="M9",
+    components=[
+        _stated(
+            "disodium hydrogen phosphate dodecahydrate",
+            _SALT,
+            17.1,
+            _GL,
+            _cite(_FANG2025, "17.1 g/L", _Q_FANG_M9),
+        ),
+        _stated(
+            "potassium dihydrogen phosphate",
+            _SALT,
+            3.0,
+            _GL,
+            _cite(_FANG2025, "3 g/L", _Q_FANG_M9),
+        ),
+        _stated(
+            "sodium chloride", _SALT, 0.5, _GL, _cite(_FANG2025, "0.5 g/L", _Q_FANG_M9)
+        ),
+        _stated(
+            "ammonium chloride", _NSRC, 2.0, _GL, _cite(_FANG2025, "2 g/L", _Q_FANG_M9)
+        ),
+        _mixture(
+            "yeast extract",
+            MediaComponentRole.complex_ingredient,
+            _UNDEFINED,
+            concentration=_c(2.0, _GL),
+            provenance=[_cite(_FANG2025, "2 g/L", _Q_FANG_M9)],
+            note="2 g/L yeast extract is what makes this medium semi-defined rather "
+            "than minimal, so is_synthetic is False",
+        ),
+        _stated("glycerol", _CSRC, 30.0, _GL, _cite(_FANG2025, "30 g/L", _Q_FANG_M9)),
+        _stated(
+            "magnesium sulfate heptahydrate",
+            _SALT,
+            0.25,
+            _GL,
+            _cite(_FANG2025, "0.25 g/L", _Q_FANG_M9),
+        ),
+        _stated(
+            "calcium chloride",
+            _SALT,
+            0.0111,
+            _GL,
+            _cite(
+                _FANG2025,
+                "11.1 mg/L",
+                _Q_FANG_M9,
+                note="stated in mg/L; the library has no mg/L unit, so the same amount "
+                "is carried in g/L",
+            ),
+        ),
+        _stated(
+            "thiamine",
+            _VITAMIN,
+            0.01,
+            _GL,
+            _cite(
+                _FANG2025,
+                "10 mg/L",
+                _Q_FANG_M9,
+                note="stated in mg/L; the library has no mg/L unit, so the same amount "
+                "is carried in g/L",
+            ),
+        ),
+        _mixture(
+            "Triton X-100",
+            MediaComponentRole.other,
+            _UNDEFINED,
+            concentration=_c(0.1, ConcentrationUnit.percent_v_v),
+            provenance=[_cite(_FANG2025, "0.1% (v/v)", _Q_FANG_TRACE)],
+            note="a polydisperse octylphenol ethoxylate, so it is a preparation rather "
+            "than one substance; no other medium in this library carries a surfactant",
+        ),
+        _mixture(
+            "metal trace stock solution",
+            _TRACE,
+            _DEFERRED,
+            concentration=_c(0.1, ConcentrationUnit.percent_v_v),
+            provenance=[_cite(_FANG2025, "1 mL/L", _Q_FANG_TRACE)],
+            note=_FANG_TRACE_STOCK,
+        ),
+    ],
+    dropouts=[_M9_ANHYDROUS_PHOSPHATE],
+    provenance=[
+        _cite(
+            _FANG2025,
+            "modified M9 medium (pH 7.2)",
+            _Q_FANG_M9,
+            note=_HYDRATE_DROPOUT_NOTE,
+        )
+    ],
+)
+"""Fang 2025's modified M9: the CRISPRi-FACS screen medium and every flask run (row 43)."""
+
+
+# --------------------------------------------------------------------------- #
 # Foo 2014 (E. coli DH1): "1x M9 salt (Difco)" is a commercial salts powder whose
 # composition the paper does not print, so the two Foo media derive from their own
 # ``M9_DIFCO`` base rather than from the stated ``M9`` salts.
@@ -4060,6 +4209,11 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "25 Wang 2018: the L-Trp-biosynthesis selective condition (0.5 g/L casamino "
         "acid in MOPS)",
     ),
+    "M9_MODIFIED_FANG2025": (
+        "43 Fang 2025: both rounds of the CRISPRi-FACS screen (500 mL flasks holding "
+        "100 mL), and every tube and flask fermentation; the glucose variant the same "
+        "sentence offers is used by one titer figure and by no screen record",
+    ),
 }
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
 
@@ -4135,6 +4289,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "DM500": DM500,
     "MOPS_MINIMAL": MOPS_MINIMAL,
     "MOPS_CASAMINO_WANG2018": MOPS_CASAMINO_WANG2018,
+    "M9_MODIFIED_FANG2025": M9_MODIFIED_FANG2025,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS

@@ -21,6 +21,7 @@ from torchcell.adapters import (
     CrispriChemgenChoe2025Adapter,
     CrispriCrossRachwalski2024Adapter,
     CrispriDifferentialProteomeYunus2026Adapter,
+    CrispriGuideFfaEnrichmentFang2025Adapter,
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
@@ -132,6 +133,7 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 )
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
+from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
@@ -371,6 +373,7 @@ dataset_adapter_map: dict[type, type] = {
     GrowthRateSchmidt2016Dataset: GrowthRateSchmidt2016Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
+    CrispriGuideFfaEnrichmentFang2025Dataset: CrispriGuideFfaEnrichmentFang2025Adapter,
     CrispriGuideFitnessWang2018Dataset: CrispriGuideFitnessWang2018Adapter,
     ProteomeBanerjee2025Dataset: ProteomeBanerjee2025Adapter,
     RbTnseqBorchert2023Dataset: RbTnseqBorchert2023Adapter,

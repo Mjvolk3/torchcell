@@ -22,6 +22,7 @@
 disodium hydrogen phosphate | canonical
 disodium hydrogen phosphate dihydrate | canonical
 disodium hydrogen phosphate heptahydrate | canonical | query=sodium phosphate dibasic heptahydrate
+disodium hydrogen phosphate dodecahydrate | canonical | query=sodium phosphate dibasic dodecahydrate
 potassium dihydrogen phosphate | canonical
 dipotassium hydrogen phosphate | canonical
 ammonium chloride | canonical

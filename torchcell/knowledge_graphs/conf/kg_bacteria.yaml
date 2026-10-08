@@ -109,3 +109,4 @@ datasets:
   - CrispriArrayYunus2026Dataset
   - CrispriKnockdownYunus2026Dataset
   - CrispriDifferentialProteomeYunus2026Dataset
+  - CrispriGuideFfaEnrichmentFang2025Dataset

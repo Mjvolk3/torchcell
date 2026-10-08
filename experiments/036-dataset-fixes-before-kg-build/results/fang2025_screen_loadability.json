@@ -1,0 +1,1010 @@
+{
+  "row": 43,
+  "row_name": "Fang 2025 FFA CRISPRi-FACS",
+  "doi": "10.1038/s41467-025-58368-3",
+  "citation_key": "fangGenomescaleCRISPRiScreen2025",
+  "mirror": {
+    "doi": "10.1038/s41467-025-58368-3",
+    "title": "Genome-scale CRISPRi screen identifies pcnB repression conferring improved physiology for overproduction of free fatty acids in Escherichia coli",
+    "retrieved_si_objects": [
+      {
+        "path": "si/si1.pdf",
+        "bytes": 1304850,
+        "sha256": "97fcd38f8d1de6499927ae4ef61b85eeacea60340ddc4c07bbce834f002b6707",
+        "original_filename": "41467_2025_58368_MOESM1_ESM.pdf",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM1_ESM.pdf",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM1_ESM.pdf"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si2.pdf",
+        "bytes": 116080,
+        "sha256": "b4d5303803e404c86ac60f75203ead2a91b67a8709c751b04ed20d8444d87f81",
+        "original_filename": "41467_2025_58368_MOESM2_ESM.pdf",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM2_ESM.pdf",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM2_ESM.pdf"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si3.xlsx",
+        "bytes": 16154,
+        "sha256": "523574e4406d9f1cfcf83e200241d76fadbe4f39c0ed3017a379937b8dacc264",
+        "original_filename": "41467_2025_58368_MOESM3_ESM.xlsx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM3_ESM.xlsx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM3_ESM.xlsx"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si4.xlsx",
+        "bytes": 14399,
+        "sha256": "b7836a9ca6300960d498a8a088bef67976b648865d46e664ebffbcdb10dad40f",
+        "original_filename": "41467_2025_58368_MOESM4_ESM.xlsx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM4_ESM.xlsx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM4_ESM.xlsx"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si5.xlsx",
+        "bytes": 17133,
+        "sha256": "9fbcf594c0670a43cd50579eb4e69bb9c92ac63ecd5b93ff119d6bce9abba669",
+        "original_filename": "41467_2025_58368_MOESM5_ESM.xlsx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM5_ESM.xlsx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM5_ESM.xlsx"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si6.pdf",
+        "bytes": 3752104,
+        "sha256": "92c6fbdb579e8832e77c228badc8b1279eb5e9afe8611daf6dc6ddcde0fafa80",
+        "original_filename": "41467_2025_58368_MOESM6_ESM.pdf",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM6_ESM.pdf",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM6_ESM.pdf"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si7.pdf",
+        "bytes": 598743,
+        "sha256": "8839d7140f487e350cce819dcdcf32dd454253bb838e859337ea565bfa30282a",
+        "original_filename": "41467_2025_58368_MOESM7_ESM.pdf",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM7_ESM.pdf",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM7_ESM.pdf"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      },
+      {
+        "path": "si/si8.xlsx",
+        "bytes": 14033730,
+        "sha256": "04945e4651c05b1c6d6fa3dc057ae6bced9f370b2537068472354510d20a8a5a",
+        "original_filename": "41467_2025_58368_MOESM8_ESM.xlsx",
+        "retrieval_method": "pmc_cloud",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC11954867.1/41467_2025_58368_MOESM8_ESM.xlsx",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object",
+        "retrieval_params": {
+          "key": "PMC11954867.1/41467_2025_58368_MOESM8_ESM.xlsx"
+        },
+        "retrieved_at": "2026-10-07T11:42:29.642864+00:00"
+      }
+    ],
+    "n_retrieved_si_objects": 8
+  },
+  "publisher_deposit": {
+    "bucket_objects": [
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig1_HTML.jpg",
+        "bytes": 246110,
+        "name": "41467_2025_58368_Fig1_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig2_HTML.jpg",
+        "bytes": 239592,
+        "name": "41467_2025_58368_Fig2_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig3_HTML.jpg",
+        "bytes": 228337,
+        "name": "41467_2025_58368_Fig3_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig4_HTML.jpg",
+        "bytes": 69557,
+        "name": "41467_2025_58368_Fig4_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig5_HTML.jpg",
+        "bytes": 183304,
+        "name": "41467_2025_58368_Fig5_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig6_HTML.jpg",
+        "bytes": 158530,
+        "name": "41467_2025_58368_Fig6_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_Fig7_HTML.jpg",
+        "bytes": 65708,
+        "name": "41467_2025_58368_Fig7_HTML.jpg"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM1_ESM.pdf",
+        "bytes": 1304850,
+        "name": "41467_2025_58368_MOESM1_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM2_ESM.pdf",
+        "bytes": 116080,
+        "name": "41467_2025_58368_MOESM2_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM3_ESM.xlsx",
+        "bytes": 16154,
+        "name": "41467_2025_58368_MOESM3_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM4_ESM.xlsx",
+        "bytes": 14399,
+        "name": "41467_2025_58368_MOESM4_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM5_ESM.xlsx",
+        "bytes": 17133,
+        "name": "41467_2025_58368_MOESM5_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM6_ESM.pdf",
+        "bytes": 3752104,
+        "name": "41467_2025_58368_MOESM6_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM7_ESM.pdf",
+        "bytes": 598743,
+        "name": "41467_2025_58368_MOESM7_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM8_ESM.xlsx",
+        "bytes": 14033730,
+        "name": "41467_2025_58368_MOESM8_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/PMC11954867.1.json",
+        "bytes": 2407,
+        "name": "PMC11954867.1.json"
+      },
+      {
+        "key": "PMC11954867.1/PMC11954867.1.pdf",
+        "bytes": 1931384,
+        "name": "PMC11954867.1.pdf"
+      },
+      {
+        "key": "PMC11954867.1/PMC11954867.1.txt",
+        "bytes": 105525,
+        "name": "PMC11954867.1.txt"
+      },
+      {
+        "key": "PMC11954867.1/PMC11954867.1.xml",
+        "bytes": 207290,
+        "name": "PMC11954867.1.xml"
+      }
+    ],
+    "supplementary_objects": [
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM1_ESM.pdf",
+        "bytes": 1304850,
+        "name": "41467_2025_58368_MOESM1_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM2_ESM.pdf",
+        "bytes": 116080,
+        "name": "41467_2025_58368_MOESM2_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM3_ESM.xlsx",
+        "bytes": 16154,
+        "name": "41467_2025_58368_MOESM3_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM4_ESM.xlsx",
+        "bytes": 14399,
+        "name": "41467_2025_58368_MOESM4_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM5_ESM.xlsx",
+        "bytes": 17133,
+        "name": "41467_2025_58368_MOESM5_ESM.xlsx"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM6_ESM.pdf",
+        "bytes": 3752104,
+        "name": "41467_2025_58368_MOESM6_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM7_ESM.pdf",
+        "bytes": 598743,
+        "name": "41467_2025_58368_MOESM7_ESM.pdf"
+      },
+      {
+        "key": "PMC11954867.1/41467_2025_58368_MOESM8_ESM.xlsx",
+        "bytes": 14033730,
+        "name": "41467_2025_58368_MOESM8_ESM.xlsx"
+      }
+    ],
+    "n_supplementary_objects": 8,
+    "declared_supplementary": [
+      {
+        "id": "MOESM1",
+        "href": "41467_2025_58368_MOESM1_ESM.pdf"
+      },
+      {
+        "id": "MOESM2",
+        "href": "41467_2025_58368_MOESM2_ESM.pdf"
+      },
+      {
+        "id": "MOESM3",
+        "href": "41467_2025_58368_MOESM3_ESM.xlsx"
+      },
+      {
+        "id": "MOESM4",
+        "href": "41467_2025_58368_MOESM4_ESM.xlsx"
+      },
+      {
+        "id": "MOESM5",
+        "href": "41467_2025_58368_MOESM5_ESM.xlsx"
+      },
+      {
+        "id": "MOESM6",
+        "href": "41467_2025_58368_MOESM6_ESM.pdf"
+      },
+      {
+        "id": "MOESM7",
+        "href": "41467_2025_58368_MOESM7_ESM.pdf"
+      },
+      {
+        "id": "MOESM8",
+        "href": "41467_2025_58368_MOESM8_ESM.xlsx"
+      }
+    ],
+    "n_declared_supplementary": 8
+  },
+  "deposit_reconciliation": {
+    "published_not_mirrored": [],
+    "mirrored_not_published": [],
+    "complete": true
+  },
+  "si8_sheets": [
+    {
+      "sheet": "Figure 1",
+      "dimensions": "B1:AS55673",
+      "max_row": 55673,
+      "panels": [
+        "Figure 1b",
+        "Figure 1c",
+        "Figure 1d",
+        "Figure 1e",
+        "Figure 1f",
+        "Figure 1g"
+      ],
+      "headers": [
+        "sgRNA-ID",
+        "Reads-before soting",
+        "Reads-after sorting",
+        "sgRNA-ID",
+        "Reads",
+        "Reads (log2)",
+        "Reads (log2) in red",
+        "sgRNA-ID",
+        "Reads-transformation",
+        "Reads-before soting",
+        "Reads-after sorting",
+        "Normalized read-before soting",
+        "Normalized read-after soting",
+        "Fitness",
+        "Fitness in red",
+        "Fitness (reads<20, transformation)",
+        "Fitness (reads<20, before soting)",
+        "Fitness (reads<20, after soting)",
+        "Fitness (all)",
+        "FFAs (mg L-1)",
+        "3 h",
+        "Relative pcnB expression",
+        "FFAs (mg L-1)"
+      ],
+      "per_guide": true,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure 2",
+      "dimensions": "B1:AI117",
+      "max_row": 117,
+      "panels": [
+        "Figure 2b"
+      ],
+      "headers": [
+        "Transcript",
+        "gadA",
+        "gadB",
+        "glmS",
+        "glsA",
+        "pyrI",
+        "pyrB",
+        "carB",
+        "alaA",
+        "nadB",
+        "asnA",
+        "gltB",
+        "purF",
+        "asnB",
+        "gadX",
+        "gadE",
+        "gadC"
+      ],
+      "per_guide": false,
+      "per_strain": false,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure 3",
+      "dimensions": "B1:M23",
+      "max_row": 23,
+      "panels": [
+        "Figure 3c"
+      ],
+      "headers": [
+        "OD1",
+        "OD2",
+        "Cell surface hydrophobicity (%)= (OD1-OD2)/OD1*100"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure 4",
+      "dimensions": "B2:H17",
+      "max_row": 17,
+      "panels": [],
+      "headers": [
+        "FFAs (mg L-1)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure 5",
+      "dimensions": "B1:AJ55673",
+      "max_row": 55673,
+      "panels": [
+        "Figure 5a",
+        "Figure 5b",
+        "Figure 5c",
+        "Figure 5d",
+        "Figure 5e"
+      ],
+      "headers": [
+        "sgRNA-ID",
+        "Reads-before soting",
+        "Reads-after sorting",
+        "sgRNA-ID",
+        "Reads-sor",
+        "Reads (log2)",
+        "Reads (log2) in red",
+        "sgRNA-ID",
+        "Reads-before soting",
+        "Reads-after sorting",
+        "Normalized read-before soting",
+        "Normalized read-after soting",
+        "Fitness",
+        "Fitness in red",
+        "Fitness (reads<20, before soting)",
+        "Fitness (reads<20, after soting)",
+        "Fitness (all)",
+        "FFAs (mg L-1)",
+        "pcnB",
+        "Relative gene expression"
+      ],
+      "per_guide": true,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure 6",
+      "dimensions": "B1:G22",
+      "max_row": 22,
+      "panels": [
+        "Figure 6b"
+      ],
+      "headers": [
+        "Intracellular FFAs (%)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure 7",
+      "dimensions": "B1:I21",
+      "max_row": 21,
+      "panels": [
+        "Figure 7a"
+      ],
+      "headers": [
+        "FFAs (mg L-1)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure S1",
+      "dimensions": "B2:I50",
+      "max_row": 50,
+      "panels": [],
+      "headers": [
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S2",
+      "dimensions": "B2:L10",
+      "max_row": 10,
+      "panels": [],
+      "headers": [
+        "Relative pcnB expression",
+        "FFAs (mg L-1)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure S3",
+      "dimensions": "B2:N9",
+      "max_row": 9,
+      "panels": [],
+      "headers": [
+        "FFAs (mg L-1)",
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure S4",
+      "dimensions": "B1:G24",
+      "max_row": 24,
+      "panels": [
+        "Figure S4a"
+      ],
+      "headers": [
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S5",
+      "dimensions": "B1:N4124",
+      "max_row": 4124,
+      "panels": [
+        "Figure S5a",
+        "Figure S5b"
+      ],
+      "headers": [
+        "pcnBi / CF",
+        "q-value",
+        "pcnBi / CF",
+        "p-value"
+      ],
+      "per_guide": false,
+      "per_strain": false,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S6",
+      "dimensions": "B1:E17",
+      "max_row": 17,
+      "panels": [
+        "Figure S6a"
+      ],
+      "headers": [
+        "KEGG Pathway Term Description",
+        "Rich Ratio",
+        "Q value",
+        "Term Candidate Gene Number"
+      ],
+      "per_guide": false,
+      "per_strain": false,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S7",
+      "dimensions": "B1:E22",
+      "max_row": 22,
+      "panels": [
+        "Figure S7a"
+      ],
+      "headers": [
+        "KEGG Pathway Term Description",
+        "Rich Ratio",
+        "Q value",
+        "Term Candidate Gene Number"
+      ],
+      "per_guide": false,
+      "per_strain": false,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S8",
+      "dimensions": "B2:Z12",
+      "max_row": 12,
+      "panels": [],
+      "headers": [
+        "Half-life of gadB (min)",
+        "Half-life of gadC (min)",
+        "Half-life of glsA (min)",
+        "Half-life of dxs (min)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S9",
+      "dimensions": "B2:L9",
+      "max_row": 9,
+      "panels": [],
+      "headers": [
+        "FFAs (mg L-1)",
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure S10",
+      "dimensions": "B2:I5",
+      "max_row": 5,
+      "panels": [],
+      "headers": [
+        "Acetate (mg L-1)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S11",
+      "dimensions": "B2:H17",
+      "max_row": 17,
+      "panels": [],
+      "headers": [
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S12",
+      "dimensions": "B2:G8",
+      "max_row": 8,
+      "panels": [],
+      "headers": [
+        "FFAs (mg L-1)"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": true
+    },
+    {
+      "sheet": "Figure S13",
+      "dimensions": "B1:N40",
+      "max_row": 40,
+      "panels": [
+        "Figure S13a",
+        "Figure S13b"
+      ],
+      "headers": [
+        "OD600",
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    },
+    {
+      "sheet": "Figure S14",
+      "dimensions": "B2:G6",
+      "max_row": 6,
+      "panels": [],
+      "headers": [
+        "OD600"
+      ],
+      "per_guide": false,
+      "per_strain": true,
+      "carries_titer_header": false
+    }
+  ],
+  "rounds": [
+    {
+      "round_id": "round_1_cf",
+      "sheet": "Figure 1",
+      "panel": "Figure 1d",
+      "host_strain": "CF",
+      "libraries": [
+        "after_sorting",
+        "before_sorting",
+        "transformation"
+      ],
+      "total_reads": {
+        "transformation": 19369813,
+        "before_sorting": 19069930,
+        "after_sorting": 20235260
+      },
+      "source_rows": 55671,
+      "distinct_guide_ids": 55671,
+      "max_equation_1_error": 0.0,
+      "max_equation_2_error": 1.7763568394002505e-15,
+      "floor_cross_tab": {
+        "passes=False,fitness_populated=False": 40291,
+        "passes=True,fitness_populated=True": 15380
+      },
+      "floor_explains_fitness_column": true,
+      "n_kept": 15380,
+      "n_dropped": 40291,
+      "kept_min": -7.729755875909553,
+      "kept_max": 6.8223483723941,
+      "kept_negative": 14887,
+      "kept_nonpositive": 14887,
+      "excluded_partition": {
+        "none": 15380,
+        "after_sorting": 38379,
+        "before_sorting": 135,
+        "transformation": 1777
+      }
+    },
+    {
+      "round_id": "round_2_pcnbi",
+      "sheet": "Figure 5",
+      "panel": "Figure 5c",
+      "host_strain": "pcnBi",
+      "libraries": [
+        "after_sorting",
+        "before_sorting"
+      ],
+      "total_reads": {
+        "before_sorting": 5032894,
+        "after_sorting": 6474695
+      },
+      "source_rows": 55671,
+      "distinct_guide_ids": 55671,
+      "max_equation_1_error": 0.0,
+      "max_equation_2_error": 1.7763568394002505e-15,
+      "floor_cross_tab": {
+        "passes=False,fitness_populated=False": 55340,
+        "passes=True,fitness_populated=True": 331
+      },
+      "floor_explains_fitness_column": true,
+      "n_kept": 331,
+      "n_dropped": 55340,
+      "kept_min": -6.647216987217181,
+      "kept_max": 11.301100320582364,
+      "kept_negative": 284,
+      "kept_nonpositive": 284,
+      "excluded_partition": {
+        "none": 331,
+        "after_sorting": 55334,
+        "before_sorting": 6
+      }
+    }
+  ],
+  "subsumption": {
+    "wang_library_path": "/scratch/projects/torchcell-scratch/torchcell-raw/wangPooledCRISPRInterference2018/si/si_data/41467_2018_4899_MOESM6_ESM.xlsx",
+    "wang_library_sha256": "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62",
+    "wang_library_rows": 56071,
+    "wang_targeting_guides": 55671,
+    "wang_non_targeting_controls": 400,
+    "fang_rounds_screen_identical_sets": true,
+    "fang_union_guides": 55671,
+    "fang_equals_wang_targeting_library": true,
+    "in_fang_not_in_wang": [],
+    "n_in_fang_not_in_wang": 0,
+    "in_wang_targeting_not_in_fang": [],
+    "n_in_wang_targeting_not_in_fang": 0,
+    "fang_releases_non_targeting_controls": 0,
+    "served_wang_screen_ids": [
+      "essentiality",
+      "auxotrophy",
+      "trp_biosynthesis",
+      "furfural_tolerance",
+      "isobutanol_tolerance"
+    ],
+    "fang_round_ids": [
+      "round_1_cf",
+      "round_2_pcnbi"
+    ],
+    "phenotype_collides_with_a_served_screen": false
+  },
+  "titer_blocks": {
+    "titer_header": "FFAs (mg L-1)",
+    "n_blocks": 13,
+    "blocks": [
+      {
+        "sheet": "Figure 1",
+        "header_cell": "Y2",
+        "n_labelled_rows": 47,
+        "labels": [
+          "CF",
+          "gyrA_9",
+          "gyrA_103",
+          "gyrA_127",
+          "gyrA_407",
+          "gyrA_1315",
+          "gyrA_1604",
+          "gyrB_20",
+          "gyrB_470",
+          "gyrB_1415",
+          "hisQ_516",
+          "paaG_218",
+          "pcnB_27",
+          "pcnB_591",
+          "pcnB_829",
+          "sucA_23",
+          "ygcU_1142",
+          "bsmA_138",
+          "fhuA_11",
+          "fhuA_260",
+          "ldcC_25",
+          "pcnB_956",
+          "pcnB_1214",
+          "pcnB_1339",
+          "rcbA_131",
+          "rng_793",
+          "rsmC_16",
+          "sbmC_130",
+          "xdhB_379",
+          "ybiI_139"
+        ]
+      },
+      {
+        "sheet": "Figure 1",
+        "header_cell": "AO2",
+        "n_labelled_rows": 12,
+        "labels": [
+          "pcnB_27",
+          "pcnB_591",
+          "pcnB_829",
+          "pcnB_956",
+          "pcnB_1214",
+          "pcnB_1339",
+          "folK_38",
+          "folK_188",
+          "folK_400",
+          "Figure 1h",
+          "pcnB_956",
+          "pcnBi"
+        ]
+      },
+      {
+        "sheet": "Figure 1",
+        "header_cell": "AO15",
+        "n_labelled_rows": 2,
+        "labels": [
+          "pcnB_956",
+          "pcnBi"
+        ]
+      },
+      {
+        "sheet": "Figure 4",
+        "header_cell": "D2",
+        "n_labelled_rows": 14,
+        "labels": [
+          "CF",
+          "pcnBi",
+          "JM-CF",
+          "JM-pcnBi",
+          "AD-CF",
+          "AD-pcnBi",
+          "BL-CF",
+          "BL-pcnBi",
+          "OB-CF",
+          "OB-pcnBi",
+          "CF",
+          "pcnBi",
+          "JM-CF",
+          "JM-pcnBi"
+        ]
+      },
+      {
+        "sheet": "Figure 5",
+        "header_cell": "W2",
+        "n_labelled_rows": 37,
+        "labels": [
+          "pcnBi",
+          "pcnBi-acrD_2252",
+          "pcnBi-evgS_521",
+          "pcnBi-lacZ_26",
+          "pcnBi-rhmR_725",
+          "pcnBi-ydgA_337",
+          "pcnBi-artJ_219",
+          "pcnBi-elbB_274",
+          "pcnBi-galE_615",
+          "pcnBi-ymfE_133",
+          "pcnBi-yegE_39",
+          "pcnBi-yedF_51",
+          "pcnBi-eutG_762",
+          "pcnBi-creB_172",
+          "pcnBi-yfdN_333",
+          "pcnBi-yhaB_426",
+          "pcnBi-yibB_310",
+          "pcnBi-ydjA_130",
+          "pcnBi-caiF_331",
+          "pcnBi-ugpA_189",
+          "pcnBi-yebB_345",
+          "pcnBi-dppC_689",
+          "pcnBi-dusA_480",
+          "pcnBi-yifL_106",
+          "pcnBi-ybjH_204",
+          "pcnBi-yecM_448",
+          "pcnBi-phnO_132",
+          "pcnBi-pcnB_956",
+          "pcnBi-ynfH_221",
+          "pcnBi-yccM_61"
+        ]
+      },
+      {
+        "sheet": "Figure 5",
+        "header_cell": "AF13",
+        "n_labelled_rows": 7,
+        "labels": [
+          "pcnBi",
+          "pcnBi-acrD_71",
+          "pcnBi-acrD_137",
+          "pcnBi-acrD_738",
+          "Figure 5g",
+          "pcnBi-acrD_2252",
+          "pcnBi-acrDi"
+        ]
+      },
+      {
+        "sheet": "Figure 5",
+        "header_cell": "AF21",
+        "n_labelled_rows": 2,
+        "labels": [
+          "pcnBi-acrD_2252",
+          "pcnBi-acrDi"
+        ]
+      },
+      {
+        "sheet": "Figure 6",
+        "header_cell": "C17",
+        "n_labelled_rows": 4,
+        "labels": [
+          "CF",
+          "acrDi",
+          "pcnBi",
+          "pcnBi-acrDi"
+        ]
+      },
+      {
+        "sheet": "Figure 7",
+        "header_cell": "C2",
+        "n_labelled_rows": 17,
+        "labels": [
+          "pcnBi-acrDi",
+          "pcnBi-acrDi-fadR+",
+          "pcnBi-acrDi-fadRT7",
+          "Figure 7b",
+          "Time (h)",
+          "0",
+          "3.75",
+          "11.65",
+          "14.84",
+          "17.78",
+          "21.93",
+          "24.78",
+          "27.78",
+          "34.77",
+          "38.73",
+          "41.7",
+          "44.7"
+        ]
+      },
+      {
+        "sheet": "Figure S2",
+        "header_cell": "H2",
+        "n_labelled_rows": 8,
+        "labels": [
+          "SD",
+          "0.0022772674414745383",
+          "0.0009945352348375268",
+          "0.018351453239457707",
+          "0.0030568533385383944",
+          "0.03877267888604036",
+          "0.04949407425473609",
+          "0.14865640383896467"
+        ]
+      },
+      {
+        "sheet": "Figure S3",
+        "header_cell": "C2",
+        "n_labelled_rows": 4,
+        "labels": [
+          "CF",
+          "pcnB-",
+          "pcnBmE",
+          "pcnBmN"
+        ]
+      },
+      {
+        "sheet": "Figure S9",
+        "header_cell": "C2",
+        "n_labelled_rows": 6,
+        "labels": [
+          "CF",
+          "pcnBi",
+          "pcnB-",
+          "CF-",
+          "pcnBiF-",
+          "pcnB-F-"
+        ]
+      },
+      {
+        "sheet": "Figure S12",
+        "header_cell": "C2",
+        "n_labelled_rows": 5,
+        "labels": [
+          "pcnBi",
+          "pcnBi-gyrA_103",
+          "pcnBi-pcnB_27",
+          "pcnBi-ygcU_1142",
+          "pcnBi-hemX_50"
+        ]
+      }
+    ],
+    "total_labelled_rows": 165
+  },
+  "quotes": {
+    "read_floor": "sgRNAs with fewer than 20 reads in each library were excluded from the analysis to calculate sgRNA fitness.",
+    "library_provenance": "a previously published plasmid library containing 55,671 sgRNAs20 was transformed into E. coli strain CF (an MG1655 (DE3) derivative with fadE deletion) carrying the pCF plasmid for expression of dCas9 and the truncated fatty acyl-ACP thioesterase TesA\u2032",
+    "library_reference": "20. Wang, T. et al. Pooled CRISPR interference screening enables genome-scale functional genomics study in bacteria with superior performance. Nat. Commun. 9, 2475 (2018).",
+    "sort_only": "Thus, fitness reflects the relative abundance of each sgRNA due solely to sorting, helping to minimize data noise from cultivation.",
+    "geo_accession": "The NGS data generated in this study have been deposited in the NCBI GEO database under accession code GSE267827."
+  },
+  "geo_accession": "GSE267827",
+  "n_kept_total": 15711,
+  "blocking_claim_still_true": false
+}

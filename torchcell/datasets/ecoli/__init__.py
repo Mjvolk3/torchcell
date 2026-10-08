@@ -61,6 +61,9 @@ sourcing layer.
   its own batches in the integrated S1 Dataset matrix.
 - ``tong2020`` -- ``CarbonSourceTong2020Dataset``: Keio and sRNA-library deletion growth
   on thirty carbon sources, against two assembly pins.
+- ``fang2025`` -- ``CrispriGuideFfaEnrichmentFang2025Dataset``: the two-round
+  CRISPRi-FACS free-fatty-acid enrichment screen over the SAME 55,671-guide library
+  ``wang2018`` serves, 15,708 records.
 - ``wang2018`` -- ``CrispriGuideFitnessWang2018Dataset``: the genome-scale pooled CRISPRi
   library, one signed log2 fitness per (guide, screen) over five screens.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
@@ -136,6 +139,9 @@ from .choe2019_growth_rate import (
 )
 from .choe2025 import CrispriChemgenChoe2025Dataset as CrispriChemgenChoe2025Dataset
 from .cui2018 import CrispriKnockdownCui2018Dataset as CrispriKnockdownCui2018Dataset
+from .fang2025 import (
+    CrispriGuideFfaEnrichmentFang2025Dataset as CrispriGuideFfaEnrichmentFang2025Dataset,
+)
 from .foo2014 import IsopentenolTiterFoo2014Dataset as IsopentenolTiterFoo2014Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
 from .girgis2009 import EnvChemgenGirgis2009Dataset as EnvChemgenGirgis2009Dataset

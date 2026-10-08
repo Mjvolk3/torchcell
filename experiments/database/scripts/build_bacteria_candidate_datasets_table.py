@@ -1496,16 +1496,40 @@ CANDIDATES: list[Candidate] = [
         dim_basis="estimate",
         seq_basis="K-12+guide",
         modality="CRISPRi",
-        why="The screen reuses a previously published plasmid library of 55671 "
-        "sgRNAs, sorted with a fluorescent free-fatty-acid biosensor and read "
-        "out by NGS; the engineered pcnBi-acrDi-fadR+ strain reached 35.1 g/L "
-        "FFAs in fed-batch. Pooled enrichment gives a guide-level score "
-        "rather than a per-design titer, so only the handful of individually "
-        "reconstructed strains carry phenotype values; no sequencing "
-        "accession was confirmed.",
-        accession="https://www.nature.com/articles/s41467-025-58368-3",
-        accession_confirmed=False,
-        status="blocked",
+        why="LOADED 2026-10-08 as CrispriGuideFfaEnrichmentFang2025Dataset; the block "
+        "was STALE on both of its grounds, measured by "
+        "experiments/036-dataset-fixes-before-kg-build/scripts/"
+        "fang2025_screen_loadability.py. The per-guide scores ARE released: "
+        "Supplementary Data 6 (si8.xlsx, sha256 04945e4651c05b1c) holds 55,671 rows in "
+        "each of two sheets, one per screening round, with each guide's read counts "
+        "before and after sorting, its normalized reads and its signed fitness. The "
+        "Methods equations reproduce from those bytes, equation (1) exactly and "
+        "equation (2) to 1.8e-15, and the authors' own floor, ``sgRNAs with fewer than "
+        "20 reads in each library were excluded``, reproduces the released qualified "
+        "Fitness column with ZERO disagreement in both rounds: 15,380 rows in round 1 "
+        "and 331 in round 2. Three accessions are stated verbatim, GSE267827 for the "
+        "screen reads, GSE267710 for the transcriptome and PXD052390 for the proteome, "
+        "and all eight publisher supplementary objects are mirrored with a pmc_cloud "
+        "retrieval that reproduced its pin on 2026-10-08. The library is Wang 2018's, "
+        "measured id for id: the 55,671 screened ids are EXACTLY that dataset's 55,671 "
+        "targeting guides, zero in one and not the other, and none of its 400 "
+        "non-targeting controls is released; independently, all 174 short-form primer "
+        "names of Supplementary Data 3 carry the Wang spacer of their long-form id or "
+        "its exact reverse complement, 174 of 174, which is what resolves ``pcnB_956`` "
+        "to ``pcnBb0143_956`` and gives round 2's constant background knockdown a "
+        "released spacer. NOT SUBSUMED: Wang 2018's five screens are essentiality, "
+        "auxotrophy, Trp biosynthesis and two chemical tolerances, so this is a new "
+        "phenotype on known strains. The build keeps 15,708 records over 16,187 "
+        "knockdowns and 2,628 genes, dropping the 95,631 rows below the read floor and "
+        "3 rows whose only target is a retired b-number. A SECOND release is measured "
+        "and deliberately NOT loaded: 13 ``FFAs (mg L-1)`` blocks over 165 labelled "
+        "rows, three replicates and an SD each, with the CF control's 746.8201 mg/L "
+        "mean as a released reference titer, because pcnBi-acrDi-fadR+ carries a "
+        "P_BAD-driven fadR OVEREXPRESSION that no bacterial gene-perturbation leaf "
+        "types.",
+        accession="NCBI GEO GSE267827 (screen reads), GSE267710 (transcriptome), ProteomeXchange PXD052390 (proteome); Supplementary Data 1-6 via PMC11954867, all eight objects mirrored by pmc_cloud and re-verified 2026-10-08",
+        accession_confirmed=True,
+        status="candidate",
         confidence="sourced",
         analog=Analog(
             dataset="Xue 2025 free fatty acids",

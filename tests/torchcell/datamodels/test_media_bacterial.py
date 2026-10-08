@@ -258,7 +258,7 @@ def test_m9_is_the_four_salts_and_every_m9_formulation_derives_from_it() -> None
     m9_family = [
         key for key in BACTERIAL_KEYS if MEDIA_LIBRARY[key].base_medium == "M9"
     ]
-    assert len(m9_family) == 17
+    assert len(m9_family) == 18
     assert oc.media_derivation_issues() == []
 
 

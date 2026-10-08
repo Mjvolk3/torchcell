@@ -48193,6 +48193,19 @@
     },
     {
       "chebi_id": null,
+      "inchikey": "DGLRDKLJZLEJCY-UHFFFAOYSA-L",
+      "name": "disodium hydrogen phosphate dodecahydrate",
+      "pubchem_cid": 61456,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-08",
+      "smiles": "O.O.O.O.O.O.O.O.O.O.O.O.OP(=O)([O-])[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/sodium%20phosphate%20dibasic%20dodecahydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
       "inchikey": "PYLIXCKOHOHGKQ-UHFFFAOYSA-L",
       "name": "disodium hydrogen phosphate heptahydrate",
       "pubchem_cid": 6096963,

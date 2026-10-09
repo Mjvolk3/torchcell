@@ -5,8 +5,10 @@
 
 Synthetic tests (run everywhere) build all five workbooks in ``tmp_path``. The hermetic
 build uses the real ``EcoliK12MG1655Genome`` over a synthetic MG1655 assembly derived
-from ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, with ``b0099`` added as
-a ``gene_synonym`` of ``b0005`` ``proB`` so the remap rule has something to catch, served
+from ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, with two synonyms added
+so both branches of the remap are exercised: ``b0099`` on ``b0005`` ``proB`` alone (one
+carrier, so the ``locus_tag_synonym`` route describes it) and ``b0098`` on BOTH ``b0006``
+``proC`` and the pseudogene ``b0004`` ``yaaP`` (two carriers, so no route does). Served
 through a stubbed ``resolve`` with the network refused. ``verify_raw_files`` is replaced
 by a presence check (the synthetic files cannot carry the real pins; the pins are
 asserted by the refusal test and by the data-gated tests). The synthetic screen:
@@ -14,11 +16,15 @@ asserted by the refusal test and by the data-gated tests). The synthetic screen:
     strain   b-number   outcome
     thrL     b0001      kept
     thrA     b0002      kept
-    ghostG   b0099      dropped: a gene_synonym of b0005, so the record would store
-                        another locus and no DerivedIdentifierRoute describes that
+    ghostG   b0099      kept: the annotation lists b0099 as a gene_synonym of exactly
+                        one locus, b0005, so the record stores b0005 with a
+                        locus_tag_synonym DerivedIdentifierMapping
     oddS     b0000      dropped: no assigned target and no Table S1 sgRNA
     ctrl1    b0000      the reference
     ctrl2    b0000      the reference
+
+``b0098`` is released by no strain of the screen; the records it would make are built
+directly in the ``resolve_strains`` tests, so the remap drop rule keeps a case.
 
 Three Table S9 metabolites in two adducts each give six features, one of which is empty
 in every column (so the all-or-nothing rule and the empty-row count are exercised), and
@@ -58,7 +64,10 @@ from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     SmallMoleculePerturbation,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
+from torchcell.datasets.bacteria_common import (
+    LOCUS_TAG_PATTERNS,
+    LocusTagResolutionError,
+)
 from torchcell.literature.manifest import RetrievalMethod, RetrievalRecord
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
 from torchcell.verification.sourced import audit_sourced_value
@@ -66,10 +75,16 @@ from torchcell.verification.sourced import audit_sourced_value
 # --------------------------------------------------------------------------- #
 # The synthetic screen
 # --------------------------------------------------------------------------- #
-#: ``b0099`` as a ``gene_synonym`` of ``b0005`` is what the remap rule catches.
+#: ``b0099`` on ``b0005`` alone is the recoverable ``locus_tag_synonym`` case; ``b0098``
+#: on both ``b0006`` and the pseudogene ``b0004`` is the case no route describes.
+_EXTRA_SYNONYMS = {
+    "b0004": ("ECK0004", "b0098"),
+    "b0005": ("ECK0005", "b0099"),
+    "b0006": ("ECK0006", "Pro2", "b0098"),
+}
 SYNTHETIC_LOCI = [
-    locus.model_copy(update={"synonyms": ("ECK0005", "b0099")})
-    if locus.tag == "b0005"
+    locus.model_copy(update={"synonyms": _EXTRA_SYNONYMS[locus.tag]})
+    if locus.tag in _EXTRA_SYNONYMS
     else locus
     for locus in MG1655_LOCI
 ]
@@ -663,7 +678,12 @@ def test_metabolite_phenotype_stores_the_mean_its_se_and_the_known_identities() 
     assert phenotype.measurement_type == (
         "fi_ms_iml1515_feature_fold_change_vs_batch_median_mean_of_2_plates"
     )
-    assert phenotype.provenance_gaps == []
+    (gap,) = phenotype.provenance_gaps
+    assert gap.field == "target_metabolite_ids"
+    assert gap.reason == "not_reported_by_primary"
+    assert gap.keys == ("ac-gcald[M-H]-",)
+    assert gap.looked_in == m.TABLE_S9_PROVENANCE
+    assert gap.note == m.METABOLITE_IDENTITY_GAP_NOTE
     with pytest.raises(ValueError, match="2 keys for 1 replicate lists"):
         m.metabolite_phenotype(["a", "b"], [[1.0, 1.0]], {})
 
@@ -770,27 +790,41 @@ def test_environment_is_the_induced_m9_glucose_culture() -> None:
 # --------------------------------------------------------------------------- #
 # Hermetic build
 # --------------------------------------------------------------------------- #
-def test_build_two_records_with_the_control_reference_and_ledgers(
+def test_build_three_records_with_the_control_reference_and_ledgers(
     synthetic: Path,
     mg1655: EcoliK12MG1655Genome,
     presence_only_pins: list[Mapping[str, str]],
 ) -> None:
-    """The thrA and thrL strains are kept, in that (gene-sorted) order.
+    """ghostG, thrA and thrL are kept, in that (gene-sorted) order.
 
-    ghostG's b0099 is a b0005 synonym and oddS has no assigned target, both ledgered;
-    the two ctrl strains are the reference.
+    ghostG's b0099 is a b0005 synonym with ONE carrier, so it is kept on a
+    ``locus_tag_synonym`` mapping; oddS has no assigned target and is ledgered; the two
+    ctrl strains are the reference.
     """
     dataset = m.MetabolomeRapp2026Dataset(root=str(synthetic), ecoli_genome=mg1655)
     assert presence_only_pins == [
         {name: m.DATA_SHA256[name] for name in dataset.raw_file_names}
     ]
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     keys = ["ppal[M+H]+", "ppal[M-H]-", "ac-gcald[M+H]+", "didp[M+H]+", "didp[M-H]-"]
 
-    first = dataset[0]["experiment"]
+    recovered = dataset[0]["experiment"]
+    (mapped,) = recovered["genotype"]["perturbations"]
+    assert mapped["systematic_gene_name"] == "b0005"
+    assert mapped["perturbed_gene_name"] == "proB"
+    assert mapped["identifier_mapping"] == {
+        "source_identifier": "b0099",
+        "route": "locus_tag_synonym",
+    }
+    assert recovered["phenotype"]["metabolite_level"] == {
+        key: expected_level("ghostG", key) for key in keys
+    }
+
+    first = dataset[1]["experiment"]
     (perturbation,) = first["genotype"]["perturbations"]
     assert perturbation["systematic_gene_name"] == "b0002"
     assert perturbation["perturbed_gene_name"] == "thrA"
+    assert perturbation["identifier_mapping"] is None
     assert perturbation["crispr"]["guide_sequence"] == "TTTTCCCCGGGGAAAATTTT"
     assert first["phenotype"]["metabolite_level"] == {
         key: expected_level("thrA", key) for key in keys
@@ -802,9 +836,16 @@ def test_build_two_records_with_the_control_reference_and_ledgers(
         "didp[M+H]+": "didp",
         "didp[M-H]-": "didp",
     }
+    (gap,) = first["phenotype"]["provenance_gaps"]
+    assert gap["field"] == "target_metabolite_ids"
+    assert gap["reason"] == "not_reported_by_primary"
+    assert gap["keys"] == ("ac-gcald[M+H]+",)
+    assert gap["looked_in"] == m.TABLE_S9_PROVENANCE.model_dump()
+    assert gap["resolve_with"] is None
+    assert gap["note"] == m.METABOLITE_IDENTITY_GAP_NOTE
     assert first["environment"] == m.environment().model_dump()
 
-    second = dataset[1]["experiment"]
+    second = dataset[2]["experiment"]
     assert second["genotype"]["perturbations"][0]["systematic_gene_name"] == "b0001"
     assert second["phenotype"]["metabolite_level"] == {
         key: expected_level("thrL", key) for key in keys
@@ -829,20 +870,14 @@ def test_build_two_records_with_the_control_reference_and_ledgers(
         drops["source_records"],
         drops["kept_records"],
         drops["dropped_records"],
-    ) == (6, 4, 2, 2)
+    ) == (6, 4, 3, 1)
     assert drops["reference_tokens"] == ["ctrl1", "ctrl2"]
     assert [(rule["rule"], rule["items"]) for rule in drops["rules"]] == [
         (
             "no_target_gene_assigned",
             ["oddS (b0000, plate 2 well C5): no Table S1 sgRNA"],
         ),
-        (
-            "b_number_remapped_by_the_annotation",
-            [
-                "ghostG (b0099): the annotation carries it as a gene synonym of "
-                "current gene b0005, so the record would store b0005"
-            ],
-        ),
+        ("b_number_remapped_by_the_annotation", []),
     ]
     identity = json.loads((preprocess / "metabolite_identity.json").read_text())
     assert (identity["n_features"], identity["n_single_identity"]) == (5, 4)
@@ -856,14 +891,20 @@ def test_build_two_records_with_the_control_reference_and_ledgers(
     assert crosscheck["max_abs_difference"] == 0.0
     strains = (preprocess / "strains.csv").read_text().splitlines()
     assert strains[0] == (
-        "record,gene,b_number,locus_tag,symbol,sgrna_id,spacer,plate,well,batch,"
-        "optical_density"
+        "record,gene,b_number,locus_tag,symbol,identifier_route,sgrna_id,spacer,plate,"
+        "well,batch,optical_density"
     )
     assert strains[1] == (
-        "0,thrA,b0002,b0002,thrA,thrA #2,TTTTCCCCGGGGAAAATTTT,1,A3,1,0.600000; 0.700000"
+        "0,ghostG,b0099,b0005,proB,locus_tag_synonym,ghostG #1,"
+        "CCCCTTTTAAAAGGGGCCCC,2,B4,1,0.600000; 0.700000"
     )
     assert strains[2] == (
-        "1,thrL,b0001,b0001,thrL,thrL #1,ACGTACGTACGTACGTACGT,1,A2,1,0.600000; 0.700000"
+        "1,thrA,b0002,b0002,thrA,,thrA #2,TTTTCCCCGGGGAAAATTTT,1,A3,1,"
+        "0.600000; 0.700000"
+    )
+    assert strains[3] == (
+        "2,thrL,b0001,b0001,thrL,,thrL #1,ACGTACGTACGTACGTACGT,1,A2,1,"
+        "0.600000; 0.700000"
     )
     metabolites = (preprocess / "metabolites.csv").read_text().splitlines()
     assert metabolites[1].startswith("ppal[M+H]+,ppal,[M+H]+,")
@@ -871,6 +912,10 @@ def test_build_two_records_with_the_control_reference_and_ledgers(
     ledger = json.loads((preprocess / "identifier_reconciliation.json").read_text())
     assert ledger["reconciliation"]["unique_names"] == 3
     assert ledger["min_resolved_fraction"] == m.MIN_RESOLVED_FRACTION
+    assert ledger["locus_tag_synonyms"] == [
+        "ghostG (b0099): the annotation carries it as a gene synonym of current gene "
+        "b0005, so the record stores b0005 with route locus_tag_synonym"
+    ]
 
 
 def test_build_stops_below_the_resolution_threshold(
@@ -1100,8 +1145,9 @@ def test_real_sourced_values_are_verbatim(key: str) -> None:
 
 @pytest.mark.data
 def test_real_build_counts_and_two_hand_checked_records() -> None:
-    """1,496 records (1,513 strain tokens - 15 controls - argR - phnE); aaeA and the
-    paper's IspB frdp accumulation are read off ``si5.xlsx`` independently.
+    """1,497 records (1,513 strain tokens - 15 controls - argR); aaeA and the paper's
+    IspB frdp accumulation are read off ``si5.xlsx`` independently, and ``phnE`` is the
+    one record stored on a ``locus_tag_synonym`` mapping.
     """
     from torchcell.verification.runners import load_records
 
@@ -1111,11 +1157,18 @@ def test_real_build_counts_and_two_hand_checked_records() -> None:
     assert (drops["strain_tokens"], drops["source_records"], drops["kept_records"]) == (
         1513,
         1498,
-        1496,
+        1497,
     )
     assert [(rule["rule"], rule["n_records"]) for rule in drops["rules"]] == [
         ("no_target_gene_assigned", 1),
-        ("b_number_remapped_by_the_annotation", 1),
+        ("b_number_remapped_by_the_annotation", 0),
+    ]
+    identifiers = json.loads(
+        Path(_built_root(), "preprocess", "identifier_reconciliation.json").read_text()
+    )
+    assert identifiers["locus_tag_synonyms"] == [
+        "phnE (b4104): the annotation carries it as a gene synonym of pseudogene b4583 "
+        "(not a gene feature), so the record stores b4583 with route locus_tag_synonym"
     ]
     identity = json.loads(
         Path(_built_root(), "preprocess", "metabolite_identity.json").read_text()
@@ -1132,7 +1185,7 @@ def test_real_build_counts_and_two_hand_checked_records() -> None:
     assert (crosscheck["n_pairs"], crosscheck["max_abs_difference"]) == (1385, 0.0)
 
     records = load_records(_built_root())
-    assert len(records) == 1496
+    assert len(records) == 1497
     by_gene = {
         record["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]: (
             record
@@ -1152,6 +1205,12 @@ def test_real_build_counts_and_two_hand_checked_records() -> None:
         assert len(phenotype["metabolite_level"]) == 1321
         assert set(phenotype["n_replicates"].values()) == {2}
         assert len(phenotype["target_metabolite_ids"]) == 1077
+        (gap,) = phenotype["provenance_gaps"]
+        assert gap["field"] == "target_metabolite_ids"
+        assert gap["reason"] == "not_reported_by_primary"
+        assert len(gap["keys"]) == 244
+        assert set(gap["keys"]).isdisjoint(phenotype["target_metabolite_ids"])
+        assert len(set(gap["keys"]) | set(phenotype["target_metabolite_ids"])) == 1321
         for key, (level, se) in expected.items():
             assert phenotype["metabolite_level"][key] == pytest.approx(level)
             assert phenotype["metabolite_level_se"][key] == pytest.approx(se)
@@ -1336,6 +1395,142 @@ def test_resolve_strains_refuses_a_target_with_no_sgrna(
     )
     with pytest.raises(ValueError, match="'thrA' has b-number b0002 but no Table S1"):
         m.MetabolomeRapp2026Dataset(root=str(synthetic), ecoli_genome=mg1655)
+
+
+def test_locus_tag_synonym_mapping_reads_the_annotation_s_own_synonym_lists(
+    mg1655: EcoliK12MG1655Genome,
+) -> None:
+    """Every condition of the route is checked against the annotation, not assumed."""
+    pattern = LOCUS_TAG_PATTERNS["ecoli_k12_mg1655_bnumber"]
+    recovered = m.locus_tag_synonym_mapping(mg1655, "b0099", "b0005", pattern)
+    assert recovered is not None
+    assert recovered.model_dump() == {
+        "source_identifier": "b0099",
+        "route": "locus_tag_synonym",
+    }
+    # b0098 is listed by TWO loci (the pseudogene b0004 and the gene b0006), so the
+    # route is ambiguous even though resolve_gene_name picks the single gene.
+    assert mg1655.resolve_gene_name("b0098").systematic_name == "b0006"
+    assert m.locus_tag_synonym_mapping(mg1655, "b0098", "b0006", pattern) is None
+    # b0001 is a locus tag of this annotation, so nothing was retired.
+    assert m.locus_tag_synonym_mapping(mg1655, "b0001", "b0005", pattern) is None
+    # ECK0005 is a synonym of b0005 but not a tag of the namespace (a gene_symbol or an
+    # eck_crosswalk route, never this one).
+    assert m.locus_tag_synonym_mapping(mg1655, "ECK0005", "b0005", pattern) is None
+    # b0099's one carrier is b0005, so storing any other locus is not this route.
+    assert m.locus_tag_synonym_mapping(mg1655, "b0099", "b0006", pattern) is None
+
+
+def _one_strain(gene: str, b_number: str) -> Any:
+    """One ``StrainSamples`` with its two plate rows, for a direct resolve call."""
+    return m.StrainSamples(
+        gene=gene,
+        b_number=b_number,
+        columns=(0, 1),
+        rows=tuple(
+            m.SampleRow(
+                sample=m.parse_sample_id(f"{gene}_R{replicate}_msSYN001_B1"),
+                b_number=b_number,
+                optical_density=0.6,
+                plate="2",
+                well="B4",
+            )
+            for replicate in (1, 2)
+        ),
+    )
+
+
+def test_resolve_strains_keeps_a_one_carrier_synonym_on_a_typed_route(
+    mg1655: EcoliK12MG1655Genome,
+) -> None:
+    """``b0099`` has one carrier, so the record is kept with the route recorded."""
+    strain = _one_strain("ghostG", "b0099")
+    guide = m.Guide(
+        gene="ghostG",
+        sgrna_id="ghostG #1",
+        b_number="b0099",
+        spacer="CCCCTTTTAAAAGGGGCCCC",
+    )
+    kept, rules, ledger = m.resolve_strains(
+        mg1655, [strain], {"ghostG": guide}, label="synonym"
+    )
+    (item,) = kept
+    assert (item.locus_tag, item.symbol) == ("b0005", "proB")
+    assert item.identifier_mapping is not None
+    assert item.identifier_mapping.route == "locus_tag_synonym"
+    assert item.identifier_mapping.source_identifier == "b0099"
+    assert [(rule.rule, rule.n_records) for rule in rules] == [
+        ("no_target_gene_assigned", 0),
+        ("b_number_remapped_by_the_annotation", 0),
+    ]
+    assert ledger.locus_tag_synonyms == [
+        "ghostG (b0099): the annotation carries it as a gene synonym of current gene "
+        "b0005, so the record stores b0005 with route locus_tag_synonym"
+    ]
+    (perturbation,) = m.crispri_genotype(item).perturbations
+    assert perturbation.model_dump()["identifier_mapping"] == {
+        "source_identifier": "b0099",
+        "route": "locus_tag_synonym",
+    }
+
+
+def test_resolve_strains_still_drops_a_synonym_two_loci_list(
+    mg1655: EcoliK12MG1655Genome,
+) -> None:
+    """``b0098`` is a synonym of two loci, so no route describes the remap."""
+    strain = _one_strain("twinG", "b0098")
+    guide = m.Guide(
+        gene="twinG",
+        sgrna_id="twinG #1",
+        b_number="b0098",
+        spacer="AAAACCCCGGGGTTTTAAAA",
+    )
+    kept, rules, ledger = m.resolve_strains(
+        mg1655, [strain], {"twinG": guide}, label="ambiguous synonym"
+    )
+    assert kept == []
+    assert ledger.locus_tag_synonyms == []
+    remap = rules[1]
+    assert remap.rule == "b_number_remapped_by_the_annotation"
+    assert remap.items == [
+        "twinG (b0098): the annotation carries it as a gene synonym of current gene "
+        "b0006, so the record would store b0006"
+    ]
+
+
+def test_metabolite_identity_gaps_names_the_keys_or_the_whole_field() -> None:
+    """A partial map gaps the uncovered keys; no sourced key gaps the whole field."""
+    keys = ["ppal[M+H]+", "ac-gcald[M-H]-", "didp[M+H]+"]
+    (partial,) = m.metabolite_identity_gaps(keys, {"ppal[M+H]+": "ppal"})
+    assert partial.keys == ("ac-gcald[M-H]-", "didp[M+H]+")
+    (whole,) = m.metabolite_identity_gaps(keys, {})
+    assert whole.keys == ()
+    assert (
+        m.metabolite_identity_gaps(keys, {key: key.split("[")[0] for key in keys}) == []
+    )
+
+
+def test_a_per_key_gap_is_refused_when_the_map_carries_the_named_key() -> None:
+    """Storing an id and declaring it missing is refused key by key."""
+    from torchcell.datamodels.schema import MetabolitePhenotype
+
+    gap = m.metabolite_identity_gaps(
+        ["ppal[M+H]+", "ac-gcald[M-H]-"], {"ppal[M+H]+": "ppal"}
+    )
+    with pytest.raises(
+        ValueError,
+        match=(
+            r"field 'target_metabolite_ids' declares keys \['ac-gcald\[M-H\]-'\] "
+            r"missing but carries them"
+        ),
+    ):
+        MetabolitePhenotype(
+            metabolite_level={"ppal[M+H]+": 1.0, "ac-gcald[M-H]-": 2.0},
+            n_replicates={"ppal[M+H]+": 2, "ac-gcald[M-H]-": 2},
+            measurement_type=m.MEASUREMENT_TYPE,
+            target_metabolite_ids={"ppal[M+H]+": "ppal", "ac-gcald[M-H]-": "ac"},
+            provenance_gaps=gap,
+        )
 
 
 def test_canonical_symbol_keeps_the_tag_when_the_symbol_does_not_round_trip(

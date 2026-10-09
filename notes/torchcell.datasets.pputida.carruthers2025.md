@@ -948,3 +948,218 @@ kept / 12 dropped and 21 kept / 12 dropped.
   effector, resistance markers and proteomic contaminants the DIA-NN search database was
   built to include, plus host proteins UniProt-GOA carries no tag for. None has a gene
   node to key an abundance to.
+
+## 2026.10.09 - The fourth family: the released differential proteomics (issue #770)
+
+Numbered fourth after the campaign proteome landed above, so this release now serves a
+titer, an absolute panel proteome, the Dryad campaign proteome and this contrast.
+
+`ProteomeFoldChangeCarruthers2025Dataset` serves the per-protein log2 fold changes this
+release ships and the three earlier classes had no field for. It is a
+`BacterialProteinFoldChangeExperiment` dataset, not a mode of
+`ProteomeCarruthers2025Dataset`: that class's number is an absolute Top3 level, this one's
+is a ratio against a named denominator, and only the relative class has a per-protein
+p-value. Open item 9 above asked for "a protein phenotype whose value is not an absolute";
+`ProteinFoldChangePhenotype` is that, and this is its first P. putida consumer.
+
+Dev store: `$DATA_ROOT/data/torchcell/proteome_fold_change_carruthers2025`, built by
+`python -m torchcell.database.build_dataset_lmdb --dataset
+ProteomeFoldChangeCarruthers2025Dataset --retire-existing`.
+
+### 16 records, and what each one is
+
+| sheet | records | genotype | reference_basis |
+|---|---|---|---|
+| `Figure 5b` | 14 | pIY670 pathway + one CRISPRi leaf | the non-target control strain |
+| `Figure 6b` | 2 | pIY670 pathway + a deletion AND the CRISPRi leaf of the SAME locus | a non-targeting control sgRNA in a knockout background |
+
+5,958 fold changes in all: 5,732 from `Figure 5b` and 226 from `Figure 6b` (14 for
+`PP_0812`, 212 for `PP_0815`). Every record carries the matching p-value and
+`n_replicates = 3` per protein, `fold_change_scale = log2`, and
+`measurement_type = dia_log2_fold_change_paired_two_tailed_t_test`.
+
+The reference phenotype is `ProteinFoldChangePhenotype.neutral_reference()`, which is 0.0
+on the log2 scale for every stored key. That is not a measurement and nothing is imputed:
+a fold change's denominator IS its scale's neutral value, so experiment over reference
+reproduces the released number exactly.
+
+### Every sourced value, quoted verbatim with its pin
+
+All quotes below are verbatim substrings of mirrored bytes and are asserted to be so.
+
+- `paper.md`, sha256 `ca9a8a2593d2ae3ab3bacfb767e797ece2bdaa0228a4f798f1c38e1af73ef88d`:
+  - Fig. 5 caption (the SCALE and the TEST): "b Statistically significant
+    Log2(Fold-change) values (paired two-tailed Student’s $T -$ test, $p { < } 0 . 0 5 )$
+    for selected sgRNAs of electron transport chain complexes and selected proteins from
+    the TCA cycle. POI $\mathsf { L o g } _ { 2 } \mathsf { F C }$ cells are bolded.
+    Source data are provided in the Source Data file."
+  - Fig. 6 caption (the two KO contrasts): "b Volcano plots of two KO strains,
+    ΔPP_0812 and ΔPP_0815, showing fold-change differences in global protein
+    expression with a target vs. non-target sgRNA."
+  - Fig. 6a caption (the KO DENOMINATOR): "a Comparison of mean isoprenol production
+    between strains expressing either a PP_0815-targeting sgRNA or a non-targeting
+    control sgRNA in a knockout background, demonstrating significant off-target effects
+    of the PP_0815 sgRNA $\left( n = 3 \right)$ ."
+  - Methods, Statistics and reproducibility (the TEST again, and the REPLICATES): "Where
+    applicable, statistical significance was determined using a paired Student’s T-test,
+    where $p { < } 0 . 0 5$ ." and "All strains were cultured as biological triplicates
+    $\left( n = 3 \right)$ ."
+  - Results (the nearest statement about a THIRD `Figure 6b` column, and the reason it is
+    not taken): "Furthermore, both deletion strains displayed broad changes in the
+    proteome that were not reflected in other cytochrome ${ \mathsf { b o } } _ { 3 }$
+    subunit deletions when comparing non-target and target sgRNAs (e.g., ΔPP_0812)
+    (Fig. 6b)."
+- `si/si1.md`, sha256 `2f83cfecc539e6607e33c51c420fb0be95c335a494cba6ef485eb5cb627ea0a5`:
+  - Supplementary Information contents (the single-guide DENOMINATOR): "Supplementary
+    Figure 9: Heatmaps of relevant pathways among best performing sgRNAs compared to the
+    non-target control strain"
+  - Supplementary Figure 10 caption (what the refused sheet says about itself): "Depicts
+    the protein levels that were significantly changed (paired two-tailed Student’s
+    T-test, $\mathsf { p } < 0 . 0 5$ ) across 25 of the best performing sgRNA
+    combinations."
+- `si/si9.xlsx` (raw mirror `41467_2025_66304_MOESM9_ESM.xlsx`), sha256
+  `1b3a7ab5f165386ba1c11e8873c397e7b03f5189274c0a423c5c60dd3616c1c7`: the
+  `Supplementary Figure 9` sheet's one cell, "See Figure 5b", and the header cell
+  `PP_0368_log10_pval`.
+
+The `See Figure 5b` cell is the load-bearing measurement. Without it, the Supplementary
+Fig. 9 caption would be a statement about some other figure, and `Figure 5b` would have no
+sourced denominator at all. `assert_fold_change_pointer` reads that sheet on every build
+and refuses any other content, so the sourced `reference_basis` cannot silently detach
+from its evidence. Every quote above is stored as a module constant whose text is asserted
+to be a substring of the mirrored file, so a drifted OCR cannot leave a stale quote behind.
+
+### The p-value is converted, not estimated
+
+The released column is unsigned -log10(p). Measured over all 6,222 released cells of the
+two sheets: the range is 1.30103425637741 to 19.3125325679514 with no negative value, so
+both sheets are pre-filtered at the caption's p<0.05 (the largest recovered probability is
+0.04999950946964488, the smallest 4.869310086069108e-20). `p_value_from_neg_log10` applies
+`p = 10**-x`, asserts the round trip `-log10(p) == x` within 1e-12 and refuses anything at
+or above 0.05. Measured maximum round-trip error over all 6,222 values: exactly 0.0.
+
+### Key reconciliation
+
+`reconcile_locus_tags` runs once over the UNION of both sheets' row keys against
+`pputida_KT2440_ASM756v2`: 1,395 of 1,414 resolve (0.9866), and `MIN_RESOLVED_FRACTION` is
+0.98. Per sheet it is 1,284 of 1,290 (`Figure 5b`) and 358 of 372 (`Figure 6b`). The 19
+that do not resolve are ledgered in `preprocess/dropped_protein_keys.csv` and are dropped
+from every record's map, because a key that is no locus of the pinned assembly has no gene
+node to key a ratio to: twelve `A0A140F*` UniProt accessions, `Q9FD70`, `EF_1364`,
+`MM_1762`, `SPy_1046`, `YNR043W`, `b4055 JW4015`, and the one two-tag key
+`PP_1157 PP_3365`. No stored key collides: zero released keys reconcile to a shared locus.
+
+`Figure 6b` also carries 181 rows that hold a `primary_name` with no `Locus Name` and no
+value. They are skipped, and a keyless row that ever carries a value stops the build.
+
+### The `Figure 6b` decision: 2 of 10 columns, and why
+
+The sheet releases ten contrast columns. The Fig. 6 caption names a contrast for exactly
+two of them ("two KO strains, ΔPP_0812 and ΔPP_0815 ... with a target vs. non-target
+sgRNA"), so those two are built and the other eight are ledgered unbuilt with the
+measurement that refused each, in `KO_FOLD_CHANGE_UNSOURCED_REASONS` and in
+`preprocess/build_accounting.json`. Measured on the pinned workbook:
+
+| column | measurement | refused because |
+|---|---|---|
+| `Control` | also the name of the campaign's non-targeting control line in `Figure 4b` | the header cannot be read as a strain designation without choosing between a control strain and a contrast against one |
+| `PP_0368`, `PP_0751`, `PP_0813`, `PP_0814` | each IS a `Figure 6a` KO-background label | no mirrored statement names any of them as a `Figure 6b` contrast |
+| `PP_0812_15` | a `Figure 6a` KO-background label (`PP_0812-15` there) | the nearest statement is the Results' "both deletion strains", a pronoun whose antecedent would have to be resolved against a caption that says "two KO strains" and names which two |
+| `PP_0751_PP_0812` | a BUILT two-sgRNA CRISPRi array: present as a `Figure 4b` line name and in Supplementary Table 4's DBTL1-6 array list | not a KO background at all, so the denominator could be the non-targeting control or a KO carrying one, and the release states neither |
+| `PP_1317_PP_0812` | absent from `Figure 4b`'s line names, from `Figure 6a`'s KO-background labels AND from Supplementary Table 4 | matches no released strain, so neither the numerator strain nor the denominator can be sourced |
+
+`PP_0812_15` is the nearest miss and is called out deliberately: it is a real KO
+background and the Results sentence plausibly covers it, but taking it would mean
+inferring a contrast, which is what this loader refuses to do.
+
+### `Supplementary Figure 10` is refused entirely, with its measurement
+
+26 keys x 25 strain columns = 650 values, no empty cell, no `_log10_pval` column anywhere
+in the header, values signed from -7.05757655263963 to 3.92161053900316 with median
+-1.0118185429312652, and only 2 of the 26 keys a `PP_` locus tag (`PP_2793`, `PP_2794`);
+the other 24 are title-cased protein symbols (`AcsA1`, `CyoA`, `ValS`, and the released
+sheet's own inconsistent `Ilvl` and `RPsJ`).
+
+The blocker is a required field with no source. `fold_change_scale` is required, and no
+mirrored statement names a scale or a unit for this sheet: its caption says only
+"Heatmap of significantly changed proteins present in all 25 best performing CRISPRi
+strain" and, in the body, that the values are "protein levels that were significantly
+changed". A log2 reading is consistent with the signed range but is a HYPOTHESIS the
+release does not state, and storing it would assert a scale the source never gave.
+`assert_best_array_heatmap_refusal` re-measures the sheet on every build and stops the
+build if it gains a p-value column or stops being dense, so the recorded refusal can never
+go stale silently.
+
+### Retention arithmetic
+
+49 candidates = 14 `Figure 5b` columns + 10 `Figure 6b` columns + 25
+`Supplementary Figure 10` columns. 16 kept, 33 dropped = 8 unsourced `Figure 6b` columns +
+25 refused heatmap columns. `control_rows` is 0: this release publishes the ratio, never
+the denominator's own numbers.
+
+### L0-L4, measured on the built store
+
+`python -c "from torchcell.verification.runners import
+run_bacterial_protein_fold_change; run_bacterial_protein_fold_change('$DATA_ROOT')"`
+-> PASS.
+
+| level | row | verdict | detail |
+|---|---|---|---|
+| L0 | `structural` | pass | 16 records validated against `ExperimentType` |
+| L1 | `count` | pass | observed 16, expected 16 |
+| L1 | `contrast_uniqueness` | pass | 16 distinct `(genotype, environment, reference_basis)` contrasts, one record each |
+| L1 | `fold_change_contrast_coverage` | pass | 14 `Figure 5b` contrasts and `Figure 6b` contrasts `['PP_0812', 'PP_0815']` |
+| L2 | `value_fidelity` | pass | 5,958 fold changes, all finite |
+| L2 | `p_values_are_probabilities` | pass | all 5,958 p-values lie in (0, 1] |
+| L3 | `reference_is_the_scales_neutral_value` | pass | all 5,958 reference values are 0.0 and key-matched to the experiment |
+| L3 | `fold_change_scale_consistent` | pass | single scale `log2` |
+| L3 | `measurement_type_consistent` | pass | single `dia_log2_fold_change_paired_two_tailed_t_test` |
+| L3 | `fold_change_biological_triplicate` | pass | replicate counts `[3]` |
+| L4 | `stored_fold_changes_vs_released_sheets` | pass | 5,958 entities agree within 0.0, re-read from the raw mirror |
+| L4 | `stored_p_values_invert_to_released_neg_log10` | pass | 5,958 entities agree within 1e-12 |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | pass | 1.000 of 1,335 measured genes are loci of `pputida_KT2440_ASM756v2` |
+
+The two cross-source rows re-read `si/si9.xlsx` from the raw mirror and reconcile its keys
+again, so a store that drifted from its source is caught per protein rather than in
+aggregate. The L4 containment row comes from the family runner, which checks the union of
+the tested proteins and the perturbed host genes.
+
+### Files
+
+- loader: the third class in `torchcell/datasets/pputida/carruthers2025.py`, with its
+  readers (`read_fold_change_rows`, `fold_change_contrasts`, `read_best_array_heatmap`),
+  its conversion (`p_value_from_neg_log10`), its three build-time assertions
+  (`assert_fold_change_pointer`,
+  `assert_fold_change_contrasts_are_released_strains`,
+  `assert_best_array_heatmap_refusal`) and its report (`fold_change_report`).
+  `verify_build`'s `family` literal gains `"fold_change"`.
+- family gate: `torchcell/verification/protein_fold_change.py`
+  (`verify_protein_fold_change_dataset`, `protein_fold_change_locus_set`,
+  `fold_change_p_value_round_trip`). `_contrast` keys on genotype AND environment AND
+  denominator, so a wild-type panel that varies only the environment is not collapsed to
+  one contrast.
+- runner: `BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS` +
+  `run_bacterial_protein_fold_change` in `torchcell/verification/runners.py`, wired into
+  `run_all`.
+- adapter: `torchcell/adapters/carruthers2025_proteome_fold_change_adapter.py` and
+  `torchcell/adapters/conf/proteome_fold_change_carruthers2025_adapter.yaml`, which enable
+  `protein fold change phenotype (chunked)` and
+  `protein fold change phenotype reference` in place of the protein-abundance pair.
+- tests: `tests/torchcell/datasets/pputida/test_carruthers2025_fold_change.py` (47) and
+  `tests/torchcell/adapters/test_carruthers2025_proteome_fold_change_adapter.py` (5). The
+  synthetic Source Data workbook in `tests/torchcell/datasets/pputida/test_carruthers2025.py`
+  grew the four fold-change sheets so `main()` is covered over all three families.
+
+### Open items for the owner, added to the nine above
+
+10. The release publishes no standard error for a fold change, so
+    `protein_fold_change_se` is `None` on every record. It is not a `ProvenanceGap`
+    (the field is optional and the phenotype's `label_statistic_name` already names it),
+    but a consumer that wants a weight per protein has only the p-value and n = 3.
+11. Eight of `Figure 6b`'s ten columns are released data this ontology cannot hold, for
+    want of one sentence naming each column's denominator. The honest options are to
+    leave them out (what this branch does) or to add a typed "contrast whose reference
+    strain is unstated" axis, which is a schema decision.
+12. `Supplementary Figure 10`'s 650 values wait on a mirrored statement of their scale.
+    If one is found, the sheet becomes 25 more records with no other change, since its
+    strain columns are array names this release already types.

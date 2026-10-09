@@ -22,6 +22,7 @@ non-negative SE, so L0 subsumes those. This verifier adds:
 
 from __future__ import annotations
 
+import json
 import math
 from collections.abc import Callable, Sequence
 from typing import Any
@@ -77,31 +78,45 @@ def _genotype_signature(
 
 
 def _l1_orf_uniqueness(
-    records: Sequence[Record], *, per_protocol: bool = False
+    records: Sequence[Record],
+    *,
+    per_protocol: bool = False,
+    per_environment: bool = False,
 ) -> LevelResult:
     """L1: exactly one record per STRAIN (genotype signature of deleted ORFs).
 
     With ``per_protocol`` the key is (strain, measurement_type): one record per strain
     per declared protocol.
+
+    With ``per_environment`` the key also carries the record's whole ``environment``, so
+    the rule becomes one record per strain PER ENVIRONMENT. A dataset that varies the
+    environment at a fixed genotype needs this: Ishii 2007's wild type was run at four
+    dilution rates, all four records carry ``Genotype(perturbations=[])``, and they are
+    distinguished by ``Environment.dilution_rate_per_hour`` alone. For a dataset whose
+    records share one environment the key is the strain plus a constant, so the verdict
+    and the unique-key count are unchanged.
     """
     seen: dict[tuple[Any, ...], int] = {}
     for rec in records:
         sig: tuple[Any, ...] = _genotype_signature(rec["experiment"])
         if per_protocol:
             sig = (sig, rec["experiment"]["phenotype"]["measurement_type"])
+        if per_environment:
+            sig = (sig, json.dumps(rec["experiment"]["environment"], sort_keys=True))
         seen[sig] = seen.get(sig, 0) + 1
     dups = {s: n for s, n in seen.items() if n > 1}
-    unique_unit, dup_unit = (
-        ("(strain, protocol) pairs", "(strain, protocol) pairs")
-        if per_protocol
-        else ("strains (deletion sets)", "deletion sets")
-    )
+    unit = "strains (deletion sets)"
+    if per_protocol:
+        unit = "(strain, protocol) pairs"
+    elif per_environment:
+        unit = "(strain, environment) pairs"
+    dup_unit = "deletion sets" if unit.endswith("sets)") else unit
     return LevelResult(
         level=Level.L1,
         name="genotype_uniqueness",
         passed=not dups,
         message=(
-            f"{len(seen)} unique {unique_unit}, one record each"
+            f"{len(seen)} unique {unit}, one record each"
             if not dups
             else f"{len(dups)} {dup_unit} appear in multiple records"
         ),
@@ -229,6 +244,7 @@ def verify_metabolite_dataset(
     expected_count: int,
     reference_centered: bool = True,
     protocol_measurement_types: frozenset[str] | None = None,
+    environment_keyed: bool = False,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a metabolite dataset.
 
@@ -241,6 +257,11 @@ def verify_metabolite_dataset(
     dataset released under several protocols on different scales (one record per
     strain per protocol). When set, L1 uniqueness keys on (strain, protocol) and L3
     requires each record's type to be declared and its reference to share it.
+
+    ``environment_keyed`` (default False): set for a dataset that varies the ENVIRONMENT
+    at a fixed genotype, where one strain legitimately appears in several records
+    (Ishii 2007's wild type at four chemostat dilution rates). L1 uniqueness then keys on
+    (strain, environment).
 
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
     caller across datasets.
@@ -255,7 +276,11 @@ def verify_metabolite_dataset(
     report.add(l0_structural((rec["experiment"] for rec in records), validate))
     report.add(l1_count(len(records), expected_count))
     report.add(
-        _l1_orf_uniqueness(records, per_protocol=protocol_measurement_types is not None)
+        _l1_orf_uniqueness(
+            records,
+            per_protocol=protocol_measurement_types is not None,
+            per_environment=environment_keyed,
+        )
     )
 
     levels = [

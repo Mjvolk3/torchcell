@@ -7,7 +7,8 @@ knowledge-graph nodes and edges.
 
 One record per strain: one ``BacterialCrisprInterferencePerturbation`` served as a
 ``bacterial perturbation`` node, its ``CrisprConstruct`` as a ``crispr construct`` node,
-and the relative expression of its own target as a ``ProteinAbundancePhenotype``.
+and the relative expression of its own target against the control strain as a
+``ProteinFoldChangePhenotype`` (linear scale, one proteomics sample per strain).
 """
 
 import os.path as osp

@@ -29,7 +29,8 @@ sourcing layer.
   727 of these 314,847 scores, and the build proves the partition against the served
   Babu store in both directions before writing a record. Its 149 SPA-tag recipient rows
   share Babu's hypomorph blocker and its two colony-size sheets have no phenotype class.
-- ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
+- ``caglar2017`` -- ``ProteomeCaglar2017Dataset``, ``RnaseqCaglar2017Dataset`` and
+  ``ProteinFoldChangeCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
 - ``caglar2017_doubling_time`` -- ``DoublingTimeCaglar2017Dataset``: the same paper's
@@ -165,6 +166,9 @@ sourcing layer.
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
 from .butland2008 import (
     GeneInteractionButland2008Dataset as GeneInteractionButland2008Dataset,
+)
+from .caglar2017 import (
+    ProteinFoldChangeCaglar2017Dataset as ProteinFoldChangeCaglar2017Dataset,
 )
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset

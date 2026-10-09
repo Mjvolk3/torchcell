@@ -394,6 +394,7 @@ def test_resolved_compound_unparseable_smiles_keeps_the_caller_smiles_and_defers
                 "looked_in": None,
                 "resolve_with": None,
                 "note": None,
+                "keys": [],
             }
         ],
         "name": "zzz-no-row",

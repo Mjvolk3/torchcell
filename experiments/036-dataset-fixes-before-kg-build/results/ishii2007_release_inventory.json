@@ -13,7 +13,14 @@
       },
       "targets": 85,
       "filled_cells": 3825,
-      "servable_records": 24,
+      "servable_records": 28,
+      "dilution_rates_served": [
+        0.1,
+        0.2,
+        0.4,
+        0.5,
+        0.7
+      ],
       "dropped": {
         "reference_sample": [
           "RF02@BL",
@@ -32,15 +39,9 @@
           "RF05@CL",
           "RF08"
         ],
-        "culture_not_batch": [
-          "GR01",
-          "GR02",
-          "GR03",
-          "GR04",
-          "GR04x"
-        ],
         "duplicate_culture_same_genotype_and_environment": [
-          "KO05x"
+          "KO05x",
+          "GR04x"
         ]
       }
     },
@@ -54,7 +55,14 @@
       },
       "targets": 67,
       "filled_cells": 1917,
-      "servable_records": 24,
+      "servable_records": 28,
+      "dilution_rates_served": [
+        0.1,
+        0.2,
+        0.4,
+        0.5,
+        0.7
+      ],
       "dropped": {
         "no_data_in_this_layer": [
           "KO05x",
@@ -67,12 +75,6 @@
           "RF03@BR",
           "RF03@BT",
           "RF03@BV"
-        ],
-        "culture_not_batch": [
-          "GR01",
-          "GR02",
-          "GR03",
-          "GR04"
         ]
       }
     },
@@ -86,7 +88,14 @@
       },
       "targets": 579,
       "filled_cells": 4813,
-      "servable_records": 24,
+      "servable_records": 28,
+      "dilution_rates_served": [
+        0.1,
+        0.2,
+        0.4,
+        0.5,
+        0.7
+      ],
       "dropped": {
         "no_data_in_this_layer": [
           "GR04x"
@@ -97,12 +106,6 @@
           "RF04",
           "RF05",
           "RF06"
-        ],
-        "culture_not_batch": [
-          "GR01",
-          "GR02",
-          "GR03",
-          "GR04"
         ],
         "duplicate_culture_same_genotype_and_environment": [
           "KO05x"
@@ -119,7 +122,14 @@
       },
       "targets": 50,
       "filled_cells": 1563,
-      "servable_records": 24,
+      "servable_records": 28,
+      "dilution_rates_served": [
+        0.1,
+        0.2,
+        0.4,
+        0.5,
+        0.7
+      ],
       "dropped": {
         "no_data_in_this_layer": [
           "KO05x",
@@ -130,12 +140,6 @@
           "RF04",
           "RF05",
           "RF06"
-        ],
-        "culture_not_batch": [
-          "GR01",
-          "GR02",
-          "GR03",
-          "GR04"
         ]
       }
     }
@@ -146,115 +150,24 @@
     "nucleotide": 61
   },
   "loaded_datasets": {
-    "metabolome_ishii2007": 24,
-    "proteome_ishii2007": 24,
-    "flux_ishii2007": 24
+    "metabolome_ishii2007": 28,
+    "proteome_ishii2007": 28,
+    "flux_ishii2007": 28
   },
-  "access": {
-    "science_org_supplement": {
-      "url": "https://www.science.org/doi/suppl/10.1126/science.1132067",
-      "status": 403,
-      "final_url": "https://www.science.org/doi/suppl/10.1126/science.1132067",
-      "javascript_challenge": true
-    },
-    "science_org_article": {
-      "url": "https://www.science.org/doi/10.1126/science.1132067",
-      "status": 403,
-      "final_url": "https://www.science.org/doi/10.1126/science.1132067",
-      "javascript_challenge": true
-    },
-    "science_org_pdf_with_publisher_ijkey": {
-      "url": "https://www.science.org/doi/pdf/10.1126/science.1132067?ijkey=9Ix5kSaD9ei06&keytype=ref",
-      "status": 403,
-      "final_url": "https://www.science.org/doi/pdf/10.1126/science.1132067?ijkey=9Ix5kSaD9ei06&keytype=ref",
-      "javascript_challenge": true
-    },
-    "sciencemag_som_url_printed_in_the_paper": {
-      "url": "https://www.sciencemag.org/cgi/content/full/1132067/DC1",
-      "status": 403,
-      "final_url": "https://www.sciencemag.org/cgi/content/full/1132067/DC1",
-      "javascript_challenge": true
-    },
-    "project_web_site": {
-      "url": "http://ecoli.iab.keio.ac.jp/",
-      "status": 200,
-      "final_url": "http://ecoli.iab.keio.ac.jp/",
-      "javascript_challenge": false
-    },
-    "pmc_id_converter": {
-      "url": "https://pmc.ncbi.nlm.nih.gov/tools/idconv/api/v1/articles/?ids=10.1126%2Fscience.1132067&format=json&tool=torchcell",
-      "status": 200,
-      "record": {
-        "doi": "10.1126/science.1132067",
-        "requested-id": "10.1126/science.1132067",
-        "status": "error",
-        "errmsg": "Identifier not found in PMC"
-      }
-    }
-  },
-  "released_files": [
+  "dilution_rate_arm_per_hour": [
+    0.1,
+    0.2,
+    0.4,
+    0.5,
+    0.7
+  ],
+  "reference_dilution_rate_per_hour": 0.2,
+  "retired_drop_rules": [
     {
-      "file": "Quantitative_data.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/Quantitative_data.xls",
-      "status": 200,
-      "bytes": 824320,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": true
-    },
-    {
-      "file": "Metabolome_UK_data.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/Metabolome_UK_data.xls",
-      "status": 200,
-      "bytes": 17547264,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": false
-    },
-    {
-      "file": "DNAArray_data.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/DNAArray_data.xls",
-      "status": 200,
-      "bytes": 2789376,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": false
-    },
-    {
-      "file": "DNAArray_raw-data.zip",
-      "url": "http://ecoli.iab.keio.ac.jp/DNAArray_raw-data.zip",
-      "status": 200,
-      "bytes": 15122608,
-      "content_type": "application/zip",
-      "last_modified": "Wed, 14 Feb 2007 08:32:36 GMT",
-      "consumed_by_the_loader": false
-    },
-    {
-      "file": "2D-DIGE_ratio_data.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/2D-DIGE_ratio_data.xls",
-      "status": 200,
-      "bytes": 1842688,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": false
-    },
-    {
-      "file": "2D-DIGE_ID_list.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/2D-DIGE_ID_list.xls",
-      "status": 200,
-      "bytes": 114176,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": false
-    },
-    {
-      "file": "Flux_GC-MS_data.xls",
-      "url": "http://ecoli.iab.keio.ac.jp/Flux_GC-MS_data.xls",
-      "status": 200,
-      "bytes": 214016,
-      "content_type": "application/vnd.ms-excel",
-      "last_modified": "Thu, 10 May 2007 12:10:35 GMT",
-      "consumed_by_the_loader": true
+      "rule": "culture_not_batch",
+      "retired_by": "Environment.dilution_rate_per_hour (#753)",
+      "was_dropping": "GR01-GR04, the wild type at 0.1, 0.4, 0.5 and 0.7 h-1, in all three served sheets",
+      "why_it_no_longer_applies": "the four cultures differ from the 0.2 h-1 reference and from one another in dilution rate, which is now a field of the environment, so they are four distinct environments and four records"
     }
   ]
 }

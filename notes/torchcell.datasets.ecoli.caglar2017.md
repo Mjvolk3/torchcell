@@ -651,7 +651,6 @@ It does not remove it: if Houser 2015 is ever mirrored and loaded, those 27 plus
 samples become a real duplication and the superset rule applies, the same shape as #760.
 The attribution is what makes that detectable, because a Houser 2015 admission check can
 now ask which records already name it.
-
 ## 2026.10.09 - Correction: Table S5 IS loadable, and the raw mirror gained it
 
 The earlier section "2026.10.07 - Tables S5 to S14, and why the doubling times are not
@@ -722,3 +721,222 @@ per-sample split's evidence is scoped to the 27 samples that are columns of Tabl
 S3 and Table S5 releases no sample columns. The measured overlap it does not act on (3
 rows plus the reference row join onto `glucose_time_course`) is recorded in
 [[torchcell.datasets.ecoli.caglar2017_doubling_time]].
+
+## 2026.10.09 - Table S8 retrieved and the protein fold-change loader (issue #770)
+
+### The retrieval: Table S8 IS reproducibly retrievable from the PMC bucket
+
+The raw mirror held only Tables S1 to S4 (`srep45303-s2.csv` to `-s5.csv`), so the first
+question was whether Table S8 could be pinned by the same recorded retriever rather than
+copied out of the library mirror. It can.
+
+`torchcell.literature.retrieve.pmc_cloud_object` with key `PMC5394689.1/srep45303-s9.csv`
+returned 91,055,296 bytes with sha256
+`738e1ee3f17e62a76a610741bc1b60ea21ee6eb80bdaa06846587dae791b44f5`, which equals the
+sha256 and the byte count of the library mirror's
+`torchcell-library/caglarColiMolecularPhenotype2017/si/si9.csv` exactly. Probing the
+bucket prefix for `srep45303-s1` through `-s11` gave HTTP 404 for `-s1` and 200 for the
+other ten, so the SI objects are `-s<N+1>` for Table S<N>, the same offset the four
+existing tables use. The deposited provenance record is therefore a retrieval, not a
+copy:
+
+| field | value |
+|---|---|
+| `path` | `data/srep45303-s9.csv` |
+| `source_url` | `https://pmc-oa-opendata.s3.amazonaws.com/PMC5394689.1/srep45303-s9.csv` |
+| `retrieval_method` | `pmc_cloud` |
+| `retrieval_command` | `torchcell.literature.retrieve.pmc_cloud_object` with `{"key": "PMC5394689.1/srep45303-s9.csv"}` |
+| `sha256` | `738e1ee3f17e62a76a610741bc1b60ea21ee6eb80bdaa06846587dae791b44f5` |
+| `bytes` | 91,055,296 |
+| `retrieved_at` | 2026-10-09 |
+
+The deposit went through a new, narrow `deposit_si_table("S8", ...)` rather than
+`deposit_raw_mirror`, because this citation key's mirror is now written by more than one
+loader: it already held `data/srep45303-s6.csv` (Table S5), which `raw_file_specs()` does
+not name, so the whole-mirror equality check in `deposit_raw_mirror` reads that other
+loader's deposit as drift and refuses. `deposit_si_table` appends exactly one
+`ArtifactRecord`, leaves the four existing table records and the 42 GenPept records
+byte-identical, keeps the first deposit's `created_at`, and refuses a record already
+present with other content. The manifest went from 47 to 48 files.
+
+### The granularity decision: 24 protein groups become 8 records
+
+Table S8 is 201,408 rows x 24 columns: 100,704 `mrna` rows and 100,704 `protein` rows,
+measured, as 48 groups of exactly 4,196 rows, one group per `fullFileName`. 24 of those
+groups are protein-level. Two independent axes collapse them.
+
+**Axis 1, the control parameterization: 24 to 12.** `investigatedEffect` takes six values
+on the protein rows, three pairs that differ only by the suffix `PLUSdoublingTimeMinutes`:
+
+| `investigatedEffect` | protein rows |
+|---|---|
+| `batchNumberPLUScarbonSource` | 25,176 |
+| `batchNumberPLUScarbonSourcePLUSdoublingTimeMinutes` | 25,176 |
+| `batchNumberPLUSMg` | 16,784 |
+| `batchNumberPLUSMgPLUSdoublingTimeMinutes` | 16,784 |
+| `batchNumberPLUSNa` | 8,392 |
+| `batchNumberPLUSNaPLUSdoublingTimeMinutes` | 8,392 |
+
+Within a pair, every other released descriptor is identical: `test_for`, `contrast`,
+`base`, `testVSbase`, `growthPhase.x`, `growthPhase.y`, `carbonSource` (`SYAN`), `Mg`
+(`baseMgAllMg`) and `Na` (`baseNaAllNa`) all agree, measured. So the pair differs in no
+experimental factor at all. The SI says what the column is, verbatim from `si/si1.md`
+(sha256 `1b7b8ed0f8b21c1909568f8a05d6a92d99bffaf851aa474a3a8673ebc2da4bdc`, "List of
+Supplementary Tables"):
+
+> Control parameters of the test (batch only or batch plus doubling time)
+
+and the paper says which one is primary, verbatim from `paper.md` (sha256
+`0878d5e7d49bcea4570aa2db225318a8469f4755645f1ddf73563effe7b3109b`, Methods, Identifying
+differentially expressed genes):
+
+> In general, our design formula was \~batch_number $^ +$ variable_of_interest, where variable_of_interest was either a categorical variable representing the carbons source or growth phase (exponential or stationary) or a quantitative variable representing
+
+with the other one introduced as a repeat, verbatim from the same file (Results):
+
+> We repeated our DeSeq2 analyses but included in our design formula a term representing the doubling time (see Methods).
+
+A record is a typed `genotype x environment -> phenotype` statement. Two groups that
+agree on every experimental column are two ESTIMATES of one such cell under two
+statistical adjustments, not two cells, and no field on the record distinguishes an
+adjustment. So the 12 batch-only groups are kept and the 12 doubling-time groups are
+refused, **50,352 rows ledgered**.
+
+**Axis 2, pooled doses: 12 to 8.** For the Mg and Na contrasts the released `contrast`
+cell is a LEVEL, and Table S1 shows two of those levels hold several doses:
+
+| level | distinct dose in Table S1's protein samples | test samples (Exp / Sta) |
+|---|---|---|
+| `lowMg` | 0.08 mM MgSO4 | 3 / 3 |
+| `highMg` | 8 and 200 mM MgSO4 | 6 / 6 |
+| `highNa` | 100, 200 and 300 mM Na+ | 6 / 5 |
+
+`SmallMoleculePerturbation.concentration` is a required `Concentration`, so a pooled
+level has no honest single value, and a mean or a maximum would be a guess. The two
+`highMg` and the two `highNa` groups are refused, **16,784 rows ledgered**. `lowMg` is
+single-valued and builds. The three carbon-source levels are each one compound at the
+stated 0.5 g/L, so all six carbon-source groups build.
+
+**Refused, with the measurement that refused it:**
+
+| refusal | groups | rows | measurement |
+|---|---|---|---|
+| gene-level arm, out of scope | 24 | 100,704 | no gene-level expression fold-change phenotype exists; `dataType == "mrna"` row count |
+| secondary control model | 12 | 50,352 | `investigatedEffect` adds `doublingTimeMinutes` and no experimental column differs |
+| level pools several doses | 4 | 16,784 | `highMg` at 8 and 200 mM; `highNa` at 100, 200 and 300 mM |
+
+### The 8 records, and the exact non-NA count of everything stored
+
+`ProteinFoldChangeCaglar2017Dataset`, root `data/torchcell/protein_fold_change_caglar2017`,
+`BacterialProteinFoldChangeExperiment` / `...Reference`, `fold_change_scale=log2`.
+Measured on the dev store:
+
+| i | contrast | phase | dose | n test | n base | `protein_fold_change` | `..._se` | `..._p_value` | `..._p_value_adjusted` |
+|---|---|---|---|---|---|---|---|---|---|
+| 0 | lowMg | exponential | 0.08 mM | 3 | 20 | 4180 | 4180 | 4180 | 2235 |
+| 1 | gluconate | exponential | 0.5 g/L | 3 | 20 | 4180 | 4180 | 4180 | 2316 |
+| 2 | glycerol | exponential | 0.5 g/L | 15 | 20 | 4180 | 4180 | 4180 | 2964 |
+| 3 | lactate | exponential | 0.5 g/L | 3 | 20 | 4180 | 4180 | 4180 | 2559 |
+| 4 | lowMg | stationary | 0.08 mM | 3 | 11 | 4137 | 4137 | 4136 | 4136 |
+| 5 | gluconate | stationary | 0.5 g/L | 3 | 11 | 4137 | 4137 | 4136 | 2294 |
+| 6 | glycerol | stationary | 0.5 g/L | 6 | 11 | 4137 | 4137 | 4136 | 2534 |
+| 7 | lactate | stationary | 0.5 g/L | 3 | 11 | 4137 | 4137 | 4136 | 2854 |
+| | | | | | **total** | **33,268** | **33,268** | **33,264** | **21,892** |
+
+Out of 4,196 released rows per group, 16 (exponential) and 59 (stationary) carry no
+`log2FoldChange`, which is exactly the set with `baseMean == 0`; those proteins are not
+keys anywhere, never a 0. Four exponential rows and one stationary row carry a fold
+change but no `pvalue`, and the `padj` column is NA on far more rows again, which is
+DESeq2's independent filtering. The three statistic maps are therefore nested subsets of
+the fold-change keys, which L2 `statistic_keys_are_nested` asserts.
+
+The union of the 8 key sets is 4,187 REL606 loci, which is the dataset's `gene_set`. All
+24 protein groups list the same 4,196 `YP_` accessions in the same order, and that order
+equals Table S3's file order, so the existing deposited-GenPept crosswalk (4,196 of 4,196
+`YP_` to `ECB_`) keys every record and locus-tag reconciliation returns
+`{'current': 4196}` with 0 outside `ecoli_b_rel606_locus_tag`.
+
+### `p_value_adjustment_method` is back-solved, not stated
+
+The paper names the correction only as a kind, verbatim from `paper.md` (sha256
+`0878d5e7d49bcea4570aa2db225318a8469f4755645f1ddf73563effe7b3109b`, Results,
+Identification of differentially expressed genes):
+
+> at a false-discovery-rate (FDR) corrected $P$ value $< 0 . 0 5$
+
+and defers the procedure to DESeq2, which is not mirrored. The released columns settle
+it. Within each `fullFileName` group, the Benjamini-Hochberg adjustment of the rows that
+carry both a `pvalue` and a `padj` reproduces `padj` to a maximum absolute deviation of
+**1.04e-13** over all 24 protein groups and 69,472 such rows (worst group: the stationary
+`lowMgVSbaseMg` batch-only one). The build refuses anything over 1e-9, and the evidence
+is `preprocess/adjustment_back_solve.json`. So `p_value_adjustment_method` is stored as
+`benjamini_hochberg`.
+
+### `n_replicates` is the conservative lower end, and why
+
+The samples of each DESeq2 fit are NOT released: Table S8 names them only through the set
+id `set00_StcYtcNasAgrNgrMgh` inside `fullFileName`, whose definition is in the authors'
+code, and `lfcSE` does not invert to a sample count, so a back-solve is precluded. Under
+CLAUDE.md's rule 2 the stored value is the low end: the number of protein samples Table
+S1 puts in the contrast's TEST group, measured by the group's own released cells. The high
+end (test plus base) is recorded per record in
+`preprocess/n_replicates_derivation.json` as a `StatDerivation` with
+`method=conservative_low`, `range_low` the stored value and `range_high` the two groups
+together, so the number and its justification travel with the record.
+
+The paper's own statement of the replicate structure, verbatim from `paper.md` (Figure 1
+legend), is the design and not the per-contrast count:
+
+> For each experimental condition, bacteria were grown in three biological replicates.
+
+Measured against Table S1's protein samples, the design holds for gluconate, lactate and
+lowMg (3 each, both phases) but not for glucose (20 exponential, 11 stationary, because
+the glucose starvation time course and the salt-series base samples share that condition)
+or glycerol (15 exponential, 6 stationary, the glycerol time course). That is why the
+count is measured per contrast rather than taken as 3.
+
+The denominator is named verbatim from `paper.md` (Results, Identification of
+differentially expressed genes):
+
+> For each growth phase, we defined the base level reference condition to be growth in glucose with $5 \mathrm { m M }$ $\mathrm { N a ^ { + } }$ and $0 . 8 \bar { \mathrm { m M } } \mathrm { M g } ^ { 2 + }$ .
+
+which is what `reference_basis` carries, and the reference phenotype is
+`neutral_reference()`: 0.0 on the log2 scale for every stored key, so experiment minus
+reference reproduces the released number and nothing is imputed. No environment carries a
+`duration_hours`, because a contrast's group pools samples collected at different times
+(glycerol exponential at 5, 7, 8, 10 and 14 h, for instance) and the phase is set by
+optical density; each one records a `ProvenanceGap` naming its own pooled times, which is
+also what makes the 8 environments pairwise distinct given that `Environment` has no
+growth-phase slot.
+
+### L0-L4 on the built dev store
+
+8 records, built by
+`python -m torchcell.database.build_dataset_lmdb --dataset ProteinFoldChangeCaglar2017Dataset --retire-existing`;
+`--list-stale --include-private` does not name it.
+
+| level | check | verdict | measurement |
+|---|---|---|---|
+| L0 | `structural` | pass | 8 records validated against `ExperimentType` |
+| L1 | `count` | pass | observed 8, expected 8 |
+| L1 | `contrast_uniqueness` | pass | 8 distinct contrasts, one record each |
+| L1 | `contrast_environment_uniqueness` | pass | 8 distinct (environment, reference environment) pairs |
+| L1 | `sample_uniqueness` | pass | 8 distinct `protein_fold_change` profiles |
+| L2 | `value_fidelity` | pass | 33,268 fold changes, all finite |
+| L2 | `p_values_are_probabilities` | pass | all 33,264 p-values in (0, 1] |
+| L2 | `fold_change_se_nonnegative` | pass | 33,268 standard errors, finite and non-negative |
+| L2 | `adjusted_p_values_are_probabilities` | pass | 21,892 of 21,892 in (0, 1] |
+| L2 | `statistic_keys_are_nested` | pass | 0 statistic maps key an untested protein |
+| L3 | `reference_is_the_scales_neutral_value` | pass | all 33,268 reference values are 0.0 and key-matched |
+| L3 | `fold_change_scale_consistent` | pass | single scale `log2` |
+| L3 | `measurement_type_consistent` | pass | single `deseq2_wald_log2_fold_change_design_batch_plus_condition` |
+| L3 | `p_value_adjustment_method_consistent` | pass | `['benjamini_hochberg']` |
+| L3 | `assembly_pin` | pass | `('ecoli_B_REL606_ASM1798v1', 'GCA_000017985.1')` |
+| L3 | `p_value_adjustment_back_solve` | pass | Benjamini-Hochberg reproduces `padj` over 24 groups, 69,472 rows, to 1.04e-13 |
+| L3 | `provenance_audit` (x53) | pass | every module `SourcedValue` backed by a verbatim quote in `paper.md` or `si1.md` |
+| L4 | `gene_containment_rel606` | pass | 4,187 of 4,187 measured loci are REL606 GenBank gene rows |
+
+Adding this family to `torchcell/datasets/ecoli/caglar2017.py` changes the module the
+build manifest fingerprints, so `--list-stale --include-private` now reports
+`RnaseqCaglar2017Dataset` and `ProteomeCaglar2017Dataset` as stale. Neither store's
+records change; both need a rebuild before the next KG build.

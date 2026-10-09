@@ -23,9 +23,11 @@ t o t a l } } = \\ln 2 / \\mathrm { T } _ { 1 / 2 }$". So:
 - ``degradation_rate`` is ``ln(2) / half_life``, per hour: an exact algebraic transform
   of the consumed cell through the Note's own identity, so the record is internally
   consistent (``degradation_rate == ln 2 / half_life`` for every key).
-- ``measurement_type`` says it is the TOTAL turnover rate (active degradation PLUS
-  dilution) and names the reactor and the doubling time, because the dilution term is
-  set by the doubling time and two conditions' rates are not comparable without it.
+- ``measurement_type`` names the assay and its unit only
+  (``n15_ammonium_tmtproc_total_turnover_rate_per_hour``): it is the TOTAL turnover rate,
+  active degradation PLUS dilution. The dilution term itself is the environment's, and it
+  is carried there as ``Environment.dilution_rate_per_hour`` rather than spelled into
+  this string.
 
 The ACTIVE degradation rate ``k_D`` is deliberately NOT stored: ``k_D = k_total - D``
 goes negative wherever the fitted total half-life exceeds the doubling time, which the
@@ -42,44 +44,80 @@ is stored on), computed from the two replicate rates ``ln 2 / T_i``; it is ``nan
 protein with one replicate in that condition or with a ceiling-flagged replicate, the
 landed convention for "this key has no SE" (the validator admits NaN there).
 
-CEILING CELLS ARE KEPT, BECAUSE THE SOURCE KEEPS THEM. 2,084 of the 61,811 released
+CEILING CELLS ARE KEPT AND THEY TRAVEL AS CENSORED. 2,084 of the 61,811 released
 replicate cells carry a trailing ``*``, which Supplementary Data 1 glosses as "* Protein
 total half-life was set to ceiling for this dilution rate" and Supplementary Data 7
-marks ``Undetermined``. They are right-censored, not absent: the authors include them in
-their own "Average of half-lives" cell (verified: every mean column equals the arithmetic
-mean of its available replicates, 0 mismatches in 28,610 two-replicate cells) and in
-Table 1's per-condition protein counts, which this loader reproduces exactly as an L1
-oracle. Dropping them would delete the stable half of the proteome and would break that
-oracle. What is lost is the per-protein CENSORING FLAG, for which
-``ProteinTurnoverPhenotype`` has no field; every flagged cell is written to
-``preprocess/ceiling_cells.csv`` instead, and the measured ceiling of each doubling time
-(2 h at 42 min, 4 h at 3 h, 8 h at 6 h, 16 h at 12 h) is recorded there.
+marks ``Undetermined``; 2,082 of them are cells of a stored key. They are right-censored,
+not absent: the authors include them in their own "Average of half-lives" cell (verified:
+every mean column equals the arithmetic mean of its available replicates, 0 mismatches in
+28,610 two-replicate cells) and in Table 1's per-condition protein counts, which this
+loader reproduces exactly as an L1 oracle. Dropping them would delete the stable half of
+the proteome and would break that oracle.
 
-THE IDENTIFIER ROUTE IS TWO LAYERS, BOTH MEASURED. The release keys on UniProt entries
-(``sp|A5A614|YCIZ_ECOLI``) plus a gene-name column, neither of which is a locus tag.
+The flag now travels on the record. ``censoring`` carries a ``Censoring`` for EVERY
+stored key of every record, which the source's own oracle makes honest: Supplementary
+Data 1's ``*`` and Supplementary Data 7's ``Undetermined`` agree on all 61,811 released
+cells (0 disagreements, asserted at build time), so the release resolves the question for
+every cell and absence would be the wrong answer rather than a cheaper one. A key is
+``right`` when ANY of its replicate cells is ceiling-flagged, because the authors' mean
+then has a capped value in it and the true mean half-life lies above the stored one;
+1,989 of the 33,187 stored keys are ``right`` (93 of them with both replicates capped)
+and the other 31,198 are ``uncensored``. The side is stated on the RELEASED quantity, the
+total half-life ``half_life`` stores verbatim, which is what the cap was applied to;
+``degradation_rate`` is ``ln 2`` over it, a decreasing map, so the same key bounds the
+rate from ABOVE. ``preprocess/ceiling_cells.csv`` is still written, because it carries
+what the record does not: the replicate number and the measured ceiling of each doubling
+time (2 h at 42 min, 4 h at 3 h, 8 h at 6 h, 16 h at 12 h).
+
+THE IDENTIFIER ROUTE IS TWO LAYERS, BOTH MEASURED AND BOTH TYPED. The release keys on
+UniProt entries (``sp|A5A614|YCIZ_ECOLI``) plus a gene-name column, neither of which is a
+locus tag.
 
 1. The pinned GenBank assembly carries UniProt accessions itself, as
    ``/db_xref="UniProtKB/Swiss-Prot:<acc>"`` on its CDS features (4,275 accessions, none
-   mapping to two loci). 3,225 of the 3,262 released accessions resolve through it.
+   mapping to two loci). 3,225 of the 3,262 released accessions resolve through it, on
+   ``DerivedIdentifierRoute`` member ``uniprot_db_xref``.
 2. The remaining rows go through ``reconcile_locus_tags`` on the released gene name,
-   which the genome resolves at its symbol and synonym layers.
+   which the genome resolves at its symbol and synonym layers: 35 rows, ``gene_symbol``.
 
-Together they reach 3,260 of 3,262 unique b-numbers, with no two rows claiming one
-locus. Layer 1 takes precedence, and the one row where the two layers DISAGREE shows
+Every resolved row's route is now a typed ``DerivedIdentifierMapping``, built and
+validated at read time -- all 3,262 released keys pass ``UNIPROT_ACCESSION_PATTERN``
+through ``DerivedIdentifierMapping.uniprot_accession()`` -- and
+``preprocess/identifier_route.csv`` records that enum value, not a free string. The
+mapping cannot be attached per key, because a dict-keyed phenotype has no
+``identifier_mapping`` field; it is the CSV and the build accounting that carry it.
+
+Together the two layers reach 3,260 of 3,262 unique b-numbers, with no two rows claiming
+one locus. Layer 1 takes precedence, and the one row where the two layers DISAGREE shows
 why: ``sp|P0A6E9|BIOD2_ECOLI`` carries the gene name ``bioD``, whose symbol resolves to
 ``b0778`` (bioD1), while the accession resolves to ``b1593`` (bioD2) -- the UniProt entry
 name is BIOD2 and the table carries ``bioD1`` as a separate row, so the symbol column is
-the imprecise one. ``DerivedIdentifierRoute`` has no member for a UniProt db_xref route
-and a dict-keyed phenotype carries no ``identifier_mapping``, so the per-key route is
-recorded in ``preprocess/identifier_route.csv`` and the reconciliation report rather than
-on the record; the DELETION perturbations, which the paper releases as gene symbols, do
-carry ``identifier_mapping`` with ``route="gene_symbol"``.
+the imprecise one.
+
+The DELETION perturbations keep ``route="gene_symbol"``, measured rather than assumed:
+the paper releases its knockouts only as symbols ("The ΔclpP, Δlon, ΔhslV single mutants
+were generated by P1 transduction", "we knocked out the smpB gene"), never as
+accessions, and those four symbols resolve through the genome's name layers. A
+``uniprot_db_xref`` route there would have to invent an accession the source does not
+release for the genotype.
 
 TWO PROTEIN KEYS ARE DROPPED, and they are the only drops. ``sp|P07363-2|CHEA_ECOLI`` and
 ``sp|P63284-2|CLPB_ECOLI`` are alternative-isoform accessions whose canonical forms
 (``P07363`` cheA, ``P63284`` clpB) are already separate rows of the same table, and whose
 gene-name cell is empty. Resolving them would put two values on one locus; a
 gene-level record cannot hold that, so they are not keys of any record.
+
+THE CHEMOSTAT DILUTION RATE IS A TYPED FIELD OF THE ENVIRONMENT. Twelve of the 13
+conditions are continuous culture, where "we can control the cell doubling time and
+enforce steady state" and ``D`` is "the known variable $D$ (dilution rate)". No numeric
+``D`` is printed per condition, but the paper fixes it twice over: Fig. 2's legend says
+"The vertical line marks the dilution limit set by the 6-h doubling time", i.e. the
+dilution-limited total half-life IS the doubling time, and the Supplementary Note's
+identity ``k_total = ln 2 / T_half`` turns that half-life into a rate. So
+``dilution_rate_per_hour`` is ``ln 2`` over the doubling time Table 1 publishes for that
+condition: 0.231049 h^-1 at 3 h, 0.115525 at 6 h, 0.057762 at 12 h. The 42 min condition
+is batch, so it carries no dilution rate at all. This is exact arithmetic on two quoted
+sentences, not a model, and it is the same identity ``degradation_rate`` already uses.
 
 THE GENOTYPE AXIS IS NOT PURELY WILD TYPE. Table 1's conditions 1-8 are the unperturbed
 strain, so those records carry ``Genotype(perturbations=[])`` -- the environment is what
@@ -98,15 +136,38 @@ one of the 3,262 UniProt entry names ends in ``_ECOLI``, UniProt's K-12 mnemonic
 the Keio collection, which is BW25113, but by P1 transduction INTO NCM3722, so the
 measured strain is an NCM3722 derivative and not a Keio clone.
 
-WHAT COULD NOT BE SOURCED, AND IS GAPPED RATHER THAN GUESSED. No per-protein uncertainty
-of the released MEAN is published: Supplementary Data 7 gives a per-REPLICATE 95%
-confidence interval, from ``curve_fit``'s parameter variance times a t quantile at
-``dof = i x 8 - 1`` with ``i`` the protein's peptide count, and ``i`` is not released, so
-the interval cannot be turned back into the standard deviation it came from. The
-intervals are consumed as the censoring oracle (every ``Undetermined`` cell matches a
-``*`` cell and no other: 0 disagreements in 61,811 cells) and are verified to be
-symmetric on the rate scale, which is the independent confirmation that the fitted
-parameter is the rate; they are not stored, because the class has no interval field.
+THE PUBLISHED INTERVAL IS STORED FOR EXACTLY THE KEYS IT IS AN INTERVAL OF.
+Supplementary Data 7 publishes a per-REPLICATE 95% confidence interval on the total
+half-life, from ``curve_fit``'s parameter variance times the t quantile at
+``dof = i x 8 - 1`` with ``i`` the protein's peptide count.
+
+- A ONE-REPLICATE key's stored value IS that replicate's fitted half-life, so the
+  released interval is the record's interval and is stored losslessly. 4,587 of the
+  33,187 stored keys have one replicate; 292 of those are ceiling-flagged and their
+  interval cell reads ``Undetermined``; of the 4,295 that remain, 4,270 are stored. The
+  bounds are inverted onto the RATE scale, which is exact arithmetic through the Note's
+  own identity (``r = ln 2 / T`` is decreasing, so the two bounds swap), and the build
+  asserts that every stored pair brackets the stored rate.
+- The other 25 are REFUSED and listed in the build accounting: their released upper
+  half-life bound is zero or negative (the rate interval's lower bound crossed zero), so
+  no finite non-negative rate bound exists for them. Clamping one at zero would
+  manufacture a bound the fit did not give.
+- A TWO-REPLICATE key gets no bounds. The interval is published per replicate, and the
+  interval of the MEAN of two fits is not published; combining the two needs ``i``, the
+  per-protein peptide count, which the release does not carry. ``degradation_rate_lower``
+  and ``degradation_rate_upper`` are ragged by design and a key absent from them is
+  exactly "the source publishes no interval for this key", so no per-key gap restates it.
+
+``confidence_level`` is 0.95 and ``interval_method`` names the construction, both
+sourced. ``degradation_rate_se`` stays the paper's own two-replicate ``sd / sqrt(n)``: a
+replicate SE and a fitted interval are different statistics, and this release carries
+each one for the keys the other cannot cover.
+
+WHAT IS STILL GAPPED RATHER THAN GUESSED. There is no per-protein uncertainty of the
+released MEAN for a two-replicate key, because ``i`` is unreleased and the interval does
+not invert back to the standard deviation it came from; and no per-protein synthesis rate
+exists at all, since the model fits one free parameter. The latter is the one typed
+``ProvenanceGap`` on the phenotype.
 """
 
 from __future__ import annotations
@@ -146,9 +207,11 @@ from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
     BacterialGeneNamespace,
     BacterialStrainBackground,
+    Censoring,
     Concentration,
     ConcentrationUnit,
     DerivedIdentifierMapping,
+    DerivedIdentifierRoute,
     Environment,
     EnvironmentPhysicalPerturbation,
     Experiment,
@@ -482,6 +545,62 @@ CONFIDENCE_INTERVALS = _si_note(
     "quantile at dof = i x 8 - 1 with i the protein's peptide count; i is not "
     "released, so the interval does not invert back to a standard deviation",
 )
+CONFIDENCE_LEVEL_SOURCE = _si_note(
+    0.95,
+    "This is the error with $67 \\%$ confidence interval. To get the $9 5 \\%$ CI, we "
+    "should",
+    page=_PAGE_SI_FITTING,
+    note="the level the stored bounds are at; the workbook's own column header says it "
+    "too ('Total half-life 95% confidence interval in <condition>, replicate 1')",
+)
+INTERVAL_FROM_CURVE_FIT_VARIANCE = _si_note(
+    "curve_fit parameter variance",
+    "with returning the parameter estimate also returns the variance estimate of the "
+    "fitted parameter.",
+    page=_PAGE_SI_FITTING,
+)
+INTERVAL_T_QUANTILE = _si_note(
+    "t ppf at 0.975",
+    "Therefore we evaluate, Percent point function (inverse of cdf) at a value of "
+    "0.975 given degrees",
+    page=_PAGE_SI_FITTING,
+)
+INTERVAL_DOF = _si_note(
+    "dof = i x 8 - 1",
+    "of freedom (dof= Number of data points – number of estimated parameters $= \\dot "
+    "{ 1 } \\times 8 - 1$ )",
+    page=_PAGE_SI_FITTING,
+    note="i is the protein's peptide count and is not released, which is why the "
+    "interval is stored as an interval and never inverted to a standard error",
+)
+DILUTION_IS_THE_CHEMOSTAT_VARIABLE = _paper(
+    "D",
+    "the known variable $D$ (dilution rate)",
+    page=_PAGE_RESULTS,
+    note="the dilution rate is the chemostat's controlled variable, not a fitted one, "
+    "which is why it belongs to the environment rather than to the phenotype",
+)
+DILUTION_LIMIT_IS_THE_DOUBLING_TIME = _paper(
+    "T_dilution_limit = doubling time",
+    "The vertical line marks the dilution limit set by the 6-h doubling time.",
+    page="Fig. 2 legend",
+    note="a purely diluting protein's total half-life is the doubling time, so with the "
+    "Supplementary Note's identity k_total = ln 2 / T_half the dilution rate is ln 2 "
+    "over the doubling time; this is the arithmetic Environment.dilution_rate_per_hour "
+    "carries",
+)
+DOUBLING_TIMES_MEASURED = _paper(
+    {"batch": 0.7, "chemostat": (3.0, 6.0, 12.0)},
+    "rapidly doubling cells with unlimited growth in minimal medium (0.7 h)",
+    page=_PAGE_RESULTS,
+    note="the four doubling times, the chemostat three of which set a dilution rate; "
+    "Table 1 names each condition's own doubling time and is quoted per condition",
+)
+DOUBLING_TIMES_CHEMOSTAT = _paper(
+    (3.0, 6.0, 12.0),
+    "slower doubling cells in carbonlimited chemostats (3 h, 6 h, and 12 h)",
+    page=_PAGE_RESULTS,
+)
 REPLICATE_SE_FORMULA = _si_note(
     "sd / sqrt(n)",
     "where $\\bar { \\mathsf X }$ is the sample mean and $\\sigma ^ { 2 }$ is the "
@@ -615,6 +734,24 @@ SAMPLING_SERIES: dict[str, tuple[str, int]] = {
     ),
 }
 
+#: Doubling time -> its length in hours. The batch culture's 0.7 h is the paper's own
+#: rounding of its 42 min label ("minimal medium (0.7 h)"); the three chemostat values
+#: are Table 1's, quoted per condition on ``Condition.table1_quote``.
+DOUBLING_HOURS: dict[str, float] = {"42 min": 0.7, "3 h": 3.0, "6 h": 6.0, "12 h": 12.0}
+
+#: What one stored number is, with its unit. The reactor and the doubling time are NOT
+#: in here: the dilution regime is the environment's, and it is carried typed, on
+#: ``Environment.dilution_rate_per_hour``.
+MEASUREMENT_TYPE = "n15_ammonium_tmtproc_total_turnover_rate_per_hour"
+
+#: The level of every stored bound, as the Note and the workbook column headers state.
+CONFIDENCE_LEVEL: float = float(CONFIDENCE_LEVEL_SOURCE.value)
+#: How the stored bounds were produced, and the one transform applied to them.
+INTERVAL_METHOD = (
+    "curve_fit_parameter_variance_t_ppf_0.975_dof_8i_minus_1_"
+    "published_per_replicate_on_the_total_half_life_inverted_to_the_rate_scale"
+)
+
 Limitation = Literal["none", "C", "N", "P"]
 
 
@@ -625,7 +762,9 @@ class Condition(BaseModel):
     rather than silently shifting a condition's values. ``table1_proteins`` is the
     per-condition protein count Table 1 publishes and the L1 oracle this loader
     reproduces; ``ceiling_hours`` is the single ceiling value measured in that
-    condition's two replicate columns.
+    condition's two replicate columns. ``censored_keys`` and ``interval_keys`` are the
+    measured per-condition counts of the two #753 maps, pinned the same way
+    ``stored_proteins`` is, so a change in either is a build failure rather than a drift.
     """
 
     model_config = ConfigDict(frozen=True)
@@ -638,6 +777,8 @@ class Condition(BaseModel):
     deleted_symbols: tuple[str, ...]
     table1_proteins: int
     stored_proteins: int
+    censored_keys: int
+    interval_keys: int
     table1_quote: str
     ceiling_hours: float
     header_replicate_1: str
@@ -652,12 +793,22 @@ class Condition(BaseModel):
         return SAMPLING_SERIES[self.doubling_time][1] / 60.0
 
     @property
-    def measurement_type(self) -> str:
-        """What one stored number is, including its unit, reactor and dilution regime."""
-        return (
-            "n15_ammonium_tmtproc_total_turnover_rate_per_hour_"
-            f"{self.reactor}_doubling_{self.doubling_time.replace(' ', '')}"
-        )
+    def doubling_hours(self) -> float:
+        """This condition's doubling time, in hours."""
+        return DOUBLING_HOURS[self.doubling_time]
+
+    @property
+    def dilution_rate_per_hour(self) -> float | None:
+        """``ln 2`` over the doubling time for a chemostat; ``None`` for the batch.
+
+        The dilution-limited total half-life IS the doubling time ("the dilution limit
+        set by the 6-h doubling time"), and the Supplementary Note's identity
+        ``k_total = ln 2 / T_half`` turns that half-life into the rate. A batch culture
+        has no dilution rate, so it carries none.
+        """
+        if self.reactor == "batch":
+            return None
+        return math.log(2.0) / self.doubling_hours
 
 
 CONDITIONS: tuple[Condition, ...] = (
@@ -670,6 +821,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2555,
         stored_proteins=2553,
+        censored_keys=177,
+        interval_keys=338,
         table1_quote=(
             "<td>1.</td><td>Wild type</td><td>Minimal media</td><td>Batch</td>"
             "<td>42 min</td><td>2</td><td>2555</td>"
@@ -702,6 +855,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2665,
         stored_proteins=2664,
+        censored_keys=240,
+        interval_keys=302,
         table1_quote=(
             "<td>2.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>3h</td>"
             "<td>2</td><td>2665</td>"
@@ -734,6 +889,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2651,
         stored_proteins=2650,
+        censored_keys=166,
+        interval_keys=331,
         table1_quote=(
             "<td>3.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2651</td>"
@@ -766,6 +923,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2697,
         stored_proteins=2696,
+        censored_keys=156,
+        interval_keys=404,
         table1_quote=(
             "<td>4.</td><td>Wild type</td><td>C-lim</td><td>Chemostat</td><td>12 h</td>"
             "<td>2</td><td>2697</td>"
@@ -798,6 +957,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2469,
         stored_proteins=2468,
+        censored_keys=62,
+        interval_keys=357,
         table1_quote=(
             "<td>5.</td><td>Wild type</td><td>P-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2469</td>"
@@ -830,6 +991,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2619,
         stored_proteins=2618,
+        censored_keys=156,
+        interval_keys=248,
         table1_quote=(
             "<td>6.</td><td>Wild type</td><td>P-lim</td><td>Chemostat</td><td>12h</td>"
             "<td>2</td><td>2619</td>"
@@ -862,6 +1025,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2467,
         stored_proteins=2466,
+        censored_keys=44,
+        interval_keys=395,
         table1_quote=(
             "<td>7.</td><td>Wild type</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2467</td>"
@@ -894,6 +1059,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=(),
         table1_proteins=2460,
         stored_proteins=2459,
+        censored_keys=98,
+        interval_keys=367,
         table1_quote=(
             "<td>8.</td><td>Wild type</td><td>N-lim</td><td>Chemostat</td><td>12 h</td>"
             "<td>2</td><td>2460</td>"
@@ -926,6 +1093,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=("clpP",),
         table1_proteins=2491,
         stored_proteins=2490,
+        censored_keys=221,
+        interval_keys=367,
         table1_quote=(
             "<td>11.</td><td>Δclp</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2491</td>"
@@ -958,6 +1127,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=("lon",),
         table1_proteins=2390,
         stored_proteins=2389,
+        censored_keys=194,
+        interval_keys=254,
         table1_quote=(
             "<td>10.</td><td>Δ lon</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2390</td>"
@@ -990,6 +1161,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=("hslV",),
         table1_proteins=2393,
         stored_proteins=2392,
+        censored_keys=164,
+        interval_keys=315,
         table1_quote=(
             "<td>9.</td><td>Δ hslV</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2393</td>"
@@ -1022,6 +1195,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=("clpP", "lon", "hslV"),
         table1_proteins=2809,
         stored_proteins=2808,
+        censored_keys=254,
+        interval_keys=355,
         table1_quote=(
             "<td>12.</td><td>Δ hslV Δ lon Δ clpP</td><td>N-lim</td>"
             "<td>Chemostat</td><td>6h</td><td>2</td><td>2809</td>"
@@ -1057,6 +1232,8 @@ CONDITIONS: tuple[Condition, ...] = (
         deleted_symbols=("smpB",),
         table1_proteins=2535,
         stored_proteins=2534,
+        censored_keys=57,
+        interval_keys=237,
         table1_quote=(
             "<td>13.</td><td>Δ smpB</td><td>N-lim</td><td>Chemostat</td><td>6h</td>"
             "<td>2</td><td>2535</td>"
@@ -1310,39 +1487,105 @@ def read_half_lives(
     return protein_ids, gene_names, cells
 
 
-def read_undetermined(path: str) -> tuple[list[str], dict[str, list[bool]]]:
-    """Read Supplementary Data 7: which per-replicate confidence intervals are absent.
+class ConfidenceCell(BaseModel):
+    """One released Supplementary Data 7 cell: a half-life interval, or ``Undetermined``.
 
-    Returns the protein ids and, per ``Condition.key``, the two replicates' flags in
-    row order. ``True`` means the released cell is the literal ``Undetermined``.
+    The workbook writes a determined cell as ``[lower upper]`` in hours, on the TOTAL
+    HALF-LIFE scale its column header names, and an undetermined one as the literal
+    ``Undetermined``, which is the censoring flag Supplementary Data 1 writes as ``*``.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    undetermined: bool
+    lower_hours: float | None = None
+    upper_hours: float | None = None
+
+    @property
+    def bounds_hours(self) -> tuple[float, float]:
+        """The two released endpoints; only a determined cell has them."""
+        if self.lower_hours is None or self.upper_hours is None:
+            raise RuntimeError(
+                "an Undetermined confidence cell has no endpoints; it is the ceiling "
+                "flag, not an interval"
+            )
+        return self.lower_hours, self.upper_hours
+
+
+def parse_confidence_interval(value: Any) -> ConfidenceCell | None:
+    """Parse one Supplementary Data 7 cell; ``None`` where the protein is not quantified.
+
+    Any other shape raises: the two endpoints are what the record's bounds are built
+    from, so an unparsed cell is never skipped.
+    """
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text:
+        return None
+    if text == UNDETERMINED_NOTE.value:
+        return ConfidenceCell(undetermined=True)
+    if not (text.startswith("[") and text.endswith("]")):
+        raise RuntimeError(
+            f"{text!r} is neither {UNDETERMINED_NOTE.value!r} nor a '[lower upper]' "
+            "interval; Supplementary Data 7's cell shape changed"
+        )
+    parts = text[1:-1].split()
+    if len(parts) != 2:
+        raise RuntimeError(
+            f"{text!r} has {len(parts)} endpoint(s), not the two a 95% confidence "
+            "interval has"
+        )
+    return ConfidenceCell(
+        undetermined=False, lower_hours=float(parts[0]), upper_hours=float(parts[1])
+    )
+
+
+def read_confidence_intervals(
+    path: str,
+) -> tuple[list[str], dict[str, list[ConfidenceCell | None]]]:
+    """Read Supplementary Data 7: the per-replicate 95% intervals on the half-life.
+
+    Returns the protein ids and, per ``Condition.key``, the two replicates' cells in row
+    order. An ``Undetermined`` cell is the censoring flag; a determined one carries the
+    two released endpoints, in hours.
     """
     header, data = _sheet(path, CONFIDENCE_SHEET)
     protein_ids = [str(row[1]) for row in data]
-    flags: dict[str, list[bool]] = {}
+    cells: dict[str, list[ConfidenceCell | None]] = {}
     for condition in CONDITIONS:
         indices = [
             _column(header, name, path)
             for name in (condition.header_ci_1, condition.header_ci_2)
         ]
-        flags[condition.key] = [
-            ("" if row[index] is None else str(row[index]).strip()) == "Undetermined"
-            for row in data
-            for index in indices
+        cells[condition.key] = [
+            parse_confidence_interval(row[index]) for row in data for index in indices
         ]
-    return protein_ids, flags
+    return protein_ids, cells
 
 
 # --------------------------------------------------------------------------- #
 # Identifier route: UniProt db_xref of the pinned assembly, then the gene symbol
 # --------------------------------------------------------------------------- #
+#: The two ``DerivedIdentifierRoute`` members this release's protein keys reach a locus
+#: tag through, named once so the counts, the CSV and the typed mapping cannot drift.
+UNIPROT_ROUTE: DerivedIdentifierRoute = "uniprot_db_xref"
+SYMBOL_ROUTE: DerivedIdentifierRoute = "gene_symbol"
+
+
 class IdentifierRoute(BaseModel):
-    """How the released protein keys reached locus tags, with every count measured."""
+    """How the released protein keys reached locus tags, with every count measured.
+
+    ``rows_per_route`` is keyed on ``DerivedIdentifierRoute`` members, so the ledger
+    names the typed route rather than a free string.
+    """
 
     source_rows: int
     unique_accessions: int
     assembly_uniprot_xrefs: int
     resolved_by_uniprot_xref: int
     resolved_by_gene_name: int
+    rows_per_route: dict[DerivedIdentifierRoute, int]
     unresolved: tuple[str, ...]
     disagreements: tuple[tuple[str, str, str, str], ...] = ()
 
@@ -1401,15 +1644,20 @@ def _symbol_locus(genome: EcoliK12Genome, name: str) -> str | None:
 
 def identifier_names(
     genome: EcoliK12Genome, protein_ids: Sequence[str], gene_names: Sequence[str]
-) -> tuple[list[str], IdentifierRoute]:
-    """The name handed to ``reconcile_locus_tags`` for each released row, and the route.
+) -> tuple[list[str], list[DerivedIdentifierMapping | None], IdentifierRoute]:
+    """The name handed to ``reconcile_locus_tags`` per released row, typed route and all.
 
-    Layer 1 is the pinned assembly's own UniProt ``/db_xref``; layer 2 is the released
-    gene name. A row neither layer resolves keeps its released protein id, which
-    ``reconcile_locus_tags`` reports as outside the namespace.
+    Layer 1 is the pinned assembly's own UniProt ``/db_xref``, which is
+    ``DerivedIdentifierRoute`` member ``uniprot_db_xref``; layer 2 is the released gene
+    name, ``gene_symbol``. Each resolved row gets a ``DerivedIdentifierMapping``, so the
+    released key is validated as a UniProt accession (through
+    ``DerivedIdentifierMapping.uniprot_accession``) at read time rather than trusted. A
+    row neither layer resolves keeps its released protein id, which
+    ``reconcile_locus_tags`` reports as outside the namespace, and carries no mapping.
     """
     xrefs = uniprot_locus_tags(genome)
     names: list[str] = []
+    mappings: list[DerivedIdentifierMapping | None] = []
     by_xref = by_symbol = 0
     unresolved: list[str] = []
     disagreements: list[tuple[str, str, str, str]] = []
@@ -1424,12 +1672,23 @@ def identifier_names(
             disagreements.append((protein_id, gene_name, from_xref, from_symbol))
         if from_xref is not None:
             names.append(from_xref)
+            mappings.append(
+                DerivedIdentifierMapping(
+                    source_identifier=protein_id, route=UNIPROT_ROUTE
+                )
+            )
             by_xref += 1
         elif from_symbol is not None:
             names.append(from_symbol)
+            mappings.append(
+                DerivedIdentifierMapping(
+                    source_identifier=gene_name, route=SYMBOL_ROUTE
+                )
+            )
             by_symbol += 1
         else:
             names.append(protein_id)
+            mappings.append(None)
             unresolved.append(protein_id)
     route = IdentifierRoute(
         source_rows=len(names),
@@ -1437,6 +1696,7 @@ def identifier_names(
         assembly_uniprot_xrefs=len(xrefs),
         resolved_by_uniprot_xref=by_xref,
         resolved_by_gene_name=by_symbol,
+        rows_per_route={UNIPROT_ROUTE: by_xref, SYMBOL_ROUTE: by_symbol},
         unresolved=tuple(unresolved),
         disagreements=tuple(disagreements),
     )
@@ -1453,7 +1713,7 @@ def identifier_names(
         len(route.disagreements),
         list(route.disagreements),
     )
-    return names, route
+    return names, mappings, route
 
 
 # --------------------------------------------------------------------------- #
@@ -1478,14 +1738,21 @@ def strain_reference(data_root: str | None = None) -> AssemblyReferenceGenome:
 
 
 def deletion_perturbation(symbol: str, locus_tag: str) -> BacterialDeletionPerturbation:
-    """One released protease / SsrA deletion, keyed on the pinned assembly's b-number."""
+    """One released protease / SsrA deletion, keyed on the pinned assembly's b-number.
+
+    The route is ``gene_symbol`` and stays so: the paper releases its knockouts only as
+    symbols ("The ΔclpP, Δlon, ΔhslV single mutants were generated by P1 transduction",
+    "we knocked out the smpB gene"), never as UniProt accessions, and each of the four
+    resolves through the genome's name layers. The ``uniprot_db_xref`` route belongs to
+    the per-protein LABEL keys, which the release does write as accessions.
+    """
     keio = symbol in KEIO_DERIVED_SYMBOLS
     return BacterialDeletionPerturbation(
         systematic_gene_name=locus_tag,
         perturbed_gene_name=symbol,
         gene_namespace=MG1655_NAMESPACE,
         identifier_mapping=DerivedIdentifierMapping(
-            source_identifier=symbol, route="gene_symbol"
+            source_identifier=symbol, route=SYMBOL_ROUTE
         ),
         collection=KEIO_COLLECTION if keio else None,
         construction=None,
@@ -1582,9 +1849,10 @@ def environment(condition: Condition) -> Environment:
     """The growth environment of one released condition.
 
     ``duration_hours`` is the labeling window: the last sampling time of this doubling
-    time's Table 2 series. It is what separates the same medium read at three dilution
-    rates, and the doubling time itself is named on the phenotype's
-    ``measurement_type`` because the stored rate includes the dilution term.
+    time's Table 2 series. ``dilution_rate_per_hour`` is the chemostat's controlled
+    variable, ``ln 2`` over the doubling time, and ``None`` for the batch condition; it
+    is what the stored rate's dilution term IS, so it is typed on the environment rather
+    than spelled into the phenotype's ``measurement_type``.
     """
     perturbations: list[Any] = []
     if condition.reactor == "chemostat":
@@ -1607,17 +1875,47 @@ def environment(condition: Condition) -> Environment:
         perturbations=perturbations,
         aerobicity="aerobic",
         duration_hours=condition.duration_hours,
+        dilution_rate_per_hour=condition.dilution_rate_per_hour,
     )
 
 
+class RefusedInterval(BaseModel):
+    """One released interval that has no finite non-negative rate bound.
+
+    The released upper endpoint on the half-life is zero or negative, which is the rate
+    interval's lower bound having crossed zero. Inverting it gives a negative rate bound
+    and clamping it at zero would manufacture a bound the fit did not give, so the key
+    carries no interval and is listed here instead.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    condition: str
+    locus_tag: str
+    half_life_hours: float
+    released_lower_hours: float
+    released_upper_hours: float
+    reason: str
+
+
 class ConditionValues(BaseModel):
-    """One condition's per-protein label, derived from the released cells."""
+    """One condition's per-protein label, derived from the released cells.
+
+    ``censoring`` is keyed on every stored key, because the source's oracle resolves
+    every cell; ``degradation_rate_lower`` / ``degradation_rate_upper`` are ragged, and
+    hold exactly the one-replicate keys whose released interval inverts onto the rate
+    scale.
+    """
 
     half_life: dict[str, float]
     degradation_rate: dict[str, float]
     degradation_rate_se: dict[str, float]
+    degradation_rate_lower: dict[str, float]
+    degradation_rate_upper: dict[str, float]
+    censoring: dict[str, Censoring]
     n_replicates: dict[str, int]
     ceiling_cells: tuple[tuple[str, int], ...]
+    refused_intervals: tuple[RefusedInterval, ...]
     two_replicate_keys: int
 
 
@@ -1631,21 +1929,51 @@ def total_turnover_rate(half_life_hours: float) -> float:
     return math.log(2.0) / half_life_hours
 
 
+def rate_bounds(lower_hours: float, upper_hours: float) -> tuple[float, float]:
+    """Invert a released half-life interval onto the rate scale.
+
+    ``r = ln 2 / T`` is strictly decreasing, so the endpoints swap: the lower rate bound
+    comes from the UPPER half-life endpoint. Exact arithmetic through the Supplementary
+    Note's own identity, the same one ``degradation_rate`` is built with.
+    """
+    if lower_hours <= 0.0 or upper_hours <= 0.0:
+        raise RuntimeError(
+            f"the released interval [{lower_hours} {upper_hours}] has a non-positive "
+            "endpoint, so it has no finite non-negative rate bound"
+        )
+    return math.log(2.0) / upper_hours, math.log(2.0) / lower_hours
+
+
 def condition_values(
-    condition: Condition, keys: Sequence[str], cells: Sequence[HalfLifeCell | None]
+    condition: Condition,
+    keys: Sequence[str],
+    cells: Sequence[HalfLifeCell | None],
+    intervals: Sequence[ConfidenceCell | None],
 ) -> ConditionValues:
-    """Build one condition's label maps from its three columns, row by row.
+    """Build one condition's label maps from its five columns, row by row.
 
     ``cells`` is the flat ``(replicate 1, replicate 2, mean)`` triple per row that
-    :func:`read_half_lives` returns. A row whose mean cell is empty is not a key of
-    this condition: the assay did not quantify that protein here, and a missing value
-    is an absent key, never a zero.
+    :func:`read_half_lives` returns, and ``intervals`` the flat ``(replicate 1,
+    replicate 2)`` pair :func:`read_confidence_intervals` returns. A row whose mean cell
+    is empty is not a key of this condition: the assay did not quantify that protein
+    here, and a missing value is an absent key, never a zero.
+
+    A key is ``Censoring.right`` when any of its replicate cells is ceiling-flagged, and
+    ``Censoring.uncensored`` otherwise: the released mean then has a capped value in it,
+    so the true mean half-life lies above the stored one. A ONE-REPLICATE key's stored
+    value is that replicate's own fitted half-life, so its released interval is the
+    record's interval and is stored, inverted onto the rate scale; a two-replicate key
+    gets none, because the interval of the mean of two fits is not published.
     """
     half_life: dict[str, float] = {}
     rate: dict[str, float] = {}
     rate_se: dict[str, float] = {}
+    rate_lower: dict[str, float] = {}
+    rate_upper: dict[str, float] = {}
+    censoring: dict[str, Censoring] = {}
     n_replicates: dict[str, int] = {}
     ceiling: list[tuple[str, int]] = []
+    refused: list[RefusedInterval] = []
     two_replicate = 0
     for row, key in enumerate(keys):
         replicate_1, replicate_2, mean = cells[3 * row : 3 * row + 3]
@@ -1676,17 +2004,63 @@ def condition_values(
         if len(replicates) == 2:
             two_replicate += 1
         censored = any(cell.ceiling for cell in replicates)
+        censoring[key] = Censoring.right if censored else Censoring.uncensored
         if len(replicates) == 2 and not censored:
             rates = [total_turnover_rate(cell.hours) for cell in replicates]
             rate_se[key] = statistics.stdev(rates) / math.sqrt(2.0)
         else:
             rate_se[key] = float("nan")
+        if len(replicates) == 2:
+            continue
+        number = 0 if replicate_1 is not None else 1
+        interval = intervals[2 * row + number]
+        if censored:
+            if interval is None or not interval.undetermined:
+                raise RuntimeError(
+                    f"{condition.key}/{key}: replicate {number + 1} is ceiling-flagged "
+                    f"but its interval cell is {interval!r}, not "
+                    f"{UNDETERMINED_NOTE.value!r}; the two workbooks disagree"
+                )
+            continue
+        if interval is None or interval.undetermined:
+            raise RuntimeError(
+                f"{condition.key}/{key}: replicate {number + 1} is an estimate but "
+                f"its interval cell is {interval!r}; the release publishes an interval "
+                "for every determined fit"
+            )
+        released_lower, released_upper = interval.bounds_hours
+        if released_lower <= 0.0 or released_upper <= 0.0:
+            refused.append(
+                RefusedInterval(
+                    condition=condition.key,
+                    locus_tag=key,
+                    half_life_hours=mean.hours,
+                    released_lower_hours=released_lower,
+                    released_upper_hours=released_upper,
+                    reason="non_positive_released_half_life_endpoint",
+                )
+            )
+            continue
+        lower, upper = rate_bounds(released_lower, released_upper)
+        if not lower <= rate[key] <= upper:
+            raise RuntimeError(
+                f"{condition.key}/{key}: the released interval "
+                f"[{released_lower} {released_upper}] h inverts to "
+                f"[{lower} {upper}] per hour, which does not bracket the stored rate "
+                f"{rate[key]}"
+            )
+        rate_lower[key] = lower
+        rate_upper[key] = upper
     return ConditionValues(
         half_life=half_life,
         degradation_rate=rate,
         degradation_rate_se=rate_se,
+        degradation_rate_lower=rate_lower,
+        degradation_rate_upper=rate_upper,
+        censoring=censoring,
         n_replicates=n_replicates,
         ceiling_cells=tuple(ceiling),
+        refused_intervals=tuple(refused),
         two_replicate_keys=two_replicate,
     )
 
@@ -1694,13 +2068,24 @@ def condition_values(
 def phenotype(
     condition: Condition, values: ConditionValues
 ) -> ProteinTurnoverPhenotype:
-    """The protein-turnover phenotype of one released condition."""
+    """The protein-turnover phenotype of one released condition.
+
+    ``censoring`` is stated for every stored key; the bound maps are ragged and hold the
+    one-replicate keys whose published interval is the record's interval.
+    ``measurement_type`` names the assay and its unit only, because the dilution regime
+    is the environment's ``dilution_rate_per_hour``.
+    """
     return ProteinTurnoverPhenotype(
         degradation_rate=values.degradation_rate,
         degradation_rate_se=values.degradation_rate_se,
+        degradation_rate_lower=values.degradation_rate_lower,
+        degradation_rate_upper=values.degradation_rate_upper,
+        confidence_level=CONFIDENCE_LEVEL,
+        interval_method=INTERVAL_METHOD,
+        censoring=values.censoring,
         half_life=values.half_life,
         n_replicates=values.n_replicates,
-        measurement_type=condition.measurement_type,
+        measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[SYNTHESIS_RATE_GAP],
     )
 
@@ -1729,12 +2114,23 @@ class BuildAccounting(BaseModel):
     source_rows: int
     released_cells: int
     ceiling_cells: int
+    censored_keys: int
+    uncensored_keys: int
+    interval_keys: int
+    one_replicate_keys: int
+    refused_intervals: list[RefusedInterval]
+    confidence_level: float
+    interval_method: str
+    measurement_type: str
+    dilution_rate_per_hour: dict[str, float | None]
     candidate_records: int
     kept_records: int
     dropped_records: int
     kept_protein_keys: int
     dropped_protein_keys: int
     per_condition_keys: dict[str, int]
+    per_condition_censored_keys: dict[str, int]
+    per_condition_interval_keys: dict[str, int]
     rules: list[DropRule]
     identifier_route: IdentifierRoute
     reconciliation: LocusTagReconciliation
@@ -1855,7 +2251,7 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         half_lives_path = osp.join(self.raw_dir, HALF_LIVES_FILENAME)
         confidence_path = osp.join(self.raw_dir, CONFIDENCE_FILENAME)
         protein_ids, gene_names, cells = read_half_lives(half_lives_path)
-        ci_ids, undetermined = read_undetermined(confidence_path)
+        ci_ids, intervals = read_confidence_intervals(confidence_path)
         if protein_ids != ci_ids:
             raise RuntimeError(
                 "Supplementary Data 1 and 7 do not list the same proteins in the same "
@@ -1868,7 +2264,7 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             )
 
         genome = self._genome()
-        names, route = identifier_names(genome, protein_ids, gene_names)
+        names, mappings, route = identifier_names(genome, protein_ids, gene_names)
         stored, reconciliation = reconcile_locus_tags(
             genome, pd.Series(names), label=self.name
         )
@@ -1887,14 +2283,16 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
                 f"the unresolved keys are {sorted(dropped)}, not the two isoform rows "
                 f"{list(DROPPED_PROTEIN_KEYS)} this loader accounts for"
             )
-        self._check_undetermined_oracle(keys, cells, undetermined)
+        self._check_undetermined_oracle(keys, cells, intervals)
 
         loci = self._deleted_loci(genome)
         reference_genome = strain_reference()
         pub = publication()
         by_condition: dict[str, ConditionValues] = {}
         for condition in CONDITIONS:
-            values = condition_values(condition, keys, cells[condition.key])
+            values = condition_values(
+                condition, keys, cells[condition.key], intervals[condition.key]
+            )
             if len(values.half_life) != condition.table1_proteins:
                 raise RuntimeError(
                     f"{condition.key}: {len(values.half_life)} released proteins, not "
@@ -1905,12 +2303,30 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
                 values.half_life.pop(key, None)
                 values.degradation_rate.pop(key, None)
                 values.degradation_rate_se.pop(key, None)
+                values.degradation_rate_lower.pop(key, None)
+                values.degradation_rate_upper.pop(key, None)
+                values.censoring.pop(key, None)
                 values.n_replicates.pop(key, None)
             if len(values.half_life) != condition.stored_proteins:
                 raise RuntimeError(
                     f"{condition.key}: {len(values.half_life)} stored proteins, not "
                     f"the {condition.stored_proteins} this loader pins (Table 1's "
                     f"{condition.table1_proteins} less the isoform rows it quantified)"
+                )
+            censored = sum(
+                1 for state in values.censoring.values() if state is Censoring.right
+            )
+            if censored != condition.censored_keys:
+                raise RuntimeError(
+                    f"{condition.key}: {censored} right-censored key(s), not the "
+                    f"{condition.censored_keys} this loader pins ({CEILING_NOTE.quote!r})"
+                )
+            if len(values.degradation_rate_lower) != condition.interval_keys:
+                raise RuntimeError(
+                    f"{condition.key}: {len(values.degradation_rate_lower)} key(s) with "
+                    f"a stored interval, not the {condition.interval_keys} this loader "
+                    "pins (the one-replicate keys whose released interval inverts onto "
+                    "the rate scale)"
                 )
             by_condition[condition.key] = values
 
@@ -1947,7 +2363,14 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         interned_env.close()
 
         self._write_reports(
-            protein_ids, gene_names, keys, by_condition, route, reconciliation, index
+            protein_ids,
+            gene_names,
+            keys,
+            mappings,
+            by_condition,
+            route,
+            reconciliation,
+            index,
         )
         log.info(
             "Gupta2024 turnover: %d records (one per released condition) x %d-%d "
@@ -1963,25 +2386,28 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
     def _check_undetermined_oracle(
         keys: Sequence[str],
         cells: Mapping[str, Sequence[HalfLifeCell | None]],
-        undetermined: Mapping[str, Sequence[bool]],
+        intervals: Mapping[str, Sequence[ConfidenceCell | None]],
     ) -> None:
         """Every ceiling-flagged half-life has an ``Undetermined`` interval, and only it.
 
         An independent cross-source check on the censoring flag: Supplementary Data 1's
         ``*`` and Supplementary Data 7's ``Undetermined`` are produced by different
         sheets of the authors' pipeline, and they agree on all 61,811 released cells.
+        That agreement is what makes ``censoring`` complete per key: the source answers
+        the question for every released cell, so the record states it for every key.
         """
         mismatched: list[tuple[str, str, int, bool, bool]] = []
         for condition in CONDITIONS:
             triples = cells[condition.key]
-            flags = undetermined[condition.key]
+            confidence = intervals[condition.key]
             for row, key in enumerate(keys):
                 for number in (0, 1):
                     cell = triples[3 * row + number]
-                    flagged = flags[2 * row + number]
-                    ceiling = cell is not None and cell.ceiling
+                    interval = confidence[2 * row + number]
                     if cell is None:
                         continue
+                    flagged = interval is not None and interval.undetermined
+                    ceiling = cell.ceiling
                     if ceiling != flagged:
                         mismatched.append(
                             (condition.key, key, number + 1, ceiling, flagged)
@@ -1998,28 +2424,44 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
         protein_ids: Sequence[str],
         gene_names: Sequence[str],
         keys: Sequence[str],
+        mappings: Sequence[DerivedIdentifierMapping | None],
         by_condition: Mapping[str, ConditionValues],
         route: IdentifierRoute,
         reconciliation: LocusTagReconciliation,
         kept_records: int,
     ) -> None:
-        """Write the identifier route, the ceiling ledger and the build accounting."""
+        """Write the identifier route, the ceiling ledger and the build accounting.
+
+        ``identifier_route.csv`` records the TYPED ``DerivedIdentifierRoute`` member of
+        each resolved row and the identifier it was derived from, both read off the row's
+        own validated ``DerivedIdentifierMapping``, not a free string.
+        """
         dropped = set(reconciliation.outside_namespace)
         with open(
             osp.join(self.preprocess_dir, "identifier_route.csv"), "w", newline=""
         ) as handle:
             writer = csv.writer(handle)
             writer.writerow(
-                ["protein_id", "accession", "released_gene_name", "stored_key", "kept"]
+                [
+                    "protein_id",
+                    "accession",
+                    "released_gene_name",
+                    "route",
+                    "source_identifier",
+                    "stored_key",
+                    "kept",
+                ]
             )
-            for protein_id, gene_name, key in zip(
-                protein_ids, gene_names, keys, strict=True
+            for protein_id, gene_name, mapping, key in zip(
+                protein_ids, gene_names, mappings, keys, strict=True
             ):
                 writer.writerow(
                     [
                         protein_id,
                         base_accession(protein_id),
                         gene_name,
+                        "" if mapping is None else mapping.route,
+                        "" if mapping is None else mapping.source_identifier,
                         key,
                         "no" if key in dropped else "yes",
                     ]
@@ -2060,6 +2502,41 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             source_rows=len(protein_ids),
             released_cells=released_cells,
             ceiling_cells=ceiling_cells,
+            censored_keys=sum(
+                1
+                for condition in CONDITIONS
+                for state in by_condition[condition.key].censoring.values()
+                if state is Censoring.right
+            ),
+            uncensored_keys=sum(
+                1
+                for condition in CONDITIONS
+                for state in by_condition[condition.key].censoring.values()
+                if state is Censoring.uncensored
+            ),
+            interval_keys=sum(
+                len(by_condition[condition.key].degradation_rate_lower)
+                for condition in CONDITIONS
+            ),
+            one_replicate_keys=sum(
+                1
+                for condition in CONDITIONS
+                for n in by_condition[condition.key].n_replicates.values()
+                if n == 1
+            ),
+            refused_intervals=[
+                refused
+                for condition in CONDITIONS
+                for refused in by_condition[condition.key].refused_intervals
+                if refused.locus_tag not in dropped
+            ],
+            confidence_level=CONFIDENCE_LEVEL,
+            interval_method=INTERVAL_METHOD,
+            measurement_type=MEASUREMENT_TYPE,
+            dilution_rate_per_hour={
+                condition.key: condition.dilution_rate_per_hour
+                for condition in CONDITIONS
+            },
             candidate_records=len(CONDITIONS),
             kept_records=kept_records,
             dropped_records=len(CONDITIONS) - kept_records,
@@ -2067,6 +2544,18 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
             dropped_protein_keys=len(dropped),
             per_condition_keys={
                 condition.key: len(by_condition[condition.key].half_life)
+                for condition in CONDITIONS
+            },
+            per_condition_censored_keys={
+                condition.key: sum(
+                    1
+                    for state in by_condition[condition.key].censoring.values()
+                    if state is Censoring.right
+                )
+                for condition in CONDITIONS
+            },
+            per_condition_interval_keys={
+                condition.key: len(by_condition[condition.key].degradation_rate_lower)
                 for condition in CONDITIONS
             },
             rules=[
@@ -2097,19 +2586,39 @@ class ProteinTurnoverGupta2024Dataset(ExperimentDataset):
                 "degradation_rate_se is the paper's own two-replicate sd/sqrt(n) on "
                 "the rate scale, and nan where a key has one replicate or a ceiling "
                 "cell; the point estimate is ln 2 over the arithmetic mean half-life "
-                "while the SE centres on the mean of the two rates, which differ by "
+                "while the SE centers on the mean of the two rates, which differ by "
                 "the arithmetic-harmonic gap (measured median 0.0023 relative)",
                 "ceiling-flagged cells are KEPT, as the authors keep them in their own "
-                "mean and in Table 1's counts; the per-protein censoring flag has no "
-                "field on ProteinTurnoverPhenotype and is written to ceiling_cells.csv",
+                "mean and in Table 1's counts, and the flag TRAVELS: censoring carries "
+                "a Censoring for every stored key, right where any replicate cell is "
+                f"capped ({CEILING_NOTE.quote!r}) and uncensored otherwise. The side is "
+                "stated on the released total half-life, which is what the cap was "
+                "applied to; degradation_rate is ln 2 over it, so the same key bounds "
+                "the rate from above. ceiling_cells.csv still carries what the record "
+                "does not: the replicate number and the condition's ceiling value",
                 "the per-replicate 95% confidence intervals of Supplementary Data 7 "
-                "are consumed as the censoring oracle and are NOT stored: the class "
-                "has no interval field, and they do not invert to a standard deviation "
-                "without the unreleased per-protein peptide count",
-                f"the identifier route is recorded in identifier_route.csv because "
-                f"DerivedIdentifierRoute has no UniProt db_xref member and a "
-                f"dict-keyed phenotype carries no identifier_mapping; the one row "
-                f"where the two layers disagree is {list(route.disagreements)}",
+                "are stored for exactly the one-replicate keys, whose stored value IS "
+                "that replicate's fit, inverted onto the rate scale by r = ln 2 / T; a "
+                "two-replicate key gets none, because the interval of the mean of two "
+                "fits is not published and combining them needs the unreleased "
+                "per-protein peptide count i. The bound maps are ragged by design, so "
+                "an absent key already means 'no interval is published for it'",
+                "the intervals are also the censoring oracle: every Undetermined cell "
+                "matches a ceiling-flagged cell and no other, over all 61,811 released "
+                "cells, which is what makes the per-key censoring map complete",
+                f"each resolved row's route is a typed DerivedIdentifierMapping "
+                f"({route.rows_per_route}), validated at read time and recorded as the "
+                f"enum value in identifier_route.csv; the per-key mapping cannot sit on "
+                f"the record because a dict-keyed phenotype has no identifier_mapping "
+                f"field. The one row where the two layers disagree is "
+                f"{list(route.disagreements)}",
+                "the DELETION perturbations keep route=gene_symbol: the paper releases "
+                "its knockouts only as symbols, never as accessions",
+                "the chemostat dilution rate is Environment.dilution_rate_per_hour, "
+                "ln 2 over the doubling time (the dilution-limited total half-life IS "
+                f"the doubling time: {DILUTION_LIMIT_IS_THE_DOUBLING_TIME.quote!r}); "
+                "the batch condition carries none, and measurement_type now names the "
+                "assay and its unit only",
             ],
         )
         accounting.check()
@@ -2139,21 +2648,32 @@ def _records(dataset_root: str) -> list[dict[str, Any]]:
     return load_records(dataset_root)
 
 
-def _condition_identity(condition: Condition) -> tuple[str, str, tuple[str, ...]]:
+#: What identifies one of the 13 conditions in a built record. ``measurement_type`` is
+#: NOT part of it any more: it names the assay and its unit only, which is the same
+#: string in all 13. The dilution regime that used to be spelled into it now reads off
+#: the environment, as the labeling window already did.
+ConditionIdentity = tuple[str, float, float | None, tuple[str, ...]]
+
+
+def _condition_identity(condition: Condition) -> ConditionIdentity:
     """What identifies one condition in a built record, independent of record order."""
     return (
-        condition.measurement_type,
         medium(condition.limitation).name,
+        condition.duration_hours,
+        condition.dilution_rate_per_hour,
         tuple(sorted(condition.deleted_symbols)),
     )
 
 
-def _record_identity(record: Mapping[str, Any]) -> tuple[str, str, tuple[str, ...]]:
+def _record_identity(record: Mapping[str, Any]) -> ConditionIdentity:
     """The same identity, read back out of a built record."""
     experiment = record["experiment"]
+    env = experiment["environment"]
+    dilution = env["dilution_rate_per_hour"]
     return (
-        str(experiment["phenotype"]["measurement_type"]),
-        str(experiment["environment"]["media"]["name"]),
+        str(env["media"]["name"]),
+        float(env["duration_hours"]),
+        None if dilution is None else float(dilution),
         tuple(
             sorted(
                 str(perturbation["perturbed_gene_name"])
@@ -2166,9 +2686,9 @@ def _record_identity(record: Mapping[str, Any]) -> tuple[str, str, tuple[str, ..
 def _l1_condition_keys(records: Sequence[Mapping[str, Any]]) -> LevelResult:
     """L1: each record keys the pinned count, Table 1's less its isoform rows.
 
-    Records are matched to conditions by (measurement_type, medium, deleted symbols),
-    which is unique across the 13, because the LMDB returns its keys in lexicographic
-    order and positional matching would compare the wrong pairs.
+    Records are matched to conditions by (medium, labeling window, dilution rate,
+    deleted symbols), which is unique across the 13, because the LMDB returns its keys
+    in lexicographic order and positional matching would compare the wrong pairs.
     """
     expected = {
         _condition_identity(condition): condition.stored_proteins
@@ -2210,12 +2730,16 @@ def _l1_condition_keys(records: Sequence[Mapping[str, Any]]) -> LevelResult:
 
 
 def _l1_key_alignment(records: Sequence[Mapping[str, Any]]) -> LevelResult:
-    """L1: every per-protein map of a record is keyed identically."""
+    """L1: every per-protein map of a record is keyed identically.
+
+    ``censoring`` is in this set, not among the ragged maps: the source's oracle resolves
+    every released cell, so a stored key without a censoring state would be a loss.
+    """
     misaligned: list[dict[str, Any]] = []
     for index, record in enumerate(records):
         phenotype_dump = record["experiment"]["phenotype"]
         rates = set(phenotype_dump["degradation_rate"])
-        for field in ("degradation_rate_se", "half_life", "n_replicates"):
+        for field in ("degradation_rate_se", "half_life", "n_replicates", "censoring"):
             if set(phenotype_dump[field] or {}) != rates:
                 misaligned.append({"record": index, "field": field})
     return LevelResult(
@@ -2224,6 +2748,111 @@ def _l1_key_alignment(records: Sequence[Mapping[str, Any]]) -> LevelResult:
         passed=not misaligned,
         message=f"{len(records)} records checked; {len(misaligned)} misaligned",
         details={"misaligned": misaligned[:20]},
+    )
+
+
+def _l1_censored_and_interval_counts(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L1: each record's censored and interval key counts are the pinned ones."""
+    expected = {
+        _condition_identity(condition): (
+            condition.censored_keys,
+            condition.interval_keys,
+        )
+        for condition in CONDITIONS
+    }
+    observed = {
+        _record_identity(record): (
+            sum(
+                1
+                for state in record["experiment"]["phenotype"]["censoring"].values()
+                if str(state) == Censoring.right.value
+            ),
+            len(record["experiment"]["phenotype"]["degradation_rate_lower"]),
+        )
+        for record in records
+    }
+    wrong = {
+        str(key): {"observed": observed[key], "expected": expected[key]}
+        for key in sorted(set(expected) & set(observed), key=str)
+        if observed[key] != expected[key]
+    }
+    passed = (
+        not wrong and set(expected) == set(observed) and len(observed) == len(records)
+    )
+    censored = sum(count for count, _ in observed.values())
+    intervals = sum(count for _, count in observed.values())
+    return LevelResult(
+        level=Level.L1,
+        name="per_condition_censored_and_interval_key_counts_are_the_pinned_ones",
+        passed=passed,
+        message=(
+            f"{censored} right-censored key(s) and {intervals} key(s) with a stored "
+            f"interval over {len(records)} records; {len(wrong)} mismatch(es)"
+        ),
+        details={"mismatches": wrong},
+    )
+
+
+def _l2_bounds_bracket_the_rate(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    """L2: every stored bound pair brackets its rate, and the two maps share keys."""
+    offenders: list[dict[str, Any]] = []
+    n = 0
+    for index, record in enumerate(records):
+        phenotype_dump = record["experiment"]["phenotype"]
+        rates = phenotype_dump["degradation_rate"]
+        lower = phenotype_dump["degradation_rate_lower"]
+        upper = phenotype_dump["degradation_rate_upper"]
+        if set(lower) != set(upper):
+            offenders.append({"record": index, "reason": "lower and upper keys differ"})
+            continue
+        for key, low in lower.items():
+            n += 1
+            high = float(upper[key])
+            rate = float(rates[key])
+            if not float(low) <= rate <= high:
+                offenders.append(
+                    {"record": index, "key": key, "bounds": [low, high], "rate": rate}
+                )
+    return LevelResult(
+        level=Level.L2,
+        name="stored_interval_brackets_the_stored_rate",
+        passed=not offenders,
+        message=f"{n} bound pair(s) checked; {len(offenders)} outside",
+        details={"offenders": offenders[:20]},
+    )
+
+
+def _l3_dilution_rate_is_ln2_over_the_doubling_time(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L3: the chemostat records carry ln 2 over their doubling time, the batch none."""
+    expected = {
+        _condition_identity(condition): condition.dilution_rate_per_hour
+        for condition in CONDITIONS
+    }
+    wrong: dict[str, dict[str, float | None]] = {}
+    continuous = 0
+    for record in records:
+        identity = _record_identity(record)
+        observed = identity[2]
+        if observed is not None:
+            continuous += 1
+        if observed != expected[identity]:
+            wrong[str(identity)] = {
+                "observed": observed,
+                "expected": expected[identity],
+            }
+    chemostats = sum(1 for c in CONDITIONS if c.reactor == "chemostat")
+    return l3_convention(
+        "dilution_rate_per_hour_is_ln2_over_the_doubling_time",
+        not wrong and continuous == chemostats,
+        detail=(
+            f"{continuous} continuous-culture record(s) of {len(records)}, "
+            f"{chemostats} expected; {len(wrong)} mismatch(es) "
+            f"({DILUTION_LIMIT_IS_THE_DOUBLING_TIME.quote!r})"
+        ),
     )
 
 
@@ -2303,8 +2932,9 @@ def verify_build(
     ``verify_protein_dataset`` reads ``phenotype['protein_abundance']`` and cannot see a
     rate -- so the gate is composed here from the shared primitives in
     ``torchcell.verification.levels`` rather than forced through an unrelated family.
-    L2 checks the rates and their standard errors (NaN admitted, which is what a
-    one-replicate or ceiling-involved key stores); L3 re-derives the half-life identity
+    L2 checks the rates, their standard errors (NaN admitted, which is what a
+    one-replicate or ceiling-involved key stores) and that every stored interval
+    brackets its rate; L3 re-derives the half-life identity, the chemostat dilution rate
     and the assembly pin; L4 contains every stored key in the pinned assembly's loci.
     """
     from pydantic import TypeAdapter
@@ -2338,6 +2968,7 @@ def verify_build(
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_condition_keys(records))
     report.add(_l1_key_alignment(records))
+    report.add(_l1_censored_and_interval_counts(records))
     rates = [
         float(value)
         for record in records
@@ -2352,7 +2983,9 @@ def verify_build(
         ).values()
     ]
     report.add(l2_value_fidelity(standard_errors, allow_nan=True, minimum=0.0))
+    report.add(_l2_bounds_bracket_the_rate(records))
     report.add(_l3_rate_is_ln2_over_half_life(records))
+    report.add(_l3_dilution_rate_is_ln2_over_the_doubling_time(records))
     report.add(_l3_assembly_pin(records))
     report.add(_l4_keys_are_loci(records, genome))
     preprocess = osp.join(dataset_root, "preprocess")

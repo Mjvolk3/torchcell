@@ -147,7 +147,10 @@ def measure_layers(book: Any) -> dict[str, Any]:
         kinds: dict[str, int] = {}
         for column in columns:
             kinds[column.kind] = kinds.get(column.kind, 0) + 1
-        kept, ledger = ishii.classify_columns(sheet, columns, rows, dataset=label)
+        dilution_rates = ishii.check_dilution_rate_arm(book, columns)
+        kept, ledger = ishii.classify_columns(
+            sheet, columns, rows, dataset=label, dilution_rates=dilution_rates
+        )
         out[label] = {
             "sheet": name,
             "sample_columns": len(columns),
@@ -155,6 +158,9 @@ def measure_layers(book: Any) -> dict[str, Any]:
             "targets": len(rows),
             "filled_cells": sum(_filled(sheet, rows, c.column) for c in columns),
             "servable_records": len(kept),
+            "dilution_rates_served": sorted(
+                {ishii.culture_dilution_rate(column, dilution_rates) for column in kept}
+            ),
             "dropped": {
                 rule.rule: list(rule.sample_ids)
                 for rule in ledger.rules
@@ -190,6 +196,9 @@ def main() -> int:
         "layers": measure_layers(book),
         "metabolite_protocol_rows": ishii.EXPECTED_PROTOCOL_ROWS,
         "loaded_datasets": ishii.EXPECTED_RECORDS,
+        "dilution_rate_arm_per_hour": list(ishii.DILUTION_RATE_ARM),
+        "reference_dilution_rate_per_hour": ishii.DILUTION_RATE_PER_HOUR,
+        "retired_drop_rules": [dict(rule) for rule in ishii.RETIRED_DROP_RULES],
     }
     if args.network:
         report["access"] = probe_access()

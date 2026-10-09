@@ -10,10 +10,12 @@ is ``torchcell.datasets.bacteria_common``.
 
 What this package holds:
 
-- ``carruthers2025`` -- ``IsoprenolTiterCarruthers2025Dataset`` and
-  ``ProteomeCarruthers2025Dataset``: the CRISPRi isoprenol production campaign, 465
-  product-titer strains on the IY1449b chassis plus the released 19-sample Top3 proteome
-  panel.
+- ``carruthers2025`` -- ``IsoprenolTiterCarruthers2025Dataset``,
+  ``ProteomeCarruthers2025Dataset`` and
+  ``ProteomeFoldChangeCarruthers2025Dataset``: the CRISPRi isoprenol production
+  campaign, 465 product-titer strains on the IY1449b chassis, the released 19-sample
+  Top3 proteome panel, and the 16 released differential-proteomics contrasts (per-protein
+  log2 fold change with its p-value).
 - ``desiqueira2025`` -- ``IsoprenolTiterDeSiqueira2025Dataset``,
   ``ProteomeDeSiqueira2025Dataset``, ``ProteomePercentDeSiqueira2025Dataset`` and
   ``ProteomeLog10PercentDeSiqueira2025Dataset``: the acetate-tolerization panel, whose
@@ -36,6 +38,9 @@ from .carruthers2025 import (
 )
 from .carruthers2025 import (
     ProteomeCarruthers2025Dataset as ProteomeCarruthers2025Dataset,
+)
+from .carruthers2025 import (
+    ProteomeFoldChangeCarruthers2025Dataset as ProteomeFoldChangeCarruthers2025Dataset,
 )
 from .desiqueira2025 import (
     IsoprenolTiterDeSiqueira2025Dataset as IsoprenolTiterDeSiqueira2025Dataset,

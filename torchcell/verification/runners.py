@@ -16,11 +16,12 @@ Run everything::
 
 Or import and call :func:`run_expression`, :func:`run_morphology`, or :func:`run_all`.
 
-The two bioproduction families work the other way round: each of their datasets already
-carries its own L0-L3 gate and its own raw-mirror cross-source oracles in the loader
-module that owns its readers, so :func:`run_product_titer` and
-:func:`run_bacterial_protein_abundance` dispatch to those entry points and add the one
-rule that is the family's own, the host-aware locus containment.
+The three bioproduction families work the other way round: each of their datasets
+already carries its own L0-L3 gate and its own raw-mirror cross-source oracles in the
+loader module that owns its readers, so :func:`run_product_titer`,
+:func:`run_bacterial_protein_abundance` and :func:`run_bacterial_protein_fold_change`
+dispatch to those entry points and add the one rule that is the family's own, the
+host-aware locus containment.
 
 The L4 gene universe and the canonical-name resolver belong to the host a record is
 written against. The yeast runners use S288C (:func:`_sgd_gene_set`, :func:`_genome`);
@@ -664,17 +665,23 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
             page="Mol Syst Biol 13:907; S-BSST5 zscore_neg.tsv, zscore_pos.tsv",
         ),
     },
-    # The paired-modality chemostat metabolome. 24 BW25113 Keio disruptants at one
-    # dilution rate; the reference is the wild-type control of each record's OWN
-    # measurement series, restricted to the metabolites that record also detected, so
-    # it is an absolute baseline and not centered on 0. L4 is the BW25113 locus
-    # universe, read off the records' own assembly pin.
+    # The paired-modality chemostat metabolome. 24 BW25113 Keio disruptants at 0.2 h-1
+    # plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1; the reference is the wild-type
+    # 0.2 h-1 control of each record's OWN measurement series, restricted to the
+    # metabolites that record also detected, so it is an absolute baseline and not
+    # centered on 0. L4 is the BW25113 locus universe, read off the records' own
+    # assembly pin.
     "metabolome_ishii2007": {
         "root": "data/torchcell/metabolome_ishii2007",
-        # 35 Metabolite columns - 1 empty (GR04x) - 5 reference - 4 dilution-rate
-        # (culture_not_batch) - 1 duplicate pfkA culture = 24 kept records.
-        "expected_count": 24,
+        # 35 Metabolite columns - 1 empty (GR04x) - 5 reference - 1 duplicate pfkA
+        # culture = 28 kept records: 24 disruptants at 0.2 h-1 plus the wild type at
+        # 0.1, 0.4, 0.5 and 0.7 h-1, which Environment.dilution_rate_per_hour (#753)
+        # keeps as four distinct environments.
+        "expected_count": 28,
         "reference_centered": False,
+        # The four wild-type records share one empty genotype and differ only in
+        # dilution rate, so L1 uniqueness keys on (strain, environment).
+        "environment_keyed": True,
         "provenance": Provenance(
             source_uri="http://ecoli.iab.keio.ac.jp/Quantitative_data.xls",
             citation_key="ishiiMultipleHighThroughputAnalyses2007",
@@ -696,9 +703,10 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     "metabolome_rapp2026": {
         "root": "data/torchcell/metabolome_rapp2026",
         # 1,513 Table S4 strain tokens - 15 control strains (the reference) - 1 strain
-        # with no assigned target (argR) - 1 b-number the annotation remaps (phnE
-        # b4104) = 1,496 kept records.
-        "expected_count": 1496,
+        # with no assigned target (argR) = 1,497 kept records. phnE's b4104 is kept
+        # since #753: the annotation lists it as a /gene_synonym of exactly one locus,
+        # b4583, so the record stores b4583 on a locus_tag_synonym mapping.
+        "expected_count": 1497,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri=("torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si5.xlsx"),
@@ -719,9 +727,9 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # reference is 1.0, the library median the released fold change divides by.
     "targeted_metabolome_rapp2026": {
         "root": "data/torchcell/targeted_metabolome_rapp2026",
-        # 411 Table S6 strain tokens - 4 control tokens (ctrl4, ctrl7, ctrl8, ctrl11) -
-        # 1 b-number the annotation remaps (phnE b4104) = 406 kept records.
-        "expected_count": 406,
+        # 411 Table S6 strain tokens - 4 control tokens (ctrl4, ctrl7, ctrl8, ctrl11)
+        # = 407 kept records (phnE kept on a locus_tag_synonym mapping since #753).
+        "expected_count": 407,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si7.xlsx",
@@ -743,8 +751,9 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     # ratio to, back-solved as Mean_Int / Mean_FC.
     "metabolite_intensity_rapp2026": {
         "root": "data/torchcell/metabolite_intensity_rapp2026",
-        # 411 Table S5 strain tokens - 4 control tokens - phnE = 406 kept records.
-        "expected_count": 406,
+        # 411 Table S5 strain tokens - 4 control tokens = 407 kept records (phnE kept
+        # on a locus_tag_synonym mapping since #753).
+        "expected_count": 407,
         "reference_centered": False,
         "provenance": Provenance(
             source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si6.xlsx",
@@ -789,6 +798,7 @@ def run_metabolite(data_root: str) -> bool:
             expected_count=spec.get("expected_count", len(records)),
             reference_centered=spec.get("reference_centered", True),
             protocol_measurement_types=spec.get("protocol_measurement_types"),
+            environment_keyed=spec.get("environment_keyed", False),
         )
         assembly_sets = _dataset_assembly_sets(records)
         if assembly_sets != (SGD_S288C_R64,):
@@ -2153,9 +2163,10 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     # from S288C (``_host_for_dataset``).
     "growth_auc_rapp2026": {
         "root": "data/torchcell/growth_auc_rapp2026",
-        # Table S2's 1,515 library genes minus phnE, whose released b4104 the pinned
-        # MG1655 annotation carries as a /gene_synonym of the pseudogene b4583.
-        "expected_count": 1514,
+        # Table S2's 1,515 library genes, phnE among them: since #753 its released
+        # b4104 is stored as the one locus the pinned MG1655 annotation lists it as a
+        # /gene_synonym of, the pseudogene b4583, on a locus_tag_synonym mapping.
+        "expected_count": 1515,
         "provenance": Provenance(
             source_uri="torchcell-raw/rappMetabolomeColiCRISPRi2026/data/si3.xlsx",
             citation_key="rappMetabolomeColiCRISPRi2026",
@@ -2366,6 +2377,15 @@ def _verify_menasalvas_metabolite_production(
     )
 
 
+def _verify_carruthers_proteome_fold_change(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Carruthers 2025 differential proteomics: the fold-change gate plus its own rows."""
+    from torchcell.datasets.pputida import carruthers2025
+
+    return carruthers2025.verify_build(dataset_root, data_root, family="fold_change")
+
+
 def _verify_banerjee_proteome(dataset_root: str, data_root: str) -> VerificationReport:
     """Banerjee 2025 proteome: the shared gate plus its four own L1-L4 rows."""
     from torchcell.datasets.pputida import banerjee2025
@@ -2445,6 +2465,19 @@ def _verify_caglar_proteome(dataset_root: str, data_root: str) -> VerificationRe
     from torchcell.datasets.ecoli import caglar2017
 
     return caglar2017.run_verification("proteome", data_root)
+
+
+def _verify_caglar_protein_fold_change(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Caglar 2017 protein fold changes: the shared fold-change gate plus REL606.
+
+    ``dataset_root`` is unused, as in :func:`_verify_caglar_proteome`: this entry point
+    takes the family name and resolves the root itself.
+    """
+    from torchcell.datasets.ecoli import caglar2017
+
+    return caglar2017.run_verification("protein_fold_change", data_root)
 
 
 def _verify_ishii_proteome(dataset_root: str, data_root: str) -> VerificationReport:
@@ -2553,6 +2586,22 @@ BACTERIAL_METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
 }
 
 
+#: Every landed ``BacterialProteinFoldChangeExperiment`` dataset. Separate from the
+#: abundance registry because the two store different measurements: a ratio against a
+#: named denominator, not an absolute level, so the family's own L0-L3 gate is
+#: ``torchcell.verification.protein_fold_change``.
+BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS: dict[str, dict[str, Any]] = {
+    "proteome_fold_change_carruthers2025": {
+        "root": "data/torchcell/proteome_fold_change_carruthers2025",
+        "verify": _verify_carruthers_proteome_fold_change,
+    },
+    "protein_fold_change_caglar2017": {
+        "root": "data/torchcell/protein_fold_change_caglar2017",
+        "verify": _verify_caglar_protein_fold_change,
+    },
+}
+
+
 def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """Every perturbed identifier a dataset's records assert is a locus of their host.
 
@@ -2599,6 +2648,22 @@ def bacterial_protein_locus_set(records: Sequence[Mapping[str, Any]]) -> set[str
     measured = host_perturbed_gene_set(records)
     for record in records:
         measured |= set(record["experiment"]["phenotype"]["protein_abundance"])
+    return measured
+
+
+def bacterial_protein_fold_change_locus_set(
+    records: Sequence[Mapping[str, Any]],
+) -> set[str]:
+    """The host loci a fold-change dataset names: its tested proteins and its
+    perturbed genes.
+
+    The same union the abundance family checks, read off ``protein_fold_change``
+    instead of ``protein_abundance``: both are identifiers a loader resolved against
+    the record's own pinned assembly, so one that is not a locus of it is a build error.
+    """
+    measured = host_perturbed_gene_set(records)
+    for record in records:
+        measured |= set(record["experiment"]["phenotype"]["protein_fold_change"])
     return measured
 
 
@@ -2664,6 +2729,16 @@ def run_bacterial_metabolite(data_root: str) -> bool:
     )
 
 
+def run_bacterial_protein_fold_change(data_root: str) -> bool:
+    """Verify every bacterial protein fold-change dataset (L0-L4). True if all pass."""
+    return _run_bacterial_family(
+        BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS,
+        data_root,
+        measured_set=bacterial_protein_fold_change_locus_set,
+        l4_name="protein_and_perturbed_locus_containment_assembly",
+    )
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -2680,6 +2755,7 @@ def run_all(data_root: str) -> bool:
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
+    bacterial_fold_change_ok = run_bacterial_protein_fold_change(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -2695,6 +2771,7 @@ def run_all(data_root: str) -> bool:
         and titer_ok
         and bacterial_protein_ok
         and bacterial_metabolite_ok
+        and bacterial_fold_change_ok
     )
 
 

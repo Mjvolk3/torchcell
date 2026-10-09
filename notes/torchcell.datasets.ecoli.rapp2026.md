@@ -326,3 +326,103 @@ The three siblings reuse this module's `SOURCED_VALUES`, `SCREEN_MEDIA`, `enviro
 `host_background()`, `read_guides`, `read_sample_rows`, `read_metabolites` and the
 `b_number_remapped_by_the_annotation` drop rule, so there is one strain pin, one medium
 and one `phnE` decision across all four families of this paper.
+
+## 2026.10.09 - `locus_tag_synonym` recovers `phnE`, and the 244 identity gaps are typed
+
+Issue #753 landed two schema members that this loader's two open findings were waiting
+on, so both are closed. Nothing about the stored statistic, the medium, the assembly pin
+or the raw mirror changed; two earlier sections above are no longer true and are
+corrected here rather than edited.
+
+### `phnE` is kept, on a recorded derived mapping
+
+`DerivedIdentifierRoute` gained `locus_tag_synonym`: the source released a retired locus
+tag of the pinned strain's OWN namespace, which the annotation carries as a
+`/gene_synonym` of exactly one current locus. Measured on the pinned
+`ecoli_K12_MG1655_ASM584v2` GenBank bytes before the record was recovered:
+
+| question | measurement |
+|---|---|
+| is `b4104` one of the annotation's locus tags? | no; the annotation carries 4,651 loci and `b4104` is not one of them |
+| how many loci list `b4104` as a `/gene_synonym`? | exactly **one**, `b4583` (`phnE1`), whose synonyms are `b4103`, `b4104`, `ECK4096`, `ECK4097` |
+| what does `resolve_gene_name("b4104")` return? | `non_gene_feature` -> `b4583`, `feature_type="pseudogene"`, note `gene synonym of pseudogene b4583 (not a gene feature)` |
+| does storing `b4583` pass L4 gene containment? | yes; L4's universe is every `gene` row of `GCA_000005845.2_ASM584v2_feature_table.txt.gz`, pseudogene loci included, and `b4583` is one of its 4,651 members (`b4104` and `b4103` are not) |
+| is the remap a collision? | no; `b4583` is proposed by one released b-number only, so `reconcile_locus_tags` keeps the remap rather than falling back to the name as given |
+
+So the record is stored with `systematic_gene_name="b4583"`,
+`perturbed_gene_name="phnE1"` and
+`identifier_mapping=DerivedIdentifierMapping(source_identifier="b4104", route="locus_tag_synonym")`.
+`locus_tag_synonym_mapping` re-checks every condition above against the annotation and
+returns `None` otherwise, so the drop rule still fires for a remap no route describes (a
+released tag two loci list, a tag of another strain's namespace, a stored tag outside the
+namespace). The `b_number_remapped_by_the_annotation` rule stays in the drop log with
+`n_records = 0`, and `identifier_reconciliation.json` gained `locus_tag_synonyms`, one
+line per recorded mapping. `strains.csv` gained an `identifier_route` column.
+
+Retention ledger, measured:
+
+| step | before | after |
+|---|---|---|
+| Table S4 strain tokens | 1,513 | 1,513 |
+| control strains | 15 | 15 |
+| source records | 1,498 | 1,498 |
+| dropped: `no_target_gene_assigned` (`argR`) | 1 | 1 |
+| dropped: `b_number_remapped_by_the_annotation` | 1 | **0** |
+| **kept records** | **1,496** | **1,497** |
+
+One consequence worth recording: the released-symbol disagreement count goes from 2
+(`flc`, `rhmA`) to **3**, because `phnE`'s own symbol does not resolve to `b4583` on this
+annotation. The record stores the b-number's locus and `canonical_symbol` either way, and
+the disagreement is ledgered as the other two are.
+
+### The 244 merged isobaric keys are a typed per-key gap
+
+`ProvenanceGap` gained `keys: tuple[str, ...]`, and `ProvenanceGapMixin` now admits a gap
+that names keys beside a POPULATED mapping field on the stronger condition that the
+mapping carries none of them. So the finding recorded above as "a gap on that field is
+not expressible beside a partial map" is closed: every record carries
+
+```
+ProvenanceGap(field="target_metabolite_ids",
+              reason=not_reported_by_primary,
+              looked_in=<Table S9, sha256 46aed36e634f...>,
+              keys=(the 244 merged keys),
+              note=METABOLITE_IDENTITY_GAP_NOTE)
+```
+
+Measured on the rebuilt store: **exactly 244 keys** on every one of the 1,497 records,
+`244 + 1,077 = 1,321`, and the gapped keys are disjoint from the stored map. The reason is
+`not_reported_by_primary`, not `deferred_pending_source_review`: flow-injection MS cannot
+separate equal masses, so there is nothing to comb for. `preprocess/metabolite_identity.json`
+still carries each key's full BiGG candidate tuple, because a candidate set is not
+expressible on a `ProvenanceGap`, which names keys and not values.
+
+One gap of 244 keys per record is the honest shape and it was not split: the keys are one
+absence with one reason, and splitting them would multiply the reason without adding
+information. Its cost, measured: `processed/lmdb/data.mdb` grows from 112.0 MB to
+**116.6 MB** (+4%). The gap is also refused when the map carries a named key, which is
+asserted directly.
+
+### Rebuild and verification
+
+`python -m torchcell.database.build_dataset_lmdb --dataset MetabolomeRapp2026Dataset
+--retire-existing`: 1,497 records in 112 s, gene-set size 1,497, 1 reference.
+`--list-stale --include-private` no longer names it.
+
+`python -m torchcell.datasets.ecoli.rapp2026 verify` **PASS**: L0 structural 1,497
+records; L1 count 1,497 of 1,497; L1 genotype uniqueness 1,497; L2 value_fidelity and
+se_nonnegative 1,977,537 values each; L3 reference_finite for all 1,977,537; L3 one
+`measurement_type`; L3 24 of 24 sourced values backed by a verbatim quote; L4
+gene_containment 1,497 of 1,497 knocked-down loci are MG1655 GenBank gene rows.
+
+Recorded, not resolved: `verify_metabolite_dataset` runs no `l1_provenance_gaps` census,
+so the 244-key gaps are stored and L0-validated but do not appear in the metabolite
+family's report the way the fitness family's do.
+
+### Tests
+
+`tests/torchcell/datasets/ecoli/test_rapp2026.py`: 45 hermetic + 28 data-gated, 73
+passing with `--data`. The synthetic assembly now files `b0099` on `b0005` alone (the
+recoverable case, so the hermetic build keeps three records rather than two) and `b0098`
+on BOTH `b0006` and the pseudogene `b0004`, which is the two-carrier case no route
+describes and which the `resolve_strains` tests build directly.

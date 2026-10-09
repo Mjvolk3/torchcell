@@ -87,6 +87,29 @@ unread here: the attribution is sourced entirely from Caglar's own citation of i
 citation gives journal, volume and article id but no DOI, so ``HOUSER2015_DOI`` records
 how the DOI string was fixed and the check that it names the right record.
 
+PROTEIN FOLD CHANGE (``ProteinFoldChangeCaglar2017Dataset``,
+``ProteinFoldChangePhenotype``). The protein arm of Supplementary Table S8
+(``srep45303-s9.csv``, retrieved from the same PMC Article Datasets bucket as Tables S1
+to S4), one record per differential-proteomics CONTRAST rather than per sample: a
+different estimand from the proteome loader's absolute levels. Table S8 holds 48 groups
+of 4,196 rows, 24 of them protein-level, which are 6 contrasts x 2 growth phases x 2
+CONTROL PARAMETERIZATIONS (``TABLE_S8_CONTROL_PARAMETERS``). The loader keeps the
+batch-only groups, which is the paper's primary design (``PRIMARY_DESIGN``), and refuses
+the doubling-time ones (``DOUBLING_TIME_DESIGN``): those differ in no released
+experimental column, so they are a second estimate of one genotype x environment cell.
+Of the 12 remaining, the two ``highMg`` and the two ``highNa`` groups are refused as
+well, because Table S1 puts several doses in each of those levels (MgSO4 at 8 and
+200 mM; Na+ at 100, 200 and 300 mM) and a ``SmallMoleculePerturbation`` takes one
+``Concentration``. The 8 records store ``log2FoldChange`` with ``lfcSE``, ``pvalue`` and
+``padj`` on ``fold_change_scale=log2``, keyed by the ``ECB_`` tags the GenPept bridge
+gives; ``p_value_adjustment_method`` is back-solved from the released p-values
+(``adjustment_back_solve``), not stated. ``n_replicates`` is the contrast's TEST-group
+protein-sample count from Table S1, the conservative lower end
+(``replicate_derivations``). The reference phenotype is the log2 scale's neutral value for
+every stored key, which is what a fold change's denominator carries by definition. The
+gene-level arm's 100,704 rows are out of scope: no gene-level expression fold-change
+phenotype exists.
+
 The flux arm (Table S4) is not loaded: it holds flux RATIOS, which neither
 ``MetabolitePhenotype`` (pool sizes) nor ``FluxPhenotype`` (signed net flux) can store.
 """
@@ -129,6 +152,8 @@ from torchcell.datamodels.schema import (
     BACTERIAL_LOCUS_TAG_PATTERNS,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialProteinFoldChangeExperiment,
+    BacterialProteinFoldChangeExperimentReference,
     BacterialReferenceStrain,
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
@@ -139,9 +164,11 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
+    FoldChangeScale,
     Genotype,
     PhysicalFactor,
     ProteinAbundancePhenotype,
+    ProteinFoldChangePhenotype,
     Publication,
     RNASeqExpressionPhenotype,
     SmallMoleculePerturbation,
@@ -201,10 +228,10 @@ SI1_MD_SHA256 = "1b7b8ed0f8b21c1909568f8a05d6a92d99bffaf851aa474a3a8673ebc2da4bd
 PMC_ARTICLE = "PMC5394689.1"
 #: The date the raw-mirror bytes were produced by the recorded retrievers.
 RAW_RETRIEVED_AT = "2026-10-07"
-#: Per-table retrieval date, where it is not ``RAW_RETRIEVED_AT``. Table S5 was fetched
-#: for the doubling-time loader, which the first deposit did not need
-#: (``deposit_si_table``), so its record carries its OWN date.
-TABLE_RETRIEVED_AT: dict[str, str] = {"S5": "2026-10-09"}
+#: Per-table retrieval date, where it is not ``RAW_RETRIEVED_AT``. Tables S5 and S8 were
+#: fetched for the doubling-time and fold-change loaders, which the first deposit did not
+#: need (``deposit_si_table``), so their records carry their OWN date.
+TABLE_RETRIEVED_AT: dict[str, str] = {"S5": "2026-10-09", "S8": "2026-10-09"}
 
 _OCR_METHOD = "MinerU OCR of the publisher PDF (torchcell-library mirror)"
 
@@ -381,6 +408,67 @@ TABLE_S4 = _si(
     "Supplementary Table S4: Mean flux ratios for 13 branches each, measured for "
     "varying Mg $^ { 2 + }$ and Na $^ +$ concentrations in exponential and stationary "
     "phase.",
+)
+TABLE_S8 = _si(
+    "Combined results from tests for differential expression",
+    "Supplementary Table S8: Combined results from tests for differential expression "
+    "for all genes and all distinct tests considered.",
+    note="measured on the mirror: 201,408 rows x 24 columns, 100,704 mRNA rows keyed by "
+    "ECB_ locus tag and 100,704 protein rows keyed by YP_ accession, as 48 groups of "
+    "exactly 4,196 rows, one per fullFileName",
+)
+TABLE_S8_COLUMNS = _si(
+    ("baseMean", "log2FoldChange", "lfcSE", "stat", "pvalue", "padj"),
+    "Results from DeSeq2 calculation, including base mean value, log2FoldChange, "
+    "ifcSE, stat, pvalue, padj.",
+    note="the SI writes 'ifcSE'; the column in the released file is 'lfcSE'",
+)
+TABLE_S8_CONTROL_PARAMETERS = _si(
+    ("batch only", "batch plus doubling time"),
+    "Control parameters of the test (batch only or batch plus doubling time)",
+    note="the investigatedEffect column: the test's STATISTICAL control, not an "
+    "experimental factor, so the two parameterizations of one contrast are two "
+    "estimates of one genotype x environment cell and not two records",
+)
+PRIMARY_DESIGN = _paper(
+    "~batch_number + variable_of_interest",
+    "In general, our design formula was \\~batch_number $^ +$ variable_of_interest, "
+    "where variable_of_interest was either a categorical variable representing the "
+    "carbons source or growth phase (exponential or stationary) or a quantitative "
+    "variable representing",
+    page="Methods, Identifying differentially expressed genes",
+    note="the paper's primary design; the loader keeps the batch-only groups of "
+    "Table S8 and refuses the doubling-time ones (REFUSED_CONTROL_MODEL)",
+)
+DOUBLING_TIME_DESIGN = _paper(
+    "~batch_number + doubling_time + variable_of_interest",
+    "We repeated our DeSeq2 analyses but included in our design formula a term "
+    "representing the doubling time (see Methods).",
+    page="Results, Differentially expressed genes and growth rate",
+    note="a REPEAT of the same analyses under a second control model; the released "
+    "columns of the two sets of groups differ only in investigatedEffect",
+)
+FOLD_CHANGE_BASIS = _paper(
+    "glucose, 5 mM Na+, 0.8 mM Mg2+, same growth phase",
+    "For each growth phase, we defined the base level reference condition to be growth "
+    "in glucose with $5 \\mathrm { m M }$ $\\mathrm { N a ^ { + } }$ and "
+    "$0 . 8 \\bar { \\mathrm { m M } } \\mathrm { M g } ^ { 2 + }$ .",
+    page="Results, Identification of differentially expressed genes",
+    note="what reference_basis names: the DENOMINATOR of every Table S8 fold change",
+)
+FDR_CORRECTED = _paper(
+    "FDR-corrected P value",
+    "at a false-discovery-rate (FDR) corrected $P$ value $< 0 . 0 5$",
+    page="Results, Identification of differentially expressed genes",
+    note="the correction is named only as FDR; which FDR procedure produced padj is "
+    "back-solved from the released p-values (adjustment_back_solve) as "
+    "Benjamini-Hochberg, DESeq2's default",
+)
+BATCH_IN_DESIGN = _paper(
+    "batch number is a predictor",
+    "We corrected for possible batch effects by including batch number as a predictor "
+    "variable in the design formula of DESeq2.",
+    page="Methods, Identifying differentially expressed genes",
 )
 GEO_ACCESSION = _paper(
     "GSE94117",
@@ -869,16 +957,25 @@ SI_TABLES: dict[str, tuple[str, str, str]] = {
         "Supplementary Table S4 (tableS4_fluxData.csv): mean and SDE of 13 branch flux "
         "ratios per salt, concentration and phase",
     ),
-    # Added 2026-10-09 for the doubling-time loader (#776), which is a REVISION of
-    # this mirror: the file the paper's SI lists, fetched by the recorded retriever,
-    # its bytes identical to the library mirror's own si/si6.csv pin. The four tables
-    # above are untouched, so `deposit_raw_mirror` extends the manifest additively.
+    # Added 2026-10-09 for the doubling-time loader (#776) and the fold-change loader
+    # (#770), both of which are REVISIONS of this mirror: the files the paper's SI
+    # lists, fetched by the recorded retriever. The four tables above are untouched, so
+    # `deposit_raw_mirror` extends the manifest additively.
     "S5": (
         "srep45303-s6.csv",
         "76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60",
         "Supplementary Table S5: doubling time in exponential phase, one row per "
         "biological replicate growth curve (55 rows over 19 conditions), each with its "
         "own 95% confidence interval and the r^2 of the linear fit to OD600",
+    ),
+    "S8": (
+        "srep45303-s9.csv",
+        "738e1ee3f17e62a76a610741bc1b60ea21ee6eb80bdaa06846587dae791b44f5",
+        "Supplementary Table S8 (tableS8_combinedOutputDF_DeSeq.csv): the DESeq2 "
+        "differential-expression results of every test considered, 201,408 rows x 24 "
+        "columns -- 100,704 mRNA rows keyed by ECB_ locus tag and 100,704 protein rows "
+        "keyed by YP_ accession, as 48 groups of 4,196 (6 contrasts x 2 growth phases "
+        "x 2 control parameterizations x 2 data types)",
     ),
 }
 
@@ -971,7 +1068,7 @@ def _si_table_spec(table: str) -> RawFileSpec:
 
 
 def si_table_specs() -> list[RawFileSpec]:
-    """The supplementary tables the loaders read, in table order (S1 to S5)."""
+    """The supplementary tables the loaders read, in table order (S1 to S5 and S8)."""
     return [_si_table_spec(table) for table in SI_TABLES]
 
 
@@ -2787,12 +2884,833 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
 
 
 # --------------------------------------------------------------------------- #
+# Family 3: the protein fold changes of Table S8
+# --------------------------------------------------------------------------- #
+#: Table S8's ``dataType`` cell of a protein row (the other value is ``mrna``).
+S8_PROTEIN = "protein"
+#: Table S8's ``dataType`` cell of a gene-level row.
+S8_MRNA = "mrna"
+#: The Table S8 columns the loader reads.
+S8_COLUMNS: tuple[str, ...] = (
+    "id",
+    "baseMean",
+    "log2FoldChange",
+    "lfcSE",
+    "pvalue",
+    "padj",
+    "dataType",
+    "growthPhase.x",
+    "test_for",
+    "contrast",
+    "base",
+    "fullFileName",
+    "investigatedEffect",
+    "testVSbase",
+)
+#: Table S8's ``growthPhase.x`` cell -> the growth phase Table S1 names.
+S8_PHASES: dict[str, GrowthPhase] = {
+    "Exp": GrowthPhase.exponential,
+    "Sta": GrowthPhase.stationary,
+}
+#: The substring that marks the doubling-time control model in ``investigatedEffect``.
+DOUBLING_TIME_MARKER = "doublingTimeMinutes"
+#: What a stored number is: DESeq2's Wald log2 fold change under the primary design.
+FOLD_CHANGE_MEASUREMENT_TYPE = (
+    "deseq2_wald_log2_fold_change_design_batch_plus_condition"
+)
+#: The correction behind ``padj``, back-solved from the released p-values
+#: (``adjustment_back_solve``); the paper names only "FDR corrected" (``FDR_CORRECTED``).
+P_VALUE_ADJUSTMENT_METHOD = "benjamini_hochberg"
+#: A released ``padj`` further than this from the Benjamini-Hochberg value of the
+#: group's own p-values refuses the build. Measured on the mirror over all 48 groups:
+#: 1.04e-13 at worst.
+ADJUSTMENT_TOLERANCE = 1e-9
+#: The denominator of every Table S8 fold change (``FOLD_CHANGE_BASIS``).
+FOLD_CHANGE_REFERENCE_BASIS = (
+    "the base level reference condition of the same growth phase: glucose with 5 mM "
+    "Na+ and 0.8 mM Mg2+ on Davis Minimal medium (DM500)"
+)
+
+
+class ContrastFactor(BaseModel):
+    """How one ``test_for`` value of Table S8 selects its samples out of Table S1."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    test_for: str
+    level_field: str = Field(description="the SampleRow field the level names")
+    fixed: tuple[tuple[str, str], ...] = Field(
+        description="SampleRow fields held at the base level in both groups"
+    )
+    dose_field: str | None = Field(
+        description="the SampleRow field whose value the environment stores; None when "
+        "the level itself is the edit (the carbon source, dosed by CARBON_SOURCE_SWAP)"
+    )
+
+
+#: One entry per ``test_for`` value Table S8 carries, measured on the mirror:
+#: ``carbonSource``, ``Mg_mM_Levels`` and ``Na_mM_Levels``.
+S8_FACTORS: dict[str, ContrastFactor] = {
+    "carbonSource": ContrastFactor(
+        test_for="carbonSource",
+        level_field="carbon_source",
+        fixed=(("mg_level", "baseMg"), ("na_level", "baseNa")),
+        dose_field=None,
+    ),
+    "Mg_mM_Levels": ContrastFactor(
+        test_for="Mg_mM_Levels",
+        level_field="mg_level",
+        fixed=(("carbon_source", BASE_CARBON), ("na_level", "baseNa")),
+        dose_field="mg_mm",
+    ),
+    "Na_mM_Levels": ContrastFactor(
+        test_for="Na_mM_Levels",
+        level_field="na_level",
+        fixed=(("carbon_source", BASE_CARBON), ("mg_level", "baseMg")),
+        dose_field="na_mm",
+    ),
+}
+
+
+def benjamini_hochberg(p_values: FloatArray) -> FloatArray:
+    """Benjamini-Hochberg adjusted p-values of ``p_values`` (step-up, capped at 1)."""
+    n = p_values.size
+    order = np.argsort(p_values, kind="stable")
+    scaled = p_values[order] * n / np.arange(1, n + 1, dtype=np.float64)
+    monotone = np.minimum.accumulate(scaled[::-1])[::-1]
+    out = np.empty(n, dtype=np.float64)
+    out[order] = np.minimum(monotone, 1.0)
+    return out
+
+
+class AdjustmentBackSolve(BaseModel):
+    """The evidence that Table S8's ``padj`` is the Benjamini-Hochberg value of its
+    own ``pvalue`` column, per group.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    method: str
+    groups: int
+    rows_with_both: int = Field(
+        description="Rows carrying a pvalue and a padj (DESeq2's independent filtering "
+        "writes NA padj for the rest)."
+    )
+    max_abs_deviation: float
+    worst_group: str
+
+
+def adjustment_back_solve(frame: pd.DataFrame) -> AdjustmentBackSolve:
+    """Back-solve the multiple-testing correction from the released columns.
+
+    The paper names the correction only as "FDR corrected" (``FDR_CORRECTED``) and
+    defers the procedure to DESeq2, which is not mirrored, so the method is MEASURED
+    here: within each ``fullFileName`` group, the Benjamini-Hochberg adjustment of the
+    rows that carry both a ``pvalue`` and a ``padj`` must reproduce ``padj``. A group
+    that misses by more than ``ADJUSTMENT_TOLERANCE`` refuses the build.
+    """
+    worst = -1.0
+    worst_group = ""
+    rows = 0
+    groups = 0
+    for name, group in frame.groupby("fullFileName", sort=True):
+        tested = group[group["pvalue"].notna() & group["padj"].notna()]
+        groups += 1
+        rows += len(tested)
+        if tested.empty:
+            raise RuntimeError(f"{name}: no row carries both a pvalue and a padj")
+        deviation = float(
+            np.abs(
+                benjamini_hochberg(tested["pvalue"].to_numpy(dtype=np.float64))
+                - tested["padj"].to_numpy(dtype=np.float64)
+            ).max()
+        )
+        if deviation > worst:
+            worst = deviation
+            worst_group = str(name)
+    if worst > ADJUSTMENT_TOLERANCE:
+        raise RuntimeError(
+            f"{worst_group}: padj differs from the Benjamini-Hochberg value of its own "
+            f"p-values by {worst} (tolerance {ADJUSTMENT_TOLERANCE}); the released "
+            "correction is not Benjamini-Hochberg"
+        )
+    return AdjustmentBackSolve(
+        method=P_VALUE_ADJUSTMENT_METHOD,
+        groups=groups,
+        rows_with_both=rows,
+        max_abs_deviation=worst,
+        worst_group=worst_group,
+    )
+
+
+class ContrastGroup(BaseModel):
+    """One Table S8 group: its released descriptors and its 4,196 rows' file name."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    file_name: str = Field(description="Table S8 ``fullFileName``, the group's key")
+    test_vs_base: str
+    growth_phase: GrowthPhase
+    test_for: str
+    contrast: str = Field(description="the test level")
+    base: str = Field(description="the reference level")
+    investigated_effect: str
+    rows: int
+
+    @property
+    def primary_control_model(self) -> bool:
+        """True for the paper's primary design, batch only (``PRIMARY_DESIGN``)."""
+        return DOUBLING_TIME_MARKER not in self.investigated_effect
+
+
+def read_table_s8_protein(path: str | Path) -> pd.DataFrame:
+    """Table S8's protein rows, with the columns the loader reads.
+
+    A ``dataType`` cell of neither known form, or a ``growthPhase.x`` cell that is not
+    a phase Table S8 carries, raises rather than being skipped.
+    """
+    frame = pd.read_csv(path, usecols=list(S8_COLUMNS))
+    types = set(frame["dataType"])
+    if types != {S8_PROTEIN, S8_MRNA}:
+        raise RuntimeError(f"{Path(path).name}: dataType values {sorted(types)}")
+    protein = frame[frame["dataType"] == S8_PROTEIN].copy()
+    phases = set(protein["growthPhase.x"])
+    if not phases <= set(S8_PHASES):
+        raise RuntimeError(
+            f"{Path(path).name}: protein rows carry growth phases {sorted(phases)}"
+        )
+    factors = set(protein["test_for"])
+    if not factors <= set(S8_FACTORS):
+        raise RuntimeError(
+            f"{Path(path).name}: protein rows test for {sorted(factors)}"
+        )
+    return protein
+
+
+def contrast_groups(protein: pd.DataFrame) -> list[ContrastGroup]:
+    """Every protein-level Table S8 group, in file-name order.
+
+    A group whose descriptor columns are not constant over its rows raises: the group
+    key is the file name, and the descriptors are what the record is built from.
+    """
+    groups: list[ContrastGroup] = []
+    for name, rows in protein.groupby("fullFileName", sort=True):
+        cells = {
+            column: sorted(set(rows[column]))
+            for column in (
+                "testVSbase",
+                "growthPhase.x",
+                "test_for",
+                "contrast",
+                "base",
+                "investigatedEffect",
+            )
+        }
+        varying = {k: v for k, v in cells.items() if len(v) != 1}
+        if varying:
+            raise RuntimeError(f"{name}: descriptor columns vary {varying}")
+        groups.append(
+            ContrastGroup(
+                file_name=str(name),
+                test_vs_base=cells["testVSbase"][0],
+                growth_phase=S8_PHASES[cells["growthPhase.x"][0]],
+                test_for=cells["test_for"][0],
+                contrast=cells["contrast"][0],
+                base=cells["base"][0],
+                investigated_effect=cells["investigatedEffect"][0],
+                rows=len(rows),
+            )
+        )
+    return groups
+
+
+def table_s8_protein_order(
+    protein: pd.DataFrame, groups: Sequence[ContrastGroup]
+) -> list[str]:
+    """The ``YP_`` accessions every protein group lists, in their shared file order.
+
+    Measured on the mirror: all 24 protein groups carry the same 4,196 accessions in
+    the same order, which is Table S3's order, so one crosswalk and one reconciliation
+    key every record. A group in another order raises rather than being re-sorted.
+    """
+    orders = {
+        group.file_name: [
+            str(value)
+            for value in protein.loc[protein["fullFileName"] == group.file_name, "id"]
+        ]
+        for group in groups
+    }
+    order = orders[groups[0].file_name]
+    differing = sorted(name for name, ids in orders.items() if ids != order)
+    if differing:
+        raise RuntimeError(f"Table S8 groups {differing} list the ids in another order")
+    if len(set(order)) != len(order):
+        raise RuntimeError("a Table S8 protein group repeats an accession")
+    return order
+
+
+class ContrastSamples(BaseModel):
+    """The Table S1 protein samples of one contrast's two groups, and its dose."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    test_samples: tuple[str, ...]
+    base_samples: tuple[str, ...]
+    test_times_hr: tuple[float, ...]
+    base_times_hr: tuple[float, ...]
+    doses: tuple[float, ...] = Field(
+        description="the distinct values of the factor's dose field over the test "
+        "samples; empty when the level itself is the edit"
+    )
+
+
+def contrast_samples(
+    rows: Sequence[SampleRow], group: ContrastGroup
+) -> ContrastSamples:
+    """The protein samples Table S1 puts in a contrast's test and base groups.
+
+    Selected by the group's own released cells: the factor's level field at
+    ``contrast`` or ``base``, every other factor at its base level
+    (``S8_FACTORS``), in the group's growth phase. An empty group raises.
+    """
+    factor = S8_FACTORS[group.test_for]
+
+    def members(level: str) -> list[SampleRow]:
+        return [
+            row
+            for row in rows
+            if row.growth_phase is group.growth_phase
+            and getattr(row, factor.level_field) == level
+            and all(getattr(row, field) == value for field, value in factor.fixed)
+        ]
+
+    test = members(group.contrast)
+    base = members(group.base)
+    if not test or not base:
+        raise RuntimeError(
+            f"{group.file_name}: Table S1 puts {len(test)} samples in the "
+            f"{group.contrast} group and {len(base)} in the {group.base} group"
+        )
+    doses = (
+        ()
+        if factor.dose_field is None
+        else tuple(sorted({float(getattr(row, factor.dose_field)) for row in test}))
+    )
+    return ContrastSamples(
+        test_samples=tuple(row.sample for row in test),
+        base_samples=tuple(row.sample for row in base),
+        test_times_hr=tuple(sorted({row.growth_time_hr for row in test})),
+        base_times_hr=tuple(sorted({row.growth_time_hr for row in base})),
+        doses=doses,
+    )
+
+
+class RefusedGroup(BaseModel):
+    """A Table S8 group the loader does not turn into a record, and the measurement
+    that refused it.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    file_name: str
+    test_vs_base: str
+    growth_phase: str
+    investigated_effect: str
+    rows: int
+    reason: str
+    measurement: str
+
+
+def refuse_control_model(group: ContrastGroup) -> RefusedGroup:
+    """The doubling-time parameterization of a contrast the primary design also covers."""
+    return RefusedGroup(
+        file_name=group.file_name,
+        test_vs_base=group.test_vs_base,
+        growth_phase=group.growth_phase.value,
+        investigated_effect=group.investigated_effect,
+        rows=group.rows,
+        reason="secondary control model",
+        measurement="investigatedEffect adds doublingTimeMinutes to the primary "
+        f"design; its test_for, contrast, base and growth phase equal those of "
+        f"{group.investigated_effect.replace('PLUS' + DOUBLING_TIME_MARKER, '')}, so "
+        "the two groups are two estimates of one genotype x environment cell under "
+        "two statistical control parameterizations",
+    )
+
+
+def refuse_pooled_dose(group: ContrastGroup, samples: ContrastSamples) -> RefusedGroup:
+    """A level whose test samples hold several doses, so no single dose is honest."""
+    factor = S8_FACTORS[group.test_for]
+    return RefusedGroup(
+        file_name=group.file_name,
+        test_vs_base=group.test_vs_base,
+        growth_phase=group.growth_phase.value,
+        investigated_effect=group.investigated_effect,
+        rows=group.rows,
+        reason="level pools several doses",
+        measurement=f"Table S1 puts {len(samples.test_samples)} protein samples in the "
+        f"{group.contrast} group at {factor.dose_field} "
+        f"{[f'{d:g}' for d in samples.doses]}; SmallMoleculePerturbation requires one "
+        "Concentration and the released cell is a level, not a dose",
+    )
+
+
+#: Provenance of the Table S8 group a replicate count is measured against.
+S8_PROVENANCE = Provenance(
+    source_uri=f"{RAW_DIR_REL}/{si_table_relpath('S8')}",
+    citation_key=CITATION_KEY,
+    sha256=SI_TABLES["S8"][1],
+    method="Table S1's protein samples selected by the group's own released cells "
+    "(contrast_samples)",
+    page="Table S8 fullFileName (the set id 'set00_StcYtcNasAgrNgrMgh')",
+)
+
+
+def replicate_derivations(built: Sequence[Mapping[str, Any]]) -> list[StatDerivation]:
+    """``n_replicates`` as one ``StatDerivation`` per record: the conservative lower end.
+
+    The samples of a DESeq2 fit are not released. Table S8 names them only by the set
+    id inside ``fullFileName``, whose definition is in the authors' code, and ``lfcSE``
+    does not invert to a sample count, so a back-solve is precluded. The stored value is
+    therefore the number of protein samples Table S1 puts in the contrast's TEST group,
+    the low end of the range whose high end is both groups: the base group's samples
+    enter the same two-group difference and DESeq2 pools dispersion over the whole fit,
+    so the true n is larger and this end never overstates the precision (CLAUDE.md
+    "Resolving a range with no per-record value", rule 2).
+    """
+    return [
+        StatDerivation(
+            field=f"n_replicates[{record['file_name']}]",
+            method=DerivationMethod.conservative_low,
+            value=float(record["n_test_samples"]),
+            range_low=float(record["n_test_samples"]),
+            range_high=float(
+                int(record["n_test_samples"]) + int(record["n_base_samples"])
+            ),
+            statistic="protein samples Table S1 puts in the contrast's test group, in "
+            "the record's growth phase",
+            diagnostics={
+                "n_test_samples": float(record["n_test_samples"]),
+                "n_base_samples": float(record["n_base_samples"]),
+            },
+            provenance=S8_PROVENANCE,
+            rationale="the fit's sample set is encoded only in the unreleased set id "
+            "of fullFileName and lfcSE does not invert to n, so a back-solve is "
+            "precluded; the test group alone is the low end of the two groups the "
+            "contrast differences",
+        )
+        for record in built
+    ]
+
+
+def contrast_duration_gap(
+    group: ContrastGroup, times: Sequence[float], *, level: str
+) -> ProvenanceGap:
+    """Why a contrast's environment has no ``duration_hours``."""
+    stated = ", ".join(f"{t:g}" for t in times)
+    return ProvenanceGap(
+        field="duration_hours",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=EXPONENTIAL_SAMPLING.provenance,
+        note=f"the {group.growth_phase.value} {level} group of "
+        f"{group.test_vs_base} pools samples Table S1 dates at {stated} h; the paper "
+        "sets the phase by optical density, so no single duration describes the group",
+    )
+
+
+def contrast_environment(group: ContrastGroup, samples: ContrastSamples) -> Environment:
+    """The test condition of one contrast: medium, the level's edit, 37 C, aerobic.
+
+    The edits are the existing per-sample builders (``carbon_source_perturbation``,
+    ``magnesium_perturbation``, ``sodium_perturbation``) at the one dose the test
+    group holds; a group that pools doses never reaches here (``refuse_pooled_dose``).
+    """
+    factor = S8_FACTORS[group.test_for]
+    perturbations: list[EnvironmentPerturbationType] = []
+    if factor.dose_field is None:
+        media = DM500 if group.contrast == BASE_CARBON else DAVIS_MINIMAL
+        if group.contrast != BASE_CARBON:
+            perturbations.append(carbon_source_perturbation(group.contrast))
+    else:
+        media = DM500
+        if len(samples.doses) != 1:
+            raise RuntimeError(
+                f"{group.file_name}: {factor.dose_field} {list(samples.doses)}"
+            )
+        dose = samples.doses[0]
+        perturbations.append(
+            magnesium_perturbation(dose)
+            if factor.dose_field == "mg_mm"
+            else sodium_perturbation(dose)
+        )
+    return Environment(
+        media=media,
+        temperature=Temperature(value=float(CULTURE_CONDITIONS.value)),
+        perturbations=perturbations,
+        aerobicity="aerobic",
+        provenance_gaps=[
+            contrast_duration_gap(group, samples.test_times_hr, level=group.contrast)
+        ],
+    )
+
+
+def protein_fold_change_phenotype(
+    proteins: Sequence[str], values: pd.DataFrame, n_test_samples: int
+) -> ProteinFoldChangePhenotype:
+    """One contrast's log2 fold changes, keyed by the REL606 loci that carry a value.
+
+    A protein the group left blank is simply not a key: DESeq2 writes no fold change
+    where the fit's base mean is 0, and sets ``pvalue`` and ``padj`` to NA for a row it
+    flagged as an outlier or filtered out, so the three maps are nested subsets of the
+    4,196 rows rather than padded with a neutral 0.
+    """
+
+    def column(name: str) -> dict[str, float]:
+        return {
+            protein: float(value)
+            for protein, value in zip(proteins, values[name], strict=True)
+            if not math.isnan(float(value))
+        }
+
+    fold = column("log2FoldChange")
+    if not fold:
+        raise RuntimeError("the group carries no fold change")
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=fold,
+        fold_change_scale=FoldChangeScale.log2,
+        reference_basis=FOLD_CHANGE_REFERENCE_BASIS,
+        protein_fold_change_se={p: v for p, v in column("lfcSE").items() if p in fold},
+        protein_fold_change_p_value={
+            p: v for p, v in column("pvalue").items() if p in fold
+        },
+        protein_fold_change_p_value_adjusted={
+            p: v for p, v in column("padj").items() if p in fold
+        },
+        p_value_adjustment_method=P_VALUE_ADJUSTMENT_METHOD,
+        n_replicates=dict.fromkeys(fold, n_test_samples),
+        measurement_type=FOLD_CHANGE_MEASUREMENT_TYPE,
+    )
+
+
+def fold_change_reference_phenotype(
+    phenotype: ProteinFoldChangePhenotype, n_base_samples: int
+) -> ProteinFoldChangePhenotype:
+    """The denominator's own phenotype: the neutral value of the record's scale.
+
+    Not a measurement (``ProteinFoldChangePhenotype.neutral_reference``): a log2 fold
+    change's reference is 0 by definition, so experiment minus reference reproduces the
+    released number exactly and nothing is imputed.
+    """
+    neutral = phenotype.neutral_reference()
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=neutral,
+        fold_change_scale=phenotype.fold_change_scale,
+        reference_basis=phenotype.reference_basis,
+        n_replicates=dict.fromkeys(neutral, n_base_samples),
+        measurement_type=phenotype.measurement_type,
+    )
+
+
+class FoldChangeRecord(BaseModel):
+    """What one fold-change record was built from."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    index: int
+    file_name: str
+    test_vs_base: str
+    growth_phase: GrowthPhase
+    test_for: str
+    contrast: str
+    base: str
+    investigated_effect: str
+    n_test_samples: int
+    n_base_samples: int
+    test_samples: list[str]
+    base_samples: list[str]
+    test_times_hr: list[float]
+    doses: list[float]
+    n_fold_change: int
+    n_se: int
+    n_p_value: int
+    n_p_value_adjusted: int
+
+
+class FoldChangeAccounting(BaseModel):
+    """The retention arithmetic of the fold-change build, group by group."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset: str
+    table: str
+    table_rows: int
+    mrna_rows: int
+    protein_rows: int
+    candidate_groups: int
+    kept_records: int
+    refused_groups: int
+    refused_rows: int
+    refusals_by_reason: dict[str, int]
+    refused: list[RefusedGroup]
+    kept_by_growth_phase: dict[str, int]
+    kept_by_test_for: dict[str, int]
+    notes: list[str]
+
+    def check(self) -> None:
+        """Kept plus refused is every candidate group, and the reasons add up."""
+        if self.kept_records + self.refused_groups != self.candidate_groups:
+            raise RuntimeError(f"{self.dataset}: retention does not add up")
+        if sum(self.refusals_by_reason.values()) != self.refused_groups:
+            raise RuntimeError(f"{self.dataset}: refusal reasons do not add up")
+        if sum(r.rows for r in self.refused) != self.refused_rows:
+            raise RuntimeError(f"{self.dataset}: refused rows do not add up")
+
+
+@register_dataset
+class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
+    """Caglar 2017 differential proteomics: one record per Table S8 protein contrast.
+
+    The protein arm of Table S8 under the paper's primary design (``PRIMARY_DESIGN``),
+    one record per (growth phase, test level) whose test condition Table S1 states at a
+    single dose. The gene-level arm, the doubling-time control model and the two
+    pooled-dose salt levels are refused in ``build_accounting.json``.
+    """
+
+    REFERENCE_STRAIN: ClassVar[Literal["REL606"]] = "REL606"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/protein_fold_change_caglar2017",
+        io_workers: int = 0,
+        ecoli_genome: EcoliBREL606Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the REL606 genome is injected by the build or opened in process."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @staticmethod
+    def pins() -> list[tuple[str, str]]:
+        """Tables S1 and S8 and every NCBI batch that keys ``YP_`` to ``ECB_`` tags."""
+        return [_table_pin("S1"), _table_pin("S8"), *_batch_pins()]
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Tables S1 and S8 and the GenPept batches, required before processing."""
+        return list(_raw_pins(self.pins()))
+
+    def download(self) -> None:
+        """Link the tables and batches from the raw mirror after verifying their pins."""
+        _link_mirror_files(self.raw_dir, self.pins())
+
+    def _genome(self) -> EcoliBREL606Genome:
+        """The injected REL606 genome, or the default cache opened read-only."""
+        if self.ecoli_genome is None:
+            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
+        return self.ecoli_genome
+
+    def compute_gene_set(self) -> GeneSet:
+        """The REL606 loci the fold-change profiles are keyed by."""
+        return measured_gene_set(self, "protein_fold_change")
+
+    @post_process
+    def process(self) -> None:
+        """Keep each admissible Table S8 protein contrast as one record."""
+        require_pinnable_strain()
+        verify_raw_files(self.raw_dir, _raw_pins(self.pins()))
+        genome = self._genome()
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+
+        sheet = read_sample_sheet(osp.join(self.raw_dir, SI_TABLES["S1"][0]))
+        rows = [row for row in sheet if row.protein_technical_replicates > 0]
+        s8_path = osp.join(self.raw_dir, SI_TABLES["S8"][0])
+        data_types = pd.read_csv(s8_path, usecols=["dataType"])["dataType"]
+        mrna_rows = int((data_types == S8_MRNA).sum())
+        protein = read_table_s8_protein(s8_path)
+        adjustment = adjustment_back_solve(protein)
+        groups = contrast_groups(protein)
+
+        order = table_s8_protein_order(protein, groups)
+        crosswalk = protein_crosswalk(
+            (
+                osp.join(self.raw_dir, Path(relpath).name)
+                for relpath, _ in _batch_pins()
+            ),
+            order,
+        )
+        proteins, report = reconcile_rel606(
+            genome,
+            [crosswalk[a] for a in order],
+            label=f"{self.name} Table S8 proteins (YP_ -> ECB_ by NCBI record)",
+        )
+
+        pin = assembly_reference(self.REFERENCE_STRAIN)
+        reference_members = reference_rows(rows)
+        genotype = Genotype(perturbations=[])
+        pub = publication()
+        refused: list[RefusedGroup] = []
+        kept: list[tuple[ContrastGroup, ContrastSamples]] = []
+        for group in groups:
+            if not group.primary_control_model:
+                refused.append(refuse_control_model(group))
+                continue
+            samples = contrast_samples(rows, group)
+            if (
+                S8_FACTORS[group.test_for].dose_field is not None
+                and len(samples.doses) != 1
+            ):
+                refused.append(refuse_pooled_dose(group, samples))
+                continue
+            kept.append((group, samples))
+
+        built: list[dict[str, Any]] = []
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for index, (group, samples) in enumerate(kept):
+                values = (
+                    protein[protein["fullFileName"] == group.file_name]
+                    .set_index("id")
+                    .reindex(order)
+                )
+                phenotype = protein_fold_change_phenotype(
+                    proteins, values, len(samples.test_samples)
+                )
+                members = reference_members[group.growth_phase]
+                if {row.sample for row in members} != set(samples.base_samples):
+                    raise RuntimeError(
+                        f"{group.file_name}: its base group is not the phase's "
+                        "reference condition"
+                    )
+                reference = BacterialProteinFoldChangeExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=pin,
+                    environment_reference=reference_environment(
+                        group.growth_phase, (r.growth_time_hr for r in members)
+                    ),
+                    phenotype_reference=fold_change_reference_phenotype(
+                        phenotype, len(samples.base_samples)
+                    ),
+                )
+                experiment = BacterialProteinFoldChangeExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype,
+                    environment=contrast_environment(group, samples),
+                    phenotype=phenotype,
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, pub, itxn),
+                )
+                built.append(
+                    FoldChangeRecord(
+                        index=index,
+                        file_name=group.file_name,
+                        test_vs_base=group.test_vs_base,
+                        growth_phase=group.growth_phase,
+                        test_for=group.test_for,
+                        contrast=group.contrast,
+                        base=group.base,
+                        investigated_effect=group.investigated_effect,
+                        n_test_samples=len(samples.test_samples),
+                        n_base_samples=len(samples.base_samples),
+                        test_samples=list(samples.test_samples),
+                        base_samples=list(samples.base_samples),
+                        test_times_hr=list(samples.test_times_hr),
+                        doses=list(samples.doses),
+                        n_fold_change=len(phenotype.protein_fold_change),
+                        n_se=len(phenotype.protein_fold_change_se or {}),
+                        n_p_value=len(phenotype.protein_fold_change_p_value or {}),
+                        n_p_value_adjusted=len(
+                            phenotype.protein_fold_change_p_value_adjusted or {}
+                        ),
+                    ).model_dump(mode="json")
+                )
+        env.close()
+        interned_env.close()
+
+        out = self.preprocess_dir
+        _write_model(out, "adjustment_back_solve.json", adjustment)
+        _write_json(
+            out,
+            "n_replicates_derivation.json",
+            [d.model_dump(mode="json") for d in replicate_derivations(built)],
+        )
+        _write_model(out, "locus_tag_reconciliation.json", report)
+        _write_json(out, "protein_crosswalk.json", {a: crosswalk[a] for a in order})
+        _write_json(out, "fold_change_records.json", built)
+        accounting = FoldChangeAccounting(
+            dataset=self.name,
+            table=f"Table S8 ({SI_TABLES['S8'][0]})",
+            table_rows=int(data_types.size),
+            mrna_rows=mrna_rows,
+            protein_rows=len(protein),
+            candidate_groups=len(groups),
+            kept_records=len(kept),
+            refused_groups=len(refused),
+            refused_rows=sum(r.rows for r in refused),
+            refusals_by_reason=_counts_of(r.reason for r in refused),
+            refused=refused,
+            kept_by_growth_phase=_counts_of(g.growth_phase.value for g, _ in kept),
+            kept_by_test_for=_counts_of(g.test_for for g, _ in kept),
+            notes=[
+                "the gene-level arm of Table S8 is out of scope: no gene-level "
+                f"expression fold-change phenotype exists, and its {mrna_rows} rows "
+                "would need one",
+                "a record is one protein-level contrast under the paper's primary "
+                "design, batch only; the doubling-time parameterization of the same "
+                "contrast is a second estimate of one genotype x environment cell",
+                "n_replicates is the contrast's TEST-group protein-sample count from "
+                "Table S1, the conservative lower end "
+                "(n_replicates_derivation.json)",
+                "the reference phenotype is the neutral value of the log2 scale for "
+                "every stored key, which is what a fold change's denominator carries "
+                "by definition",
+            ],
+        )
+        accounting.check()
+        _write_model(out, "build_accounting.json", accounting)
+        log.info(
+            "Caglar 2017 protein fold changes: %d records from %d protein groups "
+            "(%d refused, %d rows); padj reproduced to %.3g",
+            len(kept),
+            len(groups),
+            len(refused),
+            accounting.refused_rows,
+            adjustment.max_abs_deviation,
+        )
+
+    def preprocess_raw(
+        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
+    ) -> pd.DataFrame:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
 # Verification (L0-L4) of the built dev LMDBs
 # --------------------------------------------------------------------------- #
-Family = Literal["rnaseq", "proteome"]
+Family = Literal["rnaseq", "proteome", "protein_fold_change"]
 DATASET_SLUGS: dict[Family, str] = {
     "rnaseq": "rnaseq_caglar2017",
     "proteome": "proteome_caglar2017",
+    "protein_fold_change": "protein_fold_change_caglar2017",
 }
 REL606_PIN = ("ecoli_B_REL606_ASM1798v1", "GCA_000017985.1")
 
@@ -2806,15 +3724,29 @@ def sourced_values() -> dict[str, SourcedValue]:
     }
 
 
+#: The supplementary table each family's verifier re-reads.
+FAMILY_TABLES: dict[Family, str] = {
+    "rnaseq": "S2",
+    "proteome": "S3",
+    "protein_fold_change": "S8",
+}
+
+
 def _verifier_provenance(family: Family) -> Provenance:
-    table = "S2" if family == "rnaseq" else "S3"
+    table = FAMILY_TABLES[family]
     obj, sha, _ = SI_TABLES[table]
     return Provenance(
         source_uri=f"{RAW_DIR_REL}/data/{obj}",
         citation_key=CITATION_KEY,
         sha256=sha,
-        method="Table values inverted through the base-2 DESeq2 VST to integer counts "
-        "(back_solve_counts)",
+        method=(
+            "Released DESeq2 log2 fold changes, standard errors and p-values read "
+            "verbatim, with the multiple-testing correction back-solved "
+            "(adjustment_back_solve)"
+            if family == "protein_fold_change"
+            else "Table values inverted through the base-2 DESeq2 VST to integer "
+            "counts (back_solve_counts)"
+        ),
         page=f"Supplementary Table {table}",
     )
 
@@ -3018,6 +3950,141 @@ def verify_proteome_records(
     return report
 
 
+def _l3_adjustment_back_solve(evidence: AdjustmentBackSolve) -> LevelResult:
+    """L3: the released ``padj`` is its group's own Benjamini-Hochberg adjustment."""
+    passed = evidence.max_abs_deviation <= ADJUSTMENT_TOLERANCE
+    return LevelResult(
+        level=Level.L3,
+        name="p_value_adjustment_back_solve",
+        passed=passed,
+        message=f"{evidence.method} reproduces padj over {evidence.groups} groups and "
+        f"{evidence.rows_with_both} rows to {evidence.max_abs_deviation:.3g}",
+        details=evidence.model_dump(),
+    )
+
+
+def _l1_distinct_contrast_environments(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L1 for an environment-contrast panel: one record per (environment, reference).
+
+    The shared gate's contrast key is the genotype and the denominator, which a
+    wild-type panel shares across every record by design: here the contrast IS the
+    environment, and the growth phase rides on the environment's and the reference
+    environment's duration gaps, so this is the pair that must be unique.
+    """
+    keys = Counter(
+        (
+            json.dumps(r["experiment"]["environment"], sort_keys=True),
+            json.dumps(r["reference"]["environment_reference"], sort_keys=True),
+        )
+        for r in records
+    )
+    repeated = sum(n for n in keys.values() if n > 1)
+    return LevelResult(
+        level=Level.L1,
+        name="contrast_environment_uniqueness",
+        passed=repeated == 0,
+        message=f"{len(keys)} distinct (environment, reference environment) pairs over "
+        f"{len(records)} records",
+        details={"n_records": len(records), "n_in_repeated_pairs": repeated},
+    )
+
+
+def verify_protein_fold_change_records(
+    records: Sequence[Mapping[str, Any]],
+    *,
+    expected_count: int,
+    gene_universe: Collection[str],
+    adjustment: AdjustmentBackSolve,
+) -> VerificationReport:
+    """The fold-change family gate (L0-L3) plus this panel's own L1, the assembly pin,
+    the Benjamini-Hochberg back-solve and the REL606 containment (L4).
+    """
+    from torchcell.verification.protein_fold_change import (
+        verify_protein_fold_change_dataset,
+    )
+
+    report = verify_protein_fold_change_dataset(
+        [dict(r) for r in records],
+        dataset_name=DATASET_SLUGS["protein_fold_change"],
+        provenance=_verifier_provenance("protein_fold_change"),
+        expected_count=expected_count,
+    )
+    report.add(_l1_distinct_contrast_environments(records))
+    report.add(_l1_distinct_profiles(records, "protein_fold_change"))
+    se = l2_value_fidelity(
+        (
+            float(v)
+            for r in records
+            for v in (
+                r["experiment"]["phenotype"]["protein_fold_change_se"] or {}
+            ).values()
+        ),
+        allow_nan=False,
+        minimum=0.0,
+    )
+    report.add(se.model_copy(update={"name": "fold_change_se_nonnegative"}))
+    adjusted = [
+        float(v)
+        for r in records
+        for v in (
+            r["experiment"]["phenotype"]["protein_fold_change_p_value_adjusted"] or {}
+        ).values()
+    ]
+    off_range = [v for v in adjusted if not 0.0 < v <= 1.0]
+    report.add(
+        LevelResult(
+            level=Level.L2,
+            name="adjusted_p_values_are_probabilities",
+            passed=not off_range,
+            message=f"{len(adjusted) - len(off_range)} of {len(adjusted)} adjusted "
+            "p-values lie in (0, 1]",
+            details={"n_values": len(adjusted), "n_bad": len(off_range)},
+        )
+    )
+    nested = sum(
+        1
+        for r in records
+        for name in (
+            "protein_fold_change_se",
+            "protein_fold_change_p_value",
+            "protein_fold_change_p_value_adjusted",
+        )
+        if not set(r["experiment"]["phenotype"][name] or {})
+        <= set(r["experiment"]["phenotype"]["protein_fold_change"])
+    )
+    report.add(
+        LevelResult(
+            level=Level.L2,
+            name="statistic_keys_are_nested",
+            passed=nested == 0,
+            message=f"{nested} statistic maps key a protein the record carries no fold "
+            "change for",
+            details={"n_bad": nested},
+        )
+    )
+    methods = sorted(
+        {r["experiment"]["phenotype"]["p_value_adjustment_method"] for r in records}
+    )
+    report.add(
+        LevelResult(
+            level=Level.L3,
+            name="p_value_adjustment_method_consistent",
+            passed=methods == [P_VALUE_ADJUSTMENT_METHOD],
+            message=f"adjustment methods {methods}",
+            details={"methods": methods},
+        )
+    )
+    report.add(_l3_assembly_pin(records))
+    report.add(_l3_adjustment_back_solve(adjustment))
+    measured = {
+        p for r in records for p in r["experiment"]["phenotype"]["protein_fold_change"]
+    }
+    report.add(_l4_containment(measured, gene_universe))
+    return report
+
+
 def run_verification(
     family: Family, data_root: str | None = None
 ) -> VerificationReport:
@@ -3034,25 +4101,40 @@ def run_verification(
     abs_root = osp.join(base, "data/torchcell", DATASET_SLUGS[family])
     preprocess = osp.join(abs_root, "preprocess")
     records = load_records(abs_root)
-    accounting = BuildAccounting.model_validate_json(
-        Path(preprocess, "build_accounting.json").read_text()
-    )
-    back_solve = VstBackSolve.model_validate_json(
-        Path(preprocess, "vst_back_solve.json").read_text()
-    )
     references = {
         json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
     }
     universe: set[str] = set()
     for reference in references:
         universe |= _gene_set_for_reference(json.loads(reference), base)
-    verify = verify_rnaseq_records if family == "rnaseq" else verify_proteome_records
-    report = verify(
-        records,
-        expected_count=accounting.kept_records,
-        gene_universe=universe,
-        back_solve=back_solve,
-    )
+    if family == "protein_fold_change":
+        fold_change_accounting = FoldChangeAccounting.model_validate_json(
+            Path(preprocess, "build_accounting.json").read_text()
+        )
+        report = verify_protein_fold_change_records(
+            records,
+            expected_count=fold_change_accounting.kept_records,
+            gene_universe=universe,
+            adjustment=AdjustmentBackSolve.model_validate_json(
+                Path(preprocess, "adjustment_back_solve.json").read_text()
+            ),
+        )
+    else:
+        accounting = BuildAccounting.model_validate_json(
+            Path(preprocess, "build_accounting.json").read_text()
+        )
+        back_solve = VstBackSolve.model_validate_json(
+            Path(preprocess, "vst_back_solve.json").read_text()
+        )
+        verify = (
+            verify_rnaseq_records if family == "rnaseq" else verify_proteome_records
+        )
+        report = verify(
+            records,
+            expected_count=accounting.kept_records,
+            gene_universe=universe,
+            back_solve=back_solve,
+        )
     library = Path(base) / "torchcell-library"
     for value in sourced_values().values():
         report.add(audit_sourced_value(value, library))
@@ -3063,6 +4145,7 @@ def run_verification(
 DATASET_CLASSES: dict[Family, type[ExperimentDataset]] = {
     "rnaseq": RnaseqCaglar2017Dataset,
     "proteome": ProteomeCaglar2017Dataset,
+    "protein_fold_change": ProteinFoldChangeCaglar2017Dataset,
 }
 
 

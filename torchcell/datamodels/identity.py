@@ -174,6 +174,9 @@ ENVIRONMENT_IDENTITY_FIELDS: tuple[str, ...] = (
     "aerobicity",
     "duration_hours",
     "duration_generations",
+    # --- begin #753: the chemostat dilution rate ---
+    "dilution_rate_per_hour",
+    # --- end #753 ---
 )
 ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS: tuple[str, ...] = (
     "culture_format",
@@ -400,7 +403,15 @@ def _pre_culture_identity(pre_culture: PreCulture) -> dict[str, Any]:
 
 
 def environment_identity(environment: Environment) -> dict[str, Any]:
-    """Project an environment onto medium, temperature, edits, oxygen and duration.
+    """Project an environment onto medium, temperature, edits, oxygen, duration and rate.
+
+    ``dilution_rate_per_hour`` is projected because it is a CONTROLLED variable, not a
+    protocol detail: in a chemostat it sets the specific growth rate and the residual
+    concentration of the growth-limiting substrate, so two cultures differing only in it
+    are two environments and must be two environment nodes. Measured on Ishii 2007,
+    which is the reason the field exists: its recovered wild-type series holds four
+    records differing ONLY here, and without this line all four collapse onto one
+    environment node (#753).
 
     ``provenance_gaps`` is dropped, but what a gap MEANS is kept: the gapped field is
     ``None``, and a ``None`` temperature projects as ``None``, so a record that never
@@ -424,6 +435,9 @@ def environment_identity(environment: Environment) -> dict[str, Any]:
         "aerobicity": environment.aerobicity,
         "duration_hours": environment.duration_hours,
         "duration_generations": environment.duration_generations,
+        # --- begin #753: the chemostat dilution rate ---
+        "dilution_rate_per_hour": environment.dilution_rate_per_hour,
+        # --- end #753 ---
     }
     if not isinstance(environment, CultureEnvironment):
         return identity

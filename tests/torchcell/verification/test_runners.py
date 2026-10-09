@@ -24,8 +24,9 @@ Derived expectations: LMDB iterates keys in byte order, so eleven records writte
 ``"0"``..``"10"`` come back as 0, 1, 10, 2, ..., 9. An expression L4 with reference universe
 {A, B, C} and other universe {A, B, C, D} has ``n_overlap`` 4 and one disagreement,
 ``{"entity": "D", "a": 0.0, "b": 1.0, "diff": 1.0}``. A gene containment of {A, B, D} in
-Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls eleven family
-runners in a fixed order and evaluates every one before combining with ``and``.
+Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls fourteen family
+runners in a fixed order (``RUN_ALL_ORDER``, which is the list this module stubs) and
+evaluates every one before combining with ``and``.
 """
 
 from __future__ import annotations
@@ -162,6 +163,8 @@ RUN_ALL_ORDER = [
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
+    # #770: the protein fold-change family, called last in run_all.
+    "run_bacterial_protein_fold_change",
 ]
 
 
@@ -1822,10 +1825,16 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "isobutanol_validated_lopez2024": 224,
         "ffa_xue2025": 176,
         "metabolome_fuhrer2017": 3735,
-        "metabolome_ishii2007": 24,
-        "metabolome_rapp2026": 1496,
-        "targeted_metabolome_rapp2026": 406,
-        "metabolite_intensity_rapp2026": 406,
+        # #753: 24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5
+        # and 0.7 h-1, which Environment.dilution_rate_per_hour keeps as four distinct
+        # environments instead of one byte-identical one.
+        "metabolome_ishii2007": 28,
+        # #753: each gains the one record the loader used to drop, Rapp's `phnE`
+        # released as `b4104`, a retired tag of the pinned strain's own namespace that
+        # DerivedIdentifierRoute's new `locus_tag_synonym` member can now name.
+        "metabolome_rapp2026": 1497,
+        "targeted_metabolome_rapp2026": 407,
+        "metabolite_intensity_rapp2026": 407,
     }
     assert {
         name
@@ -1918,7 +1927,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.FITNESS_DATASETS) == {
         "smf_oduibhir2014": 1312,
         "smf_baryshnikova2010": 5993,
-        "growth_auc_rapp2026": 1514,
+        "growth_auc_rapp2026": 1515,  # #753: + the recovered phnE record,
     }
     assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
     assert (runners.MIN_GENE_OVERLAP, runners.MIN_RNASEQ_GENE_CONTAINMENT) == (
@@ -2551,6 +2560,15 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         runners._verify_menasalvas_metabolite_production("/root", "/data").dataset_name
         == "menasalvas"
     )
+    # #770: the two fold-change dispatchers, which forward a DIFFERENT family token
+    assert (
+        runners._verify_carruthers_proteome_fold_change("/root", "/data").dataset_name
+        == "carruthers"
+    )
+    assert (
+        runners._verify_caglar_protein_fold_change("/root", "/data").dataset_name
+        == "caglar"
+    )
     assert calls == [
         ("foo", ("/root", "/data"), {}),
         ("banerjee", ("/root", "/data"), {}),
@@ -2566,11 +2584,13 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         ("menasalvas", ("/root", "/data"), {"family": "proteome"}),
         ("menasalvas", ("/root", "/data"), {"family": "metabolite_growth"}),
         ("menasalvas", ("/root", "/data"), {"family": "metabolite_production"}),
+        ("carruthers", ("/root", "/data"), {"family": "fold_change"}),
+        ("caglar", ("protein_fold_change", "/data"), {}),
     ]
 
 
 def test_the_bioproduction_registries_name_every_landed_store() -> None:
-    """The two registries are the list of landed datasets of each family."""
+    """The three registries are the list of landed datasets of each family."""
     assert {
         name: spec["root"] for name, spec in runners.PRODUCT_TITER_DATASETS.items()
     } == {
@@ -2619,5 +2639,18 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         ),
         "metabolite_production_menasalvas2025": (
             "data/torchcell/metabolite_production_menasalvas2025"
+        ),
+    }
+    # #770: the relative axis, a separate family because an absolute level and a ratio
+    # answer different questions and must never pool.
+    assert {
+        name: spec["root"]
+        for name, spec in runners.BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS.items()
+    } == {
+        "proteome_fold_change_carruthers2025": (
+            "data/torchcell/proteome_fold_change_carruthers2025"
+        ),
+        "protein_fold_change_caglar2017": (
+            "data/torchcell/protein_fold_change_caglar2017"
         ),
     }

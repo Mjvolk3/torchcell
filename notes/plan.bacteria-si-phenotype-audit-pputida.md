@@ -1170,7 +1170,6 @@ becomes 136 once rank 1 (55, corrected to 0 by the Caglar section above) and ran
 corrected to 0 here) come out: 49 + 21 + 10 + 1 for ranks 2, 3, 5 and 7, of which ranks 5
 and 7 are now built and ranks 2 and 3 (Carruthers, 70 records) are still open.
 
-
 ## 2026.10.08 - Row 29 closed: the subsumption extended to all 13 sheets, and the 271 loci it recovers
 
 Duplication risk 1 above is now measured in full rather than on one sheet, and the loader
@@ -1219,3 +1218,40 @@ is a value on the new records and remains a gap on the 332 served ones. Filling 
 a full-rebuild change and was not done.
 
 Details, every quote and the L0 to L4 result: [[torchcell.datasets.pputida.borchert2023]].
+
+## 2026.10.09 - Gap R is closed, and the audit's own count of what it gates was too high
+
+Gap R, stated above, was "there is no protein-level relative-abundance or fold-change
+phenotype, and no per-protein p-value slot", and the audit counted it as gating five
+papers. `ProteinFoldChangePhenotype` landed for #770 (schema reasoning in
+[[torchcell.datamodels.bacterial-perturbation-ontology]]), carrying the ratio, its scale,
+the denominator it is against, a per-protein SE, and the raw and adjusted p-values with
+the correction named. The contradiction the audit flagged as "the decision" is resolved in
+the direction the audit implied: the Yunus loader WAS over the line, and all three of its
+datasets now sit on the new leaf rather than on `ProteinAbundancePhenotype`, whose
+prohibition on storing a ratio stands as written.
+
+Measured per paper, after the class landed:
+
+| paper | audit's claim | outcome | records |
+|---|---|---|---|
+| Yunus 2026 | 338 keys blocked, plus a mislabeled ratio already stored | re-stated on the new leaf; its Tables S4/S5 p-values now stored | 102 + 25 + 1, retention unchanged |
+| Carruthers 2025 | `Figure 5b` 5,770 fold changes plus 5,770 p-values, `Figure 6b` 452 plus 452 | loaded, see [[torchcell.datasets.pputida.carruthers2025]] | see that note |
+| Caglar 2017 | Table S8, 201,408 rows | HALF of it is mRNA: 100,704 protein rows over 24 protein-level contrast groups, see [[torchcell.datasets.ecoli.caglar2017]] | see that note |
+| Kang 2026 | Table S6, 40 proteins | **still refused**, and not by gap R: the pinned KT2440 assembly carries ZERO UniProtKB cross-references, so the table's 40 UniProt accessions reach no locus. [[torchcell.datasets.pputida.kang2026]] | 0 |
+| Lim 2025 | seven proteome sheets | **still refused**, and not by gap R: an evolved isolate is one arm of every released contrast, which is #731. [[torchcell.datasets.pputida.lim2025]] | 0 |
+
+So gap R gated three of the five, not five. The other two were each blocked by a second
+thing the audit listed separately (the de Siqueira crosswalk note for Kang, #731 for Lim),
+and the fold-change class alone does not move them. Both refusals are now measured rather
+than inferred, by
+[[protein_fold_change_refusals_kang_lim|experiments.036-dataset-fixes-before-kg-build.scripts.protein_fold_change_refusals_kang_lim]].
+
+The audit's two other named gaps are untouched: no absolute cell count, and no
+optical-density member on `MeasurementType`.
+
+`Supplementary Figure 10` stays refused on the basis the audit itself gave (the sheet
+names no unit, its values are signed with median -1.0118, and it releases no p-values), so
+the fold-change class does not pick it up either. The PRODUCT-side sibling the Niu 2019
+comment on #770 records is also not closed here: a product ratio wants the typed
+`Compound`, so it belongs beside `ProductTiterPhenotype`, not in this class.

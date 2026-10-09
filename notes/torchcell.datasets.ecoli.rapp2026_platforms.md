@@ -169,3 +169,68 @@ Three adapters, one module and one conf each, registered in `dataset_adapter_map
 `crispr construct` and `environment perturbation` pairs, like the metabolome adapter, and
 serve the `bacterial perturbation` class rather than the yeast `perturbation` class. The
 data-gated graph check passes on each dev store. No KG build was run.
+
+## 2026.10.09 - `phnE` is kept in all three families, and the identity gaps are typed
+
+Issue #753's `DerivedIdentifierRoute.locus_tag_synonym` and `ProvenanceGap.keys` close
+the two findings this module shared with
+[[torchcell.datasets.ecoli.rapp2026]], whose dated section of the same day carries the
+annotation measurements (`b4104` is not one of the 4,651 locus tags, exactly one locus
+lists it as a `/gene_synonym`, and that locus `b4583` is a `gene` row of the feature
+table so it passes L4). The tables above are superseded by the counts here.
+
+### Every family keeps one more record
+
+`resolve_genes` now calls `rapp2026.locus_tag_synonym_mapping` before dropping, so
+`phnE` is stored as `b4583` (`phnE1`) with
+`identifier_mapping=DerivedIdentifierMapping(source_identifier="b4104", route="locus_tag_synonym")`.
+`REMAP_RULE` stays in every drop log with `n_records = 0`, and fires only for a remap no
+route describes. `identifier_reconciliation.json` gained `locus_tag_synonyms` and
+`strains.csv` an `identifier_route` column.
+
+| family | records before | records after | values before | values after |
+|---|---|---|---|---|
+| `GrowthAucRapp2026Dataset` | 1,514 | **1,515** | 1,514 | **1,515** |
+| `TargetedMetabolomeRapp2026Dataset` | 406 | **407** | 1,244 | **1,246** |
+| `MetaboliteIntensityRapp2026Dataset` | 406 | **407** | 1,373 | **1,375** |
+
+So the growth family is now one record per Table S2 library gene, with no exception, and
+`phnE` does carry accumulating features in both accumulation tables (two in the targeted
+screen, two in the intensity table), which is why those two families gain 2 values each.
+
+### The two metabolite families gap their uncovered identity keys
+
+Both accumulation families reuse `rapp2026.metabolite_identity_gaps`, which names the
+record's keys that `target_metabolite_ids` omits. Because a record here measures only its
+own accumulating features, the gap shape varies per record and the measured distribution
+is:
+
+| family | records with a per-key gap | per-key gap sizes | records whose whole field is absent |
+|---|---|---|---|
+| targeted | 165 of 407 | 1, 2, 3, 4, 6 | 41 |
+| intensity | 169 of 407 | 1, 2, 3, 4, 5, 6, 7, 8 | 41 |
+
+A record on which NO key is sourced stores `target_metabolite_ids=None` and carries the
+whole-field gap (empty `keys`), which is `ProvenanceGap`'s original contract; a record
+with a partial map carries the per-key form. Both are the same reason,
+`not_reported_by_primary`.
+
+### Rebuild and verification
+
+Each family rebuilt with `python -m torchcell.database.build_dataset_lmdb --dataset
+<Class> --retire-existing` (10 s, 10 s, 11 s); `--list-stale --include-private` names
+none of them. `python -m torchcell.datasets.ecoli.rapp2026_platforms verify <family>`
+**PASS** for all three:
+
+| family | L0 | L1 | L2 | L3 | L4 |
+|---|---|---|---|---|---|
+| growth | 1,515 validated | count 1,515; pair uniqueness 1,515; 3,030 documented gaps over 1,515/1,515; canonical gene names 1,515 | 1,515 values + SE, no zero dispersion | reference fitness == 1.0; compound + media identity; 10 provenance audits | 1.000 of 1,515 are MG1655 genes; all current genome genes |
+| targeted | 407 validated | count 407; genotype uniqueness 407 | 1,246 values | reference finite + key-subset; one `measurement_type`; 10 provenance audits | 407 of 407 MG1655 gene rows |
+| intensity | 407 validated | count 407; genotype uniqueness 407 | 1,375 values + 1,375 SE | reference finite + key-subset; one `measurement_type`; 10 provenance audits | 407 of 407 MG1655 gene rows |
+
+### Tests
+
+`tests/torchcell/datasets/ecoli/test_rapp2026_platforms.py`: 44 hermetic + 21 data-gated,
+65 passing with `--data`. The synthetic assembly files `b0099` on `b0005` alone (so the
+hermetic builds keep ghostG) and `b0098` on both `b0006` and the pseudogene `b0004`, the
+two-carrier case `resolve_genes` still drops.

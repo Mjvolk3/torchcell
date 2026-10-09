@@ -2523,3 +2523,342 @@ def test_an_exposure_states_a_dose_or_declares_the_gap() -> None:
         ],
     )
     assert gapped.exposure_duration_seconds is None
+
+
+# --- 7. #770 and #753: the protein fold-change family and five new fields -- #
+def _fold_change(**kw: Any) -> s.ProteinFoldChangePhenotype:
+    """One PP_ keyed fold-change record on the linear scale, overridable per test."""
+    fields: dict[str, Any] = dict(
+        protein_fold_change={"PP_4188": 0.2213},
+        fold_change_scale=s.FoldChangeScale.linear,
+        reference_basis="control strain carrying a non-targeting sgRNA",
+        n_replicates={"PP_4188": 3},
+        measurement_type="dia_top3_ratio_to_control",
+    )
+    fields.update(kw)
+    return s.ProteinFoldChangePhenotype(**fields)
+
+
+def test_a_fold_change_record_names_its_scale_and_its_denominator() -> None:
+    """The ratio, the scale that fixes its neutral value, and the basis it is against."""
+    phenotype = _fold_change()
+    assert phenotype.label_name == "protein_fold_change"
+    assert phenotype.label_statistic_name == "protein_fold_change_se"
+    assert phenotype.graph_level == "node"
+    assert phenotype.fold_change_scale.neutral_value == 1.0
+    assert s.FoldChangeScale.log2.neutral_value == 0.0
+    assert s.FoldChangeScale.log10.neutral_value == 0.0
+    # the reference is the neutral value by definition, never a measured quantity
+    assert phenotype.neutral_reference() == {"PP_4188": 1.0}
+    log2 = _fold_change(
+        protein_fold_change={"PP_4188": -2.1, "PP_0368": 0.0},
+        n_replicates={"PP_4188": 3, "PP_0368": 3},
+        fold_change_scale=s.FoldChangeScale.log2,
+    )
+    # a log scale is SIGNED, and its neutral value is 0.0 for every stored key
+    assert log2.neutral_reference() == {"PP_0368": 0.0, "PP_4188": 0.0}
+
+
+def test_a_linear_fold_change_is_non_negative_and_a_log_one_is_signed() -> None:
+    """A negative ratio is refused; zero is a measured loss of signal, not an absence."""
+    with _refuses(
+        "protein_fold_change for PP_4188 is -2.1, which is not a ratio; a linear fold "
+        "change is non-negative (a log scale is signed). Zero is a measured numerator "
+        "below detection, not a missing key"
+    ):
+        _fold_change(protein_fold_change={"PP_4188": -2.1})
+    # 0.0 on the linear scale IS a measurement: Yunus 2026 releases the verbatim cell
+    # `0` for 37 of its 102 single-target rows and counts them in its own census
+    assert _fold_change(protein_fold_change={"PP_4188": 0.0}).protein_fold_change == {
+        "PP_4188": 0.0
+    }
+    assert _fold_change(
+        protein_fold_change={"PP_4188": -2.1}, fold_change_scale=s.FoldChangeScale.log2
+    ).protein_fold_change == {"PP_4188": -2.1}
+    with _refuses("protein_fold_change for PP_4188 must be finite"):
+        _fold_change(protein_fold_change={"PP_4188": math.inf})
+    with _refuses("protein_fold_change cannot be empty"):
+        _fold_change(protein_fold_change={}, n_replicates={})
+    with _refuses("n_replicates keys must match protein_fold_change keys"):
+        _fold_change(n_replicates={"PP_0368": 3})
+    with _refuses("n_replicates for PP_4188 must be >= 1"):
+        _fold_change(n_replicates={"PP_4188": 0})
+
+
+def test_a_fold_change_p_value_is_a_probability_and_names_its_correction() -> None:
+    """The per-protein test result the schema had nowhere to put before #770."""
+    phenotype = _fold_change(
+        protein_fold_change_se={"PP_4188": 0.01},
+        protein_fold_change_p_value={"PP_4188": 4.87e-20},
+        protein_fold_change_p_value_adjusted={"PP_4188": 1.2e-17},
+        p_value_adjustment_method="benjamini_hochberg",
+    )
+    assert phenotype.protein_fold_change_p_value == {"PP_4188": 4.87e-20}
+    assert phenotype.p_value_adjustment_method == "benjamini_hochberg"
+    with _refuses(
+        "protein_fold_change_p_value for PP_4188 is 1.5, not a probability in [0, 1]"
+    ):
+        _fold_change(protein_fold_change_p_value={"PP_4188": 1.5})
+    with _refuses("protein_fold_change_p_value key PP_0368 not in protein_fold_change"):
+        _fold_change(protein_fold_change_p_value={"PP_0368": 0.01})
+    with _refuses(
+        "adjusted p-values name their correction: set p_value_adjustment_method"
+    ):
+        _fold_change(protein_fold_change_p_value_adjusted={"PP_4188": 0.01})
+    with _refuses(
+        "p_value_adjustment_method describes stored adjusted p-values; set "
+        "protein_fold_change_p_value_adjusted or leave the method None"
+    ):
+        _fold_change(p_value_adjustment_method="benjamini_hochberg")
+    # NaN is "no test for this key", the convention the SE maps already use
+    nan_p = _fold_change(
+        protein_fold_change_p_value={"PP_4188": math.nan}
+    ).protein_fold_change_p_value
+    assert nan_p is not None and math.isnan(nan_p["PP_4188"])
+    with _refuses("SE for PP_4188 must be non-negative"):
+        _fold_change(protein_fold_change_se={"PP_4188": -0.01})
+
+
+def test_the_fold_change_family_round_trips_through_the_type_maps() -> None:
+    """Leaf plus experiment plus reference, reconstructed by tag as the loaders do."""
+    assert _experiment_cls("protein_fold_change") is s.ProteinFoldChangeExperiment
+    assert (
+        _experiment_cls("bacterial_protein_fold_change")
+        is s.BacterialProteinFoldChangeExperiment
+    )
+    assert (
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["bacterial_protein_fold_change"]
+        is s.BacterialProteinFoldChangeExperimentReference
+    )
+    experiment = s.BacterialProteinFoldChangeExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(perturbations=[s.BacterialDeletionPerturbation(**_MG1655)]),
+        environment=Environment(media=_lb()),
+        phenotype=_fold_change(),
+    )
+    assert experiment.experiment_type == "bacterial_protein_fold_change"
+    dumped = experiment.model_dump()
+    assert s.BacterialProteinFoldChangeExperiment.model_validate(dumped) == experiment
+    assert s.ProteinFoldChangePhenotype in typing.get_args(s.PhenotypeType)
+
+
+def test_a_turnover_record_stores_its_published_interval_and_its_censoring() -> None:
+    """#753: the interval stays an interval, and a capped value says it is a bound."""
+    fields: dict[str, Any] = dict(
+        degradation_rate={"b0002": 0.08, "b0003": 0.02},
+        n_replicates={"b0002": 2, "b0003": 1},
+        measurement_type="pulse_silac_degradation_rate_per_hour",
+    )
+    phenotype = s.ProteinTurnoverPhenotype(
+        **fields,
+        degradation_rate_lower={"b0003": 0.015},
+        degradation_rate_upper={"b0003": 0.027},
+        confidence_level=0.95,
+        interval_method="curve_fit_parameter_variance_t_quantile",
+        censoring={"b0002": s.Censoring.uncensored, "b0003": s.Censoring.right},
+    )
+    # the SE is still the named label statistic: a replicate SE and a fitted interval
+    # are different statistics, and a release may carry either
+    assert phenotype.label_statistic_name == "degradation_rate_se"
+    assert phenotype.censoring == {
+        "b0002": s.Censoring.uncensored,
+        "b0003": s.Censoring.right,
+    }
+    # ragged by design: b0002 has two replicates and no published interval
+    assert set(phenotype.degradation_rate_lower or {}) == {"b0003"}
+    assert [str(member) for member in s.Censoring] == ["uncensored", "right", "left"]
+    with _refuses(
+        "degradation_rate_lower for b0003 exceeds the stored rate (0.03 > 0.02)"
+    ):
+        s.ProteinTurnoverPhenotype(
+            **fields,
+            degradation_rate_lower={"b0003": 0.03},
+            confidence_level=0.95,
+            interval_method="curve_fit_parameter_variance_t_quantile",
+        )
+    with _refuses(
+        "degradation_rate_upper for b0003 is below the stored rate (0.01 < 0.02)"
+    ):
+        s.ProteinTurnoverPhenotype(
+            **fields,
+            degradation_rate_upper={"b0003": 0.01},
+            confidence_level=0.95,
+            interval_method="curve_fit_parameter_variance_t_quantile",
+        )
+    with _refuses("censoring key b9999 not in degradation_rate"):
+        s.ProteinTurnoverPhenotype(**fields, censoring={"b9999": s.Censoring.right})
+
+
+def test_turnover_bounds_must_state_their_level_and_their_method() -> None:
+    """Bounds nobody can interpret are refused, unless each absence is a typed gap."""
+    fields: dict[str, Any] = dict(
+        degradation_rate={"b0002": 0.08},
+        n_replicates={"b0002": 1},
+        measurement_type="pulse_silac_degradation_rate_per_hour",
+        degradation_rate_lower={"b0002": 0.07},
+        degradation_rate_upper={"b0002": 0.09},
+    )
+    with _refuses(
+        "an interval states the level it covers: set confidence_level or carry a "
+        "ProvenanceGap on it"
+    ):
+        s.ProteinTurnoverPhenotype(**fields)
+    with _refuses(
+        "an interval states how it was produced: set interval_method or carry a "
+        "ProvenanceGap on it"
+    ):
+        s.ProteinTurnoverPhenotype(**fields, confidence_level=0.95)
+    gapped = s.ProteinTurnoverPhenotype(
+        **fields,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="confidence_level",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            ),
+            ProvenanceGap(
+                field="interval_method",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            ),
+        ],
+    )
+    assert gapped.gapped_fields() == {"confidence_level", "interval_method"}
+    with _refuses(
+        "confidence_level and interval_method describe stored bounds; set "
+        "degradation_rate_lower/upper or leave both None"
+    ):
+        s.ProteinTurnoverPhenotype(
+            degradation_rate={"b0002": 0.08},
+            n_replicates={"b0002": 1},
+            measurement_type="pulse_silac_degradation_rate_per_hour",
+            confidence_level=0.95,
+        )
+
+
+def test_an_environment_carries_a_chemostat_dilution_rate() -> None:
+    """#753: the dilution rate is the controlled variable, so it is part of identity."""
+    chemostat = Environment(media=_lb(), dilution_rate_per_hour=0.2)
+    assert chemostat.dilution_rate_per_hour == 0.2
+    assert Environment(media=_lb()).dilution_rate_per_hour is None
+    # two cultures differing only here are two environments, which is the point
+    assert chemostat != Environment(media=_lb(), dilution_rate_per_hour=0.7)
+    with _refuses("dilution_rate_per_hour must be finite and positive, got 0.0"):
+        Environment(media=_lb(), dilution_rate_per_hour=0.0)
+    with _refuses("dilution_rate_per_hour must be finite and positive, got -0.2"):
+        Environment(media=_lb(), dilution_rate_per_hour=-0.2)
+
+
+def test_the_two_new_identifier_routes_check_the_form_they_read() -> None:
+    """#753: a UniProt accession and a retired tag of the pinned strain's namespace."""
+    header = s.DerivedIdentifierMapping(
+        source_identifier="sp|P0A6E9|BIOD2_ECOLI", route="uniprot_db_xref"
+    )
+    assert header.uniprot_accession() == "P0A6E9"
+    bare = s.DerivedIdentifierMapping(
+        source_identifier="P0A6E9", route="uniprot_db_xref"
+    )
+    assert bare.uniprot_accession() == "P0A6E9"
+    with _refuses(
+        "a uniprot_db_xref route starts from a UniProtKB accession, bare or in a "
+        "db|ACC|ENTRY header, got 'bioD'"
+    ):
+        s.DerivedIdentifierMapping(source_identifier="bioD", route="uniprot_db_xref")
+    assert (
+        s.DerivedIdentifierMapping(
+            source_identifier="b4104", route="locus_tag_synonym"
+        ).route
+        == "locus_tag_synonym"
+    )
+    with _refuses(
+        "a locus_tag_synonym route starts from a retired locus tag of the pinned "
+        "strain's own namespace, got 'phnE'"
+    ):
+        s.DerivedIdentifierMapping(source_identifier="phnE", route="locus_tag_synonym")
+    # the namespace rule lives on the leaf, where the stored tag's namespace is known
+    assert (
+        s.BacterialDeletionPerturbation(
+            **_MG1655,
+            identifier_mapping=s.DerivedIdentifierMapping(
+                source_identifier="b4104", route="locus_tag_synonym"
+            ),
+        ).identifier_mapping
+        is not None
+    )
+    with _refuses(
+        "a locus_tag_synonym stays inside one namespace, but 'BW25113_0002' is a "
+        "ecoli_k12_bw25113_locus_tag tag while gene_namespace is "
+        "'ecoli_k12_mg1655_bnumber' (a tag of another strain is an eck_crosswalk)"
+    ):
+        s.BacterialDeletionPerturbation(
+            **_MG1655,
+            identifier_mapping=s.DerivedIdentifierMapping(
+                source_identifier="BW25113_0002", route="locus_tag_synonym"
+            ),
+        )
+
+
+def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
+    """#753: 244 unsourced keys beside 1,077 sourced ones, and still no silent None."""
+    phenotype = s.MetabolitePhenotype(
+        metabolite_level={"glucose": 1.0},
+        n_replicates={"glucose": 3},
+        measurement_type="lcms_relative_intensity",
+        target_metabolite_ids={"glucose": "CHEBI:17234"},
+        provenance_gaps=[
+            ProvenanceGap(
+                field="target_metabolite_ids",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                keys=("feature_0042",),
+                note="a merged isobaric feature with several candidate identities",
+            )
+        ],
+    )
+    gap = phenotype.provenance_gaps[0]
+    assert gap.keys == ("feature_0042",)
+    # the honesty invariant gets STRONGER, not weaker: the map may not carry the key
+    with _refuses(
+        "field 'target_metabolite_ids' declares keys ['glucose'] missing but carries "
+        "them (cannot both store a value and declare it missing)"
+    ):
+        s.MetabolitePhenotype(
+            metabolite_level={"glucose": 1.0},
+            n_replicates={"glucose": 3},
+            measurement_type="lcms_relative_intensity",
+            target_metabolite_ids={"glucose": "CHEBI:17234"},
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="target_metabolite_ids",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    keys=("glucose",),
+                )
+            ],
+        )
+    with _refuses(
+        "field 'measurement_type' has a per-key ProvenanceGap but is str, not a "
+        "mapping (a per-key gap names keys of a dict-valued field)"
+    ):
+        s.MetabolitePhenotype(
+            metabolite_level={"glucose": 1.0},
+            n_replicates={"glucose": 3},
+            measurement_type="lcms_relative_intensity",
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="measurement_type",
+                    reason=ProvenanceGapReason.not_reported_by_primary,
+                    keys=("glucose",),
+                )
+            ],
+        )
+    with pytest.raises(ValidationError, match="ProvenanceGap.keys cannot repeat a key"):
+        ProvenanceGap(
+            field="target_metabolite_ids",
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            keys=("a", "a"),
+        )
+    with pytest.raises(
+        ValidationError, match="ProvenanceGap.keys cannot hold an empty key"
+    ):
+        ProvenanceGap(
+            field="target_metabolite_ids",
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            keys=(" ",),
+        )

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.ishii2007]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/ishii2007
 # Test file: tests/torchcell/datasets/ecoli/test_ishii2007.py
-"""Ishii 2007 paired metabolome, proteome and 13C flux of 24 Keio chemostat cultures.
+"""Ishii 2007 paired metabolome, proteome and 13C flux of 28 Keio chemostat cultures.
 
 Ishii et al. 2007 (Science 316:593, doi:10.1126/science.1132067) ran four quantitative
 layers on ONE set of glucose-limited chemostat cultures: "We collected data using these
@@ -13,11 +13,23 @@ are served here, one dataset class each, because
 these are three different quantities on three different scales:
 
 - :class:`MetabolomeIshii2007Dataset` -- CE-TOFMS intracellular concentrations in mM
-  (``MetabolitePhenotype``), 24 records.
+  (``MetabolitePhenotype``), 28 records.
 - :class:`ProteomeIshii2007Dataset` -- LC-MS/MS absolute abundances in
-  mg-protein/g-dry-cell-weight (``ProteinAbundancePhenotype``), 24 records.
+  mg-protein/g-dry-cell-weight (``ProteinAbundancePhenotype``), 28 records.
 - :class:`FluxIshii2007Dataset` -- fitted 13C net fluxes as a percentage of the specific
-  glucose uptake rate (``FluxPhenotype``), 24 records.
+  glucose uptake rate (``FluxPhenotype``), 28 records.
+
+EACH ARM IS 24 DISRUPTANTS AT 0.2 h-1 PLUS THE WILD TYPE AT FOUR OTHER DILUTION RATES.
+``Environment.dilution_rate_per_hour`` (#753) is set on every environment this module
+builds, so the four wild-type cultures the release calls ``GR01``-``GR04`` are four
+distinct environments and are records rather than a drop. Their rate comes off the
+release's own label row, not off the ``GR`` numbering: the ``IDs`` sheet's Sample Name
+column and every data sheet's name row both read ``WT, 0.1h-1``, ``WT, 0.4h-1``,
+``WT, 0.5h-1`` and ``WT, 0.7h-1``, ``check_dilution_rate_arm`` asserts the two agree
+column by column, and the set of parsed rates must equal the paper's arm
+(0.1, 0.2, 0.4, 0.5, 0.7 h-1) minus the 0.2 h-1 reference. A wild-type culture carries
+``Genotype(perturbations=[])``, so what distinguishes those four records from one
+another, and from the reference, is the dilution rate alone.
 
 THE FLUX ARM NEEDED NO SCHEMA CHANGE. ``FluxPhenotype`` already states that a flux map
 is a FIT of a whole network and keeps the interval an interval; this release fits one
@@ -63,29 +75,47 @@ fixed order, so each dropped column has exactly one reason:
 
 1. ``no_data_in_this_layer`` -- the column is empty in this sheet. ``KO05x`` (the first
    of the two pfkA cultures) in the Protein and Flux sheets, and ``GR04x`` in all three.
+   ``GR04x`` is the release's second mRNA measurement of the 0.7 h-1 wild type ("Used
+   for 2nd measurement of mRNAs."), so it is empty in all three served layers and is a
+   fact about the bytes, not a schema limit.
 2. ``reference_sample`` -- an ``RF`` column; the reference, not a record.
-3. ``culture_not_batch`` -- ``GR01``-``GR04``, the wild type at 0.1, 0.4, 0.5 and 0.7
-   h-1. They differ from the reference and from each other ONLY in dilution rate and
-   ``Environment`` has no dilution-rate slot (#753), so loading them would give five
-   cultures one byte-identical environment. This is the rule the landed Schmidt 2016 and
-   Lamoureux 2023 loaders already state under this name.
-4. ``duplicate_culture_same_genotype_and_environment`` -- ``KO05x`` in the Metabolite
+3. ``duplicate_culture_same_genotype_and_environment`` -- ``KO05x`` in the Metabolite
    sheet, where it does carry data. pfkA is the one disruptant cultured twice
    ("pfkA disruptant was cultured twice."), and both cultures are pfkA at 0.2 h-1, so
-   they would collide. ``KO05`` is kept because it is the culture measured in all three
-   served layers, which is what keeps the three datasets paired on one culture.
+   they would collide on genotype AND environment. ``KO05`` is kept because it is the
+   culture measured in all three served layers, which is what keeps the three datasets
+   paired on one culture.
 
-Metabolite: 35 columns - 1 empty - 5 reference - 4 dilution-rate - 1 duplicate = **24**.
-Protein: 36 - 2 empty - 6 reference - 4 = **24**. Flux: 34 - 2 - 4 - 4 = **24**.
+Metabolite: 35 columns - 1 empty - 5 reference - 1 duplicate = **28**.
+Protein: 36 - 2 empty - 6 reference = **28**. Flux: 34 - 2 - 4 = **28**.
 
-THE REFERENCE IS SERIES-MATCHED WHERE THE RELEASE STATES A SERIES. The workbook labels
-every sample with a measurement series and documents which columns are the controls
-("Column BL- | Control (Wild type, cultured at a dilution rate of 0.2h-1)"), so each
-Metabolite and Protein record's ``experiment_reference`` is the reference column of its
-OWN series, not a pooled average. The Flux sheet carries no series row, so that arm uses
-``RF03``, the one reference culture measured in all three served layers; the other three
-reference fits are written to ``preprocess/flux_reference_fits.csv`` so nothing is lost,
-and the choice is flagged in ``build_accounting.json``.
+THE RULE THIS LOADER NO LONGER CARRIES is ``culture_not_batch``, which the landed
+Schmidt 2016 and Lamoureux 2023 loaders state under the same name. It dropped
+``GR01``-``GR04`` on the ground that ``Environment`` had no dilution-rate slot, so five
+cultures would have shared one byte-identical environment. The slot exists, the four
+cultures are loaded, and the rule is retired here rather than narrowed, because nothing
+is left for it to name: every sample column of every served sheet is kept or named by
+one of the three rules above. ``build_accounting.json`` records the retirement under
+``retired_drop_rules``.
+
+THE REFERENCE IS SERIES-MATCHED WHERE THE RELEASE STATES A SERIES, AND IT IS THE 0.2 h-1
+WILD TYPE FOR EVERY RECORD. The workbook labels every sample with a measurement series
+and documents which columns are the controls ("Column BL- | Control (Wild type, cultured
+at a dilution rate of 0.2h-1)"), so each Metabolite and Protein record's
+``experiment_reference`` is the reference column of its OWN series, not a pooled average.
+The Samples table assigns that one control block to the whole sheet, the dilution-rate
+block ("Column BA-BJ | Wild type, cultured at various dilution rates") included, and the
+``IDs`` sheet puts each ``GR`` column in a series that has an ``RF`` column: Protein
+series 4 for all four, Metabolite series 5 for ``GR01``-``GR03`` and series 4 for
+``GR04``. So a dilution-rate record's reference is a REAL released control culture, and
+it is a CROSS-ENVIRONMENT one: its ``environment_reference`` carries
+``dilution_rate_per_hour=0.2`` while the record carries its own rate, which is what makes
+the comparison the paper asks for ("To allow a comparison of the effects of these genetic
+perturbations with the effects of environmental perturbations") visible in the stored
+bytes instead of hidden in a matching denominator. The Flux sheet carries no series row,
+so that arm uses ``RF03``, the one reference culture measured in all three served layers;
+the other three reference fits are written to ``preprocess/flux_reference_fits.csv`` so
+nothing is lost, and the choice is flagged in ``build_accounting.json``.
 
 IDENTIFIERS, MEASURED. Every stored gene identifier is a BW25113 locus tag from the
 pinned GenBank annotation through :func:`reconcile_locus_tags`, because the collection is
@@ -94,7 +124,8 @@ the Keio collection and Ishii never names its background: Baba 2006 (mirrored) d
 through a gene synonym onto a non-gene feature) with no collision and no ambiguity.
 66 of the 67 quantified protein symbols resolve; ``gpmG`` is retired on this annotation
 and carries NO value in any of the 36 Protein columns, so it never becomes a key, and
-``check_gpmg_unused`` asserts that emptiness rather than trusting it.
+``check_gpmg_unused`` asserts that emptiness rather than trusting it. The four
+dilution-rate records have no perturbation at all, so they contribute no identifier.
 
 WHAT IS NOT LOADED, AND WHY. The qRT-PCR mRNA layer (85 transcripts, absolute copy
 number per ug total RNA) has no home in the schema: the three expression phenotypes are
@@ -224,6 +255,14 @@ SHEET_METABOLITE = "Metabolite"
 SHEET_FLUX = "Flux"
 SHEET_RATES = "Specific_Rates"
 
+#: The ``IDs`` sheet's roster: a header cell reading this in this column, then one row
+#: per sample with the Sample ID here and the Sample Name in the next column.
+IDS_SAMPLE_ID_HEADER = "Sample ID"
+IDS_SAMPLE_ID_COLUMN = 1
+#: How the release writes a dilution-rate culture's name, in the ``IDs`` sheet's Sample
+#: Name column and in every data sheet's own name row: ``WT, 0.1h-1``.
+DILUTION_RATE_NAME = re.compile(r"^WT, (?P<rate>[0-9]+(?:\.[0-9]+)?)h-1$")
+
 #: ``Specific_Rates`` row labels this loader reads.
 OXYGEN_UPTAKE_ROW = "Oxygen uptake rate (OUR)"
 GLUCOSE_UPTAKE_ROW = "Glucose consumption rate"
@@ -250,11 +289,12 @@ MEASUREMENT_TYPE_METABOLITE = "ce_tofms_intracellular_concentration_mm"
 MEASUREMENT_TYPE_PROTEIN = "lc_ms_ms_absolute_mg_protein_per_g_dry_cell_weight"
 MEASUREMENT_TYPE_FLUX = "c13_mfa_net_flux_percent_of_specific_glucose_uptake"
 
-#: Records of the full build, MEASURED on the pinned workbook.
+#: Records of the full build, MEASURED on the pinned workbook: the 24 disruptants at
+#: 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
 EXPECTED_RECORDS: dict[str, int] = {
-    "metabolome_ishii2007": 24,
-    "proteome_ishii2007": 24,
-    "flux_ishii2007": 24,
+    "metabolome_ishii2007": 28,
+    "proteome_ishii2007": 28,
+    "flux_ishii2007": 28,
 }
 #: The flux reference fit this arm stores; the sheet carries no series row.
 FLUX_REFERENCE_SAMPLE = "RF03"
@@ -409,6 +449,22 @@ def _workbook(value: Any, quote: str, *, note: str | None = None) -> SourcedValu
     )
 
 
+def _ids_sheet(value: Any, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A value bound to the ``IDs`` sheet of the pinned quantitative workbook."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=RAW_FILES_BY_NAME[QUANTITATIVE_FILE].mirror_relpath,
+            citation_key=CITATION_KEY,
+            sha256=DATA_SHA256[QUANTITATIVE_FILE],
+            method="the project web site's quantitative workbook (torchcell-raw mirror)",
+            page="sheet 'IDs'",
+        ),
+    )
+
+
 # --------------------------------------------------------------------------- #
 # Sourced values (verbatim quotes, pinned sha256)
 # --------------------------------------------------------------------------- #
@@ -453,16 +509,18 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "dilution_rate_per_hour": _paper(
         0.2,
         _CULTURE_QUOTE,
-        note="the one dilution rate every loaded record was grown at. Environment has "
-        "no slot for it (#753), so it is named on the dataset and on the drop rule for "
-        "the wild-type dilution-rate arm, never improvised onto a field",
+        note="the dilution rate of every disruptant culture AND of every RF control "
+        "column ('Control (Wild type, cultured at a dilution rate of 0.2h-1)'). It is "
+        "stored on Environment.dilution_rate_per_hour (#753), so a record states the "
+        "rate it was grown at instead of the rate being named only on the dataset",
     ),
     "dilution_rate_arm": _paper(
         [0.1, 0.2, 0.4, 0.5, 0.7],
         _DILUTION_RATE_QUOTE,
-        note="the wild-type arm. Its four non-reference cultures are dropped under "
-        "culture_not_batch: they differ from the reference and from one another ONLY in "
-        "dilution rate",
+        note="the wild-type arm, all five rates of it loaded: 0.2 h-1 is the reference "
+        "culture every record is compared against, and the other four are records of "
+        "their own environment. check_dilution_rate_arm asserts that the rates parsed "
+        "off the release's label row are exactly this list minus 0.2",
     ),
     "glucose_limited": _paper(
         "glucose",
@@ -614,6 +672,17 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the intended disruptant that produced no culture and no data in any "
         "layer. Recorded so the panel's 24 is understood as 25 attempted",
     ),
+    "gr04x_second_mrna_measurement": _ids_sheet(
+        "GR04x",
+        "Used for 2nd measurement of mRNAs.",
+        note="the IDs sheet's Memo for GR04x, a SECOND wild-type culture at 0.7 h-1 "
+        "(Culture Date 38693 against GR04's 38631), so GR04 and GR04x are the second "
+        "pair of cultures this release grew at one genotype and one dilution rate. "
+        "GR04x carries no value in the Protein, Metabolite or Flux sheets, so all three "
+        "served layers drop it under no_data_in_this_layer; GR04 is named in "
+        "PREFERRED_DUPLICATE_SAMPLES so the unserved mRNA layer, where both carry data, "
+        "also resolves to one record per culture",
+    ),
     "reference_columns": _workbook(
         "Control (Wild type, cultured at a dilution rate of 0.2h-1)",
         "Control (Wild type, cultured at a dilution rate of 0.2h-1)",
@@ -653,16 +722,24 @@ DISRUPTANT_SYMBOLS: tuple[str, ...] = (
 CULTURE_REPLICATE = re.compile(r"^(?P<symbol>[A-Za-z]+)_(?P<replicate>[0-9]+)$")
 #: The only sample names allowed to carry that suffix, measured on the pinned workbook.
 SUFFIXED_SAMPLE_NAMES: frozenset[str] = frozenset({"pfkA_1", "pfkA_2"})
-#: Which culture is the record when one genotype was grown twice. ``KO05`` (``pfkA_2``)
-#: is the pfkA culture measured in ALL THREE served layers -- ``KO05x`` (``pfkA_1``) has
-#: metabolite and mRNA data only, and no oxygen uptake rate -- so keeping ``KO05`` is
-#: what makes the three datasets' pfkA records the same culture. Column order alone
-#: would have picked ``KO05x``, which is why this is named rather than implicit.
-PREFERRED_DUPLICATE_SAMPLES: frozenset[str] = frozenset({"KO05"})
+#: Which culture is the record when one genotype was grown twice at one dilution rate.
+#: ``KO05`` (``pfkA_2``) is the pfkA culture measured in ALL THREE served layers --
+#: ``KO05x`` (``pfkA_1``) has metabolite and mRNA data only, and no oxygen uptake rate --
+#: so keeping ``KO05`` is what makes the three datasets' pfkA records the same culture.
+#: Column order alone would have picked ``KO05x``, which is why this is named rather than
+#: implicit. ``GR04`` is the same situation on the wild type at 0.7 h-1: ``GR04x`` is a
+#: second culture at that rate ("Used for 2nd measurement of mRNAs.", Culture Date 38693
+#: against 38631) and is EMPTY in all three served sheets, so the served arms drop it
+#: under ``no_data_in_this_layer`` and never reach the duplicate rule; naming ``GR04``
+#: keeps the unserved mRNA layer, where both carry data, resolvable to one record.
+PREFERRED_DUPLICATE_SAMPLES: frozenset[str] = frozenset({"KO05", "GR04"})
 
 COLLECTION = "Keio collection"
 CASSETTE: str = SOURCED_VALUES["cassette"].value
+#: The dilution rate of the reference culture and of all 24 disruptant cultures.
 DILUTION_RATE_PER_HOUR: float = SOURCED_VALUES["dilution_rate_per_hour"].value
+#: Every rate the wild type was run at, the reference rate included.
+DILUTION_RATE_ARM: tuple[float, ...] = tuple(SOURCED_VALUES["dilution_rate_arm"].value)
 AEROBICITY: str = SOURCED_VALUES["aerobic"].value
 
 PUBLICATION = Publication(
@@ -713,10 +790,7 @@ MEDIUM = Media(
             "concentration",
         )
     ],
-    provenance=[
-        SOURCED_VALUES["glucose_limited"],
-        SOURCED_VALUES["dilution_rate_per_hour"],
-    ],
+    provenance=[SOURCED_VALUES["glucose_limited"], SOURCED_VALUES["dilution_rate_arm"]],
 )
 """Ishii 2007's chemostat medium, kept in this module and OUT of ``MEDIA_LIBRARY``.
 
@@ -764,12 +838,15 @@ METABOLITE_SE_GAP = ProvenanceGap(
 )
 
 
-def environment() -> Environment:
-    """The one environment every loaded record shares: the medium, aerobic, no temperature.
+def environment(dilution_rate_per_hour: float) -> Environment:
+    """One culture's environment: the medium, aerobic, no temperature, this rate.
 
-    All 24 loaded cultures are disruptants at the same dilution rate in the same medium,
-    so a single shared environment is correct here and the records stay distinct by
-    genotype. The wild-type dilution-rate arm is what would collide, and it is dropped.
+    The dilution rate is REQUIRED rather than defaulted, because it is the only field
+    that distinguishes the five wild-type environments from one another: in a chemostat
+    it is the controlled variable, and at steady state it equals the specific growth rate
+    and sets the residual concentration of the growth-limiting substrate. The 24
+    disruptant cultures and every RF control share 0.2 h-1; the four dilution-rate
+    records carry 0.1, 0.4, 0.5 and 0.7 h-1 and are four different environments.
 
     There is NO ``ProvenanceGap`` on ``media``, and that is the mixin's rule rather than
     an omission: a field cannot both hold a value and declare itself missing. The
@@ -782,6 +859,7 @@ def environment() -> Environment:
         media=MEDIUM,
         temperature=None,
         aerobicity=AEROBICITY,
+        dilution_rate_per_hour=dilution_rate_per_hour,
         provenance_gaps=[TEMPERATURE_GAP],
     )
 
@@ -1090,6 +1168,117 @@ def read_row_labels(sheet: Any, first_row: int) -> list[tuple[int, str]]:
     ]
 
 
+def read_ids_roster(book: Any) -> dict[str, str]:
+    """``{Sample ID: Sample Name}`` from the ``IDs`` sheet's roster.
+
+    This is the release's own documented roster of what every sample is, and it is where
+    the dilution-rate arm's rates are read from: the ``GR`` numbering states nothing, the
+    names do.
+    """
+    sheet = book.sheet_by_name(SHEET_IDS)
+    headers = [
+        row
+        for row in range(sheet.nrows)
+        if _text(sheet, row, IDS_SAMPLE_ID_COLUMN) == IDS_SAMPLE_ID_HEADER
+    ]
+    if len(headers) != 1:
+        raise RuntimeError(
+            f"the IDs sheet has {len(headers)} {IDS_SAMPLE_ID_HEADER!r} cells in column "
+            f"{IDS_SAMPLE_ID_COLUMN}, expected exactly one; the roster cannot be read"
+        )
+    roster: dict[str, str] = {}
+    for row in range(headers[0] + 1, sheet.nrows):
+        sample_id = _text(sheet, row, IDS_SAMPLE_ID_COLUMN)
+        if not sample_id:
+            continue
+        if sample_id in roster:
+            raise RuntimeError(f"the IDs sheet lists {sample_id!r} twice")
+        roster[sample_id] = _text(sheet, row, IDS_SAMPLE_ID_COLUMN + 1)
+    return roster
+
+
+def dilution_rate_from_name(name: str) -> float:
+    """The dilution rate a released sample NAME states, in h^-1."""
+    match = DILUTION_RATE_NAME.match(name)
+    if match is None:
+        raise RuntimeError(
+            f"sample name {name!r} states no dilution rate; the release writes a "
+            "dilution-rate culture as 'WT, <rate>h-1'"
+        )
+    return float(match.group("rate"))
+
+
+def check_dilution_rate_arm(
+    book: Any, columns: Sequence[SampleColumn]
+) -> dict[str, float]:
+    """``{column label: dilution rate}`` for one sheet's dilution-rate columns.
+
+    MEASURED, never assumed from the ``GR`` ordering. The rate comes from the ``IDs``
+    sheet's Sample Name, which the release writes for every sample, and the data sheet's
+    OWN name row must agree with it character for character wherever it carries a name.
+    It is blank for exactly the columns this layer did not measure (``GR04x`` in all
+    three served sheets), which is the same blank header pair ``read_sample_columns``
+    already allows and which ``no_data_in_this_layer`` accounts for. The set of rates
+    found must equal the paper's arm minus the 0.2 h-1 reference rate, so a release that
+    renumbered the arm, or whose two label rows disagree, stops the build here.
+    """
+    roster = read_ids_roster(book)
+    rates: dict[str, float] = {}
+    for column in columns:
+        if column.kind != "dilution_rate":
+            continue
+        if column.sample_id not in roster:
+            raise RuntimeError(
+                f"{column.sample_id} is a sample column of {book.sheet_names()} but is "
+                "not in the IDs sheet's roster, so its dilution rate has no label to be "
+                "read from"
+            )
+        listed = roster[column.sample_id]
+        if column.name and column.name != listed:
+            raise RuntimeError(
+                f"the IDs sheet calls {column.sample_id} {listed!r} and the sheet's own "
+                f"name row calls it {column.name!r}; the dilution rate is read off that "
+                "label, so the two must agree"
+            )
+        rates[column.label] = dilution_rate_from_name(listed)
+    found = sorted(set(rates.values()))
+    expected = sorted(set(DILUTION_RATE_ARM) - {DILUTION_RATE_PER_HOUR})
+    if found != expected:
+        raise RuntimeError(
+            f"the dilution-rate columns state rates {found}, expected the paper's arm "
+            f"minus the {DILUTION_RATE_PER_HOUR} h-1 reference rate ({expected})"
+        )
+    return rates
+
+
+def culture_dilution_rate(
+    column: SampleColumn, dilution_rates: Mapping[str, float]
+) -> float:
+    """The dilution rate one sample column was grown at, in h^-1.
+
+    A dilution-rate column's rate comes from its own label through
+    :func:`check_dilution_rate_arm`. A disruptant column's is 0.2 h-1 ("The cells were
+    grown at a single fixed dilution rate of 0.2 hours-1"), and so is a reference
+    column's ("Control (Wild type, cultured at a dilution rate of 0.2h-1)").
+    """
+    if column.kind == "dilution_rate":
+        return dilution_rates[column.label]
+    return DILUTION_RATE_PER_HOUR
+
+
+def culture_identity(
+    column: SampleColumn, dilution_rates: Mapping[str, float]
+) -> tuple[str, float]:
+    """What makes one sample column a distinct culture: its genotype and its rate.
+
+    The genotype side is the disrupted gene symbol, or the empty string for a wild-type
+    dilution-rate culture, which has no perturbation. Two columns collide only when both
+    halves match, which is the pfkA pair and nothing else in this release.
+    """
+    symbol = "" if column.kind == "dilution_rate" else disruptant_symbol(column.name)
+    return symbol, culture_dilution_rate(column, dilution_rates)
+
+
 def read_measurements_unit(book: Any, label: str) -> str:
     """The unit the ``Information`` sheet's Measurements table pairs with ``label``."""
     sheet = book.sheet_by_name(SHEET_INFORMATION)
@@ -1332,16 +1521,22 @@ DROP_REFERENCE = DropReason(
     "record",
     sample_ids=(),
 )
-DROP_CULTURE_NOT_BATCH = DropReason(
-    rule="culture_not_batch",
-    description="the wild type at a different dilution rate: Environment has no "
-    "culture-mode or dilution-rate slot (#753), and these cultures differ from the "
-    "reference and from one another ONLY in dilution rate, so loading them would give "
-    "five cultures one byte-identical environment. This is the rule the landed Schmidt "
-    "2016 and Lamoureux 2023 loaders state under the same name",
-    sample_ids=(),
-    needed_addition="a culture-mode / dilution-rate slot on Environment "
-    "(closure-changing)",
+#: ``culture_not_batch`` WAS the third rule here: it dropped ``GR01``-``GR04``, the wild
+#: type at 0.1, 0.4, 0.5 and 0.7 h-1, because ``Environment`` had no dilution-rate slot
+#: and the five cultures would have shared one byte-identical environment. #753 added
+#: ``Environment.dilution_rate_per_hour``, the four cultures are records, and the rule is
+#: retired rather than narrowed because no sample column is left for it to name.
+#: :data:`RETIRED_DROP_RULES` carries that into ``build_accounting.json``.
+RETIRED_DROP_RULES: tuple[dict[str, str], ...] = (
+    {
+        "rule": "culture_not_batch",
+        "retired_by": "Environment.dilution_rate_per_hour (#753)",
+        "was_dropping": "GR01-GR04, the wild type at 0.1, 0.4, 0.5 and 0.7 h-1, in all "
+        "three served sheets",
+        "why_it_no_longer_applies": "the four cultures differ from the 0.2 h-1 "
+        "reference and from one another in dilution rate, which is now a field of the "
+        "environment, so they are four distinct environments and four records",
+    },
 )
 DROP_DUPLICATE_CULTURE = DropReason(
     rule="duplicate_culture_same_genotype_and_environment",
@@ -1360,16 +1555,18 @@ def classify_columns(
     value_rows: Sequence[int],
     *,
     dataset: str,
+    dilution_rates: Mapping[str, float],
 ) -> tuple[list[SampleColumn], DropLedger]:
     """Split one sheet's sample columns into records and drop rules.
 
-    The order is fixed and each column gets exactly one reason: emptiness first (a
-    fact about the bytes), then the reference block, then the dilution-rate arm, then a
-    duplicate culture of an already-kept genotype.
+    The order is fixed and each column gets exactly one reason: emptiness first (a fact
+    about the bytes), then the reference block, then a duplicate culture of an
+    already-kept genotype. A dilution-rate column is a RECORD, because its rate is part
+    of its environment; the duplicate rule keys on (genotype, dilution rate) for the same
+    reason, so two cultures only collide when both match.
     """
     empty: list[str] = []
     reference: list[str] = []
-    dilution: list[str] = []
     duplicate: list[str] = []
     candidates: list[SampleColumn] = []
     for column in columns:
@@ -1377,25 +1574,25 @@ def classify_columns(
             empty.append(column.label)
         elif column.kind == "reference":
             reference.append(column.label)
-        elif column.kind == "dilution_rate":
-            dilution.append(column.label)
         else:
             candidates.append(column)
-    by_symbol: dict[str, list[SampleColumn]] = {}
+    by_culture: dict[tuple[str, float], list[SampleColumn]] = {}
     for column in candidates:
-        by_symbol.setdefault(disruptant_symbol(column.name), []).append(column)
+        by_culture.setdefault(culture_identity(column, dilution_rates), []).append(
+            column
+        )
     kept_ids: set[str] = set()
-    for symbol, group in by_symbol.items():
+    for culture, group in by_culture.items():
         if len(group) == 1:
             kept_ids.add(group[0].label)
             continue
         preferred = [c for c in group if c.sample_id in PREFERRED_DUPLICATE_SAMPLES]
         if len(preferred) != 1:
             raise RuntimeError(
-                f"{symbol} has {len(group)} cultures with data in {sheet.name} "
+                f"{culture} has {len(group)} cultures with data in {sheet.name} "
                 f"({[c.label for c in group]}) and {len(preferred)} of them are named "
-                "in PREFERRED_DUPLICATE_SAMPLES; exactly one culture of a genotype can "
-                "be the record"
+                "in PREFERRED_DUPLICATE_SAMPLES; exactly one culture of a genotype at "
+                "one dilution rate can be the record"
             )
         kept_ids.add(preferred[0].label)
         duplicate.extend(c.label for c in group if c.label != preferred[0].label)
@@ -1408,7 +1605,6 @@ def classify_columns(
         rules=(
             DROP_NO_DATA.model_copy(update={"sample_ids": tuple(empty)}),
             DROP_REFERENCE.model_copy(update={"sample_ids": tuple(reference)}),
-            DROP_CULTURE_NOT_BATCH.model_copy(update={"sample_ids": tuple(dilution)}),
             DROP_DUPLICATE_CULTURE.model_copy(update={"sample_ids": tuple(duplicate)}),
         ),
     )
@@ -1466,6 +1662,16 @@ def deletion_genotype(resolved: ResolvedGene) -> Genotype:
             )
         ]
     )
+
+
+def wild_type_genotype() -> Genotype:
+    """The wild type: no perturbation, so the dilution rate is the whole difference.
+
+    The release's ``GR`` cultures are the unmodified K-12 strain at another dilution
+    rate, so there is nothing to put in ``perturbations`` and nothing is invented. Two
+    such records stay distinct because their environments do.
+    """
+    return Genotype(perturbations=[])
 
 
 def metabolite_phenotype(levels: Mapping[str, float]) -> MetabolitePhenotype:
@@ -1593,8 +1799,16 @@ class _Ishii2007Dataset(ExperimentDataset):
         return self.ecoli_genome
 
     def _disruptants(self, kept: Sequence[SampleColumn]) -> dict[str, ResolvedGene]:
-        """``{released symbol: ResolvedGene}`` for the kept records, panel checked."""
-        symbols = [disruptant_symbol(column.name) for column in kept]
+        """``{released symbol: ResolvedGene}`` for the kept DISRUPTANT records.
+
+        The dilution-rate records have no perturbation, so they are not in the panel and
+        contribute no symbol; the panel check still sees exactly the paper's 24.
+        """
+        symbols = [
+            disruptant_symbol(column.name)
+            for column in kept
+            if column.kind == "disruptant"
+        ]
         check_disruptant_panel(symbols)
         ledger = resolve_symbols(
             self._genome(), symbols, label=f"{self.name} disruptant symbols"
@@ -1603,8 +1817,20 @@ class _Ishii2007Dataset(ExperimentDataset):
         self._identifier_ledger = ledger
         return {gene.released_symbol: gene for gene in ledger.resolved}
 
+    @staticmethod
+    def _genotype_of(
+        column: SampleColumn, genes: Mapping[str, ResolvedGene]
+    ) -> Genotype:
+        """The genotype of one kept culture: one Keio deletion, or the wild type."""
+        if column.kind == "dilution_rate":
+            return wild_type_genotype()
+        return deletion_genotype(genes[disruptant_symbol(column.name)])
+
     def _write_common_ledgers(
-        self, drops: DropLedger, rates: Mapping[str, Mapping[str, float]]
+        self,
+        drops: DropLedger,
+        rates: Mapping[str, Mapping[str, float]],
+        dilution_rates: Mapping[str, float],
     ) -> None:
         """The drop ledger, the identifier ledger, the rates and the build accounting."""
         out = Path(self.preprocess_dir)
@@ -1623,7 +1849,14 @@ class _Ishii2007Dataset(ExperimentDataset):
             json.dumps(
                 {
                     "dataset": self.name,
-                    "dilution_rate_per_hour": DILUTION_RATE_PER_HOUR,
+                    "reference_dilution_rate_per_hour": DILUTION_RATE_PER_HOUR,
+                    "dilution_rates_loaded": sorted(
+                        {DILUTION_RATE_PER_HOUR, *dilution_rates.values()}
+                    ),
+                    "dilution_rate_by_sample_column": dict(
+                        sorted(dilution_rates.items())
+                    ),
+                    "retired_drop_rules": [dict(rule) for rule in RETIRED_DROP_RULES],
                     "sourced_values": {
                         key: value.model_dump(mode="json")
                         for key, value in SOURCED_VALUES.items()
@@ -1660,7 +1893,10 @@ class _Ishii2007Dataset(ExperimentDataset):
 
 @register_dataset
 class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
-    """CE-TOFMS intracellular metabolite concentrations of 24 Keio chemostat cultures."""
+    """CE-TOFMS intracellular metabolite concentrations of 28 chemostat cultures.
+
+    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+    """
 
     SLUG: ClassVar[str] = "metabolome_ishii2007"
 
@@ -1690,8 +1926,13 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
         rows = read_metabolite_rows(book)
         keys = metabolite_keys(rows)
         columns = read_sample_columns(sheet, paired=False, series_row=1, name_row=2)
+        dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet, columns, [row for row, _, _ in rows], dataset=self.name
+            sheet,
+            columns,
+            [row for row, _, _ in rows],
+            dataset=self.name,
+            dilution_rates=dilution_rates,
         )
         references = reference_by_series(columns, kept)
         rates = read_specific_rates(book)
@@ -1699,10 +1940,12 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
         genes = self._disruptants(kept)
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates)
-        self._write_metabolite_ledger(sheet, rows, keys, kept, references)
+        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_metabolite_ledger(
+            sheet, rows, keys, kept, references, dilution_rates
+        )
 
-        env = environment()
+        reference_env = environment(DILUTION_RATE_PER_HOUR)
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
         reference_only = 0
         env_out, interned_env = self._open_write_lmdb(
@@ -1713,8 +1956,10 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
                 levels = self._levels(sheet, rows, keys, column.column)
                 experiment = BacterialMetaboliteExperiment(
                     dataset_name=self.name,
-                    genotype=deletion_genotype(genes[disruptant_symbol(column.name)]),
-                    environment=env,
+                    genotype=self._genotype_of(column, genes),
+                    environment=environment(
+                        culture_dilution_rate(column, dilution_rates)
+                    ),
                     phenotype=metabolite_phenotype(levels),
                 )
                 reference_column = references[normalize_series(column.series)]
@@ -1733,7 +1978,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
                 reference = BacterialMetaboliteExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
-                    environment_reference=env.model_copy(),
+                    environment_reference=reference_env.model_copy(),
                     phenotype_reference=metabolite_phenotype(reference_levels),
                 )
                 reference_only += len(
@@ -1781,6 +2026,7 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
         keys: Mapping[int, str],
         kept: Sequence[SampleColumn],
         references: Mapping[str, SampleColumn],
+        dilution_rates: Mapping[str, float],
     ) -> None:
         """Every metabolite row with its protocol and the released reference dispersion."""
         average, sd, cv = (
@@ -1814,8 +2060,13 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
             [
                 {
                     "sample_id": column.sample_id,
-                    "disruptant": disruptant_symbol(column.name),
+                    "perturbed_gene_symbol": culture_identity(column, dilution_rates)[
+                        0
+                    ],
                     "culture_name_verbatim": column.name,
+                    "dilution_rate_per_hour": culture_dilution_rate(
+                        column, dilution_rates
+                    ),
                     "series_verbatim": column.series,
                     "reference_sample_id": references[
                         normalize_series(column.series)
@@ -1828,7 +2079,10 @@ class MetabolomeIshii2007Dataset(_Ishii2007Dataset):
 
 @register_dataset
 class ProteomeIshii2007Dataset(_Ishii2007Dataset):
-    """LC-MS/MS absolute protein abundances of 24 Keio chemostat cultures."""
+    """LC-MS/MS absolute protein abundances of 28 chemostat cultures.
+
+    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
+    """
 
     SLUG: ClassVar[str] = "proteome_ishii2007"
 
@@ -1858,8 +2112,13 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
         sheet = book.sheet_by_name(SHEET_PROTEIN)
         labels = read_row_labels(sheet, 4)
         columns = read_sample_columns(sheet, paired=True, series_row=1, name_row=2)
+        dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet, columns, [row for row, _ in labels], dataset=self.name
+            sheet,
+            columns,
+            [row for row, _ in labels],
+            dataset=self.name,
+            dilution_rates=dilution_rates,
         )
         references = reference_by_series(columns, kept)
         rates = read_specific_rates(book)
@@ -1882,10 +2141,10 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
             )
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates)
-        self._write_protein_ledger(labels, proteins, kept, references)
+        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_protein_ledger(labels, proteins, kept, references, dilution_rates)
 
-        env = environment()
+        reference_env = environment(DILUTION_RATE_PER_HOUR)
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
         unbaselined: dict[str, list[str]] = {}
         reference_only = 0
@@ -1906,8 +2165,10 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
                 reference_only += len(set(ref_levels) - shared)
                 experiment = BacterialProteinAbundanceExperiment(
                     dataset_name=self.name,
-                    genotype=deletion_genotype(genes[disruptant_symbol(column.name)]),
-                    environment=env,
+                    genotype=self._genotype_of(column, genes),
+                    environment=environment(
+                        culture_dilution_rate(column, dilution_rates)
+                    ),
                     phenotype=protein_phenotype(
                         {k: levels[k] for k in shared}, {k: errors[k] for k in shared}
                     ),
@@ -1915,7 +2176,7 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
                 reference = BacterialProteinAbundanceExperimentReference(
                     dataset_name=self.name,
                     genome_reference=genome_reference,
-                    environment_reference=env.model_copy(),
+                    environment_reference=reference_env.model_copy(),
                     phenotype_reference=protein_phenotype(
                         {k: ref_levels[k] for k in shared},
                         {k: ref_errors[k] for k in shared},
@@ -1984,6 +2245,7 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
         proteins: IdentifierLedger,
         kept: Sequence[SampleColumn],
         references: Mapping[str, SampleColumn],
+        dilution_rates: Mapping[str, float],
     ) -> None:
         """The protein panel with its locus tags, and the released peptide counts."""
         peptides: dict[str, int] = {}
@@ -2009,8 +2271,13 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
             [
                 {
                     "sample_id": column.sample_id,
-                    "disruptant": disruptant_symbol(column.name),
+                    "perturbed_gene_symbol": culture_identity(column, dilution_rates)[
+                        0
+                    ],
                     "culture_name_verbatim": column.name,
+                    "dilution_rate_per_hour": culture_dilution_rate(
+                        column, dilution_rates
+                    ),
                     "series_verbatim": column.series,
                     "reference_sample_id": references[
                         normalize_series(column.series)
@@ -2023,7 +2290,9 @@ class ProteomeIshii2007Dataset(_Ishii2007Dataset):
 
 @register_dataset
 class FluxIshii2007Dataset(_Ishii2007Dataset):
-    """Fitted 13C net-flux maps of 24 Keio chemostat cultures.
+    """Fitted 13C net-flux maps of 28 chemostat cultures.
+
+    24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and 0.7 h-1.
 
     The reaction network is the release's own 43 net reactions, keyed by the reaction
     STRING the sheet prints ("G6P <-> F6P"), because the release names no model and no
@@ -2058,26 +2327,32 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
         sheet = book.sheet_by_name(SHEET_FLUX)
         net_rows, exchange_rows = self._split_rows(sheet)
         columns = read_sample_columns(sheet, paired=False, series_row=None, name_row=1)
+        dilution_rates = check_dilution_rate_arm(book, columns)
         kept, drops = classify_columns(
-            sheet, columns, [row for row, _ in net_rows], dataset=self.name
+            sheet,
+            columns,
+            [row for row, _ in net_rows],
+            dataset=self.name,
+            dilution_rates=dilution_rates,
         )
         rates = read_specific_rates(book)
         check_aerobic(rates, [column.sample_id for column in kept])
         genes = self._disruptants(kept)
         reference_columns = [c for c in columns if c.kind == "reference"]
         stored_reference = self._stored_reference(reference_columns)
-        self._check_fit_inputs([column.name for column in kept])
+        self._check_fit_inputs(kept)
 
         os.makedirs(self.processed_dir, exist_ok=True)
-        self._write_common_ledgers(drops, rates)
-        self._write_flux_ledger(sheet, net_rows, exchange_rows, reference_columns, kept)
+        self._write_common_ledgers(drops, rates, dilution_rates)
+        self._write_flux_ledger(
+            sheet, net_rows, exchange_rows, reference_columns, kept, dilution_rates
+        )
 
-        env = environment()
         genome_reference = assembly_reference(self.REFERENCE_STRAIN)
         reference = FluxExperimentReference(
             dataset_name=self.name,
             genome_reference=genome_reference,
-            environment_reference=env.model_copy(),
+            environment_reference=environment(DILUTION_RATE_PER_HOUR),
             phenotype_reference=flux_phenotype(
                 self._net_flux(sheet, net_rows, stored_reference.column)
             ),
@@ -2089,8 +2364,10 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
             for idx, column in enumerate(tqdm(kept, desc=self.name)):
                 experiment = FluxExperiment(
                     dataset_name=self.name,
-                    genotype=deletion_genotype(genes[disruptant_symbol(column.name)]),
-                    environment=env,
+                    genotype=self._genotype_of(column, genes),
+                    environment=environment(
+                        culture_dilution_rate(column, dilution_rates)
+                    ),
                     phenotype=flux_phenotype(
                         self._net_flux(sheet, net_rows, column.column)
                     ),
@@ -2146,14 +2423,32 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
             )
         return by_id[FLUX_REFERENCE_SAMPLE]
 
-    def _check_fit_inputs(self, names: Sequence[str]) -> None:
+    @staticmethod
+    def _fit_input_sheet(column: SampleColumn) -> str:
+        """The GC-MS workbook's sheet name for one culture, as the release names it.
+
+        MEASURED on the pinned workbook: the labeling sheets of the disruptant cultures
+        are named by CULTURE NAME (``galM`` ... ``talB``, ``pfkA_1``, ``pfkA_2``) and the
+        dilution-rate and reference sheets by SAMPLE ID (``GR01``-``GR04``,
+        ``RF03``-``RF06``). A dilution-rate culture's name (``WT, 0.1h-1``) is not a
+        sheet name in that workbook, so the id is what the lookup uses.
+        """
+        if column.kind == "dilution_rate":
+            return column.sample_id
+        return column.name
+
+    def _check_fit_inputs(self, kept: Sequence[SampleColumn]) -> None:
         """Every stored fit's GC-MS labeling data is in the mirrored input workbook.
 
         A fitted flux is only honest to store with its inputs recorded, so the build
         refuses a record whose mass-isotopomer sheet is missing.
         """
         sheets = set(xlrd.open_workbook(self._raw(GC_MS_FILE)).sheet_names())
-        missing = sorted(name for name in names if name not in sheets)
+        missing = sorted(
+            self._fit_input_sheet(column)
+            for column in kept
+            if self._fit_input_sheet(column) not in sheets
+        )
         if missing:
             raise RuntimeError(
                 f"{GC_MS_FILE} has no mass-distribution sheet for {missing}, so those "
@@ -2181,6 +2476,7 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
         exchange_rows: Sequence[tuple[int, str]],
         reference_columns: Sequence[SampleColumn],
         kept: Sequence[SampleColumn],
+        dilution_rates: Mapping[str, float],
     ) -> None:
         """The reaction list, the exchange coefficients and all four reference fits."""
         out = Path(self.preprocess_dir)
@@ -2215,8 +2511,13 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
             [
                 {
                     "sample_id": column.sample_id,
-                    "disruptant": disruptant_symbol(column.name),
+                    "perturbed_gene_symbol": culture_identity(column, dilution_rates)[
+                        0
+                    ],
                     "culture_name_verbatim": column.name,
+                    "dilution_rate_per_hour": culture_dilution_rate(
+                        column, dilution_rates
+                    ),
                     "reference_sample_id": FLUX_REFERENCE_SAMPLE,
                 }
                 for column in kept
@@ -2230,22 +2531,27 @@ class FluxIshii2007Dataset(_Ishii2007Dataset):
 METABOLITE_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="CE-TOFMS intracellular concentration in mM per Keio chemostat culture; the "
-    "reference is the wild-type 0.2 h-1 control column of the record's OWN series",
+    method="CE-TOFMS intracellular concentration in mM per chemostat culture (24 Keio "
+    "disruptants at 0.2 h-1 and the wild type at 0.1, 0.4, 0.5 and 0.7 h-1); the "
+    "reference is the wild-type 0.2 h-1 control column of the record's OWN series, "
+    "which for a dilution-rate record is a cross-environment reference",
     page="Science 316:593; project web site v1.0.0, sheet 'Metabolite'",
 )
 PROTEIN_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="LC-MS/MS absolute abundance in mg-protein/g-dry-cell-weight; SE = "
+    method="LC-MS/MS absolute abundance in mg-protein/g-dry-cell-weight over 24 Keio "
+    "disruptants at 0.2 h-1 and the wild type at 0.1, 0.4, 0.5 and 0.7 h-1; SE = "
     "level * CV / 100 / sqrt(2) over duplicate sample preparation and independent "
-    "LC-MS/MS measurement",
+    "LC-MS/MS measurement; the reference is the 0.2 h-1 control of the record's own "
+    "series",
     page="Science 316:593; project web site v1.0.0, sheet 'Protein'",
 )
 FLUX_PROVENANCE = Provenance(
     source_uri=f"{PROJECT_SITE}{QUANTITATIVE_FILE}",
     citation_key=CITATION_KEY,
-    method="13C metabolic flux analysis, net flux as a percentage of the specific "
+    method="13C metabolic flux analysis over 24 Keio disruptants at 0.2 h-1 and the "
+    "wild type at 0.1, 0.4, 0.5 and 0.7 h-1, net flux as a percentage of the specific "
     f"glucose uptake rate; the fit's input is {GC_MS_FILE}, no interval is released",
     page="Science 316:593; project web site v1.0.0, sheet 'Flux'",
 )
@@ -2263,6 +2569,11 @@ def run_verification(name: str, data_root: str | None = None) -> VerificationRep
     The flux arm has no family verifier (no flux dataset has ever been served), so it
     gets the L0 structural gate, the L1 count and the L2 value check of the shared
     helpers directly, plus the bacterial L4 containment over its perturbed loci.
+
+    The metabolome arm passes ``environment_keyed=True``: its four wild-type
+    dilution-rate records share one empty genotype, so L1 uniqueness has to key on
+    (strain, environment) rather than on the strain alone, which is what a record of a
+    genotype IN an environment means.
     """
     from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
     from torchcell.verification.metabolite import (
@@ -2287,6 +2598,7 @@ def run_verification(name: str, data_root: str | None = None) -> VerificationRep
             provenance=METABOLITE_PROVENANCE,
             expected_count=EXPECTED_RECORDS[name],
             reference_centered=False,
+            environment_keyed=True,
         )
         measured = metabolite_gene_set(records)
         l4_name = "perturbed_gene_containment_bw25113_locus_tags"

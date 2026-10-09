@@ -388,6 +388,30 @@ protein abundance phenotype:
         protein_abundance_se: str
         measurement_type: str
 
+# --- begin #770: the protein fold-change family ---
+# Per-protein RELATIVE abundance against a control strain (ProteinFoldChangePhenotype),
+# the sibling of protein abundance on the relative axis. Every dict keyed by protein id
+# is a JSON string, as for protein abundance; fold_change_scale and reference_basis are
+# the two scalars that make two columns comparable, and the two p-value maps are the
+# per-protein significance the absolute class has no field for.
+protein fold change phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        protein_fold_change: str
+        protein_fold_change_se: str
+        protein_fold_change_p_value: str
+        protein_fold_change_p_value_adjusted: str
+        p_value_adjustment_method: str
+        fold_change_scale: str
+        reference_basis: str
+        n_replicates: str
+        measurement_type: str
+# --- end #770 ---
+
 # A strain's signed growth/fitness RESPONSE in a perturbed environment
 # (EnvironmentResponsePhenotype): chemogenomic screens and the segregant growth
 # panels. measurement_type = WHAT the number is, assay_type = HOW it was measured.
@@ -462,6 +486,13 @@ protein turnover phenotype:
         synthesis_rate: str
         n_replicates: str
         measurement_type: str
+        # --- begin #753: the published interval and the censoring flag ---
+        degradation_rate_lower: str
+        degradation_rate_upper: str
+        confidence_level: float
+        interval_method: str
+        censoring: str
+        # --- end #753 ---
 
 # A fitted net-flux map (FluxPhenotype): signed per-reaction fluxes and their
 # confidence bounds as JSON strings; confidence_level and n_samples are scalars of the
@@ -585,6 +616,7 @@ phenotype member of:
             visual score phenotype,
             metabolite phenotype,
             protein abundance phenotype,
+            protein fold change phenotype,
             environment response phenotype,
             product titer phenotype,
             protein turnover phenotype,

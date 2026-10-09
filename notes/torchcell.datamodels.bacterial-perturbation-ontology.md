@@ -648,7 +648,6 @@ an additive union member, and the full rebuild is what clears it. The eight stor
 step touched were rebuilt by name and read fresh: the three de Siqueira proteome classes,
 its titer class, Lim's tolerance and proteome classes, and Menasalvas and Kang, whose
 loaders did not change but whose closures moved. All eight pass their own verification.
-
 ## 2026.10.09 - Round-2 bacterial leaves and a dose that is not a concentration (#749, #792, #799)
 
 Three more gene-perturbation leaves and one environment leaf, each because a LANDED
@@ -735,3 +734,96 @@ and the new Niu 2019 (51). All three pass L0 to L4.
 released sample SD of a growth RATIO (an SD does not transform with its statistic, so
 `log2_ratio` cannot carry it), and every dimensionless product ratio, of which Niu 2019
 releases 40. Issue #770 owns it, and it is proposed rather than taken in this branch.
+
+## 2026.10.09 - The protein fold-change family, and five fields two landed loaders asked for
+
+Issues #770 and #753, both on the protein phenotype side of `schema.py`. Every addition is
+additive and sits in a block delimited `# --- begin #770 ... # --- end #770 ---` or the
+same with `#753`, so parallel branches rebase cleanly.
+
+### #770, a relative axis beside the absolute one
+
+`ProteinAbundancePhenotype`'s docstring forbids a ratio in capitals ("absolute per-strain
+quantity on a log signal scale, NOT a ratio"), and the P. putida supplementary-data audit
+found five papers releasing a protein-level fold change with a significance value beside
+it, plus a landed loader (Yunus 2026) storing a ratio under that class anyway. The fix is
+option 1 of the three the issue lists: a sibling class, not a discriminator on the
+absolute one, because an absolute level and a ratio answer different questions and the
+contract that makes the absolute case unambiguous is worth keeping.
+
+`ProteinFoldChangePhenotype` carries the ratio, `fold_change_scale`
+(`linear` | `log2` | `log10`), `reference_basis` (the denominator in the source's own
+terms), a per-protein SE, `protein_fold_change_p_value`, its BH-adjusted companion with
+`p_value_adjustment_method` naming the correction, `n_replicates` and `measurement_type`.
+Three reasons for that shape:
+
+- **The scale is required, not inferred.** `0.5` is halved on the linear scale and a
+  1.41-fold increase on log2, so without the field a linear and a log2 column of the same
+  contrast average into nothing.
+- **The reference is the neutral value by definition**, which is why
+  `FoldChangeScale.neutral_value` and `ProteinFoldChangePhenotype.neutral_reference()`
+  exist: experiment over reference reproduces the released number exactly and nothing is
+  imputed. This is the rule the Yunus loader already followed by hand with a `1.0`
+  reference; now it is on the class.
+- **The basis is per column, not per paper.** Carruthers 2025's Source Data carries
+  `POI:Control` beside `dCas9:Control` on one strain, so the pair (scale, basis) is what
+  makes two columns comparable.
+
+`gene_interaction_p_value` was the only p-value anywhere in `schema.py` before this, which
+is why a fold-change table's test result had nowhere to go. Generic and bacterial
+experiment/reference pairs follow the existing families
+(`BacterialProteinFoldChangeExperimentReference` takes `genome_reference:
+AssemblyReferenceGenome`, as the bacterial abundance pair does), and the BioCypher node
+class `protein fold change phenotype` plus three `CellAdapter` methods complete the
+leaf/node-class/adapter-method triple the bijection checks in
+`torchcell/datamodels/ontology_checks.py` require. The lane is read from the `is_a`, so
+`LANE_OF_LABEL` needs no edit.
+
+The PRODUCT-side gap the issue's comment records (Niu 2019's 40 released pinene ratios,
+which `ProductTiterPhenotype` admits only by lying about `titer_unit`) is NOT closed here:
+it wants the typed `Compound`, so it is a sibling of `ProductTiterPhenotype` rather than a
+member of this class, and that is a separate decision.
+
+### #753, five fields the Gupta 2024 and Rapp 2026 loaders typed as gaps
+
+| # | addition | what it recovers |
+|---|---|---|
+| 1 | `ProteinTurnoverPhenotype.degradation_rate_lower` / `_upper` + `confidence_level` + `interval_method` | a published interval stays an interval. `FluxPhenotype`'s triple is reused verbatim rather than inventing a second interval pattern; the validator requires `lower <= rate <= upper` per key and refuses bounds that state neither a level nor a method unless each carries a typed gap |
+| 2 | `ProteinTurnoverPhenotype.censoring`, a `dict[str, Censoring]` | the right-censored cells Gupta 2024 writes to `preprocess/ceiling_cells.csv` travel with the record. `Censoring` has `uncensored` as a member rather than spelling it by absence, so a complete oracle can state it per key and a MISSING key means the source does not say |
+| 3 | `Environment.dilution_rate_per_hour` | in a chemostat the dilution rate IS the controlled variable, so two cultures differing only in it are two environments. Ishii 2007 drops its wild-type dilution-rate series under `culture_not_batch` for exactly this reason |
+| 4 | `DerivedIdentifierRoute` gains `uniprot_db_xref` and `locus_tag_synonym` | the primary route of any proteomics release (Gupta: 3,225 of 3,262 accessions) and a retired tag inside the pinned strain's own namespace (Rapp: 1 dropped record). Five landed loaders (`babu2014`, `butland2008`, `girgis2009`, `rapp2026`, `rapp2026_platforms`) record the second one in a drop ledger today |
+| 5 | `ProvenanceGap.keys` + the per-key branch of `ProvenanceGapMixin` | a gap can sit beside a PARTIALLY populated map (Rapp's `target_metabolite_ids`: 1,077 sourced, 244 merged isobaric features with 2 to 11 candidates each). The honesty invariant gets stronger, not weaker: storing a value and declaring it missing is still refused, now key by key |
+
+`uniprot_db_xref` outranks the symbol layer, and Gupta 2024 measured why rather than
+asserting it: `sp|P0A6E9|BIOD2_ECOLI` carries the gene name `bioD`, whose symbol resolves
+to `b0778` (bioD1) while its accession resolves to `b1593` (bioD2). A symbol-only route
+mis-keys that protein. `DerivedIdentifierMapping.uniprot_accession()` is the one place
+that reads the accession out of either a bare accession or a `sp|ACC|ENTRY` header, so no
+consumer parses the string itself.
+
+Two placements were considered and rejected. `dilution_rate_per_hour` could have gone on
+`CultureEnvironment`, which exists precisely so a new field does not touch every served
+dataset's closure; it is on `Environment` because the experiment classes that need it
+declare `environment: Environment` and would each have to narrow their annotation, which
+is the more invasive change, and because a dilution rate is part of the environment
+IDENTITY in the same way `duration_generations` is rather than a protocol detail.
+`ProvenanceGap.keys` could have been a second gap class, which would have left every
+existing record's bytes untouched; one class won because a per-key absence is the same
+concept narrowed, and KG 4.0 is a full rebuild either way.
+
+### Schema impact, measured
+
+`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`:
+**BREAKING, 81 impacted datasets of which 37 breaking.** 19 changed symbols. The breaking
+set is the bacterial datasets, via the module-level `_check_gene_namespace` (which gained
+the `locus_tag_synonym` namespace rule) together with `DerivedIdentifierMapping` and
+`DerivedIdentifierRoute`. The 44 remaining are stale, not breaking, via `Environment`
+(one new optional field) and `ProvenanceGapMixin` (one changed validator); that set is
+every served yeast dataset, from `SmfCostanzo2016Dataset` through
+`ProteomeZelezniak2018Dataset`, because `Environment` is in the schema closure of all of
+them.
+
+That blast radius is the price of putting the dilution rate on the shared `Environment`
+and of relaxing the gap invariant in the shared mixin, and it is the right price for this
+wave: KG 4.0 is a full rebuild, so no served store is being updated in place, and both
+fields are the honest home for what the sources release.

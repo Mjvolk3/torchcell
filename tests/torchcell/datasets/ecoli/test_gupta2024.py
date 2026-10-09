@@ -23,6 +23,7 @@ from typing import Any, cast
 
 import openpyxl
 import pytest
+from pydantic import ValidationError
 
 import torchcell.datasets.ecoli.gupta2024 as gp
 from tests.torchcell.sequence.genome._bacterial_fixtures import (
@@ -35,6 +36,8 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialStrainBackground,
+    Censoring,
+    DerivedIdentifierMapping,
     EnvironmentPhysicalPerturbation,
     ProteinTurnoverExperiment,
     ProteinTurnoverExperimentReference,
@@ -306,6 +309,15 @@ def test_every_condition_is_distinct_in_what_identifies_a_record() -> None:
     assert len(identities) == gp.EXPECTED_RECORDS
 
 
+def test_every_condition_pins_its_censored_and_interval_key_counts() -> None:
+    """Both #753 maps are pinned per condition, so neither can drift unnoticed."""
+    assert sum(c.censored_keys for c in gp.CONDITIONS) == 1989
+    assert sum(c.interval_keys for c in gp.CONDITIONS) == 4270
+    for condition in gp.CONDITIONS:
+        assert 0 < condition.censored_keys < condition.stored_proteins
+        assert 0 < condition.interval_keys < condition.stored_proteins
+
+
 def test_duration_hours_is_the_last_sampling_time_of_the_doubling_time() -> None:
     """Methods Table 2's series, in hours: what separates three dilution rates."""
     by_key = {c.key: c for c in gp.CONDITIONS}
@@ -315,14 +327,46 @@ def test_duration_hours_is_the_last_sampling_time_of_the_doubling_time() -> None
     assert by_key["wt_clim_12h"].duration_hours == pytest.approx(2166 / 60)
 
 
-def test_the_measurement_type_names_the_reactor_and_the_doubling_time() -> None:
-    """The stored rate includes dilution, so its regime is part of what it IS."""
-    by_key = {c.key: c for c in gp.CONDITIONS}
-    assert by_key["wt_nlim_6h"].measurement_type == (
-        "n15_ammonium_tmtproc_total_turnover_rate_per_hour_chemostat_doubling_6h"
+def test_the_measurement_type_names_the_assay_and_its_unit_only() -> None:
+    """The dilution regime moved onto the environment, so it is out of this string."""
+    assert gp.MEASUREMENT_TYPE == "n15_ammonium_tmtproc_total_turnover_rate_per_hour"
+    assert "doubling" not in gp.MEASUREMENT_TYPE
+    assert "chemostat" not in gp.MEASUREMENT_TYPE
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"), ["b0001"], _triple(2.0, 4.0), _pair(None, None)
     )
-    assert by_key["wt_minimal_batch_42min"].measurement_type.endswith(
-        "batch_doubling_42min"
+    for condition in gp.CONDITIONS:
+        assert gp.phenotype(condition, values).measurement_type == gp.MEASUREMENT_TYPE
+
+
+def test_the_dilution_rate_is_ln2_over_each_doubling_time() -> None:
+    """The dilution-limited half-life IS the doubling time, through ln 2 / T."""
+    by_key = {c.key: c for c in gp.CONDITIONS}
+    assert by_key["wt_clim_3h"].dilution_rate_per_hour == pytest.approx(
+        math.log(2.0) / 3.0
+    )
+    assert by_key["wt_clim_6h"].dilution_rate_per_hour == pytest.approx(
+        math.log(2.0) / 6.0
+    )
+    assert by_key["wt_clim_12h"].dilution_rate_per_hour == pytest.approx(
+        math.log(2.0) / 12.0
+    )
+    assert by_key["wt_minimal_batch_42min"].dilution_rate_per_hour is None
+    assert by_key["wt_minimal_batch_42min"].doubling_hours == pytest.approx(0.7)
+    continuous = [c for c in gp.CONDITIONS if c.dilution_rate_per_hour is not None]
+    assert len(continuous) == 12
+
+
+def test_the_13_identities_survive_the_dilution_rate_moving_off_measurement_type() -> (
+    None
+):
+    """One constant measurement_type for all 13, and 13 distinct records regardless."""
+    identities = {gp._condition_identity(c) for c in gp.CONDITIONS}
+    assert len(identities) == 13
+    windows = {c.duration_hours for c in gp.CONDITIONS}
+    assert len(windows) == 4
+    assert gp._condition_identity(_condition("wt_clim_3h")) != gp._condition_identity(
+        _condition("wt_clim_6h")
     )
 
 
@@ -404,6 +448,43 @@ def test_a_chemostat_environment_carries_the_controlled_ph_and_a_batch_one_does_
     assert chemostat.aerobicity == "aerobic"
 
 
+def test_a_chemostat_environment_carries_the_dilution_rate_and_a_batch_one_does_not() -> (
+    None
+):
+    """The dilution rate is the chemostat's controlled variable; a batch has none."""
+    by_key = {c.key: c for c in gp.CONDITIONS}
+    assert gp.environment(by_key["wt_nlim_6h"]).dilution_rate_per_hour == pytest.approx(
+        math.log(2.0) / 6.0
+    )
+    assert gp.environment(
+        by_key["wt_clim_12h"]
+    ).dilution_rate_per_hour == pytest.approx(math.log(2.0) / 12.0)
+    assert gp.environment(by_key["wt_minimal_batch_42min"]).dilution_rate_per_hour is (
+        None
+    )
+
+
+def test_the_three_c_limited_environments_stay_three_distinct_environments() -> None:
+    """Same medium, three dilution rates: the identity has to keep them apart."""
+    from torchcell.datamodels.identity import environment_identity
+
+    identities = {
+        json.dumps(environment_identity(gp.environment(condition)), sort_keys=True)
+        for condition in gp.CONDITIONS
+        if condition.key in ("wt_clim_3h", "wt_clim_6h", "wt_clim_12h")
+    }
+    assert len(identities) == 3
+    assert (
+        len(
+            {
+                json.dumps(environment_identity(gp.environment(c)), sort_keys=True)
+                for c in gp.CONDITIONS
+            }
+        )
+        == 8
+    )
+
+
 def test_the_ncm3722_background_declares_what_the_paper_does_not_say() -> None:
     """NCM3722's lesions and construction are typed absences, not guesses."""
     background = gp.ncm3722_background()
@@ -459,9 +540,31 @@ def _triple(
     return cells
 
 
+def _pair(
+    first: tuple[float, float] | str | None, second: tuple[float, float] | str | None
+) -> list[gp.ConfidenceCell | None]:
+    """Two Supplementary Data 7 cells: an interval, ``Undetermined``, or an empty cell."""
+    cells: list[gp.ConfidenceCell | None] = []
+    for value in (first, second):
+        if value is None:
+            cells.append(None)
+        elif isinstance(value, str):
+            assert value == "Undetermined"
+            cells.append(gp.ConfidenceCell(undetermined=True))
+        else:
+            cells.append(
+                gp.ConfidenceCell(
+                    undetermined=False, lower_hours=value[0], upper_hours=value[1]
+                )
+            )
+    return cells
+
+
 def test_two_clean_replicates_get_the_papers_own_standard_error() -> None:
     """sd/sqrt(2) on the rate scale, which for n = 2 is half the rate difference."""
-    values = gp.condition_values(_condition("wt_nlim_6h"), ["b0001"], _triple(2.0, 4.0))
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"), ["b0001"], _triple(2.0, 4.0), _pair(None, None)
+    )
     assert values.half_life == {"b0001": pytest.approx(3.0)}
     assert values.degradation_rate["b0001"] == pytest.approx(math.log(2.0) / 3.0)
     assert values.n_replicates == {"b0001": 2}
@@ -471,37 +574,54 @@ def test_two_clean_replicates_get_the_papers_own_standard_error() -> None:
     )
     assert values.two_replicate_keys == 1
     assert values.ceiling_cells == ()
+    assert values.censoring == {"b0001": Censoring.uncensored}
+    assert values.degradation_rate_lower == {}
+    assert values.degradation_rate_upper == {}
+    assert values.refused_intervals == ()
 
 
 def test_one_replicate_has_no_replicate_standard_error() -> None:
     """A single measurement carries no dispersion, so the key stores NaN."""
     values = gp.condition_values(
-        _condition("wt_nlim_6h"), ["b0001"], _triple(2.0, None)
+        _condition("wt_nlim_6h"), ["b0001"], _triple(2.0, None), _pair((1.6, 2.5), None)
     )
     assert values.n_replicates == {"b0001": 1}
     assert math.isnan(values.degradation_rate_se["b0001"])
     assert values.two_replicate_keys == 0
+    assert values.censoring == {"b0001": Censoring.uncensored}
+    assert values.degradation_rate_lower == {
+        "b0001": pytest.approx(math.log(2.0) / 2.5)
+    }
+    assert values.degradation_rate_upper == {
+        "b0001": pytest.approx(math.log(2.0) / 1.6)
+    }
 
 
 def test_a_ceiling_replicate_is_kept_but_never_enters_a_standard_error() -> None:
     """A censored value is part of the released mean and not part of a dispersion."""
     values = gp.condition_values(
-        _condition("wt_nlim_6h"), ["b0001"], _triple(8.0, 4.0, ceiling=True)
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(8.0, 4.0, ceiling=True),
+        _pair("Undetermined", (3.5, 4.6)),
     )
     assert values.half_life["b0001"] == pytest.approx(6.0)
     assert values.n_replicates == {"b0001": 2}
     assert math.isnan(values.degradation_rate_se["b0001"])
     assert values.ceiling_cells == (("b0001", 1),)
+    assert values.censoring == {"b0001": Censoring.right}
+    assert values.degradation_rate_lower == {}
 
 
 def test_a_protein_the_condition_did_not_quantify_is_not_a_key() -> None:
     """A missing value is an absent key, never a zero."""
     values = gp.condition_values(
-        _condition("wt_nlim_6h"), ["b0001"], _triple(None, None)
+        _condition("wt_nlim_6h"), ["b0001"], _triple(None, None), _pair(None, None)
     )
     assert values.half_life == {}
     assert values.degradation_rate == {}
     assert values.n_replicates == {}
+    assert values.censoring == {}
 
 
 def test_a_mean_that_is_not_the_mean_of_its_replicates_is_refused() -> None:
@@ -509,7 +629,9 @@ def test_a_mean_that_is_not_the_mean_of_its_replicates_is_refused() -> None:
     cells = _triple(2.0, 4.0)
     cells[2] = gp.HalfLifeCell(hours=9.0, ceiling=False)
     with pytest.raises(RuntimeError, match="is not the arithmetic mean"):
-        gp.condition_values(_condition("wt_nlim_6h"), ["b0001"], cells)
+        gp.condition_values(
+            _condition("wt_nlim_6h"), ["b0001"], cells, _pair(None, None)
+        )
 
 
 def test_replicate_values_with_no_mean_cell_are_refused() -> None:
@@ -517,7 +639,9 @@ def test_replicate_values_with_no_mean_cell_are_refused() -> None:
     cells = _triple(2.0, 4.0)
     cells[2] = None
     with pytest.raises(RuntimeError, match="with no mean cell"):
-        gp.condition_values(_condition("wt_nlim_6h"), ["b0001"], cells)
+        gp.condition_values(
+            _condition("wt_nlim_6h"), ["b0001"], cells, _pair(None, None)
+        )
 
 
 def test_a_mean_cell_with_no_replicate_value_is_refused() -> None:
@@ -528,19 +652,216 @@ def test_a_mean_cell_with_no_replicate_value_is_refused() -> None:
         gp.HalfLifeCell(hours=3.0, ceiling=False),
     ]
     with pytest.raises(RuntimeError, match="a mean cell with no replicate value"):
-        gp.condition_values(_condition("wt_nlim_6h"), ["b0001"], cells)
+        gp.condition_values(
+            _condition("wt_nlim_6h"), ["b0001"], cells, _pair(None, None)
+        )
 
 
 def test_the_phenotype_declares_the_unreleased_synthesis_rate() -> None:
     """One fitted parameter, so a synthesis rate is a typed absence."""
     condition = _condition("wt_nlim_6h")
-    values = gp.condition_values(condition, ["b0001"], _triple(2.0, 4.0))
+    values = gp.condition_values(
+        condition, ["b0001"], _triple(2.0, 4.0), _pair(None, None)
+    )
     phenotype = gp.phenotype(condition, values)
     assert phenotype.label_name == "degradation_rate"
     assert phenotype.label_statistic_name == "degradation_rate_se"
     assert phenotype.synthesis_rate is None
     assert phenotype.gapped_fields() == {"synthesis_rate"}
-    assert phenotype.measurement_type == condition.measurement_type
+    assert phenotype.measurement_type == gp.MEASUREMENT_TYPE
+
+
+# --------------------------------------------------------------------------- #
+# Synthetic: the censoring flag and the published interval (#753)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [
+        (None, None),
+        ("", None),
+        ("   ", None),
+        ("Undetermined", gp.ConfidenceCell(undetermined=True)),
+        (
+            "[2.996 5.721]",
+            gp.ConfidenceCell(undetermined=False, lower_hours=2.996, upper_hours=5.721),
+        ),
+        (
+            "[0.169 -0.523]",
+            gp.ConfidenceCell(
+                undetermined=False, lower_hours=0.169, upper_hours=-0.523
+            ),
+        ),
+    ],
+)
+def test_a_released_interval_cell_parses_to_its_two_endpoints(
+    value: Any, expected: gp.ConfidenceCell | None
+) -> None:
+    """``[lower upper]`` in hours, or the ``Undetermined`` that IS the ceiling flag."""
+    assert gp.parse_confidence_interval(value) == expected
+
+
+@pytest.mark.parametrize("value", ["2.996 5.721", "[1.0]", "[1.0 2.0 3.0]"])
+def test_an_interval_cell_of_another_shape_is_refused(value: str) -> None:
+    """An unparsed cell is never skipped: the record's bounds come out of it."""
+    with pytest.raises(RuntimeError):
+        gp.parse_confidence_interval(value)
+
+
+def test_an_undetermined_cell_has_no_endpoints_to_read() -> None:
+    """It is the censoring flag, so asking it for bounds is a build error."""
+    with pytest.raises(RuntimeError, match="has no endpoints"):
+        gp.ConfidenceCell(undetermined=True).bounds_hours
+
+
+def test_the_rate_bounds_swap_the_released_endpoints() -> None:
+    """``r = ln 2 / T`` is decreasing, so the upper half-life gives the lower rate."""
+    lower, upper = gp.rate_bounds(2.0, 8.0)
+    assert lower == pytest.approx(math.log(2.0) / 8.0)
+    assert upper == pytest.approx(math.log(2.0) / 2.0)
+
+
+@pytest.mark.parametrize(("low", "high"), [(0.0, 0.0), (0.169, -0.523), (-1.0, 2.0)])
+def test_a_non_positive_released_endpoint_has_no_rate_bound(
+    low: float, high: float
+) -> None:
+    """A rate bound that crossed zero cannot be clamped into existence."""
+    with pytest.raises(RuntimeError, match="non-positive endpoint"):
+        gp.rate_bounds(low, high)
+
+
+def test_a_one_replicate_key_whose_upper_endpoint_is_negative_is_refused_not_clamped() -> (
+    None
+):
+    """The key carries no interval and is listed, with the released endpoints."""
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(0.5, None),
+        _pair((0.169, -0.523), None),
+    )
+    assert values.degradation_rate_lower == {}
+    assert values.degradation_rate_upper == {}
+    assert len(values.refused_intervals) == 1
+    refused = values.refused_intervals[0]
+    assert refused.locus_tag == "b0001"
+    assert refused.condition == "wt_nlim_6h"
+    assert refused.released_lower_hours == pytest.approx(0.169)
+    assert refused.released_upper_hours == pytest.approx(-0.523)
+    assert refused.reason == "non_positive_released_half_life_endpoint"
+    assert refused.half_life_hours == pytest.approx(0.5)
+
+
+def test_a_released_interval_that_does_not_bracket_the_stored_rate_stops_the_build() -> (
+    None
+):
+    """A stored bound that excludes the stored value would misreport both."""
+    with pytest.raises(RuntimeError, match="does not bracket the stored rate"):
+        gp.condition_values(
+            _condition("wt_nlim_6h"),
+            ["b0001"],
+            _triple(2.0, None),
+            _pair((3.0, 4.0), None),
+        )
+
+
+def test_a_censored_one_replicate_key_must_carry_an_undetermined_interval() -> None:
+    """The two workbooks agree on every cell, so a determined one here is a conflict."""
+    with pytest.raises(RuntimeError, match="the two workbooks disagree"):
+        gp.condition_values(
+            _condition("wt_nlim_6h"),
+            ["b0001"],
+            _triple(8.0, None, ceiling=True),
+            _pair((7.0, 9.0), None),
+        )
+
+
+def test_a_censored_one_replicate_key_stores_no_interval() -> None:
+    """A capped fit has no interval to store, and the key says it is right-censored."""
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(8.0, None, ceiling=True),
+        _pair("Undetermined", None),
+    )
+    assert values.censoring == {"b0001": Censoring.right}
+    assert values.degradation_rate_lower == {}
+    assert values.n_replicates == {"b0001": 1}
+
+
+def test_a_one_replicate_estimate_with_no_interval_cell_is_refused() -> None:
+    """The release publishes an interval for every determined fit; 0 exceptions."""
+    with pytest.raises(RuntimeError, match="publishes an interval for every"):
+        gp.condition_values(
+            _condition("wt_nlim_6h"), ["b0001"], _triple(2.0, None), _pair(None, None)
+        )
+
+
+def test_a_two_replicate_key_gets_no_interval_even_when_both_are_published() -> None:
+    """The interval of the MEAN of two fits is not published, so none is stored."""
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(2.0, 4.0),
+        _pair((1.6, 2.5), (3.5, 4.6)),
+    )
+    assert values.n_replicates == {"b0001": 2}
+    assert values.degradation_rate_lower == {}
+    assert values.degradation_rate_upper == {}
+
+
+def test_the_second_replicate_is_the_one_read_when_the_first_is_absent() -> None:
+    """The interval comes from the replicate the key actually has."""
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"),
+        ["b0001"],
+        _triple(None, 4.0),
+        _pair((1.0, 2.0), (3.5, 4.6)),
+    )
+    assert values.degradation_rate_lower == {
+        "b0001": pytest.approx(math.log(2.0) / 4.6)
+    }
+    assert values.degradation_rate_upper == {
+        "b0001": pytest.approx(math.log(2.0) / 3.5)
+    }
+
+
+def test_the_phenotype_states_the_level_and_the_method_of_its_bounds() -> None:
+    """Bounds without a level and a construction are two studies silently compared."""
+    condition = _condition("wt_nlim_6h")
+    values = gp.condition_values(
+        condition, ["b0001"], _triple(2.0, None), _pair((1.6, 2.5), None)
+    )
+    phenotype = gp.phenotype(condition, values)
+    assert phenotype.confidence_level == 0.95
+    assert phenotype.interval_method == gp.INTERVAL_METHOD
+    assert phenotype.interval_method.startswith("curve_fit_parameter_variance_t_ppf")
+    assert phenotype.censoring == {"b0001": Censoring.uncensored}
+    assert phenotype.degradation_rate_lower is not None
+    assert set(phenotype.degradation_rate_lower) == {"b0001"}
+    assert phenotype.label_statistic_name == "degradation_rate_se"
+
+
+def test_the_level_is_the_one_the_supplementary_note_states() -> None:
+    """0.95, quoted; the workbook's own column headers say it too."""
+    assert gp.CONFIDENCE_LEVEL == 0.95
+    assert gp.CONFIDENCE_LEVEL_SOURCE.value == 0.95
+    assert "$9 5 \\%$ CI" in gp.CONFIDENCE_LEVEL_SOURCE.quote
+    for condition in gp.CONDITIONS:
+        assert condition.header_ci_1.startswith(
+            "Total half-life 95% confidence interval"
+        )
+
+
+def test_every_stored_key_states_whether_it_is_censored() -> None:
+    """The oracle is complete, so uncensored is stated rather than spelled by absence."""
+    values = gp.condition_values(
+        _condition("wt_nlim_6h"),
+        ["b0001", "b0002"],
+        _triple(2.0, 4.0) + _triple(8.0, 4.0, ceiling=True),
+        _pair((1.6, 2.5), (3.5, 4.6)) + _pair("Undetermined", (3.5, 4.6)),
+    )
+    assert values.censoring == {"b0001": Censoring.uncensored, "b0002": Censoring.right}
+    assert set(values.censoring) == set(values.degradation_rate)
 
 
 # --------------------------------------------------------------------------- #
@@ -554,11 +875,19 @@ def test_the_readers_return_every_released_row_in_order(tmp_path: Path) -> None:
     assert gene_names == [row[1] for row in ROWS]
     assert set(cells) == {condition.key for condition in gp.CONDITIONS}
     assert len(cells["wt_nlim_6h"]) == 3 * len(ROWS)
-    ci_ids, flags = gp.read_undetermined(str(ci_path))
+    ci_ids, intervals = gp.read_confidence_intervals(str(ci_path))
     assert ci_ids == protein_ids
-    assert len(flags["wt_nlim_6h"]) == 2 * len(ROWS)
-    assert flags["wt_nlim_6h"][2 * CEILING_ROW] is True
-    assert flags["wt_nlim_6h"][2 * CEILING_ROW + 1] is False
+    assert len(intervals["wt_nlim_6h"]) == 2 * len(ROWS)
+    flagged = intervals["wt_nlim_6h"][2 * CEILING_ROW]
+    assert flagged == gp.ConfidenceCell(undetermined=True)
+    determined = intervals["wt_nlim_6h"][2 * SINGLE_REPLICATE_ROW]
+    assert determined is not None
+    assert determined.undetermined is False
+    lower, upper = determined.bounds_hours
+    assert lower < upper
+    second = intervals["wt_nlim_6h"][2 * CEILING_ROW + 1]
+    assert second is not None
+    assert second.undetermined is False
 
 
 def test_a_column_the_loader_pins_and_the_workbook_lacks_is_refused(
@@ -627,7 +956,7 @@ def test_the_accession_layer_takes_precedence_over_a_disagreeing_symbol(
     genome: EcoliK12MG1655Genome,
 ) -> None:
     """The ``THRW`` row's gene name points at another locus; the accession wins."""
-    names, route = gp.identifier_names(
+    names, mappings, route = gp.identifier_names(
         genome, [row[0] for row in ROWS], [row[1] for row in ROWS]
     )
     assert names == [
@@ -647,6 +976,54 @@ def test_the_accession_layer_takes_precedence_over_a_disagreeing_symbol(
     assert route.disagreements == (("sp|P00003|THRW_ECOLI", "thrL", "b0003", "b0001"),)
     assert route.assembly_uniprot_xrefs == 4
     assert route.unique_accessions == len(ROWS) - 1
+    assert route.rows_per_route == {"uniprot_db_xref": 4, "gene_symbol": 3}
+    assert [None if m is None else m.route for m in mappings] == [
+        "uniprot_db_xref",
+        "gene_symbol",
+        "uniprot_db_xref",
+        "uniprot_db_xref",
+        "gene_symbol",
+        "uniprot_db_xref",
+        "gene_symbol",
+        None,
+    ]
+    assert [None if m is None else m.source_identifier for m in mappings] == [
+        "sp|P00001|THRL_ECOLI",
+        "thrA",
+        "sp|P00003|THRW_ECOLI",
+        "sp|P00437|CLPP_ECOLI",
+        "lon",
+        "sp|P03932|HSLV_ECOLI",
+        "smpB",
+        None,
+    ]
+
+
+def test_a_db_xref_mapping_validates_the_released_accession_through_the_schema(
+    genome: EcoliK12MG1655Genome,
+) -> None:
+    """The typed route reads the accession out of the ``sp|ACC|ENTRY`` header itself."""
+    _, mappings, _ = gp.identifier_names(
+        genome, [row[0] for row in ROWS], [row[1] for row in ROWS]
+    )
+    first = mappings[0]
+    assert first is not None
+    assert first.uniprot_accession() == "P00001"
+    with pytest.raises(ValidationError):
+        DerivedIdentifierMapping(
+            source_identifier="not-an-accession", route="uniprot_db_xref"
+        )
+
+
+def test_a_row_neither_layer_resolves_carries_no_mapping(
+    genome: EcoliK12MG1655Genome,
+) -> None:
+    """An unresolved row keys nothing, so there is no derivation to record for it."""
+    names, mappings, route = gp.identifier_names(genome, [DROPPED], [""])
+    assert names == [DROPPED]
+    assert mappings == [None]
+    assert route.unresolved == (DROPPED,)
+    assert route.rows_per_route == {"uniprot_db_xref": 0, "gene_symbol": 0}
 
 
 def test_a_deleted_symbol_that_resolves_nowhere_stops_the_build(
@@ -786,12 +1163,23 @@ def _accounting(**overrides: Any) -> gp.BuildAccounting:
         "source_rows": 10,
         "released_cells": 100,
         "ceiling_cells": 1,
+        "censored_keys": 1,
+        "uncensored_keys": 8,
+        "interval_keys": 2,
+        "one_replicate_keys": 2,
+        "refused_intervals": [],
+        "confidence_level": gp.CONFIDENCE_LEVEL,
+        "interval_method": gp.INTERVAL_METHOD,
+        "measurement_type": gp.MEASUREMENT_TYPE,
+        "dilution_rate_per_hour": {},
         "candidate_records": 13,
         "kept_records": 13,
         "dropped_records": 0,
         "kept_protein_keys": 9,
         "dropped_protein_keys": 1,
         "per_condition_keys": {},
+        "per_condition_censored_keys": {},
+        "per_condition_interval_keys": {},
         "rules": [],
         "identifier_route": gp.IdentifierRoute(
             source_rows=10,
@@ -799,6 +1187,7 @@ def _accounting(**overrides: Any) -> gp.BuildAccounting:
             assembly_uniprot_xrefs=4,
             resolved_by_uniprot_xref=5,
             resolved_by_gene_name=4,
+            rows_per_route={"uniprot_db_xref": 5, "gene_symbol": 4},
             unresolved=(),
         ),
         "reconciliation": LocusTagReconciliation(
@@ -849,10 +1238,10 @@ def test_the_two_workbooks_must_agree_on_which_cells_are_censored() -> None:
     """``*`` in Supplementary Data 1 and ``Undetermined`` in 7 are one fact, twice."""
     keys = ["b0001"]
     cells = {c.key: _triple(8.0, 4.0, ceiling=True) for c in gp.CONDITIONS}
-    good = {c.key: [True, False] for c in gp.CONDITIONS}
+    good = {c.key: _pair("Undetermined", (3.5, 4.6)) for c in gp.CONDITIONS}
     gp.ProteinTurnoverGupta2024Dataset._check_undetermined_oracle(keys, cells, good)
     bad = dict(good)
-    bad[gp.CONDITIONS[0].key] = [False, False]
+    bad[gp.CONDITIONS[0].key] = _pair((7.0, 9.0), (3.5, 4.6))
     with pytest.raises(RuntimeError, match="disagree between Supplementary"):
         gp.ProteinTurnoverGupta2024Dataset._check_undetermined_oracle(keys, cells, bad)
 
@@ -864,6 +1253,13 @@ def test_the_two_workbooks_must_agree_on_which_cells_are_censored() -> None:
 #: dropped, and the first condition drops ``lon`` (absent) as well.
 SYNTHETIC_STORED = {condition.key: 7 for condition in gp.CONDITIONS}
 SYNTHETIC_STORED[gp.CONDITIONS[0].key] = 6
+#: ``clpP`` is ceiling-flagged in replicate 1 of every condition, so exactly one stored
+#: key per record is right-censored.
+SYNTHETIC_CENSORED = {condition.key: 1 for condition in gp.CONDITIONS}
+#: Only the first condition has a one-replicate key (``thrA``), so only it stores a
+#: published interval.
+SYNTHETIC_INTERVALS = {condition.key: 0 for condition in gp.CONDITIONS}
+SYNTHETIC_INTERVALS[gp.CONDITIONS[0].key] = 1
 
 
 def _pin(
@@ -905,6 +1301,8 @@ def mirrored(
                 update={
                     "table1_proteins": SYNTHETIC_STORED[condition.key] + 1,
                     "stored_proteins": SYNTHETIC_STORED[condition.key],
+                    "censored_keys": SYNTHETIC_CENSORED[condition.key],
+                    "interval_keys": SYNTHETIC_INTERVALS[condition.key],
                 }
             )
             for condition in gp.CONDITIONS
@@ -952,6 +1350,31 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     for key, rate in phenotype["degradation_rate"].items():
         assert rate == pytest.approx(math.log(2.0) / phenotype["half_life"][key])
     assert math.isnan(phenotype["degradation_rate_se"]["b0437"])
+    assert phenotype["measurement_type"] == gp.MEASUREMENT_TYPE
+    assert phenotype["confidence_level"] == gp.CONFIDENCE_LEVEL
+    assert phenotype["interval_method"] == gp.INTERVAL_METHOD
+    assert set(phenotype["censoring"]) == set(phenotype["degradation_rate"])
+    assert phenotype["censoring"]["b0437"] == Censoring.right.value
+    assert phenotype["censoring"]["b0001"] == Censoring.uncensored.value
+    assert phenotype["degradation_rate_lower"] == {}
+    assert phenotype["degradation_rate_upper"] == {}
+    assert wild_type["experiment"]["environment"][
+        "dilution_rate_per_hour"
+    ] == pytest.approx(math.log(2.0) / 6.0)
+
+    batch = by_identity[
+        gp._condition_identity(
+            next(c for c in gp.CONDITIONS if c.key == "wt_minimal_batch_42min")
+        )
+    ]
+    assert batch["experiment"]["environment"]["dilution_rate_per_hour"] is None
+    batch_phenotype = batch["experiment"]["phenotype"]
+    assert set(batch_phenotype["degradation_rate_lower"]) == {"b0002"}
+    assert set(batch_phenotype["degradation_rate_upper"]) == {"b0002"}
+    low = batch_phenotype["degradation_rate_lower"]["b0002"]
+    high = batch_phenotype["degradation_rate_upper"]["b0002"]
+    assert low < batch_phenotype["degradation_rate"]["b0002"] < high
+    assert batch_phenotype["n_replicates"]["b0002"] == 1
 
     triple = by_identity[
         gp._condition_identity(
@@ -970,9 +1393,36 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert accounting["rules"][0]["items"] == [DROPPED]
     assert accounting["per_condition_keys"] == SYNTHETIC_STORED
     assert accounting["ceiling_cells"] == gp.EXPECTED_RECORDS
+    assert accounting["censored_keys"] == gp.EXPECTED_RECORDS
+    assert accounting["uncensored_keys"] == sum(SYNTHETIC_STORED.values()) - (
+        gp.EXPECTED_RECORDS
+    )
+    assert accounting["interval_keys"] == 1
+    assert accounting["one_replicate_keys"] == 1
+    assert accounting["refused_intervals"] == []
+    assert accounting["confidence_level"] == gp.CONFIDENCE_LEVEL
+    assert accounting["interval_method"] == gp.INTERVAL_METHOD
+    assert accounting["measurement_type"] == gp.MEASUREMENT_TYPE
+    assert accounting["per_condition_censored_keys"] == SYNTHETIC_CENSORED
+    assert accounting["per_condition_interval_keys"] == SYNTHETIC_INTERVALS
+    assert accounting["dilution_rate_per_hour"]["wt_nlim_6h"] == pytest.approx(
+        math.log(2.0) / 6.0
+    )
+    assert accounting["dilution_rate_per_hour"]["wt_minimal_batch_42min"] is None
+    assert accounting["identifier_route"]["rows_per_route"] == {
+        "uniprot_db_xref": 4,
+        "gene_symbol": 3,
+    }
     route = (root / "preprocess" / "identifier_route.csv").read_text()
-    assert "sp|P00003|THRW_ECOLI,P00003,thrL,b0003,yes" in route
-    assert f"{DROPPED},P00002,,{DROPPED},no" in route
+    assert route.splitlines()[0] == (
+        "protein_id,accession,released_gene_name,route,source_identifier,stored_key,kept"
+    )
+    assert (
+        "sp|P00003|THRW_ECOLI,P00003,thrL,uniprot_db_xref,"
+        "sp|P00003|THRW_ECOLI,b0003,yes" in route
+    )
+    assert "sp|P00002|THRA_ECOLI,P00002,thrA,gene_symbol,thrA,b0002,yes" in route
+    assert f"{DROPPED},P00002,,,,{DROPPED},no" in route
     ceilings = (root / "preprocess" / "ceiling_cells.csv").read_text()
     assert ceilings.count("b0437,1,") == gp.EXPECTED_RECORDS
     assert (root / "preprocess" / "build_manifest.json").is_file()
@@ -990,6 +1440,9 @@ def test_the_verifier_passes_on_the_synthetic_build(
     names = {result.name for result in report.results}
     assert "degradation_rate_is_ln2_over_half_life" in names
     assert "stored_protein_keys_are_loci_of_the_pinned_assembly" in names
+    assert "dilution_rate_per_hour_is_ln2_over_the_doubling_time" in names
+    assert "stored_interval_brackets_the_stored_rate" in names
+    assert "per_condition_censored_and_interval_key_counts_are_the_pinned_ones" in names
     assert (root / "preprocess" / "verification_report.json").is_file()
 
 
@@ -1091,10 +1544,10 @@ def test_the_two_released_workbooks_agree_on_every_censored_cell() -> None:
     ci_path = _mirror_path(gp.CONFIDENCE_REL)
     assert half_path is not None and ci_path is not None
     protein_ids, _, cells = gp.read_half_lives(str(half_path))
-    ci_ids, flags = gp.read_undetermined(str(ci_path))
+    ci_ids, intervals = gp.read_confidence_intervals(str(ci_path))
     assert protein_ids == ci_ids
     gp.ProteinTurnoverGupta2024Dataset._check_undetermined_oracle(
-        protein_ids, cells, flags
+        protein_ids, cells, intervals
     )
     # The flat triples hold two replicate cells then the authors' mean cell.
     replicates = [
@@ -1114,6 +1567,98 @@ def test_the_two_released_workbooks_agree_on_every_censored_cell() -> None:
     assert sum(1 for cell in replicates if cell.ceiling) == 2084
     # No mean cell is itself flagged: the ceiling lives on the replicate it capped.
     assert not any(cell.ceiling for cell in means)
+
+
+@requires_mirror
+def test_the_released_intervals_reproduce_the_pinned_censoring_and_bound_counts() -> (
+    None
+):
+    """The #753 maps, measured on the real bytes: 2,082 cells, 1,989 keys, 4,270 bounds.
+
+    Keyed on the released protein ids rather than locus tags, which needs no genome: the
+    two isoform rows are then popped exactly as ``process`` pops them, so the per-condition
+    numbers are the ones each ``Condition`` pins.
+    """
+    half_path = _mirror_path(gp.HALF_LIVES_REL)
+    ci_path = _mirror_path(gp.CONFIDENCE_REL)
+    assert half_path is not None and ci_path is not None
+    protein_ids, _, cells = gp.read_half_lives(str(half_path))
+    _, intervals = gp.read_confidence_intervals(str(ci_path))
+    censored_cells = 0
+    censored_keys = 0
+    uncensored_keys = 0
+    interval_keys = 0
+    one_replicate_keys = 0
+    refused = 0
+    for condition in gp.CONDITIONS:
+        values = gp.condition_values(
+            condition, protein_ids, cells[condition.key], intervals[condition.key]
+        )
+        for key in gp.DROPPED_PROTEIN_KEYS:
+            values.half_life.pop(key, None)
+            values.degradation_rate.pop(key, None)
+            values.degradation_rate_lower.pop(key, None)
+            values.degradation_rate_upper.pop(key, None)
+            values.censoring.pop(key, None)
+            values.n_replicates.pop(key, None)
+        kept = set(values.half_life)
+        this_censored = sum(
+            1 for state in values.censoring.values() if state is Censoring.right
+        )
+        assert this_censored == condition.censored_keys, condition.key
+        assert len(values.degradation_rate_lower) == condition.interval_keys, (
+            condition.key
+        )
+        censored_cells += sum(1 for key, _ in values.ceiling_cells if key in kept)
+        censored_keys += this_censored
+        uncensored_keys += sum(
+            1 for state in values.censoring.values() if state is Censoring.uncensored
+        )
+        interval_keys += len(values.degradation_rate_lower)
+        one_replicate_keys += sum(1 for n in values.n_replicates.values() if n == 1)
+        refused += sum(1 for r in values.refused_intervals if r.locus_tag in kept)
+    assert censored_cells == 2082
+    assert censored_keys == 1989
+    assert uncensored_keys == 31198
+    assert censored_keys + uncensored_keys == 33187
+    assert one_replicate_keys == 4587
+    assert interval_keys == 4270
+    assert refused == 25
+    assert interval_keys + refused + 292 == one_replicate_keys
+
+
+@requires_mirror
+def test_every_sourced_quote_is_still_verbatim_in_its_pinned_mirror_file() -> None:
+    """A quote that drifted is a sourced value that no longer says what it claims."""
+    import os
+
+    data_root = os.environ.get("DATA_ROOT")
+    assert data_root
+    library = Path(data_root) / "torchcell-library" / gp.CITATION_KEY
+    if not (library / gp.PAPER_MD).is_file():
+        pytest.skip("the Gupta 2024 OCR mirror is not on this machine")
+    texts = {
+        gp.PAPER_MD: (library / gp.PAPER_MD).read_text(),
+        gp.SI1_MD: (library / gp.SI1_MD).read_text(),
+    }
+    for sourced in (
+        gp.CONFIDENCE_LEVEL_SOURCE,
+        gp.INTERVAL_FROM_CURVE_FIT_VARIANCE,
+        gp.INTERVAL_T_QUANTILE,
+        gp.INTERVAL_DOF,
+        gp.DILUTION_IS_THE_CHEMOSTAT_VARIABLE,
+        gp.DILUTION_LIMIT_IS_THE_DOUBLING_TIME,
+        gp.DOUBLING_TIMES_MEASURED,
+        gp.DOUBLING_TIMES_CHEMOSTAT,
+    ):
+        text = texts[sourced.provenance.source_uri]
+        assert sourced.quote in text, sourced.quote
+        assert (
+            hashlib.sha256(
+                (library / sourced.provenance.source_uri).read_bytes()
+            ).hexdigest()
+            == sourced.provenance.sha256
+        )
 
 
 @requires_mirror

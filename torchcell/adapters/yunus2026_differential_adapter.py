@@ -8,7 +8,8 @@ knowledge-graph nodes and edges.
 One record: one ``BacterialCrisprInterferencePerturbation`` served as a ``bacterial
 perturbation`` node, its ``CrisprConstruct`` as a ``crispr construct`` node, and the
 strain's released per-protein fold change against the control as a
-``ProteinAbundancePhenotype``.
+``ProteinFoldChangePhenotype`` (linear scale, carrying the released unadjusted
+equal-variance t-test p-value per protein).
 """
 
 import os.path as osp

@@ -40,16 +40,21 @@ carried as a ``BacterialStrainBackground`` whose ``parents`` name BW25993 and wh
 ``genotype_statement`` is the key-resources string verbatim. Measured: all 1,497
 released b-numbers resolve on that annotation (1,495 current, 2 pseudogene loci).
 
-RECORDS DROPPED (rules + items in ``preprocess/dropped_records.json``). A strain token
-whose Table S3 b-number is the controls' ``b0000`` placeholder and which Table S1 carries
-no sgRNA for (``no_target_gene_assigned``: ``argR``, one strain), and a strain whose
-released b-number is not a locus tag of the pinned annotation but a ``/gene_synonym`` of
-another locus (``b_number_remapped_by_the_annotation``: ``phnE`` ``b4104``, which the
-MG1655 annotation carries as a synonym of the pseudogene ``b4583`` ``phnE1``). The second
-is a SCHEMA finding, not a data one: storing ``b4583`` needs a
-``DerivedIdentifierMapping``, and ``DerivedIdentifierRoute`` has no member for a retired
-tag of the pinned strain's own namespace, so the mapping cannot be recorded on the
-record and the record is dropped rather than remapped silently.
+RECORDS DROPPED (rules + items in ``preprocess/dropped_records.json``). One rule removes
+a record: ``no_target_gene_assigned``, a strain token whose Table S3 b-number is the
+controls' ``b0000`` placeholder and which Table S1 carries no sgRNA for (``argR``, one
+strain), so neither the knocked-down locus nor the guide spacer is released.
+``b_number_remapped_by_the_annotation`` stays in the ledger and removes NOTHING: it fires
+only for a released b-number this annotation relates to another locus by a route no
+``DerivedIdentifierRoute`` member names. ``phnE``'s ``b4104`` used to be that case and is
+now KEPT: measured on the pinned annotation's own bytes, ``b4104`` is not one of its 4,651
+locus tags and is a ``/gene_synonym`` of exactly ONE locus, the pseudogene ``b4583``
+(``phnE1``, synonyms ``b4103``, ``b4104``, ``ECK4096``, ``ECK4097``), which IS a ``gene``
+row of the feature table and so passes L4 containment. The record stores ``b4583`` with
+``identifier_mapping=DerivedIdentifierMapping(source_identifier="b4104",
+route="locus_tag_synonym")``, which is the derived mapping recorded on the record rather
+than applied silently (:func:`locus_tag_synonym_mapping` re-checks every condition of the
+route before building it).
 
 PHENOTYPE. ``MetabolitePhenotype`` keyed by Table S4's ``Abbr`` verbatim, which is the
 iML1515 isobaric group's abbreviation plus the adduct (``frdp[M-H]-``), so two adducts of
@@ -59,10 +64,11 @@ independent plates); ``metabolite_level_se`` is the standard error of that mean,
 as the value. ``target_metabolite_ids`` maps a key to its Table S9 **BiGG** id wherever
 the feature's abbreviation names exactly ONE metabolite; a feature whose abbreviation is
 a MERGED isobaric set (FI-MS cannot separate equal masses) is absent from the map rather
-than assigned one of its candidates, and ``preprocess/metabolite_identity.json`` lists
-every such key with its full candidate set. A gap on the field is not expressible
-beside a partial map (``ProvenanceGapMixin`` requires a gapped field to be ``None``), so
-the uncovered keys are recorded in that ledger, the dendron note and the PR.
+than assigned one of its candidates. Those uncovered keys now carry a typed per-key
+``ProvenanceGap`` on ``target_metabolite_ids`` beside the sourced ones
+(:func:`metabolite_identity_gaps`), which names each one and is refused if the map ever
+carries it. ``preprocess/metabolite_identity.json`` keeps the full candidate TUPLE of
+every such key, since a candidate set is not expressible on a ``ProvenanceGap``.
 The reference is the measured profile of the 15 control strains (empty sgRNA) on the
 same per-batch-median scale, with ``n_replicates`` 30.
 """
@@ -109,6 +115,7 @@ from torchcell.datamodels.schema import (
     Concentration,
     ConcentrationUnit,
     CrisprConstruct,
+    DerivedIdentifierMapping,
     Environment,
     Experiment,
     ExperimentReference,
@@ -1542,7 +1549,13 @@ def group_samples(
 
 
 class ResolvedStrain(BaseModel):
-    """A kept CRISPRi strain with its MG1655 locus tag, symbol and guide."""
+    """A kept CRISPRi strain with its MG1655 locus tag, symbol and guide.
+
+    ``identifier_mapping`` is ``None`` for a strain whose released b-number IS the
+    stored locus tag, and a ``locus_tag_synonym`` mapping for one the annotation
+    relates to its stored tag through a ``/gene_synonym``
+    (:func:`locus_tag_synonym_mapping`).
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1550,6 +1563,7 @@ class ResolvedStrain(BaseModel):
     locus_tag: str
     symbol: str
     guide: Guide
+    identifier_mapping: DerivedIdentifierMapping | None = None
 
 
 class SymbolDisagreement(BaseModel):
@@ -1573,6 +1587,10 @@ class IdentifierLedger(BaseModel):
     reconciliation: LocusTagReconciliation
     min_resolved_fraction: float
     symbol_disagreements: list[SymbolDisagreement]
+    locus_tag_synonyms: list[str] = []
+    """One line per kept record whose stored tag was reached through a
+    ``/gene_synonym`` of the pinned namespace, i.e. every ``locus_tag_synonym``
+    mapping this build recorded."""
 
 
 def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
@@ -1584,6 +1602,42 @@ def canonical_symbol(genome: EcoliK12Genome, tag: str) -> str:
         return tag
     resolution = genome.resolve_gene_name(symbol)
     return symbol if resolution.systematic_name == tag else tag
+
+
+#: The GenBank name layer a ``locus_tag_synonym`` route reads, and the only one it may
+#: read: ``/gene_synonym``. An ``old_locus_tag`` or a symbol is a different route.
+SYNONYM_LAYER: Final = "synonym"
+
+
+def locus_tag_synonym_mapping(
+    genome: EcoliK12Genome, released: str, stored: str, pattern: re.Pattern[str]
+) -> DerivedIdentifierMapping | None:
+    """The ``locus_tag_synonym`` mapping of ``released`` onto ``stored``, else ``None``.
+
+    Reads the pinned annotation's own ``/gene_synonym`` lists and returns a mapping only
+    when every condition the route names holds: ``released`` and ``stored`` both have the
+    form of a locus tag of the pinned namespace (``pattern``, so nothing crosses
+    strains), the annotation does NOT carry ``released`` as a locus tag of its own, and
+    exactly ONE locus lists ``released`` as a ``/gene_synonym`` -- that locus being
+    ``stored``. ``None`` means no route describes the remap and the caller drops the
+    record: a tag of another strain's namespace is an ``eck_crosswalk``, and a released
+    tag that several loci list is ambiguous.
+
+    Measured on ``ecoli_K12_MG1655_ASM584v2``: ``b4104`` is not one of the 4,651 locus
+    tags and is listed by exactly one locus, ``b4583`` (``phnE1``), whose ``/gene_synonym``
+    values are ``b4103``, ``b4104``, ``ECK4096``, ``ECK4097``.
+    """
+    if pattern.match(released) is None or pattern.match(stored) is None:
+        return None
+    loci = genome.genbank.loci
+    if released in loci:
+        return None
+    carriers = sorted(tag for tag, locus in loci.items() if released in locus.synonyms)
+    if carriers != [stored]:
+        return None
+    return DerivedIdentifierMapping(
+        source_identifier=released, route="locus_tag_synonym"
+    )
 
 
 def resolve_strains(
@@ -1599,10 +1653,13 @@ def resolve_strains(
     Table S3 b-number is the controls' placeholder and for which Table S1 holds no
     sgRNA, so neither the knocked-down locus nor the guide spacer is released.
     ``b_number_remapped_by_the_annotation`` drops a strain whose released b-number the
-    pinned MG1655 annotation does not carry as a locus tag but as a ``/gene_synonym``
-    of another locus: storing that locus needs a ``DerivedIdentifierMapping``, and
-    ``DerivedIdentifierRoute`` has no member for a retired tag of the pinned strain's
-    own namespace, so the record is dropped rather than remapped silently.
+    pinned MG1655 annotation relates to another locus by a route no
+    ``DerivedIdentifierRoute`` member names. A released b-number the annotation carries
+    as a ``/gene_synonym`` of exactly one locus of the SAME namespace is NOT such a
+    route: the record is kept and the remap is recorded on its perturbation as a
+    ``locus_tag_synonym`` :class:`DerivedIdentifierMapping`
+    (:func:`locus_tag_synonym_mapping`), which is what keeps ``phnE`` (``b4104`` ->
+    ``b4583``).
 
     Stops (``LocusTagResolutionError``) below :data:`MIN_RESOLVED_FRACTION`.
     """
@@ -1615,15 +1672,24 @@ def resolve_strains(
 
     kept: list[ResolvedStrain] = []
     remapped: list[str] = []
+    synonyms: list[str] = []
     disagreements: list[SymbolDisagreement] = []
     for strain, tag in zip(targeted, stored.tolist(), strict=True):
+        mapping: DerivedIdentifierMapping | None = None
         if tag != strain.b_number or pattern.match(tag) is None:
+            mapping = locus_tag_synonym_mapping(genome, strain.b_number, tag, pattern)
             resolution = genome.resolve_gene_name(strain.b_number)
-            remapped.append(
+            if mapping is None:
+                remapped.append(
+                    f"{strain.gene} ({strain.b_number}): the annotation carries it as a "
+                    f"{resolution.note}, so the record would store {tag}"
+                )
+                continue
+            synonyms.append(
                 f"{strain.gene} ({strain.b_number}): the annotation carries it as a "
-                f"{resolution.note}, so the record would store {tag}"
+                f"{resolution.note}, so the record stores {tag} with route "
+                f"{mapping.route}"
             )
-            continue
         guide = guides.get(strain.gene)
         if guide is None:
             raise ValueError(
@@ -1651,6 +1717,7 @@ def resolve_strains(
                 locus_tag=tag,
                 symbol=canonical_symbol(genome, tag),
                 guide=guide,
+                identifier_mapping=mapping,
             )
         )
     rules = [
@@ -1669,11 +1736,13 @@ def resolve_strains(
         ),
         DropRule(
             rule="b_number_remapped_by_the_annotation",
-            description="the released b-number is not a locus tag of the pinned "
-            "MG1655 annotation but a /gene_synonym of another locus; recording that "
-            "remap needs a DerivedIdentifierMapping, and DerivedIdentifierRoute has no "
-            "member for a retired tag of the pinned strain's own namespace, so the "
-            "record is dropped rather than remapped silently",
+            description="the pinned MG1655 annotation does not carry the released "
+            "b-number as a locus tag of its own, and relates it to the locus the "
+            "record would store by a route no DerivedIdentifierRoute member names, so "
+            "no DerivedIdentifierMapping can record the remap and the record is "
+            "dropped rather than remapped silently. A released b-number the annotation "
+            "lists as a /gene_synonym of exactly one locus of the same namespace is "
+            "kept instead, with a locus_tag_synonym mapping on its perturbation",
             n_records=len(remapped),
             items=remapped,
         ),
@@ -1682,6 +1751,7 @@ def resolve_strains(
         reconciliation=report,
         min_resolved_fraction=MIN_RESOLVED_FRACTION,
         symbol_disagreements=disagreements,
+        locus_tag_synonyms=synonyms,
     )
     return kept, rules, ledger
 
@@ -1731,6 +1801,56 @@ def host_background() -> BacterialStrainBackground:
     )
 
 
+#: Table S9, the identity layer, as the gap on ``target_metabolite_ids`` looks_in.
+TABLE_S9_PROVENANCE = Provenance(
+    source_uri=f"torchcell-raw/{CITATION_KEY}/data/{TABLE_S9}",
+    citation_key=CITATION_KEY,
+    sha256=DATA_SHA256[TABLE_S9],
+    method="every row of the released isobaric-metabolite table read: its BiGG id "
+    "list, KEGG id, monoisotopic mass and neutral formula",
+    page=f"Cell Syst 2026 Table S9 ({TABLE_S9}, sheet {TABLE_S9_SHEET})",
+)
+
+#: Why a merged isobaric feature has no BiGG id, and where its candidates live.
+METABOLITE_IDENTITY_GAP_NOTE = (
+    "flow-injection MS cannot separate equal masses, so Table S9 releases this "
+    "feature's abbreviation as a MERGED isobaric group of 2 to 11 candidate "
+    "metabolites and names no single one of them as the measured species; assigning a "
+    "candidate would be a guess, so the key is absent from target_metabolite_ids "
+    "rather than mapped. preprocess/metabolite_identity.json carries every gapped key "
+    "with its full BiGG candidate TUPLE (merged_candidates), the isobaric-set-size "
+    "histogram and the per-adduct counts, and preprocess/metabolites.csv the whole "
+    "feature table; a candidate tuple is not expressible on a ProvenanceGap, which "
+    "names keys and not values"
+)
+
+
+def metabolite_identity_gaps(
+    keys: Sequence[str], target_metabolite_ids: Mapping[str, str]
+) -> list[ProvenanceGap]:
+    """The typed absence of a BiGG id for the keys ``target_metabolite_ids`` omits.
+
+    One gap on ``target_metabolite_ids``, naming every key of ``keys`` the map does not
+    carry. When the map carries NONE of this record's keys the gap names no keys, which
+    is the whole-field contract and requires the stored field to be ``None``; otherwise
+    it names the uncovered keys and ``ProvenanceGapMixin`` refuses it if the map ever
+    gains one of them. No uncovered key means no gap.
+    """
+    unsourced = tuple(sorted(set(keys) - set(target_metabolite_ids)))
+    if not unsourced:
+        return []
+    sourced = [key for key in keys if key in target_metabolite_ids]
+    return [
+        ProvenanceGap(
+            field="target_metabolite_ids",
+            reason=ProvenanceGapReason.not_reported_by_primary,
+            looked_in=TABLE_S9_PROVENANCE,
+            note=METABOLITE_IDENTITY_GAP_NOTE,
+            keys=unsourced if sourced else (),
+        )
+    ]
+
+
 def metabolite_phenotype(
     keys: Sequence[str],
     replicates: Sequence[Sequence[float]],
@@ -1741,7 +1861,8 @@ def metabolite_phenotype(
     ``replicates`` holds one list of plate values per key. The level is their
     arithmetic mean, which is the paper's own ``Mean_FC``
     (:func:`check_mean_fold_change`), and the statistic is the standard error of that
-    mean over the same plates.
+    mean over the same plates. Every key ``target_metabolite_ids`` omits is carried as
+    a typed per-key ``ProvenanceGap`` (:func:`metabolite_identity_gaps`).
     """
     if len(keys) != len(replicates):
         raise ValueError(f"{len(keys)} keys for {len(replicates)} replicate lists")
@@ -1759,6 +1880,7 @@ def metabolite_phenotype(
         n_replicates=n_replicates,
         measurement_type=MEASUREMENT_TYPE,
         target_metabolite_ids=dict(target_metabolite_ids),
+        provenance_gaps=metabolite_identity_gaps(keys, target_metabolite_ids),
     )
 
 
@@ -1770,7 +1892,7 @@ def crispri_genotype(resolved: ResolvedStrain) -> Genotype:
                 systematic_gene_name=resolved.locus_tag,
                 perturbed_gene_name=resolved.symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
-                identifier_mapping=None,
+                identifier_mapping=resolved.identifier_mapping,
                 crispr=CrisprConstruct(
                     effector=CAS_EFFECTOR,
                     guide_sequence=resolved.guide.spacer,
@@ -1961,7 +2083,8 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
             raise RuntimeError("drop rules do not account for every dropped strain")
         log.info(
             "Rapp 2026: %d strain tokens (%d control) -> %d records; drops %s; "
-            "b-number statuses %s; %d released symbols do not resolve to their "
+            "b-number statuses %s; %d locus_tag_synonym mappings recorded; "
+            "%d released symbols do not resolve to their "
             "b-number's locus; %d of %d stored features carry one BiGG id",
             len(strains),
             len(controls),
@@ -1971,6 +2094,7 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
                 s.value: n
                 for s, n in identifiers.reconciliation.status_histogram.items()
             },
+            len(identifiers.locus_tag_synonyms),
             len(identifiers.symbol_disagreements),
             ledger.n_single_identity,
             ledger.n_features,
@@ -2077,6 +2201,11 @@ class MetabolomeRapp2026Dataset(ExperimentDataset):
                     "b_number": item.strain.b_number,
                     "locus_tag": item.locus_tag,
                     "symbol": item.symbol,
+                    "identifier_route": (
+                        ""
+                        if item.identifier_mapping is None
+                        else item.identifier_mapping.route
+                    ),
                     "sgrna_id": item.guide.sgrna_id,
                     "spacer": item.guide.spacer,
                     "plate": item.strain.rows[0].plate,

@@ -1,15 +1,14 @@
-# torchcell/adapters/yunus2026_array_adapter.py
-# [[torchcell.adapters.yunus2026_array_adapter]]
-# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/yunus2026_array_adapter.py
-# Test file: tests/torchcell/adapters/test_yunus2026_array_adapter.py
-"""BioCypher adapter exposing the Yunus 2026 multiplexed CRISPRi array panels as
+# torchcell/adapters/caglar2017_protein_fold_change_adapter.py
+# [[torchcell.adapters.caglar2017_protein_fold_change_adapter]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/caglar2017_protein_fold_change_adapter.py
+# Test file: tests/torchcell/adapters/test_caglar2017_protein_fold_change_adapter.py
+"""BioCypher adapter exposing the Caglar 2017 REL606 protein fold changes as
 knowledge-graph nodes and edges.
 
-One record per array strain: 1 to 5 ``BacterialCrisprInterferencePerturbation`` leaves
-served as ``bacterial perturbation`` nodes, each guide's ``CrisprConstruct`` as a
-``crispr construct`` node, and the per-protein mean relative expression against the
-control strain as a ``ProteinFoldChangePhenotype`` (linear scale, with the sample SD
-over sqrt(3) as its SE).
+One record per Table S8 protein-level contrast under the paper's primary design. Every
+strain is the wild type, so the genotype carries no perturbation and no
+``bacterial perturbation`` node is served; the contrast itself is an environment edit,
+so the environment-perturbation pair is enabled.
 """
 
 import os.path as osp
@@ -18,15 +17,15 @@ import yaml
 from omegaconf import OmegaConf
 
 from torchcell.adapters.cell_adapter import CellAdapter
-from torchcell.datasets.pputida.yunus2026 import CrispriArrayYunus2026Dataset
+from torchcell.datasets.ecoli.caglar2017 import ProteinFoldChangeCaglar2017Dataset
 
 
-class CrispriArrayYunus2026Adapter(CellAdapter):
-    """Cell adapter that serves CrispriArrayYunus2026Dataset to BioCypher."""
+class ProteinFoldChangeCaglar2017Adapter(CellAdapter):
+    """Cell adapter that serves ProteinFoldChangeCaglar2017Dataset to BioCypher."""
 
     def __init__(
         self,
-        dataset: CrispriArrayYunus2026Dataset,
+        dataset: ProteinFoldChangeCaglar2017Dataset,
         process_workers: int,
         io_workers: int,
         chunk_size: int = int(1e4),
@@ -35,7 +34,7 @@ class CrispriArrayYunus2026Adapter(CellAdapter):
         """Load the adapter conf enable-list and initialize the base CellAdapter."""
         current_dir = osp.dirname(osp.abspath(__file__))
         config_path = osp.join(
-            current_dir, "conf", "crispri_array_yunus2026_adapter.yaml"
+            current_dir, "conf", "protein_fold_change_caglar2017_adapter.yaml"
         )
         if not osp.exists(config_path):
             raise FileNotFoundError(f"Config file not found: {config_path}")

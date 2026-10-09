@@ -1,8 +1,12 @@
-# Yunus 2026 CRISPRi arrays: 25 IY1452 strains, BacterialProteinFoldChangeExperiment.
-# 1 to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
-# `bacterial perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair
-# is enabled. The environment carries EnvironmentPhysicalPerturbation and
-# SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.
+# Carruthers 2025 differential proteomics: 16 contrasts,
+# BacterialProteinFoldChangeExperiment. 14 Figure 5b records carry 6 perturbations
+# (5 HeterologousPathwayPerturbation + 1 BacterialCrisprInterferencePerturbation) and the
+# 2 Figure 6b records carry 7 (the same plus a BacterialDeletionPerturbation of the same
+# locus), all served as `bacterial perturbation`: 80 pathway leaves, 16 CRISPRi leaves,
+# 2 deletion leaves, 98 in all. Every CRISPRi leaf carries a CrisprConstruct, so the crispr-construct
+# pair is enabled. The environment carries a SmallMoleculePerturbation (the L-arabinose
+# induction), so the environment-perturbation pair is enabled. The phenotype is the
+# `protein fold change phenotype` class, never `protein abundance phenotype`.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"

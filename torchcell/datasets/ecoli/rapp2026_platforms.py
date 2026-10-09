@@ -11,19 +11,19 @@ its own dataset here so that no two platforms ever share one record set:
 1. ``GrowthAucRapp2026Dataset`` -- the paper's own growth statistic, the trapezoid area
    under each strain's released OD600 curve (Table S2), stored as
    ``BacterialFitnessExperiment`` / ``FitnessPhenotype`` with the 16 control strains as
-   the denominator. **1,514 records** (Table S2's 1,515 library genes minus ``phnE``,
-   whose released b-number the pinned annotation remaps). 18 of those genes have no
-   metabolome sample at all, so this family EXTENDS the strain coverage of the key.
+   the denominator. **1,515 records**, one per Table S2 library gene, ``phnE`` among them
+   on a ``locus_tag_synonym`` mapping. 18 of those genes have no metabolome sample at
+   all, so this family EXTENDS the strain coverage of the key.
 2. ``TargetedMetabolomeRapp2026Dataset`` -- the targeted LC-MS/MS screen of Table S6,
    the EIC peak-height fold change against the library median, a SECOND PLATFORM.
-   **406 records, 1,244 values.** MEASURED not to duplicate the stored FI-MS values:
+   **407 records, 1,246 values.** MEASURED not to duplicate the stored FI-MS values:
    joining Table S6 1:1 onto Table S5 on (gene, abbreviation, mode) gives Pearson
    r = 0.6722 on the linear fold change (0.6701 on log2) with a median absolute log2
    difference of 1.1649, reproduced at build time into
    ``preprocess/platform_agreement.json``.
 3. ``MetaboliteIntensityRapp2026Dataset`` -- Table S5's ABSOLUTE FI-MS intensity of each
    accumulating annotated feature (``Mean_Int`` / ``R1_Int`` / ``R2_Int``), a different
-   scale from the stored fold change. **406 records, 1,373 values**, each with a real
+   scale from the stored fold change. **407 records, 1,375 values**, each with a real
    per-replicate standard error.
 
 DATA. Every file is in the citation key's raw mirror under one manifest, pinned by
@@ -35,12 +35,17 @@ Table S5 + Table S9.
 STRAIN. Identical to the metabolome loader: records pin the MG1655 GenBank assembly the
 released b-numbers mean, with ``YYdCas9`` as the ``BacterialStrainBackground``, and one
 ``BacterialCrisprInterferencePerturbation`` per record carrying the Table S1 spacer.
-Every family applies the same single retention rule as the metabolome loader
-(``b_number_remapped_by_the_annotation``): ``phnE``'s ``b4104`` is a ``/gene_synonym`` of
-the pseudogene ``b4583`` on the pinned annotation, and ``DerivedIdentifierRoute`` has no
-member for a retired tag of the pinned strain's own namespace, so the record is dropped
-rather than remapped silently. ``argR``, the metabolome loader's other drop, is absent
-from Table S1 and Table S2 and from both accumulation tables, so it never arises here.
+Every family carries the same single retention rule as the metabolome loader
+(``b_number_remapped_by_the_annotation``), and in every family it now removes NOTHING.
+``phnE``'s ``b4104`` is not a locus tag of the pinned annotation and is a
+``/gene_synonym`` of exactly ONE locus, the pseudogene ``b4583`` (``phnE1``), so the
+record is KEPT with ``identifier_mapping=DerivedIdentifierMapping(
+source_identifier="b4104", route="locus_tag_synonym")`` on its perturbation
+(``rapp2026.locus_tag_synonym_mapping`` re-checks every condition of that route). The
+rule still fires for a released b-number this annotation relates to another locus by a
+route no ``DerivedIdentifierRoute`` member names. ``argR``, the metabolome loader's other
+drop, is absent from Table S1 and Table S2 and from both accumulation tables, so it never
+arises here.
 
 REFERENCES, which is where the three families differ.
 
@@ -106,6 +111,7 @@ from torchcell.datamodels.schema import (
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     CrisprConstruct,
+    DerivedIdentifierMapping,
     Experiment,
     ExperimentReference,
     FitnessPhenotype,
@@ -159,7 +165,9 @@ from torchcell.datasets.ecoli.rapp2026 import (
     environment,
     host_background,
     load_manifest,
+    locus_tag_synonym_mapping,
     manifest_sha256,
+    metabolite_identity_gaps,
     raw_mirror_dir,
     read_guides,
     read_metabolites,
@@ -570,16 +578,22 @@ def check_column_legends(
 #: The retention rule every family here applies, worded as the metabolome loader does.
 REMAP_RULE = "b_number_remapped_by_the_annotation"
 REMAP_RULE_DESCRIPTION = (
-    "the released b-number is not a locus tag of the pinned MG1655 annotation but a "
-    "/gene_synonym of another locus; recording that remap needs a "
-    "DerivedIdentifierMapping, and DerivedIdentifierRoute has no member for a retired "
-    "tag of the pinned strain's own namespace, so the record is dropped rather than "
-    "remapped silently"
+    "the pinned MG1655 annotation does not carry the released b-number as a locus tag "
+    "of its own, and relates it to the locus the record would store by a route no "
+    "DerivedIdentifierRoute member names, so no DerivedIdentifierMapping can record "
+    "the remap and the record is dropped rather than remapped silently. A released "
+    "b-number the annotation lists as a /gene_synonym of exactly one locus of the same "
+    "namespace is kept instead, with a locus_tag_synonym mapping on its perturbation"
 )
 
 
 class ResolvedGene(BaseModel):
-    """One kept library gene: its MG1655 locus tag, canonical symbol and sgRNA."""
+    """One kept library gene: its MG1655 locus tag, canonical symbol and sgRNA.
+
+    ``identifier_mapping`` is ``None`` for a gene whose Table S1 b-number IS the stored
+    locus tag, and a ``locus_tag_synonym`` mapping for one the annotation relates to its
+    stored tag through a ``/gene_synonym`` (``rapp2026.locus_tag_synonym_mapping``).
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -587,6 +601,7 @@ class ResolvedGene(BaseModel):
     locus_tag: str
     symbol: str
     guide: Guide
+    identifier_mapping: DerivedIdentifierMapping | None = None
 
 
 def resolve_genes(
@@ -614,16 +629,25 @@ def resolve_genes(
 
     kept: list[ResolvedGene] = []
     remapped: list[str] = []
+    synonyms: list[str] = []
     disagreements: list[SymbolDisagreement] = []
     for gene, tag in zip(genes, stored.tolist(), strict=True):
         guide = guides[gene]
+        mapping: DerivedIdentifierMapping | None = None
         if tag != guide.b_number or pattern.match(tag) is None:
+            mapping = locus_tag_synonym_mapping(genome, guide.b_number, tag, pattern)
             resolution = genome.resolve_gene_name(guide.b_number)
-            remapped.append(
+            if mapping is None:
+                remapped.append(
+                    f"{gene} ({guide.b_number}): the annotation carries it as a "
+                    f"{resolution.note}, so the record would store {tag}"
+                )
+                continue
+            synonyms.append(
                 f"{gene} ({guide.b_number}): the annotation carries it as a "
-                f"{resolution.note}, so the record would store {tag}"
+                f"{resolution.note}, so the record stores {tag} with route "
+                f"{mapping.route}"
             )
-            continue
         symbol_resolution = genome.resolve_gene_name(gene)
         if symbol_resolution.systematic_name != tag:
             disagreements.append(
@@ -641,6 +665,7 @@ def resolve_genes(
                 locus_tag=tag,
                 symbol=canonical_symbol(genome, tag),
                 guide=guide,
+                identifier_mapping=mapping,
             )
         )
     rule = DropRule(
@@ -653,6 +678,7 @@ def resolve_genes(
         reconciliation=report,
         min_resolved_fraction=MIN_RESOLVED_FRACTION,
         symbol_disagreements=disagreements,
+        locus_tag_synonyms=synonyms,
     )
     return kept, rule, ledger
 
@@ -665,7 +691,7 @@ def crispri_genotype(resolved: ResolvedGene) -> Genotype:
                 systematic_gene_name=resolved.locus_tag,
                 perturbed_gene_name=resolved.symbol,
                 gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN_NAME],
-                identifier_mapping=None,
+                identifier_mapping=resolved.identifier_mapping,
                 crispr=CrisprConstruct(
                     effector=CAS_EFFECTOR,
                     guide_sequence=resolved.guide.spacer,
@@ -1378,15 +1404,16 @@ def metabolite_phenotype(
         for item in items
         if len(item.replicates) > 1
     }
+    stored_ids = {
+        item.key: target_ids[item.key] for item in items if item.key in target_ids
+    }
     return MetabolitePhenotype(
         metabolite_level=level,
         metabolite_level_se=standard_error or None,
         n_replicates=n_replicates,
         measurement_type=measurement_type,
-        target_metabolite_ids={
-            item.key: target_ids[item.key] for item in items if item.key in target_ids
-        }
-        or None,
+        target_metabolite_ids=stored_ids or None,
+        provenance_gaps=metabolite_identity_gaps(list(level), stored_ids),
     )
 
 
@@ -1394,15 +1421,18 @@ def reference_phenotype(
     items: Sequence[Accumulation], measurement_type: str, target_ids: Mapping[str, str]
 ) -> MetabolitePhenotype:
     """The denominator of one strain's released values, on the same keys and scale."""
+    stored_ids = {
+        item.key: target_ids[item.key] for item in items if item.key in target_ids
+    }
     return MetabolitePhenotype(
         metabolite_level={item.key: item.reference_level for item in items},
         metabolite_level_se=None,
         n_replicates={item.key: item.reference_n for item in items},
         measurement_type=measurement_type,
-        target_metabolite_ids={
-            item.key: target_ids[item.key] for item in items if item.key in target_ids
-        }
-        or None,
+        target_metabolite_ids=stored_ids or None,
+        provenance_gaps=metabolite_identity_gaps(
+            [item.key for item in items], stored_ids
+        ),
     )
 
 
@@ -1652,6 +1682,11 @@ class GrowthAucRapp2026Dataset(_Rapp2026Dataset):
                     "b_number": item.guide.b_number,
                     "locus_tag": item.locus_tag,
                     "symbol": item.symbol,
+                    "identifier_route": (
+                        ""
+                        if item.identifier_mapping is None
+                        else item.identifier_mapping.route
+                    ),
                     "sgrna_id": item.guide.sgrna_id,
                     "spacer": item.guide.spacer,
                     "plate_well": growth_of[item.gene].plate_well,
@@ -1809,6 +1844,11 @@ class _AccumulationDataset(_Rapp2026Dataset):
                     "b_number": item.guide.b_number,
                     "locus_tag": item.locus_tag,
                     "symbol": item.symbol,
+                    "identifier_route": (
+                        ""
+                        if item.identifier_mapping is None
+                        else item.identifier_mapping.route
+                    ),
                     "sgrna_id": item.guide.sgrna_id,
                     "spacer": item.guide.spacer,
                     "n_values": len(stored[item.gene]),

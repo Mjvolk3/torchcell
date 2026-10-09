@@ -100,11 +100,13 @@ from torchcell.adapters import (
     MorphologyCampos2018Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
+    ProteinFoldChangeCaglar2017Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
+    ProteomeFoldChangeCarruthers2025Adapter,
     ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
@@ -130,6 +132,7 @@ from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
+    ProteinFoldChangeCaglar2017Dataset,
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
 )
@@ -197,6 +200,7 @@ from torchcell.datasets.pputida.carruthers2025 import (
     CampaignProteomeCarruthers2025Dataset,
     IsoprenolTiterCarruthers2025Dataset,
     ProteomeCarruthers2025Dataset,
+    ProteomeFoldChangeCarruthers2025Dataset,
 )
 from torchcell.datasets.pputida.desiqueira2025 import (
     IsoprenolTiterDeSiqueira2025Dataset,
@@ -275,6 +279,9 @@ def _case(
 
 RNASEQ = "rnaseq expression phenotype"
 PROTEOME = "protein abundance phenotype"
+# #770: the relative axis. Yunus 2026 stores a ratio to its control strain, which the
+# absolute class forbids, so its three datasets are on the fold-change leaf.
+FOLD_CHANGE = "protein fold change phenotype"
 TITER = "product titer phenotype"
 RESPONSE = "environment response phenotype"
 TURNOVER = "protein turnover phenotype"
@@ -341,6 +348,14 @@ BACTERIAL: list[Bacterial] = [
         "doubling_time_caglar2017",
         DoublingTimeCaglar2017Dataset,
         RESPONSE,
+        perturbation=False,
+    ),
+    _case(
+        ProteinFoldChangeCaglar2017Adapter,
+        "caglar2017_protein_fold_change",
+        "protein_fold_change_caglar2017",
+        ProteinFoldChangeCaglar2017Dataset,
+        FOLD_CHANGE,
         perturbation=False,
     ),
     _case(
@@ -677,6 +692,14 @@ BACTERIAL: list[Bacterial] = [
         crispr=True,
     ),
     _case(
+        ProteomeFoldChangeCarruthers2025Adapter,
+        "carruthers2025_proteome_fold_change",
+        "proteome_fold_change_carruthers2025",
+        ProteomeFoldChangeCarruthers2025Dataset,
+        FOLD_CHANGE,
+        crispr=True,
+    ),
+    _case(
         ProteomeDeSiqueira2025Adapter,
         "desiqueira2025_proteome",
         "proteome_desiqueira2025",
@@ -775,7 +798,7 @@ BACTERIAL: list[Bacterial] = [
         "yunus2026_array",
         "crispri_array_yunus2026",
         CrispriArrayYunus2026Dataset,
-        PROTEOME,
+        FOLD_CHANGE,
         crispr=True,
     ),
     _case(
@@ -783,7 +806,7 @@ BACTERIAL: list[Bacterial] = [
         "yunus2026_knockdown",
         "crispri_knockdown_yunus2026",
         CrispriKnockdownYunus2026Dataset,
-        PROTEOME,
+        FOLD_CHANGE,
         crispr=True,
     ),
     _case(
@@ -791,7 +814,7 @@ BACTERIAL: list[Bacterial] = [
         "yunus2026_differential",
         "crispri_differential_proteome_yunus2026",
         CrispriDifferentialProteomeYunus2026Dataset,
-        PROTEOME,
+        FOLD_CHANGE,
         crispr=True,
     ),
     _case(

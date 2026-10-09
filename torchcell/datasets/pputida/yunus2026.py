@@ -7,10 +7,10 @@
 Yunus, Carruthers, Chen, Gin, Baidoo, Petzold, Garcia Martin, Adams, Mukhopadhyay and
 Lee 2026 (Metab. Eng., doi:10.1016/j.ymben.2025.11.007) screened CRISPRi knockdowns
 chosen by FluxRETAP against knockdowns chosen by intuition, in the engineered
-isoprenol-producing strain ``IY1452``, and built the arrays with VAMMPIRE. Two released
+isoprenol-producing strain ``IY1452``, and built the arrays with VAMMPIRE. Seven released
 tables of the one supplementary file carry a per-strain number, and this module serves
-both, as two dataset classes because ``ExperimentDataset.transform_item`` validates
-against ONE ``experiment_class``:
+all of them, as three dataset classes because ``ExperimentDataset.transform_item``
+validates against ONE ``experiment_class``:
 
 - :class:`CrispriKnockdownYunus2026Dataset` -- Supplementary Table S3, the 125-sample
   shotgun-proteomics screen: one record per CRISPRi strain, the relative expression of
@@ -31,24 +31,30 @@ against ONE ``experiment_class``:
 
 THE THIRD FAMILY IS THE SAME QUANTITY TYPE ON A DIFFERENT SCALE, WHICH IS WHY IT IS A
 THIRD DATASET. Tables S4 and S5 release a ``Fold Change`` against the control strain from
-the same DIA-NN Top3 quantification, so it is the quantity ``ProteinAbundancePhenotype``
+the same DIA-NN Top3 quantification, so it is the quantity ``ProteinFoldChangePhenotype``
 already holds here. It is not a 103rd record of the Table S3 family, because the two
 differ in exactly the way ``measurement_type`` exists to record: Table S3 is ONE
-proteomics sample per strain with no uncertainty released, while this is a thresholded
-differential over three biological replicates with a t-test beside it. The shared
-``verify_protein_dataset`` asserts one ``measurement_type`` per dataset, so a different
-scale is a different dataset.
+proteomics sample per strain with no uncertainty and no test released, while this is a
+thresholded differential over three biological replicates with a t-test beside it. The
+shared ``verify_protein_dataset`` asserts one ``measurement_type`` per dataset, so a
+different scale is a different dataset.
 
-WHAT TABLES S4 AND S5 RELEASE THAT IS READ AND NOT STORED. The ``P-Value (Equal
-Variance)`` and ``(-Log10(P-Value))`` columns are gap R of
-``[[plan.bacteria-si-phenotype-audit-pputida]]``: ``ProteinAbundancePhenotype`` carries
-``protein_abundance_se`` and no per-protein p-value field, and the only p-value in all of
-``schema.py`` is ``gene_interaction_p_value`` on ``GeneInteractionPhenotype``. ``Rank`` is
-a presentation index of the released sort order. All three are read and used as build
-oracles instead (:func:`parse_differential`), so no asserted column is parsed past:
-``log2(Fold Change)`` reproduces the released log2 on 338 of 338 rows, the released
-``-log10 p`` recovers the printed p to its own precision, the ranks are ``1..n`` in row
-order, and every row clears the thresholds its direction implies.
+TABLES S4 AND S5's P-VALUE IS STORED; WHAT IS READ AND NOT STORED IS ONE REVERSIBLE
+TRANSFORM OF IT AND ONE PRESENTATION INDEX. The released ``P-Value (Equal Variance)``
+column goes into ``protein_fold_change_p_value`` for all 305 stored keys, unadjusted:
+the Fig. 5B caption states it is a "student's t-test $p$ -value" with an applied
+threshold of 0.05, and no multiple-testing correction appears anywhere in the paper or
+the SI, so ``p_value_adjustment_method`` is ``None`` and the adjusted map is a typed gap.
+The one FDR in this paper is DIA-NN's IDENTIFICATION filter ("a global FDR = 0.01 at both
+the precursor and protein group levels"), applied before any contrast was computed, and
+it is recorded in :data:`SOURCED_VALUES` precisely so it is never mistaken for a
+correction of these p-values. ``(-Log10(P-Value))`` is the same number by exact
+arithmetic (``p = 10 ** -x``) and ``Rank`` is a presentation index of the released sort
+order (:data:`DIFFERENTIAL_NOT_STORED`); both are read and used as build oracles instead
+(:func:`parse_differential`), so no asserted column is parsed past: ``log2(Fold Change)``
+reproduces the released log2 on 338 of 338 rows, the released ``-log10 p`` recovers the
+printed p to its own precision, the ranks are ``1..n`` in row order, and every row clears
+the thresholds its direction implies.
 
 THE KNOCKED-DOWN GENE IS THE GENOTYPE, NOT A MEASURED KEY, AND IT IS IN THE TABLES UNDER
 ANOTHER NAME. No row of either table carries ``PP_4188`` in its ``Protein`` column, which
@@ -130,17 +136,34 @@ so it is the UNFILTERED frame of Supplementary Note 1's script rather than its p
 output, and it covers a WIDER protein set than the panel (252 of the panel's 253
 accessions appear in it, one does not), so neither deposited file completes the other.
 
-WHAT ONE STORED NUMBER IS, AND WHY IT IS A ``ProteinAbundancePhenotype``. Both released
-tables report a RATIO: the target protein's abundance in the CRISPRi strain divided by
-its abundance in the control strain, from the same DIA-NN Top3 quantification. The
-record carries the strain's own number and the reference carries ``1.0``, which is the
-ratio's denominator by definition rather than a measured quantity, so experiment /
+WHAT ONE STORED NUMBER IS, AND WHY IT IS A ``ProteinFoldChangePhenotype``. Every
+released table here reports a RATIO: the target protein's abundance in the CRISPRi strain
+divided by its abundance in the control strain, from the same DIA-NN Top3 quantification.
+The record carries the strain's own number and the reference carries ``1.0``, which is
+the ratio's denominator by definition rather than a measured quantity, so experiment /
 reference reproduces the released value exactly and nothing is imputed.
-``measurement_type`` names the scale (:data:`MEASUREMENT_TYPE`), which is the axis that
-keeps these numbers from ever being compared with an absolute Top3 signal such as the
-Carruthers 2025 proteome's. ``ProteinAbundancePhenotype``'s docstring asks for an
-absolute per-strain quantity, so this is a deliberate, documented stretch of that class
-and the PR asks for the typed ``abundance_basis`` axis that would make it exact.
+``ProteinAbundancePhenotype`` is the WRONG class for that and says so in its own
+docstring ("absolute per-strain quantity on a log signal scale, NOT a ratio"), which is
+the mislabeling issue #770 records; these three datasets are on the relative sibling
+instead. ``fold_change_scale`` is :data:`FOLD_CHANGE_SCALE` (linear, MEASURED two ways,
+see that constant), ``reference_basis`` carries the source's own clause for the
+denominator (:data:`REFERENCE_BASIS`, :data:`DIFFERENTIAL_REFERENCE_BASIS`), and
+``measurement_type`` names the quantification (:data:`MEASUREMENT_TYPE`), which is the
+axis that keeps these numbers from ever being compared with an absolute Top3 signal such
+as the Carruthers 2025 proteome's.
+
+A RELEASED ``0`` IS A MEASUREMENT, NOT A MISSING VALUE, AND IT IS NOT AN ``n.d.``. Table
+S3 writes the verbatim cell ``0`` on 37 of its 102 numeric rows and Tables S9-S12 write
+it on 49 of their 93 replicate cells, which makes 13 of the 51 (construct, protein) means
+exactly ``0.0``. Those are complete knockdowns: the protein WAS detected in the control
+strain (so the ratio has a denominator) and was not detected in the CRISPRi strain. The
+paper counts them, and the arithmetic proves it: its census reproduces exactly on linear
+thresholds over the 102 numeric rows (68 at ``<= 0.5``, 51 at ``< 0.05``, 16 in
+``(0.5, 0.9]``, 13 in ``(0.9, 1.0)``, 5 above ``1.0``, summing to 102), and the 37 zeros
+sit inside the 51 "downregulated by more than 95 %" (the ``linear_scale_census`` entry
+of :data:`SOURCED_VALUES` carries the quote). The 23 ``n.d.`` rows are the
+different, DROPPED case: the paper states their expression "was not detected in the
+control strain", so the ratio has no denominator at all.
 
 THE CHASSIS IS A DEFERRAL THIS PAPER DOES NOT CLOSE. The background is the strain the
 paper names, ``IY1452``, described only as "a highly genetically engineered
@@ -196,7 +219,7 @@ DATASETS. Table S3 is "shotgun proteomics on 125 samples carrying different sgRN
 the table holds exactly 125 rows, one per strain, so one sample per strain; the build
 asserts that row count, which is what makes ``n_replicates = 1`` an arithmetic reading
 of the source rather than an assumption. Table S3 releases no uncertainty and the
-replicate DESIGN behind one sample is not stated, so ``protein_abundance_se`` is a typed
+replicate DESIGN behind one sample is not stated, so ``protein_fold_change_se`` is a typed
 gap. Tables S8-S12 release three per-replicate values per construct (``R1``, ``R2``,
 ``R3``) and the Fig. 3J-N caption states "Error bars represent standard deviation from
 three biological replicates", so those records carry ``n_replicates = 3`` and an SE
@@ -205,11 +228,10 @@ genotype they share -- Table S3 gives ``PP_4188`` 0.2213 while Table S8's three
 replicates mean 0.2509 -- which is the evidence that they are separate runs and must not
 be pooled into one record.
 
-NOT LOADED, with the reason: Supplementary Tables S4 and S5 (145 downregulated and 193
-upregulated proteins of the ``PP_4188`` strain against the control, as fold change,
-log2 fold change and a t-test p-value) are a derived differential statistic for a single
-strain with no per-replicate values released, and no phenotype class models a
-per-protein differential with its own test; Supplementary Table S6 (plasmids) and the
+NOT LOADED, with the reason: Supplementary Tables S4 and S5's ``(-Log10(P-Value))`` and
+``Rank`` columns, the first because it is the stored p-value's own reversible transform
+and the second because it is a presentation index of the released sort order (both are
+read and asserted as build oracles instead); Supplementary Table S6 (plasmids) and the
 non-sgRNA rows of Table S7 (the three sequencing primers) are genotype metadata rather
 than measurements; Tables S1 and S2 are the target lists, carried in
 ``preprocess/target_lists.csv``; Fig. 5A's TCA metabolite concentrations, Fig. 3C/D's
@@ -255,8 +277,8 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialCrisprInterferencePerturbation,
     BacterialGeneNamespace,
-    BacterialProteinAbundanceExperiment,
-    BacterialProteinAbundanceExperimentReference,
+    BacterialProteinFoldChangeExperiment,
+    BacterialProteinFoldChangeExperimentReference,
     BacterialReferenceStrain,
     BacterialStrainBackground,
     Concentration,
@@ -269,12 +291,14 @@ from torchcell.datamodels.schema import (
     EnvironmentPhysicalPerturbation,
     Experiment,
     ExperimentReference,
+    FoldChangeScale,
     Genotype,
     PhysicalFactor,
     ProductTiterExperiment,
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
     ProteinAbundancePhenotype,
+    ProteinFoldChangePhenotype,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -509,11 +533,14 @@ CHASSIS_STRAIN = "IY1452"
 #: ``dia_nn_top3_peptide_signal_mean``).
 MEASUREMENT_TYPE = "dia_nn_top3_relative_to_control_strain"
 #: What one stored number of the Tables S4 + S5 differential IS. The released header's own
-#: word is ``Fold Change``, and the replicate design behind it is three biological
-#: replicates, so it is a DIFFERENT scale from Table S3's single-sample
-#: ``Relative expression level`` and gets its own measurement_type and its own dataset
-#: class (the shared protein verifier asserts one measurement_type per dataset).
-DIFFERENTIAL_MEASUREMENT_TYPE = "dia_nn_top3_fold_change_relative_to_control_strain"
+#: word is ``Fold Change``, the test beside it is an equal-variance Student's t-test, and
+#: the replicate design behind it is three biological replicates, so it is a DIFFERENT
+#: scale from Table S3's single-sample ``Relative expression level`` and gets its own
+#: measurement_type and its own dataset class (the shared protein verifier asserts one
+#: measurement_type per dataset).
+DIFFERENTIAL_MEASUREMENT_TYPE = (
+    "dia_nn_top3_fold_change_relative_to_control_strain_equal_variance_t_test"
+)
 #: What one stored number of the DEPOSITED Benchling panel IS: an ABSOLUTE per-strain
 #: Top3 signal as the share page RENDERED it, not a ratio and not an export. A distinct
 #: string from every other proteome family's (the two ratio scales above, Carruthers
@@ -521,8 +548,19 @@ DIFFERENTIAL_MEASUREMENT_TYPE = "dia_nn_top3_fold_change_relative_to_control_str
 #: ``dia_nn_top3_percent_of_proteome_mean``), so heterogeneous proteomics is never
 #: pooled; ``benchling_displayed`` is the half of the name that records the caveat.
 PANEL_PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_signal_benchling_displayed"
+#: The scale EVERY released number of this paper is on: a plain, untransformed ratio of
+#: the strain to the control strain. Measured, not assumed, two ways. (1) Tables S4 and
+#: S5 release ``Fold Change`` AND ``Log2(Fold Change)`` side by side and
+#: ``log2(Fold Change)`` reproduces the second column on 338 of 338 rows
+#: (:func:`parse_differential`), so the first column is the linear ratio. (2) The Results
+#: census of Table S3 reproduces exactly on LINEAR thresholds over the 102 numeric rows
+#: (68 at <= 0.5, 51 at < 0.05, 16 in (0.5, 0.9], 13 in (0.9, 1.0), 5 above 1.0, summing
+#: to 102); on a log2 scale 0.5 would be a 1.41-fold INCREASE, not "downregulated by
+#: 50 %".
+FOLD_CHANGE_SCALE = FoldChangeScale.linear
 #: The reference strain's value on that scale: the ratio's denominator, by definition.
-REFERENCE_RELATIVE_EXPRESSION = 1.0
+#: Derived from the scale rather than written down, so the two can never disagree.
+REFERENCE_RELATIVE_EXPRESSION = FOLD_CHANGE_SCALE.neutral_value
 
 #: The deposited table's own label for the control strain's row. It is a REAL released
 #: row (isoprenol 845.73 and a full protein profile), so both deposited families
@@ -847,6 +885,64 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         page=_METHODS_PROTEOMICS,
         note="the quantification both released ratios are formed from",
     ),
+    "relative_expression_basis": _paper(
+        "the control strains",
+        "(I) Summary of relative expression levels of target genes in comparison to "
+        "the control strains.",
+        page="Fig. 3 caption (panel I)",
+        note="the DENOMINATOR of every Table S3 and Tables S8-S12 number, in the "
+        "source's own words; it is what ProteinFoldChangePhenotype.reference_basis "
+        "records, and the control strain is the nontarget-sgRNA strain of the same "
+        "campaign (SOURCED_VALUES['control_strain_is_nontarget'])",
+    ),
+    "control_strain_is_nontarget": _paper(
+        "nontarget",
+        "(G) Protein counts of PP_1607 in both nontarget (control) and PP_1607 strains.",
+        page="Fig. 3 caption (panel G)",
+        note="the only statement of WHAT the control strain is: the strain carrying the "
+        "non-targeting sgRNA, which is also the NON_GENE_OLIGO_LABELS 'nontarget' guide",
+    ),
+    "linear_scale_census": _paper(
+        {"down_50": 68, "down_95": 51, "down_10_50": 16, "down_10": 13, "up": 5},
+        "Proteomics analysis revealed that 68 genes were downregulated by at least $5 0 "
+        "\\%$ , 51 of which were downregulated by more than $9 5 ~ \\%$ (Fig. 3). "
+        "Sixteen genes were downregulated by $1 0 { - } 5 0 ~ \\%$ . Thirteen genes were "
+        "downregulated only by $1 0 ~ \\%$ . Five genes were upregulated.",
+        page=_RESULTS_VAMMPIRE,
+        note="the evidence that FOLD_CHANGE_SCALE is linear and that a released '0' is a "
+        "MEASUREMENT rather than a placeholder. The five buckets reproduce exactly on "
+        "linear thresholds over Table S3's 102 numeric rows (68 at <= 0.5, 51 at < 0.05, "
+        "16 in (0.5, 0.9], 13 in (0.9, 1.0), 5 above 1.0) and sum to 102; the 37 rows "
+        "whose verbatim cell is '0' sit inside the 51 'more than 95 %' bucket, i.e. "
+        "downregulated by 100 %. On a log2 scale 0.5 would be a 1.41-fold increase",
+    ),
+    "differential_basis_and_test": _paper(
+        "the control strain",
+        "(B) Volcano plot representing the results of shotgun proteomic analysis from "
+        "strain PP_4188 strain in comparison to the control strain. Horizontal dashed "
+        "line represents the applied significance threshold of a student’s t-test "
+        "$p$ -value $= 0 . 0 5$ . Vertical dashed lines represent the applied thresholds "
+        "of an absolute fold change ${ \\geq } 1$ .",
+        page="Fig. 5 caption (panel B)",
+        note="three things at once: the DENOMINATOR of Tables S4 and S5 ('in comparison "
+        "to the control strain'), WHAT their 'P-Value (Equal Variance)' column is (a "
+        "Student's t-test p-value), and that the 0.05 the parser asserts is the applied "
+        "threshold. The t-test p-value is RAW: no multiple-testing correction is named "
+        "anywhere in the paper or the SI, so p_value_adjustment_method stays None "
+        "(SOURCED_VALUES['identification_fdr'] is the other FDR in this paper, and it is "
+        "not one)",
+    ),
+    "identification_fdr": _paper(
+        0.01,
+        "The main DIA-NN reports were filtered with a global $\\mathrm { F D R } = 0 . 0 "
+        "1$ at both the precursor and protein group levels.",
+        page=_METHODS_PROTEOMICS,
+        note="recorded so this FDR is never mistaken for a correction of the Tables S4 "
+        "and S5 p-values: it is an IDENTIFICATION FDR on precursors and protein groups, "
+        "applied before any contrast was computed. Nothing in the paper or the SI "
+        "adjusts the released per-protein t-test p-values, which is why they are stored "
+        "as protein_fold_change_p_value and the adjusted map is None",
+    ),
     "search_database": _paper(
         "P. putida KT2440 UniProt proteome + heterologous proteins + contaminants",
         "The DIA-NN search used the latest P. putida KT2440 Uniprot proteome FASTA "
@@ -957,7 +1053,7 @@ SI_SOURCED_VALUES: dict[str, SourcedValue] = {
         "statement of it. Tables S4 and S5 are 'from PP_4188 strain' and the same 48 h "
         "extraction, and their 'P-Value (Equal Variance)' column needs a per-group "
         "replicate set, but neither table releases a per-replicate value or an "
-        "uncertainty, so protein_abundance_se is a typed gap",
+        "uncertainty, so protein_fold_change_se is a typed gap",
     ),
     "differential_down_caption": _si_docx(
         145,
@@ -1002,6 +1098,29 @@ TITER_N_REPLICATES: int = TITER_REPLICATE_RANGE[0]
 #: count Table S3's family carries for the same reason.
 PANEL_N_REPLICATES = 1
 DIFFERENTIAL_N_REPLICATES: int = int(SI_SOURCED_VALUES["differential_replicates"].value)
+
+#: ``reference_basis`` of the Table S3 and Tables S8-S12 families: WHAT the denominator
+#: is, carrying the source's own clause rather than a paraphrase of it.
+REFERENCE_BASIS = (
+    "the same protein in the control strain, which carries the non-targeting sgRNA: "
+    "'relative expression levels of target genes in comparison to the control strains' "
+    "(Fig. 3I), 'nontarget (control)' (Fig. 3G)"
+)
+#: ``reference_basis`` of the Tables S4 and S5 differential, from the Fig. 5B caption.
+DIFFERENTIAL_REFERENCE_BASIS = (
+    "the same protein in the control strain, which carries the non-targeting sgRNA: "
+    "'shotgun proteomic analysis from strain PP_4188 strain in comparison to the "
+    "control strain' (Fig. 5B)"
+)
+#: The multiple-testing correction behind the Tables S4 and S5 p-values. ``None``
+#: because none is named: the Fig. 5B caption calls the column a "student's t-test
+#: $p$ -value" with an applied threshold of 0.05 and no adjustment, and the only FDR in
+#: the paper is DIA-NN's IDENTIFICATION filter on precursors and protein groups
+#: (SOURCED_VALUES['identification_fdr']), applied before any contrast was computed. The
+#: class requires the method whenever adjusted p-values are stored and forbids it
+#: otherwise, so the raw p-values go in ``protein_fold_change_p_value`` and the adjusted
+#: map stays None.
+DIFFERENTIAL_P_VALUE_ADJUSTMENT: str | None = None
 if [n for _, _, n in DIFFERENTIAL_PANELS] != [
     int(SI_SOURCED_VALUES["differential_down_caption"].value),
     int(SI_SOURCED_VALUES["differential_up_caption"].value),
@@ -1010,13 +1129,16 @@ if [n for _, _, n in DIFFERENTIAL_PANELS] != [
         "DIFFERENTIAL_PANELS no longer holds the row counts its captions are sourced for"
     )
 #: What Tables S4 and S5 release that this loader reads but does NOT store, and why.
-#: Both are gap R of [[plan.bacteria-si-phenotype-audit-pputida]].
+#: The ``P-Value (Equal Variance)`` column IS stored now, as
+#: ``protein_fold_change_p_value`` on ``ProteinFoldChangePhenotype``; what is left is
+#: one reversible transform of it and one presentation index.
 DIFFERENTIAL_NOT_STORED: tuple[str, ...] = (
-    "the 'P-Value (Equal Variance)' and '(-Log10(P-Value))' columns: "
-    "ProteinAbundancePhenotype carries protein_abundance_se and no per-protein p-value "
-    "field, and the only p-value anywhere in schema.py is gene_interaction_p_value on "
-    "GeneInteractionPhenotype, so there is no honest home for a per-protein test "
-    "result. Both columns are read and used as build oracles instead",
+    "the '(-Log10(P-Value))' column: the same quantity as the stored "
+    "protein_fold_change_p_value by exact arithmetic (p = 10 ** -x), so storing both "
+    "would store one number twice. It is read and asserted as a build oracle instead: "
+    "10 ** -(-Log10(P-Value)) reproduces the released p to its own printed precision on "
+    "338 of 338 rows (worst relative disagreement 3.2489e-3, Table S4's '1.30E-06' "
+    "against a released -log10 of 5.884647992)",
     "the 'Rank' column: a presentation index of the released sort order (1 to 145 by "
     "ascending fold change in Table S4, 1 to 193 by descending fold change in Table "
     "S5, both measured), so it carries nothing the stored fold change does not. Read "
@@ -1053,9 +1175,9 @@ NOT_LOADED: tuple[str, ...] = (
     "and S9) and their error bars: the figures are the only place the SD of a titer "
     "appears, and a bar chart is not machine-readable, so every stored titer carries a "
     "typed gap on its uncertainty rather than a number read off a figure",
-    "Supplementary Tables S4 and S5's p-value, -log10 p-value and rank columns: the "
-    "Fold Change column IS loaded, by CrispriDifferentialProteomeYunus2026Dataset; the "
-    f"three columns beside it are not ({DIFFERENTIAL_NOT_STORED[0]})",
+    "Supplementary Tables S4 and S5's -log10 p-value and rank columns: the Fold Change "
+    "AND the 'P-Value (Equal Variance)' columns ARE loaded, by "
+    f"CrispriDifferentialProteomeYunus2026Dataset ({DIFFERENTIAL_NOT_STORED[0]})",
     "Supplementary Table S6 (plasmids) and the three sequencing primers of Table S7 "
     "(IY77, IY169, IY425): genotype and method metadata, not measurements",
     "Fig. 5A (TCA metabolite concentrations at 24, 48 and 72 h), Fig. 3C/D (terminal "
@@ -1458,9 +1580,11 @@ class DifferentialRow(BaseModel):
     description: str
     fold_change: float
     log2_fold_change: float
-    #: Read for the build oracles below and deliberately NOT stored
-    #: (:data:`DIFFERENTIAL_NOT_STORED`).
+    #: The released ``P-Value (Equal Variance)``, an unadjusted Student's t-test
+    #: p-value, STORED as ``protein_fold_change_p_value``.
     p_value: float
+    #: Read for the build oracle and not stored: the reversible transform of
+    #: :attr:`p_value` (:data:`DIFFERENTIAL_NOT_STORED`).
     neg_log10_p_value: float
     rank: int
 
@@ -2261,7 +2385,7 @@ def crispri_perturbation(
 
 def relative_expression_phenotype(
     values: Mapping[str, float], *, n_replicates: int
-) -> ProteinAbundancePhenotype:
+) -> ProteinFoldChangePhenotype:
     """One record's relative target-protein expression, keyed by locus tag.
 
     ``n_replicates = 1`` carries no SE at all (the source releases none and states no
@@ -2274,19 +2398,28 @@ def relative_expression_phenotype(
     for tag, value in values.items():
         if not math.isfinite(value):
             raise RuntimeError(f"{tag}: non-finite relative expression {value}")
-    return ProteinAbundancePhenotype(
-        protein_abundance=dict(values),
-        protein_abundance_se=None,
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=dict(values),
+        fold_change_scale=FOLD_CHANGE_SCALE,
+        reference_basis=REFERENCE_BASIS,
+        protein_fold_change_se=None,
         n_replicates={tag: n_replicates for tag in values},
         measurement_type=MEASUREMENT_TYPE,
         provenance_gaps=[
             ProvenanceGap(
-                field="protein_abundance_se",
+                field="protein_fold_change_se",
                 reason=ProvenanceGapReason.not_reported_by_primary,
                 note="Supplementary Table S3 releases one number per strain with no "
                 "uncertainty, and the replicate design behind one proteomics sample is "
                 "not stated; there is nothing to derive an SE from",
-            )
+            ),
+            ProvenanceGap(
+                field="protein_fold_change_p_value",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="Supplementary Table S3 releases no test result beside its ratio: "
+                "one proteomics sample per strain cannot carry a p-value. The Tables S4 "
+                "and S5 differential does, and that is a different dataset",
+            ),
         ],
     )
 
@@ -2295,60 +2428,97 @@ def array_phenotype(
     means: Mapping[str, float],
     standard_errors: Mapping[str, float],
     counts: Mapping[str, int],
-) -> ProteinAbundancePhenotype:
+) -> ProteinFoldChangePhenotype:
     """One array construct's per-protein mean relative expression with its SE."""
     if set(means) != set(standard_errors) or set(means) != set(counts):
         raise RuntimeError("mean, SE and replicate-count keys disagree")
-    return ProteinAbundancePhenotype(
-        protein_abundance=dict(means),
-        protein_abundance_se=dict(standard_errors),
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=dict(means),
+        fold_change_scale=FOLD_CHANGE_SCALE,
+        reference_basis=REFERENCE_BASIS,
+        protein_fold_change_se=dict(standard_errors),
         n_replicates=dict(counts),
         measurement_type=MEASUREMENT_TYPE,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="protein_fold_change_p_value",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="Supplementary Tables S8-S12 release three per-replicate ratios "
+                "per construct and no test against the control, so there is no p-value "
+                "to store and none can be derived without the control's own replicates",
+            )
+        ],
     )
 
 
-def differential_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhenotype:
-    """The PP_4188 strain's released fold changes, keyed by locus tag.
+def differential_phenotype(
+    values: Mapping[str, float], p_values: Mapping[str, float] | None = None
+) -> ProteinFoldChangePhenotype:
+    """The PP_4188 strain's released fold changes and t-test p-values, by locus tag.
 
-    ``protein_abundance_se`` is a typed gap rather than a derived number: the replicate
-    COUNT is sourced (three biological replicates, Supplementary Fig. S8's caption), but
-    neither Table S4 nor Table S5 releases a per-replicate value or a spread, so there
-    is nothing to divide by sqrt(n). The released ``P-Value (Equal Variance)`` is a test
-    result, not a dispersion, and ``ProteinAbundancePhenotype`` has no field for it
-    (:data:`DIFFERENTIAL_NOT_STORED`).
+    ``p_values`` carries the released ``P-Value (Equal Variance)`` column, which the
+    Fig. 5B caption states is a "student's t-test $p$ -value" against the control
+    strain. It is UNADJUSTED: no multiple-testing correction appears anywhere in the
+    paper or the SI, so it goes in ``protein_fold_change_p_value`` and
+    ``p_value_adjustment_method`` stays :data:`DIFFERENTIAL_P_VALUE_ADJUSTMENT`
+    (``None``), which the class requires of a record with no adjusted map.
+
+    ``protein_fold_change_se`` is a typed gap rather than a derived number: the
+    replicate COUNT is sourced (three biological replicates, Supplementary Fig. S8's
+    caption), but neither Table S4 nor Table S5 releases a per-replicate value or a
+    spread, so there is nothing to divide by sqrt(n). A p-value is a test result, not a
+    dispersion, and inverting it into an SE would need the per-group means this release
+    does not carry.
     """
     if not values:
         raise RuntimeError("a differential record needs at least one protein")
     for tag, value in values.items():
         if not math.isfinite(value) or value <= 0.0:
             raise RuntimeError(f"{tag}: fold change {value} is not a positive ratio")
-    return ProteinAbundancePhenotype(
-        protein_abundance=dict(values),
-        protein_abundance_se=None,
+    if p_values is not None and set(p_values) != set(values):
+        raise RuntimeError("p-value and fold-change keys disagree")
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=dict(values),
+        fold_change_scale=FOLD_CHANGE_SCALE,
+        reference_basis=DIFFERENTIAL_REFERENCE_BASIS,
+        protein_fold_change_se=None,
+        protein_fold_change_p_value=None if p_values is None else dict(p_values),
+        protein_fold_change_p_value_adjusted=None,
+        p_value_adjustment_method=DIFFERENTIAL_P_VALUE_ADJUSTMENT,
         n_replicates=dict.fromkeys(values, DIFFERENTIAL_N_REPLICATES),
         measurement_type=DIFFERENTIAL_MEASUREMENT_TYPE,
         provenance_gaps=[
             ProvenanceGap(
-                field="protein_abundance_se",
+                field="protein_fold_change_se",
                 reason=ProvenanceGapReason.not_reported_by_primary,
                 note="Supplementary Tables S4 and S5 release a fold change, its log2, a "
                 "p-value and a rank, and no per-replicate value or spread. The "
                 f"replicate count is sourced ({DIFFERENTIAL_N_REPLICATES} biological "
                 "replicates, Supplementary Fig. S8's caption) but the SD exists only as "
                 "that figure's error bars, so there is nothing to derive an SE from",
-            )
+            ),
+            ProvenanceGap(
+                field="protein_fold_change_p_value_adjusted",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+                note="only the unadjusted t-test p-value is released. The one FDR in "
+                "this paper is DIA-NN's IDENTIFICATION filter ('a global FDR = 0.01 at "
+                "both the precursor and protein group levels'), applied before any "
+                "contrast was computed, so it is not a correction of these p-values and "
+                "no adjusted column exists to store",
+            ),
         ],
     )
 
 
 def differential_reference_phenotype(
     values: Mapping[str, float],
-) -> ProteinAbundancePhenotype:
+) -> ProteinFoldChangePhenotype:
     """The control strain on the released fold-change scale: 1.0 for every key.
 
     Not a measurement, the same way :func:`reference_phenotype` is not: 1.0 is the fold
-    change's denominator by definition, so experiment / reference reproduces the
-    released number exactly.
+    change's denominator by definition, which is what
+    ``ProteinFoldChangePhenotype.neutral_reference`` returns, and it carries no p-value
+    because a strain tested against itself has no contrast.
     """
     return differential_phenotype(
         dict.fromkeys(sorted(values), REFERENCE_RELATIVE_EXPRESSION)
@@ -2357,22 +2527,25 @@ def differential_reference_phenotype(
 
 def reference_phenotype(
     tags: Iterable[str], *, n_replicates: int, with_se: bool
-) -> ProteinAbundancePhenotype:
+) -> ProteinFoldChangePhenotype:
     """The control strain on the released scale: 1.0 for every measured protein.
 
-    Not a measurement -- it is the ratio's denominator, and the only value the released
-    numbers are expressed against, so experiment / reference reproduces the source's
-    number exactly. ``REFERENCE_RELATIVE_EXPRESSION`` names it so a reader cannot
-    mistake it for a quantified abundance.
+    Not a measurement -- it is the fold change's denominator, and the only value the
+    released numbers are expressed against, so experiment / reference reproduces the
+    source's number exactly. ``REFERENCE_RELATIVE_EXPRESSION`` is
+    ``FOLD_CHANGE_SCALE.neutral_value``, so a reader cannot mistake it for a quantified
+    abundance and the two can never disagree.
     """
     keys = sorted(set(tags))
     if not keys:
         raise RuntimeError("a reference needs the record's measured proteins")
     values = {tag: REFERENCE_RELATIVE_EXPRESSION for tag in keys}
     if with_se:
-        return ProteinAbundancePhenotype(
-            protein_abundance=values,
-            protein_abundance_se={tag: 0.0 for tag in keys},
+        return ProteinFoldChangePhenotype(
+            protein_fold_change=values,
+            fold_change_scale=FOLD_CHANGE_SCALE,
+            reference_basis=REFERENCE_BASIS,
+            protein_fold_change_se={tag: 0.0 for tag in keys},
             n_replicates={tag: n_replicates for tag in keys},
             measurement_type=MEASUREMENT_TYPE,
         )
@@ -2704,12 +2877,12 @@ class _Yunus2026Dataset(ExperimentDataset):
     @property
     def experiment_class(self) -> type[Experiment]:
         """Experiment schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperiment
+        return BacterialProteinFoldChangeExperiment
 
     @property
     def reference_class(self) -> type[ExperimentReference]:
         """Experiment-reference schema class produced by this dataset."""
-        return BacterialProteinAbundanceExperimentReference
+        return BacterialProteinFoldChangeExperimentReference
 
     @property
     def raw_file_names(self) -> list[str]:
@@ -2983,7 +3156,7 @@ class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
                 assignments.append(assignment)
                 value = row.relative_expression
                 assert value is not None  # noqa: S101 - kept rows are numeric by filter
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = BacterialProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
                         perturbations=[
@@ -2995,7 +3168,7 @@ class CrispriKnockdownYunus2026Dataset(_Yunus2026Dataset):
                         {tag: value}, n_replicates=1
                     ),
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = BacterialProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),
@@ -3166,13 +3339,13 @@ class CrispriArrayYunus2026Dataset(_Yunus2026Dataset):
                     perturbations.append(
                         crispri_perturbation(tag, common[tag], assignment)
                     )
-                experiment = BacterialProteinAbundanceExperiment(
+                experiment = BacterialProteinFoldChangeExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(perturbations=perturbations),
                     environment=environment,
                     phenotype=array_phenotype(means, standard_errors, counts),
                 )
-                reference = BacterialProteinAbundanceExperimentReference(
+                reference = BacterialProteinFoldChangeExperimentReference(
                     dataset_name=self.name,
                     genome_reference=reference_genome,
                     environment_reference=environment.model_copy(),
@@ -3339,6 +3512,11 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
             for entry in rows
             if entry.protein in kept
         }
+        p_values = {
+            kept[entry.protein]: entry.p_value
+            for entry in rows
+            if entry.protein in kept
+        }
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -3346,7 +3524,7 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
         pub = publication()
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            experiment = BacterialProteinAbundanceExperiment(
+            experiment = BacterialProteinFoldChangeExperiment(
                 dataset_name=self.name,
                 genotype=Genotype(
                     perturbations=[
@@ -3354,9 +3532,9 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
                     ]
                 ),
                 environment=environment,
-                phenotype=differential_phenotype(values),
+                phenotype=differential_phenotype(values, p_values),
             )
-            reference = BacterialProteinAbundanceExperimentReference(
+            reference = BacterialProteinFoldChangeExperimentReference(
                 dataset_name=self.name,
                 genome_reference=chassis_reference(),
                 environment_reference=environment.model_copy(),
@@ -3411,6 +3589,14 @@ class CrispriDifferentialProteomeYunus2026Dataset(_Yunus2026Dataset):
                     "measurement_type",
                     f"n_replicates = {DIFFERENTIAL_N_REPLICATES} for every key: "
                     f"'{SI_SOURCED_VALUES['differential_replicates'].quote}'",
+                    f"the released 'P-Value (Equal Variance)' is stored for all "
+                    f"{len(p_values)} keys as protein_fold_change_p_value, UNADJUSTED: "
+                    f"'{SOURCED_VALUES['differential_basis_and_test'].quote}'. No "
+                    "multiple-testing correction is named anywhere in the paper or the "
+                    "SI, so p_value_adjustment_method is None and the adjusted map is a "
+                    "typed gap; the paper's one FDR is DIA-NN's identification filter, "
+                    f"'{SOURCED_VALUES['identification_fdr'].quote}', applied before any "
+                    "contrast was computed",
                     *DIFFERENTIAL_NOT_STORED,
                 ],
             )
@@ -3908,8 +4094,9 @@ DATASETS: dict[str, dict[str, Any]] = {
         "root": DIFFERENTIAL_ROOT_REL,
         "page": "Supplementary Tables S4 and S5 (mmc1.docx)",
         "method": "the PP_4188 strain's released per-protein Fold Change against the "
-        "control strain (DIA-NN Top3) over three biological replicates; reference = the "
-        "control strain at the ratio's denominator (1.0)",
+        "control strain (DIA-NN Top3) over three biological replicates, with the "
+        "released unadjusted equal-variance t-test p-value; reference = the control "
+        "strain at the ratio's denominator (1.0)",
     },
 }
 
@@ -3933,12 +4120,14 @@ def _l4_reference_is_the_ratio_denominator(
 
     The released numbers are ratios to the control strain, so the reference may hold
     the denominator and nothing else; a reference that drifted off 1.0 would silently
-    rescale every record in the dataset.
+    rescale every record in the dataset. The denominator is read from the scale
+    (``FoldChangeScale.linear.neutral_value``), so the rule cannot disagree with the
+    ``fold_change_scale`` the records were written on.
     """
     bad: list[str] = []
     n = 0
     for index, record in enumerate(records):
-        levels = record["reference"]["phenotype_reference"]["protein_abundance"]
+        levels = record["reference"]["phenotype_reference"]["protein_fold_change"]
         for tag, value in levels.items():
             n += 1
             if float(value) != REFERENCE_RELATIVE_EXPRESSION:
@@ -4287,11 +4476,86 @@ def verify_build(
     return report
 
 
+def _l3_scale_and_basis_are_one_contrast(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L3: one ``(fold_change_scale, reference_basis)`` pair across the dataset.
+
+    The pair is what makes two columns comparable, so two pairs in one store would mean
+    two different contrasts pooled under one dataset name: a linear ratio averaged with
+    a log2 one, or a ratio to the control strain averaged with a ratio to something
+    else. Scale is also asserted to be the one this loader measured on the pinned docx.
+    """
+    pairs = sorted(
+        {
+            (
+                str(record["experiment"]["phenotype"]["fold_change_scale"]),
+                str(record["experiment"]["phenotype"]["reference_basis"]),
+            )
+            for record in records
+        }
+    )
+    scales = {scale for scale, _ in pairs}
+    passed = len(pairs) == 1 and scales == {str(FOLD_CHANGE_SCALE)}
+    return LevelResult(
+        level=Level.L3,
+        name="scale_and_basis_are_one_contrast",
+        passed=passed,
+        message=(
+            f"all {len(records)} records are {pairs[0][0]!r} against one basis"
+            if passed
+            else f"{len(pairs)} distinct (scale, basis) pairs, scales {sorted(scales)}"
+        ),
+        details={
+            "n_pairs": len(pairs),
+            "scales": sorted(scales),
+            "expected_scale": str(FOLD_CHANGE_SCALE),
+            "bases": sorted({basis for _, basis in pairs}),
+        },
+    )
+
+
+def _l3_p_values_are_unadjusted(records: Sequence[Mapping[str, Any]]) -> LevelResult:
+    """L3: a stored p-value is an unadjusted probability and names no correction.
+
+    Nothing in this paper adjusts the released per-protein t-test p-values, so a record
+    that grew an adjusted map or an adjustment method would be carrying a correction no
+    mirrored byte states. A dataset with no p-values at all passes trivially.
+    """
+    n_p = 0
+    bad: list[str] = []
+    for index, record in enumerate(records):
+        phenotype = record["experiment"]["phenotype"]
+        p_values = phenotype["protein_fold_change_p_value"] or {}
+        n_p += len(p_values)
+        for tag, value in p_values.items():
+            if not 0.0 < float(value) <= 1.0:
+                bad.append(f"record {index} {tag}={value}")
+        if phenotype["protein_fold_change_p_value_adjusted"] is not None:
+            bad.append(f"record {index} carries an adjusted p-value map")
+        if phenotype["p_value_adjustment_method"] != DIFFERENTIAL_P_VALUE_ADJUSTMENT:
+            bad.append(
+                f"record {index} names the correction "
+                f"{phenotype['p_value_adjustment_method']!r}"
+            )
+    return LevelResult(
+        level=Level.L3,
+        name="p_values_are_unadjusted_probabilities",
+        passed=not bad,
+        message=(
+            f"{n_p} stored p-values are unadjusted probabilities naming no correction"
+            if not bad
+            else f"{len(bad)} p-value violations"
+        ),
+        details={"n_p_values": n_p, "examples": bad[:10]},
+    )
+
+
 def run_verification(name: str, data_root: str | None = None) -> VerificationReport:
-    """Run the protein-abundance family verifier (L0-L3), the bacterial L4 containment,
-    the reference-denominator rule and the provenance audit of every
-    ``SOURCED_VALUES`` entry on a built dev LMDB; write
-    ``preprocess/verification_report.json``.
+    """Run the shared protein verifier on the fold-change label (L0-L3), the bacterial
+    L4 containment, the one-contrast and unadjusted-p-value rules, the
+    reference-denominator rule and the provenance audit of every ``SOURCED_VALUES``
+    entry on a built dev LMDB; write ``preprocess/verification_report.json``.
     """
     from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
     from torchcell.verification.runners import (
@@ -4313,6 +4577,8 @@ def run_verification(name: str, data_root: str | None = None) -> VerificationRep
         provenance=verifier_provenance(name),
         expected_count=drops.kept_records,
         allow_duplicate_orfs=True,
+        label_key="protein_fold_change",
+        se_key="protein_fold_change_se",
     )
     references = {
         json.dumps(r["reference"]["genome_reference"], sort_keys=True) for r in records
@@ -4323,7 +4589,7 @@ def run_verification(name: str, data_root: str | None = None) -> VerificationRep
     measured = protein_gene_set(records) | {
         tag
         for record in records
-        for tag in record["experiment"]["phenotype"]["protein_abundance"]
+        for tag in record["experiment"]["phenotype"]["protein_fold_change"]
     }
     missing = sorted(measured - universe)
     report.add(
@@ -4340,6 +4606,8 @@ def run_verification(name: str, data_root: str | None = None) -> VerificationRep
             },
         )
     )
+    report.add(_l3_scale_and_basis_are_one_contrast(records))
+    report.add(_l3_p_values_are_unadjusted(records))
     report.add(_l4_reference_is_the_ratio_denominator(records))
     library = Path(base) / "torchcell-library"
     if library_available(library):

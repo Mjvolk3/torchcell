@@ -7,7 +7,7 @@
 Carruthers et al. 2025 (Nat Commun, doi:10.1038/s41467-025-66304-8; PMID 41390487) ran
 six automated design-build-test-learn cycles over multiplexed CRISPRi arrays on an
 engineered isoprenol-producing KT2440 chassis, with a paired global proteome panel.
-This module serves BOTH released readouts, as two dataset classes because
+This module serves every released readout, as three dataset classes because
 ``ExperimentDataset.transform_item`` validates against ONE ``experiment_class``:
 
 - :class:`IsoprenolTiterCarruthers2025Dataset` -- ``ProductTiterExperiment``, one record
@@ -15,6 +15,23 @@ This module serves BOTH released readouts, as two dataset classes because
   over biological triplicates.
 - :class:`ProteomeCarruthers2025Dataset` -- ``BacterialProteinAbundanceExperiment``, one
   record per released off-target-study proteome sample (Top3 DIA-NN abundances).
+- :class:`ProteomeFoldChangeCarruthers2025Dataset` --
+  ``BacterialProteinFoldChangeExperiment``, one record per released differential
+  contrast COLUMN: 14 single-guide CRISPRi contrasts from ``Figure 5b`` plus the 2
+  knockout contrasts the Fig. 6 caption names, of the 10 ``Figure 6b`` releases.
+
+THE RELATIVE FAMILY IS NOT A MODE OF THE ABSOLUTE ONE. A Top3 level and a log2 ratio
+are different measurements, and ``ProteinAbundancePhenotype`` has no field for the
+p-value a differential release ships beside its ratio, so the fold changes are
+``ProteinFoldChangePhenotype`` records with their own class, adapter and gate. What a
+fold-change record's denominator IS comes from the source, never from this loader:
+``Figure 5b``'s is "the non-target control strain", and the Source Data's own
+``Supplementary Figure 9`` sheet holds the single cell ``See Figure 5b``, which is what
+makes that caption a statement about this sheet. Two sheets are refused with their
+measurements rather than guessed: eight of ``Figure 6b``'s ten columns, whose
+denominators no mirrored statement names, and ``Supplementary Figure 10`` entirely,
+because ``fold_change_scale`` is required and no mirrored statement names a scale or a
+unit for it.
 
 THE GENOTYPE, DECOMPOSED. The reference is the chassis ``IY1449b`` (KT2440 with
 markerless in-frame deletions), carried as a ``BacterialStrainBackground`` on an
@@ -167,6 +184,8 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialProteinFoldChangeExperiment,
+    BacterialProteinFoldChangeExperimentReference,
     BacterialStrainBackground,
     Concentration,
     ConcentrationUnit,
@@ -176,6 +195,7 @@ from torchcell.datamodels.schema import (
     EndpointRule,
     Experiment,
     ExperimentReference,
+    FoldChangeScale,
     GeneAdditionPerturbation,
     GenomicSpan,
     Genotype,
@@ -184,6 +204,7 @@ from torchcell.datamodels.schema import (
     ProductTiterExperimentReference,
     ProductTiterPhenotype,
     ProteinAbundancePhenotype,
+    ProteinFoldChangePhenotype,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -368,6 +389,14 @@ SHEET_OVEREXPRESSION_TITER = "Supplementary Figure 12bd"
 SHEET_OVEREXPRESSION_PROTEOME = "Supplementary Figure 12ac"
 #: The per-cycle control proteome. NOT read -- see :data:`CONTROL_PROTEOME_DEFERRAL`.
 SHEET_CONTROL_PROTEOME = "Supplementary Figure 15"
+#: The released DIFFERENTIAL proteomics: per-protein log2 fold change with a p-value.
+#: ``SHEET_FOLD_CHANGE`` is the single-guide CRISPRi panel, ``SHEET_FOLD_CHANGE_POINTER``
+#: the sheet whose only cell points at it, and ``SHEET_KO_FOLD_CHANGE`` the KO panel.
+SHEET_FOLD_CHANGE = "Figure 5b"
+SHEET_FOLD_CHANGE_POINTER = "Supplementary Figure 9"
+SHEET_KO_FOLD_CHANGE = "Figure 6b"
+#: The best-array heatmap. NOT read -- see :data:`BEST_ARRAY_HEATMAP_REFUSAL`.
+SHEET_BEST_ARRAY_HEATMAP = "Supplementary Figure 10"
 
 KT2440_NAMESPACE: BacterialGeneNamespace = "pputida_kt2440_locus_tag"
 #: The host species, as the deposited assembly report names it. An extra copy of a
@@ -393,8 +422,8 @@ SPAN_END = SPAN_START + SPAN_LENGTH - 1
 LOCUS_TAG_RE = re.compile(r"PP_\d{4}")
 REPLICATE_RE = re.compile(r"^(?P<base>.+)-R(?P<replicate>\d+)$")
 
-#: The two dataset families this release serves, one per experiment class.
-Family = Literal["titer", "proteome", "campaign_proteome"]
+#: The four dataset families this release serves, one per experiment class.
+Family = Literal["titer", "proteome", "campaign_proteome", "fold_change"]
 #: The product every titer record measures, as the compound layer canonicalizes it.
 PRODUCT_NAME = "isoprenol"
 #: One record per ``(construct, DBTL cycle)`` strain of ``Figure 4b``.
@@ -410,6 +439,32 @@ EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS = 2
 EXPECTED_PROTEOME_RECORDS = (
     EXPECTED_PP0815_PROTEOME_RECORDS + EXPECTED_OVEREXPRESSION_PROTEOME_RECORDS
 )
+#: One record per sgRNA target column of ``SHEET_FOLD_CHANGE``.
+EXPECTED_FOLD_CHANGE_RECORDS_FIG5B = 14
+#: One record per ``SHEET_KO_FOLD_CHANGE`` column the Fig. 6 caption names (see
+#: :data:`KO_FOLD_CHANGE_CONTRASTS`); the other eight columns are ledgered.
+EXPECTED_FOLD_CHANGE_RECORDS_FIG6B = 2
+EXPECTED_FOLD_CHANGE_RECORDS = (
+    EXPECTED_FOLD_CHANGE_RECORDS_FIG5B + EXPECTED_FOLD_CHANGE_RECORDS_FIG6B
+)
+#: What one stored fold change IS: a log2 ratio tested by the paired two-tailed
+#: Student's t-test both captions and the Methods name.
+FOLD_CHANGE_MEASUREMENT_TYPE = "dia_log2_fold_change_paired_two_tailed_t_test"
+#: The released column suffixes. ``_log10_pval`` is UNSIGNED -log10(p), which
+#: :func:`p_value_from_neg_log10` converts by exact arithmetic.
+FOLD_CHANGE_SUFFIX = "_log2_FC"
+NEG_LOG10_P_VALUE_SUFFIX = "_log10_pval"
+#: Tolerance of ``-log10(10**-x) == x``. Measured over all 6,222 released p-values of
+#: the two sheets: the maximum round-trip error is exactly 0.0.
+P_VALUE_ROUND_TRIP_TOL = 1e-12
+#: The significance ceiling both sheets are pre-filtered at, which the Fig. 5b caption
+#: states. Measured: the largest released p-value is 0.04999950946964488.
+FOLD_CHANGE_P_VALUE_CEILING = 0.05
+#: The ``SHEET_KO_FOLD_CHANGE`` columns a verbatim statement names as a contrast.
+KO_FOLD_CHANGE_CONTRASTS: tuple[str, ...] = ("PP_0812", "PP_0815")
+#: The exact cell ``SHEET_FOLD_CHANGE_POINTER`` holds, which is what makes the
+#: Supplementary Fig. 9 caption a statement about ``SHEET_FOLD_CHANGE``'s denominator.
+FOLD_CHANGE_POINTER_CELL = "See Figure 5b"
 #: What one Top3 number is, named so heterogeneous proteomics is never silently mixed.
 PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_peptide_signal_mean"
 #: The proteome panel's background: every sample is a derivative of the PP_0815 KO.
@@ -872,6 +927,43 @@ CAMPAIGN_GENE_LIST_IS_THE_LINE = _dryad_readme(
     "nothing the construct name does not",
 )
 
+# --- the released differential proteomics (the fold-change family) -------------
+_Q_FIG5B = (
+    "b Statistically significant Log2(Fold-change) values (paired two-tailed "
+    "Student’s $T -$ test, $p { < } 0 . 0 5 )$ for selected sgRNAs of electron "
+    "transport chain complexes and selected proteins from the TCA cycle. POI "
+    "$\\mathsf { L o g } _ { 2 } \\mathsf { F C }$ cells are bolded. Source data are "
+    "provided in the Source Data file."
+)
+_Q_SI_FIG9_TITLE = (
+    "Supplementary Figure 9: Heatmaps of relevant pathways among best performing "
+    "sgRNAs compared to the non-target control strain"
+)
+_Q_FIG6B = (
+    "b Volcano plots of two KO strains, ΔPP_0812 and ΔPP_0815, showing "
+    "fold-change differences in global protein expression with a target vs. non-target "
+    "sgRNA."
+)
+_Q_FIG6B_BOTH_DELETIONS = (
+    "Furthermore, both deletion strains displayed broad changes in the proteome that "
+    "were not reflected in other cytochrome ${ \\mathsf { b o } } _ { 3 }$ subunit "
+    "deletions when comparing non-target and target sgRNAs (e.g., ΔPP_0812) "
+    "(Fig. 6b)."
+)
+_Q_STATS_TTEST = (
+    "Where applicable, statistical significance was determined using a paired "
+    "Student’s T-test, where $p { < } 0 . 0 5$ ."
+)
+_Q_SI_FIG10_TITLE = (
+    "Supplementary Figure 10: Heatmap of significantly changed proteins present in all "
+    "25 best performing CRISPRi strain"
+)
+_Q_SI_FIG10 = (
+    "Depicts the protein levels that were significantly changed (paired two-tailed "
+    "Student’s T-test, $\\mathsf { p } < 0 . 0 5$ ) across 25 of the best "
+    "performing sgRNA combinations."
+)
+
 CHASSIS_GENOTYPE = _paper(
     "KT2440 ΔphaABC, ΔmvaB, ΔhbdH, 4,538,575Δ86,812 (Δzwf, ΔglZ, ΔliuC)",
     _Q_CHASSIS,
@@ -1177,6 +1269,127 @@ CONTROL_PROTEOME_DEFERRAL = _si(
     "are already this dataset's phenotype_reference (18, 12, 12, 12, 12, 12, 12 "
     "measured, matching CONTROL_N), so nothing it holds is lost silently",
 )
+
+FOLD_CHANGE_SCALE = _paper(
+    FoldChangeScale.log2.value,
+    _Q_FIG5B,
+    page="Fig. 5 caption",
+    note="the caption names the scale of the stored number: Log2(Fold-change). The "
+    f"column headers of {SHEET_FOLD_CHANGE} and {SHEET_KO_FOLD_CHANGE} say the same "
+    "thing in the file ('<target>_log2_FC' beside '<target>_log10_pval')",
+)
+FOLD_CHANGE_TEST = _paper(
+    FOLD_CHANGE_MEASUREMENT_TYPE,
+    _Q_FIG5B,
+    page="Fig. 5 caption",
+    note="the test behind every stored p-value, stated identically by the Fig. 6c "
+    f"caption and by the Methods' '{_Q_STATS_TTEST}'. One measurement_type for both "
+    "sheets, because both report the same statistic of the same DIA-NN pipeline",
+)
+FOLD_CHANGE_P_VALUE_SCALE = _source_data(
+    NEG_LOG10_P_VALUE_SUFFIX,
+    "PP_0368_log10_pval",
+    page=f"Source Data '{SHEET_FOLD_CHANGE}', header row",
+    note="the released column is UNSIGNED -log10(p): measured over both sheets it runs "
+    "1.30103425637741 to 19.3125325679514 with no negative value, and 10**-1.30103 = "
+    "0.049999, so the sheets are pre-filtered at the caption's p<0.05. The stored "
+    "number is the probability, recovered by the exact arithmetic p = 10**-x whose "
+    "round trip :func:`p_value_from_neg_log10` asserts",
+)
+FOLD_CHANGE_REFERENCE_BASIS = _si(
+    "the non-target control strain",
+    _Q_SI_FIG9_TITLE,
+    page="Supplementary Information contents, Supplementary Figure 9",
+    note=f"the denominator of every {SHEET_FOLD_CHANGE} column, in the source's own "
+    f"words. What binds this caption to that sheet is MEASURED, not assumed: the "
+    f"Source Data's own '{SHEET_FOLD_CHANGE_POINTER}' sheet holds exactly one cell, "
+    f"'{FOLD_CHANGE_POINTER_CELL}', so the figure this caption describes IS that "
+    "sheet; :func:`assert_fold_change_pointer` stops the build if the cell changes",
+)
+KO_FOLD_CHANGE_REFERENCE_BASIS = _paper(
+    "a non-targeting control sgRNA in a knockout background",
+    _Q_KO_PANEL_FIG6A,
+    page="Fig. 6 caption",
+    note=f"the denominator of the two {SHEET_KO_FOLD_CHANGE} columns that are stored, "
+    "in the source's own words. The Fig. 6a caption is the titer arm of exactly these "
+    f"strain pairs, and the Fig. 6b caption states the proteome contrast itself: "
+    f"'{_Q_FIG6B}'",
+)
+KO_FOLD_CHANGE_SOURCE = _paper(
+    KO_FOLD_CHANGE_CONTRASTS,
+    _Q_FIG6B,
+    page="Fig. 6 caption",
+    note=f"the only verbatim statement of a {SHEET_KO_FOLD_CHANGE} contrast, and it "
+    "names two KO strains and which two. The sheet releases ten columns, so eight are "
+    "ledgered unbuilt rather than given a guessed denominator (see "
+    ":data:`KO_FOLD_CHANGE_UNSOURCED_REASONS`)",
+)
+BEST_ARRAY_HEATMAP_REFUSAL = _si(
+    None,
+    _Q_SI_FIG10,
+    page="Supplementary Figure 10 caption",
+    note=f"why {SHEET_BEST_ARRAY_HEATMAP} is NOT loaded. Measured on the pinned "
+    "workbook: 26 keys x 25 strain columns, 650 cells with no empty cell, no p-value "
+    "column at all, values signed from -7.05757655263963 to 3.92161053900316 with "
+    "median -1.0118185429312652, and 24 of the 26 keys title-cased protein symbols "
+    "(AcsA1, CyoA, ValS) rather than locus tags. ``fold_change_scale`` is a required "
+    "field and no mirrored statement names a scale or a unit for this sheet: the "
+    f"caption says only '{_Q_SI_FIG10_TITLE}', and its body says only that the values "
+    "are 'protein levels that were significantly changed'. A log2 reading is a "
+    "HYPOTHESIS the release does not support, and storing it would assert a scale the "
+    "source never states, so the sheet is refused with its measurement recorded",
+)
+
+
+#: Every other ``SHEET_KO_FOLD_CHANGE`` column and the measurement that refuses it. The
+#: sheet releases ten columns and the Fig. 6 caption names a contrast for two, so these
+#: eight have no sourced denominator; each reason is a measurement on the pinned bytes.
+KO_FOLD_CHANGE_UNSOURCED_REASONS: dict[str, str] = {
+    "Control": (
+        "the sheet's own label for a column no mirrored statement describes. 'Control' "
+        "is also the name of the campaign's non-targeting control line in Figure 4b, "
+        "so the header cannot even be read as a strain designation without choosing "
+        "between a control strain and a contrast against one"
+    ),
+    "PP_0368": (
+        "a Figure 6a KO-background label, but no mirrored statement names it as a "
+        "Figure 6b contrast; the Fig. 6 caption names two KO strains and this is "
+        "neither"
+    ),
+    "PP_0751": (
+        "a Figure 6a KO-background label, but no mirrored statement names it as a "
+        "Figure 6b contrast"
+    ),
+    "PP_0813": (
+        "a Figure 6a KO-background label, but no mirrored statement names it as a "
+        "Figure 6b contrast"
+    ),
+    "PP_0814": (
+        "a Figure 6a KO-background label, but no mirrored statement names it as a "
+        "Figure 6b contrast"
+    ),
+    "PP_0812_15": (
+        "a Figure 6a KO-background label (the sheet writes with an underscore what "
+        "Figure 6a writes PP_0812-15), and the nearest statement is the Results' "
+        f"'{_Q_FIG6B_BOTH_DELETIONS}'. Reading that as this column means resolving the "
+        "pronoun 'both deletion strains' to the previous sentence's pair against a "
+        "caption that says 'two KO strains' and names which two, so the contrast would "
+        "be inferred, not sourced"
+    ),
+    "PP_0751_PP_0812": (
+        "not a KO background at all: measured on the pinned workbook, PP_0751_PP_0812 "
+        "is a BUILT two-sgRNA CRISPRi array, released as a Figure 4b line name and "
+        "listed in Supplementary Table 4's DBTL1-6 array list, so the column's "
+        "denominator could be the campaign's non-targeting control or a KO carrying "
+        "one, and the release states neither"
+    ),
+    "PP_1317_PP_0812": (
+        "matches no released strain: measured on the pinned workbook it is absent from "
+        "Figure 4b's line names and from Figure 6a's KO-background labels, and it is "
+        "not in Supplementary Table 4's array list either, so neither the numerator "
+        "strain nor the denominator can be sourced"
+    ),
+}
 
 #: The five heterologous pIY670 genes. ``token`` is the verbatim part name in the
 #: plasmid description, ``symbol`` the ``Protein`` id the released proteomics uses, and
@@ -2274,6 +2487,259 @@ def read_overexpression_proteome_rows(path: str) -> list[OverexpressionProteomeR
             top3_signal=float(row[8]),
         )
         for row in rows
+    ]
+
+
+class FoldChangeRow(BaseModel):
+    """One released ``(protein key, contrast)`` log2 fold change and its -log10 p-value."""
+
+    sheet: str
+    contrast: str
+    protein: str
+    log2_fold_change: float
+    neg_log10_p_value: float
+
+
+def p_value_from_neg_log10(value: float) -> float:
+    """``p = 10**-x`` for an UNSIGNED -log10 p-value, with the round trip asserted.
+
+    The released column is -log10(p), so the probability is recovered by exact
+    arithmetic rather than estimated. The inverse is checked on every value because a
+    conversion that is not reversible is not the same number the source released.
+    """
+    if value < 0.0 or not math.isfinite(value):
+        raise RuntimeError(
+            f"a -log10 p-value must be a non-negative finite number, got {value!r}"
+        )
+    probability = float(10.0**-value)
+    if not 0.0 < probability <= 1.0:
+        raise RuntimeError(f"10**-{value} is {probability}, not a probability")
+    back = -math.log10(probability)
+    if abs(back - value) > P_VALUE_ROUND_TRIP_TOL:
+        raise RuntimeError(
+            f"the p-value conversion is not reversible: -log10(10**-{value}) = {back}"
+        )
+    if probability >= FOLD_CHANGE_P_VALUE_CEILING:
+        raise RuntimeError(
+            f"p = {probability} is not below the {FOLD_CHANGE_P_VALUE_CEILING} the "
+            f"caption states the sheet is filtered at ('{_Q_FIG5B}')"
+        )
+    return probability
+
+
+def _fold_change_column_pairs(
+    header: Sequence[Any], sheet: str
+) -> list[tuple[str, int, int]]:
+    """``(contrast, fold-change column, p-value column)`` for each released contrast.
+
+    The p-value column must be the fold-change column's immediate right neighbor and
+    must carry the same contrast name, so a reordered or renamed export is refused
+    rather than silently paired with the wrong statistic.
+    """
+    pairs: list[tuple[str, int, int]] = []
+    for index, cell in enumerate(header):
+        name = "" if cell is None else str(cell)
+        if not name.endswith(FOLD_CHANGE_SUFFIX):
+            continue
+        contrast = name[: -len(FOLD_CHANGE_SUFFIX)]
+        expected = f"{contrast}{NEG_LOG10_P_VALUE_SUFFIX}"
+        neighbor = index + 1
+        if neighbor >= len(header) or str(header[neighbor]) != expected:
+            raise RuntimeError(
+                f"{sheet}: column {name!r} is not followed by {expected!r}; the sheet's "
+                "fold-change / p-value pairing changed"
+            )
+        pairs.append((contrast, index, neighbor))
+    if not pairs:
+        raise RuntimeError(f"{sheet}: no {FOLD_CHANGE_SUFFIX} column")
+    return pairs
+
+
+def read_fold_change_rows(path: str, sheet: str) -> list[FoldChangeRow]:
+    """Every released fold-change cell of one sheet, long-form.
+
+    A fold change and its p-value are released together or not at all, and the two
+    sheets are ragged: a protein a contrast did not test is an empty pair of cells and
+    becomes no row, never a 0 and never a 1. ``SHEET_KO_FOLD_CHANGE`` additionally
+    carries 181 rows that hold a ``primary_name`` with no ``Locus Name`` and no value;
+    they are skipped, and one that ever carries a value stops the build.
+    """
+    header, rows = _sheet_rows(path, sheet)
+    pairs = _fold_change_column_pairs(header, sheet)
+    out: list[FoldChangeRow] = []
+    seen: set[tuple[str, str]] = set()
+    for row in rows:
+        key = row[0]
+        if key is None:
+            if any(row[fc] is not None or row[pv] is not None for _, fc, pv in pairs):
+                raise RuntimeError(
+                    f"{sheet}: a row with no 'Locus Name' carries a value; the key "
+                    "column cannot be dropped"
+                )
+            continue
+        protein = str(key)
+        for contrast, fc, pv in pairs:
+            value, significance = row[fc], row[pv]
+            if value is None:
+                if significance is not None:
+                    raise RuntimeError(
+                        f"{sheet}/{contrast}/{protein}: a p-value with no fold change"
+                    )
+                continue
+            if significance is None:
+                raise RuntimeError(
+                    f"{sheet}/{contrast}/{protein}: a fold change with no p-value"
+                )
+            identity = (contrast, protein)
+            if identity in seen:
+                raise RuntimeError(
+                    f"{sheet}: {identity} appears twice; one contrast cannot give one "
+                    "protein two fold changes"
+                )
+            seen.add(identity)
+            out.append(
+                FoldChangeRow(
+                    sheet=sheet,
+                    contrast=contrast,
+                    protein=protein,
+                    log2_fold_change=float(value),
+                    neg_log10_p_value=float(significance),
+                )
+            )
+    if not out:
+        raise RuntimeError(f"{sheet}: no released fold change")
+    return out
+
+
+def fold_change_contrasts(path: str, sheet: str) -> tuple[str, ...]:
+    """The sheet's contrast column names, in released order."""
+    header, _ = _sheet_rows(path, sheet)
+    return tuple(
+        contrast for contrast, _, _ in _fold_change_column_pairs(header, sheet)
+    )
+
+
+def read_best_array_heatmap(
+    path: str,
+) -> tuple[tuple[str, ...], tuple[str, ...], list[float]]:
+    """``SHEET_BEST_ARRAY_HEATMAP``'s keys, strain columns and values.
+
+    Read ONLY to measure the refusal in :data:`BEST_ARRAY_HEATMAP_REFUSAL`; nothing
+    this returns reaches a record.
+    """
+    header, rows = _sheet_rows(path, SHEET_BEST_ARRAY_HEATMAP)
+    strains = tuple(str(cell) for cell in header[1:] if cell is not None)
+    keys = tuple(str(row[0]) for row in rows)
+    values = [float(cell) for row in rows for cell in row[1:] if cell is not None]
+    return keys, strains, values
+
+
+def assert_fold_change_pointer(path: str) -> str:
+    """Prove the Supplementary Fig. 9 caption describes ``SHEET_FOLD_CHANGE``.
+
+    The Source Data devotes a sheet to Supplementary Figure 9 and puts one cell in it.
+    That cell is what makes the caption's "compared to the non-target control strain" a
+    statement about this sheet's denominator rather than about a different figure, so
+    it is asserted on the pinned bytes before a ``reference_basis`` is written.
+    """
+    book = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    try:
+        if SHEET_FOLD_CHANGE_POINTER not in book.sheetnames:
+            raise RuntimeError(
+                f"{osp.basename(path)} has no sheet {SHEET_FOLD_CHANGE_POINTER!r}"
+            )
+        cells = [
+            str(cell)
+            for row in book[SHEET_FOLD_CHANGE_POINTER].iter_rows(values_only=True)
+            for cell in row
+            if cell is not None
+        ]
+    finally:
+        book.close()
+    if cells != [FOLD_CHANGE_POINTER_CELL]:
+        raise RuntimeError(
+            f"{SHEET_FOLD_CHANGE_POINTER} holds {cells!r}, not "
+            f"[{FOLD_CHANGE_POINTER_CELL!r}]; the Supplementary Fig. 9 caption can no "
+            f"longer be read as a statement about {SHEET_FOLD_CHANGE}"
+        )
+    return (
+        f"{SHEET_FOLD_CHANGE_POINTER} holds exactly one cell, "
+        f"{FOLD_CHANGE_POINTER_CELL!r}, so its caption "
+        f"('{_Q_SI_FIG9_TITLE}') states {SHEET_FOLD_CHANGE}'s denominator"
+    )
+
+
+def assert_fold_change_contrasts_are_released_strains(path: str) -> list[str]:
+    """Join every fold-change contrast column to the strains the release names.
+
+    ``SHEET_FOLD_CHANGE``'s columns must all be single-guide CRISPRi constructs of the
+    campaign, which is what licenses the genotype each record is written with; a column
+    that is not stops the build. The ``SHEET_KO_FOLD_CHANGE`` columns are only MEASURED
+    against the same universes, because the eight unstored ones are ledgered by that
+    measurement rather than built.
+    """
+    titer_rows = read_titer_rows(path)
+    constructs = {row.construct_name for row in titer_rows}
+    ko_backgrounds = {row.background for row in read_ko_panel_rows(path)}
+    proofs: list[str] = []
+    singles = fold_change_contrasts(path, SHEET_FOLD_CHANGE)
+    missing = [tag for tag in singles if tag not in constructs]
+    if missing:
+        raise RuntimeError(
+            f"{SHEET_FOLD_CHANGE} columns {missing} are not released {SHEET_TITER} "
+            "constructs, so the single-guide CRISPRi genotype is not sourced for them"
+        )
+    off_pattern = [tag for tag in singles if not LOCUS_TAG_RE.fullmatch(tag)]
+    if off_pattern:
+        raise RuntimeError(
+            f"{SHEET_FOLD_CHANGE} columns {off_pattern} are not single PP_ locus tags"
+        )
+    proofs.append(
+        f"all {len(singles)} {SHEET_FOLD_CHANGE} contrast columns are single PP_ locus "
+        f"tags released as single-guide {SHEET_TITER} constructs"
+    )
+    for contrast in fold_change_contrasts(path, SHEET_KO_FOLD_CHANGE):
+        normalized = contrast.replace("_15", "-15") if "_15" in contrast else contrast
+        proofs.append(
+            f"{SHEET_KO_FOLD_CHANGE} column {contrast!r}: "
+            f"{SHEET_KO_PANEL} KO background {normalized in ko_backgrounds}, "
+            f"{SHEET_TITER} line name {contrast in constructs}"
+        )
+    return proofs
+
+
+def assert_best_array_heatmap_refusal(path: str) -> list[str]:
+    """Measure, and record, why ``SHEET_BEST_ARRAY_HEATMAP`` is refused.
+
+    A refusal is a measurement here, not an opinion: the sheet's shape, density, value
+    range and key form are read off the pinned bytes, and the absence of any p-value
+    column is proved by the header rather than assumed.
+    """
+    keys, strains, values = read_best_array_heatmap(path)
+    header, _ = _sheet_rows(path, SHEET_BEST_ARRAY_HEATMAP)
+    significance = [
+        str(cell)
+        for cell in header
+        if cell is not None and str(cell).endswith(NEG_LOG10_P_VALUE_SUFFIX)
+    ]
+    if significance:
+        raise RuntimeError(
+            f"{SHEET_BEST_ARRAY_HEATMAP} now releases p-value columns {significance}; "
+            "the recorded refusal is stale and must be re-measured"
+        )
+    tags = [key for key in keys if LOCUS_TAG_RE.fullmatch(key)]
+    if len(values) != len(keys) * len(strains):
+        raise RuntimeError(
+            f"{SHEET_BEST_ARRAY_HEATMAP} is no longer dense: {len(values)} values for "
+            f"{len(keys)} keys x {len(strains)} strain columns"
+        )
+    return [
+        f"{SHEET_BEST_ARRAY_HEATMAP} refused: {len(keys)} keys x {len(strains)} strain "
+        f"columns = {len(values)} values with no empty cell, no "
+        f"{NEG_LOG10_P_VALUE_SUFFIX} column, values in "
+        f"[{min(values)}, {max(values)}] with median {statistics.median(values)}, and "
+        f"only {len(tags)} of {len(keys)} keys a PP_ locus tag",
+        f"{SHEET_BEST_ARRAY_HEATMAP} refusal reason: {BEST_ARRAY_HEATMAP_REFUSAL.note}",
     ]
 
 
@@ -4681,6 +5147,397 @@ class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
 
 
 # --------------------------------------------------------------------------- #
+# Family 3: the released differential proteomics (per-protein log2 fold change)
+# --------------------------------------------------------------------------- #
+@register_dataset
+class ProteomeFoldChangeCarruthers2025Dataset(ExperimentDataset):
+    """Carruthers 2025 per-protein log2 fold changes of the CRISPRi and KO contrasts.
+
+    The RELATIVE sibling of :class:`ProteomeCarruthers2025Dataset`: that class stores an
+    absolute Top3 level per strain, this one stores the ratio of a strain's proteome to
+    a control's, which is a different measurement and so a different experiment class.
+    One record per released contrast COLUMN:
+
+    - ``Figure 5b`` (14 records): one single-guide CRISPRi strain per column, against
+      the non-target control strain. Both the scale and the denominator are sourced.
+    - ``Figure 6b`` (2 records): the two KO-plus-target-sgRNA strains the Fig. 6 caption
+      names, against the same KO carrying a non-targeting sgRNA. The sheet releases ten
+      columns; the other eight have no sourced denominator and are ledgered unbuilt,
+      with the measurement that refused each one, in
+      :data:`KO_FOLD_CHANGE_UNSOURCED_REASONS`.
+
+    ``Supplementary Figure 10`` is refused entirely and its measurement recorded: see
+    :data:`BEST_ARRAY_HEATMAP_REFUSAL`.
+
+    THE REFERENCE IS NOT A MEASUREMENT. A fold change's denominator is the neutral value
+    of its scale by definition, so each record's ``phenotype_reference`` is
+    ``ProteinFoldChangePhenotype.neutral_reference()`` over the record's own keys, and
+    experiment over reference reproduces the released number exactly. Nothing is
+    imputed, and no absolute control level is invented.
+    """
+
+    REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
+    #: Measured on the pinned workbook over the UNION of both sheets' row keys: 1,395 of
+    #: 1,414 (0.9866) resolve to a locus of this assembly. Per sheet it is 1,284 of
+    #: 1,290 (Figure 5b) and 358 of 372 (Figure 6b). The 19 that do not are heterologous
+    #: and contaminant keys (``EF_1364``, ``MM_1762``, ``SPy_1046``, ``YNR043W``,
+    #: ``b4055 JW4015``, ``Q9FD70``, twelve ``A0A140F*`` UniProt accessions) plus the
+    #: one two-tag key ``PP_1157 PP_3365``; the threshold sits just below the measured
+    #: fraction, so a real drop means the keying changed.
+    MIN_RESOLVED_FRACTION: ClassVar[float] = 0.98
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/proteome_fold_change_carruthers2025",
+        io_workers: int = 0,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the KT2440 genome resolves protein keys and chassis symbols."""
+        self.pputida_genome = pputida_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The Source Data workbook, which holds both released contrast sheets."""
+        return [SOURCE_DATA_FILENAME]
+
+    def download(self) -> None:
+        """Link the Source Data workbook into ``raw/`` after verifying its pin."""
+        _link_mirror_files(
+            self.raw_dir, ((SOURCE_DATA_REL, SOURCE_DATA_FILENAME, SOURCE_DATA_SHA256),)
+        )
+        log.info("Carruthers 2025 fold-change artifact linked into %s", self.raw_dir)
+
+    def _genome(self) -> PPutidaKT2440Genome:
+        """The injected KT2440 genome, or one opened from the genomes tier."""
+        if self.pputida_genome is None:
+            self.pputida_genome = bacterial_genome("pputida", self.REFERENCE_STRAIN)
+        return self.pputida_genome
+
+    @staticmethod
+    def _phenotype(
+        cells: Sequence[FoldChangeRow],
+        stored_by_key: Mapping[str, str],
+        dropped: Collection[str],
+        *,
+        reference_basis: str,
+    ) -> ProteinFoldChangePhenotype:
+        """One contrast column's fold changes, p-values and replicate counts.
+
+        A key the reconciliation could not place as a locus of the pinned assembly is
+        dropped from the map and ledgered; there is no gene node to key its ratio to.
+        """
+        fold_change: dict[str, float] = {}
+        p_values: dict[str, float] = {}
+        n_replicates: dict[str, int] = {}
+        replicates = int(N_REPLICATES.value)
+        for cell in cells:
+            if cell.protein in dropped:
+                continue
+            tag = stored_by_key[cell.protein]
+            if tag in fold_change:
+                raise RuntimeError(
+                    f"{cell.sheet}/{cell.contrast}: two released keys reconcile to "
+                    f"{tag}, so one locus would carry two fold changes"
+                )
+            fold_change[tag] = cell.log2_fold_change
+            p_values[tag] = p_value_from_neg_log10(cell.neg_log10_p_value)
+            n_replicates[tag] = replicates
+        if not fold_change:
+            raise RuntimeError("a contrast with no resolved protein key")
+        return ProteinFoldChangePhenotype(
+            protein_fold_change=fold_change,
+            fold_change_scale=FoldChangeScale(FOLD_CHANGE_SCALE.value),
+            reference_basis=reference_basis,
+            protein_fold_change_p_value=p_values,
+            n_replicates=n_replicates,
+            measurement_type=str(FOLD_CHANGE_TEST.value),
+        )
+
+    @staticmethod
+    def _reference_phenotype(
+        phenotype: ProteinFoldChangePhenotype,
+    ) -> ProteinFoldChangePhenotype:
+        """The denominator: the neutral value of this record's scale, per stored key."""
+        neutral = phenotype.neutral_reference()
+        return ProteinFoldChangePhenotype(
+            protein_fold_change=neutral,
+            fold_change_scale=phenotype.fold_change_scale,
+            reference_basis=phenotype.reference_basis,
+            n_replicates=dict(phenotype.n_replicates),
+            measurement_type=phenotype.measurement_type,
+        )
+
+    @post_process
+    def process(self) -> None:
+        """Build one fold-change record per sourced contrast column; write LMDB."""
+        verify_raw_files(self.raw_dir, {SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256})
+        path = osp.join(self.raw_dir, SOURCE_DATA_FILENAME)
+        genome = self._genome()
+
+        single_rows = read_fold_change_rows(path, SHEET_FOLD_CHANGE)
+        ko_rows = read_fold_change_rows(path, SHEET_KO_FOLD_CHANGE)
+        proofs = [
+            assert_fold_change_pointer(path),
+            *assert_fold_change_contrasts_are_released_strains(path),
+            *assert_best_array_heatmap_refusal(path),
+        ]
+
+        keys = sorted({row.protein for row in (*single_rows, *ko_rows)})
+        stored, report = reconcile_locus_tags(genome, pd.Series(keys), label=self.name)
+        report.require_resolved(self.MIN_RESOLVED_FRACTION)
+        stored_by_key = dict(zip(keys, stored, strict=True))
+        dropped_keys = sorted(set(report.outside_namespace))
+        kept_keys = [key for key in keys if key not in set(dropped_keys)]
+        if not kept_keys:
+            raise RuntimeError(f"{self.name}: every protein key was dropped")
+
+        by_contrast: dict[tuple[str, str], list[FoldChangeRow]] = defaultdict(list)
+        for row in (*single_rows, *ko_rows):
+            by_contrast[(row.sheet, row.contrast)].append(row)
+
+        single_contrasts = fold_change_contrasts(path, SHEET_FOLD_CHANGE)
+        if len(single_contrasts) != EXPECTED_FOLD_CHANGE_RECORDS_FIG5B:
+            raise RuntimeError(
+                f"{SHEET_FOLD_CHANGE} releases {len(single_contrasts)} contrast "
+                f"columns, not {EXPECTED_FOLD_CHANGE_RECORDS_FIG5B}"
+            )
+        ko_contrasts = fold_change_contrasts(path, SHEET_KO_FOLD_CHANGE)
+        unsourced = [
+            contrast
+            for contrast in ko_contrasts
+            if contrast not in KO_FOLD_CHANGE_CONTRASTS
+        ]
+        if set(unsourced) != set(KO_FOLD_CHANGE_UNSOURCED_REASONS):
+            raise RuntimeError(
+                f"{SHEET_KO_FOLD_CHANGE} releases unsourced columns {sorted(unsourced)}; "
+                f"the ledger covers {sorted(KO_FOLD_CHANGE_UNSOURCED_REASONS)}. A new "
+                "column needs its own sourced contrast or its own ledgered refusal"
+            )
+        missing = [
+            contrast
+            for contrast in KO_FOLD_CHANGE_CONTRASTS
+            if contrast not in ko_contrasts
+        ]
+        if missing:
+            raise RuntimeError(
+                f"{SHEET_KO_FOLD_CHANGE} no longer releases {missing}, which the Fig. 6 "
+                f"caption names ('{_Q_FIG6B}')"
+            )
+
+        reference_genome = chassis_reference(genome)
+        environment = production_environment()
+        pathway = pathway_perturbations()
+        common = _standard_names(genome, [*single_contrasts, *KO_FOLD_CHANGE_CONTRASTS])
+        pub = publication()
+
+        plan: list[tuple[str, str, str, Genotype]] = []
+        for contrast in single_contrasts:
+            name = common.get(contrast, contrast)
+            plan.append(
+                (
+                    SHEET_FOLD_CHANGE,
+                    contrast,
+                    str(FOLD_CHANGE_REFERENCE_BASIS.value),
+                    Genotype(
+                        perturbations=[*pathway, crispri_perturbation(contrast, name)]
+                    ),
+                )
+            )
+        for contrast in KO_FOLD_CHANGE_CONTRASTS:
+            name = common.get(contrast, contrast)
+            plan.append(
+                (
+                    SHEET_KO_FOLD_CHANGE,
+                    contrast,
+                    str(KO_FOLD_CHANGE_REFERENCE_BASIS.value),
+                    Genotype(
+                        perturbations=[
+                            *pathway,
+                            deletion_perturbation(contrast, name),
+                            crispri_perturbation(contrast, name),
+                        ]
+                    ),
+                )
+            )
+        if len(plan) != EXPECTED_FOLD_CHANGE_RECORDS:
+            raise RuntimeError(
+                f"{len(plan)} contrasts planned, not {EXPECTED_FOLD_CHANGE_RECORDS}"
+            )
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        contrast_rows: list[dict[str, Any]] = []
+        idx = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for sheet, contrast, basis, genotype in tqdm(
+                plan, desc="carruthers2025-fold-change"
+            ):
+                phenotype = self._phenotype(
+                    by_contrast[(sheet, contrast)],
+                    stored_by_key,
+                    dropped_keys,
+                    reference_basis=basis,
+                )
+                experiment = BacterialProteinFoldChangeExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype,
+                    environment=environment,
+                    phenotype=phenotype,
+                )
+                reference = BacterialProteinFoldChangeExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=reference_genome,
+                    environment_reference=environment.model_copy(),
+                    phenotype_reference=self._reference_phenotype(phenotype),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(experiment, reference, pub, itxn),
+                )
+                contrast_rows.append(
+                    {
+                        "sheet": sheet,
+                        "contrast": contrast,
+                        "reference_basis": basis,
+                        "n_proteins": len(phenotype.protein_fold_change),
+                        "n_released": len(by_contrast[(sheet, contrast)]),
+                    }
+                )
+                idx += 1
+        env.close()
+        interned_env.close()
+
+        pd.DataFrame(contrast_rows).to_csv(
+            osp.join(self.preprocess_dir, "contrasts.csv"), index=False
+        )
+        Path(osp.join(self.preprocess_dir, "fold_change_proofs.json")).write_text(
+            json.dumps(proofs, indent=2)
+        )
+        pd.DataFrame(
+            [
+                {"protein_key": key, "reason": "not_a_locus_of_the_pinned_assembly"}
+                for key in dropped_keys
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "dropped_protein_keys.csv"), index=False)
+        heatmap_keys, heatmap_strains, heatmap_values = read_best_array_heatmap(path)
+        _write_accounting(
+            BuildAccounting(
+                dataset=self.name,
+                source_rows=len(single_rows) + len(ko_rows),
+                control_rows=0,
+                candidate_records=len(single_contrasts)
+                + len(ko_contrasts)
+                + len(heatmap_strains),
+                kept_records=idx,
+                dropped_records=len(unsourced) + len(heatmap_strains),
+                rules=[
+                    DropRule(
+                        rule="protein_key_is_not_a_locus_of_the_pinned_assembly",
+                        scope="protein_key",
+                        description=(
+                            "the key is a heterologous, contaminant or multi-tag "
+                            f"identifier, no locus of {KT2440_ASSEMBLY_SET}, so it has "
+                            "no gene node to key a fold change to"
+                        ),
+                        n_records=0,
+                        items=dropped_keys,
+                    ),
+                    DropRule(
+                        rule="ko_fold_change_contrast_has_no_sourced_denominator",
+                        scope="strain",
+                        description=(
+                            f"{SHEET_KO_FOLD_CHANGE} releases ten contrast columns and "
+                            f"the Fig. 6 caption names two ('{_Q_FIG6B}'). The other "
+                            "eight are refused rather than given a guessed "
+                            "denominator; the per-column measurement is in "
+                            "KO_FOLD_CHANGE_UNSOURCED_REASONS and is listed here as "
+                            "'<column>: <measurement>'"
+                        ),
+                        n_records=len(unsourced),
+                        items=[
+                            f"{contrast}: {KO_FOLD_CHANGE_UNSOURCED_REASONS[contrast]}"
+                            for contrast in unsourced
+                        ],
+                    ),
+                    DropRule(
+                        rule="best_array_heatmap_states_no_scale",
+                        scope="strain",
+                        description=str(BEST_ARRAY_HEATMAP_REFUSAL.note),
+                        n_records=len(heatmap_strains),
+                        items=list(heatmap_strains),
+                    ),
+                ],
+                reconciliation=report,
+                notes=[
+                    f"{len(single_contrasts)} {SHEET_FOLD_CHANGE} records + "
+                    f"{len(KO_FOLD_CHANGE_CONTRASTS)} {SHEET_KO_FOLD_CHANGE} records; "
+                    f"{len(dropped_keys)} of {len(keys)} protein KEYS are dropped, "
+                    f"leaving {len(kept_keys)} across the two sheets",
+                    f"the maps are RAGGED by release: {SHEET_FOLD_CHANGE} carries "
+                    f"{len(single_rows)} fold changes over {len(single_contrasts)} "
+                    f"columns and {SHEET_KO_FOLD_CHANGE} carries {len(ko_rows)} over "
+                    f"{len(ko_contrasts)}, because both sheets are pre-filtered at the "
+                    f"caption's p<{FOLD_CHANGE_P_VALUE_CEILING}; a protein a contrast "
+                    "did not significantly change is simply not a key",
+                    f"{SHEET_KO_FOLD_CHANGE} also releases "
+                    "181 rows that carry a 'primary_name' with no 'Locus Name' and no "
+                    "value; they are skipped, and one that ever carries a value stops "
+                    "the build",
+                    "the reference phenotype is neutral_reference(), 0.0 on the log2 "
+                    "scale for every stored key: a fold change's denominator is its "
+                    "scale's neutral value by definition, so nothing is imputed",
+                    f"{SHEET_BEST_ARRAY_HEATMAP} is NOT loaded: its "
+                    f"{len(heatmap_keys)} keys x {len(heatmap_strains)} strain columns "
+                    f"are refused because no mirrored statement names their scale",
+                    f"the released p-value column is {NEG_LOG10_P_VALUE_SUFFIX}, "
+                    "unsigned -log10(p); the stored number is the probability "
+                    "p = 10**-x and every conversion's round trip is asserted",
+                    *proofs,
+                ],
+            ),
+            self.preprocess_dir,
+        )
+        log.info(
+            "Carruthers2025 fold change: %d records = %d %s contrasts + %d %s "
+            "contrasts (%d of %d released %s columns refused); %d keys dropped from "
+            "%d released cells",
+            idx,
+            len(single_contrasts),
+            SHEET_FOLD_CHANGE,
+            len(KO_FOLD_CHANGE_CONTRASTS),
+            SHEET_KO_FOLD_CHANGE,
+            len(unsourced),
+            len(ko_contrasts),
+            SHEET_KO_FOLD_CHANGE,
+            len(dropped_keys),
+            len(single_rows) + len(ko_rows),
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
 # L0-L4 verification of a built tree. The shared family gates do L0-L3
 # (``verify_product_titer_dataset`` / ``verify_protein_dataset``); the two rules below
 # are this release's own, and the two L4 rows join the built store to a DIFFERENT
@@ -5378,6 +6235,192 @@ def campaign_proteome_report(
     return report
 
 
+def _fold_change_provenance() -> Provenance:
+    """Where the fold-change family's numbers came from."""
+    return Provenance(
+        source_uri=SOURCE_DATA_REL,
+        citation_key=CITATION_KEY,
+        sha256=SOURCE_DATA_SHA256,
+        method=(
+            f"Source Data sheets '{SHEET_FOLD_CHANGE}' (14 single-guide CRISPRi "
+            f"contrasts) and '{SHEET_KO_FOLD_CHANGE}' (the 2 KO contrasts the Fig. 6 "
+            "caption names, of 10 released), columns '<contrast>_log2_FC' and "
+            "'<contrast>_log10_pval'; the fold change is stored verbatim on the log2 "
+            "scale and the p-value as the probability p = 10**-x"
+        ),
+        page=(
+            f"Source Data '{SHEET_FOLD_CHANGE}' and '{SHEET_KO_FOLD_CHANGE}'; the "
+            f"Fig. 5 and Fig. 6 captions and '{SHEET_FOLD_CHANGE_POINTER}' as the "
+            "statements of scale, test and denominator"
+        ),
+    )
+
+
+def _fold_change_contrast(record: Mapping[str, Any]) -> tuple[str, str]:
+    """``(sheet, contrast)`` of one stored fold-change record, read off its genotype.
+
+    A record of the single-guide panel carries one CRISPRi leaf and no deletion; a
+    record of the KO panel carries a deletion of the SAME locus beside it. That is the
+    whole distinction, so neither sheet name nor contrast is stored twice.
+    """
+    knockdowns = sorted(
+        str(perturbation["systematic_gene_name"])
+        for perturbation in record["experiment"]["genotype"]["perturbations"]
+        if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+    )
+    deletions = sorted(
+        str(perturbation["systematic_gene_name"])
+        for perturbation in record["experiment"]["genotype"]["perturbations"]
+        if perturbation["perturbation_type"] == "bacterial_deletion"
+    )
+    if len(knockdowns) != 1:
+        raise AssertionError(
+            f"a fold-change record carries {len(knockdowns)} CRISPRi leaves"
+        )
+    if not deletions:
+        return SHEET_FOLD_CHANGE, knockdowns[0]
+    if deletions != knockdowns:
+        raise AssertionError(
+            f"a KO fold-change record deletes {deletions} and knocks down {knockdowns}"
+        )
+    return SHEET_KO_FOLD_CHANGE, knockdowns[0]
+
+
+def _released_fold_change_cells(
+    data_root: str | None,
+) -> tuple[dict[tuple[str, str, str], FoldChangeRow], dict[str, str]]:
+    """Re-read both released sheets and reconcile their keys, for the L4 oracles."""
+    path = str(raw_mirror_dir(data_root) / SOURCE_DATA_REL)
+    rows = [
+        *read_fold_change_rows(path, SHEET_FOLD_CHANGE),
+        *read_fold_change_rows(path, SHEET_KO_FOLD_CHANGE),
+    ]
+    genome = bacterial_genome("pputida", "KT2440", data_root)
+    keys = sorted({row.protein for row in rows})
+    stored, _ = reconcile_locus_tags(genome, pd.Series(keys), label="l4-fold-change")
+    key_map = dict(zip(keys, stored, strict=True))
+    return (
+        {(row.sheet, row.contrast, key_map[row.protein]): row for row in rows},
+        key_map,
+    )
+
+
+def _l1_fold_change_contrast_coverage(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L1: the stored contrasts are exactly the sourced ones, per sheet."""
+    observed: dict[str, set[str]] = defaultdict(set)
+    for record in records:
+        sheet, contrast = _fold_change_contrast(record)
+        observed[sheet].add(contrast)
+    ko = sorted(observed[SHEET_KO_FOLD_CHANGE])
+    holds = len(
+        observed[SHEET_FOLD_CHANGE]
+    ) == EXPECTED_FOLD_CHANGE_RECORDS_FIG5B and ko == sorted(KO_FOLD_CHANGE_CONTRASTS)
+    return LevelResult(
+        level=Level.L1,
+        name="fold_change_contrast_coverage",
+        passed=holds,
+        message=(
+            f"{len(observed[SHEET_FOLD_CHANGE])} {SHEET_FOLD_CHANGE} contrasts and "
+            f"{SHEET_KO_FOLD_CHANGE} contrasts {ko}"
+        ),
+        details={
+            "n_single_guide": len(observed[SHEET_FOLD_CHANGE]),
+            "ko_contrasts": ko,
+            "expected_single_guide": EXPECTED_FOLD_CHANGE_RECORDS_FIG5B,
+            "expected_ko_contrasts": sorted(KO_FOLD_CHANGE_CONTRASTS),
+        },
+    )
+
+
+def _l3_fold_change_triplicate(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L3: every protein's replicate count is the Methods' biological triplicate."""
+    expected = int(N_REPLICATES.value)
+    counts = {
+        int(value)
+        for record in records
+        for value in record["experiment"]["phenotype"]["n_replicates"].values()
+    }
+    return l3_convention(
+        "fold_change_biological_triplicate",
+        counts == {expected},
+        detail=(
+            f"replicate counts {sorted(counts)}; the Methods state "
+            f"'{_Q_TRIPLICATE}', so every fold change carries {expected}"
+        ),
+    )
+
+
+def _l4_fold_change_vs_released_sheets(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: every stored fold change is the released cell, re-read from the mirror."""
+    cells, _ = _released_fold_change_cells(data_root)
+    shared: list[tuple[str, float, float]] = []
+    for record in records:
+        sheet, contrast = _fold_change_contrast(record)
+        for tag, value in sorted(
+            record["experiment"]["phenotype"]["protein_fold_change"].items()
+        ):
+            row = cells.get((sheet, contrast, tag))
+            if row is None:
+                raise AssertionError(
+                    f"{sheet}/{contrast}/{tag} is stored but is not in the released "
+                    "sheet under its reconciled key"
+                )
+            shared.append((f"{sheet}/{contrast}/{tag}", value, row.log2_fold_change))
+    return l4_cross_source(shared, tol=0.0).model_copy(
+        update={"name": "stored_fold_changes_vs_released_sheets"}
+    )
+
+
+def _l4_fold_change_p_values_vs_released_sheets(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: every stored p-value inverts to the released -log10 value exactly.
+
+    The stored number is a probability and the released number is -log10 of it, so the
+    oracle is the inverse of the loader's own conversion rather than a re-derivation.
+    """
+    cells, _ = _released_fold_change_cells(data_root)
+    shared: list[tuple[str, float, float]] = []
+    for record in records:
+        sheet, contrast = _fold_change_contrast(record)
+        p_values = record["experiment"]["phenotype"]["protein_fold_change_p_value"]
+        for tag, probability in sorted(p_values.items()):
+            row = cells[(sheet, contrast, tag)]
+            shared.append(
+                (
+                    f"{sheet}/{contrast}/{tag}",
+                    -math.log10(float(probability)),
+                    row.neg_log10_p_value,
+                )
+            )
+    return l4_cross_source(shared, tol=P_VALUE_ROUND_TRIP_TOL).model_copy(
+        update={"name": "stored_p_values_invert_to_released_neg_log10"}
+    )
+
+
+def fold_change_report(
+    records: Sequence[dict[str, Any]], data_root: str | None = None
+) -> VerificationReport:
+    """The fold-change family's L0-L4 report over already-loaded records."""
+    from torchcell.verification.protein_fold_change import (
+        verify_protein_fold_change_dataset,
+    )
+
+    report = verify_protein_fold_change_dataset(
+        [dict(record) for record in records],
+        dataset_name="proteome_fold_change_carruthers2025",
+        provenance=_fold_change_provenance(),
+        expected_count=EXPECTED_FOLD_CHANGE_RECORDS,
+    )
+    report.add(_l1_fold_change_contrast_coverage(records))
+    report.add(_l3_fold_change_triplicate(records))
+    report.add(_l4_fold_change_vs_released_sheets(records, data_root))
+    report.add(_l4_fold_change_p_values_vs_released_sheets(records, data_root))
+    return report
+
+
 def titer_report(
     records: Sequence[dict[str, Any]], data_root: str | None = None
 ) -> VerificationReport:
@@ -5435,8 +6478,8 @@ def verify_build(
 ) -> VerificationReport:
     """Run this release's L0-L4 gate over a built tree and write the report.
 
-    ``family`` is ``"titer"``, ``"proteome"`` or ``"campaign_proteome"``. The report
-    is written to
+    ``family`` is ``"titer"``, ``"proteome"``, ``"campaign_proteome"`` or
+    ``"fold_change"``. The report is written to
     ``<dataset_root>/preprocess/verification_report.json``.
     """
     from torchcell.verification.runners import load_records
@@ -5446,6 +6489,7 @@ def verify_build(
         "titer": titer_report,
         "proteome": proteome_report,
         "campaign_proteome": campaign_proteome_report,
+        "fold_change": fold_change_report,
     }[family]
     report = build(records, data_root)
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
@@ -5456,7 +6500,7 @@ def verify_build(
 
 
 def main() -> None:
-    """Build/load both families for interactive debugging.
+    """Build/load all three families for interactive debugging.
 
     Verification is NOT run here: the L4 oracles need the real raw mirror, and
     ``run_product_titer`` / ``run_bacterial_protein_abundance`` in
@@ -5473,6 +6517,10 @@ def main() -> None:
             "data/torchcell/isoprenol_titer_carruthers2025",
         ),
         (ProteomeCarruthers2025Dataset, "data/torchcell/proteome_carruthers2025"),
+        (
+            ProteomeFoldChangeCarruthers2025Dataset,
+            "data/torchcell/proteome_fold_change_carruthers2025",
+        ),
         (
             CampaignProteomeCarruthers2025Dataset,
             "data/torchcell/campaign_proteome_carruthers2025",

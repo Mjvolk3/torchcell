@@ -4,7 +4,9 @@
 """``torchcell/adapters/yunus2026_array_adapter.py``: the conf it loads, the gate's view of it,
 and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Yunus 2026 CRISPRi arrays: 25 IY1452 strains, BacterialProteinAbundanceExperiment.
+Yunus 2026 CRISPRi arrays: 25 IY1452 strains,
+BacterialProteinFoldChangeExperiment (linear ratio to the control strain, with the
+sample SD over sqrt(3) as its SE).
 1 to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
 `bacterial perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair
 is enabled. The environment carries EnvironmentPhysicalPerturbation and
@@ -13,8 +15,12 @@ SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled
 
 from __future__ import annotations
 
-import pytest
+from pathlib import Path
 
+import pytest
+import yaml
+
+import torchcell.adapters
 from tests.torchcell.adapters._adapter_init_harness import (
     assert_construction,
     assert_missing_conf,
@@ -28,6 +34,7 @@ from tests.torchcell.adapters._bacterial_adapter_cases import (
 )
 from torchcell.datasets.pputida.yunus2026 import CrispriArrayYunus2026Dataset
 
+CONF_NAME = "crispri_array_yunus2026_adapter.yaml"
 CASE = case_for(CrispriArrayYunus2026Dataset)
 
 
@@ -56,3 +63,24 @@ def test_dev_store_emits_a_closed_declared_graph(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     assert_dev_store_graph(CASE, monkeypatch)
+
+
+def test_conf_serves_the_fold_change_phenotype_and_not_the_absolute_one() -> None:
+    """The conf's phenotype pair is the RELATIVE family, exactly.
+
+    Issue #770: this dataset stores a ratio to a control strain, which
+    ``ProteinAbundancePhenotype`` forbids in its own docstring, so the conf must enable
+    the fold-change node methods and neither of the protein-abundance ones.
+    """
+    conf = yaml.safe_load(
+        (Path(torchcell.adapters.__file__).parent / "conf" / CONF_NAME).read_text(
+            encoding="utf-8"
+        )
+    )
+    names = [m["method_name"] for m in conf["cell_adapter"]["node_methods"]]
+    assert [n for n in names if "phenotype" in n] == [
+        "protein fold change phenotype (chunked)",
+        "protein fold change phenotype reference",
+    ]
+    assert "protein abundance phenotype (chunked)" not in names
+    assert "protein abundance phenotype reference" not in names

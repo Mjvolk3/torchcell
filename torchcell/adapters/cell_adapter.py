@@ -288,6 +288,12 @@ class CellAdapter:
                 "protein abundance phenotype (chunked)",
                 self._protein_abundance_phenotype_node,
             ),
+            # --- begin #770: the protein fold-change family ---
+            (
+                "protein fold change phenotype (chunked)",
+                self._protein_fold_change_phenotype_node,
+            ),
+            # --- end #770 ---
             (
                 "environment response phenotype (chunked)",
                 self._environment_response_phenotype_node,
@@ -354,6 +360,12 @@ class CellAdapter:
                 "protein abundance phenotype reference",
                 self._get_protein_abundance_phenotype_reference_nodes,
             ),
+            # --- begin #770: the protein fold-change family ---
+            (
+                "protein fold change phenotype reference",
+                self._get_protein_fold_change_phenotype_reference_nodes,
+            ),
+            # --- end #770 ---
             (
                 "environment response phenotype reference",
                 self._get_environment_response_phenotype_reference_nodes,
@@ -2338,6 +2350,72 @@ class CellAdapter:
             )
         return nodes
 
+    # --- begin #770: the protein fold-change family ---
+    @staticmethod
+    def _protein_fold_change_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``ProteinFoldChangePhenotype`` (experiment or reference)."""
+        standard_errors = phenotype.protein_fold_change_se
+        p_values = phenotype.protein_fold_change_p_value
+        p_values_adjusted = phenotype.protein_fold_change_p_value_adjusted
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "protein_fold_change": json.dumps(phenotype.protein_fold_change),
+            "protein_fold_change_se": (
+                json.dumps(standard_errors) if standard_errors is not None else None
+            ),
+            "protein_fold_change_p_value": (
+                json.dumps(p_values) if p_values is not None else None
+            ),
+            "protein_fold_change_p_value_adjusted": (
+                json.dumps(p_values_adjusted) if p_values_adjusted is not None else None
+            ),
+            "p_value_adjustment_method": phenotype.p_value_adjustment_method,
+            "fold_change_scale": str(phenotype.fold_change_scale),
+            "reference_basis": phenotype.reference_basis,
+            "n_replicates": json.dumps(phenotype.n_replicates),
+            "measurement_type": phenotype.measurement_type,
+        }
+
+    @data_chunker
+    def _protein_fold_change_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="protein fold change phenotype",
+            properties=self._protein_fold_change_properties(phenotype),
+        )
+
+    def _get_protein_fold_change_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="protein fold change phenotype",
+                    node_label="protein fold change phenotype",
+                    properties=self._protein_fold_change_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #770 ---
+
     @staticmethod
     def _protein_turnover_properties(phenotype: Any) -> dict[str, Any]:
         """Node properties of a ``ProteinTurnoverPhenotype`` (experiment or reference)."""
@@ -2360,6 +2438,27 @@ class CellAdapter:
             ),
             "n_replicates": json.dumps(phenotype.n_replicates),
             "measurement_type": phenotype.measurement_type,
+            # --- begin #753: the published interval and the censoring flag ---
+            "degradation_rate_lower": (
+                json.dumps(phenotype.degradation_rate_lower)
+                if phenotype.degradation_rate_lower is not None
+                else None
+            ),
+            "degradation_rate_upper": (
+                json.dumps(phenotype.degradation_rate_upper)
+                if phenotype.degradation_rate_upper is not None
+                else None
+            ),
+            "confidence_level": phenotype.confidence_level,
+            "interval_method": phenotype.interval_method,
+            "censoring": (
+                json.dumps(
+                    {key: str(value) for key, value in phenotype.censoring.items()}
+                )
+                if phenotype.censoring is not None
+                else None
+            ),
+            # --- end #753 ---
         }
 
     @data_chunker

@@ -6,20 +6,24 @@
 
 Synthetic tests (run everywhere) write every consumed workbook into ``tmp_path`` and
 build all three families against the real ``EcoliK12MG1655Genome`` over the synthetic
-MG1655 assembly of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, with
-``b0099`` added as a ``gene_synonym`` of ``b0005`` so the one retention rule has
-something to catch. ``verify_raw_files`` is replaced by a presence check (synthetic
-bytes cannot carry the real pins, which the data-gated tests assert instead). The
-synthetic screen:
+MG1655 assembly of ``tests/torchcell/sequence/genome/_bacterial_fixtures.py``, with two
+synonyms added: ``b0099`` on ``b0005`` ``proB`` alone, which the ``locus_tag_synonym``
+route describes, and ``b0098`` on BOTH ``b0006`` ``proC`` and the pseudogene ``b0004``
+``yaaP``, which no route describes. ``verify_raw_files`` is replaced by a presence check
+(synthetic bytes cannot carry the real pins, which the data-gated tests assert instead).
+The synthetic screen:
 
     strain   b-number   outcome
     thrL     b0001      kept
     thrA     b0002      kept
-    proB     b0005      kept (growth only; it has no accumulating feature)
-    ghostG   b0099      dropped: a gene_synonym of b0005, so the record would store
-                        another locus and no DerivedIdentifierRoute describes that
+    proC     b0006      kept (growth only; it has no accumulating feature)
+    ghostG   b0099      kept: one carrier, so the record stores b0005 with a
+                        locus_tag_synonym DerivedIdentifierMapping
     ctrl1    b0000      the growth denominator / a released control token
     ctrl2    b0000      the growth denominator
+
+``b0098`` is released by no strain of the screen; the ``resolve_genes`` test builds it
+directly, so the remap drop rule keeps a case.
 
 Growth curves are flat, so a culture's trapezoid AUC is its OD600 times the 30 h axis
 and the growth-defect split is exactly one strain (``proB`` at OD 0.3, AUC 9 < 18).
@@ -68,9 +72,16 @@ from torchcell.verification.sourced import audit_sourced_value
 # --------------------------------------------------------------------------- #
 # The synthetic screen
 # --------------------------------------------------------------------------- #
+#: ``b0099`` on ``b0005`` alone is the recoverable ``locus_tag_synonym`` case; ``b0098``
+#: on both ``b0006`` and the pseudogene ``b0004`` is the case no route describes.
+_EXTRA_SYNONYMS = {
+    "b0004": ("ECK0004", "b0098"),
+    "b0005": ("ECK0005", "b0099"),
+    "b0006": ("ECK0006", "Pro2", "b0098"),
+}
 SYNTHETIC_LOCI = [
-    locus.model_copy(update={"synonyms": ("ECK0005", "b0099")})
-    if locus.tag == "b0005"
+    locus.model_copy(update={"synonyms": _EXTRA_SYNONYMS[locus.tag]})
+    if locus.tag in _EXTRA_SYNONYMS
     else locus
     for locus in MG1655_LOCI
 ]
@@ -920,20 +931,53 @@ def test_target_metabolite_ids_skips_a_merged_isobaric_group(
 # --------------------------------------------------------------------------- #
 # Strain resolution
 # --------------------------------------------------------------------------- #
-def test_resolve_genes_keeps_the_library_and_drops_the_remapped_b_number(
+def test_resolve_genes_keeps_a_one_carrier_synonym_on_a_typed_route(
     raw_dir: Path, mg1655: EcoliK12MG1655Genome, small_counts: None
 ) -> None:
     guides = metabolome.read_guides(raw_dir / metabolome.TABLE_S1)
     kept, rule, ledger = m.resolve_genes(
         mg1655, ["thrL", "thrA", "proC", "ghostG"], guides, label="synthetic"
     )
-    assert [item.gene for item in kept] == ["thrL", "thrA", "proC"]
-    assert [item.locus_tag for item in kept] == ["b0001", "b0002", "b0006"]
+    assert [item.gene for item in kept] == ["thrL", "thrA", "proC", "ghostG"]
+    assert [item.locus_tag for item in kept] == ["b0001", "b0002", "b0006", "b0005"]
+    assert [item.identifier_mapping for item in kept[:3]] == [None, None, None]
+    ghost = kept[3].identifier_mapping
+    assert ghost is not None
+    assert ghost.model_dump() == {
+        "source_identifier": "b0099",
+        "route": "locus_tag_synonym",
+    }
     assert rule.rule == "b_number_remapped_by_the_annotation"
-    assert rule.n_records == 1
-    assert rule.items[0].startswith("ghostG (b0099): the annotation carries it as a ")
+    assert rule.n_records == 0
+    assert rule.items == []
+    assert ledger.locus_tag_synonyms == [
+        "ghostG (b0099): the annotation carries it as a gene synonym of current gene "
+        "b0005, so the record stores b0005 with route locus_tag_synonym"
+    ]
     assert ledger.reconciliation.unique_names == 4
     assert ledger.min_resolved_fraction == MIN_RESOLVED_FRACTION
+
+
+def test_resolve_genes_still_drops_a_synonym_two_loci_list(
+    raw_dir: Path, mg1655: EcoliK12MG1655Genome, small_counts: None
+) -> None:
+    """``b0098`` is a synonym of two loci, so no DerivedIdentifierRoute describes it."""
+    guide = metabolome.Guide(
+        gene="twinG",
+        sgrna_id="twinG #1",
+        b_number="b0098",
+        spacer="AAAACCCCGGGGTTTTAAAA",
+    )
+    kept, rule, ledger = m.resolve_genes(
+        mg1655, ["twinG"], {"twinG": guide}, label="ambiguous synonym"
+    )
+    assert kept == []
+    assert ledger.locus_tag_synonyms == []
+    assert rule.n_records == 1
+    assert rule.items == [
+        "twinG (b0098): the annotation carries it as a gene synonym of current gene "
+        "b0006, so the record would store b0006"
+    ]
 
 
 def test_resolve_genes_refuses_a_gene_with_no_released_sgrna(
@@ -984,13 +1028,19 @@ def test_growth_build_stores_the_auc_ratio_against_the_control_cultures(
     synthetic: Any, presence_only_pins: list[Mapping[str, str]]
 ) -> None:
     dataset = synthetic("growth")
-    assert len(dataset) == 3
+    assert len(dataset) == 4
     assert presence_only_pins == [
         {name: metabolome.DATA_SHA256[name] for name in dataset.CONSUMED_FILES}
     ]
     baseline = control_baseline()
 
-    record = dataset[0]["experiment"]
+    index_of = {
+        dataset[index]["experiment"]["genotype"]["perturbations"][0][
+            "perturbed_gene_name"
+        ]: index
+        for index in range(len(dataset))
+    }
+    record = dataset[index_of["proC"]]["experiment"]
     (perturbation,) = record["genotype"]["perturbations"]
     assert perturbation["systematic_gene_name"] == "b0006"
     assert perturbation["perturbed_gene_name"] == "proC"
@@ -999,7 +1049,7 @@ def test_growth_build_stores_the_auc_ratio_against_the_control_cultures(
     assert record["phenotype"]["n_samples"] == 3
     assert record["phenotype"]["sample_unit"] == "biological_replicate"
 
-    reference = dataset[0]["reference"]["phenotype_reference"]
+    reference = dataset[index_of["proC"]]["reference"]["phenotype_reference"]
     assert reference["fitness"] == pytest.approx(1.0)
     assert reference["n_samples"] == 6
     assert reference["fitness_uncertainty"] == pytest.approx(
@@ -1010,7 +1060,20 @@ def test_growth_build_stores_the_auc_ratio_against_the_control_cultures(
             "perturbed_gene_name"
         ]
         for index in range(len(dataset))
-    } == {"proC", "thrA", "thrL"}
+    } == {"proB", "proC", "thrA", "thrL"}
+    mapped = {
+        dataset[index]["experiment"]["genotype"]["perturbations"][0][
+            "perturbed_gene_name"
+        ]: dataset[index]["experiment"]["genotype"]["perturbations"][0][
+            "identifier_mapping"
+        ]
+        for index in range(len(dataset))
+    }
+    assert mapped["proB"] == {
+        "source_identifier": "b0099",
+        "route": "locus_tag_synonym",
+    }
+    assert [mapped[gene] for gene in ("proC", "thrA", "thrL")] == [None, None, None]
 
 
 def test_growth_build_writes_its_ledgers(synthetic: Any) -> None:
@@ -1018,15 +1081,18 @@ def test_growth_build_writes_its_ledgers(synthetic: Any) -> None:
     out = Path(dataset.preprocess_dir)
     drops = json.loads((out / "dropped_records.json").read_text())
     assert (drops["strain_tokens"], drops["source_records"]) == (6, 4)
-    assert (drops["kept_records"], drops["dropped_records"]) == (3, 1)
+    assert (drops["kept_records"], drops["dropped_records"]) == (4, 0)
     assert drops["reference_tokens"] == ["ctrl1", "ctrl2"]
     baseline = json.loads((out / "control_baseline.json").read_text())
     assert baseline["n_control_cultures"] == 6
     assert baseline["mean_auc"] == pytest.approx(control_baseline())
     assert baseline["statistic"] == m.GROWTH_STATISTIC
     strains = (out / "strains.csv").read_text().splitlines()
-    assert strains[0].startswith("record,gene,b_number,locus_tag,symbol")
-    assert len(strains) == 4
+    assert strains[0].startswith(
+        "record,gene,b_number,locus_tag,symbol,identifier_route"
+    )
+    assert len(strains) == 5
+    assert [line.split(",")[5] for line in strains[1:]].count("locus_tag_synonym") == 1
     assert "True" in [line.split(",")[-1] for line in strains[1:]]
     defects = json.loads((out / "growth_defect_check.json").read_text())
     assert defects["cutoff"] == m.AUC_DEFECT_CUTOFF
@@ -1036,14 +1102,14 @@ def test_targeted_build_stores_the_fold_change_on_its_own_measurement_type(
     synthetic: Any,
 ) -> None:
     dataset = synthetic("targeted")
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     phenotypes = {
         record["experiment"]["genotype"]["perturbations"][0]["perturbed_gene_name"]: (
             record["experiment"]["phenotype"]
         )
         for record in (dataset[index] for index in range(len(dataset)))
     }
-    assert sorted(phenotypes) == ["thrA", "thrL"]
+    assert sorted(phenotypes) == ["proB", "thrA", "thrL"]
     assert phenotypes["thrL"]["metabolite_level"] == {
         "ppal[M+H]+": 3.0,
         "didp[M-H]-": 15.0,
@@ -1061,7 +1127,7 @@ def test_targeted_build_stores_the_fold_change_on_its_own_measurement_type(
     ledger = json.loads(
         (Path(dataset.preprocess_dir) / "accumulation_ledger.json").read_text()
     )
-    assert (ledger["n_rows"], ledger["n_records"], ledger["n_values"]) == (6, 2, 3)
+    assert (ledger["n_rows"], ledger["n_records"], ledger["n_values"]) == (6, 3, 5)
     assert ledger["control_tokens"] == ["ctrl1"]
     assert ledger["measurement_type"] == m.TARGETED_MEASUREMENT_TYPE
     agreement = json.loads(
@@ -1074,7 +1140,7 @@ def test_intensity_build_stores_the_absolute_intensity_and_its_plate_se(
     synthetic: Any,
 ) -> None:
     dataset = synthetic("intensity")
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     record = next(
         dataset[index]
         for index in range(len(dataset))
@@ -1193,20 +1259,35 @@ def test_real_column_legends_are_verbatim_in_the_pinned_workbooks() -> None:
 
 @pytest.mark.data
 @pytest.mark.parametrize(
-    ("family", "expected"), [("growth", 1514), ("targeted", 406), ("intensity", 406)]
+    ("family", "expected"), [("growth", 1515), ("targeted", 407), ("intensity", 407)]
 )
 def test_real_builds_hold_the_measured_record_counts(
     family: str, expected: int
 ) -> None:
+    """``phnE`` is kept in every family, on a ``locus_tag_synonym`` mapping."""
     _, root_rel, _ = m.FAMILIES[family]
-    drops = json.loads(
-        Path(
-            _real_data_root(), root_rel, "preprocess", "dropped_records.json"
-        ).read_text()
-    )
+    preprocess = Path(_real_data_root(), root_rel, "preprocess")
+    drops = json.loads((preprocess / "dropped_records.json").read_text())
     assert drops["kept_records"] == expected
     assert drops["rules"][0]["rule"] == "b_number_remapped_by_the_annotation"
-    assert drops["rules"][0]["n_records"] == 1
+    assert drops["rules"][0]["n_records"] == 0
+    identifiers = json.loads(
+        (preprocess / "identifier_reconciliation.json").read_text()
+    )
+    assert identifiers["locus_tag_synonyms"] == [
+        "phnE (b4104): the annotation carries it as a gene synonym of pseudogene b4583 "
+        "(not a gene feature), so the record stores b4583 with route locus_tag_synonym"
+    ]
+    strains = (preprocess / "strains.csv").read_text().splitlines()
+    assert strains[0].split(",")[:6] == [
+        "record",
+        "gene",
+        "b_number",
+        "locus_tag",
+        "symbol",
+        "identifier_route",
+    ]
+    assert [line.split(",")[5] for line in strains[1:]].count("locus_tag_synonym") == 1
 
 
 @pytest.mark.data

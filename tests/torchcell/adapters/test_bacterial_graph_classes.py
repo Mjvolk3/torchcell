@@ -407,7 +407,13 @@ YEAST_PERTURBATION_NODES = [
 ]
 
 # sha256 of ``_digest`` of each method's output on ``_yeast_record()``, computed with
-# origin/main 76933585's CellAdapter (the branch reproduced all of them).
+# origin/main 76933585's CellAdapter (the branch reproduced all of them). The two
+# experiment-edge digests moved in the #753 wave and nowhere else: an experiment's id is
+# the sha256 of its fully inlined record, so ``Environment``'s new
+# ``dilution_rate_per_hour`` field changes it for every record, which is exactly the
+# BREAKING verdict ``scripts/schema_impact_check.py`` reports for all 81 datasets. The
+# six node digests are untouched, which is the evidence the change did not reach the
+# genotype, perturbation, construct or phenotype nodes.
 YEAST_GOLDEN_DIGESTS = {
     "genotype (chunked)": (
         "5f412c3d4e0cc79a1c2121d7b38996401404c8aef584b834199601e0ccdd4d73"
@@ -422,7 +428,7 @@ YEAST_GOLDEN_DIGESTS = {
         "dbade8c3c8ad945e439aa6688b306b27b64044bf7415df60a19c14d1f1c00f65"
     ),
     "genotype to experiment (chunked)": (
-        "4fad9e3895e3d03a777ce4b7a82fb520665c1ed81933690c883a4466458bd40c"
+        "f66b704c612a016b08312c976a638a9794e4204743bc86acb5c65a0091141acd"
     ),
     "perturbation to genotype (chunked)": (
         "15ab04c1633aac64a213c195cc0236dead004b933abdae1aaa55b059ae8cace3"
@@ -431,7 +437,7 @@ YEAST_GOLDEN_DIGESTS = {
         "c61d8ab0f5b88b2678c2a25fc4daa28162e3cee9679e0b3683d2a747a4e70a3b"
     ),
     "phenotype to experiment (chunked)": (
-        "cf4ab1db3a8bd8dbb33f9580e977655c8b4b63a5847f80c71faff2a241c908f6"
+        "c330b8b655c1e879544ca96d3de695a8ad5f161d6a7ee7bb332c81b7eea7babb"
     ),
 }
 
@@ -683,10 +689,16 @@ def _phenotype_record(phenotype: Any) -> dict[str, Any]:
 
 
 def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
+    """Every dict is one JSON string, including #753's bounds and censoring map."""
     phenotype = _turnover(
         degradation_rate_se={"b0002": 0.01},
         half_life={"b0002": 6.3},
         synthesis_rate={"b0003": 0.2},
+        degradation_rate_lower={"b0003": 0.06},
+        degradation_rate_upper={"b0003": 0.08},
+        confidence_level=0.95,
+        interval_method="curve_fit_parameter_variance_t_quantile",
+        censoring={"b0002": s.Censoring.right, "b0003": s.Censoring.uncensored},
     )
     [node] = _run("protein turnover phenotype (chunked)", _phenotype_record(phenotype))
     pid = _sha(phenotype)
@@ -705,6 +717,11 @@ def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
         "synthesis_rate": '{"b0003": 0.2}',
         "n_replicates": '{"b0002": 3, "b0003": 2}',
         "measurement_type": "pulse_silac_degradation_rate_per_hour",
+        "degradation_rate_lower": '{"b0003": 0.06}',
+        "degradation_rate_upper": '{"b0003": 0.08}',
+        "confidence_level": 0.95,
+        "interval_method": "curve_fit_parameter_variance_t_quantile",
+        "censoring": '{"b0002": "right", "b0003": "uncensored"}',
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }
@@ -714,7 +731,12 @@ def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
         props["degradation_rate_se"],
         props["half_life"],
         props["synthesis_rate"],
-    ) == (None, None, None)
+        props["degradation_rate_lower"],
+        props["degradation_rate_upper"],
+        props["confidence_level"],
+        props["interval_method"],
+        props["censoring"],
+    ) == (None, None, None, None, None, None, None, None)
 
 
 def test_flux_phenotype_node_keeps_the_sign_and_the_interval() -> None:

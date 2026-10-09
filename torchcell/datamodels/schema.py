@@ -8,6 +8,7 @@
 import math
 import posixpath
 import re
+from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any, Literal, Self, get_args
 
@@ -174,6 +175,15 @@ class ProvenanceGapMixin(ModelStrict):
     (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped
     field must be ``None`` -- you cannot both store a value and declare it missing.
     ``provenance_gaps`` itself cannot be gapped.
+
+    #753 adds the PER-KEY form of invariant (2). A dict-valued field that is sourced
+    for some keys and unsourced for others (Rapp 2026's ``target_metabolite_ids``:
+    1,077 features with a sourced identity, 244 merged isobaric features with 2 to 11
+    candidates each and no sourced pick) cannot be ``None``, so the whole-field rule
+    refused the gap and the 244 keys had to live outside the record. A gap that names
+    ``keys`` is admitted beside a populated mapping, on the strictly stronger
+    condition that the mapping does NOT carry any of those keys: storing a value and
+    declaring it missing is still refused, now key by key.
     """
 
     provenance_gaps: list[ProvenanceGap] = Field(
@@ -198,7 +208,25 @@ class ProvenanceGapMixin(ModelStrict):
                 )
             if gap.field == "provenance_gaps":
                 raise ValueError("provenance_gaps cannot itself be gapped")
-            if getattr(self, gap.field) is not None:
+            value = getattr(self, gap.field)
+            # --- begin #753: per-key gaps beside a partially populated map ------- #
+            if gap.keys:
+                if not isinstance(value, Mapping):
+                    raise ValueError(
+                        f"field '{gap.field}' has a per-key ProvenanceGap but is "
+                        f"{type(value).__name__}, not a mapping (a per-key gap names "
+                        "keys of a dict-valued field)"
+                    )
+                present = sorted(key for key in gap.keys if key in value)
+                if present:
+                    raise ValueError(
+                        f"field '{gap.field}' declares keys {present} missing but "
+                        "carries them (cannot both store a value and declare it "
+                        "missing)"
+                    )
+                continue
+            # --- end #753 -------------------------------------------------------- #
+            if value is not None:
                 raise ValueError(
                     f"field '{gap.field}' has a ProvenanceGap but is not None "
                     "(cannot both store a value and declare it missing)"
@@ -402,9 +430,33 @@ def _check_gene_namespace(model: "GenePerturbation") -> None:
                 f"an eck_crosswalk crosses namespaces, but {mapping.source_identifier!r} "
                 f"is already a {namespace} tag"
             )
+    # --- begin #753: two routes two landed loaders could not name --------------- #
+    if mapping.route == "locus_tag_synonym":
+        source_namespace = _namespace_of_locus_tag(mapping.source_identifier)
+        if source_namespace != namespace:
+            raise ValueError(
+                f"a locus_tag_synonym stays inside one namespace, but "
+                f"{mapping.source_identifier!r} is a {source_namespace} tag while "
+                f"gene_namespace is {namespace!r} (a tag of another strain is an "
+                "eck_crosswalk)"
+            )
+    # --- end #753 ---------------------------------------------------------------- #
 
 
-DerivedIdentifierRoute = Literal["eck_crosswalk", "jw_synonym", "gene_symbol"]
+UNIPROT_ACCESSION_PATTERN = (
+    r"^[OPQ][0-9][A-Z0-9]{3}[0-9](-\d+)?$|^[A-NR-Z][0-9]([A-Z][A-Z0-9]{2}[0-9]){1,2}"
+    r"(-\d+)?$"
+)
+"""A UniProtKB accession as the knowledgebase writes one, with an optional isoform
+suffix. UniProt's own published regular expression, which is what the pinned GenBank
+assemblies' ``/db_xref="UniProtKB/Swiss-Prot:<acc>"`` values are drawn from (Gupta 2024
+reads 4,275 of them off ``ecoli_K12_MG1655_ASM584v2``)."""
+
+# --- begin #753: two routes two landed loaders could not name ------------------- #
+DerivedIdentifierRoute = Literal[
+    "eck_crosswalk", "jw_synonym", "gene_symbol", "uniprot_db_xref", "locus_tag_synonym"
+]
+# --- end #753 ------------------------------------------------------------------- #
 """How a bacterial record's stored locus tag was reached from the identifier its source
 released, when the two differ.
 
@@ -419,6 +471,24 @@ released, when the two differ.
 - ``gene_symbol``: the source released a gene name (a current symbol or a symbol the
   annotation lists as a synonym), resolved to exactly one locus by the genome's name
   layers.
+- ``uniprot_db_xref``: the source keyed on a UniProtKB accession (a proteomics release
+  does this as a matter of course: ``sp|A5A614|YCIZ_ECOLI``), and the stored tag is the
+  one locus whose CDS feature carries that accession as a
+  ``/db_xref="UniProtKB/Swiss-Prot:<acc>"``. This is the PRIMARY route for a proteomics
+  dataset and it outranks the symbol layer, which Gupta 2024 measured: 3,225 of 3,262
+  accessions resolve through the cross-reference, and the one row where the two layers
+  disagree shows the symbol column is the imprecise one
+  (``sp|P0A6E9|BIOD2_ECOLI`` carries gene name ``bioD``, whose symbol resolves to
+  ``b0778`` (bioD1) while its accession resolves to ``b1593`` (bioD2)).
+- ``locus_tag_synonym``: the source released a RETIRED locus tag of the pinned strain's
+  OWN namespace, which the annotation carries as a ``/gene_synonym`` of exactly one
+  current locus. Not an ``eck_crosswalk`` (nothing crosses strains), not a
+  ``jw_synonym`` (no ``JW`` id) and not a ``gene_symbol`` (it is a tag). Rapp 2026's
+  ``phnE`` is released as ``b4104``, a ``/gene_synonym`` of the pseudogene ``b4583``
+  (``phnE1``) on the pinned MG1655 annotation; with no member to name that route the
+  loader dropped the record, which is the one record this member recovers. Four more
+  landed loaders (``babu2014``, ``butland2008``, ``girgis2009``,
+  ``rapp2026_platforms``) record the same unnameable route in their drop ledgers.
 """
 
 JW_IDENTIFIER_PATTERN = r"^JW[RS]?\d{4}$"
@@ -472,7 +542,36 @@ class DerivedIdentifierMapping(ModelStrict):
                 f"{identifier!r} is a locus tag, not a gene symbol; a tag of another "
                 "strain is an eck_crosswalk"
             )
+        # --- begin #753: two routes two landed loaders could not name ----------- #
+        if self.route == "uniprot_db_xref" and not re.match(
+            UNIPROT_ACCESSION_PATTERN, self.uniprot_accession()
+        ):
+            raise ValueError(
+                "a uniprot_db_xref route starts from a UniProtKB accession, bare or "
+                f"in a db|ACC|ENTRY header, got {identifier!r}"
+            )
+        if self.route == "locus_tag_synonym" and not is_tag:
+            raise ValueError(
+                "a locus_tag_synonym route starts from a retired locus tag of the "
+                f"pinned strain's own namespace, got {identifier!r}"
+            )
+        # --- end #753 ------------------------------------------------------------ #
         return self
+
+    # --- begin #753: two routes two landed loaders could not name --------------- #
+    def uniprot_accession(self) -> str:
+        """The accession inside ``source_identifier``, for a ``uniprot_db_xref`` route.
+
+        A proteomics release keys either on the bare accession (``A5A614``) or on the
+        FASTA header UniProt itself writes (``sp|A5A614|YCIZ_ECOLI``). Both are stored
+        verbatim, and this is the one place that reads the accession out of either, so
+        a consumer joining on the annotation's ``/db_xref`` never parses the string
+        itself.
+        """
+        parts = self.source_identifier.split("|")
+        return parts[1] if len(parts) == 3 else self.source_identifier
+
+    # --- end #753 ---------------------------------------------------------------- #
 
 
 class MatingType(StrEnum):
@@ -4451,6 +4550,21 @@ class Environment(ProvenanceGapMixin):
         "generations); None if not applicable. Distinct exposure durations are distinct "
         "environments, so this is part of the environment identity.",
     )
+    # --- begin #753: the chemostat dilution rate --------------------------------- #
+    dilution_rate_per_hour: float | None = Field(
+        default=None,
+        description="the dilution rate of a CONTINUOUS (chemostat) culture, in h^-1; "
+        "None for a batch culture. In a chemostat the dilution rate IS the controlled "
+        "variable: at steady state it equals the specific growth rate and it sets the "
+        "residual concentration of the growth-limiting substrate, so two cultures that "
+        "differ only in dilution rate are two different environments and this is part "
+        "of the environment identity, as duration_generations is. It is a typed field "
+        "rather than free text on a phenotype's measurement_type (Gupta 2024) so it is "
+        "queryable, and naming it is what lets a dilution-rate series be loaded at all "
+        "(Ishii 2007 drops its wild-type series under culture_not_batch because its "
+        "cultures differ from one another ONLY here).",
+    )
+    # --- end #753 ---------------------------------------------------------------- #
 
     @field_validator("aerobicity", mode="after")
     @classmethod
@@ -4461,6 +4575,21 @@ class Environment(ProvenanceGapMixin):
                 f"aerobicity must be aerobic/anaerobic/microaerobic, got {v!r}"
             )
         return v
+
+    # --- begin #753: the chemostat dilution rate --------------------------------- #
+    @field_validator("dilution_rate_per_hour", mode="after")
+    @classmethod
+    def validate_dilution_rate(cls, v: float | None) -> float | None:
+        """A dilution rate is finite and strictly positive, or absent."""
+        if v is None:
+            return v
+        if not math.isfinite(v) or v <= 0.0:
+            raise ValueError(
+                f"dilution_rate_per_hour must be finite and positive, got {v}"
+            )
+        return v
+
+    # --- end #753 ---------------------------------------------------------------- #
 
 
 class CultureEnvironment(Environment):
@@ -5838,6 +5967,192 @@ class ProteinAbundanceExperiment(Experiment, ModelStrict):
     phenotype: ProteinAbundancePhenotype
 
 
+# --- begin #770: the protein fold-change family -------------------------------- #
+class FoldChangeScale(StrEnum):
+    """The scale a relative measurement is RELEASED on, which fixes its neutral value.
+
+    A fold change is dimensionless, so the number alone does not say whether ``0.5``
+    means halved (linear) or a four-fold increase (log2). The scale is therefore a
+    required, typed part of the measurement rather than a word in a free-text field:
+    without it, a linear ratio and a log2 ratio of the same contrast average together
+    into nothing. ``neutral_value`` is the value of no change on each scale, which is
+    also the value a reference phenotype carries by definition.
+    """
+
+    linear = "linear"
+    log2 = "log2"
+    log10 = "log10"
+
+    @property
+    def neutral_value(self) -> float:
+        """The value of "no change" on this scale: 1.0 linear, 0.0 on a log scale."""
+        return 1.0 if self is FoldChangeScale.linear else 0.0
+
+
+class ProteinFoldChangePhenotype(Phenotype, ModelStrict):
+    """Per-protein RELATIVE abundance: the ratio of a strain's proteome to a reference.
+
+    The sibling of ``ProteinAbundancePhenotype`` on the relative axis, and not a mode of
+    it: that class's docstring is explicit that its number is an "absolute per-strain
+    quantity on a log signal scale, NOT a ratio", because an absolute level and a ratio
+    answer different questions and must never pool. A differential-proteomics release
+    ships a fold change with a test result beside it, which this class carries and the
+    absolute class has no field for (``gene_interaction_p_value`` was the only p-value
+    anywhere in the schema).
+
+    ``fold_change_scale`` fixes what the number means and what "no change" is, so the
+    reference phenotype is the neutral value by definition rather than a measurement.
+    ``reference_basis`` names the DENOMINATOR, which one paper can vary within itself
+    (Carruthers 2025's Source Data carries ``POI:Control`` beside ``dCas9:Control`` on
+    one strain), so the pair (scale, basis) is what makes two columns comparable.
+    ``protein_fold_change_p_value`` and its BH-adjusted companion are per protein, with
+    ``p_value_adjustment_method`` naming the correction, because an unadjusted and an
+    adjusted p-value of one contrast are different numbers.
+
+    Keyed by the protein's systematic identifier in the record's namespace, with the
+    same ragged-key honesty as the other dict-valued families: a protein the contrast
+    did not test is simply not a key, never a 1.0 and never a 0. On the LINEAR scale a
+    stored ``0.0`` is therefore a measurement and not a placeholder: the numerator fell
+    below detection while the denominator did not, which is a complete loss of signal
+    rather than an absent value. Yunus 2026 releases the verbatim cell ``0`` for 37 of
+    its 102 single-target rows and counts them inside its own "51 of which were
+    downregulated by more than 95 %" census, so refusing zero would refuse a third of
+    that paper. A log scale cannot express it (``log2 0`` is not finite), which is one
+    more reason the scale is a required field.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "protein_fold_change"
+    label_statistic_name: str | None = "protein_fold_change_se"
+
+    protein_fold_change: dict[str, float] = Field(
+        description="protein systematic id -> fold change on fold_change_scale "
+        "(SIGNED on a log scale; strictly positive on the linear scale)"
+    )
+    fold_change_scale: FoldChangeScale = Field(
+        description="the scale the released number is on, which fixes its neutral value"
+    )
+    reference_basis: str = Field(
+        description="what the denominator is, in the source's own terms, e.g. "
+        "'control strain carrying a non-targeting sgRNA' or 'protein of interest over "
+        "the same protein in the no-guide control'"
+    )
+    protein_fold_change_se: dict[str, float] | None = Field(
+        default=None,
+        description="protein systematic id -> standard error of the fold change on "
+        "fold_change_scale",
+    )
+    protein_fold_change_p_value: dict[str, float] | None = Field(
+        default=None,
+        description="protein systematic id -> the UNADJUSTED p-value of the contrast's "
+        "test for that protein, as a probability in [0, 1]. A release that publishes "
+        "-log10(p) is converted by exact arithmetic (p = 10**-x), which is reversible; "
+        "the test itself is named by measurement_type",
+    )
+    protein_fold_change_p_value_adjusted: dict[str, float] | None = Field(
+        default=None,
+        description="protein systematic id -> the multiple-testing-adjusted p-value, as "
+        "a probability in [0, 1]; p_value_adjustment_method names the correction",
+    )
+    p_value_adjustment_method: str | None = Field(
+        default=None,
+        description="the multiple-testing correction behind "
+        "protein_fold_change_p_value_adjusted, e.g. 'benjamini_hochberg'. Required "
+        "whenever adjusted p-values are stored and forbidden otherwise",
+    )
+    n_replicates: dict[str, int] = Field(
+        description="protein systematic id -> number of independent samples/replicates "
+        "behind that protein's fold change"
+    )
+    measurement_type: str = Field(
+        description="what the number is and how it was tested, e.g. "
+        "'dia_top3_ratio_to_control' or "
+        "'dia_log2_fold_change_paired_two_tailed_t_test'"
+    )
+
+    @model_validator(mode="after")
+    def validate_protein_fold_change(self) -> "ProteinFoldChangePhenotype":
+        """Non-empty, scale-consistent values, matching replicate keys, valid p-values."""
+        if not self.protein_fold_change:
+            raise ValueError("protein_fold_change cannot be empty")
+        if set(self.n_replicates) != set(self.protein_fold_change):
+            raise ValueError("n_replicates keys must match protein_fold_change keys")
+        for key, n in self.n_replicates.items():
+            if n < 1:
+                raise ValueError(f"n_replicates for {key} must be >= 1")
+        linear = self.fold_change_scale is FoldChangeScale.linear
+        for key, value in self.protein_fold_change.items():
+            if math.isnan(value) or math.isinf(value):
+                raise ValueError(f"protein_fold_change for {key} must be finite")
+            if linear and value < 0.0:
+                raise ValueError(
+                    f"protein_fold_change for {key} is {value}, which is not a ratio; "
+                    "a linear fold change is non-negative (a log scale is signed). "
+                    "Zero is a measured numerator below detection, not a missing key"
+                )
+        if self.protein_fold_change_se is not None:
+            for key, se in self.protein_fold_change_se.items():
+                if key not in self.protein_fold_change:
+                    raise ValueError(f"SE key {key} not in protein_fold_change")
+                if not math.isnan(se) and se < 0:
+                    raise ValueError(f"SE for {key} must be non-negative")
+        for name in (
+            "protein_fold_change_p_value",
+            "protein_fold_change_p_value_adjusted",
+        ):
+            mapping = getattr(self, name)
+            if mapping is None:
+                continue
+            for key, p in mapping.items():
+                if key not in self.protein_fold_change:
+                    raise ValueError(f"{name} key {key} not in protein_fold_change")
+                if math.isnan(p):
+                    continue
+                if math.isinf(p) or not 0.0 <= p <= 1.0:
+                    raise ValueError(
+                        f"{name} for {key} is {p}, not a probability in [0, 1]"
+                    )
+        adjusted = self.protein_fold_change_p_value_adjusted is not None
+        if adjusted and self.p_value_adjustment_method is None:
+            raise ValueError(
+                "adjusted p-values name their correction: set p_value_adjustment_method"
+            )
+        if not adjusted and self.p_value_adjustment_method is not None:
+            raise ValueError(
+                "p_value_adjustment_method describes stored adjusted p-values; set "
+                "protein_fold_change_p_value_adjusted or leave the method None"
+            )
+        return self
+
+    def neutral_reference(self) -> dict[str, float]:
+        """The denominator's own value on this record's scale, for every stored key.
+
+        Not a measurement: a fold change's reference is its neutral value by
+        definition (1.0 linear, 0.0 on a log scale), so experiment over reference
+        reproduces the released number exactly and nothing is imputed.
+        """
+        neutral = self.fold_change_scale.neutral_value
+        return dict.fromkeys(sorted(self.protein_fold_change), neutral)
+
+
+class ProteinFoldChangeExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a protein fold-change experiment."""
+
+    experiment_reference_type: str = "protein_fold_change"
+    phenotype_reference: ProteinFoldChangePhenotype
+
+
+class ProteinFoldChangeExperiment(Experiment, ModelStrict):
+    """Experiment measuring a per-protein fold change against a reference strain."""
+
+    experiment_type: str = "protein_fold_change"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinFoldChangePhenotype
+
+
+# --- end #770 ------------------------------------------------------------------- #
+
+
 class AssayType(StrEnum):
     """HOW an environment-response readout was physically measured (experimental design).
 
@@ -6593,6 +6908,39 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
         return self
 
 
+# --- begin #753: per-key censoring on a turnover measurement ------------------- #
+class Censoring(StrEnum):
+    """Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.
+
+    A pulse-labeling turnover assay cannot resolve a protein that barely turns over
+    within the labeling window, so the fit is capped and the released number is the cap:
+    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over
+    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set
+    to ceiling for this dilution rate". Averaging a censored value with uncensored ones
+    biases the mean toward the cap, so a consumer must be able to tell them apart.
+
+    ``uncensored`` is a member rather than being spelled by absence: a source whose
+    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state
+    it for every key, and a key MISSING from the map then means the source does not say
+    for that key. The two are different facts and the schema keeps them different.
+
+    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the
+    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true
+    half-life lies above the stored one and the cell is ``right`` censored; because
+    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the
+    RATE from above. A consumer reading ``right`` beside a rate alone would read it
+    backwards, so a loader that stores censoring names the censored quantity in its
+    ``measurement_type`` and in its note.
+    """
+
+    uncensored = "uncensored"
+    right = "right"
+    left = "left"
+
+
+# --- end #753 ------------------------------------------------------------------- #
+
+
 class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
     """Per-protein turnover: how fast each protein is degraded and replaced.
 
@@ -6607,6 +6955,17 @@ class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
     optional companions a study may release instead of or beside it.
     ``measurement_type`` records WHAT the numbers are, including their time unit, so two
     assays are never silently compared.
+
+    Two further axes (#753) carry what a turnover release routinely publishes and this
+    class could not hold. ``degradation_rate_lower`` / ``degradation_rate_upper`` with
+    ``confidence_level`` and ``interval_method`` store a published INTERVAL as an
+    interval, reusing ``FluxPhenotype``'s lossless triple rather than inverting it into
+    a standard deviation the source does not give; ``label_statistic_name`` stays
+    ``degradation_rate_se`` because a replicate SE and a fitted interval are different
+    statistics and a release may carry either. ``censoring`` says per key whether the
+    stored number is an estimate or a BOUND: a pulse-labeling assay caps a protein that
+    barely turns over, and a capped half-life averaged in with estimates biases the mean
+    toward the cap.
     """
 
     graph_level: str = "node"
@@ -6634,6 +6993,40 @@ class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
         description="what the numbers are, including the time unit, e.g. "
         "'pulse_silac_degradation_rate_per_hour'"
     )
+    # --- begin #753: the published interval and the censoring flag -------------- #
+    degradation_rate_lower: dict[str, float] | None = Field(
+        default=None,
+        description="protein locus tag -> lower bound of the published interval on the "
+        "RATE scale (the scale label_name is on). Ragged by design: a key the source "
+        "publishes no interval for is simply not a key here.",
+    )
+    degradation_rate_upper: dict[str, float] | None = Field(
+        default=None,
+        description="protein locus tag -> upper bound of the published interval on the "
+        "RATE scale",
+    )
+    confidence_level: float | None = Field(
+        default=None,
+        description="the level the bounds are stated at, as a fraction (e.g. 0.95); "
+        "None when no interval is stored, or a typed gap when bounds are stored and "
+        "the source does not say what level they are",
+    )
+    interval_method: str | None = Field(
+        default=None,
+        description="HOW the interval was produced, so two studies' bounds are never "
+        "silently compared, e.g. 'curve_fit_parameter_variance_t_quantile' or "
+        "'bootstrap_percentile'. None when no interval is stored",
+    )
+    censoring: dict[str, Censoring] | None = Field(
+        default=None,
+        description="protein locus tag -> whether the stored value is an estimate or a "
+        "BOUND, and on which side. A right-censored half-life capped at the labeling "
+        "window's ceiling is a bound, and averaging it with estimates biases the mean, "
+        "so it must travel with the record. None means the source reports no censoring "
+        "at all; a key absent from a present map means the source does not say for "
+        "that key.",
+    )
+    # --- end #753 ---------------------------------------------------------------- #
 
     @model_validator(mode="after")
     def validate_turnover(self) -> "ProteinTurnoverPhenotype":
@@ -6659,6 +7052,68 @@ class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
                     raise ValueError(f"{name} key {key} not in degradation_rate")
                 if not math.isnan(value) and value < 0:
                     raise ValueError(f"{name} for {key} must be non-negative")
+        # --- begin #753: the published interval and the censoring flag ---------- #
+        for name in ("degradation_rate_lower", "degradation_rate_upper"):
+            mapping = getattr(self, name)
+            if mapping is None:
+                continue
+            for key, value in mapping.items():
+                if key not in self.degradation_rate:
+                    raise ValueError(f"{name} key {key} not in degradation_rate")
+                if math.isnan(value) or math.isinf(value) or value < 0:
+                    raise ValueError(
+                        f"{name} for {key} must be finite and non-negative"
+                    )
+        for key, lower in (self.degradation_rate_lower or {}).items():
+            if lower > self.degradation_rate[key]:
+                raise ValueError(
+                    f"degradation_rate_lower for {key} exceeds the stored rate "
+                    f"({lower} > {self.degradation_rate[key]})"
+                )
+        for key, upper in (self.degradation_rate_upper or {}).items():
+            if upper < self.degradation_rate[key]:
+                raise ValueError(
+                    f"degradation_rate_upper for {key} is below the stored rate "
+                    f"({upper} < {self.degradation_rate[key]})"
+                )
+        has_bounds = (
+            self.degradation_rate_lower is not None
+            or self.degradation_rate_upper is not None
+        )
+        gapped = self.gapped_fields()
+        if (
+            has_bounds
+            and self.confidence_level is None
+            and ("confidence_level" not in gapped)
+        ):
+            raise ValueError(
+                "an interval states the level it covers: set confidence_level or "
+                "carry a ProvenanceGap on it"
+            )
+        if (
+            has_bounds
+            and self.interval_method is None
+            and ("interval_method" not in gapped)
+        ):
+            raise ValueError(
+                "an interval states how it was produced: set interval_method or "
+                "carry a ProvenanceGap on it"
+            )
+        if not has_bounds and (
+            self.confidence_level is not None or self.interval_method is not None
+        ):
+            raise ValueError(
+                "confidence_level and interval_method describe stored bounds; set "
+                "degradation_rate_lower/upper or leave both None"
+            )
+        if self.confidence_level is not None and not 0.0 < self.confidence_level < 1.0:
+            raise ValueError(
+                f"confidence_level is a fraction in (0, 1), got {self.confidence_level}"
+            )
+        for key in self.censoring or {}:
+            if key not in self.degradation_rate:
+                raise ValueError(f"censoring key {key} not in degradation_rate")
+        # --- end #753 ------------------------------------------------------------ #
         return self
 
 
@@ -7118,6 +7573,26 @@ class BacterialProteinAbundanceExperiment(Experiment, ModelStrict):
     phenotype: ProteinAbundancePhenotype
 
 
+# --- begin #770: the protein fold-change family -------------------------------- #
+class BacterialProteinFoldChangeExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial protein fold-change experiment."""
+
+    experiment_reference_type: str = "bacterial_protein_fold_change"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: ProteinFoldChangePhenotype
+
+
+class BacterialProteinFoldChangeExperiment(Experiment, ModelStrict):
+    """Bacterial differential-proteomics experiment (a fold change against a control)."""
+
+    experiment_type: str = "bacterial_protein_fold_change"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinFoldChangePhenotype
+
+
+# --- end #770 ------------------------------------------------------------------- #
+
+
 class BacterialMetaboliteExperimentReference(ExperimentReference, ModelStrict):
     """Assembly-pinned reference for a bacterial metabolite experiment."""
 
@@ -7319,6 +7794,9 @@ PhenotypeType = (
     | VisualScorePhenotype
     | MetabolitePhenotype
     | ProteinAbundancePhenotype
+    # --- begin #770: the protein fold-change family ---
+    | ProteinFoldChangePhenotype
+    # --- end #770 ---
     | EnvironmentResponsePhenotype
     | ProductTiterPhenotype
     | ProteinTurnoverPhenotype
@@ -7341,6 +7819,9 @@ ExperimentType = (
     | VisualScoreExperiment
     | MetaboliteExperiment
     | ProteinAbundanceExperiment
+    # --- begin #770: the protein fold-change family ---
+    | ProteinFoldChangeExperiment
+    # --- end #770 ---
     | EnvironmentResponseExperiment
     | StrainEnvironmentResponseExperiment
     | SegregantGrowthExperiment
@@ -7353,6 +7834,9 @@ ExperimentType = (
     | BacterialGeneInteractionExperiment
     | BacterialGeneEssentialityExperiment
     | BacterialProteinAbundanceExperiment
+    # --- begin #770: the protein fold-change family ---
+    | BacterialProteinFoldChangeExperiment
+    # --- end #770 ---
     | BacterialMetaboliteExperiment
     | BacterialRNASeqExpressionExperiment
     | BacterialVisualScoreExperiment
@@ -7373,6 +7857,9 @@ ExperimentReferenceType = (
     | VisualScoreExperimentReference
     | MetaboliteExperimentReference
     | ProteinAbundanceExperimentReference
+    # --- begin #770: the protein fold-change family ---
+    | ProteinFoldChangeExperimentReference
+    # --- end #770 ---
     | EnvironmentResponseExperimentReference
     | StrainEnvironmentResponseExperimentReference
     | SegregantGrowthExperimentReference
@@ -7385,6 +7872,9 @@ ExperimentReferenceType = (
     | BacterialGeneInteractionExperimentReference
     | BacterialGeneEssentialityExperimentReference
     | BacterialProteinAbundanceExperimentReference
+    # --- begin #770: the protein fold-change family ---
+    | BacterialProteinFoldChangeExperimentReference
+    # --- end #770 ---
     | BacterialMetaboliteExperimentReference
     | BacterialRNASeqExpressionExperimentReference
     | BacterialVisualScoreExperimentReference
@@ -7405,6 +7895,9 @@ EXPERIMENT_TYPE_MAP = {
     "visual_score": VisualScoreExperiment,
     "metabolite": MetaboliteExperiment,
     "protein_abundance": ProteinAbundanceExperiment,
+    # --- begin #770: the protein fold-change family ---
+    "protein_fold_change": ProteinFoldChangeExperiment,
+    # --- end #770 ---
     "environment_response": EnvironmentResponseExperiment,
     "strain_environment_response": StrainEnvironmentResponseExperiment,
     "segregant_growth": SegregantGrowthExperiment,
@@ -7417,6 +7910,9 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_gene_interaction": BacterialGeneInteractionExperiment,
     "bacterial_gene_essentiality": BacterialGeneEssentialityExperiment,
     "bacterial_protein_abundance": BacterialProteinAbundanceExperiment,
+    # --- begin #770: the protein fold-change family ---
+    "bacterial_protein_fold_change": BacterialProteinFoldChangeExperiment,
+    # --- end #770 ---
     "bacterial_metabolite": BacterialMetaboliteExperiment,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
     "bacterial_visual_score": BacterialVisualScoreExperiment,
@@ -7436,6 +7932,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "visual_score": VisualScoreExperimentReference,
     "metabolite": MetaboliteExperimentReference,
     "protein_abundance": ProteinAbundanceExperimentReference,
+    # --- begin #770: the protein fold-change family ---
+    "protein_fold_change": ProteinFoldChangeExperimentReference,
+    # --- end #770 ---
     "environment_response": EnvironmentResponseExperimentReference,
     "strain_environment_response": StrainEnvironmentResponseExperimentReference,
     "segregant_growth": SegregantGrowthExperimentReference,
@@ -7448,6 +7947,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_gene_interaction": BacterialGeneInteractionExperimentReference,
     "bacterial_gene_essentiality": BacterialGeneEssentialityExperimentReference,
     "bacterial_protein_abundance": BacterialProteinAbundanceExperimentReference,
+    # --- begin #770: the protein fold-change family ---
+    "bacterial_protein_fold_change": (BacterialProteinFoldChangeExperimentReference),
+    # --- end #770 ---
     "bacterial_metabolite": BacterialMetaboliteExperimentReference,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,

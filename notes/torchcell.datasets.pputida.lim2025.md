@@ -645,3 +645,43 @@ rather than loosened:
 
 `pytest tests/torchcell/datasets/pputida/test_lim2025.py` and its de Siqueira sibling run
 200 passed, 11 skipped; the anti-padding lint reports 485 files clean.
+## 2026.10.09 - The seven proteome sheets stay refused after #770, because every released contrast has an evolved isolate on one side
+
+Issue #770 names Lim 2025's proteome sheets as one of five places a protein-level fold
+change plus a p-value is released with no phenotype class to hold it.
+`ProteinFoldChangePhenotype` landed in this wave and holds the numbers. The sheets are
+still NOT loaded, and the reason is the GENOTYPE axis, not the phenotype one.
+
+Measured by
+[[protein_fold_change_refusals_kang_lim|experiments.036-dataset-fixes-before-kg-build.scripts.protein_fold_change_refusals_kang_lim]]
+over `si/si2.xlsx` (sha256
+`a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612`). Every one of the
+seven proteome sheets carries exactly one `log2_Fold_change_A/B` column, and the two arms
+it is built from are:
+
+| sheet | rows | arm A | arm B |
+|---|---|---|---|
+| `Proteome_A10F63I1vsIPL400_M9G` | 2,367 | `log2_mean_A10_F63_I1_M9G` | `log2_mean_IPL400_M9G` |
+| `Proteome_A10F63I1vsIPL400_G+4IP` | 2,374 | `log2_mean_A10F63I1_M9G+4IP` | `log2_mean_IPL400_M9G+4IP` |
+| `Proteome_A12F53I1vsIPL400_M9G` | 2,367 | `log2_mean_A12_F53_I1_M9G` | `log2_mean_IPL400_M9G` |
+| `Proteome_A12F53I1vsIPL400_G+4IP` | 2,338 | `log2_mean_A12F53I1_M9G+4IP` | `log2_mean_IPL400_M9G+4IP` |
+| `IPL400vsA10F63I1_pIY670_M9G_12h` | 2,350 | `log2_mean_IPL400_pIY670_M9G_12hr` | `log2_mean_A10F63I1_pIY670_M9G_12hr` |
+| `IPL400vsA10F63I1_pIY670_M9G_24h` | 2,350 | `log2_mean_IPL400_pIY670_M9G_24hr` | `log2_mean_A10F63I1_pIY670_M9G_24hr` |
+| `IPL400vsA10F63I1_pIY670_M9G_48h` | 2,378 | `log2_mean_IPL400_pIY670_M9G_48hr` | `log2_mean_A10F63I1_pIY670_M9G_48hr` |
+
+`A10F63I1` and `A12F53I1` are evolved isolates, and one of them is an arm of all seven
+released fold changes. Writing a record for a fold change means writing the genotype on
+each side of it, and an evolved clone's genotype cannot be written with the existing
+classes (#731, open: "Bacterial sequence-variant representation: evolved clones cannot be
+written with existing classes"). Three of the seven are additionally blocked on the
+`pIY670` arm's medium, which `MEDIA_LIBRARY` has no entry for. Note also the direction
+flip, which any later loader must handle: in the four `Proteome_*` sheets arm A is the
+evolved isolate, and in the three `IPL400vs*` sheets arm A is the parent, so the sign of
+`log2_Fold_change_A/B` means the opposite thing between the two families.
+
+So the new phenotype class is NOT what was blocking this paper, and the honest statement is
+that #770 closes none of its rows. The existing `ProteomeLim2025Dataset` keeps its one
+absolute-abundance record and its refusals stand as written. When #731 lands, the four
+`Proteome_*` sheets become four fold-change records (two isolates, two media) with their
+`p-value` and `p_adjusted(BH)` columns, which is what `ProteinFoldChangePhenotype` was
+shaped for.

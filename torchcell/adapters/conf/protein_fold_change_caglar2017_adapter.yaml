@@ -1,8 +1,9 @@
-# Yunus 2026 CRISPRi arrays: 25 IY1452 strains, BacterialProteinFoldChangeExperiment.
-# 1 to 5 BacterialCrisprInterferencePerturbation per record (72 in all), served as
-# `bacterial perturbation`, each carrying a CrisprConstruct, so the crispr-construct pair
-# is enabled. The environment carries EnvironmentPhysicalPerturbation and
-# SmallMoleculePerturbation edits, so the environment-perturbation pair is enabled.
+# Caglar 2017 protein fold changes: 8 REL606 Table S8 contrasts,
+# BacterialProteinFoldChangeExperiment. Every genotype is the wild type (0 perturbations
+# in 8 of 8 records), so neither `bacterial perturbation` nor `perturbation to genotype`
+# is enabled. The contrast IS an environment edit, so every record carries a
+# SmallMoleculePerturbation or an EnvironmentPhysicalPerturbation and the
+# environment-perturbation pair is enabled.
 cell_adapter:
   node_methods:
     - method_name: "experiment reference"
@@ -10,10 +11,6 @@ cell_adapter:
     - method_name: "experiment (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "genotype (chunked)"
-      memory_reduction_factor: 1.0
-    - method_name: "bacterial perturbation (chunked)"
-      memory_reduction_factor: 1.0
-    - method_name: "crispr construct (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0
@@ -41,10 +38,6 @@ cell_adapter:
     - method_name: "experiment reference to experiment (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "genotype to experiment (chunked)"
-      memory_reduction_factor: 1.0
-    - method_name: "perturbation to genotype (chunked)"
-      memory_reduction_factor: 1.0
-    - method_name: "crispr construct to perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment to experiment (chunked)"
       memory_reduction_factor: 1.0

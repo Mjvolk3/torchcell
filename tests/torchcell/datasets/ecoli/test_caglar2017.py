@@ -55,10 +55,13 @@ from torchcell.datamodels.media import DAVIS_MINIMAL, DM500
 from torchcell.datamodels.schema import (
     BACTERIAL_LOCUS_TAG_PATTERNS,
     AssemblyReferenceGenome,
+    Concentration,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    FoldChangeScale,
     PhysicalFactor,
     SmallMoleculePerturbation,
+    Temperature,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagResolutionError,
@@ -66,9 +69,10 @@ from torchcell.datasets.bacteria_common import (
     reconcile_locus_tags,
 )
 from torchcell.datasets.ecoli import caglar2017 as c
-from torchcell.literature.manifest import Manifest, sha256_file
+from torchcell.literature.manifest import Manifest, RetrievalMethod, sha256_file
 from torchcell.sequence.genome.ecoli.rel606 import REL606_ASSEMBLY, EcoliBREL606Genome
 from torchcell.verification.report import (
+    DerivationMethod,
     Level,
     LevelResult,
     Provenance,
@@ -203,10 +207,11 @@ def test_the_proposed_rel606_pattern_is_disjoint_from_every_deposited_namespace(
 # --------------------------------------------------------------------------- #
 # Retrieval records
 # --------------------------------------------------------------------------- #
-def test_the_si_tables_are_pmc_bucket_objects_s2_to_s6() -> None:
-    """Tables S1 to S5, i.e. PMC objects ``-s2`` to ``-s6``: the SI numbers the tables
-    one behind the bucket's objects. ``-s6`` (Table S5, the doubling times) joined the
-    mirror in the #776 revision, which is why the list is five and not four.
+def test_the_si_tables_are_pmc_bucket_objects_s2_to_s6_and_s9() -> None:
+    """Tables S1 to S5 and S8, i.e. PMC objects ``-s2`` to ``-s6`` and ``-s9``: the SI
+    numbers the tables one behind the bucket's objects. ``-s6`` (Table S5, the doubling
+    times) joined the mirror in the #776 revision and ``-s9`` (Table S8, the DESeq2
+    fold changes) in the #770 one, which is why the list is six and not four.
     """
     specs = c.si_table_specs()
     assert [s.relpath for s in specs] == [
@@ -215,7 +220,27 @@ def test_the_si_tables_are_pmc_bucket_objects_s2_to_s6() -> None:
         "data/srep45303-s4.csv",
         "data/srep45303-s5.csv",
         "data/srep45303-s6.csv",
+        "data/srep45303-s9.csv",
     ]
+    # Tables S5 and S8 are the doubling-time and fold-change loaders' tables and were
+    # fetched for them, after the first deposit, so their records carry their own
+    # retrieval date.
+    assert specs[4].retrieval.retrieved_at == "2026-10-09"
+    table_s8 = specs[5].retrieval
+    assert (table_s8.method, table_s8.retrieved_at) == (
+        RetrievalMethod.pmc_cloud,
+        "2026-10-09",
+    )
+    assert table_s8.params == {"key": "PMC5394689.1/srep45303-s9.csv"}
+    assert table_s8.source_url == (
+        "https://pmc-oa-opendata.s3.amazonaws.com/PMC5394689.1/srep45303-s9.csv"
+    )
+    assert (
+        table_s8.sha256
+        == specs[5].sha256
+        == ("738e1ee3f17e62a76a610741bc1b60ea21ee6eb80bdaa06846587dae791b44f5")
+    )
+    assert [s.retrieval.retrieved_at for s in specs[:4]] == [c.RAW_RETRIEVED_AT] * 4
     first = specs[0].retrieval
     assert first.retriever == "torchcell.literature.retrieve.pmc_cloud_object"
     assert first.params == {"key": "PMC5394689.1/srep45303-s2.csv"}
@@ -271,6 +296,114 @@ def _genpept(records: list[tuple[str, list[str]]]) -> str:
     return handle.getvalue()
 
 
+#: Table S8's 24 columns, in released order (measured on the mirror).
+S8_HEADER = [
+    "Unnamed: 0",
+    "X",
+    "id",
+    "baseMean",
+    "log2FoldChange",
+    "lfcSE",
+    "stat",
+    "pvalue",
+    "padj",
+    "gene_name",
+    "signChange",
+    "pick_data",
+    "growthPhase.x",
+    "test_for",
+    "contrast",
+    "base",
+    "fullFileName",
+    "dataType",
+    "carbonSource",
+    "Mg",
+    "Na",
+    "growthPhase.y",
+    "investigatedEffect",
+    "testVSbase",
+]
+
+
+def _s8_group(
+    values: Sequence[tuple[str, float]],
+    *,
+    test_vs_base: str,
+    phase: str,
+    effect: str,
+    test_for: str,
+    contrast: str,
+    base: str,
+    data_type: str = "protein",
+    p_values: Sequence[float] | None = None,
+    adjusted: Sequence[float] | None = None,
+) -> tuple[str, list[list[Any]]]:
+    """One Table S8 group's rows and its ``fullFileName``.
+
+    ``p_values`` defaults to the released shape of a tested row and ``adjusted`` to its
+    Benjamini-Hochberg value, so a group built from the defaults passes
+    ``adjustment_back_solve``. A ``nan`` fold change is a row DESeq2 left blank.
+    """
+    name = f"resDf_{data_type}_set00_{phase}_{effect}__{test_vs_base}.csv"
+    raw = (
+        [0.01 * (index + 1) for index in range(len(values))]
+        if p_values is None
+        else list(p_values)
+    )
+    adjust = (
+        list(c.benjamini_hochberg(np.asarray(raw, dtype=np.float64)))
+        if adjusted is None
+        else list(adjusted)
+    )
+    rows = []
+    for index, ((identifier, fold), p, q) in enumerate(
+        zip(values, raw, adjust, strict=True), start=1
+    ):
+        rows.append(
+            [
+                index,
+                index,
+                identifier,
+                10.0 * index,
+                fold,
+                0.25,
+                fold / 0.25,
+                p,
+                q,
+                f"gene{index}",
+                1 if fold > 0 else -1,
+                data_type,
+                phase,
+                test_for,
+                contrast,
+                base,
+                name,
+                data_type,
+                "SYAN",
+                "baseMgAllMg",
+                "baseNaAllNa",
+                phase,
+                effect,
+                test_vs_base,
+            ]
+        )
+    return name, rows
+
+
+def _s8_csv(values: Sequence[tuple[str, float]], **group: Any) -> bytes:
+    """A one-group Table S8 file."""
+    return _s8_file([_s8_group(values, **group)])
+
+
+def _s8_file(groups: Sequence[tuple[str, list[list[Any]]]]) -> bytes:
+    handle = io.StringIO()
+    writer = csv.writer(handle)
+    writer.writerow(S8_HEADER)
+    for _, rows in groups:
+        writer.writerows(rows)
+    return handle.getvalue().encode()
+
+
 def _stage(root: Path) -> dict[str, bytes]:
     """A staged raw tree: four tables (two ECB/YP rows) and one GenPept batch."""
     files = {
@@ -281,6 +414,15 @@ def _stage(root: Path) -> dict[str, bytes]:
         "data/srep45303-s6.csv": (
             b"name,replicate,doubling.time.minutes,doubling.time.minutes.95m,"
             b"doubling.time.minutes.95p,r.squared\nGlucose.tab,1,53.2,49.1,59.2,0.98\n"
+        ),
+        "data/srep45303-s9.csv": _s8_csv(
+            [("YP_1.1", 1.0), ("YP_2.1", -2.0)],
+            test_vs_base="lowMgVSbaseMg",
+            phase="Exp",
+            effect="batchNumberPLUSMg",
+            test_for="Mg_mM_Levels",
+            contrast="lowMg",
+            base="baseMg",
         ),
         "ncbi_protein/yp_batch_00.gp": _genpept(
             [("YP_1.1", ["ECB_00001"]), ("YP_2.1", ["ECB_00009"])]
@@ -1195,6 +1337,7 @@ def _synthetic_mirror(staging: Path) -> dict[str, bytes]:
             b"name,replicate,doubling.time.minutes,doubling.time.minutes.95m,"
             b"doubling.time.minutes.95p,r.squared\nGlucose.tab,1,53.2,49.1,59.2,0.98\n"
         ),
+        "data/srep45303-s9.csv": _s8_file(S8_GROUPS),
         "ncbi_protein/yp_batch_00.gp": _genpept(
             [(p, [g]) for p, g in zip(PROTEINS, GENES, strict=True)]
         ).encode(),
@@ -1601,9 +1744,10 @@ def test_main_dispatches_build_and_verify(
     assert c.main(["verify", "--family", "rnaseq"]) == 1
 
 
-#: Module-level SourcedValues: 26 from the raw-mirror branch, 19 the loaders add, and
-#: the 3 Houser 2015 attribution quotes (#771).
-SOURCED_VALUE_COUNT = 26 + 19 + 3
+#: Module-level SourcedValues: 26 from the raw-mirror branch, 19 the loaders add, the
+#: 3 Houser 2015 attribution quotes (#771), and the 8 the Table S8 protein fold-change
+#: loader adds (#770).
+SOURCED_VALUE_COUNT = 26 + 19 + 3 + 8
 
 
 def test_every_sourced_value_is_collected_by_name() -> None:
@@ -1882,3 +2026,625 @@ def test_the_dev_tree_builds_pin_the_measured_counts_and_pass_l0_to_l4(
         built, expected_count=records, gene_universe=universe, back_solve=evidence
     )
     assert report.passed, report.summary()
+
+
+# --------------------------------------------------------------------------- #
+# Table S8: the protein fold changes
+# --------------------------------------------------------------------------- #
+#: The protein fold changes of the synthetic mirror, by Table S8 group. ``YP_3.1`` is
+#: blank in the lowMg group (DESeq2 writes no fold change where the base mean is 0).
+S8_LOW_MG = [("YP_1.1", 1.5), ("YP_2.1", -0.75), ("YP_3.1", float("nan"))]
+S8_HIGH_NA = [("YP_1.1", -2.0), ("YP_2.1", 0.5), ("YP_3.1", 3.25)]
+#: Table S8 carries both data types, so the synthetic table does too: one gene-level
+#: group, which the loader counts and refuses as out of scope.
+S8_MRNA_GROUP = _s8_group(
+    [(gene, 1.0) for gene in GENES],
+    test_vs_base="lowMgVSbaseMg",
+    phase="Exp",
+    effect="batchNumberPLUSMg",
+    test_for="Mg_mM_Levels",
+    contrast="lowMg",
+    base="baseMg",
+    data_type="mrna",
+)
+#: Four groups: the lowMg contrast under both control models, the highNa contrast under
+#: the primary one, and the gene-level group. The doubling-time group is a refusal.
+S8_GROUPS = [
+    _s8_group(
+        S8_LOW_MG,
+        test_vs_base="lowMgVSbaseMg",
+        phase="Exp",
+        effect="batchNumberPLUSMg",
+        test_for="Mg_mM_Levels",
+        contrast="lowMg",
+        base="baseMg",
+    ),
+    _s8_group(
+        S8_LOW_MG,
+        test_vs_base="lowMgVSbaseMg",
+        phase="Exp",
+        effect="batchNumberPLUSMgPLUSdoublingTimeMinutes",
+        test_for="Mg_mM_Levels",
+        contrast="lowMg",
+        base="baseMg",
+    ),
+    _s8_group(
+        S8_HIGH_NA,
+        test_vs_base="highNaVSbaseNa",
+        phase="Sta",
+        effect="batchNumberPLUSNa",
+        test_for="Na_mM_Levels",
+        contrast="highNa",
+        base="baseNa",
+    ),
+    S8_MRNA_GROUP,
+]
+
+
+def test_benjamini_hochberg_is_the_step_up_adjustment_capped_at_one() -> None:
+    # n = 4: p * 4 / rank is [0.04, 0.04, 0.0533..., 1.6], made monotone from the
+    # right and capped, so the first two share the running minimum 0.04.
+    adjusted = c.benjamini_hochberg(np.array([0.01, 0.02, 0.04, 0.40]))
+    assert list(adjusted) == pytest.approx([0.04, 0.04, 0.05333333333333334, 0.4])
+    # n = 2: [1.8, 0.95] made monotone from the right is [0.95, 0.95]; the cap at 1
+    # never bites here, which is why the larger raw p-value sets both.
+    assert list(c.benjamini_hochberg(np.array([0.9, 0.95]))) == pytest.approx(
+        [0.95, 0.95]
+    )
+    assert list(c.benjamini_hochberg(np.array([1.0, 1.0]))) == pytest.approx([1.0, 1.0])
+    # Order does not matter: the adjustment travels back to its own row, so the same
+    # four p-values shuffled give the same four adjusted values, shuffled with them.
+    assert list(c.benjamini_hochberg(np.array([0.04, 0.40, 0.01, 0.02]))) == (
+        pytest.approx([0.05333333333333334, 0.4, 0.04, 0.04])
+    )
+
+
+def test_adjustment_back_solve_identifies_the_correction_and_refuses_another(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s8.csv"
+    path.write_bytes(_s8_file(S8_GROUPS))
+    protein = c.read_table_s8_protein(path)
+    evidence = c.adjustment_back_solve(protein)
+    assert evidence.method == "benjamini_hochberg"
+    assert (evidence.groups, evidence.rows_with_both) == (3, 9)
+    assert evidence.max_abs_deviation < 1e-15
+
+    bonferroni = _s8_group(
+        S8_HIGH_NA,
+        test_vs_base="highNaVSbaseNa",
+        phase="Sta",
+        effect="batchNumberPLUSNa",
+        test_for="Na_mM_Levels",
+        contrast="highNa",
+        base="baseNa",
+        p_values=[0.01, 0.02, 0.04],
+        adjusted=[0.03, 0.06, 0.12],
+    )
+    path.write_bytes(_s8_file([bonferroni, S8_MRNA_GROUP]))
+    with pytest.raises(
+        RuntimeError, match="the released correction is not Benjamini-Hochberg"
+    ):
+        c.adjustment_back_solve(c.read_table_s8_protein(path))
+
+
+def test_read_table_s8_protein_keeps_the_protein_rows_and_refuses_an_unknown_cell(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s8.csv"
+    path.write_bytes(_s8_file(S8_GROUPS))
+    protein = c.read_table_s8_protein(path)
+    assert len(protein) == 9
+    assert set(protein["dataType"]) == {"protein"}
+    assert sorted(set(protein.columns)) == sorted(c.S8_COLUMNS)
+
+    only_protein = tmp_path / "one_type.csv"
+    only_protein.write_bytes(_s8_file(S8_GROUPS[:3]))
+    with pytest.raises(RuntimeError, match=r"dataType values \['protein'\]"):
+        c.read_table_s8_protein(only_protein)
+
+    unknown_phase = tmp_path / "phase.csv"
+    unknown_phase.write_bytes(
+        _s8_file(
+            [
+                S8_MRNA_GROUP,
+                _s8_group(
+                    S8_HIGH_NA,
+                    test_vs_base="highNaVSbaseNa",
+                    phase="LateSta",
+                    effect="batchNumberPLUSNa",
+                    test_for="Na_mM_Levels",
+                    contrast="highNa",
+                    base="baseNa",
+                ),
+            ]
+        )
+    )
+    with pytest.raises(RuntimeError, match=r"growth phases \['LateSta'\]"):
+        c.read_table_s8_protein(unknown_phase)
+
+
+def test_contrast_groups_read_the_released_descriptors_and_the_control_model(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s8.csv"
+    path.write_bytes(_s8_file(S8_GROUPS))
+    groups = c.contrast_groups(c.read_table_s8_protein(path))
+    assert [g.file_name for g in groups] == sorted(name for name, _ in S8_GROUPS[:3])
+    # Sorted by file name, and "PLUSdoublingTimeMinutes__" sorts before "__" ('P' <
+    # '_'), so the secondary control model of the lowMg contrast comes first.
+    assert [g.primary_control_model for g in groups] == [False, True, True]
+    primary = next(g for g in groups if g.test_vs_base == "highNaVSbaseNa")
+    assert primary.model_dump() == {
+        "file_name": "resDf_protein_set00_Sta_batchNumberPLUSNa__highNaVSbaseNa.csv",
+        "test_vs_base": "highNaVSbaseNa",
+        "growth_phase": c.GrowthPhase.stationary,
+        "test_for": "Na_mM_Levels",
+        "contrast": "highNa",
+        "base": "baseNa",
+        "investigated_effect": "batchNumberPLUSNa",
+        "rows": 3,
+    }
+
+
+def test_contrast_groups_refuse_a_group_whose_descriptors_vary(tmp_path: Path) -> None:
+    name, rows = S8_GROUPS[0]
+    mutated = [list(row) for row in rows]
+    mutated[1][S8_HEADER.index("contrast")] = "highMg"
+    path = tmp_path / "s8.csv"
+    path.write_bytes(_s8_file([(name, mutated), S8_MRNA_GROUP]))
+    with pytest.raises(RuntimeError, match=r"descriptor columns vary \{'contrast'"):
+        c.contrast_groups(c.read_table_s8_protein(path))
+
+
+def test_table_s8_protein_order_refuses_a_group_listing_the_ids_otherwise(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "s8.csv"
+    path.write_bytes(_s8_file(S8_GROUPS))
+    protein = c.read_table_s8_protein(path)
+    groups = c.contrast_groups(protein)
+    assert c.table_s8_protein_order(protein, groups) == PROTEINS
+
+    reversed_group = _s8_group(
+        list(reversed(S8_HIGH_NA)),
+        test_vs_base="highNaVSbaseNa",
+        phase="Sta",
+        effect="batchNumberPLUSNa",
+        test_for="Na_mM_Levels",
+        contrast="highNa",
+        base="baseNa",
+    )
+    path.write_bytes(_s8_file([S8_GROUPS[0], reversed_group, S8_MRNA_GROUP]))
+    protein = c.read_table_s8_protein(path)
+    with pytest.raises(RuntimeError, match="list the ids in another order"):
+        c.table_s8_protein_order(protein, c.contrast_groups(protein))
+
+
+def _group(**overrides: Any) -> c.ContrastGroup:
+    cells: dict[str, Any] = {
+        "file_name": "probe.csv",
+        "test_vs_base": "lowMgVSbaseMg",
+        "growth_phase": c.GrowthPhase.exponential,
+        "test_for": "Mg_mM_Levels",
+        "contrast": "lowMg",
+        "base": "baseMg",
+        "investigated_effect": "batchNumberPLUSMg",
+        "rows": 3,
+    }
+    cells.update(overrides)
+    return c.ContrastGroup(**cells)
+
+
+def test_contrast_samples_select_the_two_groups_table_s1_states(tmp_path: Path) -> None:
+    rows = [r for r in _rows(tmp_path / "s1.csv") if r.protein_technical_replicates > 0]
+    low_mg = c.contrast_samples(rows, _group())
+    assert low_mg.model_dump() == {
+        "test_samples": ("MURI_006",),
+        "base_samples": ("MURI_002", "MURI_003"),
+        "test_times_hr": (5.0,),
+        "base_times_hr": (3.0, 4.0),
+        "doses": (0.005,),
+    }
+    high_na = c.contrast_samples(
+        rows,
+        _group(
+            test_vs_base="highNaVSbaseNa",
+            growth_phase=c.GrowthPhase.stationary,
+            test_for="Na_mM_Levels",
+            contrast="highNa",
+            base="baseNa",
+        ),
+    )
+    assert (high_na.test_samples, high_na.base_samples, high_na.doses) == (
+        ("MURI_007",),
+        ("MURI_004",),
+        (200.0,),
+    )
+    # The carbon-source contrast has RNA data only: lactate's one sample is not a
+    # protein sample, so the contrast has no test group and the build stops.
+    with pytest.raises(RuntimeError, match="puts 0 samples in the lactate group"):
+        c.contrast_samples(
+            rows,
+            _group(
+                test_vs_base="lactateVSglucose",
+                test_for="carbonSource",
+                contrast="lactate",
+                base="glucose",
+            ),
+        )
+
+
+def test_a_level_holding_several_doses_is_refused_with_the_doses_it_measured(
+    tmp_path: Path,
+) -> None:
+    sheet = [
+        *S1_ROWS,
+        ("MURI_008", "NaCl_stress", "30", "0", "1", "14", "glucose", "0.8", "300",
+         "stationary", "baseMg", "highNa", "unique_condition_28"),
+    ]  # fmt: skip
+    rows = [
+        r
+        for r in _rows(tmp_path / "s1.csv", sheet)
+        if r.protein_technical_replicates > 0
+    ]
+    group = _group(
+        test_vs_base="highNaVSbaseNa",
+        growth_phase=c.GrowthPhase.stationary,
+        test_for="Na_mM_Levels",
+        contrast="highNa",
+        base="baseNa",
+        rows=3,
+    )
+    samples = c.contrast_samples(rows, group)
+    assert samples.doses == (200.0, 300.0)
+    refusal = c.refuse_pooled_dose(group, samples)
+    assert refusal.reason == "level pools several doses"
+    assert refusal.rows == 3
+    assert refusal.measurement == (
+        "Table S1 puts 2 protein samples in the highNa group at na_mm ['200', '300']; "
+        "SmallMoleculePerturbation requires one Concentration and the released cell is "
+        "a level, not a dose"
+    )
+    with pytest.raises(RuntimeError, match=r"probe\.csv: na_mm \[200\.0, 300\.0\]"):
+        c.contrast_environment(group, samples)
+
+
+def test_refuse_control_model_names_the_primary_design_it_duplicates() -> None:
+    refusal = c.refuse_control_model(
+        _group(
+            investigated_effect="batchNumberPLUSMgPLUSdoublingTimeMinutes", rows=4196
+        )
+    )
+    assert (refusal.reason, refusal.rows) == ("secondary control model", 4196)
+    assert "equal those of batchNumberPLUSMg," in refusal.measurement
+
+
+def test_contrast_environment_is_the_test_level_with_no_single_duration(
+    tmp_path: Path,
+) -> None:
+    rows = [r for r in _rows(tmp_path / "s1.csv") if r.protein_technical_replicates > 0]
+    group = _group()
+    environment = c.contrast_environment(group, c.contrast_samples(rows, group))
+    assert environment.media == DM500
+    assert environment.temperature == Temperature(value=37.0)
+    assert environment.duration_hours is None
+    magnesium = environment.perturbations[0]
+    assert isinstance(magnesium, SmallMoleculePerturbation)
+    assert magnesium.compound.name == "magnesium sulfate"
+    assert magnesium.concentration.value == 0.005
+    gap = environment.provenance_gaps[0]
+    assert gap.field == "duration_hours"
+    assert gap.note == (
+        "the exponential lowMg group of lowMgVSbaseMg pools samples Table S1 dates at "
+        "5 h; the paper sets the phase by optical density, so no single duration "
+        "describes the group"
+    )
+    carbon = _group(
+        test_vs_base="glycerolVSglucose",
+        test_for="carbonSource",
+        contrast="glycerol",
+        base="glucose",
+    )
+    swapped = c.contrast_environment(
+        carbon,
+        c.ContrastSamples(
+            test_samples=("MURI_002",),
+            base_samples=("MURI_003",),
+            test_times_hr=(3.0,),
+            base_times_hr=(4.0,),
+            doses=(),
+        ),
+    )
+    assert swapped.media == DAVIS_MINIMAL
+    glycerol = swapped.perturbations[0]
+    assert isinstance(glycerol, EnvironmentPhysicalPerturbation)
+    assert glycerol.factor is PhysicalFactor.carbon_source
+    assert glycerol.magnitude == Concentration(
+        value=0.5, unit=ConcentrationUnit.g_per_l
+    )
+
+
+def _values(
+    fold: Sequence[tuple[str, float]], **columns: Sequence[float]
+) -> pd.DataFrame:
+    frame = pd.DataFrame(
+        {
+            "log2FoldChange": [value for _, value in fold],
+            "lfcSE": [0.25] * len(fold),
+            "pvalue": [0.01 * (i + 1) for i in range(len(fold))],
+            "padj": [0.04 * (i + 1) for i in range(len(fold))],
+        },
+        index=[name for name, _ in fold],
+    )
+    for name, column in columns.items():
+        frame[name] = list(column)
+    return frame
+
+
+def test_a_phenotype_drops_the_blank_rows_and_nests_the_statistic_maps() -> None:
+    nan = float("nan")
+    values = _values(
+        [("a", 1.5), ("b", nan), ("c", -0.75)],
+        pvalue=[0.01, 0.02, nan],
+        padj=[0.04, 0.05, nan],
+    )
+    phenotype = c.protein_fold_change_phenotype(GENES, values, 3)
+    assert phenotype.protein_fold_change == {"ECB_00001": 1.5, "ECB_00003": -0.75}
+    assert phenotype.protein_fold_change_se == {"ECB_00001": 0.25, "ECB_00003": 0.25}
+    # ECB_00002 is blank, so it is not a key anywhere; ECB_00003 has a fold change but
+    # no test result, so it is a key in neither p-value map.
+    assert phenotype.protein_fold_change_p_value == {"ECB_00001": 0.01}
+    assert phenotype.protein_fold_change_p_value_adjusted == {"ECB_00001": 0.04}
+    assert phenotype.p_value_adjustment_method == "benjamini_hochberg"
+    assert phenotype.fold_change_scale is FoldChangeScale.log2
+    assert phenotype.n_replicates == {"ECB_00001": 3, "ECB_00003": 3}
+    assert phenotype.measurement_type == (
+        "deseq2_wald_log2_fold_change_design_batch_plus_condition"
+    )
+    assert phenotype.reference_basis == (
+        "the base level reference condition of the same growth phase: glucose with "
+        "5 mM Na+ and 0.8 mM Mg2+ on Davis Minimal medium (DM500)"
+    )
+    with pytest.raises(RuntimeError, match="the group carries no fold change"):
+        c.protein_fold_change_phenotype(
+            GENES, _values([("a", nan), ("b", nan), ("c", nan)]), 3
+        )
+
+
+def test_the_reference_phenotype_is_the_log2_scales_neutral_value() -> None:
+    phenotype = c.protein_fold_change_phenotype(
+        GENES, _values([("a", 1.5), ("b", -2.0), ("c", 0.5)]), 3
+    )
+    reference = c.fold_change_reference_phenotype(phenotype, 11)
+    assert reference.protein_fold_change == dict.fromkeys(GENES, 0.0)
+    assert reference.fold_change_scale is FoldChangeScale.log2
+    assert reference.n_replicates == dict.fromkeys(GENES, 11)
+    assert reference.protein_fold_change_se is None
+    assert reference.protein_fold_change_p_value is None
+    assert reference.p_value_adjustment_method is None
+    assert reference.measurement_type == phenotype.measurement_type
+
+
+def test_replicate_derivations_take_the_conservative_low_end_of_the_two_groups() -> (
+    None
+):
+    derivations = c.replicate_derivations(
+        [
+            {"file_name": "a.csv", "n_test_samples": 3, "n_base_samples": 20},
+            {"file_name": "b.csv", "n_test_samples": 15, "n_base_samples": 20},
+        ]
+    )
+    assert [d.field for d in derivations] == [
+        "n_replicates[a.csv]",
+        "n_replicates[b.csv]",
+    ]
+    assert [(d.value, d.range_low, d.range_high) for d in derivations] == [
+        (3.0, 3.0, 23.0),
+        (15.0, 15.0, 35.0),
+    ]
+    assert {d.method for d in derivations} == {DerivationMethod.conservative_low}
+    assert derivations[0].diagnostics == {"n_test_samples": 3.0, "n_base_samples": 20.0}
+    assert derivations[0].provenance is not None
+    assert derivations[0].provenance.sha256 == c.SI_TABLES["S8"][1]
+
+
+def test_deposit_si_table_appends_one_record_and_is_idempotent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = _stage(tmp_path / "staging")
+    _pin_to(monkeypatch, files)
+    monkeypatch.setattr(c, "datetime", _FrozenDatetime)
+    root = c.deposit_raw_mirror(
+        source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    manifest = tmp_path / "dr" / "torchcell-raw" / c.CITATION_KEY / "manifest.json"
+    # Start from a mirror that does NOT hold Table S8, as the first deposit left it.
+    trimmed = Manifest.model_validate_json(manifest.read_text())
+    trimmed.files = [f for f in trimmed.files if f.path != "data/srep45303-s9.csv"]
+    manifest.write_text(trimmed.model_dump_json())
+    (root / "data" / "srep45303-s9.csv").unlink()
+
+    dest = c.deposit_si_table(
+        "S8", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    assert dest == root / "data" / "srep45303-s9.csv"
+    assert dest.read_bytes() == files["data/srep45303-s9.csv"]
+    written = Manifest.model_validate_json(manifest.read_text())
+    assert written.created_at == "2026-10-07T12:00:00+00:00"
+    assert [f.path for f in written.files] == [
+        "data/srep45303-s2.csv",
+        "data/srep45303-s3.csv",
+        "data/srep45303-s4.csv",
+        "data/srep45303-s5.csv",
+        "data/srep45303-s9.csv",
+        "ncbi_protein/yp_batch_00.gp",
+    ]
+    record = next(f for f in written.files if f.path == "data/srep45303-s9.csv")
+    assert record.bytes == len(files["data/srep45303-s9.csv"])
+    assert record.retrieval is not None
+    assert record.retrieval.params == {"key": "PMC5394689.1/srep45303-s9.csv"}
+
+    frozen = manifest.read_bytes()
+    c.deposit_si_table(
+        "S8", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    assert manifest.read_bytes() == frozen
+
+
+def test_deposit_si_table_refuses_a_record_of_other_content_and_a_missing_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = _stage(tmp_path / "staging")
+    _pin_to(monkeypatch, files)
+    with pytest.raises(
+        RuntimeError, match="does not exist; run the full deposit first"
+    ):
+        c.deposit_si_table(
+            "S8", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+    monkeypatch.setattr(c, "datetime", _FrozenDatetime)
+    c.deposit_raw_mirror(
+        source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    manifest = tmp_path / "dr" / "torchcell-raw" / c.CITATION_KEY / "manifest.json"
+    drifted = Manifest.model_validate_json(manifest.read_text())
+    for record in drifted.files:
+        if record.path == "data/srep45303-s9.csv":
+            record.bytes += 1
+    manifest.write_text(drifted.model_dump_json())
+    with pytest.raises(
+        RuntimeError,
+        match=r"records data/srep45303-s9\.csv differently; refusing to overwrite",
+    ):
+        c.deposit_si_table(
+            "S8", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+
+
+@pytest.fixture
+def fold_change(
+    tmp_path: Path, mirror: Path, genome: EcoliBREL606Genome
+) -> c.ProteinFoldChangeCaglar2017Dataset:
+    return c.ProteinFoldChangeCaglar2017Dataset(
+        root=str(tmp_path / "protein_fold_change_caglar2017"), ecoli_genome=genome
+    )
+
+
+def test_the_fold_change_build_keeps_the_primary_control_model_only(
+    fold_change: c.ProteinFoldChangeCaglar2017Dataset,
+) -> None:
+    assert len(fold_change) == 2
+    assert sorted(fold_change.gene_set) == GENES
+    accounting = _ledger(fold_change, "build_accounting.json")
+    assert accounting["candidate_groups"] == 3
+    assert accounting["kept_records"] == 2
+    assert accounting["refused_groups"] == 1
+    assert accounting["refused_rows"] == 3
+    assert accounting["refusals_by_reason"] == {"secondary control model": 1}
+    assert accounting["kept_by_growth_phase"] == {"exponential": 1, "stationary": 1}
+    assert accounting["kept_by_test_for"] == {"Mg_mM_Levels": 1, "Na_mM_Levels": 1}
+    assert accounting["table_rows"] == 12
+    assert accounting["mrna_rows"] == 3
+    assert accounting["protein_rows"] == 9
+    assert [r["file_name"] for r in accounting["refused"]] == [
+        "resDf_protein_set00_Exp_batchNumberPLUSMgPLUSdoublingTimeMinutes__"
+        "lowMgVSbaseMg.csv"
+    ]
+
+    records = _ledger(fold_change, "fold_change_records.json")
+    assert [(r["contrast"], r["growth_phase"]) for r in records] == [
+        ("lowMg", "exponential"),
+        ("highNa", "stationary"),
+    ]
+    assert [(r["n_test_samples"], r["n_base_samples"]) for r in records] == [
+        (1, 2),
+        (1, 1),
+    ]
+    # The lowMg group leaves YP_3.1 blank, so its record carries two of three loci.
+    assert [r["n_fold_change"] for r in records] == [2, 3]
+    assert [r["n_p_value_adjusted"] for r in records] == [2, 3]
+
+    low_mg = _record(fold_change, 0)
+    phenotype = low_mg["experiment"]["phenotype"]
+    assert phenotype["protein_fold_change"] == {"ECB_00001": 1.5, "ECB_00002": -0.75}
+    assert phenotype["fold_change_scale"] == "log2"
+    assert phenotype["n_replicates"] == {"ECB_00001": 1, "ECB_00002": 1}
+    assert low_mg["reference"]["phenotype_reference"]["protein_fold_change"] == {
+        "ECB_00001": 0.0,
+        "ECB_00002": 0.0,
+    }
+    assert low_mg["reference"]["phenotype_reference"]["n_replicates"] == {
+        "ECB_00001": 2,
+        "ECB_00002": 2,
+    }
+    assert low_mg["experiment"]["genotype"]["perturbations"] == []
+    assert [
+        p["compound"]["name"]
+        for p in low_mg["experiment"]["environment"]["perturbations"]
+    ] == ["magnesium sulfate"]
+    assert low_mg["reference"]["environment_reference"]["media"]["name"] == DM500.name
+
+    high_na = _record(fold_change, 1)["experiment"]
+    assert high_na["phenotype"]["protein_fold_change"] == {
+        "ECB_00001": -2.0,
+        "ECB_00002": 0.5,
+        "ECB_00003": 3.25,
+    }
+    assert [p["compound"]["name"] for p in high_na["environment"]["perturbations"]] == [
+        "sodium chloride"
+    ]
+    assert high_na["environment"]["perturbations"][0]["concentration"]["value"] == 195.0
+    assert _ledger(fold_change, "adjustment_back_solve.json")["groups"] == 3
+    assert [
+        d["method"] for d in _ledger(fold_change, "n_replicates_derivation.json")
+    ] == ["conservative_low", "conservative_low"]
+
+
+def test_the_fold_change_verifier_passes_the_records_and_catches_a_broken_reference(
+    fold_change: c.ProteinFoldChangeCaglar2017Dataset,
+) -> None:
+    records = [_record(fold_change, i) for i in range(len(fold_change))]
+    evidence = c.AdjustmentBackSolve.model_validate(
+        _ledger(fold_change, "adjustment_back_solve.json")
+    )
+    report = c.verify_protein_fold_change_records(
+        records, expected_count=2, gene_universe=GENES, adjustment=evidence
+    )
+    assert report.passed, report.summary()
+    assert [r.name for r in report.results] == [
+        "structural",
+        "count",
+        "contrast_uniqueness",
+        "value_fidelity",
+        "p_values_are_probabilities",
+        "reference_is_the_scales_neutral_value",
+        "fold_change_scale_consistent",
+        "measurement_type_consistent",
+        "contrast_environment_uniqueness",
+        "sample_uniqueness",
+        "fold_change_se_nonnegative",
+        "adjusted_p_values_are_probabilities",
+        "statistic_keys_are_nested",
+        "p_value_adjustment_method_consistent",
+        "assembly_pin",
+        "p_value_adjustment_back_solve",
+        "gene_containment_rel606",
+    ]
+
+    records[0]["reference"]["phenotype_reference"]["protein_fold_change"][
+        "ECB_00001"
+    ] = 1.0
+    records[1]["experiment"]["phenotype"]["p_value_adjustment_method"] = "bonferroni"
+    broken = c.verify_protein_fold_change_records(
+        records,
+        expected_count=2,
+        gene_universe=GENES[:1],
+        adjustment=evidence.model_copy(update={"max_abs_deviation": 0.5}),
+    )
+    assert {r.name for r in broken.results if not r.passed} == {
+        "reference_is_the_scales_neutral_value",
+        "p_value_adjustment_method_consistent",
+        "p_value_adjustment_back_solve",
+        "gene_containment_rel606",
+    }

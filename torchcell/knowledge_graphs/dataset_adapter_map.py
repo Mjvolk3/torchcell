@@ -85,6 +85,7 @@ from torchcell.adapters import (
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
+    ProteinFoldChangeCaglar2017Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
@@ -127,6 +128,9 @@ from torchcell.adapters import (
     TmiKuzmin2020Adapter,
     TranscriptionFactorKnockoutChoe2019Adapter,
 )
+from torchcell.adapters.carruthers2025_proteome_fold_change_adapter import (
+    ProteomeFoldChangeCarruthers2025Adapter,
+)
 from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
     InhibitorBioscreenVolk2021Adapter,
@@ -135,6 +139,7 @@ from torchcell.data.experiment_dataset import Visibility
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
+    ProteinFoldChangeCaglar2017Dataset,
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
 )
@@ -202,6 +207,7 @@ from torchcell.datasets.pputida.carruthers2025 import (
     CampaignProteomeCarruthers2025Dataset,
     IsoprenolTiterCarruthers2025Dataset,
     ProteomeCarruthers2025Dataset,
+    ProteomeFoldChangeCarruthers2025Dataset,
 )
 from torchcell.datasets.pputida.desiqueira2025 import (
     IsoprenolTiterDeSiqueira2025Dataset,
@@ -368,6 +374,7 @@ dataset_adapter_map: dict[type, type] = {
     RnaseqCaglar2017Dataset: RnaseqCaglar2017Adapter,
     ProteomeCaglar2017Dataset: ProteomeCaglar2017Adapter,
     DoublingTimeCaglar2017Dataset: DoublingTimeCaglar2017Adapter,
+    ProteinFoldChangeCaglar2017Dataset: ProteinFoldChangeCaglar2017Adapter,
     CrispriChemgenChoe2025Dataset: CrispriChemgenChoe2025Adapter,
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
@@ -412,6 +419,7 @@ dataset_adapter_map: dict[type, type] = {
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,
     ProteomeCarruthers2025Dataset: ProteomeCarruthers2025Adapter,
     CampaignProteomeCarruthers2025Dataset: CampaignProteomeCarruthers2025Adapter,
+    ProteomeFoldChangeCarruthers2025Dataset: ProteomeFoldChangeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Dataset: ProteomeDeSiqueira2025Adapter,
     ProteomePercentDeSiqueira2025Dataset: ProteomePercentDeSiqueira2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Dataset: (

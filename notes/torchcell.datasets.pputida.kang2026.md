@@ -510,3 +510,50 @@ The record count is unchanged at 19, and this row's refusals remain the ones alr
 recorded: the aqueous-isoprenol column of Table S9 (read, oracle-checked and carried in
 `preprocess/titer_rows.csv`, and NOT a `ProductTiterExperiment`) and the five strains
 Table 1 gives no titer.
+## 2026.10.09 - Table S6 stays refused after #770, because the identifier route is the blocker, not the phenotype class
+
+Issue #770 names Kang 2026's Supplementary Table S6 as one of five places a protein-level
+fold change is released and the schema could not hold it. `ProteinFoldChangePhenotype`
+landed in this wave and holds it. The table is still NOT loaded, for a different reason
+that was measured here rather than assumed: its keys cannot be resolved to loci of the
+pinned assembly.
+
+Measured by
+[[protein_fold_change_refusals_kang_lim|experiments.036-dataset-fixes-before-kg-build.scripts.protein_fold_change_refusals_kang_lim]]
+over `si/si1.docx` (sha256
+`c7d4567fae037c7392e39b855cc71f83b7b4a5d96699c3f18b991a25c57f09e0`), read through this
+module's own `si_table(path, 6)`:
+
+| fact | measurement |
+|---|---|
+| caption, verbatim | "Table S6. List of top 20 accessory genes upregulated and downregulated by sgRNA targeting PP_4854." |
+| columns | `Protein Group`, `Protein Names`, `Protein`, `Protein Description`, `Fold Change`, `Log2 (Fold Change)`, `p-Value (Equal Variance)`, `(-Log10 (p-Value))`, `Category`, `Rank` |
+| rows | 41 including the header, so 40 data rows, 40 distinct keys |
+| key form | a UniProt accession in `Protein Group` (`Q88HX1`, `Q88DG9`, `Q88C64`) |
+| significance | the table is NOT filtered: 29 of 40 rows have `p-Value (Equal Variance)` below 0.05 |
+| UniProtKB cross-references on the pinned assembly | **0** in `GCA_000007565.2_ASM756v2_genomic.gbff.gz` |
+
+The last row is the blocker. `DerivedIdentifierRoute` gained a `uniprot_db_xref` member in
+this wave, and that member is the route Gupta 2024 resolves 3,225 of 3,262 proteins
+through, but it reads the annotation's own
+`/db_xref="UniProtKB/Swiss-Prot:<acc>"` entries and the pinned *P. putida* KT2440 GenBank
+carries none. For contrast, the same measurement on the pinned MG1655 assembly
+(`GCA_000005845.2_ASM584v2_genomic.gbff.gz`) counts 4,281. So the route that unblocks the E. coli
+proteomics releases is measurably unavailable for this assembly, and a 40-key dict of
+UniProt accessions has no path to locus tags through anything this repo pins as part of
+the genome.
+
+The genomes tier does hold `109.P_putida_KT2440.goa`, a UniProt GAF whose synonym column
+carries PP_ tags, and it reaches 29 of the 40 accessions (the other 11 are absent from the
+GOA entirely, mostly "Uncharacterized protein", and one of the 11 is `Q99ZW2`, Cas9
+itself, which is heterologous and has no host locus). Using it would be a THIRD identifier
+route neither #770 nor #753 asks for, it would cap the resolved fraction at 0.72 on a
+40-key table, and the rank-1 upregulated row is Cas9 at a fold change of 209, which is a
+presence/absence artifact of a reference strain that lacks the CRISPRi system rather than
+a measured induction. One record of 40 keys is not worth a new route decided in passing.
+
+Recorded as refused and counted, which is the Wang 2018 treatment #770 names as the honest
+alternative. The contrast itself is sourced and ready for whoever takes the route
+question up, verbatim from the Figure S1 caption: "(a) Volcano plot analysis displaying
+differentially expressed proteins in PIPA-D16 (targeting PP_4854) relative to the control
+strain PIPA-C (lacking the CRISPRi/dCas9 system)."

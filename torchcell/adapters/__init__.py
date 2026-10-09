@@ -28,6 +28,9 @@ from .cachera2023_adapter import (
 from .caglar2017_doubling_time_adapter import (
     DoublingTimeCaglar2017Adapter as DoublingTimeCaglar2017Adapter,
 )
+from .caglar2017_protein_fold_change_adapter import (
+    ProteinFoldChangeCaglar2017Adapter as ProteinFoldChangeCaglar2017Adapter,
+)
 from .caglar2017_proteome_adapter import (
     ProteomeCaglar2017Adapter as ProteomeCaglar2017Adapter,
 )
@@ -45,6 +48,9 @@ from .carruthers2025_campaign_proteome_adapter import (
 )
 from .carruthers2025_proteome_adapter import (
     ProteomeCarruthers2025Adapter as ProteomeCarruthers2025Adapter,
+)
+from .carruthers2025_proteome_fold_change_adapter import (
+    ProteomeFoldChangeCarruthers2025Adapter as ProteomeFoldChangeCarruthers2025Adapter,
 )
 from .carruthers2025_titer_adapter import (
     IsoprenolTiterCarruthers2025Adapter as IsoprenolTiterCarruthers2025Adapter,
@@ -377,6 +383,7 @@ ecoli_adapters = [
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
     "DoublingTimeCaglar2017Adapter",
+    "ProteinFoldChangeCaglar2017Adapter",
     "CrispriChemgenChoe2025Adapter",
     "CrispriKnockdownCui2018Adapter",
     "GrowthRateCampos2018Adapter",
@@ -420,6 +427,7 @@ pputida_adapters = [
     "CampaignProteomeCarruthers2025Adapter",
     "IsoprenolTiterCarruthers2025Adapter",
     "ProteomeCarruthers2025Adapter",
+    "ProteomeFoldChangeCarruthers2025Adapter",
     "ProteomeDeSiqueira2025Adapter",
     "ProteomeLog10PercentDeSiqueira2025Adapter",
     "ProteomePercentDeSiqueira2025Adapter",

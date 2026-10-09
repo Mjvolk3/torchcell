@@ -327,3 +327,241 @@ controlled-pH factor). The data-gated
 every emitted edge endpoint is an emitted node and every label and property is declared.
 No KG build was run and no admission check was run; the
 `kg_manifest --dataset ProteinTurnoverGupta2024Dataset admit` step is the follow-up.
+
+## 2026.10.09 - Issue #753: the censoring flag, the published interval, the typed identifier route and the chemostat dilution rate
+
+Issue #753 was found writing this loader: four things the release publishes that the
+schema could not hold, each written to a preprocess file or named on free text instead.
+The schema landed them (`ProteinTurnoverPhenotype.censoring`,
+`degradation_rate_lower` / `_upper` + `confidence_level` + `interval_method`,
+`DerivedIdentifierRoute.uniprot_db_xref`, `Environment.dilution_rate_per_hour`), and
+this loader now carries all four on the record.
+
+- loader: `torchcell/datasets/ecoli/gupta2024.py`
+- tests: `tests/torchcell/datasets/ecoli/test_gupta2024.py` (94 pass with the mirror),
+  `tests/torchcell/adapters/test_gupta2024_adapter.py` (5 pass under `--data`)
+- dev store: `$DATA_ROOT/data/torchcell/protein_turnover_gupta2024/`
+
+### 1. The censoring flag now travels, for every key
+
+`censoring` carries a `Censoring` for **every** stored key, not only the capped ones,
+because the source resolves the question for every released cell: Supplementary Data 1's
+`*` and Supplementary Data 7's `Undetermined` agree on all 61,811 cells, 0 disagreements
+in either direction, which the build asserts as a cross-source oracle. With a complete
+oracle, a key missing from the map would mean "the source does not say", which would be
+false here, so `uncensored` is stated rather than spelled by absence.
+
+A key is `right` when **any** of its replicate cells is ceiling-flagged: the authors'
+mean then has a capped value in it, so the true mean half-life lies above the stored one.
+
+| measured on the rebuilt store | count |
+|---|---|
+| stored replicate cells | 61,787 |
+| of which ceiling-flagged (`*`) | 2,082 |
+| stored keys | 33,187 |
+| keys `Censoring.right` | 1,989 |
+| of those, with BOTH replicates capped | 93 |
+| keys `Censoring.uncensored` | 31,198 |
+
+The side is stated on the **released total half-life**, which is what the cap was applied
+to and what `half_life` stores verbatim; `degradation_rate` is `ln 2` over it, a
+decreasing map, so the same key bounds the rate from ABOVE. The gloss, verbatim from
+Supplementary Data 1 cell A3 (sha256
+`546cc57b8386a15217dd76c10077844073ac083755cdecbd99f9284c1cbe0acc`):
+
+> \* Protein total half-life was set to ceiling for this dilution rate
+
+and Supplementary Data 7 cell A3 (sha256
+`149a361b9b4c783c046f702364ba083730a294a1ef5ef3b6bcfc73a9ff27d4fe`):
+
+> \*Undetermined = Model fitting resulted in half-lives much greater than dilution rate; total half-life was set to ceiling for that condition
+
+`preprocess/ceiling_cells.csv` is still written: it carries what the record does not, the
+replicate NUMBER and the measured ceiling of that doubling time (2 h at 42 min, 4 h at
+3 h, 8 h at 6 h, 16 h at 12 h).
+
+### 2. The published interval is stored for exactly the keys it is an interval of
+
+The measurement decided this, and it went the storable way for one subset only.
+Supplementary Data 7 publishes a per-REPLICATE 95% interval on the total half-life, as a
+`[lower upper]` cell in hours. For a **one-replicate** key the stored value IS that
+replicate's fitted half-life, so the released interval is the record's interval and
+stores losslessly; for a two-replicate key the interval of the MEAN of two fits is not
+published.
+
+| measured | count |
+|---|---|
+| stored keys with ONE replicate | 4,587 |
+| of those, ceiling-flagged (interval cell reads `Undetermined`) | 292 |
+| of those, with a determined interval | 4,295 |
+| **stored** on the rate scale | **4,270** |
+| refused, released upper endpoint `<= 0` | 25 |
+| one-replicate keys with no interval cell at all | 0 |
+| stored keys with TWO replicates (no bounds) | 28,600 |
+
+The bounds are inverted onto the rate scale, which is exact arithmetic through the Note's
+own identity: `r = ln 2 / T` is strictly decreasing, so the endpoints swap and the LOWER
+rate bound comes from the UPPER half-life endpoint. The build asserts every stored pair
+brackets the stored rate, and L2 re-asserts it on the built store (4,270 pairs, 0
+outside).
+
+The 25 refusals are the honest half of the measurement and are listed in
+`preprocess/build_accounting.json` under `refused_intervals` with their released
+endpoints. Their published upper half-life endpoint is zero or negative, which is the
+rate interval's lower bound having crossed zero (e.g. `sp|P02943|LAMB_ECOLI` in minimal
+batch: half-life 0.8007 h, released `[0.367 -4.378]`). No finite non-negative rate bound
+exists for them and clamping one at zero would manufacture a bound the fit did not give.
+
+`confidence_level = 0.95` and `interval_method` are sourced. From the Supplementary Note
+(`si/si1.md`, sha256 `5f913f0b846865ad0bcac57cfe7a9f1895d04dd2ec7b16db11bf28be10d1062a`),
+"Protein half-life fitting":
+
+> 265 We also assign confidence intervals to the fitted half-lives. Curve- fit function in python along
+> with returning the parameter estimate also returns the variance estimate of the fitted parameter.
+> This is the error with $67 \%$ confidence interval. To get the $9 5 \%$ CI, we should
+> Therefore we evaluate, Percent point function (inverse of cdf) at a value of 0.975 given degrees
+> of freedom (dof= Number of data points – number of estimated parameters $= \dot { 1 } \times 8 - 1$ )
+
+so `interval_method` is
+`curve_fit_parameter_variance_t_ppf_0.975_dof_8i_minus_1_published_per_replicate_on_the_total_half_life_inverted_to_the_rate_scale`.
+The workbook's own column headers state the level too ("Total half-life 95% confidence
+interval in C-lim chemostat, doubling time 6 hrs, replicate 1").
+
+Why a two-replicate key gets nothing rather than something: combining two replicate
+intervals needs `i`, the per-protein peptide count the `dof` depends on, and `i` is not
+released. `degradation_rate_lower` / `_upper` are ragged by design and an absent key
+already means "the source publishes no interval for this key", so no per-key
+`ProvenanceGap` restates it (naming the 28,600 two-replicate keys per record would add
+~740k redundant strings to the store to say what the field's own contract says).
+`degradation_rate_se` is unchanged: the paper's own two-replicate `sd / sqrt(n)`. A
+replicate SE and a fitted interval are different statistics, and this release carries
+each one for the keys the other cannot cover.
+
+### 3. The identifier route is typed
+
+`DerivedIdentifierRoute` now has `uniprot_db_xref`, so the route the loader measured is
+the route it records.
+
+| route | rows | what it reads |
+|---|---|---|
+| `uniprot_db_xref` | 3,225 | `/db_xref="UniProtKB/Swiss-Prot:<acc>"` on the pinned assembly's CDS features |
+| `gene_symbol` | 35 | the released gene-name column, through the genome's symbol and synonym layers |
+| none (unresolved) | 2 | the two alternative-isoform rows, which key nothing |
+
+What moved: `identifier_names` now builds a validated `DerivedIdentifierMapping` per
+resolved row (all 3,262 released keys pass `UNIPROT_ACCESSION_PATTERN` through
+`DerivedIdentifierMapping.uniprot_accession()`, measured), `IdentifierRoute` gained
+`rows_per_route` keyed on the enum, and `preprocess/identifier_route.csv` gained a
+`route` and a `source_identifier` column holding the enum value and the verbatim
+identifier instead of a free string.
+
+What did NOT move, with the measurement that refused it: the **deletion perturbations**
+keep `route="gene_symbol"`. The paper releases its knockouts only as symbols,
+
+> The ΔclpP, Δlon, ΔhslV single mutants were generated by P1 transduction from the Keio collection87 into E. coli strain NCM3722.
+> we knocked out the smpB gene (codes for a protein in the SsrA tagging complex75), and measured gene-by-gene protein turnover in nitrogen limitation with a 6-h doubling time in duplicate.
+
+(`paper.md`, sha256 `1be6b9d958235a80ce2421c552299dd6bf2371cccfed28a24bd813a30d3d35a2`),
+never as accessions, and each of the four resolves through the genome's name layers. A
+`uniprot_db_xref` route there would have to invent an accession the source does not
+release for the genotype. The per-key protein route still cannot sit ON the record, for
+the reason that has not changed: a dict-keyed phenotype has no `identifier_mapping`
+field, so the CSV and the accounting are where it lives.
+
+### 4. The chemostat dilution rate is a typed environment field
+
+`Environment.dilution_rate_per_hour` replaces the free text on `measurement_type`, which
+is now `n15_ammonium_tmtproc_total_turnover_rate_per_hour` for all 13 records: the assay
+and its unit, nothing else.
+
+No numeric `D` is printed per condition, but the paper fixes it twice over. From
+`paper.md`, Results:
+
+> the known variable $D$ (dilution rate)
+
+and the Fig. 2 legend:
+
+> The vertical line marks the dilution limit set by the 6-h doubling time.
+
+The dilution-limited total half-life IS the doubling time, and the Supplementary Note's
+identity
+
+> Since $\mathsf { k } _ { \mathsf { t o t a l } } = \ln 2 / \mathrm { T } _ { 1 / 2 }$
+
+turns that half-life into a rate. So `dilution_rate_per_hour = ln 2 / doubling time`:
+exact arithmetic on two quoted sentences, the same identity `degradation_rate` already
+uses. The 42 min condition is batch and carries none; the paper's own 0.7 h for it
+("rapidly doubling cells with unlimited growth in minimal medium (0.7 h)") is recorded on
+`Condition.doubling_hours` but sets no dilution rate.
+
+| doubling time | records | `dilution_rate_per_hour` (h^-1) |
+|---|---|---|
+| 42 min (batch) | 1 | `None` |
+| 3 h | 1 | 0.23104906018664842 |
+| 6 h | 8 | 0.11552453009332421 |
+| 12 h | 3 | 0.057762265046662105 |
+
+**Did it split or collide anything? No, measured both ways.** On the superseded store
+(`processed.superseded.20261009-030053`) and on the rebuilt one:
+
+| | before | after |
+|---|---|---|
+| records | 13 | 13 |
+| distinct environment dumps | 8 | 8 |
+| distinct environment identities | 8 | 8 |
+| distinct `measurement_type` values | 4 | 1 |
+| distinct experiment contents | 13 | 13 |
+| stored keys per record | 2389 ... 2808 | unchanged |
+
+The dilution rate is a bijection of `duration_hours` within this release's chemostat set
+(3 h to a 12.15 h labeling window, 6 h to 26.867, 12 h to 36.1), so the window already
+separated every pair the dilution rate would. Two caveats recorded rather than assumed:
+`environment_identity` in `torchcell/datamodels/identity.py` does **not** yet project
+`dilution_rate_per_hour`, although the field's own description says it is part of the
+environment identity; that is a one-line shared-file change handed to the driver rather
+than made here, and it changes nothing for this dataset. And because `measurement_type`
+is now one constant string, the verifier's record identity is
+`(medium name, duration_hours, dilution_rate_per_hour, deleted symbols)` instead of
+`(measurement_type, medium, deleted symbols)`, which would otherwise have collapsed the
+three C-limited wild-type records onto one identity.
+
+### Build and verification
+
+```
+python -m torchcell.database.build_dataset_lmdb --dataset ProteinTurnoverGupta2024Dataset --retire-existing
+BUILT ProteinTurnoverGupta2024Dataset: 13 records in 4s; gene_set size 4; references 1
+```
+
+`--list-stale --include-private` no longer names the dataset. Retention ledger unchanged:
+3,262 released rows less the 2 isoform rows, 13 of 13 conditions kept, 33,187 stored label
+values.
+
+```
+protein_turnover_gupta2024: PASS
+  [ok] L0 structural: 13 records validated
+  [ok] L1 count: observed 13, expected 13
+  [ok] L1 per_condition_protein_counts_match_table_1_less_isoform_rows: 13 records matched to 13 conditions; 0 count mismatch(es), 0 missing, 0 unexpected
+  [ok] L1 every_per_protein_map_is_keyed_on_degradation_rate: 13 records checked; 0 misaligned
+  [ok] L1 per_condition_censored_and_interval_key_counts_are_the_pinned_ones: 1989 right-censored key(s) and 4270 key(s) with a stored interval over 13 records; 0 mismatch(es)
+  [ok] L2 value_fidelity: 33187 values checked
+  [ok] L2 value_fidelity: 33187 values checked
+  [ok] L2 stored_interval_brackets_the_stored_rate: 4270 bound pair(s) checked; 0 outside
+  [ok] L3 degradation_rate_is_ln2_over_half_life: 33187 values; largest |ln2/T - k| is 0.000e+00
+  [ok] L3 dilution_rate_per_hour_is_ln2_over_the_doubling_time: 12 continuous-culture record(s) of 13, 12 expected; 0 mismatch(es)
+  [ok] L3 assembly_pin_is_mg1655_genbank_with_the_ncm3722_background: 1 distinct pin(s)
+  [ok] L4 stored_protein_keys_are_loci_of_the_pinned_assembly: 3260 distinct keys; containment 1.000000; 0 outside
+```
+
+Three levels are new: the per-condition censored and interval key counts (each pinned on
+its `Condition`, so neither map can drift unnoticed), the bound-bracketing check, and the
+dilution-rate identity. `censoring` joined the L1 key-alignment set, since it is keyed on
+every stored key; the bound maps stay out of it, because they are ragged.
+
+### Does `ProteinTurnoverPhenotype` suffice now
+
+The two representational gaps the 2026.10.07 section raised are closed: the per-protein
+censoring flag and the published interval both travel on the record, and the third item
+("`Environment` cannot express a chemostat dilution rate") is a typed field. What remains
+absent is absent in the SOURCE, not in the schema: no per-protein uncertainty of a
+two-replicate MEAN is published, and no per-protein synthesis rate exists at all, which
+is the one typed `ProvenanceGap` left on the phenotype.

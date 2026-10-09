@@ -901,6 +901,26 @@ KO_ARRAY_PROSE_TITERS: tuple[float, ...] = (980.0, 981.0, 982.0)
 #: What the four synthetic panels build: 2 Figure 6a + 2 Figure 6d + 4 off-target +
 #: 2 uninduced overexpression strains.
 SYNTHETIC_PANEL_TITER_RECORDS = 2 + 3 + 1 + len(OFFTARGET_SAMPLES) + 2
+#: The synthetic ``Figure 5b`` contrast columns: every single-guide DBTL0 construct, so
+#: the released-strain join the fold-change loader asserts holds on the miniature too.
+FOLD_CHANGE_CONTRASTS: tuple[str, ...] = SINGLE_GUIDE_TARGETS
+#: The synthetic ``Figure 6b`` columns with no sourced denominator, and why. The real
+#: sheet releases eight; the miniature releases two, one of each kind the ledger has.
+FOLD_CHANGE_UNSOURCED: dict[str, str] = {
+    "Control": "the sheet's own label for a column no mirrored statement describes",
+    "PP_0812_15": "a Figure 6a KO-background label no statement names as a contrast",
+}
+#: The protein keys both fold-change sheets carry: three loci plus the one key no layer
+#: resolves, which must be dropped from every record's map and ledgered.
+FOLD_CHANGE_KEYS: tuple[str, ...] = (*PROTEOME_TAGS[:3], PROTEOME_UNRESOLVED)
+#: The synthetic ``Supplementary Figure 10`` columns and keys: refused as a sheet, so
+#: only its shape, density and key form are read.
+BEST_ARRAY_HEATMAP_STRAINS: tuple[str, ...] = ("PP_0368_PP_0815", "PP_0528_PP_0815")
+BEST_ARRAY_HEATMAP_KEYS: tuple[str, ...] = ("PP_2793", "AcsA1", "ValS")
+#: 5 Figure 5b contrasts + the 2 Figure 6b contrasts the Fig. 6 caption names.
+SYNTHETIC_FOLD_CHANGE_RECORDS = len(FOLD_CHANGE_CONTRASTS) + len(
+    c25.KO_FOLD_CHANGE_CONTRASTS
+)
 
 ASSEMBLY_REPORT = """# Assembly name:  ASM756v2
 # Organism name:  Pseudomonas putida KT2440 (g-proteobacteria)
@@ -1125,6 +1145,7 @@ def _write_source_data(path: Path) -> None:
                     )
 
     _write_source_data_panels(book, rows)
+    _write_source_data_fold_change(book)
     book.save(path)
 
 
@@ -1141,6 +1162,59 @@ def _figure_4b_values(
     ]
     assert out, f"{base} has no cycle {cycle} rows in the synthetic Figure 4b"
     return out
+
+
+def _write_source_data_fold_change(book: Any) -> None:
+    """The two released fold-change sheets, the pointer sheet and the refused heatmap.
+
+    Written in the released shape, not its size: ragged value/p-value pairs, a
+    ``Figure 6b`` orphan row that carries only a ``primary_name``, the one cell that
+    sources the single-guide denominator, and a dense heatmap with no p-value column.
+    """
+    single = book.create_sheet(c25.SHEET_FOLD_CHANGE)
+    header: list[Any] = ["Locus Name", "Primary Name"]
+    for contrast in FOLD_CHANGE_CONTRASTS:
+        header += [f"{contrast}_log2_FC", f"{contrast}_log10_pval"]
+    single.append(header)
+    for key_index, key in enumerate(FOLD_CHANGE_KEYS):
+        row: list[Any] = [key, None]
+        for contrast_index in range(len(FOLD_CHANGE_CONTRASTS)):
+            # every contrast tests the first key and only some of the others, which is
+            # what makes the stored maps ragged by release rather than by this loader
+            if key_index == 0 or contrast_index <= key_index:
+                row += [0.5 + key_index + contrast_index, 2.0 + contrast_index * 0.5]
+            else:
+                row += [None, None]
+        single.append(row)
+
+    ko = book.create_sheet(c25.SHEET_KO_FOLD_CHANGE)
+    ko_contrasts = (*c25.KO_FOLD_CHANGE_CONTRASTS, *FOLD_CHANGE_UNSOURCED)
+    ko_header: list[Any] = ["Locus Name", "primary_name"]
+    for contrast in ko_contrasts:
+        ko_header += [f"{contrast}_log2_FC", f"{contrast}_log10_pval"]
+    ko.append(ko_header)
+    ko.append([None, "aspS", *([None] * (len(ko_contrasts) * 2))])
+    for key_index, key in enumerate(FOLD_CHANGE_KEYS):
+        row = [key, None]
+        for contrast_index in range(len(ko_contrasts)):
+            row += [-1.0 - key_index - contrast_index, 3.0 + contrast_index * 0.25]
+        ko.append(row)
+
+    pointer = book.create_sheet(c25.SHEET_FOLD_CHANGE_POINTER)
+    pointer.append([c25.FOLD_CHANGE_POINTER_CELL])
+
+    heatmap = book.create_sheet(c25.SHEET_BEST_ARRAY_HEATMAP)
+    heatmap.append(["POI", *BEST_ARRAY_HEATMAP_STRAINS])
+    for key_index, key in enumerate(BEST_ARRAY_HEATMAP_KEYS):
+        heatmap.append(
+            [
+                key,
+                *(
+                    -1.0 + key_index - strain_index
+                    for strain_index in range(len(BEST_ARRAY_HEATMAP_STRAINS))
+                ),
+            ]
+        )
 
 
 def _write_source_data_panels(
@@ -1547,6 +1621,21 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     monkeypatch.setattr(c25, "OFFTARGET_CANDIDATE_TARGETS", OFFTARGET_DISTINCT_TARGETS)
     monkeypatch.setattr(
         c25, "EXPECTED_PANEL_TITER_RECORDS", SYNTHETIC_PANEL_TITER_RECORDS
+    )
+    monkeypatch.setattr(
+        c25, "EXPECTED_FOLD_CHANGE_RECORDS_FIG5B", len(FOLD_CHANGE_CONTRASTS)
+    )
+    monkeypatch.setattr(
+        c25, "EXPECTED_FOLD_CHANGE_RECORDS", SYNTHETIC_FOLD_CHANGE_RECORDS
+    )
+    monkeypatch.setattr(c25, "KO_FOLD_CHANGE_UNSOURCED_REASONS", FOLD_CHANGE_UNSOURCED)
+    # The miniature carries four fold-change keys, one of which no layer resolves, so
+    # its resolved fraction is 0.75 where the released sheets' is 0.9866. The released
+    # threshold is asserted by the dev-tree build and its report, not here.
+    monkeypatch.setattr(
+        c25.ProteomeFoldChangeCarruthers2025Dataset,
+        "MIN_RESOLVED_FRACTION",
+        (len(FOLD_CHANGE_KEYS) - 1) / len(FOLD_CHANGE_KEYS),
     )
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
@@ -2489,7 +2578,7 @@ def test_both_loaders_refuse_the_interface_they_do_not_implement(
         proteome.create_experiment()
 
 
-def test_main_builds_both_families_and_prints_their_accounting(
+def test_main_builds_all_three_families_and_prints_their_accounting(
     synthetic_mirror: Path,
     synthetic_kt2440: Any,
     campaign_patches: None,
@@ -2514,13 +2603,18 @@ def test_main_builds_both_families_and_prints_their_accounting(
         f"CampaignProteomeCarruthers2025Dataset: len = {SYNTHETIC_CAMPAIGN_RECORDS}"
         in out
     )
+    assert "ProteomeFoldChangeCarruthers2025Dataset: len =" in out
     # The titer and panel families drop exactly the induced overexpression groups, so
-    # both print it; the campaign family drops no record, only accessions.
+    # both print it; the campaign family drops no record, only accessions, and the
+    # fold-change family drops its own unsourced contrasts and the refused heatmap
+    # columns instead.
     dropped = len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
         c25.OVEREXPRESSION_SHEET_LABELS
     )
     assert out.count(f'"dropped_records": {dropped}') == 2
     assert out.count('"dropped_records": 0') == 1
+    fold_change_dropped = len(FOLD_CHANGE_UNSOURCED) + len(BEST_ARRAY_HEATMAP_STRAINS)
+    assert out.count(f'"dropped_records": {fold_change_dropped}') == 1
 
 
 # --- the four Source Data panels: parsers, proofs and refusals ------------- #

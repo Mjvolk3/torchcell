@@ -60,6 +60,7 @@ datasets:
   - RnaseqCaglar2017Dataset
   - ProteomeCaglar2017Dataset
   - DoublingTimeCaglar2017Dataset
+  - ProteinFoldChangeCaglar2017Dataset
   - GrowthRateCampos2018Dataset
   - MorphologyCampos2018Dataset
   - GrowthRateChoe2019Dataset
@@ -103,6 +104,7 @@ datasets:
   - IsoprenolTiterCarruthers2025Dataset
   - ProteomeCarruthers2025Dataset
   - CampaignProteomeCarruthers2025Dataset
+  - ProteomeFoldChangeCarruthers2025Dataset
   - ProteomeDeSiqueira2025Dataset
   - ProteomePercentDeSiqueira2025Dataset
   - ProteomeLog10PercentDeSiqueira2025Dataset

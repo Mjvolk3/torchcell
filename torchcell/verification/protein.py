@@ -75,13 +75,15 @@ def _l1_orf_uniqueness(
     )
 
 
-def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
+def _l3_reference_finite(
+    records: Sequence[Record], label_key: str = "protein_abundance"
+) -> LevelResult:
     """L3: the WT reference abundance is finite + key-matched for every protein."""
     n = 0
     bad = 0
     for rec in records:
-        exp_keys = set(rec["experiment"]["phenotype"]["protein_abundance"])
-        levels = rec["reference"]["phenotype_reference"]["protein_abundance"]
+        exp_keys = set(rec["experiment"]["phenotype"][label_key])
+        levels = rec["reference"]["phenotype_reference"][label_key]
         if set(levels) != exp_keys:
             bad += 1
             continue
@@ -126,12 +128,21 @@ def verify_protein_dataset(
     provenance: Provenance,
     expected_count: int,
     allow_duplicate_orfs: bool = False,
+    label_key: str = "protein_abundance",
+    se_key: str = "protein_abundance_se",
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for a protein-abundance dataset.
 
     L4 (cross-source gene overlap with the deletion collection) is asserted by the
     caller across datasets. ``allow_duplicate_orfs`` relaxes L1 uniqueness for
     datasets that intentionally hold multiple strains per ORF (e.g. Messner 2023).
+
+    ``label_key`` / ``se_key`` name the phenotype's value and SE maps, so the same gate
+    runs over the relative sibling of this family: a ``ProteinFoldChangePhenotype``
+    dataset passes ``label_key="protein_fold_change"``. Every rule here is about the
+    SHAPE of a per-protein map (finite values, non-negative SE, a key-matched finite
+    reference, one measurement_type), which both classes share; what the number MEANS is
+    the caller's own L3/L4 business, which is why nothing here reads the scale.
     """
     from pydantic import TypeAdapter
 
@@ -147,16 +158,14 @@ def verify_protein_dataset(
     levels = [
         float(v)
         for rec in records
-        for v in rec["experiment"]["phenotype"]["protein_abundance"].values()
+        for v in rec["experiment"]["phenotype"][label_key].values()
     ]
     report.add(l2_value_fidelity(levels, allow_nan=False))
 
     se_values = [
         float(v)
         for rec in records
-        for v in (
-            rec["experiment"]["phenotype"].get("protein_abundance_se") or {}
-        ).values()
+        for v in (rec["experiment"]["phenotype"].get(se_key) or {}).values()
         if not (isinstance(v, float) and math.isnan(v))
     ]
     se_result = l2_value_fidelity(se_values, allow_nan=False, minimum=0.0)
@@ -170,7 +179,7 @@ def verify_protein_dataset(
         )
     )
 
-    report.add(_l3_reference_finite(records))
+    report.add(_l3_reference_finite(records, label_key))
     report.add(_l3_measurement_type_consistent(records))
     return report
 

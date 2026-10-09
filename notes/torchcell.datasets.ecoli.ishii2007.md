@@ -275,3 +275,230 @@ half-stated interval.
 Generating script for every number above:
 `experiments/036-dataset-fixes-before-kg-build/scripts/ishii2007_release_inventory.py`,
 results in `experiments/036-dataset-fixes-before-kg-build/results/ishii2007_release_inventory.json`.
+
+## 2026.10.09 - #753 names the dilution rate, so the wild-type arm is served
+
+`Environment.dilution_rate_per_hour` landed with issue #753 (validated finite and
+strictly positive or absent). Every environment this loader builds now sets it, the
+`culture_not_batch` drop rule is retired, and all three arms go from **24 to 28
+records**: the 24 Keio disruptants at 0.2 h-1 plus the wild type at 0.1, 0.4, 0.5 and
+0.7 h-1.
+
+### Which column is which rate, measured instead of inferred from GR01..GR04
+
+The `GR` numbering says nothing about the rate, so it is not what the loader reads. The
+release writes the rate into the Sample Name, in two places that must agree:
+
+| sample id | `IDs` sheet Sample Name | data sheets' name row | rate (h-1) |
+|---|---|---|---|
+| `GR01` | `WT, 0.1h-1` | `WT, 0.1h-1` | 0.1 |
+| `GR02` | `WT, 0.4h-1` | `WT, 0.4h-1` | 0.4 |
+| `GR03` | `WT, 0.5h-1` | `WT, 0.5h-1` | 0.5 |
+| `GR04` | `WT, 0.7h-1` | `WT, 0.7h-1` | 0.7 |
+| `GR04x` | `WT, 0.7h-1` | blank in all three served sheets | 0.7 |
+| `RF01`-`RF08` | `WT, 0.2h-1` | `WT(Mar)`, `WT(Jun)`, ... | 0.2 |
+
+The ordering does happen to be `0.1, 0.4, 0.5, 0.7`, but that is a measurement, not an
+assumption: `check_dilution_rate_arm` reads the `IDs` roster, refuses a data sheet whose
+own name row contradicts it, and refuses a parsed rate set that is not the paper's arm
+minus the 0.2 h-1 reference rate. `GR04x`'s name cell is blank in the Protein,
+Metabolite and Flux sheets, so for that column the roster is the only label, which is why
+the roster is the source and the data sheet the cross-check.
+
+### The quotes, with their sha256
+
+Ishii `paper.md`, sha256
+`1d30256f408a939cf1cf400c03f36a124a8274627393602cabcb92cf72394065`:
+
+- the arm, all five rates (`SOURCED_VALUES["dilution_rate_arm"]`): "To allow a
+  comparison of the effects of these genetic perturbations with the effects of
+  environmental perturbations, wild-type cells were examined at several different
+  dilution rates (0.1, 0.2, 0.4, 0.5, and $0 . 7 \ \mathrm { h o u r s } ^ { - 1 }$ ."
+- the reference rate (`SOURCED_VALUES["dilution_rate_per_hour"]`): "The cells were grown
+  at a single fixed dilution rate of 0.2 hours−1 in glucose-limited chemostat cultures,
+  and wildtype cells cultured at the same specific growth rate were used as a reference
+  sample for comparison."
+- why the rate is an environment and not a protocol detail: "In chemostat cultures, the
+  concentration of growth-limiting substrate can be controlled by the dilution rate $( I
+  4 )$ . the dilution rate was thus varied in this study from an almost glucose-starved
+  state to a nearly unlimited glucose supply."
+
+`Quantitative_data.xls`, sha256
+`2b7663f505af2137d31697a4d316eb1f7ffd24274f73e4844d27d03348313888`:
+
+- `Information` sheet, the Samples table, which assigns the GR block and the control
+  block to the same sheet: "Wild type, cultured at various dilution rates" (against
+  "Column BA-AJ" for mRNA and Protein, "Column AB-AF" for the other layers) and
+  "Control (Wild type, cultured at a dilution rate of 0.2h-1)" (against "Column BL-" and
+  "Column AH-").
+- `IDs` sheet, the Memo of the one column that is a second culture at an already-served
+  rate (`SOURCED_VALUES["gr04x_second_mrna_measurement"]`, new): "Used for 2nd
+  measurement of mRNAs."
+
+### The reference for a dilution-rate record is the 0.2 h-1 wild type, and it is honest
+
+The decision was: is there a legitimate reference for a wild-type culture at 0.1 h-1, or
+should these cultures be refused? **There is one, and the release names it.** The
+Samples table gives every sheet ONE control block, "Control (Wild type, cultured at a
+dilution rate of 0.2h-1)", and it covers the GR block as well as the disruptants. The
+`IDs` sheet then puts each GR column in a measurement series that has an `RF` column, so
+the series match the other 24 records use resolves for these four too:
+
+| arm | GR01 | GR02 | GR03 | GR04 |
+|---|---|---|---|---|
+| Metabolite (series 5, 5, 5, 4) | RF06 | RF06 | RF06 | RF05 |
+| Protein (series 4, 4, 4, 4) | RF03 | RF03 | RF03 | RF03 |
+| Flux (no series row) | RF03 | RF03 | RF03 | RF03 |
+
+So no denominator is invented. It IS a **cross-environment reference**, and the stored
+bytes say so rather than hiding it: the record's `environment` carries its own rate while
+its `environment_reference` carries 0.2 h-1. That is exactly the comparison the paper
+asks for ("To allow a comparison of the effects of these genetic perturbations with the
+effects of environmental perturbations"). Nothing was refused on this row.
+
+### The empty genotype does not collide, measured
+
+A wild-type record carries `Genotype(perturbations=[])`, so four records per arm share
+one genotype. The adapter's content-addressed experiment id is the sha256 of the whole
+serialized experiment, environment included (`cell_adapter._experiment_node`), so the
+dilution rate is what separates them. Measured on the built stores: **28 distinct ids
+over 28 records in each of the three arms**, with four records carrying no perturbation
+and rates `[0.1, 0.4, 0.5, 0.7]`. There is no fifth wild-type experiment to collide
+with, because the 0.2 h-1 wild type is only ever an `ExperimentReference`.
+
+`verify_metabolite_dataset`'s L1 `genotype_uniqueness` keyed on the strain alone, which
+four identical empty genotypes fail. It now takes `environment_keyed=True` (additive,
+default False, threaded into `_l1_orf_uniqueness` as `per_environment`) and keys on
+(strain, environment), which is what a record of a genotype IN an environment means. For
+a dataset whose records share one environment the key is the strain plus a constant, so
+no other dataset's verdict or unique-key count changes (asserted in
+`tests/torchcell/verification/test_metabolite_verification.py`). The protein verifier
+needed nothing: its L1 iterates deleted ORFs, and an empty genotype contributes none.
+
+### The recomputed column arithmetic
+
+Regenerated by
+`experiments/036-dataset-fixes-before-kg-build/scripts/ishii2007_release_inventory.py`
+into `.../results/ishii2007_release_inventory.json`, from the loader's own
+`classify_columns`:
+
+| layer | sample columns | disruptant / dilution / reference | empty | reference | duplicate | kept |
+|---|---|---|---|---|---|---|
+| Metabolite | 35 | 25 / 5 / 5 | 1 (`GR04x`) | 5 | 1 (`KO05x`) | **28** |
+| Protein | 36 | 25 / 5 / 6 | 2 (`GR04x`, `KO05x`) | 6 | 0 | **28** |
+| Flux | 34 | 25 / 5 / 4 | 2 (`GR04x`, `KO05x`) | 4 | 0 | **28** |
+| mRNA (not served) | 45 | 25 / 5 / 15 | 0 | 15 | 2 (`KO05x`, `GR04x`) | 28 |
+
+35 - 1 - 5 - 1 = 28; 36 - 2 - 6 = 28; 34 - 2 - 4 = 28. The old line read
+"35 - 1 - 5 - 4 - 1 = 24; 36 - 2 - 6 - 4 = 24; 34 - 2 - 4 - 4 = 24"; the four
+dilution-rate columns are no longer a subtrahend.
+
+`GR04x` stays dropped under `no_data_in_this_layer` in all three served sheets, and the
+`pfkA` duplicate rule is untouched (`KO05` is still the kept pfkA culture in all three
+arms, `pfkA_2`, at 0.2 h-1).
+
+**A second duplicate pair surfaced, and it is in the unserved layer.** `GR04` and
+`GR04x` are two wild-type cultures at ONE rate (Culture Date 38693 against 38631, with
+`GR04x`'s Memo "Used for 2nd measurement of mRNAs."), so with the rate in the identity
+they are a `(genotype, dilution rate)` collision exactly like the pfkA pair. In the three
+served sheets `GR04x` is empty and never reaches the duplicate rule; in the mRNA layer
+both carry data, so `PREFERRED_DUPLICATE_SAMPLES` now names `GR04` alongside `KO05`, for
+the same reason (`GR04` is the culture measured in all three served layers). This changes
+nothing in the served arms and makes the mRNA layer measurable.
+
+### Record counts, before and after
+
+| dataset | before | after | wild-type records | rates served |
+|---|---|---|---|---|
+| `metabolome_ishii2007` | 24 | **28** | 4 | 0.1, 0.2, 0.4, 0.5, 0.7 |
+| `proteome_ishii2007` | 24 | **28** | 4 | 0.1, 0.2, 0.4, 0.5, 0.7 |
+| `flux_ishii2007` | 24 | **28** | 4 | 0.1, 0.2, 0.4, 0.5, 0.7 |
+
+Rebuilt with `python -m torchcell.database.build_dataset_lmdb --dataset <Class>
+--retire-existing`; `--list-stale --include-private` names none of the three afterwards.
+What the four new records hold:
+
+| rate (h-1) | metabolites (reference) | proteins | reactions |
+|---|---|---|---|
+| 0.1 | 189 (124) | 57 | 42 |
+| 0.4 | 157 (123) | 56 | 40 |
+| 0.5 | 135 (123) | 57 | 40 |
+| 0.7 | 126 (107) | 56 | 40 |
+
+Side effects, all measured: distinct stored protein keys 58 -> 59; metabolome reference
+baselines dropped (metabolites the record did not detect) 319 -> 345; protein reference
+baselines dropped 18 -> 20; `EXPECTED_PROTEIN_KEYS_WITHOUT_REFERENCE` **unchanged at 1**
+(still `KO19`'s `BW25113_4090`).
+
+### Verification, L0 to L4, after the rebuild
+
+`python -m torchcell.datasets.ecoli.ishii2007 verify --dataset <slug>`, all three PASS:
+
+| level | metabolome | proteome | flux |
+|---|---|---|---|
+| L0 structural | 28 records | 28 records | 28 records |
+| L1 count | 28 = 28 | 28 = 28 | 28 = 28 |
+| L1 uniqueness | 28 unique (strain, environment) pairs | 24 unique knocked-out ORFs | (no family rule) |
+| L2 value fidelity | 4,040 values | 1,574 values | 1,172 values |
+| L2 se non-negative | 0 (no SE released) | 1,513 values | n/a |
+| L3 reference | key-subset for 3,297 values | key-matched for 1,574 | interval not half-stated |
+| L3 measurement type | single | single | single |
+| L3 provenance audit | 24 quotes | 24 quotes | 24 quotes |
+| L4 containment | 24 of 24 loci | 65 of 65 identifiers | 24 of 24 loci |
+
+The quote count is 24 rather than 23 because of the new `IDs`-sheet Memo value; the L4
+protein count is 65 rather than 64 because of the one extra stored protein key.
+
+### Does the field unblock Schmidt 2016 and Lamoureux 2023? Measured, and yes
+
+Measured from the built drop ledgers and the raw mirrors; **neither file was edited
+here**, both belong to another PR.
+
+- **Schmidt 2016, all three proteome arms: 4 conditions each, fully unblocked.** The
+  `culture_not_batch` rule names `Chemostat µ=0.5`, `Chemostat µ=0.35`,
+  `Chemostat µ=0.20`, `Chemostat µ=0.12` in `proteome_schmidt2016`, and
+  `chemostat µ=0.12 / 0.20 / 0.35 / 0.5` in `proteome_srm_set1_schmidt2016` and
+  `proteome_srm_set2_schmidt2016` (set 2 writes `µ=0.2`). The rate is in the released
+  condition label itself, so every one of the four has a rate to carry: 14 -> 18 records
+  for `proteome_schmidt2016` and `proteome_srm_set2_schmidt2016`, 11 -> 15 for
+  `proteome_srm_set1_schmidt2016`, if their loaders set the field. Their
+  `needed_addition` text, "a culture-mode / dilution-rate slot on Environment
+  (closure-changing)", now names a field that exists for the dilution-rate half.
+- **Lamoureux 2023: 3 of 3 samples unblocked.** `rnaseq_lamoureux2023`'s
+  `culture_not_batch` holds exactly `p1k_00049`, `p1k_00092` and `p1k_00093`. All three
+  are `Culture Type = Chemostat` with the rate stated verbatim in `Additional Details`:
+  "chemostat w/ dilution rate 0.31 h^-1" for `p1k_00049` and `p1k_00092`, "chemostat w/
+  dilution rate 0.44 h^-1" for `p1k_00093`. The two 0.31 h-1 samples do not collide with
+  each other either, because their environments differ elsewhere too (`p1k_00049`:
+  `NH4Cl(10mM)` plus `sauer trace element mixture`; `p1k_00092`: `NH4Cl(1)`, no trace
+  mixture). The mirror holds 5 chemostat rows in all; the other two (`p1k_00096`,
+  `p1k_00097`) are dropped earlier under `point_mutation_allele` (rpoB E546V) and stay
+  dropped. The 82 `Fed-batch` rows are **not** unblocked: a fed-batch culture has no
+  steady-state dilution rate, and none reaches this rule anyway.
+- `rnaseq_public_k12_lamoureux2023` carries 164 samples under the same rule name, but
+  there that rule also covers `bioreactor`, blank and `Mid-to-late exponential` culture
+  labels. How many of the 164 state a dilution rate is **not measured here**.
+
+### Things worth knowing next time
+
+- The synthetic fixture now carries an `IDs` sheet and narrows `DILUTION_RATE_ARM` to
+  `(0.1, 0.2, 0.7)`, because it holds one served rate and one empty column rather than
+  the release's five.
+- `records.csv` changed shape: `sample_id, perturbed_gene_symbol,
+  culture_name_verbatim, dilution_rate_per_hour, series_verbatim, reference_sample_id`
+  (the flux arm has no `series_verbatim`). `perturbed_gene_symbol` is empty for a
+  wild-type culture, which is the honest value, and `build_accounting.json` gained
+  `reference_dilution_rate_per_hour`, `dilution_rates_loaded`,
+  `dilution_rate_by_sample_column` and `retired_drop_rules`.
+- The `Flux_GC-MS_data.xls` labeling sheets are named by CULTURE NAME for the
+  disruptants (`galM` ... `talB`, `pfkA_1`, `pfkA_2`) and by SAMPLE ID for the
+  dilution-rate and reference cultures (`GR01`-`GR04`, `RF03`-`RF06`), so
+  `_check_fit_inputs` looks each up by kind. `WT, 0.1h-1` is not a sheet name in that
+  workbook.
+- `torchcell/datamodels/identity.py::environment_identity` now projects
+  `dilution_rate_per_hour` (landed by the sibling #753 agent). Measured over this
+  module's own `environment()`: the five rates give **5 of 5 distinct environment node
+  ids** (`identity_sha256(environment_identity(environment(rate)))`), so the four
+  recovered records get four environment nodes in the graph rather than collapsing onto
+  one. Nothing in the dataset build reads that projection, so the dev stores did not
+  need a second rebuild for it.

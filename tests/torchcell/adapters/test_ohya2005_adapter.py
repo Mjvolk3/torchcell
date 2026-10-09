@@ -37,7 +37,7 @@ Payloads: genotype, perturbation and phenotype nodes carry no ``serialized_data`
 experiment, experiment reference, genome, environment, media, temperature and
 publication nodes keep it. Since ca0734254 (#622) the medium is the loader's sourced
 ``OHYA_YPD`` (the library ``YPD_LIQUID`` node, restated with the paper's quotes), so
-the environment's JSON is 5168 bytes, over the 512-byte environment floor: each
+the environment's JSON is 5200 bytes, over the 512-byte environment floor: each
 Experiment blob points at it and the experiment method also emits it as one
 ``interned constant`` node per record. The one-deletion genotype is 395 bytes, under
 the 8192-byte genotype floor (``EXPERIMENT_POINTER_MIN_BYTES``), and stays inline.
@@ -162,10 +162,19 @@ TEMPERATURE_ID = identity_sha256(temperature_identity(TEMPERATURE))
 REFERENCE_ID = _sha(REFERENCE)
 
 # The environment's JSON, served as one interned constant since ca0734254 (#622) made
-# it larger than the 512-byte pointer floor; its id is the sha256 of these bytes.
+# it larger than the 512-byte pointer floor; its id is the sha256 of these bytes. Both
+# the byte count and the id moved in the #753 wave, where ``Environment`` gained
+# ``dilution_rate_per_hour``: a content address over the whole record is supposed to
+# move when the record's shape does, which is the BREAKING verdict
+# ``scripts/schema_impact_check.py`` reports for all 81 datasets. ``ENVIRONMENT_ID``
+# ``ENVIRONMENT_ID`` moved for the same reason: ``environment_identity`` projects the
+# dilution rate, because in a chemostat it is a controlled variable and two cultures
+# differing only in it must be two environment nodes (Ishii 2007's recovered wild-type
+# series is four such records). ``MEDIA_ID`` is UNCHANGED, which is the evidence the
+# change stayed on the environment and did not disturb the medium-level join.
 ENVIRONMENT_JSON = json.dumps(ENVIRONMENT.model_dump())
 ENVIRONMENT_CONSTANT_ID = (
-    "28919698ebe47c62582394ac960b08cded51399610bb3aa23e9d9812067ed577"
+    "ee9652f19e630ed76c05e0b8ec524567f62e0e6ad7798b2fea6950e1c4745f98"
 )
 
 
@@ -521,7 +530,7 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
         "aea23796700e8b3a95fce85defa3c999208717499a582a5b7862db7f3f605232"
     )
     assert ENVIRONMENT_ID == (
-        "2f4cd08aa982db58cc7d5324f79b3808f517bff1d3d221fa815771b4bcdf19b5"
+        "9473b25614c31cc2deae2f61d1d6964c5d08e8a0bbebb35d366fa0447350f591"
     )
     # The sourced medium takes the environment past the Neo4j pointer floor, so each
     # Experiment node points at one ``interned constant`` node (emitted per record,
@@ -529,7 +538,7 @@ def test_get_nodes_emits_the_exact_ohya_node_list(
     assert (
         ENVIRONMENT_CONSTANT_ID == hashlib.sha256(ENVIRONMENT_JSON.encode()).hexdigest()
     )
-    assert len(json.dumps(ENVIRONMENT.model_dump())) == 5168
+    assert len(json.dumps(ENVIRONMENT.model_dump())) == 5200
     assert EXPERIMENT_POINTER_MIN_BYTES["environment"] == 512
     genotypes = [e.genotype for e in EXPERIMENTS]
     assert all(isinstance(g, Genotype) for g in genotypes)

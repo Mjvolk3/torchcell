@@ -42,8 +42,9 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
+    FoldChangeScale,
     PhysicalFactor,
-    ProteinAbundancePhenotype,
+    ProteinFoldChangePhenotype,
     SmallMoleculePerturbation,
 )
 from torchcell.literature.manifest import ROLE_RAW_DATA, Manifest, RetrievalMethod
@@ -842,17 +843,41 @@ def test_relative_expression_phenotype_names_the_scale_and_gaps_the_missing_se()
 ):
     """One protein, the released ratio, n = 1, and a typed absence for the SE."""
     pheno = y26.relative_expression_phenotype({"PP_0100": 0.25}, n_replicates=1)
-    assert pheno.protein_abundance == {"PP_0100": 0.25}
+    assert pheno.protein_fold_change == {"PP_0100": 0.25}
     assert pheno.n_replicates == {"PP_0100": 1}
     assert pheno.measurement_type == y26.MEASUREMENT_TYPE
-    assert pheno.protein_abundance_se is None
-    assert pheno.gapped_fields() == {"protein_abundance_se"}
+    assert pheno.protein_fold_change_se is None
+    assert pheno.gapped_fields() == {
+        "protein_fold_change_se",
+        "protein_fold_change_p_value",
+    }
+
+
+def test_relative_expression_phenotype_is_a_linear_ratio_to_the_control_strain() -> (
+    None
+):
+    """The two fields that make this number comparable: its scale and its denominator."""
+    pheno = y26.relative_expression_phenotype({"PP_0100": 0.25}, n_replicates=1)
+    assert pheno.fold_change_scale is FoldChangeScale.linear
+    assert pheno.fold_change_scale.neutral_value == 1.0
+    assert pheno.reference_basis == y26.REFERENCE_BASIS
+    assert (
+        "relative expression levels of target genes in comparison to the control "
+        "strains" in pheno.reference_basis
+    )
+    assert pheno.neutral_reference() == {"PP_0100": 1.0}
 
 
 def test_relative_expression_phenotype_keeps_a_released_zero() -> None:
-    """A released 0 means no detectable target protein; it is kept, not imputed."""
+    """A released 0 means no detectable target protein; it is kept, not imputed.
+
+    Table S3 writes the verbatim cell ``0`` on 37 of its 102 numeric rows, and the
+    Results census counts those rows inside its "more than 95 %" bucket, so the value
+    is a measurement of a complete knockdown. It is NOT the 'n.d.' case, where the
+    control strain itself had no detected expression and the ratio has no denominator.
+    """
     pheno = y26.relative_expression_phenotype({"PP_0101": 0.0}, n_replicates=1)
-    assert pheno.protein_abundance["PP_0101"] == 0.0
+    assert pheno.protein_fold_change["PP_0101"] == 0.0
 
 
 def test_relative_expression_phenotype_refuses_an_empty_map() -> None:
@@ -870,9 +895,12 @@ def test_relative_expression_phenotype_refuses_a_non_finite_value() -> None:
 def test_array_phenotype_carries_the_mean_with_the_standard_error() -> None:
     """The SE the Fig. 3 caption's sample SD implies: SD / sqrt(n)."""
     pheno = y26.array_phenotype({"PP_0200": 0.21}, {"PP_0200": 0.01}, {"PP_0200": 3})
-    assert pheno.protein_abundance_se == {"PP_0200": 0.01}
+    assert pheno.protein_fold_change_se == {"PP_0200": 0.01}
     assert pheno.n_replicates == {"PP_0200": 3}
-    assert pheno.gapped_fields() == set()
+    assert pheno.fold_change_scale is FoldChangeScale.linear
+    assert pheno.reference_basis == y26.REFERENCE_BASIS
+    assert pheno.protein_fold_change_p_value is None
+    assert pheno.gapped_fields() == {"protein_fold_change_p_value"}
 
 
 def test_array_phenotype_refuses_disagreeing_key_sets() -> None:
@@ -886,16 +914,34 @@ def test_reference_phenotype_is_the_ratios_denominator() -> None:
     pheno = y26.reference_phenotype(
         ["PP_0200", "PP_0201"], n_replicates=3, with_se=True
     )
-    assert pheno.protein_abundance == {"PP_0200": 1.0, "PP_0201": 1.0}
-    assert pheno.protein_abundance_se == {"PP_0200": 0.0, "PP_0201": 0.0}
+    assert pheno.protein_fold_change == {"PP_0200": 1.0, "PP_0201": 1.0}
+    assert pheno.protein_fold_change_se == {"PP_0200": 0.0, "PP_0201": 0.0}
     assert y26.REFERENCE_RELATIVE_EXPRESSION == 1.0
 
 
-def test_reference_phenotype_without_se_carries_the_same_typed_gap() -> None:
+def test_reference_relative_expression_is_read_off_the_scale() -> None:
+    """The denominator is the scale's neutral value, never a second written constant."""
+    assert y26.FOLD_CHANGE_SCALE is FoldChangeScale.linear
+    assert y26.REFERENCE_RELATIVE_EXPRESSION == FoldChangeScale.linear.neutral_value
+    assert FoldChangeScale.log2.neutral_value == 0.0
+
+
+def test_reference_phenotype_is_the_scales_neutral_reference() -> None:
+    """``neutral_reference`` and the written reference are the same map, key for key."""
+    pheno = y26.reference_phenotype(
+        ["PP_0201", "PP_0200"], n_replicates=3, with_se=True
+    )
+    assert pheno.protein_fold_change == pheno.neutral_reference()
+
+
+def test_reference_phenotype_without_se_carries_the_same_typed_gaps() -> None:
     """The Table S3 family's reference gaps its SE exactly as its records do."""
     pheno = y26.reference_phenotype(["PP_0100"], n_replicates=1, with_se=False)
-    assert pheno.protein_abundance == {"PP_0100": 1.0}
-    assert pheno.gapped_fields() == {"protein_abundance_se"}
+    assert pheno.protein_fold_change == {"PP_0100": 1.0}
+    assert pheno.gapped_fields() == {
+        "protein_fold_change_se",
+        "protein_fold_change_p_value",
+    }
 
 
 def test_reference_phenotype_refuses_an_empty_protein_set() -> None:
@@ -904,13 +950,84 @@ def test_reference_phenotype_refuses_an_empty_protein_set() -> None:
         y26.reference_phenotype([], n_replicates=1, with_se=False)
 
 
-def test_protein_abundance_phenotype_still_requires_matched_replicate_keys() -> None:
+def test_protein_fold_change_phenotype_still_requires_matched_replicate_keys() -> None:
     """The schema invariant this module relies on: one replicate count per protein."""
-    with pytest.raises(ValidationError):
-        ProteinAbundancePhenotype(
-            protein_abundance={"PP_0100": 0.2},
+    with pytest.raises(
+        ValidationError, match="n_replicates keys must match protein_fold_change keys"
+    ):
+        ProteinFoldChangePhenotype(
+            protein_fold_change={"PP_0100": 0.2},
+            fold_change_scale=y26.FOLD_CHANGE_SCALE,
+            reference_basis=y26.REFERENCE_BASIS,
             n_replicates={"PP_0101": 1},
             measurement_type=y26.MEASUREMENT_TYPE,
+        )
+
+
+def test_differential_phenotype_stores_the_released_unadjusted_p_value() -> None:
+    """The 'P-Value (Equal Variance)' column, verbatim, with no correction named."""
+    pheno = y26.differential_phenotype(
+        {"PP_0100": 0.25, "PP_0104": 8.0}, {"PP_0100": 0.001195825, "PP_0104": 0.0005}
+    )
+    assert pheno.protein_fold_change_p_value == {
+        "PP_0100": 0.001195825,
+        "PP_0104": 0.0005,
+    }
+    assert pheno.protein_fold_change_p_value_adjusted is None
+    assert pheno.p_value_adjustment_method is None
+    assert y26.DIFFERENTIAL_P_VALUE_ADJUSTMENT is None
+    assert pheno.measurement_type == y26.DIFFERENTIAL_MEASUREMENT_TYPE
+    assert pheno.reference_basis == y26.DIFFERENTIAL_REFERENCE_BASIS
+    assert pheno.gapped_fields() == {
+        "protein_fold_change_se",
+        "protein_fold_change_p_value_adjusted",
+    }
+
+
+def test_differential_phenotype_refuses_p_values_on_other_keys() -> None:
+    """A p-value map that does not cover exactly the stored proteins is a build error."""
+    with pytest.raises(RuntimeError, match="p-value and fold-change keys disagree"):
+        y26.differential_phenotype({"PP_0100": 0.25}, {"PP_0104": 0.01})
+
+
+def test_differential_phenotype_without_p_values_names_no_correction() -> None:
+    """The reference carries no contrast, so it carries no p-value and no method."""
+    pheno = y26.differential_reference_phenotype({"PP_0104": 8.0, "PP_0100": 0.25})
+    assert pheno.protein_fold_change == {"PP_0100": 1.0, "PP_0104": 1.0}
+    assert pheno.protein_fold_change_p_value is None
+    assert pheno.p_value_adjustment_method is None
+
+
+def test_the_schema_requires_a_method_for_an_adjusted_p_value() -> None:
+    """Storing an adjusted p-value without naming its correction is refused.
+
+    This is why ``p_value_adjustment_method`` stays None here: nothing in this paper
+    adjusts the released t-test p-values, so there is no correction to name.
+    """
+    with pytest.raises(ValidationError, match="set p_value_adjustment_method"):
+        ProteinFoldChangePhenotype(
+            protein_fold_change={"PP_0100": 0.2},
+            fold_change_scale=y26.FOLD_CHANGE_SCALE,
+            reference_basis=y26.DIFFERENTIAL_REFERENCE_BASIS,
+            protein_fold_change_p_value_adjusted={"PP_0100": 0.01},
+            n_replicates={"PP_0100": 3},
+            measurement_type=y26.DIFFERENTIAL_MEASUREMENT_TYPE,
+        )
+
+
+def test_the_schema_forbids_a_method_with_no_adjusted_p_value() -> None:
+    """The converse: naming a correction with nothing corrected is refused."""
+    with pytest.raises(
+        ValidationError, match="p_value_adjustment_method describes stored adjusted"
+    ):
+        ProteinFoldChangePhenotype(
+            protein_fold_change={"PP_0100": 0.2},
+            fold_change_scale=y26.FOLD_CHANGE_SCALE,
+            reference_basis=y26.DIFFERENTIAL_REFERENCE_BASIS,
+            protein_fold_change_p_value={"PP_0100": 0.01},
+            p_value_adjustment_method="benjamini_hochberg",
+            n_replicates={"PP_0100": 3},
+            measurement_type=y26.DIFFERENTIAL_MEASUREMENT_TYPE,
         )
 
 
@@ -1283,15 +1400,51 @@ def test_knockdown_record_stores_the_ratio_against_a_denominator_reference(
     item = dataset[0]
     experiment = _dump(item["experiment"])
     reference = _dump(item["reference"])
-    abundance = experiment["phenotype"]["protein_abundance"]
+    abundance = experiment["phenotype"]["protein_fold_change"]
     tag = next(iter(abundance))
     value = abundance[tag]
-    denominator = reference["phenotype_reference"]["protein_abundance"][tag]
+    denominator = reference["phenotype_reference"]["protein_fold_change"][tag]
     assert denominator == 1.0
     assert value / denominator == value
     assert experiment["phenotype"]["measurement_type"] == y26.MEASUREMENT_TYPE
     assert reference["genome_reference"]["strain"] == y26.CHASSIS_STRAIN
     assert reference["genome_reference"]["assembly_accession"].startswith("GCA_")
+
+
+def test_knockdown_record_keeps_a_released_zero_against_its_denominator(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A complete knockdown survives the build as a stored 0.0 on a 1.0 reference.
+
+    The synthetic Table S3 releases ``0.0`` for ``PP_0101``, as the real table does for
+    37 of its 102 numeric rows. The record keeps it, the reference still holds the
+    ratio's denominator, and experiment over reference reproduces the released number
+    (0.0 / 1.0 = 0.0) rather than imputing anything.
+    """
+    dataset = _build(
+        y26.CrispriKnockdownYunus2026Dataset,
+        tmp_path / "knockdown",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    zeros = []
+    for index in range(len(dataset)):
+        item = dataset[index]
+        values = _dump(item["experiment"])["phenotype"]["protein_fold_change"]
+        if 0.0 in values.values():
+            zeros.append((item, values))
+    assert len(zeros) == 1
+    item, values = zeros[0]
+    assert values == {"PP_0101": 0.0}
+    reference = _dump(item["reference"])["phenotype_reference"]
+    assert reference["protein_fold_change"] == {"PP_0101": 1.0}
+    assert values["PP_0101"] / reference["protein_fold_change"]["PP_0101"] == 0.0
+    assert y26.relative_expression_phenotype(
+        values, n_replicates=1
+    ).neutral_reference() == {"PP_0101": 1.0}
 
 
 def test_knockdown_record_genotype_is_one_crispri_perturbation_on_its_target(
@@ -1312,7 +1465,7 @@ def test_knockdown_record_genotype_is_one_crispri_perturbation_on_its_target(
         perturbations = experiment["genotype"]["perturbations"]
         assert len(perturbations) == 1
         assert {p["systematic_gene_name"] for p in perturbations} == set(
-            experiment["phenotype"]["protein_abundance"]
+            experiment["phenotype"]["protein_fold_change"]
         )
 
 
@@ -1387,16 +1540,16 @@ def test_array_record_carries_every_protein_its_panels_measured(
         )
         by_guides[key] = experiment["phenotype"]
     triple = by_guides[("PP_0200", "PP_0201", "PP_0202")]
-    assert set(triple["protein_abundance"]) == {
+    assert set(triple["protein_fold_change"]) == {
         "PP_0200",
         "PP_0201",
         "PP_0202",
         "PP_0100",
     }
     assert set(triple["n_replicates"].values()) == {3}
-    assert triple["protein_abundance_se"] is not None
-    assert triple["protein_abundance"]["PP_0200"] == pytest.approx(0.41)
-    assert triple["protein_abundance_se"]["PP_0200"] == pytest.approx(
+    assert triple["protein_fold_change_se"] is not None
+    assert triple["protein_fold_change"]["PP_0200"] == pytest.approx(0.41)
+    assert triple["protein_fold_change_se"]["PP_0200"] == pytest.approx(
         0.01 / math.sqrt(3)
     )
 
@@ -1419,7 +1572,7 @@ def test_array_dataset_measures_a_protein_in_a_construct_with_no_guide_for_it(
         guides = {
             p["systematic_gene_name"] for p in experiment["genotype"]["perturbations"]
         }
-        measured = set(experiment["phenotype"]["protein_abundance"])
+        measured = set(experiment["phenotype"]["protein_fold_change"])
         if measured - guides:
             return
     pytest.fail("no construct measures a protein it carries no guide for")
@@ -1493,19 +1646,83 @@ def test_verification_passes_on_a_synthetic_build(
         provenance=y26.verifier_provenance("crispri_knockdown_yunus2026"),
         expected_count=len(dataset),
         allow_duplicate_orfs=True,
+        label_key="protein_fold_change",
+        se_key="protein_fold_change_se",
     )
+    report.add(y26._l3_scale_and_basis_are_one_contrast(records))
+    report.add(y26._l3_p_values_are_unadjusted(records))
     report.add(y26._l4_reference_is_the_ratio_denominator(records))
     assert report.passed, report.summary()
     denominator = next(
         r for r in report.results if r.name == "reference_is_the_ratio_denominator"
     )
     assert denominator.level is Level.L4
+    contrast = next(
+        r for r in report.results if r.name == "scale_and_basis_are_one_contrast"
+    )
+    assert contrast.level is Level.L3
+    assert contrast.details["scales"] == ["linear"]
+    assert contrast.details["bases"] == [y26.REFERENCE_BASIS]
+
+
+def test_l3_contrast_rule_fails_two_scales_in_one_store() -> None:
+    """A linear ratio and a log2 ratio in one dataset would average into nothing."""
+    records = [
+        {
+            "experiment": {
+                "phenotype": {
+                    "fold_change_scale": "linear",
+                    "reference_basis": y26.REFERENCE_BASIS,
+                }
+            }
+        },
+        {
+            "experiment": {
+                "phenotype": {
+                    "fold_change_scale": "log2",
+                    "reference_basis": y26.REFERENCE_BASIS,
+                }
+            }
+        },
+    ]
+    result = y26._l3_scale_and_basis_are_one_contrast(records)
+    assert not result.passed
+    assert result.details["scales"] == ["linear", "log2"]
+    assert (
+        result.message == "2 distinct (scale, basis) pairs, scales ['linear', 'log2']"
+    )
+
+
+def test_l3_p_value_rule_fails_an_unsourced_correction() -> None:
+    """No mirrored byte adjusts these p-values, so an adjusted map must not appear."""
+    records = [
+        {
+            "experiment": {
+                "phenotype": {
+                    "protein_fold_change_p_value": {"PP_0100": 0.01},
+                    "protein_fold_change_p_value_adjusted": {"PP_0100": 0.04},
+                    "p_value_adjustment_method": "benjamini_hochberg",
+                }
+            }
+        }
+    ]
+    result = y26._l3_p_values_are_unadjusted(records)
+    assert not result.passed
+    assert result.details["n_p_values"] == 1
+    assert result.details["examples"] == [
+        "record 0 carries an adjusted p-value map",
+        "record 0 names the correction 'benjamini_hochberg'",
+    ]
 
 
 def test_l4_reference_rule_fails_a_rescaled_reference() -> None:
     """A reference off 1.0 would silently rescale every record, so the rule catches it."""
     records = [
-        {"reference": {"phenotype_reference": {"protein_abundance": {"PP_0100": 2.0}}}}
+        {
+            "reference": {
+                "phenotype_reference": {"protein_fold_change": {"PP_0100": 2.0}}
+            }
+        }
     ]
     result = y26._l4_reference_is_the_ratio_denominator(records)
     assert not result.passed
@@ -1841,19 +2058,41 @@ def test_the_differential_record_is_one_profile_on_its_own_scale(
         for key, _, _ in (*DIFFERENTIAL_DOWN, *DIFFERENTIAL_UP)
         if key.startswith("PP_")
     }
-    assert set(phenotype["protein_abundance"]) == expected
-    assert phenotype["protein_abundance"]["PP_0101"] == pytest.approx(0.05)
-    assert phenotype["protein_abundance"]["PP_0104"] == pytest.approx(8.0)
+    assert set(phenotype["protein_fold_change"]) == expected
+    assert phenotype["protein_fold_change"]["PP_0101"] == pytest.approx(0.05)
+    assert phenotype["protein_fold_change"]["PP_0104"] == pytest.approx(8.0)
     assert set(phenotype["n_replicates"].values()) == {y26.DIFFERENTIAL_N_REPLICATES}
-    assert phenotype["protein_abundance_se"] is None
+    assert phenotype["protein_fold_change_se"] is None
     assert [gap["field"] for gap in phenotype["provenance_gaps"]] == [
-        "protein_abundance_se"
+        "protein_fold_change_se",
+        "protein_fold_change_p_value_adjusted",
     ]
+    assert phenotype["fold_change_scale"] == "linear"
+    assert phenotype["reference_basis"] == y26.DIFFERENTIAL_REFERENCE_BASIS
     reference = record["reference"]["phenotype_reference"]
-    assert set(reference["protein_abundance"].values()) == {
+    assert set(reference["protein_fold_change"].values()) == {
         y26.REFERENCE_RELATIVE_EXPRESSION
     }
     assert reference["measurement_type"] == y26.DIFFERENTIAL_MEASUREMENT_TYPE
+    assert reference["protein_fold_change_p_value"] is None
+
+
+def test_the_differential_record_stores_every_released_p_value(
+    built_differential: Any,
+) -> None:
+    """Each stored key carries its row's 'P-Value (Equal Variance)', unadjusted."""
+    phenotype = built_differential[0]["experiment"]["phenotype"]
+    expected = {
+        key: p
+        for key, _, p in (*DIFFERENTIAL_DOWN, *DIFFERENTIAL_UP)
+        if key.startswith("PP_")
+    }
+    assert phenotype["protein_fold_change_p_value"] == pytest.approx(expected)
+    assert set(phenotype["protein_fold_change_p_value"]) == set(
+        phenotype["protein_fold_change"]
+    )
+    assert phenotype["protein_fold_change_p_value_adjusted"] is None
+    assert phenotype["p_value_adjustment_method"] is None
 
 
 def test_the_differential_genotype_is_the_knocked_down_gene_with_its_spacer(
@@ -1867,7 +2106,8 @@ def test_the_differential_genotype_is_the_knocked_down_gene_with_its_spacer(
     assert perturbations[0]["systematic_gene_name"] == SCREEN_LOCI[0][0]
     assert perturbations[0]["crispr"]["guide_sequence"] == OLIGO_SPECS[0][1]
     assert (
-        SCREEN_LOCI[0][0] not in record["experiment"]["phenotype"]["protein_abundance"]
+        SCREEN_LOCI[0][0]
+        not in record["experiment"]["phenotype"]["protein_fold_change"]
     )
 
 
@@ -1908,17 +2148,40 @@ def test_the_differential_drop_log_accounts_for_the_unresolvable_keys(
         assert note in drops["notes"]
 
 
-def test_the_two_columns_blocked_on_gap_r_are_read_and_never_stored(
+def test_the_two_redundant_columns_are_read_and_never_stored(
     built_differential: Any,
 ) -> None:
-    """The p-value and the rank reach the ledger and no record field."""
+    """The -log10 p and the rank reach the ledger and no record field.
+
+    Both are read as build oracles: the first is the stored p-value's own reversible
+    transform and the second is a presentation index of the released sort order.
+    """
     record = built_differential[0]
     phenotype = record["experiment"]["phenotype"]
-    assert set(phenotype) & {"p_value", "rank", "protein_abundance_p_value"} == set()
+    assert set(phenotype) & {"p_value", "rank", "neg_log10_p_value"} == set()
     ledger = pd.read_csv(Path(built_differential.preprocess_dir) / "differential.csv")
-    assert ledger["p_value"].notna().all()
-    assert "p-value" in y26.DIFFERENTIAL_NOT_STORED[0].lower()
+    assert ledger["neg_log10_p_value"].notna().all()
+    assert ledger["rank"].notna().all()
+    assert "(-Log10(P-Value))" in y26.DIFFERENTIAL_NOT_STORED[0]
     assert "Rank" in y26.DIFFERENTIAL_NOT_STORED[1]
+    assert len(y26.DIFFERENTIAL_NOT_STORED) == 2
+    assert "P-Value (Equal Variance)" not in "".join(y26.DIFFERENTIAL_NOT_STORED)
+
+
+def test_the_stored_p_value_reproduces_the_released_minus_log10(
+    built_differential: Any,
+) -> None:
+    """Storing the plain p loses nothing: 10 ** -(-log10 p) is the stored number."""
+    phenotype = built_differential[0]["experiment"]["phenotype"]
+    ledger = pd.read_csv(Path(built_differential.preprocess_dir) / "differential.csv")
+    stored = phenotype["protein_fold_change_p_value"]
+    kept = ledger[ledger["stored"]]
+    assert len(kept) == len(stored)
+    for tag, neg_log10 in zip(
+        kept["locus_tag"].tolist(), kept["neg_log10_p_value"].tolist(), strict=True
+    ):
+        recovered = 10.0 ** -float(neg_log10)
+        assert recovered == pytest.approx(stored[str(tag)], rel=y26._P_VALUE_TOL)
 
 
 def test_the_docx_sourced_values_are_kept_out_of_the_text_audit_loop() -> None:

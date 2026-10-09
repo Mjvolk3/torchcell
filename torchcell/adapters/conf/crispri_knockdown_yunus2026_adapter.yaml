@@ -1,4 +1,4 @@
-# Yunus 2026 CRISPRi knockdowns: 102 IY1452 strains, BacterialProteinAbundanceExperiment.
+# Yunus 2026 CRISPRi knockdowns: 102 IY1452 strains, BacterialProteinFoldChangeExperiment.
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
 # perturbation`, carrying a CrisprConstruct, so the crispr-construct pair is enabled. The
 # environment carries EnvironmentPhysicalPerturbation and SmallMoleculePerturbation edits,
@@ -27,9 +27,9 @@ cell_adapter:
     - method_name: "environment perturbation (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment perturbation reference"
-    - method_name: "protein abundance phenotype (chunked)"
+    - method_name: "protein fold change phenotype (chunked)"
       memory_reduction_factor: 1.0
-    - method_name: "protein abundance phenotype reference"
+    - method_name: "protein fold change phenotype reference"
     - method_name: "dataset"
     - method_name: "publication (chunked)"
       memory_reduction_factor: 1.0

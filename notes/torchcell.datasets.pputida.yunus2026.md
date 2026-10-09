@@ -655,3 +655,151 @@ has. After the rebuild all three PASS too, at 102, 25 and 1 records.
 - `tests/torchcell/adapters/test_bacterial_adapters.py`'s three `== 57` pins were
   re-derived from the merged tree as `== 60`. They were already stale by one before this
   change.
+
+## 2026.10.09 - The three CRISPRi ratio classes moved onto ProteinFoldChangePhenotype, and the S4/S5 p-value is now stored
+
+Issue #770 records the mislabeling this section closes: every CRISPRi number this paper
+releases in Tables S3 to S5 is a ratio to a control strain, and
+`ProteinAbundancePhenotype`'s own docstring forbids exactly that ("absolute per-strain
+quantity on a log signal scale, NOT a ratio"). The three CRISPRi dataset classes now
+produce `BacterialProteinFoldChangeExperiment` / `...Reference` with a
+`ProteinFoldChangePhenotype`, and the differential family stores the per-protein p-value
+the old class had no field for. `CrispriPanelProteomeYunus2026Dataset`, added by the
+Benchling deposit above, is NOT moved: its number is an absolute Top3 signal
+(`PANEL_PROTEOME_MEASUREMENT_TYPE`), so `ProteinAbundancePhenotype` is its right home.
+
+### What moved
+
+| dataset | class before | class after | records before | records after |
+|---|---|---|---|---|
+| `CrispriKnockdownYunus2026Dataset` | `BacterialProteinAbundanceExperiment` | `BacterialProteinFoldChangeExperiment` | 102 | 102 |
+| `CrispriArrayYunus2026Dataset` | `BacterialProteinAbundanceExperiment` | `BacterialProteinFoldChangeExperiment` | 25 | 25 |
+| `CrispriDifferentialProteomeYunus2026Dataset` | `BacterialProteinAbundanceExperiment` | `BacterialProteinFoldChangeExperiment` | 1 (305 keys) | 1 (305 keys) |
+
+The move changes the CLASS, not the retention: the same 23 `n.d.` rows are dropped from
+Table S3 and the same 33 unresolvable DIA-NN keys are dropped from the differential
+profile. Builds:
+`python -m torchcell.database.build_dataset_lmdb --dataset <Class> --retire-existing`,
+all three rebuilt 2026.10.09; `--list-stale --include-private` names none of them
+afterwards. The five builders moved with the classes
+(`relative_expression_phenotype`, `array_phenotype`, `differential_phenotype`,
+`differential_reference_phenotype`, `reference_phenotype`), the three adapter confs under
+`torchcell/adapters/conf/` now enable `protein fold change phenotype (chunked)` plus
+`protein fold change phenotype reference` and neither protein-abundance method, and
+`verify_protein_dataset` gained `label_key` / `se_key` keyword arguments (defaulting to
+the absolute family, so every other caller is unchanged) because each of its rules is
+about the SHAPE of a per-protein map, which both classes share.
+
+### `fold_change_scale` is linear, measured two ways rather than assumed
+
+`FOLD_CHANGE_SCALE = FoldChangeScale.linear` for all three families, and
+`REFERENCE_RELATIVE_EXPRESSION` is now read off `FOLD_CHANGE_SCALE.neutral_value` instead
+of being written down a second time.
+
+1. Tables S4 and S5 release both columns side by side, verbatim headers `Fold Change` and
+   `Log2(Fold Change)` (`si1.docx`, sha256
+   `daa2c91d0ec7b4560e086517bbdbcbf845c060f0f201c294c5ddef2399b963a9`, Supplementary
+   Tables S4 and S5 header row), and `parse_differential` asserts
+   `log2(Fold Change) == Log2(Fold Change)` within 1e-6 on 338 of 338 rows. So the first
+   column is the linear ratio and the second is its log2.
+2. Table S3's census reproduces exactly on LINEAR thresholds. Verbatim, `paper.md`
+   sha256 `32ab4cd3753a930c6ad983809e7083a06159b7b0feb6b5252ace180273bbe563`, Results
+   3.2:
+
+   > "Proteomics analysis revealed that 68 genes were downregulated by at least $5 0 \%$
+   > , 51 of which were downregulated by more than $9 5 ~ \%$ (Fig. 3). Sixteen genes were
+   > downregulated by $1 0 { - } 5 0 ~ \%$ . Thirteen genes were downregulated only by
+   > $1 0 ~ \%$ . Five genes were upregulated."
+
+   Measured over the 102 numeric rows: 68 at `<= 0.5`, 51 at `< 0.05`, 16 in
+   `(0.5, 0.9]`, 13 in `(0.9, 1.0)`, 5 above `1.0`, and `68 + 16 + 13 + 5 = 102`. On a
+   log2 scale 0.5 would be a 1.41-fold increase, not "downregulated by 50 %".
+
+### `reference_basis` comes from the source's own clause
+
+Table S3 and Tables S8-S12 (`REFERENCE_BASIS`), `paper.md`, Fig. 3 caption panel I:
+
+> "(I) Summary of relative expression levels of target genes in comparison to the control
+> strains."
+
+What that control strain IS, Fig. 3 caption panel G:
+
+> "(G) Protein counts of PP_1607 in both nontarget (control) and PP_1607 strains."
+
+Tables S4 and S5 (`DIFFERENTIAL_REFERENCE_BASIS`), Fig. 5 caption panel B:
+
+> "(B) Volcano plot representing the results of shotgun proteomic analysis from strain
+> PP_4188 strain in comparison to the control strain. Horizontal dashed line represents
+> the applied significance threshold of a student's t-test $p$ -value $= 0 . 0 5$ .
+> Vertical dashed lines represent the applied thresholds of an absolute fold change
+> ${ \geq } 1$ ."
+
+### The S4/S5 p-value is stored, UNADJUSTED, and the paper's one FDR is not a correction
+
+The released `P-Value (Equal Variance)` column now goes into
+`protein_fold_change_p_value` for all 305 stored keys. The Fig. 5B caption above names
+the test (a Student's t-test against the control strain) and the 0.05 threshold
+`parse_differential` already asserted. Nothing in `paper.md` or `si1.docx` adjusts those
+p-values: a search of both for `benjamini`, `hochberg`, `fdr`, `false discovery`,
+`adjusted`, `multiple test`, `q-value` and `bonferroni` returns exactly one FDR, and it is
+an IDENTIFICATION filter applied before any contrast was computed (`paper.md`, Methods
+2.6):
+
+> "The main DIA-NN reports were filtered with a global $\mathrm { F D R } = 0 . 0 1$ at
+> both the precursor and protein group levels."
+
+So `protein_fold_change_p_value_adjusted` is `None` with a typed `ProvenanceGap` and
+`p_value_adjustment_method` is `None` (`DIFFERENTIAL_P_VALUE_ADJUSTMENT`), which is what
+the class requires of a record with no adjusted map. `measurement_type` grew the test it
+now carries:
+`dia_nn_top3_fold_change_relative_to_control_strain_equal_variance_t_test`.
+
+`DIFFERENTIAL_NOT_STORED` narrowed from the p-value columns to two entries: the
+`(-Log10(P-Value))` column, because `10 ** -(-Log10(P-Value))` reproduces the stored p on
+338 of 338 rows (worst relative disagreement 3.2489e-3, Table S4's `1.30E-06` against a
+released `-log10` of `5.884647992`, which is the printed precision of the p column), and
+`Rank`, a presentation index of the released sort order. Both stay build oracles.
+
+### A released `0` is a measurement, which needed a one-line schema correction
+
+Measured on the pinned docx: Table S3 writes the verbatim cell `0` on 37 of its 102
+numeric rows, and Tables S9/S10/S11/S12 write it on 49 of their 93 replicate cells, which
+makes 13 of the 51 (construct, protein) means exactly `0.0`. Tables S4 and S5 have no
+such value (min fold change `0.003286423`, 0 of 338 non-positive). Those zeros are
+complete knockdowns: the protein was detected in the CONTROL strain, so the ratio has a
+denominator, and was not detected in the CRISPRi strain. The census above counts them,
+and the 37 sit inside its 51 "more than 95 %" bucket. They are NOT the `n.d.` case, which
+the paper states is missing in the control strain ("could not be determined as their gene
+expression was not detected in the control strain") and which stays dropped.
+
+`ProteinFoldChangePhenotype` first refused them: its linear branch required
+`value > 0.0`. It now refuses `value < 0.0` only, so a negative linear ratio is still
+impossible and a measured zero survives. `0.0 / 1.0 = 0.0`, so experiment over reference
+still reproduces the released number exactly and `neutral_reference()` is unchanged.
+
+### L0-L4, all three, on the rebuilt dev stores
+
+`python -m torchcell.datasets.pputida.yunus2026 verify`, 2026.10.09, 114 `[ok]` results
+and no failures. Two new rules joined the gate: L3 `scale_and_basis_are_one_contrast`
+(one `(fold_change_scale, reference_basis)` pair per dataset, since the pair is what makes
+two columns comparable) and L3 `p_values_are_unadjusted_probabilities` (a stored p is a
+probability and names no correction).
+
+| level | rule | knockdown | array | differential |
+|---|---|---|---|---|
+| L0 | structural | ok, 102 records | ok, 25 records | ok, 1 record |
+| L1 | count | ok, 102 = 102 | ok, 25 = 25 | ok, 1 = 1 |
+| L1 | orf_uniqueness | ok, 100 ORFs, 2 multi-strain | ok, 12 ORFs, 8 multi-strain | ok, 1 ORF |
+| L2 | value_fidelity | ok, 102 values | ok, 51 values | ok, 305 values |
+| L2 | se_nonnegative | ok, 0 values (typed gap) | ok, 51 values | ok, 0 values (typed gap) |
+| L3 | reference_finite | ok, 102 values | ok, 51 values | ok, 305 values |
+| L3 | measurement_type_consistent | ok, `dia_nn_top3_relative_to_control_strain` | ok, same | ok, `..._equal_variance_t_test` |
+| L3 | scale_and_basis_are_one_contrast | ok, 102 records linear | ok, 25 records linear | ok, 1 record linear |
+| L3 | p_values_are_unadjusted_probabilities | ok, 0 stored | ok, 0 stored | ok, 305 stored |
+| L3 | provenance_audit | ok, 27 of 27 quotes verbatim | ok, 27 of 27 | ok, 27 of 27 |
+| L4 | gene_containment_kt2440_locus_tags | ok, 100 of 100 | ok, 12 of 12 | ok, 306 of 306 |
+| L4 | reference_is_the_ratio_denominator | ok, 102 values = 1.0 | ok, 51 values = 1.0 | ok, 305 values = 1.0 |
+
+The provenance audit grew from 22 to 27 entries: `relative_expression_basis`,
+`control_strain_is_nontarget`, `linear_scale_census`, `differential_basis_and_test` and
+`identification_fdr` are the five new `SOURCED_VALUES`, each quoting `paper.md` verbatim.

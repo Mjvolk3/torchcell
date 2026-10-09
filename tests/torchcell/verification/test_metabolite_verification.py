@@ -380,3 +380,55 @@ def test_protocol_split_fails_a_cross_protocol_reference_and_an_undeclared_type(
     records.append(_protocol_records()[0])
     dup = _result(records, "genotype_uniqueness", **kwargs)
     assert dup.message == "1 (strain, protocol) pairs appear in multiple records"
+
+
+# --- environment-keyed uniqueness (#753, Ishii 2007's dilution-rate arm) ----- #
+def _dilution_rate_records() -> list[dict[str, Any]]:
+    """Three WILD-TYPE records at 0.1, 0.2 and 0.7 h-1, one genotype between them."""
+    records = []
+    for rate in (0.1, 0.2, 0.7):
+        record = _record("YMR056C", 1.0, ref_level=5.0)
+        record["experiment"]["genotype"]["perturbations"] = []
+        record["experiment"]["environment"]["dilution_rate_per_hour"] = rate
+        records.append(record)
+    return records
+
+
+def test_environment_keyed_uniqueness_separates_one_strain_across_environments() -> (
+    None
+):
+    """One genotype at three dilution rates is three records, not two duplicates."""
+    records = _dilution_rate_records()
+    unique = _result(
+        records, "genotype_uniqueness", reference_centered=False, environment_keyed=True
+    )
+    assert unique.passed is True
+    assert unique.message == "3 unique (strain, environment) pairs, one record each"
+    assert unique.details == {"n_strains": 3, "n_duplicated": 0}
+    # Keyed on the strain alone the same three records are one duplicated key.
+    strain_only = _result(records, "genotype_uniqueness", reference_centered=False)
+    assert strain_only.passed is False
+    assert strain_only.message == "1 deletion sets appear in multiple records"
+    assert strain_only.details == {"n_strains": 1, "n_duplicated": 1}
+
+
+def test_environment_keyed_uniqueness_still_fails_a_repeated_environment() -> None:
+    """Two records at the SAME strain and the SAME rate are a duplicate either way."""
+    records = _dilution_rate_records()
+    records.append(_dilution_rate_records()[0])
+    dup = _result(
+        records, "genotype_uniqueness", reference_centered=False, environment_keyed=True
+    )
+    assert dup.passed is False
+    assert dup.message == "1 (strain, environment) pairs appear in multiple records"
+    assert dup.details == {"n_strains": 3, "n_duplicated": 1}
+
+
+def test_environment_keyed_uniqueness_does_not_change_a_fixed_environment() -> None:
+    """With one environment for every record the key is the strain plus a constant."""
+    records = _good_records()
+    plain = _result(records, "genotype_uniqueness")
+    keyed = _result(records, "genotype_uniqueness", environment_keyed=True)
+    assert (plain.passed, keyed.passed) == (True, True)
+    assert plain.details == keyed.details == {"n_strains": 3, "n_duplicated": 0}
+    assert keyed.message == "3 unique (strain, environment) pairs, one record each"

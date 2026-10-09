@@ -810,6 +810,75 @@ def test_promoter_activity_optional_fields_project_as_none() -> None:
     assert props["sample_unit"] == "biological_replicate"
 
 
+def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
+    return {
+        "experiment": s.BacterialMorphologyExperiment(
+            dataset_name="BacterialToy",
+            genotype=s.Genotype(perturbations=_bacterial_leaves()),
+            environment=s.Environment(media=_lb()),
+            phenotype=phenotype,
+        )
+    }
+
+
+def _morphology(**kw: Any) -> s.BacterialMorphologyPhenotype:
+    fields: dict[str, Any] = dict(
+        assay="campos2018",
+        morphology={"<L>": 2.81, "%2N": 0.19},
+        morphology_coefficient_of_variation={"CV_L": 0.24},
+        n_samples=245,
+        sample_unit=s.SampleUnit.cell,
+    )
+    fields.update(kw)
+    return s.BacterialMorphologyPhenotype(**fields)
+
+
+def test_bacterial_morphology_phenotype_node_projects_both_dicts_as_json() -> None:
+    """``assay`` rides beside them: the keys inside are only readable against it."""
+    phenotype = _morphology()
+    [node] = _run(
+        "bacterial morphology phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "bacterial morphology phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "graph_level": "global",
+        "label_name": "morphology",
+        "label_statistic_name": "morphology_coefficient_of_variation",
+        "assay": "campos2018",
+        "morphology": '{"<L>": 2.81, "%2N": 0.19}',
+        "morphology_coefficient_of_variation": '{"CV_L": 0.24}',
+        "n_samples": 245,
+        "sample_unit": "cell",
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+    }
+    [edge] = _run("phenotype to experiment (chunked)", _morphology_record(phenotype))
+    assert edge.get_source_id() == pid
+    assert edge.get_label() == "phenotype member of"
+
+
+def test_bacterial_morphology_optional_fields_project_as_none() -> None:
+    """A strain whose assay determined no CV, and a release stating no cell count."""
+    props = _run(
+        "bacterial morphology phenotype (chunked)",
+        _phenotype_record(
+            _morphology(
+                morphology_coefficient_of_variation=None,
+                n_samples=None,
+                sample_unit=None,
+            )
+        ),
+    )[0].get_properties()
+    optional = ("morphology_coefficient_of_variation", "n_samples", "sample_unit")
+    assert [props[k] for k in optional] == [None] * len(optional)
+    assert props["morphology"] == '{"<L>": 2.81, "%2N": 0.19}'
+
+
 @pytest.mark.parametrize(
     "method_name,label,phenotypes",
     [
@@ -832,6 +901,15 @@ def test_promoter_activity_optional_fields_project_as_none() -> None:
             "promoter activity phenotype reference",
             "promoter activity phenotype",
             [_activity(), _activity(), _activity(promoter_activity=9.5)],
+        ),
+        (
+            "bacterial morphology phenotype reference",
+            "bacterial morphology phenotype",
+            [
+                _morphology(),
+                _morphology(),
+                _morphology(morphology={"<L>": 3.02, "%2N": 0.19}),
+            ],
         ),
     ],
 )

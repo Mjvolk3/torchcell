@@ -6,8 +6,7 @@ import {
   type Quota,
   type SplitScores,
   type SubmissionMetadata,
-  type SubmissionResult,
-} from '@site/src/lib/benchApi';
+  type SubmissionResult, DATA_SCOPE_LABELS, DATA_SCOPE_TITLES, type DataScope} from '@site/src/lib/benchApi';
 import {useBenchApi} from '@site/src/lib/useBenchApi';
 import {useBenchSession} from '@site/src/lib/benchAuth';
 import {failureState, useLoad, type LoadState} from '@site/src/lib/useLoad';
@@ -276,8 +275,8 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
   const [modelFamily, setModelFamily] = useState('');
   const [encoding, setEncoding] = useState('');
   const [codeUrl, setCodeUrl] = useState('');
-  const [usesExternalData, setUsesExternalData] = useState(false);
-  const [externalDataDescription, setExternalDataDescription] = useState('');
+  const [dataScope, setDataScope] = useState<DataScope>('split_only');
+  const [dataDescription, setDataDescription] = useState('');
   const [hyperparameters, setHyperparameters] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -296,8 +295,8 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
     model_family: modelFamily.trim(),
     encoding: encoding.trim(),
     code_url: codeUrl.trim() === '' ? null : codeUrl.trim(),
-    uses_external_data: usesExternalData,
-    external_data_description: usesExternalData ? externalDataDescription.trim() : null,
+    data_scope: dataScope,
+    data_description: dataScope === 'split_only' ? null : dataDescription.trim(),
     hyperparameters: hyper,
   });
   const parsedHyperparameters = parseHyperparameters(hyperparameters);
@@ -433,25 +432,39 @@ function SubmitForm({accessToken}: {accessToken: string}): ReactNode {
                   A public repository at a fixed commit. Verification needs it.
                 </span>
               </label>
-              <label className={clsx(styles.checkbox, styles.formWide)}>
-                <input
-                  type="checkbox"
-                  checked={usesExternalData}
-                  onChange={(e) => setUsesExternalData(e.target.checked)}
-                />
-                The method uses data beyond the benchmark training split
-                <FieldName>metadata.uses_external_data</FieldName>
-              </label>
-              {usesExternalData ? (
+              <fieldset className={clsx(styles.field, styles.formWide)}>
+                <legend className={styles.fieldLabel}>
+                  Data scope: what the method was trained or conditioned on beyond its
+                  encodings
+                  <FieldName>metadata.data_scope</FieldName>
+                </legend>
+                {(['split_only', 'torchcell_db', 'external'] as const).map((scope) => (
+                  <label key={scope} className={styles.checkbox}>
+                    <input
+                      type="radio"
+                      name="data_scope"
+                      value={scope}
+                      checked={dataScope === scope}
+                      onChange={() => setDataScope(scope)}
+                    />
+                    <code>{scope}</code>: {DATA_SCOPE_TITLES[scope]} ({DATA_SCOPE_LABELS[scope]})
+                  </label>
+                ))}
+                <p className={styles.muted}>
+                  Encoders of sequence or genes, mechanistic simulators, and the reference
+                  genome are not data here; see the training protocol.
+                </p>
+              </fieldset>
+              {dataScope !== 'split_only' ? (
                 <label className={clsx(styles.field, styles.formWide)}>
                   <span className={styles.fieldLabel}>
-                  External data description
-                  <FieldName>metadata.external_data_description</FieldName>
-                </span>
+                    What the additional data is
+                    <FieldName>metadata.data_description</FieldName>
+                  </span>
                   <textarea
                     className={styles.textarea}
-                    value={externalDataDescription}
-                    onChange={(e) => setExternalDataDescription(e.target.value)}
+                    value={dataDescription}
+                    onChange={(e) => setDataDescription(e.target.value)}
                     required
                   />
                 </label>

@@ -63,8 +63,8 @@ form; over the API it is a JSON string in the multipart field `metadata`.
 | `model_family` | string | For example kNN, linear, GNN, transformer |
 | `encoding` | string | The gene encoding the model reads |
 | `code_url` | string or null | Public code, needed for verification |
-| `uses_external_data` | boolean | Whether data beyond the training split was used |
-| `external_data_description` | string or null | What that data was |
+| `data_scope` | `split_only`, `torchcell_db` or `external` | What was trained or conditioned on beyond the encodings; see the [training protocol](./training-protocol.mdx) |
+| `data_description` | string or null | What that additional data was; required unless `split_only` |
 | `hyperparameters` | object | Flat map of names to strings, numbers, or booleans |
 
 ## Grading

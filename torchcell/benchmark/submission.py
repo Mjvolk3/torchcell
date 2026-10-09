@@ -80,6 +80,10 @@ class PredictionRow(BaseModel):
     )
 
 
+DataScope = Literal["split_only", "torchcell_db", "external"]
+"""What a method was trained or conditioned on beyond its encodings; see the field."""
+
+
 class SubmissionMetadata(BaseModel):
     """What the leaderboard shows about a method, sent as JSON beside the predictions."""
 
@@ -97,11 +101,19 @@ class SubmissionMetadata(BaseModel):
         default=None,
         description="Public code that reproduces the predictions; needed to be verified.",
     )
-    uses_external_data: bool = Field(
-        description="True when anything beyond the dataset's train split was trained on."
+    data_scope: DataScope = Field(
+        description=(
+            "What the method was trained or conditioned on, beyond the encodings. "
+            "split_only: the dataset's train split and nothing else (inductive). "
+            "torchcell_db: other records of the TorchCell database as well, for "
+            "example another dataset's measurements as input (transductive). "
+            "external: measurements from outside the TorchCell database. Encoders of "
+            "sequence or genes and mechanistic simulators are not data for this field."
+        )
     )
-    external_data_description: LongText | None = Field(
-        default=None, description="What the external data is; required when used."
+    data_description: LongText | None = Field(
+        default=None,
+        description="What the additional data is; required unless data_scope is split_only.",
     )
     hyperparameters: dict[
         HyperparameterKey, HyperparameterString | int | float | bool
@@ -112,10 +124,10 @@ class SubmissionMetadata(BaseModel):
     )
 
     @model_validator(mode="after")
-    def _external_data_is_described(self) -> SubmissionMetadata:
-        if self.uses_external_data and self.external_data_description is None:
+    def _additional_data_is_described(self) -> SubmissionMetadata:
+        if self.data_scope != "split_only" and self.data_description is None:
             raise ValueError(
-                "external_data_description is required when uses_external_data is true"
+                f"data_description is required when data_scope is {self.data_scope}"
             )
         return self
 

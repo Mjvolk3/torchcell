@@ -29,10 +29,14 @@ A submitter requests verification by opening a
 [Benchmark verification request](https://github.com/Mjvolk3/torchcell/issues/new?template=benchmark-verification.yml)
 issue, which collects the submission id, the repository and commit, the environment,
 the exact command, the hardware, and the seed. A maintainer reproduces the predictions
-and marks the submission verified. Automating that reproduction is planned.
+from that commit, compares the regenerated file with the uploaded one by hash, and
+marks the submission verified through the admin route. Nothing else moves a submission
+out of provisional. A reproduction step inside the library, run against the recorded
+commit and command, is planned; until it exists the step is by hand.
 
 ## Filtering
 
 The [leaderboard](./leaderboard.mdx) has a **verified only** toggle. With it on, the
 table and both charts show verified submissions only. In the charts the two states
-also differ by marker shape: a circle for provisional, a diamond for verified.
+differ by fill: an open marker for provisional, a filled one for verified. Circles are
+submissions and diamonds are the maintainers' baselines.

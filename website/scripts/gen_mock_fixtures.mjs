@@ -152,6 +152,7 @@ function leaderboardFor(dataset, seed) {
         model_family: family,
         encoding,
         code_url: baseline || i % 2 === 0 ? 'https://example.invalid/mock-code' : null,
+        data_scope: ['split_only', 'torchcell_db', 'external'][i % 3],
         status,
         submitted_at: isoDay(day),
         is_baseline: baseline,

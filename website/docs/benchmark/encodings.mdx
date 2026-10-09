@@ -22,7 +22,9 @@ how each one is computed, its dimension, and its source model is planned for eac
 | ESM2 | `Esm2Dataset` | planned |
 | Random controls | `RandomEmbeddingDataset` | planned |
 
-FUDT is the fungal upstream and downstream sequence transformer.
+FUDT is the fungal upstream and downstream sequence transformer, a species-aware
+encoding: it was trained on fungal sequence, not on a pan-domain corpus, so its
+windows carry yeast regulatory context that a general nucleotide model does not.
 
 The random controls are encodings that carry no biological information, so they set
 the level a learned encoding has to exceed.

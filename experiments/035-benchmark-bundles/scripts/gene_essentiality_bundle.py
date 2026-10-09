@@ -424,10 +424,11 @@ def main() -> None:
         # Pinned to the commit the build ran at: a `main` link answers 404 until the
         # branch lands, and a pinned one keeps pointing at the code that produced the file.
         "code_url": f"https://github.com/Mjvolk3/torchcell/blob/{head}/{SCRIPT}",
-        "uses_external_data": True,
-        "external_data_description": (
+        "data_scope": "torchcell_db",
+        "data_description": (
             f"SmfCostanzo2016Dataset via tc-data archive {smf.archive} "
-            f"(sha256 {smf.archive_sha256[:12]}), preprocess/data.csv"
+            f"(sha256 {smf.archive_sha256[:12]}), preprocess/data.csv: another "
+            "TorchCell dataset read as the score, so transductive on the database"
         ),
         "hyperparameters": {
             "temperature_c": 30,

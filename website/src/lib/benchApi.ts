@@ -85,6 +85,8 @@ export type LeaderboardRow = {
   model_family: string;
   encoding: string;
   code_url: string | null;
+  /** null for a submission made before the field existed. */
+  data_scope: DataScope | null;
   status: 'provisional' | 'verified';
   submitted_at: string;
   is_baseline: boolean;
@@ -192,9 +194,27 @@ export type SubmissionMetadata = {
   model_family: string;
   encoding: string;
   code_url: string | null;
-  uses_external_data: boolean;
-  external_data_description: string | null;
+  data_scope: DataScope;
+  data_description: string | null;
   hyperparameters: Record<string, string | number | boolean>;
+};
+
+/**
+ * What a method was trained or conditioned on beyond its encodings: the train split
+ * only (inductive), other TorchCell records too (transductive), or outside data.
+ */
+export type DataScope = 'split_only' | 'torchcell_db' | 'external';
+
+export const DATA_SCOPE_LABELS: Record<DataScope, string> = {
+  split_only: 'inductive',
+  torchcell_db: 'transductive',
+  external: 'external data',
+};
+
+export const DATA_SCOPE_TITLES: Record<DataScope, string> = {
+  split_only: 'Trained on the dataset train split only',
+  torchcell_db: 'Also uses other records of the TorchCell database',
+  external: 'Uses measurements from outside the TorchCell database',
 };
 
 export type MessageResponse = {message: string};

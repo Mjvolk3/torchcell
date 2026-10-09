@@ -333,3 +333,18 @@ html[data-layout='wide'] [class*='docItemCol'] {
     transition: none;
   }
 }
+
+
+/* Data scope chips on the boards: inductive, transductive, external data. */
+.tc-chip--scope-split_only {
+  background: var(--ifm-color-success-contrast-background);
+  color: var(--ifm-color-success-contrast-foreground);
+}
+.tc-chip--scope-torchcell_db {
+  background: var(--ifm-color-info-contrast-background);
+  color: var(--ifm-color-info-contrast-foreground);
+}
+.tc-chip--scope-external {
+  background: var(--ifm-color-warning-contrast-background);
+  color: var(--ifm-color-warning-contrast-foreground);
+}

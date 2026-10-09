@@ -1,0 +1,68 @@
+---
+title: Benchmark datasets
+sidebar_label: All datasets
+description: Every served benchmark dataset in one table, each with its own page.
+---
+
+import DatasetsTable from '@site/src/components/bench/DatasetsTable';
+
+Every dataset in TorchCell is planned to get a board. The table is read from the API
+when the page loads, so it is the served list, not a copy; a dataset's own page (the
+title) holds its label rule, its counts, and its provenance in full.
+
+<DatasetsTable />
+
+## How provenance is recorded
+
+Every dataset page begins with where each source file came from, how it was
+retrieved, and the hash of the bytes used. The same record is served with the dataset
+(`provenance` in `GET /datasets`) and shown, folded, at the top of its panel on the
+[leaderboard](../leaderboard.mdx). The rule is the project's: a stored file and its
+sha256 are canonical, a URL is retrieval history, and a rebuild re-runs the recorded
+retrieval and verifies the hash rather than trusting the live site.
+
+
+A bundle is built by a committed script under `experiments/035-benchmark-bundles/`,
+which writes the provenance block into the bundle and a full build record into that
+experiment's `results/`.
+
+## Planned regression datasets
+
+:::caution[Provisional choice]
+
+The three datasets below are a provisional choice. The project owner has not
+confirmed them, and the list may change before the benchmark opens.
+
+:::
+
+| Slug | What it measures | Source | Loader | Records |
+| :-- | :-- | :-- | :-- | --: |
+| `smf-costanzo2016` | Single-mutant fitness | Costanzo 2016 | `SmfCostanzo2016Dataset` | 20,484 |
+| `amino-acid-mulleder2016` | Amino acid levels across the deletion collection | Mulleder 2016 | `AminoAcidMulleder2016Dataset` | 4,678 |
+| `betaxanthin-cachera2023` | Betaxanthin production | Cachera 2023 | `BetaxanthinCachera2023Dataset` | 4,719 |
+
+The datasets are described in the Sphinx docs:
+
+- [Gene essentiality and single-mutant fitness](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/essentiality-smf.html)
+- [Amino acids and betaxanthin](https://mjvolk3.github.io/torchcell/datasets/scerevisiae/amino-acid-betaxanthin.html)
+
+Each one also has a [dataset card](/learn/) under the Learn tab.
+
+## Split files
+
+A **split file** is a CSV with the columns `record_id,split`. It assigns every record
+of a dataset to one split, train, validation, or test, and every submission to that
+dataset is scored on the same validation and test records. The split file and an empty predictions template are downloadable from the
+dataset panel on the [leaderboard](../leaderboard.mdx), and from the API:
+
+| File | Route | Columns |
+| :-- | :-- | :-- |
+| Split file | `GET /datasets/{slug}/splits.csv` | `record_id,split` |
+| Predictions template | `GET /datasets/{slug}/template.csv` | `record_id,split,target,prediction`, with `prediction` empty |
+
+## Targets
+
+A **target** is one predicted quantity. A dataset with one measured value per record
+has one target. A dataset with several measured values per record, such as a set of
+amino acid levels, has one target per value, and its scores are averaged over targets
+as described under [Metrics](../metrics.mdx).

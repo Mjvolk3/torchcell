@@ -67,7 +67,7 @@ when it was rejected or failed validation, and 2 when the quota refused it.
   "model_family": "ridge",
   "encoding": "one-hot gene",
   "code_url": "https://github.com/<you>/<repository>/tree/<commit>",
-  "uses_external_data": false,
+  "data_scope": "split_only",
   "hyperparameters": {"alpha": 1.0}
 }
 ```
@@ -86,7 +86,7 @@ metadata = SubmissionMetadata(
     description="Ridge regression on a one-hot gene encoding.",
     model_family="ridge",
     encoding="one-hot gene",
-    uses_external_data=False,
+    data_scope="split_only",
     hyperparameters={"alpha": 1.0},
 )
 result = client.submit("<dataset>", metadata, Path("predictions.csv"))

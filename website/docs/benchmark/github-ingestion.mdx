@@ -1,19 +1,68 @@
 ---
 title: Submissions through GitHub
 sidebar_label: GitHub ingestion
-description: Planned ingestion of submissions filed as GitHub issues.
+description: The planned second way to submit, as a GitHub issue that an action turns into the same graded submission.
 ---
 
 <StatusBadge status="planned" />
 
-Planned: a second way to submit, in which a submission is filed as a GitHub issue. The
-ingestion of such an issue is LLM-assisted and automated through GitHub, and the
-result goes through the same grader as an upload from the [submit page](./submit.mdx).
+A second way to submit, for people who would rather file a form than hold a token: a
+GitHub issue on the TorchCell repository becomes a submission on the board, graded by
+the same server and held to the same rules as an upload from the
+[submit page](./submit.mdx). Nothing below is built; this page is the design, so that
+it can be argued with before it is.
 
-None of this is built, and the design is not decided. Until it exists, the
-[submit page](./submit.mdx) and `POST /submissions` are the only ways to submit.
+## The flow
 
-One GitHub form exists today, for a different step: the
-[Benchmark verification request](https://github.com/Mjvolk3/torchcell/issues/new?template=benchmark-verification.yml)
-issue asks for an already graded submission to be reproduced and marked
-[verified](./status.mdx).
+1. **File the issue.** An issue form, "Benchmark submission", asks for exactly the
+   [metadata fields](./submission-format.mdx): dataset, method name, description,
+   model family, encoding, code at a fixed commit, data scope with its description,
+   and hyperparameters. The predictions file is not pasted; the form takes a link to
+   the CSV at a commit in a public repository, so the file that is graded is the file
+   that is versioned.
+2. **Match the author to an account.** Submissions belong to accounts, and accounts
+   come from [CILogon](./account.mdx). The action looks for an account whose sign-in
+   provider is GitHub and whose provider identity is the issue author. If there is
+   none, the action comments with the one-time step: sign in once on the account page
+   with GitHub. Nothing is created from the issue alone, so a submission cannot be
+   filed under someone else's name.
+3. **Read the form.** The action reads the structured fields directly. Free text in
+   the description and the data description is kept as written. Where a field is
+   missing or does not parse, an LLM-assisted step proposes the metadata record from
+   the issue's text and the linked repository, posts it as a comment, and waits for
+   the author to reply `confirm`. The proposal is a draft the author signs; it is never
+   submitted on its own.
+4. **Submit.** The action downloads the CSV at the linked commit, checks its hash,
+   and calls `POST /submissions` on the author's behalf with an action-held
+   credential scoped to that one account and that one call. The grader's result,
+   validation and test together, or the rejection reasons, is posted as a comment and
+   the issue is labeled with the status.
+5. **Verify.** The same issue carries the
+   [verification request](./status.mdx): the repository, commit, environment, command
+   and seed are already in it, so a maintainer, or the planned reproduction step, can
+   reproduce the file from the issue alone and mark the submission verified.
+
+## What stays the same
+
+- The quota, the flags, the public history, and the data scope apply exactly as to an
+  upload. An issue is a different door to the same room.
+- The issue is public, as the submission history is. A submission filed this way has
+  its reasoning on record from the start, which is the point.
+- Withdrawal works the same way: closing the issue with a note withdraws the
+  submission, and the account page shows it as withdrawn.
+
+## What is decided and what is not
+
+Decided: the metadata fields, that the file is graded from a commit and not from an
+attachment, that an account is required and matched through the GitHub sign-in, and
+that the LLM step proposes but never submits.
+
+Not decided: whether the action runs on this repository or on a dedicated one, how
+the per-account credential is minted and expires, and whether an issue may carry more
+than one submission (one per dataset, say). The verification request form exists
+today and is the only GitHub form in use:
+
+- [Benchmark verification request](https://github.com/Mjvolk3/torchcell/issues/new?template=benchmark-verification.yml)
+
+Until the action exists, the [submit page](./submit.mdx), the `tc-bench` command, and
+`POST /submissions` are the ways to submit.

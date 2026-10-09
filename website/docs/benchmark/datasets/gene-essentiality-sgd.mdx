@@ -1,0 +1,66 @@
+---
+title: Gene essentiality (SGD)
+sidebar_label: Gene essentiality
+description: The gene essentiality board, labeled from SGD alone, with its provenance, label rule, counts, and first entry.
+---
+
+The first board: predict whether the null mutant of a gene is inviable. Slug
+`gene-essentiality-sgd`, binary task, target `is_essential`, primary metric AUROC.
+
+## Provenance
+
+| Source | Role | Retrieval | Where the bytes live |
+| :-- | :-- | :-- | :-- |
+| `SGD_features.tab`, the SGD chromosomal feature table | gene universe: every ORF (Verified, Uncharacterized, Dubious) | `direct_url` from `sgd-archive.yeastgenome.org` | raw mirror `torchcell-raw/cherrySGDSaccharomycesGenome1998/`, hash in its `provenance.json` |
+| SGD locus phenotype annotations, one JSON per ORF | label 0: a `null` mutant in `S288C` annotated `viable` | `direct_url` from `yeastgenome.org/backend/locus/<ORF>/phenotype_details`, the endpoint the served dataset was built from | same mirror, `phenotype_details/<ORF>.json`, one hash per file plus one over the set |
+| tc-data archive of `GeneEssentialitySgdDataset` | label 1: the gene set the knowledge graph serves (`null` mutant in `S288C` annotated `inviable`) | `tc_data_archive`, verified against the store's `index.json` | the tc-data store; archive and member hashes in the bundle |
+
+Both labels come from SGD. No fitness dataset is spent on the labels, so a method may
+use single-mutant fitness, or any other TorchCell dataset, as input; that use is
+declared as the submission's [data scope](../training-protocol.mdx). The scripts are
+`experiments/035-benchmark-bundles/scripts/sgd_phenotype_mirror.py` (the mirror, with
+`provenance.json`) and `gene_essentiality_bundle.py` (the bundle, its public provenance
+block, and the build record in `experiments/035-benchmark-bundles/results/`).
+
+## Labels and splits
+
+| Slug | Version | Task | Records | Label 1 | Label 0 |
+| :-- | :-- | :-- | --: | --: | --: |
+| `gene-essentiality-sgd` | 2 | binary, target `is_essential` | 5,930 genes | 1,140 | 4,790 |
+
+Built 2026-10-08 from 6,613 SGD ORFs (5,783 Verified, 147 Uncharacterized, 683
+Dubious): 1,140 essential, 4,790 non-essential, 683 excluded with neither call. Splits:
+4,744 train, 593 validation, 593 test, each 19% essential. The fresh SGD read had 1,161
+inviable genes, 21 more than the served set and none fewer; the served set is what is
+labeled, and the difference is recorded. 54 genes carry both calls and are labeled
+essential.
+
+- **Essential (1):** the gene is in the gene set of the served
+  `GeneEssentialitySgdDataset`: SGD annotates a null mutant in S288C as inviable.
+- **Non-essential (0):** the gene is an SGD ORF, not in that set, and SGD annotates a
+  null mutant in S288C as viable.
+- **Excluded:** ORFs with neither call. A gene with both calls is labeled essential and
+  the count is recorded in the provenance notes.
+- **Split:** within each class, 80% train, 10% validation, 10% test, drawn with a fixed
+  seed, so each split keeps the class ratio.
+- **Record id:** the systematic gene name, for example `YAL001C`.
+
+## The baseline
+
+The first entry is a lookup, not a model: the gene's Costanzo 2016 single-mutant fitness
+at 30 C, minimum over its KanMX and NatMX deletion strains, scored as one minus fitness.
+A gene with no deletion strain measured scores one, since the deletion collection lacks
+the genes whose deletion did not live. It reads another TorchCell dataset, so its data
+scope is `torchcell_db` (transductive), and it is marked as a baseline. It sets the
+level a sequence-only (inductive) method has to reach to be interesting, and the level
+a transductive method has to beat.
+
+:::note[The labels are public]
+
+SGD publishes which genes are inviable, so the test labels can be looked up. That is
+not a defect of the dataset; it is why the [training protocol](../training-protocol.mdx)
+asks that nothing be selected on test, and why verification reproduces a submission
+from its code rather than trusting the file.
+
+:::
+

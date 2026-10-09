@@ -182,6 +182,7 @@ from torchcell.benchmark.security import (
 )
 from torchcell.benchmark.storage import archive_submission
 from torchcell.benchmark.submission import (
+    DataScope,
     Split,
     SubmissionMetadata,
     submission_json_schema,
@@ -451,6 +452,12 @@ class LeaderboardRow(BaseModel):
     model_family: str
     encoding: str
     code_url: str | None
+    data_scope: DataScope | None = Field(
+        description=(
+            "split_only, torchcell_db or external, as declared; None for a submission "
+            "made before the field existed."
+        )
+    )
     status: SubmissionStatus
     submitted_at: datetime
     is_baseline: bool
@@ -518,6 +525,7 @@ def _row(submission: Submission, user: User) -> UserHistoryRow:
         model_family=submission.model_family or "",
         encoding=submission.encoding or "",
         code_url=submission.code_url,
+        data_scope=(submission.submission_metadata or {}).get("data_scope"),
         status=SubmissionStatus(submission.status),
         submitted_at=submission.created_at,
         is_baseline=submission.is_baseline,

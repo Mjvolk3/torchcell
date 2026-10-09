@@ -23,7 +23,7 @@ scored submissions for one dataset.
 ## How it works
 
 1. **Download the split.** Each dataset publishes a split file that assigns every
-   record id to the train, validation, or test split. See [Datasets](./datasets.mdx).
+   record id to the train, validation, or test split. See [Datasets](./datasets/index.mdx).
 2. **Train on train, select on validation.** Follow the
    [training protocol](./training-protocol.mdx): choose every hyperparameter on the
    validation split and predict the test split once.
@@ -47,4 +47,4 @@ hiding them. [Integrity](./integrity.mdx) describes what it relies on instead.
 
 Every dataset gets a board, and the same [baseline procedure](./baselines.mdx) is run
 over each one. The first boards cover three seed datasets, and that choice is
-provisional; see [Datasets](./datasets.mdx).
+provisional; see [Datasets](./datasets/index.mdx).

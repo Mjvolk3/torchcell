@@ -38,9 +38,36 @@ decision. This template keeps it that way.
 - Submitting several variants and reporting the one with the best test score. Every
   submission stays in the public history, so this is visible.
 
+## What data may go in
+
+Every submission declares its **data scope**, and the board shows it beside the
+score. The scope is about measurements, not about encoders.
+
+| `data_scope` | Meaning | Shown as |
+| :-- | :-- | :-- |
+| `split_only` | The dataset's train split and nothing else was trained or conditioned on. | inductive |
+| `torchcell_db` | Other records of the TorchCell database were used as well, for example another dataset's measurements read as an input feature or added to training. | transductive |
+| `external` | Measurements from outside the TorchCell database were used. | external data |
+
+Three things are **not** data for this field, whatever the scope: an encoding of
+sequence or genes (a protein language model, a nucleotide model, a species-aware
+model such as FUDT, a one-hot or a random embedding), a mechanistic simulator (a
+constraint-based model, an ODE model), and the reference genome and its annotation.
+They are models of the organism, not measurements of these strains, and every method
+is free to use them. The [encodings](./encodings.mdx) page lists the ones the
+baselines use.
+
+Why the distinction matters: a method that reads the single-mutant fitness of a strain
+from the database and predicts its essentiality is answering a different question from
+one that predicts it from sequence alone, and the two should not be ranked as if they
+were the same. The scope keeps both on the board and tells them apart; it does not
+reject either. The same holds for external measurements: declare them in
+`data_description`, the board marks the row, and readers compare like with like. A
+submission that is later found to have used undeclared data is withdrawn.
+
 ## What to report
 
 Put the code at a fixed commit in `code_url`, list the selected hyperparameters in
-the metadata, and declare any data beyond the training split in
-`uses_external_data`. A submission can only be [verified](./status.mdx) if its code
+the metadata, and declare the data scope with a description of any data beyond the
+training split. A submission can only be [verified](./status.mdx) if its code
 reproduces the uploaded predictions.

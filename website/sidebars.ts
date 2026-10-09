@@ -95,7 +95,8 @@ const sidebars: SidebarsConfig = {
       type: 'category',
       label: 'Datasets and baselines',
       items: [
-        'benchmark/datasets',
+        'benchmark/datasets/index',
+        'benchmark/datasets/gene-essentiality-sgd',
         'benchmark/baselines',
         'benchmark/encodings',
         'benchmark/metrics',

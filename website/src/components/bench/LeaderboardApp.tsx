@@ -11,6 +11,8 @@ import {
   type BenchApi,
   type BenchmarkDatasetPublic,
   type BundleProvenance,
+  DATA_SCOPE_LABELS,
+  DATA_SCOPE_TITLES,
   type LeaderboardRow,
   type MetricName,
 } from '@site/src/lib/benchApi';
@@ -135,10 +137,12 @@ export function ValTestScatter({
   const range: [number, number] = [lo - pad, hi + pad];
 
   const groups = [
-    {name: 'Submission, provisional', baseline: false, status: 'provisional', symbol: 'circle'},
-    {name: 'Submission, verified', baseline: false, status: 'verified', symbol: 'diamond'},
-    {name: 'Baseline, provisional', baseline: true, status: 'provisional', symbol: 'circle-open'},
-    {name: 'Baseline, verified', baseline: true, status: 'verified', symbol: 'diamond-open'},
+    // Fill says status (open = provisional, filled = verified); shape says who
+    // (circle = submission, diamond = baseline).
+    {name: 'Submission, provisional', baseline: false, status: 'provisional', symbol: 'circle-open'},
+    {name: 'Submission, verified', baseline: false, status: 'verified', symbol: 'circle'},
+    {name: 'Baseline, provisional', baseline: true, status: 'provisional', symbol: 'diamond-open'},
+    {name: 'Baseline, verified', baseline: true, status: 'verified', symbol: 'diamond'},
   ] as const;
 
   const data: Data[] = [
@@ -358,6 +362,7 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
             {header('Encoding', 'encoding')}
             {header('Model family', 'family')}
             {header('Status', 'status')}
+            <th scope="col">Data</th>
             {header(`Val ${metricLabel}`, 'val', true)}
             {header(`Test ${metricLabel}`, 'test', true)}
             {header('Flags', 'flags')}
@@ -381,6 +386,20 @@ export function BoardTable({rows, metricLabel}: {rows: RankedRow[]; metricLabel:
               <td>{row.model_family}</td>
               <td>
                 <StatusBadge status={row.status} />
+              </td>
+              <td>
+                {row.data_scope ? (
+                  <span
+                    className={clsx('tc-chip', `tc-chip--scope-${row.data_scope}`)}
+                    title={DATA_SCOPE_TITLES[row.data_scope]}
+                  >
+                    {DATA_SCOPE_LABELS[row.data_scope]}
+                  </span>
+                ) : (
+                  <span className={styles.muted} title="Submitted before the data scope field existed">
+                    undeclared
+                  </span>
+                )}
               </td>
               <td className={styles.num}>{fmtMetric(row.valValue)}</td>
               <td className={styles.num}>{fmtMetric(row.testValue)}</td>
@@ -411,8 +430,10 @@ const GITHUB_TREE = 'https://github.com/Mjvolk3/torchcell/blob/main/';
  */
 function Provenance({provenance}: {provenance: BundleProvenance}): ReactNode {
   return (
-    <div className={styles.provenance}>
-      <p className={styles.panelTitle}>Provenance</p>
+    <details className={styles.provenance}>
+      <summary className={styles.panelTitle}>
+        Provenance: {provenance.sources.length} sources, label rule, split rule
+      </summary>
       <ul className={styles.facts}>
         {provenance.sources.map((s) => (
           <li key={s.name}>
@@ -453,7 +474,7 @@ function Provenance({provenance}: {provenance: BundleProvenance}): ReactNode {
           </li>
         ))}
       </ul>
-    </div>
+    </details>
   );
 }
 

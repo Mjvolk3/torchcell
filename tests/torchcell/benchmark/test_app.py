@@ -74,7 +74,7 @@ METADATA: dict[str, Any] = {
     "description": "Ridge regression on a one-hot gene encoding.",
     "model_family": "ridge",
     "encoding": "one-hot gene",
-    "uses_external_data": False,
+    "data_scope": "split_only",
 }
 Labels = dict[tuple[str, str], float]
 Csv = Callable[[Mapping[tuple[str, str], float]], bytes]

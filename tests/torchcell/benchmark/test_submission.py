@@ -29,7 +29,7 @@ METADATA: dict[str, Any] = {
     "description": "Ridge regression on a one-hot gene encoding.",
     "model_family": "ridge",
     "encoding": "one-hot gene",
-    "uses_external_data": False,
+    "data_scope": "split_only",
 }
 
 
@@ -110,17 +110,30 @@ def test_metadata_defaults_and_whitespace() -> None:
     assert metadata.hyperparameters == {}
 
 
-def test_metadata_requires_external_data_description() -> None:
-    with pytest.raises(ValidationError, match="external_data_description is required"):
-        SubmissionMetadata.model_validate({**METADATA, "uses_external_data": True})
+def test_metadata_requires_a_description_beyond_split_only() -> None:
+    """``torchcell_db`` and ``external`` need ``data_description``; ``split_only`` does
+    not; an unknown scope and the boolean the field replaced are refused.
+    """
+    for scope in ("torchcell_db", "external"):
+        with pytest.raises(
+            ValidationError,
+            match=f"data_description is required when data_scope is {scope}",
+        ):
+            SubmissionMetadata.model_validate({**METADATA, "data_scope": scope})
     described = SubmissionMetadata.model_validate(
         {
             **METADATA,
-            "uses_external_data": True,
-            "external_data_description": "STRING v12 protein links.",
+            "data_scope": "external",
+            "data_description": "STRING v12 protein links.",
         }
     )
-    assert described.external_data_description == "STRING v12 protein links."
+    assert described.data_scope == "external"
+    assert described.data_description == "STRING v12 protein links."
+    assert SubmissionMetadata.model_validate(METADATA).data_description is None
+    with pytest.raises(ValidationError, match="data_scope"):
+        SubmissionMetadata.model_validate({**METADATA, "data_scope": "all_of_it"})
+    with pytest.raises(ValidationError, match="uses_external_data"):
+        SubmissionMetadata.model_validate({**METADATA, "uses_external_data": False})
 
 
 def test_metadata_code_url_must_be_http() -> None:
@@ -164,5 +177,5 @@ def test_json_schema_names_the_contract() -> None:
         "description",
         "model_family",
         "encoding",
-        "uses_external_data",
+        "data_scope",
     ]

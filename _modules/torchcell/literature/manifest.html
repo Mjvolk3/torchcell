@@ -138,6 +138,15 @@
 <span class="c1"># Roles a file in an artifact directory can play.</span>
 <span class="n">ROLE_PAPER_PDF</span> <span class="o">=</span> <span class="s2">"paper_pdf"</span>
 <span class="n">ROLE_PAPER_OCR</span> <span class="o">=</span> <span class="s2">"paper_ocr"</span>
+<span class="c1"># The publisher's own plain text of an article (PMC's .txt rendering), which is NOT</span>
+<span class="c1"># OCR: it is the source of record for a verbatim quote when a paper has no Zotero</span>
+<span class="c1"># item, and therefore no OCR'd literature mirror, to quote from.</span>
+<span class="n">ROLE_PAPER_TEXT</span> <span class="o">=</span> <span class="s2">"paper_text"</span>
+<span class="c1"># A deterministic TEXT rendering of a supplementary file that is not itself text (a</span>
+<span class="c1"># workbook's legend rows, a table dumped to TSV). Its ProcessingRecord names the</span>
+<span class="c1"># reader and pins the input's sha256, so a quote in it is auditable although the</span>
+<span class="c1"># artifact it came from is binary.</span>
+<span class="n">ROLE_SI_TEXT</span> <span class="o">=</span> <span class="s2">"si_text"</span>
 <span class="n">ROLE_SI_PDF</span> <span class="o">=</span> <span class="s2">"si_pdf"</span>
 <span class="n">ROLE_SI_OCR</span> <span class="o">=</span> <span class="s2">"si_ocr"</span>
 <span class="n">ROLE_SI_DATA</span> <span class="o">=</span> <span class="s2">"si_data"</span>
@@ -167,8 +176,9 @@
 
     <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"Path relative to the artifact directory."</span><span class="p">)</span>
     <span class="n">role</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"paper_pdf | paper_ocr | si_pdf | si_ocr | si_data | raw_data | "</span>
-        <span class="s2">"ocr_image | ocr_layout | ocr_provenance | annotations"</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"paper_pdf | paper_ocr | paper_text | si_pdf | si_ocr | "</span>
+        <span class="s2">"si_text | si_data | raw_data | ocr_image | ocr_layout | ocr_provenance | "</span>
+        <span class="s2">"annotations"</span>
     <span class="p">)</span>
     <span class="nb">bytes</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">sha256</span><span class="p">:</span> <span class="nb">str</span>

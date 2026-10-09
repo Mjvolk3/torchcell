@@ -6263,6 +6263,180 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">ReporterReadout</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""HOW a transcriptional reporter's output was physically read.</span>
+
+<span class="sd">    The counterpart of ``AssayType`` for a reporter-fusion readout: the number is a</span>
+<span class="sd">    signal from a reporter gene, and what instrument produced it decides what the</span>
+<span class="sd">    number can be compared with. A plate-reader intensity is a well average over a</span>
+<span class="sd">    whole population; a flow-cytometry intensity is a per-cell distribution the source</span>
+<span class="sd">    summarized; an enzymatic activity is a rate, not an intensity. Mixing them silently</span>
+<span class="sd">    would compare a population average with a single-cell summary.</span>
+
+<span class="sd">    - ``plate_reader_fluorescence``: well fluorescence read by a microplate reader.</span>
+<span class="sd">    - ``flow_cytometry_fluorescence``: per-cell fluorescence summarized by the source.</span>
+<span class="sd">    - ``microscopy_fluorescence``: fluorescence quantified from images.</span>
+<span class="sd">    - ``luminescence``: a luciferase or other light-emitting reporter.</span>
+<span class="sd">    - ``enzymatic_activity``: a reporter enzyme's activity (e.g. Miller units).</span>
+<span class="sd">    """</span>
+
+    <span class="n">plate_reader_fluorescence</span> <span class="o">=</span> <span class="s2">"plate_reader_fluorescence"</span>
+    <span class="n">flow_cytometry_fluorescence</span> <span class="o">=</span> <span class="s2">"flow_cytometry_fluorescence"</span>
+    <span class="n">microscopy_fluorescence</span> <span class="o">=</span> <span class="s2">"microscopy_fluorescence"</span>
+    <span class="n">luminescence</span> <span class="o">=</span> <span class="s2">"luminescence"</span>
+    <span class="n">enzymatic_activity</span> <span class="o">=</span> <span class="s2">"enzymatic_activity"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PromoterActivityPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Transcription from ONE promoter, read as the signal of a reporter fused to it.</span>
+
+<span class="sd">    For transcriptional-reporter libraries (Zaslaver-style promoter-GFP collections,</span>
+<span class="sd">    luciferase or lacZ fusion panels): the strain carries a reporter whose expression is</span>
+<span class="sd">    driven by one promoter, and the measured number is that reporter's signal. The</span>
+<span class="sd">    measured entity is the PROMOTER, not the reporter gene and not the strain's fitness,</span>
+<span class="sd">    which is why this is its own family:</span>
+
+<span class="sd">    - ``FitnessPhenotype`` and ``EnvironmentResponsePhenotype`` are growth readouts.</span>
+<span class="sd">      ``EnvironmentResponsePhenotype`` additionally requires an environmental edit on</span>
+<span class="sd">      every record (its verifier's ``environment_perturbed`` rule), so it cannot carry</span>
+<span class="sd">      the untreated arm of a reporter time course, which is half of what such a screen</span>
+<span class="sd">      releases.</span>
+<span class="sd">    - the three expression families (``MicroarrayExpressionPhenotype``,</span>
+<span class="sd">      ``RNASeqExpressionPhenotype``, ``PseudobulkExpressionPhenotype``) are genome-wide</span>
+<span class="sd">      dicts of one strain's transcriptome. A reporter library inverts that: one promoter</span>
+<span class="sd">      per strain, measured in many strains, and the reporter is a proxy for the</span>
+<span class="sd">      promoter's transcription rather than a count of the native transcript.</span>
+
+<span class="sd">    ``promoter_activity`` is the signal AS RELEASED, in ``activity_units``: an absolute</span>
+<span class="sd">    intensity when the source released one, a normalized or background-subtracted value</span>
+<span class="sd">    when the source released that, and nothing is converted here. A ratio against a</span>
+<span class="sd">    control arm is NOT stored, because it is a function of two stored records (the</span>
+<span class="sd">    treated and the control reading of the same promoter at the same time) and storing it</span>
+<span class="sd">    beside them would store one measurement twice.</span>
+
+<span class="sd">    ``promoter_name`` is the source's own label for the promoter, verbatim.</span>
+<span class="sd">    ``promoter_gene`` is the gene identifier that label resolves to in the record's</span>
+<span class="sd">    pinned assembly, which is what joins the record to a gene node; it is ``None`` when</span>
+<span class="sd">    the label names no single gene, never a guess. ``well_id`` carries the source's own</span>
+<span class="sd">    plate/well (or tube) identifier: a library routinely holds one promoter in several</span>
+<span class="sd">    wells, and without it two independent readings of one promoter under one condition</span>
+<span class="sd">    would collide into a single L1 identity instead of standing as two measurements.</span>
+
+<span class="sd">    The uncertainty ontology mirrors ``FitnessPhenotype``: ``promoter_activity_se`` is</span>
+<span class="sd">    the DERIVED, ML-facing SE, auto-filled from the source-reported uncertainty and its</span>
+<span class="sd">    type via ``derive_se``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"promoter_activity"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"promoter_activity_se"</span>
+
+    <span class="n">promoter_activity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the reporter signal as released, in activity_units"</span>
+    <span class="p">)</span>
+    <span class="n">promoter_activity_se</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"standard error of the signal (primary uncertainty statistic)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">promoter_activity_uncertainty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"source-reported uncertainty number, verbatim (meaning given by "</span>
+        <span class="s2">"promoter_activity_uncertainty_type)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">promoter_activity_uncertainty_type</span><span class="p">:</span> <span class="n">UncertaintyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what promoter_activity_uncertainty IS (sample_sd, ...)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"number of independent replicate measurements of the signal"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is (biological_replicate, ...)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">promoter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own label for the measured promoter, verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">promoter_gene</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the gene identifier the promoter label resolves to in the pinned "</span>
+        <span class="s2">"assembly (the join key to a gene node); None when the label names no single "</span>
+        <span class="s2">"gene, never a guess"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">readout</span><span class="p">:</span> <span class="n">ReporterReadout</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"HOW the reporter signal was read (plate reader, cytometer, ...)"</span>
+    <span class="p">)</span>
+    <span class="n">reporter_gene</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the reporter the promoter drives, verbatim (e.g. 'gfpmut2')"</span>
+    <span class="p">)</span>
+    <span class="n">activity_units</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"human-readable definition and units of the signal, including "</span>
+        <span class="s2">"whether it is background-subtracted or normalized"</span>
+    <span class="p">)</span>
+    <span class="n">well_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own plate/well (or tube) identifier of this reading, "</span>
+        <span class="s2">"which is what keeps two wells of one promoter label L1-distinct"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"promoter_activity"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_activity</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reject a non-finite signal (NaN or infinity is not a measurement)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"promoter_activity must be finite, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_n_samples</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""n_samples is a positive integer or None."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples must be a positive integer or None, got: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fill_activity_se</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Derive the ML-facing SE from the reported uncertainty (frozen -&gt; fill first)."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">unc</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"promoter_activity_uncertainty"</span><span class="p">)</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"promoter_activity_uncertainty_type"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"promoter_activity_se"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">typ</span> <span class="o">=</span> <span class="n">UncertaintyType</span><span class="p">(</span><span class="n">typ</span><span class="p">)</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span> <span class="ow">and</span> <span class="n">n</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">data</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">"promoter_activity_se"</span><span class="p">]</span> <span class="o">=</span> <span class="n">derive_se</span><span class="p">(</span><span class="n">unc</span><span class="p">,</span> <span class="n">typ</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PromoterActivityPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Enforce the uncertainty invariant and non-empty identifiers."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">promoter_name</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"promoter_name cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">well_id</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"well_id cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">reporter_gene</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"reporter_gene cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">activity_units</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"activity_units cannot be empty"</span><span class="p">)</span>
+        <span class="n">unc</span><span class="p">,</span> <span class="n">typ</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">promoter_activity_uncertainty</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">promoter_activity_uncertainty_type</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"promoter_activity_uncertainty and its type must both be set or both "</span>
+                <span class="s2">"be None (no unlabelled uncertainty)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples and sample_unit are required for </span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Bacterial experiment families (plan 3b, 3c).</span>
 <span class="c1">#</span>
@@ -6334,6 +6508,30 @@
     <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"flux"</span>
     <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
     <span class="n">phenotype</span><span class="p">:</span> <span class="n">FluxPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PromoterActivityExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference context for a promoter-activity experiment.</span>
+
+<span class="sd">    The reference of a reporter reading is the SAME reporter strain in the control arm</span>
+<span class="sd">    of the same screen -- the untreated culture, read at the same time -- so the</span>
+<span class="sd">    reference is a real measurement, not a derived baseline. The assembly is pinned for</span>
+<span class="sd">    the same reason every bacterial family pins it: pydantic serializes by the DECLARED</span>
+<span class="sd">    type, so an ``AssemblyReferenceGenome`` in a ``ReferenceGenome`` slot would dump</span>
+<span class="sd">    without its assembly.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"promoter_activity"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">PromoterActivityPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PromoterActivityExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring transcription from one promoter through a reporter fusion."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"promoter_activity"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">PromoterActivityPhenotype</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">BacterialFitnessExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
@@ -6486,6 +6684,7 @@
     <span class="o">|</span> <span class="n">ProductTiterPhenotype</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
     <span class="o">|</span> <span class="n">FluxPhenotype</span>
+    <span class="o">|</span> <span class="n">PromoterActivityPhenotype</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -6508,6 +6707,7 @@
     <span class="o">|</span> <span class="n">ProductTiterExperiment</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverExperiment</span>
     <span class="o">|</span> <span class="n">FluxExperiment</span>
+    <span class="o">|</span> <span class="n">PromoterActivityExperiment</span>
     <span class="o">|</span> <span class="n">BacterialFitnessExperiment</span>
     <span class="o">|</span> <span class="n">BacterialEnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">BacterialGeneInteractionExperiment</span>
@@ -6538,6 +6738,7 @@
     <span class="o">|</span> <span class="n">ProductTiterExperimentReference</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverExperimentReference</span>
     <span class="o">|</span> <span class="n">FluxExperimentReference</span>
+    <span class="o">|</span> <span class="n">PromoterActivityExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialFitnessExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialEnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialGeneInteractionExperimentReference</span>
@@ -6568,6 +6769,7 @@
     <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperiment</span><span class="p">,</span>
     <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperiment</span><span class="p">,</span>
     <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperiment</span><span class="p">,</span>
+    <span class="s2">"promoter_activity"</span><span class="p">:</span> <span class="n">PromoterActivityExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_environment_response"</span><span class="p">:</span> <span class="n">BacterialEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperiment</span><span class="p">,</span>
@@ -6597,6 +6799,7 @@
     <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperimentReference</span><span class="p">,</span>
     <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperimentReference</span><span class="p">,</span>
     <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperimentReference</span><span class="p">,</span>
+    <span class="s2">"promoter_activity"</span><span class="p">:</span> <span class="n">PromoterActivityExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_environment_response"</span><span class="p">:</span> <span class="n">BacterialEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperimentReference</span><span class="p">,</span>

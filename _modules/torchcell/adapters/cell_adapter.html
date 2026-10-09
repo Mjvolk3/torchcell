@@ -384,6 +384,10 @@
             <span class="p">),</span>
             <span class="p">(</span><span class="s2">"flux phenotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_flux_phenotype_node</span><span class="p">),</span>
             <span class="p">(</span>
+                <span class="s2">"promoter activity phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_promoter_activity_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
                 <span class="s2">"fitness phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_fitness_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
@@ -444,6 +448,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_protein_turnover_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span><span class="s2">"flux phenotype reference"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_flux_phenotype_reference_nodes</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"promoter activity phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_promoter_activity_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span><span class="s2">"dataset"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataset_nodes</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"publication (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publication_node</span><span class="p">),</span>
         <span class="p">]</span>
@@ -2442,6 +2450,71 @@
                     <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"flux phenotype"</span><span class="p">,</span>
                     <span class="n">node_label</span><span class="o">=</span><span class="s2">"flux phenotype"</span><span class="p">,</span>
                     <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_flux_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_promoter_activity_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``PromoterActivityPhenotype`` (experiment or reference).</span>
+
+<span class="sd">        Every value is a scalar: a record measures one promoter, so this family has no</span>
+<span class="sd">        dict-valued field to JSON-encode the way the profile phenotypes do.</span>
+<span class="sd">        """</span>
+        <span class="n">uncertainty_type</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_activity_uncertainty_type</span>
+        <span class="n">sample_unit</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"promoter_activity"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_activity</span><span class="p">,</span>
+            <span class="s2">"promoter_activity_se"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_activity_se</span><span class="p">,</span>
+            <span class="s2">"promoter_activity_uncertainty"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_activity_uncertainty</span><span class="p">,</span>
+            <span class="s2">"promoter_activity_uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">uncertainty_type</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"promoter_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_name</span><span class="p">,</span>
+            <span class="s2">"promoter_gene"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">promoter_gene</span><span class="p">,</span>
+            <span class="s2">"readout"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">readout</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">"reporter_gene"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reporter_gene</span><span class="p">,</span>
+            <span class="s2">"activity_units"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">activity_units</span><span class="p">,</span>
+            <span class="s2">"well_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">well_id</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_promoter_activity_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"promoter activity phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_promoter_activity_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_promoter_activity_phenotype_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"promoter activity phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"promoter activity phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_promoter_activity_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>

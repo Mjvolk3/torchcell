@@ -18,6 +18,7 @@ a median of 0.956024, none non-positive and none with a zero SD, and the parent 
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
@@ -36,6 +37,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     serve_tier,
     write_assembly,
 )
+from torchcell.data import file_sha256
 from torchcell.datamodels.media import YT_2X
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
@@ -418,3 +420,61 @@ def test_real_dev_store_holds_46_records_and_its_declared_ledger() -> None:
     extraction = json.loads(Path(root, "preprocess", "extraction.json").read_text())
     assert extraction["table_s3_sha256"] == wg.TABLE_S3_SHA256
     assert extraction["fitness_range"]["median"] == pytest.approx(0.956024, abs=1e-6)
+
+
+# --------------------------------------------------------------------------- #
+# download() and the genome guard
+# --------------------------------------------------------------------------- #
+def test_download_links_every_pinned_mirror_file_and_refuses_an_absent_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The pins are ``wang2015``'s, so the mirror is deposited through its depositor."""
+    staging = tmp_path / "staging"
+    staging.mkdir()
+    sources: dict[str, Path] = {}
+    for index, raw in enumerate(wg.RAW_FILES):
+        path = staging / raw.name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(f"synthetic {index}".encode())
+        sources[raw.name] = path
+    pinned = tuple(
+        raw.model_copy(
+            update={
+                "sha256": hashlib.sha256(sources[raw.name].read_bytes()).hexdigest()
+            }
+        )
+        for raw in wg.RAW_FILES
+    )
+    monkeypatch.setattr(wg, "RAW_FILES", pinned)
+    data_root = tmp_path / "root"
+    wg.deposit_raw_mirror(
+        sources={name: path for name, path in sources.items()}, data_root=str(data_root)
+    )
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+
+    root = tmp_path / "build"
+    (root / "raw").mkdir(parents=True)
+    dataset = gw.GrowthWang2015Dataset.__new__(gw.GrowthWang2015Dataset)
+    monkeypatch.setattr(
+        type(dataset), "raw_dir", property(lambda self: str(root / "raw"))
+    )
+    dataset.download()
+    assert sorted(p.name for p in (root / "raw").iterdir()) == sorted(
+        raw.name for raw in pinned
+    )
+    for raw in pinned:
+        assert file_sha256(root / "raw" / raw.name) == raw.sha256
+
+    (data_root / wg.RAW_DIR_REL / pinned[0].mirror_relpath).unlink()
+    with pytest.raises(RuntimeError, match="missing from mirror"):
+        dataset.download()
+
+
+def test_the_genome_guard_refuses_an_assembly_other_than_bw25113(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    dataset = gw.GrowthWang2015Dataset.__new__(gw.GrowthWang2015Dataset)
+    wrong = type("WrongGenome", (), {"ASSEMBLY_SET": "ecoli_K12_MG1655_ASM584v2"})()
+    dataset.ecoli_genome = wrong
+    with pytest.raises(ValueError, match="needs the ecoli_K12_BW25113_ASM75055v1"):
+        dataset._genome()

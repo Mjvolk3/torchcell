@@ -109,6 +109,38 @@ bacterial perturbation:
         description: str
         gene_namespace: str
 
+# A CALLED bacterial variant (issue #731): the three variant leaves in schema.py
+# (BacterialSequenceVariantPerturbation, BacterialIntergenicVariantPerturbation,
+# BacterialSpanDeletionPerturbation), each of which composes a `BacterialVariantCall`.
+# It is its OWN class rather than rows of `bacterial perturbation`, for the reason the
+# `phage perturbation` class exists: the properties below (the replicon, the 1-based
+# interval, the variant kind, the call frequency and whether that frequency is a clone's
+# or a population's) are what a variant record is asked about, and `bacterial
+# perturbation` is served, so they cannot be added there without a full rebuild -- and
+# if they were, they would be null on every one of its other five leaves, exactly the
+# argument that keeps `strain_id` off it. A SIBLING of `bacterial perturbation` under
+# `genotype`, so no served `MATCH (:BacterialPerturbation)` changes.
+# systematic_gene_name is a locus tag for an in-locus or span call and the derived site
+# id `<replicon>:<position>` for an intergenic one, which is how a call that is in no
+# gene stays out of the gene-keyed join rather than being attributed to a neighbour.
+# Same id rule as `perturbation` (sha256 of the leaf's model_dump), so the existing
+# `perturbation member of` edges address these nodes unchanged.
+bacterial sequence variant perturbation:
+    is_a: genotype
+    represented_as: node
+    properties:
+        systematic_gene_name: str
+        perturbed_gene_name: str
+        perturbation_type: str
+        description: str
+        gene_namespace: str
+        reference_sequence: str
+        position_start: int
+        position_end: int
+        variant_type: str
+        variant_frequency: float
+        call_mode: str
+
 # A haploid segregant of a biparental cross: a haplotype MOSAIC against two pinned
 # parent assemblies (SegregantGenotype), not a list of gene perturbations. It IS a
 # genotype (is_a), so genotype-level queries reach it; the gene-keyed properties of
@@ -473,14 +505,15 @@ genotype member of:
     source: [genotype, segregant genotype]
     target: experiment
 
-# Two sources since `bacterial perturbation` joined, so input_label is required for the
+# Three sources since `bacterial sequence variant perturbation` joined, so input_label
+# is required for the
 # same reason as on `genotype member of`. The adapter's relationship_label is unchanged
 # ("perturbation member of"), so the served PerturbationMemberOf edges keep their type.
 perturbation member of:
     is_a: genetically associated with
     represented_as: edge
     input_label: perturbation member of
-    source: [perturbation, bacterial perturbation]
+    source: [perturbation, bacterial perturbation, bacterial sequence variant perturbation]
     target: genotype
 
 # A bacterial CRISPRi leaf carries the shared CrisprConstruct, so its construct edge

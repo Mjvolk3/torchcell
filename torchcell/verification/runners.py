@@ -2462,17 +2462,30 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
 def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """Every perturbed identifier a dataset's records assert is a locus of their host.
 
-    The perturbed systematic names MINUS the heterologous ones. A
-    ``HeterologousPathwayPerturbation`` carries ``source_organism``, and when that
-    organism is not the record's own species the identifier is a gene of ANOTHER genome
-    (``MvaSEf``, ``ATF1``) -- which is exactly what the class exists to say, so checking
-    it against the host's locus universe would fail every production record for the
-    wrong reason. An extra copy of a NATIVE gene names its real locus tag and stays in.
+    The perturbed systematic names MINUS the heterologous ones and the intergenic
+    calls. A ``HeterologousPathwayPerturbation`` carries ``source_organism``, and when
+    that organism is not the record's own species the identifier is a gene of ANOTHER
+    genome (``MvaSEf``, ``ATF1``) -- which is exactly what the class exists to say, so
+    checking it against the host's locus universe would fail every production record for
+    the wrong reason. An extra copy of a NATIVE gene names its real locus tag and stays
+    in.
+
+    A ``BacterialIntergenicVariantPerturbation`` (issue #731) is excluded for the same
+    kind of reason: its identifier is the derived site id ``<replicon>:<position>``,
+    because the call sits in no locus at all, so it is not a claim about a gene of the
+    assembly and cannot be checked as one. Its flanking loci ARE such claims and are
+    checked, which is what keeps the exclusion from hiding a bad identifier.
     """
     genes: set[str] = set()
     for record in records:
         species = record["reference"]["genome_reference"]["species"]
         for perturbation in record["experiment"]["genotype"]["perturbations"]:
+            if perturbation.get("perturbation_type") == "bacterial_intergenic_variant":
+                genes |= {
+                    str(tag)
+                    for tag in perturbation.get("flanking_systematic_gene_names", ())
+                }
+                continue
             name = perturbation.get("systematic_gene_name")
             if name is None or perturbation.get("source_organism", species) != species:
                 continue

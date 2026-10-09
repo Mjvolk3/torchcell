@@ -36,6 +36,9 @@ from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
     BacterialCrisprInterferencePerturbation,
     BacterialDeletionPerturbation,
+    BacterialIntergenicVariantPerturbation,
+    BacterialSequenceVariantPerturbation,
+    BacterialSpanDeletionPerturbation,
     HeterologousPathwayPerturbation,
     PhagePerturbation,
     PromoterReplacementPerturbation,
@@ -77,10 +80,23 @@ BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
 )
 """The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
 
-Exactly the leaves that carry ``gene_namespace``. A yeast leaf is never one of them, so a
-yeast record emits no ``bacterial perturbation`` node, and ``_perturbation_node`` (served)
-is not touched to exclude them: a bacterial adapter conf enables
-``bacterial perturbation (chunked)`` instead of ``perturbation (chunked)``.
+The leaves that carry ``gene_namespace`` MINUS the called-variant leaves below, which
+have their own class. A yeast leaf is never one of them, so a yeast record emits no
+``bacterial perturbation`` node, and ``_perturbation_node`` (served) is not touched to
+exclude them: a bacterial adapter conf enables ``bacterial perturbation (chunked)``
+instead of ``perturbation (chunked)``.
+"""
+BACTERIAL_VARIANT_PERTURBATION_LEAVES: tuple[type, ...] = (
+    BacterialSequenceVariantPerturbation,
+    BacterialIntergenicVariantPerturbation,
+    BacterialSpanDeletionPerturbation,
+)
+"""The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).
+
+Exactly the leaves that compose a ``BacterialVariantCall``.
+``BacterialSpanDeletionPerturbation`` is also a ``BacterialDeletionPerturbation``, so the
+``bacterial perturbation`` method excludes this tuple explicitly; without that a span
+deletion would be written twice, once under each label.
 """
 CGROUP_MEMORY_CURRENT = "/sys/fs/cgroup/memory.current"
 CGROUP_MEMORY_MAX = "/sys/fs/cgroup/memory.max"
@@ -204,6 +220,10 @@ class CellAdapter:
             ("segregant genotype (chunked)", self._segregant_genotype_node),
             ("perturbation (chunked)", self._perturbation_node),
             ("bacterial perturbation (chunked)", self._bacterial_perturbation_node),
+            (
+                "bacterial sequence variant perturbation (chunked)",
+                self._bacterial_variant_perturbation_node,
+            ),
             ("crispr construct (chunked)", self._crispr_construct_node),
             ("environment (chunked)", self._environment_node),
             ("environment reference", self._get_environment_reference_nodes),
@@ -1007,11 +1027,62 @@ class CellAdapter:
     def _bacterial_perturbation_node(
         self, data: dict[str, Any], method_name: str
     ) -> list[BioCypherNode]:
-        """One node per perturbation of a bacterial leaf class; none for a yeast leaf."""
+        """One node per perturbation of a bacterial leaf class; none for a yeast leaf.
+
+        A called-variant leaf is excluded even when it is a subclass of one of these
+        (``BacterialSpanDeletionPerturbation`` is a ``BacterialDeletionPerturbation``):
+        it belongs to ``bacterial sequence variant perturbation`` and writing it here
+        too would serve one perturbation as two nodes.
+        """
         return [
             self._bacterial_perturbation_node_from(perturbation)
             for perturbation in data["experiment"].genotype.perturbations
             if isinstance(perturbation, BACTERIAL_PERTURBATION_LEAVES)
+            and not isinstance(perturbation, BACTERIAL_VARIANT_PERTURBATION_LEAVES)
+        ]
+
+    # --- Called bacterial variants (issue #731) ---
+    # A variant leaf composes a ``BacterialVariantCall``, so the replicon, the 1-based
+    # interval, the variant kind and the call frequency are read off ``.call`` rather
+    # than off the leaf. The node id is the sha256 of the leaf's model_dump, the same id
+    # _perturbation_to_genotype_edges addresses, so that edge method is unchanged.
+
+    @staticmethod
+    def _bacterial_variant_perturbation_node_from(perturbation: Any) -> BioCypherNode:
+        perturbation_id = hashlib.sha256(
+            json.dumps(perturbation.model_dump()).encode("utf-8")
+        ).hexdigest()
+        call = perturbation.call
+        return BioCypherNode(
+            node_id=perturbation_id,
+            preferred_id=perturbation.perturbation_type,
+            node_label="bacterial sequence variant perturbation",
+            properties={
+                "systematic_gene_name": perturbation.systematic_gene_name,
+                "perturbed_gene_name": perturbation.perturbed_gene_name,
+                "perturbation_type": perturbation.perturbation_type,
+                "description": perturbation.description,
+                "gene_namespace": perturbation.gene_namespace,
+                "reference_sequence": call.reference_sequence,
+                "position_start": call.position_start,
+                "position_end": call.position_end,
+                "variant_type": str(call.variant_type),
+                # None when the release wrote a RANGE rather than one number; the
+                # verbatim cell stays in the Experiment blob either way.
+                "variant_frequency": call.frequency,
+                "call_mode": str(call.call_mode),
+            },
+        )
+
+    @data_chunker
+    def _bacterial_variant_perturbation_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """One node per CALLED variant of the genotype; none for any other leaf."""
+        return [
+            self._bacterial_variant_perturbation_node_from(perturbation)
+            for perturbation in data["experiment"].genotype.perturbations
+            if isinstance(perturbation, BACTERIAL_VARIANT_PERTURBATION_LEAVES)
         ]
 
     # Environment.temperature is Optional: a curation layer that never carried a

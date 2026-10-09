@@ -718,6 +718,16 @@ Two things a loader for the four must still settle, and neither is settled here:
    experiment's `Genotype | list[Genotype]` field (which the class permits) or adds a
    genotype to the reference class (which is another schema change).
 
+There IS a precedent for the second point inside this same wave, which is why it is a
+decision and not a blocker: `ProteomeFoldChangeCarruthers2025Dataset` writes a
+strain-versus-strain contrast by putting the numerator strain in the experiment's
+`genotype` and naming the denominator strain in the phenotype's `reference_basis`, with
+the reference carrying only `genome_reference` and `phenotype_reference`. The same shape
+would write Lim's four. The reason to ask first is that Carruthers' denominator is a
+non-targeting CRISPRi control, one step from the reference strain, while Lim's is IPL400,
+a seven-deletion production strain, so prose in `reference_basis` is carrying much more
+of the genotype there.
+
 Flagged for the owner: this is a loader plus a representation decision, not a pin, so
 #770's Lim rows are left open rather than closed in the same pass that corrected the
 reason they were refused.

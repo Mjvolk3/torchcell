@@ -2564,6 +2564,9 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         for name, spec in runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS.items()
     } == {
         "proteome_banerjee2025": "data/torchcell/proteome_banerjee2025",
+        "campaign_proteome_carruthers2025": (
+            "data/torchcell/campaign_proteome_carruthers2025"
+        ),
         "proteome_carruthers2025": "data/torchcell/proteome_carruthers2025",
         "proteome_desiqueira2025": "data/torchcell/proteome_desiqueira2025",
         "proteome_percent_desiqueira2025": (

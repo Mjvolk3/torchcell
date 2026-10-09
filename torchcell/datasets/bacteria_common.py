@@ -38,6 +38,7 @@ import os
 import os.path as osp
 import re
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any, Literal, overload
 
@@ -57,6 +58,7 @@ from torchcell.datamodels.schema import (
 )
 from torchcell.literature.manifest import sha256_file
 from torchcell.sequence.genome.bacterial import (
+    GAF_COLUMNS,
     BacterialAssembly,
     BacterialGenome,
     GenomeAnnotationMismatchError,
@@ -73,7 +75,7 @@ from torchcell.sequence.genome.ecoli.k12 import (
 from torchcell.sequence.genome.ecoli.k12 import eck_crosswalk as _annotation_crosswalk
 from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome, EcoliBStrainName
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
-from torchcell.sequence.genome.registry import resolve
+from torchcell.sequence.genome.registry import load_genome_manifest, resolve
 
 log = logging.getLogger(__name__)
 
@@ -643,3 +645,165 @@ class BacterialGenomeInjector:
         if strain not in self.built:
             self.built[strain] = bacterial_genome(host, strain, self.data_root)
         return {name: self.built[strain]}
+
+
+# --------------------------------------------------------------------------- #
+# UniProt accession -> locus tag, read from the deposited GOA proteome file
+#
+# A released proteomics matrix is often keyed by UniProt ACCESSION rather than by a
+# locus tag or a gene symbol, and ``ProteinAbundancePhenotype`` keys its abundances by
+# the systematic locus. ``reconcile_locus_tags`` cannot help: it resolves NAMES, and an
+# accession is not a name of any annotation layer. The crosswalk below reads the one
+# mirrored file that states the relation, the assembly set's GOA proteome file, whose
+# column 2 is the accession and whose column 11 carries that protein's locus tags. It
+# is the same sha256-pinned member the host's genome already reads its GO from, so no
+# new artifact and no network call is introduced.
+#
+# Measured on ``pputida_KT2440_ASM756v2`` (109.P_putida_KT2440.goa, sha256
+# 575731316d9fcb98580dd7e2209a0239c909ada389e42c4052e5a8f7a1069a81): 3,887 accessions
+# carry at least one ``PP_`` tag and 10 of them carry two, which is why ``multi`` is a
+# separate map rather than an arbitrary pick.
+# --------------------------------------------------------------------------- #
+class UniProtLocusCrosswalk(BaseModel):
+    """What one assembly set's GOA proteome file says about UniProt accessions.
+
+    ``single`` is the usable crosswalk: an accession the file gives exactly one locus
+    tag. ``multi`` is an accession the file gives SEVERAL, which happens when one
+    protein sequence is encoded at more than one locus; such an accession names no one
+    gene, so a consumer drops it rather than choosing.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    assembly_set: BacterialAssemblySet
+    member: str = Field(description="The GOA proteome file's name in its assembly set.")
+    sha256: str = Field(description="The manifest-pinned digest of those bytes.")
+    rows: int = Field(description="Annotation rows read (header comments excluded).")
+    single: dict[str, str] = Field(description="accession -> its one locus tag")
+    multi: dict[str, tuple[str, ...]] = Field(
+        description="accession -> its locus tags, for the accessions with more than one"
+    )
+
+    @property
+    def accessions(self) -> int:
+        """Accessions the file gives at least one locus tag."""
+        return len(self.single) + len(self.multi)
+
+
+class UniProtResolution(BaseModel):
+    """One consumer's accessions split by what the crosswalk makes of each.
+
+    ``resolved`` maps the accessions that reach exactly one locus; ``multi_locus`` and
+    ``unmapped`` are the two reasons an accession reaches none, kept apart because they
+    are different facts about the source and each is listed in full.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    label: str
+    assembly_set: BacterialAssemblySet
+    requested: int
+    resolved: dict[str, str]
+    multi_locus: dict[str, tuple[str, ...]]
+    unmapped: tuple[str, ...]
+    collisions: dict[str, tuple[str, ...]] = Field(
+        description="locus tag -> the several accessions that reach it; such a tag "
+        "would key two proteins' abundance to one gene."
+    )
+
+    @property
+    def resolved_fraction(self) -> float:
+        """``len(resolved)`` over ``requested``."""
+        return len(self.resolved) / self.requested
+
+    def require_resolved(self, min_fraction: float) -> None:
+        """Refuse when fewer than ``min_fraction`` of the accessions reach one locus."""
+        if self.resolved_fraction < min_fraction:
+            raise LocusTagResolutionError(
+                f"{self.label}: {len(self.resolved)} of {self.requested} UniProt "
+                f"accessions ({self.resolved_fraction:.4f}) reach one "
+                f"{self.assembly_set} locus, below {min_fraction}; "
+                f"{len(self.multi_locus)} reach several and {len(self.unmapped)} reach "
+                "none"
+            )
+
+
+def uniprot_locus_crosswalk(
+    genome: BacterialGenome[Any], data_root: str | None = None
+) -> UniProtLocusCrosswalk:
+    """Read the assembly set's GOA proteome file as an accession -> locus-tag map.
+
+    The file and the locus-tag pattern are the host's own ``GoSourceSpec``, so the
+    crosswalk can only ever describe the annotation the genome itself was built from. A
+    host whose GO comes from the RefSeq GFF instead has no GOA file and is refused,
+    because there is then no mirrored statement of the relation to read.
+    """
+    spec = genome.ASSEMBLY.go_source
+    if spec.route != "gaf_synonym_column":
+        raise ValueError(
+            f"{genome.ASSEMBLY.assembly_set} reads GO through the {spec.route!r} route, "
+            "which has no GOA proteome file; a UniProt accession crosswalk needs one"
+        )
+    if spec.identifier_pattern is None:
+        raise ValueError(f"{spec.member} names no identifier_pattern")
+    path = resolve(spec.assembly_set, spec.member, data_root=data_root)
+    pinned = load_genome_manifest(spec.assembly_set, data_root).record(spec.member)
+    pattern = re.compile(spec.identifier_pattern)
+    tags: dict[str, set[str]] = {}
+    rows = 0
+    with open(path) as handle:
+        for line in handle:
+            if line.startswith("!"):
+                continue
+            columns = line.rstrip("\n").split("\t")
+            if len(columns) != GAF_COLUMNS:
+                raise ValueError(
+                    f"{spec.member}: a GAF 2.x row has {GAF_COLUMNS} columns, got "
+                    f"{len(columns)}: {line[:80]!r}"
+                )
+            rows += 1
+            found = {
+                token
+                for value in columns[10].split("|")
+                for token in value.split("/")
+                if pattern.fullmatch(token)
+            }
+            if found:
+                tags.setdefault(columns[1], set()).update(found)
+    return UniProtLocusCrosswalk(
+        assembly_set=spec.assembly_set,
+        member=spec.member,
+        sha256=pinned.sha256,
+        rows=rows,
+        single={a: next(iter(t)) for a, t in sorted(tags.items()) if len(t) == 1},
+        multi={a: tuple(sorted(t)) for a, t in sorted(tags.items()) if len(t) > 1},
+    )
+
+
+def resolve_uniprot_accessions(
+    crosswalk: UniProtLocusCrosswalk, accessions: Iterable[str], *, label: str
+) -> UniProtResolution:
+    """Split one consumer's accessions into resolved, multi-locus and unmapped.
+
+    Collisions are reported, not repaired: two accessions reaching one locus means the
+    released matrix quantifies two proteins the annotation files at one gene, and which
+    column that gene's abundance is cannot be decided here.
+    """
+    requested = sorted(set(accessions))
+    resolved = {a: crosswalk.single[a] for a in requested if a in crosswalk.single}
+    multi = {a: crosswalk.multi[a] for a in requested if a in crosswalk.multi}
+    unmapped = tuple(a for a in requested if a not in resolved and a not in multi)
+    reverse: dict[str, list[str]] = {}
+    for accession, tag in resolved.items():
+        reverse.setdefault(tag, []).append(accession)
+    return UniProtResolution(
+        label=label,
+        assembly_set=crosswalk.assembly_set,
+        requested=len(requested),
+        resolved=resolved,
+        multi_locus=multi,
+        unmapped=unmapped,
+        collisions={
+            tag: tuple(group) for tag, group in reverse.items() if len(group) > 1
+        },
+    )

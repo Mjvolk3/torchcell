@@ -14,6 +14,7 @@ from torchcell.adapters import (
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
     Bloom2019Adapter,
+    CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
     CarotenoidOzaydin2013Adapter,
     CaudalPanTranscriptome2024Adapter,
@@ -193,6 +194,7 @@ from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
+    CampaignProteomeCarruthers2025Dataset,
     IsoprenolTiterCarruthers2025Dataset,
     ProteomeCarruthers2025Dataset,
 )
@@ -399,6 +401,7 @@ dataset_adapter_map: dict[type, type] = {
     RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,
     ProteomeCarruthers2025Dataset: ProteomeCarruthers2025Adapter,
+    CampaignProteomeCarruthers2025Dataset: CampaignProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Dataset: ProteomeDeSiqueira2025Adapter,
     ProteomePercentDeSiqueira2025Dataset: ProteomePercentDeSiqueira2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Dataset: (

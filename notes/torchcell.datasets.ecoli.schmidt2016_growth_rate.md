@@ -274,3 +274,31 @@ OFF in the paper's three proteome confs. The environment-perturbation pair is on
 medium carries one `EnvironmentPhysicalPerturbation` for its carbon source, on every record
 and on both wild-type references. `tests/torchcell/adapters/test_schmidt2016_growth_rate_adapter.py`
 pins both directions on the conf (hermetic) and on the emitted graph (data-gated).
+
+## 2026.10.09 - Correction: the "Rank 13, Table S23" section above is stale, and Table S23 is now loaded
+
+The section "Rank 13, Table S23: the block is CONFIRMED, and two more release defects"
+is superseded. Re-measured on 2026.10.09 after PR #836 (#776) landed the absolute branch:
+
+1. Its reason 1, the absent absolute growth member, is CLOSED for this readout.
+   `MeasurementType.growth_rate` is in `ABSOLUTE_MEASUREMENT_TYPES`, so
+   `reference_centered=False` is admissible and L3 `reference_zero` is satisfied by the
+   reference stating its own finite rate.
+2. Its reason 2, the two negative rates a log2 ratio cannot hold, is MOOT on the absolute
+   route, which takes no ratio. Both negative rows drop on
+   `growth_phase_not_representable` instead.
+3. Its reason 3, the unresolvable `Stdev` denominator, is CONFIRMED by re-test and is not
+   a blocker: `n_samples` is `int | None`, and the released `Stdev` is stored with the
+   conservative `n_samples = 3`.
+
+The live reasons the record count is 15 rather than 26 are the strain vocabulary together
+with the empty-genotype L1 key (4 rows), the absent medium (1 row) and the absent
+growth-phase and culture-mode slots on `Environment` (6 rows). The loader, the full
+measurement and the L0 to L4 table are in
+[[torchcell.datasets.ecoli.schmidt2016_s23_growth_rate]].
+
+The two release defects this note recorded for a future Table S23 loader both held and
+are both acted on there: the `MG1665` spelling is one of the three strain spellings the
+reader admits and is dropped by name, and the released condition labels are normalized
+three ways (padding space, trailing footnote digit, lowercase chemostat label) before
+they join `schmidt2016.CONDITIONS`.

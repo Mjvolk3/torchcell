@@ -56,6 +56,7 @@ from torchcell.adapters import (
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
+    GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
@@ -191,6 +192,9 @@ from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Data
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.schmidt2016_growth_rate import (
     GrowthRateSchmidt2016Dataset,
+)
+from torchcell.datasets.ecoli.schmidt2016_s23_growth_rate import (
+    GrowthRateS23Schmidt2016Dataset,
 )
 from torchcell.datasets.ecoli.schmidt2016_srm import (
     ProteomeSrmSet1Schmidt2016Dataset,
@@ -409,6 +413,7 @@ dataset_adapter_map: dict[type, type] = {
     ProteomeSrmSet1Schmidt2016Dataset: ProteomeSrmSet1Schmidt2016Adapter,
     ProteomeSrmSet2Schmidt2016Dataset: ProteomeSrmSet2Schmidt2016Adapter,
     GrowthRateSchmidt2016Dataset: GrowthRateSchmidt2016Adapter,
+    GrowthRateS23Schmidt2016Dataset: GrowthRateS23Schmidt2016Adapter,
     CarbonSourceTong2020Dataset: CarbonSourceTong2020Adapter,
     EnvChemgenWang2015Dataset: EnvChemgenWang2015Adapter,
     CrispriGuideFfaEnrichmentFang2025Dataset: CrispriGuideFfaEnrichmentFang2025Adapter,

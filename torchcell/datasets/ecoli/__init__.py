@@ -129,6 +129,12 @@ sourcing layer.
   S24, the only gene-perturbation phenotype it releases. Six records: the KEIO ``rimI``,
   ``rimJ`` and ``rimL`` deletions in glucose and in acetate, each a ``FitnessPhenotype``
   ratio to the wild-type row of its own medium.
+- ``schmidt2016_s23_growth_rate`` -- ``GrowthRateS23Schmidt2016Dataset``: the same
+  paper's Table S23, the per-condition growth rates. 15 records of the 26 released rows,
+  one ``EnvironmentResponsePhenotype`` per kept (condition, BW25113) row carrying the
+  ABSOLUTE rate in h^-1 against the released Glucose row. The 11 dropped rows are the 4
+  rows of the two strains L1 cannot tell apart from BW25113 on a wild-type genotype, plus
+  the 7 rows the proteome loader's own medium, growth-phase and culture-mode rules cover.
 - ``mohiuddin2022`` -- ``PromoterReporterMohiuddin2022Dataset``: the promoter-GFP
   reporter library, one ``PromoterActivityPhenotype`` record per (arm, plate, well, read
   hour) over 1,930 wells, four arms and nine hourly reads. The only expression-side
@@ -236,6 +242,9 @@ from .schastnaya2021 import (
 from .schmidt2016 import ProteomeSchmidt2016Dataset as ProteomeSchmidt2016Dataset
 from .schmidt2016_growth_rate import (
     GrowthRateSchmidt2016Dataset as GrowthRateSchmidt2016Dataset,
+)
+from .schmidt2016_s23_growth_rate import (
+    GrowthRateS23Schmidt2016Dataset as GrowthRateS23Schmidt2016Dataset,
 )
 from .schmidt2016_srm import (
     ProteomeSrmSet1Schmidt2016Dataset as ProteomeSrmSet1Schmidt2016Dataset,

@@ -82,6 +82,7 @@ from torchcell.adapters import (
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
+    GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
@@ -184,6 +185,9 @@ from torchcell.datasets.ecoli.schastnaya2021 import MetabolomeSchastnaya2021Data
 from torchcell.datasets.ecoli.schmidt2016 import ProteomeSchmidt2016Dataset
 from torchcell.datasets.ecoli.schmidt2016_growth_rate import (
     GrowthRateSchmidt2016Dataset,
+)
+from torchcell.datasets.ecoli.schmidt2016_s23_growth_rate import (
+    GrowthRateS23Schmidt2016Dataset,
 )
 from torchcell.datasets.ecoli.schmidt2016_srm import (
     ProteomeSrmSet1Schmidt2016Dataset,
@@ -616,6 +620,14 @@ BACTERIAL: list[Bacterial] = [
         "growth_rate_schmidt2016",
         GrowthRateSchmidt2016Dataset,
         "fitness phenotype",
+    ),
+    _case(
+        GrowthRateS23Schmidt2016Adapter,
+        "schmidt2016_s23_growth_rate",
+        "growth_rate_s23_schmidt2016",
+        GrowthRateS23Schmidt2016Dataset,
+        RESPONSE,
+        perturbation=False,
     ),
     _case(
         CarbonSourceTong2020Adapter,

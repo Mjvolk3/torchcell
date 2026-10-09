@@ -240,6 +240,9 @@ from .schmidt2016_adapter import (
 from .schmidt2016_growth_rate_adapter import (
     GrowthRateSchmidt2016Adapter as GrowthRateSchmidt2016Adapter,
 )
+from .schmidt2016_s23_growth_rate_adapter import (
+    GrowthRateS23Schmidt2016Adapter as GrowthRateS23Schmidt2016Adapter,
+)
 from .schmidt2016_srm_set1_adapter import (
     ProteomeSrmSet1Schmidt2016Adapter as ProteomeSrmSet1Schmidt2016Adapter,
 )
@@ -414,6 +417,7 @@ ecoli_adapters = [
     "MetabolomeSchastnaya2021Adapter",
     "EnvChemgenShiver2016Adapter",
     "ProteomeSchmidt2016Adapter",
+    "GrowthRateS23Schmidt2016Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",
     "CrispriGuideFfaEnrichmentFang2025Adapter",

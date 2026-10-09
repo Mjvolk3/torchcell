@@ -241,6 +241,8 @@ docker run --rm --entrypoint bash \
     -e NEO4J_ACCEPT_LICENSE_AGREEMENT=yes \
     -v "$SERVE_ROOT/biocypher-out":/var/lib/neo4j/biocypher-out \
     -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
+    -v "$DEV_DATA_ROOT/data/ecoli":/var/lib/neo4j/data/ecoli:ro \
+    -v "$DEV_DATA_ROOT/data/pputida":/var/lib/neo4j/data/pputida:ro \
     -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
     -v "$BUILD_ROOT/database/.env":/.env \
     -v "$BUILD_ROOT/database/biocypher":/var/lib/neo4j/biocypher \

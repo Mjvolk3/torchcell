@@ -228,9 +228,14 @@ fi
 if [ -z "$RESUME_JOB" ]; then
 echo "---------------- 1 GENERATE (ephemeral container; dev tree read-only) $(date)"
 # The dev tree's data/torchcell shadows the build tree's copy read-only (loaders open
-# LMDB readonly, lock=False); genome/graph caches (data/sgd, go, string, tflink) come
-# from the build tree as in every previous build. The container runs as root so pip can
-# install into the image; the CSVs are handed to uid 7474, which runs the import.
+# LMDB readonly, lock=False); yeast genome/graph caches (data/sgd, go, string, tflink)
+# come from the build tree as in every previous build. The bacterial genome caches
+# (data/ecoli/<strain>/genome, data/pputida/kt2440/genome) are read from the dev tree
+# read-only: the bacterial adapters build their reference genome at generation time
+# with overwrite=False, and job 3546 (the first build with bacterial datasets) died in
+# the generation container on GenomeRootNotFoundError because the build tree has no
+# such cache. The container runs as root so pip can install into the image; the CSVs
+# are handed to uid 7474, which runs the import.
 GEN_LOG="$OUTDIR/${JOB}_generate.log"
 docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
     --cpus="$SLURM_CPUS_PER_TASK" -e SLURM_CPUS_PER_TASK="$SLURM_CPUS_PER_TASK" --memory="${mem_mb}m" \
@@ -238,6 +243,8 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
     -v "$SERVE_ROOT/biocypher-out":/var/lib/neo4j/biocypher-out \
     -v "$BUILD_ROOT/database/data":/var/lib/neo4j/data \
     -v "$DEV_DATA_ROOT/data/torchcell":/var/lib/neo4j/data/torchcell:ro \
+    -v "$DEV_DATA_ROOT/data/ecoli":/var/lib/neo4j/data/ecoli:ro \
+    -v "$DEV_DATA_ROOT/data/pputida":/var/lib/neo4j/data/pputida:ro \
     -v "$DEV_DATA_ROOT/torchcell-genomes":/var/lib/neo4j/torchcell-genomes:ro \
     -v "$BUILD_ROOT/database/.env":/.env \
     -v "$BUILD_ROOT/database/biocypher":/var/lib/neo4j/biocypher \

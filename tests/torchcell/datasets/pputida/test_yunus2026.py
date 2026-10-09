@@ -2809,7 +2809,8 @@ def test_the_build_refuses_a_deposited_label_no_route_reaches(
     _write_benchling_deposit(
         data_root / y26.RAW_DIR_REL, (panel, synthetic_benchling[1])
     )
-    y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
+    mirror = y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
+    assert (mirror / "manifest.json").is_file()
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     with pytest.raises(RuntimeError, match="reach no target of Tables S1, S2 or S3"):
         _build(

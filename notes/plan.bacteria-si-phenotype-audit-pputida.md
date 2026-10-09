@@ -1255,3 +1255,40 @@ names no unit, its values are signed with median -1.0118, and it releases no p-v
 the fold-change class does not pick it up either. The PRODUCT-side sibling the Niu 2019
 comment on #770 records is also not closed here: a product ratio wants the typed
 `Compound`, so it belongs beside `ProductTiterPhenotype`, not in this class.
+
+## 2026.10.09 - The loadable-now ledger, measured against main at 6cf257308
+
+The measurement, the probe design and the totals over both audits are recorded once, in
+[[plan.bacteria-si-phenotype-audit-ecoli]]'s section of the same date; the script is
+`experiments/036-dataset-fixes-before-kg-build/scripts/si_audit_loadable_ledger.py`.
+This is the P. putida half of its output.
+
+| rank | item | audit count | state | records now | where |
+|---|---|---|---|---|---|
+| 1 | Caglar 2017 doubling time per replicate growth curve | 55 (or 19 condition means) | **landed** | 55 | PR #836 |
+| 2 | Carruthers 2025 four unstored isoprenol titer sheets | 49 records over 190 cultures, plus 14 references | **landed** | 502 | PR #783 |
+| 3 | Carruthers 2025 two unstored per-protein abundance sheets | 21 records, about 630 values | **landed** | 21 | PR #783 |
+| 4 | Kang 2026 fed-batch isoprenol titer and residual sugars (Table S9) | 21 (7 titer + 14 metabolite) | **refused** |  | `torchcell/datasets/pputida/kang2026.py` |
+| 5 | de Siqueira 2025 two further proteomics normalizations | 10 (2 normalizations x 5 samples) | **landed** | 34 | PR #784 |
+| 6 | Menasalvas 2025 metabolites and five proteomics sheets (Dryad) | about 4 metabolite records plus the designed-strain arms | **open** |  | the Dryad deposit the audit calls unfetched IS now in the raw mirror, so the row is no longer retrieval-gated; it is assigned to the #739/#788 branch, which has not yet touched the loader (measured) |
+| 7 | Yunus 2026 per-protein fold change, PP_4188 strain (Tables S4, S5) | 1 record carrying 338 protein keys | **landed** | 1 | PR #784 |
+| 8 | Carruthers 2025 knockdown ratios (Figure 3c), CONDITIONAL on gap R | 92 records of a 2-protein profile | **in_flight** |  | `feat/739-788-manual-deposits-consumed`, `feat/770-753-protein-phenotype-fields` |
+| 9 | Lim 2025 three IPL400 production-proteome arms, CONDITIONAL | 0 to 2 | **open** |  | needs a MEDIA_LIBRARY entry for the production medium and a pairing decision against an evolved strain |
+
+**Rank 6 is no longer retrieval-gated, and that is the one correction this ledger makes
+to the table above.** The row reads "the files are not on disk and `datadryad.org` serves
+the same Anubis proof-of-work challenge as #739 on a DIFFERENT deposit". Measured: the
+Dryad deposit IS in the raw mirror, as
+`$DATA_ROOT/torchcell-raw/menasalvasBiosensordrivenStrainEngineering2025/data/dryad/doi_10_5061_dryad_sbcc2frjq__v20250919.zip`
+beside its own `DEPOSIT.md`, `README.md` and `SHA256SUMS.txt`. The by-hand retrieval
+happened; the loader has not consumed it. The rank is assigned to
+`feat/739-788-manual-deposits-consumed`, which at the time of this measurement had
+touched `carruthers2025.py` and `bacteria_common.py` and not `menasalvas2025.py`, so the
+ledger reports it open with the assignment declared beside the measurement.
+
+**Ranks 8 and 9 stay conditional for the reasons the table gives, and rank 8 is in
+flight.** Rank 8's owner path `carruthers2025.py` is being rewritten on two branches
+(`feat/739-788-manual-deposits-consumed` and `feat/770-753-protein-phenotype-fields`), so
+landing it elsewhere would collide; rank 9 needs a `MEDIA_LIBRARY` entry for the
+production medium and a pairing decision, neither of which is a measurement this ledger
+can settle.

@@ -3910,3 +3910,87 @@ Three kinds of statement share one boolean column, and no field distinguishes th
 
 **Rank 1 (per-strain fitness) is untouched**: not mirrored, and its 24,626,916 is an upper
 bound rather than a count.
+
+## 2026.10.09 - The loadable-now ledger, measured against main at 6cf257308
+
+Umbrella issue #826 asks for one thing before the KG 4.0 rebuild: every row of this
+table either stores records or carries a dated refusal. Nothing recorded which rank was
+still open, so the state below is measured rather than recalled, by
+`experiments/036-dataset-fixes-before-kg-build/scripts/si_audit_loadable_ledger.py`
+(results `si_audit_loadable_ledger.json` and `.csv` beside it). Each cell comes from a
+probe the script declares per rank:
+
+- **landed** = every loader class the rank declares is in `dataset_registry` AND its dev
+  LMDB holds entries, counted with the same `stat()["entries"]` call
+  `ExperimentDataset.len` makes. A rank that enriches already-served records declares a
+  module symbol instead, looked up in the loader source.
+- **the pull request** = `git log --reverse -S'<class ...>'` (or `-S'<symbol>'` for an
+  enrichment rank), then the PR with the FEWEST commits among those whose GitHub commit
+  list carries that subject. The fewest-commits rule is what makes the #779 to #784
+  stack attribute correctly: six of those PRs carry the Carruthers commit and only #783
+  is the Carruthers pull request. An enrichment rank is attributed by its symbol and not
+  by its class, because the class predates it: the Price stress records landed in #725
+  and Table S4's solvent reached them in #782.
+- **in flight** = a local branch whose diff against `origin/main` adds lines to a path
+  the rank owns.
+- **refused** = a verbatim decline in a loader module or dendron note, matched as a
+  substring of the pinned text.
+
+### Totals over both audits, 31 ledger rows
+
+| state | rows |
+|---|---|
+| landed | 15 |
+| refused | 7 |
+| open | 6 |
+| in flight | 2 |
+| excluded by owner decision | 1 |
+
+| rank | item | audit count | state | records now | where |
+|---|---|---|---|---|---|
+| 1 | Price 2018 per-strain fitness (strain_fit.tab, strain_se) | <= 24,626,916 (upper bound) | **open** |  | retrieval: strain_fit.tab is not in the raw mirror, and the 24,626,916 is an upper bound (152,018 barcodes x 162 samples), not a count |
+| 2 | Shiver 2016 Nichols batch-0 block of S1 Dataset, 235 conditions | 835,337 | **excluded** |  | owner decision |
+| 3 | Lamoureux 2023 Public K-12, 1,675 public RNA-seq samples | 1,675 | **landed** | 240 | PR #779 |
+| 4 | Rapp 2026 growth AUC over Table S2's curves | 1,514 | **landed** | 1,515 | PR #781 |
+| 5 | Rapp 2026 targeted LC-MS/MS fold change (Table S6) | 411 records, 1,256 values | **landed** | 407 | PR #781 |
+| 6 | Rapp 2026 FI-MS absolute intensities (Table S5) | 411 records, 1,385 values | **landed** | 407 | PR #781 |
+| 7 | Rapp 2026 Table S6 Intensity PrecMz | 411 records | **refused** |  | `torchcell/datasets/ecoli/rapp2026_platforms.py` |
+| 8 | Rapp 2026 Table S7's 2,847 annotated features | 254 records, 2,847 values | **refused** |  | `torchcell/datasets/ecoli/rapp2026_platforms.py` |
+| 9 | Price 2018 Table S1 likely-essential E. coli genes | 324 | **landed** | 320 | PR #782 |
+| 10 | Price 2018 Tables S2 and S3 wild-type growth calls | 192 | **refused** |  | `notes/torchcell.datasets.ecoli.price2018.md` |
+| 11 | Lamoureux 2023 per-sample growth rate (metadata_qc.csv) | 103 of 241, ceiling 354 | **open** |  | the audit calls it blocked by gap 1; PR #836 (#776) landed the absolute branch, so the remaining question is whether a matched reference rate is released per condition |
+| 12 | Wang 2015 no-isoprenol OD600 | 46 plus 1 reference | **open** |  | a recorded decision rather than a release defect: it would be a second phenotype family beside the stored chemical-genomic records |
+| 13 | Schmidt 2016 Table S23 per-condition growth rate + Stdev | 26 | **open** |  | three blockers measured in the schmidt2016_growth_rate note; PR #836 (#776) lifted the first, and the Stdev's replicate design stays a gap |
+| 14 | Schmidt 2016 Tables S2 and S3 SRM absolute abundances | up to 22 records, 1,461 values | **landed** | 25 | PR #780 |
+| 15 | Caglar 2017 doubling time | 19 | **landed** | 55 | PR #836 |
+| 16 | Schmidt 2016 Table S24 deletion-strain growth rates | 6 plus 2 references | **landed** | 6 | PR #780 |
+| 17 | Gupta 2024 absolute protein concentration (Supplementary Data 6) | 1 record, 2,994 values | **in_flight** |  | `feat/770-753-protein-phenotype-fields` |
+| 18 | Price 2018 Table S4 Solvent into the stress records | 0 new, enriches 207,240 | **landed** | 553,896 | PR #782 |
+| 19a | Lamoureux 2023 Public K-12 aerobicity | 0 standalone (1,425 inside rank 3) | **landed** |  | PR #779 |
+| 19b | Lamoureux 2023 Public K-12 time | 0 standalone (391 inside rank 3) | **refused** |  | `torchcell/datasets/ecoli/lamoureux2023_public_k12.py` |
+| 20 | Lamoureux 2023 the 98 short / low-FPKM genes | 0 new, 23,618 values on built records | **refused** |  | `notes/plan.bacteria-si-phenotype-audit-ecoli.md` |
+| 21 | Lamoureux 2023 the 20 QC-failed libraries | <= 20, uncounted | **refused** |  | `torchcell/datasets/ecoli/lamoureux2023.py` |
+
+**Rank 2 is excluded by owner decision, and the exclusion is data.** Nichols 2011 has no
+PDF in the literature mirror (#691, a by-hand retrieval), and the standing decision is
+that Shiver 2016's 835,337-value batch-0 block is not landed before that paper is
+mirrored and the duplication question is settled. The ledger carries the reason in
+`EXCLUDED_ROWS` rather than leaving the rank silent.
+
+**Rank 1 is open and retrieval-gated, not refused.** Measured: the raw mirror holds only
+`data/bigfit/html/Keio/fit_t.tab`, `fit_standard_error_naive.tab` and
+`fit_standard_error_obs.tab`, and no `strain_fit.tab`. The release carries the values and
+this project has not fetched them, which is a different statement from a decline.
+
+**Three open ranks were re-measured after #776 landed, and two of the three changed
+answer.** PR #836 gave `EnvironmentResponsePhenotype` a two-sided interval and a
+replicate id, and gave the environment-response verifier an absolute-readout branch
+(`reference_centered=False`, admitted only for a `measurement_type` in
+`ABSOLUTE_MEASUREMENT_TYPES`, which is `{growth_rate, colony_size}`). That is gap 1's
+second half, and it is what rank 11, rank 13 and rank 15 were all blocked on.
+
+| rank | the audit's blocker | re-measured 2026.10.09 |
+|---|---|---|
+| 11 | blocked in its absolute form by gap 1 | LOADABLE: 103 of the 241 PRECISE-1K records carry a `Growth Rate (1/hr)`, 0 of the 240 Public K-12 records do, and 8 wild-type `*:wt_glc` rows release a rate the absolute branch can use as the reference |
+| 12 | a recorded decision, not a release defect | LOADABLE as a FITNESS ratio, and the absolute branch does NOT reach it: `MeasurementType` still has no optical-density member, so the readout cannot take the absolute route and goes through `FitnessPhenotype` instead |
+| 13 | three blockers in the `schmidt2016_growth_rate` note | PARTLY loadable: 15 of the 26 rows, not 26. Gap 1 is lifted, the log2 blocker is moot on the absolute route, and 11 rows drop for reasons the note did not have |

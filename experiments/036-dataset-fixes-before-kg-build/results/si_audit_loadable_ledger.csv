@@ -1,0 +1,32 @@
+table,rank,item,audit_records,state,records_now,landing_prs,in_flight_branches,blocker
+ecoli,1,"Price 2018 per-strain fitness (strain_fit.tab, strain_se)","<= 24,626,916 (upper bound)",open,,,,"retrieval: strain_fit.tab is not in the raw mirror, and the 24,626,916 is an upper bound (152,018 barcodes x 162 samples), not a count"
+ecoli,2,"Shiver 2016 Nichols batch-0 block of S1 Dataset, 235 conditions","835,337",excluded,,,,
+ecoli,3,"Lamoureux 2023 Public K-12, 1,675 public RNA-seq samples","1,675",landed,240.0,779,,
+ecoli,4,Rapp 2026 growth AUC over Table S2's curves,"1,514",landed,1515.0,781,,
+ecoli,5,Rapp 2026 targeted LC-MS/MS fold change (Table S6),"411 records, 1,256 values",landed,407.0,781,,
+ecoli,6,Rapp 2026 FI-MS absolute intensities (Table S5),"411 records, 1,385 values",landed,407.0,781,,
+ecoli,7,Rapp 2026 Table S6 Intensity PrecMz,411 records,refused,,,,
+ecoli,8,"Rapp 2026 Table S7's 2,847 annotated features","254 records, 2,847 values",refused,,,,
+ecoli,9,Price 2018 Table S1 likely-essential E. coli genes,324,landed,320.0,782,,
+ecoli,10,Price 2018 Tables S2 and S3 wild-type growth calls,192,refused,,,,
+ecoli,11,Lamoureux 2023 per-sample growth rate (metadata_qc.csv),"103 of 241, ceiling 354",open,0.0,,,"the audit calls it blocked by gap 1; PR #836 (#776) landed the absolute branch, so the remaining question is whether a matched reference rate is released per condition"
+ecoli,12,Wang 2015 no-isoprenol OD600,46 plus 1 reference,open,0.0,,,a recorded decision rather than a release defect: it would be a second phenotype family beside the stored chemical-genomic records
+ecoli,13,Schmidt 2016 Table S23 per-condition growth rate + Stdev,26,open,0.0,,,"three blockers measured in the schmidt2016_growth_rate note; PR #836 (#776) lifted the first, and the Stdev's replicate design stays a gap"
+ecoli,14,Schmidt 2016 Tables S2 and S3 SRM absolute abundances,"up to 22 records, 1,461 values",landed,25.0,780,,
+ecoli,15,Caglar 2017 doubling time,19,landed,55.0,836,,
+ecoli,16,Schmidt 2016 Table S24 deletion-strain growth rates,6 plus 2 references,landed,6.0,780,,
+ecoli,17,Gupta 2024 absolute protein concentration (Supplementary Data 6),"1 record, 2,994 values",in_flight,0.0,,feat/770-753-protein-phenotype-fields,"two unresolved sourcing questions, neither a schema change: n_replicates is unsourced and the release never says which of the 13 conditions the label-free run was"
+ecoli,18,Price 2018 Table S4 Solvent into the stress records,"0 new, enriches 207,240",landed,553896.0,782,,
+ecoli,19a,Lamoureux 2023 Public K-12 aerobicity,"0 standalone (1,425 inside rank 3)",landed,,779,,
+ecoli,19b,Lamoureux 2023 Public K-12 time,0 standalone (391 inside rank 3),refused,,,,
+ecoli,20,Lamoureux 2023 the 98 short / low-FPKM genes,"0 new, 23,618 values on built records",refused,,,,
+ecoli,21,Lamoureux 2023 the 20 QC-failed libraries,"<= 20, uncounted",refused,,,,"the release's own QC excluded them and the compendium the loader reads is the 1,035-sample one, so there is no released value to store"
+pputida,1,Caglar 2017 doubling time per replicate growth curve,55 (or 19 condition means),landed,55.0,836,,
+pputida,2,Carruthers 2025 four unstored isoprenol titer sheets,"49 records over 190 cultures, plus 14 references",landed,502.0,783,,
+pputida,3,Carruthers 2025 two unstored per-protein abundance sheets,"21 records, about 630 values",landed,21.0,783,,
+pputida,4,Kang 2026 fed-batch isoprenol titer and residual sugars (Table S9),21 (7 titer + 14 metabolite),refused,,,,
+pputida,5,de Siqueira 2025 two further proteomics normalizations,10 (2 normalizations x 5 samples),landed,34.0,784,,
+pputida,6,Menasalvas 2025 metabolites and five proteomics sheets (Dryad),about 4 metabolite records plus the designed-strain arms,open,0.0,,,"the Dryad deposit the audit calls unfetched IS now in the raw mirror, so the row is no longer retrieval-gated; it is assigned to the #739/#788 branch, which has not yet touched the loader (measured)"
+pputida,7,"Yunus 2026 per-protein fold change, PP_4188 strain (Tables S4, S5)",1 record carrying 338 protein keys,landed,1.0,784,,
+pputida,8,"Carruthers 2025 knockdown ratios (Figure 3c), CONDITIONAL on gap R",92 records of a 2-protein profile,in_flight,0.0,,feat/739-788-manual-deposits-consumed;feat/770-753-protein-phenotype-fields,gap R: ProteinAbundancePhenotype's docstring forbids a ratio
+pputida,9,"Lim 2025 three IPL400 production-proteome arms, CONDITIONAL",0 to 2,open,0.0,,,needs a MEDIA_LIBRARY entry for the production medium and a pairing decision against an evolved strain

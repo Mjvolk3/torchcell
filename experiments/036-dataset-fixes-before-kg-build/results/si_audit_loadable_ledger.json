@@ -1,0 +1,940 @@
+{
+  "measured_at": "2026-10-09T10:48:34.273991+00:00",
+  "head": "6cf257308cee5a6fa32f3bacee33fd1537bcb90d",
+  "data_root": "/scratch/projects/torchcell-scratch",
+  "ecoli_audit": "notes/plan.bacteria-si-phenotype-audit-ecoli.md",
+  "pputida_audit": "notes/plan.bacteria-si-phenotype-audit-pputida.md",
+  "prs_resolved": true,
+  "n_rows": 31,
+  "totals": {
+    "excluded": 1,
+    "in_flight": 2,
+    "landed": 15,
+    "open": 6,
+    "refused": 7
+  },
+  "rows": [
+    {
+      "table": "ecoli",
+      "rank": "1",
+      "item": "Price 2018 per-strain fitness (strain_fit.tab, strain_se)",
+      "audit_records": "<= 24,626,916 (upper bound)",
+      "state": "open",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [
+        "/scratch/projects/torchcell-scratch/torchcell-raw/priceMutantPhenotypesThousands2018/data/bigfit/html/Keio/strain_fit.tab"
+      ],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "retrieval: strain_fit.tab is not in the raw mirror, and the 24,626,916 is an upper bound (152,018 barcodes x 162 samples), not a count",
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "2",
+      "item": "Shiver 2016 Nichols batch-0 block of S1 Dataset, 235 conditions",
+      "audit_records": "835,337",
+      "state": "excluded",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": "Nichols 2011 is not in the literature mirror (#691, a by-hand retrieval), and the owner's standing decision is that Shiver 2016's batch-0 block is not landed before that paper is mirrored and the duplication question is settled."
+    },
+    {
+      "table": "ecoli",
+      "rank": "3",
+      "item": "Lamoureux 2023 Public K-12, 1,675 public RNA-seq samples",
+      "audit_records": "1,675",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "RnaseqPublicK12Lamoureux2023Dataset",
+          "registered": true,
+          "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_public_k12_lamoureux2023/processed/lmdb",
+          "entries": 240,
+          "landing_commit": "96ec133f3179c740d1c0e8e07fda2a82105c80ff",
+          "landing_subject": "FEAT(datasets): Lamoureux 2023 Public K-12, the 1,675 reprocessed public E. coli RNA-seq samples",
+          "landing_pr": 779
+        }
+      ],
+      "records_now": 240,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        779
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "4",
+      "item": "Rapp 2026 growth AUC over Table S2's curves",
+      "audit_records": "1,514",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "GrowthAucRapp2026Dataset",
+          "registered": true,
+          "root": "data/torchcell/growth_auc_rapp2026",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/growth_auc_rapp2026/processed/lmdb",
+          "entries": 1515,
+          "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
+          "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
+          "landing_pr": 781
+        }
+      ],
+      "records_now": 1515,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        781
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "5",
+      "item": "Rapp 2026 targeted LC-MS/MS fold change (Table S6)",
+      "audit_records": "411 records, 1,256 values",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "TargetedMetabolomeRapp2026Dataset",
+          "registered": true,
+          "root": "data/torchcell/targeted_metabolome_rapp2026",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/targeted_metabolome_rapp2026/processed/lmdb",
+          "entries": 407,
+          "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
+          "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
+          "landing_pr": 781
+        }
+      ],
+      "records_now": 407,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        781
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "6",
+      "item": "Rapp 2026 FI-MS absolute intensities (Table S5)",
+      "audit_records": "411 records, 1,385 values",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "MetaboliteIntensityRapp2026Dataset",
+          "registered": true,
+          "root": "data/torchcell/metabolite_intensity_rapp2026",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_intensity_rapp2026/processed/lmdb",
+          "entries": 407,
+          "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
+          "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
+          "landing_pr": 781
+        }
+      ],
+      "records_now": 407,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        781
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "7",
+      "item": "Rapp 2026 Table S6 Intensity PrecMz",
+      "audit_records": "411 records",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "torchcell/datasets/ecoli/rapp2026_platforms.py::NOT loaded: an instrument-scale intensity with no normalizat"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "8",
+      "item": "Rapp 2026 Table S7's 2,847 annotated features",
+      "audit_records": "254 records, 2,847 values",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "torchcell/datasets/ecoli/rapp2026_platforms.py::Table S7 is gated on a release"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "9",
+      "item": "Price 2018 Table S1 likely-essential E. coli genes",
+      "audit_records": "324",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "GeneEssentialityPrice2018EcoliDataset",
+          "registered": true,
+          "root": "data/torchcell/gene_essentiality_price2018_ecoli",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_price2018_ecoli/processed/lmdb",
+          "entries": 320,
+          "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
+          "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
+          "landing_pr": 782
+        }
+      ],
+      "records_now": 320,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        782
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "10",
+      "item": "Price 2018 Tables S2 and S3 wild-type growth calls",
+      "audit_records": "192",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "notes/torchcell.datasets.ecoli.price2018.md::**Agreed with the audit: not loadable as they stand.**"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "11",
+      "item": "Lamoureux 2023 per-sample growth rate (metadata_qc.csv)",
+      "audit_records": "103 of 241, ceiling 354",
+      "state": "open",
+      "stores": [
+        {
+          "name": "GrowthRateLamoureux2023Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "the audit calls it blocked by gap 1; PR #836 (#776) landed the absolute branch, so the remaining question is whether a matched reference rate is released per condition",
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "12",
+      "item": "Wang 2015 no-isoprenol OD600",
+      "audit_records": "46 plus 1 reference",
+      "state": "open",
+      "stores": [
+        {
+          "name": "GrowthWang2015Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "a recorded decision rather than a release defect: it would be a second phenotype family beside the stored chemical-genomic records",
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "13",
+      "item": "Schmidt 2016 Table S23 per-condition growth rate + Stdev",
+      "audit_records": "26",
+      "state": "open",
+      "stores": [
+        {
+          "name": "EnvGrowthRateSchmidt2016Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "three blockers measured in the schmidt2016_growth_rate note; PR #836 (#776) lifted the first, and the Stdev's replicate design stays a gap",
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "14",
+      "item": "Schmidt 2016 Tables S2 and S3 SRM absolute abundances",
+      "audit_records": "up to 22 records, 1,461 values",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "ProteomeSrmSet1Schmidt2016Dataset",
+          "registered": true,
+          "root": "data/torchcell/proteome_srm_set1_schmidt2016",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set1_schmidt2016/processed/lmdb",
+          "entries": 11,
+          "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
+          "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
+          "landing_pr": 780
+        },
+        {
+          "name": "ProteomeSrmSet2Schmidt2016Dataset",
+          "registered": true,
+          "root": "data/torchcell/proteome_srm_set2_schmidt2016",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set2_schmidt2016/processed/lmdb",
+          "entries": 14,
+          "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
+          "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
+          "landing_pr": 780
+        }
+      ],
+      "records_now": 25,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        780
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "15",
+      "item": "Caglar 2017 doubling time",
+      "audit_records": "19",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "DoublingTimeCaglar2017Dataset",
+          "registered": true,
+          "root": "data/torchcell/doubling_time_caglar2017",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/doubling_time_caglar2017/processed/lmdb",
+          "entries": 55,
+          "landing_commit": "4a7ab07bffb8d32955542514cd20bbd385c51163",
+          "landing_subject": "FEAT(datasets): load Caglar 2017 Table S5's 55 per-replicate doubling times as an absolute growth readout",
+          "landing_pr": 836
+        }
+      ],
+      "records_now": 55,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        836
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "16",
+      "item": "Schmidt 2016 Table S24 deletion-strain growth rates",
+      "audit_records": "6 plus 2 references",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "GrowthRateSchmidt2016Dataset",
+          "registered": true,
+          "root": "data/torchcell/growth_rate_schmidt2016",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_schmidt2016/processed/lmdb",
+          "entries": 6,
+          "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
+          "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
+          "landing_pr": 780
+        }
+      ],
+      "records_now": 6,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        780
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "17",
+      "item": "Gupta 2024 absolute protein concentration (Supplementary Data 6)",
+      "audit_records": "1 record, 2,994 values",
+      "state": "in_flight",
+      "stores": [
+        {
+          "name": "ProteomeAbsoluteGupta2024Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [
+        "feat/770-753-protein-phenotype-fields"
+      ],
+      "landing_prs": [],
+      "blocker": "two unresolved sourcing questions, neither a schema change: n_replicates is unsourced and the release never says which of the 13 conditions the label-free run was",
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "18",
+      "item": "Price 2018 Table S4 Solvent into the stress records",
+      "audit_records": "0 new, enriches 207,240",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "RbTnseqPrice2018EcoliDataset",
+          "registered": true,
+          "root": "data/torchcell/rbtnseq_price2018_ecoli",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_price2018_ecoli/processed/lmdb",
+          "entries": 553896,
+          "landing_commit": "f62db511cbd50daaa925c39c40319e18d21f9649",
+          "landing_subject": "FEAT(datasets): Price 2018 Fitness Browser compendium, E. coli BW25113 arm (rank 21, the superset of Wetmore 2015): 553,896 RB-TnSeq gene-fitness records over 147 samples x 3,768 genes",
+          "landing_pr": 725
+        }
+      ],
+      "records_now": 553896,
+      "enrichment": [
+        {
+          "path": "torchcell/datasets/ecoli/price2018.py",
+          "text": "def stress_solvent(",
+          "present": true,
+          "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
+          "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
+          "landing_pr": 782
+        },
+        {
+          "path": "torchcell/datasets/ecoli/price2018.py",
+          "text": "SOLVENT_IS_THE_PRESCREEN_STOCK",
+          "present": true,
+          "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
+          "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
+          "landing_pr": 782
+        }
+      ],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        782
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "19a",
+      "item": "Lamoureux 2023 Public K-12 aerobicity",
+      "audit_records": "0 standalone (1,425 inside rank 3)",
+      "state": "landed",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [
+        {
+          "path": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+          "text": "AEROBICITY_CELLS",
+          "present": true,
+          "landing_commit": "96ec133f3179c740d1c0e8e07fda2a82105c80ff",
+          "landing_subject": "FEAT(datasets): Lamoureux 2023 Public K-12, the 1,675 reprocessed public E. coli RNA-seq samples",
+          "landing_pr": 779
+        }
+      ],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        779
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "19b",
+      "item": "Lamoureux 2023 Public K-12 time",
+      "audit_records": "0 standalone (391 inside rank 3)",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "torchcell/datasets/ecoli/lamoureux2023_public_k12.py::the 'time' column carries no unit in its header"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "20",
+      "item": "Lamoureux 2023 the 98 short / low-FPKM genes",
+      "audit_records": "0 new, 23,618 values on built records",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "notes/plan.bacteria-si-phenotype-audit-ecoli.md::Already recorded, and the source's own QC removed them, so t"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "ecoli",
+      "rank": "21",
+      "item": "Lamoureux 2023 the 20 QC-failed libraries",
+      "audit_records": "<= 20, uncounted",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "torchcell/datasets/ecoli/lamoureux2023.py::1035 highquality RNA-seq samples"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "the release's own QC excluded them and the compendium the loader reads is the 1,035-sample one, so there is no released value to store",
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "1",
+      "item": "Caglar 2017 doubling time per replicate growth curve",
+      "audit_records": "55 (or 19 condition means)",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "DoublingTimeCaglar2017Dataset",
+          "registered": true,
+          "root": "data/torchcell/doubling_time_caglar2017",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/doubling_time_caglar2017/processed/lmdb",
+          "entries": 55,
+          "landing_commit": "4a7ab07bffb8d32955542514cd20bbd385c51163",
+          "landing_subject": "FEAT(datasets): load Caglar 2017 Table S5's 55 per-replicate doubling times as an absolute growth readout",
+          "landing_pr": 836
+        }
+      ],
+      "records_now": 55,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        836
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "2",
+      "item": "Carruthers 2025 four unstored isoprenol titer sheets",
+      "audit_records": "49 records over 190 cultures, plus 14 references",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "IsoprenolTiterCarruthers2025Dataset",
+          "registered": true,
+          "root": "data/torchcell/isoprenol_titer_carruthers2025",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_carruthers2025/processed/lmdb",
+          "entries": 502,
+          "landing_commit": "3b697978a6249b2766d707b4a27e201e94d4e1bb",
+          "landing_subject": "FEAT(datasets): the first P. putida loader, Carruthers 2025 CRISPRi isoprenol production: 465 (construct, DBTL cycle) product-titer strains on the IY1449b chassis with its 8 typed deletion alleles and the 5 pIY670 pathway genes, plus the released 19-sample Top3 proteome panel, every sourced value quoting sha256-pinned mirrored bytes",
+          "landing_pr": 720
+        }
+      ],
+      "records_now": 502,
+      "enrichment": [
+        {
+          "path": "torchcell/datasets/pputida/carruthers2025.py",
+          "text": "SHEET_OFFTARGET_TITER = \"Supplementary Figure 13d\"",
+          "present": true,
+          "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
+          "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
+          "landing_pr": 783
+        },
+        {
+          "path": "torchcell/datasets/pputida/carruthers2025.py",
+          "text": "SHEET_KO_ARRAYS = \"Figure 6d\"",
+          "present": true,
+          "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
+          "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
+          "landing_pr": 783
+        }
+      ],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        783
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "3",
+      "item": "Carruthers 2025 two unstored per-protein abundance sheets",
+      "audit_records": "21 records, about 630 values",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "ProteomeCarruthers2025Dataset",
+          "registered": true,
+          "root": "data/torchcell/proteome_carruthers2025",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_carruthers2025/processed/lmdb",
+          "entries": 21,
+          "landing_commit": "3b697978a6249b2766d707b4a27e201e94d4e1bb",
+          "landing_subject": "FEAT(datasets): the first P. putida loader, Carruthers 2025 CRISPRi isoprenol production: 465 (construct, DBTL cycle) product-titer strains on the IY1449b chassis with its 8 typed deletion alleles and the 5 pIY670 pathway genes, plus the released 19-sample Top3 proteome panel, every sourced value quoting sha256-pinned mirrored bytes",
+          "landing_pr": 720
+        }
+      ],
+      "records_now": 21,
+      "enrichment": [
+        {
+          "path": "torchcell/datasets/pputida/carruthers2025.py",
+          "text": "SHEET_CONTROL_PROTEOME = \"Supplementary Figure 15\"",
+          "present": true,
+          "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
+          "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
+          "landing_pr": 783
+        },
+        {
+          "path": "torchcell/datasets/pputida/carruthers2025.py",
+          "text": "SHEET_OVEREXPRESSION_PROTEOME = \"Supplementary Figure 12ac\"",
+          "present": true,
+          "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
+          "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
+          "landing_pr": 783
+        }
+      ],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        783
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "4",
+      "item": "Kang 2026 fed-batch isoprenol titer and residual sugars (Table S9)",
+      "audit_records": "21 (7 titer + 14 metabolite)",
+      "state": "refused",
+      "stores": [],
+      "records_now": null,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [
+        "torchcell/datasets/pputida/kang2026.py::ISOPRENOL_NOT_A_RECORD"
+      ],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "5",
+      "item": "de Siqueira 2025 two further proteomics normalizations",
+      "audit_records": "10 (2 normalizations x 5 samples)",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "ProteomePercentDeSiqueira2025Dataset",
+          "registered": true,
+          "root": "data/torchcell/proteome_percent_desiqueira2025",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_percent_desiqueira2025/processed/lmdb",
+          "entries": 17,
+          "landing_commit": "31ccd7f5ddd02ed881d0ebcf02258305c7c0ba3e",
+          "landing_subject": "FEAT(datasets): serve de Siqueira 2025's two further proteome normalizations",
+          "landing_pr": 784
+        },
+        {
+          "name": "ProteomeLog10PercentDeSiqueira2025Dataset",
+          "registered": true,
+          "root": "data/torchcell/proteome_log10_percent_desiqueira2025",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_log10_percent_desiqueira2025/processed/lmdb",
+          "entries": 17,
+          "landing_commit": "31ccd7f5ddd02ed881d0ebcf02258305c7c0ba3e",
+          "landing_subject": "FEAT(datasets): serve de Siqueira 2025's two further proteome normalizations",
+          "landing_pr": 784
+        }
+      ],
+      "records_now": 34,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        784
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "6",
+      "item": "Menasalvas 2025 metabolites and five proteomics sheets (Dryad)",
+      "audit_records": "about 4 metabolite records plus the designed-strain arms",
+      "state": "open",
+      "stores": [
+        {
+          "name": "MetaboliteMenasalvas2025Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [
+        "/scratch/projects/torchcell-scratch/torchcell-raw/menasalvasBiosensordrivenStrainEngineering2025/data/dryad/doi_10_5061_dryad_sbcc2frjq__v20250919.zip"
+      ],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "the Dryad deposit the audit calls unfetched IS now in the raw mirror, so the row is no longer retrieval-gated; it is assigned to the #739/#788 branch, which has not yet touched the loader (measured)",
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "7",
+      "item": "Yunus 2026 per-protein fold change, PP_4188 strain (Tables S4, S5)",
+      "audit_records": "1 record carrying 338 protein keys",
+      "state": "landed",
+      "stores": [
+        {
+          "name": "CrispriDifferentialProteomeYunus2026Dataset",
+          "registered": true,
+          "root": "data/torchcell/crispri_differential_proteome_yunus2026",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_differential_proteome_yunus2026/processed/lmdb",
+          "entries": 1,
+          "landing_commit": "5556aae6ab3e4a4d089c055e1b09b100c396b133",
+          "landing_subject": "FEAT(datasets): load Yunus 2026's PP_4188 differential fold changes",
+          "landing_pr": 784
+        }
+      ],
+      "records_now": 1,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [
+        784
+      ],
+      "blocker": null,
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "8",
+      "item": "Carruthers 2025 knockdown ratios (Figure 3c), CONDITIONAL on gap R",
+      "audit_records": "92 records of a 2-protein profile",
+      "state": "in_flight",
+      "stores": [
+        {
+          "name": "ProteomeFoldChangeCarruthers2025Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [
+        "feat/739-788-manual-deposits-consumed",
+        "feat/770-753-protein-phenotype-fields"
+      ],
+      "landing_prs": [],
+      "blocker": "gap R: ProteinAbundancePhenotype's docstring forbids a ratio",
+      "excluded_reason": null
+    },
+    {
+      "table": "pputida",
+      "rank": "9",
+      "item": "Lim 2025 three IPL400 production-proteome arms, CONDITIONAL",
+      "audit_records": "0 to 2",
+      "state": "open",
+      "stores": [
+        {
+          "name": "ProteomeProductionLim2025Dataset",
+          "registered": false,
+          "root": null,
+          "store_path": null,
+          "entries": null,
+          "landing_commit": null,
+          "landing_subject": null,
+          "landing_pr": null
+        }
+      ],
+      "records_now": 0,
+      "enrichment": [],
+      "enrichment_missing": [],
+      "refusal_found": [],
+      "retrieval_present": [],
+      "retrieval_absent": [],
+      "in_flight_branches": [],
+      "landing_prs": [],
+      "blocker": "needs a MEDIA_LIBRARY entry for the production medium and a pairing decision against an evolved strain",
+      "excluded_reason": null
+    }
+  ]
+}

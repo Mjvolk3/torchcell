@@ -29,7 +29,9 @@ from tests.torchcell.adapters._bacterial_adapter_cases import (
     assert_gate_resolves_own_files,
     case_for,
 )
-from torchcell.datasets.pputida.menasalvas2025 import MetaboliteProductionPhaseMenasalvas2025Dataset
+from torchcell.datasets.pputida.menasalvas2025 import (
+    MetaboliteProductionPhaseMenasalvas2025Dataset,
+)
 
 CASE = case_for(MetaboliteProductionPhaseMenasalvas2025Dataset)
 

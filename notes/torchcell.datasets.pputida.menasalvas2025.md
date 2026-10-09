@@ -791,3 +791,48 @@ hand against the built stores (1.000 of 73 measured genes are loci of
 4. `GeneAdditionPerturbation.source_organism` is still a required `str`, so the
    sentinel of the 2026.10.07 row above is still in place, now on the mCherry biosensor
    copies as well as the five pathway genes.
+
+## 2026.10.09 - The three Dryad arms are wired into the served graph
+
+The 2026.10.09 section above ends with "Adapters, written and not yet wired". They are
+wired now, and nothing in the loaders changed to do it.
+
+| place | change |
+|---|---|
+| `torchcell/adapters/__init__.py` | three exports, three names in `pputida_adapters` (23) |
+| `torchcell/knowledge_graphs/dataset_adapter_map.py` | three dataset-to-adapter entries; the map now holds 114 |
+| `torchcell/knowledge_graphs/conf/kg_bacteria.yaml` | three dataset names; the bacterial list is now 63, all distinct |
+| `torchcell/verification/runners.py` | three verify hooks, `proteome_menasalvas2025` into `BACTERIAL_PROTEIN_ABUNDANCE_DATASETS`, a new `BACTERIAL_METABOLITE_DATASETS` registry, `run_bacterial_metabolite` in `run_all` |
+| `tests/torchcell/adapters/_bacterial_adapter_cases.py` | three `_case` rows, all `variant=True` |
+| `tests/torchcell/adapters/test_menasalvas2025_{proteome,metabolite_growth,metabolite_production}_adapter.py` | three new modules, the shape the other bacterial adapter tests use |
+
+### The metabolite registry, and why it is its own
+
+The note's recommendation is what landed. `METABOLITE_DATASETS` has no per-dataset
+`verify` hook and its L4 keys on `metabolite_gene_set`, which counts a heterologous
+pathway token (`MvaSEf`) and a site-keyed variant id (`<replicon>:<position>`) as a locus
+of the host assembly, so a production host's records fail it for the wrong reason.
+`BACTERIAL_METABOLITE_DATASETS` is driven by `_run_bacterial_family` with
+`measured_set=host_perturbed_gene_set`, the set that excludes both, exactly as
+`BACTERIAL_PROTEIN_ABUNDANCE_DATASETS` is. The E. coli metabolome rows stay where they
+are; nothing about them changes.
+
+### Measured through the new registries, 2026-10-09
+
+| store | records | verdict |
+|---|---|---|
+| `proteome_menasalvas2025` | 6 | PASS, L0 to L4 |
+| `metabolite_growth_menasalvas2025` | 3 | PASS, L0 to L4 |
+| `metabolite_production_menasalvas2025` | 3 | PASS, L0 to L4 |
+
+Both metabolite phases report
+`L4 perturbed_gene_containment_assembly: 1.000 of 73 measured genes are loci of pputida_KT2440_ASM756v2`,
+which is the number the earlier section verified by hand. The growth phase stores 138
+values over 46 metabolites, the production phase 139 over 48.
+
+Two stores in `BACTERIAL_PROTEIN_ABUNDANCE_DATASETS` FAIL on the shared dev tree and are
+not this branch's: `proteome_caglar2017` (105/105 records fail L0 schema validation) and
+`proteome_ishii2007` (28/28 fail L0, and L1 observed 28 against expected 24). Both are
+E. coli stores whose loaders this branch does not touch, built by another branch under an
+older closure. Measured 2026-10-09 by running
+`torchcell.verification.runners.run_bacterial_protein_abundance` over the dev tree.

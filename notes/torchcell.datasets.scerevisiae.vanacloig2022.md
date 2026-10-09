@@ -354,3 +354,62 @@ Old build moved to `processed.superseded.20261008-160841` and `preprocess.supers
 ### Rebuild consequence of the schema change
 
 Adding an enum member changes the contract fingerprint of every closure that contains `ConcentrationUnit`: after this change `python -m torchcell.provenance.build_manifest` reports 109 of 130 dev directories STALE, every one naming `ConcentrationUnit` (1 fresh, the rebuilt Vanacloig store; 20 unmanifested). For 100 of them `ConcentrationUnit` is the only changed symbol; the other 9 also name other symbols (among them the two older Vanacloig sibling directories). Every one needs a dev rebuild before the full KG rebuild, whose precondition is that every mapped dev store reads fresh. Hypothesis (untested): their records serialize identically, since no other loader emits the new member.
+
+## 2026.10.09 - #764 closed: both dose decisions verified from the built dev store
+
+PR #807 (in v1.7.0) implemented the two decisions #764 left open. This section is the
+measurement that the built store serves them, taken from the dev LMDB rather than from
+the loader source, plus both sides of the DMSO conflict re-read from the pinned bytes.
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/vanacloig2022_dose_decisions_verification.py`
+Results: `experiments/036-dataset-fixes-before-kg-build/results/vanacloig2022_dose_decisions_verification.json`
+
+Store: 118,662 records over 34 conditions. **0 conditions carry a null dose**, which is
+what #764 was opened on (it recorded five conditions keeping `Concentration.value =
+None`).
+
+### Decision 1, the DMSO 2.50% vs 1% v/v conflict: both numbers are served, on different fields
+
+They are two different quantities, which is why there was never a number to choose
+between. Both quotes verify verbatim against their pinned artifact.
+
+| quantity | value stored | field | quote | artifact |
+|---|---|---|---|---|
+| DMSO's own condition dose | 2.5 `percent_v/v`, basis `IC30` | the DMSO condition's `Concentration` | `<tr><td>DMSO</td><td>2.50%</td><td>No</td><td>67-68-5</td><td>Sigma-Aldrich</td><td>D-8779</td></tr>` | `si/si2.md`, sha256 `bad5b060...` |
+| vehicle fraction of the DMSO-dissolved inhibitors | 1.0 | `Solvent.percent` on **17** conditions | "Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration so that the final concentration of DMSO in SynBase medium was $1 \%$ $( \mathrm { v / v } )$ ." | `paper.md` |
+
+Measured: every one of the 17 DMSO-dissolved conditions carries `Solvent.percent` 1.0 and
+nothing else; the DMSO condition itself carries 2.5. The `v/v` on DMSO's own dose is
+sourced, not assumed: the Methods sentence is the paper's ONLY DMSO fraction statement
+that names a basis, so it fixes v/v as the paper's convention for DMSO specifically.
+
+### Decision 2, the percent-dose unit: a basis-free `ConcentrationUnit.percent`
+
+Five Table S1 cells are a bare percent with no v/v or w/v. The decision taken was the
+schema addition (a new enum member) rather than adopting a basis per compound, because
+adopting one would assert a basis the source does not state.
+
+| Fig 1B token | compound | value | unit | basis |
+|---|---|---|---|---|
+| MBO | 2-methyl-3-buten-2-ol | 1.5 | `percent` | `IC30` |
+| EtOH | ethanol | 4.0 | `percent` | `IC30` |
+| IBA | isobutyl alcohol | 0.75 | `percent` | `IC30` |
+| GVL | gamma-valerolactone | 1.5 | `percent` | `IC30` |
+| MMS | methyl methanesulfonate | 0.01 | `percent` | `fixed` |
+
+DMSO is deliberately NOT in this set: it serves `percent_v/v`, because the paper states a
+basis for DMSO and for nothing else. No percent dose is stored in a molar unit, and a
+molar conversion stays unavailable because it needs a basis and a density the paper does
+not report.
+
+GVL's number comes from the displaced row quote, since MinerU moves its IC30 cell onto the
+"OTHER COMPOUNDS" section header; both rows are quoted on the module
+(`TABLE_S1_DOSES["GVL"]` and `GVL_TABLE_S1_DISPLACED`) and the stored 1.5 is the
+displaced one.
+
+### Still outstanding, outside this issue
+
+The new `ConcentrationUnit.percent` member makes 109 of 130 dev stores read STALE on
+`ConcentrationUnit` under `build_manifest`, and the served KG carries the pre-#807
+Vanacloig records until the next FULL rebuild. Both are rebuild scheduling, not dose
+decisions, so #764 closes on the measurement above.

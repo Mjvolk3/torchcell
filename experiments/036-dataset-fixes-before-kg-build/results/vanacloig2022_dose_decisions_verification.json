@@ -1,0 +1,342 @@
+{
+  "dev_store": {
+    "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022",
+    "records": 118662,
+    "conditions": 34
+  },
+  "stored_doses": {
+    "1-butyl-3-methylimidazolium chloride": {
+      "value": 8.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3483
+    },
+    "1-ethyl-3-methylimidazolium chloride": {
+      "value": 50.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3490
+    },
+    "2,2'-bipyridine": {
+      "value": 18.0,
+      "unit": "ug/mL",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3488
+    },
+    "2,6-dimethylpyrazine": {
+      "value": 38.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3503
+    },
+    "2-methyl-3-buten-2-ol": {
+      "value": 1.5,
+      "unit": "percent",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3482
+    },
+    "2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-": {
+      "value": 3.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3483
+    },
+    "4'-hydroxyacetophenone": {
+      "value": 5.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3505
+    },
+    "4-hydroxybenzaldehyde": {
+      "value": 4.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3491
+    },
+    "4-hydroxybenzoic acid": {
+      "value": 6.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3508
+    },
+    "5-(hydroxymethyl)furfural": {
+      "value": 3.3,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3503
+    },
+    "acetamide": {
+      "value": 250.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3487
+    },
+    "acetosyringone": {
+      "value": 5.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3496
+    },
+    "acetovanillone": {
+      "value": 3.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3508
+    },
+    "azelaic acid": {
+      "value": 10.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3495
+    },
+    "benomyl": {
+      "value": 34.4,
+      "unit": "uM",
+      "basis": "fixed",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3490
+    },
+    "benzoic acid": {
+      "value": 0.12,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3488
+    },
+    "cinnamic acid": {
+      "value": 0.38,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3503
+    },
+    "crystal violet": {
+      "value": 15.0,
+      "unit": "uM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3386
+    },
+    "dimethyl sulfoxide": {
+      "value": 2.5,
+      "unit": "percent_v/v",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3485
+    },
+    "ethanol": {
+      "value": 4.0,
+      "unit": "percent",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3485
+    },
+    "ferulamide": {
+      "value": 2.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3488
+    },
+    "ferulic acid": {
+      "value": 0.94,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3498
+    },
+    "furfural": {
+      "value": 8.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3492
+    },
+    "gamma-valerolactone": {
+      "value": 1.5,
+      "unit": "percent",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3472
+    },
+    "isobutanol": {
+      "value": 0.75,
+      "unit": "percent",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3479
+    },
+    "methyl methanesulfonate": {
+      "value": 0.01,
+      "unit": "percent",
+      "basis": "fixed",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3487
+    },
+    "methylglyoxal": {
+      "value": 7.5,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3482
+    },
+    "nonylacridine orange": {
+      "value": 5.0,
+      "unit": "uM",
+      "basis": "IC30",
+      "solvent": null,
+      "solvent_percent": null,
+      "records": 3505
+    },
+    "p-coumaric acid": {
+      "value": 3.3,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3508
+    },
+    "sinapic acid": {
+      "value": 1.5,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3493
+    },
+    "syringaldehyde": {
+      "value": 2.2,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3512
+    },
+    "syringic acid": {
+      "value": 15.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3499
+    },
+    "vanillic acid": {
+      "value": 6.7,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3484
+    },
+    "vanillin": {
+      "value": 5.0,
+      "unit": "mM",
+      "basis": "IC30",
+      "solvent": "DMSO",
+      "solvent_percent": 1.0,
+      "records": 3504
+    }
+  },
+  "dmso_conflict": {
+    "table_s1_row_quote": "<tr><td>DMSO</td><td>2.50%</td><td>No</td><td>67-68-5</td><td>Sigma-Aldrich</td><td>D-8779</td></tr>",
+    "methods_vehicle_quote": "Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration so that the final concentration of DMSO in SynBase medium was $1 \\%$ $( \\mathrm { v / v } )$ .",
+    "dmso_condition_dose": {
+      "value": 2.5,
+      "unit": "percent_v/v",
+      "basis": "IC30"
+    },
+    "dmso_dissolved_conditions": 17,
+    "vehicle_percents": [
+      1.0
+    ],
+    "the_two_numbers_are_different_fields": true,
+    "table_s1_row": {
+      "source_uri": "si/si2.md",
+      "sha256_matches_the_pin": true,
+      "quote_found_verbatim": true,
+      "quote": "<tr><td>DMSO</td><td>2.50%</td><td>No</td><td>67-68-5</td><td>Sigma-Aldrich</td><td>D-8779</td></tr>"
+    },
+    "methods_vehicle": {
+      "source_uri": "paper.md",
+      "sha256_matches_the_pin": true,
+      "quote_found_verbatim": true,
+      "quote": "Chemical compounds insoluble in water were dissolved in DMSO at 100X concentration so that the final concentration of DMSO in SynBase medium was $1 \\%$ $( \\mathrm { v / v } )$ ."
+    }
+  },
+  "percent_unit_decision": {
+    "basis_free_tokens": [
+      "MBO",
+      "EtOH",
+      "IBA",
+      "GVL",
+      "MMS"
+    ],
+    "units": {
+      "MBO": "percent",
+      "EtOH": "percent",
+      "IBA": "percent",
+      "GVL": "percent",
+      "MMS": "percent"
+    },
+    "values": {
+      "MBO": 1.5,
+      "EtOH": 4.0,
+      "IBA": 0.75,
+      "GVL": 1.5,
+      "MMS": 0.01
+    },
+    "dmso_is_not_basis_free": "percent_v/v",
+    "displaced_gvl_quote": "<tr><td>OTHER COMPOUNDS</td><td>1.5%</td><td></td><td></td><td></td><td>140795000</td></tr>",
+    "gvl_row_quote": "<tr><td>Gamma valerolactone (GVL)</td><td></td><td>No</td><td>108-29-2</td><td>Acros Organics</td><td></td></tr>"
+  },
+  "null_doses": [],
+  "verdict": {
+    "every_condition_has_a_numeric_dose": true,
+    "the_five_basis_free_percents_use_the_percent_unit": true,
+    "dmso_serves_table_s1_2_5_percent_v_v": true,
+    "the_1_percent_v_v_is_the_vehicle_of_every_dmso_dissolved_condition": true,
+    "both_quotes_are_verbatim_in_the_pinned_bytes": true,
+    "no_percent_dose_is_stored_in_a_molar_unit": true
+  }
+}

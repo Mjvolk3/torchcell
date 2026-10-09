@@ -453,3 +453,65 @@ header no longer gives the adapter as a reason for the phage-only enable-list; t
 is that no record carries a non-phage environment perturbation, so the served lane would
 emit nothing. Verified on the dev store with `--data`: the phage lane emits the phage and
 the served lane emits nothing over the same records.
+
+## 2026.10.09 - #760 verified from the built dev stores, not from the docstring
+
+The de-duplication decision landed with the loader (option 1, hardened: both the shared
+21,685 S1 rows AND the 1,687 non-overlapping tail are dropped under named rules). This
+section records the measurement that the pair of stores actually behaves that way, taken
+from the two built dev LMDBs rather than from the loader source.
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/rousset2018_cui2018_overlap_verification.py`
+Results: `experiments/036-dataset-fixes-before-kg-build/results/rousset2018_cui2018_overlap_verification.json`
+
+### The two stores
+
+| store | records | screens | distinct content ids | distinct spacers |
+|---|---|---|---|---|
+| `CrispriScreenRousset2018Dataset` | 68,436 | `phage_lambda` 17,109, `phage_T4` 17,109, `phage_186cIts` 17,109, `lambda_transduction` 17,109 | 68,436 | 17,109 |
+| `CrispriKnockdownCui2018Dataset` | 141,542 | `LC-E18` 70,771, `LC-E75` 70,771 | 141,542 | 70,771 |
+
+`screen_id` holds no growth screen in the Rousset store, and the content id is the one a
+knowledge-graph build writes, `sha256(json.dumps(experiment.model_dump()))`
+(`torchcell/adapters/cell_adapter.py::_experiment_node`), so the id count equalling the
+record count means no record is a duplicate of another inside either store.
+
+### Nothing is stored twice across the pair
+
+| quantity | measured |
+|---|---|
+| shared experiment content ids | **0** |
+| shared (spacer, `screen_id`) measurement keys | **0** |
+| shared spacers | 16,979 |
+
+The 16,979 is the point: the two releases screened the same guide library, so a spacer
+appearing in both stores is expected and is not duplication. What makes the pair
+non-duplicative is that the screen vocabularies are disjoint, so no (spacer, screen)
+measurement key can exist twice. Four hermetic tests in
+`tests/torchcell/datasets/ecoli/test_rousset2018.py` pin that, including that the
+`served_by` string names a dataset class, slug and screen id the Cui module really
+defines.
+
+### The retention ledger adds up
+
+| rule | records |
+|---|---|
+| `guide_targets_no_gene` | 5,063 |
+| `guide_targets_the_template_strand` | 30,811 |
+| `growth_screen_measurement_is_served_by_cui2018` | 21,685 |
+| `growth_screen_guide_is_below_cui2018_read_floor` | 1,687 |
+| **sum (S1 Table's released rows)** | **59,246** |
+
+kept 68,436 + dropped 59,690 = 128,126 released (guide, screen) cells. Every raw file
+matches its pinned sha256 (three Rousset tables and Cui's MOESM8).
+
+### The headline join, re-measured on the pinned bytes
+
+| comparison | n | median abs diff | max abs diff | Pearson r |
+|---|---|---|---|---|
+| Rousset S1 `log2FC` vs Cui `fit75` | 54,326 | 0.0000 | 0.0066 | **1.0000** |
+| Rousset S1 `log2FC` vs Cui `fit18` | 54,326 | 0.4151 | 6.7516 | 0.8018 |
+
+Set sizes: 59,246 Rousset S1 spacers with a value, 78,137 Cui spacers numeric in both
+columns, 54,326 shared, 4,920 Rousset-only, 23,811 Cui-only. Identical to the numbers
+#760 was opened on, which is the check that the issue's measurement reproduces.

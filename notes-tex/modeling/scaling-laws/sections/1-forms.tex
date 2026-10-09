@@ -1,0 +1,121 @@
+%% notes-tex/modeling/scaling-laws/sections/1-forms.tex
+
+\section{The two forms\secstatus{todo}}
+\label{sec:forms}
+
+A \term{scaling law} is a fitted relation between a model's held-out loss and one
+or more of the three quantities that a training run spends: the number of trainable
+parameters $N$, the amount of training data $D$, and the training compute $C$. The
+claim behind the name is that, over the range a family of models was trained on,
+the loss falls as a power of each quantity, so that a line fit on log-log axes to
+the runs one can afford predicts the loss of a run one cannot. The literature
+carries two functional forms, and the difference between them is a floor.
+
+\notesec{Kaplan: one axis at a time}
+Kaplan et al.\ (arXiv:2001.08361)\external{arXiv:2001.08361, not in the mirror}
+fit each axis separately, with the other axes made large enough not to limit:
+\begin{equation}
+  L(N) = \left(\frac{N_c}{N}\right)^{\alpha_N}, \qquad
+  L(D) = \left(\frac{D_c}{D}\right)^{\alpha_D}.
+  \label{eq:kaplan}
+\end{equation}
+Here $L$ is the \term{test loss}, the average loss on a fixed held-out evaluation
+set, cross-entropy per token for a language model. $N_c$ and $D_c$ are fitted
+constants in units of parameters and data; they set where each curve sits and have
+no meaning of their own. $\alpha_N$ and $\alpha_D$ are the \term{scaling exponents},
+the slopes on log-log axes, and the larger one names the axis along which a decade
+of spending buys more. For language models Kaplan reports $\alpha_N \approx 0.076$
+and $\alpha_D \approx 0.095$. Compute enters through the transformer rule
+\begin{equation}
+  C \approx 6 N D \ \text{FLOPs},
+  \label{eq:sixnd}
+\end{equation}
+about two floating-point operations per parameter per training token for the
+forward pass and four for the backward pass. $N$ in that rule and in
+Equation~\ref{eq:kaplan} counts \emph{non-embedding} parameters; including the
+embedding matrix bends the curve at small $N$, because the embedding scales with the
+vocabulary rather than with the capacity the loss responds to.
+
+\notesec{Chinchilla: a joint form with a floor}
+Hoffmann et al.\ (arXiv:2203.15556)\external{arXiv:2203.15556, not in the mirror}
+fit both axes at once and let the loss bottom out:
+\begin{equation}
+  L(N, D) = E + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}}.
+  \label{eq:chinchilla}
+\end{equation}
+$E$ is the \term{irreducible loss}, the value approached with infinite parameters
+and infinite data; it comes from noise or inherent unpredictability in the data,
+the entropy of text for a language model. $A$ and $B$ are the coefficients of the
+model-size and data terms, and $\alpha$, $\beta$ are the exponents of the joint fit.
+Their Approach~3 fit gives $E = 1.69$, $A = 406.4$, $B = 410.7$, $\alpha = 0.34$,
+$\beta = 0.28$ on their training runs. With a floor present, a pure power law is
+wrong at the large end: on log-log axes $L$ bends toward $E$ while $L - E$ stays
+straight, which is the diagnostic panel~c of Figure~\ref{fig:forms} draws.
+
+\notesec{Compute-optimal allocation}
+Minimizing Equation~\ref{eq:chinchilla} subject to the budget $C = 6ND$ gives the
+size and data a fixed budget should buy. Writing $D = C/(6N)$ and setting the
+derivative in $N$ to zero,
+\begin{equation}
+  N^*(C) = G \left(\frac{C}{6}\right)^{a}, \qquad
+  D^*(C) = \frac{C}{6 N^*(C)}, \qquad
+  G = \left(\frac{\alpha A}{\beta B}\right)^{\frac{1}{\alpha + \beta}}, \qquad
+  a = \frac{\beta}{\alpha + \beta}, \quad b = \frac{\alpha}{\alpha + \beta},
+  \label{eq:optimum}
+\end{equation}
+so $N^* \propto C^{a}$ and $D^* \propto C^{b}$ with $a + b = 1$. The Hoffmann
+constants give $a = 0.452$ and $b = 0.548$, parameters and data growing at nearly
+the same rate; Kaplan's earlier conclusion that model size should grow much faster
+than data came from learning-rate schedules not matched to each run's length, which
+Hoffmann corrected. The \term{compute-optimal frontier} is the curve
+$(N^*(C), D^*(C))$ in the $(N, D)$ plane, and an \term{IsoFLOP curve} is the loss
+along one budget line $6ND = C$, a U in $N$ whose minimum sits on the frontier.
+\src{experiments/041-scaling-laws/scripts/scaling\_law\_forms.py, ChinchillaFit.a / .b / .G}
+
+\notesec{The same runs, a different fit}
+Besiroglu et al.\ (arXiv:2404.10102)\external{arXiv:2404.10102, not in the
+mirror} refit the Approach~3 data and got $E = 1.82$, $A = 482$, $B = 2085$,
+$\alpha = 0.35$, $\beta = 0.37$, which moves the allocation to $a = 0.513$ and
+$b = 0.487$. The same runs support two frontiers that differ visibly over the
+budgets that matter (panel~h), which is the standing argument for reporting an
+interval on every exponent rather than a point.
+
+\input{tables/t1-constants}
+
+\notesec{Symbols}
+Three names in the fitting code of Section~\ref{sec:ablation} clash with the
+symbols above and are listed here so the clash is visible. Table~\ref{tab:symbols}
+is hand-authored.
+
+%% SOURCE: hand-authored; the symbols of eqs. 1-4 and of the estimator in
+%% experiments/041-scaling-laws/scripts/scaling_law_forms.py (fit_floored).
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Every symbol in Equations~\ref{eq:kaplan} to \ref{eq:optimum} and in the
+estimator, with the three names that collide.}
+\label{tab:symbols}
+\begin{tabular}{lp{0.78\textwidth}}
+\toprule
+symbol & meaning \\
+\midrule
+$L$ & test loss: average loss on a fixed, separate held-out set \\
+$N$ & trainable parameters; Kaplan counts non-embedding parameters only \\
+$D$ & training data the optimizer consumed, in the unit the loss averages over (tokens, or records here) \\
+$C$ & training compute in floating-point operations \\
+$6$ & FLOPs per parameter per training example for a transformer, forward plus backward \\
+$N_c$, $D_c$ & Kaplan's fitted scale constants, units of parameters and of data \\
+$\alpha_N$, $\alpha_D$ & Kaplan's single-axis exponents \\
+$E$ & irreducible loss, the floor \\
+$A$, $B$ & coefficients of the finite-size and finite-data terms \\
+$\alpha$, $\beta$ & exponents of the joint fit \\
+$N^*$, $D^*$ & compute-optimal size and data for a budget $C$ \\
+$a$, $b$ & allocation exponents, $N^* \propto C^a$, $D^* \propto C^b$, $a + b = 1$ \\
+$G$ & prefactor of the optimum, Equation~\ref{eq:optimum} \\
+\addlinespace
+\texttt{log\_a}, \texttt{log\_e} & in the estimator: $\log A$ and $\log E$, fit in log space so both stay positive; not the allocation exponents $a$, $b$ \\
+\texttt{alpha} & in the estimator: the joint-fit $\alpha$ \\
+\texttt{r} & the residual, predicted log-loss minus observed log-loss \\
+\texttt{starts} & the grid of initial guesses the optimizer is run from, because the floored fit has several local minima \\
+\bottomrule
+\end{tabular}
+\end{table}

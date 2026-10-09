@@ -1,0 +1,86 @@
+%% notes-tex/modeling/scaling-laws/sections/2-figure.tex
+
+\section{Reading the figure\secstatus{todo}}
+\label{sec:figure}
+
+Figure~\ref{fig:forms} draws both forms at the published constants of
+Table~\ref{tab:constants}. Every panel is the function, not a measurement; the one
+panel with points, panel~i, draws runs from a known curve to show the fitting
+recipe on data whose answer is known. The rows go from one axis at a time, to the
+joint surface, to what the surface implies for spending.
+
+\tcfig{figures/scaling_law_forms.pdf}{%
+The two scaling-law forms and what follows from them.
+\textbf{a, b}, Kaplan's single-axis laws, Equation~\ref{eq:kaplan}, with the
+published exponent and one smaller and one larger. On log-log axes the exponent
+is the slope, and every curve passes through $L = 1$ at $N = N_c$ or $D = D_c$.
+\textbf{c}, the irreducible floor: $E + AN^{-\alpha}$ at the Hoffmann constants
+bends toward $E$ (dotted) while $L - E$ stays a straight line.
+\textbf{d}, the joint form, Equation~\ref{eq:chinchilla}, as a surface over
+$\log_{10} N$ and $\log_{10} D$; the amber diagonals are lines of constant compute
+$6ND = C$ and the brick line is the compute-optimal frontier, where each diagonal
+touches its lowest contour.
+\textbf{e}, cuts of the surface at fixed $D$: more parameters stop paying once the
+curve reaches the plateau $E + BD^{-\beta}$ (dotted, per curve).
+\textbf{f}, cuts at fixed $N$: more data stops paying at $E + AN^{-\alpha}$.
+\textbf{g}, IsoFLOP curves, the loss along one diagonal of d, drawn against $N$
+with $D = C/(6N)$; each U has a minimum (marked) at $N^*(C)$, and the minima lie
+on the frontier (dashed).
+\textbf{h}, the allocation, Equation~\ref{eq:optimum}: $N^*$ and $D^*$ against
+$C$ on log-log axes, under the Hoffmann fit (solid) and the Besiroglu refit of the
+same runs (dashed); the slopes are $a$ and $b$.
+\textbf{i}, a synthetic fitting exercise. Fifteen runs, three seeds at each of five
+sizes from $10^6$ to $10^{8.67}$, are drawn from $E + AN^{-\alpha}$ at the Hoffmann
+constants with 2\% multiplicative noise, and two sizes above are held out. A pure
+power law (lilac) and a floored power law (wheat) are fit on the fifteen and
+extrapolated, with 5 to 95\% bootstrap bands over runs. The generating curve is
+dashed.
+}{fig:forms}
+\src{experiments/041-scaling-laws/scripts/scaling\_law\_forms.py}
+
+\notesec{What to look for in each row}
+In the top row the exponent is everything: panel~a shows that a change of
+$\alpha_N$ from 0.076 to 0.15 moves the loss predicted at $N = 10^{13}$ by less
+than it moves the loss at $10^5$, since every curve is pinned at $N_c$, but an
+exponent fit at small $N$ and used at large $N$ moves the forecast by the full
+difference in slope times the decades extrapolated. Panel~c is the diagnostic to
+run before trusting any straight-line fit: if the largest runs sit below the line,
+the floor has been reached or something else has become the bottleneck, and the
+curve to fit is $L - E$.
+
+In the middle row, every cut plateaus, and the height of the plateau is set by the
+axis held fixed. Panel~e is the picture of a data-limited project: at
+$D = 10^8$ examples the Hoffmann surface flattens at $L = 4.1$ no matter how many
+parameters are added, and reaching $L = 3$ needs ten times the data before it
+needs a larger model. Panel~f is the mirror image. The dotted plateau lines are
+$E + BD^{-\beta}$ and $E + AN^{-\alpha}$, and the gap between a plateau and $E$ is
+what the other axis can still buy.
+
+In the bottom row the question is spending. The IsoFLOP minima in panel~g sit at
+$N^* = 2.3\times10^8$, $6.4\times10^8$, $1.8\times10^9$ and $5.2\times10^9$
+parameters for budgets of $10^{19}$ to $10^{22}$ FLOPs, which is 0.45 decades of
+size per decade of compute, the slope $a$ of panel~h. Panel~h also shows the cost
+of a fitting choice: the same runs give $a = 0.45$ under one fit and $0.51$ under
+another, and at $10^{24}$ FLOPs those two lines are a factor of about two apart
+in $N^*$.
+\src{experiments/041-scaling-laws/results/scaling\_law\_forms\_summary.json, isoflop\_optima\_N, fits}
+
+Panel~i is the exercise that decides whether a curve is worth extrapolating. The
+pure power law fits the fifteen small runs well enough to pass by eye and gives
+$\alpha = 0.149$ with a 90\% bootstrap interval of 0.134 to 0.164; it predicts
+losses of 1.60 and 1.27 at the two held-out sizes, where the observed means are
+1.99 and 1.85, and its band at $10^{10}$ excludes every held-out point. The floored
+fit recovers $\alpha = 0.348$ against a generating value of 0.34, with an interval
+of 0.316 to 0.376, and $E = 1.71$ against 1.69, and predicts 1.96 and 1.86 at the
+held-out sizes. Nothing in the fitted range distinguishes the two models; the
+held-out runs do. That is the reason the largest runs are held out rather than
+fit.
+\src{experiments/041-scaling-laws/results/scaling\_law\_forms\_summary.json, synthetic\_fits}
+
+\notesec{The animated versions}
+The Dendron note
+\file{notes/experiments.041-scaling-laws.scripts.scaling_law_forms.md} embeds four
+GIFs the same script writes, one sweep each: $D$ rising under the $N$-curve of
+panel~e, $N$ rising under the $D$-curve of panel~f, $C$ rising under the IsoFLOP
+curve of panel~g with the minimum tracing the frontier, and $\alpha$ moving while
+the fitted range is pinned, so that only the forecast moves.

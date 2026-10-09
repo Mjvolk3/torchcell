@@ -1,0 +1,96 @@
+%% notes-tex/modeling/scaling-laws/sections/3-counting.tex
+
+\section{Counting $N$, $D$ and $C$ when the examples are strains\secstatus{todo}}
+\label{sec:counting}
+
+The forms were fit on language models, where the units are settled: a parameter
+is a weight, a datum is a token, and compute is $6ND$. For a model whose examples
+are genotype, environment and phenotype records, each unit has to be chosen, and a
+curve is only as defensible as the choice. The rule that resolves most of the
+cases is that $D$ counts in the unit the loss averages over, and that the unit is
+held fixed across every run in the sweep.
+
+\notesec{$D$ is instances consumed, not dimensions}
+$D$ is the number of training examples the optimizer has processed when the loss is
+measured: the number of records in the training subset times the number of
+epochs, in the same unit the loss is averaged over. For a language model that unit
+is the token because the cross-entropy is per token; for a model trained on one
+loss per record it is the record. The dimension of an example, meaning the number
+of features in a record, the number of genes in the genome the model attends over,
+or the length of a sequence embedding, is not $D$. Dimension changes what a record
+is and how much compute each record costs, and it changes $N$ through the width of
+the input layer, but a sweep over dimension is a sweep over architecture, not over
+data, and belongs on a different axis of the ablation. Two consequences follow.
+
+\begin{itemize}
+\item A record with several supervised labels, a genotype measured on several
+phenotypes, counts as one record under a summed loss and as one example per label
+under a per-label loss. Either is a valid unit; what breaks the curve is changing
+the unit between runs, or reporting a loss averaged over one unit against a $D$
+counted in another.
+\item A gene-token model that reads a genome as a set of tokens does not consume
+$D \times 6{,}000$ tokens in the Kaplan sense: the loss is still one number per
+record, and the tokens inside a record are the dimension, not the data. The
+per-record compute does scale with that token count, which is why $C$ is measured
+rather than computed for such a model (below).
+\end{itemize}
+
+\notesec{Repeated epochs count for less}
+Language models are trained for about one epoch, so $D$ equals the corpus. A
+genotype-to-phenotype model trains for many epochs over a fixed corpus, and a
+repeated record is not worth a fresh one. Muennighoff et al.\
+(arXiv:2305.16264)\external{arXiv:2305.16264, not in the mirror} fit the
+Chinchilla form with an \term{effective data} term in which repeated tokens
+decay in value: up to about four epochs the loss is close to what the same number
+of fresh tokens would give, and beyond that the return on repetition falls off
+quickly. The usable statement for a data-limited project is that $D$ in
+Equation~\ref{eq:chinchilla} is the number of distinct records, and the epoch
+count is a training hyperparameter held fixed across the sweep, not a multiplier
+on $D$. A $D$-sweep is then a sweep over the size of the distinct training set,
+which is what asks the question the project needs answered: whether a new
+experiment or a bigger model will pay more.
+
+\notesec{Subsample by the unit that leaks}
+A $D$-sweep draws nested subsets of the training set, 1/64, 1/16, 1/4 and the
+whole, against one fixed evaluation set. If test genotypes share genes or
+perturbations with training genotypes, adding data partly measures memorization of
+those shared parts, and the apparent exponent is inflated. The subsets are
+therefore drawn by the unit that leaks: by gene, or by the query pair a screen was
+built around, so that a smaller subset removes whole genes or whole screens rather
+than thinning records uniformly. The 025 additive-baselines document showed the
+size of this effect on the trigenic build, where the additive ridge falls from
+0.400 test Pearson under a random-over-records split to 0.185 under a
+query-pair-disjoint one; a $D$-sweep drawn by record on that build would scale
+the first number, not the second.
+
+\notesec{$N$: count what the loss responds to}
+$N$ is the number of trainable parameters that the loss responds to as capacity.
+Kaplan's exclusion of the embedding matrix has a direct analog: a gene-token model
+carries an embedding table with one row per gene, whose size is set by the genome
+rather than by the architecture, and that table should be reported separately
+from the rest, with the curve fit on the rest. Sizes are then produced by scaling
+width and depth together in a fixed ratio, five to seven of them spaced evenly in
+$\log N$ over at least one and a half to two decades.
+
+\notesec{$C$: measure it}
+The $6ND$ rule is transformer-specific and per token. For a model whose per-record
+cost depends on how many gene tokens a record carries, on graph message passing,
+or on a sequence encoder run once per gene, $C$ is read from a profiler for one
+training step at each size and multiplied by the number of steps.
+\texttt{torch.utils.flop\_counter.FlopCounterMode} does this for a PyTorch model
+without instrumentation. The IsoFLOP construction of panel~g then uses the measured
+cost per record in place of $6N$.
+
+\notesec{$E$ has a physical reading}
+For a language model $E$ is the entropy of text and is not independently
+measurable. For a phenotype measured with replicates it is. Under a mean-squared
+loss the best possible predictor has expected error equal to the measurement-noise
+variance, so the replicate variance of the evaluation set is a lower bound on $E$
+in the loss's own units, and it is available before any model is trained. The
+released standard-deviation columns of the Costanzo and Kuzmin screens, whose
+replicate structure is recorded in
+\file{notes/torchcell.datasets.scerevisiae.costanzo2016.noise-computation.md},
+give the per-record $\sigma$ from which that bound is computed. A fitted $E$ that
+falls below it says the fit is wrong, and one far above it says the model family
+is leaving something on the table that neither more data nor more parameters will
+recover. Which of those holds on the trigenic build has not been measured.

@@ -458,7 +458,7 @@ def mapped_datasets() -> dict[str, type]:
 
 def dataset_root(dataset_class: type) -> str:
     """The loader's default ``root``, relative to ``DATA_ROOT``."""
-    params = inspect.signature(dataset_class.__init__).parameters
+    params = inspect.signature(dataset_class.__init__).parameters  # type: ignore[misc]
     return str(params["root"].default)
 
 
@@ -622,6 +622,76 @@ def sweep_one(name: str, data_root: str) -> DatasetSweep:
     return row
 
 
+def _short_report(paths: list[str], data_root: str) -> str:
+    """The written reports as ``<store>/preprocess/<file>``, relative to ``DATA_ROOT``."""
+    if not paths:
+        return "-"
+    return ", ".join(f"`{osp.relpath(p, data_root)}`" for p in paths)
+
+
+def render_tables(results: SweepResults) -> str:
+    """The sweep as the three markdown tables the dendron note carries.
+
+    The note quotes this output rather than restating it by hand, so every row,
+    count and report path in the note is the one this sweep measured.
+    """
+    lines: list[str] = []
+    totals = results.totals()
+    verified = [r for r in results.datasets.values() if r.route != "none"]
+    lines.append(f"HEAD `{results.git_head[:10]}`, `DATA_ROOT={results.data_root}`")
+    lines.append("")
+    lines.append(
+        f"{len(results.datasets)} mapped datasets: "
+        + ", ".join(f"{k} {totals[k]}" for k in sorted(totals))
+    )
+    lines.append("")
+    lines.append("| Store | Records | Route | Result | Report |")
+    lines.append("|---|---:|---|---|---|")
+    for row in verified:
+        failed = (
+            "PASS"
+            if row.verdict == "PASS"
+            else (
+                f"FAIL: {', '.join(f'{f.level} {f.name}' for f in row.failed_rules)}"
+                if row.verdict == "FAIL"
+                else f"ERROR: {row.error}"
+            )
+        )
+        lines.append(
+            f"| `{row.root.rsplit('/', 1)[-1]}` | {row.records} | "
+            f"`{row.route_detail}` | {failed} ({row.n_rules} rules) | "
+            f"{_short_report(row.reports, results.data_root)} |"
+        )
+    lines.append("")
+    lines.append("### Datasets with no verifier")
+    lines.append("")
+    lines.append("| Store | Dataset class | Records |")
+    lines.append("|---|---|---:|")
+    for row in results.datasets.values():
+        if row.route == "none":
+            lines.append(
+                f"| `{row.root.rsplit('/', 1)[-1]}` | `{row.dataset_class}` | "
+                f"{row.records} |"
+            )
+    lines.append("")
+    lines.append("### Failing rules")
+    lines.append("")
+    failing = [r for r in verified if r.failed_rules]
+    if not failing:
+        lines.append("No rule failed.")
+    else:
+        lines.append("| Store | Level | Rule | Message |")
+        lines.append("|---|---|---|---|")
+        for row in failing:
+            for rule in row.failed_rules:
+                message = rule.message.replace("|", "\\|").replace("\n", " ")
+                lines.append(
+                    f"| `{row.root.rsplit('/', 1)[-1]}` | {rule.level} | "
+                    f"`{rule.name}` | {message} |"
+                )
+    return "\n".join(lines)
+
+
 def default_out() -> str:
     """The sweep's results file inside this experiment's ``results/`` directory."""
     here = osp.dirname(osp.abspath(__file__))
@@ -692,6 +762,17 @@ def main(argv: list[str] | None = None) -> int:
         "--list-routes", action="store_true", help="print the route table and exit"
     )
     parser.add_argument(
+        "--table",
+        action="store_true",
+        help="render the results file as the dendron note's markdown tables and exit",
+    )
+    parser.add_argument(
+        "--merge",
+        action="append",
+        default=[],
+        help="merge another results file's rows into --out and exit (repeatable)",
+    )
+    parser.add_argument(
         "--one",
         default=None,
         help="verify exactly this dataset IN THIS PROCESS and print its row as JSON "
@@ -709,6 +790,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     out = args.out or default_out()
+
+    if args.table:
+        print(render_tables(load_results(out, data_root)))
+        return 0
+
+    if args.merge:
+        merged = load_results(out, data_root)
+        for path in args.merge:
+            for name, row in load_results(path, data_root).datasets.items():
+                merged.datasets[name] = row
+        save_results(merged, out)
+        print(json.dumps(merged.totals(), indent=2))
+        return 0
+
     results = load_results(out, data_root)
     names = selected(args, data_root)
     print(f"sweeping {len(names)} datasets -> {out}")

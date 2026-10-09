@@ -873,6 +873,10 @@ NEW_CLASSES = {
         "promoter activity phenotype (chunked)",
         s.PromoterActivityPhenotype,
     ),
+    "bacterial morphology phenotype": (
+        "bacterial morphology phenotype (chunked)",
+        s.BacterialMorphologyPhenotype,
+    ),
 }
 
 

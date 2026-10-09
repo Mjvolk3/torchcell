@@ -122,6 +122,8 @@ _ENV_JSON: dict[str, Any] = {
     "aerobicity": "aerobic",
     "duration_hours": None,
     "duration_generations": None,
+    # #753: a chemostat's dilution rate, None for this batch culture
+    "dilution_rate_per_hour": None,
 }
 
 

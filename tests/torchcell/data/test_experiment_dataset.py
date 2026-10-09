@@ -441,7 +441,11 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     unchanged: the three fixture records hash to the literal ids the pre-fix code
     produced (records 0 and 1 share ``REF_A``), derived before the change. 2026.10.02
     (issue #602): the ids were re-derived once ``FitnessPhenotype`` gained
-    ``screen_id``, which every reference dump now carries as ``null``.
+    ``screen_id``, which every reference dump now carries as ``null``. 2026.10.09
+    (issue #753): re-derived again once ``Environment`` gained
+    ``dilution_rate_per_hour`` and ``ProvenanceGap`` gained ``keys``, both of which a
+    reference dump now carries. A content address is supposed to move when the content's
+    shape does, which is the BREAKING verdict ``scripts/schema_impact_check.py`` reports.
     """
     as_model = serialize_for_hashing(REF_A)
     as_dict = serialize_for_hashing(REF_A.model_dump())
@@ -449,9 +453,9 @@ def test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump() -> N
     assert as_model == as_dict
     assert compute_sha256_hash(as_model) == compute_sha256_hash(as_dict)
     assert process_reference_batch([_dumped(i) for i in range(3)]) == [
-        "4369f092c5679d133fd8eec58878f5fe6fc333edfad33a87f7f5fdd3b67986ea",
-        "4369f092c5679d133fd8eec58878f5fe6fc333edfad33a87f7f5fdd3b67986ea",
-        "19e8ef0706efb5ef0e9f488d6171d069ec83d73b89720f86987b4f688107519f",
+        "59bbf8bc9d6e83acd45578bc3a2bd1a584b2be11386a1547b8062296a9f566d7",
+        "59bbf8bc9d6e83acd45578bc3a2bd1a584b2be11386a1547b8062296a9f566d7",
+        "211b373fad48862c5ad09323ff5fcf8cf03bff837a825bde856d15ce253b2045",
     ]
 
 

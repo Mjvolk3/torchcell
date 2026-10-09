@@ -2813,7 +2813,7 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
         ],
     )
     gap = phenotype.provenance_gaps[0]
-    assert gap.keys == ("feature_0042",)
+    assert gap.keys == ["feature_0042"]
     # the honesty invariant gets STRONGER, not weaker: the map may not carry the key
     with _refuses(
         "field 'target_metabolite_ids' declares keys ['glucose'] missing but carries "

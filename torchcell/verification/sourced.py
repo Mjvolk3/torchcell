@@ -179,15 +179,17 @@ class ProvenanceGap(BaseModel):
         default=None, description="optional human reasoning for the gap."
     )
     # --- begin #753: per-key gaps beside a partially populated map --------------- #
-    keys: tuple[str, ...] = Field(
-        default=(),
+    keys: list[str] = Field(
+        default_factory=list,
         description="for a DICT-valued field that is sourced for some keys and "
         "unsourced for others: the keys this absence covers. Empty (the default) "
         "means the WHOLE field is absent, which is the original contract and "
         "requires the field to be None. Non-empty narrows the gap to these keys, "
         "which must then be absent from the mapping (Rapp 2026's 244 merged "
         "isobaric features, each with 2 to 11 candidate identities and no sourced "
-        "pick, beside 1,077 sourced ones).",
+        "pick, beside 1,077 sourced ones). A LIST, not a tuple, so a gap dumps to the "
+        "same value a JSON round trip yields and a live model compares equal to the "
+        "record an LMDB returns.",
     )
     # --- end #753 ---------------------------------------------------------------- #
 

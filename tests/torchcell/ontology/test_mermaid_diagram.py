@@ -459,7 +459,9 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     sources times the two ``phenotype member of`` targets). Its follow-up added
     ``phage perturbation`` under a SIXTH Biolink class, ``biotic exposure`` (Biolink
     defines ``environmental exposure`` as abiotic, so a virion does not belong there),
-    and one data line (a second ``environment perturbation member of`` source).
+    and one data line (a second ``environment perturbation member of`` source). #770
+    added ``protein fold change phenotype`` under ``phenotypic feature`` and two data
+    lines, one per ``phenotype member of`` target.
     Line count 143 = 1 header + (2 + 6) + (2 + 4) + (2 + 28) + (2 + 28 is_a lines)
     + (2 + 49) + 9 legend + 5 styling + 3 class lines. ``Genotype`` is declared on
     lines 5 and 14 (Biolink class and auto-mapped node, the duplicate Finding), and
@@ -481,8 +483,12 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # joined (issue #731): one node, and one more source on `perturbation member of`.
     # 35 and 54 since `bacterial morphology phenotype` joined (issue #774): one node,
     # and one more source on `phenotype member of`, which has two targets.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (35, 13, 54)
-    assert len(lines) == 154
+    # 36 and 56 since `protein fold change phenotype` joined (issue #770): the same
+    # shape again, one node and one more source on that two-target edge.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (36, 13, 56)
+    # 158 = 154 + 4: one node is a declaration, an ``is_a`` line and one data line per
+    # ``phenotype member of`` target, of which there are two.
+    assert len(lines) == 158
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

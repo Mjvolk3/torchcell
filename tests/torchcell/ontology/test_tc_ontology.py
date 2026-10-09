@@ -13,7 +13,7 @@ because importing biocypher writes a log directory into the working directory.
 2026.09.30 (Phase 15): the committed ``biocypher/config/torchcell_schema_config.yaml``
 is read as the real table: 27 nodes, of which 23 sit under five Biolink parents
 (environmental exposure 4, genotype 2, information content entity 3, nucleic acid
-entity 1, phenotypic feature 13) and 4 are auto-mapped by name (dataset, genome,
+entity 1, phenotypic feature 14) and 4 are auto-mapped by name (dataset, genome,
 genotype, publication); 13 edges under five relations (coexists with 1, genetically
 associated with 1, mentions 1, part of 6, participates in 4); 10 concepts in all. The
 compact headers count the schema (27 and 13 here, 3 and 2 for the small schema), and a
@@ -147,7 +147,8 @@ def test_real_schema_compact_table(
     parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
-    the product titer, protein turnover and flux phenotypes join phenotypic feature.
+    the product titer, protein turnover and flux phenotypes join phenotypic feature,
+    and #770's protein fold change phenotype joins it too.
     ``phage perturbation`` adds the SIXTH parent, ``biotic exposure``: Biolink defines
     ``environmental exposure`` as abiotic, and the two are siblings under
     ``exposure event``, so a phage node carries neither the other's label.
@@ -174,7 +175,7 @@ def test_real_schema_compact_table(
         "phenotype, fitness phenotype, flux phenotype, gene essentiality phenotype, "
         "gene interaction phenotype, metabolite phenotype, microarray expression "
         "phenotype, product titer phenotype, promoter activity phenotype, protein "
-        "abundance phenotype, protein "
+        "abundance phenotype, protein fold change phenotype, protein "
         "turnover phenotype, pseudobulk expression phenotype, rnaseq expression "
         "phenotype, synthetic lethality phenotype, synthetic rescue phenotype, visual "
         "score phenotype",
@@ -188,7 +189,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    31/35 explicit + 4 auto-mapped = 35/35 total" in lines
+    assert "Nodes:    32/36 explicit + 4 auto-mapped = 36/36 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -199,19 +200,19 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 35 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 36 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
-    variant perturbation`` and ``bacterial morphology phenotype``) and 13 edges, the
-    small
-    test schema 3 nodes and 2 edges (its stray string entry is neither).
+    variant perturbation``, ``bacterial morphology phenotype`` and, for #770,
+    ``protein fold change phenotype``) and 13 edges, the small test schema 3 nodes and
+    2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
     from torchcell.ontology.tc_ontology import print_schema_mappings
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 35, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 36, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

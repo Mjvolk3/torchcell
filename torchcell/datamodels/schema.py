@@ -3363,6 +3363,11 @@ class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
     AXIS 3 and SO:0001218 ``transgenic_insertion`` for the same reason the marked-allele
     leaf carries them: the gene is present and its own sequence is what changed. The
     CONSEQUENCE (how much product is left) is a phenotype, never a field here (M1).
+
+    ``degron`` is the one required field, because it is the one thing a release that
+    states a degron at all always states. Everything else is stated when the source
+    states it: two columns of one locus differing only in their degron ('imp-DAS' and
+    'imp-DAS+4') are two strains on the strength of that field alone.
     """
 
     description: str = (
@@ -3383,9 +3388,15 @@ class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
         description="the degron fused to the product, verbatim (e.g. 'DAS+4', "
         "'ssrA-DAS')"
     )
-    terminus: Literal["N", "C"] = Field(
-        description="which end of the product the degron is fused to; required, since "
-        "a degron's recognition depends on the end it sits at"
+    terminus: Literal["N", "C"] | None = Field(
+        default=None,
+        description="which end of the product the degron is fused to, when the SOURCE "
+        "states it. Optional for the same reason the marked-allele leaf's is: Shiver "
+        "2016 releases its degron columns as a label suffix ('-DAS', '-DAS+4') and "
+        "describes none of those strains' construction, and its deferral target is not "
+        "in the literature mirror. A required field with no source would have to be "
+        "filled with a guess, which is the exact failure "
+        "``BacterialBackgroundAllele.functional`` was measured to have",
     )
     protease: str | None = Field(
         default=None,

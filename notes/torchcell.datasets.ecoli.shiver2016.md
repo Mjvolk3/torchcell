@@ -432,3 +432,188 @@ and a `--data` test running every enabled method over the dev store.
   rebuild as the other 20.
 
 The loader's three schema findings are issue #749 and are not addressed here.
+
+## 2026.10.09 - The allele columns are stored, the UV dose has a field, and the s_score question is settled (issue #749)
+
+Three findings of this loader, settled now that `BacterialMarkedAllelePerturbation`,
+`BacterialDegronPerturbation` and `PhysicalExposurePerturbation` exist in `schema.py`.
+
+### 1. 126 of the 134 non-deletion columns are stored
+
+The rule `label_is_not_a_gene_deletion` is gone, replaced by
+`label_is_a_point_or_indel_mutant`, which keeps only the 8 columns that need issue
+#731's leaf. The buckets, measured by applying each suffix of `ALLELE_SUFFIXES`
+separately to the 3,975 released header fields:
+
+| suffix | columns | labels | leaf | field stored |
+|---|---|---|---|---|
+| `-SPA` | 114 | 114 | `BacterialMarkedAllelePerturbation` | `tag="SPA"` |
+| `-kan` | 7 | 7 | `BacterialMarkedAllelePerturbation` | `cassette="kan"` |
+| `-DAS` / `-DAS+4` | 5 | 5 | `BacterialDegronPerturbation` | `degron="DAS"` / `"DAS+4"` |
+| `{...}` / `*` | 8 | 7 | none, still dropped | issue #731 |
+
+The 8 that stay dropped are `bamA{del(64)}`, `bamA{dup(218-219)}`, `fabZ{F101Y}`,
+`ftsA{R286W}`, `lpxC{G210S}`, `msbA{P18S}` and `yfiO*` (two columns), 439 non-blank
+cells. A substituted or indel allele is #731's leaf and inventing a second one here
+would file one kind of record under two classes.
+
+### Measured before and after, from the rebuilt dev store
+
+| quantity | before | after |
+|---|---|---|
+| released cells (3,975 x 57) | 226,575 | 226,575 |
+| kept columns | 3,720 | **3,846** (3,720 deletions + 126 alleles) |
+| distinct locus tags | 3,720 | 3,838 |
+| stored records | 204,033 | **210,998** |
+| `label_is_not_a_gene_deletion` | 134 columns, 7,638 records | rule removed |
+| `label_is_a_point_or_indel_mutant` | n/a | 8 columns, 456 records |
+| `label_is_not_in_the_bw25113_annotation` | 49 columns, 2,793 | 49 columns, 2,793 |
+| `label_is_a_fragment_of_a_merged_bw25113_locus` | 48 columns, 2,736 | 48 columns, 2,736 |
+| `label_is_ambiguous_in_bw25113` | 2 columns, 114 | 2 columns, 114 |
+| `label_has_two_columns_in_the_release` | 22 columns, 1,254 | 22 columns, 1,254 |
+| `cell_is_blank` | 8,007 cells | 8,224 cells |
+
+6,965 new records: 126 columns x 57 conditions = 7,182 cells, of which 6,965 are
+non-blank. The gene set rises only from 3,720 to 3,838, which is the point: an allele
+column is another STRAIN of a gene the deletion columns already name, not another gene.
+
+### Two mechanics the extension needed
+
+**A second resolution pass.** A suffixed label is not a symbol the BW25113 annotation
+carries, so the reconciliation leaves all 134 of them in `retired_kept`, which is how
+the old rule found them at all. The suffix is now stripped and the BASE symbol resolved
+instead. All 121 distinct base symbols resolve to exactly one locus (the loader raises
+if one does not); each label's base symbol and the tag it reached is written to
+`preprocess/identifier_reconciliation.json` under `allele_base_symbol_resolutions`, so
+the second pass is auditable rather than implicit. An allele column whose base symbol is
+itself a merged-locus fragment or ambiguous inherits that rule; measured on the release,
+none of the 121 is in either set, so that is the invariant rather than a correction.
+
+**The uniqueness key is the strain, not the locus.** The build used to raise if two kept
+columns claimed one locus tag. The arrays break that honestly: `lpxC`, `lpxC-SPA` and
+`lpxc-kan` are three strains of one gene, and `imp-DAS` and `imp-DAS+4` are two strains
+on `BW25113_0054` differing only in their degron. The post-condition now keys on the
+`(locus tag, allele kind, allele token)` triple. The same thing had to be added to the
+environment-response verifier's strain signature
+(`torchcell/verification/environment_response.py`), which previously keyed on
+`(systematic_gene_name, perturbation_type, perturbed_gene_name)` plus the CRISPR and
+#507 discriminators: the two degrons agree on all three, so `tag`, `terminus`, `degron`,
+`cassette` and `insertion_site` join the key. Adding a field can only split a group,
+never merge two, so every dataset that passes uniqueness today still passes.
+
+`perturbed_gene_name` is the BASE symbol, not the column label. `thrA-SPA` names a
+strain and the gene it perturbs is `thrA`; writing the label there put two common-name
+spellings on one locus tag, which the verifier's canonical-name rule flagged (measured:
+3 genes, 398 records, on the synthetic build). The released label survives verbatim on
+`identifier_mapping.source_identifier`.
+
+### What the allele records deliberately do NOT carry
+
+Every one of these is a mirrored-source question, not a modeling choice:
+
+- `terminus` is `None` on all 119 marked alleles and all 5 degrons. SPA is a C-terminal
+  tag in the paper that BUILT that collection (Butland 2008, which IS mirrored), but
+  Shiver defers its whole array to Nichols 2011 ("the same methodology as reported
+  previously [8]") and Nichols 2011 has no mirror entry (#691), so no mirrored sentence
+  places the fusion on THESE strains. This is also why
+  `BacterialDegronPerturbation.terminus` is optional rather than required.
+- `allele_effect="not_stated"`. The S1 Dataset legend says only "Unless otherwise
+  specified, the mutations are precise gene deletions", never that a tagged allele is
+  hypomorphic. That is exactly what the leaf's third vocabulary member exists for; a
+  bool would have had to be written `False`, which asserts the opposite.
+- `collection` is `None`. The deletion columns carry "KEIO deletion library" because the
+  Methods name it; the only thing this paper says about the rest of the array is that it
+  screened "the previously screened library [8,10]", which names no strain set.
+- `protease`, `adaptor` and `inducing_condition` are `None` on the degrons: this paper
+  names none of them.
+
+### 2. The UV dose is stored, as a time (#749 item 3)
+
+The three irradiated conditions release their dose in the label's square brackets, read
+verbatim from the pinned matrix
+(`pgen.1006124.s005.txt`, sha256
+`9edcf6f6f34b957661b23f2a5e7f6f14e25c387ab825e0b4c79a5f995f8de690`), rows 272, 275, 276
+of column 1:
+
+```
+M9min glucose+UV [0.2% (w/v); 12 sec] {4}
+UV+10C [12 sec] {4}
+UV [12 sec] {4}
+```
+
+The governing legend is the S1 Dataset caption, and it is the sentence that states the
+mismatch:
+
+> Conditions are labelled with the condition name, concentration in square brackets '[]',
+> and "batch" number in curly brackets.
+
+The brackets hold a concentration for 54 conditions and a time for these three, and
+`EnvironmentPhysicalPerturbation.magnitude` is a `Concentration`, so the 12 seconds used
+to survive only inside the `screen_id` string. It is now a
+`PhysicalExposurePerturbation` with `exposure_duration_seconds=12.0`: the dose in its
+own field in the unit its name states, the same move `PhagePerturbation` made for a
+multiplicity of infection rather than adding a `ConcentrationUnit` member that would
+make an exposure time look like a dose.
+
+**No irradiance or fluence is released anywhere in the mirror.** Swept `paper.md`, the
+`paper.pdf` text layer, `paper_middle.json`, `paper_content_list.json`, the extracted
+text of `si4.docx`, `si6.docx` and `si7.docx`, and the 20.5 MB raw matrix for `irradian`,
+`fluence`, `mJ/cm`, `J/m2`, `germicid`, `Stratalinker`, `crosslink`, `lamp`, `254 nm`
+and `ultraviolet`: zero hits in all of them. The word "UV" itself appears exactly once in
+`paper.md`, and it is the protease name `HslUV`. Both dose fields are therefore typed
+gaps whose `resolve_with` names Nichols 2011, not plain `not_reported_by_primary` with no
+target: the UV series is a Nichols condition re-run (batch 0 of the same release carries
+`UV [6sec]` through `UV [24sec]`), so the irradiance is deferred there rather than
+unreported by anyone.
+
+### 3. No `MeasurementType.s_score` member, and the reason is sourcing (#749 item 2)
+
+This is a correction to what the previous section of this note and the loader docstring
+asserted. **The claim "the fitness-score IS the Collins/Nichols S-score" was an
+unlabeled inference, and it is now labeled as a hypothesis.**
+
+Measured on two independent renderings of the same paper, `paper.md` (sha256
+`4a1bec97d10f6ef1c02c99329f7adce0d79623819fcf421c098058a7c82ced72`) and the publisher
+PDF's text layer: the strings `S score`, `S-score`, `Z score`, `z-score` and `sscore`
+appear **nowhere**, case-insensitively. The paper says "fitness-score", 20 times. S1
+Table's own column headers are `10˚C fitness-score` and `16˚C score`. The released
+matrix is a condition column followed by 3,975 bare gene symbols, with no statistic
+named anywhere in its 20.5 MB. The authors' own machine name for the pipeline is
+`fitness_score` (`https://github.com/AnthonyShiverMicrobes/fitness_score.git`).
+
+What IS sourced verbatim, from Results, "The chemical-genomic screen substantially
+expands known connections in E. coli":
+
+> These fitness-scores represent the statistical significance of a change in colony size
+> for a particular condition, with negative and positive fitness-scores representing
+> sensitivity and resistance, respectively.
+
+and, in the same paragraph:
+
+> We assigned fitness-scores to each mutant, using an in-house software package that
+> built upon previous analyses [8,18] by implementing additional filtering and
+> normalization steps to improve data quality (Methods).
+
+and from Methods, "Data collection and processing":
+
+> The chemical genomics screen was conducted using the same methodology as reported
+> previously [8] with few modifications.
+
+and, in the same paragraph:
+
+> Steps added to the original analysis pipeline [18] include ... variance normalization
+> of the data (to improve reproducibility of measurements between plates).
+
+[8] is Nichols 2011 and [18] is Collins 2006, and **neither is in the literature
+mirror**, so the S-score formula cannot be read from our own documentation. The decision
+that follows: no `s_score` member is added, because a `MeasurementType` member named
+after a statistic whose definition we cannot read would be a label with no provenance
+behind it. `z_score` stays, on the evidence we do hold: the Methods name the
+standardizing step outright, and `z_score`'s own definition is a "standardized
+fitness/growth deviation". `MeasurementType`'s docstring now records that it covers this
+family and why there is no `s_score`.
+
+**Hypothesis (untested, and untestable from our mirror): the released number is the
+Collins S-score, a modified t-statistic.** It follows from the deferral chain Shiver ->
+[8,18] -> Collins 2006, not from any sentence we hold. Mirroring Nichols 2011 and
+Collins 2006 (#691) is what would settle it.

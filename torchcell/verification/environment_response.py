@@ -172,6 +172,17 @@ def _genotype_signature(
             )
         if p.get("collection") is not None:
             ident = ident + (p["collection"],)
+        # The strain discriminators of the round-2 bacterial allele leaves (#749, #792).
+        # One locus can carry a deletion, an affinity tag, a marked insertion and two
+        # DIFFERENT degrons, and the first three already separate on perturbation_type;
+        # the two degrons do not. 'imp-DAS' and 'imp-DAS+4' agree on locus, kind and
+        # gene name and differ only in the degron, so the allele fields join the key.
+        # Adding a field can only SPLIT a group, never merge two, so every dataset that
+        # passes uniqueness today still passes. Absent on every other leaf except
+        # ``cassette``, which is constant per strain where it is present.
+        for field in ("tag", "terminus", "degron", "cassette", "insertion_site"):
+            if p.get(field) is not None:
+                ident = ident + (str(p[field]),)
         constructed = p.get("constructed_orf")
         if isinstance(constructed, dict):
             ident = ident + (constructed.get("source_systematic_name"),)

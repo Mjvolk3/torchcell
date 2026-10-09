@@ -17,21 +17,25 @@ cells, and those 57 columns of work are what this loader serves.
 RECORD = one (deletion strain x screen condition)
 ``BacterialEnvironmentResponseExperiment``:
 
-- GENOTYPE: one ``BacterialDeletionPerturbation`` against BW25113
-  (``ecoli_k12_bw25113_locus_tag``), because "The KEIO deletion library is derived from
-  BW25113". The release labels its columns with GENE NAMES ("Gene names are used to
-  label the mutation"), so each label is resolved to a BW25113 GenBank locus tag through
+- GENOTYPE: one perturbation against BW25113 (``ecoli_k12_bw25113_locus_tag``), because
+  "The KEIO deletion library is derived from BW25113". The release labels its columns
+  with GENE NAMES ("Gene names are used to label the mutation"), so each label is
+  resolved to a BW25113 GenBank locus tag through
   ``bacteria_common.reconcile_locus_tags`` and the record carries
   ``identifier_mapping=DerivedIdentifierMapping(route="gene_symbol")``. No ECK crosswalk
-  is needed or used: the release names symbols, not another strain's locus tags.
+  is needed or used: the release names symbols, not another strain's locus tags. WHICH
+  leaf follows the label's own suffix, since "Unless otherwise specified, the mutations
+  are precise gene deletions": a bare symbol is a ``BacterialDeletionPerturbation``, a
+  ``-SPA`` or ``-kan`` column a ``BacterialMarkedAllelePerturbation``, a ``-DAS`` or
+  ``-DAS+4`` column a ``BacterialDegronPerturbation``.
 - ENVIRONMENT: the screen plate. ``SHIVER2016_LB_LENNOX_AGAR`` by default ("Chemical
   sensitivity screens used LB Lennox agar plates ... unless otherwise specified"), or
   ``SHIVER2016_M9_MINIMAL_AGAR`` for the nine conditions the release prefixes "M9min".
   Each dosed chemical is a ``SmallMoleculePerturbation`` at a sourced ``Concentration``;
   the M9 plates' carbon source is an ``EnvironmentPhysicalPerturbation``
-  (``factor=carbon_source``); UV is one (``factor=radiation``); temperature lives on
-  ``Environment.temperature`` (M2), which is how 10 C, 25 C and the 4 C survival
-  condition are encoded.
+  (``factor=carbon_source``); UV is a ``PhysicalExposurePerturbation`` dosed by its
+  released exposure time; temperature lives on ``Environment.temperature`` (M2), which
+  is how 10 C, 25 C and the 4 C survival condition are encoded.
 - PHENOTYPE: ``EnvironmentResponsePhenotype``, ``measurement_type=z_score``,
   ``assay_type=colony_size_array``, ``screen_id`` = the verbatim released condition
   label. The reference carries 0.0: a fitness-score of 0 is no change in colony size.
@@ -44,18 +48,32 @@ representing sensitivity and resistance, respectively." ``FitnessPhenotype`` is 
 strictly positive ko/wt ratio that CLAMPS non-positive values and whose verifier wants a
 1.0 reference, so it would destroy more than half of this dataset's information.
 
-WHY ``measurement_type=z_score``. The fitness-score is the Collins/Nichols S-score: the
-Methods defer the pipeline ("The chemical genomics screen was conducted using the same
-methodology as reported previously [8] with few modifications", and the "original
-analysis pipeline [18]"), where [8] is Nichols et al. 2011 (Cell 144:143) and [18] is
-Collins et al. 2006 (Genome Biol 7:R63), whose S-score is a modified t-statistic. That
-is a STANDARDIZED colony-size deviation, which is what ``MeasurementType.z_score``
-("standardized fitness/growth deviation") names. It is deliberately NOT ``log2_ratio``
-(the number is not a log of a ratio), NOT ``differential_fitness`` (not a plain
-subtraction of two normalized fitnesses), NOT ``colony_size`` (that member is defined as
-an absolute, unnormalized size) and NOT ``sensitivity_score`` (a one-sided fitness-defect
-score). ``MeasurementType`` has no ``s_score`` member and ``schema.py`` is not changed
-here; the PR records that an ``s_score`` member would be more precise than ``z_score``.
+WHY ``measurement_type=z_score``, AND WHY THERE IS NO ``s_score`` MEMBER (#749 item 2).
+What the release CALLS its number is a "fitness-score", twenty times; the words "S
+score", "S-score", "Z score" and "z-score" appear nowhere in this paper, its PDF text
+layer, its three SI tables or the 20.5 MB released matrix, whose header is a condition
+column followed by 3,975 bare gene symbols. Two things ARE sourced verbatim: what the
+number means ("These fitness-scores represent the statistical significance of a change
+in colony size for a particular condition, with negative and positive fitness-scores
+representing sensitivity and resistance, respectively") and that the pipeline is this
+paper's modification of someone else's ("an in-house software package that built upon
+previous analyses [8,18]", "the original analysis pipeline [18]"), where [8] is Nichols
+et al. 2011 (Cell 144:143) and [18] is Collins et al. 2006 (Genome Biol 7:R63). The
+Methods also name the standardizing step outright: "variance normalization of the data
+(to improve reproducibility of measurements between plates)".
+
+**Hypothesis (untested, and untestable from our mirror): this number is the Collins
+S-score, a modified t-statistic.** It follows from the deferral chain, not from any
+sentence we hold; NEITHER cited paper is in the literature mirror (#691), so the formula
+cannot be read. That is why no ``MeasurementType.s_score`` member was added: a member
+named after a statistic whose definition we cannot read would carry a label with no
+provenance behind it. ``z_score`` ("standardized fitness/growth deviation") is what the
+variance-normalized colony-size significance score IS on the evidence we do hold, and
+``MeasurementType``'s own docstring now says so and says why. It is deliberately NOT
+``log2_ratio`` (the number is not a log of a ratio), NOT ``differential_fitness`` (not a
+plain subtraction of two normalized fitnesses), NOT ``colony_size`` (that member is
+defined as an absolute, unnormalized size) and NOT ``sensitivity_score`` (a one-sided
+fitness-defect score).
 
 UNITS CONVERTED, NEVER INVENTED. The released doses use seven units. Four are typed as
 released (``mM``, ``uM``, ``% (w/v)``, ``% (v/v)``). The three mass-per-volume units are
@@ -84,11 +102,23 @@ SOURCED VALUES are module-level ``SourcedValue``s anchored to the sha256 of
   (-2.0,-1.2) while 95% of the cutoff values for positive (resistance) fitness-scores
   fell in the range (+1.2,+2.1)".
 
-The UV dose is reported as an EXPOSURE TIME with no irradiance ("UV [12 sec]"), so no
-fluence exists to store; the radiation perturbation's ``magnitude`` is ``None`` with a
-``not_reported_by_primary`` gap, and the 12 s exposure survives verbatim in
-``screen_id``. ``ConcentrationUnit`` carries no time or fluence unit, which the PR
-records as a finding rather than a schema edit.
+THE UV DOSE IS A TIME, AND IT IS NOW STORED (#749 item 3). The three irradiated
+conditions release their dose inside the label's square brackets as an exposure time:
+``UV [12 sec] {4}``, ``UV+10C [12 sec] {4}`` and
+``M9min glucose+UV [0.2% (w/v); 12 sec] {4}``. The S1 Dataset legend says those brackets
+hold a "concentration", which for this condition they do not, and
+``EnvironmentPhysicalPerturbation.magnitude`` is a ``Concentration``, so the 12 seconds
+previously survived only inside the ``screen_id`` string. It is now a
+``PhysicalExposurePerturbation`` carrying ``exposure_duration_seconds=12.0``, the dose
+in its own field in the unit its name states, exactly as ``PhagePerturbation`` carries a
+multiplicity of infection rather than a ``ConcentrationUnit`` member that would make a
+particle-to-cell ratio look like a dose. No irradiance or fluence is released: swept
+every text-searchable mirrored file of this key plus the released matrix for
+``irradian``, ``fluence``, ``mJ/cm``, ``J/m2``, ``germicid``, ``lamp``, ``254 nm`` and
+``ultraviolet``, with zero hits. Both are typed gaps whose ``resolve_with`` names
+Nichols 2011, because the UV series is a Nichols condition re-run (batch 0 carries
+``UV [6sec]`` through ``UV [24sec]``) and the Methods defer the whole screen methodology
+there.
 
 Growth duration is not a property of the screen: the endpoint is a colony-size rule
 ("incubated at 37 C until the majority of colonies reached a defined size (~8 hours)"),
@@ -107,14 +137,12 @@ dendron note instead of on the record.
 RECORDS DROPPED (rule + counts + items in ``preprocess/dropped_records.json``). Each
 column rule removes one column across all 57 conditions:
 
-1. ``label_is_not_a_gene_deletion`` -- 133 labels, 134 columns. The arrayed library is
-   not only Keio: the labels include Nichols 2011's essential-gene arrays, marked by the
-   release's own suffixes (``-SPA`` affinity tags, ``-DAS``/``-DAS+4`` degrons, ``-kan``
-   insertions, ``{...}`` point mutants, and ``yfiO*``). The S1 Dataset legend is explicit
-   that these are the exceptions: "Unless otherwise specified, the mutations are precise
-   gene deletions." A SPA-tagged hypomorph is not a deletion, and the schema has no
-   bacterial tagged-allele or degron leaf, so storing it as a
-   ``BacterialDeletionPerturbation`` would assert an absence that did not happen.
+1. ``label_is_a_point_or_indel_mutant`` -- 7 labels, 8 columns
+   (``bamA{del(64)}``, ``bamA{dup(218-219)}``, ``fabZ{F101Y}``, ``ftsA{R286W}``,
+   ``lpxC{G210S}``, ``msbA{P18S}``, ``yfiO*`` in two columns; 439 non-blank cells).
+   A substituted or indel allele is issue #731's leaf, so inventing a second one here
+   would put one kind of record in two classes. The 126 OTHER non-deletion columns of
+   the same essential-gene arrays are stored: see THE ALLELE COLUMNS below.
 2. ``label_is_not_in_the_bw25113_annotation`` -- 49 labels. The label is no locus tag,
    symbol or synonym of GCA_000750555.1: multi-gene deletions (``ecnAB``, ``rdlABC``,
    ``rdlABCD``, ``sibABCDE``), old-annotation ORF fragments (``ygaQ_1`` to ``ygaQ_4``,
@@ -140,13 +168,42 @@ column rule removes one column across all 57 conditions:
    -- no plate, well, or allele id -- that tells the two strains apart. Keeping both
    would put two records on one (strain, condition) key; keeping one would be an
    arbitrary choice between two real measurements, so both go.
-6. ``cell_is_blank`` -- 8,007 cells. The strain has no fitness-score in that condition;
+6. ``cell_is_blank`` -- 8,224 cells. The strain has no fitness-score in that condition;
    the Methods state the filtering ("Unreliable measurements were removed ... each
    condition had a different number of measurements ... that passed analysis").
 
-Arithmetic: 3,975 columns - (134 + 49 + 48 + 2 + 22) = 3,720 kept columns, each one
-distinct BW25113 locus tag. 3,720 x 57 = 212,040 cells, minus 8,007 blanks = 204,033
-records. Against the full release grid: 226,575 - 255 x 57 - 8,007 = 204,033.
+Arithmetic: 3,975 columns - (8 + 49 + 48 + 2 + 22) = 3,846 kept columns, 3,720 of them
+precise deletions and 126 of them allele columns. 3,846 x 57 = 219,222 cells, minus the
+8,224 blanks = 210,998 records.
+
+THE ALLELE COLUMNS (#749 item 1). The arrayed library is not only Keio: it is "the
+previously screened library [8,10]", which carries Nichols 2011's essential-gene arrays
+beside the KEIO deletions, and the release marks those strains with its own label
+suffixes. 126 of the 134 suffixed columns are stored, on the two leaves that landed for
+them, and each one carries ONLY the suffix the release wrote:
+
+| suffix | columns | leaf | fields stored |
+|---|---|---|---|
+| ``-SPA`` | 114 | ``BacterialMarkedAllelePerturbation`` | ``tag="SPA"`` |
+| ``-kan`` | 7 | ``BacterialMarkedAllelePerturbation`` | ``cassette="kan"`` |
+| ``-DAS`` / ``-DAS+4`` | 5 | ``BacterialDegronPerturbation`` | ``degron="DAS"`` / ``"DAS+4"`` |
+
+The locus tag comes from a SECOND resolution pass: a suffixed label is not a symbol the
+annotation carries, so the suffix is stripped and the BASE symbol is resolved. All 126
+base symbols resolve to exactly one BW25113 locus (measured; the loader raises if one
+does not), and the identity that must be unique is the (locus, allele kind, token)
+triple rather than the locus alone, because the arrays carry a deletion, an SPA tag and
+a kan insertion of one gene, and two different degrons of another (``imp-DAS`` and
+``imp-DAS+4`` both sit on ``BW25113_0054``).
+
+What is NOT stored on them is as deliberate as what is. ``terminus`` is ``None`` on
+every one: SPA is a C-terminal tag in the paper that BUILT that collection, but this
+paper describes none of these strains' construction and defers its whole array to
+Nichols 2011, which is not in the mirror (#691), so no mirrored sentence places the
+fusion on THESE strains. ``allele_effect`` is ``not_stated`` for the same reason: the
+release says only that these columns are not precise gene deletions, never that the
+allele is hypomorphic. ``collection`` is ``None`` because the deletion columns' "KEIO
+deletion library" is named in the Methods and the rest of the array is not.
 
 PARSE CROSS-CHECK (recorded, not run in the build). S1 Table ("Cold-sensitive genes from
 the screen", ``si/si6.docx``, sha256
@@ -181,7 +238,7 @@ from collections import Counter
 from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar, Literal
+from typing import Any, ClassVar, Literal, cast
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, model_validator
@@ -198,9 +255,11 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB_LENNOX, M9
 from torchcell.datamodels.schema import (
     AssayType,
+    BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialMarkedAllelePerturbation,
     Concentration,
     ConcentrationUnit,
     DerivedIdentifierMapping,
@@ -216,6 +275,7 @@ from torchcell.datamodels.schema import (
     Media,
     MediaComponent,
     MediaComponentRole,
+    PhysicalExposurePerturbation,
     PhysicalFactor,
     Publication,
     SmallMoleculePerturbation,
@@ -482,8 +542,10 @@ LABELS_ARE_GENE_NAMES = _paper(
     "Gene names are used to label the mutation. Unless otherwise specified, the "
     "mutations are precise gene deletions.",
     page=_S1_DATASET,
-    note="the identifier space of the columns (hence route='gene_symbol'), and the rule "
-    "that drops the suffixed non-deletion alleles: they ARE otherwise specified",
+    note="the identifier space of the columns (hence route='gene_symbol'), and the "
+    "sentence that makes a suffixed label a non-deletion allele: those columns ARE "
+    "otherwise specified. The suffix is also the only thing the release says about the "
+    "allele, which is why a -SPA column stores tag='SPA' and nothing more",
 )
 MATRIX_ORIENTATION = _paper(
     "genes in columns, conditions in rows",
@@ -498,6 +560,16 @@ DATA_AVAILABILITY = _paper(
     page="front matter, 'Data Availability Statement'",
     note="the plate images and Iris output behind the scores; not needed, because S1 "
     "Dataset releases the scored matrix, and not mirrored",
+)
+LIBRARY_IS_THE_PREVIOUS_ONE = _paper(
+    "the previously screened library",
+    "we conducted a new chemical-genomic screen of the previously screened library "
+    "[8,10] focusing on antibiotics with unique or unknown modes of action.",
+    page="Introduction",
+    note="why the allele columns' collection, terminus and construction stay None: the "
+    "array is Nichols 2011's, this paper describes none of its strains' construction, "
+    "and Nichols 2011 is not in the literature mirror (#691), so no mirrored sentence "
+    "places the SPA fusion or the DAS degron on these strains",
 )
 FOLLOWUP_CASSETTE = _paper(
     "kanamycin resistance cassette amplified from pKD4",
@@ -526,6 +598,7 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     AEROBICITY,
     BATCH_MEANING,
     LABELS_ARE_GENE_NAMES,
+    LIBRARY_IS_THE_PREVIOUS_ONE,
     MATRIX_ORIENTATION,
     DATA_AVAILABILITY,
     FOLLOWUP_CASSETTE,
@@ -1149,6 +1222,19 @@ CONDITION_LABELS: tuple[str, ...] = tuple(spec.label for spec in CONDITIONS)
 # --------------------------------------------------------------------------- #
 # Environment
 # --------------------------------------------------------------------------- #
+#: The unmirrored paper this screen defers its methodology to (#691): the colony
+#: replicate design behind one fitness-score and, through it, the S-score formula.
+#: Several gaps resolve_with it, so it is defined before the first of them.
+_NICHOLS2011 = Provenance(
+    source_uri="https://doi.org/10.1016/j.cell.2010.11.052",
+    citation_key="nicholsPhenotypicLandscapeBacterial2011",
+    method="the screen's own deferral: 'the same methodology as reported previously "
+    "[8]'; [8]'s Extended Experimental Procedures hold the colony replicate design "
+    "behind one fitness-score, and defer the score itself to Collins 2006 "
+    "(doi:10.1186/gb-2006-7-7-r63)",
+    page="Cell 144(1):143-156, Extended Experimental Procedures",
+)
+
 _DURATION_GAP = ProvenanceGap(
     field="duration_hours",
     reason=ProvenanceGapReason.not_reported_by_primary,
@@ -1156,12 +1242,31 @@ _DURATION_GAP = ProvenanceGap(
     "majority of colonies reached a defined size (~8 hours)'), the per-condition "
     "incubation is not released, and the cold conditions necessarily ran longer",
 )
-_RADIATION_GAP = ProvenanceGap(
-    field="magnitude",
+#: The three irradiated conditions release their dose as an exposure TIME in the label's
+#: own square brackets, measured on the pinned bytes of ``pgen.1006124.s005.txt``:
+#: ``UV [12 sec] {4}``, ``UV+10C [12 sec] {4}`` and
+#: ``M9min glucose+UV [0.2% (w/v); 12 sec] {4}``. 12 seconds is therefore a released
+#: value and is stored as one on ``PhysicalExposurePerturbation``.
+UV_EXPOSURE_SECONDS = 12.0
+_IRRADIANCE_GAP = ProvenanceGap(
+    field="irradiance_w_per_m2",
     reason=ProvenanceGapReason.not_reported_by_primary,
-    note="the released label gives the UV dose as an exposure TIME ('12 sec') and the "
-    "paper reports no irradiance, so no fluence exists to store; the exposure survives "
-    "verbatim in the phenotype's screen_id",
+    looked_in=_NICHOLS2011,
+    note="swept every text-searchable mirrored file of this key (paper.md, the PDF text "
+    "layer, the three SI docx tables) plus the 20.5 MB released matrix for 'irradian', "
+    "'fluence', 'mJ/cm', 'J/m2', 'germicid', 'lamp', '254 nm' and 'ultraviolet': zero "
+    "hits. The UV series is a Nichols 2011 condition re-run (the release carries "
+    "'UV [6sec]' through 'UV [24sec]' in batch 0) and this paper's Methods defer the "
+    "whole screen methodology to [8], so the irradiance is deferred there rather than "
+    "simply unreported by anyone",
+)
+_FLUENCE_GAP = ProvenanceGap(
+    field="fluence_j_per_m2",
+    reason=ProvenanceGapReason.not_reported_by_primary,
+    looked_in=_NICHOLS2011,
+    note="a fluence is an irradiance times a time, and the irradiance is absent, so no "
+    "fluence exists to compute. It is NOT back-computed: that would manufacture a "
+    "number the source never released",
 )
 
 
@@ -1185,10 +1290,21 @@ def carbon_source(dose: Dose) -> EnvironmentPhysicalPerturbation:
     )
 
 
-def radiation() -> EnvironmentPhysicalPerturbation:
-    """The UV exposure: a radiation factor with no storable dose."""
-    return EnvironmentPhysicalPerturbation(
-        factor=PhysicalFactor.radiation, provenance_gaps=[_RADIATION_GAP]
+def radiation() -> PhysicalExposurePerturbation:
+    """The UV exposure, dosed by the released exposure time (#749 item 3).
+
+    Before ``PhysicalExposurePerturbation`` existed the 12 seconds had nowhere typed to
+    go: ``EnvironmentPhysicalPerturbation.magnitude`` is a ``Concentration``, and the
+    S1 Dataset legend itself says the square brackets hold a "concentration", which for
+    this condition they do not. ``ConcentrationUnit`` carries no time or fluence unit
+    and gaining one would make an exposure time look like a dose unit, so the dose takes
+    its own field, exactly as ``PhagePerturbation`` does for a multiplicity of
+    infection. The irradiance and the fluence stay typed gaps.
+    """
+    return PhysicalExposurePerturbation(
+        factor=PhysicalFactor.radiation,
+        exposure_duration_seconds=UV_EXPOSURE_SECONDS,
+        provenance_gaps=[_IRRADIANCE_GAP, _FLUENCE_GAP],
     )
 
 
@@ -1213,15 +1329,6 @@ def environment(spec: ConditionSpec) -> Environment:
 # --------------------------------------------------------------------------- #
 # Phenotype
 # --------------------------------------------------------------------------- #
-_NICHOLS2011 = Provenance(
-    source_uri="https://doi.org/10.1016/j.cell.2010.11.052",
-    citation_key="nicholsPhenotypicLandscapeBacterial2011",
-    method="the screen's own deferral: 'the same methodology as reported previously "
-    "[8]'; [8]'s Extended Experimental Procedures hold the colony replicate design "
-    "behind one fitness-score, and defer the score itself to Collins 2006 "
-    "(doi:10.1186/gb-2006-7-7-r63)",
-    page="Cell 144(1):143-156, Extended Experimental Procedures",
-)
 _GAP_N_SAMPLES = ProvenanceGap(
     field="n_samples",
     reason=ProvenanceGapReason.deferred_pending_source_review,
@@ -1286,18 +1393,117 @@ def reference_phenotype(spec: ConditionSpec) -> EnvironmentResponsePhenotype:
 BW25113_NAMESPACE = STRAIN_GENE_NAMESPACES["BW25113"]
 
 
-def genotype(source_label: str, locus_tag: str) -> Genotype:
-    """One precise gene deletion of the arrayed library, written against BW25113."""
+def _mapping(source_label: str) -> DerivedIdentifierMapping:
+    """How the stored locus tag was reached: the release names symbols, not tags."""
+    return DerivedIdentifierMapping(source_identifier=source_label, route="gene_symbol")
+
+
+def deletion_perturbation(
+    source_label: str, locus_tag: str
+) -> BacterialDeletionPerturbation:
+    """One precise gene deletion of the arrayed KEIO library."""
+    return BacterialDeletionPerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=source_label,
+        gene_namespace=BW25113_NAMESPACE,
+        identifier_mapping=_mapping(source_label),
+        collection=KEIO_COLLECTION,
+    )
+
+
+def marked_allele_perturbation(
+    source_label: str, locus_tag: str, *, gene_name: str, kind: str, token: str
+) -> BacterialMarkedAllelePerturbation:
+    """A ``-SPA`` or ``-kan`` column of the essential-gene arrays.
+
+    Only what the RELEASE states is stored. The token is the label's own suffix, so a
+    ``-SPA`` column carries ``tag="SPA"`` and a ``-kan`` column ``cassette="kan"``.
+    Three fields stay ``None`` on purpose:
+
+    - ``terminus``: this paper never describes these strains' construction. The SPA tag
+      is a C-terminal tag in the paper that BUILT the collection, but Shiver defers its
+      whole array to Nichols 2011 ("the same methodology as reported previously [8]")
+      and Nichols 2011 is not in the literature mirror (#691), so there is no mirrored
+      sentence that says where the fusion sits on THESE strains.
+    - ``cassette`` on a tag column and ``tag`` on a marker column: the label names one
+      or the other, never both.
+    - ``insertion_site``: no released text places the cassette in the locus.
+
+    ``allele_effect`` is ``not_stated`` for the same reason: Shiver says only that these
+    columns are not precise gene deletions, never that the allele is hypomorphic. That
+    is exactly the case the leaf's third vocabulary member exists for.
+
+    ``collection`` is ``None`` too. The deletion columns carry "KEIO deletion library"
+    because the Methods name it ("The KEIO deletion library is derived from BW25113"),
+    while the only thing this paper says about the rest of the array is that it screened
+    "the previously screened library [8,10]", which names no strain set.
+    """
+    return BacterialMarkedAllelePerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=gene_name,
+        gene_namespace=BW25113_NAMESPACE,
+        identifier_mapping=_mapping(source_label),
+        collection=None,
+        cassette=token if kind == "marker" else None,
+        tag=token if kind == "tag" else None,
+        allele_effect="not_stated",
+    )
+
+
+def degron_perturbation(
+    source_label: str, locus_tag: str, *, gene_name: str, token: str
+) -> BacterialDegronPerturbation:
+    """A ``-DAS`` or ``-DAS+4`` column of the essential-gene arrays.
+
+    ``degron`` is the label's own token, so ``imp-DAS`` and ``imp-DAS+4`` stay two
+    strains on one locus. The protease, the adaptor, the inducing condition and the
+    terminus are all ``None``: this paper names none of them, and its deferral target
+    (Nichols 2011) is not mirrored.
+    """
+    return BacterialDegronPerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=gene_name,
+        gene_namespace=BW25113_NAMESPACE,
+        identifier_mapping=_mapping(source_label),
+        collection=None,
+        degron=token,
+    )
+
+
+def genotype(column: StrainColumn) -> Genotype:
+    """The one-perturbation genotype of one kept column, by what its label says it is."""
+    if column.allele_kind == "deletion":
+        return Genotype(
+            perturbations=[deletion_perturbation(column.source_label, column.locus_tag)]
+        )
+    token = str(column.allele_token)
+    # ``perturbed_gene_name`` is the GENE's common name, so it is the base symbol, not
+    # the column label: 'thrA-SPA' names a strain, and the gene it perturbs is thrA.
+    # Writing the label there would put two common-name spellings on one locus tag,
+    # which the environment-response verifier's canonical-name rule flags as a
+    # conflict, and rightly: a tagged allele and a deletion of thrA perturb the same
+    # gene. The released label survives verbatim on ``identifier_mapping``, and the
+    # allele identity lives in the leaf's own ``tag`` / ``cassette`` / ``degron``.
+    gene_name = str(column.resolved_label)
+    if column.allele_kind == "degron":
+        return Genotype(
+            perturbations=[
+                degron_perturbation(
+                    column.source_label,
+                    column.locus_tag,
+                    gene_name=gene_name,
+                    token=token,
+                )
+            ]
+        )
     return Genotype(
         perturbations=[
-            BacterialDeletionPerturbation(
-                systematic_gene_name=locus_tag,
-                perturbed_gene_name=source_label,
-                gene_namespace=BW25113_NAMESPACE,
-                identifier_mapping=DerivedIdentifierMapping(
-                    source_identifier=source_label, route="gene_symbol"
-                ),
-                collection=KEIO_COLLECTION,
+            marked_allele_perturbation(
+                column.source_label,
+                column.locus_tag,
+                gene_name=gene_name,
+                kind=column.allele_kind,
+                token=token,
             )
         ]
     )
@@ -1382,13 +1588,52 @@ def _batch_of(label: str) -> int:
 # --------------------------------------------------------------------------- #
 # Strain resolution and retention
 # --------------------------------------------------------------------------- #
-#: Release suffixes that mark a column as an allele other than a precise gene deletion:
-#: an SPA affinity tag, a DAS degron, a kanamycin insertion, a point/indel mutant in
-#: curly brackets, or a starred allele. The S1 Dataset legend is what makes these the
-#: exceptions: "Unless otherwise specified, the mutations are precise gene deletions."
-NON_DELETION_ALLELE = re.compile(r"(-SPA|-DAS(\+4)?|-kan|\{.*\}|\*)$", re.IGNORECASE)
+#: Release suffixes that mark a column as an allele other than a precise gene deletion,
+#: paired with the allele KIND each one names. The S1 Dataset legend is what makes these
+#: the exceptions: "Unless otherwise specified, the mutations are precise gene
+#: deletions." Order matters: ``-DAS``/``-DAS+4`` is tested before the others so a
+#: degron is never read as a plain tag, and the point/indel form is tested last because
+#: its ``.+?`` base is the loosest.
+#:
+#: Every token is the label's OWN text, lifted verbatim: a ``-SPA`` column stores
+#: ``tag="SPA"`` and a ``-DAS+4`` column stores ``degron="DAS+4"`` because that is what
+#: the release wrote, not because another paper describes those reagents.
+ALLELE_SUFFIXES: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("degron", re.compile(r"^(?P<base>.+)-(?P<token>DAS(?:\+4)?)$", re.IGNORECASE)),
+    ("tag", re.compile(r"^(?P<base>.+)-(?P<token>SPA)$", re.IGNORECASE)),
+    ("marker", re.compile(r"^(?P<base>.+)-(?P<token>kan)$", re.IGNORECASE)),
+    ("mutant", re.compile(r"^(?P<base>.+?)(?P<token>\{.*\}|\*)$")),
+)
 
-DROP_NOT_A_DELETION = "label_is_not_a_gene_deletion"
+#: The allele kinds a perturbation leaf exists for. ``mutant`` is deliberately absent:
+#: a point or indel allele is issue #731's leaf, so those columns stay dropped.
+STORABLE_ALLELE_KINDS: frozenset[str] = frozenset({"tag", "marker", "degron"})
+
+AlleleKind = Literal["deletion", "tag", "marker", "degron"]
+
+
+class AlleleLabel(BaseModel):
+    """A released column label split into its base symbol and its allele token."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    kind: str
+    base: str
+    token: str
+
+
+def classify_allele_label(name: str) -> AlleleLabel | None:
+    """The allele kind, base symbol and token of a label, or ``None`` for a deletion."""
+    for kind, pattern in ALLELE_SUFFIXES:
+        match = pattern.match(name)
+        if match is not None:
+            return AlleleLabel(
+                kind=kind, base=match.group("base"), token=match.group("token")
+            )
+    return None
+
+
+DROP_POINT_MUTANT = "label_is_a_point_or_indel_mutant"
 DROP_NOT_IN_ANNOTATION = "label_is_not_in_the_bw25113_annotation"
 DROP_MERGED_LOCUS = "label_is_a_fragment_of_a_merged_bw25113_locus"
 DROP_AMBIGUOUS = "label_is_ambiguous_in_bw25113"
@@ -1399,13 +1644,12 @@ DROP_BLANK_CELL = "cell_is_blank"
 #: the drop log carries.
 COLUMN_RULES: tuple[tuple[str, str], ...] = (
     (
-        DROP_NOT_A_DELETION,
-        "the label names an allele other than a precise gene deletion (an -SPA affinity "
-        "tag, a -DAS/-DAS+4 degron, a -kan insertion, a {...} point or indel mutant, or "
-        "a starred allele) from the essential-gene arrays the screened library carries "
-        "beside the KEIO deletions. BacterialDeletionPerturbation would assert an "
-        "absence that did not happen, and the schema has no bacterial tagged-allele or "
-        "degron leaf",
+        DROP_POINT_MUTANT,
+        "the label names a point or indel allele of the essential-gene arrays "
+        "({...} or a starred allele). The -SPA, -kan and -DAS columns of those same "
+        "arrays are STORED on the marked-allele and degron leaves (#749); a substituted "
+        "or indel allele is issue #731's leaf, so inventing a second one here would put "
+        "one kind of record in two classes",
     ),
     (
         DROP_NOT_IN_ANNOTATION,
@@ -1432,13 +1676,44 @@ COLUMN_RULES: tuple[tuple[str, str], ...] = (
 
 
 class StrainColumn(BaseModel):
-    """One kept gene column: its index, its released label and its BW25113 locus tag."""
+    """One kept gene column: its index, its released label and its BW25113 locus tag.
+
+    ``allele_kind`` is what the label's own suffix says the strain IS. For a deletion
+    the label resolved to the locus tag directly; for an allele column the label carries
+    a suffix the annotation does not know, so the BASE symbol was resolved instead and
+    ``allele_token`` holds the suffix verbatim.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     index: int
     source_label: str
     locus_tag: str
+    allele_kind: AlleleKind = "deletion"
+    allele_token: str | None = None
+    #: the symbol that WAS resolved, when it is not the whole label
+    resolved_label: str | None = None
+
+    @model_validator(mode="after")
+    def _check_allele(self) -> StrainColumn:
+        """A deletion carries no token; an allele column carries both."""
+        if self.allele_kind == "deletion":
+            if self.allele_token is not None or self.resolved_label is not None:
+                raise ValueError(
+                    f"{self.source_label}: a deletion column carries no allele token"
+                )
+            return self
+        if self.allele_token is None or self.resolved_label is None:
+            raise ValueError(
+                f"{self.source_label}: an allele column names its token and the symbol "
+                "that was resolved"
+            )
+        return self
+
+    @property
+    def identity(self) -> tuple[str, str, str]:
+        """What makes this column a distinct strain: the locus plus the allele."""
+        return (self.locus_tag, self.allele_kind, (self.allele_token or "").upper())
 
 
 class ColumnResolution(BaseModel):
@@ -1452,6 +1727,10 @@ class ColumnResolution(BaseModel):
     #: Drop rule -> the number of columns it removed.
     dropped_columns: dict[str, int]
     reconciliation: LocusTagReconciliation
+    #: Allele column label -> the base symbol resolved for it and the tag it reached.
+    #: Recorded separately from the reconciliation because the reconciliation ran on the
+    #: SUFFIXED labels, which the annotation does not carry; this is the second pass.
+    allele_resolutions: dict[str, tuple[str, str]] = {}
 
 
 def resolve_columns(
@@ -1469,15 +1748,50 @@ def resolve_columns(
     )
     reconciliation.require_resolved(MIN_RESOLVED_FRACTION)
     retired = set(reconciliation.retired_kept)
+    # An allele column's label carries a suffix the annotation does not know, so the
+    # reconciliation leaves it retired. The suffix is stripped and the BASE symbol is
+    # resolved in a second pass; a base symbol the annotation does not carry either
+    # falls through to DROP_NOT_IN_ANNOTATION with every other unresolvable label.
+    alleles: dict[str, AlleleLabel] = {}
+    allele_resolutions: dict[str, tuple[str, str]] = {}
+    unresolved_alleles: set[str] = set()
+    point_mutants: set[str] = set()
+    for name in retired:
+        allele = classify_allele_label(name)
+        if allele is None:
+            continue
+        if allele.kind not in STORABLE_ALLELE_KINDS:
+            point_mutants.add(name)
+            continue
+        resolution = genome.resolve_gene_name(allele.base)
+        if (
+            resolution.systematic_name is None
+            or resolution.status is GeneNameStatus.AMBIGUOUS
+            or resolution.status is GeneNameStatus.RETIRED
+        ):
+            unresolved_alleles.add(name)
+            continue
+        alleles[name] = allele
+        allele_resolutions[name] = (allele.base, str(resolution.systematic_name))
+    # An allele column is no better off than its own base symbol: if the bare symbol is
+    # one of the fragments of a merged locus, or matches two loci, the allele inherits
+    # that and joins the same rule. Measured on the release: none of the 121 base
+    # symbols is in either set, so this moves nothing today and is the invariant rather
+    # than a correction.
+    merged = set(reconciliation.kept_on_collision)
+    ambiguous = set(reconciliation.ambiguous_kept)
+    merged |= {name for name, allele in alleles.items() if allele.base in merged}
+    ambiguous |= {name for name, allele in alleles.items() if allele.base in ambiguous}
+    for name in merged | ambiguous:
+        alleles.pop(name, None)
+        allele_resolutions.pop(name, None)
     by_rule: dict[str, set[str]] = {
-        DROP_NOT_A_DELETION: {
-            name for name in retired if NON_DELETION_ALLELE.search(name)
-        },
-        DROP_NOT_IN_ANNOTATION: {
-            name for name in retired if not NON_DELETION_ALLELE.search(name)
-        },
-        DROP_MERGED_LOCUS: set(reconciliation.kept_on_collision),
-        DROP_AMBIGUOUS: set(reconciliation.ambiguous_kept),
+        DROP_POINT_MUTANT: point_mutants,
+        DROP_NOT_IN_ANNOTATION: (
+            retired - set(alleles) - point_mutants - merged - ambiguous
+        ),
+        DROP_MERGED_LOCUS: merged,
+        DROP_AMBIGUOUS: ambiguous,
     }
     counts = Counter(gene_labels)
     claimed: set[str] = set().union(*by_rule.values())
@@ -1486,16 +1800,37 @@ def resolve_columns(
     }
     dropped = claimed | by_rule[DROP_DUPLICATE_COLUMN]
     kept = [
-        StrainColumn(index=index, source_label=name, locus_tag=str(stored.iloc[index]))
+        StrainColumn(
+            index=index,
+            source_label=name,
+            locus_tag=(
+                allele_resolutions[name][1]
+                if name in alleles
+                else str(stored.iloc[index])
+            ),
+            allele_kind=cast(AlleleKind, alleles[name].kind)
+            if name in alleles
+            else "deletion",
+            allele_token=alleles[name].token if name in alleles else None,
+            resolved_label=allele_resolutions[name][0] if name in alleles else None,
+        )
         for index, name in enumerate(gene_labels)
         if name not in dropped
     ]
-    tags = Counter(column.locus_tag for column in kept)
-    collisions = sorted(tag for tag, count in tags.items() if count > 1)
+    # The identity, not the locus, is what must be unique: the arrays carry a deletion,
+    # an SPA tag, a kan insertion and two different degrons of the SAME gene, which are
+    # distinct strains ('imp-DAS' and 'imp-DAS+4' both sit on BW25113_0054). Two columns
+    # producing the same (locus, kind, token) WOULD be one strain measured twice.
+    identities = Counter(column.identity for column in kept)
+    collisions = sorted(
+        f"{tag} {kind} {token}".strip()
+        for (tag, kind, token), count in identities.items()
+        if count > 1
+    )
     if collisions:
         raise RuntimeError(
-            f"{label}: {len(collisions)} locus tags are claimed by more than one kept "
-            f"column after the drop rules: {collisions[:10]}"
+            f"{label}: {len(collisions)} strain identities are claimed by more than "
+            f"one kept column after the drop rules: {collisions[:10]}"
         )
     outside = sorted(
         {
@@ -1510,6 +1845,11 @@ def resolve_columns(
             f"{label}: {len(outside)} kept tags are not loci of the pinned assembly: "
             f"{outside[:10]}"
         )
+    if unresolved_alleles - by_rule[DROP_NOT_IN_ANNOTATION]:
+        raise RuntimeError(
+            f"{label}: allele labels whose base symbol does not resolve were not "
+            f"attributed to a rule: {sorted(unresolved_alleles)[:10]}"
+        )
     return ColumnResolution(
         kept=kept,
         dropped_labels={rule: sorted(by_rule[rule]) for rule, _ in COLUMN_RULES},
@@ -1518,6 +1858,7 @@ def resolve_columns(
             for rule, _ in COLUMN_RULES
         },
         reconciliation=reconciliation,
+        allele_resolutions=allele_resolutions,
     )
 
 
@@ -1648,7 +1989,7 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
                         continue
                     experiment = BacterialEnvironmentResponseExperiment(
                         dataset_name=self.name,
-                        genotype=genotype(column.source_label, column.locus_tag),
+                        genotype=genotype(column),
                         environment=environments[spec.label],
                         phenotype=phenotype(float(cell), spec),
                     )
@@ -1731,6 +2072,20 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
             "study_conditions": n_conditions,
             "kept_columns": len(columns.kept),
             "distinct_locus_tags": len({c.locus_tag for c in columns.kept}),
+            "kept_columns_by_allele_kind": dict(
+                sorted(Counter(c.allele_kind for c in columns.kept).items())
+            ),
+            "kept_columns_by_allele_token": dict(
+                sorted(
+                    Counter(
+                        str(c.allele_token) for c in columns.kept if c.allele_token
+                    ).items()
+                )
+            ),
+            "allele_base_symbol_resolutions": {
+                label: {"base_symbol": base, "locus_tag": tag}
+                for label, (base, tag) in sorted(columns.allele_resolutions.items())
+            },
             "min_resolved_fraction": MIN_RESOLVED_FRACTION,
             "reconciliation": columns.reconciliation.model_dump(mode="json"),
             "dropped_columns": columns.dropped_columns,
@@ -1756,8 +2111,13 @@ class EnvChemgenShiver2016Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
-#: Records of the full build: 3,720 kept columns x 57 conditions, minus 8,007 blanks.
-EXPECTED_RECORDS = 204033
+#: Records of the full build: 3,846 kept columns x 57 conditions, minus the blanks.
+#: 3,720 of those columns are precise gene deletions and 126 are the essential-gene
+#: arrays' marked alleles and degrons, stored since #749 (114 ``-SPA`` tags, 7 ``-kan``
+#: insertions, 5 ``-DAS``/``-DAS+4`` degrons).
+EXPECTED_RECORDS = 210998
+#: Records whose strain is an allele column rather than a precise gene deletion.
+EXPECTED_ALLELE_RECORDS = 6965
 
 
 def verify_build(

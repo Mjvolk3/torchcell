@@ -2429,9 +2429,18 @@ def test_a_degron_is_its_own_leaf_carrying_its_inducing_condition() -> None:
     assert degron.perturbation_type == "bacterial_degron"
     assert isinstance(degron, s.SequencePerturbation)
     assert not isinstance(degron, s.BacterialMarkedAllelePerturbation)
-    assert s.BacterialDegronPerturbation.model_fields["terminus"].is_required()
+    # degron is the one required field; a release that names only the degron is legal,
+    # which is Shiver 2016's '-DAS' columns
+    assert s.BacterialDegronPerturbation.model_fields["degron"].is_required()
+    token_only = s.BacterialDegronPerturbation(**_MG1655, degron="DAS+4")
+    assert (token_only.terminus, token_only.protease, token_only.adaptor) == (
+        None,
+        None,
+        None,
+    )
+    assert token_only.inducing_condition is None
     with pytest.raises(ValidationError):
-        s.BacterialDegronPerturbation(**_MG1655, degron="DAS+4")
+        s.BacterialDegronPerturbation(**_MG1655)
 
 
 def test_the_bacterial_crispra_leaf_states_increased_where_crispri_cannot() -> None:

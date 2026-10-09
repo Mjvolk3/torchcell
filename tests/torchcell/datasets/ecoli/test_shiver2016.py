@@ -49,9 +49,11 @@ from torchcell.datamodels.schema import (
     BACTERIAL_ASSEMBLY_SETS,
     AssayType,
     AssemblyReferenceGenome,
+    BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialMarkedAllelePerturbation,
     Concentration,
     ConcentrationUnit,
     DoseBasis,
@@ -59,6 +61,7 @@ from torchcell.datamodels.schema import (
     FitnessPhenotype,
     MeasurementType,
     MediaComponentRole,
+    PhysicalExposurePerturbation,
     PhysicalFactor,
     SmallMoleculePerturbation,
 )
@@ -389,18 +392,45 @@ def test_the_m9_carbon_source_is_a_physical_factor_at_the_recipe_amount() -> Non
     )
 
 
-def test_uv_is_a_radiation_factor_whose_dose_is_a_typed_absence() -> None:
-    (spec,) = [c for c in s.CONDITIONS if c.label == "UV [12 sec] {4}"]
-    environment = s.environment(spec)
-    (factor,) = environment.perturbations
-    assert isinstance(factor, EnvironmentPhysicalPerturbation)
-    assert factor.factor is PhysicalFactor.radiation
-    assert factor.magnitude is None
-    assert [g.field for g in factor.provenance_gaps] == ["magnitude"]
-    assert factor.provenance_gaps[0].reason is (
-        ProvenanceGapReason.not_reported_by_primary
-    )
-    assert "exposure TIME" in str(factor.provenance_gaps[0].note)
+def test_uv_is_an_exposure_dosed_by_its_released_time() -> None:
+    """#749 item 3: the 12 seconds the release states is now a stored value.
+
+    It used to survive only inside the screen_id string, because the brackets the S1
+    Dataset legend calls a "concentration" hold a time for this condition and
+    EnvironmentPhysicalPerturbation.magnitude is a Concentration.
+    """
+    for label in (
+        "UV [12 sec] {4}",
+        "UV+10C [12 sec] {4}",
+        "M9min glucose+UV [0.2% (w/v); 12 sec] {4}",
+    ):
+        (spec,) = [c for c in s.CONDITIONS if c.label == label]
+        environment = s.environment(spec)
+        exposure = [
+            p
+            for p in environment.perturbations
+            if isinstance(p, PhysicalExposurePerturbation)
+        ]
+        assert len(exposure) == 1, label
+        (factor,) = exposure
+        assert factor.factor is PhysicalFactor.radiation
+        assert factor.exposure_duration_seconds == 12.0 == s.UV_EXPOSURE_SECONDS
+        assert factor.irradiance_w_per_m2 is None
+        assert factor.fluence_j_per_m2 is None
+        assert [g.field for g in factor.provenance_gaps] == [
+            "irradiance_w_per_m2",
+            "fluence_j_per_m2",
+        ]
+        assert factor.provenance_gaps[0].reason is (
+            ProvenanceGapReason.not_reported_by_primary
+        )
+        # the gap defers to the paper the UV series was first screened in
+        looked_in = factor.provenance_gaps[0].looked_in
+        assert looked_in is not None
+        assert looked_in.citation_key == "nicholsPhenotypicLandscapeBacterial2011"
+        assert "no fluence exists to compute" in str(factor.provenance_gaps[1].note)
+        # 12 seconds is not a concentration, so it rides no concentration column
+        assert "magnitude" not in PhysicalExposurePerturbation.model_fields
 
 
 def test_a_temperature_only_condition_carries_no_perturbation() -> None:
@@ -485,10 +515,29 @@ def test_the_reference_is_the_unaffected_strain_at_a_score_of_zero() -> None:
     assert reference.units == s.UNITS_REFERENCE
 
 
+def _column(
+    label: str,
+    tag: str,
+    *,
+    kind: str = "deletion",
+    token: str | None = None,
+    base: str | None = None,
+) -> s.StrainColumn:
+    """One kept column, as resolve_columns would have produced it."""
+    return s.StrainColumn(
+        index=0,
+        source_label=label,
+        locus_tag=tag,
+        allele_kind=cast(Any, kind),
+        allele_token=token,
+        resolved_label=base,
+    )
+
+
 def test_the_genotype_names_the_collection_and_the_symbol_route_and_no_cassette() -> (
     None
 ):
-    genotype = s.genotype("thrA", "BW25113_0002")
+    genotype = s.genotype(_column("thrA", "BW25113_0002"))
     (perturbation,) = genotype.perturbations
     assert isinstance(perturbation, BacterialDeletionPerturbation)
     assert perturbation.systematic_gene_name == "BW25113_0002"
@@ -503,7 +552,108 @@ def test_the_genotype_names_the_collection_and_the_symbol_route_and_no_cassette(
 
 def test_the_genotype_refuses_a_tag_of_another_strains_namespace() -> None:
     with pytest.raises(ValueError):
-        s.genotype("thrA", "b0002")
+        s.genotype(_column("thrA", "b0002"))
+
+
+def test_an_allele_column_stores_only_the_suffix_the_release_wrote() -> None:
+    """#749 item 1: each suffix picks its leaf and fills exactly one field.
+
+    What is absent is the point: this paper describes none of these strains, so the
+    terminus, the collection, the insertion site, the protease and the adaptor are all
+    None rather than borrowed from the paper that built the collection.
+    """
+    tag = s.genotype(
+        _column("fusA-SPA", "BW25113_3340", kind="tag", token="SPA", base="fusA")
+    ).perturbations[0]
+    assert isinstance(tag, BacterialMarkedAllelePerturbation)
+    assert (tag.tag, tag.cassette, tag.terminus) == ("SPA", None, None)
+    assert tag.allele_effect == "not_stated"
+    assert (tag.collection, tag.insertion_site) == (None, None)
+    # the GENE's name, not the column label: a tagged allele and a deletion of fusA
+    # perturb the same gene, and the released label survives on the mapping
+    assert tag.perturbed_gene_name == "fusA"
+    assert tag.identifier_mapping is not None
+    assert tag.identifier_mapping.source_identifier == "fusA-SPA"
+
+    marker = s.genotype(
+        _column("fabZ-kan", "BW25113_0180", kind="marker", token="kan", base="fabZ")
+    ).perturbations[0]
+    assert isinstance(marker, BacterialMarkedAllelePerturbation)
+    assert (marker.cassette, marker.tag, marker.terminus) == ("kan", None, None)
+
+    degron = s.genotype(
+        _column("imp-DAS+4", "BW25113_0054", kind="degron", token="DAS+4", base="imp")
+    ).perturbations[0]
+    assert isinstance(degron, BacterialDegronPerturbation)
+    assert degron.degron == "DAS+4"
+    assert (degron.terminus, degron.protease, degron.adaptor) == (None, None, None)
+    assert degron.inducing_condition is None
+
+
+def test_two_degrons_of_one_locus_are_two_strains() -> None:
+    """``imp-DAS`` and ``imp-DAS+4`` sit on one locus and are not one strain."""
+    das = _column("imp-DAS", "BW25113_0054", kind="degron", token="DAS", base="imp")
+    das4 = _column(
+        "imp-DAS+4", "BW25113_0054", kind="degron", token="DAS+4", base="imp"
+    )
+    assert das.identity != das4.identity
+    assert s.genotype(das) != s.genotype(das4)
+    # and a tag of the same locus is a third strain, distinct from its deletion
+    tag = _column("imp-SPA", "BW25113_0054", kind="tag", token="SPA", base="imp")
+    deletion = _column("imp", "BW25113_0054")
+    assert len({das.identity, das4.identity, tag.identity, deletion.identity}) == 4
+
+
+def test_a_strain_column_refuses_a_half_stated_allele() -> None:
+    """A deletion carries no token, and an allele column names both of its parts."""
+    with pytest.raises(ValueError, match="a deletion column carries no allele token"):
+        s.StrainColumn(
+            index=0, source_label="thrA", locus_tag="BW25113_0002", allele_token="SPA"
+        )
+    with pytest.raises(ValueError, match="names its token and the symbol"):
+        s.StrainColumn(
+            index=0,
+            source_label="thrA-SPA",
+            locus_tag="BW25113_0002",
+            allele_kind="tag",
+            allele_token="SPA",
+        )
+
+
+@pytest.mark.parametrize(
+    "label,kind,base,token",
+    [
+        ("fusA-SPA", "tag", "fusA", "SPA"),
+        ("lolA-DAS", "degron", "lolA", "DAS"),
+        ("imp-DAS+4", "degron", "imp", "DAS+4"),
+        ("fabZ-kan", "marker", "fabZ", "kan"),
+        ("lpxc-kan", "marker", "lpxc", "kan"),
+        ("bamA{del(64)}", "mutant", "bamA", "{del(64)}"),
+        ("fabZ{F101Y}", "mutant", "fabZ", "{F101Y}"),
+        ("yfiO*", "mutant", "yfiO", "*"),
+    ],
+)
+def test_the_allele_classifier_splits_a_label_into_base_and_token(
+    label: str, kind: str, base: str, token: str
+) -> None:
+    """The suffix decides the leaf, and the base symbol is what gets resolved."""
+    allele = s.classify_allele_label(label)
+    assert allele is not None, label
+    assert (allele.kind, allele.base, allele.token) == (kind, base, token)
+    assert (allele.kind in s.STORABLE_ALLELE_KINDS) == (kind != "mutant")
+
+
+def test_a_plain_deletion_label_names_no_allele() -> None:
+    """Labels that LOOK suffixed but are not allele markers stay deletions.
+
+    ``istR-1``, ``murE-A`` and ``ygaQ_2`` all carry a hyphen or underscore suffix, and
+    none of them is a tag, a marker or a degron, so each must classify as a deletion
+    rather than be read as an allele of ``istR`` or ``murE``.
+    """
+    labels = ["thrA", "ygaQ_2", "istR-1", "murE-A", "ECK0503", "rdlABC", "proB"]
+    assert {label: s.classify_allele_label(label) for label in labels} == dict.fromkeys(
+        labels
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -521,6 +671,14 @@ _SYNTHETIC_GENES: tuple[str, ...] = (
     "ECK0005",
     "thrL-SPA",
     "nosuchgene",
+    # the allele columns (#749): a tag on a gene that also has a deletion column, a
+    # marker, two degrons of one gene that differ only in their token, and a point
+    # mutant that stays dropped
+    "thrA-SPA",
+    "hokC-kan",
+    "yaaP-DAS",
+    "yaaP-DAS+4",
+    "yaaP{P18S}",
 )
 
 
@@ -570,7 +728,7 @@ def test_read_refuses_a_renamed_first_column(tmp_path: Path) -> None:
 def test_read_refuses_a_row_that_is_not_the_header_width(tmp_path: Path) -> None:
     short = ("urea [1 mM] {1}", "0.0")
     path = _release(tmp_path / "s1.txt", extra_rows=(short,))
-    with pytest.raises(ValueError, match="has 2 fields, expected 12"):
+    with pytest.raises(ValueError, match="has 2 fields, expected 17"):
         s.read_fitness_matrix(path)
 
 
@@ -618,25 +776,40 @@ def bw25113(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> EcoliK12BW25113G
 def test_each_column_rule_claims_its_own_labels(
     bw25113: EcoliK12BW25113Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.7)
+    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     resolution = s.resolve_columns(_SYNTHETIC_GENES, bw25113, label="synthetic")
-    assert [(c.index, c.source_label, c.locus_tag) for c in resolution.kept] == [
-        (0, "thrA", "BW25113_0002"),
-        (1, "hokC", "BW25113_4412"),
-        (2, "yaaP", "BW25113_0004"),
-        (3, "yaaX", "BW25113_0008"),
+    assert [
+        (c.index, c.source_label, c.locus_tag, c.allele_kind, c.allele_token)
+        for c in resolution.kept
+    ] == [
+        (0, "thrA", "BW25113_0002", "deletion", None),
+        (1, "hokC", "BW25113_4412", "deletion", None),
+        (2, "yaaP", "BW25113_0004", "deletion", None),
+        (3, "yaaX", "BW25113_0008", "deletion", None),
+        (11, "thrA-SPA", "BW25113_0002", "tag", "SPA"),
+        (12, "hokC-kan", "BW25113_4412", "marker", "kan"),
+        (13, "yaaP-DAS", "BW25113_0004", "degron", "DAS"),
+        (14, "yaaP-DAS+4", "BW25113_0004", "degron", "DAS+4"),
     ]
+    # the allele columns' locus tags come from the SECOND pass, on the base symbol
+    assert resolution.allele_resolutions == {
+        "thrA-SPA": ("thrA", "BW25113_0002"),
+        "hokC-kan": ("hokC", "BW25113_4412"),
+        "yaaP-DAS": ("yaaP", "BW25113_0004"),
+        "yaaP-DAS+4": ("yaaP", "BW25113_0004"),
+    }
     assert resolution.dropped_labels == {
-        s.DROP_NOT_A_DELETION: ["thrL-SPA"],
+        s.DROP_POINT_MUTANT: ["yaaP{P18S}"],
         s.DROP_NOT_IN_ANNOTATION: ["nosuchgene"],
-        s.DROP_MERGED_LOCUS: ["ECK0001", "thrL"],
+        # 'thrL-SPA' inherits its base symbol's rule: thrL is a merged-locus fragment
+        s.DROP_MERGED_LOCUS: ["ECK0001", "thrL", "thrL-SPA"],
         s.DROP_AMBIGUOUS: ["ECK0005"],
         s.DROP_DUPLICATE_COLUMN: ["proB"],
     }
     assert resolution.dropped_columns == {
-        s.DROP_NOT_A_DELETION: 1,
+        s.DROP_POINT_MUTANT: 1,
         s.DROP_NOT_IN_ANNOTATION: 1,
-        s.DROP_MERGED_LOCUS: 2,
+        s.DROP_MERGED_LOCUS: 3,
         s.DROP_AMBIGUOUS: 1,
         s.DROP_DUPLICATE_COLUMN: 2,
     }
@@ -648,7 +821,7 @@ def test_each_column_rule_claims_its_own_labels(
 def test_a_pseudogene_locus_is_kept_as_a_perturbation_target(
     bw25113: EcoliK12BW25113Genome, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.7)
+    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     resolution = s.resolve_columns(_SYNTHETIC_GENES, bw25113, label="synthetic")
     (pseudo,) = [c for c in resolution.kept if c.source_label == "yaaP"]
     status = bw25113.resolve_gene_name(pseudo.locus_tag).status
@@ -667,29 +840,13 @@ def test_a_release_below_the_resolution_threshold_stops_the_build(
 def test_every_column_rule_has_a_description_in_the_drop_log() -> None:
     rules = dict(s.COLUMN_RULES)
     assert list(rules) == [
-        s.DROP_NOT_A_DELETION,
+        s.DROP_POINT_MUTANT,
         s.DROP_NOT_IN_ANNOTATION,
         s.DROP_MERGED_LOCUS,
         s.DROP_AMBIGUOUS,
         s.DROP_DUPLICATE_COLUMN,
     ]
     assert all(len(description) > 40 for description in rules.values())
-
-
-def test_the_non_deletion_suffixes_match_the_releases_own_allele_markers() -> None:
-    for label in (
-        "fusA-SPA",
-        "lolA-DAS",
-        "imp-DAS+4",
-        "fabZ-kan",
-        "lpxc-kan",
-        "bamA{del(64)}",
-        "fabZ{F101Y}",
-        "yfiO*",
-    ):
-        assert s.NON_DELETION_ALLELE.search(label) is not None, label
-    for label in ("thrA", "ygaQ_2", "istR-1", "murE-A", "ECK0503", "rdlABC"):
-        assert s.NON_DELETION_ALLELE.search(label) is None, label
 
 
 # --------------------------------------------------------------------------- #
@@ -772,9 +929,10 @@ def test_the_loader_is_registered_and_receives_the_bw25113_genome(
 
 
 # --------------------------------------------------------------------------- #
-# The whole loader, hermetic. Derived expectations for the synthetic frame:
-# 4 of 11 columns are kept (thrA, hokC, yaaP, yaaX), 57 conditions, one blank cell,
-# so 4 x 57 - 1 = 227 records and 7 x 57 = 399 dropped by the column rules.
+# The whole loader, hermetic. Derived expectations for the synthetic frame: 8 of 16
+# columns are kept (the deletions thrA, hokC, yaaP, yaaX plus the allele columns
+# thrA-SPA, hokC-kan, yaaP-DAS and yaaP-DAS+4), 57 conditions, one blank cell, so
+# 8 x 57 - 1 = 455 records and 8 x 57 = 456 dropped by the column rules.
 # --------------------------------------------------------------------------- #
 def _pin(strain: EcoliK12StrainName) -> AssemblyReferenceGenome:
     assembly_set = BACTERIAL_ASSEMBLY_SETS[strain]
@@ -802,7 +960,7 @@ def mirrored(
     s.deposit_raw_mirror(data_path=source, data_root=str(data_root))
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.7)
+    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     monkeypatch.setattr(
         s, "bacterial_genome", lambda host, strain, data_root=None: bw25113
     )
@@ -815,7 +973,9 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
 ) -> None:
     root = tmp_path / "dataset"
     dataset = s.EnvChemgenShiver2016Dataset(root=str(root))
-    assert len(dataset) == 227
+    assert len(dataset) == 455
+    # the allele columns sit on loci the deletion columns already name, so the gene set
+    # is unchanged by storing them: they are more STRAINS, not more genes
     assert sorted(dataset.gene_set) == [
         "BW25113_0002",
         "BW25113_0004",
@@ -836,11 +996,11 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     assert dataset[0]["publication"]["doi"] == s.DOI
 
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["kept_records"]) == (627, 227)
+    assert (drops["source_records"], drops["kept_records"]) == (912, 455)
     assert {r["rule"]: (r["n_columns"], r["n_records"]) for r in drops["rules"]} == {
-        s.DROP_NOT_A_DELETION: (1, 57),
+        s.DROP_POINT_MUTANT: (1, 57),
         s.DROP_NOT_IN_ANNOTATION: (1, 57),
-        s.DROP_MERGED_LOCUS: (2, 114),
+        s.DROP_MERGED_LOCUS: (3, 171),
         s.DROP_AMBIGUOUS: (1, 57),
         s.DROP_DUPLICATE_COLUMN: (2, 114),
         s.DROP_BLANK_CELL: (0, 1),
@@ -849,9 +1009,26 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(
     report = json.loads(
         (root / "preprocess" / "identifier_reconciliation.json").read_text()
     )
-    assert report["released_gene_columns"] == 11
+    assert report["released_gene_columns"] == 16
     assert report["released_condition_rows"] == 57
-    assert (report["kept_columns"], report["distinct_locus_tags"]) == (4, 4)
+    # 8 kept columns on 4 loci: the four allele columns are more STRAINS, not more genes
+    assert (report["kept_columns"], report["distinct_locus_tags"]) == (8, 4)
+    assert report["kept_columns_by_allele_kind"] == {
+        "degron": 2,
+        "deletion": 4,
+        "marker": 1,
+        "tag": 1,
+    }
+    assert report["kept_columns_by_allele_token"] == {
+        "DAS": 1,
+        "DAS+4": 1,
+        "SPA": 1,
+        "kan": 1,
+    }
+    assert report["allele_base_symbol_resolutions"]["yaaP-DAS+4"] == {
+        "base_symbol": "yaaP",
+        "locus_tag": "BW25113_0004",
+    }
     assert report["identifier_route"] == "gene_symbol"
     assert report["reconciliation"]["gene_namespace"] == ("ecoli_k12_bw25113_locus_tag")
     assert (root / "preprocess" / "build_manifest.json").is_file()
@@ -919,7 +1096,7 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
     assert len(resolution.kept) == 3720
     assert len({c.locus_tag for c in resolution.kept}) == 3720
     assert resolution.dropped_columns == {
-        s.DROP_NOT_A_DELETION: 134,
+        s.DROP_POINT_MUTANT: 134,
         s.DROP_NOT_IN_ANNOTATION: 49,
         s.DROP_MERGED_LOCUS: 48,
         s.DROP_AMBIGUOUS: 2,
@@ -1020,7 +1197,7 @@ def test_two_kept_columns_on_one_locus_tag_stop_the_build(
         stored, report = reconcile(genome, names, label=label)
         return pd.Series(["BW25113_0002"] * len(stored)), report
 
-    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.7)
+    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     monkeypatch.setattr(s, "reconcile_locus_tags", collide)
     with pytest.raises(RuntimeError, match="claimed by more than one kept column"):
         s.resolve_columns(_SYNTHETIC_GENES, bw25113, label="collide")
@@ -1035,7 +1212,7 @@ def test_a_kept_tag_that_is_no_locus_of_the_assembly_stops_the_build(
         stored, report = reconcile(genome, names, label=label)
         return pd.Series([f"BW25113_9{i:03d}" for i in range(len(stored))]), report
 
-    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.7)
+    monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     monkeypatch.setattr(s, "reconcile_locus_tags", stray)
     with pytest.raises(RuntimeError, match="not loci of the pinned assembly"):
         s.resolve_columns(_SYNTHETIC_GENES, bw25113, label="stray")
@@ -1057,10 +1234,10 @@ def test_verify_build_passes_l0_to_l4_on_the_synthetic_build(
 ) -> None:
     root = tmp_path / "dataset"
     s.EnvChemgenShiver2016Dataset(root=str(root))
-    report = s.verify_build(str(root), genome=bw25113, expected_count=227)
+    report = s.verify_build(str(root), genome=bw25113, expected_count=455)
     assert report.passed, report.summary()
     rows = {result.name: result for result in report.results}
-    assert rows["count"].details["observed"] == 227
+    assert rows["count"].details["observed"] == 455
     assert rows["pair_uniqueness"].details["n_duplicated"] == 0
     assert rows["measurement_type_consistent"].details["measurement_types"] == [
         "z_score"

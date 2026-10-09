@@ -37,10 +37,13 @@ sourcing layer.
   curve. A separate module so the served RNA-seq and proteome stores' schema closure
   does not move; the dataset is what the environment-response phenotype's interval
   carrier, replicate id and absolute-reference branch were added for (#776).
-- ``campos2018`` -- ``GrowthRateCampos2018Dataset``: the imaged Keio collection. Its
-  released phenotype is 26 features of ONE medium (19 morphological, 2 growth, 5 cell
-  cycle), of which only the Gompertz maximal growth rate has a phenotype class, served
-  as a ko/wt growth-rate ratio; the module records the exact mismatch for the other 25.
+- ``campos2018`` -- ``GrowthRateCampos2018Dataset`` and
+  ``MorphologyCampos2018Dataset``: the imaged Keio collection, split by readout. Its
+  released phenotype is 28 named features of ONE medium (Appendix Table S1's 21
+  morphological, 2 growth and 5 cell cycle symbols); the Gompertz maximal growth rate is
+  served as a ko/wt growth-rate ratio and the 26 morphology symbols as a
+  ``BacterialMorphologyPhenotype`` against the ``campos2018`` assay vocabulary. Only the
+  saturating optical density has no phenotype class left.
 - ``choe2019_growth_rate`` -- ``GrowthRateChoe2019Dataset`` and
   ``TranscriptionFactorKnockoutChoe2019Dataset``: the two writable arms of the
   genome-reduced ALE campaign. The first serves the two designed deletions built on the
@@ -159,6 +162,7 @@ from .caglar2017_doubling_time import (
     DoublingTimeCaglar2017Dataset as DoublingTimeCaglar2017Dataset,
 )
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
+from .campos2018 import MorphologyCampos2018Dataset as MorphologyCampos2018Dataset
 from .choe2019_growth_rate import GrowthRateChoe2019Dataset as GrowthRateChoe2019Dataset
 from .choe2019_growth_rate import (
     TranscriptionFactorKnockoutChoe2019Dataset as TranscriptionFactorKnockoutChoe2019Dataset,

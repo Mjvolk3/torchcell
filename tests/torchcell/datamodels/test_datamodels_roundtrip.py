@@ -96,6 +96,15 @@ _SPAN_CALL_EXAMPLE: dict[str, Any] = {
 
 # class qualname -> keyword arguments; committed when a validator wants a specific shape.
 EXAMPLES: dict[str, dict[str, Any]] = {
+    # The generic builder fills a str field with "x", which no registered morphology
+    # assay is named and no assay symbol is, so the #774 phenotype needs a real one.
+    "torchcell.datamodels.schema.BacterialMorphologyPhenotype": {
+        "assay": "campos2018",
+        "morphology": {"<L>": 2.81, "<W>": 1.08, "%2N": 0.19},
+        "morphology_coefficient_of_variation": {"CV_L": 0.24, "CV_W": 0.07},
+        "n_samples": 245,
+        "sample_unit": "cell",
+    },
     "torchcell.datamodels.schema.BackgroundAllele": {
         "systematic_gene_name": "YOR202W",
         "gene_name": "HIS3",

@@ -513,6 +513,7 @@ BACTERIAL_DATASETS = {
     "MetabolomeIshii2007Dataset",
     "MetabolomeRapp2026Dataset",
     "MetabolomeSchastnaya2021Dataset",
+    "MorphologyCampos2018Dataset",
     "PhageRbTnseqMutalik2020Dataset",
     "PromoterReporterMohiuddin2022Dataset",
     "ProteinTurnoverGupta2024Dataset",

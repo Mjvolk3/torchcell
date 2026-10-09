@@ -91,6 +91,7 @@ from torchcell.adapters import (
     MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
+    MorphologyCampos2018Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinTurnoverGupta2024Adapter,
@@ -128,7 +129,10 @@ from torchcell.datasets.ecoli.caglar2017 import (
 from torchcell.datasets.ecoli.caglar2017_doubling_time import (
     DoublingTimeCaglar2017Dataset,
 )
-from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+from torchcell.datasets.ecoli.campos2018 import (
+    GrowthRateCampos2018Dataset,
+    MorphologyCampos2018Dataset,
+)
 from torchcell.datasets.ecoli.choe2019_growth_rate import (
     GrowthRateChoe2019Dataset,
     TranscriptionFactorKnockoutChoe2019Dataset,
@@ -330,6 +334,14 @@ BACTERIAL: list[Bacterial] = [
         "ecoli_growth_rate_campos2018",
         GrowthRateCampos2018Dataset,
         "fitness phenotype",
+        env_perturbation=False,
+    ),
+    _case(
+        MorphologyCampos2018Adapter,
+        "campos2018_morphology",
+        "ecoli_morphology_campos2018",
+        MorphologyCampos2018Dataset,
+        "bacterial morphology phenotype",
         env_perturbation=False,
     ),
     _case(

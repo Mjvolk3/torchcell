@@ -148,8 +148,11 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.interned_constant</span><span class="w"> </span><span class="kn">import</span> <span class="n">split_experiment_dump</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BacterialCrisprActivationPerturbation</span><span class="p">,</span>
     <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
+    <span class="n">BacterialDegronPerturbation</span><span class="p">,</span>
     <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialMarkedAllelePerturbation</span><span class="p">,</span>
     <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
     <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
     <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
@@ -191,6 +194,14 @@
     <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
     <span class="n">PromoterReplacementPerturbation</span><span class="p">,</span>
     <span class="n">HeterologousPathwayPerturbation</span><span class="p">,</span>
+    <span class="c1"># round-2 leaves (#749, #792, #799). Each projects the same five properties the</span>
+    <span class="c1"># `bacterial perturbation` graph class declares; their leaf-specific fields</span>
+    <span class="c1"># (cassette, tag, degron, insertion_site, collection) carry no node property, as</span>
+    <span class="c1"># `BacterialDeletionPerturbation.collection` does not, and travel in the</span>
+    <span class="c1"># serialized record.</span>
+    <span class="n">BacterialMarkedAllelePerturbation</span><span class="p">,</span>
+    <span class="n">BacterialDegronPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialCrisprActivationPerturbation</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="sd">"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.</span>
 

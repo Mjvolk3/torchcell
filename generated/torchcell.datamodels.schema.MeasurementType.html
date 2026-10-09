@@ -142,7 +142,22 @@ scores are never silently compared.</p>
 <li><p><code class="docutils literal notranslate"><span class="pre">log2_ratio</span></code>: log2(treatment/control) barcode abundance / fitness ratio
 (Vanacloig).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">z_score</span></code>: standardized fitness/growth deviation (Wildenhain; Hoepfner z-score
-columns).</p></li>
+columns). It ALSO covers the variance-normalized colony-size score the
+<em>E. coli</em> chemical-genomics arrays release as a “fitness-score” (Shiver 2016,
+Nichols 2011 and the Collins 2006 pipeline they are computed with), and there is
+deliberately NO <code class="docutils literal notranslate"><span class="pre">s_score</span></code> member for that family. The reason is the sourcing
+rather than the statistics: no mirrored text calls the released number an S-score.
+Shiver 2016 says only that “These fitness-scores represent the statistical
+significance of a change in colony size for a particular condition, with negative
+and positive fitness-scores representing sensitivity and resistance,
+respectively”, and that its pipeline “built upon previous analyses [8,18]” –
+Nichols 2011 and Collins 2006, NEITHER of which is in the literature mirror
+(#691). Its own Methods name the standardizing step, “variance normalization of
+the data (to improve reproducibility of measurements between plates)”, which is
+what this member’s “standardized” means. A member named after a statistic whose
+definition we cannot read would be a label with no provenance behind it, so the
+S-score identification stays an explicitly labeled inference in the loader and in
+<code class="docutils literal notranslate"><span class="pre">[[torchcell.datasets.ecoli.shiver2016]]</span></code> (issue #749).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">sensitivity_score</span></code>: HIP/HOP sensitivity / fitness-defect score (Hoepfner MADL,
 Hillenmeyer, Lee).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">categorical</span></code>: NOMINAL qualitative call with no order among its terms

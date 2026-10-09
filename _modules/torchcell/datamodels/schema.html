@@ -3530,6 +3530,304 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">sequence_change</span><span class="si">}</span><span class="s2">"</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial perturbation leaves, round 2 (issues #749, #792, #799).</span>
+<span class="c1">#</span>
+<span class="c1"># Three more leaves on the same contract as the five above: each subclasses the</span>
+<span class="c1"># axis leaf its OUTCOME already belongs to, carries a required ``gene_namespace``</span>
+<span class="c1"># and overrides the name validator with the bacterial patterns, so the yeast</span>
+<span class="c1"># validator on ``GenePerturbation`` is untouched. The block is additive and</span>
+<span class="c1"># self-contained; nothing above it is edited.</span>
+<span class="c1">#</span>
+<span class="c1"># Each leaf exists because a landed loader MEASURED released rows it could not</span>
+<span class="c1"># type, and the counts are in the PR body and the dataset notes:</span>
+<span class="c1">#</span>
+<span class="c1"># - ``BacterialMarkedAllelePerturbation``: Shiver 2016 drops 134 Nichols 2011</span>
+<span class="c1">#   columns whose strains are tags and marked insertions rather than deletions</span>
+<span class="c1">#   (#749), and Babu 2014 drops 3,420 of 42,705 released interaction pairs whose</span>
+<span class="c1">#   donor or recipient is one of Butland 2008's 149 kan-marked, SPA-tagged</span>
+<span class="c1">#   essential-gene strains (#792). ONE leaf serves both, because the two issues</span>
+<span class="c1">#   describe the same construct: a selectable cassette integrated at a gene's</span>
+<span class="c1">#   terminus with the open reading frame intact, with or without an in-frame tag.</span>
+<span class="c1">#   Splitting them would file one physical collection under two labels.</span>
+<span class="c1"># - ``BacterialDegronPerturbation``: the Nichols ``-DAS`` columns, whose construct</span>
+<span class="c1">#   asserts regulated PROTEOLYSIS of the product conditional on an adaptor, which a</span>
+<span class="c1">#   marked allele does not assert (#749).</span>
+<span class="c1"># - ``BacterialCrisprActivationPerturbation``: Niu 2019's 57-target activation arm,</span>
+<span class="c1">#   four fifths of that release's numeric cells (#799).</span>
+<span class="c1">#</span>
+<span class="c1"># Point mutants and codon substitutions are deliberately NOT here: a called or</span>
+<span class="c1"># designed single-base allele is issue #731's leaf, and inventing a second one</span>
+<span class="c1"># would put one kind of record in two classes.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMarkedAllelePerturbation</span><span class="p">(</span><span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial gene carrying a selectable cassette at a terminus, ORF intact.</span>
+
+<span class="sd">    The leaf #749 asks for as a tagged-allele leaf and #792 as a hypomorph leaf. It is</span>
+<span class="sd">    one class because the two releases describe one construct: a selectable marker</span>
+<span class="sd">    integrated at the gene's own locus, optionally fusing an in-frame peptide tag, with</span>
+<span class="sd">    the coding sequence otherwise intact. Butland 2008's 149 essential-gene strains are</span>
+<span class="sd">    simultaneously "kan-marked", "tagged with ... a C-terminal sequential peptide</span>
+<span class="sd">    affinity tag (SPA)" and "potentially hypomorphic", so a tagged leaf and a hypomorph</span>
+<span class="sd">    leaf would both claim the same strain set.</span>
+
+<span class="sd">    It sits on AXIS 3 (a sequence-level allelic change at the locus) for the same reason</span>
+<span class="sd">    the yeast ``DampPerturbation`` does: a cassette in the 3' UTR is an edit to the</span>
+<span class="sd">    gene's own sequence, not a trans-acting effector, and the gene is neither absent nor</span>
+<span class="sd">    copy-number-changed. The mechanism is SO:0001218 ``transgenic_insertion`` -- what was</span>
+<span class="sd">    done to the DNA is the insertion of recombinant bases -- which is the same honest</span>
+<span class="sd">    state/mechanism pairing ``TransposonInsertionPerturbation`` carries, minus its</span>
+<span class="sd">    ``state="absent"``: here the gene still makes a product.</span>
+
+<span class="sd">    ``allele_effect`` is REQUIRED with no default, because it is a claim about the</span>
+<span class="sd">    strain that only the source can make: a C-terminal tag on a non-essential gene may</span>
+<span class="sd">    be a purification handle with no growth consequence, while the same cassette on an</span>
+<span class="sd">    essential gene is how an essential gene is interrogated at all. It is three-valued</span>
+<span class="sd">    rather than a bool so a silent release is written as ``not_stated`` instead of being</span>
+<span class="sd">    asserted not to be hypomorphic. There is deliberately NO fold-change or</span>
+<span class="sd">    ``expression_range`` field: Butland 2008 states the magnitude is unknown ("in the</span>
+<span class="sd">    majority of cases the nature of the observed hypomorphic defect is unknown"), and</span>
+<span class="sd">    the yeast DAmP leaf's 4-to-10-fold default would assert a number no bacterial source</span>
+<span class="sd">    releases. ``tag``, ``terminus``, ``cassette`` and ``insertion_site`` are each</span>
+<span class="sd">    optional and each stated only when a mirrored source states it, so an untagged</span>
+<span class="sd">    marked allele and a SPA-tagged one are the same class with the fusion present or</span>
+<span class="sd">    absent.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Bacterial gene with a selectable cassette integrated at a terminus, "</span>
+        <span class="s2">"optionally fusing an in-frame tag; the open reading frame is intact"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_marked_allele"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"bacterial_marked_allele"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0001218"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"transgenic_insertion"</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the selectable cassette integrated at the locus, verbatim (e.g. "</span>
+        <span class="s2">"'kan'); None when the source does not name it. Optional for the same reason "</span>
+        <span class="s2">"``BacterialDeletionPerturbation.cassette`` is: a gene-perturbation leaf is not "</span>
+        <span class="s2">"a ``ProvenanceGapMixin`` carrier, and an array whose strain construction lives "</span>
+        <span class="s2">"in an unmirrored method paper names no marker"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">insertion_site</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s1">'where in the locus the cassette went, verbatim (e.g. "3</span><span class="se">\'</span><span class="s1">-UTR"); '</span>
+        <span class="s2">"None when the source states only that the strain is marked"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">tag</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the in-frame peptide tag fused to the product, verbatim "</span>
+        <span class="s2">"(e.g. 'SPA'); None when the cassette carries no fusion"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">terminus</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"N"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which end of the product the tag is fused to, when the SOURCE "</span>
+        <span class="s2">"states it; None when there is no fusion, and None when a release names the tag "</span>
+        <span class="s2">"but not its end (Shiver's '-SPA' columns, whose strain construction is in an "</span>
+        <span class="s2">"unmirrored method paper)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">allele_effect</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"hypomorphic"</span><span class="p">,</span> <span class="s2">"unaffected"</span><span class="p">,</span> <span class="s2">"not_stated"</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the SOURCE says the cassette does to the gene's function: "</span>
+        <span class="s2">"``hypomorphic`` (reduced function or reduced transcript), ``unaffected`` (the "</span>
+        <span class="s2">"source states the tagged allele behaves as wild type), or ``not_stated``. "</span>
+        <span class="s2">"Required with no default, and three-valued rather than a bool, because a "</span>
+        <span class="s2">"gene-perturbation leaf cannot carry a ``ProvenanceGap``: without an explicit "</span>
+        <span class="s2">"``not_stated`` member, a release that is silent would have to be written as "</span>
+        <span class="s2">"False, which asserts the allele is NOT hypomorphic"</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the physical strain set this allele came from, verbatim (e.g. "</span>
+        <span class="s2">"'SPA-tagged essential-gene collection'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"mechanism_so_id"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_mechanism_so_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Mechanism SO id is well-formed."""</span>
+        <span class="k">return</span> <span class="n">_validate_so_id</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace_and_fusion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialMarkedAllelePerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The tag's own namespace agrees, and a terminus names a tag."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tag</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">terminus</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"terminus </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">terminus</span><span class="si">!r}</span><span class="s2"> is stated with no tag; a terminus without "</span>
+                <span class="s2">"a fusion names nothing"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialDegronPerturbation</span><span class="p">(</span><span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial gene fused to a degron that directs its product to a protease.</span>
+
+<span class="sd">    The Nichols 2011 ``-DAS`` columns (#749). It is a SEPARATE leaf from</span>
+<span class="sd">    ``BacterialMarkedAllelePerturbation`` although the DNA edit is the same kind of</span>
+<span class="sd">    in-frame cassette, because the construct asserts something the marked allele does</span>
+<span class="sd">    not: the product is targeted for REGULATED PROTEOLYSIS, and in the ssrA/DAS system</span>
+<span class="sd">    that degradation happens only when the adaptor is present. The adaptor's inducing</span>
+<span class="sd">    condition is therefore part of what the strain is, and a leaf without a slot for it</span>
+<span class="sd">    would make an induced depletion indistinguishable from an uninduced control.</span>
+
+<span class="sd">    AXIS 3 and SO:0001218 ``transgenic_insertion`` for the same reason the marked-allele</span>
+<span class="sd">    leaf carries them: the gene is present and its own sequence is what changed. The</span>
+<span class="sd">    CONSEQUENCE (how much product is left) is a phenotype, never a field here (M1).</span>
+
+<span class="sd">    ``degron`` is the one required field, because it is the one thing a release that</span>
+<span class="sd">    states a degron at all always states. Everything else is stated when the source</span>
+<span class="sd">    states it: two columns of one locus differing only in their degron ('imp-DAS' and</span>
+<span class="sd">    'imp-DAS+4') are two strains on the strength of that field alone.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Bacterial gene fused to a degron directing its product to a protease"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_degron"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"bacterial_degron"</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0001218"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"transgenic_insertion"</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">degron</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the degron fused to the product, verbatim (e.g. 'DAS+4', "</span>
+        <span class="s2">"'ssrA-DAS')"</span>
+    <span class="p">)</span>
+    <span class="n">terminus</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"N"</span><span class="p">,</span> <span class="s2">"C"</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which end of the product the degron is fused to, when the SOURCE "</span>
+        <span class="s2">"states it. Optional for the same reason the marked-allele leaf's is: Shiver "</span>
+        <span class="s2">"2016 releases its degron columns as a label suffix ('-DAS', '-DAS+4') and "</span>
+        <span class="s2">"describes none of those strains' construction, and its deferral target is not "</span>
+        <span class="s2">"in the literature mirror. A required field with no source would have to be "</span>
+        <span class="s2">"filled with a guess, which is the exact failure "</span>
+        <span class="s2">"``BacterialBackgroundAllele.functional`` was measured to have"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">protease</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the protease the degron directs the product to, verbatim (e.g. "</span>
+        <span class="s2">"'ClpXP'); None when the source does not name it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">adaptor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the adaptor the degron needs to be recognized, verbatim (e.g. "</span>
+        <span class="s2">"'SspB'); None when the source does not name it"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">inducing_condition</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what must be present for the degradation to happen, verbatim "</span>
+        <span class="s2">"(e.g. 'sspB expressed from an arabinose-inducible promoter'); None when the "</span>
+        <span class="s2">"construct is constitutive or the source does not state it. The INDUCER "</span>
+        <span class="s2">"molecule and its dose stay a ``SmallMoleculePerturbation`` on the "</span>
+        <span class="s2">"environment, as on ``PromoterReplacementPerturbation``, so the compound layer "</span>
+        <span class="s2">"is not restated here"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the selectable cassette carrying the degron, verbatim (e.g. "</span>
+        <span class="s2">"'kan'); None when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">collection</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the physical strain set this allele came from, verbatim; None "</span>
+        <span class="s2">"when unsourced"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">construction</span><span class="p">:</span> <span class="n">StrainConstruction</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"accession / lab / batch / plate of this strain"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"mechanism_so_id"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_mechanism_so_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Mechanism SO id is well-formed."""</span>
+        <span class="k">return</span> <span class="n">_validate_so_id</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialDegronPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialCrisprActivationPerturbation</span><span class="p">(</span><span class="n">CrisprActivationPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""CRISPRa of a bacterial gene, reusing the shared guide construct.</span>
+
+<span class="sd">    The mirror image of ``BacterialCrisprInterferencePerturbation``, and the same</span>
+<span class="sd">    justification: the whole expression axis is inherited unchanged -- present gene,</span>
+<span class="sd">    ``sgRNA`` mechanism, ``expression_direction="increased"`` -- and the ``crispr``</span>
+<span class="sd">    construct the yeast CRISPRa leaf already defines carries the guide and the</span>
+<span class="sd">    dead-Cas activator, so the payload is described once for both families. Only the</span>
+<span class="sd">    identifier space differs.</span>
+
+<span class="sd">    Niu 2019's activation arm is what it was added for: a ``dCas9*-MCPSoxS`` activator</span>
+<span class="sd">    directed by a released ``N20`` spacer against a BW25113 locus. Before it, the only</span>
+<span class="sd">    bacterial leaf that could state ``increased`` was</span>
+<span class="sd">    ``PromoterReplacementPerturbation``, which asserts SO:1000032 ``delins`` -- a native</span>
+<span class="sd">    promoter removed and a characterized part put in its place -- an edit a</span>
+<span class="sd">    guide-directed activator never makes.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"CRISPR activation (increased expression) of a bacterial gene by locus tag"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_crispr_activation"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_crispr_activation"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="p">)</span>
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"which host's locus-tag namespace systematic_gene_name is written in"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"source released; None when the source released it as stored"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name."""</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialCrisprActivationPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares."""</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># End of the round-2 bacterial perturbation leaves.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">SgaPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SgaKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">SgaNatMxDeletionPerturbation</span>
@@ -3565,6 +3863,10 @@
     <span class="o">|</span> <span class="n">BacterialSequenceVariantPerturbation</span>
     <span class="o">|</span> <span class="n">BacterialSiteVariantPerturbation</span>
     <span class="o">|</span> <span class="n">BacterialSpanDeletionPerturbation</span>
+    <span class="c1"># round-2 bacterial leaves (#749, #792, #799)</span>
+    <span class="o">|</span> <span class="n">BacterialMarkedAllelePerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialDegronPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialCrisprActivationPerturbation</span>
 <span class="p">)</span>
 
 
@@ -4296,11 +4598,102 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># A physical exposure whose DOSE is not a concentration (issue #749 item 3).</span>
+<span class="c1">#</span>
+<span class="c1"># Follows ``PhagePerturbation``'s precedent exactly: a dose that is not a</span>
+<span class="c1"># concentration gets its own named field rather than a new ``ConcentrationUnit``</span>
+<span class="c1"># member that would make a time look like a dose unit. Additive, a sibling of the</span>
+<span class="c1"># other environment leaves, and nothing above it is edited.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhysicalExposurePerturbation</span><span class="p">(</span><span class="n">EnvironmentPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A timed physical exposure (irradiation, heat shock, ...) dosed by time or fluence.</span>
+
+<span class="sd">    ``EnvironmentPhysicalPerturbation`` carries a scalar factor whose magnitude is a</span>
+<span class="sd">    ``Concentration``, which works for pH and osmolarity and fails for an exposure: a</span>
+<span class="sd">    UV dose is an irradiance times a time, and when a release states only the time there</span>
+<span class="sd">    is no concentration to write. Shiver 2016 releases its UV conditions as</span>
+<span class="sd">    ``UV [12 sec] {4}`` with no irradiance anywhere in the paper or its SI, measured over</span>
+<span class="sd">    every text-searchable mirrored file, so no fluence exists to compute.</span>
+
+<span class="sd">    The fix is the one ``PhagePerturbation`` already made for the multiplicity of</span>
+<span class="sd">    infection: the dose takes its own field in the unit its name states, instead of a</span>
+<span class="sd">    ``ConcentrationUnit`` member (``sec``, ``J/m2``) that would make an exposure time</span>
+<span class="sd">    look like a concentration. ``factor`` reuses the ``PhysicalFactor`` vocabulary so a</span>
+<span class="sd">    radiation exposure and a qualitative ``EnvironmentPhysicalPerturbation(factor=</span>
+<span class="sd">    radiation)`` name the same variable.</span>
+
+<span class="sd">    An exposure always HAS a dose, so one of the three dose fields is stated or the</span>
+<span class="sd">    absent one is a typed ``ProvenanceGap``, never a silent ``None``. The three are not</span>
+<span class="sd">    redundant: a release may state the time alone (Shiver), the fluence alone, or the</span>
+<span class="sd">    irradiance and the time from which a fluence follows. No cross-field arithmetic is</span>
+<span class="sd">    asserted, because an irradiance a source reports may be nominal or time-averaged and</span>
+<span class="sd">    multiplying it would manufacture a fluence the source never released.</span>
+<span class="sd">    """</span>
+
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"physical_exposure"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"physical_exposure"</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Timed physical exposure dosed by duration, irradiance or fluence"</span>
+    <span class="p">)</span>
+    <span class="n">factor</span><span class="p">:</span> <span class="n">PhysicalFactor</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the neutral physical variable the culture was exposed to, from the "</span>
+        <span class="s2">"same vocabulary the scalar physical leaf uses (e.g. ``radiation``)"</span>
+    <span class="p">)</span>
+    <span class="n">exposure_duration_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how long the exposure lasted, unit seconds; None only with a "</span>
+        <span class="s2">"ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">irradiance_w_per_m2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the delivered power per area, unit W/m^2, when the source states "</span>
+        <span class="s2">"it; None only with a ProvenanceGap"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">fluence_j_per_m2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the delivered energy per area, unit J/m^2, when the source "</span>
+        <span class="s2">"releases it; None only with a ProvenanceGap. NOT back-computed from the two "</span>
+        <span class="s2">"fields above"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">source_description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the exposure apparatus and its spectrum as the source states them, "</span>
+        <span class="s2">"verbatim (e.g. 'germicidal lamp, 254 nm'); None when unstated"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_dose</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PhysicalExposurePerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""At least one dose field is stated or gapped, and every stated one is &gt; 0."""</span>
+        <span class="n">dose_fields</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">"exposure_duration_seconds"</span><span class="p">,</span>
+            <span class="s2">"irradiance_w_per_m2"</span><span class="p">,</span>
+            <span class="s2">"fluence_j_per_m2"</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">gapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">gapped</span> <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dose_fields</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"PhysicalExposurePerturbation states no dose and declares no "</span>
+                <span class="sa">f</span><span class="s2">"ProvenanceGap on any of </span><span class="si">{</span><span class="n">dose_fields</span><span class="si">}</span><span class="s2">; an exposure always has a dose, "</span>
+                <span class="s2">"so an unreleased one is a typed gap, never a silent None"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">dose_fields</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"PhysicalExposurePerturbation.</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> must be &gt; 0, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
 <span class="n">EnvironmentPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SmallMoleculePerturbation</span>
     <span class="o">|</span> <span class="n">EnvironmentPhysicalPerturbation</span>
     <span class="o">|</span> <span class="n">BiologicPerturbation</span>
     <span class="o">|</span> <span class="n">PhagePerturbation</span>
+    <span class="c1"># a dose that is not a concentration (#749 item 3)</span>
+    <span class="o">|</span> <span class="n">PhysicalExposurePerturbation</span>
 <span class="p">)</span>
 
 
@@ -6098,7 +6491,22 @@
 <span class="sd">    - ``log2_ratio``: log2(treatment/control) barcode abundance / fitness ratio</span>
 <span class="sd">      (Vanacloig).</span>
 <span class="sd">    - ``z_score``: standardized fitness/growth deviation (Wildenhain; Hoepfner z-score</span>
-<span class="sd">      columns).</span>
+<span class="sd">      columns). It ALSO covers the variance-normalized colony-size score the</span>
+<span class="sd">      *E. coli* chemical-genomics arrays release as a "fitness-score" (Shiver 2016,</span>
+<span class="sd">      Nichols 2011 and the Collins 2006 pipeline they are computed with), and there is</span>
+<span class="sd">      deliberately NO ``s_score`` member for that family. The reason is the sourcing</span>
+<span class="sd">      rather than the statistics: no mirrored text calls the released number an S-score.</span>
+<span class="sd">      Shiver 2016 says only that "These fitness-scores represent the statistical</span>
+<span class="sd">      significance of a change in colony size for a particular condition, with negative</span>
+<span class="sd">      and positive fitness-scores representing sensitivity and resistance,</span>
+<span class="sd">      respectively", and that its pipeline "built upon previous analyses [8,18]" --</span>
+<span class="sd">      Nichols 2011 and Collins 2006, NEITHER of which is in the literature mirror</span>
+<span class="sd">      (#691). Its own Methods name the standardizing step, "variance normalization of</span>
+<span class="sd">      the data (to improve reproducibility of measurements between plates)", which is</span>
+<span class="sd">      what this member's "standardized" means. A member named after a statistic whose</span>
+<span class="sd">      definition we cannot read would be a label with no provenance behind it, so the</span>
+<span class="sd">      S-score identification stays an explicitly labeled inference in the loader and in</span>
+<span class="sd">      ``[[torchcell.datasets.ecoli.shiver2016]]`` (issue #749).</span>
 <span class="sd">    - ``sensitivity_score``: HIP/HOP sensitivity / fitness-defect score (Hoepfner MADL,</span>
 <span class="sd">      Hillenmeyer, Lee).</span>
 <span class="sd">    - ``categorical``: NOMINAL qualitative call with no order among its terms</span>

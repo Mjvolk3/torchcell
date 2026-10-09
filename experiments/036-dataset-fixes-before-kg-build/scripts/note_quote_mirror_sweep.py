@@ -463,6 +463,24 @@ def fold_typography(text: str) -> str:
     return "".join(_CURLY_TO_ASCII.get(char, char) for char in text)
 
 
+def inside_math_span(mirror: str, pieces: list[Difference]) -> bool:
+    r"""True when every difference sits inside a ``$...$`` span of the mirror text.
+
+    MinerU spaces out the characters of a formula (``$3 3 0 \ E .$``), and a note that
+    closes those spaces up changes only spaces, which would otherwise be charged to
+    MD037. The enclosing dollar signs are what tell the two apart.
+    """
+    if "$" not in mirror or not pieces:
+        return False
+    spans: list[tuple[int, int]] = []
+    opens = [index for index, char in enumerate(mirror) if char == "$"]
+    for start, end in zip(opens[0::2], opens[1::2], strict=False):
+        spans.append((start, end))
+    if not spans:
+        return False
+    return all(any(start < piece.at <= end for start, end in spans) for piece in pieces)
+
+
 def classify_drift(mirror: str, note: str) -> DriftSignature:
     r"""Attribute the difference between the mirror's bytes and the note's rendition.
 
@@ -480,7 +498,7 @@ def classify_drift(mirror: str, note: str) -> DriftSignature:
     ) and {"<", ">"} & set(note_side)
     if autolinked:
         return DriftSignature.markdownlint_autolink
-    if _MATH_MARKUP & set(mirror_side):
+    if _MATH_MARKUP & set(mirror_side) or inside_math_span(mirror, pieces):
         return DriftSignature.ocr_math_markup
     for piece in pieces:
         if piece.mirror.strip() == "" and piece.mirror != "" and piece.note == "":
@@ -553,6 +571,16 @@ def scan_notes(
         present = anchor_tokens(text)
         for probe in probes:
             check = checks[probe.index]
+            # The anchor set gates everything: a quote present verbatim has all of its
+            # own long words in the note, so a note missing half of them cannot hold it
+            # and needs no substring search. Doing the substring search first instead
+            # cost 1,695 x 1,546 scans of a 20 kB note, about 12 minutes per run.
+            hits = sum(1 for anchor in probe.anchors if anchor in present)
+            if probe.anchors:
+                if hits * 2 < len(probe.anchors):
+                    continue
+            elif probe.normalized not in text:
+                continue
             if probe.normalized in text:
                 check.renditions.append(
                     NoteRendition(
@@ -564,8 +592,7 @@ def scan_notes(
                     )
                 )
                 continue
-            hits = sum(1 for anchor in probe.anchors if anchor in present)
-            if not probe.anchors or hits * 2 < len(probe.anchors):
+            if not probe.anchors:
                 continue
             ratio, window = best_window(probe, text)
             if ratio < _NEAR_RATIO or not window:
@@ -580,19 +607,6 @@ def scan_notes(
                         status=NoteStatus.variant_in_mirror,
                         ratio=round(ratio, 4),
                         note_text=window,
-                    )
-                )
-                continue
-            elsewhere = in_any_pinned_artifact(window, artifacts, cache)
-            if elsewhere is not None:
-                check.renditions.append(
-                    NoteRendition(
-                        note=rel,
-                        hook_excluded=excluded,
-                        status=NoteStatus.variant_in_mirror,
-                        ratio=round(ratio, 4),
-                        note_text=window,
-                        mirror_text=elsewhere.name,
                     )
                 )
                 continue
@@ -626,6 +640,22 @@ def scan_notes(
                         ratio=round(ratio, 4),
                         note_text=window,
                         mirror_text=source,
+                    )
+                )
+                continue
+            # Only a near-identical candidate pays for the cross-paper check, which scans
+            # every pinned artifact: running it ahead of the paraphrase bound made the
+            # whole-tree sweep pay it 200 times instead of 40.
+            elsewhere = in_any_pinned_artifact(window, artifacts, cache)
+            if elsewhere is not None:
+                check.renditions.append(
+                    NoteRendition(
+                        note=rel,
+                        hook_excluded=excluded,
+                        status=NoteStatus.variant_in_mirror,
+                        ratio=round(ratio, 4),
+                        note_text=window,
+                        mirror_text=elsewhere.name,
                     )
                 )
                 continue

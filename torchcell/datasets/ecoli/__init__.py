@@ -177,6 +177,11 @@ sourcing layer.
   only through a web server whose API answered 502 the day the row was settled, so there
   is no artifact to hash. The module holds the inventory, the quotes and the five
   required titer fields the release cannot fill.
+- ``typas2008`` -- the eSGA companion record: NOT loaded, because the release prints no
+  interaction score. Its 42 released pairs are the TERMS neg (sick), neg (lethal) and
+  pos, its one numeric table is a marker co-transduction check, and its 12 by 12 cross is
+  four heat-map panels. The deposit IS mirrored in full, and Babu 2014 holds only 2 of
+  the 42 pairs, so the row is blocked rather than subsumed.
 """
 
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset

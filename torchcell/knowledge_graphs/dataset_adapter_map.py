@@ -70,7 +70,9 @@ from torchcell.adapters import (
     IsoprenylAcetateTiterKang2026Adapter,
     Lian2019Adapter,
     MetaboliteDaSilveira2014Adapter,
+    MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
+    MetaboliteProductionPhaseMenasalvas2025Adapter,
     MetaboliteZelezniak2018Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeIshii2007Adapter,
@@ -91,6 +93,7 @@ from torchcell.adapters import (
     ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
+    ProteomeMenasalvas2025Adapter,
     ProteomeMessner2023Adapter,
     ProteomeMori2021Adapter,
     ProteomePercentDeSiqueira2025Adapter,
@@ -214,6 +217,9 @@ from torchcell.datasets.pputida.lim2025 import (
 )
 from torchcell.datasets.pputida.menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset,
+    MetaboliteGrowthPhaseMenasalvas2025Dataset,
+    MetaboliteProductionPhaseMenasalvas2025Dataset,
+    ProteomeMenasalvas2025Dataset,
 )
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
@@ -417,6 +423,13 @@ dataset_adapter_map: dict[type, type] = {
     IsoprenolToleranceLim2025Dataset: IsoprenolToleranceLim2025Adapter,
     ProteomeLim2025Dataset: ProteomeLim2025Adapter,
     IsoprenolSelectionMenasalvas2025Dataset: IsoprenolSelectionMenasalvas2025Adapter,
+    ProteomeMenasalvas2025Dataset: ProteomeMenasalvas2025Adapter,
+    MetaboliteGrowthPhaseMenasalvas2025Dataset: (
+        MetaboliteGrowthPhaseMenasalvas2025Adapter
+    ),
+    MetaboliteProductionPhaseMenasalvas2025Dataset: (
+        MetaboliteProductionPhaseMenasalvas2025Adapter
+    ),
     CrispriArrayYunus2026Dataset: CrispriArrayYunus2026Adapter,
     CrispriDifferentialProteomeYunus2026Dataset: (
         CrispriDifferentialProteomeYunus2026Adapter

@@ -160,6 +160,15 @@ from .lopez2024_adapter import (
 from .menasalvas2025_adapter import (
     IsoprenolSelectionMenasalvas2025Adapter as IsoprenolSelectionMenasalvas2025Adapter,
 )
+from .menasalvas2025_metabolite_growth_adapter import (
+    MetaboliteGrowthPhaseMenasalvas2025Adapter as MetaboliteGrowthPhaseMenasalvas2025Adapter,
+)
+from .menasalvas2025_metabolite_production_adapter import (
+    MetaboliteProductionPhaseMenasalvas2025Adapter as MetaboliteProductionPhaseMenasalvas2025Adapter,
+)
+from .menasalvas2025_proteome_adapter import (
+    ProteomeMenasalvas2025Adapter as ProteomeMenasalvas2025Adapter,
+)
 from .messner2023_adapter import (
     ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
 )
@@ -420,6 +429,9 @@ pputida_adapters = [
     "IsoprenolToleranceLim2025Adapter",
     "ProteomeLim2025Adapter",
     "IsoprenolSelectionMenasalvas2025Adapter",
+    "MetaboliteGrowthPhaseMenasalvas2025Adapter",
+    "MetaboliteProductionPhaseMenasalvas2025Adapter",
+    "ProteomeMenasalvas2025Adapter",
     "CrispriArrayYunus2026Adapter",
     "CrispriDifferentialProteomeYunus2026Adapter",
     "CrispriKnockdownYunus2026Adapter",

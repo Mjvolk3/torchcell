@@ -161,6 +161,7 @@ RUN_ALL_ORDER = [
     "run_segregant_growth",
     "run_product_titer",
     "run_bacterial_protein_abundance",
+    "run_bacterial_metabolite",
 ]
 
 
@@ -2490,6 +2491,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         desiqueira2025,
         kang2026,
         lim2025,
+        menasalvas2025,
         yunus2026,
     )
 
@@ -2510,6 +2512,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     monkeypatch.setattr(lim2025, "run_proteome_verification", record("lim"))
     monkeypatch.setattr(caglar2017, "run_verification", record("caglar"))
     monkeypatch.setattr(yunus2026, "verify_build", record("yunus"))
+    monkeypatch.setattr(menasalvas2025, "verify_build", record("menasalvas"))
 
     assert runners._verify_foo_titer("/root", "/data").dataset_name == "foo"
     assert (
@@ -2536,6 +2539,18 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     assert (
         runners._verify_yunus_panel_proteome("/root", "/data").dataset_name == "yunus"
     )
+    assert (
+        runners._verify_menasalvas_proteome("/root", "/data").dataset_name
+        == "menasalvas"
+    )
+    assert (
+        runners._verify_menasalvas_metabolite_growth("/root", "/data").dataset_name
+        == "menasalvas"
+    )
+    assert (
+        runners._verify_menasalvas_metabolite_production("/root", "/data").dataset_name
+        == "menasalvas"
+    )
     assert calls == [
         ("foo", ("/root", "/data"), {}),
         ("banerjee", ("/root", "/data"), {}),
@@ -2548,6 +2563,9 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         ("caglar", ("proteome", "/data"), {}),
         ("yunus", ("/root", "/data"), {"family": "titer"}),
         ("yunus", ("/root", "/data"), {"family": "panel_proteome"}),
+        ("menasalvas", ("/root", "/data"), {"family": "proteome"}),
+        ("menasalvas", ("/root", "/data"), {"family": "metabolite_growth"}),
+        ("menasalvas", ("/root", "/data"), {"family": "metabolite_production"}),
     ]
 
 
@@ -2587,7 +2605,19 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         "proteome_lim2025": "data/torchcell/proteome_lim2025",
         "proteome_caglar2017": "data/torchcell/proteome_caglar2017",
         "proteome_ishii2007": "data/torchcell/proteome_ishii2007",
+        "proteome_menasalvas2025": "data/torchcell/proteome_menasalvas2025",
         "crispri_panel_proteome_yunus2026": (
             "data/torchcell/crispri_panel_proteome_yunus2026"
+        ),
+    }
+    assert {
+        name: spec["root"]
+        for name, spec in runners.BACTERIAL_METABOLITE_DATASETS.items()
+    } == {
+        "metabolite_growth_menasalvas2025": (
+            "data/torchcell/metabolite_growth_menasalvas2025"
+        ),
+        "metabolite_production_menasalvas2025": (
+            "data/torchcell/metabolite_production_menasalvas2025"
         ),
     }

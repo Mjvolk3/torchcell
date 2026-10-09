@@ -90,7 +90,9 @@ from torchcell.adapters import (
     IsoprenolTiterYunus2026Adapter,
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
+    MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
+    MetaboliteProductionPhaseMenasalvas2025Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
@@ -102,6 +104,7 @@ from torchcell.adapters import (
     ProteomeBanerjee2025Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
+    ProteomeMenasalvas2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
@@ -209,6 +212,9 @@ from torchcell.datasets.pputida.lim2025 import (
 )
 from torchcell.datasets.pputida.menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset,
+    MetaboliteGrowthPhaseMenasalvas2025Dataset,
+    MetaboliteProductionPhaseMenasalvas2025Dataset,
+    ProteomeMenasalvas2025Dataset,
 )
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
@@ -275,6 +281,7 @@ TURNOVER = "protein turnover phenotype"
 INTERACTION = "gene interaction phenotype"
 FLUX = "flux phenotype"
 PROMOTER_ACTIVITY = "promoter activity phenotype"
+METABOLITE = "metabolite phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -738,6 +745,30 @@ BACTERIAL: list[Bacterial] = [
         IsoprenolSelectionMenasalvas2025Dataset,
         RESPONSE,
         crispr=True,
+    ),
+    _case(
+        ProteomeMenasalvas2025Adapter,
+        "menasalvas2025_proteome",
+        "proteome_menasalvas2025",
+        ProteomeMenasalvas2025Dataset,
+        PROTEOME,
+        variant=True,
+    ),
+    _case(
+        MetaboliteGrowthPhaseMenasalvas2025Adapter,
+        "menasalvas2025_metabolite_growth",
+        "metabolite_growth_menasalvas2025",
+        MetaboliteGrowthPhaseMenasalvas2025Dataset,
+        METABOLITE,
+        variant=True,
+    ),
+    _case(
+        MetaboliteProductionPhaseMenasalvas2025Adapter,
+        "menasalvas2025_metabolite_production",
+        "metabolite_production_menasalvas2025",
+        MetaboliteProductionPhaseMenasalvas2025Dataset,
+        METABOLITE,
+        variant=True,
     ),
     _case(
         CrispriArrayYunus2026Adapter,

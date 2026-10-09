@@ -2335,6 +2335,37 @@ def _verify_yunus_panel_proteome(
     return yunus2026.verify_build(dataset_root, data_root, family="panel_proteome")
 
 
+def _verify_menasalvas_proteome(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Menasalvas 2025 deposited proteome: the shared gate plus its own L1-L4 rows."""
+    from torchcell.datasets.pputida import menasalvas2025
+
+    return menasalvas2025.verify_build(dataset_root, data_root, family="proteome")
+
+
+def _verify_menasalvas_metabolite_growth(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Menasalvas 2025 data S1-1, growth phase: the metabolite gate of that phase."""
+    from torchcell.datasets.pputida import menasalvas2025
+
+    return menasalvas2025.verify_build(
+        dataset_root, data_root, family="metabolite_growth"
+    )
+
+
+def _verify_menasalvas_metabolite_production(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Menasalvas 2025 data S1-1, production phase: that phase's metabolite gate."""
+    from torchcell.datasets.pputida import menasalvas2025
+
+    return menasalvas2025.verify_build(
+        dataset_root, data_root, family="metabolite_production"
+    )
+
+
 def _verify_banerjee_proteome(dataset_root: str, data_root: str) -> VerificationReport:
     """Banerjee 2025 proteome: the shared gate plus its four own L1-L4 rows."""
     from torchcell.datasets.pputida import banerjee2025
@@ -2491,12 +2522,35 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
         "root": "data/torchcell/proteome_ishii2007",
         "verify": _verify_ishii_proteome,
     },
+    "proteome_menasalvas2025": {
+        "root": "data/torchcell/proteome_menasalvas2025",
+        "verify": _verify_menasalvas_proteome,
+    },
     "crispri_panel_proteome_yunus2026": {
         "root": "data/torchcell/crispri_panel_proteome_yunus2026",
         "verify": _verify_yunus_panel_proteome,
     },
 }
 
+
+#: Every landed ``BacterialMetaboliteExperiment`` dataset whose L4 is its own assembly's
+#: locus universe rather than the yeast deletion collection, and whose gate is the
+#: loader's own ``verify_build`` rather than :func:`verify_metabolite_dataset`. The
+#: E. coli metabolome rows stay in :data:`METABOLITE_DATASETS`, where their L4 keys on
+#: :func:`metabolite_gene_set`; a production host's records cannot, because that set
+#: counts a heterologous pathway token (``MvaSEf``) and a site-keyed variant id
+#: (``<replicon>:<position>``) as a locus of the host assembly and would fail L4 for
+#: the wrong reason. :func:`host_perturbed_gene_set` is the set that excludes both.
+BACTERIAL_METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
+    "metabolite_growth_menasalvas2025": {
+        "root": "data/torchcell/metabolite_growth_menasalvas2025",
+        "verify": _verify_menasalvas_metabolite_growth,
+    },
+    "metabolite_production_menasalvas2025": {
+        "root": "data/torchcell/metabolite_production_menasalvas2025",
+        "verify": _verify_menasalvas_metabolite_production,
+    },
+}
 
 def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """Every perturbed identifier a dataset's records assert is a locus of their host.
@@ -2599,6 +2653,16 @@ def run_bacterial_protein_abundance(data_root: str) -> bool:
     )
 
 
+def run_bacterial_metabolite(data_root: str) -> bool:
+    """Verify every bacterial-host metabolite dataset (L0-L4). True if all pass."""
+    return _run_bacterial_family(
+        BACTERIAL_METABOLITE_DATASETS,
+        data_root,
+        measured_set=host_perturbed_gene_set,
+        l4_name="perturbed_gene_containment_assembly",
+    )
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -2614,6 +2678,7 @@ def run_all(data_root: str) -> bool:
     segregant_ok = run_segregant_growth(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
+    bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -2628,6 +2693,7 @@ def run_all(data_root: str) -> bool:
         and segregant_ok
         and titer_ok
         and bacterial_protein_ok
+        and bacterial_metabolite_ok
     )
 
 

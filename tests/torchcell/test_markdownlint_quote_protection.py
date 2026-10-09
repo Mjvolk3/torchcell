@@ -34,14 +34,18 @@ PRE_COMMIT = REPO / ".pre-commit-config.yaml"
 CANARY_REL = "tests/torchcell/data/markdownlint_canary/quote_canary.md"
 CANARY = REPO / CANARY_REL
 
-# Every markdownlint rule that ships an autofix which rewrites characters INSIDE a line
-# of prose, a blockquote, a backtick span, or a fenced block. Measured against
-# markdownlint v0.36.1 (markdownlint-cli2 v0.16.0, the pinned `rev`). Add a rule here
-# when markdownlint ships a new inline autofix.
+# Every markdownlint rule whose fix rewrites characters INSIDE a line of prose, a
+# blockquote, a backtick span, or a fenced block. Measured against markdownlint v0.36.1
+# (markdownlint-cli2 v0.16.0, the pinned `rev`): the old config rewrote 9 of the canary's
+# shapes, and MD035 was the one it reported without fixing, so that entry is forward
+# protection for the version that implements it. Add a rule here when markdownlint ships
+# a new inline autofix.
 INLINE_FIX_RULES = (
+    "MD004",  # ul-style: rewrites a list marker, and a wrapped `+ ` line is read as one
     "MD011",  # reversed-link-syntax: `(text)[url]` -> `[text](url)`
     "MD027",  # multiple-spaces-after-blockquote-symbol: drops a quoted line's indent
     "MD034",  # no-bare-urls: wraps a bare URL or DOI in `<>`
+    "MD035",  # hr-style: rewrites a thematic break's characters
     "MD037",  # no-space-in-emphasis: deletes the spaces beside `_` or `*`
     "MD038",  # no-space-in-code: deletes the spaces beside a backtick delimiter
     "MD039",  # no-space-in-links: deletes the spaces inside link text
@@ -58,7 +62,9 @@ CANARY_SHAPES = {
     "MD034_doi": "doi:10.1126/sciadv.ady2677",
     "MD037": "deletions in ΔPP_ 2428, ΔPP_ 4622, ΔPP_ 3540, and ΔPP_4373.",
     "MD038": "the OCR cell ` ΔPP_ 2428 ` carries its own padding.",
+    "MD004": '+ "and the released second bullet uses a plus"',
     "MD011": '"see (Table 4)[S4] of the Supplementary Material"',
+    "MD035": "\n---\n\n***\n",
     "MD049": '"the _mvaS_ overexpression and the',
     "MD050": '__PP_2074__ deletion"',
     "MD027": '>  "    PP_2428    PP_4622" is how the OCR laid out the table row',

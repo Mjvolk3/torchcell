@@ -572,11 +572,14 @@ We have the following, which helps we track work easily.
 
 ### Markdown Formatting
 
-All markdown files in `notes/` are automatically formatted on save using the markdownlint VSCode extension. Configuration is stored in `.vscode/workspaces/torchcell.code-workspace` (the `markdownlint.config` block). All five `.code-workspace` files live in `.vscode/workspaces/`, so their relative folder paths are rooted two levels up (`../..` is the repo).
+All markdown files in `notes/` are automatically formatted on save using the markdownlint VSCode extension, and again by the `markdownlint-cli2 --fix` pre-commit hook. Both read the SAME rule table, `.markdownlint.jsonc` at the repo root, so a rule disabled there is disabled on both paths. The `.code-workspace` files only turn the on-save fix on (`source.fixAll.markdownlint`); all five live in `.vscode/workspaces/`, so their relative folder paths are rooted two levels up (`../..` is the repo).
 
-**Markdownlint Rules (from workspace config):**
+**No autofix may edit characters inside a line (#846).** A note carries the same verbatim quote a loader pins in `SourcedValue.quote`, and the fixer falsified two Menasalvas 2025 quotes in place: MD034 turned a bare DOI into an autolink and MD037 deleted the spaces in `ΔPP_ 2428`. Every rule whose fix rewrites inline text is therefore `false` in `.markdownlint.jsonc` (MD011, MD027, MD034, MD037, MD038, MD039, MD044, MD049, MD050, MD053) and MD010 leaves fenced blocks alone. `tests/torchcell/test_markdownlint_quote_protection.py` pins that list against `tests/torchcell/data/markdownlint_canary/quote_canary.md`, and `experiments/036-dataset-fixes-before-kg-build/scripts/note_quote_mirror_sweep.py` re-reads every note quote against the mirror bytes to find one that already drifted.
+
+**Markdownlint Rules (the layout half of `.markdownlint.jsonc`):**
 
 - **MD007**: `{ "indent": 2 }` - Use 2-space indentation for nested lists
+- **MD024**: `{ "siblings_only": true }` - A repeated heading is allowed under a different parent
 - **MD008**: `false` - Don't require consistent header style
 - **MD013**: `false` - No line length limit
 - **MD014**: `false` - Dollar signs in shell commands allowed
@@ -588,7 +591,6 @@ All markdown files in `notes/` are automatically formatted on save using the mar
 - **MD036**: `false` - Emphasis used instead of heading allowed
 - **MD040**: `false` - Fenced code blocks without language allowed
 - **MD045**: `false` - Images allowed without alt text
-- **MD050**: `false` - Strong style doesn't need to be consistent
 
 Write clean, well-structured markdown and VSCode will handle consistency automatically. Try to abide by these rules so we don't have to manually save to reformat.
 

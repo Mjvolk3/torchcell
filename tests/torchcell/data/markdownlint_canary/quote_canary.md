@@ -38,6 +38,18 @@ and the OCR cell ` ΔPP_ 2428 ` carries its own padding.
 
 > "the _mvaS_ overexpression and the __PP_2074__ deletion"
 
+## MD004 ul-style: a list marker is a source character
+
+- "the released first bullet uses a dash"
+
++ "and the released second bullet uses a plus"
+
+## MD035 hr-style: a thematic break keeps its characters
+
+---
+
+***
+
 ## MD053 link-reference-definitions: a definition is not dead weight
 
 [dryad-deposit]: https://doi.org/10.5061/dryad.sbcc2frjq

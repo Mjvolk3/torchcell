@@ -10,14 +10,14 @@ judgment itself is the artifact and it lives in a committed script rather than a
 gitignored results file.
 
 Emits, off the same records:
-  - notes-tex/database-expansion-100/tables/candidates.tex   (triage table)
-  - notes-tex/database-expansion-100/tables/sources.tex      (citation + link + accession)
-  - notes-tex/database-expansion-100/tables/perturbseq.tex   (rows bearing on a Perturb-seq)
-  - notes-tex/database-expansion-100/tables/synergies.tex    (candidate x partner joins)
-  - notes-tex/database-expansion-100/tables/swaps.tex        (rank changes vs the last pass)
-  - notes-tex/database-expansion-100/tables/pins.tex         (requested rows pinned above the cut)
-  - notes-tex/database-expansion-100/tables/excluded.tex     (what was dropped, and why)
-  - notes-tex/database-expansion-100/tables/counts.tex       (per-class and per-band totals)
+  - notes-tex/database/database-expansion-100/tables/candidates.tex   (triage table)
+  - notes-tex/database/database-expansion-100/tables/sources.tex      (citation + link + accession)
+  - notes-tex/database/database-expansion-100/tables/perturbseq.tex   (rows bearing on a Perturb-seq)
+  - notes-tex/database/database-expansion-100/tables/synergies.tex    (candidate x partner joins)
+  - notes-tex/database/database-expansion-100/tables/swaps.tex        (rank changes vs the last pass)
+  - notes-tex/database/database-expansion-100/tables/pins.tex         (requested rows pinned above the cut)
+  - notes-tex/database/database-expansion-100/tables/excluded.tex     (what was dropped, and why)
+  - notes-tex/database/database-expansion-100/tables/counts.tex       (per-class and per-band totals)
   - <results>/candidates/candidate_datasets.json             (machine-readable dump)
 
 Run from the repo root:
@@ -36,7 +36,8 @@ from pydantic import BaseModel, Field
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
-TEX_DIR = REPO / "notes-tex" / "database-expansion-100" / "tables"
+# notes-tex documents live one group below notes-tex/ (notes-tex/README.md).
+TEX_DIR = REPO / "notes-tex" / "database" / "database-expansion-100" / "tables"
 JSON_OUT = RESULTS / "candidates" / "candidate_datasets.json"
 
 SOURCE_LINE = (
@@ -146,9 +147,18 @@ PertSeq = Literal["none", "input", "output", "both"]
 #                    two disagree, translation efficiency and turnover, had no
 #                    band to sit in at all.
 #   scale         -- everything else, ranked as before.
-Band = Literal["perturb-seq", "molecular layers", "scale"]
+# "next build" is the author's explicit order for the build that follows the served
+# 2026.10.02 store (set 2026-10-09): the 1,011-isolate rows that pair with the built
+# Caudal 2024 transcriptomes. It sits above every other band because it is a decision,
+# not a score, and it is reported as such.
+Band = Literal["next build", "perturb-seq", "molecular layers", "scale"]
 
-BAND_ORDER: dict[str, int] = {"perturb-seq": 0, "molecular layers": 1, "scale": 2}
+BAND_ORDER: dict[str, int] = {
+    "next build": 0,
+    "perturb-seq": 1,
+    "molecular layers": 2,
+    "scale": 3,
+}
 
 
 class Synergy(BaseModel):
@@ -432,8 +442,8 @@ CANDIDATES: list[Candidate] = [
         phenotype="growth fitness per condition",
         shape="scalar",
         seq_basis="isolate-WGS",
-        why="The genome backbone every other natural-variation row resolves against, and it carries its own phenotype panel. 1,625,809 high-quality SNPs at 232-fold mean coverage.",
-        accession="ENA/SRA; phenotype tables via the paper and France Genomique",
+        why="The genome backbone every other natural-variation row resolves against, and it carries its own phenotype panel. 1,625,809 high-quality SNPs at 232-fold mean coverage. The host's loss-of-function (nonsense plus SIFT) and homozygous-frameshift matrices are already mirrored and md5-verified against the host; they define natural loss-of-function alleles as a perturbation on the built Caudal 2024 isolates.",
+        accession="ENA/SRA; phenotype tables via the paper and France Genomique; assemblies, pangenome, copy-number, loss-of-function and frameshift matrices mirrored from 1002genomes.u-strasbg.fr",
     ),
     Candidate(
         name="Cooper 2010 (CE-LIF amino-acid metabolome)",
@@ -599,7 +609,10 @@ CANDIDATES: list[Candidate] = [
         dim=2000,
         seq_basis="isolate-WGS",
         why="Proteomes on the sequenced isolate panel whose transcriptomes Caudal 2024 already supplies. That overlap is the paired anchor the RNA-to-protein inference thesis needs.",
-        accession="PRIDE PXD048219",
+        # From the mirrored paper's data availability statement (2026-10-09): the
+        # natural collection is at MassIVE MSV000090435; PXD044526 is the disome
+        # collection and PXD048219 the turnover series, not the isolate proteomes.
+        accession="MassIVE MSV000090435 (natural collection); PRIDE PXD044526 (disomes), PXD048219 (turnover)",
     ),
     Candidate(
         name="Jakobson 2025 (genome-to-proteome map)",
@@ -2015,21 +2028,26 @@ CANDIDATES: list[Candidate] = [
         confidence="recall",
     ),
     Candidate(
-        name="De Chiara 2022 (domestication and genome instability)",
-        citation="De Chiara M, Barre BP, Persson K, et al., Liti G. Nat Ecol Evol 2022;6:761-773.",
+        # Title, authors, volume and pages verified against Crossref 2026-10-09
+        # ("Domestication reprogrammed the budding yeast life cycle", 16 authors,
+        # 6:448-460); the previous entry carried the wrong pages and a name that
+        # described the aneuploidy result rather than the paper. The data location
+        # is still unverified.
+        name="De Chiara 2022 (domestication and the life cycle)",
+        citation="De Chiara M, Barre BP, Persson K, et al., Liti G. Nat Ecol Evol 2022;6:448-460.",
         url="https://doi.org/10.1038/s41559-022-01671-9",
         klass="Natural variation",
         tier=3,
         genotypes_n=1011,
         genotypes="1,011-isolate panel, reanalyzed",
-        env_n=36,
-        env="conditions",
-        instances_n=36396,
+        env_n=None,
+        env="life-cycle stages",
+        instances_n=None,
         instances_basis="estimate",
-        phenotype="growth, aneuploidy, instability",
+        phenotype="sporulation, germination and other life-cycle traits; aneuploidy",
         shape="scalar",
         seq_basis="isolate-WGS",
-        why="Ties genome instability and aneuploidy in the isolate panel to phenotype. Industrial strains acquire aneuploidy under selection, so this is the natural-variation view of a failure mode long fermentations create.",
+        why="Life-cycle traits on the isolate panel, the natural-variation counterpart of the supported CalMorph morphology on deletions, and the paper's tie between domestication, aneuploidy and genome instability. Industrial strains acquire aneuploidy under selection, so it is also the natural-variation view of a failure mode long fermentations create.",
         accession="Nat Ecol Evol SI (unconfirmed)",
         confidence="recall",
     ),
@@ -3698,6 +3716,31 @@ EXCLUDED: list[Excluded] = [
 # ---------------------------------------------------------------------------
 
 BANDS: dict[str, tuple[Band, str]] = {
+    # -- next build: the author's order for the build after 2026.10.02 ---------
+    "Muenzner 2024 (natural-isolate proteome)": (
+        "next build",
+        "Next build, first: the proteome on the sequenced 1,011-isolate panel whose "
+        "transcriptomes the supported Caudal 2024 already carries, so protein and "
+        "mRNA sit on one genotype axis strain by strain. The natural-variation "
+        "counterpart of the Kemmeren 2014 and Messner 2023 pair that Figure 3 "
+        "rests on.",
+    ),
+    "Peter 2018 (1,011 isolate genomes + phenome)": (
+        "next build",
+        "Next build, second: the 36-condition growth phenome on the same panel, and "
+        "the loss-of-function (nonsense plus SIFT) and homozygous-frameshift "
+        "matrices already mirrored from the host. Those matrices define a natural "
+        "loss-of-function perturbation, so the model sees a gene broken two ways, "
+        "by engineered deletion and by a natural allele; the ontology has no type "
+        "for natural gene loss yet and the core-loss copy-number variant stands in.",
+    ),
+    "De Chiara 2022 (domestication and the life cycle)": (
+        "next build",
+        "Next build, third: sporulation, germination and other life-cycle traits on "
+        "the same panel, the natural-variation counterpart of the supported "
+        "CalMorph morphology on deletions, so a cell-level phenotype is measured on "
+        "both genotype axes.",
+    ),
     # -- perturb-seq: rows a yeast Perturb-seq campaign is designed against ----
     "Boocock 2025 (single-cell eQTL mapping)": (
         "perturb-seq",
@@ -3901,11 +3944,6 @@ BANDS: dict[str, tuple[Band, str]] = {
         "Protein abundance across the same sequenced segregant panel Albert 2018 "
         "profiles by transcriptome, so protein and transcript quantitative trait "
         "loci are measurable on one genotype set.",
-    ),
-    "Muenzner 2024 (natural-isolate proteome)": (
-        "molecular layers",
-        "796 proteomes drawn from the sequenced 1,011-isolate panel that the "
-        "supported Caudal 2024 transcriptomes also come from.",
     ),
     "Albert 2018 (eQTL in 1,012 segregants)": (
         "molecular layers",
@@ -5740,7 +5778,8 @@ def render_final(rows: list[Candidate]) -> str:
         + r"""}
 \caption[]{The final fifty, then ten extra in rank order in case a row above proves
 unreachable. Every stat the ranking used is here beside the reason. \emph{Band, tier}:
-\emph{P} is the perturb-seq band, \emph{M} molecular layers, \emph{S} scale, applied before
+\emph{N} is the next-build band (the author's order, Sec.~\ref{sec:band}), \emph{P} the
+perturb-seq band, \emph{M} molecular layers, \emph{S} scale, applied before
 tier (Sec.~\ref{sec:rule}); within a band the tier rule orders, then measurements.
 \emph{Genotypes} and \emph{Env} are the perturbation and condition axes. \emph{Inst.} is
 genotype$\times$environment records, $\dagger$ where it is the product of the two axes
@@ -5770,7 +5809,12 @@ Table~\ref{tab:sources}; joins in Table~\ref{tab:synergies}.}
 \endfoot
 """
     )
-    band_letter = {"perturb-seq": "P", "molecular layers": "M", "scale": "S"}
+    band_letter = {
+        "next build": "N",
+        "perturb-seq": "P",
+        "molecular layers": "M",
+        "scale": "S",
+    }
     lines = []
     for i, c in enumerate(final, start=1):
         if i == WAVE_1 + 1:

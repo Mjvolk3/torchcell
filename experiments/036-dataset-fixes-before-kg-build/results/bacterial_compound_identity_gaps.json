@@ -1,22 +1,1351 @@
 {
   "table_sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
-  "datasets_requested": 1,
-  "datasets_scanned": 1,
+  "datasets_requested": 57,
+  "datasets_scanned": 57,
   "datasets_not_scanned": [],
-  "datasets_whose_store_cannot_be_read": {},
-  "compound_objects_scanned": 1530,
-  "distinct_resolved_labels": 28,
-  "gap_labels": 18,
-  "gap_labels_name_only": 17,
+  "datasets_whose_store_cannot_be_read": {
+    "ProteinTurnoverGupta2024Dataset": "AttributeError: Can't get attribute 'Censoring' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/760-771-764-726-data-decisions/torchcell/datamodels/schema.py'>",
+    "IsoprenolTiterDeSiqueira2025Dataset": "AttributeError: Can't get attribute 'BacterialVariantType' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/760-771-764-726-data-decisions/torchcell/datamodels/schema.py'>",
+    "CrispriArrayYunus2026Dataset": "AttributeError: Can't get attribute 'FoldChangeScale' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/760-771-764-726-data-decisions/torchcell/datamodels/schema.py'>",
+    "CrispriKnockdownYunus2026Dataset": "AttributeError: Can't get attribute 'FoldChangeScale' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/760-771-764-726-data-decisions/torchcell/datamodels/schema.py'>",
+    "CrispriDifferentialProteomeYunus2026Dataset": "AttributeError: Can't get attribute 'FoldChangeScale' on <module 'torchcell.datamodels.schema' from '/home/michaelvolk/Documents/projects/torchcell.worktrees/fix/760-771-764-726-data-decisions/torchcell/datamodels/schema.py'>"
+  },
+  "compound_objects_scanned": 77536,
+  "distinct_resolved_labels": 127,
+  "gap_labels": 276,
+  "gap_labels_name_only": 275,
   "gap_labels_by_proposed_triage": {
-    "single_substance_candidate": 18
+    "environment_placeholder": 61,
+    "single_substance_candidate": 198,
+    "undefined_or_proprietary_preparation": 17
   },
   "gap_labels_that_would_rename_a_served_node": [],
   "gaps": [
     {
+      "label": "1,2-Propanediol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1,3-Butandiol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1,4-Butanediol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1,5-Pentanediol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1,6-Hexanediamine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1-Pentanol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "1-ethyl-3-methylimidazolium acetate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2,2'-Dipyridyl",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2-Furfuraldehyde",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2-Piperidinone",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2-methyl-1-butanol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2000x trace element solution (Lim 2020; Linger 2014)",
+      "stores": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "2000x trace element solution (Lim 2022 SI)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "20AA_mix",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "3-aminobutyric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "3-methyl-1-butanol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "3-methyl-2-oxobutanoate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "3-methyl-3-butenol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "4-Aminobutyric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "4-Guanidinobutyric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "4-acetoxybenzoic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "4-acetoxyvanillic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "5-Hydroxymethylfurfural",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Adenine hydrochloride hydrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Aluminum chloride hydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Bacitracin",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Benzalkonium Chloride",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Beta-alanine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Butanol",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Butyl stearate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Butyrolactam",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "CCCP",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cadaverine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Caprolactam",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Carbenicillin disodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Carnitine Hydrochloride",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Carolacton",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cephalothin sodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Chloramphenicol",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Chlorhexidine",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Chlorophene",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cholin acetate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Choline chloride",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cobalt chloride hexahydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cytidine",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Cytosine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Alanine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Cycloserine",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Fructose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Galactose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Galacturonic Acid monohydrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Gluconic Acid sodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Glucosamine Hydrochloride",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Glucose-6-Phosphate sodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Glucuronic Acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Lysine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Maltose monohydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Mannose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Ribose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Sorbitol",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Trehalose dihydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-Xylose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "D-alanine",
       "stores": [
-        "CarbonSourceTong2020Dataset"
+        "CarbonSourceTong2020Dataset",
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-fructose",
+      "stores": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "D-ribose",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "DL-2-Aminobutyric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "DL-3-Aminoisobutyric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "DPD",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Davis Minimal medium salts (Lenski 1991 formulation)",
+      "stores": [
+        "ProteomeCaglar2017Dataset",
+        "RnaseqCaglar2017Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Decanoic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Doxycycline hyclate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Durasyn 164",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "ET2DA",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Ethanolamine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
       ],
       "name_only": true,
       "proposed_triage": "single_substance_candidate",
@@ -53,6 +1382,24 @@
       "label": "Fumarate",
       "stores": [
         "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Fusidic acid sodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
       ],
       "name_only": true,
       "proposed_triage": "single_substance_candidate",
@@ -140,6 +1487,443 @@
       "renames_a_served_node": false
     },
     {
+      "label": "Glutaraldehyde",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Gly-DL-Asp",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Gly-Glu",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Glycolic Acid",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Glycolic acid",
+      "stores": [
+        "RbTnseqBorchert2023Dataset",
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Heptanoic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Hexanoic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Hydantoin",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "IPTG",
+      "stores": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset",
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Isopropanol",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Kanamycin",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Aspartate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Fucose",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Glutamic acid monopotassium salt monohydrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Malic acid disodium salt monohydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Ornithine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-Pipecolic Acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-malate",
+      "stores": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "L-pyroglutamic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "LB base, PRECISE-1K formulation",
+      "stores": [
+        "RnaseqLamoureux2023Dataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Lactic acid",
+      "stores": [
+        "RbTnseqBorchert2023Dataset",
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Lauric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "M9 base, PRECISE-1K formulation",
+      "stores": [
+        "RnaseqLamoureux2023Dataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "M9 salts (Difco)",
+      "stores": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "Malate",
       "stores": [
         "CarbonSourceTong2020Dataset"
@@ -176,6 +1960,42 @@
       "renames_a_served_node": false
     },
     {
+      "label": "MreB Perturbing Compound A22",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "N-Acetyl-D-Glucosamine",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "N-acetyl Glucosamine",
       "stores": [
         "CarbonSourceTong2020Dataset"
@@ -194,9 +2014,281 @@
       "renames_a_served_node": false
     },
     {
+      "label": "N-acetylglucosamine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Na-citrate",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Nalidixic acid sodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Nickel (II) chloride hexahydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Nicotinic Acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Nonanoic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "Oxaloacetate",
       "stores": [
         "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "PQ",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Peracetic Acid",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Phenylacetic acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Phosphomycin disodium salt",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Potassium acetate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Povidone-Iodine",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Propandiamine",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Protocatechuic Acid",
+      "stores": [
+        "RbTnseqBorchert2023Dataset",
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Putrescine Dihydrochloride",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
       ],
       "name_only": true,
       "proposed_triage": "single_substance_candidate",
@@ -248,9 +2340,228 @@
       "renames_a_served_node": false
     },
     {
+      "label": "SM buffer (Teknova)",
+      "stores": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "Saccharate",
       "stores": [
         "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium Chlorite",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium D,L-Lactate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium D-Lactate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium Hypochlorite",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium nitrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium nitrite",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium propionate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium pyruvate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium succinate dibasic hexahydrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Sodium sulfate",
+      "stores": [
+        "RbTnseqBorchert2023Dataset",
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Spectinomycin dihydrochloride pentahydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
       ],
       "name_only": true,
       "proposed_triage": "single_substance_candidate",
@@ -284,6 +2595,42 @@
       "renames_a_served_node": false
     },
     {
+      "label": "Tetracycline hydrochloride",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Thallium(I) acetate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "Thymidine",
       "stores": [
         "CarbonSourceTong2020Dataset"
@@ -302,9 +2649,106 @@
       "renames_a_served_node": false
     },
     {
+      "label": "Triton X-100",
+      "stores": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Tween 20",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Valeric acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "a-Ketoglutaric acid disodium salt hydrate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "aebersold trace element mixture",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
       "label": "agar",
       "stores": [
-        "CarbonSourceTong2020Dataset"
+        "CarbonSourceTong2020Dataset",
+        "CrispriCrossRachwalski2024Dataset",
+        "GeneEssentialityGoodall2018Dataset",
+        "GeneEssentialityPrice2018EcoliDataset",
+        "GeneInteractionBabu2014Dataset",
+        "GeneInteractionButland2008Dataset",
+        "PhageRbTnseqMutalik2020Dataset"
       ],
       "name_only": false,
       "proposed_triage": "single_substance_candidate",
@@ -320,6 +2764,2317 @@
       "unresolved_reason": "agar is a polysaccharide mixture extracted from red algae; PubChem's Agar record (CID 71571511) carries the InChIKey of the agarobiose repeat unit, which is not the substance weighed into a plate, so the CID is kept as the identifier and the InChIKey is left null",
       "curated": true,
       "identified": true,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "alpha-methylglucoside",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "amikacin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "ampicillin",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset",
+        "CrispriGuideFitnessWang2018Dataset",
+        "EnvChemgenGirgis2009Dataset",
+        "GrowthAucRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset",
+        "MetabolomeRapp2026Dataset",
+        "PromoterReporterMohiuddin2022Dataset",
+        "TargetedMetabolomeRapp2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "arginine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "beta-hydroxyisobutanoate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "beta-ketoadipate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "casamino acids",
+      "stores": [
+        "CrispriGuideFitnessWang2018Dataset",
+        "EnvChemgenGirgis2009Dataset",
+        "GrowthRateCampos2018Dataset",
+        "RbTnseqPrice2018EcoliDataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "casein hydrolysate (N-Z Case Plus)",
+      "stores": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "cefoxitin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "ceftriaxone",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "chloramphenicol",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset",
+        "GeneEssentialityGoodall2018Dataset",
+        "GeneInteractionBabu2014Dataset",
+        "GeneInteractionButland2008Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "cis,cis-muconate",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "cobalt(II) chloride",
+      "stores": [
+        "GrowthAucRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset",
+        "MetabolomeRapp2026Dataset",
+        "TargetedMetabolomeRapp2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "copper (II) chloride dihydrate",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "cytidine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "disodium fumarate",
+      "stores": [
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "disodium succinate hexahydrate",
+      "stores": [
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "dodecane",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "doxycycline",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "doxycycline hyclate",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "e-Amino-N-Caproic Acid",
+      "stores": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "fusidic acid",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "gentamicin",
+      "stores": [
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "gentamycin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "glucarate",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "gluconate",
+      "stores": [
+        "ProteomeCaglar2017Dataset",
+        "RnaseqCaglar2017Dataset",
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "glucosamine",
+      "stores": [
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "glucose-limited chemostat medium (no recipe stated)",
+      "stores": [
+        "FluxIshii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "glutamate",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_Control2' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_Glc+Ace' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_Mixed' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_TEA_HS' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ALE:IL_TEOH_OAc' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor1:24h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P1_15min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P1_25h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P3_15min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P3_25h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P5_15min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:P5_25h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_0min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_15min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_1h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_25h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_3h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Bioreactor2:S_9h' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon2:Coumarate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon2:Glucose' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon:Citrate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon:Ferulate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon:Glucose' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Carbon:Serine' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Crc:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'FinR:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'FleQ:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'FleQ:Del_fleQ' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Fuel:Butanol' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Fuel:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Fuel:Isopentanol' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Glycolaldehyde:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Glycolaldehyde:Glycolaldehyde' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'HNS_protein:Control_ex' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_fructose' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_fructose_glucose' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_fructose_glucose_gluconate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_gluconate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_glucose' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Muconate:KT2440_glucose_gluconate' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:H2O2_60min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:H2O2_7min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:Imipenem_60min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:Imipenem_7min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:NaCl_60min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Multistress:NaCl_7min' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Myristic_acid:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Myristic_acid:Myristic_acid' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Phase:WT_Ex' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Phase:WT_St' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Phase:WT_Tr' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'RelA:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'RelA:Del_relA' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'RelA:Del_relA_lignin' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Zn:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'Zn:Zn_ion' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ZnO:Control' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ZnO:Nano' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "growth environment of putidaPRECISE321 condition 'ZnO:Zn_ion' (medium, additions and timing not carried by the compendium)",
+      "stores": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "environment_placeholder",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "iron(II) chloride",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "isoprenyl acetate",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "kanamycin",
+      "stores": [
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "CrispriGuideFitnessWang2018Dataset",
+        "GeneEssentialityPrice2018EcoliDataset",
+        "GeneInteractionBabu2014Dataset",
+        "GeneInteractionButland2008Dataset",
+        "IsopentenolTiterFoo2014Dataset",
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset",
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "lactic acid",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "leucine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "m-toluic acid",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "meropenem",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "metal trace stock solution",
+      "stores": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "methionine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "modified M9 minimal medium (amounts deferred to Eng et al. 2023)",
+      "stores": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "nitrofurantoin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "phenylalanine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "phleomycin",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "piperacillin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "polymyxin B",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "potassium nitrate",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "puromycin",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "pyocyanin",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "pyruvate",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "rifampicin",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "salicylic acid",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "sauer trace element mixture",
+      "stores": [
+        "RnaseqLamoureux2023Dataset",
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "sauer trace element mixture w/o MgSO4",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "sodium pyruvate",
+      "stores": [
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "streptomycin",
+      "stores": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "thiamin",
+      "stores": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "threonine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "trace element solution (Teknova)",
+      "stores": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "trace metal solution (Teknova T1001)",
+      "stores": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "IsoprenolTiterCarruthers2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "undefined_or_proprietary_preparation",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "trimethoprim-sulfamethoxazole",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "tryptone",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset",
+        "CrispriCrossRachwalski2024Dataset",
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriKnockdownCui2018Dataset",
+        "CrispriScreenRousset2018Dataset",
+        "EnvChemgenWang2015Dataset",
+        "GeneEssentialityGoodall2018Dataset",
+        "GeneEssentialityPrice2018EcoliDataset",
+        "GeneInteractionBabu2014Dataset",
+        "GeneInteractionButland2008Dataset",
+        "PhageRbTnseqMutalik2020Dataset",
+        "PromoterReporterMohiuddin2022Dataset",
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNDEFINED_MIXTURE",
+      "resolved_name": "tryptone",
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": "a pancreatic digest of casein; intrinsically undefined, no structure exists",
+      "curated": true,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "tyrosine",
+      "stores": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "water",
+      "stores": [
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "yeast extract",
+      "stores": [
+        "CrispriChemgenChoe2025Dataset",
+        "CrispriCrossRachwalski2024Dataset",
+        "CrispriGuideFfaEnrichmentFang2025Dataset",
+        "CrispriGuideFitnessWang2018Dataset",
+        "CrispriKnockdownCui2018Dataset",
+        "CrispriScreenRousset2018Dataset",
+        "EnvChemgenWang2015Dataset",
+        "GeneEssentialityGoodall2018Dataset",
+        "GeneEssentialityPrice2018EcoliDataset",
+        "GeneInteractionBabu2014Dataset",
+        "GeneInteractionButland2008Dataset",
+        "IsoprenylAcetateTiterKang2026Dataset",
+        "PhageRbTnseqMutalik2020Dataset",
+        "PromoterReporterMohiuddin2022Dataset",
+        "ProteomeSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset",
+        "RbTnseqPrice2018EcoliDataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNDEFINED_MIXTURE",
+      "resolved_name": "yeast extract",
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": "an autolysate of yeast cells; intrinsically undefined, no structure exists",
+      "curated": true,
+      "identified": false,
       "renames_a_served_node": false
     },
     {
@@ -394,11 +5149,291 @@
     }
   },
   "per_dataset_compound_objects": {
-    "CarbonSourceTong2020Dataset": 1530
+    "CarbonSourceTong2020Dataset": 1530,
+    "CrispriArrayYunus2026Dataset": 0,
+    "CrispriChemgenChoe2025Dataset": 83,
+    "CrispriCrossRachwalski2024Dataset": 154,
+    "CrispriDifferentialProteomeYunus2026Dataset": 8,
+    "CrispriGuideFfaEnrichmentFang2025Dataset": 39,
+    "CrispriGuideFitnessWang2018Dataset": 93,
+    "CrispriKnockdownCui2018Dataset": 12,
+    "CrispriKnockdownYunus2026Dataset": 0,
+    "CrispriScreenRousset2018Dataset": 42,
+    "EnvChemgenGirgis2009Dataset": 340,
+    "EnvChemgenShiver2016Dataset": 0,
+    "EnvChemgenWang2015Dataset": 8,
+    "FluxIshii2007Dataset": 6,
+    "GeneEssentialityGoodall2018Dataset": 16,
+    "GeneEssentialityPrice2018EcoliDataset": 10,
+    "GeneInteractionBabu2014Dataset": 18,
+    "GeneInteractionButland2008Dataset": 12,
+    "GrowthAucRapp2026Dataset": 30,
+    "GrowthRateCampos2018Dataset": 12,
+    "GrowthRateChoe2019Dataset": 14,
+    "GrowthRateSchmidt2016Dataset": 56,
+    "IsopentenolTiterFoo2014Dataset": 38,
+    "IsoprenolSelectionMenasalvas2025Dataset": 34,
+    "IsoprenolTiterCarruthers2025Dataset": 742,
+    "IsoprenolTiterDeSiqueira2025Dataset": 35,
+    "IsoprenolToleranceLim2025Dataset": 40,
+    "IsoprenylAcetateTiterKang2026Dataset": 333,
+    "MetaboliteIntensityRapp2026Dataset": 5025,
+    "MetabolomeFuhrer2017Dataset": 32,
+    "MetabolomeIshii2007Dataset": 32,
+    "MetabolomeRapp2026Dataset": 30,
+    "MetabolomeSchastnaya2021Dataset": 10,
+    "PhageRbTnseqMutalik2020Dataset": 866,
+    "PromoterReporterMohiuddin2022Dataset": 52209,
+    "ProteinTurnoverGupta2024Dataset": 80,
+    "ProteomeBanerjee2025Dataset": 15,
+    "ProteomeCaglar2017Dataset": 228,
+    "ProteomeCarruthers2025Dataset": 50,
+    "ProteomeDeSiqueira2025Dataset": 46,
+    "ProteomeIshii2007Dataset": 25,
+    "ProteomeLim2025Dataset": 37,
+    "ProteomeLog10PercentDeSiqueira2025Dataset": 46,
+    "ProteomeMori2021Dataset": 128,
+    "ProteomePercentDeSiqueira2025Dataset": 46,
+    "ProteomeSchmidt2016Dataset": 215,
+    "ProteomeSrmSet1Schmidt2016Dataset": 159,
+    "ProteomeSrmSet2Schmidt2016Dataset": 201,
+    "PutidaPrecise321Lim2022Dataset": 555,
+    "RbTnseqBorchert2023Dataset": 730,
+    "RbTnseqBorchert2024Dataset": 6601,
+    "RbTnseqPrice2018EcoliDataset": 1722,
+    "RnaseqCaglar2017Dataset": 330,
+    "RnaseqLamoureux2023Dataset": 301,
+    "RnaseqPublicK12Lamoureux2023Dataset": 78,
+    "TargetedMetabolomeRapp2026Dataset": 4020,
+    "TranscriptionFactorKnockoutChoe2019Dataset": 14
   },
   "per_dataset_scan_path": {
     "CarbonSourceTong2020Dataset": {
       "interned_entries": 90,
+      "records_read": false
+    },
+    "CrispriArrayYunus2026Dataset": {
+      "interned_entries": 12,
+      "records_read": false
+    },
+    "CrispriChemgenChoe2025Dataset": {
+      "interned_entries": 13,
+      "records_read": false
+    },
+    "CrispriCrossRachwalski2024Dataset": {
+      "interned_entries": 16,
+      "records_read": false
+    },
+    "CrispriDifferentialProteomeYunus2026Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "CrispriGuideFfaEnrichmentFang2025Dataset": {
+      "interned_entries": 3,
+      "records_read": false
+    },
+    "CrispriGuideFitnessWang2018Dataset": {
+      "interned_entries": 10,
+      "records_read": false
+    },
+    "CrispriKnockdownCui2018Dataset": {
+      "interned_entries": 3,
+      "records_read": false
+    },
+    "CrispriKnockdownYunus2026Dataset": {
+      "interned_entries": 101,
+      "records_read": false
+    },
+    "CrispriScreenRousset2018Dataset": {
+      "interned_entries": 7,
+      "records_read": false
+    },
+    "EnvChemgenGirgis2009Dataset": {
+      "interned_entries": 34,
+      "records_read": false
+    },
+    "EnvChemgenShiver2016Dataset": {
+      "interned_entries": 0,
+      "records_read": true
+    },
+    "EnvChemgenWang2015Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "FluxIshii2007Dataset": {
+      "interned_entries": 6,
+      "records_read": false
+    },
+    "GeneEssentialityGoodall2018Dataset": {
+      "interned_entries": 4,
+      "records_read": false
+    },
+    "GeneEssentialityPrice2018EcoliDataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "GeneInteractionBabu2014Dataset": {
+      "interned_entries": 3,
+      "records_read": false
+    },
+    "GeneInteractionButland2008Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "GrowthAucRapp2026Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "GrowthRateCampos2018Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "GrowthRateChoe2019Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "GrowthRateSchmidt2016Dataset": {
+      "interned_entries": 4,
+      "records_read": false
+    },
+    "IsopentenolTiterFoo2014Dataset": {
+      "interned_entries": 2,
+      "records_read": true
+    },
+    "IsoprenolSelectionMenasalvas2025Dataset": {
+      "interned_entries": 3,
+      "records_read": false
+    },
+    "IsoprenolTiterCarruthers2025Dataset": {
+      "interned_entries": 22,
+      "records_read": true
+    },
+    "IsoprenolTiterDeSiqueira2025Dataset": {
+      "interned_entries": 3,
+      "records_read": true
+    },
+    "IsoprenolToleranceLim2025Dataset": {
+      "interned_entries": 4,
+      "records_read": false
+    },
+    "IsoprenylAcetateTiterKang2026Dataset": {
+      "interned_entries": 17,
+      "records_read": true
+    },
+    "MetaboliteIntensityRapp2026Dataset": {
+      "interned_entries": 335,
+      "records_read": false
+    },
+    "MetabolomeFuhrer2017Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "MetabolomeIshii2007Dataset": {
+      "interned_entries": 32,
+      "records_read": false
+    },
+    "MetabolomeRapp2026Dataset": {
+      "interned_entries": 2,
+      "records_read": false
+    },
+    "MetabolomeSchastnaya2021Dataset": {
+      "interned_entries": 10,
+      "records_read": false
+    },
+    "PhageRbTnseqMutalik2020Dataset": {
+      "interned_entries": 149,
+      "records_read": false
+    },
+    "PromoterReporterMohiuddin2022Dataset": {
+      "interned_entries": 17397,
+      "records_read": false
+    },
+    "ProteinTurnoverGupta2024Dataset": {
+      "interned_entries": 9,
+      "records_read": false
+    },
+    "ProteomeBanerjee2025Dataset": {
+      "interned_entries": 5,
+      "records_read": false
+    },
+    "ProteomeCaglar2017Dataset": {
+      "interned_entries": 43,
+      "records_read": false
+    },
+    "ProteomeCarruthers2025Dataset": {
+      "interned_entries": 5,
+      "records_read": false
+    },
+    "ProteomeDeSiqueira2025Dataset": {
+      "interned_entries": 5,
+      "records_read": false
+    },
+    "ProteomeIshii2007Dataset": {
+      "interned_entries": 25,
+      "records_read": false
+    },
+    "ProteomeLim2025Dataset": {
+      "interned_entries": 4,
+      "records_read": false
+    },
+    "ProteomeLog10PercentDeSiqueira2025Dataset": {
+      "interned_entries": 5,
+      "records_read": false
+    },
+    "ProteomeMori2021Dataset": {
+      "interned_entries": 8,
+      "records_read": false
+    },
+    "ProteomePercentDeSiqueira2025Dataset": {
+      "interned_entries": 5,
+      "records_read": false
+    },
+    "ProteomeSchmidt2016Dataset": {
+      "interned_entries": 16,
+      "records_read": false
+    },
+    "ProteomeSrmSet1Schmidt2016Dataset": {
+      "interned_entries": 12,
+      "records_read": false
+    },
+    "ProteomeSrmSet2Schmidt2016Dataset": {
+      "interned_entries": 15,
+      "records_read": false
+    },
+    "PutidaPrecise321Lim2022Dataset": {
+      "interned_entries": 0,
+      "records_read": true
+    },
+    "RbTnseqBorchert2023Dataset": {
+      "interned_entries": 74,
+      "records_read": false
+    },
+    "RbTnseqBorchert2024Dataset": {
+      "interned_entries": 436,
+      "records_read": false
+    },
+    "RbTnseqPrice2018EcoliDataset": {
+      "interned_entries": 248,
+      "records_read": false
+    },
+    "RnaseqCaglar2017Dataset": {
+      "interned_entries": 60,
+      "records_read": false
+    },
+    "RnaseqLamoureux2023Dataset": {
+      "interned_entries": 68,
+      "records_read": false
+    },
+    "RnaseqPublicK12Lamoureux2023Dataset": {
+      "interned_entries": 27,
+      "records_read": false
+    },
+    "TargetedMetabolomeRapp2026Dataset": {
+      "interned_entries": 268,
+      "records_read": false
+    },
+    "TranscriptionFactorKnockoutChoe2019Dataset": {
+      "interned_entries": 2,
       "records_read": false
     }
   }

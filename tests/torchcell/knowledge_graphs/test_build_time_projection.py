@@ -489,6 +489,7 @@ BACTERIAL_DATASETS = {
     "CrispriGuideFitnessWang2018Dataset",
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
+    "CrispriPanelProteomeYunus2026Dataset",
     "CrispriScreenRousset2018Dataset",
     "DoublingTimeCaglar2017Dataset",
     "EnvChemgenGirgis2009Dataset",
@@ -507,6 +508,7 @@ BACTERIAL_DATASETS = {
     "IsoprenolSelectionMenasalvas2025Dataset",
     "IsoprenolTiterCarruthers2025Dataset",
     "IsoprenolTiterDeSiqueira2025Dataset",
+    "IsoprenolTiterYunus2026Dataset",
     "IsoprenolToleranceLim2025Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
     "MetaboliteIntensityRapp2026Dataset",
@@ -562,7 +564,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
 
     inverse = {a.__name__: d.__name__ for d, a in dataset_adapter_map.items()}
     assert {a: inverse[a] for a in ADAPTER_TO_DATASET} == ADAPTER_TO_DATASET
-    assert len(dataset_adapter_map) == 110 + 1 + 1
+    assert len(dataset_adapter_map) == 110 + 1 + 3
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",

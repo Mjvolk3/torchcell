@@ -31,6 +31,7 @@ import math
 import os
 import os.path as osp
 import shutil
+import zipfile
 from collections import Counter
 from pathlib import Path
 from typing import Any
@@ -57,8 +58,17 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     UncertaintyType,
 )
-from torchcell.datasets.bacteria_common import LocusTagResolutionError
-from torchcell.literature.manifest import ROLE_SI_DATA, Manifest, RetrievalMethod
+from torchcell.datasets.bacteria_common import (
+    LocusTagResolutionError,
+    UniProtLocusCrosswalk,
+    resolve_uniprot_accessions,
+)
+from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
+    ROLE_SI_DATA,
+    Manifest,
+    RetrievalMethod,
+)
 from torchcell.verification.report import Level, VerificationReport
 
 
@@ -486,16 +496,29 @@ def kt2440() -> Any:
 @pytest.mark.data
 @requires_mirror
 def test_the_mirror_manifest_records_the_digests_the_module_pins() -> None:
-    """The retrieval record and the loader's pins are the same bytes."""
+    """The retrieval record and the loader's pins are the same bytes.
+
+    The two PMC objects were retrieved by a re-runnable command; the four Dryad files
+    were not, so each records ``manual_browser`` and the recipe instead.
+    """
     manifest = c25.load_manifest()
     assert manifest.citation_key == c25.CITATION_KEY
     assert manifest.doi == c25.DOI
     assert c25.manifest_sha256(manifest, c25.SOURCE_DATA_REL) == c25.SOURCE_DATA_SHA256
     assert c25.manifest_sha256(manifest, c25.TARGETS_REL) == c25.TARGETS_SHA256
+    manual = {relpath for relpath, _role, _sha in c25.dryad_deposits()}
     for record in manifest.files:
         assert record.retrieval is not None
-        assert record.retrieval.method.value == "pmc_cloud"
         assert record.retrieval.sha256 == record.sha256
+        if record.path in manual:
+            assert record.retrieval.method.value == "manual_browser"
+            assert record.retrieval.params["retrieval_command"] == (
+                c25.DRYAD_MANUAL_RECIPE
+            )
+        else:
+            assert record.retrieval.method.value == "pmc_cloud"
+    for relpath, _role, expected in c25.dryad_deposits():
+        assert c25.manifest_sha256(manifest, relpath) == expected
 
 
 @pytest.mark.data
@@ -697,29 +720,34 @@ def test_the_built_proteome_store_has_one_record_per_sample_and_passes_l0_to_l4(
 
 @pytest.mark.data
 @requires_built
-def test_the_titer_build_accounting_records_zero_drops() -> None:
-    """Every released non-control culture is in a record."""
+def test_the_titer_build_accounting_drops_only_the_induced_groups() -> None:
+    """Every released culture is in a record bar the induced overexpression groups.
+
+    Measured on the pinned workbook: 465 campaign strain-cycles plus the four panels'
+    49 candidate groups, of which the 12 induced ones are dropped because the
+    inducer's unit is released nowhere in the mirror.
+    """
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(TITER_ROOT, "preprocess/build_accounting.json")).read_text()
     )
     accounting.check()
     assert accounting.source_rows == 1506
     assert accounting.control_rows == 90
-    assert accounting.candidate_records == 465
-    assert accounting.kept_records == 465
-    assert accounting.dropped_records == 0
+    assert accounting.candidate_records == 514
+    assert accounting.kept_records == c25.EXPECTED_TITER_RECORDS
+    assert accounting.dropped_records == 12
 
 
 @pytest.mark.data
 @requires_built
-def test_the_proteome_build_accounting_drops_keys_but_never_a_sample() -> None:
-    """77 of 1,501 protein keys are dropped; all 19 samples are kept."""
+def test_the_proteome_build_accounting_drops_keys_and_the_induced_samples() -> None:
+    """77 of 1,501 protein keys are dropped, and the 12 induced samples."""
     accounting = c25.BuildAccounting.model_validate_json(
         Path(osp.join(PROTEOME_ROOT, "preprocess/build_accounting.json")).read_text()
     )
     accounting.check()
-    assert accounting.kept_records == 19
-    assert accounting.dropped_records == 0
+    assert accounting.kept_records == c25.EXPECTED_PROTEOME_RECORDS
+    assert accounting.dropped_records == 12
     dropped = pd.read_csv(
         osp.join(PROTEOME_ROOT, "preprocess/dropped_protein_keys.csv")
     )
@@ -1315,6 +1343,187 @@ def _sha256_bytes(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# --------------------------------------------------------------------------- #
+# The deposited Dryad campaign proteome, in miniature.
+#
+# Seven accessions, one per branch of the UniProt crosswalk: four reach a locus by both
+# the GOA route and the panel sheet's accession -> symbol route and agree, one reaches a
+# DIFFERENT locus on each route, one names two loci, and one reaches none. The matrix
+# carries the same cultures as the synthetic ``Figure 4b`` bar three, so the titer join
+# has a missing set to name, and every row's present cells sum to exactly 100.
+# --------------------------------------------------------------------------- #
+#: ``accession -> locus``, agreeing on both routes. The accession spelling is the one
+#: the synthetic Source Data proteome sheet files that locus' key under.
+CAMPAIGN_AGREEING: dict[str, str] = {
+    "QPP_0368": "PP_0368",
+    "QPP_0378": "PP_0378",
+    "QPP_0528": "PP_0528",
+    "QPP_0812": "PP_0812",
+}
+#: The one accession the two routes send to different loci, as the release's two do.
+CAMPAIGN_DISAGREEING = "QPP_0815"
+CAMPAIGN_DISAGREEING_GOA = "PP_0813"
+CAMPAIGN_DISAGREEING_SHEET = "PP_0815"
+#: The accession the GOA file gives two locus tags, and the one it gives none.
+CAMPAIGN_MULTI_LOCUS = "QMULTI"
+CAMPAIGN_MULTI_LOCI: tuple[str, str] = ("PP_0977", "PP_1593")
+CAMPAIGN_UNMAPPED = "QNONE"
+CAMPAIGN_ACCESSIONS: tuple[str, ...] = (
+    *CAMPAIGN_AGREEING,
+    CAMPAIGN_DISAGREEING,
+    CAMPAIGN_MULTI_LOCUS,
+    CAMPAIGN_UNMAPPED,
+)
+#: Accessions that reach exactly one locus: the four agreeing plus the disagreeing one.
+CAMPAIGN_RESOLVED_ACCESSIONS = len(CAMPAIGN_AGREEING) + 1
+#: Raw per-row weights, before the row is normalized to 100.
+CAMPAIGN_WEIGHTS: dict[str, float] = {
+    "QPP_0368": 30.0,
+    "QPP_0378": 20.0,
+    "QPP_0528": 10.0,
+    "QPP_0812": 15.0,
+    CAMPAIGN_DISAGREEING: 10.0,
+    CAMPAIGN_MULTI_LOCUS: 5.0,
+    CAMPAIGN_UNMAPPED: 10.0,
+}
+#: The accession blank in every culture of one strain-cycle, which is what makes that
+#: record's key set a strict SUBSET of its cycle control's.
+CAMPAIGN_BLANKED = "QPP_0528"
+CAMPAIGN_BLANKED_STRAIN: tuple[str, int] = ("PP_0378", 0)
+#: The accession whose cell is a released 0 in the matrix's first culture.
+CAMPAIGN_ZEROED = "QPP_0812"
+#: Cultures the synthetic Source Data has and the matrix does not: R4-R6 of the one
+#: six-replicate construct, so the strain-cycle survives on its first three.
+CAMPAIGN_MISSING_REPLICATES: tuple[int, ...] = (4, 5, 6)
+#: Strain-cycles the synthetic matrix groups into: the five single-guide DBTL0
+#: constructs, the six-replicate one, the filler one and the eight combinations.
+SYNTHETIC_CAMPAIGN_RECORDS = (
+    len(SINGLE_GUIDE_TARGETS)
+    + 2
+    + sum(len(group) for group in COMBINATION_CONSTRUCTS.values())
+)
+#: The cycle whose ``Line`` cell carries the release's unexplained ``PRT1093_`` prefix.
+CAMPAIGN_PREFIXED_CYCLE = 6
+CAMPAIGN_LINE_PREFIX = "PRT1093_"
+CAMPAIGN_README = (
+    "# Synthetic Dryad README\n\nLine: (str) The line name with the replicate ID "
+    "removed\n"
+)
+
+
+def _campaign_cultures() -> list[tuple[str, int, int, float]]:
+    """``(construct, cycle, replicate, titer)`` of every culture the matrix carries."""
+    out: list[tuple[str, int, int, float]] = []
+    for line, cycle, _is_control, titer, _passed in _titer_rows():
+        match = c25.REPLICATE_RE.match(line)
+        assert match is not None
+        construct = match.group("base")
+        replicate = int(match.group("replicate"))
+        if (
+            construct == SIX_REPLICATE_CONSTRUCT
+            and replicate in CAMPAIGN_MISSING_REPLICATES
+        ):
+            continue
+        out.append((construct, cycle, replicate, titer))
+    return out
+
+
+def _campaign_row_cells(index: int, construct: str, cycle: int) -> dict[str, float]:
+    """One culture's present cells, normalized so the row sums to exactly 100."""
+    weights = {a: w + index * 0.01 for a, w in CAMPAIGN_WEIGHTS.items()}
+    if (construct, cycle) == CAMPAIGN_BLANKED_STRAIN:
+        del weights[CAMPAIGN_BLANKED]
+    if index == 0:
+        weights[CAMPAIGN_ZEROED] = 0.0
+    total = sum(weights.values())
+    return {a: 100.0 * w / total for a, w in weights.items()}
+
+
+def _write_campaign_matrix(path: Path) -> None:
+    """The deposited Top3 matrix in the released column order."""
+    rows: list[dict[str, Any]] = []
+    for index, (construct, cycle, replicate, titer) in enumerate(_campaign_cultures()):
+        cells = _campaign_row_cells(index, construct, cycle)
+        line_cell = construct
+        if cycle == CAMPAIGN_PREFIXED_CYCLE:
+            line_cell = f"{CAMPAIGN_LINE_PREFIX}{construct}"
+        row: dict[str, Any] = {
+            "DBTL_Cycle": cycle,
+            "Line_name": f"{construct}-R{replicate}",
+            "Line": line_cell,
+            "Replicate": replicate,
+            "Isoprenol_titer": titer,
+            "Isoprenol_titer_units": c25.DRYAD_TITER_UNIT,
+        }
+        for accession in CAMPAIGN_ACCESSIONS:
+            row[accession] = cells.get(accession, "")
+        rows.append(row)
+    pd.DataFrame(rows).to_csv(path, index=False)
+
+
+def _write_campaign_metadata(path: Path) -> None:
+    """The deposited per-culture metadata CSV, BOM and all."""
+    rows: list[dict[str, Any]] = []
+    for construct, cycle, replicate, _titer in _campaign_cultures():
+        line_cell = construct
+        if cycle == CAMPAIGN_PREFIXED_CYCLE:
+            line_cell = f"{CAMPAIGN_LINE_PREFIX}{construct}"
+        is_control = construct.startswith(c25.KO_ARRAY_CONTROL_LINE)
+        rows.append(
+            {
+                "DBTL_Cycle": cycle,
+                "Line_name": f"{construct}-R{replicate}",
+                "Line": line_cell,
+                "Genes_targeted_for_CRISPRi": "" if is_control else line_cell,
+                **c25.CAMPAIGN_ENVIRONMENT_COLUMNS,
+            }
+        )
+    pd.DataFrame(rows).to_csv(path, index=False, encoding="utf-8-sig")
+
+
+def _write_dryad_deposit(root: Path) -> dict[str, str]:
+    """Write the four deposited Dryad files; return ``relpath -> sha256``."""
+    directory = root / c25.DRYAD_DIR_REL
+    directory.mkdir(parents=True, exist_ok=True)
+    matrix = directory / c25.DRYAD_TOP3_FILENAME
+    metadata = directory / c25.DRYAD_METADATA_FILENAME
+    readme = directory / c25.DRYAD_README_FILENAME
+    _write_campaign_matrix(matrix)
+    _write_campaign_metadata(metadata)
+    readme.write_text(CAMPAIGN_README)
+    archive = directory / c25.DRYAD_ZIP_FILENAME
+    with zipfile.ZipFile(archive, "w") as handle:
+        for member in (matrix, metadata, readme):
+            handle.write(member, arcname=member.name)
+    return {
+        c25.DRYAD_TOP3_REL: _sha256_bytes(matrix),
+        c25.DRYAD_METADATA_REL: _sha256_bytes(metadata),
+        c25.DRYAD_README_REL: _sha256_bytes(readme),
+        c25.DRYAD_ZIP_REL: _sha256_bytes(archive),
+    }
+
+
+#: Which module constant pins which deposited Dryad file.
+_DRYAD_PIN_OF_REL: dict[str, str] = {
+    c25.DRYAD_TOP3_REL: "DRYAD_TOP3_SHA256",
+    c25.DRYAD_METADATA_REL: "DRYAD_METADATA_SHA256",
+    c25.DRYAD_README_REL: "DRYAD_README_SHA256",
+    c25.DRYAD_ZIP_REL: "DRYAD_ZIP_SHA256",
+}
+
+
+def _synthetic_crosswalk() -> UniProtLocusCrosswalk:
+    """What a GOA proteome file would say about :data:`CAMPAIGN_ACCESSIONS`."""
+    return UniProtLocusCrosswalk(
+        assembly_set=c25.KT2440_ASSEMBLY_SET,
+        member="synthetic.goa",
+        sha256="f" * 64,
+        rows=len(CAMPAIGN_ACCESSIONS),
+        single={**CAMPAIGN_AGREEING, CAMPAIGN_DISAGREEING: CAMPAIGN_DISAGREEING_GOA},
+        multi={CAMPAIGN_MULTI_LOCUS: CAMPAIGN_MULTI_LOCI},
+    )
+
+
 @pytest.fixture
 def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     """A raw mirror under ``tmp_path`` built by the module's own deposit function.
@@ -1341,6 +1550,11 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     )
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
+    # The Dryad campaign proteome is a MANUAL deposit, so the fixture puts its four
+    # files in place exactly as the owner's browser download does and re-points the
+    # module's pins at them; `deposit_raw_mirror` then verifies and describes them.
+    for relpath, digest in _write_dryad_deposit(data_root / c25.RAW_DIR_REL).items():
+        monkeypatch.setattr(c25, _DRYAD_PIN_OF_REL[relpath], digest)
     root = c25.deposit_raw_mirror(
         source_data_path=source_data, targets_path=targets, data_root=str(data_root)
     )
@@ -1352,7 +1566,7 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
     synthetic_mirror: Path,
 ) -> None:
-    """Two `si_data` records, each with a re-runnable `pmc_cloud` retrieval."""
+    """Two scripted `pmc_cloud` records, then the four manual Dryad ones."""
     manifest = c25.load_manifest(str(synthetic_mirror))
     assert manifest.citation_key == c25.CITATION_KEY
     assert manifest.doi == c25.DOI
@@ -1360,8 +1574,12 @@ def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
     assert [record.path for record in manifest.files] == [
         c25.SOURCE_DATA_REL,
         c25.TARGETS_REL,
+        c25.DRYAD_ZIP_REL,
+        c25.DRYAD_TOP3_REL,
+        c25.DRYAD_METADATA_REL,
+        c25.DRYAD_README_REL,
     ]
-    for record in manifest.files:
+    for record in manifest.files[:2]:
         assert record.role == ROLE_SI_DATA
         assert record.retrieval is not None
         assert record.retrieval.method is RetrievalMethod.pmc_cloud
@@ -1373,6 +1591,61 @@ def test_the_deposit_writes_both_files_and_a_manifest_that_pins_them(
     assert c25.manifest_sha256(manifest, c25.SOURCE_DATA_REL) == c25.SOURCE_DATA_SHA256
     assert len(manifest.si_data_sources) == 10
     assert manifest.provenance_complete is True
+
+
+def test_the_four_dryad_files_are_manual_browser_records_carrying_the_recipe(
+    synthetic_mirror: Path,
+) -> None:
+    """Each manual deposit records the recipe, the depositor and its own digest.
+
+    The zip is the bytes that ARRIVED and is recorded as raw data beside the three
+    members a loader reads, so a rebuild re-runs one recipe and verifies four digests.
+    """
+    manifest = c25.load_manifest(str(synthetic_mirror))
+    dryad = {record.path: record for record in manifest.files[2:]}
+    assert set(dryad) == {
+        c25.DRYAD_ZIP_REL,
+        c25.DRYAD_TOP3_REL,
+        c25.DRYAD_METADATA_REL,
+        c25.DRYAD_README_REL,
+    }
+    assert dryad[c25.DRYAD_README_REL].role == ROLE_SI_DATA
+    assert {dryad[rel].role for rel in (c25.DRYAD_ZIP_REL, c25.DRYAD_TOP3_REL)} == {
+        ROLE_RAW_DATA
+    }
+    for relpath, record in dryad.items():
+        assert record.source == f"https://doi.org/{c25.DRYAD_DOI}"
+        assert record.retrieval is not None
+        assert record.retrieval.method is RetrievalMethod.manual_browser
+        assert record.retrieval.retriever == "manual"
+        assert record.retrieval.retrieved_at == c25.DRYAD_RETRIEVED_AT
+        assert record.retrieval.sha256 == record.sha256
+        params = record.retrieval.params
+        assert params["retrieval_command"] == c25.DRYAD_MANUAL_RECIPE
+        assert params["retrieved_by"] == c25.DRYAD_RETRIEVED_BY
+        assert params["deposit_record"] == f"{c25.DRYAD_DIR_REL}/DEPOSIT.md"
+        assert params["checksums"] == f"{c25.DRYAD_DIR_REL}/SHA256SUMS.txt"
+        assert c25.manifest_sha256(manifest, relpath) == record.sha256
+
+
+def test_the_dryad_records_refuse_an_absent_deposit_and_name_the_recipe(
+    tmp_path: Path,
+) -> None:
+    """An absent manual file raises WITH the only instructions that reproduce it."""
+    with pytest.raises(RuntimeError, match="MANUAL RECIPE") as excinfo:
+        c25.dryad_artifact_records(tmp_path)
+    assert c25.DRYAD_MANUAL_RECIPE in str(excinfo.value)
+    assert c25.DRYAD_ZIP_FILENAME in str(excinfo.value)
+
+
+def test_the_dryad_records_refuse_a_deposited_file_off_its_pin(
+    synthetic_mirror: Path,
+) -> None:
+    """A deposited file whose bytes drifted is detected, not followed."""
+    root = c25.raw_mirror_dir(str(synthetic_mirror))
+    (root / c25.DRYAD_README_REL).write_text("not the deposited README")
+    with pytest.raises(Exception, match="sha256"):
+        c25.dryad_artifact_records(root)
 
 
 def test_the_deposit_is_idempotent_by_sha256(
@@ -1578,6 +1851,48 @@ def test_standard_names_prefers_the_annotations_symbol_and_falls_back_to_the_tag
 
 
 # --- both loaders, built end to end under tmp_path ------------------------- #
+@pytest.fixture
+def campaign_patches(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Re-point the campaign family's released-shape pins at the synthetic deposit.
+
+    The crosswalk itself is replaced rather than read: the synthetic assembly fixture
+    serves no GOA proteome file, and what that reader does with real GAF bytes is
+    asserted in ``tests/torchcell/datasets/test_bacteria_common.py``. Everything below
+    the crosswalk, including the resolution split and both drop rules, is the code the
+    real store runs.
+    """
+    monkeypatch.setattr(
+        c25, "uniprot_locus_crosswalk", lambda *a, **k: _synthetic_crosswalk()
+    )
+    monkeypatch.setattr(
+        c25, "EXPECTED_CAMPAIGN_PROTEOME_RECORDS", SYNTHETIC_CAMPAIGN_RECORDS
+    )
+    monkeypatch.setattr(c25, "CAMPAIGN_CROSSWALK_SHARED", CAMPAIGN_RESOLVED_ACCESSIONS)
+    monkeypatch.setattr(
+        c25,
+        "CAMPAIGN_CROSSWALK_DISAGREEMENTS",
+        {CAMPAIGN_DISAGREEING: (CAMPAIGN_DISAGREEING_GOA, CAMPAIGN_DISAGREEING_SHEET)},
+    )
+    monkeypatch.setattr(
+        c25.CampaignProteomeCarruthers2025Dataset,
+        "MIN_RESOLVED_FRACTION",
+        CAMPAIGN_RESOLVED_ACCESSIONS / len(CAMPAIGN_ACCESSIONS),
+    )
+
+
+@pytest.fixture
+def built_campaign(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    campaign_patches: None,
+    tmp_path: Path,
+) -> Any:
+    """The campaign-proteome loader built over the synthetic Dryad deposit."""
+    return c25.CampaignProteomeCarruthers2025Dataset(
+        root=str(tmp_path / "build" / "campaign"), pputida_genome=synthetic_kt2440
+    )
+
+
 @pytest.fixture
 def built_titer(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -> Any:
     """The titer loader built over the synthetic mirror and annotation."""
@@ -2177,6 +2492,7 @@ def test_both_loaders_refuse_the_interface_they_do_not_implement(
 def test_main_builds_both_families_and_prints_their_accounting(
     synthetic_mirror: Path,
     synthetic_kt2440: Any,
+    campaign_patches: None,
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -2194,11 +2510,17 @@ def test_main_builds_both_families_and_prints_their_accounting(
     out = capsys.readouterr().out
     assert "IsoprenolTiterCarruthers2025Dataset: len =" in out
     assert "ProteomeCarruthers2025Dataset: len =" in out
-    # Both families drop exactly the induced overexpression groups, so both print it.
+    assert (
+        f"CampaignProteomeCarruthers2025Dataset: len = {SYNTHETIC_CAMPAIGN_RECORDS}"
+        in out
+    )
+    # The titer and panel families drop exactly the induced overexpression groups, so
+    # both print it; the campaign family drops no record, only accessions.
     dropped = len(c25.OVEREXPRESSION_INDUCED_LEVELS) * len(
         c25.OVEREXPRESSION_SHEET_LABELS
     )
     assert out.count(f'"dropped_records": {dropped}') == 2
+    assert out.count('"dropped_records": 0') == 1
 
 
 # --- the four Source Data panels: parsers, proofs and refusals ------------- #
@@ -2751,3 +3073,447 @@ def test_the_prose_l4_refuses_a_genotype_the_store_does_not_hold_uniquely(
     )
     with pytest.raises(AssertionError, match="each must be unique"):
         c25._l4_ko_array_titer_vs_results_text(records)
+
+
+# --------------------------------------------------------------------------- #
+# The deposited Dryad campaign proteome: readers, proofs, build and battery.
+# --------------------------------------------------------------------------- #
+def _campaign_matrix(tmp_path: Path) -> Path:
+    """The synthetic matrix on its own, for the reader's refusals."""
+    path = tmp_path / c25.DRYAD_TOP3_FILENAME
+    _write_campaign_matrix(path)
+    return path
+
+
+def test_read_campaign_proteome_types_every_released_cell(tmp_path: Path) -> None:
+    """Cultures, accessions, the blank cells and the one released zero."""
+    proteome = c25.read_campaign_proteome(str(_campaign_matrix(tmp_path)))
+    cultures = _campaign_cultures()
+    assert proteome.accessions == CAMPAIGN_ACCESSIONS
+    assert len(proteome.cultures) == len(cultures)
+    first = proteome.cultures[0]
+    assert (first.construct_name, first.cycle, first.replicate) == (
+        cultures[0][0],
+        cultures[0][1],
+        cultures[0][2],
+    )
+    assert first.is_control is True
+    assert first.titer_mg_per_l == cultures[0][3]
+    blanked = sum(
+        1
+        for construct, cycle, _replicate, _titer in cultures
+        if (construct, cycle) == CAMPAIGN_BLANKED_STRAIN
+    )
+    assert proteome.blank_cells == blanked
+    assert proteome.zero_cells == 1
+    assert proteome.cells[(0, CAMPAIGN_ZEROED)] == 0.0
+    assert (0, CAMPAIGN_BLANKED) in proteome.cells
+    # The DBTL6 cultures carry the release's unexplained Line prefix; the loader keys
+    # on Line_name, so the construct is the unprefixed one and the cell is recorded.
+    prefixed = [
+        culture
+        for culture in proteome.cultures
+        if culture.cycle == CAMPAIGN_PREFIXED_CYCLE
+    ]
+    assert prefixed
+    for culture in prefixed:
+        assert culture.line_cell == f"{CAMPAIGN_LINE_PREFIX}{culture.construct_name}"
+
+
+def test_read_campaign_proteome_refuses_a_changed_leading_header(
+    tmp_path: Path,
+) -> None:
+    """The six key columns are pinned; a renamed one refuses."""
+    path = _campaign_matrix(tmp_path)
+    frame = pd.read_csv(path)
+    frame = frame.rename(columns={"Line_name": "line_name"})
+    frame.to_csv(path, index=False)
+    with pytest.raises(RuntimeError, match="not"):
+        c25.read_campaign_proteome(str(path))
+
+
+def test_read_campaign_proteome_refuses_a_unit_other_than_the_sourced_one(
+    tmp_path: Path,
+) -> None:
+    """The titer unit comes from the file's own column, and is asserted."""
+    path = _campaign_matrix(tmp_path)
+    frame = pd.read_csv(path)
+    frame.loc[0, "Isoprenol_titer_units"] = "g/L"
+    frame.to_csv(path, index=False)
+    with pytest.raises(RuntimeError, match="states titer units"):
+        c25.read_campaign_proteome(str(path))
+
+
+def test_read_campaign_proteome_refuses_a_line_name_with_no_replicate(
+    tmp_path: Path,
+) -> None:
+    """Without the ``-R<n>`` suffix there is no culture identity to key on."""
+    path = _campaign_matrix(tmp_path)
+    frame = pd.read_csv(path)
+    frame.loc[0, "Line_name"] = "Control"
+    frame.to_csv(path, index=False)
+    with pytest.raises(RuntimeError, match="has no -R<n> replicate suffix"):
+        c25.read_campaign_proteome(str(path))
+
+
+def test_read_campaign_proteome_refuses_a_repeated_culture_identity(
+    tmp_path: Path,
+) -> None:
+    """One ``(cycle, construct, replicate)`` is one culture, never two rows."""
+    path = _campaign_matrix(tmp_path)
+    frame = pd.read_csv(path)
+    frame = pd.concat([frame, frame.iloc[[0]]], ignore_index=True)
+    frame.to_csv(path, index=False)
+    with pytest.raises(RuntimeError, match="appears twice"):
+        c25.read_campaign_proteome(str(path))
+
+
+def test_read_campaign_metadata_reads_the_bom_header_and_refuses_a_missing_column(
+    tmp_path: Path,
+) -> None:
+    """The first header cell is read by position; a dropped column refuses."""
+    path = tmp_path / c25.DRYAD_METADATA_FILENAME
+    _write_campaign_metadata(path)
+    rows = c25.read_campaign_metadata(str(path))
+    assert len(rows) == len(_campaign_cultures())
+    assert rows[0].cycle == 0
+    assert rows[0].genes_targeted is None
+    assert rows[0].values == c25.CAMPAIGN_ENVIRONMENT_COLUMNS
+    frame = pd.read_csv(path)
+    frame = frame.drop(columns=["Media"])
+    frame.to_csv(path, index=False, encoding="utf-8-sig")
+    with pytest.raises(RuntimeError, match=r"has no columns \['Media'\]"):
+        c25.read_campaign_metadata(str(path))
+
+
+def test_the_campaign_aggregation_excludes_a_blank_and_averages_a_released_zero(
+    tmp_path: Path,
+) -> None:
+    """A blank carries no key; a released 0 is a present measurement."""
+    proteome = c25.read_campaign_proteome(str(_campaign_matrix(tmp_path)))
+    locus_of = {**CAMPAIGN_AGREEING, CAMPAIGN_DISAGREEING: CAMPAIGN_DISAGREEING_GOA}
+    blanked = [
+        index
+        for index, culture in enumerate(proteome.cultures)
+        if (culture.construct_name, culture.cycle) == CAMPAIGN_BLANKED_STRAIN
+    ]
+    aggregate = c25.aggregate_campaign_profile(
+        proteome, blanked, locus_of, label="blanked"
+    )
+    assert CAMPAIGN_AGREEING[CAMPAIGN_BLANKED] not in aggregate.abundance
+    assert set(aggregate.n_replicates.values()) == {len(blanked)}
+    zeroed = c25.aggregate_campaign_profile(proteome, [0], locus_of, label="zeroed")
+    assert zeroed.abundance[CAMPAIGN_AGREEING[CAMPAIGN_ZEROED]] == 0.0
+    assert math.isnan(zeroed.se[CAMPAIGN_AGREEING[CAMPAIGN_ZEROED]])
+    assert zeroed.cultures == 1
+
+
+def test_the_campaign_rows_are_asserted_to_be_percentages(tmp_path: Path) -> None:
+    """Every released row sums to 100; a scaled row refuses with both extremes."""
+    path = _campaign_matrix(tmp_path)
+    proteome = c25.read_campaign_proteome(str(path))
+    proof = c25.assert_campaign_rows_are_percentages(proteome)
+    assert proof.startswith("L3: all")
+    assert "100.0000-100.0000" in proof
+    frame = pd.read_csv(path)
+    frame.loc[0, CAMPAIGN_UNMAPPED] = 400.0
+    frame.to_csv(path, index=False)
+    with pytest.raises(RuntimeError, match="so a row sums to 100 within"):
+        c25.assert_campaign_rows_are_percentages(c25.read_campaign_proteome(str(path)))
+
+
+def test_the_campaign_titer_column_is_joined_to_the_source_data_exactly(
+    tmp_path: Path, synthetic_mirror: Path
+) -> None:
+    """Two independent releases of one GC-FID number, so any difference refuses."""
+    root = c25.raw_mirror_dir(str(synthetic_mirror))
+    proteome = c25.read_campaign_proteome(str(root / c25.DRYAD_TOP3_REL))
+    rows = c25.read_titer_rows(str(root / c25.SOURCE_DATA_REL))
+    proof = c25.assert_campaign_titers_match_source_data(proteome, rows)
+    assert "max |diff| 0.0 mg/L" in proof
+    for replicate in CAMPAIGN_MISSING_REPLICATES:
+        assert f"{SIX_REPLICATE_CONSTRUCT}-R{replicate} (DBTL0)" in proof
+    drifted = [
+        culture.model_copy(update={"titer_mg_per_l": culture.titer_mg_per_l + 0.5})
+        if index == 0
+        else culture
+        for index, culture in enumerate(proteome.cultures)
+    ]
+    with pytest.raises(RuntimeError, match="disagree about a culture titer"):
+        c25.assert_campaign_titers_match_source_data(
+            proteome.model_copy(update={"cultures": tuple(drifted)}), rows
+        )
+
+
+def test_the_campaign_crosswalk_proof_pins_the_disagreements_by_accession(
+    built_campaign: Any, synthetic_mirror: Path, synthetic_kt2440: Any
+) -> None:
+    """The two routes are compared accession by accession, not under a tolerance."""
+    proofs = json.loads(
+        Path(
+            osp.join(built_campaign.root, "preprocess/campaign_proofs.json")
+        ).read_text()
+    )
+    crosswalk_proof = next(
+        proof for proof in proofs if "reach the same locus by the GOA" in proof
+    )
+    assert f"of the {CAMPAIGN_RESOLVED_ACCESSIONS} accessions" in crosswalk_proof
+    assert (
+        f"{CAMPAIGN_DISAGREEING} (GOA {CAMPAIGN_DISAGREEING_GOA}, sheet "
+        f"{CAMPAIGN_DISAGREEING_SHEET})"
+    ) in crosswalk_proof
+
+
+def test_the_campaign_crosswalk_refuses_a_disagreement_set_that_is_not_pinned(
+    tmp_path: Path, synthetic_mirror: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A third disagreement is a new fact about one of the two files, not noise."""
+    root = c25.raw_mirror_dir(str(synthetic_mirror))
+    proteome = c25.read_campaign_proteome(str(root / c25.DRYAD_TOP3_REL))
+    panel_rows = c25.read_proteome_rows(str(root / c25.SOURCE_DATA_REL))
+    resolution = resolve_uniprot_accessions(
+        _synthetic_crosswalk(), proteome.accessions, label="t"
+    )
+    panel_locus_of = {**{tag: tag for tag in PROTEOME_TAGS}, PROTEOME_MERGED: "PP_5424"}
+    monkeypatch.setattr(c25, "CAMPAIGN_CROSSWALK_SHARED", CAMPAIGN_RESOLVED_ACCESSIONS)
+    monkeypatch.setattr(c25, "CAMPAIGN_CROSSWALK_DISAGREEMENTS", {})
+    with pytest.raises(RuntimeError, match="not on the measured"):
+        c25.assert_campaign_accession_crosswalk(
+            proteome, resolution, panel_rows, panel_locus_of
+        )
+    monkeypatch.setattr(c25, "CAMPAIGN_CROSSWALK_SHARED", 0)
+    with pytest.raises(RuntimeError, match="both key"):
+        c25.assert_campaign_accession_crosswalk(
+            proteome, resolution, panel_rows, panel_locus_of
+        )
+
+
+def test_the_campaign_loader_writes_one_record_per_strain_cycle(
+    built_campaign: Any,
+) -> None:
+    """One record per non-control ``(construct, cycle)``, keyed on its guide targets."""
+    assert len(built_campaign) == SYNTHETIC_CAMPAIGN_RECORDS
+    assert built_campaign.raw_file_names == [
+        c25.DRYAD_TOP3_FILENAME,
+        c25.DRYAD_METADATA_FILENAME,
+        c25.DRYAD_README_FILENAME,
+        c25.SOURCE_DATA_FILENAME,
+    ]
+    strains = pd.read_csv(osp.join(built_campaign.root, "preprocess/strain_cycles.csv"))
+    assert len(strains) == SYNTHETIC_CAMPAIGN_RECORDS
+    assert set(strains["n_cultures"]) == {3}
+    filler = strains.loc[strains["construct"] == FILLER_CONSTRUCT].iloc[0]
+    assert filler["n_targets"] == 1
+    assert filler["non_targeting_tokens"] == "NT1"
+    record = built_campaign[0]
+    experiment = record["experiment"]
+    dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+    phenotype = dumped["phenotype"]
+    assert phenotype["measurement_type"] == c25.CAMPAIGN_MEASUREMENT_TYPE
+    assert set(phenotype["protein_abundance"]) <= {
+        *CAMPAIGN_AGREEING.values(),
+        CAMPAIGN_DISAGREEING_GOA,
+    }
+    kinds = Counter(
+        pert["perturbation_type"] for pert in dumped["genotype"]["perturbations"]
+    )
+    assert kinds["heterologous_pathway"] == 5
+    assert kinds["bacterial_crispr_interference"] >= 1
+
+
+def test_the_campaign_reference_is_its_cycles_control_over_the_records_own_keys(
+    built_campaign: Any, tmp_path: Path
+) -> None:
+    """The reference is key-matched to the record, and is the cycle's control mean."""
+    references = pd.read_csv(
+        osp.join(built_campaign.root, "preprocess/cycle_references.csv")
+    )
+    assert sorted(references["cycle"]) == list(range(c25.EXPECTED_CAMPAIGN_REFERENCES))
+    assert set(references["n_proteins"]) == {CAMPAIGN_RESOLVED_ACCESSIONS}
+    proteome = c25.read_campaign_proteome(
+        str(c25.raw_mirror_dir(str(tmp_path / "data_root")) / c25.DRYAD_TOP3_REL)
+    )
+    locus_of = {**CAMPAIGN_AGREEING, CAMPAIGN_DISAGREEING: CAMPAIGN_DISAGREEING_GOA}
+    controls = [
+        index
+        for index, culture in enumerate(proteome.cultures)
+        if culture.is_control and culture.cycle == 0
+    ]
+    expected = c25.aggregate_campaign_profile(
+        proteome, controls, locus_of, label="dbtl0"
+    )
+    for index in range(len(built_campaign)):
+        record = built_campaign[index]
+        experiment = record["experiment"]
+        dumped = experiment if isinstance(experiment, dict) else experiment.model_dump()
+        reference = record["reference"]
+        ref = reference if isinstance(reference, dict) else reference.model_dump()
+        keys = set(dumped["phenotype"]["protein_abundance"])
+        assert set(ref["phenotype_reference"]["protein_abundance"]) == keys
+    blanked = next(
+        index
+        for index in range(len(built_campaign))
+        if CAMPAIGN_AGREEING[CAMPAIGN_BLANKED]
+        not in (
+            built_campaign[index]["experiment"]["phenotype"]["protein_abundance"]
+            if isinstance(built_campaign[index]["experiment"], dict)
+            else built_campaign[index]["experiment"].model_dump()["phenotype"][
+                "protein_abundance"
+            ]
+        )
+    )
+    reference = built_campaign[blanked]["reference"]
+    ref = reference if isinstance(reference, dict) else reference.model_dump()
+    stored = ref["phenotype_reference"]["protein_abundance"]
+    assert CAMPAIGN_AGREEING[CAMPAIGN_BLANKED] not in stored
+    for locus, value in stored.items():
+        assert value == pytest.approx(expected.abundance[locus])
+
+
+def test_the_campaign_accounting_names_both_accession_drop_rules(
+    built_campaign: Any,
+) -> None:
+    """No record is dropped; the two accession rules carry their own members."""
+    accounting = c25.BuildAccounting.model_validate_json(
+        Path(
+            osp.join(built_campaign.root, "preprocess/build_accounting.json")
+        ).read_text()
+    )
+    accounting.check()
+    assert accounting.source_rows == len(_campaign_cultures())
+    assert accounting.candidate_records == SYNTHETIC_CAMPAIGN_RECORDS
+    assert accounting.kept_records == SYNTHETIC_CAMPAIGN_RECORDS
+    assert accounting.dropped_records == 0
+    rules = {rule.rule: rule for rule in accounting.rules}
+    assert rules["accession_has_no_locus_tag_in_the_goa_proteome_file"].items == [
+        CAMPAIGN_UNMAPPED
+    ]
+    assert rules["accession_names_several_loci"].items == [CAMPAIGN_MULTI_LOCUS]
+    dropped = pd.read_csv(
+        osp.join(built_campaign.root, "preprocess/dropped_accessions.csv")
+    )
+    assert set(dropped["accession"]) == {CAMPAIGN_UNMAPPED, CAMPAIGN_MULTI_LOCUS}
+    multi = dropped.loc[dropped["accession"] == CAMPAIGN_MULTI_LOCUS].iloc[0]
+    assert multi["detail"] == ";".join(CAMPAIGN_MULTI_LOCI)
+
+
+def test_the_campaign_build_refuses_a_resolved_fraction_below_its_floor(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    campaign_patches: None,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The floor is a measured property of the deposit, so falling under it refuses."""
+    monkeypatch.setattr(
+        c25.CampaignProteomeCarruthers2025Dataset, "MIN_RESOLVED_FRACTION", 0.99
+    )
+    with pytest.raises(LocusTagResolutionError, match="reach one"):
+        c25.CampaignProteomeCarruthers2025Dataset(
+            root=str(tmp_path / "build" / "floor"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_campaign_build_refuses_two_accessions_that_reach_one_locus(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    campaign_patches: None,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A locus reached by two accessions would key two proteins' abundance to it."""
+    collided = _synthetic_crosswalk().model_copy(
+        update={
+            "single": {
+                **CAMPAIGN_AGREEING,
+                CAMPAIGN_DISAGREEING: CAMPAIGN_AGREEING["QPP_0368"],
+            }
+        }
+    )
+    monkeypatch.setattr(c25, "uniprot_locus_crosswalk", lambda *a, **k: collided)
+    with pytest.raises(RuntimeError, match="name one locus from several"):
+        c25.CampaignProteomeCarruthers2025Dataset(
+            root=str(tmp_path / "build" / "collision"), pputida_genome=synthetic_kt2440
+        )
+
+
+def test_the_campaign_battery_passes_l0_to_l4_on_the_synthetic_build(
+    built_campaign: Any,
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """L0 to L4, the titer pairing and the L4 re-derivation from the deposited bytes."""
+    monkeypatch.setattr(c25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    monkeypatch.setattr(
+        c25, "uniprot_locus_crosswalk", lambda *a, **k: _synthetic_crosswalk()
+    )
+    records = [built_campaign[index] for index in range(len(built_campaign))]
+    report = c25.campaign_proteome_report(records, str(synthetic_mirror))
+    assert report.passed, [
+        (r.level, r.name, r.message) for r in report.results if not r.passed
+    ]
+    assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3, Level.L4}
+
+
+def test_verify_build_refuses_a_family_it_does_not_serve(tmp_path: Path) -> None:
+    """The dispatcher names its three families rather than guessing one."""
+    with pytest.raises(Exception):
+        c25.verify_build(
+            str(tmp_path),
+            str(tmp_path),
+            family="not_a_family",  # type: ignore[arg-type]
+        )
+
+
+CAMPAIGN_PROTEOME_ROOT = osp.join(
+    DATA_ROOT, "data/torchcell/campaign_proteome_carruthers2025"
+)
+requires_built_campaign = pytest.mark.skipif(
+    not osp.isdir(osp.join(CAMPAIGN_PROTEOME_ROOT, "processed/lmdb")),
+    reason="requires the built Carruthers 2025 campaign proteome LMDB under $DATA_ROOT",
+)
+
+
+@pytest.mark.data
+@requires_built_campaign
+def test_the_built_campaign_store_pairs_the_titers_and_passes_l0_to_l4() -> None:
+    """The released shape: 465 strain-cycles, 7 controls, 1,842 of 2,187 accessions."""
+    from torchcell.verification.runners import load_records
+
+    records = load_records(CAMPAIGN_PROTEOME_ROOT)
+    assert len(records) == c25.EXPECTED_CAMPAIGN_PROTEOME_RECORDS
+    report = c25.campaign_proteome_report(records, DATA_ROOT)
+    assert report.passed, [
+        (r.level, r.name, r.message) for r in report.results if not r.passed
+    ]
+    assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3, Level.L4}
+
+
+@pytest.mark.data
+@requires_built_campaign
+def test_the_built_campaign_accounting_drops_accessions_but_never_a_record() -> None:
+    """345 of 2,187 accessions carry no single locus; all 465 records are kept."""
+    accounting = c25.BuildAccounting.model_validate_json(
+        Path(
+            osp.join(CAMPAIGN_PROTEOME_ROOT, "preprocess/build_accounting.json")
+        ).read_text()
+    )
+    accounting.check()
+    assert accounting.source_rows == 1497
+    assert accounting.control_rows == 78 + 12
+    assert accounting.kept_records == c25.EXPECTED_CAMPAIGN_PROTEOME_RECORDS
+    assert accounting.dropped_records == 0
+    dropped = pd.read_csv(
+        osp.join(CAMPAIGN_PROTEOME_ROOT, "preprocess/dropped_accessions.csv")
+    )
+    assert len(dropped) == 345
+    assert set(dropped["reason"]) == {
+        "accession_names_several_loci",
+        "no_locus_tag_in_the_goa_proteome_file",
+    }
+    references = pd.read_csv(
+        osp.join(CAMPAIGN_PROTEOME_ROOT, "preprocess/cycle_references.csv")
+    )
+    assert sorted(references["cycle"]) == list(range(c25.EXPECTED_CAMPAIGN_REFERENCES))
+    assert list(references["control_cultures"]) == [18, 12, 12, 12, 12, 12, 12]

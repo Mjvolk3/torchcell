@@ -427,3 +427,367 @@ elsewhere. The fix is the same shape as the variant leaves and is additive: make
 `source_organism` optional so a `ProvenanceGap` can cover it, then backfill those five
 records. It is recorded on #731 and left open there deliberately, because it is an
 addition-axis gap rather than a variant-representation one.
+
+## 2026.10.09 - The Dryad deposit is mirrored and three of its arms are loaded
+
+Issue #788 item 1. The deposit the 2026.10.07 row above declared NOT deposited was
+retrieved by hand and is now in the raw mirror, and three new datasets read it. The
+2026.10.07 conclusion that no per-SNP leaf field was reachable is **corrected**: every
+leaf field is in `data S1-5` and `data S1-5` is now mirrored. The conclusion that no
+per-strain titer exists anywhere still stands.
+
+### What was deposited, and the recipe that reproduces it
+
+`/scratch/projects/torchcell-scratch/torchcell-raw/menasalvasBiosensordrivenStrainEngineering2025/data/dryad/`
+
+| file | bytes | sha256 |
+|---|---|---|
+| `doi_10_5061_dryad_sbcc2frjq__v20250919.zip` (the arrival bytes) | 78,995,492 | `67ae73c6f20058513daee837389aace1fc1fd5973840de0d0d886e9da6e4c19c` |
+| `Data_Dryad_Supplementary_Data_Updated_2025-9-18_2.zip` (member) | 78,976,184 | `ca5c9a1b7d5aca6851df886b6c5b27c56884e7fde68f4f63880363e023038463` |
+| `README.md` (member) | 18,978 | `07f1e8ed9981276341a67a7843eff4c0d408c1c4ee976e5fd08c1d214ebb9271` |
+
+`SHA256SUMS.txt` pins **three** files, not four: this deposit's arrival zip holds two
+members where Carruthers 2025's held three. Each of the three is an
+`ArtifactRecord` with `RetrievalMethod.manual_browser` whose `retrieval.sha256` equals
+the record's own, carrying the recipe from `DEPOSIT.md` verbatim as its
+`retrieval_command` (`DRYAD_MANUAL_RECIPE`):
+
+> "open https://doi.org/10.5061/dryad.sbcc2frjq in a browser, solve the challenge,
+> click "Download dataset", save the zip unchanged, then unzip it into this directory
+> beside the zip."
+
+plus `retrieved_by` ("the owner (mjvolk3), browser download"), `deposit_note`,
+`deposit_record` (`data/dryad/DEPOSIT.md`) and `checksums`
+(`data/dryad/SHA256SUMS.txt`). The two now-false `si_expected` entries were rewritten:
+the Dryad entry reads DEPOSITED and names the three files and the junk a loader skips,
+and the titer entry keeps the titer claim (still true) while naming the arms that are
+now loaded.
+
+### What the inner zip actually holds
+
+170 members. Measured 2026-10-09 with `unzip -l`: **three** are data this module can
+read, and the rest are `__MACOSX/` resource forks, `.DS_Store` files, a
+`~$Menasalvas et al Supplementary Data 1.xlsx` Excel lock file, 150-odd `.fcs` flow
+files, `.fastq` reads, three AlphaFold `.mp4` movies and Supplementary Data 4's
+`fast.genomics` TSV.
+
+| member | bytes | read by |
+|---|---|---|
+| `.../Menasalvas et al Supplementary Data 1.xlsx` | 1,747,748 | the two metabolite datasets (sheet 1) and all three (sheet 5) |
+| `.../Menasalvas et al Supplementary Data 2.xlsx` | 7,618,312 | the proteome dataset (sheet 4) |
+| `.../Menasalvas et al Supplementary Data 3-5/Menasalvas et al Supplementary Data 4.tsv` | 1,518,084 | nothing |
+
+`extract_dryad_members` reads the two workbooks by their exact zip paths and writes
+them under basenames the module chose, into `<dataset root>/preprocess/dryad/`. Nothing
+calls `extractall`, no released member name reaches the filesystem, and the extraction
+is idempotent by sha256.
+
+### The sourced genotypes
+
+`paper.md` (sha256 `d14536948af5ba67d52362ae71fb804a2fac03a1f7ab152817a01df3aa92d080`),
+Results, opening paragraph of "Functional genomics analyses reveal metabolic shifts in
+high isoprenol producers". The MinerU OCR breaks this sentence across a blank line after
+"PP_3540/mvaB, and"; the quote joins the two fragments with one space and changes
+nothing else:
+
+> "Our two highest producer strains TEAM-3185 and TEAM-3174 contain gene deletions in
+> PP_2428, PP_4622, PP_3540/mvaB, and PP_4373/fleQ. TEAM-3174 also overexpresses mvaS
+> and includes ΔPP_2710. TEAM-3185 lacks the mvaS overexpression, and ΔPP_2710 but
+> PP_2074 is deleted."
+
+Supplementary Table 4 (`si/si1.md`, sha256
+`2afa42609d20500f80d5edbddf0bb41b88b4e7f1ea0abefb40fa4b969e4e5e8e`) states the same
+sets independently and adds what the Results do not: TEAM-3185 is
+"Pp TEAM-2777 ΔPP_ 2428 ΔPP_ 4622 ΔPP_ 3540 ΔPP_4373ΔPP_2074", so both improved strains
+inherit TEAM-2777's ΔPP_2664 and ΔPP_2675, and TEAM-3174's two mvaS copies sit at
+`PP_1117intergenic` and `PP_5464intergenic` under `Pcv`. The organism of those copies is
+sourced from the Results ("identified overexpression of Enterococcus faecalis mvaS as
+the most successful"); the INTEGRATED pathway's own mvaS keeps
+`SOURCE_ORGANISM_UNREPORTED`, because the paper defers that pathway's origin to two
+unmirrored references. Table 4's TEAM-3174 row is OCR-merged with its rowspan
+neighbors, which is recorded in `TABLE4_TEAM3174.note` rather than silently cleaned.
+
+The metabolomics replicate count came out of the deposit README, line 25, under
+"Sheet 1. Metabolite concentrations from selected isoprenol producer strains.":
+
+> "Average value from 3 biological replicates. Strain names are indicated with the
+> TEAM-XXXX format. GP = growth phase samples. PP = production phase samples. Fold
+> Change was calculated by the determining the ratio of concentrations from the
+> indicated strain IDs in during growth phase (GP)"
+
+The article states it too, in the Fig. 7E caption ("Mean values from three biological
+replicates for each sample are reported."), but the MinerU OCR of the article DROPPED
+that sentence: `grep -cE "three biological|Mean values from"` on `paper.md` returns 0
+while the PDF text layer returns 2. Fig. 7's caption carries TWO different replicate
+counts, `n = 4` for the panel-A growth curve and three for the panel-E metabolomics, so
+taking the wrong one was a live risk. The same README states the replicon
+(`Genomic Coordinates in P. putida AE015451`) and the caller
+(`breseq v 0.38.1`).
+
+### Arms built, with their measured record counts
+
+| dataset | dev-tree root | records | per record |
+|---|---|---|---|
+| `ProteomeMenasalvas2025Dataset` | `data/torchcell/proteome_menasalvas2025` | 6 | 2,090 loci, 3 replicates |
+| `MetaboliteGrowthPhaseMenasalvas2025Dataset` | `data/torchcell/metabolite_growth_menasalvas2025` | 3 | 46 metabolites, n = 3 |
+| `MetaboliteProductionPhaseMenasalvas2025Dataset` | `data/torchcell/metabolite_production_menasalvas2025` | 3 | 46, 46 and 47 metabolites, n = 3 |
+
+The proteome records are `BacterialProteinAbundanceExperiment` and the metabolite ones
+`BacterialMetaboliteExperiment`, not the yeast-shaped `MetaboliteExperiment`: only the
+bacterial reference classes type `genome_reference` as `AssemblyReferenceGenome`, so the
+yeast-shaped one DROPS the KT2440 assembly pin on dump and
+`torchcell.verification.runners._dataset_assembly_sets` then refuses the record with "a
+genome reference without assembly_set must be 'Saccharomyces cerevisiae'". Caught by
+running the runner's own L4 containment against the first build.
+| `IsoprenolSelectionMenasalvas2025Dataset` (rebuilt) | `data/torchcell/isoprenol_selection_menasalvas2025` | 58 | unchanged |
+
+The proteome arm reads `Sheet 4. GrowthProduction phase`: 39,438 rows, six samples
+`{2595,3174,3185}_{growth,production}` at 6,573 rows each, three replicates `R1 R2 R3`.
+One record per sample, `measurement_type = "dia_protein_counts_sum_mean"` (the
+per-sample mean of the released `Counts_sum`, with SE = SD / sqrt(3)), reference = the
+matching-phase TEAM-2595 profile. The two TEAM-2595 records are therefore their own
+reference, which is what keeping every released sample as a record costs; dropping two
+real samples to avoid it would cost more, and it is also where the called variants land.
+
+Growth phase and production phase are different environments, sourced from the Methods:
+
+> "The log-phase samples were harvested when each strain reached an $\mathrm { O D } _
+> { 6 0 0 }$ of 0.7 (roughly 8 to 14 hours postback dilution and induction) as monitored
+> by a spectrophotometer. The production-phase samples were harvested at the 24-hour
+> time point."
+
+The production phase carries `duration_hours = 24.0`; the growth phase carries `None`
+with a typed gap, because its "roughly 8 to 14 hours" is a 6 h range no single duration
+holds and it differs per strain. `Environment.temperature` is a typed absence in both:
+30 C is stated for the overnight LB culture, both M9 adaptation steps and the
+conjugation spot, and is not restated for the production run.
+
+Both metabolite datasets store the `Average Concentration (µM)` block, not the
+`Specific Concentration (µM/OD600)` one: the README says the second is the first
+"normalized against the OD~600~ at the time of sample harvest", so storing both would
+store one measurement twice, and the harvest OD600 it divides by is not released per
+sample. `measurement_type = "lc_ms_intracellular_concentration_uM"`, following
+Mulleder 2016's `intracellular_concentration_mM`. `metabolite_level_se` is `None` with
+a typed gap: the sheet releases 18 columns and none is an SD, SE, CV or n, there are no
+hidden rows or columns and no cell comments.
+
+### Drop rules, with counts
+
+Proteome (`n_records = 0` for all three: no SAMPLE is dropped, only measurement keys):
+
+| rule | items |
+|---|---|
+| `protein_key_is_not_a_host_protein` | 9: `Q9FD71` `Q9FD70` `Q8PW39` `P32377` `P0AE22` (the five mevalonate-pathway enzymes) and `P04264` `P13645` `P35527` `P00761` (three human keratins and pig trypsin) |
+| `protein_key_merges_two_protein_groups` | 4: `Aroe` `Asd` `Dapa` `Dapf` |
+| `protein_key_is_not_a_locus_of_the_pinned_assembly` | 86: 85 retired symbols plus the ambiguous `Asd` |
+
+2,178 host keys resolve to 2,092 loci (96.05%), 2,090 of which survive the merged-key
+rule. Metabolite (both phases): `relative_concentration_is_on_another_scale` drops the
+10 `Relative` rows, quoting the sheet's own footnote row 66 (which the README repeats
+verbatim); `metabolite_cell_is_blank_for_this_strain_and_phase` drops 6 cells in the
+growth phase (`Glycolate` and `Pyruvate` in all three strains) and 5 in the production
+phase. A released 0 is a present measurement and is stored.
+
+### Arms and claims REFUSED, with the measurement that refused them
+
+- **`TEAM-3175`'s 254 calls and `TEAM-3184`'s 255 calls.** Four distinct names for at
+  most two improved strains: the Results and every data sheet say `TEAM-3174` /
+  `TEAM-3185`, the shotgun-proteomics Methods say `TEAM-3175` / `TEAM-3184`, the
+  data-availability statement says `TEAM-3175` / `TEAM-3185`, and `data S1-5` says
+  `TEAM-2595` / `TEAM-3175` / `TEAM-3184`. No mirrored byte states any identity between
+  them, so attaching those calls to the 3174 and 3185 records would be an unstated
+  identity. `TEAM-2595` is spelled identically in `data S1-5` and in every phenotype
+  sheet, so its 75 calls attach with no assumption: 26 in-locus
+  `BacterialSequenceVariantPerturbation` and 49 intergenic
+  `BacterialSiteVariantPerturbation`.
+  *Hypothesis (untested, and deliberately NOT acted on):* `TEAM-3184` is `TEAM-3185`
+  and `TEAM-3175` is `TEAM-3174`. The circumstantial evidence is one-sided: `TEAM-3184`
+  carries a `Δ924 bp` deletion of the whole `PP_2074` CDS, which Table 4 states only
+  for `TEAM-3185`, but `TEAM-3175` carries no `PP_2710` call, which Table 4 states only
+  for `TEAM-3174`. Resolving it needs the BioSample records, not a preference.
+- **`BacterialSpanDeletionPerturbation` for the 26.1 kb `fleQ` deletion.** The Results
+  state "a 26.1-kb deletion surrounding the fleQ/PP_4373 locus containing 24
+  flagellarelated genes. A comprehensive tabulation of all polymorphisms is described in
+  data S1-5." Measured on `data S1-5`: **0** of 584 rows name `fleQ` or `PP_4373`, and
+  the largest released deletion is `Δ1,867 bp` on `PP_2664`. The same sentence says "74
+  additional" SNPs while the table holds 584 rows over 284 distinct positions for three
+  clones, so the prose aggregate and the released table are not the same statement. The
+  refusal of 2026.10.07 stands, now with the table in hand rather than inferred.
+- **The two promoter replacements** `PJ23100-PP_2666,PP_2665` (all three strains) and
+  `PJ23119-PP_1697` (the two improved strains, via TEAM-2777).
+  `PromoterReplacementPerturbation.expression_direction` is required with no default and
+  no mirrored byte states a direction for either swap; the Results say only "the best
+  signal-to-noise isoprenol response was with the constitutive J23100 promoter for the
+  PP_2665, PP_2666 operon". Recorded in `UNASSERTED_DESIGNED_CHASSIS`.
+- **Supplementary Data 2 sheet 5** (`Sheet 5. Isoprenol pathway over`). Loadable with no
+  schema change: 55,080 rows, six samples `TEAM_{2595,3174,3185}_{pIY670,pTE554}` at
+  four replicates each over 2,290 proteins, with the environment stated by the
+  Supplementary Figure 18 caption. Deferred as its own dataset rather than folded in,
+  because it is the SAME three strains carrying an ADDITIONAL episomal copy of the five
+  pathway genes the chromosome already holds, so every genotype would carry `mvaS`,
+  `mvaE`, `MKmm`, `PMDHKQ` and `aphA` twice under two localizations, and the inducer
+  that caption states ("2% of arabinose") names no w/v or v/v basis where Supplementary
+  Figure 20's caption does state "0.1% w/v".
+- **Supplementary Data 2 sheets 1-3** (the yiaY/yiaZ complementation, the PJ23119-yiaYZ
+  isoprenol dose response and the culture-format comparison), **Supplementary Data 1
+  sheets 2-4 and the ShinyGO sheet**, and **Supplementary Data 4**. No loader reads
+  them; sheets 1-3 also carry non-*P. putida* entries and sheet 1 releases
+  `Counts_mean` with no `Replicate` column at all.
+
+### `data S1-5`, as measured
+
+584 rows: `TEAM-3184` 255, `TEAM-3175` 254, `TEAM-2595` 75, over 284 distinct positions.
+Evidence `RA` 569, `MC JC` 13, `JC` 2 (the README's legend defines `MJ`, which the sheet
+never writes, so the released cell is kept verbatim and never mapped to an enum).
+Encodings 395 in-locus and 189 intergenic, and the split is exactly 1:1 with the
+`annotation` cell's own `intergenic` prefix. Variant types `snv` 405, `insertion` 122,
+`deletion` 40, `substitution` 17, read from five released `mutation` forms with no
+default branch: `G→A`, `+C`, `Δ1,227 bp`, `(C)6→7` (an insertion when the copy count
+rises, a deletion when it falls) and `2 bp→CT` / `48 bp→33 bp`. The `→` is U+2192 and is
+written as that codepoint in every pattern; the cells also carry U+00A0 and U+2011, which
+`_norm` normalizes for matching while `type_statement` and `sequence_change` keep the
+cell verbatim. All 202 distinct single-locus gene names and all 95 distinct flanking
+names resolve to locus tags of `GCA_000007565.2`.
+
+`position_end` repeats `position_start` for every call, uniformly. `data S1-5` releases
+one coordinate per call and no end coordinate; `BacterialVariantCall.position_end` is a
+required `int`, so the absence cannot be a `ProvenanceGap`, and deriving an end would
+assert breseq's coordinate convention for each of the five change forms, which no
+mirrored byte states. The released span stays verbatim in `sequence_change` and
+`annotation`, and an L3 row (`one_coordinate_per_call`) asserts the convention so a
+consumer cannot mistake it for a measurement.
+
+### L0-L4
+
+`verify_build(dataset_root, data_root, family=...)` dispatches on
+`Family = "selection" | "proteome" | "metabolite_growth" | "metabolite_production"`.
+All four reports PASS.
+
+`proteome` (`verify_protein_dataset` + 6 own rows):
+
+| level | row | result |
+|---|---|---|
+| L0 | `structural` | ok, 6 records validated |
+| L1 | `count` | ok, observed 6, expected 6 |
+| L1 | `orf_uniqueness` | ok, 89 ORFs, duplicates expected |
+| L1 | `one_record_per_strain_and_growth_phase` | ok, 6 keys over 6 records |
+| L2 | `value_fidelity` / `se_nonnegative` | ok, 12,540 values each |
+| L3 | `reference_finite` | ok, 12,540 values |
+| L3 | `measurement_type_consistent` | ok, `dia_protein_counts_sum_mean` |
+| L3 | `every_record_measures_the_same_kt2440_locus_set` | ok, 1 key set, 2,090 loci |
+| L3 | `called_variants_attach_only_to_the_identically_named_clone` | ok, TEAM-2595 carries 75, no other strain any |
+| L3 | `one_coordinate_per_call` | ok, 150 stored calls |
+| L4 | `stored_deletion_sets_are_supplementary_table_4s` | ok, 0 of 6 disagree |
+| L4 | `supplementary_note_2_loci_are_measured_in_every_record` | ok, 10 of 10 loci |
+| L4 | `pp_2088_production_fold_is_supplementary_note_2s` | ok, stored 31.895 and 18.555 against Note 2's 34 and 20 |
+
+The last two join the built store to `si/si1.md`, a DIFFERENT released file from the
+Dryad workbook the loader read. The fold row names its statistic (the ratio of the
+per-sample means of the released `Counts_sum`) and holds to a declared relative
+tolerance of 0.10, because the SI states two rounded integers computed on the authors'
+own normalized intensities.
+
+`metabolite_growth` and `metabolite_production` (`verify_metabolite_dataset` with
+`reference_centered=False`, plus 5 own rows each):
+
+| level | row | growth | production |
+|---|---|---|---|
+| L0 | `structural` | ok, 3 records | ok, 3 records |
+| L1 | `count` | ok, 3 | ok, 3 |
+| L1 | `genotype_uniqueness` | ok, 3 strains | ok, 3 strains |
+| L1 | `one_record_per_released_strain` | ok | ok |
+| L2 | `value_fidelity` | ok, 138 values | ok, 139 values |
+| L3 | `reference_finite` | ok, 138 | ok, 137 |
+| L3 | `measurement_type_consistent` | ok | ok |
+| L3 | `every_stored_metabolite_is_an_absolute_row` | ok, 46 of 48, 0 Relative | ok, 48 of 48, 0 Relative |
+| L3 | `called_variants_attach_only_to_the_identically_named_clone` | ok, 75 | ok, 75 |
+| L3 | `one_coordinate_per_call` | ok, 75 calls | ok, 75 calls |
+| L4 | `results_prose_amino_acids_are_not_in_data_s1_1` | ok, 0 of 3 stored | ok |
+| L4 | `specific_block_recovers_one_harvest_od600_per_strain` | ok, recovered 2.4 / 1.2 / 2.7 | ok, 15.511 / 12.920 / 13.995 |
+
+Two findings fell out of those L4 rows.
+
+- **The Results cite `data S1-1` for three metabolites it does not release.** "We
+  observed a 2-fold increase in phenylalanine and a 15-fold increase in leucine
+  concentrations comparing TEAM-3174 and TEAM-3185 to the base strain (Fig. 7E and data
+  S1-1). In contrast, tryptophan concentrations showed inconsistent changes between the
+  two producers as TEAM-3185 had no change whereas TEAM-3174 showed a $7 \mathbf { x }$
+  decrease (Fig. 7E and data S1-1)." Measured: of the 58 released rows, the only
+  amino-acid-adjacent ones are `4-Aminobutyric acid` and `Glutamate`. None of the three
+  is a released row, so the claim is not sourceable from the deposit. The L4 row asserts
+  exactly that, pinned: a released row for any of the three would fail it.
+- **The growth-phase `Specific` block recovers the harvest OD600 exactly; the
+  production-phase one does not.** Dividing each stored growth-phase level by its
+  released specific value gives one number per strain to within the 0.01 rounding of the
+  average column: **2.400** for TEAM-2595, **1.200** for TEAM-3174, **2.700** for
+  TEAM-3185. That number is the harvest OD600 the deposit nowhere states as such. In the
+  production phase the ratio is not constant, and the metabolites that break it are
+  pinned exactly (`SPECIFIC_BLOCK_DISAGREEMENTS`): six for TEAM-2595 (`2-Methylcitrate`,
+  `ADP`, `Citrate`, `Malonate`, `NADH`, `Pyruvate`), one for TEAM-3174
+  (`Methylmalonate`) and two for TEAM-3185 (`NAD`, `NADH`). That is a property of the
+  released sheet, not of the build.
+
+`selection` is unchanged and still PASSES all 19 rows, with 58 records over 60 distinct
+targets.
+
+### A finding recorded and NOT acted on
+
+`Sheet 4` names nine non-*P. putida* proteins, and five of them are the mevalonate
+pathway with their source organisms in the UniProt entry name: `HMGCS_ENTFL` (Q9FD71),
+`Q9FD70_ENTFL` (Q9FD70), `Q8PW39_METMA` (Q8PW39, mevalonate kinase), `MVD1_YEAST`
+(P32377, diphosphomevalonate decarboxylase) and `APHA_ECOLI` (P0AE22). That is the first
+independent evidence in the mirror for the organisms behind the integrated pathway's
+`mvaS`, `mvaE`, `MKmm`, `PMDHKQ` and `aphA` tokens, and `MKmm` beside a
+*Methanosarcina mazei* mevalonate kinase is suggestive of the suffix read Carruthers
+2025 refused. **The sheet never states which pIY670 part token each enzyme is**, so
+`SOURCE_ORGANISM_UNREPORTED` stays on all five and the mapping is raised for review
+rather than taken. Acting on it would also change every `IsoprenolSelectionMenasalvas2025Dataset`
+record's content, which is a full-rebuild case, not an additive one.
+
+### Adapters, written and not yet wired
+
+Three `CellAdapter` subclasses and their enable-lists, each shaped on the precedent that
+already serves the same node classes:
+
+| adapter module | class | conf |
+|---|---|---|
+| `torchcell/adapters/menasalvas2025_proteome_adapter.py` | `ProteomeMenasalvas2025Adapter` | `conf/proteome_menasalvas2025_adapter.yaml` |
+| `torchcell/adapters/menasalvas2025_metabolite_growth_adapter.py` | `MetaboliteGrowthPhaseMenasalvas2025Adapter` | `conf/metabolite_growth_menasalvas2025_adapter.yaml` |
+| `torchcell/adapters/menasalvas2025_metabolite_production_adapter.py` | `MetaboliteProductionPhaseMenasalvas2025Adapter` | `conf/metabolite_production_menasalvas2025_adapter.yaml` |
+
+All three enable `bacterial perturbation (chunked)` **and**
+`bacterial sequence variant perturbation (chunked)`, because the two bacterial node
+methods partition the leaves and the TEAM-2595 records carry called variants (the same
+pairing `proteome_desiqueira2025_adapter.yaml` uses). They enable the
+environment-perturbation pair (crystal violet and pH) and no `crispr construct` pair,
+because no record of these three families carries a CRISPRi leaf. `LANE_OF_LABEL` in
+`torchcell/database/browser_style.py` needs **no** change: every variant leaf is served
+under the one `bacterial sequence variant perturbation` label it already carries, and
+`ProteinAbundancePhenotype` and `MetabolitePhenotype` are already served classes.
+
+`torchcell/adapters/__init__.py`, `dataset_adapter_map.py`, `conf/kg_bacteria.yaml`,
+`torchcell/verification/runners.py` and
+`tests/torchcell/adapters/_bacterial_adapter_cases.py` are NOT touched by this change
+and still have to be edited for the three datasets to reach a build or the shared
+runner. One thing to get right there: `METABOLITE_DATASETS` in `runners.py` has no
+per-dataset `verify` hook and its L4 keys on `metabolite_gene_set`, which counts
+heterologous pathway tokens and site-keyed variant ids as host loci; a
+`BACTERIAL_METABOLITE_DATASETS` registry driven by `_run_bacterial_family` with
+`measured_set=host_perturbed_gene_set` is the shape that works, and it was verified by
+hand against the built stores (1.000 of 73 measured genes are loci of
+`pputida_KT2440_ASM756v2`, and 1.000 of 2,137 for the proteome).
+
+### Open decisions
+
+1. Whether to map the five pathway tokens onto the five UniProt accessions above. It
+   needs an explicit go-ahead and a full KG rebuild, because it changes a served
+   dataset's records.
+2. Whether `Sheet 5` becomes its own dataset. It is loadable; the arabinose basis and
+   the double pathway copy are the two things to settle first.
+3. `verify_metabolite_dataset` has no `allow_duplicate_orfs` relaxation, which is why
+   the metabolite arm is two datasets rather than one of six records. A one-line
+   addition mirroring `verify_protein_dataset` would allow the single-dataset shape; it
+   is NOT made here, because `torchcell/verification/` is outside this change.
+4. `GeneAdditionPerturbation.source_organism` is still a required `str`, so the
+   sentinel of the 2026.10.07 row above is still in place, now on the mCherry biosensor
+   copies as well as the five pathway genes.

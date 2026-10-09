@@ -804,3 +804,147 @@ the operon a sample overexpresses: the pinned multiset is 19 x 1,424 plus one 2 
    over Supplementary Data 1 because the audit measured Supplementary Data 1's two
    expression headers to be swapped. The ratio question is the same one as item 8's: both
    want a protein phenotype whose value is not an absolute.
+
+## 2026.10.09 - The Dryad campaign proteome, consumed: a third family paired to the 465 titer records
+
+Issue #739. The Dryad deposit `10.5061/dryad.gtht76hzh` (`v20250820`) was retrieved by
+hand on 2026-10-09 (`datadryad.org` serves an Anubis JavaScript proof-of-work to
+scripts) and deposited under
+`$DATA_ROOT/torchcell-raw/carruthersAutomationMachineLearning2025/data/dryad/` with a
+`DEPOSIT.md` recipe and a `SHA256SUMS.txt`. All four files are now in the raw-mirror
+manifest as `RetrievalMethod.manual_browser` records carrying that recipe verbatim: the
+arrival zip (the bytes that arrived) plus the three members a loader reads.
+
+### What one number is, sourced from the deposit's own README
+
+| sourced value | quote (verbatim, Dryad README, "Files and variables") |
+|---|---|
+| `CAMPAIGN_TOP3` | "All other table values: (float): Percentage of the proteome for the specific protein as calculated by the Top3 peptide absolute protein quantification method as detailed in Ahrne et al. 2013 (DOI:10.1002/pmic.201300135), consisting of the average signal response of the three most intense tryptic peptides for each protein. When the protein is not detected or is detected with fewer than three peptides the field is left blank (nan)." |
+| `CAMPAIGN_BLANK_IS_ABSENT` | "When the protein is not detected or is detected with fewer than three peptides the field is left blank (nan)." |
+| `CAMPAIGN_ACCESSION_KEYS` | "All other column headers: Uniprot accession IDs" |
+| `CAMPAIGN_TITER_IN_MG_PER_L` | "The file also contains the isoprenol titer measured in mg/L for each line." |
+| `CAMPAIGN_LINE_COLUMN_RULE` | "Line: (str) The line name with the replicate ID removed" |
+| `CAMPAIGN_GENE_LIST_IS_THE_LINE` | "Genes_targeted_for_CRISPRi:(str)A list of genes targeted for CRISPR interference (CRISPRi) for each line in the experiment." |
+
+A stored abundance is therefore the mean, over a strain-cycle's cultures, of the released
+per-replicate PERCENT of the proteome, and its `measurement_type` is
+`dia_nn_top3_percent_of_proteome_mean`. The panel family's
+`dia_nn_top3_peptide_signal_mean` is the raw Top3 signal of a different sheet on a
+different background, so the two are never pooled.
+
+Two of those README sentences are MEASURED DEVIATIONS from the bytes, recorded rather
+than followed:
+
+- `Line` is not `Line_name` minus the replicate id in DBTL6: all 189 DBTL6 rows (177
+  non-control, 12 control) carry a `PRT1093_` prefix their `Line_name` does not.
+  `PRT1093` appears in no mirrored byte of this paper, so the strain key is derived from
+  `Line_name` and the prefix is recorded, never typed as a perturbation.
+- `Genes_targeted_for_CRISPRi` is not a gene list but the `Line` cell verbatim, in 1,419
+  of 1,497 rows, and blank in the other 78, all of them DBTL0-5 controls. Nothing is read
+  from it; it is asserted against `Line`.
+
+### Measured shape of the deposit (all 2026-10-09, on the pinned sha256)
+
+| quantity | measured |
+|---|---|
+| released cultures | 1,497 |
+| accession columns | 2,187 |
+| non-control `(construct, DBTL cycle)` strain-cycles | 465 |
+| cultures per strain-cycle | 3 for 461, 6 for 4 |
+| per-cycle control cultures | 18, 12, 12, 12, 12, 12, 12 (DBTL0 to DBTL6) |
+| blank cells | 823,818 of 3,273,939 |
+| released zero cells | 23,750 |
+| per-culture row sum over all accessions | 99.9096 to 100.0128 |
+| accessions reaching exactly one KT2440 locus | 1,842 (0.842250) |
+| accessions reaching several | 1 (`Q877U6`, `PP_1157` and `PP_3365`) |
+| accessions reaching none | 344 |
+| record key-set sizes | 1,147 to 1,688, median 1,443 |
+| stored per-record percentage sums | 28.705 to 92.951 |
+| dropped-accession share of the proteome | 0.171949 mean, 0.763987 worst |
+
+The 465 strain-cycles are exactly the 465 `(construct, cycle)` identities the titer
+family stores, so **every one of the 465 titer records gains a paired feature row**. The
+nine Source Data cultures with no proteome row are R4-R6 of `PP_0814_PP_4192`,
+`PP_0814_PP_4862` and `PP_2137_PP_4189` in DBTL1; all three strain-cycles still have a
+record, from their R1-R3.
+
+The worst culture is `PP_1506_PP_4120-R3` (DBTL6): 63.11983% of its released proteome is
+porcine trypsin (`P00761`), which carries no KT2440 locus tag, leaving 23.603774% stored.
+That is why this family carries a percentage CEILING (100.05) and deliberately no floor:
+a floor would assert a contamination level rather than a unit.
+
+### The UniProt accession crosswalk, and why it is a new reader
+
+The deposited matrix is keyed by UniProt ACCESSION while `ProteinAbundancePhenotype` keys
+by locus tag, and `reconcile_locus_tags` resolves NAMES, not accessions. The crosswalk
+added in `torchcell/datasets/bacteria_common.py` (`uniprot_locus_crosswalk`,
+`resolve_uniprot_accessions`) reads the one mirrored file that states the relation: the
+assembly set's own GOA proteome file, column 2 the accession and column 11 its locus
+tags. For `pputida_KT2440_ASM756v2` that is `109.P_putida_KT2440.goa`, sha256
+`575731316d9fcb98580dd7e2209a0239c909ada389e42c4052e5a8f7a1069a81`, 25,276 annotation
+rows, 3,877 accessions with one `PP_` tag and 10 with two. No new artifact and no network
+call: it is the same pinned member the KT2440 genome already reads its GO from.
+
+A second route exists for the accessions the Source Data's own panel sheet also carries,
+through its `Protein` gene key. Of the 1,224 accessions both files key, 1,222 reach the
+same locus by both routes. The two that do not are pinned by accession and by both loci
+in `CAMPAIGN_CROSSWALK_DISAGREEMENTS`, because each is a SYMBOL collision on the sheet's
+route, not a GOA defect:
+
+| accession | GOA route | sheet route | why |
+|---|---|---|---|
+| `Q88G93` | `PP_3832` | `PP_4472` | GOA states the accession's own tag; the symbol `csrA` reaches another locus of this assembly |
+| `Q88L01` | `PP_2137` | `PP_2051` | same, for `fadA` |
+
+Correction to an earlier draft of this work: that comparison was first written up as
+1,225 shared accessions with three disagreements, and it was pinned under a 1% tolerance.
+Both were wrong. The measurement is 1,224 shared and two disagreements, and the gate is
+now an exact set: a third disagreement is a new fact about one of the two files, not an
+accepted error rate.
+
+### The reference, and why it is projected
+
+The per-cycle controls are the `phenotype_reference`, not records, as in the titer family.
+Each record's reference is its cycle's control profile PROJECTED onto that record's own
+key set, which the shared protein gate requires (`L3 reference_finite` asserts experiment
+and reference are key-matched so a per-protein ratio is defined everywhere). The
+projection discards nothing: every one of the 465 records' key sets is a SUBSET of its
+cycle control's, 0 records with a key the control lacks and 0 of 658,405 record-keys lost.
+
+### L0-L4 on the built dev store
+
+`python -m torchcell.database.build_dataset_lmdb --dataset CampaignProteomeCarruthers2025Dataset --retire-existing`
+built 465 records in 31 s, gene_set 126, at
+`$DATA_ROOT/data/torchcell/campaign_proteome_carruthers2025`.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 465 records validated |
+| L1 | count | observed 465, expected 465 |
+| L1 | orf_uniqueness | 126 ORFs, 62 with multiple strains |
+| L1 | campaign_genotypes_are_the_titer_familys | 465 records over 401 distinct CRISPRi target sets; the titer family's 465 strain-cycles give 401 |
+| L2 | value_fidelity | 658,405 values checked |
+| L2 | se_nonnegative | 657,354 values checked |
+| L3 | reference_finite | reference abundance finite and key-matched for all 658,405 values |
+| L3 | measurement_type_consistent | single `dia_nn_top3_percent_of_proteome_mean` |
+| L3 | stored_abundances_are_percent_of_proteome | 28.705 to 92.951 over 465 records, under the 100.05 ceiling |
+| L4 | stored_campaign_profile_vs_deposited_matrix | 1,616 overlapping entities agree within 1e-09 |
+| L4 | protein_and_perturbed_locus_containment_assembly | 1.000 of 1,871 measured genes are loci of `pputida_KT2440_ASM756v2` |
+
+The other two families were rebuilt on the same closure: 502 titer records (465 campaign
+strain-cycles plus the four panels' 37) and 21 panel-proteome records, both passing their
+own batteries. The two pinned numbers in the `@pytest.mark.data` accounting tests were
+stale from the 2026.10.08 panel work and are corrected to the measured 514 candidate / 502
+kept / 12 dropped and 21 kept / 12 dropped.
+
+### Open decisions
+
+- `PRT1093` (the DBTL6 `Line` prefix) is recorded and not typed. No mirrored byte of this
+  paper defines it, so it cannot become a perturbation or a strain identifier.
+- `Q877U6` carries both `PP_1157` and `PP_3365` in the GOA file, so one abundance column
+  stands for two genes. It is dropped rather than keyed to either, and listed in
+  `preprocess/dropped_accessions.csv`.
+- The 344 accessions with no locus tag are the heterologous pathway proteins, the dCas9
+  effector, resistance markers and proteomic contaminants the DIA-NN search database was
+  built to include, plus host proteins UniProt-GOA carries no tag for. None has a gene
+  node to key an abundance to.

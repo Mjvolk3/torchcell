@@ -203,3 +203,47 @@ numbers are the same on both.
   the surface; their contracts are not fingerprinted.
 - Bindings imported INTO `schema.py` from another module (e.g. `CALMORPH_LABELS`) are not surface
   bindings; no surface class names `CALMORPH_LABELS` today.
+
+## 2026.10.09 - The dev-store gate is checked end to end on a vocabulary change, and 7 store manifests predate it (#734)
+
+The closure change landed on `main`; what was not pinned was the thing issue #734 actually
+measured, which is a BUILT STORE's manifest reading `is_stale=False` after a module-level
+`Literal` moved. `tests/torchcell/provenance/test_build_manifest.py` now drives that
+through `check_manifest` on a synthetic surface shaped like the live chain
+(`Perturbation -> validate_locus_tag -> LOCUS_TAG_PATTERNS`, plus a `GeneNamespace`
+`Literal` on the field):
+
+| edit | before | now |
+|---|---|---|
+| namespace removed from the `Literal` | fresh | STALE, drift names `GeneNamespace` |
+| namespace added to the `Literal` | fresh | STALE, drift names `GeneNamespace` |
+| a namespace's regex changed | fresh | STALE, drift names `LOCUS_TAG_PATTERNS` |
+| a vocabulary the closure does not reach | fresh | fresh |
+
+The tests also pin WHERE the drift is reported: on the binding, never on the class. The
+recomputed fingerprint of `Perturbation` is equal to the stored one in every case above,
+which is what keeps the historical compatibility pairings readable while still staling the
+store that carries the field.
+
+On the live surface, the Rousset 2018 loader's closure is 72 symbols, 30 of them bindings,
+and it holds `BacterialGeneNamespace` and `BACTERIAL_LOCUS_TAG_PATTERNS` by name, so the
+two edits that were invisible when the issue was filed now move a fingerprint the store
+recorded.
+
+### What is still not covered, measured
+
+`check_manifest` iterates the STORED closure, so a manifest written before the bindings
+became closure nodes has no binding entry to compare and a vocabulary change stays
+invisible to it. Counted over `$DATA_ROOT/data/torchcell/*/preprocess/build_manifest.json`
+on GilaHyper (`/scratch/projects/torchcell-scratch`, 2026-10-09): **116 store manifests,
+109 record binding symbols, 7 do not.** The seven are
+`dmf_costanzo2016_1e5`, `dmf_costanzo2016_5e5`, `dmi_costanzo2016_1e5`,
+`dmi_costanzo2016_5e5` (the four size-limited development subsets),
+`env_chemgen_auesukaree2009` and `env_chemgen_vanacloig2022` (counted twice, two
+directories reporting the same `dataset_name`).
+
+This is not proposed as a new staleness condition here: flagging "the manifest records
+fewer symbols than the loader now reaches" would be honest but would change the gate's
+verdict for the whole fleet, which is the owner's call, and the rebuild that re-records
+these seven answers it either way. The gate was left as it is and the seven are named so
+the decision is made on a list rather than on a guess.

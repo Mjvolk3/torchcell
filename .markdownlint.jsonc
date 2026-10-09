@@ -1,0 +1,62 @@
+// markdownlint configuration for torchcell. Read by BOTH the markdownlint-cli2
+// pre-commit hook (.pre-commit-config.yaml) and the VS Code markdownlint
+// extension's on-save `source.fixAll.markdownlint`, so a rule disabled here is
+// disabled on both autofix paths. JSONC (not JSON) because the reasoning below
+// has to live next to the rules it explains.
+{
+  // --- Layout rules the repo wants autofixed (CLAUDE.md "Markdown Formatting") ---
+  "MD007": { "indent": 2 },
+  "MD024": { "siblings_only": true },
+  "MD008": false,
+  "MD013": false,
+  "MD014": false,
+  "MD018": false,
+  "MD025": false,
+  "MD026": false,
+  "MD029": false,
+  "MD033": false,
+  "MD036": false,
+  "MD040": false,
+  "MD045": false,
+
+  // --- begin #846: no autofix may edit characters inside a line ----------------
+  // A dendron note carries the SAME verbatim quote a loader pins in its
+  // `SourcedValue.quote`, and "verbatim quotes stay verbatim" is a hard rule
+  // (CLAUDE.md "Writing Style"). Every rule below is AUTOFIXABLE and its fix
+  // rewrites characters INSIDE a line of prose, a blockquote, a backtick span, or
+  // a fenced block, which silently falsifies provenance on any commit that
+  // touches such a note. Measured on 2026.10.09 (#846, found on PR #844):
+  // MD034 turned the bare DOI `doi:10.1126/sciadv.ady2677` into an autolink and
+  // MD037 deleted the spaces in the Supplementary-Table-4 genotype
+  // `ΔPP_ 2428`, both inside notes/torchcell.datasets.pputida.menasalvas2025.md.
+  // The sha256 pin on the SOURCE did not catch it (same shape as #758); only a
+  // re-read of the mirror bytes did.
+  //
+  // These are DISABLED, not merely un-fixed: check-only mode for notes/ is not an
+  // option, because the tree carries 7,580 MD009 + 5,626 MD010 + 688 MD012
+  // violations in notes the hook has never touched (the hook only sees STAGED
+  // files), so a reporting-only hook would block every commit that touches one of
+  // them on unrelated pre-existing whitespace. The rules kept enabled above
+  // (MD009 trailing space, MD012 blank runs, MD022/MD031/MD032 blank lines around
+  // blocks, MD047 final newline, the list/heading layout rules) only move
+  // whitespace BETWEEN lines and blocks, which cannot change a quote's text.
+  //
+  // The guarantee is pinned by tests/torchcell/test_markdownlint_quote_protection.py
+  // against tests/torchcell/data/markdownlint_canary/quote_canary.md, which the
+  // hook lints on every commit that touches it. Add a rule to that test's
+  // INLINE_FIX_RULES set when markdownlint ships a new inline autofix.
+  "MD011": false, // reversed-link-syntax: rewrites `(text)[url]` to `[text](url)`
+  "MD027": false, // multiple-spaces-after-blockquote-symbol: deletes a quoted line's leading spaces
+  "MD034": false, // no-bare-urls: wraps a bare URL or DOI in `<>` (the #846 DOI)
+  "MD037": false, // no-space-in-emphasis: deletes the spaces beside `_` or `*` (the #846 `ΔPP_ 2428`)
+  "MD038": false, // no-space-in-code: deletes the spaces beside a backtick delimiter
+  "MD039": false, // no-space-in-links: deletes the spaces inside link text
+  "MD044": false, // proper-names: rewrites capitalization, inside code spans too
+  "MD049": false, // emphasis-style: swaps `_` for `*` (MD050 does the same for strong)
+  "MD050": false, // strong-style
+  "MD053": false, // link-reference-definitions: DELETES a definition line it reads as unused
+  // A tab inside a fenced block is verbatim source bytes (an OCR'd TSV paste), so
+  // MD010 stays on for prose and off for fenced/indented code.
+  "MD010": { "code_blocks": false }
+  // --- end #846 ----------------------------------------------------------------
+}

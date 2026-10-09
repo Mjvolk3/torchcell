@@ -32,9 +32,11 @@ from torchcell.sequence.genome.registry import (
     ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
+    ECOLI_K12_W3110,
     GO_RELEASE_20260805,
     PPUTIDA_KT2440,
     ROLE_ANNOTATION,
+    ROLE_INDEX,
     ROLE_ONTOLOGY,
     ROLE_SEQUENCE,
     SENTINEL_ASSEMBLY_SETS,
@@ -303,6 +305,7 @@ BACTERIAL_MEMBERS = [
     (ECOLI_K12_MG1655, "GCA_000005845.2_ASM584v2_genomic.gbff.gz", ROLE_ANNOTATION),
     (ECOLI_K12_BW25113, "GCA_000750555.1_ASM75055v1_genomic.fna.gz", ROLE_SEQUENCE),
     (PPUTIDA_KT2440, "109.P_putida_KT2440.goa", ROLE_ANNOTATION),
+    (ECOLI_K12_W3110, "GCF_000010245.2_ASM1024v1_assembly_report.txt", ROLE_INDEX),
     (GO_RELEASE_20260805, "go-basic.obo", ROLE_ONTOLOGY),
 ]
 
@@ -339,6 +342,7 @@ def test_bacterial_set_ids_are_the_deposited_directory_names() -> None:
     assert ECOLI_K12_BW25113 == "ecoli_K12_BW25113_ASM75055v1"
     assert PPUTIDA_KT2440 == "pputida_KT2440_ASM756v2"
     assert ECOLI_B_REL606 == "ecoli_B_REL606_ASM1798v1"
+    assert ECOLI_K12_W3110 == "ecoli_K12_W3110_ASM1024v1"
     assert GO_RELEASE_20260805 == "go_release_2026-08-05"
     assert ROLE_ONTOLOGY == "ontology"
 

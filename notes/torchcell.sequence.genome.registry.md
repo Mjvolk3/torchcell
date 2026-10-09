@@ -75,3 +75,22 @@ Measured on GilaHyper: all 29 members re-fetched and equal to the plan's Verifie
 `tests/torchcell/sequence/genome/test_registry.py` pins the four ids and, on a tmp tier per
 id, `resolve` and `verify_assembly_set`, a `GenomeIntegrityError` naming both digests on a
 corrupted copy, and the exact rsync hint for an absent set (27 passed).
+
+## 2026.10.09 - `ECOLI_K12_W3110` added, deposited but not yet readable
+
+`ECOLI_K12_W3110 = "ecoli_K12_W3110_ASM1024v1"` joins the five bacterial ids, for row 41
+of the bacterial schedule (Teteneva 2024, host W3110). GCA_000010245.1 /
+GCF_000010245.2, replicon AP009048.1 / NC_007779.1, 4,646,332 bp, ten members deposited
+and `verify_assembly_set` returning all ten.
+
+The constant's docstring carries the one thing a caller must know before resolving the
+set: its GenBank member has 4,444 gene features and no `locus_tag` at all, so the
+GenBank-first ingest refuses it and no genome class reads this set yet. The id is in NO
+schema vocabulary (`BacterialAssemblySet`, `BACTERIAL_ASSEMBLY_SETS` and
+`ASSEMBLY_SET_ACCESSIONS` are unchanged), so `schema_impact_check` reports no contract
+change and nothing served is staled. Measurements and the open route decision:
+[[torchcell.datasets.ecoli.teteneva2024]].
+
+`tests/torchcell/sequence/genome/test_registry.py` now pins the fifth bacterial id and
+runs the tmp-tier `resolve` / `verify_assembly_set` / corruption / absent-set parametrization
+over it as well (30 passed).

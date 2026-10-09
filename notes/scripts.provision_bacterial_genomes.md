@@ -268,3 +268,39 @@ rsync -a gilahyper:/scratch/projects/torchcell-scratch/torchcell-genomes/ecoli_B
 ```
 
 and `verify_assembly_set(registry.ECOLI_B_REL606)` returns 9 digests.
+
+## 2026.10.09 - A sixth set: E. coli K-12 W3110 (ASM1024v1)
+
+Added for row 41 of the bacterial schedule, Teteneva 2024 lake-water RB-TnSeq, whose host
+is W3110 rather than the BW25113 or MG1655 the other K-12 rows sit on. Full finding:
+[[torchcell.datasets.ecoli.teteneva2024]].
+
+```bash
+PYTHONPATH=$WT python scripts/provision_bacterial_genomes.py \
+  --refetch-dir $R --set ecoli_K12_W3110_ASM1024v1
+```
+
+Ten members, six from `GCA_000010245.1_ASM1024v1` and four from
+`GCF_000010245.2_ASM1024v1`, every md5 matched against its directory's own
+`md5checksums.txt`, no drift from the digests measured the same day, and
+`verify_assembly_set` returning all ten after the deposit.
+
+Two things this set does that the other five do not:
+
+- the **GCF `_assembly_report.txt` is a member**. The GCA report still names the 2006
+  RefSeq release `GCF_000010245.1` (RefSeq-Accn `AC_000091.1`) while the current release
+  is `GCF_000010245.2` (RefSeq-Accn `NC_007779.1`), so the accession pair is only
+  readable off the GCF report. The accession versions differ between GCA and GCF for this
+  assembly, which is the first set here where they do.
+- the set is deposited but **not yet readable by `BacterialGenome`**. The GCA flat file
+  carries 4,444 gene features and zero `locus_tag` qualifiers, so `read_genbank` refuses
+  it by name; the GCF flat file parses at 4,531 loci. Which member this set is read
+  through is an open decision, so no genome class or schema vocabulary names it yet.
+
+Seeding another machine:
+
+```bash
+rsync -a gilahyper:/scratch/projects/torchcell-scratch/torchcell-genomes/ecoli_K12_W3110_ASM1024v1/ $DATA_ROOT/torchcell-genomes/ecoli_K12_W3110_ASM1024v1/
+```
+
+and `verify_assembly_set(registry.ECOLI_K12_W3110)` returns 10 digests.

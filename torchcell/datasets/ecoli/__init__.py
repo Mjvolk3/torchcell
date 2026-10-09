@@ -148,6 +148,13 @@ sourcing layer.
   the S13 Table states.
 - ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
   Price 2018 compendium above, which is the loader that serves them.
+- ``teteneva2024`` -- the lake-water RB-TnSeq record: the host gate is closed and the
+  loader is blocked. W3110 now has its own assembly set in the genomes tier
+  (``ecoli_K12_W3110_ASM1024v1``, ten members deposited 2026-10-09), but its GenBank
+  deposit carries no ``locus_tag`` at all, so the GenBank-first ingest does not reach
+  it and no genome class or schema vocabulary names it yet. The paper is in neither
+  mirror and filing it is a curation decision, so every value a loader needs is a typed
+  gap rather than a guess.
 - ``cai2023`` -- the MCF2Chem record: an aggregation NOT admitted. Its 8,888 production
   records are transcriptions of review tables, not measurements, and they are released
   only through a web server whose API answered 502 the day the row was settled, so there

@@ -685,3 +685,32 @@ echoed the attachment template back under `failure` with no error code. An immed
 retry, with no change to the file or the arguments, succeeded. So the failure was
 transient in the upload step, not a rejection; worth knowing because the message looks
 like a permanent one.
+
+## 2026.10.09 - Row 41 (Teteneva 2024) scheduled: host gate closed, loader refused
+
+Row 41 was added to the fifty on 2026.10.08 above, and issue #826 names its closer as "a
+loader; W3110 needs its own assembly set, genome class and `BacterialReferenceStrain`
+member (the REL606 pattern, PR #721)". The assembly set now exists; the rest is blocked,
+and the block is measured rather than assumed. Full record:
+[[torchcell.datasets.ecoli.teteneva2024]].
+
+- **Deposited**: `ecoli_K12_W3110_ASM1024v1` in the genomes tier, GCA_000010245.1 /
+  GCF_000010245.2 (ASM1024v1), replicon AP009048.1 / NC_007779.1, ten members, every md5
+  matched against NCBI's own listing.
+- **Open, not decided**: the GenBank member of this assembly carries 4,444 gene features
+  and zero `locus_tag` qualifiers (the 2006 DDBJ/NIG annotation keys genes by symbol and
+  carries an `ECK:JW:b` note on 3,730 CDS features), so the tier's GenBank-first ingest
+  refuses it. The RefSeq member parses at 4,531 loci with `Y75_RS` tags. Choosing between
+  them decides the gene namespace, which belongs with the identifiers Table S4 reports.
+- **Refused**: the paper is in neither mirror, and the 2026.10.08 entry above records that
+  filing it in Zotero is still an open curation decision. Nothing was fetched. Every value
+  a loader needs is a typed `deferred_pending_source_review` gap, and `SourcedValue` cannot
+  be constructed for the row at all. The 66,162 and 11,027 counts stay attributed to
+  `experiments/database/scripts/build_bacteria_candidate_datasets_table.py`, which measured
+  them; this pass did not open the workbook.
+- **Cheap to reverse**: the whole deposit, paper and Tables S3 and S4 as xlsx, is in the
+  PMC open-access bucket under `PMC11188689.1`, so the existing `pmc_cloud` retriever
+  reaches it with no by-hand step once the paper is curated.
+
+No schema change, so `scripts/schema_impact_check.py --base origin/main` reports no
+contract changes and no served dataset is staled.

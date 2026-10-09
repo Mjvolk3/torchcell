@@ -404,3 +404,32 @@ def test_release_modules_import_without_the_heavy_closure() -> None:
     )
     assert result.returncode == 0, result.stderr[-2000:]
     assert result.stdout.strip().splitlines()[-1] == "[]"
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.09 - what a release snapshot says about a PRIVATE dataset (#827)
+# --------------------------------------------------------------------------- #
+def test_a_private_dataset_is_snapshotted_like_a_public_one() -> None:
+    """A private dataset's row reaches the snapshot, and the snapshot has no visibility.
+
+    ``KgDatasetEntry.visibility`` records which datasets of a store are in-house, but
+    ``SnapshotDataset`` has no such field, so a snapshot of a store built with
+    ``--include-private`` lists the in-house dataset exactly like a public one. The
+    served-count fragment the docs include is generated from the newest snapshot
+    (``experiments/034-showcase-datasets/scripts/served_dataset_counts.py``), so it
+    inherits that: the dataset is listed with its record count and no marker saying it
+    is not downloadable through ``tc-data``, which refuses it
+    (``scripts/package_dataset_lmdb.refuse_if_private``). Pinned as the behavior KG 4.0
+    will have; whether the snapshot should carry the marker is an owner decision on
+    #827.
+    """
+    manifest = _manifest()
+    manifest.datasets["DsA"].visibility = "private"
+    snapshot = snapshot_from_manifest(manifest)
+    assert manifest.datasets["DsA"].visibility == "private"
+    assert sorted(snapshot.datasets) == ["DsA", "DsB"]
+    assert "visibility" not in SnapshotDataset.model_fields
+    assert (
+        snapshot.datasets["DsA"] == snapshot_from_manifest(_manifest()).datasets["DsA"]
+    )
+    assert snapshot.composite_sha256 == COMPOSITE

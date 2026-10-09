@@ -22,6 +22,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pytest
@@ -458,3 +459,215 @@ def test_the_mirror_manifest_records_every_consumed_pin() -> None:
     assert json.loads((MIRROR / "manifest.json").read_text())["title"] == (
         b.REPORT_TITLE
     )
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.09 - the L0-L4 gate the dataset carries (#827)
+# --------------------------------------------------------------------------- #
+def _synthetic_verification(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, Path]:
+    """Build the synthetic ex26 store and point every oracle of the gate at it.
+
+    The synthetic export grows wells 1 and 101 (the two inhibitor-free grid wells) and
+    well 2, so the run is 200 records, 197 no-growth calls, 2 wild-type wells, and a
+    software trait file written to agree on every well makes the L4 row 1.0.
+    """
+    data_root = _synthetic_data_root(tmp_path, monkeypatch)
+    root = tmp_path / "build"
+    dataset = v.InhibitorBioscreenVolk2021Dataset(root=str(root))
+    assert len(dataset) == 200
+    dataset.close_lmdb()
+    traits = b.raw_mirror_dir(data_root) / b.EX26_SOFTWARE_TRAITS
+    traits.parent.mkdir(parents=True, exist_ok=True)
+    grew = {1: 2.0, 101: 2.5, 2: 4.0}
+    traits.write_text(
+        "Container Name\tGT\n"
+        + "".join(f"Well {w}\t{grew.get(w, float('nan'))}\n" for w in range(1, 201))
+    )
+    monkeypatch.setattr(v, "EXPECTED_RECORDS", {"ex26": 200})
+    monkeypatch.setattr(v, "EXPECTED_NO_GROWTH", {"ex26": 197})
+    monkeypatch.setattr(v, "EXPECTED_WILD_TYPE_WELLS", {"ex26": 2})
+    monkeypatch.setattr(v, "SOFTWARE_GREW_AGREEMENT", {"ex26": 1.0})
+    return root, data_root
+
+
+def test_verify_build_covers_l0_to_l4_and_writes_its_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Every row of the gate, in order, on a store built from a synthetic export."""
+    from torchcell.verification.report import Level, VerificationReport
+
+    root, data_root = _synthetic_verification(tmp_path, monkeypatch)
+    report = v.verify_build(str(root), str(data_root))
+    assert [(r.level.name, r.name, r.passed) for r in report.results] == [
+        ("L0", "structural", True),
+        ("L1", "count", True),
+        ("L1", "completeness", True),
+        ("L1", "wells_per_run", True),
+        ("L2", "value_fidelity", True),
+        ("L2", "readout_split", True),
+        ("L3", "reference_one", True),
+        ("L3", "wild_type_wells", True),
+        ("L3", "no_growth_label", True),
+        ("L3", "strain_background", True),
+        ("L4", "software_trait_agreement", True),
+    ]
+    assert report.passed
+    assert report.levels_covered == {Level.L0, Level.L1, Level.L2, Level.L3, Level.L4}
+    written = root / "preprocess" / "verification_report.json"
+    reread = VerificationReport.model_validate_json(written.read_text())
+    assert reread == report
+    assert reread.provenance.citation_key == b.CITATION_KEY
+    assert reread.provenance.sha256 == b.REPORT_PDF_SHA256
+    assert reread.provenance.method == v.UNITS
+
+
+def test_the_software_agreement_row_is_an_oracle_and_not_a_floor(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One well called differently by the software drops the agreement below the pin.
+
+    The row fails on 0.995 against a declared 1.0, so a change in either derivation is
+    reported rather than absorbed by a threshold.
+    """
+    root, data_root = _synthetic_verification(tmp_path, monkeypatch)
+    traits = b.raw_mirror_dir(data_root) / b.EX26_SOFTWARE_TRAITS
+    traits.write_text(traits.read_text().replace("Well 3\tnan", "Well 3\t5.0"))
+    report = v.verify_build(str(root), str(data_root))
+    (row,) = [r for r in report.results if r.name == "software_trait_agreement"]
+    assert row.passed is False
+    assert row.details["observed"] == {"ex26": 0.995}
+    assert row.details["declared"] == {"ex26": 1.0}
+    assert report.passed is False
+
+
+def _records(root: Path) -> list[dict[str, Any]]:
+    from torchcell.verification.runners import load_records
+
+    return load_records(str(root))
+
+
+def test_the_gate_fails_a_record_holding_both_a_rate_and_a_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L2 ``readout_split``: a no-growth call that also carries a number is a defect."""
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    (called,) = [
+        r
+        for r in records
+        if str(r["experiment"]["phenotype"]["measurement_type"])
+        == MeasurementType.categorical.value
+    ][:1]
+    called["experiment"]["phenotype"]["environment_response"] = 0.5
+    row = v.l2_readout_split(records)
+    assert row.passed is False
+    assert row.details["n_malformed"] == 1
+    assert row.details["malformed"][0]["rule"] == "call"
+
+
+def test_the_gate_fails_a_reference_centered_on_zero(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L3 ``reference_one``: 0 is the log2-ratio convention, not this ratio's control."""
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    records[0]["reference"]["phenotype_reference"]["environment_response"] = 0.0
+    row = v.l3_reference_one(records)
+    assert row.passed is False
+    assert row.details["worst_abs_deviation"] == 1.0
+
+
+def test_the_gate_fails_when_an_inhibitor_free_well_is_dropped(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L3 ``wild_type_wells``: the declared baseline wells must all be served."""
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    kept = [
+        r
+        for r in records
+        if r["experiment"]["environment"]["perturbations"]
+        or r["experiment"]["phenotype"]["screen_id"] != "ex26:well1"
+    ]
+    row = v.l3_wild_type_wells(kept)
+    assert row.passed is False
+    assert row.details["observed"] == {"ex26": 1}
+    assert row.details["expected"] == {"ex26": 2}
+
+
+def test_the_gate_fails_a_no_growth_label_naming_the_wrong_window(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L3 ``no_growth_label``: the software's 48 h lag is not any run's length."""
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        if str(phenotype["measurement_type"]) == MeasurementType.categorical.value:
+            phenotype["category_label"] = "no growth within 48 h"
+    row = v.l3_no_growth_label(records)
+    assert row.passed is False
+    assert row.details["labels_per_run"] == {"ex26": ["no growth within 48 h"]}
+    assert row.details["expected_per_run"] == {"ex26": "no growth within 96 h"}
+
+
+def test_the_gate_fails_a_background_without_the_baid_integration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """L3 ``strain_background``: with an empty genotype, the cassette is the strain.
+
+    The oracle is the genotype string Lian 2019's Supplementary Table 11 states, split
+    into the parent and the integration, so dropping the cassette object leaves the
+    records describing an unedited BY4742 and the row says so.
+    """
+    root, _ = _synthetic_verification(tmp_path, monkeypatch)
+    records = _records(root)
+    assert (v.BAID_PARENT, v.BAID_CASSETTE_NAME) == (
+        "BY4742",
+        "Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]",
+    )
+    assert v.l3_strain_background(records).passed is True
+    records[0]["reference"]["genome_reference"]["background"]["integrations"] = []
+    row = v.l3_strain_background(records)
+    assert row.passed is False
+    # the reference is INTERNED, so one object backs every record of the run: emptying
+    # it on one record empties it for all 200, which is what the row reports.
+    assert row.message == "200 records lack the bAID background or its integration"
+    assert row.details["defects"][:2] == ["ex26:well1", "ex26:well2"]
+
+
+@needs_mirror
+def test_the_gate_oracles_equal_what_the_raw_mirror_gives() -> None:
+    """The declared per-run counts and L4 agreements, re-derived from the raw files.
+
+    The gate's oracles are numbers, so they can drift from the data without any test
+    noticing. This derives all four from the mirror itself: the layouts' well counts,
+    the wells whose raw curve never rose, the inhibitor-free wells, and the fraction of
+    wells on which the raw-curve call equals the Bioscreen software's.
+    """
+    records_per_run: dict[str, int] = {}
+    no_growth: dict[str, int] = {}
+    wild_type: dict[str, int] = {}
+    agreement: dict[str, float] = {}
+    for run in b.Run:
+        wells = v.layout_wells(
+            b.layout(run, MIRROR), b.raw_curve_generation_times(run, MIRROR)
+        )
+        records_per_run[run.value] = len(wells)
+        no_growth[run.value] = sum(1 for w in wells if w.generation_time_h is None)
+        wild_type[run.value] = sum(1 for w in wells if not w.present())
+        if run.value in v.SOFTWARE_GREW_AGREEMENT:
+            software = b.software_generation_times(run, MIRROR)
+            agree = sum(
+                1
+                for w in wells
+                if (w.generation_time_h is not None) == (software[w.well] is not None)
+            )
+            agreement[run.value] = agree / len(wells)
+    assert records_per_run == v.EXPECTED_RECORDS
+    assert no_growth == v.EXPECTED_NO_GROWTH
+    assert wild_type == v.EXPECTED_WILD_TYPE_WELLS
+    assert agreement == pytest.approx(v.SOFTWARE_GREW_AGREEMENT, abs=v.AGREEMENT_TOL)
+    assert sum(records_per_run.values()) == 977

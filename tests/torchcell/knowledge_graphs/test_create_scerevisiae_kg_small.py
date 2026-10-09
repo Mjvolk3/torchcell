@@ -58,6 +58,8 @@ from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     module_dir,
     reset_instances,
 )
+from torchcell.data.experiment_dataset import Visibility
+from torchcell.knowledge_graphs.dataset_adapter_map import PrivateDatasetRefused
 from torchcell.knowledge_graphs.head_ontology import (
     BIOLINK_SOURCE_URL,
     REPO_ONTOLOGY_PATH,
@@ -833,3 +835,93 @@ def test_the_full_build_list_contains_the_private_dataset_only_with_the_flag(
     monkeypatch.setattr(ks, "INCLUDE_PRIVATE", True)
     ks.main(_cfg(FULL_CFG))
     assert skipped() == ["FakeGamma", "InhibitorBioscreenVolk2021Dataset"]
+
+
+class FakePrivate(FakeDataset):
+    """Four records at ``data/torchcell/private``, declared ``Visibility.private``."""
+
+    n_records = 4
+    instances: list[FakeDataset] = []
+    visibility = Visibility.private
+
+    def __init__(
+        self, root: str = "data/torchcell/private", io_workers: int = 1
+    ) -> None:
+        """Record the root and ``io_workers`` the build script passes."""
+        super().__init__(root, io_workers=io_workers)
+
+
+class FakeAdapterP(FakeAdapter):
+    """Adapter for ``FakePrivate``, registered only in the PRIVATE map."""
+
+    instances: list[FakeAdapter] = []
+
+
+def _stage_private(build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Stage the private loader's LMDB and register it in the private map alone."""
+    reset_instances(FakePrivate, FakeAdapterP)
+    (
+        build.tmp_path
+        / "root"
+        / "data"
+        / "torchcell"
+        / "private"
+        / "processed"
+        / "lmdb"
+    ).mkdir(parents=True)
+    monkeypatch.setattr(ks, "PRIVATE_DATASET_ADAPTER_MAP", {FakePrivate: FakeAdapterP})
+
+
+def test_a_staged_private_dataset_is_written_only_under_include_private(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The flag decides whether the private dataset's nodes and edges are written.
+
+    Both halves in one test, because they are one behavior: with the flag the private
+    loader is instantiated and its adapter's nodes and edges reach the writer (the CSVs
+    a real build emits); without it the build stops on the name and the writer is never
+    called, so no CSV of that dataset exists to leak.
+    """
+    _stage_private(build, monkeypatch)
+    cfg = {**FULL_CFG, "datasets": ["FakePrivate"]}
+
+    monkeypatch.setattr(ks, "INCLUDE_PRIVATE", True)
+    ks.main(_cfg(cfg))
+    (private,) = FakePrivate.instances
+    (adapter,) = FakeAdapterP.instances
+    assert private.root == osp.join(build.root, "data/torchcell/private")
+    # the config caps every dataset at 2: sorted(Random(42).sample(range(4), 2))
+    assert adapter.kwargs["dataset"].selected == [0, 3]
+    (bc,) = FakeBioCypher.instances
+    assert bc.calls == [
+        ("write_nodes", [("node", "FakeAdapterP", 0), ("node", "FakeAdapterP", 1)]),
+        ("write_edges", [("edge", "FakeAdapterP", 0), ("edge", "FakeAdapterP", 1)]),
+        ("write_import_call",),
+        ("write_schema_info", True),
+    ]
+    assert FakeAlpha.instances == [] and FakeBeta.instances == []
+
+    reset_instances(FakePrivate, FakeAdapterP, FakeBioCypher)
+    monkeypatch.setattr(ks, "INCLUDE_PRIVATE", False)
+    with pytest.raises(PrivateDatasetRefused, match="FakePrivate"):
+        ks.main(_cfg(cfg))
+    assert FakePrivate.instances == []
+    assert FakeAdapterP.instances == []
+    assert FakeBioCypher.instances[0].calls == []
+
+
+def test_without_the_flag_a_private_dataset_has_no_adapter_to_build_with(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Beyond the refusal, the private map is not even unioned: the name is unknown.
+
+    ``refuse_private_datasets`` only sees classes that are IN the private map, so a
+    private loader that was never registered there must still not build; the membership
+    lookup then fails on the name rather than silently emitting nothing.
+    """
+    _stage_private(build, monkeypatch)
+    monkeypatch.setattr(ks, "PRIVATE_DATASET_ADAPTER_MAP", {})
+    monkeypatch.setattr(ks, "INCLUDE_PRIVATE", False)
+    with pytest.raises(KeyError, match="dataset_adapter_map"):
+        ks.main(_cfg({**FULL_CFG, "datasets": ["FakePrivate"]}))
+    assert FakeBioCypher.instances[0].calls == []

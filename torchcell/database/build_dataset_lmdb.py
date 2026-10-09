@@ -299,37 +299,31 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
         print(f"NO PER-DATASET VERIFIER -- {error}")
         return True
     print(f"verifying {dataset_class.__name__} with {kind}")
+
+    def refuse(message: str) -> bool:
+        """Report ``message``, retire the manifest, and answer False."""
+        print(f"ERROR: {message}", file=sys.stderr)
+        print(
+            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
+        )
+        return False
+
     try:
         reports = run(data_root)
     except Exception as error:  # reported and acted on, never swallowed
-        print(
-            f"ERROR: verification of {dataset_class.__name__} raised "
-            f"{type(error).__name__}: {error}",
-            file=sys.stderr,
+        return refuse(
+            f"verification of {dataset_class.__name__} raised "
+            f"{type(error).__name__}: {error}"
         )
-        print(
-            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
-        )
-        return False
     for report in reports:
         print(report.summary())
-    failed = [report.dataset_name for report in reports if not report.passed]
     if not reports:
-        print(
-            f"ERROR: {kind} returned no verification report for "
-            f"{dataset_class.__name__}",
-            file=sys.stderr,
+        return refuse(
+            f"{kind} returned no verification report for {dataset_class.__name__}"
         )
-        print(
-            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
-        )
-        return False
+    failed = sorted(report.dataset_name for report in reports if not report.passed)
     if failed:
-        print(f"ERROR: verification FAILED for {sorted(failed)}", file=sys.stderr)
-        print(
-            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
-        )
-        return False
+        return refuse(f"verification FAILED for {failed}")
     print(f"verification PASSED: {len(reports)} report(s) by {kind}")
     return True
 

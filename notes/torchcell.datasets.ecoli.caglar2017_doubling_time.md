@@ -148,3 +148,73 @@ incremental admission.
 Related: [[torchcell.datasets.ecoli.caglar2017]],
 [[torchcell.verification.environment_response]],
 [[plan.bacteria-si-phenotype-audit-ecoli]], [[plan.bacteria-si-phenotype-audit-pputida]].
+
+## 2026.10.09 - Rebase onto the Houser 2015 attribution, and the hermetic build tests
+
+### Who the 55 records cite, after #771 landed
+
+PR #830 (#771) replaced `caglar2017.publication()` with per-sample attribution
+(`SOURCE_STUDIES` + `attribute_sample`), so this module's single `publication()` call no
+longer resolves. The records now read `SOURCE_STUDIES[SOURCE_STUDY].publication` with
+`SOURCE_STUDY = "caglar2017"`, which is **all 55 records citing Caglar 2017**.
+
+The split rule #771 installed is scoped to SAMPLES, and Table S5 releases none. The note
+on `caglar2017.HOUSER2015_DEFERRAL` names "the 27 samples that appear as columns of BOTH
+Table S2 (mRNA) and Table S3 (protein)", and `HOUSER2015_DEPOSITS` splits two molecular
+accessions (GSE67402 / PXD002140 against GSE94117 / PXD005721). Table S5's grain is one
+growth-curve fit per biological replicate, and all 55 values, both released limits per row
+and the Table S1 reference row are fits this paper released.
+
+Measured overlap, recorded rather than acted on: **3 of 55 rows** (`Glucose.tab`) and the
+reference row join onto Table S1's `glucose_time_course`, the experiment Houser 2015
+presented. Whether Houser 2015 released a doubling time for it is **unknown here**, and
+deliberately so: that paper is unmirrored and unread
+(`caglar2017.HOUSER2015_IS_MIRRORED`), so attributing a doubling-time fit to it would be
+an unsourced claim. Owner decision left open: if Houser 2015 is mirrored and its growth
+curves are found to carry doubling times, `SOURCE_STUDY` becomes a per-row rule on the
+condition's Table S1 experiment and 3 records move.
+
+### The build is now driven hermetically, not only against the mirror
+
+`tests/torchcell/datasets/ecoli/test_caglar2017_doubling_time.py` deposits the synthetic
+Tables S5 and S1 into a temporary `DATA_ROOT` through `base.deposit_raw_mirror` with the
+pins repointed at the staged bytes, so `download()`, `_link_mirror_files` and
+`verify_raw_files` run for real rather than being stubbed; only `assembly_reference` is
+stubbed, to the released REL606 pair. Over that store the tests drive `process()`, the
+four ledgers, `verify_build`, `l4_assembly_pin` and `main`'s two subcommands.
+
+`SI_TABLES` is patched in BOTH modules: this one imported the name, so `base.SI_TABLES`
+and `dt.SI_TABLES` are separate bindings and patching one leaves the other pointing at
+the released pins.
+
+Measured changed-line coverage of this module, by the command CI runs
+(`coverage run -m pytest tests/torchcell` then `diff-cover --compare-branch=origin/main`):
+**231 of 232 changed lines, 99.6%**, against the 80% gate. The one uncovered line is the
+`raise` for unperturbed records that are not exactly the base conditions, which no input
+reachable through `CONDITIONS` can produce.
+
+Both declared counts are now oracles under test: patching `EXPECTED_UNPERTURBED` to 8 and
+`EXPECTED_NON_BRACKETING` to 0 each stops the build with its own message, so neither
+number can drift silently.
+
+### The dev store after the rebase, re-measured
+
+The attribution change moves no stored byte: the old `caglar2017.publication()` returned
+`Publication(doi=PAPER_DOI, doi_url=...)` and `SOURCE_STUDIES["caglar2017"].publication`
+returns the same two fields with every other field `None`. The store was rebuilt anyway
+(`python -m torchcell.database.build_dataset_lmdb --dataset DoublingTimeCaglar2017Dataset
+--retire-existing`): **55 records, gene_set size 0, 1 reference**, doubling time 47.649048
+to 105.358386 min, reference `Glucose.tab` = 53.679955 min.
+
+`python -m torchcell.datasets.ecoli.caglar2017_doubling_time verify`: **PASS, 17 rows, 0
+failures**, the same table as above. `build_manifest` then counts this store among the
+fresh ones.
+
+`build_manifest` reports **114 of 141 built dev stores stale**, every one of them via
+symbols this branch does not touch (`GenePerturbationType` and the
+`BacterialProteinFoldChange*` closure, from the branches that landed before this rebase;
+main records 113 of them in commit `3f7f1c189`). That staleness is the KG 4.0 full
+rebuild's work, not this branch's.
+
+`scripts/schema_impact_check.py --base origin/main` after the rebase: **34 impacted
+datasets, 0 breaking**, 3 changed symbols, every change an added optional field.

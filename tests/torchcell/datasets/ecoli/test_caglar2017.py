@@ -413,6 +413,183 @@ def test_deposit_refuses_a_manifest_recording_other_files_and_writes_nothing(
     assert [p.name for p in root.iterdir()] == ["manifest.json"]
 
 
+# --------------------------------------------------------------------------- #
+# deposit_si_table: the additive revision path
+# --------------------------------------------------------------------------- #
+#: ``SI_TABLES`` as the module releases it, captured before any test patches it.
+_RELEASED_SI_TABLES: dict[str, tuple[str, str, str]] = dict(c.SI_TABLES)
+
+
+def _pin_tables(
+    monkeypatch: pytest.MonkeyPatch, files: dict[str, bytes], tables: tuple[str, ...]
+) -> None:
+    """Pin exactly ``tables`` to the staged bytes, keeping the released table order."""
+    monkeypatch.setattr(
+        c,
+        "SI_TABLES",
+        {
+            table: (obj, _sha(files[f"data/{obj}"]), desc)
+            for table, (obj, _, desc) in _RELEASED_SI_TABLES.items()
+            if table in tables
+        },
+    )
+
+
+#: The four tables the FIRST deposit knew, before Table S5 was pinned.
+_FIRST_DEPOSIT_TABLES = ("S1", "S2", "S3", "S4")
+
+
+def _deposit_without_s5(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[dict[str, bytes], Path]:
+    """The mirror as the first deposit left it: four tables and one GenPept batch."""
+    files = _stage(tmp_path / "staging")
+    _pin_tables(monkeypatch, files, _FIRST_DEPOSIT_TABLES)
+    monkeypatch.setattr(
+        c, "YP_BATCH_SHA256", (_sha(files["ncbi_protein/yp_batch_00.gp"]),)
+    )
+    monkeypatch.setattr(c, "datetime", _FrozenDatetime)
+    root = c.deposit_raw_mirror(
+        source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    assert not (root / "data" / "srep45303-s6.csv").exists()
+    _pin_tables(monkeypatch, files, (*_FIRST_DEPOSIT_TABLES, "S5"))
+    return files, root
+
+
+def test_deposit_si_table_inserts_one_record_after_the_last_table(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files, root = _deposit_without_s5(tmp_path, monkeypatch)
+    before = json.loads((root / "manifest.json").read_text())
+    assert [f["path"] for f in before["files"]] == [
+        "data/srep45303-s2.csv",
+        "data/srep45303-s3.csv",
+        "data/srep45303-s4.csv",
+        "data/srep45303-s5.csv",
+        "ncbi_protein/yp_batch_00.gp",
+    ]
+
+    monkeypatch.setattr(_FrozenDatetime, "stamp", datetime(2027, 3, 3, tzinfo=UTC))
+    dest = c.deposit_si_table(
+        "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+
+    assert dest == root / "data" / "srep45303-s6.csv"
+    assert dest.read_bytes() == files["data/srep45303-s6.csv"]
+    after = json.loads((root / "manifest.json").read_text())
+    assert [f["path"] for f in after["files"]] == [
+        "data/srep45303-s2.csv",
+        "data/srep45303-s3.csv",
+        "data/srep45303-s4.csv",
+        "data/srep45303-s5.csv",
+        "data/srep45303-s6.csv",
+        "ncbi_protein/yp_batch_00.gp",
+    ]
+    # The first deposit's records and its created_at are left byte-identical: this is a
+    # revision of one mirror, not a second deposit of it.
+    assert after["files"][:4] == before["files"][:4]
+    assert after["files"][5] == before["files"][4]
+    assert after["created_at"] == "2026-10-07T12:00:00+00:00"
+    record = after["files"][4]
+    staged = files["data/srep45303-s6.csv"]
+    assert (record["role"], record["bytes"], record["sha256"]) == (
+        "raw_data",
+        len(staged),
+        _sha(staged),
+    )
+    assert record["retrieval"]["method"] == "pmc_cloud"
+    assert record["retrieval"]["params"] == {"key": "PMC5394689.1/srep45303-s6.csv"}
+    # Its own retrieval date, because the first deposit did not fetch it.
+    assert record["retrieval"]["retrieved_at"] == c.TABLE_RETRIEVED_AT["S5"]
+    assert record["source"] == record["retrieval"]["source_url"]
+
+
+def test_a_second_deposit_of_the_same_table_rewrites_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, root = _deposit_without_s5(tmp_path, monkeypatch)
+    c.deposit_si_table(
+        "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    first = (root / "manifest.json").read_bytes()
+
+    c.deposit_si_table(
+        "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+
+    assert (root / "manifest.json").read_bytes() == first
+
+
+def test_deposit_si_table_refuses_a_record_already_present_with_other_content(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, root = _deposit_without_s5(tmp_path, monkeypatch)
+    c.deposit_si_table(
+        "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+    )
+    path = root / "manifest.json"
+    manifest = json.loads(path.read_text())
+    manifest["files"][4]["bytes"] = manifest["files"][4]["bytes"] + 1
+    path.write_text(json.dumps(manifest))
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"records data/srep45303-s6\.csv differently; refusing to overwrite",
+    ):
+        c.deposit_si_table(
+            "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+    assert json.loads(path.read_text()) == manifest
+
+
+def test_deposit_si_table_refuses_staged_bytes_off_the_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, root = _deposit_without_s5(tmp_path, monkeypatch)
+    (tmp_path / "staging" / "data" / "srep45303-s6.csv").write_bytes(b"drifted")
+
+    with pytest.raises(RuntimeError, match=r"srep45303-s6\.csv: sha256 .* pinned"):
+        c.deposit_si_table(
+            "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+    assert not (root / "data" / "srep45303-s6.csv").exists()
+    assert [
+        f["path"] for f in json.loads((root / "manifest.json").read_text())["files"]
+    ][-1] == "ncbi_protein/yp_batch_00.gp"
+
+
+def test_deposit_si_table_refuses_a_mirror_file_holding_other_bytes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _, root = _deposit_without_s5(tmp_path, monkeypatch)
+    existing = root / "data" / "srep45303-s6.csv"
+    existing.write_bytes(b"someone else's bytes")
+
+    with pytest.raises(RuntimeError, match="exists with a different sha256; refusing"):
+        c.deposit_si_table(
+            "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+    assert existing.read_bytes() == b"someone else's bytes"
+
+
+def test_deposit_si_table_refuses_a_mirror_with_no_manifest(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    files = _stage(tmp_path / "staging")
+    _pin_tables(monkeypatch, files, (*_FIRST_DEPOSIT_TABLES, "S5"))
+
+    with pytest.raises(
+        RuntimeError, match=r"manifest\.json does not exist; run the full deposit first"
+    ):
+        c.deposit_si_table(
+            "S5", source_dir=tmp_path / "staging", data_root=str(tmp_path / "dr")
+        )
+    assert not (
+        c.raw_mirror_dir(str(tmp_path / "dr")) / "data" / "srep45303-s6.csv"
+    ).exists()
+
+
 def test_retrieve_raw_files_runs_each_recorded_retriever_and_checks_its_pin(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

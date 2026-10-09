@@ -692,3 +692,33 @@ section's measurement is why: its 165 stated rows hold 19 distinct
 it, the base condition's, is the doubling-time dataset's reference value, because Table S5
 releases no condition-level number and computing a mean of its three glucose replicates
 would be a number the paper never released.
+
+## 2026.10.09 - `deposit_si_table` under test, and the sibling module's attribution
+
+### The revision path is now covered by its own tests
+
+`deposit_si_table` arrived with the Table S5 deposit and had no test of its own. Seven
+hermetic tests now drive it in
+`tests/torchcell/datasets/ecoli/test_caglar2017.py`, over a mirror deposited with Tables
+S1 to S4 only (the four the first deposit knew) and Table S5 appended afterwards:
+
+- the record is inserted after the last `data/` record, so the manifest stays in table
+  order, and the first deposit's records plus its `created_at` are left byte-identical
+- the appended record carries Table S5's own `retrieved_at` (`TABLE_RETRIEVED_AT["S5"]`,
+  2026-10-09), not the first deposit's date
+- a second call rewrites nothing
+- a record already present with other content, staged bytes off the pin, a mirror file
+  holding other bytes, and a mirror with no `manifest.json` each raise, and in the last
+  three cases the mirror file is not written
+
+Measured changed-line coverage of this module: **29 of 29 changed lines, 100%**, by the
+command CI runs.
+
+### `DoublingTimeCaglar2017Dataset` cites this paper, not Houser 2015
+
+The sibling module imported `publication()`, which the #771 attribution replaced. It now
+reads `SOURCE_STUDIES["caglar2017"].publication` for all 55 Table S5 records, because the
+per-sample split's evidence is scoped to the 27 samples that are columns of Tables S2 and
+S3 and Table S5 releases no sample columns. The measured overlap it does not act on (3
+rows plus the reference row join onto `glucose_time_course`) is recorded in
+[[torchcell.datasets.ecoli.caglar2017_doubling_time]].

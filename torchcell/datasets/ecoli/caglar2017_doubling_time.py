@@ -26,8 +26,8 @@ store's staleness on the schema closure of the loader MODULE's own
 importing ``EnvironmentResponsePhenotype`` into ``caglar2017.py`` would mark the served
 ``rnaseq_caglar2017`` and ``proteome_caglar2017`` stores stale for a change that touches
 none of their records. The pinned artifacts, the media objects, the environment helpers
-and the publication are imported FROM ``caglar2017`` instead, so there is one copy of
-each. Same reason ``schmidt2016_growth_rate.py`` is separate from ``schmidt2016.py``.
+and the source studies are imported FROM ``caglar2017`` instead, so there is one copy
+of each. Same reason ``schmidt2016_growth_rate.py`` is separate from ``schmidt2016.py``.
 
 WHY THIS IS AN ABSOLUTE READOUT AND NOT A RATIO. The record is
 ``BacterialEnvironmentResponseExperiment`` with ``MeasurementType.growth_rate``, whose
@@ -140,6 +140,8 @@ from torchcell.datasets.ecoli.caglar2017 import (
     RAW_DIR_REL,
     REFERENCE_CONDITIONS,
     SI_TABLES,
+    SOURCE_STUDIES,
+    SourceStudyKey,
     _link_mirror_files,
     _paper,
     _raw_pins,
@@ -147,7 +149,6 @@ from torchcell.datasets.ecoli.caglar2017 import (
     _table_pin,
     carbon_source_perturbation,
     magnesium_perturbation,
-    publication,
     require_pinnable_strain,
     sodium_perturbation,
 )
@@ -227,6 +228,21 @@ CONDITIONS: dict[str, tuple[str, str, float, float]] = {
 #: The Table S5 condition that IS the paper's reference condition, and the Table S1
 #: experiment its released condition-level fit sits under.
 REFERENCE_CONDITION = "Glucose.tab"
+
+#: The study every Table S5 record is attributed to. Caglar 2017 attributes 54 of its
+#: 257 mRNA and protein records to Houser 2015 (#771, ``caglar2017.SOURCE_STUDIES`` +
+#: ``attribute_sample``), and that split's evidence is scoped to SAMPLES: the note on
+#: ``caglar2017.HOUSER2015_DEFERRAL`` names "the 27 samples that appear as columns of
+#: BOTH Table S2 (mRNA) and Table S3 (protein)", and ``HOUSER2015_DEPOSITS`` splits two
+#: molecular accessions. Table S5 releases no sample columns: its grain is a
+#: growth-curve fit per biological replicate, and all 55 values plus both released
+#: limits plus the Table S1 reference row are fits this paper released. So the split
+#: rule does not reach this table and every record names Caglar 2017. Measured overlap,
+#: recorded rather than acted on: 3 of 55 rows (``Glucose.tab``) and the reference row
+#: join onto Table S1's ``glucose_time_course``, the experiment Houser 2015 presented;
+#: whether Houser 2015 released a doubling time for it is unknown here, because that
+#: paper is unmirrored and unread (``caglar2017.HOUSER2015_IS_MIRRORED``).
+SOURCE_STUDY: SourceStudyKey = "caglar2017"
 
 #: The three Table S5 conditions that ARE the base condition (glucose, base Mg2+, base
 #: Na+), run in three separate experiments. They carry no environmental edit, which for
@@ -631,7 +647,7 @@ class DoublingTimeCaglar2017Dataset(ExperimentDataset):
             environment_reference=environments[REFERENCE_CONDITION],
             phenotype_reference=reference_phenotype(reference_row),
         )
-        pub = publication()
+        pub = SOURCE_STUDIES[SOURCE_STUDY].publication
         genotype = Genotype(perturbations=[])
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:

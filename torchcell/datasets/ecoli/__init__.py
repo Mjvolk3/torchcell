@@ -169,6 +169,9 @@ from .goodall2018 import (
 from .gupta2024 import (
     ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
 )
+from .ishii2007 import FluxIshii2007Dataset as FluxIshii2007Dataset
+from .ishii2007 import MetabolomeIshii2007Dataset as MetabolomeIshii2007Dataset
+from .ishii2007 import ProteomeIshii2007Dataset as ProteomeIshii2007Dataset
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
 from .lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset as RnaseqPublicK12Lamoureux2023Dataset,

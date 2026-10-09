@@ -1177,6 +1177,10 @@ def _link_mirror_files(raw_dir: str, pins: Iterable[tuple[str, str, str]]) -> No
 class IsopentenolTiterFoo2014Dataset(ExperimentDataset):
     """Foo 2014 isopentenol titers: the eight tolerance strains and the RFP control."""
 
+    #: The strain the genome injector resolves (``declared_reference_strain`` reads the
+    #: CLASS); the module-level ``REFERENCE_STRAIN`` is the same value for the records.
+    REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = REFERENCE_STRAIN
+
     #: Every b-number this campaign names must resolve to a locus of the pinned MG1655
     #: assembly. Measured on the pinned bytes: 8 of 8, so anything below 1.0 means the
     #: annotation or the released symbols moved and the build stops.

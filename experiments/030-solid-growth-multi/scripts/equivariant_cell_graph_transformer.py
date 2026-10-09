@@ -68,6 +68,7 @@ from torchcell.losses.logcosh import LogCoshLoss
 from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 from torchcell.timestamp import timestamp
+from torchcell.trainers.compute_accounting import ComputeAccounting
 from torchcell.trainers.int_transformer_cell import RegressionTask
 from torchcell.transforms.coo_regression_to_classification import (
     COOInverseCompose,
@@ -458,6 +459,14 @@ def main(cfg: DictConfig) -> None:
                 arm, smoke_cfg, n_batches=int(smoke_cfg["n_trajectory_batches"])
             )
         )
+    # N, D and C for the scaling readout: the loss averages over entry rows on this
+    # path, so D is counted in that unit; FLOPs are measured on one real step.
+    callbacks.append(
+        ComputeAccounting(
+            unit="entry_rows",
+            embedding_keys=("gene_embedding", "embedding_preprocessor"),
+        )
+    )
 
     # A continuation: `+resume.ckpt_path=<...-last.ckpt>` hands Lightning the full training
     # state (weights, optimizer, epoch counter), so a run cut by the 4-day mmli limit

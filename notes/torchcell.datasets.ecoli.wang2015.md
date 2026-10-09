@@ -249,3 +249,25 @@ text over the synthetic BW25113 assembly; `pdftotext` faked) and 30 data-gated
   whether the screen cultures carried it is not stated, so no kanamycin is recorded.
 - Not registered in `torchcell/verification/runners.py` (outside this branch's files);
   `run_verification` here runs the same verifier.
+
+## 2026.10.09 - The other Table S3 column is now its own dataset
+
+Table S3 releases two OD600 columns and this loader consumes both: the stored log2
+relative tolerance is `log2[(with/without)_strain / (with/without)_BW25113]`, so
+`od600_without` already enters every record as the per-strain normalizer. The column in
+its own right is now served separately, as 46 `FitnessPhenotype` ratios of each deletion
+to BW25113 in PLAIN 2YT, by `GrowthWang2015Dataset`
+([[torchcell.datasets.ecoli.wang2015_growth]]).
+
+It is not a second copy of a stored number. Measured over the 46 mutants: Pearson
+r(`od600_without`, the stored log2) is 0.5454 against 0.9774 for `od600_with`; 0 of 46
+stored values equal any no-isoprenol value; and
+`max|log2(od600_without ratio) - stored| = 0.6632`. The stored log2 is a function of both
+columns, so neither column is recoverable from it.
+
+It is a SEPARATE MODULE, and the reason is measured rather than stylistic: this module's
+schema closure is 69 symbols and equals the 69 the served `env_chemgen_wang2015` store
+records, and adding the three fitness symbols to the import above raises it to 72, which
+would mark that store stale for a change touching none of its 46 records. The new module
+imports the pins, the SI parsers, `resolve_strains`, `deletion_genotype`, the media object
+and `SOURCED_VALUES` from here, so there is still one copy of each.

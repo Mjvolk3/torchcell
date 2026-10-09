@@ -266,6 +266,7 @@ from .vanacloig2022_adapter import (
     EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
 )
 from .wang2015_adapter import EnvChemgenWang2015Adapter as EnvChemgenWang2015Adapter
+from .wang2015_growth_adapter import GrowthWang2015Adapter as GrowthWang2015Adapter
 from .wang2018_adapter import (
     CrispriGuideFitnessWang2018Adapter as CrispriGuideFitnessWang2018Adapter,
 )
@@ -420,6 +421,7 @@ ecoli_adapters = [
     "GrowthRateS23Schmidt2016Adapter",
     "CarbonSourceTong2020Adapter",
     "EnvChemgenWang2015Adapter",
+    "GrowthWang2015Adapter",
     "CrispriGuideFfaEnrichmentFang2025Adapter",
     "CrispriGuideFitnessWang2018Adapter",
 ]

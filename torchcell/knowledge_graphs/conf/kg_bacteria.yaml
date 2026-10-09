@@ -97,6 +97,7 @@ datasets:
   - GrowthRateS23Schmidt2016Dataset
   - CarbonSourceTong2020Dataset
   - EnvChemgenWang2015Dataset
+  - GrowthWang2015Dataset
   - CrispriGuideFitnessWang2018Dataset
   - PromoterReporterMohiuddin2022Dataset
   - RbTnseqBorchert2023Dataset

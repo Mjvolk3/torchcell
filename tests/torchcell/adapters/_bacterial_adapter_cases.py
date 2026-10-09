@@ -84,6 +84,7 @@ from torchcell.adapters import (
     GrowthRateChoe2019Adapter,
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
+    GrowthWang2015Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
@@ -196,6 +197,7 @@ from torchcell.datasets.ecoli.schmidt2016_srm import (
 from torchcell.datasets.ecoli.shiver2016 import EnvChemgenShiver2016Dataset
 from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
+from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
@@ -642,6 +644,13 @@ BACTERIAL: list[Bacterial] = [
         "env_chemgen_wang2015",
         EnvChemgenWang2015Dataset,
         RESPONSE,
+    ),
+    _case(
+        GrowthWang2015Adapter,
+        "wang2015_growth",
+        "growth_wang2015",
+        GrowthWang2015Dataset,
+        "fitness phenotype",
     ),
     _case(
         CrispriGuideFitnessWang2018Adapter,

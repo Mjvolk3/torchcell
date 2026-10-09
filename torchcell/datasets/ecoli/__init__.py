@@ -88,6 +88,11 @@ sourcing layer.
   library, one signed log2 fitness per (guide, screen) over five screens.
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
+- ``wang2015_growth`` -- ``GrowthWang2015Dataset``: the SAME Table S3's other column,
+  the plain-medium endpoint OD600, as 46 ``FitnessPhenotype`` ratios of each deletion to
+  BW25113. It is not a second copy of the isoprenol arm: the stored log2 there is a
+  function of both columns, and measured over the 46 mutants neither column is
+  recoverable from it.
 - ``rapp2026`` -- ``MetabolomeRapp2026Dataset``: the metabolome of a CRISPRi library
   covering every iML1515 gene, FI-MS feature fold changes per MG1655 b-number.
 - ``rapp2026_platforms`` -- the same release's three other per-strain families, each on
@@ -255,6 +260,7 @@ from .schmidt2016_srm import (
 from .shiver2016 import EnvChemgenShiver2016Dataset as EnvChemgenShiver2016Dataset
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset
+from .wang2015_growth import GrowthWang2015Dataset as GrowthWang2015Dataset
 from .wang2018 import (
     CrispriGuideFitnessWang2018Dataset as CrispriGuideFitnessWang2018Dataset,
 )

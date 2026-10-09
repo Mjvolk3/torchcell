@@ -1083,7 +1083,7 @@ def _data_root() -> str:
 def test_every_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     root = osp.join(_data_root(), "torchcell-library")
     values = [v for v in vars(s).values() if isinstance(v, SourcedValue)]
-    assert len(values) == len(s.SOURCED_VALUES) == 19
+    assert len(values) == len(s.SOURCED_VALUES) == 20
     for value in values:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
@@ -1102,10 +1102,14 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
     genome = bacterial_genome("ecoli", "BW25113")
     assert isinstance(genome, EcoliK12BW25113Genome)
     resolution = s.resolve_columns(matrix.gene_labels, genome, label="release")
-    assert len(resolution.kept) == 3720
-    assert len({c.locus_tag for c in resolution.kept}) == 3720
+    # 3,720 deletion columns plus the 126 allele columns of #749
+    assert len(resolution.kept) == 3720 + 126
+    # the 126 allele columns add 118 loci no deletion column names
+    assert len({c.locus_tag for c in resolution.kept}) == 3838
     assert resolution.dropped_columns == {
-        s.DROP_POINT_MUTANT: 134,
+        # 8, not 134: #749 stores the 126 tag / marker / degron columns, leaving only
+        # the point and indel mutants here
+        s.DROP_POINT_MUTANT: 8,
         s.DROP_NOT_IN_ANNOTATION: 49,
         s.DROP_MERGED_LOCUS: 48,
         s.DROP_AMBIGUOUS: 2,
@@ -1138,8 +1142,8 @@ def test_the_release_resolves_to_the_measured_column_counts() -> None:
         for column in resolution.kept
         if row[column.index] == ""
     )
-    assert blanks == 8007
-    assert len(resolution.kept) * 57 - blanks == s.EXPECTED_RECORDS == 204033
+    assert blanks == 8224
+    assert len(resolution.kept) * 57 - blanks == s.EXPECTED_RECORDS == 210998
 
 
 _S1_TABLE_SCORES: dict[str, float] = {

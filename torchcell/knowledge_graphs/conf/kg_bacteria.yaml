@@ -78,6 +78,7 @@ datasets:
   - RnaseqPublicK12Lamoureux2023Dataset
   - ProteomeMori2021Dataset
   - PhageRbTnseqMutalik2020Dataset
+  - CrisprPineneToleranceNiu2019Dataset
   - RbTnseqPrice2018EcoliDataset
   - GeneEssentialityPrice2018EcoliDataset
   - CrispriCrossRachwalski2024Dataset

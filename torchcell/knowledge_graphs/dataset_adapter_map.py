@@ -26,6 +26,7 @@ from torchcell.adapters import (
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     CrispriScreenRousset2018Adapter,
+    CrisprPineneToleranceNiu2019Adapter,
     DmfCostanzo2016Adapter,
     DmfKuzmin2018Adapter,
     DmfKuzmin2020Adapter,
@@ -162,6 +163,7 @@ from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
+from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
@@ -373,6 +375,7 @@ dataset_adapter_map: dict[type, type] = {
     PromoterReporterMohiuddin2022Dataset: (PromoterReporterMohiuddin2022Adapter),
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
+    CrisprPineneToleranceNiu2019Dataset: CrisprPineneToleranceNiu2019Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     GeneEssentialityPrice2018EcoliDataset: GeneEssentialityPrice2018EcoliAdapter,
     CrispriCrossRachwalski2024Dataset: CrispriCrossRachwalski2024Adapter,

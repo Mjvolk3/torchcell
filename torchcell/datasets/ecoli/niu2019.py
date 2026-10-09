@@ -24,7 +24,7 @@ RECORD = one (target gene set x arm) ``BacterialEnvironmentResponseExperiment``:
   ``assay_type=liquid_od_growth``. The reference carries 0.0, which is what a strain
   growing exactly like the no-guide control is.
 
-WHY THIS DATASET EXISTS ONLY NOW. Issue #799: until
+WHY THE CRISPR ARMS EXIST ONLY NOW. Issue #799: until
 ``BacterialCrisprActivationPerturbation`` landed, the activation arm had nowhere to go.
 ``CrisprActivationPerturbation`` inherits the R64 systematic-name validator and refuses
 both ``b3417`` and ``dxs``, and the only bacterial expression leaves were CRISPRi, whose
@@ -33,13 +33,32 @@ asserts SO:1000032 ``delins`` -- a native promoter removed and a characterized p
 in its place -- an edit a guide-directed activator never makes. The measurement is
 ``experiments/036-dataset-fixes-before-kg-build/results/niu2019_release_loadability.json``.
 
-THE HOST IS THE UNEVOLVED PARENT, WHICH IS WHY NONE OF THIS WAITS ON #731. Every record
-here is ``BW25113(PT5-dxs)`` carrying the effector plasmid plus one guide plasmid, with
-the same parent carrying the empty ``pTargetA`` as the control. The evolved isolate
-``YZFP`` is the subject of Suppl. Table 2's 374 called variants and of nothing stored
-here. ``PT5-dxs`` is CONSTANT across the dataset and shared with the control, so it is a
-``BacterialStrainBackground`` on the reference rather than a perturbation in the
-``Genotype`` (the #507 rule: the genotype keeps only what the screen varies).
+THE HOST IS THE UNEVOLVED PARENT. Every record here is ``BW25113(PT5-dxs)`` carrying the
+effector plasmid plus one guide plasmid, with the same parent carrying the empty
+``pTargetA`` as the control. ``PT5-dxs`` is CONSTANT across the dataset and shared with
+the control, so it is a ``BacterialStrainBackground`` on the reference rather than a
+perturbation in the ``Genotype`` (the #507 rule: the genotype keeps only what the screen
+varies).
+
+THE EVOLVED ISOLATE ``YZFP`` HAS A WRITABLE GENOTYPE AND NO MEASURED PHENOTYPE, SO IT IS
+NOT A RECORD HERE. Suppl. Table 2's 374 called variants are its subject, and since the
+#835 leaves landed they are writable: 322 rows carry a b-number and take
+``BacterialSequenceVariantPerturbation``, 48 are intergenic and take
+``BacterialSiteVariantPerturbation``, which is 373 of 374 with the one blank-mutation-site
+row refusing on its missing coordinate and 4 rows neither b-numbered nor intergenic
+(counts from
+``experiments/036-dataset-fixes-before-kg-build/results/niu2019_release_loadability.json``,
+the #731 classification). What refuses is the RECORD, not the genotype. This release
+measures no number of YZFP: its four SI tables are the primers, that variant list and the
+two CRISPRa/i target tables, and every number in the latter two is measured in the
+UNEVOLVED parent; the evolved strain's own tolerance and titer are attributed to reference
+[8] ("we first improved pinene tolerance to 2.0% and pinene production to 9.9 mg/L from
+5.6 mg/L ... to obtain the pinene tolerant strain Escherichia coli YZFP [8]"), which the
+Caglar 2017 rule (#771) attributes to the study that first reported them; and the 182
+qRT-PCR YZFP-over-parent transcript ratios are released as Fig. 2's bar panels with no
+table behind them. A genotype with no measured phenotype is not an ``Experiment``, so the
+373 writable leaves have nothing to hang on and the rows are counted in
+``preprocess/not_loaded.json`` rather than stored.
 
 WHY ``EnvironmentResponsePhenotype`` AND NOT ``FitnessPhenotype``. The released number is
 a ratio against a control measured in the same run, which is an environment-response
@@ -84,12 +103,9 @@ combination strains = 94. 51 are stored and 43 are not:
 Two further parts of the release are not cells of this grid and are refused for reasons
 of their own, recorded in ``preprocess/not_loaded.json``:
 
-- Suppl. Table 2's 374 called variants of the evolved isolate ``YZFP``. No class holds a
-  called bacterial variant: ``SequenceVariantPerturbation`` and ``AllelePerturbation``
-  refuse a b-number, and ``BacterialBackgroundAllele`` requires a non-optional
-  ``functional`` the release never states for any of the 374 and has no slot for the
-  position, the reference or alternate base, or the ``Frequence`` the row carries. Issue
-  #731 owns it, and no variant leaf is designed here.
+- Suppl. Table 2's 374 called variants of the evolved isolate ``YZFP``, for the reason
+  above: the genotype is writable on the #835 leaves and the release measures no
+  phenotype of that strain.
 - The 64 dashed cells. The tables' own footnote defines a dash ("-: means no change or
   negative effect."), and classifying each cell as numeric or dashed reproduces the main
   text's both / growth-only / pinene-only tallies exactly for both arms, so a dash is a
@@ -326,12 +342,12 @@ _ARMS = "Results, 'Effects of the activation and repression on growth and produc
 HOST_STRAIN = _paper(
     "BW25113(PT5-dxs)",
     "Thus, we applied this CRISPR-Cas-SoxS system [17] for activating and repressing "
-    "target genes in E. coli $\\mathrm { B W } 2 5 1 1 3 ( \\mathrm { P _ { T 5 - dxs "
-    "} } )$ to investigate their effects on growth and pinene production.",
+    "target genes in E. coli $\\mathrm { B W } 2 5 1 1 3 ( \\mathrm { P _ { T 5 - d x "
+    "s } } )$ to investigate their effects on growth and pinene production.",
     page=_ARMS,
     note="the host of every stored record: the UNEVOLVED designed parent, not the "
-    "evolved isolate YZFP whose called variants are Suppl. Table 2's subject and are "
-    "refused here (#731)",
+    "evolved isolate YZFP, whose called variants are Suppl. Table 2's subject and whose "
+    "writable genotype has no measured phenotype in this release to carry it",
 )
 EFFECTOR = _paper(
     "dCas9*-MCPSoxS",
@@ -1149,11 +1165,17 @@ NOT_LOADED: tuple[dict[str, Any], ...] = (
     {
         "what": "Suppl. Table 2: 374 called variants of the evolved isolate YZFP",
         "n_rows": 374,
-        "reason": "no class holds a called bacterial variant. "
-        "SequenceVariantPerturbation and AllelePerturbation refuse a b-number, and "
-        "BacterialBackgroundAllele requires a non-optional `functional` the release "
-        "never states for any of the 374 and has no slot for the position, the "
-        "reference or alternate base, or the Frequence the row carries",
+        "n_writable_on_the_variant_leaves": 373,
+        "reason": "the genotype is writable and the PHENOTYPE does not exist. Since the "
+        "#835 leaves landed, 322 b-numbered rows take "
+        "BacterialSequenceVariantPerturbation and 48 intergenic rows take "
+        "BacterialSiteVariantPerturbation (373 of 374; the one blank-mutation-site row "
+        "refuses on its missing coordinate, and 4 rows are neither b-numbered nor "
+        "intergenic). But this release measures no number of YZFP: the two CRISPRa/i "
+        "target tables are measured in the UNEVOLVED parent, the evolved strain's own "
+        "tolerance and titer are attributed to reference [8], and Fig. 2's 182 qRT-PCR "
+        "YZFP-over-parent transcript ratios are released as bar panels with no table. A "
+        "genotype with no measured phenotype is not an Experiment",
         "issue": 731,
     },
     {

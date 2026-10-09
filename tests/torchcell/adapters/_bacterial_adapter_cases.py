@@ -67,6 +67,7 @@ from torchcell.adapters import (
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     CrispriScreenRousset2018Adapter,
+    CrisprPineneToleranceNiu2019Adapter,
     DoublingTimeCaglar2017Adapter,
     EnvChemgenGirgis2009Adapter,
     EnvChemgenShiver2016Adapter,
@@ -157,6 +158,7 @@ from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
+from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
@@ -467,6 +469,14 @@ BACTERIAL: list[Bacterial] = [
         RESPONSE,
         env_perturbation=False,
         phage=True,
+    ),
+    _case(
+        CrisprPineneToleranceNiu2019Adapter,
+        "niu2019",
+        "crispr_pinene_tolerance_niu2019",
+        CrisprPineneToleranceNiu2019Dataset,
+        RESPONSE,
+        crispr=True,
     ),
     _case(
         RbTnseqPrice2018EcoliAdapter,

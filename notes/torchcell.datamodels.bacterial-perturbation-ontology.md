@@ -648,3 +648,90 @@ an additive union member, and the full rebuild is what clears it. The eight stor
 step touched were rebuilt by name and read fresh: the three de Siqueira proteome classes,
 its titer class, Lim's tolerance and proteome classes, and Menasalvas and Kang, whose
 loaders did not change but whose closures moved. All eight pass their own verification.
+
+## 2026.10.09 - Round-2 bacterial leaves and a dose that is not a concentration (#749, #792, #799)
+
+Three more gene-perturbation leaves and one environment leaf, each because a LANDED
+loader measured released rows it could not type. The block in `schema.py` is additive and
+self-contained, delimited by its own comment banner; nothing above it is edited.
+
+| class | axis | mechanism SO | the measurement that asked for it |
+|---|---|---|---|
+| `BacterialMarkedAllelePerturbation` | gene presence/absence | `SO:0001218 transgenic_insertion` | Shiver 2016 dropped 121 of the 134 non-deletion columns of its array (114 `-SPA`, 7 `-kan`) (#749), and Babu 2014 dropped 3,420 of 42,705 released interaction pairs whose donor or recipient is one of Butland 2008's kan-marked, SPA-tagged essential-gene strains (#792) |
+| `BacterialDegronPerturbation` | gene expression | `SO:0001218` with the proteolysis fields | Shiver's 5 `-DAS` / `-DAS+4` columns, whose construct asserts regulated PROTEOLYSIS conditional on an adaptor, which a marked allele does not assert (#749) |
+| `BacterialCrisprActivationPerturbation` | gene expression | inherited from `CrisprActivationPerturbation` | Niu 2019's 57-target activation arm, four fifths of that release's 94 numeric cells (#799) |
+| `PhysicalExposurePerturbation` | environment | n/a | Shiver's UV conditions, released as `UV [12 sec] {4}` with no irradiance anywhere in the paper or its SI (#749 item 3) |
+
+### Why ONE marked-allele leaf serves two issues
+
+#749 and #792 describe the same physical construct: a selectable cassette integrated at a
+gene's terminus with the open reading frame intact, with or without an in-frame tag.
+Splitting them by issue would file one physical strain collection under two class names.
+The leaf's optional `cassette`, `insertion_site`, `tag` and `terminus` let a release say
+as much as it says, and `allele_effect` is a required three-valued field
+(`hypomorphic | unaffected | not_stated`) rather than a bool: a gene-perturbation leaf
+cannot carry a `ProvenanceGap`, so without an explicit `not_stated` member a silent
+release would have to be written as `False`, which asserts the allele is NOT hypomorphic.
+Babu 2014 stores `hypomorphic` on the strength of its own sentence; Shiver stores
+`not_stated`, because its array defers to Nichols 2011, which has no mirror entry (#691).
+
+### Why a CRISPRa leaf rather than reusing what exists
+
+Measured in
+`experiments/036-dataset-fixes-before-kg-build/results/niu2019_release_loadability.json`:
+`CrisprActivationPerturbation` inherits the R64 ORF validator and refuses both `b3417`
+and `dxs`; of the five bacterial leaves that existed, the only one on the expression axis
+with a direction was `BacterialCrisprInterferencePerturbation`, whose
+`expression_direction` is fixed to `decreased`. `PromoterReplacementPerturbation` can
+state `increased` but asserts `SO:1000032 delins`, a native promoter removed and a
+characterized part put in its place, which a guide-directed activator never does. So the
+new leaf subclasses `CrisprActivationPerturbation` exactly as the interference leaf
+subclasses `CrisprInterferencePerturbation`: a required `gene_namespace`, the bacterial
+locus-tag validator overriding the R64 one, an optional `identifier_mapping`, and the
+inherited `crispr` construct, so the guide payload stays defined once.
+
+### Why an exposure dose is not a `ConcentrationUnit` member
+
+`EnvironmentPhysicalPerturbation` carries a scalar factor whose magnitude is a
+`Concentration`, which works for pH and osmolarity and fails for an irradiation: a UV
+dose is an irradiance times a time, and Shiver releases only the time. Adding `sec` or
+`J/m2` to `ConcentrationUnit` would make an exposure time look like a concentration for
+every other dataset. `PhagePerturbation` already set the precedent, giving the
+multiplicity of infection its own named field, so `PhysicalExposurePerturbation` gives the
+dose three: `exposure_duration_seconds`, `irradiance_w_per_m2`, `fluence_j_per_m2`. They
+are not redundant, because a release may state the time alone (Shiver), the fluence alone,
+or the irradiance and the time. No cross-field arithmetic is asserted: an irradiance a
+source reports may be nominal or time-averaged, and multiplying it would manufacture a
+fluence the source never released. A model validator requires one of the three to be
+stated or gapped, so an exposure never silently has no dose, and `factor` reuses the
+`PhysicalFactor` vocabulary so a radiation exposure and a qualitative
+`EnvironmentPhysicalPerturbation(factor=radiation)` name the same variable.
+
+### Graph side
+
+The three gene leaves join `cell_adapter.BACTERIAL_PERTURBATION_LEAVES` (5 -> 8). Each
+projects the same five properties the `bacterial perturbation` graph class declares;
+their leaf-specific fields (`cassette`, `tag`, `degron`, `insertion_site`, `collection`)
+carry no node property, as `BacterialDeletionPerturbation.collection` does not, and
+travel in the serialized record. So no graph class changed, which is what keeps this
+additive. `PhysicalExposurePerturbation` is served by the existing
+`environment perturbation` lane, which since #756 partitions the environment's
+perturbations with the phage lane.
+
+### Schema impact
+
+`python scripts/schema_impact_check.py --base origin/main`: **6 changed symbols, 81
+impacted datasets, 0 breaking.** The four new classes are new symbols; the two modified
+symbols are `GenePerturbationType` and `EnvironmentPerturbationType`, which gained union
+members. Every impacted dataset is stale through those two unions rather than through a
+changed field, which is the measured consequence of an additive union member and is what
+the KG 4.0 full rebuild clears. The three stores this step's loaders touched were rebuilt
+by name and read fresh: Shiver 2016 (204,033 -> 210,998), Babu 2014 (38,579 -> 41,988),
+and the new Niu 2019 (51). All three pass L0 to L4.
+
+### Still open, named here so it is not lost
+
+`MeasurementType` has no `fold_change` member, and two things are blocked on it: the
+released sample SD of a growth RATIO (an SD does not transform with its statistic, so
+`log2_ratio` cannot carry it), and every dimensionless product ratio, of which Niu 2019
+releases 40. Issue #770 owns it, and it is proposed rather than taken in this branch.

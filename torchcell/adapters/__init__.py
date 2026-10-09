@@ -175,6 +175,9 @@ from .mutalik2020_adapter import (
 from .nadal_ribelles2025_adapter import (
     NadalRibellesPerturbSeq2025Adapter as NadalRibellesPerturbSeq2025Adapter,
 )
+from .niu2019_adapter import (
+    CrisprPineneToleranceNiu2019Adapter as CrisprPineneToleranceNiu2019Adapter,
+)
 from .oduibhir2014_adapter import SmfODuibhir2014Adapter as SmfODuibhir2014Adapter
 from .ohnuki2018_adapter import ScmdOhnuki2018Adapter as ScmdOhnuki2018Adapter
 from .ohnuki2022_adapter import ScmdOhnuki2022Adapter as ScmdOhnuki2022Adapter
@@ -375,6 +378,7 @@ ecoli_adapters = [
     "PromoterReporterMohiuddin2022Adapter",
     "ProteomeMori2021Adapter",
     "PhageRbTnseqMutalik2020Adapter",
+    "CrisprPineneToleranceNiu2019Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "CrispriCrossRachwalski2024Adapter",
     "MetabolomeRapp2026Adapter",

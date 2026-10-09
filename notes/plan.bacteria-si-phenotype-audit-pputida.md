@@ -1292,3 +1292,12 @@ flight.** Rank 8's owner path `carruthers2025.py` is being rewritten on two bran
 landing it elsewhere would collide; rank 9 needs a `MEDIA_LIBRARY` entry for the
 production medium and a pairing decision, neither of which is a measurement this ledger
 can settle.
+
+## 2026.10.09 - The ledger's revised totals
+
+Three of the ledger's six open ranks landed on the E. coli side (ranks 11, 12 and 13),
+so the totals over both audits move from 15 landed / 6 open to 18 landed / 3 open. The
+revised table and the per-rank record counts are recorded once, in
+[[plan.bacteria-si-phenotype-audit-ecoli]]'s section of the same date. Nothing on the
+P. putida side changed: rank 6 (Menasalvas) stays assigned to the #739/#788 branch and
+rank 9 (Lim 2025) stays conditional on a `MEDIA_LIBRARY` entry and a pairing decision.

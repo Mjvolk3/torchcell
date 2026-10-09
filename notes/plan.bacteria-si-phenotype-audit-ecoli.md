@@ -3994,3 +3994,46 @@ second half, and it is what rank 11, rank 13 and rank 15 were all blocked on.
 | 11 | blocked in its absolute form by gap 1 | LOADABLE: 103 of the 241 PRECISE-1K records carry a `Growth Rate (1/hr)`, 0 of the 240 Public K-12 records do, and 8 wild-type `*:wt_glc` rows release a rate the absolute branch can use as the reference |
 | 12 | a recorded decision, not a release defect | LOADABLE as a FITNESS ratio, and the absolute branch does NOT reach it: `MeasurementType` still has no optical-density member, so the readout cannot take the absolute route and goes through `FitnessPhenotype` instead |
 | 13 | three blockers in the `schmidt2016_growth_rate` note | PARTLY loadable: 15 of the 26 rows, not 26. Gap 1 is lifted, the log2 blocker is moot on the absolute route, and 11 rows drop for reasons the note did not have |
+
+## 2026.10.09 - Three of the ledger's open ranks are now landed, and the totals move
+
+The loadable-now ledger of the section above is a measurement of the tree at
+`6cf257308`, and three of its six open ranks were implemented on this branch. The ranks
+and their new state, with the record count each one stores:
+
+| rank | item | ledger state at 6cf257308 | now | records |
+|---|---|---|---|---|
+| 11 | Lamoureux 2023 per-sample growth rate | open | **landed** | 89 (`growth_rate_lamoureux2023`) |
+| 12 | Wang 2015 no-isoprenol OD600 | open | **landed** | 46 (`growth_wang2015`) |
+| 13 | Schmidt 2016 Table S23 per-condition growth rate | open | **landed** | 15 (`growth_rate_s23_schmidt2016`) |
+
+Each stores fewer records than the audit's count, and the shortfall is a measured rule in
+each case rather than an omission:
+
+- **Rank 11, 89 of the audit's 103.** 14 of the 103 release a rate of exactly `0.0`,
+  which the release gives no legend for, so they are dropped as indistinguishable from an
+  unrecorded cell; the cost is that `oxyR`, `soxR` and `soxS` appear only in those rows.
+  Full reasoning: [[torchcell.datasets.ecoli.lamoureux2023_growth]].
+- **Rank 12, 46 plus 1 reference, which IS the audit's count.** The readout is a
+  `FitnessPhenotype` ratio and not the absolute branch, because `MeasurementType` still
+  has no optical-density member. [[torchcell.datasets.ecoli.wang2015_growth]].
+- **Rank 13, 15 of the audit's 26.** 4 rows are the two strains L1 `pair_uniqueness`
+  cannot tell apart from BW25113 on a wild-type genotype, and 7 carry the proteome
+  loader's own medium, growth-phase and culture-mode rules.
+  [[torchcell.datasets.ecoli.schmidt2016_s23_growth_rate]].
+
+### Revised totals over both audits, 31 ledger rows
+
+| state | rows at 6cf257308 | rows now |
+|---|---|---|
+| landed | 15 | 18 |
+| refused | 7 | 7 |
+| open | 6 | 3 |
+| in flight | 2 | 2 |
+| excluded by owner decision | 1 | 1 |
+
+The three still open are rank 1 (Price 2018's `strain_fit.tab`, retrieval-gated and not
+in the raw mirror), P. putida rank 6 (Menasalvas, assigned to the #739/#788 branch, whose
+Dryad deposit IS mirrored) and P. putida rank 9 (Lim 2025, needing a `MEDIA_LIBRARY`
+entry and a pairing decision). None of the three is a measurement this branch could
+settle.

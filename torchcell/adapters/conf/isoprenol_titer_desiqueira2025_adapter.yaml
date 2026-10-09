@@ -13,6 +13,11 @@ cell_adapter:
       memory_reduction_factor: 1.0
     - method_name: "bacterial perturbation (chunked)"
       memory_reduction_factor: 1.0
+    # Issue #731: these records' genotypes carry CALLED variants, served as their own
+    # class. The two bacterial methods partition the leaves, so both are enabled and
+    # neither writes a perturbation the other does.
+    - method_name: "bacterial sequence variant perturbation (chunked)"
+      memory_reduction_factor: 1.0
     - method_name: "environment (chunked)"
       memory_reduction_factor: 1.0
     - method_name: "environment reference"

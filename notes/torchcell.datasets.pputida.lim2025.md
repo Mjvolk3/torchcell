@@ -68,7 +68,7 @@ loader **matches that treatment** rather than inventing a second representation:
 **Two shapes this row adds beyond row 14's.** The 159 rows partition cleanly into **123
 on one locus, 17 intergenic and 19 spanning several loci**. An intergenic row's `Gene`
 field names the two FLANKING loci, so there is no locus to key to and inventing a
-neighbour is exactly what must not be done. A multi-locus row is a large deletion (up to
+neighbor is exactly what must not be done. A multi-locus row is a large deletion (up to
 the 53 genes of `PP_3024-PP_5558`) that no gene-keyed perturbation can state at all; it
 needs a span-level carrier, which row 14's point-variant-only table never required.
 
@@ -372,3 +372,276 @@ reference it was given is in the PR body.
 builds BOTH classes end to end against a synthetic KT2440 assembly with the network
 refused, so the whole pipeline runs with no network call and no read of the real
 `$DATA_ROOT`. `diff-cover` reports **98.8%** on `lim2025.py`.
+
+## 2026.10.09 - Called variants are writable: the #731 leaves applied
+
+The 2026.10.07 section above concluded that no perturbation class holds a called base
+change at a coordinate, so no clone column became a record. That conclusion no longer
+holds: issue #731 added three leaves to `torchcell/datamodels/schema.py`, and this loader
+now writes the calls of four of the matrix's 49 clone columns. Everything the earlier
+section says about the matrix's SHAPE still stands; what changed is where those rows go.
+
+### The three leaves, and which released row shape maps to each
+
+The partition is decided by the row's own cells (`released_row_representation`), measured
+on the pinned `si2.xlsx` (sha256
+`a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612`, sheet
+`Fig 2B_Mutation List`, 159 data rows):
+
+| released row shape | n rows | leaf | identifier |
+|---|---|---|---|
+| `Details` starts `intergenic` | 17 | `BacterialSiteVariantPerturbation` (`site_kind=intergenic`) | `AE015451:<position>`, the derived site id |
+| `Mutation Type == DEL` and `Details` empty | 25 | `BacterialSpanDeletionPerturbation`, ONE per covered locus | that locus's `PP_` tag |
+| everything else | 117 | `BacterialSequenceVariantPerturbation` | that locus's `PP_` tag |
+
+The span-deletion bucket is 25, not the 19 the multi-locus count gives: 19 rows name more
+than one locus (up to the 53 of `PP_3024`-`PP_5558`) and 6 name exactly one
+(`1578244 DEL ttgB`, `1831944 DEL PP_1635`, three `PP_4063` rows, `5076838 DEL PP_4470`).
+Both are the same shape, because breseq omits the coding offset exactly when the named
+loci lie wholly inside the deleted interval, so a single-locus row of that shape is a
+deletion that removes the whole locus. Every row left after the first two tests names
+exactly one locus; the loader asserts that rather than assuming it.
+
+`call_mode=VariantCallMode.clone` and `frequency_basis=fraction` on every call: the
+matrix cell is a within-clone fraction, measured as 431 cells reading `1` and 12 reading
+`0.9` over its 443 calls, so no cell exceeds 1 and none is a percent. `caller` is the
+`breseq 0.33.1` the loader already sourced, used verbatim.
+
+### The `Gene` cell is usually a symbol, and resolving it changed the dedup count
+
+Measured over all 241 distinct `Gene` tokens of the sheet against the pinned
+`pputida_KT2440_ASM756v2` assembly: 151 are already locus tags, 90 resolve through the
+gene-symbol layer, 1 is ambiguous (`asd` to `PP_1989` or `PP_1992`) and 0 are not found.
+Every stored tag that differs from the released token carries a
+`DerivedIdentifierMapping(route="gene_symbol")`. A token that does not land on exactly
+one locus is a hard error naming it; no mapping is invented. A clone column carrying the
+`asd` row would therefore be refused, which is the honest behavior, and none of the four
+loaded columns carries it.
+
+This resolution is what corrected the dedup count. Before resolving the symbols, only two
+of the IPL400 founder's calls look like restatements of its designed lesions. After
+resolving, six do: `adhP` is `PP_3839` and `ivd,mccB,liuC,mccA` are `PP_4064`-`PP_4067`,
+all four of them designed deletions of IPL300.
+
+### No end coordinate is asserted
+
+The release gives a 1-based `Position` and a LENGTH fused into `Sequence Change`
+(`Δ5,553 bp`, `(CCAC)2→1`, `2 bp→CG`), never an end. `position_end` therefore equals
+`position_start` on every call, including the multi-base ones; the released extent stays
+verbatim in `sequence_change`, and `deleted_span` is left None on the span leaf.
+Synthesizing an end would mean parsing that string and choosing which side of the position
+the length runs to, and the source states neither. `reference_allele`,
+`alternate_allele`, `amino_acid_change`, `codon_change` and `codon_number` stay None for
+the same reason: the sheet fuses them into `Sequence Change` and `Details` (`C→G`,
+`G476A (GGT→GCT)`) instead of giving them their own columns, and both cells are stored
+verbatim. The `Details` offsets use U+2011 non-breaking hyphens and keep them.
+
+### The clone-column-to-strain assignment is proven, not assumed
+
+`assert_founder_columns` refuses the build unless three measured facts hold together:
+
+- `A1 F0 I1 R1` carries **0** calls. The matrix is called against KT2440 WT, so its own
+  founder column must carry none.
+- `A9 F0 I1 R1`'s 8 call positions are a strict superset of `A5 F0 I1 R1`'s 6.
+- What `A9 F0` adds is exactly two rows, `ttgB` (1578244) and `PP_4398` (4989633), which
+  is the Results' own "IPL400 had the same mutations along with a mutation in PP_4398"
+  plus IPL400's designed ΔttgB.
+
+The two proteome isolates' parent is quoted, not inferred: "we chose two representative
+evolved end-point isolates (i.e., A10_F63_I1 and A12_F53_I1) which were derived from the
+same starting strain (IPL400) but contained mutations in different genes (Supplementary
+Table 5)." Supplementary Table 3's row groups put ALE 9-12 on IPL400, so ALE 10 and ALE
+12 agree independently.
+
+### Measured before and after, read from the rebuilt LMDBs
+
+| dataset | records before | records after | what changed |
+|---|---|---|---|
+| `IsoprenolToleranceLim2025Dataset` | 3 | 3 | the same three records, with the parents' calls now on the IPL300 and IPL400 genotypes; `gene_set` 8 to 12 |
+| `ProteomeLim2025Dataset` | 1 | 3 | A10_F63_I1 and A12_F53_I1 added, each against its own unstressed arm; `gene_set` 7 to 24 |
+
+Per-record called-variant accounting, from
+`preprocess/called_variant_perturbations.json` of each build:
+
+| record | clone column | called rows | candidate perturbations | written | in a locus | site-keyed | span loci | restated |
+|---|---|---|---|---|---|---|---|---|
+| IPL300 | `A5 F0 I1 R1` | 6 | 9 | 3 | 3 | 0 | 0 | 6 |
+| IPL400 | `A9 F0 I1 R1` | 8 | 11 | 4 | 4 | 0 | 0 | 7 |
+| A10_F63_I1 | `A10 F63 I1 R1` | 16 | 19 | 12 | 8 | 4 | 0 | 7 |
+| A12_F53_I1 | `A12 F53 I1 R1` | 18 | 21 | 14 | 11 | 3 | 0 | 7 |
+
+Total genotype sizes: IPL300 9 perturbations (6 designed + 3 called), IPL400 11 (7 + 4),
+A10_F63_I1 19 (7 + 12), A12_F53_I1 21 (7 + 14). `KT2440 dPP_3024` gets no calls: it is a
+reverse-engineered strain and not one of the 49 clone columns.
+
+### The dedup rule, and the 27 perturbations it dropped
+
+A call whose resolved locus the record's own strain already carries as a designed
+`BacterialDeletionPerturbation` is DROPPED, so absence has one encoding. The drop is per
+LOCUS, so a span event keeps its full `span_systematic_gene_names` (the event does remove
+them all) and only stops writing a second perturbation for the designed one.
+
+Across the four loaded records that is **27** dropped perturbations: 6 on IPL300 and 7 on
+each of the other three. The restated loci are `PP_2675` (3063719), `PP_3839`/`adhP`
+(4362918) and `PP_4064`-`PP_4067`/`ivd,mccB,liuC,mccA` (4588139) for all four, plus
+`PP_1385`/`ttgB` (1578244) for the three IPL400-background records.
+
+One consequence worth stating, because it is easy to misread the leaf table above:
+**zero `BacterialSpanDeletionPerturbation` instances survive onto a loaded record.** Every
+span-deletion row the four clone columns carry (`1578244 DEL ttgB` and
+`4588139 DEL ivd,mccB,liuC,mccA`) is entirely restated by the designed deletions, so the
+leaf's code path runs on 5 loci per IPL400-background record and all 5 are dropped. The
+span leaf is exercised but currently unpopulated in the built stores; a record of one of
+the other 45 clone columns would populate it.
+
+### What still refuses, with counts
+
+- **The 16 lineage final growth rates of Supplementary Table 3.** Each is the average
+  over a lineage's three LAST flasks, so its strain is the evolving POPULATION in that
+  flask, not one of the 46 sequenced isolates. The matrix calls CLONES
+  (`VariantCallMode.clone`) and releases no population allele frequency for a flask, so a
+  population genotype would need a threshold the release never gives for one. The #731
+  leaves do not change this, because what they hold is a clone's calls; the rule
+  `final_growth_rate_is_an_evolved_population` stays, with its reason restated.
+- **The 46 evolved isolates as TOLERANCE records.** Writable now, but Supplementary
+  Table 3 releases a growth rate per lineage and not per isolate, and Fig. 2A's
+  per-isolate rates are a figure with no numbers. The drop rule was renamed from
+  `evolved_clone_genotype_is_not_representable` to
+  `evolved_isolate_has_no_released_per_isolate_number`, because the old name is now a
+  false claim. The two whose proteome IS released are the new `ProteomeLim2025Dataset`
+  records.
+- **`PP_2676`'s 14-codon N-terminal truncation on the perturbation axis.** Typing it as a
+  `BacterialSequenceVariantPerturbation` of deletion type was considered and refused: the
+  leaf needs a 1-based `position_start` on `AE015451` and a `sequence_change`, and neither
+  Lim's Supplementary Table 1 nor Thompson 2020's strain table gives a coordinate, a
+  coding range or a length for it. The `d14` designation does not even say whether 14
+  counts base pairs or codons. It stays a `BacterialBackgroundAllele(partial_deletion)` on
+  the IPL400 background and a stated entry in `preprocess/genotype_gaps.json`. One entry,
+  unchanged.
+- **A called variant on the strain-BACKGROUND axis.** `BacterialBackgroundAllele` requires
+  a non-optional `functional: bool` that a call's consequence is unknown for, and
+  `BacterialStrainBackground` permits one allele entry per locus, which refuses
+  A12_F53_I1's two `PP_3415` calls (P293S at 3,866,001 and V46I at 3,866,742). Each
+  proteome record's `genome_reference` therefore carries IPL400's background, which for
+  the two evolved isolates is a FLOOR on the genomic content of their own unstressed
+  reference arm. This is the second `genotype_gaps.json` entry, NEW, and it replaces the
+  one the leaves closed. `genotype_gaps.json` therefore still holds 2 entries: the
+  `PP_2676` truncation and this one.
+- **29 protein keys of A12_F53_I1.** Its `G+4IP` sheet carries 2,338 rows against the
+  2,367 of its `M9G` sheet, so 29 loci are quantified unstressed but not under isoprenol
+  and the record would have a reference value with no measurement. That is the new drop
+  rule `no_key_matched_isoprenol_abundance` (0 for IPL400 and A10_F63_I1, 29 for
+  A12_F53_I1), the mirror of the existing `no_key_matched_reference_abundance` (7 keys
+  each for IPL400 and A10_F63_I1, 0 for A12_F53_I1).
+- **The 6 paralogous protein keys** (`PP_0548`, `PP_1086`, `PP_1237`, `PP_2639`,
+  `PP_4999`, `PP_5213`) and the 6 pIY670 production arms, both unchanged. Measured: the
+  same six loci on all four consumed sheets.
+
+### What the four proteome sheets now give, and the statistics re-check
+
+All four comparison sheets are consumed, not two, because each record needs the same
+column of two sheets: the strain's own `M9G` arm and its own `M9G+4IP` arm. The Welch
+back-solve at n = 3 with the released `log2_std` as a sample SD reproduces the released
+`t-test_stat` on all four, worst residual 1.05e-12 (`A10 M9G` 9.24e-13, `A10 G+4IP`
+1.05e-12, `A12 M9G` 7.46e-13, `A12 G+4IP` 6.07e-13), and the Sample Key sheet gives
+`R1,R2,R3` for all six consumed sample names. The IPL400 columns remain bit-identical
+across the sheets (2,361 shared loci on the `M9G` pair, 2,332 on the `G+4IP` pair, zero
+differing), which is what still licenses ONE IPL400 record rather than an average of four.
+
+The per-locus CSV moved from `preprocess/ipl400_proteome.csv` to
+`preprocess/lim2025_proteome.csv` and gained a `strain` column, since it now carries three
+strains.
+
+### L0 to L4, both rebuilt stores
+
+`python -m torchcell.datasets.pputida.lim2025 verify`, exit 0, both PASS. The 30
+`provenance_audit` rows, one per `SourcedValue` (29 before `evolved_isolate_parent` was
+added), are omitted from the table.
+
+| dataset | level | row | verdict |
+|---|---|---|---|
+| tolerance | L0 | `structural` | ok, 3 records validated |
+| tolerance | L1 | `count` | ok, observed 3, expected 3 |
+| tolerance | L1 | `pair_uniqueness` | ok, 3 unique (study, strain, condition) |
+| tolerance | L1 | `provenance_gaps` | ok, 12 gaps over 3/3 records, 0 deferred |
+| tolerance | L1 | `canonical_gene_names` | ok, 12 systematic names, each current |
+| tolerance | L2 | `value_fidelity` | ok, 3 values |
+| tolerance | L2 | `se_nonnegative` | ok, 0 values |
+| tolerance | L2 | `uncertainty_sanity` | ok, 0 labeled uncertainties |
+| tolerance | L3 | `measurement_type_consistent` | ok, `log2_ratio` |
+| tolerance | L3 | `reference_zero` | ok, reference response == 0 for all 3 |
+| tolerance | L3 | `environment_perturbed` | ok, all 3 carry an environmental edit |
+| tolerance | L3 | `compound_identity` | ok, 3 compound references |
+| tolerance | L3 | `media_compound_identity` | ok, 21 medium components |
+| tolerance | L3 | `media_membership` | ok, 3 records on one MEDIA_LIBRARY medium |
+| tolerance | L4 | `site_identifiers_deleted_loci` | ok, 0 of 0 |
+| tolerance | L4 | `gene_containment_kt2440_locus_tags` | ok, 12 of 12 |
+| proteome | L0 | `structural` | ok, 3 records validated |
+| proteome | L1 | `count` | ok, observed 3, expected 3 |
+| proteome | L1 | `orf_uniqueness` | ok, 24 ORFs, 15 with multiple strains (expected) |
+| proteome | L2 | `value_fidelity` | ok, 7,054 values |
+| proteome | L2 | `se_nonnegative` | ok, 7,054 values |
+| proteome | L3 | `reference_finite` | ok, finite + key-matched for all 7,054 |
+| proteome | L3 | `measurement_type_consistent` | ok, `dia_nn_top3_log2_mean` |
+| proteome | L4 | `site_identifiers_deleted_loci` | ok, 4 of 4 |
+| proteome | L4 | `gene_containment_kt2440_deleted_loci` | ok, 20 of 20 |
+| proteome | L4 | `gene_containment_kt2440_quantified_loci` | ok, 2,361 of 2,361 |
+
+Two verifier rows needed the loader to say something it had not had to say before.
+
+- **L4 `site_identifiers_*` is new.** `protein_gene_set` collects every
+  `systematic_gene_name` on a genotype, which now includes the 4 site ids
+  (`AE015451:1386816`, `:1812462`, `:4586057`, `:4808180`). Asking the gene universe to
+  contain one fails by design, since the whole point of the site-keyed leaf is that no
+  locus tag holds the call. The identifiers are now partitioned: site ids get their own L4
+  row (replicon and 1-based position checked) and only the locus tags go to the
+  gene-containment row, which is why the proteome row reads 20 of 20 rather than 20 of 24.
+- **`allow_duplicate_orfs=True` is now passed to the protein verifier.** Its
+  `orf_uniqueness` rule means "one record per knocked-out ORF", which was never this
+  dataset's shape: the three records are three STRAINS of one lineage, each carrying its
+  parent IPL400's seven designed deletions by construction, and the two isolates
+  additionally share the founder calls IPL400 already had. The flag is the verifier's own
+  supported form for that case (Messner 2023 uses it); record identity here is the
+  genotype as a whole, which L1 `count` plus each record's distinct `Genotype` carry.
+
+### Two disagreements reported, not reconciled
+
+- The Results say "In A10_F63_I1, three (gnuR, PP_4063 and frmA) out of the total nine
+  mutations, and in A12_F53_I1, four (gnuR, PP_4063, PP_3024 and frmA) out of the total
+  nine mutations". Measured against the IPL400 founder column, A10 F63 I1 carries 8 call
+  positions its founder does not and A12 F53 I1 carries 10 (of which two are the same
+  `PP_3415` gene, giving 9 distinct genes). Neither reproduces the stated nine exactly.
+  The loader stores the matrix's own rows and reports the difference.
+- The 159-rows-against-158-unique-mutations disagreement from the 2026.10.07 section is
+  unchanged.
+
+### The `called_variants.json` artifact changed meaning
+
+`read_variant_calls` no longer writes `blocking_reasons`. Each of the 159 rows now carries
+`representation` (the leaf its shape maps to, one of the three `perturbation_type`
+literals, so the recorded mapping cannot drift from the class written) and
+`locus_seen_twice_in_a_clone` (measured: 8 rows, which the perturbation axis admits and
+the background axis does not). The `BLOCK_*` constants are gone, because every one of
+them asserted something that is no longer true. `preprocess/called_variant_perturbations.json`
+is new and holds the founder check, the called-variant locus reconciliation and the
+per-record accounting table above.
+
+### The tests this changed, and how they were rewritten
+
+`tests/torchcell/datasets/pputida/test_lim2025.py` asserted the old conclusion in five
+places, each of which was replaced by the test of the new behavior at the same strength
+rather than loosened:
+
+- the `blocking_reasons` tests, which referenced the deleted `BLOCK_*` constants, now
+  assert the `representation` each of the 159 rows carries and that it is one of the
+  three `perturbation_type` literals, so the recorded mapping cannot drift from the class
+  written;
+- `test_the_genotype_gaps_name_the_parents_unwritable_content` now asserts the entry the
+  leaves CLOSED is gone and the `PP_2676` entry is still there;
+- the `strain_genotype("A10_F63_I1", {})` case, which asserted a `ValueError`, now
+  asserts the genotype an evolved isolate gets;
+- the build-artifact test now asserts the artifact's new shape;
+- the proteome record count is 3 and the renamed drop rule is asserted by its new name.
+
+`pytest tests/torchcell/datasets/pputida/test_lim2025.py` and its de Siqueira sibling run
+200 passed, 11 skipped; the anti-padding lint reports 485 files clean.

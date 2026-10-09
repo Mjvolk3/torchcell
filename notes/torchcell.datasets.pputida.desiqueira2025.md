@@ -52,7 +52,7 @@ one of those calls honestly:
      Sigma4 (`PP_1656` x2, `PP_3827` x2);
    - **105 of 173 calls carry no locus at all** and 10 more carry only a RefSeq `PP_RS`
      tag with no GenBank `old_locus_tag`, so `systematic_gene_name` cannot be filled.
-     Inventing a neighbouring locus for an intergenic call is exactly what must not be
+     Inventing a neighboring locus for an intergenic call is exactly what must not be
      done, so those calls get a typed gap instead.
 3. If a Sigma clone were written anyway, `Genotype.__eq__` compares the perturbation
    SET, so every Sigma record would be genotype-identical to the PT record it descends
@@ -451,3 +451,139 @@ The two blocked items are unchanged. The 192 host protein keys outside the names
 need a UniProt-to-locus-tag crosswalk (open gap 2), and the Sigma-class strains still need
 the variant-level perturbation leaf (#731) which would take each class from 5 records to
 20.
+
+## 2026.10.09 - The four sequenced isolates are loaded: the #731 leaves applied
+
+The first build of this loader measured that no class in `schema.py` could hold one of
+Data Set S2's 173 Geneious calls, typed every one of them into
+`preprocess/called_variants.json` with its reason, and loaded WT and PT only. The
+called-variant leaves of issue #731 close all four reasons, so the four tolerized
+isolates Data Set S2 released calls for are now records.
+
+### Measured before and after, read from the rebuilt dev LMDBs
+
+| dataset | records before | records after | gene_set before | gene_set after |
+|---|---|---|---|---|
+| `ProteomeDeSiqueira2025Dataset` | 5 | **17** | 1 | 30 |
+| `ProteomePercentDeSiqueira2025Dataset` | 5 | **17** | 1 | 30 |
+| `ProteomeLog10PercentDeSiqueira2025Dataset` | 5 | **17** | 1 | 30 |
+| `IsoprenolTiterDeSiqueira2025Dataset` | 2 | **10** | 6 | 35 |
+
+17 of the 20 released proteome samples and 10 of Table S2's 24 cells. The three and two
+left out are Sigma3's, the one isolate Data Set S2 never sequenced.
+
+### How the 173 calls were encoded, measured on the pinned workbook
+
+`preprocess/called_variants.json`, which now records the leaf each call became rather
+than the reason none could hold it:
+
+| encoding | calls | leaf |
+|---|---|---|
+| `bacterial_sequence_variant_in_locus` | 53 | `BacterialSequenceVariantPerturbation` |
+| `bacterial_site_variant_intergenic` | 105 | `BacterialSiteVariantPerturbation`, `site_kind=intergenic` |
+| `bacterial_site_variant_locus_not_in_assembly` | 10 | `BacterialSiteVariantPerturbation`, `site_kind=locus_not_in_assembly` |
+| `restates_the_designed_pt_deletion` | 5 | none; dropped and counted |
+
+Per-strain perturbations written, plus the one `BacterialDeletionPerturbation` every
+written strain carries:
+
+| strain | released calls | variants written | genotype perturbations |
+|---|---|---|---|
+| PT | 33 | 32 | 33 |
+| Sigma1 | 34 | 33 | 34 |
+| Sigma2 | 28 | 27 | 28 |
+| Sigma4 | 43 | 42 | 43 |
+| Sigma5 | 35 | 34 | 35 |
+
+No two of those perturbation sets are equal, which is the collapse the first build
+refused to risk.
+
+### Four measurements that decided the encoding
+
+- **The RefSeq-only calls cannot be keyed to a GenBank locus, and that is measured, not
+  assumed.** The 10 rows name `PP_RS21780` (9) and `PP_RS19075` (1), and
+  `resolve_gene_name` on the pinned KT2440 GenBank assembly returns `retired`, "not
+  found in GCA_000007565.2_ASM756v2; retained as given", for both. They are written as
+  site variants with `site_kind=locus_not_in_assembly` and the released RefSeq tag kept
+  verbatim in `released_locus_statement`, so the identifier the source gave is not lost
+  and no neighboring locus is invented.
+- **One call per sequenced strain restates the designed deletion.** All five carry a
+  `Deletion` at 3,063,718..3,064,173 on `PP_2675`, 456 bp of the `cytochrome c-550 PedF`
+  CDS at frequency 1, which IS the markerless in-frame deletion the strain was built
+  with. Absence has one encoding, so the call is dropped with its own encoding rather
+  than written beside the `BacterialDeletionPerturbation` that already states it.
+- **The frequency column is not one scale.** 157 of the 173 cells are bare fractions in
+  (0, 1] and 16 are percent RANGES (`95.1% -> 97.6%` through `98.5% -> 98.6%`). A range
+  has no single value, so those calls keep the verbatim cell and carry `frequency=None`;
+  `released_frequency` checks every bare number into (0, 1] rather than trusting it.
+- **21 insertions are released with `Maximum == Minimum - 1` and `Length` 0**, the
+  zero-length interval between two reference bases. The coordinates are stored as
+  released, never normalized to a one-base span the source never wrote. One of those
+  rows also has an empty `Sequence` cell, which is correct for an insertion.
+
+### A sequenced isolate's reference is PT's, and its calls are its genotype
+
+`strain_reference` returns PT's `BacterialStrainBackground` for each of the four
+isolates: PT is the base strain they were evolved from, so PT's deletion event is what
+they hold CONSTANT, and the calls are what varies. That is the division
+`BacterialStrainBackground` is documented for, and it keeps the record's genome reference
+one interned object across all five strains (the titer store holds 1 reference for 10
+records).
+
+### What still refuses, with counts
+
+- **Sigma3, in both families** (3 proteome samples, 2 determined Table S2 cells). Data
+  Set S2 releases no row for it, so its genotype is unknown rather than untyped; writing
+  it would assert it is genotypically the PT it was evolved from. The drop rule is
+  renamed `strain_was_never_sequenced` and no schema change reaches it.
+- **The two acetate media** (4 determined cells, all reading 0): Fig. S3's media A and C
+  state 75.5 mM and 1 mM ammonium sulfate against the 2 g/L the served
+  `M9_NREL_DESIQUEIRA2025` carries, so they are a different medium and `MEDIA_LIBRARY`
+  holds no object for them.
+- **6 `n.d.` cells**, which the Table S2 caption defines as not determined.
+- **`Delta14-PP_2676`** stays a `BacterialBackgroundAllele(partial_deletion)` with a
+  `ProvenanceGap` on `deleted_span`. The sequence-variant leaf could take it only with a
+  released coordinate, and the source writes `Delta14` with no coordinate and without
+  saying whether 14 counts base pairs or codons.
+- **197 protein keys outside the namespace and 1 merged key**, unchanged.
+
+### L0 to L4, measured after the rebuild
+
+`proteome_desiqueira2025` **PASS** (the other two normalizations likewise):
+
+| level | row | result |
+|---|---|---|
+| L0 | structural | 17 records validated |
+| L1 | count | observed 17, expected 17 |
+| L1 | orf_uniqueness | 71 ORFs, 71 with multiple strains (expected) |
+| L1 | strain_condition_uniqueness | 17 distinct (strain, environment) pairs |
+| L2 | value_fidelity | 26,027 values checked |
+| L2 | se_nonnegative | 26,027 values checked |
+| L3 | reference_finite | finite + key-matched for all 26,027 |
+| L3 | measurement_type_consistent | one `dia_nn_top3_peptide_signal_replicate_mean` |
+| L3 | assembly_pin | `('pputida_KT2440_ASM756v2', 'GCA_000007565.2')` |
+| L3 | stored_scale_is_the_released_column_this_class_reads | 17 records on the class's own column pair |
+| L4 | gene_containment_kt2440 | 1,531 measured and 30 perturbed host genes; 0 outside |
+| L4 | protein_and_perturbed_locus_containment_assembly | 1.000 of 1,549 |
+
+`isoprenol_titer_desiqueira2025` **PASS**:
+
+| level | row | result |
+|---|---|---|
+| L0 | structural | 10 records validated |
+| L1 | count | observed 10, expected 10 |
+| L1 | strain_condition_uniqueness | 10 distinct (strain, environment) pairs |
+| L2 | value_fidelity | 10 values checked |
+| L3 | titer_unit_is_the_released_unit | mM, as Table S2 releases |
+| L3 | stored_statistic_is_a_maximum | the maximum over the released sampling times |
+| L3 | mixed_feed_cross_source_disagreement_is_declared | released 0.05 mM stored, text's claim reported |
+| L3 | assembly_pin | `('pputida_KT2440_ASM756v2', 'GCA_000007565.2')` |
+| L3 | cross_source_titer_agrees_with_the_results_text | 0.0043 mM, within Table S2's rounding |
+| L4 | gene_containment_kt2440 | 0 measured and 30 perturbed host genes; 0 outside |
+| L4 | perturbed_gene_containment_assembly | 1.000 of 30 |
+
+The L4 gene-containment rows exempt `bacterial_site_variant` along with
+`heterologous_pathway`: a site id names no gene of the assembly BY CONSTRUCTION, which is
+the claim the leaf exists to make, so checking it against the locus universe would fail
+the record for stating something true. The flanking loci of an intergenic call ARE
+checked, which is what keeps the exemption from hiding a bad identifier.

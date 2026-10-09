@@ -164,7 +164,8 @@ def test_real_schema_compact_table(
         f"{'biotic exposure':25} → phage perturbation",
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
-        f"{'genotype':25} → bacterial perturbation, perturbation, segregant genotype",
+        f"{'genotype':25} → bacterial perturbation, bacterial sequence variant "
+        "perturbation, perturbation, segregant genotype",
         "information content entity → experiment, experiment reference, interned "
         "constant",
         f"{'nucleic acid entity':25} → crispr construct",
@@ -186,7 +187,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    29/33 explicit + 4 auto-mapped = 33/33 total" in lines
+    assert "Nodes:    30/34 explicit + 4 auto-mapped = 34/34 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -197,9 +198,10 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 33 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 34 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
-    perturbation`` and ``promoter activity phenotype``) and 13 edges, the
+    perturbation``, ``promoter activity phenotype`` and ``bacterial sequence
+    variant perturbation``) and 13 edges, the
     small
     test schema 3 nodes and 2 edges (its stray string entry is neither).
     """
@@ -208,7 +210,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 33, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 34, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

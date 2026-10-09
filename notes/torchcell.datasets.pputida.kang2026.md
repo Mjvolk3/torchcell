@@ -476,3 +476,37 @@ triplicates" while Fig. 8's caption says only "Cultivations were performed with 
 and 200 mL overlay with sampling approximately every 12 h", and the Table S9 caption states
 no replicate count. So `n = 1` would be an assumption, not a reading, which is why
 `titer_phenotype` already gaps `n_samples` and `sample_unit` for the fed-batch rows.
+
+## 2026.10.09 - This row has no called variants at all, measured
+
+Issue #731 landed the three called-variant leaves, and this row was on the list they were
+expected to extend. It does not extend, for the plainest possible reason: **this paper
+performs no resequencing and releases no variant table.** Measured on the pinned bytes
+(`si/si1.docx`, sha256 `c7d4567fae037c7392e39b855cc71f83b7b4a5d96699c3f18b991a25c57f09e0`;
+`paper.md`, sha256 `894aee24472194d22c33ecc0a31994660b19bde41e4aadee2cb0080f0c016c63`):
+
+- All nine SI tables enumerated from `word/document.xml`. **None** carries a position, a
+  reference or alternate base, a mutation type, an amino-acid change, a frequency or an
+  effect annotation. Table S5 is `No., Locus tag, Predicted enzyme function, Functional
+  class`; Table S9 is the time course; nothing is a call table.
+- `paper.md` returns zero hits for `resequenc`, `WGS`, `SNP` and `polymorphism`.
+  `mutation` occurs twice, both the engineered `Y20F` substitution in the AAT, and `ALE`
+  occurs twice, both citing OTHER papers (Lim 2021, Elmore 2020).
+- The only deposit is PRIDE `PXD067010` (proteomics). There is no BioProject, BioSample
+  or SRA accession anywhere.
+
+The two sequence-level facts this paper does state are engineering, not calls, and both
+already have a home: `Y20F` travels as `CassetteGene.variant` on the AAT cassette, and
+the ALE-identified single adenosine insertion at -10 of `xylE`'s native promoter is the
+asterisk in `PxylE*`, carried as `CassetteGene.promoter`. That insertion is the one place
+in this loader where a sequence variant is flattened into a name, and the leaves cannot
+take it either: it sits in an introduced cassette, and the release states its position
+only as "-10" relative to a promoter, never as a coordinate on a replicon, which
+`BacterialVariantCall.reference_sequence` plus `position_start` require. Deriving one
+would mean inventing a coordinate for a construct whose sequence the JBEI registry
+supplies "upon request" and which is therefore not in the mirror.
+
+The record count is unchanged at 19, and this row's refusals remain the ones already
+recorded: the aqueous-isoprenol column of Table S9 (read, oracle-checked and carried in
+`preprocess/titer_rows.csv`, and NOT a `ProductTiterExperiment`) and the five strains
+Table 1 gives no titer.

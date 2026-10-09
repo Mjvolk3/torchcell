@@ -58,42 +58,53 @@ the sample: 1,728 of 1,729 proteins carry a single value
 in it. Both are read and asserted at build time rather than stored, which is what keeps
 every asserted header cell from being parsed past.
 
-THE GENOTYPE FINDING, WHICH DECIDES WHAT IS LOADED. This study's strains are an
-evolution experiment plus whole-genome resequencing, so an evolved clone's genotype IS
-its parent plus the variants Geneious called ("Trimmed and filtered reads were mapped to
-the reference genome (NCBI SRA NC_002947.4), and in turn, variant calls were identified
-using the software package Geneious (BioMatters LLC) with default parameters
-specified"). Data Set S2 releases 173 calls over the five sequenced clones (PT 33,
-Sigma1 34, Sigma2 28, Sigma4 43, Sigma5 35) at 83 distinct sites, 33 of which are shared
-by more than one clone. **No class in ``schema.py`` can hold one of those calls
-honestly**, measured on the pinned workbook:
+THE GENOTYPE FINDING, WHICH DECIDES WHAT IS LOADED (issue #731, resolved). This study's
+strains are an evolution experiment plus whole-genome resequencing, so an evolved
+clone's genotype IS its parent plus the variants Geneious called ("Trimmed and filtered
+reads were mapped to the reference genome (NCBI SRA NC_002947.4), and in turn, variant
+calls were identified using the software package Geneious (BioMatters LLC) with default
+parameters specified"). Data Set S2 releases 173 calls over the five sequenced clones
+(PT 33, Sigma1 34, Sigma2 28, Sigma4 43, Sigma5 35) at 83 distinct sites, 33 of which
+are shared by more than one clone. The first build of this loader measured that no class
+in ``schema.py`` could hold one of those calls, counted all 173 of them into
+``preprocess/called_variants.json`` with its reason, and loaded only WT and PT. The
+called-variant leaves of issue #731 close every one of those four reasons, and the four
+sequenced isolates are now loaded. What each reason became:
 
-1. ``SequenceVariantPerturbation`` is the only variant-level perturbation leaf, and its
-   base validator admits only S288C ORF names, so a ``PP_`` tag is refused. It also
-   requires a ``strain_id`` plus an off-graph sequence pointer, and this paper released
-   SRA reads (PRJNA1153078), never per-strain allele sequences.
-2. ``BacterialBackgroundAllele(edit=sequence_variant)`` takes the tag but fails on four
-   counts. (a) ``functional: bool`` is required and not optional, so the unknown
-   functional status of a missense SNP cannot be covered by a ``ProvenanceGap``, which
-   must name a field that is ``None``. (b) It has no slot for the five things the
-   released table actually gives per call -- position, reference and alternate base,
-   amino-acid change, polymorphism type and variant frequency -- so they would be lost
-   or crammed into ``allele_name``. (c) Its container ``BacterialStrainBackground``
-   permits ONE allele entry per locus, which refuses Sigma1 (``PP_1656`` twice,
-   ``PP_3827`` three times), Sigma2 (``PP_1656`` twice) and Sigma4 (``PP_1656`` twice,
-   ``PP_3827`` twice). (d) 105 of the 173 calls carry no locus at all and 10 more carry
-   only a RefSeq ``PP_RS`` tag with no GenBank ``old_locus_tag``, so
-   ``systematic_gene_name`` cannot be filled; inventing a neighbouring locus for an
-   intergenic call is exactly what must not be done.
-3. The consequence if a Sigma clone were written anyway: ``Genotype.__eq__`` compares
-   the perturbation SET, so every Sigma record would be genotype-identical to the PT
-   record it descends from and five distinct strains would collapse onto one identity.
+1. ``SequenceVariantPerturbation`` admits only S288C ORF names and promises an off-graph
+   allele sequence this paper never deposited (it released SRA reads, PRJNA1153078)
+   -> ``BacterialSequenceVariantPerturbation``, which validates a ``PP_`` locus tag and
+   carries the CALL on the record rather than a pointer to a store that does not exist.
+2. ``BacterialBackgroundAllele(edit=sequence_variant)`` required a ``functional: bool``
+   no release states for a missense SNP, and had no slot for the position, the reference
+   and alternate base, the amino-acid change, the polymorphism type or the variant
+   frequency -> ``BacterialVariantCall`` carries all of them, verbatim, and the
+   perturbation axis has no ``functional`` field at all.
+3. ``BacterialStrainBackground`` permits ONE allele entry per locus, which refused
+   Sigma1 (``PP_1656`` twice, ``PP_3827`` three times), Sigma2 (``PP_1656`` twice) and
+   Sigma4 (``PP_1656`` twice, ``PP_3827`` twice) -> ``Genotype.perturbations`` has no
+   such rule, so two calls in one locus are two perturbations.
+4. 105 of the 173 calls carry no locus at all and 10 more carry only a RefSeq ``PP_RS``
+   tag -> ``BacterialSiteVariantPerturbation``, keyed on the derived site id
+   ``<replicon>:<position>``, with ``site_kind`` saying which of the two it is. The 10
+   RefSeq-only calls are ``locus_not_in_assembly``, and that is measured rather than
+   assumed: the two tags involved are ``PP_RS21780`` (9 rows) and ``PP_RS19075`` (1),
+   and ``resolve_gene_name`` on the pinned GenBank assembly returns ``retired``, "not
+   found in GCA_000007565.2_ASM756v2; retained as given", for both, so there is no tag
+   to key them to and the released identifier is kept verbatim instead.
 
-So the Sigma-class strains are NOT loaded. The exact additive proposal that would make
-them loadable is in the PR body and in
-``[[torchcell.datasets.pputida.desiqueira2025]]``; every one of the 173 calls is typed
-into ``preprocess/called_variants.json`` by :func:`read_variant_calls`, with the reason
-it cannot be written, so the proposal is backed by the real rows rather than by prose.
+``Genotype.__eq__`` compares the perturbation SET, and the five written strains carry 33,
+34, 28, 43 and 35 perturbations respectively, so no two of them collapse. Sigma3 is still
+NOT loaded, and no schema change reaches it: Data Set S2 releases no row for it, so its
+genotype is unknown rather than untyped, and writing it would assert it is genotypically
+the PT it was evolved from.
+
+ONE CALL PER STRAIN IS DROPPED, AND COUNTED. All five sequenced clones carry a
+``Deletion`` call at 3,063,718..3,064,173 on ``PP_2675``, 456 bp of the ``cytochrome
+c-550 PedF`` CDS, which IS the markerless in-frame deletion the strain was built with
+and which every record already carries as a ``BacterialDeletionPerturbation``. Absence
+has one encoding, so the call is dropped with the encoding
+``restates_the_designed_pt_deletion`` rather than written twice.
 
 WHAT IS WRITABLE. ``WT`` is P. putida KT2440 itself ("<td>WT</td><td>P. putida
 KT2440</td><td>Wild type strain</td><td>ATCC 47054 (JBEI-18711)</td>"), so its records
@@ -122,11 +133,13 @@ perturbation. That is deliberate: ``BacterialStrainBackground.alleles`` is docum
 "every allele of the background", so listing one of the two would be an omission, while
 the perturbation is what the graph and the model read.
 
-PT'S OWN RESEQUENCING CALLS ARE A STATED GAP, NOT A GUESS. PT carries 33 called variants
-of its own, and two of them are called out in the Figure S4 caption. They are missing
-ROWS, not missing fields, so they are not a ``ProvenanceGap`` (a gap must name a field
-that is ``None``); they are in ``preprocess/called_variants.json`` and in the build
-accounting, exactly as the 54 unnamed loci of the Carruthers chassis span are.
+PT'S OWN RESEQUENCING CALLS ARE NOW ON ITS RECORDS. PT carries 33 called variants of its
+own, two of them called out in the Figure S4 caption; 32 of the 33 are written as
+perturbations and the 33rd is the restatement of its designed deletion. Before the #731
+leaves they were missing ROWS rather than missing fields, so they were never a
+``ProvenanceGap`` (a gap must name a field that is ``None``) and lived only in
+``preprocess/called_variants.json``; that ledger is still written, now recording the
+leaf each call became.
 
 TITER UNITS AND THE STATISTIC. Table S2 releases millimolar, and ``ConcentrationUnit``
 has ``millimolar``, so the number is stored verbatim with no arithmetic. What is stored
@@ -203,7 +216,11 @@ from torchcell.datamodels.schema import (
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
     BacterialReferenceStrain,
+    BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
     BacterialStrainBackground,
+    BacterialVariantCall,
+    BacterialVariantType,
     Concentration,
     ConcentrationUnit,
     CultureEnvironment,
@@ -225,6 +242,9 @@ from torchcell.datamodels.schema import (
     SmallMoleculePerturbation,
     StrainConstruction,
     Temperature,
+    VariantCallMode,
+    VariantFrequencyBasis,
+    VariantSiteKind,
 )
 from torchcell.datasets.bacteria_common import (
     LocusTagReconciliation,
@@ -312,8 +332,48 @@ PT_STRAIN = "PT"
 #: The five tolerized isolates, spelled as Data Set S1's ``Strain`` column spells them
 #: (U+03A3). The Table S2 OCR writes the same five with U+2211. None is loadable.
 SIGMA_STRAINS: tuple[str, ...] = ("Σ1", "Σ2", "Σ3", "Σ4", "Σ5")
-#: The released ``Strain`` labels of the two writable strains.
-WRITABLE_STRAINS: tuple[str, ...] = (WT_LABEL, PT_STRAIN)
+#: The tolerized isolate Data Set S2 releases no calls for. Measured on the pinned
+#: workbook: its ``Strain`` column carries five labels and Sigma3 is not one of them, so
+#: that isolate was never sequenced and its genotype is unknown, not merely untyped.
+UNSEQUENCED_SIGMA = SIGMA_STRAINS[2]
+#: The four tolerized isolates Data Set S2 DOES release calls for, in released order.
+#: Asserted against the ledger at build time rather than trusted.
+SEQUENCED_SIGMA_STRAINS: tuple[str, ...] = tuple(
+    strain for strain in SIGMA_STRAINS if strain != UNSEQUENCED_SIGMA
+)
+#: The released ``Strain`` labels whose genotype can be written (issue #731). The four
+#: sequenced isolates joined WT and PT when the called-variant leaves landed: a clone's
+#: genotype is PT's deletion plus the variants Geneious called for it, and
+#: ``Genotype.__eq__`` now separates the five strains because their call sets differ.
+#: Sigma3 stays out, for a reason no schema change reaches: it was never sequenced.
+WRITABLE_STRAINS: tuple[str, ...] = (WT_LABEL, PT_STRAIN, *SEQUENCED_SIGMA_STRAINS)
+
+#: The replicon every Data Set S2 coordinate is on, as its ``Sequence Name`` column
+#: writes it. Measured: all 173 rows read this one value, and the Methods name the same
+#: sequence ("the reference genome (NCBI SRA NC_002947.4)"). Asserted per row, never
+#: assumed, so a workbook revision that changed replicon would stop the build.
+VARIANT_REPLICON = "NC_002947 (2)"
+#: ``Polymorphism Type`` -> the typed variant kind. Every one of the seven released
+#: spellings is mapped (measured over the 173 rows: SNP (transition) 68, SNP
+#: (transversion) 47, Insertion 23, Substitution 21, Insertion (tandem repeat) 5,
+#: Deletion 5, Deletion (tandem repeat) 4); the released spelling is kept verbatim in
+#: the call's ``type_statement``, so the transition / transversion / tandem-repeat
+#: distinction the enum does not carry is not lost. A spelling outside this map stops
+#: the build rather than defaulting.
+VARIANT_TYPE_OF_POLYMORPHISM: dict[str, BacterialVariantType] = {
+    "SNP (transition)": BacterialVariantType.snv,
+    "SNP (transversion)": BacterialVariantType.snv,
+    "Insertion": BacterialVariantType.insertion,
+    "Insertion (tandem repeat)": BacterialVariantType.insertion,
+    "Deletion": BacterialVariantType.deletion,
+    "Deletion (tandem repeat)": BacterialVariantType.deletion,
+    "Substitution": BacterialVariantType.substitution,
+}
+#: The separator the ``Variant Frequency`` column uses when it writes a RANGE instead of
+#: one number. Measured: 16 of the 173 cells read a percent range (``95.1% -> 97.6%`` ..
+#: ``98.5% -> 98.6%``) and the other 157 are bare fractions in (0, 1]. A range has no
+#: single value, so those calls carry the verbatim cell and a null numeric frequency.
+VARIANT_FREQUENCY_RANGE = "->"
 
 #: PT's two designations and the loci they name.
 PT_FULL_DELETION = "PP_2675"
@@ -344,10 +404,12 @@ PROTEOME_REFERENCE_CONDITION = CONDITION_GLUCOSE
 PROTEOME_REFERENCE_STRAIN = WT_LABEL
 #: Released proteome samples that become records. Measured on the pinned workbook: 20
 #: samples are released, 7 strains times 3 conditions less the PT mixed-carbon sample,
-#: which was never taken (PT "often fails to grow in glucose-acetate medium"). Five of
-#: the 20 are of a writable strain. One record per writable sample per normalization, so
-#: each of the three proteome dataset classes holds exactly this many.
-EXPECTED_PROTEOME_RECORDS = 5
+#: which was never taken (PT "often fails to grow in glucose-acetate medium"). 17 of the
+#: 20 are of a writable strain once the #731 leaves let a sequenced isolate carry its
+#: calls; the 3 left out are Sigma3's, the isolate Data Set S2 never sequenced. One
+#: record per writable sample per normalization, so each of the three proteome dataset
+#: classes holds exactly this many.
+EXPECTED_PROTEOME_RECORDS = 17
 
 #: This module's labels for Table S2's four media columns, in released order. The
 #: released headers write the carbon total's C in quotation marks.
@@ -363,6 +425,10 @@ TITER_COLUMNS: tuple[str, ...] = (
 TITER_COLUMNS_LOADED: tuple[str, ...] = (TITER_COLUMNS[2], TITER_COLUMNS[3])
 #: The Table S2 column the titer records are referenced against.
 TITER_REFERENCE_COLUMN = TITER_COLUMNS[2]
+#: The Table S2 rows that become records: PT and the four sequenced isolates. Sigma3's
+#: two determined cells stay out, because its genotype is unknown (it was never
+#: sequenced), not because no class could hold it.
+TITER_STRAINS_LOADED: tuple[str, ...] = (PT_STRAIN, *SEQUENCED_SIGMA_STRAINS)
 
 #: Isoprenol's InChIKey, kept as the cross-check on the compound table's row for it
 #: (PubChem CID 12988), which ``resolved_compound`` now returns in full.
@@ -1238,21 +1304,30 @@ def assert_sem_is_constant_per_protein(rows: Sequence[ProteomeRow]) -> None:
 
 
 class CalledVariant(BaseModel):
-    """One Geneious call of Data Set S2, with why it cannot be written as a genotype.
+    """One Geneious call of Data Set S2, and which perturbation leaf it becomes.
 
-    Every field is the released cell verbatim. ``blocking_reasons`` is the typed gap
-    this loader records in place of a perturbation: the reason or reasons no class in
-    ``schema.py`` can hold this call, measured on this row rather than asserted.
+    Every field is the released cell verbatim. ``encoding`` names the leaf this row is
+    written as, measured on the row rather than asserted; before the #731 leaves landed
+    this field was a list of the reasons no class could hold the call, and the ledger it
+    is written into is the same ``preprocess/called_variants.json``.
     """
 
     strain: str
     track: str
+    #: The ``Sequence Name`` cell: the replicon the coordinates are on.
+    reference_sequence: str
     position_start: int
     position_end: int
     polymorphism_type: str
-    change: str
-    #: Verbatim released cells. Both are released as strings and a multi-base call
-    #: writes a RANGE ("61 -> 63"), so neither is coerced to a float.
+    #: The fused ``Change`` cell, absent for the 21 insertion rows, which release the
+    #: two alleles in their own columns instead.
+    change: str | None
+    #: The ``Sequence`` (reference) and ``Name`` (alternate) cells, verbatim. An
+    #: insertion's reference cell reads ``--``.
+    reference_allele: str | None
+    alternate_allele: str | None
+    #: Verbatim released cells. Both are released as strings and 16 of the frequency
+    #: cells write a percent RANGE ("95.1% -> 97.6%"), so neither is coerced to a float.
     variant_frequency: str
     coverage: str
     protein_effect: str | None
@@ -1263,15 +1338,14 @@ class CalledVariant(BaseModel):
     refseq_locus_tag: str | None
     gene_symbol: str | None
     product: str | None
-    blocking_reasons: list[str]
+    encoding: str
 
 
-#: The typed blocking reasons :func:`read_variant_calls` assigns.
-REASON_NO_LOCUS = "no_locus_tag_released_intergenic_or_noncoding"
-REASON_REFSEQ_ONLY = "refseq_locus_tag_only_no_genbank_old_locus_tag"
-REASON_NO_VARIANT_LEAF = "no_bacterial_sequence_variant_perturbation_leaf"
-REASON_FUNCTIONAL_UNSTATED = "background_allele_requires_an_unstated_functional_status"
-REASON_LOCUS_SEEN_TWICE = "background_permits_one_allele_entry_per_locus"
+#: The typed encodings :func:`read_variant_calls` assigns, one per row.
+ENCODING_IN_LOCUS = "bacterial_sequence_variant_in_locus"
+ENCODING_INTERGENIC = "bacterial_site_variant_intergenic"
+ENCODING_LOCUS_NOT_IN_ASSEMBLY = "bacterial_site_variant_locus_not_in_assembly"
+ENCODING_RESTATES_DESIGNED_DELETION = "restates_the_designed_pt_deletion"
 
 VARIANT_HEADER: tuple[str, ...] = (
     "Protein Effect",
@@ -1281,6 +1355,23 @@ VARIANT_HEADER: tuple[str, ...] = (
     "Sequence",
     "Minimum",
     "Maximum",
+)
+#: Every further column :func:`read_variant_calls` reads by name. Asserted present, so a
+#: renamed column stops the build instead of silently reading ``None``.
+VARIANT_COLUMNS_READ: tuple[str, ...] = (
+    "Sequence Name",
+    "Strain",
+    "Track Name",
+    "Polymorphism Type",
+    "Change",
+    "Variant Frequency",
+    "Coverage",
+    "Amino Acid Change",
+    "Codon Change",
+    "CDS Codon Number",
+    "locus_tag",
+    "gene",
+    "product",
 )
 
 
@@ -1293,46 +1384,72 @@ def _cell(value: Any) -> str | None:
 
 
 def read_variant_calls(path: str) -> list[CalledVariant]:
-    """Every Data Set S2 call, typed, each carrying why it cannot be written.
+    """Every Data Set S2 call, typed, each carrying the leaf it is written as.
 
-    This is the module's typed gap for the evolved clones. Nothing it returns reaches a
-    record; it is written to ``preprocess/called_variants.json`` so the additive schema
-    proposal in the PR is backed by the real rows.
+    The encoding is decided by the row's own cells, in this order, and there is no
+    default branch: a row that matches none of them stops the build.
+
+    - It restates PT's designed ``PP_2675`` deletion (``ENCODING_RESTATES_DESIGNED
+      _DELETION``). Measured: all five sequenced clones carry one ``Deletion`` call at
+      3,063,718..3,064,173 on ``PP_2675``, 456 bp of a ``cytochrome c-550 PedF`` CDS,
+      which IS the markerless in-frame deletion the strain was built with. It is already
+      a ``BacterialDeletionPerturbation`` on every record, and absence has one encoding,
+      so the call is dropped and counted rather than written twice.
+    - ``old_locus_tag`` names a GenBank locus -> in-locus sequence variant.
+    - no locus at all -> a site variant, ``site_kind=intergenic``.
+    - a RefSeq ``locus_tag`` only -> a site variant,
+      ``site_kind=locus_not_in_assembly``. Measured: the two tags involved,
+      ``PP_RS21780`` (9 rows) and ``PP_RS19075`` (1), both return ``retired``, "not
+      found in GCA_000007565.2_ASM756v2; retained as given", from
+      ``resolve_gene_name`` on the pinned assembly, so there is no GenBank tag to key
+      them to and inventing one is refused.
     """
     header, rows = _sheet_rows(path)
     columns = [str(c) if c is not None else "" for c in header]
     if tuple(columns[: len(VARIANT_HEADER)]) != VARIANT_HEADER:
         raise RuntimeError(f"Data Set S2 header changed: {header!r}")
+    missing = [name for name in VARIANT_COLUMNS_READ if name not in columns]
+    if missing:
+        raise RuntimeError(f"Data Set S2 no longer releases {missing}")
     records = [dict(zip(columns, row, strict=False)) for row in rows]
-    per_strain_locus: Counter[tuple[str, str]] = Counter()
-    for row in records:
-        tag = _cell(row.get("old_locus_tag"))
-        if tag is not None:
-            per_strain_locus[(str(row["Strain"]).strip(), tag)] += 1
 
     calls: list[CalledVariant] = []
     for row in records:
         strain = str(row["Strain"]).strip()
+        replicon = str(row["Sequence Name"]).strip()
+        if replicon != VARIANT_REPLICON:
+            raise RuntimeError(
+                f"{strain}: Data Set S2 names replicon {replicon!r}, not "
+                f"{VARIANT_REPLICON!r}; the coordinates are on another sequence"
+            )
         tag = _cell(row.get("old_locus_tag"))
         refseq = _cell(row.get("locus_tag"))
-        reasons = [REASON_NO_VARIANT_LEAF]
-        if tag is None and refseq is None:
-            reasons.append(REASON_NO_LOCUS)
-        elif tag is None:
-            reasons.append(REASON_REFSEQ_ONLY)
+        polymorphism = str(row["Polymorphism Type"]).strip()
+        if polymorphism not in VARIANT_TYPE_OF_POLYMORPHISM:
+            raise RuntimeError(
+                f"{strain}: unmapped Polymorphism Type {polymorphism!r}; the mapped "
+                f"spellings are {sorted(VARIANT_TYPE_OF_POLYMORPHISM)}"
+            )
+        if tag == PT_FULL_DELETION:
+            encoding = ENCODING_RESTATES_DESIGNED_DELETION
+        elif tag is not None:
+            encoding = ENCODING_IN_LOCUS
+        elif refseq is not None:
+            encoding = ENCODING_LOCUS_NOT_IN_ASSEMBLY
         else:
-            reasons.append(REASON_FUNCTIONAL_UNSTATED)
-            if per_strain_locus[(strain, tag)] > 1:
-                reasons.append(REASON_LOCUS_SEEN_TWICE)
+            encoding = ENCODING_INTERGENIC
         codon = _cell(row.get("CDS Codon Number"))
         calls.append(
             CalledVariant(
                 strain=strain,
                 track=str(row["Track Name"]).strip(),
+                reference_sequence=replicon,
                 position_start=int(row["Minimum"]),
                 position_end=int(row["Maximum"]),
-                polymorphism_type=str(row["Polymorphism Type"]).strip(),
-                change=str(row["Change"]).strip(),
+                polymorphism_type=polymorphism,
+                change=_cell(row.get("Change")),
+                reference_allele=_cell(row.get("Sequence")),
+                alternate_allele=_cell(row.get("Name")),
                 variant_frequency=str(row["Variant Frequency"]).strip(),
                 coverage=str(row["Coverage"]).strip(),
                 protein_effect=_cell(row.get("Protein Effect")),
@@ -1343,12 +1460,114 @@ def read_variant_calls(path: str) -> list[CalledVariant]:
                 refseq_locus_tag=refseq,
                 gene_symbol=_cell(row.get("gene")),
                 product=_cell(row.get("product")),
-                blocking_reasons=reasons,
+                encoding=encoding,
             )
         )
     if not calls:
         raise RuntimeError("Data Set S2 released no variant calls")
     return calls
+
+
+def released_frequency(
+    statement: str,
+) -> tuple[float | None, VariantFrequencyBasis | None]:
+    """The numeric frequency a released cell states, or ``(None, None)`` for a range.
+
+    16 of the 173 cells write a percent range (``95.1% -> 97.6%``), which no single
+    float holds, so those calls keep the verbatim cell and carry no number. The other
+    157 are bare fractions, checked to lie in (0, 1] here rather than trusted: a cell
+    above 1 would mean the column had switched to percents and the basis would be wrong.
+    """
+    if VARIANT_FREQUENCY_RANGE in statement:
+        return None, None
+    value = float(statement)
+    if not 0.0 < value <= 1.0:
+        raise RuntimeError(
+            f"variant frequency {statement!r} is outside (0, 1]; the column is no "
+            "longer a fraction"
+        )
+    return value, VariantFrequencyBasis.fraction
+
+
+def variant_call(row: CalledVariant) -> BacterialVariantCall:
+    """The typed call of one released row, with every cell it states kept verbatim."""
+    frequency, basis = released_frequency(row.variant_frequency)
+    return BacterialVariantCall(
+        variant_type=VARIANT_TYPE_OF_POLYMORPHISM[row.polymorphism_type],
+        type_statement=row.polymorphism_type,
+        reference_sequence=row.reference_sequence,
+        position_start=row.position_start,
+        position_end=row.position_end,
+        sequence_change=row.change,
+        reference_allele=row.reference_allele,
+        alternate_allele=row.alternate_allele,
+        annotation=row.protein_effect,
+        amino_acid_change=row.amino_acid_change,
+        codon_change=row.codon_change,
+        codon_number=row.cds_codon_number,
+        call_mode=VariantCallMode.clone,
+        frequency_statement=row.variant_frequency,
+        frequency=frequency,
+        frequency_basis=basis,
+        caller=str(dict(WGS_METHOD.value)["caller"]),
+    )
+
+
+def called_variant_perturbations(
+    calls: Sequence[CalledVariant], strain: str
+) -> list[Any]:
+    """One perturbation per written call of ``strain``, ordered by position.
+
+    The order is explicit because ``Genotype.sort_perturbations`` sorts by systematic
+    name, perturbation type and perturbed name, and two calls in one locus tie on all
+    three (Sigma1 carries ``PP_1656`` twice and ``PP_3827`` three times); Python's sort
+    is stable, so the input order decides and must therefore be deterministic.
+
+    A ``restates_the_designed_pt_deletion`` row is skipped here and counted by the
+    caller: it is the same lesion ``pt_perturbation`` already writes.
+    """
+    rows = sorted(
+        (row for row in calls if row.strain == strain),
+        key=lambda row: (row.position_start, row.position_end, row.polymorphism_type),
+    )
+    perturbations: list[Any] = []
+    for row in rows:
+        if row.encoding == ENCODING_RESTATES_DESIGNED_DELETION:
+            continue
+        call = variant_call(row)
+        if row.encoding == ENCODING_IN_LOCUS:
+            assert row.genbank_locus_tag is not None
+            perturbations.append(
+                BacterialSequenceVariantPerturbation(
+                    systematic_gene_name=row.genbank_locus_tag,
+                    perturbed_gene_name=row.gene_symbol or row.genbank_locus_tag,
+                    gene_namespace=KT2440_NAMESPACE,
+                    call=call,
+                )
+            )
+            continue
+        site_kind = (
+            VariantSiteKind.locus_not_in_assembly
+            if row.encoding == ENCODING_LOCUS_NOT_IN_ASSEMBLY
+            else VariantSiteKind.intergenic
+        )
+        released_locus = (
+            row.refseq_locus_tag
+            if site_kind is VariantSiteKind.locus_not_in_assembly
+            else None
+        )
+        site_id = BacterialSiteVariantPerturbation.site_id(call)
+        perturbations.append(
+            BacterialSiteVariantPerturbation(
+                systematic_gene_name=site_id,
+                perturbed_gene_name=released_locus or site_id,
+                gene_namespace=KT2440_NAMESPACE,
+                call=call,
+                site_kind=site_kind,
+                released_locus_statement=released_locus,
+            )
+        )
+    return perturbations
 
 
 class VariantLedger(BaseModel):
@@ -1361,10 +1580,25 @@ class VariantLedger(BaseModel):
     calls_with_genbank_locus: int
     calls_with_refseq_locus_only: int
     calls_with_no_locus: int
-    reasons: dict[str, int]
+    encodings: dict[str, int]
+    perturbations_per_strain: dict[str, int]
     loci_claimed_twice: dict[str, list[str]]
     unsequenced_strains: list[str]
     calls: list[CalledVariant]
+
+    def check(self) -> None:
+        """Every call is encoded, and a written call is a perturbation of its strain."""
+        if sum(self.encodings.values()) != self.n_calls:
+            raise RuntimeError(
+                f"{sum(self.encodings.values())} encodings over {self.n_calls} calls"
+            )
+        restated = self.encodings.get(ENCODING_RESTATES_DESIGNED_DELETION, 0)
+        written = sum(self.perturbations_per_strain.values())
+        if written != self.n_calls - restated:
+            raise RuntimeError(
+                f"{written} perturbations over {self.n_calls} calls less "
+                f"{restated} restatements of the designed deletion"
+            )
 
 
 def variant_ledger(calls: Sequence[CalledVariant]) -> VariantLedger:
@@ -1380,10 +1614,12 @@ def variant_ledger(calls: Sequence[CalledVariant]) -> VariantLedger:
         if n > 1:
             per_locus[strain].append(f"{tag} x{n}")
     sequenced = {call.strain for call in calls}
-    reasons: Counter[str] = Counter()
-    for call in calls:
-        reasons.update(call.blocking_reasons)
-    return VariantLedger(
+    encodings = Counter(call.encoding for call in calls)
+    written = {
+        strain: len(called_variant_perturbations(calls, strain))
+        for strain in sorted(sequenced)
+    }
+    ledger = VariantLedger(
         n_calls=len(calls),
         n_distinct_sites=len(sites),
         n_sites_in_more_than_one_strain=sum(1 for n in sites.values() if n > 1),
@@ -1401,11 +1637,19 @@ def variant_ledger(calls: Sequence[CalledVariant]) -> VariantLedger:
             for c in calls
             if c.genbank_locus_tag is None and c.refseq_locus_tag is None
         ),
-        reasons=dict(sorted(reasons.items())),
+        encodings=dict(sorted(encodings.items())),
+        perturbations_per_strain=written,
         loci_claimed_twice={k: sorted(v) for k, v in sorted(per_locus.items())},
         unsequenced_strains=sorted(set(SIGMA_STRAINS) - sequenced),
         calls=list(calls),
     )
+    ledger.check()
+    if sorted(sequenced) != sorted((PT_STRAIN, *SEQUENCED_SIGMA_STRAINS)):
+        raise RuntimeError(
+            f"Data Set S2 releases calls for {sorted(sequenced)}, not the "
+            f"{sorted((PT_STRAIN, *SEQUENCED_SIGMA_STRAINS))} this module writes"
+        )
+    return ledger
 
 
 # --------------------------------------------------------------------------- #
@@ -1472,14 +1716,21 @@ def pt_background() -> BacterialStrainBackground:
 
 
 def strain_reference(strain: str) -> AssemblyReferenceGenome:
-    """The assembly-pinned reference one strain's records are written against."""
+    """The assembly-pinned reference one strain's records are written against.
+
+    A sequenced tolerized isolate takes PT's reference, not one of its own: PT is the
+    base strain every isolate was evolved from, so PT's deletion event is the genomic
+    content they share and hold CONSTANT, while the variants Geneious called for each
+    isolate are what varies and therefore belong in ``Genotype``. That is the division
+    ``BacterialStrainBackground`` is documented for.
+    """
     if strain == PROTEOME_REFERENCE_STRAIN:
         return assembly_reference(WT_STRAIN)
-    if strain == PT_STRAIN:
+    if strain == PT_STRAIN or strain in SEQUENCED_SIGMA_STRAINS:
         return assembly_reference(WT_STRAIN, background=pt_background())
     raise RuntimeError(
-        f"{strain!r} is not a writable strain of this paper; the tolerized isolates "
-        "carry called variants no schema class can hold (see the module docstring)"
+        f"{strain!r} is not a writable strain of this paper; "
+        f"{UNSEQUENCED_SIGMA} was never sequenced, so its genotype is unknown"
     )
 
 
@@ -1495,11 +1746,21 @@ def pt_perturbation() -> BacterialDeletionPerturbation:
     )
 
 
-def strain_genotype(strain: str, *, with_pathway: bool) -> Genotype:
-    """The genotype of one writable strain, with or without the pIY670 pathway."""
+def strain_genotype(
+    strain: str, *, with_pathway: bool, calls: Sequence[CalledVariant]
+) -> Genotype:
+    """The genotype of one writable strain, with or without the pIY670 pathway.
+
+    PT and every sequenced isolate carry PT's ``PP_2675`` deletion plus their OWN called
+    variants, so two isolates differ by the calls they do not share and
+    ``Genotype.__eq__``, which compares the perturbation SET, keeps them apart. WT
+    carries nothing: Data Set S2 releases no calls for it, because the calls are against
+    its own assembly.
+    """
     perturbations: list[Any] = []
-    if strain == PT_STRAIN:
+    if strain == PT_STRAIN or strain in SEQUENCED_SIGMA_STRAINS:
         perturbations.append(pt_perturbation())
+        perturbations.extend(called_variant_perturbations(calls, strain))
     elif strain != PROTEOME_REFERENCE_STRAIN:
         raise RuntimeError(f"{strain!r} is not a writable strain of this paper")
     if with_pathway:
@@ -1803,19 +2064,20 @@ def titer_census() -> TiterCensus:
     n_unwritable = sum(
         1
         for strain, cells in table.items()
-        if strain != PT_STRAIN
+        if strain not in TITER_STRAINS_LOADED
         for value in cells.values()
         if value is not None
     )
-    pt = table[PT_STRAIN]
     n_unloaded = sum(
         1
-        for column, value in pt.items()
+        for strain in TITER_STRAINS_LOADED
+        for column, value in table[strain].items()
         if value is not None and column not in TITER_COLUMNS_LOADED
     )
     n_loaded = sum(
         1
-        for column, value in pt.items()
+        for strain in TITER_STRAINS_LOADED
+        for column, value in table[strain].items()
         if value is not None and column in TITER_COLUMNS_LOADED
     )
     census = TiterCensus(
@@ -1909,26 +2171,32 @@ def _write_variant_ledger(path: str, variants_path: str) -> VariantLedger:
     return ledger
 
 
-def _sigma_drop_rule(
+def _unsequenced_drop_rule(
     ledger: VariantLedger,
     n_records: int,
     scope: Literal["sample", "titer_cell", "protein_key", "strain"],
 ) -> DropRule:
-    """The one rule that removes every tolerized-isolate record, with its evidence."""
+    """The one rule left after #731: the isolate that was never sequenced at all.
+
+    The other four tolerized isolates ARE written now, each as PT's deletion plus its
+    own calls (``perturbations_per_strain`` in the ledger). Sigma3 is not, and no schema
+    change reaches it: Data Set S2 releases no row for it, so its genotype is unknown
+    rather than untyped, and writing it with PT's genotype alone would assert it is
+    genotypically PT.
+    """
     return DropRule(
-        rule="strain_genotype_is_not_representable",
+        rule="strain_was_never_sequenced",
         scope=scope,
         description=(
-            f"the tolerized isolates are PT plus the {ledger.n_calls} variants Geneious "
-            f"called over {len(ledger.calls_per_strain)} sequenced clones "
-            f"({ledger.calls_with_no_locus} of them with no locus released and "
-            f"{ledger.calls_with_refseq_locus_only} with a RefSeq tag only); no class "
-            "in schema.py can hold one of those calls, so writing these records would "
-            "make every isolate genotype-identical to PT. The typed evidence is "
-            "preprocess/called_variants.json and the additive proposal is in the PR"
+            f"Data Set S2 releases {ledger.n_calls} calls over "
+            f"{len(ledger.calls_per_strain)} clones and none of them is "
+            f"{UNSEQUENCED_SIGMA}, so its genotype is unknown; writing it would assert "
+            "it is genotypically identical to the PT it was evolved from. The four "
+            f"sequenced isolates carry {ledger.perturbations_per_strain} called-variant "
+            "perturbations each (preprocess/called_variants.json)"
         ),
         n_records=n_records,
-        items=list(SIGMA_STRAINS),
+        items=[UNSEQUENCED_SIGMA],
     )
 
 
@@ -2118,7 +2386,9 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
             ):
                 experiment = BacterialProteinAbundanceExperiment(
                     dataset_name=self.name,
-                    genotype=strain_genotype(strain, with_pathway=False),
+                    genotype=strain_genotype(
+                        strain, with_pathway=False, calls=ledger.calls
+                    ),
                     environment=proteome_environment(condition),
                     phenotype=self._phenotype(cells, n_replicates),
                 )
@@ -2131,6 +2401,11 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                         "strain": strain,
                         "condition": condition,
                         "n_proteins": len(cells),
+                        "n_perturbations": len(
+                            strain_genotype(
+                                strain, with_pathway=False, calls=ledger.calls
+                            )
+                        ),
                         "n_replicates": n_replicates,
                         "measurement_type": self.NORMALIZATION.measurement_type,
                         "mean_column": self.NORMALIZATION.mean_column,
@@ -2173,7 +2448,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                 kept_records=idx,
                 dropped_records=len(dropped_samples),
                 rules=[
-                    _sigma_drop_rule(ledger, len(dropped_samples), "sample"),
+                    _unsequenced_drop_rule(ledger, len(dropped_samples), "sample"),
                     DropRule(
                         rule="protein_key_is_not_a_locus_of_the_pinned_assembly",
                         scope="protein_key",
@@ -2204,7 +2479,10 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                 reconciliation=report,
                 notes=[
                     f"{idx} of {len(all_samples)} released samples are records: the "
-                    f"writable strains are {list(WRITABLE_STRAINS)}",
+                    f"writable strains are {list(WRITABLE_STRAINS)}; "
+                    f"{UNSEQUENCED_SIGMA} is out because Data Set S2 releases no call "
+                    "for it (issue #731 made the other four isolates writable, and no "
+                    "schema change reaches an unsequenced one)",
                     f"the phenotype_reference of every record is "
                     f"{PROTEOME_REFERENCE_STRAIN} in {PROTEOME_REFERENCE_CONDITION} "
                     f"({_Q_REFERENCE_CONDITION}); it is COPIED into the reference and "
@@ -2214,9 +2492,12 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
                     "none",
                     f"{len(dropped_keys)} of {len(keys)} protein KEYS are dropped, "
                     f"leaving {len(kept)} in every record's abundance map",
-                    "PT carries 33 called variants of its own; they are missing ROWS, "
-                    "not missing fields, so they are in preprocess/called_variants.json "
-                    "rather than a ProvenanceGap",
+                    "every sequenced strain's genotype is PT's PP_2675 deletion plus "
+                    f"its own called variants: {ledger.perturbations_per_strain} "
+                    "perturbations written per strain, and "
+                    f"{ledger.encodings.get(ENCODING_RESTATES_DESIGNED_DELETION, 0)} "
+                    "calls dropped as restatements of that same designed deletion "
+                    f"(encodings {ledger.encodings})",
                     f"{ledger.unsequenced_strains} were never sequenced at all",
                     f"this class stores the {self.NORMALIZATION.measurement_type!r} "
                     f"scale, read from {self.NORMALIZATION.mean_column!r} with its SD "
@@ -2237,7 +2518,7 @@ class ProteomeDeSiqueira2025Dataset(ExperimentDataset):
         log.info(
             "deSiqueira2025 proteome: %d records over %d protein keys from %d released "
             "cells; %d keys dropped (%d outside the namespace, %d merged), %d of %d "
-            "samples left out as unwritable strains",
+            "samples left out because their strain was never sequenced",
             idx,
             len(kept),
             len(rows),
@@ -2385,16 +2666,25 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
         )
         difference = assert_titer_cross_source()
         census = titer_census()
-        released = released_titers()[PT_STRAIN]
+        table = released_titers()
 
         reference = ProductTiterExperimentReference(
             dataset_name=self.name,
             genome_reference=strain_reference(PT_STRAIN),
             environment_reference=titer_environment(TITER_REFERENCE_COLUMN),
             phenotype_reference=titer_phenotype(
-                float(released[TITER_REFERENCE_COLUMN] or 0.0)
+                float(table[PT_STRAIN][TITER_REFERENCE_COLUMN] or 0.0)
             ),
         )
+        references = {
+            strain: ProductTiterExperimentReference(
+                dataset_name=self.name,
+                genome_reference=strain_reference(strain),
+                environment_reference=titer_environment(TITER_REFERENCE_COLUMN),
+                phenotype_reference=reference.phenotype_reference,
+            )
+            for strain in TITER_STRAINS_LOADED
+        }
         pub = publication()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -2403,30 +2693,37 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
         titer_rows: list[dict[str, Any]] = []
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for column in tqdm(TITER_COLUMNS_LOADED, desc="desiqueira2025-titer"):
-                cell = released[column]
-                if cell is None:
-                    raise RuntimeError(f"Table S2's PT/{column} cell is not determined")
-                value = float(cell)
-                experiment = ProductTiterExperiment(
-                    dataset_name=self.name,
-                    genotype=strain_genotype(PT_STRAIN, with_pathway=True),
-                    environment=titer_environment(column),
-                    phenotype=titer_phenotype(value),
+            for strain in tqdm(TITER_STRAINS_LOADED, desc="desiqueira2025-titer"):
+                genotype = strain_genotype(
+                    strain, with_pathway=True, calls=ledger.calls
                 )
-                txn.put(
-                    f"{idx}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
-                )
-                titer_rows.append(
-                    {
-                        "strain": PT_STRAIN,
-                        "medium": column,
-                        "max_titer_mM": value,
-                        "statistic": str(TITER_STATISTIC.value),
-                    }
-                )
-                idx += 1
+                for column in TITER_COLUMNS_LOADED:
+                    cell = table[strain][column]
+                    if cell is None:
+                        raise RuntimeError(
+                            f"Table S2's {strain}/{column} cell is not determined"
+                        )
+                    value = float(cell)
+                    experiment = ProductTiterExperiment(
+                        dataset_name=self.name,
+                        genotype=genotype,
+                        environment=titer_environment(column),
+                        phenotype=titer_phenotype(value),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, references[strain], pub, itxn),
+                    )
+                    titer_rows.append(
+                        {
+                            "strain": strain,
+                            "medium": column,
+                            "max_titer_mM": value,
+                            "n_perturbations": len(genotype),
+                            "statistic": str(TITER_STATISTIC.value),
+                        }
+                    )
+                    idx += 1
         env.close()
         interned_env.close()
 
@@ -2441,7 +2738,9 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
                 kept_records=idx,
                 dropped_records=census.n_cells - idx,
                 rules=[
-                    _sigma_drop_rule(ledger, census.n_unwritable_strain, "titer_cell"),
+                    _unsequenced_drop_rule(
+                        ledger, census.n_unwritable_strain, "titer_cell"
+                    ),
                     DropRule(
                         rule="cell_is_not_determined",
                         scope="titer_cell",
@@ -2466,14 +2765,16 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
                             f"ammonium sulfate ({_Q_FIGS3_MEDIA}) differs from the 2 "
                             "g/L the served M9_NREL_DESIQUEIRA2025 states, so they are "
                             "a different medium and MEDIA_LIBRARY holds no object for "
-                            "them. Both PT cells read 0, so no non-zero measurement is "
+                            "them. All four determined cells (PT and Sigma1 in both "
+                            "acetate media) read 0, so no non-zero measurement is "
                             "lost; the two media entries are proposed in the PR"
                         ),
                         n_records=census.n_medium_not_in_library,
                         items=[
-                            f"{PT_STRAIN}/{column}"
-                            for column in TITER_COLUMNS
-                            if column not in TITER_COLUMNS_LOADED
+                            f"{strain}/{column}"
+                            for strain in TITER_STRAINS_LOADED
+                            for column, value in released_titers()[strain].items()
+                            if value is not None and column not in TITER_COLUMNS_LOADED
                         ],
                     ),
                 ],
@@ -2482,12 +2783,12 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
                     f"{SAMPLING_TIMES_HOURS.value} h samples, an upward-biased order "
                     "statistic, not a single-time-point titer",
                     "cross-source check: Table S2's "
-                    f"{released[TITER_REFERENCE_COLUMN]} mM for PT in glucose and the "
+                    f"{table[PT_STRAIN][TITER_REFERENCE_COLUMN]} mM for PT in glucose and the "
                     f"Results text's {dict(TITER_CROSS_SOURCE.value)['titer_mg_per_l']}"
                     f" mg/L differ by {difference:.4f} mM",
                     "cross-source DISAGREEMENT, kept: for the mixed feed the Results "
                     f"say '{_Q_PT_MIXED_NOT_DETECTABLE}' while Table S2 releases "
-                    f"{released[TITER_COLUMNS[3]]} mM; the released number is stored",
+                    f"{table[PT_STRAIN][TITER_COLUMNS[3]]} mM; the released number is stored",
                     f"the reference is PT in {TITER_REFERENCE_COLUMN}, the single-carbon "
                     "baseline the mixed feed is compared against",
                     f"{census.model_dump_json()}",
@@ -2496,9 +2797,9 @@ class IsoprenolTiterDeSiqueira2025Dataset(ExperimentDataset):
             self.preprocess_dir,
         )
         log.info(
-            "deSiqueira2025 titer: %d records of %d Table S2 cells; %d tolerized-isolate "
-            "cells and %d n.d. cells and %d PT cells in a medium the library lacks are "
-            "left out; cross-source |diff| %.4f mM",
+            "deSiqueira2025 titer: %d records of %d Table S2 cells; %d cells of the "
+            "never-sequenced isolate and %d n.d. cells and %d cells in a medium the "
+            "library lacks are left out; cross-source |diff| %.4f mM",
             idx,
             census.n_cells,
             census.n_unwritable_strain,
@@ -2640,7 +2941,13 @@ def gene_containment_rule(
         perturbed.update(
             str(p["systematic_gene_name"])
             for p in record["experiment"]["genotype"]["perturbations"]
-            if p["perturbation_type"] != "heterologous_pathway"
+            # A heterologous pathway gene is a gene of ANOTHER genome, and a SITE-keyed
+            # called variant (#731) names no gene at all: its identifier is the derived
+            # <replicon>:<position>, which is exactly the claim that no locus of this
+            # assembly holds the call, so checking it against the locus universe would
+            # fail the record for saying something true.
+            if p["perturbation_type"]
+            not in ("heterologous_pathway", "bacterial_site_variant")
         )
     outside = sorted((measured | perturbed) - universe - heterologous)
     return LevelResult(
@@ -2758,7 +3065,10 @@ def verify_build(
     records = load_records(dataset_root)
     genome = bacterial_genome("pputida", "KT2440", data_root)
     if family == "titer":
-        report = titer_levels(records, expected_count=len(TITER_COLUMNS_LOADED))
+        report = titer_levels(
+            records,
+            expected_count=len(TITER_STRAINS_LOADED) * len(TITER_COLUMNS_LOADED),
+        )
         report.add(gene_containment_rule(records, set(genome.genbank.loci)))
     elif family in PROTEOME_FAMILIES:
         from torchcell.verification.protein import verify_protein_dataset

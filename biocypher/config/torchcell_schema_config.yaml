@@ -110,7 +110,7 @@ bacterial perturbation:
         gene_namespace: str
 
 # A CALLED bacterial variant (issue #731): the three variant leaves in schema.py
-# (BacterialSequenceVariantPerturbation, BacterialIntergenicVariantPerturbation,
+# (BacterialSequenceVariantPerturbation, BacterialSiteVariantPerturbation,
 # BacterialSpanDeletionPerturbation), each of which composes a `BacterialVariantCall`.
 # It is its OWN class rather than rows of `bacterial perturbation`, for the reason the
 # `phage perturbation` class exists: the properties below (the replicon, the 1-based

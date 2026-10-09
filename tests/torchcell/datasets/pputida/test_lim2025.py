@@ -32,6 +32,7 @@ import math
 import os
 import os.path as osp
 import zipfile
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -236,9 +237,19 @@ def test_the_wild_type_is_the_empty_genotype() -> None:
 
 
 def test_an_unknown_strain_is_refused() -> None:
-    """Only the campaign's own starting strains have a typed genotype."""
+    """Only the campaign's own strains have a typed genotype."""
     with pytest.raises(ValueError, match="not a starting strain"):
-        l25.strain_genotype("A10_F63_I1", {})
+        l25.strain_genotype("IPL500", {})
+
+
+def test_an_evolved_isolate_carries_its_parents_designed_deletions() -> None:
+    """Writable since #731: the isolate's genotype is IPL400's seven plus its calls."""
+    for isolate in l25.EVOLVED_ISOLATE_CLONE_COLUMNS:
+        genotype = l25.strain_genotype(isolate, {})
+        assert sorted(genotype.systematic_gene_names) == sorted(
+            l25.designed_deletion_tags(l25.EVOLVED_ISOLATE_PARENT)
+        )
+        assert len(genotype) == 7
 
 
 def test_the_pp3024_genotype_carries_its_jbei_accession() -> None:
@@ -401,17 +412,20 @@ def test_a_ledger_refuses_counts_that_do_not_add_up() -> None:
         _drop_log(candidate_records=9).check()
 
 
-def test_the_genotype_gaps_name_the_parents_unwritable_content() -> None:
-    """Two stated gaps: the parents' called variants and PP_2676's truncation."""
+def test_the_genotype_gaps_name_what_the_axes_still_cannot_state() -> None:
+    """The parents' calls left this list in #731; the two background gaps remain."""
     gaps = l25.genotype_gaps()
     assert len(gaps) == 2
-    assert all(gap.strain == "IPL300 and IPL400" for gap in gaps)
-    assert "PP_4986" in gaps[0].content
-    assert gaps[0].source_quote == (
-        l25.SOURCED_VALUES["preexisting_parent_mutations"].quote
+    assert gaps[0].strain == "IPL300 and IPL400"
+    assert l25.PP2676_LOCUS in gaps[0].content
+    assert gaps[0].source_quote == l25.SI1_STATEMENTS["pp2676_truncation"]
+    assert gaps[1].strain == " and ".join(sorted(l25.EVOLVED_ISOLATE_CLONE_COLUMNS))
+    assert "strain-BACKGROUND axis" in gaps[1].content
+    assert gaps[1].source_quote == (l25.SOURCED_VALUES["evolved_isolate_parent"].quote)
+    assert not any(
+        gap.source_quote == l25.SOURCED_VALUES["preexisting_parent_mutations"].quote
+        for gap in gaps
     )
-    assert l25.PP2676_LOCUS in gaps[1].content
-    assert gaps[1].source_quote == l25.SI1_STATEMENTS["pp2676_truncation"]
 
 
 def test_the_genotype_loci_are_every_locus_the_module_writes_or_gaps() -> None:
@@ -876,14 +890,26 @@ ARMS: dict[str, tuple[float, float, float, float]] = {
     UNREFERENCED_TAG: (18.10, 0.210, 18.40, 0.180),
 }
 #: The clone columns of the synthetic mutation matrix: three founders, two evolved.
+WT_FOUNDER = "A1 F0 I1 R1"
+IPL300_FOUNDER = "A5 F0 I1 R1"
+IPL400_FOUNDER = "A9 F0 I1 R1"
+A10_CLONE = "A10 F63 I1 R1"
+A12_CLONE = "A12 F53 I1 R1"
 CLONES: tuple[str, ...] = (
-    "A1 F0 I1 R1",
-    "A5 F0 I1 R1",
-    "A9 F0 I1 R1",
-    "A10 F63 I1 R1",
-    "A12 F53 I1 R1",
+    WT_FOUNDER,
+    IPL300_FOUNDER,
+    IPL400_FOUNDER,
+    A10_CLONE,
+    A12_CLONE,
 )
 #: ``(region, common region, position, type, change, gene, detail, {clone: freq})``.
+#:
+#: The released shapes the three #731 leaves partition, each present: an intergenic row
+#: (537604), two rows whose ``DEL`` carries no coding offset and so covers whole loci
+#: (1578244 over four, 3063719 over one), and five rows calling a change inside one
+#: named locus. The founder columns satisfy ``assert_founder_columns``: the WT founder
+#: carries none, and the IPL400 founder's positions are the IPL300 founder's plus
+#: exactly the designed ``ttgB`` deletion and the ``PP_4398`` mutation the Results name.
 MUTATIONS: tuple[tuple[Any, ...], ...] = (
     (
         "Region1",
@@ -893,7 +919,7 @@ MUTATIONS: tuple[tuple[Any, ...], ...] = (
         "Δ1 bp",
         "PP_0164",
         "coding (280/693 nt)",
-        {"A10 F63 I1 R1": 1},
+        {A10_CLONE: 1},
     ),
     (
         "Region2",
@@ -903,39 +929,91 @@ MUTATIONS: tuple[tuple[Any, ...], ...] = (
         "A→G",
         "PP_mr07, rpoB",
         "intergenic (+134/‑19)",
-        {"A12 F53 I1 R1": 1},
+        {A12_CLONE: 1},
     ),
     (
         "Region3",
+        "",
+        1578244,
+        "DEL",
+        "Δ22,000 bp",
+        "ttgB,ttgA,ttgR,PP_1388",
+        "",
+        {IPL400_FOUNDER: 1, A10_CLONE: 1, A12_CLONE: 1},
+    ),
+    (
+        "Region4",
+        "",
+        1831944,
+        "INS",
+        "+CC",
+        "PP_1635",
+        "coding (50/400 nt)",
+        {IPL300_FOUNDER: 1, IPL400_FOUNDER: 1, A10_CLONE: 1, A12_CLONE: 1},
+    ),
+    (
+        "Region5",
+        "",
+        3063719,
+        "DEL",
+        "Δ456 bp",
+        "PP_2675",
+        "",
+        {IPL300_FOUNDER: 1, IPL400_FOUNDER: 1, A10_CLONE: 1, A12_CLONE: 1},
+    ),
+    (
+        "Region6",
         "",
         3866001,
         "SNP",
         "G→A",
         "PP_3415",
         "P293S (CCA→TCA)",
-        {"A12 F53 I1 R1": 1, "A9 F0 I1 R1": 0.9},
+        {A12_CLONE: 1, A10_CLONE: 0.9},
+    ),
+    ("Region6", "", 3866742, "SNP", "C→T", "PP_3415", "V46I (GTC→ATC)", {A12_CLONE: 1}),
+    (
+        "Region7",
+        "",
+        4362918,
+        "DEL",
+        "Δ3 bp",
+        "adhP",
+        "",
+        {IPL300_FOUNDER: 1, IPL400_FOUNDER: 1, A10_CLONE: 1, A12_CLONE: 1},
     ),
     (
-        "Region3",
+        "Region8",
         "",
-        3866742,
+        4989633,
         "SNP",
         "C→T",
-        "PP_3415",
-        "V46I (GTC→ATC)",
-        {"A12 F53 I1 R1": 1},
-    ),
-    (
-        "Region4",
-        "",
-        1570996,
-        "DEL",
-        "Δ22000 bp",
-        "ttgB,ttgA,ttgR,PP_1388",
-        "",
-        {"A10 F63 I1 R1": 1, "A5 F0 I1 R1": 1},
+        "PP_4398",
+        "A12T (GCC→ACC)",
+        {IPL400_FOUNDER: 1, A10_CLONE: 1, A12_CLONE: 1},
     ),
 )
+#: The leaf each :data:`MUTATIONS` row's shape maps to, in the same order.
+MUTATION_REPRESENTATIONS: tuple[str, ...] = (
+    "bacterial_sequence_variant",
+    "bacterial_site_variant",
+    "bacterial_span_deletion",
+    "bacterial_sequence_variant",
+    "bacterial_span_deletion",
+    "bacterial_sequence_variant",
+    "bacterial_sequence_variant",
+    "bacterial_span_deletion",
+    "bacterial_sequence_variant",
+)
+#: ``{clone column: (strain, written perturbations, restated loci)}`` the synthetic
+#: matrix implies: a call whose resolved locus is one of the strain's own designed
+#: deletions is dropped, and a span event writes one perturbation per covered locus.
+CALLED_PER_CLONE: dict[str, tuple[str, int, int]] = {
+    IPL300_FOUNDER: ("IPL300", 1, 2),
+    IPL400_FOUNDER: ("IPL400", 5, 3),
+    A10_CLONE: ("A10_F63_I1", 7, 3),
+    A12_CLONE: ("A12_F53_I1", 8, 3),
+}
 SAMPLE_KEY_HEADER = (
     "S. No",
     "Sample name",
@@ -955,7 +1033,12 @@ def _welch(
 
 
 def _proteome_sheet(
-    book: Any, sheet: str, *, tags: tuple[str, ...], title_case: bool
+    book: Any,
+    sheet: str,
+    *,
+    tags: tuple[str, ...],
+    title_case: bool,
+    parent_override: dict[str, tuple[float, float]] | None = None,
 ) -> None:
     test_suffix, parent_suffix = l25.PROTEOME_ARMS[sheet]
     worksheet = book.create_sheet(sheet)
@@ -978,6 +1061,8 @@ def _proteome_sheet(
     )
     for tag in tags:
         test_mean, test_sd, parent_mean, parent_sd = ARMS[tag]
+        if parent_override is not None and tag in parent_override:
+            parent_mean, parent_sd = parent_override[tag]
         written = tag.capitalize() if title_case and tag == UNREFERENCED_TAG else tag
         worksheet.append(
             [
@@ -1048,28 +1133,40 @@ def write_si2_xlsx(
     key.append([f"Dataset {l25.PRIDE_ACCESSION}"])
     key.append([])
     key.append(list(SAMPLE_KEY_HEADER))
-    for index, (name, condition) in enumerate(
+    for index, name in enumerate(
         (
-            (l25.SAMPLE_KEY_M9G, "M9 0.4% glucose"),
-            (l25.SAMPLE_KEY_IPL, "M9 0.4% glucose + 4 g/L Isoprenol"),
+            sample
+            for samples in l25.PROTEOME_SAMPLE_NAMES.values()
+            for sample in samples
         ),
         start=1,
     ):
+        condition = (
+            "M9 0.4% glucose + 4 g/L Isoprenol"
+            if name.endswith("+4IP")
+            else "M9 0.4% glucose"
+        )
         key.append([index, name, condition, f"HGL{index}_", replicate_token, None])
 
     stressed = (
         (*PROTEOME_TAGS, UNREFERENCED_TAG) if extra_isoprenol_tag else PROTEOME_TAGS
     )
+    # A changed IPL400 pair on ONE of the four exports, kept internally consistent (its
+    # t statistic and fold change are recomputed from it), so the duplicate-export
+    # assertion is what catches it rather than the per-sheet statistics oracle.
+    override = {PROTEOME_TAGS[0]: (99.0, 0.294)} if break_duplicate_export else None
     _proteome_sheet(book, l25.SHEET_PROTEOME_M9G, tags=PROTEOME_TAGS, title_case=False)
     _proteome_sheet(book, l25.SHEET_PROTEOME_IPL, tags=stressed, title_case=True)
     _proteome_sheet(
-        book, l25.SHEET_PROTEOME_M9G_ALT, tags=PROTEOME_TAGS, title_case=False
+        book,
+        l25.SHEET_PROTEOME_M9G_ALT,
+        tags=PROTEOME_TAGS,
+        title_case=False,
+        parent_override=override,
     )
     _proteome_sheet(
         book, l25.SHEET_PROTEOME_IPL_ALT, tags=PROTEOME_TAGS, title_case=False
     )
-    if break_duplicate_export:
-        book[l25.SHEET_PROTEOME_M9G_ALT].cell(row=2, column=7, value=99.0)
     book.save(path)
 
 
@@ -1079,21 +1176,22 @@ def test_the_mutation_matrix_reader_counts_every_dimension(tmp_path: Path) -> No
     write_si2_xlsx(path)
     matrix = l25.read_mutation_matrix(str(path))
     assert matrix.replicon == l25.KT2440_REPLICON
-    assert matrix.n_rows == 5
-    assert matrix.n_distinct_positions == 5
+    assert matrix.n_rows == len(MUTATIONS) == 9
+    assert matrix.n_distinct_positions == 9
     assert matrix.n_clone_columns == 5
     assert matrix.n_founder_columns == 3
     assert matrix.n_evolved_columns == 2
-    assert matrix.n_calls == 7
-    assert matrix.call_frequencies == {"1": 6, "0.9": 1}
-    assert matrix.mutation_types == {"DEL": 2, "SNP": 3}
+    assert matrix.n_calls == 23
+    assert matrix.call_frequencies == {"1": 22, "0.9": 1}
+    assert matrix.mutation_types == {"DEL": 4, "SNP": 4, "INS": 1}
     assert matrix.n_intergenic == 1
     assert matrix.n_multi_locus == 1
-    assert matrix.n_single_locus == 3
+    assert matrix.n_single_locus == 7
+    assert matrix.n_region_labels == 8
     assert matrix.founder_call_counts == {
-        "A1 F0 I1 R1": 0,
-        "A5 F0 I1 R1": 1,
-        "A9 F0 I1 R1": 1,
+        WT_FOUNDER: 0,
+        IPL300_FOUNDER: 3,
+        IPL400_FOUNDER: 5,
     }
 
 
@@ -1116,34 +1214,54 @@ def test_coordinates_on_another_replicon_are_refused(tmp_path: Path) -> None:
         l25.read_mutation_matrix(str(path))
 
 
-def test_every_call_is_typed_with_its_own_blocking_reasons(tmp_path: Path) -> None:
-    """The per-row ledger the de Siqueira 2025 loader also writes."""
+def test_every_call_is_typed_with_the_leaf_its_released_shape_maps_to(
+    tmp_path: Path,
+) -> None:
+    """The three shapes partition the rows, each decided by the row's own cells."""
     path = tmp_path / "si2.xlsx"
     write_si2_xlsx(path)
     calls = l25.read_variant_calls(str(path))
-    assert len(calls) == 5
-    always = {
-        l25.BLOCK_NO_BACTERIAL_VARIANT_LEAF,
-        l25.BLOCK_NO_ALLELE_SEQUENCE,
-        l25.BLOCK_NO_CALL_FIELDS,
-        l25.BLOCK_FUNCTIONAL_REQUIRED,
-        l25.BLOCK_GENOTYPE_COLLAPSE,
-    }
-    assert all(always <= set(call.blocking_reasons) for call in calls)
+    assert len(calls) == len(MUTATIONS)
+    assert [call.representation for call in calls] == list(MUTATION_REPRESENTATIONS)
     intergenic = [call for call in calls if call.is_intergenic]
     assert len(intergenic) == 1
-    assert l25.BLOCK_INTERGENIC in intergenic[0].blocking_reasons
+    assert intergenic[0].representation == "bacterial_site_variant"
     assert intergenic[0].loci == ["PP_mr07", "rpoB"]
-    multi = [call for call in calls if len(call.loci) > 1 and not call.is_intergenic]
-    assert len(multi) == 1
-    assert l25.BLOCK_MULTI_LOCUS in multi[0].blocking_reasons
-    stacked = [
-        call
-        for call in calls
-        if l25.BLOCK_ONE_ALLELE_PER_LOCUS in call.blocking_reasons
-    ]
+    spans = [call for call in calls if call.representation == "bacterial_span_deletion"]
+    assert [call.position for call in spans] == [1578244, 3063719, 4362918]
+    assert all(call.mutation_type == "DEL" and not call.detail for call in spans)
+    stacked = [call for call in calls if call.locus_seen_twice_in_a_clone]
     assert {call.position for call in stacked} == {3866001, 3866742}
     assert all(call.replicon == l25.KT2440_REPLICON for call in calls)
+
+
+def test_the_row_shape_decides_the_leaf_without_a_default_branch() -> None:
+    """A deletion with a coding offset stays in its locus; one without covers loci."""
+    assert (
+        l25.released_row_representation(
+            is_intergenic=True, mutation_type="SNP", detail="intergenic (+1/-2)"
+        )
+        == "bacterial_site_variant"
+    )
+    assert (
+        l25.released_row_representation(
+            is_intergenic=False, mutation_type="DEL", detail="  "
+        )
+        == "bacterial_span_deletion"
+    )
+    assert (
+        l25.released_row_representation(
+            is_intergenic=False, mutation_type="DEL", detail="coding (4-459/462 nt)"
+        )
+        == "bacterial_sequence_variant"
+    )
+    assert (
+        l25.released_row_representation(
+            is_intergenic=False, mutation_type="SNP", detail=""
+        )
+        == "bacterial_sequence_variant"
+    )
+    assert set(l25.VARIANT_TYPE_BY_STATEMENT) == {"SNP", "DEL", "INS", "SUB"}
 
 
 def test_the_sample_key_reader_returns_the_replicate_token(tmp_path: Path) -> None:
@@ -1248,10 +1366,33 @@ ASSEMBLY_REPORT = """# Assembly name:  ASM756v2
 AE015451.2\tassembled-molecule\tna\tChromosome\tAE015451.2\t=\tNC_002947.4
 """
 ASSEMBLY_REPORT_MEMBER = "GCA_000007565.2_ASM756v2_assembly_report.txt"
-#: Every locus the synthetic annotation carries: the genotype loci and the proteome keys.
+#: ``{locus tag: the symbol the mutation matrix names it by}``. The ``Gene`` cell names a
+#: symbol far more often than a tag, so the synthetic annotation carries one per token
+#: the loaded clone columns need; ``resolve_variant_loci`` refuses a token that does not
+#: land on exactly one locus.
+VARIANT_SYMBOLS: dict[str, str] = {
+    "PP_1385": "ttgB",
+    "PP_1386": "ttgA",
+    "PP_1387": "ttgR",
+    "PP_3839": "adhP",
+    "PP_0200": "PP_mr07",
+    "PP_0201": "rpoB",
+}
+#: The loci the matrix names by their own tag.
+VARIANT_TAGS: tuple[str, ...] = ("PP_0164", "PP_1388", "PP_1635", "PP_3415", "PP_4398")
+#: Every locus the synthetic annotation carries: the genotype loci, the proteome keys and
+#: every locus a called-variant row names.
 LOCUS_SPECS: tuple[tuple[str, str | None], ...] = tuple(
-    (tag, SYMBOLS.get(tag, "ttgB" if tag == "PP_1385" else None))
-    for tag in (*l25.genotype_loci(), *PROTEOME_TAGS, UNREFERENCED_TAG)
+    (tag, SYMBOLS.get(tag) or VARIANT_SYMBOLS.get(tag))
+    for tag in dict.fromkeys(
+        (
+            *l25.genotype_loci(),
+            *PROTEOME_TAGS,
+            UNREFERENCED_TAG,
+            *VARIANT_SYMBOLS,
+            *VARIANT_TAGS,
+        )
+    )
 )
 
 
@@ -1540,15 +1681,32 @@ def test_every_tolerance_record_is_a_log2_ratio_against_a_zero_reference(
         assert reference["genome_reference"]["assembly_set"] == l25.KT2440_ASSEMBLY_SET
 
 
+def _designed_deletions(record: dict[str, Any]) -> frozenset[str]:
+    """The loci one record carries as a DESIGNED deletion, which names its strain."""
+    return frozenset(
+        str(perturbation["systematic_gene_name"])
+        for perturbation in record["experiment"]["genotype"]["perturbations"]
+        if perturbation["perturbation_type"] == "bacterial_deletion"
+    )
+
+
 def test_the_tolerance_records_carry_the_three_expected_genotypes(
     built_tolerance: Any,
 ) -> None:
-    """Six, seven and one deletion, each on the KT2440 namespace."""
-    sizes = sorted(
-        len(built_tolerance[index]["experiment"]["genotype"]["perturbations"])
+    """Each strain's designed deletions plus the calls of its own founder column."""
+    sizes = {
+        _designed_deletions(built_tolerance[index]): len(
+            built_tolerance[index]["experiment"]["genotype"]["perturbations"]
+        )
         for index in range(len(built_tolerance))
-    )
-    assert sizes == [1, 6, 7]
+    }
+    assert sizes == {
+        frozenset(l25.IPL300_DELETIONS): 6 + CALLED_PER_CLONE[IPL300_FOUNDER][1],
+        frozenset(l25.designed_deletion_tags("IPL400")): (
+            7 + CALLED_PER_CLONE[IPL400_FOUNDER][1]
+        ),
+        frozenset({l25.PP3024_LOCUS}): 1,
+    }
     namespaces = {
         perturbation["gene_namespace"]
         for index in range(len(built_tolerance))
@@ -1564,19 +1722,16 @@ def test_the_two_tale_records_reproduce_the_table_three_ratios(
 ) -> None:
     """Each arm's mean over four lineages, divided by the wild type's."""
     values = {
-        tuple(
-            sorted(
-                perturbation["systematic_gene_name"]
-                for perturbation in built_tolerance[index]["experiment"]["genotype"][
-                    "perturbations"
-                ]
-            )
-        ): built_tolerance[index]["experiment"]["phenotype"]["environment_response"]
+        _designed_deletions(built_tolerance[index]): built_tolerance[index][
+            "experiment"
+        ]["phenotype"]["environment_response"]
         for index in range(len(built_tolerance))
     }
-    ipl300 = values[("PP_2675", "PP_3839", "PP_4064", "PP_4065", "PP_4066", "PP_4067")]
+    ipl300 = values[frozenset(l25.IPL300_DELETIONS)]
     assert ipl300 == pytest.approx(math.log2(0.2525 / 0.1535), rel=1e-12)
-    assert values[("PP_3024",)] == pytest.approx(math.log2(1.6), rel=1e-12)
+    assert values[frozenset({l25.PP3024_LOCUS})] == pytest.approx(
+        math.log2(1.6), rel=1e-12
+    )
 
 
 def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
@@ -1587,6 +1742,7 @@ def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
         "identifier_reconciliation.json",
         "variant_accounting.json",
         "called_variants.json",
+        "called_variant_perturbations.json",
         "genotype_gaps.json",
         "extraction.json",
         "table_s3.csv",
@@ -1596,15 +1752,30 @@ def test_the_tolerance_build_writes_every_ledger(built_tolerance: Any) -> None:
     drops = json.loads((out / "dropped_records.json").read_text())
     assert drops["kept_records"] == 3
     assert drops["dropped_records"] == 2
-    rules = {rule["rule"] for rule in drops["rules"]}
+    rules = {rule["rule"]: rule for rule in drops["rules"]}
     assert "hcho_arm_has_no_strain_other_than_the_reference" in rules
     assert "final_growth_rate_is_an_evolved_population" in rules
-    assert "evolved_clone_genotype_is_not_representable" in rules
+    assert "evolved_isolate_has_no_released_per_isolate_number" in rules
+    assert "evolved_clone_genotype_is_not_representable" not in rules
     assert "released_only_as_a_figure" in rules
     assert "no_titer_is_released_per_writable_strain" in rules
+    assert rules["call_restates_a_designed_deletion"]["n_items"] == (
+        CALLED_PER_CLONE[IPL300_FOUNDER][2] + CALLED_PER_CLONE[IPL400_FOUNDER][2]
+    )
     calls = json.loads((out / "called_variants.json").read_text())
-    assert len(calls) == 5
-    assert all(call["blocking_reasons"] for call in calls)
+    assert len(calls) == len(MUTATIONS)
+    assert [call["representation"] for call in calls] == list(MUTATION_REPRESENTATIONS)
+    perturbations = json.loads((out / "called_variant_perturbations.json").read_text())
+    assert perturbations["founder_check"]["wt_column"] == WT_FOUNDER
+    assert perturbations["founder_check"]["ipl400_only_positions"] == [1578244, 4989633]
+    assert {
+        row["clone_column"]: (row["n_written"], row["n_restating_a_designed_deletion"])
+        for row in perturbations["per_record"]
+    } == {
+        column: (written, restated)
+        for column, (_, written, restated) in CALLED_PER_CLONE.items()
+        if column in (IPL300_FOUNDER, IPL400_FOUNDER)
+    }
     extraction = json.loads((out / "extraction.json").read_text())
     assert len(extraction["range_checks"]) == 5
     assert extraction["si1_statements"] == l25.SI1_STATEMENTS
@@ -1625,11 +1796,11 @@ def test_the_tolerance_table_csv_carries_the_reference_arm_as_a_recordless_row(
     assert reference.iloc[0]["ale_labels"] == "1;2;3;4"
 
 
-def test_the_proteome_loader_builds_one_record_over_the_shared_loci(
+def test_the_proteome_loader_builds_one_record_per_strain_over_the_shared_loci(
     built_proteome: Any,
 ) -> None:
-    """One record: the parent under isoprenol, keyed to the reference arm's loci."""
-    assert len(built_proteome) == 1
+    """Three records: IPL400 and its two evolved isolates under isoprenol."""
+    assert len(built_proteome) == len(l25.PROTEOME_RECORD_SHEETS) == 3
     item = built_proteome[0]
     abundance = item["experiment"]["phenotype"]["protein_abundance"]
     assert set(abundance) == set(PROTEOME_TAGS) - {"PP_0548", "PP_5213"}
@@ -1639,6 +1810,104 @@ def test_the_proteome_loader_builds_one_record_over_the_shared_loci(
     assert item["experiment"]["phenotype"]["n_replicates"] == dict.fromkeys(
         abundance, 3
     )
+
+
+def test_each_evolved_isolate_carries_its_own_calls_as_perturbations(
+    built_proteome: Any,
+) -> None:
+    """The parent carries its designed deletions only; the isolates add their calls."""
+    records = [built_proteome[index] for index in range(len(built_proteome))]
+    sizes = [
+        len(record["experiment"]["genotype"]["perturbations"]) for record in records
+    ]
+    assert sizes == [
+        7,
+        7 + CALLED_PER_CLONE[A10_CLONE][1],
+        7 + CALLED_PER_CLONE[A12_CLONE][1],
+    ]
+    kinds = [
+        {
+            kind: sum(
+                1
+                for p in record["experiment"]["genotype"]["perturbations"]
+                if p["perturbation_type"] == kind
+            )
+            for kind in (
+                "bacterial_deletion",
+                "bacterial_sequence_variant",
+                "bacterial_site_variant",
+                "bacterial_span_deletion",
+            )
+        }
+        for record in records
+    ]
+    assert kinds[0] == {
+        "bacterial_deletion": 7,
+        "bacterial_sequence_variant": 0,
+        "bacterial_site_variant": 0,
+        "bacterial_span_deletion": 0,
+    }
+    assert kinds[1] == {
+        "bacterial_deletion": 7,
+        "bacterial_sequence_variant": 4,
+        "bacterial_site_variant": 0,
+        "bacterial_span_deletion": 3,
+    }
+    assert kinds[2] == {
+        "bacterial_deletion": 7,
+        "bacterial_sequence_variant": 4,
+        "bacterial_site_variant": 1,
+        "bacterial_span_deletion": 3,
+    }
+    assert records[1]["experiment"]["genotype"] != records[2]["experiment"]["genotype"]
+
+
+def test_a_span_deletion_is_one_perturbation_per_covered_locus(
+    built_proteome: Any,
+) -> None:
+    """The 22 kb event removes four loci, and ttgB is the designed one it restates."""
+    spans = [
+        p
+        for p in built_proteome[1]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "bacterial_span_deletion"
+    ]
+    assert {p["systematic_gene_name"] for p in spans} == {
+        "PP_1386",
+        "PP_1387",
+        "PP_1388",
+    }
+    assert {p["span_designation"] for p in spans} == {
+        f"{l25.KT2440_REPLICON}:1578244 Δ22,000 bp"
+    }
+    for span in spans:
+        assert tuple(span["span_systematic_gene_names"]) == (
+            "PP_1385",
+            "PP_1386",
+            "PP_1387",
+            "PP_1388",
+        )
+        assert span["call"]["variant_type"] == "deletion"
+        assert span["deleted_span"] is None
+    assert "PP_1385" not in {p["systematic_gene_name"] for p in spans}
+
+
+def test_an_intergenic_call_keeps_its_site_out_of_the_gene_set_and_its_flanks_in(
+    built_proteome: Any,
+) -> None:
+    """The site is no gene node; the two loci it sits between are."""
+    (site,) = [
+        p
+        for p in built_proteome[2]["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "bacterial_site_variant"
+    ]
+    assert site["systematic_gene_name"] == f"{l25.KT2440_REPLICON}:537604"
+    assert site["site_kind"] == "intergenic"
+    assert tuple(site["flanking_systematic_gene_names"]) == ("PP_0200", "PP_0201")
+    assert site["flanking_gene_statement"] == "PP_mr07, rpoB"
+    assert site["released_locus_statement"] is None
+    gene_set = set(built_proteome.gene_set)
+    assert site["systematic_gene_name"] not in gene_set
+    assert {"PP_0200", "PP_0201"} <= gene_set
 
 
 def test_the_proteome_record_stores_the_released_log2_value_verbatim(
@@ -1695,16 +1964,33 @@ def test_the_proteome_build_writes_its_back_solve_and_its_ledger(
     for pair, summary in back["duplicate_exports"].items():
         assert summary["bit_identical_on_shared"] is True, pair
     drops = json.loads((out / "dropped_records.json").read_text())
-    assert drops["kept_records"] == 1
+    assert drops["kept_records"] == 3
     assert drops["dropped_records"] == 0
     rules = {rule["rule"]: rule for rule in drops["rules"]}
     assert rules["gene_symbol_filed_under_two_paralogous_loci"]["items"] == [
         "PP_0548",
         "PP_5213",
     ]
-    assert rules["no_key_matched_reference_abundance"]["items"] == [UNREFERENCED_TAG]
+    assert rules["no_key_matched_reference_abundance"]["items"] == [
+        f"A10_F63_I1: ['{UNREFERENCED_TAG}']",
+        f"IPL400: ['{UNREFERENCED_TAG}']",
+    ]
     assert rules["production_medium_has_no_media_library_entry"]["n_items"] == 6
-    assert (out / "ipl400_proteome.csv").exists()
+    assert rules["call_restates_a_designed_deletion"]["n_items"] == (
+        CALLED_PER_CLONE[A10_CLONE][2] + CALLED_PER_CLONE[A12_CLONE][2]
+    )
+    assert (out / "lim2025_proteome.csv").exists()
+    perturbations = json.loads((out / "called_variant_perturbations.json").read_text())
+    assert perturbations["evolved_isolate_parent"] == l25.EVOLVED_ISOLATE_PARENT
+    assert {
+        row["strain"]: (
+            row["n_written"],
+            row["n_sequence_variants"],
+            row["n_intergenic_variants"],
+            row["n_span_deletion_loci"],
+        )
+        for row in perturbations["per_record"]
+    } == {"A10_F63_I1": (7, 4, 0, 3), "A12_F53_I1": (8, 4, 1, 3)}
 
 
 def test_a_sample_key_without_three_replicates_stops_the_proteome_build(
@@ -1961,14 +2247,28 @@ def test_the_real_mutation_matrix_holds_the_counts_the_docstring_states() -> Non
 
 @pytest.mark.data
 @pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
-def test_every_real_call_carries_a_blocking_reason() -> None:
-    """All 159 rows are typed, and the two extra shapes are counted."""
+def test_every_real_call_maps_to_one_of_the_three_leaves() -> None:
+    """All 159 rows are typed, and the three shapes partition them."""
     xlsx = osp.join(DATA_ROOT or "", l25.RAW_DIR_REL, "data", l25.SI2_XLSX)
     calls = l25.read_variant_calls(xlsx)
     assert len(calls) == 159
-    assert all(len(call.blocking_reasons) >= 5 for call in calls)
-    assert sum(l25.BLOCK_INTERGENIC in c.blocking_reasons for c in calls) == 17
-    assert sum(l25.BLOCK_ONE_ALLELE_PER_LOCUS in c.blocking_reasons for c in calls) == 8
+    assert Counter(call.representation for call in calls) == {
+        "bacterial_sequence_variant": 117,
+        "bacterial_span_deletion": 25,
+        "bacterial_site_variant": 17,
+    }
+    assert sum(call.locus_seen_twice_in_a_clone for call in calls) == 8
+    spans = [call for call in calls if call.representation == "bacterial_span_deletion"]
+    assert sum(len(call.loci) > 1 for call in spans) == 19
+    assert max(len(call.loci) for call in spans) == 53
+    assert all(
+        call.mutation_type == "DEL" and not call.detail.strip() for call in spans
+    )
+    assert all(
+        len(call.loci) == 1
+        for call in calls
+        if call.representation == "bacterial_sequence_variant"
+    )
 
 
 @pytest.mark.data
@@ -2000,6 +2300,31 @@ def test_the_real_proteome_sheets_back_solve_to_three_sample_sd_replicates() -> 
         "PP_3699",
         "PP_5287",
     ]
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
+def test_the_built_dev_stores_hold_the_records_and_genes_the_leaves_added() -> None:
+    """The counts the #731 leaves changed, read from the rebuilt dev-tree LMDBs."""
+    from torchcell.verification.runners import load_records
+
+    for relative, n_records, n_genes in (
+        (l25.TOLERANCE_ROOT_REL, 3, 12),
+        (l25.PROTEOME_ROOT_REL, 3, 28),
+    ):
+        root = osp.join(DATA_ROOT or "", relative)
+        if not osp.exists(osp.join(root, "processed", "lmdb")):
+            pytest.skip(f"{relative} has not been built on this machine")
+        records = load_records(root)
+        assert len(records) == n_records
+        gene_set = json.loads(Path(root, "preprocess", "gene_set.json").read_text())
+        assert len(gene_set) == n_genes
+        assert not [tag for tag in gene_set if tag.startswith(l25.KT2440_REPLICON)]
+        genotypes = {
+            json.dumps(record["experiment"]["genotype"], sort_keys=True)
+            for record in records
+        }
+        assert len(genotypes) == n_records
 
 
 # --------------------------------------------------------------------------- #
@@ -2055,7 +2380,7 @@ def test_the_cli_build_builds_both_datasets(
     monkeypatch.setattr(l25, "TOLERANCE_ROOT_REL", "cli/tolerance")
     monkeypatch.setattr(l25, "PROTEOME_ROOT_REL", "cli/proteome")
     assert l25.main(["build"]) == 0
-    for relative, expected in (("cli/tolerance", 3), ("cli/proteome", 1)):
+    for relative, expected in (("cli/tolerance", 3), ("cli/proteome", 3)):
         drops = json.loads(
             (
                 synthetic_mirror / relative / "preprocess" / "dropped_records.json"

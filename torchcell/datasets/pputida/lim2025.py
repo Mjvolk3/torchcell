@@ -15,69 +15,106 @@ to a strain this schema can write:
   three records: IPL300 and IPL400 at the TALE starting dose of 4 g/L isoprenol
   (Supplementary Table 3's initial growth rates), and KT2440 ``dPP_3024`` at 6 g/L
   isoprenol (the one per-strain fold the Fig. 3A text states).
-- :class:`ProteomeLim2025Dataset` -- ``BacterialProteinAbundanceExperiment``, one record:
-  the parent IPL400 under 4 g/L isoprenol, 2,361 Top3 log2 protein abundances, referenced
-  to its own unstressed proteome.
+- :class:`ProteomeLim2025Dataset` -- ``BacterialProteinAbundanceExperiment``, three
+  records: the parent IPL400 and the two evolved isolates the release quantifies
+  (A10_F63_I1, A12_F53_I1) under 4 g/L isoprenol, each strain's Top3 log2 protein
+  abundances referenced to its OWN unstressed proteome (2,361 / 2,361 / 2,332 keys).
 
-THE GENOTYPE FINDING: NO CLASS HOLDS A CALLED VARIANT, SO NO EVOLVED CLONE IS LOADED.
+THE CALLED VARIANTS ARE WRITTEN (issue #731), AND THE CLONE COLUMN IS THE CARRIER.
 An evolved clone's genotype is its parent's genomic content plus the variants breseq
 called from its resequencing. Supplementary Data 1 (``si/si2.xlsx``, sheet
 ``Fig 2B_Mutation List``) releases exactly that: 159 rows, each a position on
 ``AE015451`` -- the single replicon of the pinned ``pputida_KT2440_ASM756v2`` assembly --
 with a mutation type (100 SNP, 47 DEL, 11 INS, 1 SUB), a sequence change (``G->A``,
-``+C``, ``D1 bp``), the gene, gene pair or gene run it falls in, and a detail field (87
-amino-acid substitutions, 30 coding-span indels, 17 intergenic, 25 blank), crossed against
-49 clone columns as 443 per-clone calls (431 at frequency 1, 12 at 0.9).
+``+C``, the delta-bp form of a deletion), the gene, gene pair or gene run it falls in,
+and a detail field (87 amino-acid substitutions, 30 coding-span indels, 17 intergenic, 25
+blank), crossed against 49 clone columns as 443 per-clone calls (431 at frequency 1, 12 at
+0.9). The three leaves #731 added hold all of it, and the released row SHAPE decides
+which (:func:`released_row_representation`, measured and partitioning all 159 rows):
 
-No perturbation leaf can hold one of those rows honestly, and this was MEASURED, not
-assumed. These are the same reasons the de Siqueira 2025 loader (row 14, the other
-P. putida evolved-WGS row) found for its own 173 calls, reached independently on these
-bytes, and this loader MATCHES its treatment rather than inventing a second
-representation:
+1. ``Details`` starts ``intergenic`` (17 rows) -> ``BacterialSiteVariantPerturbation``
+   with ``site_kind=intergenic``, keyed on the derived site id
+   ``AE015451:<position>``, with both flanking loci resolved into
+   ``flanking_systematic_gene_names`` and the ``Gene`` cell verbatim in
+   ``flanking_gene_statement``. A locus tag there is refused by the leaf itself, so no
+   neighbor is ever invented.
+2. ``Mutation Type == DEL`` with an EMPTY ``Details`` (25 rows) ->
+   ``BacterialSpanDeletionPerturbation``, one per covered locus, all sharing the event's
+   ``span_designation``. breseq reports no coding offset exactly when the named loci lie
+   wholly inside the deleted interval; 19 of the 25 name more than one locus (up to the
+   53 of ``PP_3024``-``PP_5558``) and 6 name one, which is the same shape.
+3. everything else (117 rows) -> ``BacterialSequenceVariantPerturbation`` on its one
+   locus. ``PP_3415`` carries TWO of these within A12_F53_I1 (P293S at 3,866,001 and
+   V46I at 3,866,742), which ``Genotype.perturbations`` admits: it has no
+   one-entry-per-locus rule, unlike ``BacterialStrainBackground``.
 
-1. ``SequenceVariantPerturbation`` is the nearest class and it REFUSES the identifier:
-   ``SequenceVariantPerturbation(systematic_gene_name="PP_3415", ...)`` raises
-   ``Invalid systematic gene name format`` -- it inherits ``GenePerturbation``'s R64 ORF
-   regex and has no ``gene_namespace`` field.
-2. Its contract is a dereferenceable allele SEQUENCE in an off-graph gene-keyed store
-   (``sequence_source`` + ``sequence_ref``). The only sequence this paper deposits is the
-   raw reads under BioProject PRJNA1187681; no per-gene allele store exists, so even a
-   widened class would carry two None pointers.
-3. No class has a slot for what a row RELEASES: replicon, position, reference base,
-   alternate base, mutation type, amino-acid change, call frequency.
-   ``BacterialBackgroundAllele.deleted_span`` is deletion-only and would lose all of it.
-4. ``BacterialBackgroundAllele`` requires a non-optional ``functional: bool``, so the
-   unknown functional consequence of a missense SNP cannot be covered by a
-   ``ProvenanceGap`` -- a gap must name a field that is ``None``.
-5. ``BacterialStrainBackground`` permits ONE allele entry per locus, which refuses the
-   8 rows whose locus carries more than one call in a single clone. ``PP_3415`` alone
-   carries three distinct variants across the campaign and TWO within A12_F53_I1 (P293S
-   at 3,866,001 and V46I at 3,866,742, Supplementary Table 5).
-6. ``Genotype.__eq__`` compares the perturbation SET, so a clone written with its
-   parent's perturbations only would be genotype-identical to its parent, collapsing 46
-   distinct strains onto three identities.
-7. TWO SHAPES THIS ROW ADDS beyond row 14's. The 159 rows partition into 123 on one
-   locus, 17 intergenic and 19 spanning several loci. An intergenic row's ``Gene`` field
-   names the two FLANKING loci and there is no locus to key to -- inventing a neighbour
-   is exactly what must not be done. A multi-locus row is a large deletion (up to the 53
-   genes of ``PP_3024-PP_5558``) that no gene-keyed perturbation can state at all: it
-   needs a span-level carrier, which row 14's point-variant-only table never required.
+THE ``Gene`` CELL IS USUALLY A SYMBOL, AND RESOLVING IT IS NOT OPTIONAL. Measured over
+all 241 distinct ``Gene`` tokens of the sheet, 151 are already KT2440 locus tags and 90
+resolve through the gene-symbol layer of the pinned assembly: ``ttgB`` is ``PP_1385``,
+``adhP`` is ``PP_3839``, ``ivd,mccB,liuC,mccA`` are ``PP_4064``-``PP_4067``. Every stored
+tag that differs from what the release named carries a
+``DerivedIdentifierMapping(route="gene_symbol")``, and a token that does not land on
+exactly one locus is a HARD ERROR with its name (measured: one such token, ``asd`` ->
+``PP_1989`` or ``PP_1992``), never a guessed mapping.
 
-Every one of the 159 rows is typed into ``preprocess/called_variants.json`` with its own
-``blocking_reasons``, the same file and vocabulary row 14 writes, so the additive proposal
-in the PR body rests on the real rows. Nothing here works around the absence. Two
-consequences are stated rather than typed:
+NO END COORDINATE IS ASSERTED. The release gives a 1-based ``Position`` and a LENGTH
+fused into ``Sequence Change`` (``D5,553 bp``, ``(CCAC)2->1``, ``2 bp->CG``), and never an
+end. ``position_end`` therefore equals ``position_start`` on EVERY call, the released
+extent stays verbatim in ``sequence_change``, and ``deleted_span`` is left as a None on
+the span leaf. Synthesizing an end would mean parsing that string and choosing which side
+of the position the length runs to, neither of which the source states.
 
-- The 46 evolved isolates and every phenotype keyed to one of them are NOT loaded.
-- IPL300 and IPL400 themselves carry called variants the resequencing found and this
-  loader cannot write: "the starting strains IPL300 and IPL400 also contained pre-existing
-  mutations missing from the reference sequence: PP_4986, gacS, yhjE in IPL300, and then
-  IPL400 had the same mutations along with a mutation in PP_4398." The released matrix's
-  F0 clones put 6 calls on IPL300 and 8 on IPL400. Their records therefore carry the
-  DESIGNED deletions only, which is a floor on their genotype, not the whole of it. This
-  is recorded as a ``ProvenanceGap`` is not available for it -- a gap must name a field
-  that is None and ``perturbations`` is set -- so it lives in
-  ``preprocess/genotype_gaps.json``, in the note and here.
+A CALL THAT RESTATES A DESIGNED LESION IS DROPPED, AND THE DROP IS COUNTED. A call whose
+resolved locus the record's own strain already carries as a designed
+``BacterialDeletionPerturbation`` is not written a second time, so absence has one
+encoding. Measured, and larger than it looks before the symbols are resolved: ``3063719
+DEL PP_2675``, ``4362918 DEL adhP`` (``PP_3839``) and the four loci of ``4588139 DEL
+ivd,mccB,liuC,mccA`` (``PP_4064``-``PP_4067``) restate IPL300's six designed deletions,
+and ``1578244 DEL ttgB`` (``PP_1385``) restates IPL400's seventh. Per loaded record that
+is 6 of IPL300's 9 candidate perturbations and 7 of the other three records' 11, 19 and
+21. One consequence: every span-deletion row the four loaded clone columns carry is
+entirely restated, so the span leaf's code path runs on all of them and ZERO span
+perturbations survive onto a loaded record.
+
+WHICH CLONE COLUMN IS WHICH STRAIN IS PROVEN, NOT ASSUMED
+(:func:`assert_founder_columns`). An ``F0`` column is its lineage's founding starting
+strain under the ALEdb convention the paper states, and Supplementary Table 3's row
+groups put ALE 1-4 on KT2440, 5-8 on IPL300 and 9-12 on IPL400. Three measured facts have
+to hold together or the build refuses: ``A1 F0 I1 R1`` carries ZERO calls (the matrix is
+called against KT2440 WT, so its own founder must), ``A9 F0 I1 R1``'s 8 call positions are
+a strict superset of ``A5 F0 I1 R1``'s 6, and what IPL400 adds is exactly ``ttgB`` and
+``PP_4398`` -- the Results' own "IPL400 had the same mutations along with a mutation in
+PP_4398".
+
+WHAT STILL REFUSES, WITH COUNTS.
+
+- The 16 LINEAGE final growth rates of Supplementary Table 3. Each is the average over a
+  lineage's three LAST flasks, so its strain is the evolving POPULATION in that flask and
+  not one of the 46 sequenced isolates. The matrix calls CLONES
+  (``VariantCallMode.clone``) and releases no population allele frequency for a flask, so
+  a population genotype would need a threshold the release never gives. The #731 leaves
+  do not change this: they hold a clone's calls.
+- The 46 evolved isolates as TOLERANCE records. They are writable now, but
+  Supplementary Table 3 releases a growth rate per lineage and not per isolate, and
+  Fig. 2A's per-isolate rates are a figure with no numbers. The two whose proteome IS
+  released are records of :class:`ProteomeLim2025Dataset`.
+- ``PP_2676``'s 14-codon N-terminal truncation on the PERTURBATION axis. The release
+  gives no coordinate for it and no coding range, so it cannot be a
+  ``BacterialSequenceVariantPerturbation`` of deletion type either; it stays a
+  ``BacterialBackgroundAllele(partial_deletion)`` on the IPL400 background and a stated
+  gap in ``preprocess/genotype_gaps.json``.
+- A called variant on the strain-BACKGROUND axis. ``BacterialBackgroundAllele`` requires
+  a non-optional ``functional: bool`` a call's consequence is unknown for, and
+  ``BacterialStrainBackground`` permits one allele per locus, which refuses A12_F53_I1's
+  two ``PP_3415`` calls. Each proteome record's ``genome_reference`` therefore carries
+  IPL400's background, which for the two evolved isolates is a FLOOR on the genomic
+  content of their own unstressed reference arm. The second
+  ``preprocess/genotype_gaps.json`` entry states it.
+
+Every one of the 159 rows is typed into ``preprocess/called_variants.json`` with the leaf
+its shape maps to, and the per-record accounting (candidates, written, restated, resolved
+identifiers) into ``preprocess/called_variant_perturbations.json``.
+
 
 THE WRITABLE STRAINS, AND WHY ONLY THREE CARRY A NUMBER. IPL300
 (``dPP_2675 dPP_3839 dPP_4064-dPP_4067``), IPL400 (the same plus ``dttgB``/``PP_1385``)
@@ -200,7 +237,7 @@ from collections import Counter
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar
+from typing import Any, ClassVar, Literal
 from xml.etree import ElementTree
 
 import openpyxl
@@ -230,14 +267,21 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
+    BacterialSpanDeletionPerturbation,
     BacterialStrainBackground,
+    BacterialVariantCall,
+    BacterialVariantType,
     Compound,
     Concentration,
     ConcentrationUnit,
+    DerivedIdentifierMapping,
     Environment,
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
+    GenePerturbationType,
     Genotype,
     MeasurementType,
     ProteinAbundancePhenotype,
@@ -245,6 +289,9 @@ from torchcell.datamodels.schema import (
     SampleUnit,
     SmallMoleculePerturbation,
     StrainConstruction,
+    VariantCallMode,
+    VariantFrequencyBasis,
+    VariantSiteKind,
 )
 from torchcell.datasets.bacteria_common import (
     LOCUS_TAG_PATTERNS,
@@ -335,6 +382,25 @@ KT2440_ASSEMBLY_SET: BacterialAssemblySet = "pputida_KT2440_ASM756v2"
 #: The single replicon every released mutation coordinate is given on.
 KT2440_REPLICON = "AE015451"
 
+#: ``{strain: its founding F0 clone column}``. An ``F0`` column is the lineage's
+#: founding starting strain under the ALEdb convention the paper states, and Table 3's
+#: own row groups put ALE 1-4 on KT2440, 5-8 on IPL300 and 9-12 on IPL400, so A1 F0 is
+#: the WT, A5 F0 is IPL300 and A9 F0 is IPL400. :func:`assert_founder_columns` proves
+#: the assignment on the bytes rather than resting on the convention.
+FOUNDER_CLONE_COLUMNS: dict[str, str] = {
+    "KT2440": "A1 F0 I1 R1",
+    "IPL300": "A5 F0 I1 R1",
+    "IPL400": "A9 F0 I1 R1",
+}
+#: ``{isolate label: its clone column}`` of the two evolved isolates the proteome
+#: release quantifies. Both are end-point isolates of IPL400 lineages (ALE 10 and 12).
+EVOLVED_ISOLATE_CLONE_COLUMNS: dict[str, str] = {
+    "A10_F63_I1": "A10 F63 I1 R1",
+    "A12_F53_I1": "A12 F53 I1 R1",
+}
+#: The starting strain both proteome isolates descend from, stated by the paper.
+EVOLVED_ISOLATE_PARENT = "IPL400"
+
 #: Sheets of ``si2.xlsx`` this module reads.
 SHEET_MUTATIONS = "Fig 2B_Mutation List"
 SHEET_SAMPLE_KEY = "ProteomeXchange Sample Key"
@@ -354,6 +420,24 @@ PROTEOME_ARMS: dict[str, tuple[str, str]] = {
     SHEET_PROTEOME_IPL: ("A10F63I1_M9G+4IP", "IPL400_M9G+4IP"),
     SHEET_PROTEOME_M9G_ALT: ("A12_F53_I1_M9G", "IPL400_M9G"),
     SHEET_PROTEOME_IPL_ALT: ("A12F53I1_M9G+4IP", "IPL400_M9G+4IP"),
+}
+#: ``{strain: (unstressed sheet, isoprenol sheet, which column of each)}``. Each loaded
+#: record is one strain's isoprenol arm referenced to its OWN unstressed arm, so a
+#: record needs the same column of two sheets. IPL400 is the ``parent`` column of the
+#: A10 pair (its columns are bit-identical across all four sheets, which
+#: ``_assert_duplicate_exports`` re-proves); each evolved isolate is the ``test`` column
+#: of its own pair.
+PROTEOME_RECORD_SHEETS: dict[str, tuple[str, str, str]] = {
+    "IPL400": (SHEET_PROTEOME_M9G, SHEET_PROTEOME_IPL, "parent"),
+    "A10_F63_I1": (SHEET_PROTEOME_M9G, SHEET_PROTEOME_IPL, "test"),
+    "A12_F53_I1": (SHEET_PROTEOME_M9G_ALT, SHEET_PROTEOME_IPL_ALT, "test"),
+}
+#: The ``Sample name`` the Sample Key sheet files each record's two arms under, so the
+#: replicate token is read per arm rather than assumed from one arm.
+PROTEOME_SAMPLE_NAMES: dict[str, tuple[str, str]] = {
+    "IPL400": ("IPL400_M9G", "IPL400_M9G+4IP"),
+    "A10_F63_I1": ("A10_F63_I1_M9G", "A10_F63_I1_M9G+4IP"),
+    "A12_F53_I1": ("A12_F53_I1_M9G", "A12_F53_I1_M9G+4IP"),
 }
 #: What one stored proteome number is, named so heterogeneous proteomics never mixes.
 PROTEOME_MEASUREMENT_TYPE = "dia_nn_top3_log2_mean"
@@ -553,8 +637,21 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         "the starting strains IPL300 and IPL400 also contained pre-existing mutations "
         "missing from the reference sequence: PP_4986, gacS, yhjE in IPL300, and then "
         "IPL400 had the same mutations along with a mutation in PP_4398.",
-        note="the parents' own called variants, which no perturbation class can hold; "
-        "their records carry the designed deletions only, a floor on the genotype",
+        note="the parents' own called variants, which the three #731 leaves now hold: "
+        "the IPL300 record carries the A5 F0 I1 R1 column's calls and the IPL400 record "
+        "the A9 F0 I1 R1 column's. The sentence is also what assert_founder_columns "
+        "checks the two founder columns against",
+    ),
+    "evolved_isolate_parent": _paper(
+        EVOLVED_ISOLATE_PARENT,
+        "we chose two representative evolved end-point isolates (i.e., A10_F63_I1 and "
+        "A12_F53_I1) which were derived from the same starting strain (IPL400) but "
+        "contained mutations in different genes (Supplementary Table 5).",
+        note="which parent the two proteome isolates descend from, stated by the paper "
+        "rather than read off the lineage numbering; Supplementary Table 3's row groups "
+        "put ALE 9-12 on IPL400, so ALE 10 and ALE 12 agree with it independently. Their "
+        "designed deletions are therefore IPL400's seven, and their own calls come from "
+        "the A10 F63 I1 R1 and A12 F53 I1 R1 clone columns",
     ),
     "mutation_total": _paper(
         (158, 73),
@@ -1371,6 +1468,23 @@ def parent_arm(
     }
 
 
+def test_arm(
+    rows: Sequence[ProteomeRow], dropped: Iterable[str]
+) -> dict[str, tuple[float, float]]:
+    """``{locus tag: (log2 mean, log2 sample SD)}`` of the EVOLVED arm of one sheet.
+
+    The mirror of :func:`parent_arm`. Both columns are the arm's own absolute log2 Top3
+    mean, not a ratio, which is what lets an evolved isolate's two arms be compared to
+    each other exactly as IPL400's two are.
+    """
+    skip = set(dropped)
+    return {
+        row.locus_tag: (row.test_mean, row.test_sd)
+        for row in rows
+        if row.locus_tag not in skip
+    }
+
+
 def read_sample_key(path: str) -> dict[str, str]:
     """``{sample name: replicate token}`` of the ProteomeXchange Sample Key sheet."""
     _, rows = _sheet_rows(path, SHEET_SAMPLE_KEY)
@@ -1388,9 +1502,10 @@ def read_sample_key(path: str) -> dict[str, str]:
 class MutationMatrix(BaseModel):
     """What the released per-clone variant matrix holds, as counts only.
 
-    No record is built from it: no perturbation class holds a called base change at a
-    coordinate on a pinned assembly (the module docstring states the finding). These
-    counts are the counted reason, written to ``preprocess/variant_accounting.json``.
+    Counts only, written to ``preprocess/variant_accounting.json``: the matrix's shape
+    independent of which clone columns a build loads, so a changed release shows up as a
+    changed count rather than as silently different records. The calls themselves become
+    perturbations through :func:`called_variant_perturbations`.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -1423,12 +1538,65 @@ _CLONE_RE = re.compile(
 )
 
 
-class CalledVariant(BaseModel):
-    """One released breseq call, with the reason no perturbation class can hold it.
+#: ``{released Mutation Type cell: the schema's variant kind}``. The four cells are the
+#: whole released vocabulary (measured on the pinned sheet: 100 SNP, 47 DEL, 11 INS,
+#: 1 SUB over the 159 rows); an unknown cell raises a ``KeyError`` rather than being
+#: read as anything.
+VARIANT_TYPE_BY_STATEMENT: dict[str, BacterialVariantType] = {
+    "SNP": BacterialVariantType.snv,
+    "DEL": BacterialVariantType.deletion,
+    "INS": BacterialVariantType.insertion,
+    "SUB": BacterialVariantType.substitution,
+}
 
-    The same typed row the de Siqueira 2025 loader writes for row 14's calls, so the
-    two P. putida evolved-WGS rows state the blockage in one vocabulary. Nothing here
-    becomes a record; the file is the counted evidence under the additive proposal.
+#: The matrix cell is a within-clone FRACTION, not a percent: measured over its 443
+#: calls, 431 cells read ``1`` and 12 read ``0.9``, so no cell exceeds 1.
+CLONE_FREQUENCY_BASIS = VariantFrequencyBasis.fraction
+
+VariantRepresentation = Literal[
+    "bacterial_sequence_variant", "bacterial_site_variant", "bacterial_span_deletion"
+]
+"""Which #731 perturbation leaf a released row's SHAPE maps to.
+
+The three values are the leaves' own ``perturbation_type`` literals, so the recorded
+mapping cannot drift from the class that is written.
+"""
+
+
+def released_row_representation(
+    *, is_intergenic: bool, mutation_type: str, detail: str
+) -> VariantRepresentation:
+    """The leaf one released row maps to, decided by the row's own cells.
+
+    Three shapes, measured on the pinned sheet and partitioning all 159 rows:
+
+    - ``Details`` starts ``intergenic`` (17 rows): the call sits between loci and the
+      ``Gene`` cell names the two flanking ones, so it is keyed on its genomic SITE.
+    - ``Mutation Type == DEL`` with an EMPTY ``Details`` (25 rows): breseq reports no
+      coding offset, which is how it says the named loci lie wholly inside the deleted
+      interval. 19 of the 25 name more than one locus (up to the 53 of
+      ``PP_3024``-``PP_5558``) and 6 name one; both are the same shape, one span
+      deletion event covering whole loci.
+    - everything else (117 rows): one call inside one named locus. Measured: every row
+      left after the first two tests names exactly one locus, which
+      :func:`called_variant_perturbations` asserts rather than assumes.
+    """
+    if is_intergenic:
+        return "bacterial_site_variant"
+    kind = VARIANT_TYPE_BY_STATEMENT[mutation_type]
+    if kind is BacterialVariantType.deletion and not detail.strip():
+        return "bacterial_span_deletion"
+    return "bacterial_sequence_variant"
+
+
+class CalledVariant(BaseModel):
+    """One released breseq call, verbatim, with the leaf its shape maps to.
+
+    Every field is the released cell as the sheet writes it; nothing is normalized (the
+    ``Details`` offsets use U+2011 non-breaking hyphens and keep them). ``representation``
+    is the #731 leaf :func:`called_variant_perturbations` writes the call as, so
+    ``preprocess/called_variants.json`` records the row-shape-to-class mapping on the
+    real rows rather than in prose.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -1444,53 +1612,18 @@ class CalledVariant(BaseModel):
     detail: str
     is_intergenic: bool
     clones: dict[str, str]
-    blocking_reasons: list[str]
-
-
-#: The measured reasons no class holds one of these calls. Each row carries the subset
-#: that applies to it; the first four apply to every row.
-BLOCK_NO_BACTERIAL_VARIANT_LEAF = (
-    "SequenceVariantPerturbation is the only variant-level leaf and its base validator "
-    "admits only S288C ORF names, so a PP_ locus tag is refused (measured: it raises "
-    "'Invalid systematic gene name format' on PP_3415)"
-)
-BLOCK_NO_ALLELE_SEQUENCE = (
-    "SequenceVariantPerturbation promises a dereferenceable allele sequence "
-    "(sequence_source + sequence_ref); this paper deposited raw reads "
-    f"(BioProject {SRA_BIOPROJECT}) and no per-gene allele store"
-)
-BLOCK_NO_CALL_FIELDS = (
-    "no class has a slot for what the row releases: replicon, position, reference and "
-    "alternate base, mutation type, amino-acid change and call frequency. "
-    "BacterialBackgroundAllele's deleted_span is deletion-only and would lose them"
-)
-BLOCK_FUNCTIONAL_REQUIRED = (
-    "BacterialBackgroundAllele requires a non-optional functional: bool, so the unknown "
-    "functional consequence of a called variant cannot be a ProvenanceGap (a gap must "
-    "name a field that is None)"
-)
-BLOCK_GENOTYPE_COLLAPSE = (
-    "Genotype.__eq__ compares the perturbation SET, so a clone written with its parent's "
-    "perturbations only would be genotype-identical to its parent and the distinct "
-    "strains would collapse onto one identity"
-)
-BLOCK_INTERGENIC = (
-    "the call is intergenic: the Gene field names the two flanking loci, so there is no "
-    "locus to key a gene-keyed perturbation to, and inventing a neighbour is exactly "
-    "what must not be done"
-)
-BLOCK_MULTI_LOCUS = (
-    "the call spans more than one locus (a large deletion), so one gene-keyed "
-    "perturbation cannot state it; it needs a span-level carrier"
-)
-BLOCK_ONE_ALLELE_PER_LOCUS = (
-    "BacterialStrainBackground permits one allele entry per locus, and this locus "
-    "carries more than one call in a single clone"
-)
+    representation: VariantRepresentation
+    locus_seen_twice_in_a_clone: bool = Field(
+        description="another call of the same clone sits in one of this row's loci "
+        "(measured: 8 rows). The perturbation axis admits both, because "
+        "Genotype.perturbations has no one-entry-per-locus rule; the strain-BACKGROUND "
+        "axis does not, which is why a called variant is never a "
+        "BacterialBackgroundAllele"
+    )
 
 
 def read_variant_calls(path: str) -> list[CalledVariant]:
-    """Every released call as a typed row with its own blocking reasons."""
+    """Every released call as a typed row, with the #731 leaf its shape maps to."""
     header, rows = _sheet_rows(path, SHEET_MUTATIONS)
     clones = [name for name in header[9:] if name.strip()]
     body = [row for row in rows if str(row[3] or "").strip()]
@@ -1525,24 +1658,21 @@ def read_variant_calls(path: str) -> list[CalledVariant]:
         )
     out: list[CalledVariant] = []
     for item in parsed:
-        reasons = [
-            BLOCK_NO_BACTERIAL_VARIANT_LEAF,
-            BLOCK_NO_ALLELE_SEQUENCE,
-            BLOCK_NO_CALL_FIELDS,
-            BLOCK_FUNCTIONAL_REQUIRED,
-            BLOCK_GENOTYPE_COLLAPSE,
-        ]
-        if item["is_intergenic"]:
-            reasons.append(BLOCK_INTERGENIC)
-        if len(item["loci"]) > 1:
-            reasons.append(BLOCK_MULTI_LOCUS)
-        if any(
-            per_clone_locus[(clone, locus)] > 1
-            for clone in item["clones"]
-            for locus in item["loci"]
-        ):
-            reasons.append(BLOCK_ONE_ALLELE_PER_LOCUS)
-        out.append(CalledVariant(blocking_reasons=reasons, **item))
+        out.append(
+            CalledVariant(
+                representation=released_row_representation(
+                    is_intergenic=item["is_intergenic"],
+                    mutation_type=item["mutation_type"],
+                    detail=item["detail"],
+                ),
+                locus_seen_twice_in_a_clone=any(
+                    per_clone_locus[(clone, locus)] > 1
+                    for clone in item["clones"]
+                    for locus in item["loci"]
+                ),
+                **item,
+            )
+        )
     return out
 
 
@@ -1599,6 +1729,322 @@ def read_mutation_matrix(path: str) -> MutationMatrix:
         ),
         founder_call_counts=dict(founder_calls),
     )
+
+
+# --------------------------------------------------------------------------- #
+# The called variants as perturbations (issue #731)
+# --------------------------------------------------------------------------- #
+class FounderCheck(BaseModel):
+    """The measured founder-column assignment, proved on the released matrix."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    wt_column: str
+    wt_n_calls: int
+    ipl300_column: str
+    ipl300_positions: tuple[int, ...]
+    ipl400_column: str
+    ipl400_positions: tuple[int, ...]
+    ipl400_only_positions: tuple[int, ...]
+    ipl400_only_genes: tuple[str, ...]
+
+
+def assert_founder_columns(calls: Sequence[CalledVariant]) -> FounderCheck:
+    """Prove which F0 column is which starting strain, and refuse a disagreement.
+
+    Three independent facts have to hold together, and all three are measured on the
+    pinned sheet: the matrix is called against KT2440 WT, so the WT founder column
+    carries ZERO calls; IPL400 is IPL300 plus one deletion and one further pre-existing
+    mutation, so the IPL400 founder's call positions must be a strict SUPERSET of the
+    IPL300 founder's; and what IPL400 adds must be exactly the designed ``ttgB``
+    deletion and the ``PP_4398`` mutation the Results name. Anything else means the
+    column-to-strain assignment this loader writes the parents' calls under is wrong.
+    """
+    wt, ipl300, ipl400 = (
+        FOUNDER_CLONE_COLUMNS["KT2440"],
+        FOUNDER_CLONE_COLUMNS["IPL300"],
+        FOUNDER_CLONE_COLUMNS["IPL400"],
+    )
+    positions = {
+        column: tuple(sorted(call.position for call in calls if column in call.clones))
+        for column in (wt, ipl300, ipl400)
+    }
+    if positions[wt]:
+        raise CrossSourceError(
+            f"{wt} carries {len(positions[wt])} calls; the matrix is called against "
+            "KT2440 WT, so its own founder column must carry none and the "
+            "column-to-strain assignment is wrong"
+        )
+    extra = tuple(sorted(set(positions[ipl400]) - set(positions[ipl300])))
+    if not set(positions[ipl300]) < set(positions[ipl400]):
+        raise CrossSourceError(
+            f"{ipl400}'s calls are not a strict superset of {ipl300}'s "
+            f"({positions[ipl300]} vs {positions[ipl400]}); IPL400 is IPL300 plus one "
+            "deletion, so the founder assignment does not hold"
+        )
+    genes = tuple(
+        call.gene_field
+        for call in sorted(calls, key=lambda c: c.position)
+        if call.position in extra
+    )
+    named = SOURCED_VALUES["preexisting_parent_mutations"].value[-1]
+    designed = SOURCED_VALUES["ipl400_extra_deletion"].value
+    if len(genes) != 2 or named not in genes:
+        raise CrossSourceError(
+            f"{ipl400} adds {genes} over {ipl300}; the Results state it adds the "
+            f"{designed} (ttgB) deletion and a mutation in {named}"
+        )
+    return FounderCheck(
+        wt_column=wt,
+        wt_n_calls=0,
+        ipl300_column=ipl300,
+        ipl300_positions=positions[ipl300],
+        ipl400_column=ipl400,
+        ipl400_positions=positions[ipl400],
+        ipl400_only_positions=extra,
+        ipl400_only_genes=genes,
+    )
+
+
+def designed_deletion_tags(strain: str) -> tuple[str, ...]:
+    """The locus tags one writable strain carries as a DESIGNED deletion."""
+    if strain == "KT2440":
+        return ()
+    if strain == "IPL300":
+        return IPL300_DELETIONS
+    if strain in {"IPL400", *EVOLVED_ISOLATE_CLONE_COLUMNS}:
+        return (*IPL300_DELETIONS, IPL400_EXTRA_DELETION)
+    raise ValueError(f"{strain!r} is not a strain of this campaign")
+
+
+def resolve_variant_loci(
+    genome: PPutidaKT2440Genome, tokens: Sequence[str], *, label: str
+) -> tuple[dict[str, str], LocusTagReconciliation]:
+    """``{released Gene token: its KT2440 locus tag}``, refusing any token that misses.
+
+    The ``Gene`` cell names a gene SYMBOL far more often than a locus tag (measured over
+    all 241 distinct tokens of the sheet: 151 are already locus tags and 90 resolve
+    through the gene-symbol layer; ``ttgB`` is ``PP_1385``, ``adhP`` is ``PP_3839``,
+    ``ivd,mccB,liuC,mccA`` are ``PP_4064``-``PP_4067``). A token that does not land on
+    exactly one locus of the pinned assembly is a hard error: there is no mapping to
+    invent, and a guessed tag would key a variant onto the wrong gene. Measured on the
+    whole sheet, one token is ambiguous (``asd`` -> ``PP_1989`` or ``PP_1992``), so a
+    clone carrying that row is refused with its name rather than written.
+    """
+    stored, report = reconcile_locus_tags(genome, pd.Series(list(tokens)), label=label)
+    report.require_resolved(MIN_RESOLVED_FRACTION)
+    mapping = dict(zip(tokens, stored.tolist(), strict=True))
+    pattern = LOCUS_TAG_PATTERNS[report.gene_namespace]
+    outside = sorted(
+        f"{released} -> {tag}"
+        for released, tag in mapping.items()
+        if pattern.match(tag) is None
+    )
+    if outside:
+        raise RuntimeError(
+            f"{label}: {outside} do not resolve to one {report.gene_namespace} locus, "
+            "so no bacterial perturbation leaf accepts them and no mapping is invented"
+        )
+    return mapping, report
+
+
+def _derived_mapping(released: str, locus_tag: str) -> DerivedIdentifierMapping | None:
+    """How ``locus_tag`` was reached from the ``Gene`` cell, or None when they agree."""
+    if released == locus_tag:
+        return None
+    return DerivedIdentifierMapping(source_identifier=released, route="gene_symbol")
+
+
+def _clone_call(row: CalledVariant, clone_column: str) -> BacterialVariantCall:
+    """One clone's call of one released row, with every cell kept verbatim.
+
+    ``position_end`` equals ``position_start`` for EVERY row, including the multi-base
+    ones. The release gives a 1-based ``Position`` and a LENGTH fused into ``Sequence
+    Change`` (``Δ5,553 bp``, ``(CCAC)2→1``, ``2 bp→CG``) and never an end coordinate, so
+    an end would have to be synthesized by parsing that string and asserting which side
+    of the position the length runs to. Neither is released, so no end is asserted; the
+    released extent stays verbatim in ``sequence_change``. ``deleted_span`` is left None
+    on the span leaf for the same reason.
+
+    ``reference_allele``, ``alternate_allele``, ``amino_acid_change``, ``codon_change``
+    and ``codon_number`` stay None: the sheet fuses all of them into ``Sequence Change``
+    and ``Details`` (``C→G``, ``G476A (GGT→GCT)``) rather than giving them their own
+    columns, and those two cells are stored verbatim.
+    """
+    frequency = row.clones[clone_column]
+    return BacterialVariantCall(
+        variant_type=VARIANT_TYPE_BY_STATEMENT[row.mutation_type],
+        type_statement=row.mutation_type,
+        reference_sequence=row.replicon,
+        position_start=row.position,
+        position_end=row.position,
+        sequence_change=row.sequence_change,
+        annotation=row.detail or None,
+        call_mode=VariantCallMode.clone,
+        frequency_statement=frequency,
+        frequency=float(frequency),
+        frequency_basis=CLONE_FREQUENCY_BASIS,
+        caller=SOURCED_VALUES["variant_caller"].value,
+    )
+
+
+class CalledVariantAccounting(BaseModel):
+    """What one clone column's called variants became on the record that carries them."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    clone_column: str
+    strain: str
+    n_called_rows: int
+    n_candidate_perturbations: int
+    n_written: int
+    n_sequence_variants: int
+    n_intergenic_variants: int
+    n_span_deletion_loci: int
+    n_restating_a_designed_deletion: int
+    restated_loci: tuple[str, ...]
+    written_identifiers: tuple[str, ...]
+
+
+def called_variant_perturbations(
+    clone_column: str,
+    *,
+    strain: str,
+    calls: Sequence[CalledVariant],
+    loci: Mapping[str, str],
+) -> tuple[list[GenePerturbationType], CalledVariantAccounting]:
+    """One clone column's called variants as #731 perturbations, with the dedup counted.
+
+    Row shape decides the leaf (:func:`released_row_representation`), and a span
+    deletion becomes ONE perturbation PER COVERED LOCUS, all sharing the event's
+    ``span_designation``. The list is ordered by ``position_start`` so that two calls in
+    one locus (A12_F53_I1 carries ``PP_3415`` P293S at 3,866,001 and V46I at 3,866,742)
+    land in a fixed order: ``Genotype.sort_perturbations`` keys on (name, type, perturbed
+    name), which ties for those two, and ``sorted`` is stable, so the input order decides.
+
+    DEDUPLICATION. A call whose resolved locus is one the record's own strain already
+    carries as a designed ``BacterialDeletionPerturbation`` is DROPPED, because it
+    restates a lesion the genotype already states and absence has one encoding. Measured
+    on the pinned sheet, this is not a corner case: ``3063719 DEL PP_2675``, ``4362918
+    DEL adhP`` (``PP_3839``) and the four loci of ``4588139 DEL ivd,mccB,liuC,mccA``
+    (``PP_4064``-``PP_4067``) restate IPL300's six designed deletions, and ``1578244 DEL
+    ttgB`` (``PP_1385``) restates IPL400's seventh. The drop is per LOCUS, so a span
+    event keeps its full ``span_systematic_gene_names`` -- the event does remove them
+    all -- and only stops writing a second perturbation for the designed one.
+    """
+    designed = frozenset(designed_deletion_tags(strain))
+    rows = sorted(
+        (call for call in calls if clone_column in call.clones),
+        key=lambda call: call.position,
+    )
+    written: list[GenePerturbationType] = []
+    restated: list[str] = []
+    candidates = 0
+    counts: Counter[VariantRepresentation] = Counter()
+    for row in rows:
+        call = _clone_call(row, clone_column)
+        if row.representation == "bacterial_site_variant":
+            candidates += 1
+            counts[row.representation] += 1
+            written.append(
+                BacterialSiteVariantPerturbation(
+                    systematic_gene_name=(
+                        BacterialSiteVariantPerturbation.site_id(call)
+                    ),
+                    perturbed_gene_name=row.gene_field,
+                    gene_namespace=KT2440_NAMESPACE,
+                    call=call,
+                    site_kind=VariantSiteKind.intergenic,
+                    flanking_systematic_gene_names=tuple(
+                        loci[token] for token in row.loci
+                    ),
+                    flanking_gene_statement=row.gene_field,
+                )
+            )
+            continue
+        if row.representation == "bacterial_span_deletion":
+            tags = tuple(loci[token] for token in row.loci)
+            designation = BacterialSpanDeletionPerturbation.designation(call)
+            for released, tag in zip(row.loci, tags, strict=True):
+                candidates += 1
+                if tag in designed:
+                    restated.append(tag)
+                    continue
+                counts[row.representation] += 1
+                written.append(
+                    BacterialSpanDeletionPerturbation(
+                        systematic_gene_name=tag,
+                        perturbed_gene_name=released,
+                        gene_namespace=KT2440_NAMESPACE,
+                        identifier_mapping=_derived_mapping(released, tag),
+                        call=call,
+                        span_designation=designation,
+                        span_systematic_gene_names=tags,
+                        deleted_span=None,
+                    )
+                )
+            continue
+        if len(row.loci) != 1:
+            raise SheetExtractionError(
+                f"{SHEET_MUTATIONS} position {row.position}: a call inside a locus "
+                f"names {row.loci}, not one locus; its Details cell "
+                f"({row.detail!r}) places it in a gene, so it cannot be a span"
+            )
+        candidates += 1
+        released = row.loci[0]
+        tag = loci[released]
+        if tag in designed:
+            restated.append(tag)
+            continue
+        counts[row.representation] += 1
+        written.append(
+            BacterialSequenceVariantPerturbation(
+                systematic_gene_name=tag,
+                perturbed_gene_name=released,
+                gene_namespace=KT2440_NAMESPACE,
+                identifier_mapping=_derived_mapping(released, tag),
+                call=call,
+            )
+        )
+    accounting = CalledVariantAccounting(
+        clone_column=clone_column,
+        strain=strain,
+        n_called_rows=len(rows),
+        n_candidate_perturbations=candidates,
+        n_written=len(written),
+        n_sequence_variants=counts["bacterial_sequence_variant"],
+        n_intergenic_variants=counts["bacterial_site_variant"],
+        n_span_deletion_loci=counts["bacterial_span_deletion"],
+        n_restating_a_designed_deletion=len(restated),
+        restated_loci=tuple(sorted(restated)),
+        written_identifiers=tuple(p.systematic_gene_name for p in written),
+    )
+    if accounting.n_written + accounting.n_restating_a_designed_deletion != candidates:
+        raise RuntimeError(
+            f"{clone_column}: {accounting.n_written} written + "
+            f"{accounting.n_restating_a_designed_deletion} restated != {candidates} "
+            "candidate perturbations"
+        )
+    return written, accounting
+
+
+def clone_variant_tokens(
+    calls: Sequence[CalledVariant], clone_columns: Iterable[str]
+) -> list[str]:
+    """Every distinct ``Gene`` token the given clone columns need, in released order."""
+    wanted = set(clone_columns)
+    tokens: list[str] = []
+    for call in sorted(calls, key=lambda c: c.position):
+        if not wanted & set(call.clones):
+            continue
+        for token in call.loci:
+            if token not in tokens:
+                tokens.append(token)
+    if not tokens:
+        raise SheetExtractionError(
+            f"{SHEET_MUTATIONS}: {sorted(wanted)} name no called locus"
+        )
+    return tokens
 
 
 # --------------------------------------------------------------------------- #
@@ -1911,23 +2357,28 @@ def ipl_background(
     )
 
 
-def strain_genotype(strain: str, symbols: Mapping[str, str]) -> Genotype:
-    """The DESIGNED deletions of one writable strain.
+def strain_genotype(
+    strain: str, symbols: Mapping[str, str], called: Sequence[GenePerturbationType] = ()
+) -> Genotype:
+    """The DESIGNED deletions of one writable strain, plus the calls it is given.
 
     KT2440 WT is the empty genotype (the reference). IPL300 is its six deletions, IPL400
-    those plus ``PP_1385``, and ``dPP_3024`` the single reverse-engineered deletion. None
-    of them carries the called variants the resequencing found, which no class holds.
+    those plus ``PP_1385``, and an evolved isolate its parent's seven. ``called`` is the
+    strain's own called variants as #731 perturbations, which the caller builds with
+    :func:`called_variant_perturbations` (already deduplicated against these designed
+    deletions) and passes explicitly; an empty sequence means no calls were given, which
+    is the case for ``KT2440 dPP_3024``, a reverse-engineered strain that is not one of
+    the 49 clone columns.
     """
     if strain == "KT2440":
-        return Genotype(perturbations=[])
-    if strain == "IPL300":
-        tags: tuple[str, ...] = IPL300_DELETIONS
-    elif strain == "IPL400":
-        tags = (*IPL300_DELETIONS, IPL400_EXTRA_DELETION)
+        return Genotype(perturbations=list(called))
+    if strain in {"IPL300", "IPL400", *EVOLVED_ISOLATE_CLONE_COLUMNS}:
+        tags = designed_deletion_tags(strain)
     else:
         raise ValueError(f"{strain!r} is not a starting strain of this campaign")
     return Genotype(
         perturbations=[deletion(tag, symbols.get(tag, tag)) for tag in sorted(tags)]
+        + list(called)
     )
 
 
@@ -2015,7 +2466,7 @@ class DropLog(BaseModel):
 
 
 class GenotypeGap(BaseModel):
-    """Genomic content a loaded strain carries that no perturbation class can state."""
+    """Genomic content a loaded strain carries that no class on the named axis states."""
 
     strain: str
     content: str
@@ -2065,19 +2516,14 @@ def reconcile_genotype_loci(
 
 
 def genotype_gaps() -> list[GenotypeGap]:
-    """The genomic content of the loaded strains that no class can state."""
-    preexisting = SOURCED_VALUES["preexisting_parent_mutations"]
+    """The genomic content of the loaded strains that no class can state.
+
+    The parents' own called variants were the first entry here and no longer are: the
+    three #731 leaves hold them, and every loaded record built from a clone column now
+    carries them as perturbations. What remains is the strain-BACKGROUND axis, where a
+    called variant still has no carrier, and ``PP_2676``'s truncation.
+    """
     return [
-        GenotypeGap(
-            strain="IPL300 and IPL400",
-            content="the called variants the resequencing found in both parents "
-            "(PP_4986, gacS, yhjE; IPL400 adds PP_4398). The released matrix puts 6 "
-            "calls on the IPL300 founder clone and 8 on the IPL400 founder clone",
-            reason="no perturbation leaf holds a called base change at a coordinate on "
-            "a pinned assembly; SequenceVariantPerturbation refuses a PP_ tag and "
-            "promises an allele sequence that was never deposited",
-            source_quote=preexisting.quote,
-        ),
         GenotypeGap(
             strain="IPL300 and IPL400",
             content=f"{PP2676_LOCUS}'s 14-codon N-terminal truncation, on the "
@@ -2089,6 +2535,20 @@ def genotype_gaps() -> list[GenotypeGap]:
             "proteome loader writes, which is the same typing the de Siqueira 2025 "
             "loader gives the same lesion",
             source_quote=SI1_STATEMENTS["pp2676_truncation"],
+        ),
+        GenotypeGap(
+            strain=" and ".join(sorted(EVOLVED_ISOLATE_CLONE_COLUMNS)),
+            content="each isolate's own called variants on the strain-BACKGROUND axis. "
+            "The proteome record's genome_reference carries its parent IPL400's "
+            "background (seven full_deletion alleles plus PP_2676), which is a FLOOR on "
+            "the genomic content of the isolate's own unstressed reference arm",
+            reason="BacterialBackgroundAllele requires a non-optional functional: bool, "
+            "which a called variant's consequence is unknown for and a ProvenanceGap "
+            "cannot cover (a gap must name a field that is None), and "
+            "BacterialStrainBackground permits one allele entry per locus, which refuses "
+            "A12_F53_I1's two PP_3415 calls. The calls ARE written, on the PERTURBATION "
+            "axis, as the three #731 leaves on each record's genotype",
+            source_quote=SOURCED_VALUES["evolved_isolate_parent"].quote,
         ),
     ]
 
@@ -2147,7 +2607,12 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
             )
         return self.pputida_genome
 
-    def _drop_log(self, matrix: MutationMatrix, kept: int) -> DropLog:
+    def _drop_log(
+        self,
+        matrix: MutationMatrix,
+        kept: int,
+        accounting: Sequence[CalledVariantAccounting],
+    ) -> DropLog:
         """Every row of Supplementary Table 3 and every figure-only readout, counted."""
         founder = ", ".join(
             f"{clone} ({n} calls)"
@@ -2174,23 +2639,53 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                     rule="final_growth_rate_is_an_evolved_population",
                     scope="record",
                     description="Supplementary Table 3's final growth rate is the "
-                    "average over a lineage's three LAST flasks, whose genotype is the "
-                    "evolved population's: the parent plus the called variants no "
-                    "perturbation class holds",
+                    "average over a lineage's three LAST flasks, so its strain is the "
+                    "evolving POPULATION in that flask, not one of the 46 sequenced "
+                    "isolates. The mutation matrix calls CLONES "
+                    f"(VariantCallMode.clone; {matrix.n_calls} calls, "
+                    f"{matrix.call_frequencies} by frequency), so it states no "
+                    "population allele frequency for a flask, and a population genotype "
+                    "would need a threshold on a frequency the release never gives for "
+                    "one. This refusal is unchanged by the #731 leaves, which hold a "
+                    "CLONE's calls",
                     n_items=1,
                     items=[f"{_S3_N_ROWS} final growth rates (one per lineage)"],
                 ),
                 DropRule(
-                    rule="evolved_clone_genotype_is_not_representable",
+                    rule="evolved_isolate_has_no_released_per_isolate_number",
                     scope="strain",
-                    description="no perturbation leaf holds a called base change at a "
-                    f"coordinate on {KT2440_REPLICON}: "
-                    f"{matrix.n_rows} released rows, {matrix.n_calls} per-clone calls, "
-                    f"{matrix.n_evolved_columns} evolved clone columns. "
-                    f"{matrix.n_intergenic} rows are intergenic (no locus to key to) and "
-                    f"{matrix.n_multi_locus} name more than one locus",
+                    description="the 46 evolved isolates ARE writable now: each clone "
+                    "column's calls become #731 perturbations on the parent's designed "
+                    f"deletions ({matrix.n_rows} released rows, {matrix.n_calls} "
+                    f"per-clone calls, {matrix.n_evolved_columns} evolved clone columns; "
+                    f"{matrix.n_intergenic} rows keyed on a site and "
+                    f"{matrix.n_multi_locus} spanning several loci). This dataset loads "
+                    "none of them because Supplementary Table 3 releases a growth rate "
+                    "per LINEAGE and not per isolate, and Fig. 2A's per-isolate rates "
+                    "are a figure with no numbers; the two isolates whose proteome IS "
+                    f"released are records of {ProteomeLim2025Dataset.__name__}",
                     n_items=matrix.n_evolved_columns,
                     items=[f"founder columns kept out of the evolved count: {founder}"],
+                ),
+                DropRule(
+                    rule="call_restates_a_designed_deletion",
+                    scope="perturbation",
+                    description="a called variant whose resolved locus the record's own "
+                    "strain already carries as a designed BacterialDeletionPerturbation "
+                    "is dropped, so absence has one encoding. Measured on the loaded "
+                    "records: PP_2675 (position 3063719), adhP/PP_3839 (4362918), the "
+                    "four loci of ivd,mccB,liuC,mccA/PP_4064-PP_4067 (4588139) and, for "
+                    "IPL400, ttgB/PP_1385 (1578244)",
+                    n_items=sum(
+                        row.n_restating_a_designed_deletion for row in accounting
+                    ),
+                    items=[
+                        f"{row.strain} ({row.clone_column}): "
+                        f"{row.n_restating_a_designed_deletion} of "
+                        f"{row.n_candidate_perturbations} restate "
+                        f"{list(row.restated_loci)}"
+                        for row in accounting
+                    ],
                 ),
                 DropRule(
                     rule="released_only_as_a_figure",
@@ -2272,12 +2767,31 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                 f"{len(variant_calls)} typed calls over {matrix.n_rows} released rows"
             )
 
+        founder_check = assert_founder_columns(variant_calls)
+
         genome = self._genome()
         symbols, report = reconcile_genotype_loci(genome, label=self.name)
         log.info(
             "Lim 2025 tolerance: genotype loci %s",
             {status.value: n for status, n in report.status_histogram.items()},
         )
+        founder_columns = [FOUNDER_CLONE_COLUMNS[arm.strain] for arm in record_arms]
+        variant_loci, variant_report = resolve_variant_loci(
+            genome,
+            clone_variant_tokens(variant_calls, founder_columns),
+            label=f"{self.name} called-variant loci",
+        )
+        called: dict[str, list[GenePerturbationType]] = {}
+        accounting: list[CalledVariantAccounting] = []
+        for arm in record_arms:
+            perturbations, row_accounting = called_variant_perturbations(
+                FOUNDER_CLONE_COLUMNS[arm.strain],
+                strain=arm.strain,
+                calls=variant_calls,
+                loci=variant_loci,
+            )
+            called[arm.strain] = perturbations
+            accounting.append(row_accounting)
 
         genome_reference = assembly_reference("KT2440")
         tale_environment = isoprenol_environment(TALE_DOSE_G_PER_L, TALE_DURATION_GAP)
@@ -2291,7 +2805,7 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
         for arm in record_arms:
             records.append(
                 (
-                    strain_genotype(arm.strain, symbols),
+                    strain_genotype(arm.strain, symbols, called[arm.strain]),
                     tale_environment,
                     response_phenotype(
                         arm.log2_ratio_to_wt,
@@ -2308,6 +2822,8 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                         "wt_mean_growth_rate": reference_arm.mean_growth_rate,
                         "log2_ratio_to_wt": arm.log2_ratio_to_wt,
                         "n_samples": arm.n_samples,
+                        "clone_column": FOUNDER_CLONE_COLUMNS[arm.strain],
+                        "n_called_perturbations": len(called[arm.strain]),
                     },
                 )
             )
@@ -2328,11 +2844,15 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                     "wt_mean_growth_rate": None,
                     "log2_ratio_to_wt": math.log2(PP3024_FOLD),
                     "n_samples": None,
+                    # Not one of the 49 clone columns: a reverse-engineered KT2440
+                    # deletion, never sequenced, so it has no called variants to carry.
+                    "clone_column": "",
+                    "n_called_perturbations": 0,
                 },
             )
         )
 
-        drop_log = self._drop_log(matrix, len(records))
+        drop_log = self._drop_log(matrix, len(records), accounting)
         drop_log.check()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -2378,6 +2898,18 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
         (out / "genotype_gaps.json").write_text(
             json.dumps([gap.model_dump() for gap in genotype_gaps()], indent=2)
         )
+        (out / "called_variant_perturbations.json").write_text(
+            json.dumps(
+                {
+                    "founder_check": founder_check.model_dump(),
+                    "locus_reconciliation": json.loads(
+                        variant_report.model_dump_json()
+                    ),
+                    "per_record": [row.model_dump() for row in accounting],
+                },
+                indent=2,
+            )
+        )
         (out / "extraction.json").write_text(
             json.dumps(
                 {
@@ -2405,6 +2937,8 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
                     "wt_mean_growth_rate": reference_arm.mean_growth_rate,
                     "log2_ratio_to_wt": 0.0,
                     "n_samples": reference_arm.n_samples,
+                    "clone_column": FOUNDER_CLONE_COLUMNS[reference_arm.strain],
+                    "n_called_perturbations": 0,
                 },
                 *rows,
             ]
@@ -2414,11 +2948,13 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
         )
         log.info(
             "Lim 2025 tolerance: %d records (IPL300, IPL400 at %g g/L isoprenol; "
-            "d%s at %g g/L), reference KT2440 = log2(1) = 0",
+            "d%s at %g g/L), reference KT2440 = log2(1) = 0; called variants written "
+            "%s",
             len(records),
             TALE_DOSE_G_PER_L,
             PP3024_LOCUS,
             PANEL_DOSE_G_PER_L,
+            {row.strain: row.n_written for row in accounting},
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -2435,7 +2971,12 @@ class IsoprenolToleranceLim2025Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 @register_dataset
 class ProteomeLim2025Dataset(ExperimentDataset):
-    """IPL400's Top3 proteome under 4 g/L isoprenol, referenced to its own baseline."""
+    """IPL400 and its two evolved isolates under 4 g/L isoprenol (Lim 2025).
+
+    Three records, one per strain, each the strain's Top3 log2 proteome under isoprenol
+    referenced to its OWN unstressed arm. The two evolved isolates carry their called
+    variants as #731 perturbations on top of their parent IPL400's designed deletions.
+    """
 
     REFERENCE_STRAIN: ClassVar[str] = "KT2440"
     PARENT_STRAIN: ClassVar[str] = "IPL400"
@@ -2523,34 +3064,24 @@ class ProteomeLim2025Dataset(ExperimentDataset):
         *,
         n_rows: int,
         shared_symbols: Sequence[str],
-        unreferenced: Sequence[str],
-        kept_proteins: int,
+        unreferenced: Mapping[str, Sequence[str]],
+        unstressed_only: Mapping[str, Sequence[str]],
+        kept_proteins: Mapping[str, int],
+        accounting: Sequence[CalledVariantAccounting],
     ) -> DropLog:
         """Every arm of the proteome deposit and every dropped protein key, counted."""
+        strains = list(PROTEOME_RECORD_SHEETS)
         return DropLog(
             dataset=self.name,
             source_rows=n_rows,
             reference_rows=[
-                f"{self.PARENT_STRAIN} in M9 + 4 g/L glucose (the baseline)"
+                f"{strain} in M9 + 4 g/L glucose (its own baseline)"
+                for strain in strains
             ],
-            candidate_records=1,
-            kept_records=1,
+            candidate_records=len(strains),
+            kept_records=len(strains),
             dropped_records=0,
             rules=[
-                DropRule(
-                    rule="arm_is_an_evolved_isolate",
-                    scope="arm",
-                    description="the evolved-isolate columns of the four comparison "
-                    "sheets are keyed to A10_F63_I1 and A12_F53_I1, whose genotype is "
-                    "the parent plus called variants no perturbation class holds",
-                    n_items=4,
-                    items=[
-                        "A10_F63_I1 M9G",
-                        "A10_F63_I1 M9G+4IP",
-                        "A12_F53_I1 M9G",
-                        "A12_F53_I1 M9G+4IP",
-                    ],
-                ),
                 DropRule(
                     rule="production_medium_has_no_media_library_entry",
                     scope="arm",
@@ -2569,10 +3100,11 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                 DropRule(
                     rule="unstressed_arm_is_the_reference_not_a_record",
                     scope="arm",
-                    description="IPL400 in M9 + 4 g/L glucose is the record's "
-                    "phenotype_reference, which is where its 2,361 abundances are stored",
-                    n_items=1,
-                    items=[f"{self.PARENT_STRAIN} M9G"],
+                    description="each strain in M9 + 4 g/L glucose is its own record's "
+                    "phenotype_reference, which is where that strain's unstressed "
+                    "abundances are stored",
+                    n_items=len(strains),
+                    items=[f"{strain} M9G" for strain in strains],
                 ),
                 DropRule(
                     rule="gene_symbol_filed_under_two_paralogous_loci",
@@ -2581,90 +3113,155 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                     "loci of three symbols (Ubid, Pyrc, Dapa) under distinct UniProt "
                     "accessions, and those rows are exactly the ones whose released t "
                     "statistic does not reproduce at n = 3; the statistics cannot be "
-                    "attributed to either paralog",
+                    "attributed to either paralog. Measured: the same six loci on all "
+                    "four consumed sheets",
                     n_items=len(shared_symbols),
                     items=list(shared_symbols),
                 ),
                 DropRule(
                     rule="no_key_matched_reference_abundance",
                     scope="protein_key",
-                    description="the locus is quantified under isoprenol but not in the "
-                    "unstressed reference arm, so the record would carry an abundance "
-                    "with no reference value (these are the seven the G+4IP sheet "
-                    "title-cases as 'Pp_0002')",
-                    n_items=len(unreferenced),
-                    items=list(unreferenced),
+                    description="the locus is quantified under isoprenol but not in that "
+                    "strain's own unstressed arm, so the record would carry an abundance "
+                    "with no reference value (the seven the G+4IP sheet title-cases as "
+                    "'Pp_0002')",
+                    n_items=sum(len(keys) for keys in unreferenced.values()),
+                    items=[
+                        f"{strain}: {list(keys)}"
+                        for strain, keys in sorted(unreferenced.items())
+                        if keys
+                    ],
+                ),
+                DropRule(
+                    rule="no_key_matched_isoprenol_abundance",
+                    scope="protein_key",
+                    description="the mirror case: the locus is quantified in the "
+                    "strain's unstressed arm but not under isoprenol, so the record's "
+                    "phenotype would have no value for a reference key. Measured: 0 for "
+                    "IPL400 and A10_F63_I1, 29 for A12_F53_I1, whose G+4IP sheet carries "
+                    "2,338 rows against the 2,367 of its M9G sheet",
+                    n_items=sum(len(keys) for keys in unstressed_only.values()),
+                    items=[
+                        f"{strain}: {list(keys)}"
+                        for strain, keys in sorted(unstressed_only.items())
+                        if keys
+                    ],
+                ),
+                DropRule(
+                    rule="call_restates_a_designed_deletion",
+                    scope="perturbation",
+                    description="a called variant whose resolved locus the isolate's "
+                    "parent already carries as a designed BacterialDeletionPerturbation "
+                    "is dropped from its genotype, so absence has one encoding",
+                    n_items=sum(
+                        row.n_restating_a_designed_deletion for row in accounting
+                    ),
+                    items=[
+                        f"{row.strain} ({row.clone_column}): "
+                        f"{row.n_restating_a_designed_deletion} of "
+                        f"{row.n_candidate_perturbations} restate "
+                        f"{list(row.restated_loci)}"
+                        for row in accounting
+                    ],
                 ),
             ],
             notes=[
-                f"{kept_proteins} protein keys are stored on the record and on its "
-                "reference, key-matched by construction",
+                f"protein keys stored per record (phenotype and reference, key-matched "
+                f"by construction): {dict(sorted(kept_proteins.items()))}",
                 "the released log2 values are stored verbatim; nothing is exponentiated, "
                 "imputed or rescaled",
                 "the four comparison sheets export ONE IPL400 measurement, asserted "
-                "bit-identical on every shared locus, so it becomes one record",
-                "the record's genome_reference carries the full IPL400 "
+                "bit-identical on every shared locus, so IPL400 becomes one record and "
+                "is never averaged across the four exports",
+                "each record compares one strain's isoprenol arm to its OWN unstressed "
+                "arm, which is what the sheets' per-arm absolute log2 Top3 means support; "
+                "the sheets' own evolved-vs-IPL400 ratio is not stored, because the "
+                "difference of the two stored means IS it",
+                "every record's genome_reference carries the IPL400 "
                 "BacterialStrainBackground (seven full_deletion alleles plus PP_2676 as "
-                "a partial_deletion), because this comparison's reference strain IS "
-                "IPL400; the same deletions also ride the genotype as the ML-facing "
-                "edits, which is how the de Siqueira 2025 loader types its PT strain",
+                "a partial_deletion); the same deletions also ride each genotype as the "
+                "ML-facing edits, which is how the de Siqueira 2025 loader types its PT "
+                "strain. For the two evolved isolates that background is a FLOOR on the "
+                "reference arm's genomic content, because a called variant cannot be a "
+                "BacterialBackgroundAllele; preprocess/genotype_gaps.json states it",
+                "the called variants of each evolved isolate ARE written, on the "
+                "perturbation axis: "
+                + "; ".join(
+                    f"{row.strain} {row.n_written} "
+                    f"({row.n_sequence_variants} in a locus, "
+                    f"{row.n_intergenic_variants} keyed on a site, "
+                    f"{row.n_span_deletion_loci} span-deletion loci)"
+                    for row in accounting
+                ),
             ],
         )
 
     @post_process
     def process(self) -> None:
-        """Build IPL400's isoprenol-stress proteome record and write the LMDB."""
+        """Build the three strains' isoprenol-stress proteome records, write the LMDB."""
         verify_raw_files(self.raw_dir, DATA_SHA256)
         path = osp.join(self.raw_dir, SI2_XLSX)
 
-        baseline_rows = read_proteome_sheet(path, SHEET_PROTEOME_M9G)
-        stressed_rows = read_proteome_sheet(path, SHEET_PROTEOME_IPL)
-        shared_symbols = sorted(
-            set(shared_symbol_loci(baseline_rows))
-            | set(shared_symbol_loci(stressed_rows))
+        sheets = sorted(
+            {
+                sheet
+                for triple in PROTEOME_RECORD_SHEETS.values()
+                for sheet in triple[:2]
+            }
         )
+        sheet_rows = {sheet: read_proteome_sheet(path, sheet) for sheet in sheets}
+        shared_symbols = sorted(
+            set().union(
+                *(set(shared_symbol_loci(rows)) for rows in sheet_rows.values())
+            )
+        )
+        skip = set(shared_symbols)
         residuals = {
-            SHEET_PROTEOME_M9G: assert_sheet_statistics(
-                [
-                    row
-                    for row in baseline_rows
-                    if row.locus_tag not in set(shared_symbols)
-                ],
-                sheet=SHEET_PROTEOME_M9G,
-            ),
-            SHEET_PROTEOME_IPL: assert_sheet_statistics(
-                [
-                    row
-                    for row in stressed_rows
-                    if row.locus_tag not in set(shared_symbols)
-                ],
-                sheet=SHEET_PROTEOME_IPL,
-            ),
+            sheet: assert_sheet_statistics(
+                [row for row in rows if row.locus_tag not in skip], sheet=sheet
+            )
+            for sheet, rows in sheet_rows.items()
         }
         duplicates = self._assert_duplicate_exports(path, shared_symbols)
 
         sample_key = read_sample_key(path)
-        for sample in (SAMPLE_KEY_M9G, SAMPLE_KEY_IPL):
-            token = sample_key.get(sample)
-            if token != PROTEOME_REPLICATE_TOKEN:
-                raise SheetExtractionError(
-                    f"{SHEET_SAMPLE_KEY} gives {sample!r} replicates {token!r}, not "
-                    f"{PROTEOME_REPLICATE_TOKEN!r}; the stored n_replicates would be wrong"
-                )
+        for samples in PROTEOME_SAMPLE_NAMES.values():
+            for sample in samples:
+                token = sample_key.get(sample)
+                if token != PROTEOME_REPLICATE_TOKEN:
+                    raise SheetExtractionError(
+                        f"{SHEET_SAMPLE_KEY} gives {sample!r} replicates {token!r}, not "
+                        f"{PROTEOME_REPLICATE_TOKEN!r}; the stored n_replicates would be "
+                        "wrong"
+                    )
 
-        baseline = parent_arm(baseline_rows, shared_symbols)
-        stressed = parent_arm(stressed_rows, shared_symbols)
-        unreferenced = sorted(set(stressed) - set(baseline))
-        keys = sorted(set(baseline) & set(stressed))
-        if not keys:
-            raise SheetExtractionError(f"{self.name}: the two arms share no locus")
-        baseline = {tag: baseline[tag] for tag in keys}
-        stressed = {tag: stressed[tag] for tag in keys}
+        column = {"parent": parent_arm, "test": test_arm}
+        arms: dict[str, tuple[dict[str, tuple[float, float]], ...]] = {}
+        unreferenced: dict[str, list[str]] = {}
+        unstressed_only: dict[str, list[str]] = {}
+        for strain, (flat, stress, which) in PROTEOME_RECORD_SHEETS.items():
+            read = column[which]
+            baseline = read(sheet_rows[flat], shared_symbols)
+            stressed = read(sheet_rows[stress], shared_symbols)
+            unreferenced[strain] = sorted(set(stressed) - set(baseline))
+            unstressed_only[strain] = sorted(set(baseline) - set(stressed))
+            keys = sorted(set(baseline) & set(stressed))
+            if not keys:
+                raise SheetExtractionError(
+                    f"{self.name}: {strain}'s two arms share no locus"
+                )
+            arms[strain] = (
+                {tag: baseline[tag] for tag in keys},
+                {tag: stressed[tag] for tag in keys},
+            )
 
         genome = self._genome()
-        stored, report = reconcile_locus_tags(genome, pd.Series(keys), label=self.name)
+        all_keys = sorted(set().union(*(set(arm[0]) for arm in arms.values())))
+        stored, report = reconcile_locus_tags(
+            genome, pd.Series(all_keys), label=self.name
+        )
         report.require_resolved(MIN_RESOLVED_FRACTION)
-        if sorted(stored.tolist()) != keys:
+        if sorted(stored.tolist()) != all_keys:
             raise RuntimeError(
                 f"{self.name}: reconciliation moved a released locus tag, which would "
                 "re-key the abundance map"
@@ -2673,33 +3270,69 @@ class ProteomeLim2025Dataset(ExperimentDataset):
             genome, label=f"{self.name} genotype"
         )
 
+        variant_calls = read_variant_calls(path)
+        founder_check = assert_founder_columns(variant_calls)
+        clone_columns = list(EVOLVED_ISOLATE_CLONE_COLUMNS.values())
+        variant_loci, variant_report = resolve_variant_loci(
+            genome,
+            clone_variant_tokens(variant_calls, clone_columns),
+            label=f"{self.name} called-variant loci",
+        )
+        called: dict[str, list[GenePerturbationType]] = {}
+        accounting: list[CalledVariantAccounting] = []
+        for isolate, clone_column in EVOLVED_ISOLATE_CLONE_COLUMNS.items():
+            perturbations, row_accounting = called_variant_perturbations(
+                clone_column, strain=isolate, calls=variant_calls, loci=variant_loci
+            )
+            called[isolate] = perturbations
+            accounting.append(row_accounting)
+
         drop_log = self._drop_log(
-            n_rows=len(baseline_rows) + len(stressed_rows),
+            n_rows=sum(len(rows) for rows in sheet_rows.values()),
             shared_symbols=shared_symbols,
             unreferenced=unreferenced,
-            kept_proteins=len(keys),
+            unstressed_only=unstressed_only,
+            kept_proteins={strain: len(arm[0]) for strain, arm in arms.items()},
+            accounting=accounting,
         )
         drop_log.check()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
-        experiment = BacterialProteinAbundanceExperiment(
-            dataset_name=self.name,
-            genotype=strain_genotype(self.PARENT_STRAIN, symbols),
-            environment=isoprenol_environment(TALE_DOSE_G_PER_L, PROTEOME_DURATION_GAP),
-            phenotype=abundance_phenotype(stressed),
-        )
-        reference = BacterialProteinAbundanceExperimentReference(
-            dataset_name=self.name,
-            genome_reference=assembly_reference(
-                "KT2440", background=ipl_background(self.PARENT_STRAIN, symbols)
-            ),
-            environment_reference=unstressed_environment(),
-            phenotype_reference=abundance_phenotype(baseline),
+        # Every record's reference strain is the PARENT's designed content: IPL400's
+        # background is what CAN be said of an evolved isolate's background, since a
+        # called variant is no BacterialBackgroundAllele (genotype_gaps.json states it).
+        genome_reference = assembly_reference(
+            "KT2440", background=ipl_background(self.PARENT_STRAIN, symbols)
         )
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            txn.put(b"0", self._intern_record(experiment, reference, PUBLICATION, itxn))
+            for index, strain in enumerate(
+                tqdm(list(PROTEOME_RECORD_SHEETS), desc="lim2025-proteome")
+            ):
+                baseline, stressed = arms[strain]
+                experiment = BacterialProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=strain_genotype(
+                        self.PARENT_STRAIN if strain == self.PARENT_STRAIN else strain,
+                        symbols,
+                        called.get(strain, []),
+                    ),
+                    environment=isoprenol_environment(
+                        TALE_DOSE_G_PER_L, PROTEOME_DURATION_GAP
+                    ),
+                    phenotype=abundance_phenotype(stressed),
+                )
+                reference = BacterialProteinAbundanceExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=genome_reference,
+                    environment_reference=unstressed_environment(),
+                    phenotype_reference=abundance_phenotype(baseline),
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, PUBLICATION, itxn),
+                )
         env.close()
         interned_env.close()
 
@@ -2714,6 +3347,20 @@ class ProteomeLim2025Dataset(ExperimentDataset):
         (out / "genotype_gaps.json").write_text(
             json.dumps([gap.model_dump() for gap in genotype_gaps()], indent=2)
         )
+        (out / "called_variant_perturbations.json").write_text(
+            json.dumps(
+                {
+                    "founder_check": founder_check.model_dump(),
+                    "evolved_isolate_parent": EVOLVED_ISOLATE_PARENT,
+                    "parent_quote": SOURCED_VALUES["evolved_isolate_parent"].quote,
+                    "locus_reconciliation": json.loads(
+                        variant_report.model_dump_json()
+                    ),
+                    "per_record": [row.model_dump() for row in accounting],
+                },
+                indent=2,
+            )
+        )
         (out / "statistics_back_solve.json").write_text(
             json.dumps(
                 {
@@ -2724,8 +3371,9 @@ class ProteomeLim2025Dataset(ExperimentDataset):
                     "welch_tolerance": WELCH_TOLERANCE,
                     "duplicate_exports": duplicates,
                     "sample_key": {
-                        SAMPLE_KEY_M9G: sample_key[SAMPLE_KEY_M9G],
-                        SAMPLE_KEY_IPL: sample_key[SAMPLE_KEY_IPL],
+                        sample: sample_key[sample]
+                        for samples in PROTEOME_SAMPLE_NAMES.values()
+                        for sample in samples
                     },
                 },
                 indent=2,
@@ -2734,23 +3382,27 @@ class ProteomeLim2025Dataset(ExperimentDataset):
         pd.DataFrame(
             [
                 {
+                    "strain": strain,
                     "locus_tag": tag,
-                    "log2_mean_unstressed": baseline[tag][0],
-                    "log2_sd_unstressed": baseline[tag][1],
-                    "log2_mean_isoprenol": stressed[tag][0],
-                    "log2_sd_isoprenol": stressed[tag][1],
+                    "log2_mean_unstressed": arms[strain][0][tag][0],
+                    "log2_sd_unstressed": arms[strain][0][tag][1],
+                    "log2_mean_isoprenol": arms[strain][1][tag][0],
+                    "log2_sd_isoprenol": arms[strain][1][tag][1],
                 }
-                for tag in keys
+                for strain in PROTEOME_RECORD_SHEETS
+                for tag in arms[strain][0]
             ]
-        ).to_csv(out / "ipl400_proteome.csv", index=False)
+        ).to_csv(out / "lim2025_proteome.csv", index=False)
         log.info(
-            "Lim 2025 proteome: 1 record (%s under %g g/L isoprenol) over %d protein "
-            "keys; %d dropped as shared symbols, %d as unreferenced",
-            self.PARENT_STRAIN,
+            "Lim 2025 proteome: %d records (%s under %g g/L isoprenol, each against its "
+            "own unstressed arm) over %s protein keys; %d dropped as shared symbols. "
+            "Called variants written %s",
+            len(arms),
+            ", ".join(PROTEOME_RECORD_SHEETS),
             TALE_DOSE_G_PER_L,
-            len(keys),
+            {strain: len(arm[0]) for strain, arm in arms.items()},
             len(shared_symbols),
-            len(unreferenced),
+            {row.strain: row.n_written for row in accounting},
         )
 
     def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
@@ -2781,6 +3433,39 @@ PROTEOME_PROVENANCE = Provenance(
     "reference = the same strain's unstressed arm",
     page="Metab. Eng. 2025, Supplementary Data 1",
 )
+
+
+#: A perturbation identifier of the site-keyed leaf: ``<replicon>:<1-based position>``.
+#: It is deliberately not a gene, so the L4 gene-containment rows below partition the
+#: stored identifiers on it rather than counting a site as a missing gene.
+_SITE_ID_RE = re.compile(rf"^{re.escape(KT2440_REPLICON)}:\d+$")
+
+
+def _assert_site_identifiers(
+    report: VerificationReport, measured: Iterable[str], *, name: str
+) -> set[str]:
+    """Split stored identifiers into locus tags and site ids; check the site ids.
+
+    A ``BacterialSiteVariantPerturbation`` is keyed on ``AE015451:<position>`` precisely
+    because no locus tag of the pinned assembly holds the call, so asking the gene
+    universe to contain one would fail by design. The site ids get their own L4 row --
+    the replicon is the one the assembly carries and the position is inside it -- and
+    only the locus tags go to the gene-containment row.
+    """
+    sites = sorted(tag for tag in measured if _SITE_ID_RE.match(tag))
+    positions = [int(tag.split(":")[1]) for tag in sites]
+    bad = [tag for tag, position in zip(sites, positions, strict=True) if position < 1]
+    report.add(
+        LevelResult(
+            level=Level.L4,
+            name=f"site_identifiers_{name}",
+            passed=not bad,
+            message=f"{len(sites) - len(bad)} of {len(sites)} site-keyed identifiers "
+            f"are 1-based positions on {KT2440_REPLICON}",
+            details={"n_sites": len(sites), "sites": sites, "malformed": bad},
+        )
+    )
+    return {tag for tag in measured if not _SITE_ID_RE.match(tag)}
 
 
 def _expected_count(abs_root: str) -> int:
@@ -2835,7 +3520,9 @@ def run_tolerance_verification(data_root: str | None = None) -> VerificationRepo
         expected_count=_expected_count(abs_root),
         resolve_gene_name=genome.resolve_gene_name,
     )
-    deleted = environment_response_gene_set(records)
+    deleted = _assert_site_identifiers(
+        report, environment_response_gene_set(records), name="deleted_loci"
+    )
     missing = sorted(deleted - universe)
     report.add(
         LevelResult(
@@ -2875,14 +3562,26 @@ def run_proteome_verification(data_root: str | None = None) -> VerificationRepor
     if len(references) != 1:
         raise ValueError(f"{len(references)} distinct genome references; expected 1")
     universe = _gene_set_for_reference(json.loads(references.pop()), base)
+    # ``allow_duplicate_orfs`` because this is not a knockout screen: the three records
+    # are three STRAINS of one lineage, so each shares its parent IPL400's seven designed
+    # deletions by construction, and the two evolved isolates additionally share the
+    # founder calls IPL400 already carried. Record identity is the genotype as a whole,
+    # which L1 ``count`` plus the distinct ``Genotype`` of each record carry; one record
+    # per deleted ORF was never this dataset's shape.
     report = verify_protein_dataset(
         records,
         dataset_name=ProteomeLim2025Dataset.__name__,
         provenance=PROTEOME_PROVENANCE,
         expected_count=_expected_count(abs_root),
+        allow_duplicate_orfs=True,
     )
     for name, measured in (
-        ("deleted_loci", protein_gene_set(records)),
+        (
+            "deleted_loci",
+            _assert_site_identifiers(
+                report, protein_gene_set(records), name="deleted_loci"
+            ),
+        ),
         (
             "quantified_loci",
             {

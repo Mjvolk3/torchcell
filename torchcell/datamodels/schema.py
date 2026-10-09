@@ -2657,7 +2657,12 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
 #      a clone carrying two calls in one gene (Lim's ``PP_3415`` P293S + V46I in
 #      A12_F53_I1) -> ``Genotype.perturbations`` has no such rule, so two calls in one
 #      locus are two perturbations.
-#   4. An intergenic call names no locus -> its own leaf, keyed on the SITE.
+#   4. A call with no locus tag of the pinned assembly to key to -> its own leaf,
+#      keyed on the SITE. Two measured reasons, typed apart by ``VariantSiteKind``:
+#      the call is intergenic, or the release named a locus in an identifier space the
+#      assembly does not carry (de Siqueira's 10 RefSeq-only calls name ``PP_RS21780``
+#      and ``PP_RS19075``, and ``resolve_gene_name`` on the pinned GenBank assembly
+#      returns ``retired``, "not found", for both).
 #
 # The call itself is COMPOSED (``BacterialVariantCall``) rather than repeated on each
 # leaf, so what a call is is defined once and the three leaves differ only in WHERE
@@ -2736,6 +2741,28 @@ class VariantFrequencyBasis(StrEnum):
     percent = "percent"
 
 
+class VariantSiteKind(StrEnum):
+    """Why a called variant is keyed on its genomic SITE rather than on a locus tag.
+
+    Two measured cases, and the distinction matters because only one of them is a
+    statement about the genome's annotation.
+
+    - ``intergenic``: the caller placed the variant between loci and the release says
+      so (105 of de Siqueira 2025's 173 calls carry no locus, and 17 of Lim 2025's 159
+      read ``intergenic`` with the two flanking loci named).
+    - ``locus_not_in_assembly``: the release DID name a locus, but in an identifier
+      space the pinned assembly does not carry, so no locus tag of it holds the call.
+      Measured: de Siqueira's 10 RefSeq-only calls name ``PP_RS21780`` (9) and
+      ``PP_RS19075`` (1), and ``resolve_gene_name`` on the pinned KT2440 GenBank
+      assembly (GCA_000007565.2, ASM756v2) returns ``retired``, "not found in
+      GCA_000007565.2_ASM756v2; retained as given", for both. Keying such a call to a
+      neighboring locus would invent a mapping our own bytes refuse.
+    """
+
+    intergenic = "intergenic"
+    locus_not_in_assembly = "locus_not_in_assembly"
+
+
 class BacterialVariantCall(ProvenanceGapMixin):
     """One called variant, exactly as a resequencing release states it.
 
@@ -2782,16 +2809,19 @@ class BacterialVariantCall(ProvenanceGapMixin):
     position_start: int = Field(description="1-based start of the change")
     position_end: int = Field(
         description="1-based, end-INCLUSIVE end of the change; equals position_start "
-        "for a point change"
+        "for a point change, and for an INSERTION may be position_start - 1, which is "
+        "how a caller writes the zero-length reference interval an insertion sits in"
     )
-    sequence_change: str = Field(
+    sequence_change: str | None = Field(
+        default=None,
         description="the released change cell, verbatim (e.g. 'G->A', 'A -> G', '+C', "
-        "'2 bp->CG', the delta-bp form of a deletion)"
+        "'2 bp->CG', the delta-bp form of a deletion); None when the release gives the "
+        "two alleles in their own columns instead and no fused cell",
     )
     reference_allele: str | None = Field(
         default=None,
-        description="the reference base(s), when the release gives them in their own "
-        "column rather than fused into sequence_change",
+        description="the reference base(s), verbatim, when the release gives them in "
+        "their own column (de Siqueira writes '--' for an insertion site)",
     )
     alternate_allele: str | None = Field(
         default=None, description="the alternate base(s), on the same condition"
@@ -2841,7 +2871,12 @@ class BacterialVariantCall(ProvenanceGapMixin):
         """Ordered 1-based coordinates, a sourced-or-gapped frequency, a stated basis."""
         if self.position_start < 1:
             raise ValueError(f"position_start is 1-based, got {self.position_start}")
-        if self.position_end < self.position_start:
+        floor = (
+            self.position_start - 1
+            if self.variant_type is BacterialVariantType.insertion
+            else self.position_start
+        )
+        if self.position_end < floor:
             raise ValueError(
                 f"a call needs position_start <= position_end, got "
                 f"{self.position_start}..{self.position_end}"
@@ -2850,8 +2885,19 @@ class BacterialVariantCall(ProvenanceGapMixin):
             raise ValueError("BacterialVariantCall needs a reference_sequence")
         if not self.type_statement.strip():
             raise ValueError("BacterialVariantCall needs a type_statement")
-        if not self.sequence_change.strip():
-            raise ValueError("BacterialVariantCall needs a sequence_change")
+        if self.sequence_change is not None and not self.sequence_change.strip():
+            raise ValueError("sequence_change is the released cell or None, not blank")
+        if (
+            self.sequence_change is None
+            and self.reference_allele is None
+            and self.alternate_allele is None
+        ):
+            raise ValueError(
+                "a call states WHAT changed: the release's fused change cell "
+                "(sequence_change), or an allele column. One SIDE may legitimately be "
+                "absent -- an insertion replaces no reference bases, and de Siqueira "
+                "2025 writes '--' or an empty cell there -- but all three cannot be"
+            )
         _require_value_or_gap(self, ("frequency_statement",))
         if self.frequency is None:
             if self.frequency_basis is not None:
@@ -2882,7 +2928,13 @@ class BacterialVariantCall(ProvenanceGapMixin):
 
     @property
     def span_length(self) -> int:
-        """Bases the call covers on the replicon (1 for a point change)."""
+        """Reference bases the call covers (1 for a point change, 0 for an insertion).
+
+        Measured: 21 of de Siqueira 2025's 173 calls are insertions released with
+        ``Maximum == Minimum - 1`` and ``Length`` 0, which is the zero-length interval
+        between two reference bases, so the coordinates are stored as released rather
+        than normalized to a one-base span the source never wrote.
+        """
         return self.position_end - self.position_start + 1
 
 
@@ -2978,38 +3030,53 @@ class BacterialSequenceVariantPerturbation(
     )
 
 
-class BacterialIntergenicVariantPerturbation(
+class BacterialSiteVariantPerturbation(
     HashableProvenanceGapMixin, BacterialVariantPerturbation, ModelStrict
 ):
-    """A called variant that sits BETWEEN loci, keyed on the site rather than a gene.
+    """A called variant keyed on its genomic SITE, because no locus tag holds it.
 
-    The 105 de Siqueira calls with no locus tag and the 17 intergenic Lim rows. Its
+    ``site_kind`` says why, and the two reasons are different claims (see
+    ``VariantSiteKind``): the caller placed the variant BETWEEN loci, or the release
+    named a locus in an identifier space the pinned assembly does not carry. Together
+    they are 122 of de Siqueira 2025's 173 calls and 17 of Lim 2025's 159, so the
+    carrier is not an edge case.
+
     ``systematic_gene_name`` is the derived site id ``<replicon>:<position_start>``
-    (checked here to equal the call's own replicon and position, so it cannot drift from
-    the call it names), and ``perturbed_gene_name`` is the release's flanking-gene cell
-    verbatim (Lim writes ``PP_4061, PP_4063``; de Siqueira writes nothing, and the site
-    id stands in).
+    (checked here against the call's own replicon and position, so it cannot drift from
+    the call it names), and ``perturbed_gene_name`` is the release's own label for the
+    place: Lim writes the two flanking loci ``PP_4061, PP_4063``, de Siqueira writes
+    nothing for an intergenic call and ``PP_RS21780`` for a RefSeq-only one.
 
     ``flanking_systematic_gene_names`` carries the flanking loci as resolved tags WHEN
-    the release names them, in the released left-to-right order, so "which gene is this
+    the release names them, in released left-to-right order, so "which gene is this
     variant upstream of" stays answerable without claiming the variant is in either.
-    It is empty for a release that names no neighbour.
+    ``released_locus_statement`` carries the unmappable identifier verbatim, and is
+    required for ``locus_not_in_assembly`` and forbidden for ``intergenic`` -- an
+    intergenic call names no locus to record.
     """
 
     description: str = (
-        "Called sequence variant between bacterial loci, keyed on its genomic site"
+        "Called sequence variant keyed on its genomic site, because no locus tag of the "
+        "pinned assembly holds it"
     )
-    perturbation_type: Literal["bacterial_intergenic_variant"] = (
-        "bacterial_intergenic_variant"
+    perturbation_type: Literal["bacterial_site_variant"] = "bacterial_site_variant"
+    site_kind: VariantSiteKind = Field(
+        description="why the call is keyed on its site rather than on a locus tag"
     )
     flanking_systematic_gene_names: tuple[str, ...] = Field(
         default=(),
         description="the flanking loci as resolved tags, in released order; empty when "
-        "the release names no neighbour",
+        "the release names no neighbor",
     )
     flanking_gene_statement: str | None = Field(
         default=None,
         description="the release's flanking-gene cell, verbatim, when it has one",
+    )
+    released_locus_statement: str | None = Field(
+        default=None,
+        description="the locus identifier the release named, verbatim, when the pinned "
+        "assembly carries no tag for it (e.g. the RefSeq 'PP_RS21780'); set iff "
+        "site_kind is locus_not_in_assembly",
     )
 
     @field_validator("systematic_gene_name", mode="after")
@@ -3018,8 +3085,8 @@ class BacterialIntergenicVariantPerturbation(
         """A site id, never a locus tag (a tag would claim the variant is in a gene)."""
         if _namespace_of_locus_tag(v) is not None:
             raise ValueError(
-                f"{v!r} is a bacterial locus tag; an intergenic call is keyed on its "
-                "site, and a call inside a locus is a "
+                f"{v!r} is a bacterial locus tag; a site-keyed call is keyed on its "
+                "site, and a call inside a locus of the pinned assembly is a "
                 "BacterialSequenceVariantPerturbation"
             )
         if not re.match(VARIANT_SITE_ID_PATTERN, v):
@@ -3029,8 +3096,8 @@ class BacterialIntergenicVariantPerturbation(
         return v
 
     @model_validator(mode="after")
-    def _check_site(self) -> "BacterialIntergenicVariantPerturbation":
-        """The site id is the one its own call determines, and the flanks are tags."""
+    def _check_site(self) -> "BacterialSiteVariantPerturbation":
+        """The site id matches its own call; flanks are tags; the locus rule holds."""
         expected = _variant_site_id(
             self.call.reference_sequence, self.call.position_start
         )
@@ -3044,6 +3111,19 @@ class BacterialIntergenicVariantPerturbation(
                 raise ValueError(
                     f"flanking locus {tag!r} is not a {self.gene_namespace} tag"
                 )
+        unmapped = self.site_kind is VariantSiteKind.locus_not_in_assembly
+        if unmapped != (self.released_locus_statement is not None):
+            raise ValueError(
+                "released_locus_statement is required for site_kind="
+                "locus_not_in_assembly and forbidden for site_kind=intergenic, got "
+                f"site_kind={self.site_kind.value} with "
+                f"released_locus_statement={self.released_locus_statement!r}"
+            )
+        if unmapped and self.flanking_systematic_gene_names:
+            raise ValueError(
+                "a call inside a locus the assembly does not carry has no flanking "
+                "loci; those belong to an intergenic call"
+            )
         return self
 
     @classmethod
@@ -3152,7 +3232,7 @@ GenePerturbationType = (
     | PromoterReplacementPerturbation
     | HeterologousPathwayPerturbation
     | BacterialSequenceVariantPerturbation
-    | BacterialIntergenicVariantPerturbation
+    | BacterialSiteVariantPerturbation
     | BacterialSpanDeletionPerturbation
 )
 

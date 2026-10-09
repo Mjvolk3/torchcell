@@ -234,6 +234,7 @@ def _case(
     crispr: bool = False,
     env_perturbation: bool = True,
     phage: bool = False,
+    variant: bool = False,
 ) -> Bacterial:
     shape = Shape(
         phenotype,
@@ -242,6 +243,7 @@ def _case(
         env_perturbation=env_perturbation,
         phage=phage,
         bacterial=True,
+        variant=variant,
     )
     return Bacterial(
         AdapterCase(adapter_cls, f"{slug}_adapter.yaml", shape, dataset_cls),
@@ -625,6 +627,7 @@ BACTERIAL: list[Bacterial] = [
         "proteome_desiqueira2025",
         ProteomeDeSiqueira2025Dataset,
         PROTEOME,
+        variant=True,
     ),
     _case(
         ProteomePercentDeSiqueira2025Adapter,
@@ -632,6 +635,7 @@ BACTERIAL: list[Bacterial] = [
         "proteome_percent_desiqueira2025",
         ProteomePercentDeSiqueira2025Dataset,
         PROTEOME,
+        variant=True,
     ),
     _case(
         ProteomeLog10PercentDeSiqueira2025Adapter,
@@ -639,6 +643,7 @@ BACTERIAL: list[Bacterial] = [
         "proteome_log10_percent_desiqueira2025",
         ProteomeLog10PercentDeSiqueira2025Dataset,
         PROTEOME,
+        variant=True,
     ),
     _case(
         IsoprenolTiterDeSiqueira2025Adapter,
@@ -646,6 +651,7 @@ BACTERIAL: list[Bacterial] = [
         "isoprenol_titer_desiqueira2025",
         IsoprenolTiterDeSiqueira2025Dataset,
         TITER,
+        variant=True,
     ),
     _case(
         IsoprenylAcetateTiterKang2026Adapter,
@@ -667,6 +673,7 @@ BACTERIAL: list[Bacterial] = [
         "isoprenol_tolerance_lim2025",
         IsoprenolToleranceLim2025Dataset,
         RESPONSE,
+        variant=True,
     ),
     _case(
         ProteomeLim2025Adapter,
@@ -674,6 +681,7 @@ BACTERIAL: list[Bacterial] = [
         "proteome_lim2025",
         ProteomeLim2025Dataset,
         PROTEOME,
+        variant=True,
     ),
     _case(
         IsoprenolSelectionMenasalvas2025Adapter,
@@ -805,9 +813,11 @@ RECORDS = 200
 # Chunked node methods a conf enables only when the records carry that sub-object.
 ENV_PERTURBATION_NODE = "environment perturbation (chunked)"
 PHAGE_NODE = "phage perturbation (chunked)"
+VARIANT_NODE = "bacterial sequence variant perturbation (chunked)"
 PHAGE_NODE_LABEL = "phage perturbation"
 OPTIONAL_FAMILIES = (
     "bacterial perturbation (chunked)",
+    VARIANT_NODE,
     "crispr construct (chunked)",
     ENV_PERTURBATION_NODE,
     PHAGE_NODE,
@@ -953,6 +963,7 @@ def assert_dev_store_graph(
     assert shape.phenotype in labels
     assert "perturbation" not in labels
     assert ("bacterial perturbation" in labels) is shape.perturbation
+    assert ("bacterial sequence variant perturbation" in labels) is shape.variant
     assert ("crispr construct" in labels) is shape.crispr
     assert ("environment perturbation" in labels) is shape.env_perturbation
     assert ("phage perturbation" in labels) is shape.phage

@@ -365,6 +365,13 @@ class Visibility(StrEnum):
     private = "private"
 
 
+#: ``perturbation_type`` of the called-variant leaf whose identifier is a genomic SITE
+#: rather than a locus tag (``BacterialSequenceVariantPerturbation``'s sibling, issue
+#: #731). Stated as a string, not imported as a class, because this module is the
+#: dataset base and must not depend on which leaves exist.
+SITE_VARIANT_PERTURBATION_TYPE = "bacterial_site_variant"
+
+
 class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric
     """Abstract PyG dataset storing experiment items in an LMDB store."""
 
@@ -730,9 +737,25 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
 
     @staticmethod
     def extract_systematic_gene_names(genotype: dict[str, Any]) -> list[str]:
-        """Return the systematic gene names of all perturbations in a genotype."""
+        """Return the systematic gene names of all perturbations in a genotype.
+
+        A SITE-keyed called variant (``bacterial_site_variant``, issue #731) is left
+        out: its identifier is the derived ``<replicon>:<position>``, and the whole
+        point of that leaf is that no locus of the assembly holds the call, so putting
+        it in the gene set would create a gene node for a place that is not a gene.
+        The call's flanking loci, where the release names them, ARE loci and are
+        collected, so an intergenic variant still reaches the genes it sits between.
+        """
         gene_names: list[str] = []
         for perturbation in cast(list[dict[str, Any]], genotype.get("perturbations")):
+            if perturbation.get("perturbation_type") == SITE_VARIANT_PERTURBATION_TYPE:
+                gene_names.extend(
+                    cast(
+                        list[str],
+                        perturbation.get("flanking_systematic_gene_names") or [],
+                    )
+                )
+                continue
             gene_name = cast(str, perturbation.get("systematic_gene_name"))
             gene_names.append(gene_name)
         return gene_names

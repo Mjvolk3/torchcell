@@ -2470,7 +2470,7 @@ def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     the wrong reason. An extra copy of a NATIVE gene names its real locus tag and stays
     in.
 
-    A ``BacterialIntergenicVariantPerturbation`` (issue #731) is excluded for the same
+    A ``BacterialSiteVariantPerturbation`` (issue #731) is excluded for the same
     kind of reason: its identifier is the derived site id ``<replicon>:<position>``,
     because the call sits in no locus at all, so it is not a claim about a gene of the
     assembly and cannot be checked as one. Its flanking loci ARE such claims and are
@@ -2480,7 +2480,7 @@ def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     for record in records:
         species = record["reference"]["genome_reference"]["species"]
         for perturbation in record["experiment"]["genotype"]["perturbations"]:
-            if perturbation.get("perturbation_type") == "bacterial_intergenic_variant":
+            if perturbation.get("perturbation_type") == "bacterial_site_variant":
                 genes |= {
                     str(tag)
                     for tag in perturbation.get("flanking_systematic_gene_names", ())

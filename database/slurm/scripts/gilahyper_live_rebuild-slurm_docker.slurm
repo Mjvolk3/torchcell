@@ -1,9 +1,9 @@
 #!/bin/bash
 #SBATCH --job-name=live_rebuild_kg
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=64
 #SBATCH --mem=256G
-#SBATCH --time=4-00:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --error=/scratch/projects/torchcell/database/slurm/output/%j_%x.out
 #SBATCH --no-requeue
@@ -62,20 +62,38 @@
 # in the preflight. INCLUDE_PRIVATE=0 builds the public datasets alone. A tc-data
 # release refuses a private dataset either way (scripts/package_dataset_lmdb.py).
 #
-# RESOURCES. 24 CPUs and 256 G, measured. The generation container's anonymous memory
-# scales with the adapter worker count (SLURM_CPUS_PER_TASK sets it): job 1996 at 32
-# CPUs / 200 G was OOM-killed 15 min in at the Costanzo dmf experiment chunk with the
-# memcg at 206 G of anonymous memory, one worker holding 45 G. Job 2032 at 24 CPUs /
-# 256 G generated all 51 datasets (472 M node rows, 525 M edge rows) in 28 h 40 min with
-# the container sampled at 84 to 155 GiB, and imported 99.7 M nodes and 361.9 M
-# relationships in 17 min (neo4j-admin sizes its heap and off-heap from the container
-# limit). 320 G (job 1558) also works but pends behind queued GPU jobs. MaxMemPerCPU=4100
-# makes 256 G a 63-CPU floor, which fits beside the 4-CPU GPU sweeps.
+# RESOURCES. 64 CPUs, 256 G, 12 h, measured. SLURM_CPUS_PER_TASK sets the adapter worker
+# count (get_num_workers in create_scerevisiae_kg_small), so it is a build parameter and
+# not just a reservation; MaxMemPerCPU=4100 makes 256 G a 64-CPU floor in any case
+# (ceil(262144 / 4100)), which is why 24 in this header got job 2032 allocated 48. Jobs
+# 3198, 3297 and 3547 all overrode both directives on the command line, so the header is
+# now what they ran with. 64 CPUs plus 256 G leaves exactly the 64 CPUs and 216,000 MB
+# the four 16-CPU / 54,000 M GPU packs want on a 128-CPU / 513,000 MB node; 320 G forces
+# an 80-CPU floor and leaves room for three.
 #
-# DISK. Job 2032 wrote 634 G of CSV for 51 datasets; the imported store is 682 G. Both
-# land on /db (the CSVs under $SERVE_ROOT/biocypher-out, the store under $NEXT_ROOT), so
-# /db needs ~1.4 T free on top of the old store, which stays until the superseded copy is
-# removed. The preflight refuses below MIN_FREE_GB (1500).
+# Memory does not scale with the dataset count: the pool recycles once the container's
+# cgroup memory passes pool_memory_fraction (0.8) of its limit, so the peak rides the
+# ceiling rather than needing it. Job 3297's 22 recycles fired between 0.80 and 0.88 and
+# it closed at "Generation wall 11102 s, peak memory 235.4 GiB" for 51 datasets. What a
+# bigger request would cover is the per-worker working set, a 128 MiB resolved-record
+# chunk times the process_workers + 2 chunks in flight, which the config sets. Job 1996
+# at 32 CPUs / 200 G was OOM-killed 15 min in with one worker holding 45 G, before the
+# interning and pool-payload fixes; job 2032 at 256 G took 28 h 40 min for the same 51
+# datasets those fixes brought to 3 h 05 min.
+#
+# TIME. 51 datasets: 3 h 11 min (job 3198) and 3 h 36 min (job 3297) end to end, of which
+# generation was 3 h 05 min and neo4j-admin import 6 min 48 s. 109 datasets (the first
+# build with the bacterial program) project to 4 h 15 min with a 6 h 30 min upper bound:
+# the 58 new stores carry 4.02 M records and 17.6 GB of dev LMDB against 52.67 M and
+# 205.2 GB already served. Projection and its rule:
+# notes/database.kg-4-build-sizing.md, experiments/database/scripts/kg4_build_sizing.py.
+#
+# DISK. Job 3297 wrote ~200 G of CSV for 51 datasets and its imported store is 150 G
+# (the pre-interning job 2032 wrote 634 G of CSV for a 682 G store). Both land on /db
+# (the CSVs under $SERVE_ROOT/biocypher-out, the store under $NEXT_ROOT), and the old
+# store stays as data.superseded.<ts> until someone removes it. 109 datasets project to
+# 215 G of CSV and a 162 G store. The preflight refuses below MIN_FREE_GB (1500), which
+# is ~4x the projected need and is there to keep the rollback copy affordable.
 
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell

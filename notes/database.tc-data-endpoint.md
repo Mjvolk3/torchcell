@@ -164,3 +164,7 @@ Measured from GilaHyper with no local tier (`data_root` an empty directory), the
 ## 2026.10.08 - The ops panel checks the graph's pointers against it
 
 `releases artifacts` ([[torchcell.knowledge_graphs.releases]]), run by `make ops` for both hosts ([[scripts.ops]]), fetches `GET /{tier}/{key}/manifest` once per key the served release points at and reports whether every pointed file is listed with its pinned sha256. Two preconditions on the probing host, and the line names whichever is missing: `TC_DATA_API_KEY` in its `.env` (GilaHyper has none), and a route to port 8724 (from GilaHyper this waits on the OpenStack security-group rule). Tiers the endpoint does not serve (`library`) and keys it answers 404 for read as missing.
+
+## 2026.10.09 - Port 8724 is a security-group gap, and the three ways around it
+
+Measured from GilaHyper: port 7473 answers 200 and port 8724 times out after 30 s; from Radiant through its own floating IP the same split holds (7473 in 25 ms, 8724 timeout). Both ports listen on all interfaces, both have a Docker forward rule, and the VM has no host firewall, so the OpenStack security group is the only difference. The endpoint holds one named key, `mjvolk3`. The three access paths (open 8724 plain, the ssh tunnel, or HTTPS through the existing `tc-proxy` Caddy container that already holds the hostname's Let's Encrypt certificate) are drawn and compared in [[database.tc-data-endpoint.mermaid.access-options]]; the proxy path is the end state because it keeps the key encrypted in transit.

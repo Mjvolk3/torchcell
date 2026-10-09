@@ -163,3 +163,25 @@ and none alters a stored PRECISE-1K record:
 
 The open item above, "BW25113 (148 samples) is a separate loader", is now 148 + 361 = 509
 samples across the two arms, which raises its priority rather than its difficulty.
+
+## 2026.10.09 - The released growth-rate column is now its own dataset
+
+`metadata_qc.csv` carries a `Growth Rate (1/hr)` column this loader does not read. 354 of
+its 1,035 rows release a value, every one a `p1k_*` id, and the 103 the genotype and
+environment rules above admit are exactly the built records of this store that carry one.
+They are now served separately, as 89 absolute `EnvironmentResponsePhenotype` rates, by
+`GrowthRateLamoureux2023Dataset` ([[torchcell.datasets.ecoli.lamoureux2023_growth]]); 14
+of the 103 release exactly `0.0` and are dropped as indistinguishable from an unrecorded
+cell.
+
+Two facts about THIS loader the growth-rate loader had to measure. The reference it
+declares, the `control:wt_glc` pair `p1k_00001` and `p1k_00002`, releases an EMPTY rate
+cell, so the growth-rate dataset cannot use it and declares a base condition instead
+(wild-type MG1655, M9 + `glucose(2)`, 37 C, pH 7.0: 8 released rates, mean 0.63875 h^-1).
+And `settle_genotype` / `settle_environment` / `build_environment` are imported by that
+loader rather than restated, so the two datasets keep exactly the same samples.
+
+It is a SEPARATE MODULE, and the reason is measured: this module's schema closure is 61
+symbols and equals the 61 the served `rnaseq_lamoureux2023` store records, and adding the
+environment-response symbols raises it to 72, which would stale that store for a change
+touching none of its 241 records.

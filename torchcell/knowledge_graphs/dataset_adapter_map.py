@@ -56,6 +56,7 @@ from torchcell.adapters import (
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
+    GrowthRateLamoureux2023Adapter,
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     GrowthWang2015Adapter,
@@ -170,6 +171,7 @@ from torchcell.datasets.ecoli.ishii2007 import (
     ProteomeIshii2007Dataset,
 )
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.lamoureux2023_growth import GrowthRateLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
@@ -396,6 +398,7 @@ dataset_adapter_map: dict[type, type] = {
     ProteomeIshii2007Dataset: ProteomeIshii2007Adapter,
     FluxIshii2007Dataset: FluxIshii2007Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
+    GrowthRateLamoureux2023Dataset: GrowthRateLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,
     PromoterReporterMohiuddin2022Dataset: (PromoterReporterMohiuddin2022Adapter),
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,

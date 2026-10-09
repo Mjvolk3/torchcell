@@ -82,6 +82,7 @@ from torchcell.adapters import (
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
+    GrowthRateLamoureux2023Adapter,
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     GrowthWang2015Adapter,
@@ -163,6 +164,7 @@ from torchcell.datasets.ecoli.ishii2007 import (
     ProteomeIshii2007Dataset,
 )
 from torchcell.datasets.ecoli.lamoureux2023 import RnaseqLamoureux2023Dataset
+from torchcell.datasets.ecoli.lamoureux2023_growth import GrowthRateLamoureux2023Dataset
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
@@ -479,6 +481,13 @@ BACTERIAL: list[Bacterial] = [
         "rnaseq_lamoureux2023",
         RnaseqLamoureux2023Dataset,
         RNASEQ,
+    ),
+    _case(
+        GrowthRateLamoureux2023Adapter,
+        "lamoureux2023_growth",
+        "growth_rate_lamoureux2023",
+        GrowthRateLamoureux2023Dataset,
+        RESPONSE,
     ),
     _case(
         RnaseqPublicK12Lamoureux2023Adapter,

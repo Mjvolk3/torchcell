@@ -70,6 +70,11 @@ sourcing layer.
   NCM3722 growth conditions, the first consumer of ``ProteinTurnoverPhenotype``.
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
+- ``lamoureux2023_growth`` -- ``GrowthRateLamoureux2023Dataset``: the SAME release's
+  ``Growth Rate (1/hr)`` metadata column, as 89 absolute ``EnvironmentResponsePhenotype``
+  rates against a declared base condition. 354 cells are released, the expression
+  loader's own genotype and environment rules keep 103, and the 14 that read exactly 0.0
+  are dropped as indistinguishable from an unrecorded cell.
 - ``lamoureux2023_public_k12`` -- ``RnaseqPublicK12Lamoureux2023Dataset``: the Public K-12
   arm of the same release, one record per reprocessed public MG1655 RNA-seq library, keyed
   by its SRA experiment accession.
@@ -210,6 +215,9 @@ from .ishii2007 import FluxIshii2007Dataset as FluxIshii2007Dataset
 from .ishii2007 import MetabolomeIshii2007Dataset as MetabolomeIshii2007Dataset
 from .ishii2007 import ProteomeIshii2007Dataset as ProteomeIshii2007Dataset
 from .lamoureux2023 import RnaseqLamoureux2023Dataset as RnaseqLamoureux2023Dataset
+from .lamoureux2023_growth import (
+    GrowthRateLamoureux2023Dataset as GrowthRateLamoureux2023Dataset,
+)
 from .lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset as RnaseqPublicK12Lamoureux2023Dataset,
 )

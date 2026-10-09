@@ -76,6 +76,7 @@ datasets:
   - ProteomeIshii2007Dataset
   - FluxIshii2007Dataset
   - RnaseqLamoureux2023Dataset
+  - GrowthRateLamoureux2023Dataset
   - RnaseqPublicK12Lamoureux2023Dataset
   - ProteomeMori2021Dataset
   - PhageRbTnseqMutalik2020Dataset

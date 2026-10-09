@@ -146,6 +146,9 @@ from .kuzmin2020_adapter import TmiKuzmin2020Adapter as TmiKuzmin2020Adapter
 from .lamoureux2023_adapter import (
     RnaseqLamoureux2023Adapter as RnaseqLamoureux2023Adapter,
 )
+from .lamoureux2023_growth_adapter import (
+    GrowthRateLamoureux2023Adapter as GrowthRateLamoureux2023Adapter,
+)
 from .lamoureux2023_public_k12_adapter import (
     RnaseqPublicK12Lamoureux2023Adapter as RnaseqPublicK12Lamoureux2023Adapter,
 )
@@ -404,6 +407,7 @@ ecoli_adapters = [
     "ProteomeIshii2007Adapter",
     "FluxIshii2007Adapter",
     "RnaseqLamoureux2023Adapter",
+    "GrowthRateLamoureux2023Adapter",
     "PromoterReporterMohiuddin2022Adapter",
     "ProteomeMori2021Adapter",
     "PhageRbTnseqMutalik2020Adapter",

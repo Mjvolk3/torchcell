@@ -282,3 +282,11 @@ tuples; the pairs that pool several conditions pool conditions whose
   samples.
 - The 11 `ph_not_stated` rows would be recoverable if pH became a gappable slot rather than
   a perturbation every sibling record carries.
+
+## 2026.10.09 - This arm contributes no growth rate, measured
+
+The release's `Growth Rate (1/hr)` column is now served as its own dataset
+([[torchcell.datasets.ecoli.lamoureux2023_growth]]). This arm contributes NOTHING to it:
+all 354 released rate cells are `p1k_*` ids of the PRECISE-1K index, so 0 of this store's
+240 built records carry a rate. The audit's rank-11 ceiling of 354 therefore sits entirely
+on the PRECISE-1K arm.

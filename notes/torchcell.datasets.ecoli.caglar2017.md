@@ -651,3 +651,44 @@ It does not remove it: if Houser 2015 is ever mirrored and loaded, those 27 plus
 samples become a real duplication and the superset rule applies, the same shape as #760.
 The attribution is what makes that detectable, because a Houser 2015 admission check can
 now ask which records already name it.
+
+## 2026.10.09 - Correction: Table S5 IS loadable, and the raw mirror gained it
+
+The earlier section "2026.10.07 - Tables S5 to S14, and why the doubling times are not
+loaded" stated the blocker correctly and its verdict is now closed rather than wrong.
+Both missing capabilities were added to `EnvironmentResponsePhenotype` under #776 (an
+asymmetric interval carrier and a replicate id) together with a declared absolute-readout
+branch in the environment-response verifier, and the 55 rows are loaded.
+
+- loader: `torchcell/datasets/ecoli/caglar2017_doubling_time.py`,
+  `DoublingTimeCaglar2017Dataset`, a SEPARATE module so this module's two served stores'
+  schema closure does not move
+- note: [[torchcell.datasets.ecoli.caglar2017_doubling_time]]
+
+Two things changed in THIS module:
+
+1. `SI_TABLES` gained `"S5"` -> `srep45303-s6.csv`, sha256
+   `76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60`. Re-fetched by the
+   recorded retriever (`pmc_cloud_object` on key `PMC5394689.1/srep45303-s6.csv`) and the
+   bytes verified against the library mirror's own `si/si6.csv` pin, which they match.
+   `TABLE_RETRIEVED_AT` carries its own retrieval date, 2026-10-09, because the first
+   deposit (2026-10-07) did not fetch it.
+2. `deposit_si_table(table, ...)` is the additive REVISION path: it appends one
+   `ArtifactRecord` to `manifest.json`, leaves every earlier record byte-identical, keeps
+   the first deposit's `created_at`, and raises on a record already present with other
+   content or a mirror file holding other bytes. `deposit_raw_mirror` stays the
+   from-scratch deposit and keeps its whole-manifest equality guard.
+
+The consequence for the tests is that `test_the_raw_mirror_holds_exactly_the_pinned_files`
+became `test_the_raw_mirror_holds_every_pinned_file_intact`: one citation key's raw mirror
+is written by SEVERAL loaders, so a table a sibling module deposited for a phenotype this
+module does not build is a legitimate extension, not drift. What would be drift is a
+pinned record missing or present with other bytes, and that is what the test now asserts,
+plus the manifest order of the pinned files only.
+
+Table S1's doubling-time columns are still NOT loaded as records, and the 2026.10.07
+section's measurement is why: its 165 stated rows hold 19 distinct
+`(value, 95m, 95p, r2)` tuples that join 1:1 onto Table S5's 19 conditions. One row of
+it, the base condition's, is the doubling-time dataset's reference value, because Table S5
+releases no condition-level number and computing a mean of its three glucose replicates
+would be a number the paper never released.

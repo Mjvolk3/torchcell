@@ -169,6 +169,23 @@ def _phenotype_props(phenotype: Any) -> dict[str, Any]:
         props["gene_interaction_p_value"] = phenotype.gene_interaction_p_value
     # Issue #602: both phenotypes project the screen a measurement came from.
     props["screen_id"] = phenotype.screen_id
+    if not isinstance(phenotype, s.FitnessPhenotype):
+        # Issue #793: the gene-interaction phenotype also projects the replicate-design
+        # quartet. The yeast interaction loaders release no replicate design, so every
+        # one of the four is null here; what the projection buys is that "the source
+        # states none" and "the class has no slot" stop reading the same from a query.
+        props["n_samples"] = phenotype.n_samples
+        props["sample_unit"] = (
+            str(phenotype.sample_unit.value)
+            if phenotype.sample_unit is not None
+            else None
+        )
+        props["gene_interaction_uncertainty"] = phenotype.gene_interaction_uncertainty
+        props["gene_interaction_uncertainty_type"] = (
+            str(phenotype.gene_interaction_uncertainty_type.value)
+            if phenotype.gene_interaction_uncertainty_type is not None
+            else None
+        )
     return props
 
 

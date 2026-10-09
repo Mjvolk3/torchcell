@@ -181,3 +181,81 @@ uncertainty sanity, L3 signed axis with a zero reference and both signs present,
 screen-set membership, L3 compound and media identity, L3 media membership, L3 the
 provenance audit of all 18 sourced values, and L4 3,661 of 3,661 perturbed loci are
 MG1655 GenBank loci.
+
+## 2026.10.09 - The eight-colony design moves onto the record (#793)
+
+`GeneInteractionPhenotype` gained `n_samples`, `sample_unit`,
+`gene_interaction_uncertainty` and its type
+([[torchcell.datamodels.schema]], section "2026.10.09"), so Protocol S2's sourced count
+is a field of every record instead of a file beside the build.
+
+Every record now carries `n_samples = 8`, `sample_unit = colony`, and the number is read
+from `SOURCED_VALUES["n_samples"]` rather than retyped in the phenotype builder, so the
+stored value and the quote cannot drift apart. The quote
+(`si/si7.md`, sha256
+`b060ce3f5277f708675e7f26239d5ee2d357ffb2306a04da326417caad135db9`), verbatim:
+
+> Each genome-wide screen was performed twice by replica pinning the conjugants arrayed
+> in a 384 density format using four biological replicate recipient colonies, which is
+> selected further on double antibiotics at 1,536 colony density, to generate double
+> mutant colonies. These eight replicate measurements of each gene pair were subsequently
+> averaged into a single GI S-score to account for colony plate variance.
+
+`preprocess/replicate_structure.json` stays, and its role changes: it is now the
+PROVENANCE COPY of the same two numbers. It carries the verbatim quote, the citation key,
+the source path and its sha256 beside them, which is what makes the stored property
+auditable rather than asserted; a float on a graph node cannot carry any of that.
+
+The uncertainty pair stays None. The paper releases no per-pair dispersion, which is a
+different statement from the p-value's typed `not_reported_by_primary` gap (the source
+tested the SET: `P<=0.05` for the released `|Z|>=2` cut, never per pair). Those two
+absences read the same from a query only while the fields are absent from the class.
+
+The reference phenotype carries no replicate design: it is the unperturbed chassis scoring
+0 by construction, not a measured cell.
+
+### Measured, before and after
+
+The change is additive, so no record count moves:
+
+| | records | `n_samples` | `sample_unit` |
+|---|---|---|---|
+| before (origin/main) | 38,579 | absent from the class | absent from the class |
+| after | 38,579 | 8 on 38,579 of 38,579 | `colony` on 38,579 of 38,579 |
+
+42,705 released pairs, 4,126 dropped, 38,579 kept: 37,852 from the 124 `This Study`
+screens and 727 from the 39 `Butland et al.` screens.
+
+### L0 to L4
+
+Verified on a build of this branch's loader, PASS, 31 rows, 0 failures. The rows this
+change touches:
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | 38,579 records validated |
+| L1 | `count` | observed 38,579, expected 38,579 |
+| L1 | `provenance_gaps` | 154,316 documented gaps over 38,579/38,579 records |
+| L2 | `gene_interaction_equals_table_s2_cell` | 38,579 of 38,579 stored scores equal their Table S2 cell |
+| L2 | `uncertainty_sanity` | 0 labeled uncertainties, none a zero dispersion; 38,579 records report `n_samples >= 2` with no uncertainty |
+| L3 | `signed_interaction_score_with_zero_reference` | 22,732 aggravating, 15,847 alleviating, 0 zeros, reference scores [0.0] |
+| L3 | `screen_id_is_a_table_s1_screen_set` | `This Study` 37,852, `Butland et al.` 727 |
+| L3 | `provenance_audit` x 18 | every sourced value backed by a verbatim quote |
+| L4 | `gene_containment_mg1655_locus_tags` | 3,661 of 3,661 perturbed loci are MG1655 GenBank loci |
+
+The `uncertainty_sanity` row is the one that reads differently now: before this change no
+record declared `n_samples`, so the "reports `n_samples >= 2` with no uncertainty" count
+was 0 by absence. It is 38,579 by measurement now, and that is the honest reading of a
+release that states its replicate count and no dispersion.
+
+### Why the canonical dev store was NOT rebuilt by this branch
+
+`$DATA_ROOT/data/torchcell/gene_interaction_babu2014` was rebuilt at
+2026-10-09T07:45 UTC from commit `ccfb82ccd` of the parallel #792 branch, which adds the
+marked-allele (hypomorph) leaf and 41,988 kept records. Rebuilding it from this branch
+would discard that. The build and the L0-to-L4 run above are therefore from an isolated
+root, and the canonical store needs ONE rebuild once both #792 and #793 are on `main`
+(each change alone already moves the Babu schema closure, so a rebuild is due either way,
+and the KG 4.0 full build remakes it regardless).
+
+Related: [[torchcell.datasets.ecoli.butland2008]], [[torchcell.datamodels.schema]].

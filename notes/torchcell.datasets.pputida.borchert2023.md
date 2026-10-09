@@ -262,3 +262,63 @@ pass `audit_sourced_value` against the library mirror.
 - Tests: `tests/torchcell/datasets/pputida/test_borchert2023.py`,
   `tests/torchcell/adapters/test_borchert2023_adapter.py`
 - Dev store: `$DATA_ROOT/data/torchcell/rbtnseq_borchert2023/`
+
+## 2026.10.09 - The pair-of-environments question (#776): NOT a new experiment class
+
+#776's second, structural half asks whether an experiment class whose SUBJECT is a pair
+of environments is warranted now, for Borchert 2023's 259,412 significance values. The
+answer measured here is no, and the reason is that the pair-of-environments grain is
+already expressible; what is missing is a phenotype field, which is a different ask.
+
+### The counts, re-read off the built store
+
+`preprocess/not_stored.json` of
+`$DATA_ROOT/data/torchcell/rbtnseq_borchert2023`, measured on `si1.xlsx` (sha256
+`b80c6866c6fbb95696067532f4890951fcbbf2dc72f4351df0bdec86956a0784`):
+
+| | value |
+|---|---|
+| comparison sheets | 13 |
+| (gene, comparison) rows | **64,853** (5002 + 5001 + 4997 + 5002 + 5000 + 5000 + 4931 + 4993 + 5000 + 4999 + 4998 + 5000 + 4930) |
+| significance columns per sheet | 4 (`t-statistic`, `p-value`, `q-value`, `adjusted_q-value`) |
+| values with nowhere to go | **259,412** |
+
+### Why a pair of environments needs no new experiment class
+
+A record already names TWO environments: `Experiment.environment` is the condition
+measured and `ExperimentReference.environment_reference` is the condition it is referenced
+against, with the asymmetry (which one is the control) carried by the reference. That is a
+pair, and it is already used as one. Measured on the served Bloom 2019 store's condition
+table: **36 of its 38 conditions** have a reference environment that DIFFERS from the
+experiment environment, and for exactly those 36 the stored value is
+`MeasurementType.control_regression_residual`, a contrast statistic of the two plates. A
+Borchert comparison sheet is the same shape: the enrichment culture is the experiment's
+environment, the M9 + 20 mM glucose medium reference culture is the reference's.
+
+So building a class whose subject is a pair would duplicate a capability the family has,
+and would do it by making the reference a second first-class subject, which every
+`ExperimentReference` consumer (the reconstruction maps, the adapters, the L3
+`reference_zero` family of rules) reads as a CONTEXT. That is a large, cross-cutting
+change bought for nothing: it would still not give the triple a field.
+
+### What IS missing, and why it is still not stored
+
+A phenotype whose value is a contrast statistic WITH a significance triple. The loader's
+current records are per-culture fitness, and a `t`, `p`, `q` and adjusted `q` of a
+contrast attached to one of its two arms would misfile the statistic, which is the
+objection #776 raises and it stands. The honest form is a contrast-valued phenotype that
+declares `p_value` and an adjustment method alongside its value, so the number and the
+test of it sit on the same record.
+
+That shape is being built on a different phenotype in this same wave (#770's
+`ProteinFoldChangePhenotype`, which carries `log2FoldChange` with `lfcSE`, `pvalue` and
+`padj`), so the precedent for the fields will exist. Reusing it for a FITNESS contrast is
+a loader-plus-phenotype decision of its own, with its own sourcing (the pFDR and
+monotonicity-adjustment methods Borchert states verbatim), and it is not inside #776's
+scope. Until then the triple stays refused and declared in `not_stored.json` with its
+count and the issue number, which is the discipline that keeps a stored fitness value from
+silently losing its significance call.
+
+Recommendation recorded for the owner: open a follow-up for a fitness-contrast phenotype
+with a significance triple, and close #776's structural half against it. Nothing about the
+pair-of-environments grain blocks it.

@@ -63,6 +63,7 @@ from torchcell.datamodels.schema import (
     GeneInteractionPhenotype,
     Genotype,
     MediaComponentRole,
+    SampleUnit,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod
@@ -314,17 +315,23 @@ def test_the_score_definition_follows_the_deferral_to_butland() -> None:
     assert "Collins 2006" in str(m.SOURCED_VALUES["score_definition"].note)
 
 
-def test_the_eight_colony_design_is_recorded_beside_the_build_not_on_the_record() -> (
+def test_the_eight_colony_design_is_recorded_beside_the_build_and_on_the_record() -> (
     None
 ):
-    """``GeneInteractionPhenotype`` has no n_samples, so the sourced 8 is a ledger."""
+    """The ledger carries the design WITH its provenance; #793 put it on the record too.
+
+    Both halves matter: the graph property is what a query can read, and this file is
+    what makes it auditable (the verbatim Protocol S2 quote, the citation key, the
+    source path and its sha256), which a float property cannot carry.
+    """
     structure = m.replicate_structure()
     assert (structure.n_samples, structure.sample_unit) == (8, "colony")
     assert structure.replicate_screens * structure.colonies_per_screen == 8
     assert structure.citation_key == m.CITATION_KEY
     assert structure.source_uri == m.PROTOCOL_S2_MD
     assert "eight replicate measurements" in structure.quote
-    assert "n_samples" not in GeneInteractionPhenotype.model_fields
+    assert "n_samples" in GeneInteractionPhenotype.model_fields
+    assert m.phenotype(-1.0, m.SCREEN_THIS_STUDY).n_samples == structure.n_samples
 
 
 def test_the_released_counts_are_the_sourced_ones() -> None:
@@ -442,6 +449,28 @@ def test_the_phenotype_is_a_signed_score_with_a_gapped_p_value() -> None:
         is ProvenanceGapReason.not_reported_by_primary
     )
     assert m.reference_phenotype(m.SCREEN_BUTLAND).gene_interaction == 0.0
+
+
+def test_the_phenotype_carries_protocol_s2s_eight_colonies(tmp_path: Path) -> None:
+    """#793: the sourced replicate design is ON the record, and it is the quote's own
+    number rather than a literal retyped in the phenotype builder.
+    """
+    phenotype = m.phenotype(-4.43348, m.SCREEN_THIS_STUDY)
+    assert phenotype.n_samples == 8
+    assert phenotype.sample_unit is SampleUnit.colony
+    assert phenotype.n_samples == int(m.SOURCED_VALUES["n_samples"].value)
+    # no per-pair dispersion is released, which is a different absence from the p-value
+    assert phenotype.gene_interaction_uncertainty is None
+    assert phenotype.gene_interaction_uncertainty_type is None
+    assert phenotype.gapped_fields() == {"gene_interaction_p_value"}
+    # the reference is 0 by construction, not a measured cell, so it carries no design
+    reference = m.reference_phenotype(m.SCREEN_THIS_STUDY)
+    assert reference.n_samples is None
+    assert reference.sample_unit is None
+    # the json beside the build keeps the same two numbers with their provenance
+    structure = m.replicate_structure()
+    assert (structure.n_samples, structure.sample_unit) == (8, "colony")
+    assert structure.replicate_screens * structure.colonies_per_screen == 8
 
 
 def test_the_chassis_background_pins_mg1655_and_names_both_parents() -> None:

@@ -197,3 +197,107 @@ Dev store: `$DATA_ROOT/data/torchcell/gene_interaction_butland2008`, 1.2 GB proc
 - No knowledge-graph build and no live rebuild. Adding this dataset is additive, so it is
   an incremental-admission candidate (see [[torchcell.knowledge_graphs.incremental-admission]]),
   but the admission check and the increment are a separate step.
+
+## 2026.10.09 - Every record stores its OWN measured colony count (#793)
+
+`GeneInteractionPhenotype` gained `n_samples`, `sample_unit`,
+`gene_interaction_uncertainty` and its type ([[torchcell.datamodels.schema]], section
+"2026.10.09"), so the per-cell colony count this release prints is a field of every
+record instead of a distribution beside the build.
+
+The count is MEASURED per record off the raw colony-size sheet (`colony_counts`), never
+the documented four. The documented design is four colonies and it is the MODE rather
+than the rule, which is why a constant would be wrong in one direction only: 258,364 of
+296,390 records rest on four colonies and the other 38,026 on 8 to 182, so storing 4
+everywhere would overstate the precision of 38,026 records and understate it for none.
+The measured count carries no such bias, because the release states it per cell.
+`phenotype(score, n_samples)` takes the count and never defaults it.
+
+Sourced design (`SOURCED_VALUES["replicate_design"]`, `si/si5.xls` footnote g, sha256
+`74a6ea3a0373fa6e1776b0becb4212f29b9876647b96327db5222dcd68a8822b`), verbatim:
+
+> g In the genome-wide screen, each recipient deletion mutant is pinned twice leaving
+> four replicate recipient colonies representing two "Isolate 1" and two "Isolate 2"
+> versions of the strain. The number "1" represent the first replicate of the genome-wide
+> screen, while the number "2" represent the second replicate of the same screen.
+
+### Measured, before and after
+
+The change is additive, so no record count moves:
+
+| | records | `n_samples` | `sample_unit` |
+|---|---|---|---|
+| before (origin/main) | 296,390 | absent from the class | absent from the class |
+| after | 296,390 | measured, 20 distinct values | `colony` on 296,390 of 296,390 |
+
+The stored histogram, read back off the built LMDB, equals
+`preprocess/replicate_structure.json`'s `measured_n_samples_counts` exactly:
+
+| colonies | records | | colonies | records |
+|---|---|---|---|---|
+| 4 | 258,364 | | 48 | 38 |
+| 8 | 16,533 | | 52 | 445 |
+| 12 | 1,394 | | 64 | 106 |
+| 16 | 10,824 | | 78 | 37 |
+| 20 | 954 | | 80 | 26 |
+| 24 | 74 | | 96 | 2 |
+| 26 | 6,989 | | 104 | 101 |
+| 28 | 35 | | 112 | 1 |
+| 32 | 440 | | 130 | 24 |
+| | | | 156 | 2 |
+| | | | 182 | 1 |
+
+A builder that defaulted to 4 would read 296,390 at 4 and 0 everywhere else, which is
+what the new test asserts against.
+
+### What stays in the ledger, and why
+
+`preprocess/replicate_structure.json` keeps the documented design, the full measured
+distribution, the per-cell REPLICATE-SCREEN counts (2 for 281,231 records, 8 for 7,560,
+13 for 7,599) and the verbatim footnote with its sha256. The phenotype has ONE replicate
+axis and the colony is the unit the score is an average over, so the screen count has no
+field; recording it beside the build is the honest place for it, and the file is also
+what makes the stored property auditable rather than asserted.
+
+Sheet 3's per-cell `|Z|` score still has no slot. The quartet #793 added carries a
+DISPERSION of the score plus its replicate design, and a `|Z|` is a TEST of the score, so
+storing it under `gene_interaction_uncertainty` would name it something it is not. It
+stays in `preprocess/high_confidence_pairs.json` for the high-confidence rows.
+
+The reference phenotype carries no replicate design: it is the unperturbed chassis scoring
+0 by construction, not a measured cell.
+
+### L0 to L4
+
+Verified on a build of this branch's loader, PASS, 33 rows, 0 failures. The rows this
+change touches or that carry the counts:
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | 296,390 records validated |
+| L1 | `count` | observed 296,390, expected 296,390 |
+| L1 | `digenic_pair_of_one_query_and_one_recipient` | 296,390 of 296,390 are two distinct loci, one `cat` query and one `kan` recipient |
+| L1 | `recipient_leaf_carries_its_keio_isolate` | Isolate 1 148,408, Isolate 2 147,982; 0 wrong |
+| L1 | `provenance_gaps` | 1,185,560 documented gaps over 296,390/296,390 records |
+| L2 | `gene_interaction_equals_its_matrix_cell` | 296,390 of 296,390 stored scores equal their Supplementary Table 4 cell |
+| L2 | `uncertainty_sanity` | 0 labeled uncertainties, none a zero dispersion; 296,390 records report `n_samples >= 2` with no uncertainty |
+| L3 | `signed_unclamped_interaction_score_with_zero_reference` | 143,651 aggravating, 144,953 alleviating, 7,786 at exactly zero, reference scores [0.0] |
+| L3 | `partitioned_from_the_served_babu2014_store` | 296,390 stored against 38,579 served oriented pairs; 0 share one |
+| L3 | `provenance_audit` x 19 | every sourced value backed by a verbatim quote or cell |
+| L4 | `gene_containment_mg1655_locus_tags` | 3,829 of 3,829 perturbed loci are MG1655 GenBank loci |
+
+The `uncertainty_sanity` row reads differently now for the same reason it does in Babu:
+no record declared `n_samples` before, so the "reports `n_samples >= 2` with no
+uncertainty" count was 0 by absence and is 296,390 by measurement. Butland releases a
+colony count and no per-cell dispersion, and that is the honest reading of it.
+
+### Why the canonical dev store was NOT rebuilt by this branch
+
+The L0-to-L4 run above is from an isolated root whose `served_root` is a Babu build of
+THIS branch (38,579 records), so the partition proof is internally consistent. The
+canonical `$DATA_ROOT/data/torchcell/gene_interaction_babu2014` currently holds the
+parallel #792 branch's build (41,988 records with the marked-allele leaf), and a Butland
+rebuild reads that store for its partition proof, so a canonical Butland rebuild belongs
+after both branches are on `main`. The KG 4.0 full build remakes both regardless.
+
+Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.schema]].

@@ -130,3 +130,67 @@ Evidence: `test_eager_and_streaming_reports_are_equal` (one release failing ever
 ## 2026.10.01 - Stricter streaming SE rule (review of PR #589)
 
 One behavior change the parity fix introduced and the first write-up did not state: streaming `se_nonnegative` used to flag only `se < 0`, so an infinite SE passed; it now uses the eager rule (`_value_problem` with `minimum=0.0`) and fails an infinite SE with reason `inf`, as the eager verifier always did. NaN SEs are still treated as not reported in both. Measured by the independent review of PR #589 (not re-run here): 0 infinite or negative SEs in the four streaming stores that carry SEs (wildenhain2015, crispr_magic_lian2019, hillenmeyer2008_het, hillenmeyer2008_hom), so no stored `passed` flag would flip on regeneration.
+
+## 2026.10.09 - Three declared reliefs for an ABSOLUTE readout (#776)
+
+Every one is an ORACLE the caller states, not a waiver: the rule passes only while the
+observed number equals the declared one, so a regression in either direction fails the
+gate. Nothing is relaxed for a dataset that did not ask, and the one relief that is not a
+count refuses the request outright for the wrong kind of readout.
+
+### L3 `reference_zero` gains an absolute branch
+
+`verify_environment_response_dataset(..., reference_centered=True)` keeps today's
+behavior. `reference_centered=False` runs `_l3_reference_absolute` instead: the
+reference's response must be present, finite, and on the SAME `measurement_type` as the
+experiment record it references. This is the shape
+`torchcell.verification.metabolite`'s `reference_finite` branch already uses for absolute
+quantities (Mulleder amino-acid concentrations), and the result row names which of the
+three branches ran, as the categorical branch already did.
+
+**The gate is what makes it not a blanket relaxation.** The absolute branch counts every
+record whose `measurement_type` is not in `ABSOLUTE_MEASUREMENT_TYPES` and FAILS on any,
+so asking for it on a log2-ratio or z-score dataset is an error rather than a silent skip
+of the zero check. Measured on a synthetic log2-ratio release:
+`n_relative_measurement_type = 3`, rule fails.
+
+### L3 `environment_perturbed` takes a declared unperturbed count
+
+`expected_unperturbed` (default 0) and the rule becomes observed == declared. For a
+RESPONSE dataset an unperturbed record is a defect and 0 is right. For an ABSOLUTE readout
+the base condition is itself a measured condition: Caglar 2017's base condition was run in
+three separate experiments, so 9 of its 55 records carry no environmental edit. Declaring
+the count rather than waiving the rule is what keeps those rows from silently growing or
+disappearing. Same shape as Bloom 2019's `conditions_documented`, which requires the
+no-edit columns to be exactly the absolute-readout columns.
+
+### New L2 `interval_orientation`
+
+Counts stored two-sided intervals that do not bracket their value, against
+`expected_non_bracketing` (default 0). A confidence limit carried through a nonlinear
+transform can land on the wrong side of the estimate: Caglar 2017 Table S5 releases
+`95p = -1027.769034` against a doubling time of 80.95212424, the image of a slope interval
+straddling zero under `DT = log_e 2 / slope`. The schema stores the released bytes rather
+than repairing them, so this rule is the measurement of how many such rows a dataset
+holds. `expected=0` makes any inverted interval a failure, which is the ordinary case;
+a dataset that declares a nonzero count passes only while the count holds exactly.
+
+### L1 `_study_key` joins `replicate_id`
+
+A source that releases one row PER REPLICATE CURVE, each with its own interval and fit
+quality, has measured that many things. Caglar 2017 Table S5 is 55 rows over 19
+conditions; without the replicate id they collapse to 16 unique triples and the rule would
+demand a condition mean the paper never released. Measured both ways on a synthetic
+three-replicate release: with ids, `n_pairs=3, n_duplicated=0`; without,
+`n_pairs=1, n_duplicated=2`. `.get` with a `""` default keeps every other dataset's key
+unchanged.
+
+### Both entry points stay identical
+
+The eager and streaming verifiers now carry 17 rows in the same order (the nine own rows,
+then the eight shared ones), and `test_eager_and_streaming_reports_are_equal` compares
+them field by field. `interval_orientation` and the absolute-reference branch are
+accumulators for that reason, so the streaming report is not a second implementation.
+
+Related: [[torchcell.datasets.ecoli.caglar2017_doubling_time]],
+[[torchcell.datamodels.schema]].

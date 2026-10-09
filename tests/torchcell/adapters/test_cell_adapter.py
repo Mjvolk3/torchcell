@@ -821,6 +821,11 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "gene_interaction": -0.2,
             "gene_interaction_p_value": 0.01,
             "screen_id": None,
+            # #793: the replicate-design quartet is projected, null here
+            "n_samples": None,
+            "sample_unit": None,
+            "gene_interaction_uncertainty": None,
+            "gene_interaction_uncertainty_type": None,
         },
     ),
     (
@@ -1079,6 +1084,11 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "category": None,
             "category_label": None,
             "screen_id": None,
+            # #776: both released confidence limits, the level and the replicate id
+            "environment_response_lower": None,
+            "environment_response_upper": None,
+            "confidence_level": None,
+            "replicate_id": None,
         },
     ),
     (
@@ -1103,6 +1113,11 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "category": "sensitive",
             "category_label": "S",
             "screen_id": "screen-7",
+            # #776: both released confidence limits, the level and the replicate id
+            "environment_response_lower": None,
+            "environment_response_upper": None,
+            "confidence_level": None,
+            "replicate_id": None,
         },
     ),
 ]
@@ -1192,6 +1207,11 @@ def test_only_the_environment_response_reference_collector_deduplicates(
                 "category": None,
                 "category_label": None,
                 "screen_id": None,
+                # #776: both released confidence limits, the level and the replicate id
+                "environment_response_lower": None,
+                "environment_response_upper": None,
+                "confidence_level": None,
+                "replicate_id": None,
             },
             preferred_id="environment response phenotype",
         )

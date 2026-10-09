@@ -2231,3 +2231,101 @@ def test_the_product_titer_reference_narrows_its_environment_too() -> None:
         "48-well plate"
     )
     assert s.ProductTiterExperimentReference.model_validate(dumped) == reference
+
+
+# #776 / #793: the two additive phenotype blocks.
+
+
+def test_environment_response_interval_requires_a_level_and_stays_verbatim() -> None:
+    """Both released limits plus the level, and NO bracketing constraint.
+
+    Caglar 2017 Table S5's Glycerol replicate 1 releases ``95p = -1027.769034`` against
+    a doubling time of 80.95212424, the image of a slope interval straddling zero under
+    ``DT = log_e 2 / slope``. The schema stores it; the verifier counts it.
+    """
+    stored = _response(
+        measurement_type=s.MeasurementType.growth_rate,
+        environment_response=80.95212424,
+        environment_response_lower=38.94241445,
+        environment_response_upper=-1027.769034,
+        confidence_level=0.95,
+    )
+    assert stored.environment_response_upper == -1027.769034
+    assert stored.environment_response_se is None
+    with _refuses("confidence_level is required when a confidence limit is stored"):
+        _response(environment_response_lower=0.1)
+    with _refuses("confidence_level is required when a confidence limit is stored"):
+        _response(environment_response_upper=0.9)
+    with _refuses("confidence_level is a fraction in (0, 1), got 95.0"):
+        _response(environment_response_lower=0.1, confidence_level=95.0)
+    with _refuses("environment_response_lower must be finite"):
+        _response(environment_response_lower=float("inf"), confidence_level=0.95)
+
+
+def test_absolute_measurement_types_are_exactly_the_two_unnormalized_readouts() -> None:
+    """The gate the verifier's reference relief requires. A relative readout is 0 at its
+    control by construction and is deliberately not a member.
+    """
+    assert s.ABSOLUTE_MEASUREMENT_TYPES == frozenset(
+        {s.MeasurementType.growth_rate, s.MeasurementType.colony_size}
+    )
+    assert s.MeasurementType.relative_growth_rate not in s.ABSOLUTE_MEASUREMENT_TYPES
+    assert s.MeasurementType.log2_ratio not in s.ABSOLUTE_MEASUREMENT_TYPES
+    assert not s.ABSOLUTE_MEASUREMENT_TYPES & s.CATEGORICAL_MEASUREMENT_TYPES
+
+
+def test_environment_response_replicate_id_is_stored_verbatim() -> None:
+    """The source's own replicate label, kept as a string so '01' and '1' stay apart."""
+    assert _response(replicate_id="01").replicate_id == "01"
+    assert _response().replicate_id is None
+
+
+def _interaction(**overrides: Any) -> Any:
+    kwargs: dict[str, Any] = {"gene_interaction": -1.5}
+    kwargs.update(overrides)
+    return s.GeneInteractionPhenotype(**kwargs)
+
+
+def test_gene_interaction_replicate_quartet_follows_the_other_phenotypes() -> None:
+    """Babu 2014's sourced eight colonies per pair, on the record.
+
+    The p-value field is untouched and stays the class's ``label_statistic_name``: a
+    p-value is a TEST of the score, the quartet is its replicate design and dispersion,
+    and the two absences read differently on purpose.
+    """
+    stored = _interaction(n_samples=8, sample_unit=s.SampleUnit.colony)
+    assert (stored.n_samples, stored.sample_unit) == (8, s.SampleUnit.colony)
+    assert stored.label_statistic_name == "gene_interaction_p_value"
+    assert stored.gene_interaction_uncertainty is None
+    with _refuses("n_samples must be a positive integer or None, got: 0"):
+        _interaction(n_samples=0)
+
+
+def test_gene_interaction_uncertainty_is_both_or_neither() -> None:
+    """An unlabelled dispersion is not ingested, and one that divides by n states its n."""
+    sd = {
+        "gene_interaction_uncertainty": 0.2,
+        "gene_interaction_uncertainty_type": s.UncertaintyType.sample_sd,
+    }
+    labeled = _interaction(**sd, n_samples=8, sample_unit=s.SampleUnit.colony)
+    assert labeled.gene_interaction_uncertainty == 0.2
+    with _refuses(
+        "gene_interaction_uncertainty and its type must both be set or both be None"
+    ):
+        _interaction(gene_interaction_uncertainty=0.2)
+    with _refuses(
+        "gene_interaction_uncertainty and its type must both be set or both be None"
+    ):
+        _interaction(gene_interaction_uncertainty_type=s.UncertaintyType.sample_sd)
+    with _refuses("n_samples and sample_unit are required for sample_sd"):
+        _interaction(**sd)
+    with _refuses("n_samples and sample_unit are required for sample_sd"):
+        _interaction(**sd, n_samples=8)
+    # bootstrap_se and standard_error are already an SE, so they need no n
+    assert (
+        _interaction(
+            gene_interaction_uncertainty=0.05,
+            gene_interaction_uncertainty_type=s.UncertaintyType.bootstrap_se,
+        ).gene_interaction_uncertainty
+        == 0.05
+    )

@@ -48,22 +48,26 @@ pairs" keeps a sourced |Z| threshold but discards the null distribution, which i
 thing no other bacterial interaction store carries. The restriction to non-essential
 recipients is forced rather than chosen (see RETENTION rule 1).
 
-PHENOTYPE, AND THE THREE THINGS IT CANNOT HOLD.
+PHENOTYPE, AND THE TWO THINGS IT CANNOT HOLD.
 
-- ``n_samples`` / ``sample_unit``. The release states the replicate design exactly
-  (``SOURCED_VALUES["replicate_design"]``) AND prints the per-cell colony measurements,
-  so the count is measured per record rather than assumed: 258,364 of the stored records
-  rest on the documented four colonies and the rest on 8 to 182, over 2, 8 or 13
-  replicate screens. ``GeneInteractionPhenotype`` has no ``n_samples`` field and it is a
-  SERVED graph class, so adding one would force a full knowledge-graph rebuild. The
-  measured distribution goes to ``preprocess/replicate_structure.json`` (issue #793).
+``n_samples`` / ``sample_unit`` is no longer one of them. The release states the
+replicate design exactly (``SOURCED_VALUES["replicate_design"]``) AND prints the
+per-cell colony measurements, so the count is MEASURED per record rather than assumed:
+258,364 of the stored records rest on the documented four colonies and the rest on 8 to
+182, over 2, 8 or 13 replicate screens. #793 added the quartet to the served
+``GeneInteractionPhenotype``, so every record now stores its own measured count with
+``sample_unit=colony``; the full distribution and the per-cell screen counts stay in
+``preprocess/replicate_structure.json``.
+
 - a per-record p-value. The paper states ``P < 0.0001`` for the |Z|>=4 cut as a whole,
   never per cell, and sheet 4 releases no p-value column, so
   ``gene_interaction_p_value`` carries a typed ``not_reported_by_primary`` gap. Sheet 3's
-  |Z| score is a released per-cell statistic with no slot on the class either -- the same
-  #793 constraint as ``n_samples``, so it is recorded in
+  |Z| score is a released per-cell statistic with no slot on the class either: the
+  quartet #793 added carries a DISPERSION of the score plus its replicate design, and a
+  |Z| is a test of the score, so it is recorded in
   ``preprocess/high_confidence_pairs.json`` for the high-confidence rows rather than
-  derived into a p-value through a normal CDF.
+  stored under a name that means something else or derived into a p-value through a
+  normal CDF.
 - ``screen_id`` stays ``None``. Its documented purpose is disambiguating one
   publication's repeated measurement of the same (genotype, environment); here each cell
   is released once, and the query gene -- which IS the screen -- is already the
@@ -223,6 +227,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    SampleUnit,
     StrainConstruction,
     Temperature,
 )
@@ -1662,12 +1667,25 @@ def pair_genotype(
     )
 
 
-def phenotype(score: float) -> GeneInteractionPhenotype:
-    """One released S score of the unfiltered matrix."""
+def phenotype(score: float, n_samples: int) -> GeneInteractionPhenotype:
+    """One released S score of the unfiltered matrix, with ITS OWN colony count.
+
+    ``n_samples`` is counted off the raw colony-size sheet for this cell, never the
+    documented four: the design is four colonies (``SOURCED_VALUES["replicate_design"]``)
+    and that is the MODE rather than the rule, so the released counts run 4 to 182 over
+    2, 8 or 13 replicate screens. Storing 4 for every record would overstate the
+    precision of 38,026 of them and understate it for none, which is the asymmetry the
+    conservative-lower-end rule exists to avoid; the measured count has no such bias
+    because it is released per cell. The screen count stays in
+    ``preprocess/replicate_structure.json``: the phenotype has one replicate axis, and
+    the colony is the unit the score is an average over.
+    """
     return GeneInteractionPhenotype(
         gene_interaction=score,
         gene_interaction_p_value=None,
         screen_id=None,
+        n_samples=n_samples,
+        sample_unit=SampleUnit.colony,
         provenance_gaps=[P_VALUE_GAP],
     )
 
@@ -1735,15 +1753,16 @@ def build_experiment(
     recipient_gene: str,
     version: str,
     score: float,
+    n_samples: int,
 ) -> BacterialGeneInteractionExperiment:
-    """The record of one matrix cell."""
+    """The record of one matrix cell, with that cell's own measured colony count."""
     return BacterialGeneInteractionExperiment(
         dataset_name=dataset_name,
         genotype=pair_genotype(
             query_tag, query_gene, recipient_tag, recipient_gene, version
         ),
         environment=SCREEN_ENVIRONMENT,
-        phenotype=phenotype(score),
+        phenotype=phenotype(score, n_samples),
     )
 
 
@@ -2148,10 +2167,11 @@ def _replicate_structure(
         sha256=str(sourced.provenance.sha256),
         note="the documented design is four colonies -- two of this isolate in each of "
         "two replicate screens -- and it is the mode rather than the rule, so each "
-        "record's own colony measurements are counted off the raw sheet instead. "
-        "GeneInteractionPhenotype has no n_samples or sample_unit field and it is a "
-        "SERVED graph class, so the design is recorded here rather than forced onto the "
-        "record (issue #793)",
+        "record's own colony measurements are counted off the raw sheet instead. Every "
+        "record stores its own measured count as n_samples with sample_unit=colony "
+        "since #793 added the quartet to GeneInteractionPhenotype; this file keeps the "
+        "full distribution, the per-cell screen counts and the verbatim source, which "
+        "a per-record property cannot carry",
     )
 
 
@@ -2396,6 +2416,7 @@ class GeneInteractionButland2008Dataset(ExperimentDataset):
                     cell.recipient_gene,
                     cell.version,
                     cell.score,
+                    cell.n_samples,
                 )
                 txn.put(
                     f"{index}".encode(),

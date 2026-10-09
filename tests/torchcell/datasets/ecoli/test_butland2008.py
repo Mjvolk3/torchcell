@@ -61,6 +61,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     MediaComponentRole,
+    SampleUnit,
 )
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.literature.manifest import RetrievalMethod
@@ -659,15 +660,33 @@ def test_the_two_isolates_of_one_pair_are_two_distinct_genotypes() -> None:
 
 
 def test_the_phenotype_is_a_signed_score_with_a_gapped_p_value() -> None:
-    negative = m.phenotype(-5.0)
+    negative = m.phenotype(-5.0, 4)
     assert negative.gene_interaction == -5.0
     assert negative.gene_interaction_p_value is None
     assert negative.screen_id is None
     gap = negative.provenance_gaps[0]
     assert gap.field == "gene_interaction_p_value"
     assert gap.reason is ProvenanceGapReason.not_reported_by_primary
-    assert m.phenotype(0.0).gene_interaction == 0.0
+    assert m.phenotype(0.0, 4).gene_interaction == 0.0
     assert m.reference_phenotype().gene_interaction == 0.0
+
+
+def test_the_phenotype_carries_the_cells_own_measured_colony_count() -> None:
+    """#793: ``n_samples`` is counted off the raw sheet per cell, not the documented 4.
+
+    The documented design is four colonies and it is the MODE rather than the rule, so a
+    constant 4 would overstate the precision of every record released with more. The
+    builder therefore takes the count and never defaults it.
+    """
+    assert m.phenotype(-5.0, 4).n_samples == 4
+    assert m.phenotype(-5.0, 182).n_samples == 182
+    assert m.phenotype(-5.0, 4).sample_unit is SampleUnit.colony
+    design = m.SOURCED_VALUES["replicate_design"].value
+    assert int(design["colonies"]) == 4
+    assert int(design["colonies_per_isolate"]) * int(design["replicate_screens"]) == 4
+    # the reference is 0 by construction, not a measured cell
+    assert m.reference_phenotype().n_samples is None
+    assert m.reference_phenotype().sample_unit is None
 
 
 def test_the_chassis_background_pins_mg1655_and_names_both_parents() -> None:
@@ -778,7 +797,30 @@ def test_the_build_measures_the_replicate_design_rather_than_asserting_it(
     assert structure["modal_n_samples"] == 4
     assert structure["records_at_modal_n_samples"] == 8
     assert structure["sha256"] == m.DATA_SHA256[m.TABLE_S4]
-    assert "issue #793" in structure["note"]
+    assert "#793" in structure["note"]
+
+
+def test_every_built_record_stores_its_own_measured_colony_count(
+    built: m.GeneInteractionButland2008Dataset,
+) -> None:
+    """The ledger's measured distribution and the records' ``n_samples`` agree exactly.
+
+    The synthetic release holds 8 cells at 4 colonies and 1 at 8, so the two views must
+    be the same histogram; a builder that defaulted to 4 would read 9 at 4 and 0 at 8.
+    """
+    structure = json.loads(
+        Path(built.preprocess_dir, "replicate_structure.json").read_text()
+    )
+    counts: dict[int, int] = {}
+    for index in range(len(built)):
+        phenotype = built[index]["experiment"]["phenotype"]
+        assert phenotype["sample_unit"] == SampleUnit.colony
+        n = int(phenotype["n_samples"])
+        counts[n] = counts.get(n, 0) + 1
+    built.close_lmdb()
+    assert {str(k): v for k, v in sorted(counts.items())} == structure[
+        "measured_n_samples_counts"
+    ]
 
 
 def test_the_build_proves_table_3_is_a_subset_of_the_matrix(

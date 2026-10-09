@@ -45,21 +45,23 @@ crosswalk would make every record carry a derived mapping. So records pin
 a ``BacterialStrainBackground`` whose ``parents`` name Hfr Cavalli and the Keio
 collection, the same shape Rapp 2026 uses for its BW25993-derived host.
 
-PHENOTYPE, AND THE TWO THINGS IT CANNOT HOLD. ``GeneInteractionPhenotype`` takes the
-signed S score as ``gene_interaction``; it is NOT a fitness value and must never become
-one, because ``FitnessPhenotype`` clamps non-positive values and 25,239 of these 42,705
-numbers are negative. Two sourced facts have no slot on the class:
+PHENOTYPE, AND THE ONE THING IT STILL CANNOT HOLD. ``GeneInteractionPhenotype`` takes
+the signed S score as ``gene_interaction``; it is NOT a fitness value and must never
+become one, because ``FitnessPhenotype`` clamps non-positive values and 25,239 of these
+42,705 numbers are negative. One sourced fact has no slot on the class:
 
-- ``n_samples`` / ``sample_unit``. Protocol S2 states eight colonies per pair exactly
-  (``SOURCED_VALUES["n_samples"]``), which is a sourced value with nowhere to go:
-  ``GeneInteractionPhenotype`` has no ``n_samples`` field, and adding one would change
-  a SERVED graph class (``gene interaction phenotype``, imported by the yeast
-  interaction datasets) and force a full knowledge-graph rebuild. The value is written
-  to ``preprocess/replicate_structure.json`` instead and the gap is filed as issue
-  #793, not forced.
 - a per-record p-value. The paper states ``P<=0.05`` for the released set as a whole,
   not per pair, so ``gene_interaction_p_value`` carries a typed
   ``not_reported_by_primary`` gap.
+
+``n_samples`` / ``sample_unit`` USED to be the other one. Protocol S2 states eight
+colonies per pair exactly (``SOURCED_VALUES["n_samples"]``) and
+``GeneInteractionPhenotype`` had no field for it, so the value lived in
+``preprocess/replicate_structure.json`` and the gap was filed as #793. The class now
+carries the replicate-design quartet, so every record stores ``n_samples=8`` and
+``sample_unit=colony``; the json stays as the provenance copy (the verbatim quote, the
+citation key, the source path and its sha256), which is what makes the field on the
+record auditable rather than asserted.
 
 ``screen_id`` IS the superset record. Table S1 attributes 124 of the 163 donors to
 ``This Study`` and 39 to ``Butland et al.``, and Protocol S2 says the new scores were
@@ -199,6 +201,7 @@ from torchcell.datamodels.schema import (
     MediaComponent,
     MediaComponentRole,
     Publication,
+    SampleUnit,
     Temperature,
 )
 from torchcell.datasets.bacteria_common import (
@@ -671,9 +674,10 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         _Q_EIGHT_S2,
         note="EXACT, not a range: two replicate screens x four biological replicate "
         "recipient colonies = the eight colony measurements averaged into the stored "
-        "score. The sample unit is a colony. GeneInteractionPhenotype has no n_samples "
-        "field, so the value is written to preprocess/replicate_structure.json rather "
-        "than onto the record; adding the field would change a served graph class",
+        "score. The sample unit is a colony. Stored on every record as n_samples with "
+        "sample_unit=colony since #793 added the replicate-design quartet to "
+        "GeneInteractionPhenotype; preprocess/replicate_structure.json keeps the "
+        "provenance copy so the stored value stays auditable",
     ),
     "n_samples_main_text": _paper(
         8,
@@ -1279,11 +1283,12 @@ class DropLog(BaseModel):
 
 
 class ReplicateStructure(BaseModel):
-    """The replicate design the schema cannot store, written out beside the build.
+    """The replicate design, with its provenance, written out beside the build.
 
-    ``GeneInteractionPhenotype`` has no ``n_samples`` / ``sample_unit`` field and
-    adding one would change a served graph class, so the sourced eight-colony design
-    is recorded here (issue #793) rather than onto the record.
+    Since #793 the design is ALSO on every record (``n_samples=8``,
+    ``sample_unit=colony``). This file is what makes that field auditable rather than
+    asserted: it carries the verbatim Protocol S2 quote, the citation key, the source
+    path and its sha256 beside the two numbers, which a graph property cannot.
     """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
@@ -1323,9 +1328,8 @@ def replicate_structure() -> ReplicateStructure:
         source_uri=sourced.provenance.source_uri,
         sha256=str(sourced.provenance.sha256),
         note="EXACT, not a range: two replicate screens x four biological replicate "
-        "recipient colonies. GeneInteractionPhenotype has no slot for it, so it is "
-        "recorded here instead of being written onto the record or forced into a "
-        "class that clamps the sign",
+        "recipient colonies. Stored on every record since #793; this file is the "
+        "provenance copy of the same two numbers",
     )
 
 
@@ -1400,11 +1404,22 @@ def pair_genotype(
 
 
 def phenotype(score: float, screen_id: str) -> GeneInteractionPhenotype:
-    """One released GI score, with the screen set it came from."""
+    """One released GI score, with its replicate design and the screen set it came from.
+
+    ``n_samples`` is Protocol S2's eight colonies per pair, exactly
+    (``SOURCED_VALUES["n_samples"]``), now a field of the phenotype rather than a file
+    beside the build (#793). It is a constant of the release: every stored score is the
+    average of the same eight colony measurements, two replicate screens x four
+    biological replicate recipient colonies. No uncertainty accompanies it -- the paper
+    releases no per-pair dispersion -- so the uncertainty pair stays None, which is a
+    different statement from the p-value's typed gap (the source tested the SET).
+    """
     return GeneInteractionPhenotype(
         gene_interaction=score,
         gene_interaction_p_value=None,
         screen_id=screen_id,
+        n_samples=int(SOURCED_VALUES["n_samples"].value),
+        sample_unit=SampleUnit.colony,
         provenance_gaps=[P_VALUE_GAP],
     )
 

@@ -338,3 +338,90 @@ Field changes:
 Rebuild consequence: a BREAKING schema change, so a full KG rebuild at the next build (`TORCHCELL_SCHEMA_ACK=1` at commit). `scripts/schema_impact_check.py --base HEAD` (run 2026.10.07 in the worktree) reports 5 breaking datasets: `Bloom2019Dataset` (via ArtifactRef, SegregantParent), `CaudalPanTranscriptome2024Dataset` (via ArtifactRef and the three natural-variation leaves), `CrisprMagicLian2019Dataset`, `CrispriMormino2022Dataset` and `CrispriChemgenSmith2016Dataset` (via ArtifactRef, CrisprConstruct). The three CRISPR datasets change only in the serialized key name (`effector_plasmid_uri: null` becomes `effector_plasmid_ref: null`) and the node property rename.
 
 Loader slice (no rebuild): `experiments/036-dataset-fixes-before-kg-build/scripts/artifact_ref_loader_slice.py` writes `experiments/036-dataset-fixes-before-kg-build/results/artifact_ref_loader_slice.json`; the refs built for Caudal isolates AAA (4,557 variants) and AAB (4,913) and for the Bloom A and 375 parents all parse back from their tc:// string and resolve against the local genomes tier.
+
+## 2026.10.09 - Two additive phenotype blocks: a two-sided interval (#776) and the gene-interaction replicate quartet (#793)
+
+Both land with the KG 4.0 full rebuild, never an incremental admission: each moves the
+schema closure of a SERVED class, and incremental import cannot update existing nodes.
+`scripts/schema_impact_check.py --base origin/main` reports **34 impacted datasets, 0
+breaking**, every change an added optional field. Each block is delimited in
+`schema.py` so parallel branches rebase cleanly.
+
+### `EnvironmentResponsePhenotype` (#776)
+
+| field | why |
+|---|---|
+| `environment_response_lower` | the SOURCE's lower confidence limit, verbatim |
+| `environment_response_upper` | the SOURCE's upper confidence limit, verbatim |
+| `confidence_level` | the level the two limits are stated at, required whenever either is set |
+| `replicate_id` | the source's own label for ONE replicate measurement of a (strain, condition) |
+
+The interval is the `FluxPhenotype` shape, and for the reason `FluxPhenotype`'s docstring
+already states: "a two-sided confidence bound is not a single number, and naming one of
+the two bounds as 'the' statistic would misreport it." The driving case is Caglar 2017
+Table S5, whose 95% interval is asymmetric in 55 of 55 rows, so `UncertaintyType.ci95`
+(defined as a single half-width) cannot carry it without falsifying it.
+
+**The limits are deliberately NOT validated to bracket the value.** A limit carried
+through a nonlinear transform can land on the wrong side of the estimate: Table S5's
+`Glycerol.tab` replicate 1 releases `95p = -1027.769034` against a doubling time of
+80.95212424, which is the image of a slope interval straddling zero under
+`DT = log_e 2 / slope`. Repairing it or dropping it would substitute our arithmetic for
+released bytes, so the schema stores it and the environment-response verifier's new L2
+`interval_orientation` rule counts such rows against a count the loader DECLARES.
+`confidence_level` is required with either limit, and both must be finite.
+
+`replicate_id` exists because a release can be one row per replicate CURVE, each with its
+own interval and fit quality. Without it, 55 per-replicate rows collapse to 16 unique
+(study, strain, condition) triples and L1 `pair_uniqueness` would demand an aggregate the
+paper never released. It is a string, so `01` and `1` stay apart, and it joins the
+verifier's `_study_key`.
+
+`ABSOLUTE_MEASUREMENT_TYPES` (module level) names `growth_rate` and `colony_size`: the
+measurement types whose number is a quantity on the assay's own scale rather than a
+response relative to a control. A relative readout (`log2_ratio`, `z_score`,
+`sensitivity_score`, `differential_fitness`, `control_regression_residual`,
+`relative_growth_rate`) is 0 at its control by construction and is deliberately absent,
+because the verifier's `reference_centered=False` branch REQUIRES membership here. That
+is what keeps the reference relief from being a blanket relaxation.
+
+### `GeneInteractionPhenotype` (#793)
+
+| field | why |
+|---|---|
+| `n_samples` | the replicate count the score averages over |
+| `sample_unit` | what one sample physically is (`colony`, `screen`, ...) |
+| `gene_interaction_uncertainty` | the source-reported dispersion, verbatim |
+| `gene_interaction_uncertainty_type` | what that number IS, so it converts to an SE |
+
+The quartet `FitnessPhenotype`, `EnvironmentResponsePhenotype`, `MetabolitePhenotype` and
+`ProteinAbundancePhenotype` already carry. The class had none of it, so a replicate design
+that IS sourced exactly had nowhere to go: Babu 2014 Protocol S2 states eight colonies
+per gene pair (two replicate screens x four biological replicate recipient colonies) and
+Butland 2008 prints the colony measurements per cell. Both now store it on the record.
+
+**No derived SE field is added.** `label_statistic_name` stays
+`gene_interaction_p_value`: an interaction score's released statistic is a TEST of the
+score, not a dispersion of it, and inventing a second statistic name on a served class is
+a separate decision. The uncertainty pair therefore stands alone, with the same
+both-or-neither invariant and the same "a dispersion that divides by n states its n" rule
+the other phenotypes enforce. `SharedRecordRules._add_uncertainty` reads
+`{label_name}_uncertainty`, so the naming makes the shared L2 rule work unchanged.
+
+Consequence for a query: a gapped `gene_interaction_p_value` means "the source tested the
+SET, not the pair"; a gapped `n_samples` means "the source states no replicate design".
+Those read the same from a query only while the fields are absent from the class, which is
+the difference this closes.
+
+Both graph classes project the new fields (`biocypher/config/torchcell_schema_config.yaml`)
+and both `cell_adapter.py` emit sites per class (the experiment node and the reference
+node) carry them, so the declared/emitted bijection
+(`torchcell.datamodels.ontology_checks.adapter_property_mismatches`) holds.
+
+The supported query `solid_growth_025` drifts on `GeneInteractionPhenotype`'s contract
+against KG release `2026.10.06-4b293d34` (13 yeast interaction datasets). That is the
+expected full-rebuild signal and is re-validated after the KG 4.0 build.
+
+Related: [[torchcell.datasets.ecoli.caglar2017_doubling_time]],
+[[torchcell.verification.environment_response]], [[torchcell.datasets.ecoli.babu2014]],
+[[torchcell.datasets.ecoli.butland2008]].

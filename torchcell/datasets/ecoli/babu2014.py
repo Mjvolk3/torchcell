@@ -13,9 +13,11 @@ Table S2 holds 42,705 (donor, recipient) pairs, 25,239 aggravating and 17,466
 alleviating, which is the instance count the bacterial schedule row states.
 
 RECORD = one ``BacterialGeneInteractionExperiment`` per Table S2 row: a two-gene
-``Genotype`` of ``BacterialDeletionPerturbation`` leaves (the donor allele and the
-recipient allele, distinguished by their ``collection`` and ``cassette``) and a
-``GeneInteractionPhenotype`` holding that row's ``GI score`` verbatim.
+``Genotype`` holding the donor allele and the recipient allele, distinguished by their
+``collection`` and ``cassette``, and a ``GeneInteractionPhenotype`` holding that row's
+``GI score`` verbatim. Each side is a ``BacterialDeletionPerturbation`` or, for the
+156 strains whose own source calls them hypomorphs, a
+``BacterialMarkedAllelePerturbation``.
 
 WHICH OF THE 37 RELEASED SI FILES IS AUTHORITATIVE, AND WHY. The release is 21 PDFs
 (Figures S1-S5 = ``si1``-``si5``, Protocols S1-S16 = ``si6``-``si21``) and 16
@@ -71,17 +73,29 @@ is a provenance record rather than a second loader: every record stores its scre
 verbatim in ``screen_id``, so the 727 records carried over from the 39 earlier screens
 stay distinguishable from the 37,852 of the 124 new ones.
 
-THE HYPOMORPHS HAVE NO PERTURBATION LEAF, AND THAT IS A FILED GAP, NOT A GUESS. The
-recipient array is "3,968 non-essential single gene deletions ... and 149 hypomorphic
-mutant strains ... in which a Kan-R marker was integrated into the 3'-UTR", and 7 of the
-163 donors are essential-gene hypomorphs (Table S1 ``Essentiality``). A 3'-end cassette
-that alters transcript abundance is neither a deletion nor a CRISPRi knockdown nor a
-promoter replacement nor a mapped transposon insertion, so none of the five bacterial
-gene-perturbation leaves can type it; the yeast ``DampPerturbation`` is the right
-concept but carries no ``gene_namespace`` and is not a bacterial leaf. Rather than type
-a hypomorph as a deletion, the 3,420 pairs that involve one are dropped under
-``hypomorphic_allele_has_no_bacterial_perturbation_leaf`` and the missing leaf is
-filed as issue #792.
+THE HYPOMORPHS ARE STORED, AND THE TWO SIDES ARE SOURCED DIFFERENTLY. The recipient
+array is "3,968 non-essential single gene deletions ... and 149 hypomorphic mutant
+strains ... in which a Kan-R marker was integrated into the 3'-UTR", and 7 of the 163
+donors are essential-gene hypomorphs (Table S1 ``Essentiality``). Until
+``BacterialMarkedAllelePerturbation`` landed (issue #792) no leaf could type a 3'-end
+cassette that alters transcript abundance, and the 3,420 pairs involving one were
+dropped; they are now records, with each side carrying only what ITS OWN source says:
+
+- a RECIPIENT hypomorph is ``cassette="kan"``, ``insertion_site="3'-UTR"``,
+  ``tag="SPA"``, ``terminus="C"``, ``collection="SPA-tag essential"``, from Babu's own
+  Results plus Butland 2008's "tagged with a gene encoding a C-terminal sequential
+  peptide affinity tag (SPA)".
+- a DONOR hypomorph is ``cassette="cat"`` and nothing else. Protocol S16 says only that
+  the "essential gene hypomorphic mutations were constructed using the lambda-Red
+  recombination or P1 phage transduction system", so no tag, terminus or insertion site
+  is asserted for these seven; borrowing the recipient array's SPA tag would claim a
+  fusion no source gives them.
+
+Both sides carry ``allele_effect="hypomorphic"``, which is what the sources call them,
+and NEITHER carries a knockdown magnitude: Butland 2008 states that "in the majority of
+cases the nature of the observed hypomorphic defect is unknown", and the yeast
+``DampPerturbation``'s 4-to-10-fold default would import a yeast KANmx measurement as
+though it were sourced for E. coli.
 
 WHICH RECIPIENTS ARE HYPOMORPHS IS A DEFERRAL, FOLLOWED. Babu releases the count (149)
 and not the list, deferring to refs [13,16] = Butland 2008 and Babu 2011. Babu 2011 is
@@ -96,16 +110,13 @@ Supplementary Table 1.
 
 RETENTION (rules, counts and items in ``preprocess/dropped_records.json``).
 
-1. ``hypomorphic_allele_has_no_bacterial_perturbation_leaf`` -- 3,420 pairs: 1,024 with
-   one of the 7 essential (hypomorphic) donors, 2,479 with one of the 149 SPA-tagged
-   recipients, 83 with both.
-2. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 183 pairs naming one of
+1. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 186 pairs naming one of
    17 released ids GCA_000005845.2 does not carry at all, under any layer: ``JW5447``,
    ``JW5661``, ``cscR``, nine ``bNNNN.1`` sub-numbered Keio entries, and the five
    retired b-numbers ``b0370``, ``b0510``, ``b4091``, ``b4223``, ``b4274``, ``b4574``.
    A bacterial leaf's validator refuses the first twelve outright, and storing any of
    them would put a record on a locus the assembly does not have.
-3. ``b_number_remapped_by_the_annotation`` -- 519 pairs naming one of 52 b-numbers that
+2. ``b_number_remapped_by_the_annotation`` -- 527 pairs naming one of 52 b-numbers that
    GCA_000005845.2 carries as a ``/gene_synonym`` of a DIFFERENT locus: 46 of a
    pseudogene (``b0359``->``b4579``, ``b4103``->``b4583``, ...), 5 of another pseudogene
    through the remap rule (``b0500``->``b0501``, ``b0625``->``b4581``,
@@ -115,16 +126,20 @@ RETENTION (rules, counts and items in ``preprocess/dropped_records.json``).
    retired tag of the pinned strain's OWN namespace (issue #753), so the pairs are
    dropped rather than remapped silently. This is the same finding Girgis 2009 and Rapp
    2026 record, at this release's scale.
-4. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
+3. ``contradictory_duplicate_pair`` -- 4 rows, the two ordered (donor, recipient) pairs
    Table S2 releases TWICE with different scores (``b1396__paaI``/``b2863__ygeQ`` at
    -5.19537 and +4.33814; ``b2675__nrdE``/``b4462__ygaR`` at -7.12262 and -5.67666).
    The release gives no rule for choosing, and the two scores of the paaI pair disagree
    in SIGN, so both rows of both pairs are dropped.
 
-3,420 + 183 + 519 + 4 = 4,126 dropped; 42,705 - 4,126 = 38,579 records, 22,732
-aggravating and 15,847 alleviating, over 155 donors and 3,658 recipients.
+186 + 527 + 4 = 717 dropped; 42,705 - 717 = 41,988 records, 24,822 aggravating and
+17,166 alleviating, over all 163 donors and 3,807 recipients. 3,409 of those records
+carry a marked hypomorphic allele on one side or both (1,013 donor-side, 2,479
+recipient-side, 83 both); the 11 hypomorph pairs that remain dropped fail rules 1 and 2
+on the OTHER gene of the pair, which is why admitting the hypomorphs raised those two
+counts from 183 and 519 rather than leaving them alone.
 
-RECIPROCAL PAIRS ARE KEPT, AND THEY ARE NOT DUPLICATES. 102 unordered gene pairs appear
+RECIPROCAL PAIRS ARE KEPT, AND THEY ARE NOT DUPLICATES. 100 unordered gene pairs appear
 twice because each gene was a donor in its own screen, and the two scores often disagree
 in sign (``b0436__tig`` / ``b0957__ompA``: -7.63085 as donor-tig, +6.96912 as
 donor-ompA). These are two different strains, not two measurements of one: in the first
@@ -167,7 +182,7 @@ from collections import Counter
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import Any, ClassVar, Final, Literal
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, TypeAdapter
@@ -191,6 +206,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
+    BacterialMarkedAllelePerturbation,
     BacterialStrainBackground,
     Environment,
     Experiment,
@@ -654,8 +670,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "recipient_array": _paper(
         3968,
         _Q_ARRAY,
-        note="the recipient array is 3,968 Keio deletions plus 149 hypomorphs; the "
-        "hypomorph half has no bacterial perturbation leaf, so its pairs are dropped",
+        note="the recipient array is 3,968 Keio deletions plus 149 hypomorphs; this "
+        "quote is also where the hypomorph allele's marker and insertion site come "
+        "from, so it is the provenance of recipient_hypomorph_perturbation",
     ),
     "n_hypomorphic_recipients": _paper(
         149,
@@ -750,8 +767,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         149,
         _Q_BUTLAND_SPA,
         note="what a hypomorphic recipient IS: a kan-marked C-terminal SPA tag on an "
-        "essential gene. The per-gene list is Butland Supplementary Table 1's 'SPA-tag "
-        "essential' column, read at build time from the raw mirror",
+        "essential gene, which is the provenance of this record's tag and terminus. "
+        "The per-gene list is Butland Supplementary Table 1's 'SPA-tag essential' "
+        "column, read at build time from the raw mirror",
     ),
     "agar": _butland_methods(
         "agar",
@@ -1223,20 +1241,11 @@ def read_hypomorphic_recipients(path: str | Path) -> frozenset[str]:
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_HYPOMORPH = "hypomorphic_allele_has_no_bacterial_perturbation_leaf"
 RULE_NOT_A_TAG = "b_number_is_not_a_locus_tag_of_the_pinned_annotation"
 RULE_REMAPPED = "b_number_remapped_by_the_annotation"
 RULE_DUPLICATE = "contradictory_duplicate_pair"
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_HYPOMORPH: "one side of the pair is a hypomorph -- an essential-gene donor "
-    "(Table S1 Essentiality == 'essential') or one of the 149 recipients Butland 2008 "
-    "Supplementary Table 1 labels 'SPA-tag essential'. The allele is a kan cassette at "
-    "the 3' end that alters transcript abundance, which none of the five bacterial "
-    "gene-perturbation leaves can type: it is not a deletion, not a mapped transposon "
-    "insertion, not a CRISPRi knockdown and not a promoter replacement. Typing it as a "
-    "deletion would assert an absence the paper never claims, so the pair is dropped "
-    "and the missing leaf is filed as issue #792",
     RULE_NOT_A_TAG: "a released id is not an MG1655 b-number at all (a Keio JW id, a "
     "gene symbol, or a 'bNNNN.1' sub-numbered Keio entry). A bacterial perturbation "
     "leaf's name validator refuses it, and storing it would put a record on a locus "
@@ -1387,20 +1396,98 @@ def recipient_perturbation(
     )
 
 
+#: What a hypomorphic RECIPIENT is, verbatim from the two mirrored sources: Babu's own
+#: Results give the site and the marker ("a Kan-R marker was integrated into the 3'-UTR
+#: to alter transcript abundance or stability", ``_Q_ARRAY``) and Butland 2008 gives the
+#: fusion ("tagged with a gene encoding a C-terminal sequential peptide affinity tag
+#: (SPA)", ``_Q_BUTLAND_SPA``). Both are already carried as ``SOURCED_VALUES``.
+HYPOMORPH_INSERTION_SITE = "3'-UTR"
+HYPOMORPH_TAG = "SPA"
+HYPOMORPH_TERMINUS: Literal["N", "C"] = "C"
+#: The strain set the 149 belong to, as Butland Supplementary Table 1's own per-row
+#: label writes it. Deliberately the verbatim label and not a coined name: neither paper
+#: brands the set, and the table's title says only "SPA-tagged essential genes".
+HYPOMORPH_RECIPIENT_COLLECTION = SPA_TAG_ESSENTIAL
+
+
+def donor_hypomorph_perturbation(
+    locus_tag: str, symbol: str
+) -> BacterialMarkedAllelePerturbation:
+    """The donor side of an ESSENTIAL-gene query: a cat-marked hypomorphic allele.
+
+    Sourced differently from the recipient hypomorph, and the asymmetry is real. The
+    only statement about these seven strains is Protocol S16's "The Hfr C non-essential
+    donor gene deletion mutant strains or essential gene hypomorphic mutations were
+    constructed using the lambda-Red recombination or P1 phage transduction system"
+    (``SOURCED_VALUES["strains"]``), which names the construction METHOD and nothing
+    else. The donor marker is ``cat`` for the whole query collection
+    (``SOURCED_VALUES["markers"]``), so the cassette is stated; no source gives these
+    seven a tag, a terminus or an insertion site, so those stay None rather than
+    borrowing the recipient array's SPA tag.
+    """
+    return BacterialMarkedAllelePerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=symbol,
+        gene_namespace=MG1655_NAMESPACE,
+        collection=DONOR_COLLECTION,
+        cassette=DONOR_CASSETTE,
+        allele_effect="hypomorphic",
+    )
+
+
+def recipient_hypomorph_perturbation(
+    locus_tag: str, symbol: str
+) -> BacterialMarkedAllelePerturbation:
+    """The recipient side of a SPA-tagged essential gene: kan in the 3'-UTR, SPA tag.
+
+    Every field is a verbatim source value, and the magnitude of the knockdown is NOT a
+    field: Butland 2008 says outright that "in the majority of cases the nature of the
+    observed hypomorphic defect is unknown", and Babu says only that the marker alters
+    transcript "abundance or stability", so neither a direction multiplier nor a fold
+    change exists to store.
+    """
+    return BacterialMarkedAllelePerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=symbol,
+        gene_namespace=MG1655_NAMESPACE,
+        collection=HYPOMORPH_RECIPIENT_COLLECTION,
+        cassette=RECIPIENT_CASSETTE,
+        insertion_site=HYPOMORPH_INSERTION_SITE,
+        tag=HYPOMORPH_TAG,
+        terminus=HYPOMORPH_TERMINUS,
+        allele_effect="hypomorphic",
+    )
+
+
 def pair_genotype(
-    donor_tag: str, donor_gene: str, recipient_tag: str, recipient_gene: str
+    donor_tag: str,
+    donor_gene: str,
+    recipient_tag: str,
+    recipient_gene: str,
+    *,
+    donor_is_hypomorph: bool,
+    recipient_is_hypomorph: bool,
 ) -> Genotype:
     """The double mutant: the donor allele and the recipient allele.
 
     The two leaves differ in ``collection`` and ``cassette``, which is what keeps a
     reciprocally measured gene pair two strains rather than two measurements of one.
+    Each side is a deletion or a marked hypomorphic allele according to what its own
+    source says that strain IS: an essential-gene donor (Table S1 ``Essentiality``) and
+    one of the 149 ``SPA-tag essential`` recipients are hypomorphs, everything else is
+    a deletion.
     """
-    return Genotype(
-        perturbations=[
-            donor_perturbation(donor_tag, donor_gene),
-            recipient_perturbation(recipient_tag, recipient_gene),
-        ]
+    donor = (
+        donor_hypomorph_perturbation(donor_tag, donor_gene)
+        if donor_is_hypomorph
+        else donor_perturbation(donor_tag, donor_gene)
     )
+    recipient = (
+        recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
+        if recipient_is_hypomorph
+        else recipient_perturbation(recipient_tag, recipient_gene)
+    )
+    return Genotype(perturbations=[donor, recipient])
 
 
 def phenotype(score: float, screen_id: str) -> GeneInteractionPhenotype:
@@ -1494,11 +1581,21 @@ def build_experiment(
     recipient_gene: str,
     score: float,
     screen_id: str,
+    *,
+    donor_is_hypomorph: bool,
+    recipient_is_hypomorph: bool,
 ) -> BacterialGeneInteractionExperiment:
     """The record of one Table S2 row."""
     return BacterialGeneInteractionExperiment(
         dataset_name=dataset_name,
-        genotype=pair_genotype(donor_tag, donor_gene, recipient_tag, recipient_gene),
+        genotype=pair_genotype(
+            donor_tag,
+            donor_gene,
+            recipient_tag,
+            recipient_gene,
+            donor_is_hypomorph=donor_is_hypomorph,
+            recipient_is_hypomorph=recipient_is_hypomorph,
+        ),
         environment=SCREEN_ENVIRONMENT,
         phenotype=phenotype(score, screen_id),
     )
@@ -1580,9 +1677,6 @@ def retain(
         and res.systematic_name != name
     }
 
-    hypomorph = frame["donor_id"].map(lambda b: donors[b].is_hypomorph) | frame[
-        "recipient_id"
-    ].isin(hypomorphic_recipients)
     not_a_tag = frame["donor_id"].isin(retired) | frame["recipient_id"].isin(retired)
     was_remapped = frame["donor_id"].isin(set(remapped)) | frame["recipient_id"].isin(
         set(remapped)
@@ -1591,41 +1685,32 @@ def retain(
 
     rules = [
         DropRule(
-            rule=RULE_HYPOMORPH,
-            description=DROP_RULE_DESCRIPTIONS[RULE_HYPOMORPH],
-            n_records=int(hypomorph.sum()),
-            items=sorted(
-                {b for b in frame.loc[hypomorph, "donor_id"] if donors[b].is_hypomorph}
-                | {
-                    b
-                    for b in frame.loc[hypomorph, "recipient_id"]
-                    if b in hypomorphic_recipients
-                }
-            ),
-        ),
-        DropRule(
             rule=RULE_NOT_A_TAG,
             description=DROP_RULE_DESCRIPTIONS[RULE_NOT_A_TAG],
-            n_records=int((not_a_tag & ~hypomorph).sum()),
+            n_records=int(not_a_tag.sum()),
             items=sorted(retired),
         ),
         DropRule(
             rule=RULE_REMAPPED,
             description=DROP_RULE_DESCRIPTIONS[RULE_REMAPPED],
-            n_records=int((was_remapped & ~hypomorph & ~not_a_tag).sum()),
+            n_records=int((was_remapped & ~not_a_tag).sum()),
             items=sorted(f"{name} -> {tag}" for name, tag in remapped.items()),
         ),
         DropRule(
             rule=RULE_DUPLICATE,
             description=DROP_RULE_DESCRIPTIONS[RULE_DUPLICATE],
-            n_records=int((duplicate & ~hypomorph & ~not_a_tag & ~was_remapped).sum()),
+            n_records=int((duplicate & ~not_a_tag & ~was_remapped).sum()),
             items=sorted(
                 {_pair_label(dict(row)) for _, row in frame.loc[duplicate].iterrows()}
             ),
         ),
     ]
-    kept = frame.loc[~(hypomorph | not_a_tag | was_remapped | duplicate)].reset_index(
-        drop=True
+    kept = frame.loc[~(not_a_tag | was_remapped | duplicate)].reset_index(drop=True)
+    kept = kept.assign(
+        donor_is_hypomorph=[donors[b].is_hypomorph for b in kept["donor_id"]],
+        recipient_is_hypomorph=[
+            b in hypomorphic_recipients for b in kept["recipient_id"]
+        ],
     )
     not_itself = sorted(
         name
@@ -1680,7 +1765,9 @@ def retain(
     )
 
 
-def stored_rows(kept: pd.DataFrame) -> Iterator[tuple[str, str, str, str, float, str]]:
+def stored_rows(
+    kept: pd.DataFrame,
+) -> Iterator[tuple[str, str, str, str, float, str, bool, bool]]:
     """Every stored row in LMDB order, as the record builder's arguments."""
     for row in kept.itertuples(index=False):
         yield (
@@ -1690,6 +1777,8 @@ def stored_rows(kept: pd.DataFrame) -> Iterator[tuple[str, str, str, str, float,
             str(row.recipient_gene),
             float(str(row.score)),
             str(row.screen_id),
+            bool(row.donor_is_hypomorph),
+            bool(row.recipient_is_hypomorph),
         )
 
 
@@ -1697,10 +1786,15 @@ def stored_rows(kept: pd.DataFrame) -> Iterator[tuple[str, str, str, str, float,
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_babu2014"
-#: Records of the full build: 42,705 released pairs minus 3,420 hypomorph pairs, 183
-#: pairs on an id the annotation does not carry, 519 pairs on an annotation-remapped
-#: b-number and the 4 rows of the two contradictory duplicate pairs.
-EXPECTED_RECORDS = 38579
+#: Records of the full build: 42,705 released pairs minus 186 pairs on an id the
+#: annotation does not carry, 527 pairs on an annotation-remapped b-number and the 4
+#: rows of the two contradictory duplicate pairs. The 3,420 hypomorph pairs are STORED
+#: since ``BacterialMarkedAllelePerturbation`` landed (#792); 11 of them are still
+#: dropped by the identifier rules, which is why those two counts rose from 183 and 519.
+EXPECTED_RECORDS = 41988
+#: Records whose donor or recipient side is a marked hypomorphic allele rather than a
+#: deletion: 1,013 donor-side, 2,479 recipient-side, 83 both.
+EXPECTED_HYPOMORPH_RECORDS = 3409
 
 
 @register_dataset
@@ -1835,6 +1929,8 @@ class GeneInteractionBabu2014Dataset(ExperimentDataset):
                 recipient_gene,
                 score,
                 screen_id,
+                donor_hypo,
+                recipient_hypo,
             ) in tqdm(
                 stored_rows(retention.kept),
                 total=drop_log.kept_records,
@@ -1848,6 +1944,8 @@ class GeneInteractionBabu2014Dataset(ExperimentDataset):
                     recipient_gene,
                     score,
                     screen_id,
+                    donor_is_hypomorph=donor_hypo,
+                    recipient_is_hypomorph=recipient_hypo,
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -1907,8 +2005,10 @@ VERIFIER_PROVENANCE = Provenance(
     sha256=DATA_SHA256[TABLE_S2],
     method="Table S2, the GI score of every released high-confidence (donor, "
     "recipient) pair; one BacterialGeneInteractionExperiment per row, a two-leaf "
-    "BacterialDeletionPerturbation genotype against MG1655 whose donor carries cat and "
-    "whose recipient carries kan, reference = the unperturbed conjugant chassis at 0",
+    "genotype against MG1655 whose donor carries cat and whose recipient carries kan "
+    "(a BacterialDeletionPerturbation on each side, or a "
+    "BacterialMarkedAllelePerturbation where the source calls the strain a hypomorph), "
+    "reference = the unperturbed conjugant chassis at 0",
     page="Table S2 (pgen.1004120.s023.xls), sheet 'WG_GI_Score_Mar_06_2013'",
     retrieved=DATA_RETRIEVED_AT,
 )
@@ -1940,6 +2040,77 @@ def _l1_two_distinct_genes(records: Sequence[Record]) -> LevelResult:
         message=f"{len(records) - len(bad)} of {len(records)} records are two distinct "
         "loci, one cat-marked donor and one kan-marked recipient",
         details={"n_bad": len(bad), "bad_examples": bad[:20]},
+    )
+
+
+def _l1_hypomorph_sides_are_marked_alleles(
+    records: Sequence[Record],
+    *,
+    hypomorphic_donors: frozenset[str],
+    hypomorphic_recipients: frozenset[str],
+    expected_hypomorph_records: int,
+) -> LevelResult:
+    """L1: a hypomorph side is a marked allele and a deletion side is a deletion.
+
+    The check that keeps #792's fix honest in both directions: a strain the sources
+    call a hypomorph must NOT be stored as a deletion, and a Keio deletion must not
+    acquire a hypomorph's tag. It also pins the two sides' different sourcing -- the
+    recipient array's SPA tag in the 3'-UTR, the donor's cassette alone.
+    """
+    bad: list[str] = []
+    n_hypomorph = 0
+    for record in records:
+        perturbations = record["experiment"]["genotype"]["perturbations"]
+        by_cassette = {str(p["cassette"]): p for p in perturbations}
+        donor = by_cassette[DONOR_CASSETTE]
+        recipient = by_cassette[RECIPIENT_CASSETTE]
+        donor_hypo = str(donor["systematic_gene_name"]) in hypomorphic_donors
+        recipient_hypo = (
+            str(recipient["systematic_gene_name"]) in hypomorphic_recipients
+        )
+        if donor_hypo or recipient_hypo:
+            n_hypomorph += 1
+        expectations = (
+            (donor, donor_hypo, DONOR_COLLECTION, None, None),
+            (
+                recipient,
+                recipient_hypo,
+                HYPOMORPH_RECIPIENT_COLLECTION,
+                HYPOMORPH_TAG,
+                HYPOMORPH_INSERTION_SITE,
+            ),
+        )
+        for side, is_hypomorph, collection, tag, site in expectations:
+            want = "bacterial_marked_allele" if is_hypomorph else "bacterial_deletion"
+            if str(side["perturbation_type"]) != want:
+                bad.append(
+                    f"{side['systematic_gene_name']} is {side['perturbation_type']}"
+                )
+                continue
+            if not is_hypomorph:
+                continue
+            if (
+                str(side["collection"]) != collection
+                or side.get("tag") != tag
+                or side.get("insertion_site") != site
+                or str(side["allele_effect"]) != "hypomorphic"
+            ):
+                bad.append(f"{side['systematic_gene_name']} fields {dict(side)}")
+    return LevelResult(
+        level=Level.L1,
+        name="hypomorph_sides_are_marked_alleles",
+        passed=(
+            bool(records) and not bad and n_hypomorph == expected_hypomorph_records
+        ),
+        message=f"{n_hypomorph} of {len(records)} records carry a marked hypomorphic "
+        f"allele (expected {expected_hypomorph_records}); every other side is a "
+        "deletion",
+        details={
+            "n_hypomorph_records": n_hypomorph,
+            "expected_hypomorph_records": expected_hypomorph_records,
+            "n_bad": len(bad),
+            "bad_examples": bad[:20],
+        },
     )
 
 
@@ -2040,6 +2211,9 @@ def verify_records(
     released: Mapping[tuple[str, str], float],
     universe: set[str],
     expected_count: int,
+    hypomorphic_donors: frozenset[str],
+    hypomorphic_recipients: frozenset[str],
+    expected_hypomorph_records: int | None = None,
     dataset_name: str = "gene_interaction_babu2014",
 ) -> VerificationReport:
     """The L0-L4 gate over built records, given the re-read Table S2 and the MG1655
@@ -2047,12 +2221,22 @@ def verify_records(
     """
     from torchcell.verification.common import shared_rule_results
 
+    if expected_hypomorph_records is None:
+        expected_hypomorph_records = EXPECTED_HYPOMORPH_RECORDS
     report = VerificationReport(
         dataset_name=dataset_name, provenance=VERIFIER_PROVENANCE
     )
     report.add(l0_structural(records, _validate_record))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_two_distinct_genes(records))
+    report.add(
+        _l1_hypomorph_sides_are_marked_alleles(
+            records,
+            hypomorphic_donors=hypomorphic_donors,
+            hypomorphic_recipients=hypomorphic_recipients,
+            expected_hypomorph_records=expected_hypomorph_records,
+        )
+    )
     report.add(_l2_scores_match_table_s2(records, released))
     report.add(_l3_sign_convention(records))
     report.add(_l3_screen_sets(records))
@@ -2109,11 +2293,18 @@ def run_verification(data_root: str | None = None) -> VerificationReport:
         Path(abs_root, "preprocess", "dropped_records.json").read_text()
     )
     released = released_scores(osp.join(abs_root, "raw", TABLE_S2))
+    donors = read_donors(osp.join(abs_root, "raw", TABLE_S1))
     report = verify_records(
         records,
         released=released,
         universe=_gene_universe(records, base),
         expected_count=drops.kept_records,
+        hypomorphic_donors=frozenset(
+            b for b, spec in donors.items() if spec.is_hypomorph
+        ),
+        hypomorphic_recipients=read_hypomorphic_recipients(
+            osp.join(abs_root, "raw", BUTLAND_TABLE_S1)
+        ),
     )
     library_root = Path(base) / "torchcell-library"
     for value in SOURCED_VALUES.values():

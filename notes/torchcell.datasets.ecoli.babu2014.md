@@ -265,3 +265,115 @@ this branch's closure has no such symbol, plus `EnvironmentPerturbationType` and
 `GenePerturbationType`) are the parallel branches whose builds are in that tree.
 
 Related: [[torchcell.datasets.ecoli.butland2008]], [[torchcell.datamodels.schema]].
+## 2026.10.09 - The 3,420 hypomorph pairs are stored (issue #792)
+
+`BacterialMarkedAllelePerturbation` landed in `schema.py` in the same branch, so the
+pairs that used to be dropped under `hypomorphic_allele_has_no_bacterial_perturbation_leaf`
+are now records. The rule is gone from `DROP_RULE_DESCRIPTIONS`.
+
+### Measured before and after, from the rebuilt dev store
+
+Both rows read from
+`$DATA_ROOT/data/torchcell/gene_interaction_babu2014/preprocess/dropped_records.json`
+(the before row from the 2026.10.08 build, parked as
+`preprocess.superseded.20261008-171627`).
+
+| quantity | before | after |
+|---|---|---|
+| released pairs | 42,705 | 42,705 |
+| stored records | 38,579 | **41,988** |
+| `hypomorphic_allele_has_no_bacterial_perturbation_leaf` | 3,420 | rule removed |
+| `b_number_is_not_a_locus_tag_of_the_pinned_annotation` | 183 | 186 |
+| `b_number_remapped_by_the_annotation` | 519 | 527 |
+| `contradictory_duplicate_pair` | 4 | 4 |
+| aggravating / alleviating | 22,732 / 15,847 | 24,822 / 17,166 |
+| donors / recipients | 155 / 3,658 | 163 / 3,807 |
+| screen sets | 37,852 / 727 | 40,863 / 1,125 |
+| reciprocal unordered pairs | 97 | 100 |
+
+**3,409 of the 3,420, not 3,420.** The identifier rules rose by 3 and 8 because 11 of
+the hypomorph pairs fail on the OTHER gene of the pair: with the hypomorph rule gone,
+those rows are attributed to the rule that actually blocks them. The stored hypomorph
+records split 1,013 donor-side, 2,479 recipient-side, 83 both.
+
+### The two sides are sourced differently, and only one carries the SPA tag
+
+This is the finding the extension turns on. Everything the two papers say about the
+C-terminal tag and the 3'-UTR marker is about the RECIPIENT array.
+
+- **Recipient (149 strains, 2,479 pairs)**: `cassette="kan"`, `insertion_site="3'-UTR"`,
+  `tag="SPA"`, `terminus="C"`, `collection="SPA-tag essential"`,
+  `allele_effect="hypomorphic"`. Babu `paper.md`, sha256
+  `b59b39946b2bcaff5a8f608aaf733c09482e0557a8be0f4546ae8218fcf2dd97`, Results:
+  "149 hypomorphic mutant strains [13,16], in which a KanR marker was integrated into
+  the 3'-UTR to alter transcript abundance or stability [13]". Butland 2008 `paper.md`,
+  sha256 `a3da20a90b56b85e1cd7e23e784c318e78cec115b5bc3e94afcd89a5f94f8eef`:
+  "we also added 149 F- potentially hypomorphic kan-marked strains with essential genes
+  involved in conserved bacterial processes13 tagged with a gene encoding a C-terminal
+  sequential peptide affinity tag (SPA)." The `collection` string is the verbatim
+  per-row label of Butland Supplementary Table 1, not a coined name: neither paper
+  brands the set.
+- **Donor (7 strains, 1,013 pairs)**: `cassette="cat"` and nothing else. Protocol S16
+  (`si/si21.md`, sha256 `be1fa4b58d75de8aed1964f261d8e9ee119eeadcddebdeb30519540d18c5f58f`)
+  says only "The Hfr C non-essential donor gene deletion mutant strains or essential
+  gene hypomorphic mutations were constructed using the λ-Red recombination [2-4] or P1
+  phage transduction [5] system", which names the construction method and nothing else.
+  No tag, terminus or insertion site is asserted for these seven; borrowing the
+  recipient array's SPA tag would claim a fusion no source gives them.
+
+### No knockdown magnitude is stored, and a source says why
+
+Searched the whole Babu mirror (`paper.md` plus all 21 SI markdown files) and Butland's
+`paper.md` plus `si/si1.md` for `fold`, `qPCR`, `western`, `immunoblot`, `transcript
+abundance`, `knockdown`, `depletion`: no fold change, no blot, no abundance measurement
+for any hypomorph strain. Butland `paper.md` states the reason outright:
+
+> Interpretation of SSL interactions involving potential hypomorphs is, however, more
+> complex than those involving null alleles because in the majority of cases the nature
+> of the observed hypomorphic defect is unknown.
+
+So `BacterialMarkedAllelePerturbation` carries no `expression_range`. Copying the yeast
+`DampPerturbation`'s 4-to-10-fold default would import a yeast KANmx measurement as
+though it were sourced for E. coli, and Babu's own wording is weaker still: the marker
+"alters" abundance or stability, with no direction and no size.
+
+### L0 to L4 on the rebuilt store
+
+`PYTHONPATH=<worktree> python -m torchcell.datasets.ecoli.babu2014 verify` reports
+`gene_interaction_babu2014: PASS` on all 21 checks over the 41,988-record store.
+
+| level | check | result |
+|---|---|---|
+| L0 | structural | 41,988 records validated |
+| L1 | count | observed 41,988, expected 41,988 |
+| L1 | digenic_pair_of_one_donor_and_one_recipient | 41,988 of 41,988, one cat-marked donor and one kan-marked recipient |
+| L1 | **hypomorph_sides_are_marked_alleles** (new) | 3,409 of 41,988 records carry a marked hypomorphic allele (expected 3,409); every other side is a deletion |
+| L1 | provenance_gaps | 167,952 documented gaps over 41,988/41,988 records |
+| L1 | canonical_gene_names | 3,811 systematic names, one spelling each |
+| L2 | gene_interaction_equals_table_s2_cell | 41,988 of 41,988 |
+| L2 | uncertainty_sanity | 0 labeled uncertainties |
+| L3 | signed_interaction_score_with_zero_reference | 24,822 aggravating, 17,166 alleviating, 0 zeros, reference 0.0 |
+| L3 | screen_id_is_a_table_s1_screen_set | This Study 40,863, Butland et al. 1,125 |
+| L3 | compound / media identity, media membership | pass |
+| L3 | provenance_audit x18 | every value backed by a verbatim quote |
+| L4 | gene_containment_mg1655_locus_tags | 3,811 of 3,811 perturbed loci are MG1655 GenBank loci |
+
+The new L1 check is the one that keeps the fix honest in both directions: a strain the
+sources call a hypomorph must not be stored as a deletion, and a Keio deletion must not
+acquire a hypomorph's tag.
+
+### Two factual corrections to the previous section
+
+- The module docstring said 102 reciprocal unordered pairs; the built artifact said 97
+  then and says 100 now. The docstring was stale and is fixed.
+- `test_both_raw_mirrors_hold_exactly_the_consumed_files` asserted the Butland raw
+  mirror holds exactly `si2.xls`. That mirror is shared with the Butland 2008 loader,
+  which has since deposited `si3.xls`, `si4.xls` and `si5.xls`, so the assertion is now
+  containment of the file this loader consumes.
+
+### The immediate next consumer, not done here
+
+`torchcell/datasets/ecoli/butland2008.py` carries the same gap under its own rule
+`spa_tag_recipient_has_no_bacterial_perturbation_leaf`, dropping 5,811 cells. The leaf
+now exists and that loader's SPA recipients are the same 149 strains, so it is the next
+extension; it is out of this branch's scope and is recorded here rather than done.

@@ -60,6 +60,7 @@ from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
+    BacterialMarkedAllelePerturbation,
     GeneInteractionPhenotype,
     Genotype,
     MediaComponentRole,
@@ -106,12 +107,21 @@ SYNTHETIC_PAIRS: tuple[tuple[str, str, str, str, float], ...] = (
     ("b0005", "proB", "b0004", "yaaP", 4.1),
     ("b0003", "thrW", "b0001", "thrL", 4.5),
 )
-#: The four pairs the retention rules keep, as ``(donor, recipient, score, screen)``.
+#: The six pairs the retention rules keep, as ``(donor, recipient, score, screen)``.
+#: Two of them carry a hypomorph: ``b0002`` is the synthetic essential-gene donor and
+#: ``b0006`` the synthetic SPA-tagged recipient, both stored as marked alleles (#792).
 KEPT_PAIRS: tuple[tuple[str, str, float, str], ...] = (
     ("b0001", "b0003", -5.0, m.SCREEN_THIS_STUDY),
     ("b0001", "b0004", 4.0, m.SCREEN_THIS_STUDY),
+    ("b0002", "b0003", -6.0, m.SCREEN_THIS_STUDY),
+    ("b0001", "b0006", -7.0, m.SCREEN_THIS_STUDY),
     ("b0005", "b0007", 5.5, m.SCREEN_BUTLAND),
     ("b0003", "b0001", 4.5, m.SCREEN_THIS_STUDY),
+)
+#: Of those, the ones whose donor or recipient is the hypomorph.
+KEPT_HYPOMORPH_PAIRS: tuple[tuple[str, str], ...] = (
+    ("b0002", "b0003"),
+    ("b0001", "b0006"),
 )
 
 
@@ -212,6 +222,7 @@ def synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(m, "N_RELEASED_PAIRS", len(SYNTHETIC_PAIRS))
     monkeypatch.setattr(m, "SIGN_SPLIT", (5, 5))
     monkeypatch.setattr(m, "N_HYPOMORPHIC_RECIPIENTS", 1)
+    monkeypatch.setattr(m, "EXPECTED_HYPOMORPH_RECORDS", len(KEPT_HYPOMORPH_PAIRS))
 
 
 @pytest.fixture
@@ -339,7 +350,9 @@ def test_the_released_counts_are_the_sourced_ones() -> None:
     assert m.N_RELEASED_PAIRS == 42705
     assert m.SIGN_SPLIT == (25239, 17466)
     assert m.N_HYPOMORPHIC_RECIPIENTS == 149
-    assert m.EXPECTED_RECORDS == 38579
+    # 42,705 released minus 186 + 527 + 4; the hypomorph pairs are stored since #792
+    assert m.EXPECTED_RECORDS == 42705 - (186 + 527 + 4)
+    assert m.EXPECTED_HYPOMORPH_RECORDS == 1013 + 2479 - 83
 
 
 # --------------------------------------------------------------------------- #
@@ -414,7 +427,14 @@ def test_the_hypomorph_list_refuses_a_roster_of_another_size(raw_dir: Path) -> N
 # The record
 # --------------------------------------------------------------------------- #
 def test_the_genotype_is_two_leaves_distinguished_by_cassette() -> None:
-    genotype = m.pair_genotype("b0002", "thrA", "b0001", "thrL")
+    genotype = m.pair_genotype(
+        "b0002",
+        "thrA",
+        "b0001",
+        "thrL",
+        donor_is_hypomorph=False,
+        recipient_is_hypomorph=False,
+    )
     assert genotype.systematic_gene_names == ["b0001", "b0002"]
     by_tag = {
         p.systematic_gene_name: p
@@ -430,10 +450,72 @@ def test_the_genotype_is_two_leaves_distinguished_by_cassette() -> None:
     assert {p.identifier_mapping for p in by_tag.values()} == {None}
 
 
+def test_a_hypomorph_side_is_a_marked_allele_and_the_two_sides_differ() -> None:
+    """#792: the SPA recipient carries its tag and site; the donor carries neither.
+
+    The asymmetry is the whole point. Butland 2008 states the recipient array's
+    C-terminal SPA tag and Babu states its 3'-UTR kan marker, so both are stored;
+    Protocol S16 states nothing about the seven essential-gene donors beyond the
+    construction method, so no tag, terminus or insertion site is asserted for them.
+    """
+    genotype = m.pair_genotype(
+        "b0002",
+        "thrA",
+        "b0006",
+        "proC",
+        donor_is_hypomorph=True,
+        recipient_is_hypomorph=True,
+    )
+    by_tag = {p.systematic_gene_name: p for p in genotype.perturbations}
+    donor = by_tag["b0002"]
+    recipient = by_tag["b0006"]
+    assert isinstance(donor, BacterialMarkedAllelePerturbation)
+    assert isinstance(recipient, BacterialMarkedAllelePerturbation)
+    assert donor.allele_effect == "hypomorphic"
+    assert donor.cassette == m.DONOR_CASSETTE
+    assert donor.collection == m.DONOR_COLLECTION
+    assert (donor.tag, donor.terminus, donor.insertion_site) == (None, None, None)
+    assert recipient.allele_effect == "hypomorphic"
+    assert recipient.cassette == m.RECIPIENT_CASSETTE
+    assert recipient.tag == "SPA"
+    assert recipient.terminus == "C"
+    assert recipient.insertion_site == "3'-UTR"
+    assert recipient.collection == m.SPA_TAG_ESSENTIAL
+    # no magnitude is stored: Butland says the defect's nature is unknown
+    assert "expression_range" not in BacterialMarkedAllelePerturbation.model_fields
+    # a non-hypomorph side stays a deletion, so the leaf is not applied by position
+    deletion_only = m.pair_genotype(
+        "b0001",
+        "thrL",
+        "b0003",
+        "thrW",
+        donor_is_hypomorph=False,
+        recipient_is_hypomorph=False,
+    )
+    assert all(
+        isinstance(p, BacterialDeletionPerturbation)
+        for p in deletion_only.perturbations
+    )
+
+
 def test_a_reciprocal_pair_is_two_distinct_genotypes() -> None:
     """Swapping donor and recipient swaps the markers, so the strains differ."""
-    forward = m.pair_genotype("b0001", "thrL", "b0003", "thrW")
-    reverse = m.pair_genotype("b0003", "thrW", "b0001", "thrL")
+    forward = m.pair_genotype(
+        "b0001",
+        "thrL",
+        "b0003",
+        "thrW",
+        donor_is_hypomorph=False,
+        recipient_is_hypomorph=False,
+    )
+    reverse = m.pair_genotype(
+        "b0003",
+        "thrW",
+        "b0001",
+        "thrL",
+        donor_is_hypomorph=False,
+        recipient_is_hypomorph=False,
+    )
     assert forward.systematic_gene_names == reverse.systematic_gene_names
     assert forward != reverse
 
@@ -515,7 +597,7 @@ def test_the_dataset_is_registered_under_its_class_name() -> None:
     assert m.GeneInteractionBabu2014Dataset.REFERENCE_STRAIN == m.REFERENCE_STRAIN_NAME
 
 
-def test_the_build_keeps_only_the_four_typable_pairs(
+def test_the_build_keeps_every_pair_the_identifier_rules_allow(
     built: m.GeneInteractionBabu2014Dataset,
 ) -> None:
     assert len(built) == len(KEPT_PAIRS)
@@ -528,11 +610,15 @@ def test_the_build_keeps_only_the_four_typable_pairs(
         BacterialGeneInteractionExperimentReference.model_validate(item["reference"])
         genotype = experiment.genotype
         assert isinstance(genotype, Genotype)
-        by_cassette = {
-            p.cassette: p.systematic_gene_name
+        marked = [
+            p
             for p in genotype.perturbations
-            if isinstance(p, BacterialDeletionPerturbation)
-        }
+            if isinstance(
+                p, BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation
+            )
+        ]
+        assert len(marked) == 2
+        by_cassette = {p.cassette: p.systematic_gene_name for p in marked}
         observed.add(
             (
                 str(by_cassette[m.DONOR_CASSETTE]),
@@ -555,19 +641,13 @@ def test_the_build_ledgers_account_for_every_dropped_row(
     assert ledger["kept_records"] == len(KEPT_PAIRS)
     assert ledger["dropped_records"] == len(SYNTHETIC_PAIRS) - len(KEPT_PAIRS)
     counts = {rule["rule"]: rule["n_records"] for rule in ledger["rules"]}
-    assert counts == {
-        m.RULE_HYPOMORPH: 2,
-        m.RULE_NOT_A_TAG: 1,
-        m.RULE_REMAPPED: 1,
-        m.RULE_DUPLICATE: 2,
-    }
+    assert counts == {m.RULE_NOT_A_TAG: 1, m.RULE_REMAPPED: 1, m.RULE_DUPLICATE: 2}
     items = {rule["rule"]: rule["items"] for rule in ledger["rules"]}
-    assert items[m.RULE_HYPOMORPH] == ["b0002", "b0006"]
     assert items[m.RULE_NOT_A_TAG] == ["b0099"]
     assert items[m.RULE_REMAPPED] == ["b0010 -> b0003"]
-    assert ledger["n_aggravating"] == 1
+    assert ledger["n_aggravating"] == 3
     assert ledger["n_alleviating"] == 3
-    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 3, m.SCREEN_BUTLAND: 1}
+    assert ledger["screen_id_counts"] == {m.SCREEN_THIS_STUDY: 5, m.SCREEN_BUTLAND: 1}
 
 
 def test_the_build_records_the_reciprocal_pair_and_its_sign_disagreement(
@@ -643,6 +723,9 @@ def test_the_l0_to_l4_gate_passes_on_the_synthetic_build(
         released=released,
         universe=set(mg1655.genbank.loci),
         expected_count=len(KEPT_PAIRS),
+        hypomorphic_donors=frozenset({"b0002"}),
+        hypomorphic_recipients=frozenset({"b0006"}),
+        expected_hypomorph_records=len(KEPT_HYPOMORPH_PAIRS),
     )
     failures = [result.name for result in report.results if not result.passed]
     assert failures == []
@@ -676,9 +759,11 @@ def test_both_raw_mirrors_hold_exactly_the_consumed_files() -> None:
     ):
         manifest = m.load_manifest_of(key, root)
         assert manifest.citation_key == key
-        assert [record.path for record in manifest.files] == [
-            raw.mirror_relpath for raw in files
-        ]
+        # containment, not equality: the Butland mirror is shared with Butland 2008's
+        # own loader, which deposits the three further tables it consumes
+        assert {raw.mirror_relpath for raw in files} <= {
+            record.path for record in manifest.files
+        }
         for raw in files:
             assert m.manifest_sha256(manifest, raw.mirror_relpath) == raw.sha256
 
@@ -749,20 +834,26 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
     assert ledger["source_records"] == m.N_RELEASED_PAIRS
     assert ledger["kept_records"] == m.EXPECTED_RECORDS
     assert {rule["rule"]: rule["n_records"] for rule in ledger["rules"]} == {
-        m.RULE_HYPOMORPH: 3420,
-        m.RULE_NOT_A_TAG: 183,
-        m.RULE_REMAPPED: 519,
+        m.RULE_NOT_A_TAG: 186,
+        m.RULE_REMAPPED: 527,
         m.RULE_DUPLICATE: 4,
     }
-    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (22732, 15847)
-    assert ledger["kept_donors"] == 155
-    assert ledger["kept_recipients"] == 3658
+    assert (ledger["n_aggravating"], ledger["n_alleviating"]) == (24822, 17166)
+    assert ledger["kept_donors"] == 163
+    assert ledger["kept_recipients"] == 3807
     assert ledger["screen_id_counts"] == {
-        m.SCREEN_THIS_STUDY: 37852,
-        m.SCREEN_BUTLAND: 727,
+        m.SCREEN_THIS_STUDY: 40863,
+        m.SCREEN_BUTLAND: 1125,
     }
     report = json.loads((preprocess / "verification_report.json").read_text())
     assert all(result["passed"] for result in report["results"])
+    marked = next(
+        result
+        for result in report["results"]
+        if result["name"] == "hypomorph_sides_are_marked_alleles"
+    )
+    assert marked["details"]["n_hypomorph_records"] == m.EXPECTED_HYPOMORPH_RECORDS
+    assert marked["details"]["n_bad"] == 0
 
 
 @pytest.mark.data
@@ -772,9 +863,9 @@ def test_the_dev_store_records_the_reciprocal_census() -> None:
     if not path.exists():
         pytest.skip("dev store not built")
     reciprocal = json.loads(path.read_text())
-    assert reciprocal["n_pairs"] == 97
-    assert reciprocal["n_records"] == 194
-    assert reciprocal["n_sign_disagreements"] == 24
+    assert reciprocal["n_pairs"] == 100
+    assert reciprocal["n_records"] == 200
+    assert reciprocal["n_sign_disagreements"] == 25
 
 
 @pytest.mark.data

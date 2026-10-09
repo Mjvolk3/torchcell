@@ -18,8 +18,13 @@ unit silently acquiring a value would be a fabricated quantity.
 
 from __future__ import annotations
 
-import pytest
+import math
+import re
 
+import pytest
+from pydantic import ValidationError
+
+import torchcell.datamodels.schema as s
 from torchcell.datamodels.bacterial_morphology_features import (
     CAMPOS2018_MORPHOLOGY_ASSAY,
     CAMPOS2018_MORPHOLOGY_FEATURES,
@@ -232,3 +237,95 @@ def test_a_feature_and_an_assay_are_frozen_and_reject_unknown_fields() -> None:
             statistic=MorphologyStatistic.mean,
             source="invented",  # type: ignore[call-arg]
         )
+
+
+# --------------------------------------------------------------------------- #
+# The phenotype validator: what the assay vocabulary refuses
+# --------------------------------------------------------------------------- #
+def _phenotype(**kwargs: object) -> s.BacterialMorphologyPhenotype:
+    fields: dict[str, object] = {
+        "assay": "campos2018",
+        "morphology": {"<L>": 2.81},
+        "morphology_coefficient_of_variation": {"CV_L": 0.24},
+    }
+    fields.update(kwargs)
+    return s.BacterialMorphologyPhenotype(**fields)  # type: ignore[arg-type]
+
+
+def test_a_record_names_its_assay_and_reads_its_vocabulary_back() -> None:
+    phenotype = _phenotype(n_samples=245, sample_unit=s.SampleUnit.cell)
+    assert phenotype.assay_vocabulary is CAMPOS2018_MORPHOLOGY_ASSAY
+    assert phenotype.graph_level == "global"
+    assert phenotype.label_name == "morphology"
+    assert phenotype.label_statistic_name == "morphology_coefficient_of_variation"
+    assert phenotype.n_samples == 245
+    assert phenotype.sample_unit == s.SampleUnit.cell
+
+
+def test_an_unregistered_assay_is_refused_with_the_registered_ones_named() -> None:
+    with pytest.raises(KeyError, match=r"registered assays are \['campos2018'\]"):
+        _phenotype(assay="no_such_assay2030")
+
+
+def test_an_empty_profile_is_refused() -> None:
+    """A record with no measurement is not a measurement of anything."""
+    with pytest.raises(ValidationError, match="measurements cannot be empty"):
+        _phenotype(morphology={})
+
+
+def test_a_symbol_outside_the_assay_is_refused_with_the_feature_count() -> None:
+    with pytest.raises(
+        ValidationError, match="Invalid campos2018 morphology feature: <ZZ>"
+    ):
+        _phenotype(morphology={"<L>": 2.81, "<ZZ>": 1.0})
+
+
+def test_a_coefficient_of_variation_cannot_be_filed_as_a_value() -> None:
+    """The split between the two dicts is the declared statistic, not a name prefix."""
+    with pytest.raises(
+        ValidationError,
+        match="CV_L is a coefficient_of_variation of assay campos2018, so it does not "
+        "belong in morphology",
+    ):
+        _phenotype(morphology={"CV_L": 0.24})
+
+
+def test_a_value_cannot_be_filed_as_a_coefficient_of_variation() -> None:
+    with pytest.raises(
+        ValidationError,
+        match="<L> is a mean of assay campos2018, so it does not belong in "
+        "morphology_coefficient_of_variation",
+    ):
+        _phenotype(morphology_coefficient_of_variation={"<L>": 2.81})
+
+
+@pytest.mark.parametrize("field", ["morphology", "morphology_coefficient_of_variation"])
+def test_a_nan_measurement_is_refused_in_either_dict(field: str) -> None:
+    """A non-determined field is absent from the dict, never stored as NaN."""
+    symbol = "<L>" if field == "morphology" else "CV_L"
+    with pytest.raises(
+        ValidationError, match=f"{field} measurement {re.escape(symbol)} cannot be NaN"
+    ):
+        _phenotype(**{field: {symbol: math.nan}})
+
+
+def test_the_coefficients_are_optional_and_default_to_none() -> None:
+    """A record whose assay determined no CV for its strain carries none."""
+    phenotype = _phenotype(morphology_coefficient_of_variation=None)
+    assert phenotype.morphology_coefficient_of_variation is None
+
+
+def test_the_experiment_pair_names_the_same_experiment_type() -> None:
+    assert (
+        s.BacterialMorphologyExperiment.model_fields["experiment_type"].default
+        == s.BacterialMorphologyExperimentReference.model_fields[
+            "experiment_reference_type"
+        ].default
+        == "bacterial_morphology"
+    )
+    assert s.EXPERIMENT_TYPE_MAP["bacterial_morphology"] is (
+        s.BacterialMorphologyExperiment
+    )
+    assert s.EXPERIMENT_REFERENCE_TYPE_MAP["bacterial_morphology"] is (
+        s.BacterialMorphologyExperimentReference
+    )

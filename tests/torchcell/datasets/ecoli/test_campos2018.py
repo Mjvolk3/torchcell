@@ -1432,3 +1432,121 @@ def test_the_two_released_proportions_are_exact_inverses_of_the_stored_timings()
             for f, t in zip(pairs[proportion], pairs[timing], strict=True)
         )
         assert worst < 2e-15
+
+
+# --------------------------------------------------------------------------- #
+# The CLI
+# --------------------------------------------------------------------------- #
+def test_the_cli_deposits_both_released_tables_from_the_literature_mirror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``deposit`` with no ``--retrieve-into`` reads the mirror's captured bytes."""
+    source = _release(tmp_path / "library" / "si" / "si4.xlsx")
+    counts = _cell_counts(tmp_path / "library" / "si" / "si3.xlsx")
+    monkeypatch.setattr(
+        c, "DATA_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
+    )
+    monkeypatch.setattr(
+        c, "DATASET_EV1_SHA256", hashlib.sha256(counts.read_bytes()).hexdigest()
+    )
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr(c, "library_dir", lambda data_root=None: tmp_path / "library")
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: True)
+    assert c.main(["deposit"]) == 0
+    manifest = c.load_manifest(str(tmp_path))
+    assert [record.path for record in manifest.files] == [c.DATA_REL, c.CELL_COUNTS_REL]
+
+
+def test_the_cli_retrieve_into_runs_both_recorded_retrievals(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--retrieve-into`` re-runs the recorded retrieval for BOTH build inputs."""
+    source = _release(tmp_path / "src" / "ev2.xlsx")
+    counts = _cell_counts(tmp_path / "src" / "ev1.xlsx")
+    monkeypatch.setattr(
+        c, "DATA_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
+    )
+    monkeypatch.setattr(
+        c, "DATASET_EV1_SHA256", hashlib.sha256(counts.read_bytes()).hexdigest()
+    )
+    served = {c.DATA_URL: source.read_bytes(), c.CELL_COUNTS_URL: counts.read_bytes()}
+    monkeypatch.setattr(c, "run_retriever", lambda record: served[record.source_url])
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: True)
+    assert c.main(["deposit", "--retrieve-into", str(tmp_path / "staging")]) == 0
+    staged = tmp_path / "staging"
+    assert sorted(p.name for p in staged.iterdir()) == sorted(
+        [c.DATA_FILENAME, c.RAW_CELL_COUNTS_FILENAME]
+    )
+    manifest = c.load_manifest(str(tmp_path))
+    assert c.manifest_sha256(manifest, c.CELL_COUNTS_REL) == c.DATASET_EV1_SHA256
+
+
+def test_the_cli_builds_each_dataset_under_its_own_root(
+    tmp_path: Path, mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two build subcommands, two dataset roots, neither reading the other's."""
+    monkeypatch.setattr(c, "DATASET_ROOT_REL", "fitness")
+    monkeypatch.setattr(c, "MORPHOLOGY_ROOT_REL", "morphology")
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: True)
+    assert c.main(["build"]) == 0
+    assert c.main(["build-morphology"]) == 0
+    assert (Path(mirrored) / "fitness" / "processed" / "lmdb").exists()
+    assert (Path(mirrored) / "morphology" / "processed" / "lmdb").exists()
+    served = json.loads(
+        (
+            Path(mirrored) / "morphology" / "preprocess" / "served_features.json"
+        ).read_text()
+    )
+    assert served["assay"] == "campos2018"
+
+
+@pytest.mark.parametrize(
+    ("command", "root_attr", "function"),
+    [
+        ("verify", "DATASET_ROOT_REL", "verify_build"),
+        ("verify-morphology", "MORPHOLOGY_ROOT_REL", "verify_morphology_build"),
+    ],
+)
+def test_the_cli_verify_passes_its_own_root_and_returns_the_reports_verdict(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    command: str,
+    root_attr: str,
+    function: str,
+) -> None:
+    """Each verify subcommand gates on its own dataset's report, not a constant.
+
+    The verifier is replaced because the real one's record-count oracle is the released
+    3,664, which no synthetic build can meet; what is under test is which root the
+    subcommand reads and that the exit code is the report's verdict.
+    """
+    from torchcell.verification.levels import l1_count
+    from torchcell.verification.report import Provenance, VerificationReport
+
+    monkeypatch.setattr(c, root_attr, "store")
+    monkeypatch.setenv("DATA_ROOT", str(tmp_path))
+    monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: True)
+    seen: dict[str, object] = {}
+
+    def _fake(dataset_root: str, **kwargs: object) -> VerificationReport:
+        seen["root"] = dataset_root
+        seen["data_root"] = kwargs["data_root"]
+        passing = VerificationReport(
+            dataset_name="fake",
+            provenance=Provenance(source_uri="test://x", citation_key="k"),
+        )
+        passing.add(l1_count(1, 1))
+        return passing
+
+    monkeypatch.setattr(c, function, _fake)
+    assert c.main([command]) == 0
+    assert seen == {"root": str(tmp_path / "store"), "data_root": str(tmp_path)}
+
+    report = VerificationReport(
+        dataset_name="fake",
+        provenance=Provenance(source_uri="test://x", citation_key="k"),
+    )
+    report.add(l1_count(1, 2))
+    monkeypatch.setattr(c, function, lambda root, **kwargs: report)
+    assert c.main([command]) == 1

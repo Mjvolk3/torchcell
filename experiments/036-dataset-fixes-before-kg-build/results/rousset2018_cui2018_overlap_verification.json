@@ -1,0 +1,84 @@
+{
+  "dev_stores": {
+    "CrispriScreenRousset2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_crispri_rousset2018",
+      "records": 68436,
+      "screen_id": {
+        "lambda_transduction": 17109,
+        "phage_186cIts": 17109,
+        "phage_T4": 17109,
+        "phage_lambda": 17109
+      },
+      "distinct_content_ids": 68436,
+      "distinct_spacers": 17109
+    },
+    "CrispriKnockdownCui2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_knockdown_cui2018",
+      "records": 141542,
+      "screen_id": {
+        "LC-E18": 70771,
+        "LC-E75": 70771
+      },
+      "distinct_content_ids": 141542,
+      "distinct_spacers": 70771
+    }
+  },
+  "overlap": {
+    "shared_content_ids": 0,
+    "shared_spacer_screen_keys": 0,
+    "shared_spacers": 16979,
+    "rousset_screens_outside_the_four_phage_screens": [],
+    "cui_screens_outside_the_two_dose_arms": []
+  },
+  "retention_ledger": {
+    "source_records": 128126,
+    "kept_records": 68436,
+    "dropped_records": 59690,
+    "kept_plus_dropped": 128126,
+    "released_cells": 128126,
+    "s1_rule_counts": {
+      "guide_targets_no_gene": 5063,
+      "guide_targets_the_template_strand": 30811,
+      "growth_screen_measurement_is_served_by_cui2018": 21685,
+      "growth_screen_guide_is_below_cui2018_read_floor": 1687
+    },
+    "s1_rules_sum": 59246,
+    "s1_released_rows": 59246,
+    "growth_screen_rule_served_by": "CrispriKnockdownCui2018Dataset (crispri_knockdown_cui2018), screen_id LC-E75"
+  },
+  "raw_sha256": {
+    "rousset_pinned_match": {
+      "pgen.1007749.s011.csv": true,
+      "pgen.1007749.s014.csv": true,
+      "pgen.1007749.s016.csv": true
+    },
+    "cui_pinned_match": true
+  },
+  "released_join": {
+    "rousset_s1_spacers_with_a_value": 59246,
+    "cui_spacers_numeric_in_both_columns": 78137,
+    "shared_spacers": 54326,
+    "rousset_only": 4920,
+    "cui_only": 23811,
+    "vs_fit75": {
+      "n": 54326,
+      "median_abs_diff": 0.0,
+      "max_abs_diff": 0.0066,
+      "pearson_r": 1.0
+    },
+    "vs_fit18": {
+      "n": 54326,
+      "median_abs_diff": 0.4151,
+      "max_abs_diff": 6.7516,
+      "pearson_r": 0.8018
+    }
+  },
+  "verdict": {
+    "rousset_stores_no_growth_screen": true,
+    "zero_content_id_overlap": true,
+    "zero_spacer_screen_overlap": true,
+    "s1_rules_account_for_every_released_row": true,
+    "kept_plus_dropped_equals_released_cells": true,
+    "every_raw_file_matches_its_pin": true
+  }
+}

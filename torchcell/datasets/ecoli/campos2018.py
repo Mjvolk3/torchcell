@@ -208,12 +208,18 @@ from torchcell.data import (
     verify_raw_files,
     write_verified,
 )
+from torchcell.datamodels.bacterial_morphology_features import (
+    CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
+)
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
     BacterialDeletionPerturbation,
     BacterialFitnessExperiment,
     BacterialFitnessExperimentReference,
+    BacterialMorphologyExperiment,
+    BacterialMorphologyExperimentReference,
+    BacterialMorphologyPhenotype,
     ComponentDefinition,
     Compound,
     Concentration,
@@ -287,15 +293,29 @@ DATA_URL = pmc_cloud_url(PMC_CLOUD_KEY)
 PAPER_MD = "paper.md"
 PAPER_MD_SHA256 = "1bf2f74bbd528f1cd88e46bf96e829b06a7c70dca9a8ad35502fa45e9c594e83"
 
-#: Dataset EV1, the pre-normalization raw table, in the literature mirror.
+#: Dataset EV1, the pre-normalization raw table. Its ``nb Cells`` column is the number
+#: of segmented cells each strain's morphology means and CVs are computed over, which is
+#: the morphology phenotype's ``n_samples``, so the morphology dataset CONSUMES it and it
+#: is deposited in the raw mirror beside Dataset EV2 (the fitness dataset does not read
+#: it). The literature mirror holds the same bytes as ``si/si3.xlsx``.
+RAW_CELL_COUNTS_FILENAME = "MSB-14-e7573-s003.xlsx"
+CELL_COUNTS_REL = f"data/{RAW_CELL_COUNTS_FILENAME}"
 DATASET_EV1_REL = "si/si3.xlsx"
 DATASET_EV1_SHA256 = "82f0777cf85c3277be95e04c04e893fdf46c412e2640d61b35e70af75b312837"
+#: The PMC Article Datasets bucket key of Dataset EV1 (article version 1), the retrieval
+#: the literature mirror recorded for the same bytes.
+CELL_COUNTS_PMC_CLOUD_KEY = f"{PMCID}.1/{RAW_CELL_COUNTS_FILENAME}"
+CELL_COUNTS_URL = pmc_cloud_url(CELL_COUNTS_PMC_CLOUD_KEY)
+CELL_COUNTS_RETRIEVED_AT = "2026-10-09"
 #: The Appendix, whose Table S1 names every feature and its symbol.
 APPENDIX_REL = "si/si1.docx"
 APPENDIX_SHA256 = "72cc3510fa63cbf625bb1cd17acebf2a4ed764be0b11acae312b7afbaec40c75"
 
 NORMALIZED_SHEET = "Normalized data"
 SCORES_SHEET = "Scores"
+#: Dataset EV1's data sheet and the one column the morphology dataset reads from it.
+RAW_SHEET = "Raw data"
+CELL_COUNT_COLUMN = "nb Cells"
 LABEL_COLUMN = "Gene deletion"
 PLATE_COLUMN = "Plate nb"
 WELL_COLUMN = "Well nb"
@@ -353,20 +373,22 @@ PAPER_FEATURES: tuple[str, ...] = (
     *GROWTH_FEATURES,
     *CELL_CYCLE_FEATURES,
 )
-#: The one feature this loader serves.
+#: The one feature the FITNESS dataset serves.
 SERVED_FEATURE = "alpha_max"
-#: The 25 features with no phenotype class, each with the exact mismatch.
+#: The 26 morphology symbols the MORPHOLOGY dataset serves, as Appendix Table S1 names
+#: them: the paper's 19 headline morphological features plus the mean and variability of
+#: nucleoid area that Table S1 also files as morphological, plus the 5 cell cycle
+#: features. ``MORPHOLOGY_ASSAY`` is the authority; this tuple is its order.
+MORPHOLOGY_FEATURES: tuple[str, ...] = tuple(
+    feature.symbol for feature in MORPHOLOGY_ASSAY.features
+)
+#: The one feature of the release with no phenotype class left (issue #774 closed the
+#: other 25 by adding ``BacterialMorphologyPhenotype``).
 UNSERVED_FEATURES: dict[str, str] = {
-    **{
-        feature: "no multi-feature morphology phenotype class accepts a bacterial "
-        "feature name: CalMorphPhenotype validates every key against CALMORPH_LABELS / "
-        "CALMORPH_STATISTICS (the Ohya 2005 CalMorph vocabulary), and "
-        "EnvironmentResponsePhenotype carries one score per (strain, environment) with "
-        "no field naming which feature it is"
-        for feature in (*MORPHOLOGICAL_FEATURES, *CELL_CYCLE_FEATURES)
-    },
     "ODmax": "a saturating optical density is a carrying capacity, not a growth-rate "
-    "ratio, so it is not a FitnessPhenotype, and MeasurementType has no member for it",
+    "ratio, so it is not a FitnessPhenotype, and MeasurementType has no member for it; "
+    "it is a plate-reader population measurement and not morphology, so it is not a "
+    "BacterialMorphologyPhenotype feature either"
 }
 
 UNITS = (
@@ -409,6 +431,27 @@ def _legend(
             citation_key=CITATION_KEY,
             sha256=DATA_SHA256,
             method="Dataset EV2 legend sheet, read with pandas.read_excel",
+            page=page,
+        ),
+    )
+
+
+def _appendix(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim cell or caption of the sha256-pinned Appendix."""
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=APPENDIX_REL,
+            citation_key=CITATION_KEY,
+            sha256=APPENDIX_SHA256,
+            method="Appendix (.docx) read as the text runs of word/document.xml with "
+            "the stdlib XML parser; a subscript run is written _{...}, a Symbol-font "
+            "glyph is named, and an OMML equation contributes no text run, so a "
+            "formula shows as a gap in the quote",
             page=page,
         ),
     )
@@ -563,6 +606,140 @@ MARKER_CHECKED = _legend(
     note="a QC statement about the strain, so these rows are dropped",
 )
 
+# --------------------------------------------------------------------------- #
+# Morphology: what each feature IS, and where its name and unit come from
+# --------------------------------------------------------------------------- #
+_TABLE_S1 = "Appendix Table S1, 'Features considered in this study and their associated symbols'"
+_LEGEND_NORMALIZED = "Dataset EV2, sheet 'Legend normalized data'"
+
+FEATURE_TABLE_IS_THE_AUTHORITY = _paper(
+    "Appendix Table S1",
+    "The name and abbreviation for all the features can be found in Appendix Table S1.",
+    page=_MORPH,
+    note="why the morphology vocabulary is Table S1 and not the main text: the main "
+    "text points at Table S1 for every name and symbol",
+)
+MORPHOLOGICAL_TABLE_COUNT = _appendix(
+    21,
+    "Morphological features",
+    page=_TABLE_S1,
+    note="Table S1's morphological block holds 21 symbols, the 19 of the main text's "
+    "headline count plus <NA> (Mean nucleoid area) and CV_NA (Nucleoid area "
+    "variability); 21 + 5 cell cycle = the 26 morphology symbols served",
+)
+CV_DEFINITION = _paper(
+    "standard deviation divided by the mean",
+    "We also measured the variability of these features by calculating their "
+    "coefficient of variation (CV, the standard deviation divided by the mean).",
+    page=_MORPH,
+    note="the statistic of every CV_ symbol, which is why they are the ones filed under "
+    "morphology_coefficient_of_variation",
+)
+DIMENSIONS_MEASURED = _paper(
+    ("length", "width", "perimeter", "area", "aspect ratio", "circularity"),
+    "From phase-contrast images, we measured cellular dimensions, such as length, "
+    "width, perimeter, cross-sectional area, aspect ratio (width/length), and "
+    "circularity $4 \\pi$ area/(perimeter)2 ).",
+    page=_MORPH,
+    note="the per-cell quantities the <X> means are means OF; surface area, volume and "
+    "the surface-to-volume ratio are derived from the same two series",
+)
+DIVISION_RATIO_HAS_NO_MEAN = _paper(
+    "CV_DR",
+    "Therefore, measurements of mean division ratio were meaningless and not included "
+    "in our analysis. However, the CV of the division ratio was included since a high "
+    "CV indicated either an asymmetric division or an imprecise division site "
+    "selection.",
+    page=_MORPH,
+    note="why the vocabulary holds 10 means against 11 CVs: there is deliberately no "
+    "<DR> to pair with CV_DR",
+)
+CELL_CYCLE_DEFINITIONS = _paper(
+    CELL_CYCLE_FEATURES,
+    "From the images, we also calculated the degree of constriction for each cell and "
+    "determined the fraction of constricting cells in the population for each strain "
+    "(see Materials and Methods). From the latter, we inferred the timing of initiation "
+    "of cell constriction relative to the cell cycle (Powell, 1956; Collins & Richmond, "
+    "1962; Wold et al, 1994). In addition, the analysis of DAPI-stained nucleoids with "
+    "the objectDetection module of Oufti (Paintdakhi et al, 2016) provided additional "
+    "parameters, such as the number of nucleoids per cell and the fraction of cells "
+    "with one versus two nucleoids. From the fraction of cells with two nucleoids, we "
+    "estimated the relative timing of nucleoid separation (Powell, 1956; Collins & "
+    "Richmond, 1962; Wold et al, 1994). We also measured the degree of nucleoid "
+    "constriction in each cell for each strain and compared it to the degree of cell "
+    "constriction to obtain the Pearson correlation between these two parameters, as "
+    "well as the average degree of nucleoid separation at the onset of cell constriction "
+    "(Appendix Fig S1H).",
+    page=_CYCLE,
+    note="the statistic of each of the five: rho_CD is a Pearson correlation, CDN_C0 a "
+    "fitted degree at the onset of constriction, the two relative timings are inferred "
+    "from population fractions, and %2N is a fraction of cells",
+)
+CELL_CYCLE_STATISTICS = _appendix(
+    ("constriction degree <0.15", "Pearson correlation coefficient", "intercept"),
+    "The relative timing of cell constriction and nucleoid separation were estimated as "
+    "the proportions of cells without any significant constriction (constriction degree "
+    "<0.15) or with a single nucleoid, respectively. For all cells with a significant "
+    "constriction degree, we calculated the Pearson correlation coefficient between the "
+    "constriction degrees of the cell and of its nucleoid ([SYM char=F072 font=Symbol] "
+    "CD). The nucleoid constriction degree at the initiation of cell constriction "
+    "(CDN_{C0}) was determined as the intercept of a line with a slope determined by "
+    "the correlation coefficient that best fitted the single-cell data used to "
+    "calculate [SYM char=F072 font=Symbol] CD (see Appendix Fig S1E).",
+    page=f"{_TABLE_S1}, caption",
+    note="the subset of cells each cell cycle feature is computed over, and the exact "
+    "statistic of rho_CD and CDN_C0; the Symbol-font glyph F072 is a Greek rho, which "
+    "the released column writes rho_CD",
+)
+SHAPE_FACTOR_DEFINITIONS = _appendix(
+    ("<Ar>", "<C>"),
+    "The aspect ratio was defined as the ratio of cell width over cell length at the "
+    "single-cell level. The circularity, C, was defined as , at the single-cell level, "
+    "where P stands for perimeter and A for area.",
+    page=f"{_TABLE_S1}, caption",
+    note="the gap after 'defined as' is an OMML equation, which contributes no text "
+    "run; it reads C = 4*pi*A/P^2. Both are dimensionless per-cell shape factors, which "
+    "is why the release states no unit for either, and width over length puts a rod "
+    "below 1",
+)
+FEATURE_UNITS = _legend(
+    {
+        feature.symbol: feature.unit
+        for feature in MORPHOLOGY_ASSAY.features
+        if feature.unit is not None
+    },
+    "Mean cell length (µm)",
+    page=_LEGEND_NORMALIZED,
+    note="the release is the ONLY source of a feature unit: Appendix Table S1 has no "
+    "unit column and the paper states no feature unit. The legend sheet names each "
+    "feature with its unit and the 'Normalized data' header repeats it, which is why "
+    "the loader builds each column name as 'symbol (unit)' from the vocabulary and "
+    "stops if the header has moved",
+)
+CELLS_PER_STRAIN_RETAINED = _paper(
+    291,
+    "retaining about 1,300,000 identified cells ( $2 9 1 \\pm 1 1 6$ cells/strain)",
+    page=_RESULTS,
+    note="the cells each morphology mean and CV is computed over AFTER curation, and the "
+    "mean of Dataset EV1's nb Cells column over its 4,467 rows is 291.26 with SD 116.71, "
+    "so that column is this number per strain and is the morphology n_samples",
+)
+NON_DETERMINED_FIELDS = _legend(
+    None,
+    "NaN (Not a Number) values are attributed to non-determined fields.",
+    page=_LEGEND_NORMALIZED,
+    note="why a record carries the features determined for ITS strain rather than the "
+    "whole vocabulary: 278 of the 4,227 imaged strains have no nucleoid channel, so "
+    "their 7 nucleoid-derived features do not exist",
+)
+
+#: Every sourced value anchored to the Appendix.
+APPENDIX_SOURCED_VALUES: tuple[SourcedValue, ...] = (
+    MORPHOLOGICAL_TABLE_COUNT,
+    CELL_CYCLE_STATISTICS,
+    SHAPE_FACTOR_DEFINITIONS,
+)
+
 #: Every module-level sourced value, for the mirror audit.
 SOURCED_VALUES: tuple[SourcedValue, ...] = (
     LIBRARY_STRAIN,
@@ -579,6 +756,12 @@ SOURCED_VALUES: tuple[SourcedValue, ...] = (
     SCORE_TRANSFORM,
     CASSETTE,
     CELLS_PER_STRAIN,
+    FEATURE_TABLE_IS_THE_AUTHORITY,
+    CV_DEFINITION,
+    DIMENSIONS_MEASURED,
+    DIVISION_RATIO_HAS_NO_MEAN,
+    CELL_CYCLE_DEFINITIONS,
+    CELLS_PER_STRAIN_RETAINED,
 )
 #: The sourced values whose anchor is Dataset EV2's legend, not the paper OCR.
 LEGEND_SOURCED_VALUES: tuple[SourcedValue, ...] = (
@@ -586,6 +769,8 @@ LEGEND_SOURCED_VALUES: tuple[SourcedValue, ...] = (
     PLATE_AND_WELL,
     MARKER_REIMAGED,
     MARKER_CHECKED,
+    FEATURE_UNITS,
+    NON_DETERMINED_FIELDS,
 )
 
 

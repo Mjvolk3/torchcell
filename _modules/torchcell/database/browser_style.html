@@ -218,6 +218,11 @@
     <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"BacterialPerturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
+    <span class="c1"># A called bacterial variant (issue #731): a SIBLING of BacterialPerturbation</span>
+    <span class="c1"># under `genotype`, so it takes the same lane. Not in ANCESTOR_LABELS, for the</span>
+    <span class="c1"># reason PhagePerturbation is not: that tuple measures the labels the SERVED</span>
+    <span class="c1"># store carries, and no variant dataset is served yet.</span>
+    <span class="s2">"BacterialSequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"genotype"</span><span class="p">,</span>
     <span class="s2">"Environment"</span><span class="p">:</span> <span class="s2">"environment"</span><span class="p">,</span>
@@ -250,6 +255,7 @@
     <span class="s2">"Genotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Perturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"BacterialPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"BacterialSequenceVariantPerturbation"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{perturbed_gene_name}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"SegregantGenotype"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{segregant_id}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"CrisprConstruct"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{effector}</span><span class="s2">"</span><span class="p">,</span>
     <span class="s2">"Environment"</span><span class="p">:</span> <span class="s2">"</span><span class="si">{media}</span><span class="s2">"</span><span class="p">,</span>

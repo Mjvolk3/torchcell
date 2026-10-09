@@ -150,6 +150,9 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">BacterialCrisprInterferencePerturbation</span><span class="p">,</span>
     <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
     <span class="n">HeterologousPathwayPerturbation</span><span class="p">,</span>
     <span class="n">PhagePerturbation</span><span class="p">,</span>
     <span class="n">PromoterReplacementPerturbation</span><span class="p">,</span>
@@ -191,10 +194,23 @@
 <span class="p">)</span>
 <span class="sd">"""The gene-perturbation leaves written as ``bacterial perturbation`` nodes.</span>
 
-<span class="sd">Exactly the leaves that carry ``gene_namespace``. A yeast leaf is never one of them, so a</span>
-<span class="sd">yeast record emits no ``bacterial perturbation`` node, and ``_perturbation_node`` (served)</span>
-<span class="sd">is not touched to exclude them: a bacterial adapter conf enables</span>
-<span class="sd">``bacterial perturbation (chunked)`` instead of ``perturbation (chunked)``.</span>
+<span class="sd">The leaves that carry ``gene_namespace`` MINUS the called-variant leaves below, which</span>
+<span class="sd">have their own class. A yeast leaf is never one of them, so a yeast record emits no</span>
+<span class="sd">``bacterial perturbation`` node, and ``_perturbation_node`` (served) is not touched to</span>
+<span class="sd">exclude them: a bacterial adapter conf enables ``bacterial perturbation (chunked)``</span>
+<span class="sd">instead of ``perturbation (chunked)``.</span>
+<span class="sd">"""</span>
+<span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">BacterialSequenceVariantPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialSiteVariantPerturbation</span><span class="p">,</span>
+    <span class="n">BacterialSpanDeletionPerturbation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="sd">"""The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).</span>
+
+<span class="sd">Exactly the leaves that compose a ``BacterialVariantCall``.</span>
+<span class="sd">``BacterialSpanDeletionPerturbation`` is also a ``BacterialDeletionPerturbation``, so the</span>
+<span class="sd">``bacterial perturbation`` method excludes this tuple explicitly; without that a span</span>
+<span class="sd">deletion would be written twice, once under each label.</span>
 <span class="sd">"""</span>
 <span class="n">CGROUP_MEMORY_CURRENT</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.current"</span>
 <span class="n">CGROUP_MEMORY_MAX</span> <span class="o">=</span> <span class="s2">"/sys/fs/cgroup/memory.max"</span>
@@ -320,6 +336,10 @@
             <span class="p">(</span><span class="s2">"segregant genotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_genotype_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"bacterial perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_perturbation_node</span><span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"bacterial sequence variant perturbation (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_variant_perturbation_node</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span><span class="s2">"crispr construct (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crispr_construct_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"environment (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"environment reference"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_environment_reference_nodes</span><span class="p">),</span>
@@ -1141,11 +1161,62 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_perturbation_node</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""One node per perturbation of a bacterial leaf class; none for a yeast leaf."""</span>
+<span class="w">        </span><span class="sd">"""One node per perturbation of a bacterial leaf class; none for a yeast leaf.</span>
+
+<span class="sd">        A called-variant leaf is excluded even when it is a subclass of one of these</span>
+<span class="sd">        (``BacterialSpanDeletionPerturbation`` is a ``BacterialDeletionPerturbation``):</span>
+<span class="sd">        it belongs to ``bacterial sequence variant perturbation`` and writing it here</span>
+<span class="sd">        too would serve one perturbation as two nodes.</span>
+<span class="sd">        """</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_PERTURBATION_LEAVES</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">)</span>
+        <span class="p">]</span>
+
+    <span class="c1"># --- Called bacterial variants (issue #731) ---</span>
+    <span class="c1"># A variant leaf composes a ``BacterialVariantCall``, so the replicon, the 1-based</span>
+    <span class="c1"># interval, the variant kind and the call frequency are read off ``.call`` rather</span>
+    <span class="c1"># than off the leaf. The node id is the sha256 of the leaf's model_dump, the same id</span>
+    <span class="c1"># _perturbation_to_genotype_edges addresses, so that edge method is unchanged.</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_variant_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">perturbation_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">perturbation</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">call</span> <span class="o">=</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">call</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">perturbation_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"bacterial sequence variant perturbation"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"systematic_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">,</span>
+                <span class="s2">"perturbed_gene_name"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span>
+                <span class="s2">"perturbation_type"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">perturbation_type</span><span class="p">,</span>
+                <span class="s2">"description"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">description</span><span class="p">,</span>
+                <span class="s2">"gene_namespace"</span><span class="p">:</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">,</span>
+                <span class="s2">"reference_sequence"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="p">,</span>
+                <span class="s2">"position_start"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="p">,</span>
+                <span class="s2">"position_end"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">position_end</span><span class="p">,</span>
+                <span class="s2">"variant_type"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">variant_type</span><span class="p">),</span>
+                <span class="c1"># None when the release wrote a RANGE rather than one number; the</span>
+                <span class="c1"># verbatim cell stays in the Experiment blob either way.</span>
+                <span class="s2">"variant_frequency"</span><span class="p">:</span> <span class="n">call</span><span class="o">.</span><span class="n">frequency</span><span class="p">,</span>
+                <span class="s2">"call_mode"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">call_mode</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bacterial_variant_perturbation_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One node per CALLED variant of the genotype; none for any other leaf."""</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_variant_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">BACTERIAL_VARIANT_PERTURBATION_LEAVES</span><span class="p">)</span>
         <span class="p">]</span>
 
     <span class="c1"># Environment.temperature is Optional: a curation layer that never carried a</span>

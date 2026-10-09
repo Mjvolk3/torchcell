@@ -515,6 +515,13 @@
     <span class="n">private</span> <span class="o">=</span> <span class="s2">"private"</span>
 
 
+<span class="c1">#: ``perturbation_type`` of the called-variant leaf whose identifier is a genomic SITE</span>
+<span class="c1">#: rather than a locus tag (``BacterialSequenceVariantPerturbation``'s sibling, issue</span>
+<span class="c1">#: #731). Stated as a string, not imported as a class, because this module is the</span>
+<span class="c1">#: dataset base and must not depend on which leaves exist.</span>
+<span class="n">SITE_VARIANT_PERTURBATION_TYPE</span> <span class="o">=</span> <span class="s2">"bacterial_site_variant"</span>
+
+
 <div class="viewcode-block" id="ExperimentDataset">
 <a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">ExperimentDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>  <span class="c1"># type: ignore[misc]  # Dataset is untyped (Any) in torch_geometric</span>
@@ -908,9 +915,25 @@
 <a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.extract_systematic_gene_names">[docs]</a>
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">extract_systematic_gene_names</span><span class="p">(</span><span class="n">genotype</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""Return the systematic gene names of all perturbations in a genotype."""</span>
+<span class="w">        </span><span class="sd">"""Return the systematic gene names of all perturbations in a genotype.</span>
+
+<span class="sd">        A SITE-keyed called variant (``bacterial_site_variant``, issue #731) is left</span>
+<span class="sd">        out: its identifier is the derived ``&lt;replicon&gt;:&lt;position&gt;``, and the whole</span>
+<span class="sd">        point of that leaf is that no locus of the assembly holds the call, so putting</span>
+<span class="sd">        it in the gene set would create a gene node for a place that is not a gene.</span>
+<span class="sd">        The call's flanking loci, where the release names them, ARE loci and are</span>
+<span class="sd">        collected, so an intergenic variant still reaches the genes it sits between.</span>
+<span class="sd">        """</span>
         <span class="n">gene_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">cast</span><span class="p">(</span><span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">genotype</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbations"</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="o">==</span> <span class="n">SITE_VARIANT_PERTURBATION_TYPE</span><span class="p">:</span>
+                <span class="n">gene_names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="n">cast</span><span class="p">(</span>
+                        <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+                        <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"flanking_systematic_gene_names"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[],</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">continue</span>
             <span class="n">gene_name</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">perturbation</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">))</span>
             <span class="n">gene_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">gene_names</span></div>

@@ -2962,6 +2962,570 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Bacterial CALLED-VARIANT leaves (issue #731).</span>
+<span class="c1">#</span>
+<span class="c1"># An evolved clone's genotype is its parent's genomic content plus the variants a</span>
+<span class="c1"># caller found in its resequencing, and before these classes no leaf could hold one</span>
+<span class="c1"># of those calls. Measured on the two P. putida evolved-WGS releases rather than</span>
+<span class="c1"># designed from the model: de Siqueira 2025 Data Set S2 releases 173 Geneious calls</span>
+<span class="c1"># over 5 sequenced clones (58 in a GenBank locus, 10 with a RefSeq tag only, 105 with</span>
+<span class="c1"># no locus at all) and Lim 2025's ``Fig 2B_Mutation List`` releases 159 breseq rows</span>
+<span class="c1"># over 49 clone columns (123 single-locus, 17 intergenic, 19 spanning runs of up to 53</span>
+<span class="c1"># loci). Four blockages those loaders counted, and what closes each:</span>
+<span class="c1">#</span>
+<span class="c1">#   1. ``SequenceVariantPerturbation`` admits only S288C ORF names and promises a</span>
+<span class="c1">#      dereferenceable allele sequence these papers never deposited -&gt; a bacterial</span>
+<span class="c1">#      leaf with the locus-tag validator and the call itself on the record.</span>
+<span class="c1">#   2. ``BacterialBackgroundAllele.functional`` is a required bool no release states</span>
+<span class="c1">#      for a called variant -&gt; no ``functional`` field here at all (the perturbation</span>
+<span class="c1">#      axis has none, by design: the edit is not its consequence).</span>
+<span class="c1">#   3. ``BacterialStrainBackground`` permits one allele entry per locus, which refuses</span>
+<span class="c1">#      a clone carrying two calls in one gene (Lim's ``PP_3415`` P293S + V46I in</span>
+<span class="c1">#      A12_F53_I1) -&gt; ``Genotype.perturbations`` has no such rule, so two calls in one</span>
+<span class="c1">#      locus are two perturbations.</span>
+<span class="c1">#   4. A call with no locus tag of the pinned assembly to key to -&gt; its own leaf,</span>
+<span class="c1">#      keyed on the SITE. Two measured reasons, typed apart by ``VariantSiteKind``:</span>
+<span class="c1">#      the call is intergenic, or the release named a locus in an identifier space the</span>
+<span class="c1">#      assembly does not carry (de Siqueira's 10 RefSeq-only calls name ``PP_RS21780``</span>
+<span class="c1">#      and ``PP_RS19075``, and ``resolve_gene_name`` on the pinned GenBank assembly</span>
+<span class="c1">#      returns ``retired``, "not found", for both).</span>
+<span class="c1">#</span>
+<span class="c1"># The call itself is COMPOSED (``BacterialVariantCall``) rather than repeated on each</span>
+<span class="c1"># leaf, so what a call is is defined once and the three leaves differ only in WHERE</span>
+<span class="c1"># the call sits: in a locus, between two loci, or spanning a run of them.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialVariantType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The kind of sequence change a called bacterial variant is.</span>
+
+<span class="sd">    The four shapes the two releases carry, read from their own type columns rather</span>
+<span class="sd">    than chosen: Lim's ``Mutation Type`` is ``SNP`` / ``DEL`` / ``INS`` / ``SUB``</span>
+<span class="sd">    (measured: 100 / 47 / 11 / 1 of its 159 rows) and de Siqueira's ``Polymorphism</span>
+<span class="sd">    Type`` is ``SNP (transition)`` 68, ``SNP (transversion)`` 47, ``Insertion`` 23,</span>
+<span class="sd">    ``Substitution`` 21, ``Insertion (tandem repeat)`` 5, ``Deletion`` 5, ``Deletion</span>
+<span class="sd">    (tandem repeat)`` 4. Both vocabularies collapse onto these four, and the released</span>
+<span class="sd">    string is kept verbatim beside the enum in ``type_statement`` so the transition /</span>
+<span class="sd">    transversion / tandem-repeat distinction is not lost.</span>
+
+<span class="sd">    - ``snv``: one base replaced by one base.</span>
+<span class="sd">    - ``insertion``: bases gained.</span>
+<span class="sd">    - ``deletion``: bases lost (an IN-GENE deletion; a deletion that removes whole</span>
+<span class="sd">      loci is ``BacterialSpanDeletionPerturbation``, on the presence/absence axis).</span>
+<span class="sd">    - ``substitution``: a multi-base replacement (Lim's ``2 bp-&gt;CG``).</span>
+<span class="sd">    """</span>
+
+    <span class="n">snv</span> <span class="o">=</span> <span class="s2">"snv"</span>
+    <span class="n">insertion</span> <span class="o">=</span> <span class="s2">"insertion"</span>
+    <span class="n">deletion</span> <span class="o">=</span> <span class="s2">"deletion"</span>
+    <span class="n">substitution</span> <span class="o">=</span> <span class="s2">"substitution"</span>
+
+
+<span class="n">BACTERIAL_VARIANT_TYPE_SO</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">BacterialVariantType</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">snv</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0001483"</span><span class="p">,</span> <span class="s2">"SNV"</span><span class="p">),</span>
+    <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">insertion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000667"</span><span class="p">,</span> <span class="s2">"insertion"</span><span class="p">),</span>
+    <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">deletion</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:0000159"</span><span class="p">,</span> <span class="s2">"deletion"</span><span class="p">),</span>
+    <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">substitution</span><span class="p">:</span> <span class="p">(</span><span class="s2">"SO:1000032"</span><span class="p">,</span> <span class="s2">"delins"</span><span class="p">),</span>
+<span class="p">}</span>
+<span class="sd">"""Sequence Ontology mechanism of each variant kind.</span>
+
+<span class="sd">Every pair is one the schema ALREADY pins (``SO_ALLOWED`` in</span>
+<span class="sd">``test_ontology_all_trees.py``), so these leaves introduce no new SO term: a</span>
+<span class="sd">multi-base replacement is the same ``delins`` a promoter replacement is, and the other</span>
+<span class="sd">three are the deletion / insertion / SNV terms the yeast leaves use. The leaves keep</span>
+<span class="sd">the generic ``SO:0001060 sequence_variant`` as their class-default ``mechanism_so_id``</span>
+<span class="sd">-- true of every call whatever its kind -- and expose the specific pair as a property,</span>
+<span class="sd">so the mechanism field cannot desync from ``variant_type``.</span>
+<span class="sd">"""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VariantCallMode</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a frequency is a clone's within-isolate fraction or a population's.</span>
+
+<span class="sd">    The distinction is load-bearing and the releases differ on it. de Siqueira and Lim</span>
+<span class="sd">    sequenced ISOLATED clones, so a frequency below 1 means that clone is not pure at</span>
+<span class="sd">    that site (Lim: 431 calls at 1 and 12 at 0.9; de Siqueira: 0.96, 1, ...). Choe 2019</span>
+<span class="sd">    released POPULATION allele frequencies per timepoint, where a frequency is the</span>
+<span class="sd">    share of the evolving population carrying the allele and no clone genotype follows</span>
+<span class="sd">    from it without a threshold the authors never set. A consumer that cannot tell the</span>
+<span class="sd">    two apart would read a 0.5 as half a genome in one case and half a population in</span>
+<span class="sd">    the other.</span>
+<span class="sd">    """</span>
+
+    <span class="n">clone</span> <span class="o">=</span> <span class="s2">"clone"</span>
+    <span class="n">population</span> <span class="o">=</span> <span class="s2">"population"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VariantFrequencyBasis</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The scale a released variant frequency is written on, never assumed.</span>
+
+<span class="sd">    Lim's matrix is a FRACTION (``1``, ``0.9``) and de Siqueira's Geneious ``Variant</span>
+<span class="sd">    Frequency`` column is also a fraction (``0.96``, ``1``), while other releases write</span>
+<span class="sd">    percents. The scale is a property of the release, so it is stated rather than</span>
+<span class="sd">    inferred from whether a value exceeds 1.</span>
+<span class="sd">    """</span>
+
+    <span class="n">fraction</span> <span class="o">=</span> <span class="s2">"fraction"</span>
+    <span class="n">percent</span> <span class="o">=</span> <span class="s2">"percent"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">VariantSiteKind</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Why a called variant is keyed on its genomic SITE rather than on a locus tag.</span>
+
+<span class="sd">    Two measured cases, and the distinction matters because only one of them is a</span>
+<span class="sd">    statement about the genome's annotation.</span>
+
+<span class="sd">    - ``intergenic``: the caller placed the variant between loci and the release says</span>
+<span class="sd">      so (105 of de Siqueira 2025's 173 calls carry no locus, and 17 of Lim 2025's 159</span>
+<span class="sd">      read ``intergenic`` with the two flanking loci named).</span>
+<span class="sd">    - ``locus_not_in_assembly``: the release DID name a locus, but in an identifier</span>
+<span class="sd">      space the pinned assembly does not carry, so no locus tag of it holds the call.</span>
+<span class="sd">      Measured: de Siqueira's 10 RefSeq-only calls name ``PP_RS21780`` (9) and</span>
+<span class="sd">      ``PP_RS19075`` (1), and ``resolve_gene_name`` on the pinned KT2440 GenBank</span>
+<span class="sd">      assembly (GCA_000007565.2, ASM756v2) returns ``retired``, "not found in</span>
+<span class="sd">      GCA_000007565.2_ASM756v2; retained as given", for both. Keying such a call to a</span>
+<span class="sd">      neighboring locus would invent a mapping our own bytes refuse.</span>
+<span class="sd">    """</span>
+
+    <span class="n">intergenic</span> <span class="o">=</span> <span class="s2">"intergenic"</span>
+    <span class="n">locus_not_in_assembly</span> <span class="o">=</span> <span class="s2">"locus_not_in_assembly"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialVariantCall</span><span class="p">(</span><span class="n">ProvenanceGapMixin</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One called variant, exactly as a resequencing release states it.</span>
+
+<span class="sd">    Composed onto the three variant leaves below, so the call is defined once. Every</span>
+<span class="sd">    field is either the released cell verbatim or a typed reading of it; nothing here</span>
+<span class="sd">    is inferred.</span>
+
+<span class="sd">    ``reference_sequence`` is the replicon the coordinates are on, verbatim as the</span>
+<span class="sd">    release writes it (Lim's ``AE015451``, de Siqueira's ``NC_002947 (2)``). It is</span>
+<span class="sd">    required because a position is meaningless without it, and because it is what</span>
+<span class="sd">    exposes a call made against a genome that is NOT the record's own host: Niu 2019</span>
+<span class="sd">    aligned a BW25113 derivative to MG1655, so its calls mix evolution-acquired</span>
+<span class="sd">    mutations with strain-background differences, and the only way a consumer can see</span>
+<span class="sd">    that is the replicon named here disagreeing with the record's</span>
+<span class="sd">    ``AssemblyReferenceGenome``.</span>
+
+<span class="sd">    ``position_start`` / ``position_end`` are 1-based and end-inclusive; they are equal</span>
+<span class="sd">    for a point change and differ for a multi-base one (measured: 53 of de Siqueira's</span>
+<span class="sd">    173 calls have ``Maximum &gt; Minimum``).</span>
+
+<span class="sd">    ``frequency_statement`` is the released cell verbatim and is set or carries a typed</span>
+<span class="sd">    ``ProvenanceGap`` -- never a silent ``None``. It is kept beside the numeric</span>
+<span class="sd">    ``frequency`` because a release can write a RANGE there (de Siqueira's multi-base</span>
+<span class="sd">    calls write ``61 -&gt; 63``) which no float holds; the numeric field is then ``None``</span>
+<span class="sd">    while the statement keeps what the source said. ``frequency_basis`` is required</span>
+<span class="sd">    whenever ``frequency`` is set, so a fraction is never read as a percent.</span>
+
+<span class="sd">    The frequency being part of the call, and the call part of the perturbation, means</span>
+<span class="sd">    the same genomic change called at two frequencies in two clones is two perturbation</span>
+<span class="sd">    identities. That is deliberate: an isolate that is 90% mutant at a site is not</span>
+<span class="sd">    genotypically the same as one that is 100% mutant. A convergence query joins on</span>
+<span class="sd">    ``systematic_gene_name`` and ``position_start``, not on the node id.</span>
+<span class="sd">    """</span>
+
+    <span class="n">variant_type</span><span class="p">:</span> <span class="n">BacterialVariantType</span>
+    <span class="n">type_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's own type cell, verbatim (e.g. 'SNP (transition)', "</span>
+        <span class="s2">"'DEL'), kept beside the enum so the finer distinction is not lost"</span>
+    <span class="p">)</span>
+    <span class="n">reference_sequence</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the replicon the coordinates are on, verbatim as released "</span>
+        <span class="s2">"(e.g. 'AE015451', 'NC_002947 (2)')"</span>
+    <span class="p">)</span>
+    <span class="n">position_start</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"1-based start of the change"</span><span class="p">)</span>
+    <span class="n">position_end</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"1-based, end-INCLUSIVE end of the change; equals position_start "</span>
+        <span class="s2">"for a point change, and for an INSERTION may be position_start - 1, which is "</span>
+        <span class="s2">"how a caller writes the zero-length reference interval an insertion sits in"</span>
+    <span class="p">)</span>
+    <span class="n">sequence_change</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released change cell, verbatim (e.g. 'G-&gt;A', 'A -&gt; G', '+C', "</span>
+        <span class="s2">"'2 bp-&gt;CG', the delta-bp form of a deletion); None when the release gives the "</span>
+        <span class="s2">"two alleles in their own columns instead and no fused cell"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">reference_allele</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the reference base(s), verbatim, when the release gives them in "</span>
+        <span class="s2">"their own column (de Siqueira writes '--' for an insertion site)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">alternate_allele</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the alternate base(s), on the same condition"</span>
+    <span class="p">)</span>
+    <span class="n">annotation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's effect / detail cell, verbatim (e.g. "</span>
+        <span class="s2">"'L784Q (CTG-&gt;CAG)', 'coding (539/1299 nt)', 'intergenic (+140/-75)')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">amino_acid_change</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the protein-level change, verbatim, when released in its own "</span>
+        <span class="s2">"column (e.g. 'Y -&gt; H')"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">codon_change</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the codon-level change, verbatim (e.g. 'GGT -&gt; GGC')"</span>
+    <span class="p">)</span>
+    <span class="n">codon_number</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"the 1-based codon of the CDS the change sits in"</span>
+    <span class="p">)</span>
+    <span class="n">call_mode</span><span class="p">:</span> <span class="n">VariantCallMode</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"whether the frequency is a clone's within-isolate fraction or a "</span>
+        <span class="s2">"population allele frequency"</span>
+    <span class="p">)</span>
+    <span class="n">frequency_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released frequency cell, verbatim; None only with a typed gap "</span>
+        <span class="s2">"(Niu 2019 leaves one of its 374 rows blank)"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the frequency as a number, when the release gives ONE value; None "</span>
+        <span class="s2">"when it gives a range or nothing"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">frequency_basis</span><span class="p">:</span> <span class="n">VariantFrequencyBasis</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the scale `frequency` is on; required whenever frequency is set"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">caller</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the variant caller and version, verbatim (e.g. 'breseq 0.33.1', "</span>
+        <span class="s2">"'Geneious Prime'), when the release names it"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_call</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialVariantCall"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Ordered 1-based coordinates, a sourced-or-gapped frequency, a stated basis."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_start</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"position_start is 1-based, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">position_start</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">floor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">position_start</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">variant_type</span> <span class="ow">is</span> <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">insertion</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_start</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_end</span> <span class="o">&lt;</span> <span class="n">floor</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a call needs position_start &lt;= position_end, got "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">position_start</span><span class="si">}</span><span class="s2">..</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">position_end</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_sequence</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"BacterialVariantCall needs a reference_sequence"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">type_statement</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"BacterialVariantCall needs a type_statement"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_change</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sequence_change</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"sequence_change is the released cell or None, not blank"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sequence_change</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_allele</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">alternate_allele</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a call states WHAT changed: the release's fused change cell "</span>
+                <span class="s2">"(sequence_change), or an allele column. One SIDE may legitimately be "</span>
+                <span class="s2">"absent -- an insertion replaces no reference bases, and de Siqueira "</span>
+                <span class="s2">"2025 writes '--' or an empty cell there -- but all three cannot be"</span>
+            <span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"frequency_statement"</span><span class="p">,))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"frequency_basis names the scale of a frequency, but frequency is "</span>
+                    <span class="s2">"None (a range or an absent cell has no scale to state)"</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_basis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"frequency </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="si">}</span><span class="s2"> needs a frequency_basis; a bare number "</span>
+                <span class="s2">"cannot be read as a fraction or a percent"</span>
+            <span class="p">)</span>
+        <span class="n">ceiling</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mf">1.0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency_basis</span> <span class="ow">is</span> <span class="n">VariantFrequencyBasis</span><span class="o">.</span><span class="n">fraction</span> <span class="k">else</span> <span class="mf">100.0</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">frequency</span> <span class="o">&lt;=</span> <span class="n">ceiling</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"frequency </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency</span><span class="si">}</span><span class="s2"> is outside (0, </span><span class="si">{</span><span class="n">ceiling</span><span class="si">}</span><span class="s2">] for basis "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">frequency_basis</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of this call's variant kind."""</span>
+        <span class="k">return</span> <span class="n">BACTERIAL_VARIANT_TYPE_SO</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">variant_type</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">span_length</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reference bases the call covers (1 for a point change, 0 for an insertion).</span>
+
+<span class="sd">        Measured: 21 of de Siqueira 2025's 173 calls are insertions released with</span>
+<span class="sd">        ``Maximum == Minimum - 1`` and ``Length`` 0, which is the zero-length interval</span>
+<span class="sd">        between two reference bases, so the coordinates are stored as released rather</span>
+<span class="sd">        than normalized to a one-base span the source never wrote.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_end</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">position_start</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_variant_site_id</span><span class="p">(</span><span class="n">reference_sequence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">position_start</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The identifier of a genomic SITE that is not a gene: ``&lt;replicon&gt;:&lt;position&gt;``.</span>
+
+<span class="sd">    An intergenic call names no locus, so its gene-keyed identity cannot be a locus</span>
+<span class="sd">    tag, and keying it to a flanking gene would assert the variant is IN that gene --</span>
+<span class="sd">    exactly the inference the two loaders refused to make. The site id is DERIVED from</span>
+<span class="sd">    the call (the replicon the release names plus the 1-based position), so it is</span>
+<span class="sd">    stable, unique per site, and cannot be mistaken for one of the three namespaces'</span>
+<span class="sd">    locus tags. ``GeneAdditionPerturbation`` already establishes the shape: a</span>
+<span class="sd">    perturbation whose identifier is legitimately not a host locus tag.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">reference_sequence</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">position_start</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="n">VARIANT_SITE_ID_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^[^\s].*:\d+$"</span>
+<span class="sd">"""The shape of a site id, so a locus tag can never be stored in one's place."""</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialVariantPerturbation</span><span class="p">(</span><span class="n">SequencePerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""AXIS-3 base of the called-variant leaves: a sequence change the caller FOUND.</span>
+
+<span class="sd">    Abstract. ``provenance`` defaults to ``"natural"`` because the motivating case is a</span>
+<span class="sd">    variant that arose in an evolution experiment; a DESIGNED allele that the leaf also</span>
+<span class="sd">    serves (Choe 2019 built ``MS56 cspC::cspC(G37A)``) sets ``provenance="engineered"``</span>
+<span class="sd">    per record, which is what making provenance a free field on the root is for.</span>
+
+<span class="sd">    ``mechanism_so_id`` stays the generic ``SO:0001060 sequence_variant``: it is true of</span>
+<span class="sd">    every call whatever its kind, and the kind-specific pair is read off</span>
+<span class="sd">    ``call.mechanism_so``, so the two cannot disagree.</span>
+<span class="sd">    """</span>
+
+    <span class="n">gene_namespace</span><span class="p">:</span> <span class="n">BacterialGeneNamespace</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the HOST genome this call is written against"</span>
+    <span class="p">)</span>
+    <span class="n">identifier_mapping</span><span class="p">:</span> <span class="n">DerivedIdentifierMapping</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"how systematic_gene_name was derived from the identifier the "</span>
+        <span class="s2">"release named (a gene symbol, a RefSeq locus tag); None when the release "</span>
+        <span class="s2">"named the stored tag itself"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">call</span><span class="p">:</span> <span class="n">BacterialVariantCall</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the called variant, exactly as the release states it"</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"natural"</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A bacterial locus tag, not a yeast systematic name.</span>
+
+<span class="sd">        The intergenic leaf overrides this: a call between loci is keyed on its site.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="n">_validate_bacterial_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialVariantPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The locus tag's own namespace is the one the record declares.</span>
+
+<span class="sd">        A site id matches no namespace pattern, so this is a no-op on the intergenic</span>
+<span class="sd">        leaf, exactly as it is for a heterologous gene symbol on the addition leaf.</span>
+<span class="sd">        """</span>
+        <span class="n">_check_gene_namespace</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">mechanism_so</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""(SO id, SO name) of this perturbation's call."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="o">.</span><span class="n">mechanism_so</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialSequenceVariantPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">BacterialVariantPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A called variant that sits INSIDE a named bacterial locus.</span>
+
+<span class="sd">    The 58 de Siqueira calls carrying a GenBank locus tag, the 123 single-locus Lim</span>
+<span class="sd">    rows, and every designed single-allele strain of the same shape. A partial deletion</span>
+<span class="sd">    of a locus is one of these with ``call.variant_type == deletion`` and the released</span>
+<span class="sd">    coding range in ``call.annotation`` (Lim's ``PP_2675`` reads ``coding</span>
+<span class="sd">    (4-459/462 nt)``), NOT a presence/absence absence: a truncation leaves the locus in</span>
+<span class="sd">    place, and asserting it is absent would state a consequence the release did not.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Called sequence variant inside a bacterial locus, with its replicon, position, "</span>
+        <span class="s2">"change and call frequency"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_sequence_variant"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"bacterial_sequence_variant"</span>
+    <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialSiteVariantPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">BacterialVariantPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A called variant keyed on its genomic SITE, because no locus tag holds it.</span>
+
+<span class="sd">    ``site_kind`` says why, and the two reasons are different claims (see</span>
+<span class="sd">    ``VariantSiteKind``): the caller placed the variant BETWEEN loci, or the release</span>
+<span class="sd">    named a locus in an identifier space the pinned assembly does not carry. Together</span>
+<span class="sd">    they are 122 of de Siqueira 2025's 173 calls and 17 of Lim 2025's 159, so the</span>
+<span class="sd">    carrier is not an edge case.</span>
+
+<span class="sd">    ``systematic_gene_name`` is the derived site id ``&lt;replicon&gt;:&lt;position_start&gt;``</span>
+<span class="sd">    (checked here against the call's own replicon and position, so it cannot drift from</span>
+<span class="sd">    the call it names), and ``perturbed_gene_name`` is the release's own label for the</span>
+<span class="sd">    place: Lim writes the two flanking loci ``PP_4061, PP_4063``, de Siqueira writes</span>
+<span class="sd">    nothing for an intergenic call and ``PP_RS21780`` for a RefSeq-only one.</span>
+
+<span class="sd">    ``flanking_systematic_gene_names`` carries the flanking loci as resolved tags WHEN</span>
+<span class="sd">    the release names them, in released left-to-right order, so "which gene is this</span>
+<span class="sd">    variant upstream of" stays answerable without claiming the variant is in either.</span>
+<span class="sd">    ``released_locus_statement`` carries the unmappable identifier verbatim, and is</span>
+<span class="sd">    required for ``locus_not_in_assembly`` and forbidden for ``intergenic`` -- an</span>
+<span class="sd">    intergenic call names no locus to record.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Called sequence variant keyed on its genomic site, because no locus tag of the "</span>
+        <span class="s2">"pinned assembly holds it"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_site_variant"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"bacterial_site_variant"</span>
+    <span class="n">site_kind</span><span class="p">:</span> <span class="n">VariantSiteKind</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"why the call is keyed on its site rather than on a locus tag"</span>
+    <span class="p">)</span>
+    <span class="n">flanking_systematic_gene_names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="p">(),</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the flanking loci as resolved tags, in released order; empty when "</span>
+        <span class="s2">"the release names no neighbor"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">flanking_gene_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's flanking-gene cell, verbatim, when it has one"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">released_locus_statement</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the locus identifier the release named, verbatim, when the pinned "</span>
+        <span class="s2">"assembly carries no tag for it (e.g. the RefSeq 'PP_RS21780'); set iff "</span>
+        <span class="s2">"site_kind is locus_not_in_assembly"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_sys_gene_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A site id, never a locus tag (a tag would claim the variant is in a gene)."""</span>
+        <span class="k">if</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2"> is a bacterial locus tag; a site-keyed call is keyed on its "</span>
+                <span class="s2">"site, and a call inside a locus of the pinned assembly is a "</span>
+                <span class="s2">"BacterialSequenceVariantPerturbation"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">VARIANT_SITE_ID_PATTERN</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"invalid variant site id </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">; expected '&lt;replicon&gt;:&lt;position&gt;'"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_site</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialSiteVariantPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The site id matches its own call; flanks are tags; the locus rule holds."""</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="n">_variant_site_id</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="o">.</span><span class="n">position_start</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="o">!=</span> <span class="n">expected</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"site id </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">!r}</span><span class="s2"> does not name this call's site "</span>
+                <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">expected</span><span class="si">!r}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">flanking_systematic_gene_names</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gene_namespace</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"flanking locus </span><span class="si">{</span><span class="n">tag</span><span class="si">!r}</span><span class="s2"> is not a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">gene_namespace</span><span class="si">}</span><span class="s2"> tag"</span>
+                <span class="p">)</span>
+        <span class="n">unmapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">site_kind</span> <span class="ow">is</span> <span class="n">VariantSiteKind</span><span class="o">.</span><span class="n">locus_not_in_assembly</span>
+        <span class="k">if</span> <span class="n">unmapped</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">released_locus_statement</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"released_locus_statement is required for site_kind="</span>
+                <span class="s2">"locus_not_in_assembly and forbidden for site_kind=intergenic, got "</span>
+                <span class="sa">f</span><span class="s2">"site_kind=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">site_kind</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> with "</span>
+                <span class="sa">f</span><span class="s2">"released_locus_statement=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">released_locus_statement</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">unmapped</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">flanking_systematic_gene_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a call inside a locus the assembly does not carry has no flanking "</span>
+                <span class="s2">"loci; those belong to an intergenic call"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">site_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">BacterialVariantCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The site id a call determines, so a loader never spells one by hand."""</span>
+        <span class="k">return</span> <span class="n">_variant_site_id</span><span class="p">(</span><span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="p">,</span> <span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialSpanDeletionPerturbation</span><span class="p">(</span>
+    <span class="n">HashableProvenanceGapMixin</span><span class="p">,</span> <span class="n">BacterialDeletionPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One locus removed ENTIRELY by a called deletion that spans a run of loci.</span>
+
+<span class="sd">    The 19 Lim rows whose deletion covers whole loci, up to 53 of them</span>
+<span class="sd">    (``PP_3024``-``PP_5558``, 40,784 bp), and the single-locus rows of the same shape</span>
+<span class="sd">    (a deletion the caller reports with no coding offset, which is how breseq says the</span>
+<span class="sd">    locus lies wholly inside the deleted interval). It stays on the presence/absence</span>
+<span class="sd">    axis -- these loci ARE absent -- so ``issubclass(_, DeletionPerturbation)`` still</span>
+<span class="sd">    catches it, and it is ONE perturbation PER COVERED LOCUS rather than one per event:</span>
+<span class="sd">    a gene-keyed consumer must see all 53 genes as absent, not only an endpoint.</span>
+
+<span class="sd">    The event is recoverable as a set from ``span_designation``, which every locus of</span>
+<span class="sd">    one deletion carries identically (the grouping ``pathway_name`` does for a</span>
+<span class="sd">    pathway's genes), and ``span_systematic_gene_names`` lists the loci it covers in</span>
+<span class="sd">    released order.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Bacterial locus removed entirely by a called deletion spanning a run of loci"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"bacterial_span_deletion"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"bacterial_span_deletion"</span>  <span class="c1"># type: ignore[assignment]</span>
+    <span class="n">deletion_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_span"</span>
+    <span class="n">call</span><span class="p">:</span> <span class="n">BacterialVariantCall</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the called deletion, exactly as the release states it"</span>
+    <span class="p">)</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"natural"</span>
+    <span class="n">span_designation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the designation of the deletion EVENT, identical on every locus it "</span>
+        <span class="s2">"covers (e.g. 'AE015451:4588139 delta5,553 bp'), so the event is one query"</span>
+    <span class="p">)</span>
+    <span class="n">span_systematic_gene_names</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"every locus the event removes, in released order; this record's "</span>
+        <span class="s2">"own systematic_gene_name is one of them"</span>
+    <span class="p">)</span>
+    <span class="n">deleted_span</span><span class="p">:</span> <span class="n">GenomicSpan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the removed interval on the pinned assembly, when the release "</span>
+        <span class="s2">"gives both endpoints; None when it gives only a start and a length"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_span</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialSpanDeletionPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The event names at least this locus, and the call is a deletion."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="o">.</span><span class="n">variant_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">BacterialVariantType</span><span class="o">.</span><span class="n">deletion</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a span deletion's call is a deletion, not "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="o">.</span><span class="n">variant_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">span_designation</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"BacterialSpanDeletionPerturbation needs a span_designation"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">span_systematic_gene_names</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="si">}</span><span class="s2"> is not among the loci its own event "</span>
+                <span class="sa">f</span><span class="s2">"removes (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">span_systematic_gene_names</span><span class="si">}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">designation</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">call</span><span class="p">:</span> <span class="n">BacterialVariantCall</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The event designation a call determines, so a loader never spells one."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">reference_sequence</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">position_start</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">call</span><span class="o">.</span><span class="n">sequence_change</span><span class="si">}</span><span class="s2">"</span>
+
+
 <span class="n">SgaPerturbationType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">SgaKanMxDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">SgaNatMxDeletionPerturbation</span>
@@ -2994,6 +3558,9 @@
     <span class="o">|</span> <span class="n">BacterialCrisprInterferencePerturbation</span>
     <span class="o">|</span> <span class="n">PromoterReplacementPerturbation</span>
     <span class="o">|</span> <span class="n">HeterologousPathwayPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialSequenceVariantPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialSiteVariantPerturbation</span>
+    <span class="o">|</span> <span class="n">BacterialSpanDeletionPerturbation</span>
 <span class="p">)</span>
 
 

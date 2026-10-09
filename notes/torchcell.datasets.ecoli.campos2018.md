@@ -312,3 +312,223 @@ is scriptable and reproducible; nothing here needed a manual recipe.
   make `ODmax` storable.
 - `eck_crosswalk` through MG1655 recovers 22 of the 26 post-annotation gene names
   (measured), worth 22 rows.
+
+## 2026.10.09 - Issue #774: the 26 morphology features get a phenotype class
+
+Issue #774 recorded the largest single-paper representational gap in the bacterial
+program: the loader stored 1 of the release's 26 per-strain values and dropped 25, not
+for want of data but for want of a class. This closes 25 of the 26. The one left is
+`ODmax`, a saturating optical density, which is a carrying capacity rather than a
+growth-rate ratio and is not morphology either.
+
+New: `BacterialMorphologyPhenotype` in `torchcell/datamodels/schema.py`, its feature
+vocabulary in `torchcell/datamodels/bacterial_morphology_features.py`, the dataset
+`MorphologyCampos2018Dataset` beside the existing `GrowthRateCampos2018Dataset`, its
+adapter `torchcell/adapters/campos2018_morphology_adapter.py`, and the L0 to L4 gate
+`torchcell/verification/bacterial_morphology.py`.
+
+### The vocabulary is the assay's, not CalMorph's
+
+`CalMorphPhenotype` has exactly the right shape, a dict of named per-strain values plus
+a dict of named coefficients of variation, and exactly the wrong vocabulary: its two
+validators reject any key outside the 281 base and 220 CV parameters of CalMorph, a *S.
+cerevisiae* image-analysis program, and that label set is disjoint from every Campos
+symbol. The shape is kept and the label set becomes a property of the ASSAY:
+`BacterialMorphologyPhenotype.assay` names a `MorphologyAssay` in `MORPHOLOGY_ASSAYS`
+and that assay's features are the only permitted keys, so a later bacterial imaging
+screen registers its own assay and widens nobody else's set.
+
+Each `MorphologyFeature` declares what statistic its number IS, and the split between
+the two dicts is that declaration rather than a naming convention, so a CV cannot be
+filed as a mean. The Campos assay is six statistics side by side in one row:
+
+| statistic | n | symbols |
+| --- | --- | --- |
+| `mean` | 10 | `<L>` `<W>` `<A>` `<V>` `<SA>` `<P>` `<C>` `<Ar>` `<SA/V>` `<NA>` |
+| `coefficient_of_variation` | 11 | the CV of each of those nine dimensions, plus `CV_SA/V` and `CV_DR` |
+| `pearson_correlation` | 1 | `rho_CD` |
+| `regression_intercept` | 1 | `CDN_C0` |
+| `inferred_relative_timing` | 2 | `Rel.timing div` `Rel.timing nuc` |
+| `fraction_of_cells` | 1 | `%2N` |
+
+A consumer that averages a correlation with a relative timing is pooling quantities the
+source never claimed were comparable; naming the statistic is what lets it refuse.
+
+### Why the vocabulary is 26 and why Table S1 is the authority
+
+The main text counts "19 morphological features", and Appendix Table S1 ("Features
+considered in this study and their associated symbols", sha256
+`72cc3510fa63cbf625bb1cd17acebf2a4ed764be0b11acae312b7afbaec40c75`, read as the text
+runs of `word/document.xml`) names 21 morphological symbols, the difference being the
+mean and variability of nucleoid area. Table S1 is the release's naming authority and the
+main text says so: "The name and abbreviation for all the features can be found in
+Appendix Table S1." Table S1's 28 symbols are therefore 21 morphological + 2 growth + 5
+cell cycle, and the 26 the assay holds are the 28 minus the two growth symbols
+(`alpha_max`, served as the `FitnessPhenotype` of the fitness dataset, and `ODmax`).
+
+### The two released columns the vocabulary leaves out, and the measurement that justifies it
+
+Dataset EV2's "Normalized data" sheet holds 30 numeric feature columns against Table S1's
+28, plus 2 island assignments. The two extras are `%non-div` and `%1N`, and they are not
+dropped for want of a class: each is an exact deterministic inverse of a feature that IS
+stored. Measured over the 4,189 rows that determined both:
+
+| relation | residual |
+| --- | --- |
+| `Rel.timing div == -log2(1 - %non-div / 2)` | max abs 1.3e-15 |
+| `Rel.timing nuc == -log2(1 - %1N / 2)` | max abs 1.2e-15 |
+
+That is the steady-state cell-age inversion Table S1's caption describes ("estimated as
+the proportions of cells without any significant constriction (constriction degree <0.15)
+or with a single nucleoid, respectively"). Storing both sides would write one measurement
+twice under two names. `%2N` is NOT the complement of `%1N` and IS stored: measured,
+`|%1N + %2N - 1|` reaches 0.129, so cells with more than two nucleoids exist. The two
+island columns are the paper's own clustering labels over the screen, not measurements of
+a strain, so they are no dataset's phenotype. Recorded in
+`RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY` and `RELEASED_CLUSTER_COLUMNS`.
+
+### `n_samples` is the segmented cell, and Dataset EV1 became a build input
+
+A record's number is a mean (or CV, or correlation) over the strain's retained segmented
+cells from ONE well, so `biological_replicate` would report 1 for a mean over hundreds.
+`SampleUnit.cell` was added and `n_samples` is Dataset EV1's `nb Cells` column. That
+makes Dataset EV1 (`MSB-14-e7573-s003.xlsx`) a consumed raw file rather than a referenced
+supplement, so it is now deposited in the raw mirror with its own retrieval record:
+
+| path | sha256 | retrieval |
+| --- | --- | --- |
+| `data/MSB-14-e7573-s004.xlsx` | `10188365b9ebcf40309c4bdcb415b13472a460c6d0966ed860ad9e59df208274` | `pmc_cloud`, key `PMC6018989.1/MSB-14-e7573-s004.xlsx` |
+| `data/MSB-14-e7573-s003.xlsx` | `82f0777cf85c3277be95e04c04e893fdf46c412e2640d61b35e70af75b312837` | `pmc_cloud`, key `PMC6018989.1/MSB-14-e7573-s003.xlsx` |
+
+The two sheets are joined on the Keio `(plate, well)`. Measured: both carry the same
+4,467 positions with the same gene label in the same order, so the join is a row
+alignment and a position present in one and absent from the other stops the build. The
+cell counts corroborate the paper: `nb Cells` sums to 1,301,055 with mean 291.26 and SD
+116.71 over 4,467 rows, against "retaining about 1,300,000 identified cells ( $2 9 1 \pm
+1 1 6$ cells/strain)". Minimum 43, maximum 1,658.
+
+The reference is a different statistic and says so: the per-feature MEDIAN over the 240
+parental replicate wells, `n_samples=240`, `sample_unit=biological_replicate`, the same
+convention the fitness reference already uses.
+
+A feature that needs an absolute unit gets one from the release and nowhere else:
+Appendix Table S1 has no unit column and `paper.md` states no feature unit, so the 8
+units come from Dataset EV2's "Legend normalized data" sheet ("Mean cell length (µm)"),
+which the "Normalized data" header repeats as `<L> (µm)`. The loader BUILDS each column
+name as `symbol (unit)` from the vocabulary, so a header that moved stops the build. The
+other 18 features state no unit, which is the honest record: a CV, a correlation, a shape
+factor, a relative timing and a population fraction are dimensionless.
+
+### Coverage is partial by design, and the split is measured
+
+`BacterialMorphologyPhenotype` accepts the features a source DETERMINED for a strain, not
+the whole vocabulary: Dataset EV2's legend states "NaN (Not a Number) values are
+attributed to non-determined fields". Measured over the 4,227 imaged strains, 7 columns
+are NaN on exactly the same 278 rows and the other 19 are never NaN, and no wild-type row
+is among the 278:
+
+| set | n | symbols |
+| --- | --- | --- |
+| `MORPHOLOGY_REQUIRED_FEATURES` | 19 | every mean and CV of the phase-contrast dimensions, plus `CV_DR` |
+| `MORPHOLOGY_DAPI_FEATURES` | 7 | `<NA>` `CV_NA` `rho_CD` `CDN_C0` `Rel.timing div` `Rel.timing nuc` `%2N` |
+
+The set is read off the data rather than reasoned out from the derivations, because
+`Rel.timing div` is inferred from a phase-contrast proportion yet is absent on those same
+rows. Demanding full coverage would drop 19 real features to save 7 absent ones.
+
+### Measured before and after
+
+| | before | after |
+| --- | --- | --- |
+| Campos records in the dev tree | 3,664 (fitness) | 3,664 fitness + 3,664 morphology |
+| stored per-strain values | 1 per record, 3,664 total | 3,664 + 93,570 |
+| features of the release with no phenotype class | 25 of 26 | 1 of 26 (`ODmax`) |
+
+93,570 is `19 x 3,664 + 7 x 3,422`: the 19 required features on every kept record, and
+the 7 DAPI-derived ones on the 3,422 kept records that determined them (242 of the 3,664
+kept strains have no nucleoid channel). The issue's estimate was "roughly 88,000", which
+is 24 features at full coverage; the realized figure is higher because the vocabulary
+carries the two nucleoid-area symbols the main text's headline 19 leaves out, and lower
+per DAPI feature because coverage is not full. Per-feature counts are in
+`preprocess/served_features.json`.
+
+Both datasets keep exactly the same 3,664 rows, by construction: the morphology loader
+calls the same `read_normalized_table` and `resolve_rows`, so a strain is writable for
+both or for neither, and the drop ledger is identical.
+
+```text
+BUILT MorphologyCampos2018Dataset: 3664 records at
+  $DATA_ROOT/data/torchcell/ecoli_morphology_campos2018 in 9s;
+  gene_set size 3664; references 1
+```
+
+### L0 to L4, the morphology gate
+
+`torchcell/verification/bacterial_morphology.py`, run as
+`python -m torchcell.datasets.ecoli.campos2018 verify-morphology`. The CalMorph verifier
+could not be reused: it reads `phenotype["calmorph"]` by literal key and asserts the
+literal counts 281 / 220 / 501. The new one reads the vocabulary from the assay each
+record names, and refuses a dataset that mixes two assays.
+
+| level | check | result |
+| --- | --- | --- |
+| L0 | structural | 3,664 records validated |
+| L1 | count | observed 3,664, expected 3,664 |
+| L1 | pair_uniqueness | 3,664 unique (strain, environment) records, one each |
+| L1 | assay_coverage | all 3,664 carry the 19 required features of assay campos2018 and nothing outside its 26 |
+| L1 | provenance_gaps | 3,664 documented gaps over 3,664/3,664 records, 0 deferred |
+| L1 | canonical_gene_names | 3,664 systematic names, one canonical spelling each, each current |
+| L2 | value_fidelity | 93,570 values over 26 features finite and inside the bound of their declared statistic |
+| L2 | cv_nonnegative | all 40,062 coefficients of variation non-negative |
+| L2 | uncertainty_sanity | 0 labeled uncertainties (the CVs are released features, not a typed dispersion field) |
+| L3 | vocabulary_parity | 15 value symbols + 11 CV symbols == 26 features, disjoint, exhaustive, distinct |
+| L3 | reference_populated | the reference profile carries the 19 required features in all 3,664 records |
+| L3 | media_compound_identity | 18,320 component references carry a structure identifier, 0 unencodable |
+| L3 | media_membership | 3,664 records on a medium deriving from a shared library base |
+| L4 | gene_containment_sgd | 1.000 of 3,664 measured genes are BW25113 genes |
+| L4 | current_genome_genes | every one of the 3,664 names is a gene of the current genome |
+
+L2 `value_fidelity` is PER FEATURE, against the bound each declared statistic implies: a
+mean and a CV are non-negative, a Pearson correlation lies in [-1, 1], a fraction of
+cells and an inferred relative timing in [0, 1], and a fitted intercept is bounded only
+by finiteness. Pooling 26 columns into one list, which is what the CalMorph verifier
+does, cannot express those and reports an index no reader can trace to a column. The
+bounds hold on the release with room to spare (measured: `rho_CD` in [0.015, 0.980],
+`CDN_C0` in [0.145, 0.741], `Rel.timing nuc` up to 1.000, `%2N` in [0.000, 0.560]).
+
+### Schema impact
+
+`scripts/schema_impact_check.py --base origin/main`: **49 impacted datasets, 0 breaking
+(additive)**. Nine changed symbols, all additions: the three `BacterialMorphology*`
+classes, `SampleUnit` gaining `cell`, and the five unions and maps gaining those classes.
+`SampleUnit` is what reaches the other 47 datasets, and only as a widened enum. KG 4.0 is
+a full rebuild, so the impacted stores are remade there; the two Campos dev stores were
+rebuilt here with `--retire-existing` and read `fresh` under
+`python -m torchcell.provenance.build_manifest`.
+
+### No other loader in the repo is extended by this class
+
+Swept `notes/`, all 90 modules under `torchcell/datasets/`, the candidate-table
+generators and every open issue. Two findings:
+
+- **Schmidt 2016 Table S28** is recorded as blocked in
+  `notes/plan.bacteria-si-phenotype-audit-ecoli.md` with the reason "a bacterial
+  cell-size phenotype has no class. `CalMorphPhenotype` is the yeast CalMorph feature set
+  and does not apply", which reads like this gap and is NOT one.
+  Its `Cell length1` / `Cell width1` columns carry footnote 1, "Cell length, width and
+  volume according to Volkmer, B. & Heinemann, M. ... PLoS ONE 6, e23126 (2011)", so they
+  are another paper's measurements; the 19 data rows are growth conditions of the wild
+  type rather than perturbed strains; and there is no CV and no cell count, so
+  `morphology_coefficient_of_variation`, `n_samples` and `sample_unit` would all be
+  empty. Writing them under `assay="schmidt2016"` would attribute an assay Schmidt never
+  ran. Left unserved. The audit row also states "Table S28, 24 data rows" where the sheet
+  has 19 (header on row index 2, data on 3 to 21, then five footnotes), worth correcting
+  there.
+- **Silvis 2021** is the next real customer and has no loader, no raw mirror and no
+  issue. Its recorded `schema_need` is "a shape phenotype whose measured unit is a
+  segmented cell, summarized per strain as a location and a dispersion for each
+  dimension", which is this class. Serving it needs a `silvis2021` assay plus a `median`
+  member of `MorphologyStatistic`: Silvis releases medians and a robust CV, and filing a
+  median under `mean` is the misstatement the `statistic` field exists to prevent. Not
+  added here, because the enum's own rule is to add members as datasets need them and no
+  dataset needs it yet.

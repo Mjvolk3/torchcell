@@ -1836,7 +1836,7 @@ def metabolite_identity_gaps(
     it names the uncovered keys and ``ProvenanceGapMixin`` refuses it if the map ever
     gains one of them. No uncovered key means no gap.
     """
-    unsourced = tuple(sorted(set(keys) - set(target_metabolite_ids)))
+    unsourced = sorted(set(keys) - set(target_metabolite_ids))
     if not unsourced:
         return []
     sourced = [key for key in keys if key in target_metabolite_ids]
@@ -1846,7 +1846,7 @@ def metabolite_identity_gaps(
             reason=ProvenanceGapReason.not_reported_by_primary,
             looked_in=TABLE_S9_PROVENANCE,
             note=METABOLITE_IDENTITY_GAP_NOTE,
-            keys=unsourced if sourced else (),
+            keys=unsourced if sourced else [],
         )
     ]
 

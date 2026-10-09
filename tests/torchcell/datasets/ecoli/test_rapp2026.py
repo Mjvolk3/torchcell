@@ -681,7 +681,7 @@ def test_metabolite_phenotype_stores_the_mean_its_se_and_the_known_identities() 
     (gap,) = phenotype.provenance_gaps
     assert gap.field == "target_metabolite_ids"
     assert gap.reason == "not_reported_by_primary"
-    assert gap.keys == ("ac-gcald[M-H]-",)
+    assert gap.keys == ["ac-gcald[M-H]-"]
     assert gap.looked_in == m.TABLE_S9_PROVENANCE
     assert gap.note == m.METABOLITE_IDENTITY_GAP_NOTE
     with pytest.raises(ValueError, match="2 keys for 1 replicate lists"):
@@ -839,7 +839,7 @@ def test_build_three_records_with_the_control_reference_and_ledgers(
     (gap,) = first["phenotype"]["provenance_gaps"]
     assert gap["field"] == "target_metabolite_ids"
     assert gap["reason"] == "not_reported_by_primary"
-    assert gap["keys"] == ("ac-gcald[M+H]+",)
+    assert gap["keys"] == ["ac-gcald[M+H]+"]
     assert gap["looked_in"] == m.TABLE_S9_PROVENANCE.model_dump()
     assert gap["resolve_with"] is None
     assert gap["note"] == m.METABOLITE_IDENTITY_GAP_NOTE
@@ -1502,9 +1502,9 @@ def test_metabolite_identity_gaps_names_the_keys_or_the_whole_field() -> None:
     """A partial map gaps the uncovered keys; no sourced key gaps the whole field."""
     keys = ["ppal[M+H]+", "ac-gcald[M-H]-", "didp[M+H]+"]
     (partial,) = m.metabolite_identity_gaps(keys, {"ppal[M+H]+": "ppal"})
-    assert partial.keys == ("ac-gcald[M-H]-", "didp[M+H]+")
+    assert partial.keys == ["ac-gcald[M-H]-", "didp[M+H]+"]
     (whole,) = m.metabolite_identity_gaps(keys, {})
-    assert whole.keys == ()
+    assert whole.keys == []
     assert (
         m.metabolite_identity_gaps(keys, {key: key.split("[")[0] for key in keys}) == []
     )

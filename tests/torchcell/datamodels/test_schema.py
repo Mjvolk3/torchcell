@@ -2807,7 +2807,7 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
             ProvenanceGap(
                 field="target_metabolite_ids",
                 reason=ProvenanceGapReason.not_reported_by_primary,
-                keys=("feature_0042",),
+                keys=["feature_0042"],
                 note="a merged isobaric feature with several candidate identities",
             )
         ],
@@ -2828,7 +2828,7 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
                 ProvenanceGap(
                     field="target_metabolite_ids",
                     reason=ProvenanceGapReason.not_reported_by_primary,
-                    keys=("glucose",),
+                    keys=["glucose"],
                 )
             ],
         )
@@ -2844,7 +2844,7 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
                 ProvenanceGap(
                     field="measurement_type",
                     reason=ProvenanceGapReason.not_reported_by_primary,
-                    keys=("glucose",),
+                    keys=["glucose"],
                 )
             ],
         )
@@ -2852,7 +2852,7 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
         ProvenanceGap(
             field="target_metabolite_ids",
             reason=ProvenanceGapReason.not_reported_by_primary,
-            keys=("a", "a"),
+            keys=["a", "a"],
         )
     with pytest.raises(
         ValidationError, match="ProvenanceGap.keys cannot hold an empty key"
@@ -2860,5 +2860,5 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
         ProvenanceGap(
             field="target_metabolite_ids",
             reason=ProvenanceGapReason.not_reported_by_primary,
-            keys=(" ",),
+            keys=[" "],
         )

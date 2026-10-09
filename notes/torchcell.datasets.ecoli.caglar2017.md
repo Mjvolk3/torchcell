@@ -651,6 +651,7 @@ It does not remove it: if Houser 2015 is ever mirrored and loaded, those 27 plus
 samples become a real duplication and the superset rule applies, the same shape as #760.
 The attribution is what makes that detectable, because a Houser 2015 admission check can
 now ask which records already name it.
+
 ## 2026.10.09 - Correction: Table S5 IS loadable, and the raw mirror gained it
 
 The earlier section "2026.10.07 - Tables S5 to S14, and why the doubling times are not
@@ -940,3 +941,41 @@ Adding this family to `torchcell/datasets/ecoli/caglar2017.py` changes the modul
 build manifest fingerprints, so `--list-stale --include-private` now reports
 `RnaseqCaglar2017Dataset` and `ProteomeCaglar2017Dataset` as stale. Neither store's
 records change; both need a rebuild before the next KG build.
+
+## 2026.10.09 - The fold-change record cites this paper, and the per-group attribution says why
+
+#771 landed on main while the #770 fold-change loader was on a branch: every
+sample-level Caglar record now stores the `Publication` of the study that FIRST reported
+its sample, which for the 27 `glucose_time_course` samples is Houser 2015. The rebase put
+the two together, and the module-level `publication()` the fold-change loader called no
+longer exists; `SourceStudy.publication` replaced it.
+
+A fold change is not a sample. Each Table S8 record is a DESeq2 contrast over a test
+group and a base group, and the attribution of the two groups was measured rather than
+assumed (`preprocess/fold_change_records.json`, rebuilt store, 8 records):
+
+| record | phase | test for | Houser samples in the test group | in the base group |
+|---|---|---|---|---|
+| 0 | exponential | `Mg_mM_Levels` | 0 of 3 | 15 of 20 |
+| 1 to 3 | exponential | `carbonSource` | 0 of 3 each | 15 of 20 each |
+| 4 | stationary | `Mg_mM_Levels` | 0 of 3 | 6 of 11 |
+| 5 to 7 | stationary | `carbonSource` | 0 of 3 each | 6 of 11 each |
+
+Every test group is pure Caglar; every base group mixes the two studies, because the base
+group IS the phase's reference condition (glucose at base Na+ and Mg2+), which is the
+condition Houser's time course shares. So no single study "first reported" a record's
+samples, and `source_publications` cannot pick one. The ratio itself is first reported
+here, in this paper's own Table S8 differential fit, so the record stores Caglar's
+`Publication` and the per-group attribution travels in the ledger
+(`houser2015_test_samples`, `houser2015_base_samples`) with a note in
+`build_accounting.json`. Flagged for the owner: the alternative is to refuse the whole
+family on the grounds that a mixed-provenance denominator cannot be attributed, which
+would discard 33,268 fold changes a published table releases.
+
+`n_replicates` is unaffected: it is the TEST group's protein-sample count, and no test
+group holds a Houser sample.
+
+L0 to L4 after the rebuild (`run_verification("protein_fold_change")`): 1 L0, 4 L1, 5 L2,
+62 L3 and 1 L4 check, all pass. The two sample-level families were rebuilt in the same
+pass and both still verify: rnaseq 152 records (1 L0, 2 L1, 3 L2, 60 L3, 1 L4) and
+proteome 105 records (1 L0, 3 L1, 3 L2, 60 L3, 1 L4).

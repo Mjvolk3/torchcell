@@ -13,7 +13,7 @@ because importing biocypher writes a log directory into the working directory.
 2026.09.30 (Phase 15): the committed ``biocypher/config/torchcell_schema_config.yaml``
 is read as the real table: 27 nodes, of which 23 sit under five Biolink parents
 (environmental exposure 4, genotype 2, information content entity 3, nucleic acid
-entity 1, phenotypic feature 14) and 4 are auto-mapped by name (dataset, genome,
+entity 1, phenotypic feature 13) and 4 are auto-mapped by name (dataset, genome,
 genotype, publication); 13 edges under five relations (coexists with 1, genetically
 associated with 1, mentions 1, part of 6, participates in 4); 10 concepts in all. The
 compact headers count the schema (27 and 13 here, 3 and 2 for the small schema), and a
@@ -143,7 +143,7 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 33 nodes (29 under six Biolink
+    """The committed ``torchcell_schema_config.yaml``: 35 nodes (31 under six Biolink
     parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
@@ -175,8 +175,8 @@ def test_real_schema_compact_table(
         "phenotype, fitness phenotype, flux phenotype, gene essentiality phenotype, "
         "gene interaction phenotype, metabolite phenotype, microarray expression "
         "phenotype, product titer phenotype, promoter activity phenotype, protein "
-        "abundance phenotype, protein fold change phenotype, protein "
-        "turnover phenotype, pseudobulk expression phenotype, rnaseq expression "
+        "abundance phenotype, protein fold change phenotype, protein turnover "
+        "phenotype, pseudobulk expression phenotype, rnaseq expression "
         "phenotype, synthetic lethality phenotype, synthetic rescue phenotype, visual "
         "score phenotype",
         f"{'✓ auto-mapped':25} → dataset, genome, genotype, publication",

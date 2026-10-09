@@ -108,7 +108,12 @@ protein-sample count from Table S1, the conservative lower end
 (``replicate_derivations``). The reference phenotype is the log2 scale's neutral value for
 every stored key, which is what a fold change's denominator carries by definition. The
 gene-level arm's 100,704 rows are out of scope: no gene-level expression fold-change
-phenotype exists.
+phenotype exists. The record stores THIS paper's ``Publication``, not a per-sample one:
+#771's rule attributes a sample, and a contrast is not a sample. Measured on the
+release, every kept record's test group is pure Caglar and every base group mixes
+Caglar's samples with Houser's glucose time course (15 of 20 exponential, 6 of 11
+stationary), so the groups name no single first reporter while Table S8's ratio is first
+reported here; the per-group attribution goes to ``fold_change_records.json``.
 
 The flux arm (Table S4) is not loaded: it holds flux RATIOS, which neither
 ``MetabolitePhenotype`` (pool sizes) nor ``FluxPhenotype`` (signed net flux) can store.
@@ -3411,6 +3416,23 @@ def fold_change_reference_phenotype(
     )
 
 
+# --- begin #770: the per-sample attribution #771 set, read for a CONTRAST ---------- #
+def _houser2015_of(rows: Sequence[SampleRow], samples: Sequence[str]) -> list[str]:
+    """Which of ``samples`` Houser 2015 first reported, by ``attribute_sample``.
+
+    #771 attributes a SAMPLE to the study that first reported it. A fold change is not a
+    sample but a contrast over two groups of them, so the attribution is recorded per
+    group here rather than used to pick the record's ``Publication``: Table S8 is
+    Caglar's own differential fit, so Caglar is the study that first reported the ratio
+    whatever the groups hold. Measured on the release, every TEST group is pure Caglar
+    and every BASE group mixes the two, which is why one ``Publication`` per record
+    cannot be read off the groups.
+    """
+    study_of = {row.sample: attribute_sample(row).study for row in rows}
+    return [s for s in samples if study_of[s] == "houser2015"]
+
+
+# --- end #770 --------------------------------------------------------------------- #
 class FoldChangeRecord(BaseModel):
     """What one fold-change record was built from."""
 
@@ -3434,6 +3456,10 @@ class FoldChangeRecord(BaseModel):
     n_se: int
     n_p_value: int
     n_p_value_adjusted: int
+    # --- begin #770: the per-sample attribution #771 set, read for a CONTRAST ----- #
+    houser2015_test_samples: list[str]
+    houser2015_base_samples: list[str]
+    # --- end #770 ----------------------------------------------------------------- #
 
 
 class FoldChangeAccounting(BaseModel):
@@ -3560,7 +3586,11 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
         pin = assembly_reference(self.REFERENCE_STRAIN)
         reference_members = reference_rows(rows)
         genotype = Genotype(perturbations=[])
-        pub = publication()
+        # #771 attributes a SAMPLE to the study that first reported it. A record here
+        # is a CONTRAST over two sample groups, so it cites this paper: Table S8 is
+        # Caglar's own differential fit and the ratio is first reported here. The
+        # per-group attribution is measured into fold_change_records.json instead.
+        pub = SOURCE_STUDIES["caglar2017"].publication
         refused: list[RefusedGroup] = []
         kept: list[tuple[ContrastGroup, ContrastSamples]] = []
         for group in groups:
@@ -3636,6 +3666,12 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
                         n_p_value_adjusted=len(
                             phenotype.protein_fold_change_p_value_adjusted or {}
                         ),
+                        houser2015_test_samples=_houser2015_of(
+                            rows, samples.test_samples
+                        ),
+                        houser2015_base_samples=_houser2015_of(
+                            rows, samples.base_samples
+                        ),
                     ).model_dump(mode="json")
                 )
         env.close()
@@ -3678,6 +3714,14 @@ class ProteinFoldChangeCaglar2017Dataset(ExperimentDataset):
                 "the reference phenotype is the neutral value of the log2 scale for "
                 "every stored key, which is what a fold change's denominator carries "
                 "by definition",
+                "each record stores Caglar's Publication: #771 attributes a SAMPLE to "
+                "the study that first reported it, and a contrast is not a sample. "
+                "Every kept record's test group is pure Caglar and every base group "
+                "mixes Caglar's samples with Houser 2015's glucose time course, so the "
+                "groups name no single first reporter; the RATIO is first reported in "
+                "this paper's Table S8. The per-group attribution is measured in "
+                "fold_change_records.json ('houser2015_test_samples', "
+                "'houser2015_base_samples')",
             ],
         )
         accounting.check()

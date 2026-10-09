@@ -648,6 +648,7 @@ an additive union member, and the full rebuild is what clears it. The eight stor
 step touched were rebuilt by name and read fresh: the three de Siqueira proteome classes,
 its titer class, Lim's tolerance and proteome classes, and Menasalvas and Kang, whose
 loaders did not change but whose closures moved. All eight pass their own verification.
+
 ## 2026.10.09 - Round-2 bacterial leaves and a dose that is not a concentration (#749, #792, #799)
 
 Three more gene-perturbation leaves and one environment leaf, each because a LANDED
@@ -827,3 +828,66 @@ That blast radius is the price of putting the dilution rate on the shared `Envir
 and of relaxing the gap invariant in the shared mixin, and it is the right price for this
 wave: KG 4.0 is a full rebuild, so no served store is being updated in place, and both
 fields are the honest home for what the sources release.
+
+## 2026.10.09 - The #770/#753 branch rebased onto the #731 variant leaves: every pin re-derived
+
+The branch was rebased onto main after #830, #831 and #835 landed, so every count the
+#770 leaf moves had to be re-derived from the MERGED schema rather than incremented.
+What the merged state reads, each value taken from the tool that computes it and not from
+arithmetic on the old pin:
+
+| pin | before #731 | after #731 (main) | with #770 | read from |
+|---|---|---|---|---|
+| schema config nodes | 33 | 34 | **35** | `print_schema_mappings(compact=True)` |
+| explicit under a Biolink parent | 29 | 30 | **31** | same |
+| phenotypic-feature children | 16 | 17 | **18** | same |
+| edges | 13 | 13 | 13 | same |
+| Biolink concepts | 11 | 11 | 11 | same |
+| mermaid `(nodes, edges, data lines)` | (33, 13, 51) | (34, 13, 52) | **(35, 13, 54)** | `test_real_schema_diagram` |
+| mermaid line count | 147 | 150 | **154** | same |
+
+One node adds FOUR mermaid lines, not two: its declaration, its `is_a` line, and one
+data line per `phenotype member of` target, of which there are two. Incrementing the old
+pin by two was wrong and the generator said so.
+
+The Neo4j Browser stylesheet and the local-storage seed are generated, so they were
+regenerated rather than merged (`python -m torchcell.database.browser_style`, 47 node
+rules), and the three schema-ontology SVGs likewise through
+`scripts/run-ontology-figure.sh`. Both now carry `ProteinFoldChangePhenotype` and #731's
+`BacterialSequenceVariantPerturbation`, which is the check that the regeneration saw the
+merged schema and not one branch's.
+
+`ProvenanceGap.keys` is a LIST, not a tuple. A tuple dumps to a JSON array and comes back
+from an LMDB as a list, so a live model and the record read from the store compared
+unequal, which showed up as four reference-index pins failing in the yeast synthetic
+suites (Baryshnikova 2010, Bloom 2019, Hoepfner 2014, Lian 2019) rather than anywhere
+near Rapp 2026.
+
+Two content addresses moved as a direct consequence of the new `Environment` field and
+`ProvenanceGap.keys`, and were re-derived, not guessed:
+`test_serialize_for_hashing_sorts_a_model_at_every_depth_like_its_dump`'s three reference
+digests, and `_ENV_JSON` in `test_neo4j_query_raw.py`, which now carries
+`dilution_rate_per_hour: None` for a batch culture.
+
+Schema impact after the rebase is unchanged from the pre-rebase measurement: **BREAKING,
+81 impacted datasets of which 37 breaking, 19 changed symbols**.
+
+### The supported-query gate is expected RED, and this is why
+
+`python -m torchcell.knowledge_graphs.supported_queries check` reports
+`contract_changed` on all four supported queries (`amino_acid_betaxanthin`,
+`essentiality_smf`, `expression_proteome_morphology`, `solid_growth_025`), in every case
+naming `ProvenanceGapMixin` and no other symbol: its validator gained the per-key branch,
+so a stored record's `ProvenanceGap` serializes with `keys` where the
+`2026.10.06-4b293d34` closure has none. `Environment.dilution_rate_per_hour` produces NO
+query drift, which is the measured evidence that the new field is outside the phenotype
+surface closure those queries read.
+
+That drift is a true statement about the change, and the lifecycle has exactly one
+resolution for it: re-validate each query against the release the next build stamps
+(`validate <id> --release <new>`), which cannot be done before KG 4.0 exists. The
+pre-commit hook takes `TORCHCELL_QUERY_DRIFT_ACK=1` for a deliberate revision; the CI job
+`query-drift` has no acknowledgment path and fails a pull request on any drift the base
+branch does not already carry. So this branch lands with `query-drift` red by
+construction. Deprecating the four queries to make it green would be false: they are
+supported, and they return the same records.

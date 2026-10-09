@@ -2561,6 +2561,18 @@ def test_the_fold_change_build_keeps_the_primary_control_model_only(
         (1, 2),
         (1, 1),
     ]
+    # #771 attributes a SAMPLE; a contrast is not a sample, so the record cites THIS
+    # paper and the attribution is measured per group instead. The fixture reproduces
+    # the release's pattern: no test sample is Houser's, every base sample here is.
+    assert [r["houser2015_test_samples"] for r in records] == [[], []]
+    assert [r["houser2015_base_samples"] for r in records] == [
+        ["MURI_002", "MURI_003"],
+        ["MURI_004"],
+    ]
+    assert [_record(fold_change, i)["publication"]["doi"] for i in (0, 1)] == [
+        c.PAPER_DOI,
+        c.PAPER_DOI,
+    ]
     # The lowMg group leaves YP_3.1 blank, so its record carries two of three loci.
     assert [r["n_fold_change"] for r in records] == [2, 3]
     assert [r["n_p_value_adjusted"] for r in records] == [2, 3]

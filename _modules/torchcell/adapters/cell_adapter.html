@@ -1273,6 +1273,16 @@
     <span class="c1"># An added compound / physical factor / biologic is its own node, content-addressed</span>
     <span class="c1"># like a gene perturbation, so a condition such as "YPD + 0.4 M NaCl" is queryable</span>
     <span class="c1"># rather than only embedded in the environment's serialized_data.</span>
+    <span class="c1">#</span>
+    <span class="c1"># A `PhagePerturbation` is NOT emitted here: it has its own node class and its own</span>
+    <span class="c1"># method below, and both ids are the same composition projection, so a conf enabling</span>
+    <span class="c1"># both lanes would otherwise write one content id under two labels (issue #756). The</span>
+    <span class="c1"># two lanes PARTITION `environment.perturbations` -- phages to `phage perturbation`,</span>
+    <span class="c1"># every other leaf to `environment perturbation` -- so a dataset whose environment</span>
+    <span class="c1"># carries a phage AND a compound enables both and each leaf is written exactly once.</span>
+    <span class="c1"># The filter edits a SERVED method, which is adapter drift on every served dataset</span>
+    <span class="c1"># enabling it and therefore a full rebuild; it changes no served OUTPUT, since no</span>
+    <span class="c1"># served dataset's environment carries a phage.</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
@@ -1310,9 +1320,11 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">_environment_perturbation_node</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""One node per NON-phage perturbation of the environment; phages have their own."""</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">environment</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">)</span>
         <span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_environment_perturbation_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
@@ -1320,6 +1332,8 @@
         <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">perturbation</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">environment_reference</span><span class="o">.</span><span class="n">perturbations</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">perturbation</span><span class="p">,</span> <span class="n">PhagePerturbation</span><span class="p">):</span>
+                    <span class="k">continue</span>
                 <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_environment_perturbation_node_from</span><span class="p">(</span><span class="n">perturbation</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
                     <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">get_id</span><span class="p">())</span>
@@ -1328,13 +1342,13 @@
 
     <span class="c1"># --- Phage challenges (the environment axis of a phage-resistance screen) ---</span>
     <span class="c1"># A phage gets its OWN node class and method for the same reason `crispr construct`</span>
-    <span class="c1"># and `bacterial perturbation` do: `environment perturbation` is served, so giving it</span>
-    <span class="c1"># the MOI, the taxon and the accession as properties is a full rebuild, and the dose</span>
-    <span class="c1"># is not a concentration so it cannot ride the concentration columns. The served</span>
-    <span class="c1"># `_environment_perturbation_node` is NOT touched, which is what keeps this additive</span>
-    <span class="c1"># (it would emit a phage under the `environment perturbation` label, so a conf</span>
-    <span class="c1"># enables one class or the other and never both -- see the conf rule below).</span>
-    <span class="c1"># The id is the same composition projection the other environment-side nodes use, so</span>
+    <span class="c1"># and `bacterial perturbation` do: giving `environment perturbation` the MOI, the</span>
+    <span class="c1"># taxon and the accession as properties would change a served class, and the dose is</span>
+    <span class="c1"># not a concentration so it cannot ride the concentration columns.</span>
+    <span class="c1"># This method and `_environment_perturbation_node` PARTITION the environment's</span>
+    <span class="c1"># perturbations on `isinstance(..., PhagePerturbation)`, so a conf may enable both</span>
+    <span class="c1"># lanes and no content id is written under two labels (issue #756). The id is the</span>
+    <span class="c1"># same composition projection the other environment-side nodes use, so</span>
     <span class="c1"># `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.</span>
 
     <span class="nd">@staticmethod</span>

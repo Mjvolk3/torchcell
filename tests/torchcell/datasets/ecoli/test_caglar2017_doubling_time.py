@@ -346,10 +346,12 @@ def _sha(data: bytes) -> str:
 
 
 def _staged_files(tmp_path: Path) -> dict[str, bytes]:
-    """The mirror's six files. Tables S5 and S1 are the synthetic release the readers
-    above are driven with; the other three tables and the GenPept batch are placeholders
+    """The mirror's seven files. Tables S5 and S1 are the synthetic release the readers
+    above are driven with; the other four tables and the GenPept batch are placeholders
     this module never reads, present because the first deposit writes a manifest of every
-    file it knows and Table S3's first column is what names the batch.
+    file it knows and Table S3's first column is what names the batch. Table S8
+    (``-s9``) is one of those placeholders: #770's fold-change loader pinned it in the
+    shared ``SI_TABLES``, so every file that map names has to be staged here.
     """
     return {
         "data/srep45303-s2.csv": _write_s1(tmp_path).read_bytes(),
@@ -357,6 +359,7 @@ def _staged_files(tmp_path: Path) -> dict[str, bytes]:
         "data/srep45303-s4.csv": b",MURI_016\nYP_1.1,0.9\n",
         "data/srep45303-s5.csv": b'"","Branch"\n"1","OAA from PEP"\n',
         "data/srep45303-s6.csv": _write_s5(tmp_path).read_bytes(),
+        "data/srep45303-s9.csv": b"id,dataType,fullFileName\nYP_1.1,protein,x\n",
         "ncbi_protein/yp_batch_00.gp": b"LOCUS       YP_1\n//\n",
     }
 

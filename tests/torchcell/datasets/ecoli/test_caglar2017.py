@@ -476,7 +476,8 @@ def test_deposit_raw_mirror_copies_every_file_and_writes_an_exact_manifest(
     assert [
         (f["path"], f["bytes"], f["sha256"], f["role"]) for f in manifest["files"]
     ] == [(rel, len(data), _sha(data), "raw_data") for rel, data in files.items()]
-    batch = manifest["files"][5]["retrieval"]
+    # index 6: the six SI tables (S1 to S5 and S8) come first, in SI_TABLES order
+    batch = manifest["files"][6]["retrieval"]
     assert batch["method"] == "direct_url"
     assert batch["params"] == {
         "url": c.EFETCH + "?db=protein&rettype=gp&retmode=text&id=YP_1.1,YP_2.1"
@@ -755,12 +756,12 @@ def test_retrieve_raw_files_runs_each_recorded_retriever_and_checks_its_pin(
     monkeypatch.setattr(c, "run_retriever", fake_retriever)
     staging = c.retrieve_raw_files(tmp_path / "staging")
     assert calls == list(by_url)
-    assert len(calls) == 6  # five SI tables, then the one GenPept batch
+    assert len(calls) == 7  # six SI tables, then the one GenPept batch
     for rel, data in files.items():
         assert (staging / rel).read_bytes() == data
 
     c.retrieve_raw_files(tmp_path / "staging")
-    assert len(calls) == 6  # every staged file already holds its pin
+    assert len(calls) == 7  # every staged file already holds its pin
 
     monkeypatch.setattr(c, "run_retriever", lambda record: b"upstream changed")
     (staging / "data" / "srep45303-s2.csv").unlink()
@@ -2480,6 +2481,7 @@ def test_deposit_si_table_appends_one_record_and_is_idempotent(
         "data/srep45303-s3.csv",
         "data/srep45303-s4.csv",
         "data/srep45303-s5.csv",
+        "data/srep45303-s6.csv",
         "data/srep45303-s9.csv",
         "ncbi_protein/yp_batch_00.gp",
     ]

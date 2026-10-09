@@ -17,7 +17,14 @@
 #   sbatch --array=1-$(wc -l < "$CLASSES")%4 --export=ALL,CLASSES_FILE="$CLASSES" \
 #       database/slurm/scripts/gilahyper_build_dataset_lmdbs_array.slurm
 #
-# Task N builds line N of CLASSES_FILE (one registered dataset class name per line).
+# Task N builds line N of CLASSES_FILE (one registered dataset class name per line) and
+# then VERIFIES it (`--verify`): the build writes a build manifest and nothing else, so
+# the 105-store rebuild of 2026-10-09 left every `preprocess/verification_report.json`
+# absent and each dataset's own `--data` test failed on the missing report. A
+# verification that raises or fails retires the build manifest, so the store reads
+# `no_manifest` to `--list-stale` instead of `fresh` and is rebuilt before the graph is
+# built from it. A dataset whose module declares no per-dataset entry point says so and
+# keeps its manifest: its family runner in `torchcell.verification.runners` covers it.
 # The `%4` caps how many tasks run at once, which is what keeps the node's other jobs
 # fed; raise it when the node is idle. Each task retires the dataset's existing
 # processed/ and preprocess/ as *.superseded.<timestamp> siblings (a rename, never a
@@ -41,5 +48,6 @@ DATASET_CLASS=$(sed -n "${SLURM_ARRAY_TASK_ID}p" "$CLASSES_FILE")
 echo "source: $TORCHCELL_SRC ($(git rev-parse --short HEAD 2>/dev/null || echo not-a-git-repo))"
 echo "dataset: $DATASET_CLASS (line $SLURM_ARRAY_TASK_ID of $CLASSES_FILE)"
 PYTHONPATH="$TORCHCELL_SRC" python -m torchcell.database.build_dataset_lmdb \
-    --dataset "$DATASET_CLASS" --io-workers "$SLURM_CPUS_PER_TASK" --retire-existing
+    --dataset "$DATASET_CLASS" --io-workers "$SLURM_CPUS_PER_TASK" --retire-existing \
+    --verify
 echo "DONE at $(date)"

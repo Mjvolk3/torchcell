@@ -198,31 +198,21 @@ if [ -e "$NEXT_ROOT/data" ] && [ -n "$(ls -A "$NEXT_ROOT/data")" ]; then
     echo "$NEXT_ROOT/data exists and is not empty; move it aside first"; exit 1
 fi
 # Every mapped dataset must have a dev LMDB whose build manifest is fresh under the
-# schema the container will install: the store is built from exactly those records.
+# schema the container will install: the store is built from exactly those records. The
+# check is `mapped_store_status`, the same function `build_dataset_lmdb --list-stale`
+# runs, so the list the owner rebuilds from and the list this job refuses on cannot
+# disagree (issue #833). It ends in a bounded read of each store's first record: a
+# record pickled under a class this commit's schema no longer DEFINES is in no closure,
+# so the fingerprints compare equal and only the read catches it -- 5 bacterial stores
+# were in that state on 2026-10-09 while --list-stale named 1.
 N_DATASETS=$(python - "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" <<'EOF'
-import os, sys
-from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
-from torchcell.database.build_dataset_lmdb import dataset_default_root
-from torchcell.provenance.build_manifest import BuildManifest, check_manifest
-from torchcell.provenance.schema_deps import load_default_surface
-dev = sys.argv[1]
-dataset_adapter_map = build_adapter_map(include_private=sys.argv[2] == "1")
-surface = load_default_surface()
-bad = []
-for cls in dataset_adapter_map:
-    root = os.path.join(dev, dataset_default_root(cls))
-    pre = os.path.join(root, "preprocess")
-    mp = os.path.join(pre, "build_manifest.json")
-    if not os.path.isdir(os.path.join(root, "processed", "lmdb")):
-        bad.append(f"{cls.__name__}: no LMDB at {root}"); continue
-    if not os.path.isfile(mp):
-        bad.append(f"{cls.__name__}: no build manifest"); continue
-    res = check_manifest(BuildManifest.model_validate_json(open(mp).read()), surface, pre)
-    if res.is_stale:
-        bad.append(f"{cls.__name__}: stale on {sorted({d.symbol for d in res.drift})}")
+import sys
+from torchcell.database.build_dataset_lmdb import mapped_store_status
+statuses = mapped_store_status(sys.argv[1], include_private=sys.argv[2] == "1")
+bad = [s.describe() for s in statuses if s.needs_rebuild]
 if bad:
     print("\n".join(bad), file=sys.stderr); sys.exit(1)
-print(len(dataset_adapter_map))
+print(len(statuses))
 EOF
 )
 echo "$N_DATASETS mapped datasets, every dev store fresh"

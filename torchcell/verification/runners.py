@@ -2667,6 +2667,99 @@ def bacterial_protein_fold_change_locus_set(
     return measured
 
 
+def _verify_one_bacterial(
+    spec: Mapping[str, Any],
+    data_root: str,
+    *,
+    measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]],
+    l4_name: str,
+) -> VerificationReport:
+    """One bioproduction dataset: its own gate plus the family L4; writes its report.
+
+    ``min_containment`` is 1.0 and not a floor with headroom: every identifier these
+    records carry was written by a loader that resolved it against the pinned assembly,
+    so one that is not a locus of that assembly is a build error, not an accepted edge.
+    """
+    abs_root = osp.join(data_root, spec["root"])
+    report = spec["verify"](abs_root, data_root)
+    records = load_records(abs_root)
+    universe, assembly_sets = _dataset_gene_universe(records, data_root)
+    report.add(
+        _l4_assembly_gene_containment(
+            universe, assembly_sets, measured_set(records), min_containment=1.0
+        ).model_copy(update={"name": l4_name})
+    )
+    out = _write_report(report, osp.join(abs_root, "preprocess"))
+    print(report.summary())
+    print(f"  -> verified LMDB: {osp.join(abs_root, 'processed', 'lmdb')}")
+    print(f"  -> wrote report:  {out}\n")
+    return report
+
+
+class _BacterialFamily(NamedTuple):
+    """One bioproduction registry with the L4 rule the family adds to every report."""
+
+    datasets: Mapping[str, Mapping[str, Any]]
+    measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]]
+    l4_name: str
+
+
+def _bacterial_families() -> tuple[_BacterialFamily, ...]:
+    """The four bioproduction registries with their family rule.
+
+    Read out of the module globals on every call, so a test that replaces one registry
+    is seen by the single-dataset lookup exactly as it is by the family runners.
+    """
+    return (
+        _BacterialFamily(
+            PRODUCT_TITER_DATASETS,
+            host_perturbed_gene_set,
+            "perturbed_gene_containment_assembly",
+        ),
+        _BacterialFamily(
+            BACTERIAL_PROTEIN_ABUNDANCE_DATASETS,
+            bacterial_protein_locus_set,
+            "protein_and_perturbed_locus_containment_assembly",
+        ),
+        _BacterialFamily(
+            BACTERIAL_METABOLITE_DATASETS,
+            host_perturbed_gene_set,
+            "perturbed_gene_containment_assembly",
+        ),
+        _BacterialFamily(
+            BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS,
+            bacterial_protein_fold_change_locus_set,
+            "protein_and_perturbed_locus_containment_assembly",
+        ),
+    )
+
+
+def bacterial_registry_names() -> frozenset[str]:
+    """Every dataset name a bioproduction registry holds, so one can be verified alone."""
+    return frozenset(
+        name for family in _bacterial_families() for name in family.datasets
+    )
+
+
+def verify_bacterial_dataset(name: str, data_root: str) -> VerificationReport:
+    """Verify ONE bioproduction dataset by registry name and write its report.
+
+    The per-dataset half of :func:`run_product_titer` and its three siblings, so a
+    single rebuild can be verified without reading every other store in its family
+    (``build_dataset_lmdb --verify``). Raises ``KeyError`` when no registry holds the
+    name.
+    """
+    for family in _bacterial_families():
+        if name in family.datasets:
+            return _verify_one_bacterial(
+                family.datasets[name],
+                data_root,
+                measured_set=family.measured_set,
+                l4_name=family.l4_name,
+            )
+    raise KeyError(f"no bioproduction registry holds {name!r}")
+
+
 def _run_bacterial_family(
     datasets: Mapping[str, Mapping[str, Any]],
     data_root: str,
@@ -2674,27 +2767,12 @@ def _run_bacterial_family(
     measured_set: Callable[[Sequence[Mapping[str, Any]]], set[str]],
     l4_name: str,
 ) -> bool:
-    """Verify one bioproduction family: each dataset's own gate plus the L4 containment.
-
-    ``min_containment`` is 1.0 and not a floor with headroom: every identifier these
-    records carry was written by a loader that resolved it against the pinned assembly,
-    so one that is not a locus of that assembly is a build error, not an accepted edge.
-    """
+    """Verify one bioproduction family, dataset by dataset. True if all pass."""
     all_passed = True
     for spec in datasets.values():
-        abs_root = osp.join(data_root, spec["root"])
-        report = spec["verify"](abs_root, data_root)
-        records = load_records(abs_root)
-        universe, assembly_sets = _dataset_gene_universe(records, data_root)
-        report.add(
-            _l4_assembly_gene_containment(
-                universe, assembly_sets, measured_set(records), min_containment=1.0
-            ).model_copy(update={"name": l4_name})
+        report = _verify_one_bacterial(
+            spec, data_root, measured_set=measured_set, l4_name=l4_name
         )
-        out = _write_report(report, osp.join(abs_root, "preprocess"))
-        print(report.summary())
-        print(f"  -> verified LMDB: {osp.join(abs_root, 'processed', 'lmdb')}")
-        print(f"  -> wrote report:  {out}\n")
         all_passed = all_passed and report.passed
     return all_passed
 

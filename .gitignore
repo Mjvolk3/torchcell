@@ -69,6 +69,8 @@ outputs/
 
 # Pytest Code Coverage
 .coverage
+coverage.xml
+coverage.json
 
 # docs
 docs/build/

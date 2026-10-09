@@ -12,9 +12,11 @@ interaction (S) scores **in full**. Supplementary Table 4's fourth sheet is a
 39 x 8,073 matrix whose banner reads, verbatim, "without any filtering parameters".
 
 RECORD = one ``BacterialGeneInteractionExperiment`` per CELL of that matrix: a two-gene
-``Genotype`` of ``BacterialDeletionPerturbation`` leaves (the ``cat``-marked query and
-the ``kan``-marked recipient isolate) and a ``GeneInteractionPhenotype`` holding that
-cell's S score verbatim.
+``Genotype`` whose ``cat``-marked query is a ``BacterialDeletionPerturbation`` and whose
+``kan``-marked recipient is one of the array's two strain kinds -- a
+``BacterialDeletionPerturbation`` for a Keio isolate, a
+``BacterialMarkedAllelePerturbation`` for one of the 149 SPA-tagged essential genes --
+and a ``GeneInteractionPhenotype`` holding that cell's S score verbatim.
 
 WHY THIS IS A LOADER AND NOT A PROVENANCE RECORD. Two earlier passes concluded the
 opposite and both were wrong, so the measurement is restated here and re-run at build
@@ -36,17 +38,21 @@ SCOPE, AND WHY IT IS THE WHOLE MATRIX. The cell is the release's own unit of
 observation, every one of the 314,847 cells is populated, and every cell has a home on
 the existing schema: a signed float goes to ``GeneInteractionPhenotype.gene_interaction``
 (unclamped, which is why ``FitnessPhenotype`` is wrong here), the two loci to two
-bacterial deletion leaves, and the "Strain Versions" token to the recipient leaf's
-``StrainConstruction.batch``. Supplementary Table 3, the |Z|>=4 high-confidence set, is a
+bacterial gene-perturbation leaves, and a Keio row's "Strain Versions" token to the
+recipient leaf's ``StrainConstruction.batch``. Supplementary Table 3, the |Z|>=4
+high-confidence set, is a
 measured PROPER SUBSET: all 1,379 of its rows are located at their (query, recipient,
-isolate) cell of sheet 4 and all 1,379 S scores are identical, so loading Table 3 instead
-would store a selection-biased tail (730 of its 799 non-essential pairs are aggravating)
-and loading both would duplicate every row. The narrower scopes were each considered and
-rejected: "the 321 pairs Babu omits" is defined by another paper's editorial filter
-rather than by anything this release states, and "all 799 non-essential high-confidence
-pairs" keeps a sourced |Z| threshold but discards the null distribution, which is the one
-thing no other bacterial interaction store carries. The restriction to non-essential
-recipients is forced rather than chosen (see RETENTION rule 1).
+strain version) cell of sheet 4 and all 1,379 S scores are identical, so loading Table 3
+instead would store a selection-biased tail (730 of its 799 non-essential pairs are
+aggravating) and loading both would duplicate every row. The narrower scopes were each
+considered and rejected: "the 321 pairs Babu omits" is defined by another paper's
+editorial filter rather than by anything this release states, and "all 799 non-essential
+high-confidence pairs" keeps a sourced |Z| threshold but discards the null distribution,
+which is the one thing no other bacterial interaction store carries. BOTH halves of the
+array are in scope: the 149 SPA-tag essential rows were dropped until
+``BacterialMarkedAllelePerturbation`` existed to type them (THE SPA-TAG HALF below), and
+they are the half that carries 489 of the release's own 1,288 high-confidence
+interactions.
 
 PHENOTYPE, AND THE TWO THINGS IT CANNOT HOLD.
 
@@ -101,45 +107,73 @@ is 0.1116 against 0.1214 for the cells whose |S| is nonzero but under 0.05; 8,07
 map to zero, since 310 of the 798 cells whose every raw colony reads 0 carry a nonzero S,
 down to -17.8. So a zero is stored as released. The 395 cells that are BOTH all-zero-colony
 and exactly-zero-score are the one case where the release contradicts itself, and they are
-dropped under rule 5 rather than stored as "no interaction" for a strain that never grew.
+dropped under rule 4 rather than stored as "no interaction" for a strain that never grew.
+
+The SPA-tag half was re-measured the same way when it was adopted, because an exact zero
+on 149 of 5,811 cells is one per row and that regularity had to be read before it was
+stored: the mean |Z| of its zero-S cells is 0.1087 against 0.1145 for its cells whose |S|
+is nonzero but under 0.05, every one of the 149 carries at least one non-zero raw colony,
+and the one-zero-per-row shape is the whole release's shape rather than this half's
+(7,886 of the 7,924 Keio rows carry exactly one zero too). So the SPA zeros are stored as
+released and none of them is a rule-4 contradiction.
+
+THE SPA-TAG HALF, AND THE ONE FIELD IT DOES NOT STATE. 149 of the 8,073 recipient rows
+are not deletions: Supplementary Table 1 labels them ``SPA-tag essential`` and footnote a
+of every Table 4 sheet says what they are, verbatim -- "Hypomorphic, KanR- marked,
+strains with C-terminal Sequential Peptide Affinity (SPA)-tags on essential genes". Until
+``BacterialMarkedAllelePerturbation`` landed (issue #792, PR #837) no leaf could type
+that construct and their 5,811 cells were dropped; they are now stored on it, with
+``cassette="kan"``, ``tag="SPA"``, ``terminus="C"``, ``allele_effect="hypomorphic"`` and
+``collection="SPA-tag essential"``, each a field this release's own bytes state.
+
+``insertion_site`` stays ``None``, and that is measured rather than overlooked: neither
+``paper.md``, the Supplementary Methods OCR nor any sheet footnote names where in the
+locus the cassette went, and the construction is deferred to Butland et al. 2005, which
+is not in the literature mirror. The served Babu 2014 record of the SAME 149 strains does
+carry ``insertion_site="3'-UTR"``, because Babu's own Results state it ("a Kan-R marker
+was integrated into the 3'-UTR"); borrowing that sentence here would put a later paper's
+words in this release's record, so the two stores describe one strain with one field's
+difference. The node identity is the sha256 of the leaf dump, so this is one more
+``bacterial perturbation`` node, exactly as the Keio recipients already are two nodes
+across the two stores (this release carries the isolate as a construction ``batch`` and
+Babu does not).
+
+A SPA row also carries NO strain version. The "Strain Versions" cell of such a row
+repeats the label ``SPA-tag essential`` rather than naming an isolate (asserted at build
+time for all 149), so the hypomorph leaf carries ``construction=None``: the 3,956
+two-isolate Keio genes are the only strains this release constructed twice.
 
 RETENTION (rules in order; counts, reasons and items in
 ``preprocess/dropped_records.json``). Each rule counts only the cells no earlier rule
 removed.
 
-1. ``spa_tag_recipient_has_no_bacterial_perturbation_leaf`` -- 5,811 cells (the 149
-   SPA-tag essential recipient rows x 39 queries). A ``kan``-marked C-terminal SPA tag on
-   an essential gene lowers transcript abundance, which no deletion, transposon,
-   CRISPRi or promoter-replacement leaf can type. That gap is now closed in the schema:
-   ``BacterialMarkedAllelePerturbation`` landed with issue #792 and the Babu 2014 loader
-   stores its 3,409 hypomorph records on it (PR #837). THIS loader has not adopted the
-   leaf, so the 149 rows stay dropped under this rule and the scope stays the
-   non-essential half of the array; adopting it is what would store them, and the rule's
-   name belongs to that change rather than to this one.
-2. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 6,318 cells on one of 82
+1. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 6,318 cells on one of 82
    released recipient ids GCA_000005845.2 does not carry under any layer (78 ``JW`` Keio
    ids, ``CSCR``, and the ids the annotation resolves to more than one locus). A leaf's
    name validator refuses most outright and storing any would put a record on a locus the
-   assembly does not have.
-3. ``b_number_remapped_by_the_annotation`` -- 4,407 cells on one of 57 b-numbers the
+   assembly does not have. No SPA-tag row is one of them, which is measured rather than
+   assumed: all 149 resolve to a locus of the assembly in their own right.
+2. ``b_number_remapped_by_the_annotation`` -- 4,407 cells on one of 57 b-numbers the
    assembly carries as a ``/gene_synonym`` of a DIFFERENT locus. Storing the merged locus
    needs a ``DerivedIdentifierMapping`` and ``DerivedIdentifierRoute`` has no member for a
    retired tag of the pinned strain's own namespace (issue #753), so the cell is dropped
    rather than remapped silently.
-4. ``self_pair_is_not_a_digenic_genotype`` -- 78 cells (each of the 39 query genes is
+3. ``self_pair_is_not_a_digenic_genotype`` -- 78 cells (each of the 39 query genes is
    itself in the recipient array, x 2 isolates). The Supplementary Methods say these exist
    ("we observed small numbers of self double mutants"), but a ``Genotype`` of two leaves
-   on ONE locus would assert deleting the same gene twice.
-5. ``released_score_contradicts_its_own_raw_colonies`` -- 395 cells whose every raw colony
+   on ONE locus would assert deleting the same gene twice. No query gene is a SPA-tag row.
+4. ``released_score_contradicts_its_own_raw_colonies`` -- 395 cells whose every raw colony
    measurement reads 0, so no double mutant grew, yet whose released S is exactly 0.0, so
    no interaction. The release gives no rule for reconciling the two.
-6. ``already_served_by_gene_interaction_babu2014`` -- 1,448 cells whose oriented
+5. ``already_served_by_gene_interaction_babu2014`` -- 1,846 cells whose oriented
    (query, recipient) gene pair the served Babu store already holds, dropped so nothing is
-   stored twice (see THE PARTITION).
+   stored twice (see THE PARTITION). 1,448 of them are Keio-isolate cells and 398 are
+   SPA-tag cells, which rule 1 removed before the leaf existed.
 
-5,811 + 6,318 + 4,407 + 78 + 395 + 1,448 = 18,457 dropped; 314,847 - 18,457 = 296,390
-records, 143,651 aggravating, 144,953 alleviating and 7,786 at exactly zero, over 39
-query genes and 3,829 recipient genes.
+6,318 + 4,407 + 78 + 395 + 1,846 = 13,044 dropped; 314,847 - 13,044 = 301,803
+records, 146,121 aggravating, 147,747 alleviating and 7,935 at exactly zero, over 39
+query genes and 3,978 recipient genes. 5,413 of the records are SPA-tag hypomorphs: the
+5,811 cells of that half minus the 398 the served store holds.
 
 THE PARTITION AGAINST THE SERVED BABU STORE, PROVED BOTH WAYS AT BUILD TIME
 (``assert_served_partition``, ``preprocess/served_partition.json``). The unit of the
@@ -152,18 +186,23 @@ loader already relies on to keep its 100 reciprocal pairs as two records each.
   cells, since Babu's single score is derived from the same colonies.
 - REVERSE: every one of the 1,125 served ``Butland et al.`` records is accounted for in
   this release rather than assumed, in three groups that sum to 1,125. 725 are storable
-  cells of this matrix, and rule 6 removes their 1,448 cells. 398 sit on a recipient row
-  the roster labels ``SPA-tag essential``, so rule 1 removes them first and they never
-  reach rule 6: Babu stores those pairs on ``BacterialMarkedAllelePerturbation`` (PR
-  #837), a leaf this loader does not yet use. 2 are pinned by name because this release
-  does not name them at all: ``b2528 -> b4486`` and ``b2531 -> b4486``, which the matrix
-  names ``b2528 -> b4344`` and ``b2531 -> b4344`` (gene name ``*``, absent from Genobase
-  ver. 6), because the assembly carries ``b4344`` as a synonym of ``b4486``. No record of
-  Babu's other screen set (``This Study``) collides with any cell of this matrix, and any
-  served pair that falls in none of the three groups raises.
+  cells on a Keio-isolate recipient row and 398 are storable cells on a ``SPA-tag
+  essential`` row, so rule 5 removes 1,123 pairs = 1,846 cells. 2 are pinned by name
+  because this release does not name them at all: ``b2528 -> b4486`` and
+  ``b2531 -> b4486``, which the matrix names ``b2528 -> b4344`` and ``b2531 -> b4344``
+  (gene name ``*``, absent from Genobase ver. 6), because the assembly carries ``b4344``
+  as a synonym of ``b4486``. No record of Babu's other screen set (``This Study``)
+  collides with any cell of this matrix, and any served pair that falls in none of the
+  three groups raises.
+
+The 398 are what adopting the leaf changed about this proof. Before it, they were removed
+by the SPA-tag rule and never reached the served rule, so a served pair that had moved
+onto a storable row would have been stored twice; now they are a SUBSET of the served
+rule's own pairs and the build asserts that containment as well as the three counts.
 
 Every count is a constant (:data:`SERVED_BUTLAND_RECORDS`, :data:`SERVED_BUTLAND_PAIRS`,
 :data:`SERVED_OVERLAP_PAIRS`, :data:`SERVED_OVERLAP_CELLS`,
+:data:`SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT`,
 :data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`, :data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`),
 so a drift in either store stops the build.
 
@@ -201,7 +240,7 @@ from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, ClassVar, Final
+from typing import Any, ClassVar, Final, Literal
 
 import numpy as np
 import numpy.typing as npt
@@ -227,6 +266,7 @@ from torchcell.datamodels.schema import (
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
     BacterialGeneNamespace,
+    BacterialMarkedAllelePerturbation,
     BacterialStrainBackground,
     Environment,
     Experiment,
@@ -620,9 +660,10 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         uri=f"si/{TABLE_S4}",
         sha256=DATA_SHA256[TABLE_S4],
         page="Supplementary Table 4, every sheet, header cell A3",
-        note="the other 149 recipient rows. A SPA-tagged essential gene is a hypomorph "
-        "with no bacterial perturbation leaf (issue #792), so its 5,811 cells are "
-        "dropped rather than typed as deletions",
+        note="the other 149 recipient rows. A SPA-tagged essential gene is a hypomorph, "
+        "stored on BacterialMarkedAllelePerturbation (issue #792) rather than typed as "
+        "a deletion; its 5,811 cells yield 5,413 records once the served store's 398 "
+        "pairs are removed",
     ),
     "spa_tag_definition": _workbook(
         "C-terminal SPA tag on an essential gene, kan-marked",
@@ -630,8 +671,9 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         uri=f"si/{TABLE_S4}",
         sha256=DATA_SHA256[TABLE_S4],
         page="Supplementary Table 4, every sheet, footnote a",
-        note="what the untypable allele IS: a kan-marked C-terminal tag on an essential "
-        "gene, not a deletion of it",
+        note="what the allele IS, and the provenance of every field of the hypomorph "
+        "leaf: hypomorphic, kan-marked, a C-terminal SPA tag, on an essential gene. It "
+        "names no insertion site, which is why insertion_site stays None",
     ),
     "screens": _methods(
         39,
@@ -1430,7 +1472,6 @@ def audit_workbook_quote(
 # --------------------------------------------------------------------------- #
 # Retention ledger
 # --------------------------------------------------------------------------- #
-RULE_SPA_TAG = "spa_tag_recipient_has_no_bacterial_perturbation_leaf"
 RULE_NOT_A_TAG = "b_number_is_not_a_locus_tag_of_the_pinned_annotation"
 RULE_REMAPPED = "b_number_remapped_by_the_annotation"
 RULE_SELF_PAIR = "self_pair_is_not_a_digenic_genotype"
@@ -1444,7 +1485,6 @@ UNNAMED_IN_GENOBASE = "*"
 #: The rules in the order the build applies them; each counts only the cells no earlier
 #: rule removed, which is what makes the six counts sum to the dropped total.
 DROP_RULES: Final[tuple[str, ...]] = (
-    RULE_SPA_TAG,
     RULE_NOT_A_TAG,
     RULE_REMAPPED,
     RULE_SELF_PAIR,
@@ -1453,13 +1493,6 @@ DROP_RULES: Final[tuple[str, ...]] = (
 )
 
 DROP_RULE_DESCRIPTIONS: dict[str, str] = {
-    RULE_SPA_TAG: "the recipient is one of the 149 strains the roster labels 'SPA-tag "
-    "essential': a kan-marked C-terminal SPA tag on an essential gene, which lowers "
-    "transcript abundance. None of the five bacterial gene-perturbation leaves can type "
-    "it -- it is not a deletion, not a mapped transposon insertion, not a CRISPRi "
-    "knockdown and not a promoter replacement -- and typing it as a deletion would "
-    "assert an absence the paper never claims, so the cell is dropped and the missing "
-    "leaf is filed as issue #792",
     RULE_NOT_A_TAG: "a released id is not a locus tag of the pinned annotation at all "
     "(a Keio JW id, a gene symbol, or an id the annotation resolves to more than one "
     "locus). A bacterial perturbation leaf's name validator refuses it, and storing it "
@@ -1482,9 +1515,11 @@ DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     RULE_SERVED: "the oriented (query, recipient) gene pair is already a record of the "
     "served GeneInteractionBabu2014Dataset, which re-released 1,125 of this screen's "
     "measurements under screen_id 'Butland et al.'. Both isolate cells of such a pair "
-    "are dropped, because Babu's single score is derived from the same colonies. 725 of "
-    "the 1,125 reach this rule; the other 400 are removed by rule 1 or are not cells of "
-    "this release at all, which the partition proves pair by pair",
+    "are dropped, because Babu's single score is derived from the same colonies. 1,123 "
+    "of the 1,125 reach this rule -- 725 on a Keio-isolate recipient row and 398 on a "
+    "'SPA-tag essential' row, which this loader stores on "
+    "BacterialMarkedAllelePerturbation since issue #792 -- and the other 2 are not "
+    "cells of this release at all, which the partition proves pair by pair",
 }
 
 
@@ -1500,7 +1535,13 @@ class DropRule(BaseModel):
 
 
 class DropLog(BaseModel):
-    """The retention ledger of one build."""
+    """The retention ledger of one build.
+
+    ``kept_strain_versions`` counts the released "Strain Versions" token of every stored
+    record, so it has three keys rather than two: the two Keio isolates, and the
+    ``SPA-tag essential`` label a hypomorph row carries in that cell instead of an
+    isolate id. ``kept_hypomorph_records`` is the same half counted as records.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1512,7 +1553,8 @@ class DropLog(BaseModel):
     source_recipients: int
     kept_queries: int
     kept_recipients: int
-    kept_isolates: dict[str, int]
+    kept_strain_versions: dict[str, int]
+    kept_hypomorph_records: int
     n_aggravating: int
     n_alleviating: int
     n_zero: int
@@ -1604,6 +1646,7 @@ class ServedPartition(BaseModel):
     shared_pairs: int
     overlap_pairs_dropped: int
     overlap_cells_dropped: int
+    overlap_pairs_on_a_keio_recipient: int
     served_pairs_on_a_spa_tag_recipient: int
     served_pairs_not_in_this_release: list[str]
 
@@ -1615,6 +1658,18 @@ QUERY_COLLECTION = "Hfr Cavalli (Hfr C) query deletion strains"
 RECIPIENT_COLLECTION = "Keio collection"
 QUERY_CASSETTE = "cat"
 RECIPIENT_CASSETTE = "kan"
+#: The hypomorph recipient leaf's four stated fields, each verbatim from footnote a of
+#: every Table 4 sheet (``SOURCED_VALUES["spa_tag_definition"]``). The collection is the
+#: roster's own per-row label, which is the same string the served Babu 2014 store uses,
+#: so the two releases file one physical strain set under one name.
+HYPOMORPH_COLLECTION = LABEL_SPA_TAG
+HYPOMORPH_TAG = "SPA"
+HYPOMORPH_TERMINUS: Literal["N", "C"] = "C"
+HYPOMORPH_ALLELE_EFFECT: Literal["hypomorphic"] = "hypomorphic"
+#: The two recipient leaf discriminators, as the schema's own ``perturbation_type``
+#: literals spell them; the verifier reads the stored string rather than the class.
+DELETION_TYPE = "bacterial_deletion"
+MARKED_ALLELE_TYPE = "bacterial_marked_allele"
 
 P_VALUE_GAP = ProvenanceGap(
     field="gene_interaction_p_value",
@@ -1649,7 +1704,7 @@ def query_perturbation(locus_tag: str, symbol: str) -> BacterialDeletionPerturba
 def recipient_perturbation(
     locus_tag: str, symbol: str, version: str
 ) -> BacterialDeletionPerturbation:
-    """The recipient side: one arrayed Keio isolate, marked ``kan``.
+    """The recipient side of a Keio row: one arrayed isolate, marked ``kan``.
 
     ``version`` is the "Strain Versions" token verbatim and is stored as the
     construction ``batch``, because the two isolates are two independent constructions
@@ -1665,19 +1720,65 @@ def recipient_perturbation(
     )
 
 
+def recipient_hypomorph_perturbation(
+    locus_tag: str, symbol: str
+) -> BacterialMarkedAllelePerturbation:
+    """The recipient side of a ``SPA-tag essential`` row: kan-marked, C-terminal SPA tag.
+
+    Every field is a value this release's own bytes state, and footnote a of every Table 4
+    sheet (``SOURCED_VALUES["spa_tag_definition"]``) states all four in one sentence:
+    "Hypomorphic, KanR- marked, strains with C-terminal Sequential Peptide Affinity
+    (SPA)-tags on essential genes". The magnitude of the knockdown is NOT a field, because
+    the paper says outright that "in the majority of cases the nature of the observed
+    hypomorphic defect is unknown".
+
+    ``insertion_site`` stays None: no mirrored artifact of THIS release names where in the
+    locus the cassette went, and the strain construction is deferred to Butland et al.
+    2005, which is not in the mirror. ``construction`` stays None because a SPA row's
+    "Strain Versions" cell repeats the label instead of naming an isolate, so there is no
+    second construction of these genes to distinguish.
+    """
+    return BacterialMarkedAllelePerturbation(
+        systematic_gene_name=locus_tag,
+        perturbed_gene_name=symbol,
+        gene_namespace=MG1655_NAMESPACE,
+        collection=HYPOMORPH_COLLECTION,
+        cassette=RECIPIENT_CASSETTE,
+        tag=HYPOMORPH_TAG,
+        terminus=HYPOMORPH_TERMINUS,
+        allele_effect=HYPOMORPH_ALLELE_EFFECT,
+    )
+
+
 def pair_genotype(
     query_tag: str,
     query_gene: str,
     recipient_tag: str,
     recipient_gene: str,
     version: str,
+    *,
+    recipient_is_hypomorph: bool = False,
 ) -> Genotype:
-    """The double mutant of one matrix cell: the query allele and one recipient isolate."""
+    """The double mutant of one matrix cell: the query allele and one recipient strain.
+
+    ``recipient_is_hypomorph`` follows the row's own released label, so the recipient leaf
+    is a deletion for a Keio isolate and a marked allele for a ``SPA-tag essential`` row.
+    A hypomorph row carries no isolate token, so its ``version`` must be the label itself;
+    anything else would mean the release had started versioning those strains.
+    """
+    if recipient_is_hypomorph:
+        if version != LABEL_SPA_TAG:
+            raise ReleaseContentError(
+                f"a {LABEL_SPA_TAG!r} row of {recipient_tag} carries strain version "
+                f"{version!r}; the release repeats the label there and names no isolate"
+            )
+        recipient: BacterialDeletionPerturbation | BacterialMarkedAllelePerturbation = (
+            recipient_hypomorph_perturbation(recipient_tag, recipient_gene)
+        )
+    else:
+        recipient = recipient_perturbation(recipient_tag, recipient_gene, version)
     return Genotype(
-        perturbations=[
-            query_perturbation(query_tag, query_gene),
-            recipient_perturbation(recipient_tag, recipient_gene, version),
-        ]
+        perturbations=[query_perturbation(query_tag, query_gene), recipient]
     )
 
 
@@ -1768,12 +1869,19 @@ def build_experiment(
     version: str,
     score: float,
     n_samples: int,
+    *,
+    recipient_is_hypomorph: bool = False,
 ) -> BacterialGeneInteractionExperiment:
     """The record of one matrix cell, with that cell's own measured colony count."""
     return BacterialGeneInteractionExperiment(
         dataset_name=dataset_name,
         genotype=pair_genotype(
-            query_tag, query_gene, recipient_tag, recipient_gene, version
+            query_tag,
+            query_gene,
+            recipient_tag,
+            recipient_gene,
+            version,
+            recipient_is_hypomorph=recipient_is_hypomorph,
         ),
         environment=SCREEN_ENVIRONMENT,
         phenotype=phenotype(score, n_samples),
@@ -1804,15 +1912,21 @@ def build_reference(
 SERVED_BUTLAND_RECORDS: Final = 1125
 #: Those records as oriented (query, recipient) gene pairs: no two of the 1,125 share one.
 SERVED_BUTLAND_PAIRS: Final = 1125
-#: Served pairs that are storable cells of this release, so rule 6 removes them.
-SERVED_OVERLAP_PAIRS: Final = 725
+#: Served pairs that are storable cells of this release, so rule 5 removes them. It is
+#: 725 + 398: both halves of the array are in scope since issue #792's leaf landed.
+SERVED_OVERLAP_PAIRS: Final = 1123
 #: Cells of this release dropped because their oriented pair is one of those served. It
-#: is not 2 x 725 because two of the shared pairs have only one isolate row.
-SERVED_OVERLAP_CELLS: Final = 1448
-#: Served pairs whose recipient row the roster labels ``SPA-tag essential``, so rule 1
-#: removes them before rule 6 is reached. Every one of the 398 records Babu admitted
-#: under this screen is one of these: Babu types the SPA-tagged recipient as a marked
-#: allele, a leaf this loader does not use, so no cell of them is stored here either way.
+#: is not 2 x 1,123 because a SPA-tag gene has ONE row and two of the shared Keio pairs
+#: have only one isolate row.
+SERVED_OVERLAP_CELLS: Final = 1846
+#: The Keio-isolate half of that overlap: served pairs whose recipient row the roster
+#: labels ``Non-essential``, which are two cells each but for two single-isolate genes.
+SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT: Final = 725
+#: The other half: served pairs whose recipient row the roster labels ``SPA-tag
+#: essential``, one cell each. Every one of the 398 records Babu admitted under this
+#: screen when PR #837 gave it the marked-allele leaf is one of these. They used to be
+#: removed by a SPA-tag rule before rule 6 was reached; now they are a SUBSET of the
+#: served rule's pairs, which the partition asserts rather than infers.
 SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT: Final = 398
 #: The served pairs this release does NOT carry under those names, pinned by name
 #: because the reverse direction of the partition is a measurement, not an assumption.
@@ -1880,12 +1994,18 @@ def assert_served_partition(
 
     REVERSE: every served record tagged with this screen is accounted for in this
     release, in three groups whose counts are pinned and which must sum to
-    :data:`SERVED_BUTLAND_RECORDS`: the storable cells rule 6 removes
-    (:data:`SERVED_OVERLAP_PAIRS`), the pairs rule 1 removes first because their
-    recipient row is SPA-tag essential (:data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`),
-    and the pairs this release does not name at all
-    (:data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`). A served pair in none of the three
-    raises, as does a drift in either store.
+    :data:`SERVED_BUTLAND_RECORDS`: the storable cells rule 5 removes on a Keio-isolate
+    recipient row (:data:`SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT`), the storable cells
+    it removes on a ``SPA-tag essential`` row
+    (:data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`), and the pairs this release does not
+    name at all (:data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`). A served pair in none of the
+    three raises, as does a drift in either store.
+
+    The SPA-tag group is now a SUBSET of the overlap rather than a group removed ahead of
+    it, because this loader types those recipients on
+    ``BacterialMarkedAllelePerturbation`` instead of dropping them; the containment is
+    asserted, so a served pair that moved off such a row cannot pass the count pins while
+    being stored twice.
     """
     stored = set(stored_pairs)
     released = set(released_pairs)
@@ -1926,6 +2046,19 @@ def assert_served_partition(
             f"{len(on_spa_tag)} served pairs sit on a SPA-tag essential recipient row, "
             f"this build was measured against {SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT}"
         )
+    if not on_spa_tag <= overlap:
+        raise RuntimeError(
+            f"{len(on_spa_tag - overlap)} served pairs sit on a SPA-tag essential "
+            "recipient row and were NOT removed as served, so this loader would store "
+            f"them beside Babu's own records: {sorted(on_spa_tag - overlap)[:5]}"
+        )
+    on_keio = overlap - on_spa_tag
+    if len(on_keio) != SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT:
+        raise RuntimeError(
+            f"{len(on_keio)} served pairs are storable cells on a Keio-isolate "
+            "recipient row, this build was measured against "
+            f"{SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT}"
+        )
     outside = tuple(
         f"{query} -> {recipient}"
         for query, recipient in sorted(butland)
@@ -1935,13 +2068,12 @@ def assert_served_partition(
         f"{query} -> {recipient}"
         for query, recipient in butland
         - overlap
-        - on_spa_tag
         - {pair for pair in butland if pair not in released}
     )
     if unaccounted:
         raise RuntimeError(
             f"{len(unaccounted)} served pairs of this screen are cells of this release "
-            "that neither rule 1 nor rule 6 removes, so the partition no longer "
+            "that the served rule does not remove, so the partition no longer "
             f"accounts for them: {unaccounted[:5]}"
         )
     return ServedPartition(
@@ -1955,6 +2087,7 @@ def assert_served_partition(
         shared_pairs=0,
         overlap_pairs_dropped=len(overlap),
         overlap_cells_dropped=overlap_cells,
+        overlap_pairs_on_a_keio_recipient=len(on_keio),
         served_pairs_on_a_spa_tag_recipient=len(on_spa_tag),
         served_pairs_not_in_this_release=list(outside),
     )
@@ -1964,7 +2097,13 @@ def assert_served_partition(
 # Retention
 # --------------------------------------------------------------------------- #
 class StoredCell(BaseModel):
-    """One cell of the matrix as the record builder's arguments."""
+    """One cell of the matrix as the record builder's arguments.
+
+    ``version`` is the released "Strain Versions" token of the row whatever the row is,
+    so it is the isolate id for a Keio row and the ``SPA-tag essential`` label for a
+    hypomorph row; ``recipient_is_hypomorph`` is the row's label, which decides the
+    recipient leaf's class.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1973,6 +2112,7 @@ class StoredCell(BaseModel):
     recipient_tag: str
     recipient_gene: str
     version: str
+    recipient_is_hypomorph: bool
     score: float
     n_samples: int
     replicate_screens: int
@@ -2055,7 +2195,6 @@ def retain(
         tag
         for row, tag in enumerate(scores.recipient_tags)
         if scores.recipient_genes[row] == UNNAMED_IN_GENOBASE
-        and scores.labels[row] == LABEL_NON_ESSENTIAL
         and tag not in not_a_tag
         and tag not in remapped
     )
@@ -2080,7 +2219,8 @@ def retain(
     dropped: dict[str, list[str]] = {rule: [] for rule in DROP_RULES}
     cells: list[StoredCell] = []
     sign = Counter[str]()
-    isolates = Counter[str]()
+    versions_kept = Counter[str]()
+    hypomorphs = 0
     sample_counts = Counter[int]()
     screen_counts = Counter[int]()
     stored_pairs: list[tuple[str, str]] = []
@@ -2089,11 +2229,15 @@ def retain(
         label = scores.labels[row]
         version = scores.versions[row]
         recipient_gene = scores.recipient_genes[row]
+        is_hypomorph = label == LABEL_SPA_TAG
+        if is_hypomorph and version != LABEL_SPA_TAG:
+            raise ReleaseContentError(
+                f"the {LABEL_SPA_TAG!r} row of {recipient_tag} carries strain version "
+                f"{version!r}; the release repeats the label in that cell and names no "
+                "isolate for a SPA-tagged strain"
+            )
         for column, query_tag in enumerate(scores.query_tags):
             item = _cell_label(query_tag, recipient_tag, version)
-            if label != LABEL_NON_ESSENTIAL:
-                dropped[RULE_SPA_TAG].append(item)
-                continue
             if recipient_tag in not_a_tag:
                 dropped[RULE_NOT_A_TAG].append(item)
                 continue
@@ -2118,6 +2262,7 @@ def retain(
                     recipient_tag=recipient_tag,
                     recipient_gene=recipient_gene,
                     version=version,
+                    recipient_is_hypomorph=is_hypomorph,
                     score=score,
                     n_samples=int(colonies[row, column]),
                     replicate_screens=int(screens[row, column]),
@@ -2125,7 +2270,8 @@ def retain(
             )
             stored_pairs.append((query_tag, recipient_tag))
             sign["neg" if score < 0 else ("pos" if score > 0 else "zero")] += 1
-            isolates[version] += 1
+            versions_kept[version] += 1
+            hypomorphs += int(is_hypomorph)
             sample_counts[int(colonies[row, column])] += 1
             screen_counts[int(screens[row, column])] += 1
 
@@ -2165,7 +2311,8 @@ def retain(
         source_recipients=len(set(scores.recipient_tags)),
         kept_queries=len({cell.query_tag for cell in cells}),
         kept_recipients=len({cell.recipient_tag for cell in cells}),
-        kept_isolates=dict(sorted(isolates.items())),
+        kept_strain_versions=dict(sorted(versions_kept.items())),
+        kept_hypomorph_records=hypomorphs,
         n_aggravating=sign["neg"],
         n_alleviating=sign["pos"],
         n_zero=sign["zero"],
@@ -2321,11 +2468,12 @@ def high_confidence_ledger(
 # The dataset
 # --------------------------------------------------------------------------- #
 DATASET_ROOT_REL = "data/torchcell/gene_interaction_butland2008"
-#: Records of the full build: 314,847 released cells minus 5,811 SPA-tag recipient
-#: cells, 6,318 on an id the annotation does not carry, 4,407 on an annotation-remapped
-#: b-number, 78 self pairs, 395 whose score contradicts their own raw colonies and 1,448
-#: whose oriented pair the served Babu 2014 store already holds.
-EXPECTED_RECORDS = 296390
+#: Records of the full build: 314,847 released cells minus 6,318 on an id the annotation
+#: does not carry, 4,407 on an annotation-remapped b-number, 78 self pairs, 395 whose
+#: score contradicts their own raw colonies and 1,846 whose oriented pair the served Babu
+#: 2014 store already holds. 5,413 of them are SPA-tag hypomorph records, admitted when
+#: this loader adopted ``BacterialMarkedAllelePerturbation`` (issue #792).
+EXPECTED_RECORDS = 301803
 
 
 @register_dataset
@@ -2492,6 +2640,7 @@ class GeneInteractionButland2008Dataset(ExperimentDataset):
                     cell.version,
                     cell.score,
                     cell.n_samples,
+                    recipient_is_hypomorph=cell.recipient_is_hypomorph,
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -2557,10 +2706,11 @@ VERIFIER_PROVENANCE = Provenance(
     sha256=DATA_SHA256[TABLE_S4],
     method="Supplementary Table 4, sheet 'S scores': the interaction score of every "
     "(query strain, recipient strain) cell of the unfiltered 39 x 8,073 matrix. One "
-    "BacterialGeneInteractionExperiment per cell, a two-leaf "
-    "BacterialDeletionPerturbation genotype against MG1655 whose query carries cat and "
-    "whose recipient carries kan and its isolate token, reference = the unperturbed "
-    "conjugant chassis at 0",
+    "BacterialGeneInteractionExperiment per cell, a two-leaf genotype against MG1655 "
+    "whose query is a cat-marked BacterialDeletionPerturbation and whose recipient is a "
+    "kan-marked BacterialDeletionPerturbation carrying its isolate token (a Keio row) or "
+    "a kan-marked BacterialMarkedAllelePerturbation with a C-terminal SPA tag (a "
+    "'SPA-tag essential' row), reference = the unperturbed conjugant chassis at 0",
     page="Supplementary Table 4 (41592_2008_BFnmeth1239_MOESM309_ESM.xls), sheet "
     "'S scores'",
     retrieved=DATA_RETRIEVED_AT,
@@ -2596,12 +2746,30 @@ def _l1_two_distinct_genes(records: Sequence[Record]) -> LevelResult:
     )
 
 
-def _l1_isolate_is_on_the_recipient(records: Sequence[Record]) -> LevelResult:
-    """L1: the recipient leaf carries its strain version and the query leaf carries none.
+def _recipient_row_key(perturbation: Mapping[str, Any]) -> str:
+    """The released "Strain Versions" token of the row a recipient leaf came from.
 
-    The isolate is a property of the arrayed recipient strain, and it is the only thing
-    distinguishing the two records of one gene pair, so a record missing it would be an
-    unexplained duplicate of its sibling.
+    A Keio row prints its isolate id there and the leaf carries it as the construction
+    ``batch``; a ``SPA-tag essential`` row prints the label, which is the string the
+    hypomorph leaf carries as its ``collection``. So the row key is readable off the
+    stored leaf either way, and this is the key the released matrix is indexed on.
+    """
+    construction = perturbation.get("construction")
+    batch = None if construction is None else construction.get("batch")
+    if batch is not None:
+        return str(batch)
+    return str(perturbation["collection"])
+
+
+def _l1_recipient_leaf_states_its_row(records: Sequence[Record]) -> LevelResult:
+    """L1: each recipient leaf is the class its row's label names, with that row's token.
+
+    A Keio recipient is a deletion carrying its isolate as the construction ``batch``,
+    which is the only thing distinguishing the two records of one gene pair, so a record
+    missing it would be an unexplained duplicate of its sibling. A ``SPA-tag essential``
+    recipient is a ``BacterialMarkedAllelePerturbation`` with the four fields footnote a
+    states and NO construction, because that row carries no isolate id. The query leaf
+    carries neither a batch nor a tag in either case.
     """
     versions = Counter[str]()
     bad: list[str] = []
@@ -2609,18 +2777,36 @@ def _l1_isolate_is_on_the_recipient(records: Sequence[Record]) -> LevelResult:
         for perturbation in record["experiment"]["genotype"]["perturbations"]:
             construction = perturbation.get("construction")
             batch = None if construction is None else construction.get("batch")
-            if perturbation["cassette"] == RECIPIENT_CASSETTE:
-                if batch is None:
-                    bad.append(str(perturbation["systematic_gene_name"]))
+            name = str(perturbation["systematic_gene_name"])
+            if perturbation["cassette"] != RECIPIENT_CASSETTE:
+                if (
+                    batch is not None
+                    or perturbation["perturbation_type"] != DELETION_TYPE
+                ):
+                    bad.append(name)
+                continue
+            if perturbation["perturbation_type"] == MARKED_ALLELE_TYPE:
+                wrong = (
+                    batch is not None
+                    or perturbation["tag"] != HYPOMORPH_TAG
+                    or perturbation["terminus"] != HYPOMORPH_TERMINUS
+                    or perturbation["allele_effect"] != HYPOMORPH_ALLELE_EFFECT
+                    or perturbation["insertion_site"] is not None
+                    or perturbation["collection"] != HYPOMORPH_COLLECTION
+                )
+                if wrong:
+                    bad.append(name)
                 else:
-                    versions[str(batch)] += 1
-            elif batch is not None:
-                bad.append(str(perturbation["systematic_gene_name"]))
+                    versions[HYPOMORPH_COLLECTION] += 1
+            elif batch is None or perturbation["collection"] != RECIPIENT_COLLECTION:
+                bad.append(name)
+            else:
+                versions[str(batch)] += 1
     return LevelResult(
         level=Level.L1,
-        name="recipient_leaf_carries_its_keio_isolate",
+        name="recipient_leaf_states_its_array_row",
         passed=bool(records) and not bad and len(versions) > 1,
-        message=f"{sum(versions.values())} recipient leaves carry a strain version "
+        message=f"{sum(versions.values())} recipient leaves state their array row "
         f"{dict(sorted(versions.items()))}; {len(bad)} leaves are wrong",
         details={"versions": dict(sorted(versions.items())), "bad_examples": bad[:20]},
     )
@@ -2640,7 +2826,7 @@ def _l2_scores_match_the_matrix(
         key = (
             str(by_cassette[QUERY_CASSETTE]["systematic_gene_name"]),
             str(recipient["systematic_gene_name"]),
-            str(recipient["construction"]["batch"]),
+            _recipient_row_key(recipient),
         )
         stored = float(experiment["phenotype"]["gene_interaction"])
         if key not in released or released[key] != stored:
@@ -2752,7 +2938,7 @@ def verify_records(
     report.add(l0_structural(records, _validate_record))
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_two_distinct_genes(records))
-    report.add(_l1_isolate_is_on_the_recipient(records))
+    report.add(_l1_recipient_leaf_states_its_row(records))
     report.add(_l2_scores_match_the_matrix(records, released))
     report.add(_l3_sign_convention(records))
     report.add(_l3_partition_against_babu(records, served))

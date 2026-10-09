@@ -200,6 +200,7 @@ never a deletion target.
 ### Submit-time checklist, in order
 
 1. **Every dev store fresh.** `PYTHONPATH=<worktree> python -m torchcell.database.build_dataset_lmdb --list-stale --include-private` must print nothing. **Measured today it prints 99 of the 109 mapped classes**, with `GenePerturbationType` naming the drift in 97 of them: the additive union member that landed in `e1acbb28b` and `9db9b2fcb` after `v1.7.2`. `[[torchcell.datamodels.bacterial-perturbation-ontology]]` records the same thing as 113 stale stores across the whole dev tree, mapped and unmapped. Job 3547 is clean only because it builds from `v1.7.2`, where they were fresh. **A KG 4.0 built from any tag later than `v1.7.2` therefore needs the 99 stores rebuilt first**, via
+
    ```bash
    CLASSES=/scratch/projects/torchcell/database/slurm/stale_classes.txt
    PYTHONPATH=$TORCHCELL_SRC python -m torchcell.database.build_dataset_lmdb \
@@ -207,6 +208,7 @@ never a deletion target.
    sbatch --array=1-$(wc -l < "$CLASSES")%4 --export=ALL,CLASSES_FILE="$CLASSES" \
        database/slurm/scripts/gilahyper_build_dataset_lmdbs_array.slurm
    ```
+
    Sizing for that array is measured: 16 CPUs and 64 G per task, 12 h limit, and the two
    Costanzo interaction stores are the long poles at 4 h 41 min and 4 h 20 min
    (2026-10-05); every other store took minutes. The 2026-10-08 array (job 3410, 101 tasks

@@ -33,6 +33,10 @@ it had finished 49 adapters (8,480 s of adapter time) and was inside
 the 109-dataset generation, so the numbers below should be replaced by its
 `Generation wall ... s, peak memory ... GiB` line once it closes.
 
+**It did not close.** It failed at 2 h 46 min on its first bacterial adapter, for a reason
+that is now the most important item in the submit-time checklist; the second dated section
+below has it.
+
 Job 3546, submitted 36 minutes earlier, died in the generation container on
 `GenomeRootNotFoundError` for `/var/lib/neo4j/data/ecoli/mg1655/genome`: the build tree has
 no bacterial genome cache. Commit `1462c3937` mounts the dev tree's `data/ecoli` and
@@ -220,35 +224,40 @@ never a deletion target.
    the tag, not the primary checkout.
 3. **`--dependency=afterok` on the dev-store array**, so the rebuild cannot start against a
    half-built store: `sbatch --dependency=afterok:<array job id> ... gilahyper_live_rebuild-slurm_docker.slurm`.
-4. **The compound-identity curator pass, #726, is still blocked.** PubChem is throttling
+4. **Nothing may rebuild a dev store while the build runs.** The dependency above only
+   orders the start; generation then reads the dev tree for three hours, and a host-side
+   `build_dataset_lmdb --retire-existing` renames a store out from under it. That is what
+   killed job 3547, and the build-manifest fence added in this branch turns the quiet
+   version of it into a refusal. See the second dated section.
+5. **The compound-identity curator pass, #726, is still blocked.** PubChem is throttling
    (HTTP 200 once at 04:05:13, then 429 on the next four probes), 276 bacterial gap labels
    remain, and 0 of them resolves to a row in `compound_identity_table.json` today, so
    `_TABLE_SHA256` on main is unchanged. **Owner decision:** build KG 4.0 with those typed
    InChIKey gaps, or wait on PubChem. The gaps are honest records, not errors, but a later
    curator pass that resolves a label changes that record's content, which is the
    full-rebuild case, not an incremental admission.
-5. **Admission preflight at 0 blockers.** Not applicable to a full rebuild, which is what
+6. **Admission preflight at 0 blockers.** Not applicable to a full rebuild, which is what
    the admission check blocks *into*; the equivalent gate here is the script's own preflight,
    which must report `109 mapped datasets, every dev store fresh`, `df` above
    `MIN_FREE_GB`, no existing `tc-neo4j-build` or `tc-neo4j-gen` container, an empty
    `$NEXT_ROOT/data`, and a clean `cmp` of the repo and build-tree
    `torchcell_schema_config.yaml`. Read `[[torchcell.knowledge_graphs.incremental-admission]]`
    before the next *incremental* admission, not before this build.
-6. **Rollback path.** The swap is two renames, so the reverse is two renames: stop
+7. **Rollback path.** The swap is two renames, so the reverse is two renames: stop
    `tc-neo4j-readonly`, `mv /db/database/data` aside, `mv` the
    `data.superseded.<ts>` back to `data`, relaunch with the arguments
    `scripts/migrate_storage_tiers.sh` uses. Nothing is deleted by the build.
-7. **`DB(kg)` snapshot commit, then retag.** The build's `record` stage writes
+8. **`DB(kg)` snapshot commit, then retag.** The build's `record` stage writes
    `database/releases/<release id>.json` and `.closures.json` into the checkout; those are
    committed with a `DB` prefix so semantic-release cuts the paired package version, and
    `releases retag` is the only repair if a build ran from an untagged commit. KG releases
    and package releases are pairs: KG 3.0 is paired with `v1.6.2`.
-8. **Supported-queries validation.** `bash scripts/run-supported-queries.sh` (the
+9. **Supported-queries validation.** `bash scripts/run-supported-queries.sh` (the
    pre-commit wrapper over `python -m torchcell.knowledge_graphs.supported_queries check`)
    checks every registered query against the newest committed release snapshot and blocks on
    a `supported` query drifting. A bacterial-wave ontology revision will drift queries, and
    `TORCHCELL_QUERY_DRIFT_ACK=1` is the deliberate acknowledgment after the report is read.
-9. **Compatibility page.** #822 is closed: PR #821 landed the regeneration for 1.7.1 and
+10. **Compatibility page.** #822 is closed: PR #821 landed the regeneration for 1.7.1 and
    1.7.2, but the fix was the page, not the release job, so the `query-drift` job in
    `.github/workflows/docs.yaml` still goes red on the version commit semantic-release
    pushes. Run `python scripts/kg_compat_page.py` after the release lands and commit the
@@ -373,3 +382,74 @@ every dataset including the measured ones, so the two columns can be compared. G
 | ProteomeSrmSet1Schmidt2016Dataset | ecoli | 11 | 0.00 | 45 | inprocess | new | 0 |
 | ProteomeSrmSet2Schmidt2016Dataset | ecoli | 14 | 0.00 | 45 | inprocess | new | 0 |
 | TranscriptionFactorKnockoutChoe2019Dataset | ecoli | 2 | 0.00 | 60 | inprocess | new | 0 |
+
+## 2026.10.09 - Job 3547 failed at the first bacterial adapter: a dev store was rebuilt under it
+
+Job 3547 finished all 51 yeast adapters and died 2 h 46 min in, at
+`GeneInteractionBabu2014Adapter`, the first of the 58 new ones:
+
+```
+pydantic_core._pydantic_core.ValidationError: 297 validation errors for BacterialGeneInteractionExperiment
+genotype.Genotype.perturbations.1.function-after[_check_namespace(), PromoterReplacementPerturbation].perturbation_type
+  Input should be 'promoter_replacement' [type=literal_error, input_value='bacterial_marked_allele', input_type=str]
+```
+
+raised in `torchcell/data/experiment_dataset.py:912` inside a chunk worker. The record the
+adapter read carries `perturbation_type: 'bacterial_marked_allele'`, and the installed
+`v1.7.2` has no `BacterialMarkedAllelePerturbation` in its `GenePerturbationType` union, so
+pydantic walked every other member of the union and reported 297 failures.
+
+**The cause is not the schema. The dev store was rebuilt while the build was reading it.**
+`/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014/preprocess/build_manifest.json`
+reads `built_at 2026-10-09T09:36:29Z` (04:36 CDT) at commit `a1d731d0` with
+`torchcell_dirty: true`, which is neither `main` nor the build tag. The previous copies sit
+beside it as `processed.superseded.20261009-043551` and
+`preprocess.superseded.20261009-043551`, renamed at 04:35:51. Job 3547 started at 02:16 and
+reached the adapter at 05:01, so another agent's `build_dataset_lmdb --retire-existing`
+replaced the store two and a half hours into the read.
+
+The container's mounts are read-only, which stops the container from writing but does
+nothing about a host process renaming `processed/` out from under it. The preflight's
+freshness check is point-in-time at minute zero, and generation then reads the dev tree for
+three hours.
+
+**The loud failure is the lucky case.** A store swapped for one whose records still
+deserialize produces CSVs that mix two schema versions, imports cleanly, validates cleanly
+(the validation compares live counts against the CSVs the same generation wrote), and gets
+stamped with a manifest that records one commit for records built under two. Nothing
+downstream would catch it.
+
+### The fence, added to the rebuild script in this branch
+
+The preflight now digests every mapped dataset's `preprocess/build_manifest.json`
+(`sha256`, 109 lines) into `$OUTDIR/<job>_dev_fence.txt`, and generation is followed, before
+the import, by a re-digest and a `diff`. A difference fails the job and prints which
+datasets moved. A resume regenerates nothing, so its fence was honored by the job that
+generated and the check is skipped there. The helper is written to
+`$OUTDIR/<job>_dev_fence.py` so both passes run identical code.
+
+This costs about a second per pass and converts a silent provenance mixture into a refusal.
+It does not make the dev tree safe to touch during a build, which is an operator
+discipline: **while a live rebuild is running, nothing may rebuild a dev store.**
+`[[dev-stores-are-shared-across-worktrees]]` is the same hazard one level down, where a
+rebuild on one branch breaks another branch's training run; here it corrupts the graph.
+
+### What this does and does not change about the sizing
+
+Nothing in the projection moves. The failure is a provenance fault, not a resource fault,
+and it carries two measurements worth keeping:
+
+- **The 51 yeast adapters generated in 2 h 45 min** inside the 109-dataset build (02:16
+  start, `GeneInteractionBabu2014Adapter` opening at 05:01), against 3 h 05 min for the
+  same 51 as the whole of job 3297. Per-adapter the two runs agree closely:
+  `DmfCostanzo2016Adapter` 1,496 s against 1,381 s, `EnvChemgenHoepfner2014Adapter` 1,356 s
+  against 1,156 s, `HetHillenmeyer2008Adapter` 760 s against 680 s. `DmiCostanzo2016Adapter`
+  ran 1,905 s against 4,035 s, a factor of two the two logs do not explain, so the
+  3 h 37 m projection stands on the slower of the two.
+- **170 G of CSV for the 51 yeast adapters**, read directly off
+  `/db/database/biocypher-out/2026-10-09_07-20-33`. That firms up the KG 3.0 CSV figure,
+  which was only readable as a 3.0 T to 3.2 T `df` delta, and leaves the 215 G projection
+  for 109 datasets intact.
+
+The resubmission is a fresh job, not `RESUME_JOB=3547`: the resume path requires a finished
+import, and 3547 never generated a complete CSV set.

@@ -226,6 +226,31 @@ print(len(dataset_adapter_map))
 EOF
 )
 echo "$N_DATASETS mapped datasets, every dev store fresh"
+# The freshness check above is point-in-time, and generation then reads the dev tree for
+# hours. Nothing stops a HOST process from rebuilding a store underneath it: the
+# container's mounts are read-only, but `build_dataset_lmdb --retire-existing` renames
+# processed/ and preprocess/ aside as this same user. Job 3547 died that way at its first
+# bacterial adapter -- gene_interaction_babu2014 was rebuilt at 2026-10-09 04:35 CDT, two
+# hours into the run and at a commit (a1d731d0, dirty) that is neither main nor the build
+# tag, so the records the adapter read carried a GenePerturbationType member the installed
+# v1.7.2 could not deserialize. The quiet version of that failure is worse: a store whose
+# records still deserialize gets mixed into the graph under a provenance the manifest will
+# not record. So fence the tree: digest every mapped dataset's build manifest now, and
+# re-digest after generation, before anything is imported.
+DEV_FENCE_PY="$OUTDIR/${JOB}_dev_fence.py"
+cat > "$DEV_FENCE_PY" <<'EOF'
+import hashlib, os, sys
+from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+from torchcell.database.build_dataset_lmdb import dataset_default_root
+dev = sys.argv[1]
+for cls in sorted(build_adapter_map(include_private=sys.argv[2] == "1"), key=lambda c: c.__name__):
+    mp = os.path.join(dev, dataset_default_root(cls), "preprocess", "build_manifest.json")
+    with open(mp, "rb") as handle:
+        print(f"{cls.__name__} {hashlib.sha256(handle.read()).hexdigest()}")
+EOF
+DEV_FENCE="$OUTDIR/${JOB}_dev_fence.txt"
+python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" > "$DEV_FENCE"
+echo "dev fence: $(wc -l < "$DEV_FENCE") build manifests digested into $DEV_FENCE"
 docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
     "mkdir -p /parent/$NEXT_NAME/data /parent/$NEXT_NAME/logs /parent/$NEXT_NAME/metrics \
      && chown -R 7474:7474 /parent/$NEXT_NAME && ls -la /parent/$NEXT_NAME"
@@ -284,6 +309,20 @@ echo "CSV generation completed at $(date)"
 fi
 N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '[0-9]+')
 [ "$N_ADAPTERS" = "$N_DATASETS" ] || { echo "generation covered '$N_ADAPTERS' adapters, expected $N_DATASETS"; exit 1; }
+# The fence: the dev tree must be byte-identical to what the preflight saw, or the CSVs
+# mix two schema versions. A resume regenerates nothing, so its fence was already honored
+# by the job that generated.
+if [ -z "$RESUME_JOB" ]; then
+    DEV_FENCE_AFTER="$OUTDIR/${JOB}_dev_fence_after.txt"
+    python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" > "$DEV_FENCE_AFTER"
+    if diff "$DEV_FENCE" "$DEV_FENCE_AFTER"; then
+        echo "dev fence intact: all $N_DATASETS build manifests unchanged across generation"
+    else
+        echo "a dev store was rebuilt DURING generation (diff above); these CSVs mix schema versions"
+        echo "rebuild the stale stores first, then resubmit with the tree quiet"
+        exit 1
+    fi
+fi
 CALL_REL=$(grep -oE '^GENERATION_CALL=.*' "$GEN_LOG" | tail -1 | cut -d= -f2-)
 [ -n "$CALL_REL" ] || { echo "no import call reported"; exit 1; }
 OUT_TS=$(basename "$(dirname "$CALL_REL")")

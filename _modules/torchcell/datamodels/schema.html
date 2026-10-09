@@ -128,6 +128,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span><span class="p">,</span> <span class="n">field_validator</span><span class="p">,</span> <span class="n">model_validator</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.bacterial_morphology_features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MorphologyAssay</span><span class="p">,</span>
+    <span class="n">morphology_assay</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.calmorph_labels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CALMORPH_LABELS</span><span class="p">,</span> <span class="n">CALMORPH_STATISTICS</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">SourcedValue</span>
@@ -4622,7 +4626,13 @@
     <span class="n">screen</span> <span class="o">=</span> <span class="s2">"screen"</span>
     <span class="n">biological_replicate</span> <span class="o">=</span> <span class="s2">"biological_replicate"</span>
     <span class="n">technical_replicate</span> <span class="o">=</span> <span class="s2">"technical_replicate"</span>
-    <span class="n">pooled</span> <span class="o">=</span> <span class="s2">"pooled"</span></div>
+    <span class="n">pooled</span> <span class="o">=</span> <span class="s2">"pooled"</span>
+    <span class="c1"># One segmented cell of a microscopy screen. The sample unit of a per-strain</span>
+    <span class="c1"># morphology profile is the cell, not the well: Campos 2018 computes each mean and</span>
+    <span class="c1"># each CV over the strain's retained segmented cells (291 +/- 116 of them) from a</span>
+    <span class="c1"># single well, so `biological_replicate` would report 1 for a mean over hundreds of</span>
+    <span class="c1"># measurements.</span>
+    <span class="n">cell</span> <span class="o">=</span> <span class="s2">"cell"</span></div>
 
 
 
@@ -7408,6 +7418,145 @@
     <span class="n">phenotype</span><span class="p">:</span> <span class="n">VisualScorePhenotype</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># BACTERIAL MORPHOLOGY BLOCK START (issue #774)</span>
+<span class="c1"># A multi-feature bacterial cell-morphology profile: the CalMorph shape with the</span>
+<span class="c1"># vocabulary lifted out of the yeast imaging program and into the assay.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMorphologyPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial strain's cell-morphology profile from one microscopy assay.</span>
+
+<span class="sd">    ``CalMorphPhenotype`` models exactly this: a dict of named per-strain values plus a</span>
+<span class="sd">    dict of named coefficients of variation. Its vocabulary is the wrong one, and not by</span>
+<span class="sd">    oversight: ``CALMORPH_LABELS`` and ``CALMORPH_STATISTICS`` are the 281 base and 220</span>
+<span class="sd">    CV parameters of CalMorph, a *S. cerevisiae* image-analysis program, and that set was</span>
+<span class="sd">    measured to be disjoint from every symbol a bacterial screen releases. Storing</span>
+<span class="sd">    ``&lt;L&gt;`` under a CalMorph key would assert a measurement nobody made.</span>
+
+<span class="sd">    So the shape is kept and the vocabulary becomes a property of the ASSAY.</span>
+<span class="sd">    ``assay`` names a :class:`~torchcell.datamodels.bacterial_morphology_features.MorphologyAssay`</span>
+<span class="sd">    in ``MORPHOLOGY_ASSAYS``, that assay's features are the only permitted keys, and each</span>
+<span class="sd">    feature declares WHAT STATISTIC its number is. The split between the two dicts is</span>
+<span class="sd">    that declaration and not a naming convention: a key whose statistic is</span>
+<span class="sd">    ``coefficient_of_variation`` belongs in ``morphology_coefficient_of_variation`` and</span>
+<span class="sd">    every other key belongs in ``morphology``, so a CV cannot be filed as a mean. A later</span>
+<span class="sd">    bacterial imaging screen registers its own assay and widens nobody else's label set.</span>
+
+<span class="sd">    ``morphology`` therefore holds several statistics side by side (a mean over the</span>
+<span class="sd">    strain's cells, a Pearson correlation across them, a fitted intercept, a population</span>
+<span class="sd">    fraction, an inferred relative timing), which is what the source releases in one row.</span>
+<span class="sd">    The assay says which is which, and a consumer that pools them across keys is pooling</span>
+<span class="sd">    quantities the source never claimed were comparable.</span>
+
+<span class="sd">    A record carries the features the source DETERMINED for that strain, not necessarily</span>
+<span class="sd">    the whole vocabulary: Campos 2018's release states that "NaN (Not a Number) values</span>
+<span class="sd">    are attributed to non-determined fields", and 278 of its 4,227 strains have no</span>
+<span class="sd">    nucleoid channel, so their 7 nucleoid-derived features do not exist. Demanding full</span>
+<span class="sd">    coverage would drop 21 real features to save 7 absent ones.</span>
+
+<span class="sd">    ``n_samples`` with ``sample_unit`` is the replicate design of the per-cell features:</span>
+<span class="sd">    the number of segmented cells the means and CVs are computed over. Some features are</span>
+<span class="sd">    computed over a stated SUBSET of those cells (Campos's ``CV_DR`` and ``rho_CD`` over</span>
+<span class="sd">    constricted cells only, its nucleoid features over DAPI-scored cells), and the</span>
+<span class="sd">    subset sizes are not released per strain; each such feature says so in its own</span>
+<span class="sd">    ``note`` rather than this field pretending to cover them.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"morphology"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"morphology_coefficient_of_variation"</span>
+    <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the registered morphology assay whose vocabulary names the keys "</span>
+        <span class="s2">"(a key of torchcell.datamodels.bacterial_morphology_features.MORPHOLOGY_ASSAYS)"</span>
+    <span class="p">)</span>
+    <span class="n">morphology</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per-strain feature values keyed by the assay's own symbol, for "</span>
+        <span class="s2">"every feature of the assay whose statistic is not a coefficient of variation"</span>
+    <span class="p">)</span>
+    <span class="n">morphology_coefficient_of_variation</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per-strain coefficients of variation keyed by the assay's own "</span>
+        <span class="s2">"symbol, for the features whose declared statistic is a coefficient of variation"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"number of samples the per-cell features are computed over"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples physically is"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assay_vocabulary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MorphologyAssay</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The assay this record names, which is the authority on its keys."""</span>
+        <span class="k">return</span> <span class="n">morphology_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_against_the_assay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"BacterialMorphologyPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Every key is a feature of the named assay, filed under its own statistic.</span>
+
+<span class="sd">        The assay lookup raises on an unregistered name, so a record can never be</span>
+<span class="sd">        written against a vocabulary this version of the schema does not hold.</span>
+<span class="sd">        """</span>
+        <span class="n">assay</span> <span class="o">=</span> <span class="n">morphology_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">morphology</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"morphology measurements cannot be empty (assay </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="si">!r}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_dict</span><span class="p">(</span><span class="s2">"morphology"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">morphology</span><span class="p">,</span> <span class="n">assay</span><span class="o">.</span><span class="n">value_symbols</span><span class="p">,</span> <span class="n">assay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_dict</span><span class="p">(</span>
+            <span class="s2">"morphology_coefficient_of_variation"</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">morphology_coefficient_of_variation</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">assay</span><span class="o">.</span><span class="n">coefficient_of_variation_symbols</span><span class="p">,</span>
+            <span class="n">assay</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_dict</span><span class="p">(</span>
+        <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">permitted</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">assay</span><span class="p">:</span> <span class="n">MorphologyAssay</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Reject a key outside ``permitted``, a key of the wrong statistic, and NaN."""</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">permitted</span><span class="p">:</span>
+                <span class="n">feature</span> <span class="o">=</span> <span class="n">assay</span><span class="o">.</span><span class="n">by_symbol</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">feature</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"Invalid </span><span class="si">{</span><span class="n">assay</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> morphology feature: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">. Must be one "</span>
+                        <span class="sa">f</span><span class="s2">"of the </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">assay</span><span class="o">.</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s2"> symbols the assay declares."</span>
+                    <span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">statistic</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> of assay </span><span class="si">{</span><span class="n">assay</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">, so it "</span>
+                    <span class="sa">f</span><span class="s2">"does not belong in </span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2"> measurement </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> cannot be NaN"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMorphologyExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial cell-morphology experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_morphology"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">BacterialMorphologyPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialMorphologyExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A bacterial strain's cell-morphology profile from one microscopy screen."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_morphology"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">BacterialMorphologyPhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># BACTERIAL MORPHOLOGY BLOCK END (issue #774)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -7427,6 +7576,7 @@
     <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
     <span class="o">|</span> <span class="n">FluxPhenotype</span>
     <span class="o">|</span> <span class="n">PromoterActivityPhenotype</span>
+    <span class="o">|</span> <span class="n">BacterialMorphologyPhenotype</span>  <span class="c1"># issue #774</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -7458,6 +7608,7 @@
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperiment</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
+    <span class="o">|</span> <span class="n">BacterialMorphologyExperiment</span>  <span class="c1"># issue #774</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -7489,6 +7640,7 @@
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
+    <span class="o">|</span> <span class="n">BacterialMorphologyExperimentReference</span>  <span class="c1"># issue #774</span>
 <span class="p">)</span>
 
 
@@ -7520,6 +7672,7 @@
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
+    <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperiment</span><span class="p">,</span>  <span class="c1"># issue #774</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -7550,6 +7703,7 @@
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>
+    <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #774</span>
 <span class="p">}</span>
 
 

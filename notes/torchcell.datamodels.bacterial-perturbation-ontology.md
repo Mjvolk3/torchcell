@@ -640,3 +640,11 @@ methods are untouched, because the node id is the same sha256 of the leaf's
 datasets, 0 breaking**, exit 0. Every dataset whose closure reaches `Genotype` is marked
 stale because `GenePerturbationType` gained three members; nothing is breaking, and the
 KG 4.0 full rebuild that follows this wave covers the rebuild.
+
+`python -m torchcell.provenance.build_manifest` then reads **113 dev stores STALE**, all
+of them naming `GenePerturbationType` as the changed symbol and nothing else (a handful
+also name symbols a parallel branch already landed). That is the measured consequence of
+an additive union member, and the full rebuild is what clears it. The eight stores this
+step touched were rebuilt by name and read fresh: the three de Siqueira proteome classes,
+its titer class, Lim's tolerance and proteome classes, and Menasalvas and Kang, whose
+loaders did not change but whose closures moved. All eight pass their own verification.

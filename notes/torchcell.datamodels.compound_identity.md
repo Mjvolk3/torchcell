@@ -198,3 +198,120 @@ case-by-case chemistry judgment was applied beyond what PubChem answers.
 `resolved_compound(...)`, so the shared media objects do not yet carry the identifiers this
 table now holds for 50 of their 55 names. Wiring that (and the loader-side changes each
 review lists) is the orchestrator's follow-up.
+
+## 2026.10.09 - #726: the bacterial gap, measured; the curator run blocked by PubChem
+
+#726 asks for a curator pass over the bacterial condition labels and lists what was known
+when it was filed (Price 2018's 53, Tong 2020's 17, Goodall's chloramphenicol, isoprenol,
+PRECISE-1K's 22 plus kanamycin, then D-alanine, L-malate and alpha-pinene in the
+comments). That is a running tally, not a measurement, so the gap was measured from the
+built stores first.
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/bacterial_compound_identity_gaps.py`
+Results: `experiments/036-dataset-fixes-before-kg-build/results/bacterial_compound_identity_gaps.json`
+and `.../bacterial_compound_identity_gaps.csv`
+
+### What the gap actually is
+
+Every dataset in `torchcell/knowledge_graphs/conf/kg_bacteria.yaml` (57) was scanned
+against the pinned table
+(`_TABLE_SHA256 = 5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921`).
+
+| quantity | measured |
+|---|---|
+| datasets scanned | 57 |
+| compound references read | 77,536 |
+| distinct labels that DO resolve | 127 |
+| distinct labels with a typed InChIKey gap | **276** |
+| of those, name-only (no identifier at all) | 275 |
+| of those, that would RENAME a served node if a row were added | **0** |
+
+The scan reads each store's `processed/interned` env, which holds every deduplicated
+environment and reference, so one cheap pass covers every medium component, dosed small
+molecule, solvent, physical-factor agent and media dropout however many records carry
+them. Records are read only for the stores whose PHENOTYPE can hold a compound of its own
+(`ProductTiterPhenotype.product` is the only one) or that interned nothing, which is what
+keeps the pass off the multi-gigabyte stores. Two consecutive runs agree exactly on 276
+and 77,536; the numbers are a snapshot of the dev tree, which is shared across worktrees,
+so a concurrent rebuild moves them (an earlier run on this branch read 303 and 78,100).
+
+**The 0 renames is the load-bearing number.** The hazard the issue's own comment records
+is that a compound row is not additive: adding IPTG once changed what
+`resolved_compound("IPTG").name` returns and so renamed the IPTG node of already-served
+Foo 2014 records. Measured here, none of the 276 gap labels resolves to a row today, so
+none of them can be renamed by a row that did not exist; what a row changes is only
+whether the node carries an InChIKey. A `canonical` directive per label keeps it that way,
+which is the precedent `bacterial_media.txt` set ("media.py owns the bench spelling").
+
+### The 276 split three ways, and only one of them wants a PubChem row
+
+This triage is by label text and is a grouping aid for the pass, not a measurement; each
+assignment stays a curation decision.
+
+| proposed family | labels | what it wants |
+|---|---|---|
+| `single_substance_candidate` | **198** | a `canonical` row, with `query=` where PubChem's name index needs another spelling |
+| `environment_placeholder` | **61** | NO row ever: these are `Compound` objects naming a whole growth environment the release did not carry (every one is `growth environment of putidaPRECISE321 condition '...'`, from Lim 2022) |
+| `undefined_or_proprietary_preparation` | **17** | `undefined=` or `proprietary=`: medium bases (`LB base, PRECISE-1K formulation`, `Davis Minimal medium salts (Lenski 1991 formulation)`, `M9 salts (Difco)`), trace-element stocks (`sauer trace element mixture`, `trace metal solution (Teknova T1001)`), an amino-acid mix (`20AA_mix`), and vendor products (`Durasyn 164`, `SM buffer (Teknova)`) |
+
+The 198 concentrate in the two largest condition panels: Borchert 2024 (63 labels), Price
+2018 (56), Lamoureux PRECISE-1K (23 plus 17 on its public-K12 arm) and Tong 2020 (18).
+`kanamycin` alone appears in 9 stores and `yeast extract` and `tryptone` in 19 and 17,
+which is why a single row moves many datasets at once.
+
+### The pinene row Niu 2019 needs (#799)
+
+Re-measured against the pinned table: **no spelling of pinene has a row.** `pinene`,
+`alpha-pinene`, `alpha-Pinene`, `(-)-alpha-pinene` and `(+)-alpha-pinene` all return
+`UNRESOLVED_PUBLIC` with a null InChIKey, exactly as #726's comment recorded. The
+recommended input line stays the one that comment proposes,
+
+```
+alpha-pinene | canonical
+pinene
+```
+
+with `alpha-pinene` canonical because this repository's notes and the bioproduction
+literature spell it that way, and bare `pinene` on its own line so Niu's own label reaches
+the same node IF PubChem's name index answers both with one CID. Whether it does is NOT
+measured (the lookup needs the network), so that collapse is a hypothesis until the run.
+The paper never states the enantiomer, so the unspecified parent rather than (+) or (-) is
+the record to take.
+
+### Why the run itself did not happen today: a measured PubChem IP block
+
+The pass requires re-querying PubChem for every row. Measured on 2026.10.09 from
+GilaHyper: PubChem answers **HTTP 429 with an HTML body** to every request, including
+trivial ones (`water`, `glucose`, `ethanol`), from any User-Agent and with no
+`Retry-After` and no `X-Throttling-Control` header. The block is IP-based: a
+browser-like User-Agent, no User-Agent, and IPv6 all behave the same, and it outlasted
+over an hour of retries at one request per 1.2 s and a 20-minute backoff. So the table was
+NOT regenerated and `_TABLE_SHA256` is unchanged; a partially built table is not committed,
+because a missing row and an unqueried row are different claims.
+
+Two things were fixed so the run is possible when the block lifts (details in
+[[torchcell.datamodels.compound_identity_curate]]): the client now treats a 429 as the
+throttle it is, on its own patient schedule, instead of raising `JSONDecodeError` on an
+HTML body, and `--min-interval` lets a long pass run slower than the published 5
+requests/second ceiling. The exact command to resume, which reuses a response cache so an
+interrupted pass costs time rather than progress, is in the module docstring.
+
+### A separate finding: five bacterial dev stores cannot be read by current code
+
+The scan found five stores whose interned pickles name schema classes that no longer
+exist, so no current reader can load them:
+
+| dataset | missing class |
+|---|---|
+| `ProteinTurnoverGupta2024Dataset` | `Censoring` |
+| `IsoprenolTiterDeSiqueira2025Dataset` | `BacterialVariantType` |
+| `CrispriArrayYunus2026Dataset` | `FoldChangeScale` |
+| `CrispriKnockdownYunus2026Dataset` | `FoldChangeScale` |
+| `CrispriDifferentialProteomeYunus2026Dataset` | `FoldChangeScale` |
+
+All five must be rebuilt before KG 4.0. **Four of the five are invisible to the staleness
+gate**: `python -m torchcell.database.build_dataset_lmdb --list-stale --include-private`
+names `CrispriDifferentialProteomeYunus2026Dataset` but not the other four, because the
+gate fingerprints the schema CLOSURE and a class that has been deleted outright is not in
+any closure to compare. A store that cannot be unpickled is the strongest possible
+staleness signal and the gate does not see it.

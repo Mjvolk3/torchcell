@@ -47,7 +47,7 @@ ARMS = {
 # The Q split gets its own saved view: Q and R are different questions and are never
 # compared in one panel. Pinned after the first save_as_new_view().
 Q_VIEW_NAME = "030 query-pair-disjoint: closure with the token"
-Q_VIEW_ID: str | None = None
+Q_VIEW_ID: str | None = "211lmgu8i9w"
 
 
 def _split_of(run: wandb.apis.public.Run) -> str:

@@ -203,13 +203,18 @@ def test_the_proposed_rel606_pattern_is_disjoint_from_every_deposited_namespace(
 # --------------------------------------------------------------------------- #
 # Retrieval records
 # --------------------------------------------------------------------------- #
-def test_the_si_tables_are_pmc_bucket_objects_s2_to_s5() -> None:
+def test_the_si_tables_are_pmc_bucket_objects_s2_to_s6() -> None:
+    """Tables S1 to S5, i.e. PMC objects ``-s2`` to ``-s6``: the SI numbers the tables
+    one behind the bucket's objects. ``-s6`` (Table S5, the doubling times) joined the
+    mirror in the #776 revision, which is why the list is five and not four.
+    """
     specs = c.si_table_specs()
     assert [s.relpath for s in specs] == [
         "data/srep45303-s2.csv",
         "data/srep45303-s3.csv",
         "data/srep45303-s4.csv",
         "data/srep45303-s5.csv",
+        "data/srep45303-s6.csv",
     ]
     first = specs[0].retrieval
     assert first.retriever == "torchcell.literature.retrieve.pmc_cloud_object"
@@ -273,6 +278,10 @@ def _stage(root: Path) -> dict[str, bytes]:
         "data/srep45303-s3.csv": b",MURI_016\nECB_00001,4.6\nECB_00002,8.6\n",
         "data/srep45303-s4.csv": b",MURI_016\nYP_1.1,0.9\nYP_2.1,8.2\n",
         "data/srep45303-s5.csv": b'"","Branch"\n"1","OAA from PEP"\n',
+        "data/srep45303-s6.csv": (
+            b"name,replicate,doubling.time.minutes,doubling.time.minutes.95m,"
+            b"doubling.time.minutes.95p,r.squared\nGlucose.tab,1,53.2,49.1,59.2,0.98\n"
+        ),
         "ncbi_protein/yp_batch_00.gp": _genpept(
             [("YP_1.1", ["ECB_00001"]), ("YP_2.1", ["ECB_00009"])]
         ).encode(),
@@ -325,7 +334,7 @@ def test_deposit_raw_mirror_copies_every_file_and_writes_an_exact_manifest(
     assert [
         (f["path"], f["bytes"], f["sha256"], f["role"]) for f in manifest["files"]
     ] == [(rel, len(data), _sha(data), "raw_data") for rel, data in files.items()]
-    batch = manifest["files"][4]["retrieval"]
+    batch = manifest["files"][5]["retrieval"]
     assert batch["method"] == "direct_url"
     assert batch["params"] == {
         "url": c.EFETCH + "?db=protein&rettype=gp&retmode=text&id=YP_1.1,YP_2.1"
@@ -427,11 +436,12 @@ def test_retrieve_raw_files_runs_each_recorded_retriever_and_checks_its_pin(
     monkeypatch.setattr(c, "run_retriever", fake_retriever)
     staging = c.retrieve_raw_files(tmp_path / "staging")
     assert calls == list(by_url)
+    assert len(calls) == 6  # five SI tables, then the one GenPept batch
     for rel, data in files.items():
         assert (staging / rel).read_bytes() == data
 
     c.retrieve_raw_files(tmp_path / "staging")
-    assert len(calls) == 5  # every staged file already holds its pin
+    assert len(calls) == 6  # every staged file already holds its pin
 
     monkeypatch.setattr(c, "run_retriever", lambda record: b"upstream changed")
     (staging / "data" / "srep45303-s2.csv").unlink()
@@ -1004,6 +1014,10 @@ def _synthetic_mirror(staging: Path) -> dict[str, bytes]:
         "data/srep45303-s3.csv": (staging / "s2.csv").read_bytes(),
         "data/srep45303-s4.csv": (staging / "s3.csv").read_bytes(),
         "data/srep45303-s5.csv": b'"","Branch"\n"1","OAA from PEP"\n',
+        "data/srep45303-s6.csv": (
+            b"name,replicate,doubling.time.minutes,doubling.time.minutes.95m,"
+            b"doubling.time.minutes.95p,r.squared\nGlucose.tab,1,53.2,49.1,59.2,0.98\n"
+        ),
         "ncbi_protein/yp_batch_00.gp": _genpept(
             [(p, [g]) for p, g in zip(PROTEINS, GENES, strict=True)]
         ).encode(),
@@ -1454,14 +1468,25 @@ def test_every_sourced_value_is_backed_by_a_verbatim_quote_in_the_mirror() -> No
 
 @pytest.mark.data
 @_ON_DISK
-def test_the_raw_mirror_holds_exactly_the_pinned_files() -> None:
+def test_the_raw_mirror_holds_every_pinned_file_intact() -> None:
+    """Every file this module pins is in the manifest at its pin and on disk at its pin.
+
+    CONTAINMENT, not whole-mirror equality: one citation key's raw mirror is written by
+    several loaders (``deposit_si_table``), and a table a sibling module deposited for a
+    phenotype this module does not build is a legitimate extension, not drift. What
+    would be drift is a pinned record missing, or present with other bytes, and that is
+    what this asserts. The manifest's own order is checked for the pinned files only.
+    """
     root = c.raw_mirror_dir(str(_data_root()))
     manifest = c.load_manifest(str(_data_root()))
     specs = c.raw_file_specs(c.read_table_ids(root / c.si_table_relpath("S3")))
-    assert len(specs) == 46
-    assert [(r.path, r.sha256) for r in manifest.files] == [
-        (s.relpath, s.sha256) for s in specs
+    assert len(specs) == 47
+    recorded = {r.path: r.sha256 for r in manifest.files}
+    assert {s.relpath: s.sha256 for s in specs}.items() <= recorded.items()
+    pinned_order = [
+        r.path for r in manifest.files if r.path in {s.relpath for s in specs}
     ]
+    assert pinned_order == [s.relpath for s in specs]
     for spec in specs:
         assert sha256_file(root / spec.relpath) == spec.sha256
 

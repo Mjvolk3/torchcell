@@ -59,6 +59,7 @@ datasets:
   - GeneInteractionButland2008Dataset
   - RnaseqCaglar2017Dataset
   - ProteomeCaglar2017Dataset
+  - DoublingTimeCaglar2017Dataset
   - GrowthRateCampos2018Dataset
   - GrowthRateChoe2019Dataset
   - TranscriptionFactorKnockoutChoe2019Dataset

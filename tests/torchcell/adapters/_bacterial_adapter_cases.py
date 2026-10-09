@@ -67,6 +67,7 @@ from torchcell.adapters import (
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
     CrispriScreenRousset2018Adapter,
+    DoublingTimeCaglar2017Adapter,
     EnvChemgenGirgis2009Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
@@ -123,6 +124,9 @@ from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Datas
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteomeCaglar2017Dataset,
     RnaseqCaglar2017Dataset,
+)
+from torchcell.datasets.ecoli.caglar2017_doubling_time import (
+    DoublingTimeCaglar2017Dataset,
 )
 from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
 from torchcell.datasets.ecoli.choe2019_growth_rate import (
@@ -310,6 +314,14 @@ BACTERIAL: list[Bacterial] = [
         "proteome_caglar2017",
         ProteomeCaglar2017Dataset,
         PROTEOME,
+        perturbation=False,
+    ),
+    _case(
+        DoublingTimeCaglar2017Adapter,
+        "caglar2017_doubling_time",
+        "doubling_time_caglar2017",
+        DoublingTimeCaglar2017Dataset,
+        RESPONSE,
         perturbation=False,
     ),
     _case(

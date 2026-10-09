@@ -25,6 +25,9 @@ from .butland2008_adapter import (
 from .cachera2023_adapter import (
     BetaxanthinCachera2023Adapter as BetaxanthinCachera2023Adapter,
 )
+from .caglar2017_doubling_time_adapter import (
+    DoublingTimeCaglar2017Adapter as DoublingTimeCaglar2017Adapter,
+)
 from .caglar2017_proteome_adapter import (
     ProteomeCaglar2017Adapter as ProteomeCaglar2017Adapter,
 )
@@ -349,6 +352,7 @@ ecoli_adapters = [
     "GeneInteractionButland2008Adapter",
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",
+    "DoublingTimeCaglar2017Adapter",
     "CrispriChemgenChoe2025Adapter",
     "CrispriKnockdownCui2018Adapter",
     "GrowthRateCampos2018Adapter",

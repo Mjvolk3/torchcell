@@ -201,6 +201,10 @@ SI1_MD_SHA256 = "1b7b8ed0f8b21c1909568f8a05d6a92d99bffaf851aa474a3a8673ebc2da4bd
 PMC_ARTICLE = "PMC5394689.1"
 #: The date the raw-mirror bytes were produced by the recorded retrievers.
 RAW_RETRIEVED_AT = "2026-10-07"
+#: Per-table retrieval date, where it is not ``RAW_RETRIEVED_AT``. Table S5 was fetched
+#: for the doubling-time loader, which the first deposit did not need
+#: (``deposit_si_table``), so its record carries its OWN date.
+TABLE_RETRIEVED_AT: dict[str, str] = {"S5": "2026-10-09"}
 
 _OCR_METHOD = "MinerU OCR of the publisher PDF (torchcell-library mirror)"
 
@@ -865,6 +869,17 @@ SI_TABLES: dict[str, tuple[str, str, str]] = {
         "Supplementary Table S4 (tableS4_fluxData.csv): mean and SDE of 13 branch flux "
         "ratios per salt, concentration and phase",
     ),
+    # Added 2026-10-09 for the doubling-time loader (#776), which is a REVISION of
+    # this mirror: the file the paper's SI lists, fetched by the recorded retriever,
+    # its bytes identical to the library mirror's own si/si6.csv pin. The four tables
+    # above are untouched, so `deposit_raw_mirror` extends the manifest additively.
+    "S5": (
+        "srep45303-s6.csv",
+        "76411accacbdc28310622cc15289b65ad44937bdc915051bbcfc8c4da1b04c60",
+        "Supplementary Table S5: doubling time in exponential phase, one row per "
+        "biological replicate growth curve (55 rows over 19 conditions), each with its "
+        "own 95% confidence interval and the r^2 of the linear fit to OD600",
+    ),
 }
 
 #: NCBI E-utilities batch size for the YP_ protein records (GET, one URL per batch).
@@ -950,13 +965,13 @@ def _si_table_spec(table: str) -> RawFileSpec:
             retriever="torchcell.literature.retrieve.pmc_cloud_object",
             params={"key": key},
             sha256=sha,
-            retrieved_at=RAW_RETRIEVED_AT,
+            retrieved_at=TABLE_RETRIEVED_AT.get(table, RAW_RETRIEVED_AT),
         ),
     )
 
 
 def si_table_specs() -> list[RawFileSpec]:
-    """The four supplementary tables, in table order."""
+    """The supplementary tables the loaders read, in table order (S1 to S5)."""
     return [_si_table_spec(table) for table in SI_TABLES]
 
 
@@ -1094,6 +1109,11 @@ def deposit_raw_mirror(*, source_dir: str | Path, data_root: str | None = None) 
     pinned bytes is left alone, and one holding other bytes raises rather than being
     overwritten. An existing ``manifest.json`` whose file records equal the new ones is
     left untouched (its ``created_at`` is the first deposit's); one that differs raises.
+
+    This is the FROM-SCRATCH deposit: it writes a manifest of exactly the files it
+    knows, so it refuses a mirror another of this citation key's loaders extended. A
+    REVISION that adds one table to an existing mirror goes through
+    ``deposit_si_table``.
     """
     source = Path(source_dir)
     root = raw_mirror_dir(data_root)
@@ -1124,6 +1144,63 @@ def deposit_raw_mirror(*, source_dir: str | Path, data_root: str | None = None) 
         manifest.created_at = datetime.now(UTC).isoformat()
         path.write_text(manifest.model_dump_json(indent=2))
     return root
+
+
+def deposit_si_table(
+    table: str, *, source_dir: str | Path, data_root: str | None = None
+) -> Path:
+    """Add ONE supplementary table to an already-deposited raw mirror, additively.
+
+    The revision path of the provenance principle: a loader that needs a table the first
+    deposit did not fetch retrieves it with its own recorded retriever, verifies its
+    pin, and APPENDS its record to ``manifest.json`` with every earlier record left
+    byte-identical and the first deposit's ``created_at`` kept. It is not
+    ``deposit_raw_mirror``, which writes a manifest of exactly the files it knows: this
+    citation key's mirror is written by several loaders, so a whole-mirror equality
+    check would read another loader's deposit as drift. A record already present with
+    other content, and a mirror file already holding other bytes, both raise.
+    """
+    source = Path(source_dir)
+    root = raw_mirror_dir(data_root)
+    spec = _si_table_spec(table)
+    staged = source / spec.relpath
+    got = sha256_file(staged)
+    if got != spec.sha256:
+        raise RuntimeError(f"{staged}: sha256 {got}, pinned {spec.sha256}")
+    dest = root / spec.relpath
+    if dest.exists() and sha256_file(dest) != spec.sha256:
+        raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+    path = root / "manifest.json"
+    if not path.exists():
+        raise RuntimeError(f"{path} does not exist; run the full deposit first")
+    manifest = Manifest.model_validate_json(path.read_text())
+    record = ArtifactRecord(
+        path=spec.relpath,
+        role=ROLE_RAW_DATA,
+        bytes=staged.stat().st_size,
+        sha256=spec.sha256,
+        source=spec.retrieval.source_url,
+        retrieval=spec.retrieval,
+    )
+    prior = {existing.path: existing for existing in manifest.files}
+    if spec.relpath in prior:
+        if prior[spec.relpath].model_dump() != record.model_dump():
+            raise RuntimeError(
+                f"{path} records {spec.relpath} differently; refusing to overwrite"
+            )
+    else:
+        tables = [
+            index
+            for index, existing in enumerate(manifest.files)
+            if existing.path.startswith("data/")
+        ]
+        at = tables[-1] + 1 if tables else len(manifest.files)
+        manifest.files.insert(at, record)
+        path.write_text(manifest.model_dump_json(indent=2))
+    if not dest.exists():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(staged, dest)
+    return dest
 
 
 def load_manifest(data_root: str | None = None) -> Manifest:

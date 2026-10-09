@@ -32,6 +32,11 @@ sourcing layer.
 - ``caglar2017`` -- ``ProteomeCaglar2017Dataset`` and ``RnaseqCaglar2017Dataset``: the
   REL606 multi-omic growth panel, which became loadable once the *E. coli* B assembly
   set joined the tier (this module began as the provenance record of that blocker).
+- ``caglar2017_doubling_time`` -- ``DoublingTimeCaglar2017Dataset``: the same paper's
+  Table S5, 55 absolute doubling times, one per released biological-replicate growth
+  curve. A separate module so the served RNA-seq and proteome stores' schema closure
+  does not move; the dataset is what the environment-response phenotype's interval
+  carrier, replicate id and absolute-reference branch were added for (#776).
 - ``campos2018`` -- ``GrowthRateCampos2018Dataset``: the imaged Keio collection. Its
   released phenotype is 26 features of ONE medium (19 morphological, 2 growth, 5 cell
   cycle), of which only the Gompertz maximal growth rate has a phenotype class, served
@@ -150,6 +155,9 @@ from .butland2008 import (
 )
 from .caglar2017 import ProteomeCaglar2017Dataset as ProteomeCaglar2017Dataset
 from .caglar2017 import RnaseqCaglar2017Dataset as RnaseqCaglar2017Dataset
+from .caglar2017_doubling_time import (
+    DoublingTimeCaglar2017Dataset as DoublingTimeCaglar2017Dataset,
+)
 from .campos2018 import GrowthRateCampos2018Dataset as GrowthRateCampos2018Dataset
 from .choe2019_growth_rate import GrowthRateChoe2019Dataset as GrowthRateChoe2019Dataset
 from .choe2019_growth_rate import (

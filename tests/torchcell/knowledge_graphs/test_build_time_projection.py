@@ -489,6 +489,7 @@ BACTERIAL_DATASETS = {
     "CrispriKnockdownCui2018Dataset",
     "CrispriKnockdownYunus2026Dataset",
     "CrispriScreenRousset2018Dataset",
+    "DoublingTimeCaglar2017Dataset",
     "EnvChemgenGirgis2009Dataset",
     "EnvChemgenShiver2016Dataset",
     "EnvChemgenWang2015Dataset",
@@ -544,10 +545,10 @@ yet."""
 def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     """Every pair here is a (dataset, adapter) pair of ``dataset_adapter_map``.
 
-    Finding: the projection covers 33 of the 108 datasets in ``dataset_adapter_map``.
-    The 75 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
+    Finding: the projection covers 33 of the 109 datasets in ``dataset_adapter_map``.
+    The 76 absent ones (``ADAPTER_TO_DATASET``, build_time_projection.py:81-115) include
     the six EnvChemgen chemogenomic sets, both Hillenmeyer 2008 sets, the Nadal-Ribelles
-    Perturb-seq set and the 57 bacterial datasets mapped in plan.bacteria-ontology-genome
+    Perturb-seq set and the 58 bacterial datasets mapped in plan.bacteria-ontology-genome
     step 9 and after, so a projection of a build that serves them omits their
     generation time
     entirely (``calibrate`` would raise ``KeyError`` on a timing file that lists them).
@@ -558,7 +559,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
 
     inverse = {a.__name__: d.__name__ for d, a in dataset_adapter_map.items()}
     assert {a: inverse[a] for a in ADAPTER_TO_DATASET} == ADAPTER_TO_DATASET
-    assert len(dataset_adapter_map) == 108
+    assert len(dataset_adapter_map) == 109
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",

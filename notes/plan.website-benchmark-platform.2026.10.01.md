@@ -672,3 +672,36 @@ page, then `tc-bench submit` with `TC_BENCH_URL` and `TC_BENCH_TOKEN`. That path
 blocked on the CILogon client registration (see the 2026.10.07 section); it has not
 been exercised end to end against CILogon itself.
 
+## 2026.10.09 - Data scope, datasets as a table, board polish, GitHub ingestion design
+
+Raised by the project owner: fold the provenance block on the board; say how a
+submission moves from provisional to verified; the datasets page as a flat list will
+not scale past a handful; the public-labels caution read as a warning about a defect;
+establish the baseline on gene essentiality; and distinguish transductive from
+inductive methods, with external data documented and marked rather than rejected.
+
+- **Data scope.** `SubmissionMetadata.data_scope` (`split_only`, `torchcell_db`,
+  `external`) with `data_description` required beyond `split_only`, replacing the
+  external-data boolean. The rule, on the training-protocol page: measurements are
+  data, encoders (protein and nucleotide models, species-aware FUDT, one-hot, random),
+  mechanistic simulators and the reference genome are not; a transductive method
+  (other TorchCell records as input) and an external-data method stay on the board,
+  marked, and readers compare like with like; undeclared data found later means
+  withdrawal. The board shows the scope as a chip; rows from before the field show
+  "undeclared" (`LeaderboardRow.data_scope` is None). The baseline lookup is
+  `torchcell_db`: it reads Costanzo single-mutant fitness.
+- **Datasets.** `benchmark/datasets/` is now an index with a table read from `/datasets`
+  at page load (DatasetsTable) and one page per dataset; gene essentiality's page holds
+  its provenance table, label rule, counts and baseline. The caution is a note that
+  explains why verification exists. Adding a dataset: a bundle plus a page.
+- **Board.** Provenance folds into a `details` block. Markers: fill is status (open
+  provisional, filled verified), shape is author (circle submission, diamond baseline).
+  Status page: a maintainer reproduces from the recorded commit and marks verified
+  through the admin route; a reproduction step in the library is planned.
+- **GitHub ingestion** page carries the planned flow (issue form, account matched
+  through the GitHub sign-in, LLM step proposes and the author confirms, action
+  submits with a per-account credential, same issue carries verification) and what is
+  not decided. Nothing of it is built.
+- Baseline re-uploaded with the scope declared (previous row withdrawn with a note);
+  test AUROC 0.9363 unchanged. 216 tests pass; ruff, mypy, tsc clean; staging rebuilt.
+

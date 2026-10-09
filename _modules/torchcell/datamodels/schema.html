@@ -4840,7 +4840,16 @@
 <div class="viewcode-block" id="GeneInteractionPhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GeneInteractionPhenotype.html#torchcell.datamodels.schema.GeneInteractionPhenotype">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneInteractionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Phenotype holding a gene interaction score and its p-value."""</span>
+<span class="w">    </span><span class="sd">"""Phenotype holding a gene interaction score, its p-value and its replicate design.</span>
+
+<span class="sd">    ``gene_interaction_p_value`` is a TEST of the score (the only p-value field in the</span>
+<span class="sd">    schema); ``n_samples`` + ``sample_unit`` + ``gene_interaction_uncertainty`` + its</span>
+<span class="sd">    type are the replicate/dispersion quartet the other quantitative phenotypes carry</span>
+<span class="sd">    (#793), so a sourced replicate design (Babu 2014's eight colonies per pair) is on</span>
+<span class="sd">    the record rather than beside the build. The two absences read differently and are</span>
+<span class="sd">    meant to: a gapped p-value is "the source tested the SET, not the pair", a gapped</span>
+<span class="sd">    ``n_samples`` is "the source states no replicate design".</span>
+<span class="sd">    """</span>
 
     <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"hyperedge"</span>
     <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"gene_interaction"</span>
@@ -4861,6 +4870,43 @@
         <span class="s2">"measurement."</span><span class="p">,</span>
     <span class="p">)</span>
 
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#793): the replicate-design quartet every other quantitative</span>
+    <span class="c1"># phenotype carries (FitnessPhenotype, EnvironmentResponsePhenotype,</span>
+    <span class="c1"># MetabolitePhenotype, ProteinAbundancePhenotype). Nothing above changes.</span>
+    <span class="c1"># No derived SE field is added: `label_statistic_name` stays</span>
+    <span class="c1"># `gene_interaction_p_value`, because an interaction score's released</span>
+    <span class="c1"># statistic is a test of the score, not a dispersion of it.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"number of independent replicate measurements averaged into this "</span>
+        <span class="s2">"interaction score (Babu 2014: eight colonies per gene pair, exactly, from two "</span>
+        <span class="s2">"replicate screens x four biological replicate recipient colonies; Butland 2008: "</span>
+        <span class="s2">"counted off its own raw colony sheet per record, 4 to 182). None when the "</span>
+        <span class="s2">"source does not state a replicate design, which is then a typed ProvenanceGap."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is (`colony` for a pinned colony "</span>
+        <span class="s2">"array, `screen` when the independent unit is the screen rather than the "</span>
+        <span class="s2">"colony). Required alongside n_samples for a dispersion that divides by n."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">gene_interaction_uncertainty</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"source-reported uncertainty of the interaction score, verbatim; "</span>
+        <span class="s2">"its meaning is given by gene_interaction_uncertainty_type."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">gene_interaction_uncertainty_type</span><span class="p">:</span> <span class="n">UncertaintyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what gene_interaction_uncertainty IS (sample_sd, standard_error, "</span>
+        <span class="s2">"bootstrap_se, variance, ci95), so it converts to an SE correctly. Both or "</span>
+        <span class="s2">"neither: an unlabelled dispersion is not ingested."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (#793)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+
 <div class="viewcode-block" id="GeneInteractionPhenotype.validate_fitness">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GeneInteractionPhenotype.html#torchcell.datamodels.schema.GeneInteractionPhenotype.validate_fitness">[docs]</a>
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"gene_interaction"</span><span class="p">)</span>
@@ -4869,8 +4915,43 @@
         <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"Gene interaction cannot be NaN"</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
-</div>
 
+
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#793): the same two invariants the other phenotypes enforce.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+<div class="viewcode-block" id="GeneInteractionPhenotype.validate_n_samples">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.GeneInteractionPhenotype.html#torchcell.datamodels.schema.GeneInteractionPhenotype.validate_n_samples">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"n_samples"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_n_samples</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""n_samples is a positive integer or None."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples must be a positive integer or None, got: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
+
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_uncertainty</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GeneInteractionPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A reported dispersion is labelled, and one that divides by n states its n."""</span>
+        <span class="n">unc</span><span class="p">,</span> <span class="n">typ</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gene_interaction_uncertainty</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">unc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="n">typ</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"gene_interaction_uncertainty and its type must both be set or both be "</span>
+                <span class="s2">"None (no unlabelled uncertainty)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">typ</span> <span class="ow">in</span> <span class="p">(</span><span class="n">UncertaintyType</span><span class="o">.</span><span class="n">sample_sd</span><span class="p">,</span> <span class="n">UncertaintyType</span><span class="o">.</span><span class="n">variance</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples and sample_unit are required for </span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (#793)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="CalMorphPhenotype">
@@ -6113,6 +6194,29 @@
     <span class="p">{</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">categorical</span><span class="p">,</span> <span class="n">MeasurementType</span><span class="o">.</span><span class="n">ordinal</span><span class="p">}</span>
 <span class="p">)</span>
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># ABSOLUTE environment-response readouts (#776). ADDITIVE: a name for the</span>
+<span class="c1"># measurement types that are a quantity on the assay's own scale rather than a</span>
+<span class="c1"># response relative to a control, so the verifier's reference rule can be relaxed</span>
+<span class="c1"># for exactly those and refuse to be relaxed for anything else.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: Measurement types whose number is an ABSOLUTE quantity in the assay's own units, so</span>
+<span class="c1">#: the record's reference states the reference condition's own measured value and NOT a</span>
+<span class="c1">#: centered 0. A relative readout (``log2_ratio``, ``z_score``, ``sensitivity_score``,</span>
+<span class="c1">#: ``differential_fitness``, ``control_regression_residual``, ``relative_growth_rate``)</span>
+<span class="c1">#: is 0 at the control by construction and is deliberately absent: the</span>
+<span class="c1">#: ``reference_centered=False`` branch of the environment-response verifier requires</span>
+<span class="c1">#: every record's type to be a member here, which is what keeps the relief from being a</span>
+<span class="c1">#: blanket relaxation. ``colony_size`` is here because Bloom 2019's two control-plate</span>
+<span class="c1">#: conditions release the raw colony radius; ``growth_rate`` because Caglar 2017 Table S5</span>
+<span class="c1">#: releases a doubling time in minutes.</span>
+<span class="n">ABSOLUTE_MEASUREMENT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">MeasurementType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">growth_rate</span><span class="p">,</span> <span class="n">MeasurementType</span><span class="o">.</span><span class="n">colony_size</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end ABSOLUTE environment-response readouts (#776)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
 
 <div class="viewcode-block" id="EnvironmentResponsePhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype">[docs]</a>
@@ -6206,6 +6310,52 @@
         <span class="s2">"(compound, dose) alone, so the screen id is what keeps one strain x one "</span>
         <span class="s2">"condition L1-unique instead of silently merging independent measurements."</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#776): a two-sided confidence-interval carrier, and the</span>
+    <span class="c1"># per-replicate identifier a source that releases one row per replicate</span>
+    <span class="c1"># curve needs. Nothing above this block changes.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">environment_response_lower</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the SOURCE's lower confidence limit of the response, verbatim, at "</span>
+        <span class="s2">"`confidence_level`. The counterpart of FluxPhenotype.net_flux_lower: a "</span>
+        <span class="s2">"two-sided bound is not a single number, so naming one side as THE statistic "</span>
+        <span class="s2">"(feeding a half-width to UncertaintyType.ci95) would misreport it. Caglar 2017 "</span>
+        <span class="s2">"Table S5's interval is asymmetric in 55 of 55 rows (upper-to-lower half-width "</span>
+        <span class="s2">"ratio median 1.3187), which is what makes a half-width field unusable for it."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">environment_response_upper</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the SOURCE's upper confidence limit of the response, verbatim, at "</span>
+        <span class="s2">"`confidence_level`. Deliberately NOT validated to lie above "</span>
+        <span class="s2">"`environment_response`: a limit carried through a nonlinear transform can come "</span>
+        <span class="s2">"out below the value or negative (Caglar 2017 Table S5 Glycerol replicate 1 "</span>
+        <span class="s2">"releases 95p = -1027.769034, the image under DT = log_e 2 / slope of a slope "</span>
+        <span class="s2">"interval that straddles zero), and repairing or dropping it would substitute "</span>
+        <span class="s2">"our arithmetic for the released bytes. The environment-response verifier's L2 "</span>
+        <span class="s2">"`interval_orientation` rule counts such rows against a DECLARED oracle, so the "</span>
+        <span class="s2">"count is measured and a regression in it fails the gate."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">confidence_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the level the two limits are stated at, as a fraction (0.95 for a "</span>
+        <span class="s2">"95</span><span class="si">% i</span><span class="s2">nterval). Required whenever either limit is set -- an unlabeled interval "</span>
+        <span class="s2">"is the state the typed uncertainty axis exists to prevent."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">replicate_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own identifier for ONE replicate measurement of a "</span>
+        <span class="s2">"(strain, condition), when the release is per replicate rather than an "</span>
+        <span class="s2">"aggregate (Caglar 2017 Table S5's `replicate` column: one row per biological "</span>
+        <span class="s2">"replicate growth curve, each with its own interval and r^2). It joins the L1 "</span>
+        <span class="s2">"uniqueness key, so independently released replicate curves stay distinct "</span>
+        <span class="s2">"records instead of colliding as duplicates and nothing has to be aggregated "</span>
+        <span class="s2">"into a mean the source never released. None when the source releases one "</span>
+        <span class="s2">"aggregated measurement per (strain, condition), which is every other dataset."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (#776)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="EnvironmentResponsePhenotype.validate_response">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype.validate_response">[docs]</a>
@@ -6278,6 +6428,31 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples and sample_unit are required for </span><span class="si">{</span><span class="n">typ</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ADDITIVE (#776): the interval invariant. Finite limits, and a level</span>
+        <span class="c1"># whenever either limit is set. The limits are NOT required to bracket</span>
+        <span class="c1"># the value -- see environment_response_upper's description.</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"environment_response_lower"</span><span class="p">,</span> <span class="s2">"environment_response_upper"</span><span class="p">):</span>
+            <span class="n">limit</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">limit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">limit</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be finite, got </span><span class="si">{</span><span class="n">limit</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">has_limit</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">environment_response_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">has_limit</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"confidence_level is required when a confidence limit is stored "</span>
+                <span class="s2">"(an interval with no stated level is unlabelled)"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"confidence_level is a fraction in (0, 1), got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># end ADDITIVE (#776)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 

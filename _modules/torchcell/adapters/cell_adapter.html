@@ -1628,6 +1628,20 @@
             <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
             <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
             <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
+            <span class="c1"># #793: the replicate-design quartet, so a sourced eight-colony design is</span>
+            <span class="c1"># queryable from the graph instead of living beside the build.</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"gene_interaction_uncertainty"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty</span><span class="p">,</span>
+            <span class="s2">"gene_interaction_uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">str</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
         <span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
@@ -1750,6 +1764,13 @@
             <span class="s2">"category"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">category</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">if</span> <span class="n">category</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="s2">"category_label"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">category_label</span><span class="p">,</span>
             <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
+            <span class="c1"># #776: both limits of the released confidence interval plus its level</span>
+            <span class="c1"># (an asymmetric interval has no half-width), and the replicate id of a</span>
+            <span class="c1"># per-replicate release.</span>
+            <span class="s2">"environment_response_lower"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">environment_response_lower</span><span class="p">,</span>
+            <span class="s2">"environment_response_upper"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">environment_response_upper</span><span class="p">,</span>
+            <span class="s2">"confidence_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">confidence_level</span><span class="p">,</span>
+            <span class="s2">"replicate_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">replicate_id</span><span class="p">,</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>
@@ -1844,6 +1865,20 @@
                 <span class="s2">"gene_interaction"</span><span class="p">:</span> <span class="n">gene_interaction</span><span class="p">,</span>
                 <span class="s2">"gene_interaction_p_value"</span><span class="p">:</span> <span class="n">gene_interaction_p_value</span><span class="p">,</span>
                 <span class="s2">"screen_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">screen_id</span><span class="p">,</span>
+                <span class="c1"># #793: the replicate-design quartet, so a sourced eight-colony design is</span>
+                <span class="c1"># queryable from the graph instead of living beside the build.</span>
+                <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+                <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
+                <span class="s2">"gene_interaction_uncertainty"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty</span><span class="p">,</span>
+                <span class="s2">"gene_interaction_uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="nb">str</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">gene_interaction_uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="k">else</span> <span class="kc">None</span>
+                <span class="p">),</span>
             <span class="p">}</span>
 
             <span class="n">node</span> <span class="o">=</span> <span class="n">BioCypherNode</span><span class="p">(</span>

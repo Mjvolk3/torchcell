@@ -2299,6 +2299,17 @@ def _verify_carruthers_titer(dataset_root: str, data_root: str) -> VerificationR
     return carruthers2025.verify_build(dataset_root, data_root, family="titer")
 
 
+def _verify_carruthers_campaign_proteome(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Carruthers 2025 campaign proteome: the shared protein gate plus its own three."""
+    from torchcell.datasets.pputida import carruthers2025
+
+    return carruthers2025.verify_build(
+        dataset_root, data_root, family="campaign_proteome"
+    )
+
+
 def _verify_carruthers_proteome(
     dataset_root: str, data_root: str
 ) -> VerificationReport:
@@ -2427,6 +2438,10 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
     "proteome_banerjee2025": {
         "root": "data/torchcell/proteome_banerjee2025",
         "verify": _verify_banerjee_proteome,
+    },
+    "campaign_proteome_carruthers2025": {
+        "root": "data/torchcell/campaign_proteome_carruthers2025",
+        "verify": _verify_carruthers_campaign_proteome,
     },
     "proteome_carruthers2025": {
         "root": "data/torchcell/proteome_carruthers2025",

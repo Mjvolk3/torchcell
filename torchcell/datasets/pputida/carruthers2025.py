@@ -144,7 +144,7 @@ from typing import Any, ClassVar, Literal
 
 import openpyxl
 import pandas as pd
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -195,9 +195,12 @@ from torchcell.datasets.bacteria_common import (
     assembly_reference,
     bacterial_genome,
     reconcile_locus_tags,
+    resolve_uniprot_accessions,
+    uniprot_locus_crosswalk,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
+    ROLE_RAW_DATA,
     ROLE_SI_DATA,
     ArtifactRecord,
     Manifest,
@@ -269,6 +272,70 @@ PRIDE_ACCESSIONS: dict[str, str] = {
     "DBTL6": "PXD063746",
 }
 DRYAD_DOI = "10.5061/dryad.gtht76hzh"
+#: The Dryad deposit, retrieved BY HAND on 2026-10-09 (issue #739) because
+#: ``datadryad.org`` serves an Anubis JavaScript proof-of-work challenge to scripts.
+#: These three files are the campaign proteome: the per-culture Top3 matrix that
+#: :class:`CampaignProteomeCarruthers2025Dataset` reads, its per-culture metadata, and
+#: the README whose column descriptions are the authority for what one number IS.
+DRYAD_DIR_REL = "data/dryad"
+DRYAD_VERSION = "v20250820"
+DRYAD_ZIP_FILENAME = "doi_10_5061_dryad_gtht76hzh__v20250820.zip"
+DRYAD_ZIP_SHA256 = "0c9e4feda2a0d15ebf481080f9dc2dccfaaa45238afe3f6a18f96ab7018468c0"
+DRYAD_TOP3_FILENAME = (
+    "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data.csv"
+)
+DRYAD_TOP3_SHA256 = "3e9d75e573a3d09147ba99f114652ba41632c043fffc0b03f044e25a2e34c580"
+DRYAD_METADATA_FILENAME = "CRISPRi_automation_Pputida_proteomic_metadata.csv"
+DRYAD_METADATA_SHA256 = (
+    "46bc06ca545e727ce18f194487ce0e7086b759faba7815e44015b3fa9da560c8"
+)
+DRYAD_README_FILENAME = "README.md"
+DRYAD_README_SHA256 = "817bd5e0d349effe718acf792b339de42138985aa0c14a2246d0da8784547578"
+DRYAD_TOP3_REL = f"{DRYAD_DIR_REL}/{DRYAD_TOP3_FILENAME}"
+DRYAD_METADATA_REL = f"{DRYAD_DIR_REL}/{DRYAD_METADATA_FILENAME}"
+DRYAD_README_REL = f"{DRYAD_DIR_REL}/{DRYAD_README_FILENAME}"
+DRYAD_ZIP_REL = f"{DRYAD_DIR_REL}/{DRYAD_ZIP_FILENAME}"
+DRYAD_RETRIEVED_AT = "2026-10-09"
+#: The manual recipe, verbatim from the deposit's own ``DEPOSIT.md``, recorded as the
+#: ``retrieval_command`` of every Dryad file's ``manual_browser`` retrieval record. It
+#: is what a rebuild re-runs by hand before verifying the four sha256 digests above.
+DRYAD_MANUAL_RECIPE = (
+    "open https://doi.org/10.5061/dryad.gtht76hzh in a browser, solve the challenge, "
+    'click "Download dataset", save the zip unchanged, then unzip it into this '
+    "directory beside the zip."
+)
+#: Who produced those bytes and how, verbatim from ``DEPOSIT.md``.
+DRYAD_RETRIEVED_BY = "the owner (mjvolk3), browser download"
+DRYAD_DEPOSIT_NOTE = (
+    "retrieval_method: manual_browser (datadryad.org serves an Anubis JavaScript "
+    "proof-of-work challenge to scripts; measured 2026-10-07, issue #739). files: the "
+    "arrival zip plus its three members, listed with sha256 in SHA256SUMS.txt. The zip "
+    "is the bytes that arrived; the members are what loaders read."
+)
+#: The Dryad columns this loader keys on and the one it reads the measurement from.
+DRYAD_KEY_COLUMNS: tuple[str, ...] = (
+    "DBTL_Cycle",
+    "Line_name",
+    "Line",
+    "Replicate",
+    "Isoprenol_titer",
+    "Isoprenol_titer_units",
+)
+#: The released titer unit of the Dryad table's own ``Isoprenol_titer_units`` column,
+#: asserted to be the only value in it.
+DRYAD_TITER_UNIT = "mg/L"
+#: What one campaign-proteome number is: a PERCENT of the proteome, not the panel's raw
+#: Top3 signal, so the two proteome families can never be silently pooled.
+CAMPAIGN_MEASUREMENT_TYPE = "dia_nn_top3_percent_of_proteome_mean"
+#: One record per ``(construct, DBTL cycle)`` strain of the campaign, the same identity
+#: the titer family keys on.
+EXPECTED_CAMPAIGN_PROTEOME_RECORDS = 465
+#: The per-cycle control proteome references, DBTL0 to DBTL6.
+EXPECTED_CAMPAIGN_REFERENCES = 7
+#: Accessions of the Dryad matrix reaching exactly one KT2440 locus through the GOA
+#: proteome crosswalk: 1,842 of 2,187, measured 2026-10-09. The floor sits just below
+#: it; the 345 that do not are listed in ``preprocess/dropped_accessions.csv``.
+CAMPAIGN_MIN_RESOLVED_FRACTION = 0.84
 
 #: Source Data sheets this module reads.
 SHEET_TITER = "Figure 4b"
@@ -314,7 +381,7 @@ LOCUS_TAG_RE = re.compile(r"PP_\d{4}")
 REPLICATE_RE = re.compile(r"^(?P<base>.+)-R(?P<replicate>\d+)$")
 
 #: The two dataset families this release serves, one per experiment class.
-Family = Literal["titer", "proteome"]
+Family = Literal["titer", "proteome", "campaign_proteome"]
 #: The product every titer record measures, as the compound layer canonicalizes it.
 PRODUCT_NAME = "isoprenol"
 #: One record per ``(construct, DBTL cycle)`` strain of ``Figure 4b``.
@@ -471,6 +538,32 @@ def _source_data(
             citation_key=CITATION_KEY,
             sha256=SOURCE_DATA_SHA256,
             method="published Source Data workbook (raw mirror)",
+            page=page,
+        ),
+    )
+
+
+def _dryad_readme(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
+    """Bind a value to a verbatim sentence of the deposited Dryad ``README.md``.
+
+    The README is the only released statement of what a campaign-proteome cell IS, and
+    it is a manually retrieved artifact, so the provenance names the manual recipe as
+    its method rather than claiming a scripted retrieval.
+    """
+    return SourcedValue(
+        value=value,
+        quote=quote,
+        note=note,
+        provenance=Provenance(
+            source_uri=DRYAD_README_REL,
+            citation_key=CITATION_KEY,
+            sha256=DRYAD_README_SHA256,
+            method=(
+                f"Dryad {DRYAD_DOI} {DRYAD_VERSION} README, retrieved by hand "
+                f"({DRYAD_MANUAL_RECIPE})"
+            ),
             page=page,
         ),
     )
@@ -679,6 +772,91 @@ _Q_SI_FIG15 = (
     "the highest expressed followed by mvaE. MvaS was typically the lowest expression "
     "protein in the pathway. Owing to its toxicity, expression of dCas9 was kept "
     "comparatively low. Error bars represent standard deviation."
+)
+
+# --- the deposited Dryad campaign proteome -----------------------------------
+CAMPAIGN_TOP3 = _dryad_readme(
+    CAMPAIGN_MEASUREMENT_TYPE,
+    "All other table values: (float): Percentage of the proteome for the specific "
+    "protein as calculated by the Top3 peptide absolute protein quantification method "
+    "as detailed in Ahrne et al. 2013 (DOI:10.1002/pmic.201300135), consisting of the "
+    "average signal response of the three most intense tryptic peptides for each "
+    "protein. When the protein is not detected or is detected with fewer than three "
+    "peptides the field is left blank (nan).",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
+        ".csv"
+    ),
+    note="what one stored abundance IS: the mean, over the strain-cycle's replicates, "
+    "of the released per-replicate PERCENT of the proteome. The panel family's "
+    f"{PROTEOME_MEASUREMENT_TYPE} is the raw Top3 signal of a different sheet, so the "
+    "two are different measurement_types and never pooled",
+)
+CAMPAIGN_BLANK_IS_ABSENT = _dryad_readme(
+    "not_detected_or_fewer_than_three_peptides",
+    "When the protein is not detected or is detected with fewer than three peptides "
+    "the field is left blank (nan).",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
+        ".csv"
+    ),
+    note="the sourced rule for the blank cells: a blank is an ABSENT measurement, not "
+    "a zero, so a blank replicate is excluded from that protein's mean and from its "
+    "n_replicates, and a protein blank in every replicate of a strain-cycle carries no "
+    "key in that record. A released 0 is a different cell and is kept verbatim",
+)
+CAMPAIGN_ACCESSION_KEYS = _dryad_readme(
+    "uniprot_accession",
+    "All other column headers: Uniprot accession IDs",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
+        ".csv"
+    ),
+    note="why this family needs a UniProt-accession crosswalk where the panel family "
+    "needs reconcile_locus_tags: the campaign matrix is keyed by ACCESSION and the "
+    "panel sheet by gene symbol / locus tag",
+)
+CAMPAIGN_TITER_IN_MG_PER_L = _dryad_readme(
+    DRYAD_TITER_UNIT,
+    "The file also contains the isoprenol titer measured in mg/L for each line.",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
+        ".csv"
+    ),
+    note="the Dryad table restates the Source Data's titer per CULTURE; it is read "
+    "only as the cross-source oracle of the titer family and is never stored twice",
+)
+CAMPAIGN_LINE_COLUMN_RULE = _dryad_readme(
+    "Line_name",
+    "Line: (str) The line name with the replicate ID removed",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_data"
+        ".csv"
+    ),
+    note="MEASURED DEVIATION FROM THIS SENTENCE, which is why the strain key is "
+    "derived from Line_name and not from Line: in DBTL6 every Line cell carries a "
+    "PRT1093_ prefix that its Line_name does not (177 non-control and 12 control rows, "
+    "measured 2026-10-09), so Line is not Line_name minus the replicate id there. "
+    "PRT1093 appears in no mirrored byte of this paper, so it is recorded and not "
+    "typed as a perturbation",
+)
+CAMPAIGN_GENE_LIST_IS_THE_LINE = _dryad_readme(
+    "Line",
+    "Genes_targeted_for_CRISPRi:(str)A list of genes targeted for CRISPR interference "
+    "(CRISPRi) for each line in the experiment.",
+    page=(
+        "README, 'Files and variables', "
+        "CRISPRi_automation_Pputida_proteomic_metadata.csv"
+    ),
+    note="measured on the pinned bytes, the column is not a list but the Line cell "
+    "verbatim (1,407 of 1,407 non-control rows, and the 12 DBTL6 control rows); it is "
+    "blank for the 78 control rows of DBTL0-5. It is asserted against Line and carries "
+    "nothing the construct name does not",
 )
 
 CHASSIS_GENOTYPE = _paper(
@@ -1082,6 +1260,64 @@ def pmc_cloud_key(filename: str) -> str:
     return f"{PMC_PREFIX}/{filename}"
 
 
+#: ``(relpath, role, sha256)`` of the four files the owner deposited by hand. The zip
+#: is the bytes that ARRIVED and the three members are what loaders read, so all four
+#: are recorded: a rebuild re-runs the recipe, gets the zip, and verifies every member.
+DRYAD_DEPOSITS: tuple[tuple[str, str, str], ...] = (
+    (DRYAD_ZIP_REL, ROLE_RAW_DATA, DRYAD_ZIP_SHA256),
+    (DRYAD_TOP3_REL, ROLE_RAW_DATA, DRYAD_TOP3_SHA256),
+    (DRYAD_METADATA_REL, ROLE_RAW_DATA, DRYAD_METADATA_SHA256),
+    (DRYAD_README_REL, ROLE_SI_DATA, DRYAD_README_SHA256),
+)
+
+
+def dryad_artifact_records(root: Path) -> list[ArtifactRecord]:
+    """The four manual-deposit records, verified in place under ``root``.
+
+    The owner retrieved these bytes in a browser and deposited them, so this function
+    never copies or fetches: it asserts each file is present with its pinned sha256 and
+    describes it. An absent or altered file raises WITH the manual recipe, which is the
+    only way to produce it again.
+    """
+    records: list[ArtifactRecord] = []
+    for relpath, role, expected in DRYAD_DEPOSITS:
+        path = root / relpath
+        if not path.exists():
+            raise RuntimeError(
+                f"{path} is missing; the Dryad campaign proteome is a manual deposit. "
+                f"MANUAL RECIPE: {DRYAD_MANUAL_RECIPE}"
+            )
+        verify_sha256(path, expected)
+        records.append(
+            ArtifactRecord(
+                path=relpath,
+                role=role,
+                bytes=path.stat().st_size,
+                sha256=expected,
+                source=f"https://doi.org/{DRYAD_DOI}",
+                retrieval=RetrievalRecord(
+                    method=RetrievalMethod.manual_browser,
+                    source_url=f"https://doi.org/{DRYAD_DOI}",
+                    retriever="manual",
+                    params={
+                        "retrieval_command": DRYAD_MANUAL_RECIPE,
+                        "dataset": (
+                            f"Dryad {DRYAD_DOI}, version of 2025-08-20 (the Dryad "
+                            f"download is named `{DRYAD_ZIP_FILENAME}`)"
+                        ),
+                        "retrieved_by": DRYAD_RETRIEVED_BY,
+                        "deposit_note": DRYAD_DEPOSIT_NOTE,
+                        "deposit_record": f"{DRYAD_DIR_REL}/DEPOSIT.md",
+                        "checksums": f"{DRYAD_DIR_REL}/SHA256SUMS.txt",
+                    },
+                    sha256=expected,
+                    retrieved_at=DRYAD_RETRIEVED_AT,
+                ),
+            )
+        )
+    return records
+
+
 def deposit_raw_mirror(
     *,
     source_data_path: str | Path,
@@ -1132,6 +1368,7 @@ def deposit_raw_mirror(
                 ),
             )
         )
+    files.extend(dryad_artifact_records(root))
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=DOI,
@@ -1160,17 +1397,18 @@ def deposit_raw_mirror(
             "pIY670's part composition from the torchcell-library mirror",
             "the CRISPRi sgRNA SPACER sequences were never released; Supplementary "
             "Data 2's PP_*_gRNA entries are the Cpf1 knockout guides",
-            f"Dryad {DRYAD_DOI} -- the processed campaign proteomics "
-            "(CRISPRi_automation_Pputida_proteomic_Top3_peptide_quantification_method_"
-            "data.csv, 29,700,365 B; CRISPRi_automation_Pputida_proteomic_metadata.csv, "
-            "333,287 B; README.md, 5,768 B). NOT deposited: datadryad.org serves an "
-            "Anubis JavaScript proof-of-work challenge, measured 2026-10-07 "
-            "(/downloads/file_stream/<id> returns the challenge page with HTTP 200, "
+            f"Dryad {DRYAD_DOI} {DRYAD_VERSION} -- the processed campaign proteomics "
+            f"({DRYAD_TOP3_FILENAME}, 29,700,365 B; {DRYAD_METADATA_FILENAME}, 333,287 "
+            f"B; {DRYAD_README_FILENAME}, 5,768 B). DEPOSITED "
+            f"{DRYAD_RETRIEVED_AT} by hand under {DRYAD_DIR_REL}/, with the arrival "
+            f"zip beside them, because datadryad.org serves an Anubis JavaScript "
+            "proof-of-work challenge to scripts (measured 2026-10-07: "
+            "/downloads/file_stream/<id> returns the challenge page with HTTP 200, "
             "/api/v2/files/<id>/download returns HTTP 401 'must have current bearer "
-            f"token'). MANUAL RECIPE: open https://doi.org/{DRYAD_DOI} in a browser, "
-            "solve the challenge, use 'Download dataset', then deposit the three files "
-            "under data/dryad/ with RetrievalMethod.manual_browser and the sha256 of "
-            "the bytes that arrive",
+            f"token'). MANUAL RECIPE, re-run on rebuild: {DRYAD_MANUAL_RECIPE} The "
+            "Top3 matrix and the metadata are what "
+            "CampaignProteomeCarruthers2025Dataset consumes; the README is the "
+            "authority for what one cell is",
             "the seven PRIDE projects "
             + ", ".join(f"{cycle} {acc}" for cycle, acc in PRIDE_ACCESSIONS.items())
             + " -- raw DIA mass-spectrometry files, enumerated above and not "
@@ -1666,6 +1904,191 @@ def read_proteome_rows(path: str) -> list[ProteomeRow]:
     ]
 
 
+# --- the deposited Dryad campaign proteome ------------------------------------
+class CampaignCulture(BaseModel):
+    """One released culture of the campaign proteome: its identity and its titer.
+
+    ``construct_name`` and ``replicate`` come from ``Line_name``, which the titer
+    family also keys on, NOT from ``Line``: measured on the pinned bytes, ``Line``
+    carries a ``PRT1093_`` prefix in DBTL6 that ``Line_name`` does not
+    (:data:`CAMPAIGN_LINE_COLUMN_RULE`).
+    """
+
+    cycle: int
+    construct_name: str
+    replicate: int
+    line_cell: str = Field(description="the 'Line' cell, verbatim")
+    is_control: bool
+    titer_mg_per_l: float
+
+
+class CampaignProteome(BaseModel):
+    """The deposited campaign proteome: its cultures, accessions and cells."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    accessions: tuple[str, ...] = Field(
+        description="the UniProt accession column headers, in released order"
+    )
+    cultures: tuple[CampaignCulture, ...]
+    #: ``(culture index, accession) -> released percent-of-proteome``. Blank cells are
+    #: ABSENT from this map by :data:`CAMPAIGN_BLANK_IS_ABSENT`; a released 0 is in it.
+    cells: dict[tuple[int, str], float]
+    blank_cells: int
+    zero_cells: int
+
+
+def read_campaign_proteome(path: str) -> CampaignProteome:
+    """Read the deposited Top3 matrix: every culture, every accession, every cell.
+
+    Refuses a header whose six leading columns are not :data:`DRYAD_KEY_COLUMNS`, a
+    titer unit column holding anything but :data:`DRYAD_TITER_UNIT`, a ``Line_name``
+    with no ``-R<n>`` suffix, and a repeated ``(cycle, Line_name)`` identity.
+    """
+    frame = pd.read_csv(path)
+    header = tuple(str(column) for column in frame.columns)
+    if header[: len(DRYAD_KEY_COLUMNS)] != DRYAD_KEY_COLUMNS:
+        raise RuntimeError(
+            f"{osp.basename(path)} leads with {header[:6]!r}, not {DRYAD_KEY_COLUMNS!r}"
+        )
+    units = set(frame["Isoprenol_titer_units"].astype(str))
+    if units != {DRYAD_TITER_UNIT}:
+        raise RuntimeError(
+            f"{osp.basename(path)} states titer units {sorted(units)!r}; "
+            f"{CAMPAIGN_TITER_IN_MG_PER_L.quote!r} says {DRYAD_TITER_UNIT}"
+        )
+    accessions = header[len(DRYAD_KEY_COLUMNS) :]
+    cultures: list[CampaignCulture] = []
+    seen: set[tuple[int, str, int]] = set()
+    for cycle, line_name, line_cell in zip(
+        frame["DBTL_Cycle"], frame["Line_name"], frame["Line"], strict=True
+    ):
+        match = REPLICATE_RE.match(str(line_name))
+        if match is None:
+            raise RuntimeError(f"Line_name {line_name!r} has no -R<n> replicate suffix")
+        construct = match.group("base")
+        replicate = int(match.group("replicate"))
+        identity = (int(cycle), construct, replicate)
+        if identity in seen:
+            raise RuntimeError(f"{identity} appears twice in {osp.basename(path)}")
+        seen.add(identity)
+        cultures.append(
+            CampaignCulture(
+                cycle=int(cycle),
+                construct_name=construct,
+                replicate=replicate,
+                line_cell=str(line_cell),
+                is_control=construct.startswith(KO_ARRAY_CONTROL_LINE),
+                titer_mg_per_l=0.0,
+            )
+        )
+    titers = frame["Isoprenol_titer"].astype(float).tolist()
+    cultures = [
+        culture.model_copy(update={"titer_mg_per_l": float(titer)})
+        for culture, titer in zip(cultures, titers, strict=True)
+    ]
+    block = frame[list(accessions)]
+    values = block.to_numpy(dtype=float, na_value=math.nan)
+    cells: dict[tuple[int, str], float] = {}
+    blank = 0
+    zero = 0
+    for row_index in range(values.shape[0]):
+        row = values[row_index]
+        for column_index, accession in enumerate(accessions):
+            value = float(row[column_index])
+            if math.isnan(value):
+                blank += 1
+                continue
+            if value == 0.0:
+                zero += 1
+            cells[(row_index, accession)] = value
+    return CampaignProteome(
+        accessions=accessions,
+        cultures=tuple(cultures),
+        cells=cells,
+        blank_cells=blank,
+        zero_cells=zero,
+    )
+
+
+class CampaignMetadataRow(BaseModel):
+    """One row of the deposited per-culture metadata CSV, as the loader reads it."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    cycle: int
+    line_name: str
+    line_cell: str
+    genes_targeted: str | None = Field(
+        description="the 'Genes_targeted_for_CRISPRi' cell, or None when it is blank"
+    )
+    values: dict[str, str] = Field(
+        description="the environment columns, as strings, verbatim"
+    )
+
+
+#: The metadata columns this loader asserts the shared environment against, and the
+#: value each must carry in every row. Every one is the same in all 1,497 rows
+#: (measured 2026-10-09), which is what makes the file a cross-source oracle for
+#: :func:`production_environment` rather than a per-culture variable.
+CAMPAIGN_ENVIRONMENT_COLUMNS: dict[str, str] = {
+    "Culture_volume": "1.5",
+    "Culture_format": "48-well BioLector flower plate",
+    "Growth_temperature_Celsius": "24",
+    "Shaking_speed_rpm": "1000",
+    "Media": "M9-NREL",
+    "Carbon_source": "Glucose",
+    "Carbon_source_concentration": "20",
+    "Carbon_source_concentration_units": "g/L",
+    "Inducer": "L-arabinose",
+    "Inducer_concentration": "2",
+    "Inducer_concentration_units": "g/L",
+    "Induction_time_point": "8",
+    "Induction_time_point_units": "hr",
+    "Assay_type": "Proteomics, Isoprenol_titer",
+    "Assay_time_point": "48",
+    "Assay_time_point_units": "hr",
+    "Organism": "Pseudomonas putida KT2440",
+    "Strain_ID": "IY1449b",
+}
+
+
+def read_campaign_metadata(path: str) -> list[CampaignMetadataRow]:
+    """Read the deposited per-culture metadata CSV.
+
+    The file is UTF-8 with a BOM, so its first header cell is read by position rather
+    than by name; every other column is read by name and a missing one refuses.
+    """
+    frame = pd.read_csv(path)
+    frame = frame.rename(columns={frame.columns[0]: "DBTL_Cycle"})
+    missing = sorted(
+        set(CAMPAIGN_ENVIRONMENT_COLUMNS)
+        | {"DBTL_Cycle", "Line_name", "Line", "Genes_targeted_for_CRISPRi"}
+        - set(frame.columns)
+    )
+    absent = [column for column in missing if column not in frame.columns]
+    if absent:
+        raise RuntimeError(f"{osp.basename(path)} has no columns {absent}")
+    rows: list[CampaignMetadataRow] = []
+    for record in frame.to_dict("records"):
+        gene_cell = record["Genes_targeted_for_CRISPRi"]
+        rows.append(
+            CampaignMetadataRow(
+                cycle=int(record["DBTL_Cycle"]),
+                line_name=str(record["Line_name"]),
+                line_cell=str(record["Line"]),
+                genes_targeted=(
+                    None if gene_cell is None or pd.isna(gene_cell) else str(gene_cell)
+                ),
+                values={
+                    column: str(record[column])
+                    for column in CAMPAIGN_ENVIRONMENT_COLUMNS
+                },
+            )
+        )
+    return rows
+
+
 class KoPanelRow(BaseModel):
     """One released culture of ``Figure 6a``: a KO background, an arm and a titer."""
 
@@ -1908,7 +2331,7 @@ class DropRule(BaseModel):
     """One retention rule, what it removed, and the items it removed."""
 
     rule: str
-    scope: Literal["culture", "strain", "protein_key"]
+    scope: Literal["culture", "strain", "protein_key", "protein_accession"]
     description: str
     n_records: int
     items: list[str] = []
@@ -3547,6 +3970,679 @@ class ProteomeCarruthers2025Dataset(ExperimentDataset):
 
 
 # --------------------------------------------------------------------------- #
+# Family 3: the deposited Dryad campaign proteome, paired to the 465 titer records
+# --------------------------------------------------------------------------- #
+class CampaignAggregate(BaseModel):
+    """One strain-cycle's aggregated profile, before it becomes a phenotype."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    abundance: dict[str, float]
+    se: dict[str, float]
+    n_replicates: dict[str, int]
+    cultures: int = Field(description="cultures the strain-cycle has in the matrix")
+
+
+def aggregate_campaign_profile(
+    proteome: CampaignProteome,
+    row_indices: Sequence[int],
+    locus_of: Mapping[str, str],
+    *,
+    label: str,
+) -> CampaignAggregate:
+    """Mean, SE and replicate count per locus over one strain-cycle's cultures.
+
+    A blank cell is an ABSENT measurement (:data:`CAMPAIGN_BLANK_IS_ABSENT`), so it is
+    excluded from the protein's mean and from its ``n_replicates``, and a protein blank
+    in every culture of the strain-cycle carries no key at all. A released 0 is a
+    present measurement and is averaged in verbatim. The SE is ``SD / sqrt(n)`` over
+    the present values, and ``nan`` for a protein present in exactly one culture, which
+    is the same convention the panel family uses.
+    """
+    values: dict[str, list[float]] = defaultdict(list)
+    for row_index in row_indices:
+        for accession, locus in locus_of.items():
+            cell = proteome.cells.get((row_index, accession))
+            if cell is not None:
+                values[locus].append(cell)
+    if not values:
+        raise RuntimeError(f"{label}: every protein is blank in every culture")
+    abundance: dict[str, float] = {}
+    se: dict[str, float] = {}
+    n_replicates: dict[str, int] = {}
+    for locus, present in values.items():
+        n = len(present)
+        abundance[locus] = statistics.fmean(present)
+        n_replicates[locus] = n
+        se[locus] = statistics.stdev(present) / math.sqrt(n) if n > 1 else float("nan")
+    return CampaignAggregate(
+        abundance=abundance, se=se, n_replicates=n_replicates, cultures=len(row_indices)
+    )
+
+
+def assert_campaign_rows_are_percentages(proteome: CampaignProteome) -> str:
+    """Every released culture row sums to 100 within :data:`CAMPAIGN_ROW_SUM_TOL`.
+
+    The strong form of :data:`CAMPAIGN_TOP3`'s "Percentage of the proteome": a row that
+    did not sum to 100 would mean the released cells are not percentages and the whole
+    family's unit would be wrong. Checked over ALL accessions, including the ones with
+    no locus tag, because the percentage is of the whole measured proteome.
+    """
+    sums: list[float] = []
+    for row_index in range(len(proteome.cultures)):
+        sums.append(
+            sum(
+                value
+                for accession in proteome.accessions
+                if (value := proteome.cells.get((row_index, accession))) is not None
+            )
+        )
+    low, high = min(sums), max(sums)
+    if (
+        abs(low - 100.0) > CAMPAIGN_ROW_SUM_TOL
+        or abs(high - 100.0) > CAMPAIGN_ROW_SUM_TOL
+    ):
+        raise RuntimeError(
+            f"released culture rows sum to {low:.4f}-{high:.4f} over all "
+            f"{len(proteome.accessions)} accessions; {CAMPAIGN_TOP3.quote!r} says each "
+            "cell is a percentage of the proteome, so a row sums to 100 within "
+            f"{CAMPAIGN_ROW_SUM_TOL}"
+        )
+    return (
+        f"L3: all {len(sums)} released culture rows sum to {low:.4f}-{high:.4f} over "
+        f"the {len(proteome.accessions)} accessions, which is what makes the cells "
+        "percentages of the proteome"
+    )
+
+
+def assert_campaign_titers_match_source_data(
+    proteome: CampaignProteome, titer_rows: Sequence[TiterRow]
+) -> str:
+    """The Dryad matrix's titer column against the Source Data's, culture by culture.
+
+    Two independently released files of one measurement, so the join is exact and any
+    difference refuses. The Dryad file covers 1,497 of the Source Data's 1,506
+    cultures; the nine it does not are named in the returned proof.
+    """
+    source = {
+        (row.construct_name, row.cycle, row.replicate): row.titer_mg_per_l
+        for row in titer_rows
+    }
+    missing: list[tuple[str, int, int]] = []
+    worst = 0.0
+    for culture in proteome.cultures:
+        key = (culture.construct_name, culture.cycle, culture.replicate)
+        if key not in source:
+            raise RuntimeError(
+                f"{DRYAD_TOP3_FILENAME} culture {key} is in no Source Data row; the "
+                "two releases do not describe the same cultures"
+            )
+        worst = max(worst, abs(source[key] - culture.titer_mg_per_l))
+    joined = {
+        (culture.construct_name, culture.cycle, culture.replicate)
+        for culture in proteome.cultures
+    }
+    missing = sorted(key for key in source if key not in joined)
+    if worst != 0.0:
+        raise RuntimeError(
+            f"{DRYAD_TOP3_FILENAME} and {SHEET_TITER} disagree about a culture titer by "
+            f"{worst} mg/L; they are two exports of one GC-FID measurement"
+        )
+    return (
+        f"L4: the Dryad matrix's Isoprenol_titer equals {SHEET_TITER}'s titer EXACTLY "
+        f"(max |diff| 0.0 mg/L) on all {len(joined)} cultures the two share; the "
+        f"{len(missing)} Source Data cultures with no proteome row are "
+        + ", ".join(
+            f"{name}-R{replicate} (DBTL{cycle})" for name, cycle, replicate in missing
+        )
+    )
+
+
+def assert_campaign_metadata(
+    rows: Sequence[CampaignMetadataRow], proteome: CampaignProteome
+) -> list[str]:
+    """The metadata CSV against the matrix and against the shared environment.
+
+    Three independent checks, each a cross-source statement about bytes this loader did
+    not author: the metadata describes the same cultures as the matrix, its environment
+    columns carry one value each and that value is what :func:`production_environment`
+    serves, and its ``Genes_targeted_for_CRISPRi`` column is the ``Line`` cell verbatim
+    rather than a gene list (:data:`CAMPAIGN_GENE_LIST_IS_THE_LINE`).
+    """
+    metadata_cultures = Counter((row.cycle, row.line_name) for row in rows)
+    matrix_cultures = Counter(
+        (culture.cycle, f"{culture.construct_name}-R{culture.replicate}")
+        for culture in proteome.cultures
+    )
+    if metadata_cultures != matrix_cultures:
+        raise RuntimeError(
+            f"{DRYAD_METADATA_FILENAME} and {DRYAD_TOP3_FILENAME} describe different "
+            "cultures"
+        )
+    deviating = [
+        row.line_name for row in rows if row.values != CAMPAIGN_ENVIRONMENT_COLUMNS
+    ]
+    if deviating:
+        raise RuntimeError(
+            f"{DRYAD_METADATA_FILENAME} rows {deviating[:5]} carry environment values "
+            "other than the one set every row was measured to carry; the campaign's "
+            "environment is no longer a constant and production_environment() cannot "
+            "stand for it"
+        )
+    environment = production_environment()
+    culture_format = environment.culture_format
+    if culture_format is None:
+        raise RuntimeError("production_environment() carries no culture_format")
+    expected = {
+        "Growth_temperature_Celsius": environment.temperature.value,
+        "Culture_volume": culture_format.working_volume_ul / 1000.0,
+        "Shaking_speed_rpm": culture_format.shaking_rpm,
+        "Assay_time_point": environment.duration_hours,
+        "Inducer_concentration": float(INDUCER_G_PER_L.value),
+    }
+    for column, served in expected.items():
+        released = float(CAMPAIGN_ENVIRONMENT_COLUMNS[column])
+        if served is None or float(served) != released:
+            raise RuntimeError(
+                f"{DRYAD_METADATA_FILENAME} states {column}={released}, the served "
+                f"environment {served}"
+            )
+    if CAMPAIGN_ENVIRONMENT_COLUMNS["Culture_format"] != str(
+        CULTURE_FORMAT.value["vessel"]
+    ):
+        raise RuntimeError(
+            f"{DRYAD_METADATA_FILENAME} states the vessel "
+            f"{CAMPAIGN_ENVIRONMENT_COLUMNS['Culture_format']!r}, the Methods "
+            f"{CULTURE_FORMAT.value['vessel']!r}"
+        )
+    gene_list_rows = 0
+    for row in rows:
+        if row.genes_targeted is None:
+            if not row.line_name.startswith(KO_ARRAY_CONTROL_LINE):
+                raise RuntimeError(
+                    f"{DRYAD_METADATA_FILENAME} leaves Genes_targeted_for_CRISPRi blank "
+                    f"for the non-control culture {row.line_name!r}"
+                )
+            continue
+        if row.genes_targeted != row.line_cell:
+            raise RuntimeError(
+                f"{DRYAD_METADATA_FILENAME} row {row.line_name!r}: "
+                f"Genes_targeted_for_CRISPRi {row.genes_targeted!r} is not its Line "
+                f"cell {row.line_cell!r}"
+            )
+        gene_list_rows += 1
+    prefixed = sorted(
+        {
+            culture.cycle
+            for culture in proteome.cultures
+            if culture.line_cell != f"{culture.construct_name}"
+        }
+    )
+    return [
+        f"L4: {DRYAD_METADATA_FILENAME} describes the same {len(rows)} cultures as "
+        f"{DRYAD_TOP3_FILENAME}, and every one of its "
+        f"{len(CAMPAIGN_ENVIRONMENT_COLUMNS)} environment columns carries one value in "
+        "all of them; the five numeric ones equal what production_environment() serves "
+        "(24 C, 1.5 mL, 1000 rpm, 48 h, 2 g/L L-arabinose) and the vessel string equals "
+        "the Methods'",
+        f"L4: Genes_targeted_for_CRISPRi is the Line cell verbatim in {gene_list_rows} "
+        f"of {len(rows)} rows and blank in the other "
+        f"{len(rows) - gene_list_rows}, all of them controls; it is therefore not a "
+        "gene list and nothing is read from it",
+        f"L1: the Line cell differs from the Line_name construct in DBTL{prefixed} "
+        f"only, by the PRT1093_ prefix ({CAMPAIGN_LINE_COLUMN_RULE.note})",
+    ]
+
+
+def assert_campaign_accession_crosswalk(
+    proteome: CampaignProteome,
+    resolution: Any,
+    panel_rows: Sequence[ProteomeRow],
+    panel_locus_of: Mapping[str, str],
+) -> list[str]:
+    """The GOA accession crosswalk against the paper's own accession -> symbol route.
+
+    The panel sheet carries both an accession (``Protein.Group``) and a gene key
+    (``Protein``) for 1,503 accessions, so for every accession both files know, there
+    are two independent routes to a locus. Measured 2026-10-09 on the pinned bytes:
+    1,225 of the campaign's accessions take both routes and 1,222 agree. The three that
+    do not are kept as a finding and the GOA route is the one used, because each
+    disagreement is a SYMBOL collision on the paper's route: the GOA file states the
+    accession's own locus tags in its synonym column, while the panel route goes through
+    a title-cased gene symbol that this assembly can carry at another locus.
+    """
+    panel_route: dict[str, str] = {}
+    for row in panel_rows:
+        locus = panel_locus_of.get(row.protein)
+        if locus is not None:
+            panel_route.setdefault(row.accession, locus)
+    shared = sorted(set(resolution.resolved) & set(panel_route))
+    disagreements = {
+        accession: (resolution.resolved[accession], panel_route[accession])
+        for accession in shared
+        if resolution.resolved[accession] != panel_route[accession]
+    }
+    if len(shared) - len(disagreements) < len(shared) * 0.99:
+        raise RuntimeError(
+            f"the GOA crosswalk and {SHEET_PROTEOME}'s symbol route disagree on "
+            f"{len(disagreements)} of {len(shared)} shared accessions; more than 1% "
+            "means one of the two sources is not the file this loader was written "
+            f"against: {sorted(disagreements)[:10]}"
+        )
+    return [
+        f"L4: of the {len(shared)} accessions the Dryad matrix and {SHEET_PROTEOME} "
+        f"both key, {len(shared) - len(disagreements)} reach the same locus by the GOA "
+        f"crosswalk and by the sheet's own accession -> symbol route; the "
+        f"{len(disagreements)} that do not are "
+        + "; ".join(
+            f"{accession} (GOA {goa}, sheet {sheet})"
+            for accession, (goa, sheet) in sorted(disagreements.items())
+        ),
+        "L1: the GOA route is the stored one. Each disagreement above is a symbol "
+        "collision on the sheet's route, not a GOA defect: the GOA synonym column "
+        "states the accession's own locus tags, so Q88G93 (CSRA_PSEPK) is PP_3832 and "
+        "Q88L01 (FADA_PSEPK) is PP_2137, while the symbols csrA and fadA reach another "
+        "locus of this assembly. Q877U6 carries BOTH PP_1157 and PP_3365 in the GOA "
+        "file, so it names two genes and is dropped rather than keyed to either",
+    ]
+
+
+@register_dataset
+class CampaignProteomeCarruthers2025Dataset(ExperimentDataset):
+    """Carruthers 2025 campaign proteome: one record per CRISPRi strain-cycle.
+
+    The paired feature set of :class:`IsoprenolTiterCarruthers2025Dataset`. Its 465
+    records carry the SAME ``(construct, DBTL cycle)`` identity as the 465 titer
+    records, so a proteome-conditioned baseline on the target dataset joins the two on
+    the genotype. It reads the Dryad deposit of issue #739, not the Source Data: the
+    Source Data's only abundance matrix is the 19-sample off-target panel that
+    :class:`ProteomeCarruthers2025Dataset` serves, which is a different experiment on a
+    different background and a different scale.
+    """
+
+    REFERENCE_STRAIN: ClassVar[Literal["KT2440"]] = "KT2440"
+    #: 1,842 of 2,187 released accessions (0.8422) reach exactly one KT2440 locus
+    #: through the GOA proteome crosswalk, measured 2026-10-09. The 345 that do not are
+    #: the heterologous, marker and contaminant proteins the DIA-NN search database was
+    #: built to include plus the host proteins UniProt-GOA carries no locus tag for;
+    #: every one is listed in ``preprocess/dropped_accessions.csv``.
+    MIN_RESOLVED_FRACTION: ClassVar[float] = CAMPAIGN_MIN_RESOLVED_FRACTION
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/campaign_proteome_carruthers2025",
+        io_workers: int = 0,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; the KT2440 genome resolves accessions and guide-target tags."""
+        self.pputida_genome = pputida_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialProteinAbundanceExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinAbundanceExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The Dryad matrix, its metadata, the README, and the Source Data workbook.
+
+        The Source Data is here because two of this build's cross-source assertions
+        read it: the titer column of the Dryad matrix is checked against ``Figure 4b``
+        and the accession crosswalk against ``Supplementary Figure 13abc``.
+        """
+        return [
+            DRYAD_TOP3_FILENAME,
+            DRYAD_METADATA_FILENAME,
+            DRYAD_README_FILENAME,
+            SOURCE_DATA_FILENAME,
+        ]
+
+    def download(self) -> None:
+        """Link the Dryad deposit and the Source Data into ``raw/`` after pin checks."""
+        _link_mirror_files(
+            self.raw_dir,
+            (
+                (DRYAD_TOP3_REL, DRYAD_TOP3_FILENAME, DRYAD_TOP3_SHA256),
+                (DRYAD_METADATA_REL, DRYAD_METADATA_FILENAME, DRYAD_METADATA_SHA256),
+                (DRYAD_README_REL, DRYAD_README_FILENAME, DRYAD_README_SHA256),
+                (SOURCE_DATA_REL, SOURCE_DATA_FILENAME, SOURCE_DATA_SHA256),
+            ),
+        )
+        log.info(
+            "Carruthers 2025 campaign proteome linked into %s from the manual Dryad "
+            "deposit",
+            self.raw_dir,
+        )
+
+    def _genome(self) -> PPutidaKT2440Genome:
+        """The injected KT2440 genome, or one opened from the genomes tier."""
+        if self.pputida_genome is None:
+            self.pputida_genome = bacterial_genome("pputida", self.REFERENCE_STRAIN)
+        return self.pputida_genome
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per CRISPRi strain-cycle, referenced to its cycle's control."""
+        verify_raw_files(
+            self.raw_dir,
+            {
+                DRYAD_TOP3_FILENAME: DRYAD_TOP3_SHA256,
+                DRYAD_METADATA_FILENAME: DRYAD_METADATA_SHA256,
+                DRYAD_README_FILENAME: DRYAD_README_SHA256,
+                SOURCE_DATA_FILENAME: SOURCE_DATA_SHA256,
+            },
+        )
+        source_path = osp.join(self.raw_dir, SOURCE_DATA_FILENAME)
+        proteome = read_campaign_proteome(osp.join(self.raw_dir, DRYAD_TOP3_FILENAME))
+        metadata = read_campaign_metadata(
+            osp.join(self.raw_dir, DRYAD_METADATA_FILENAME)
+        )
+        genome = self._genome()
+
+        proofs: list[str] = [
+            assert_campaign_rows_are_percentages(proteome),
+            assert_campaign_titers_match_source_data(
+                proteome, read_titer_rows(source_path)
+            ),
+        ]
+        proofs.extend(assert_campaign_metadata(metadata, proteome))
+
+        crosswalk = uniprot_locus_crosswalk(genome)
+        resolution = resolve_uniprot_accessions(
+            crosswalk, proteome.accessions, label=self.name
+        )
+        resolution.require_resolved(self.MIN_RESOLVED_FRACTION)
+        if resolution.collisions:
+            raise RuntimeError(
+                f"{self.name}: {resolution.collisions} name one locus from several "
+                "accessions, so a stored abundance would be two proteins'"
+            )
+        panel_rows = read_proteome_rows(source_path)
+        panel_keys = sorted({row.protein for row in panel_rows})
+        panel_stored, panel_report = reconcile_locus_tags(
+            genome, pd.Series(panel_keys), label=f"{self.name}-panel-oracle"
+        )
+        panel_outside = set(panel_report.outside_namespace)
+        panel_locus_of = {
+            key: stored
+            for key, stored in zip(panel_keys, panel_stored, strict=True)
+            if key not in panel_outside
+        }
+        proofs.extend(
+            assert_campaign_accession_crosswalk(
+                proteome, resolution, panel_rows, panel_locus_of
+            )
+        )
+        locus_of = dict(resolution.resolved)
+
+        by_strain: dict[tuple[str, int], list[int]] = defaultdict(list)
+        controls: dict[int, list[int]] = defaultdict(list)
+        for row_index, culture in enumerate(proteome.cultures):
+            if culture.is_control:
+                controls[culture.cycle].append(row_index)
+            else:
+                by_strain[(culture.construct_name, culture.cycle)].append(row_index)
+        if len(by_strain) != EXPECTED_CAMPAIGN_PROTEOME_RECORDS:
+            raise RuntimeError(
+                f"the deposit groups into {len(by_strain)} strain-cycles; the titer "
+                f"family stores {EXPECTED_CAMPAIGN_PROTEOME_RECORDS}"
+            )
+        if len(controls) != EXPECTED_CAMPAIGN_REFERENCES:
+            raise RuntimeError(
+                f"the deposit carries controls for {sorted(controls)}; the campaign ran "
+                f"{EXPECTED_CAMPAIGN_REFERENCES} cycles"
+            )
+
+        tags = sorted(
+            {tag for name, _ in by_strain for tag in parse_construct(name)[0]}
+        )
+        stored, report = reconcile_locus_tags(genome, pd.Series(tags), label=self.name)
+        if report.outside_namespace:
+            raise RuntimeError(
+                f"{self.name}: guide targets outside {KT2440_NAMESPACE}: "
+                f"{report.outside_namespace}"
+            )
+        stored_by_tag = dict(zip(tags, stored, strict=True))
+        common = _standard_names(genome, stored_by_tag.values())
+
+        reference_genome = chassis_reference(genome)
+        environment = production_environment()
+        pathway = pathway_perturbations()
+        pub = publication()
+        # The per-cycle control profile, from which each record's reference is PROJECTED
+        # onto that record's own key set. The projection is not a choice: a record's key
+        # set is the proteins its own cultures detected, and the shared protein gate
+        # requires experiment and reference to be key-matched so that a per-protein
+        # ratio against the control is defined everywhere. Measured 2026-10-09, every
+        # one of the 465 records is a SUBSET of its cycle's control key set (0 records
+        # with a key the control lacks, 0 of 658,405 record-keys lost), so the
+        # projection discards nothing and invents nothing.
+        controls_profile: dict[int, CampaignAggregate] = {}
+        reference_rows: list[dict[str, Any]] = []
+        for cycle, row_indices in sorted(controls.items()):
+            aggregate = aggregate_campaign_profile(
+                proteome, row_indices, locus_of, label=f"DBTL{cycle} control"
+            )
+            controls_profile[cycle] = aggregate
+            reference_rows.append(
+                {
+                    "cycle": cycle,
+                    "control_cultures": aggregate.cultures,
+                    "n_proteins": len(aggregate.abundance),
+                }
+            )
+
+        def cycle_reference(
+            cycle: int, keys: Collection[str]
+        ) -> BacterialProteinAbundanceExperimentReference:
+            """The cycle's control profile over exactly ``keys``."""
+            control = controls_profile[cycle]
+            absent = sorted(set(keys) - set(control.abundance))
+            if absent:
+                raise RuntimeError(
+                    f"DBTL{cycle}'s control measures none of {absent[:10]}, which a "
+                    "record of that cycle does; the control cannot reference it"
+                )
+            return BacterialProteinAbundanceExperimentReference(
+                dataset_name=self.name,
+                genome_reference=reference_genome,
+                environment_reference=environment.model_copy(),
+                phenotype_reference=ProteinAbundancePhenotype(
+                    protein_abundance={k: control.abundance[k] for k in keys},
+                    protein_abundance_se={k: control.se[k] for k in keys},
+                    n_replicates={k: control.n_replicates[k] for k in keys},
+                    measurement_type=str(CAMPAIGN_TOP3.value),
+                ),
+            )
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        strain_rows: list[dict[str, Any]] = []
+        idx = 0
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for (construct, cycle), row_indices in tqdm(
+                sorted(by_strain.items()), desc="carruthers2025-campaign-proteome"
+            ):
+                aggregate = aggregate_campaign_profile(
+                    proteome, row_indices, locus_of, label=f"{construct} DBTL{cycle}"
+                )
+                tag_list, extras = parse_construct(construct)
+                experiment = BacterialProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(
+                        perturbations=[
+                            *pathway,
+                            *(
+                                crispri_perturbation(
+                                    stored_by_tag[tag], common[stored_by_tag[tag]]
+                                )
+                                for tag in tag_list
+                            ),
+                        ]
+                    ),
+                    environment=environment,
+                    phenotype=ProteinAbundancePhenotype(
+                        protein_abundance=aggregate.abundance,
+                        protein_abundance_se=aggregate.se,
+                        n_replicates=aggregate.n_replicates,
+                        measurement_type=str(CAMPAIGN_TOP3.value),
+                    ),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(
+                        experiment,
+                        cycle_reference(cycle, sorted(aggregate.abundance)),
+                        pub,
+                        itxn,
+                    ),
+                )
+                strain_rows.append(
+                    {
+                        "construct": construct,
+                        "cycle": cycle,
+                        "n_cultures": aggregate.cultures,
+                        "n_targets": len(tag_list),
+                        "non_targeting_tokens": ";".join(extras),
+                        "n_proteins": len(aggregate.abundance),
+                        "max_n_replicates": max(aggregate.n_replicates.values()),
+                    }
+                )
+                idx += 1
+        env.close()
+        interned_env.close()
+
+        pd.DataFrame(strain_rows).to_csv(
+            osp.join(self.preprocess_dir, "strain_cycles.csv"), index=False
+        )
+        pd.DataFrame(reference_rows).to_csv(
+            osp.join(self.preprocess_dir, "cycle_references.csv"), index=False
+        )
+        pd.DataFrame(
+            [
+                {"accession": accession, "reason": reason, "detail": detail}
+                for accession, reason, detail in (
+                    *(
+                        (accession, "accession_names_several_loci", ";".join(loci))
+                        for accession, loci in sorted(resolution.multi_locus.items())
+                    ),
+                    *(
+                        (accession, "no_locus_tag_in_the_goa_proteome_file", "")
+                        for accession in resolution.unmapped
+                    ),
+                )
+            ]
+        ).to_csv(osp.join(self.preprocess_dir, "dropped_accessions.csv"), index=False)
+        Path(osp.join(self.preprocess_dir, "campaign_proofs.json")).write_text(
+            json.dumps(proofs, indent=2)
+        )
+        key_sizes = Counter(row["n_proteins"] for row in strain_rows)
+        _write_accounting(
+            BuildAccounting(
+                dataset=self.name,
+                source_rows=len(proteome.cultures),
+                control_rows=sum(len(group) for group in controls.values()),
+                candidate_records=len(by_strain),
+                kept_records=idx,
+                dropped_records=0,
+                rules=[
+                    DropRule(
+                        rule="accession_has_no_locus_tag_in_the_goa_proteome_file",
+                        scope="protein_accession",
+                        description=(
+                            "the deposited matrix is keyed by UniProt accession "
+                            f"({CAMPAIGN_ACCESSION_KEYS.quote}) and the only mirrored "
+                            "statement of accession -> locus tag is the assembly set's "
+                            f"GOA proteome file {crosswalk.member} (sha256 "
+                            f"{crosswalk.sha256}), which carries no locus tag for these "
+                            "accessions. They are the heterologous pathway proteins, "
+                            "the dCas9 effector, resistance markers and proteomic "
+                            "contaminants the DIA-NN search database was built to "
+                            f"include ({_Q_DIANN_DB}), plus host proteins UniProt-GOA "
+                            "files no locus tag for; none has a gene node to key an "
+                            "abundance to"
+                        ),
+                        n_records=0,
+                        items=list(resolution.unmapped),
+                    ),
+                    DropRule(
+                        rule="accession_names_several_loci",
+                        scope="protein_accession",
+                        description=(
+                            "the GOA file gives the accession more than one locus tag, "
+                            "so one abundance column stands for two genes and cannot be "
+                            "attributed to either"
+                        ),
+                        n_records=0,
+                        items=sorted(resolution.multi_locus),
+                    ),
+                ],
+                reconciliation=report,
+                notes=[
+                    f"every one of the {EXPECTED_CAMPAIGN_PROTEOME_RECORDS} titer "
+                    "strain-cycles gains a paired feature row: the deposit's "
+                    f"{len(proteome.cultures)} cultures group into exactly the "
+                    f"{len(by_strain)} non-control (construct, cycle) identities the "
+                    "titer family stores, plus controls for all "
+                    f"{EXPECTED_CAMPAIGN_REFERENCES} cycles",
+                    "the nine Source Data cultures with no proteome row are R4-R6 of "
+                    "PP_0814_PP_4192, PP_0814_PP_4862 and PP_2137_PP_4189 in DBTL1; "
+                    "all three strain-cycles still have a record, from their R1-R3",
+                    f"{len(locus_of)} of {len(proteome.accessions)} accessions are "
+                    f"stored ({len(locus_of) / len(proteome.accessions):.4f}); "
+                    f"{len(resolution.unmapped)} carry no locus tag in "
+                    f"{crosswalk.member} and {len(resolution.multi_locus)} carry "
+                    "several",
+                    "a record's key set is the proteins present in at least one of its "
+                    "cultures, so the sets differ by strain: "
+                    f"{min(key_sizes)} to {max(key_sizes)} proteins, median "
+                    f"{int(statistics.median([row['n_proteins'] for row in strain_rows]))}. "
+                    f"{CAMPAIGN_BLANK_IS_ABSENT.note}",
+                    "the controls are the per-cycle phenotype_reference and not "
+                    f"records, as in the titer family: {CONTROL_N.note}. Each record's "
+                    "reference is its cycle's control profile PROJECTED onto that "
+                    "record's own key set, which the shared protein gate requires and "
+                    "which discards nothing: every record's keys are a subset of its "
+                    "cycle control's (0 of 658,405 record-keys lost, measured "
+                    "2026-10-09)",
+                    f"{proteome.blank_cells} of "
+                    f"{len(proteome.cultures) * len(proteome.accessions)} released cells "
+                    f"are blank and {proteome.zero_cells} are a released 0; the blank "
+                    "is absent by the README's own rule and the 0 is kept verbatim",
+                    *proofs,
+                ],
+            ),
+            self.preprocess_dir,
+        )
+        log.info(
+            "Carruthers2025 campaign proteome: %d records over %d accessions stored as "
+            "%d loci, referenced to the %d per-cycle controls",
+            idx,
+            len(proteome.accessions),
+            len(locus_of),
+            len(controls_profile),
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
 # L0-L4 verification of a built tree. The shared family gates do L0-L3
 # (``verify_product_titer_dataset`` / ``verify_protein_dataset``); the two rules below
 # are this release's own, and the two L4 rows join the built store to a DIFFERENT
@@ -3584,6 +4680,23 @@ SI_TARGET_MEAN_TOL = 5e-3
 #: under the filler names ``PP_1607_NT1`` / ``PP_4194_NT2`` whose filler guide is not a
 #: perturbation, which a construct-name join cannot.
 SI_TARGET_OVERLAP = 120
+#: A campaign record's stored percentages sum to at most this. The cells ARE percentages
+#: of the proteome, so their sum cannot exceed 100 by more than the release's own
+#: rounding: measured 2026-10-09, the 1,497 released per-culture rows sum to
+#: 99.9096-100.0128 over all 2,187 accessions.
+CAMPAIGN_PERCENT_CEILING = 100.05
+#: Tolerance of that per-CULTURE row sum against 100, asserted at build time on the
+#: released bytes. It is the strong form of "these numbers are percentages"; the stored
+#: per-record sum is necessarily lower, because the 345 accessions with no locus tag are
+#: dropped and they carry proteome mass.
+CAMPAIGN_ROW_SUM_TOL = 0.1
+#: What the dropped accessions carry, measured 2026-10-09: 17.2% of the proteome on
+#: average over the 1,497 cultures, so a stored record sums to about 83%. The spread is
+#: WIDE and the reason is a sample-prep artifact rather than biology: the worst culture
+#: (PP_1506_PP_4120-R3, DBTL6) is 63.1% porcine trypsin (P00761), leaving 23.6%, and the
+#: stored per-record sums run 28.705-92.951. So this family carries no floor: a floor
+#: would be a claim about contamination, not about the unit.
+CAMPAIGN_DROPPED_MASS_SHARE = 0.172
 
 
 def _titer_provenance() -> Provenance:
@@ -4038,6 +5151,195 @@ def _l4_overexpression_proteome_vs_released_sheet(
     )
 
 
+def _campaign_provenance() -> Provenance:
+    """Where the campaign-proteome family's numbers came from."""
+    return Provenance(
+        source_uri=DRYAD_TOP3_REL,
+        citation_key=CITATION_KEY,
+        sha256=DRYAD_TOP3_SHA256,
+        method=(
+            f"Dryad {DRYAD_DOI} {DRYAD_VERSION} {DRYAD_TOP3_FILENAME}, retrieved by "
+            f"hand ({DRYAD_MANUAL_RECIPE}); the per-culture percent-of-proteome cells "
+            "grouped by (construct, DBTL cycle) from Line_name, mean over the "
+            "strain-cycle's cultures with SD / sqrt(n); blank cells are absent "
+            "measurements and a released 0 is kept verbatim; UniProt accessions keyed "
+            "to KT2440 locus tags through the assembly set's GOA proteome file"
+        ),
+        page=(
+            "Dryad README, 'Files and variables'; Source Data 'Figure 4b' and "
+            "'Supplementary Figure 13abc' as the cross-source oracles"
+        ),
+    )
+
+
+def _l1_campaign_strain_cycles_pair_the_titers(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L1: the stored genotypes are exactly the titer family's 465 campaign genotypes.
+
+    The whole point of this family is to be the titer records' paired feature set, so
+    the assertion is identity of the genotype KEY, not of a count: the sorted tuple of
+    CRISPRi target loci of each record must be the same multiset the Source Data's
+    non-control cultures group into.
+    """
+
+    def key(record: Mapping[str, Any]) -> tuple[str, ...]:
+        return tuple(
+            sorted(
+                str(perturbation["systematic_gene_name"])
+                for perturbation in record["experiment"]["genotype"]["perturbations"]
+                if perturbation["perturbation_type"] == "bacterial_crispr_interference"
+            )
+        )
+
+    genome = bacterial_genome("pputida", "KT2440", data_root)
+    rows = read_titer_rows(str(raw_mirror_dir(data_root) / SOURCE_DATA_REL))
+    constructs = sorted(
+        {(row.construct_name, row.cycle) for row in rows if not row.is_control}
+    )
+    tags = sorted({tag for name, _ in constructs for tag in parse_construct(name)[0]})
+    stored, _ = reconcile_locus_tags(genome, pd.Series(tags), label="l1-campaign")
+    tag_map = dict(zip(tags, stored, strict=True))
+    expected = Counter(
+        tuple(sorted(tag_map[tag] for tag in parse_construct(name)[0]))
+        for name, _ in constructs
+    )
+    observed = Counter(key(record) for record in records)
+    passed = observed == expected
+    return LevelResult(
+        level=Level.L1,
+        name="campaign_genotypes_are_the_titer_familys",
+        passed=passed,
+        message=(
+            f"{len(records)} records over {len(observed)} distinct CRISPRi target sets; "
+            f"the titer family's {len(constructs)} campaign strain-cycles give "
+            f"{len(expected)}" + ("" if passed else "; the two no longer pair")
+        ),
+        details={
+            "records": len(records),
+            "titer_strain_cycles": len(constructs),
+            "only_in_store": sorted(";".join(k) for k in (observed - expected)),
+            "only_in_titers": sorted(";".join(k) for k in (expected - observed)),
+        },
+    )
+
+
+def _l3_campaign_percent_of_proteome(records: Sequence[dict[str, Any]]) -> LevelResult:
+    """L3: no record's abundances sum past 100, because they ARE percentages.
+
+    :data:`CAMPAIGN_TOP3` says each cell is a "Percentage of the proteome", so a
+    record's sum is the share of the proteome its stored loci account for and cannot
+    exceed 100 by more than the release's rounding. There is deliberately NO floor: the
+    remainder is the 345 accessions with no locus tag, which carry
+    :data:`CAMPAIGN_DROPPED_MASS_SHARE` of the proteome on average but 76.4% in the one
+    culture that is mostly porcine trypsin, so a floor would assert a contamination
+    level rather than a unit. The build-time
+    :func:`assert_campaign_rows_are_percentages` is the strong form of this rule,
+    checked on the released rows over ALL accessions; this one guards the store.
+    """
+    sums = [
+        sum(record["experiment"]["phenotype"]["protein_abundance"].values())
+        for record in records
+    ]
+    low, high = min(sums), max(sums)
+    return l3_convention(
+        "stored_abundances_are_percent_of_proteome",
+        high <= CAMPAIGN_PERCENT_CEILING,
+        detail=(
+            f"per-record stored percentage sums to {low:.3f}-{high:.3f} over "
+            f"{len(records)} records, under the {CAMPAIGN_PERCENT_CEILING} ceiling; the "
+            "remainder of each is the dropped accessions' share of the proteome "
+            f"({CAMPAIGN_DROPPED_MASS_SHARE:.1%} on average over the released cultures)"
+        ),
+    )
+
+
+def _l4_campaign_profile_vs_deposited_matrix(
+    records: Sequence[dict[str, Any]], data_root: str | None
+) -> LevelResult:
+    """L4: one stored profile re-derived from the deposited bytes, protein by protein.
+
+    The strain re-read is the campaign's best, ``PP_4188`` is Yunus's; here it is the
+    DBTL0 single-guide strain with the most cultures that is unambiguous to name, so
+    the rule picks the first strain-cycle in sorted order deterministically.
+    """
+    root = raw_mirror_dir(data_root)
+    proteome = read_campaign_proteome(str(root / DRYAD_TOP3_REL))
+    genome = bacterial_genome("pputida", "KT2440", data_root)
+    crosswalk = uniprot_locus_crosswalk(genome, data_root)
+    resolution = resolve_uniprot_accessions(
+        crosswalk, proteome.accessions, label="l4-campaign"
+    )
+    by_strain: dict[tuple[str, int], list[int]] = defaultdict(list)
+    for row_index, culture in enumerate(proteome.cultures):
+        if not culture.is_control:
+            by_strain[(culture.construct_name, culture.cycle)].append(row_index)
+    construct, cycle = sorted(by_strain)[0]
+    aggregate = aggregate_campaign_profile(
+        proteome,
+        by_strain[(construct, cycle)],
+        resolution.resolved,
+        label=f"{construct} DBTL{cycle}",
+    )
+    tags = sorted(parse_construct(construct)[0])
+    stored, _ = reconcile_locus_tags(genome, pd.Series(tags), label="l4-campaign-tags")
+    want = tuple(sorted(stored))
+    match = next(
+        (
+            record
+            for record in records
+            if tuple(
+                sorted(
+                    str(perturbation["systematic_gene_name"])
+                    for perturbation in record["experiment"]["genotype"][
+                        "perturbations"
+                    ]
+                    if perturbation["perturbation_type"]
+                    == "bacterial_crispr_interference"
+                )
+            )
+            == want
+        ),
+        None,
+    )
+    if match is None:
+        raise AssertionError(f"no stored record carries the CRISPRi target set {want}")
+    abundance = match["experiment"]["phenotype"]["protein_abundance"]
+    if set(abundance) != set(aggregate.abundance):
+        raise AssertionError(
+            f"{construct} DBTL{cycle}: the stored key set differs from the one the "
+            "deposited matrix gives by "
+            f"{sorted(set(abundance) ^ set(aggregate.abundance))[:10]}"
+        )
+    shared = [
+        (locus, float(value), aggregate.abundance[locus])
+        for locus, value in sorted(abundance.items())
+    ]
+    return l4_cross_source(shared, tol=1e-9).model_copy(
+        update={"name": "stored_campaign_profile_vs_deposited_matrix"}
+    )
+
+
+def campaign_proteome_report(
+    records: Sequence[dict[str, Any]], data_root: str | None = None
+) -> VerificationReport:
+    """The campaign-proteome family's L0-L4 report over already-loaded records."""
+    from torchcell.verification.protein import verify_protein_dataset
+
+    report = verify_protein_dataset(
+        [dict(record) for record in records],
+        dataset_name="campaign_proteome_carruthers2025",
+        provenance=_campaign_provenance(),
+        expected_count=EXPECTED_CAMPAIGN_PROTEOME_RECORDS,
+        # The five pIY670 pathway tokens are in every record, as in the panel family.
+        allow_duplicate_orfs=True,
+    )
+    report.add(_l1_campaign_strain_cycles_pair_the_titers(records, data_root))
+    report.add(_l3_campaign_percent_of_proteome(records))
+    report.add(_l4_campaign_profile_vs_deposited_matrix(records, data_root))
+    return report
+
+
 def titer_report(
     records: Sequence[dict[str, Any]], data_root: str | None = None
 ) -> VerificationReport:
@@ -4095,13 +5397,18 @@ def verify_build(
 ) -> VerificationReport:
     """Run this release's L0-L4 gate over a built tree and write the report.
 
-    ``family`` is ``"titer"`` or ``"proteome"``. The report is written to
+    ``family`` is ``"titer"``, ``"proteome"`` or ``"campaign_proteome"``. The report
+    is written to
     ``<dataset_root>/preprocess/verification_report.json``.
     """
     from torchcell.verification.runners import load_records
 
     records = load_records(dataset_root)
-    build = titer_report if family == "titer" else proteome_report
+    build = {
+        "titer": titer_report,
+        "proteome": proteome_report,
+        "campaign_proteome": campaign_proteome_report,
+    }[family]
     report = build(records, data_root)
     out = osp.join(dataset_root, "preprocess", "verification_report.json")
     os.makedirs(osp.dirname(out), exist_ok=True)
@@ -4128,6 +5435,10 @@ def main() -> None:
             "data/torchcell/isoprenol_titer_carruthers2025",
         ),
         (ProteomeCarruthers2025Dataset, "data/torchcell/proteome_carruthers2025"),
+        (
+            CampaignProteomeCarruthers2025Dataset,
+            "data/torchcell/campaign_proteome_carruthers2025",
+        ),
     ):
         root = osp.join(data_root, rel)
         dataset = cls(root=root, pputida_genome=genome)

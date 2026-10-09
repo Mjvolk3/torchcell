@@ -40,6 +40,9 @@ from .campos2018_adapter import (
 from .campos2018_morphology_adapter import (
     MorphologyCampos2018Adapter as MorphologyCampos2018Adapter,
 )
+from .carruthers2025_campaign_proteome_adapter import (
+    CampaignProteomeCarruthers2025Adapter as CampaignProteomeCarruthers2025Adapter,
+)
 from .carruthers2025_proteome_adapter import (
     ProteomeCarruthers2025Adapter as ProteomeCarruthers2025Adapter,
 )
@@ -399,6 +402,7 @@ pputida_adapters = [
     "ProteomeBanerjee2025Adapter",
     "RbTnseqBorchert2023Adapter",
     "RbTnseqBorchert2024Adapter",
+    "CampaignProteomeCarruthers2025Adapter",
     "IsoprenolTiterCarruthers2025Adapter",
     "ProteomeCarruthers2025Adapter",
     "ProteomeDeSiqueira2025Adapter",

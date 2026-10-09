@@ -57,6 +57,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
     install_recorder,
 )
 from torchcell.adapters import (
+    CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
@@ -188,6 +189,7 @@ from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
 from torchcell.datasets.pputida.carruthers2025 import (
+    CampaignProteomeCarruthers2025Dataset,
     IsoprenolTiterCarruthers2025Dataset,
     ProteomeCarruthers2025Dataset,
 )
@@ -652,6 +654,14 @@ BACTERIAL: list[Bacterial] = [
         "carruthers2025_proteome",
         "proteome_carruthers2025",
         ProteomeCarruthers2025Dataset,
+        PROTEOME,
+        crispr=True,
+    ),
+    _case(
+        CampaignProteomeCarruthers2025Adapter,
+        "carruthers2025_campaign_proteome",
+        "campaign_proteome_carruthers2025",
+        CampaignProteomeCarruthers2025Dataset,
         PROTEOME,
         crispr=True,
     ),

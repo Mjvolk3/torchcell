@@ -102,6 +102,7 @@ datasets:
   - RbTnseqBorchert2024Dataset
   - IsoprenolTiterCarruthers2025Dataset
   - ProteomeCarruthers2025Dataset
+  - CampaignProteomeCarruthers2025Dataset
   - ProteomeDeSiqueira2025Dataset
   - ProteomePercentDeSiqueira2025Dataset
   - ProteomeLog10PercentDeSiqueira2025Dataset

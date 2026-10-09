@@ -113,23 +113,34 @@ collapsed to the per-gene-mean predictor on 2 of 2 seeds, which is the first con
 of Section~\ref{sec:ablation} failing before the sweep could start: the learning rate
 that suits width 90 does not suit width 180.
 
-\notesec{The two sweeps the expression store supports now}
-Both run on the fast code at about 11 s per epoch for 1{,}103 training strains at
-batch 128 (Figure~3 gate document), and both need the statistic settled first, as
-above. Hypothesis (untested): on this store the data sweep is the informative one,
-because the two-store comparison, 0.45 on 3{,}581 training strains against about
-0.1 on 1{,}103, is consistent with a steep $D$ dependence even though it is
-confounded with the model and the gene set.
+\notesec{What the record does not say about $D$}
+The best per-gene scores of the campaign, the v13 reference at a window mean of 0.20
+and 0.17 on split seeds 0 and 1 (\file{v13\_split\_readout.json}), were trained on
+about the same number of strains as the twelve-seed round (the fig3\_core expression
+rows against the 1{,}103 both-label rows), with the full four-embedding input stack
+and a 6{,}000-epoch budget. The gap to the small trunk's 0.06 to 0.10 is therefore
+budget and input, not $D$, and the record holds no two points that differ in $D$
+alone.
+
+\notesec{The two sweeps, launched on cabbi 2026-10-09}
+Both run on the fast recipe with the mask schedule on (the one twelve-seed arm with
+zero collapses) at batch 128 and the unscaled rate, one run per RTX6000 card, three
+split seeds, W\&B project \file{torchcell\_019\_scaling}, stages \file{scale\_d} and
+\file{scale\_n} of \file{igb\_expr\_wave5.slurm} (IGB jobs 2427637 and 2427638). The
+statistic is still the per-gene Pearson at the registered window, with the loss curve
+logged for the calibrated fit later.
 
 \begin{itemize}[leftmargin=1.2em,itemsep=1pt,topsep=2pt]
-\item \textbf{Data.} Nested subsets of the full expression store by strain, the unit
-that leaks, at 1/64, 1/16, 1/4 and 1, at the small trunk, batch 128, 1{,}200 epochs,
-three split seeds, one fixed test set per seed. Epoch time scales with the subset, so
-about 14 card-hours in all; three A40s under the gpu partition's three-job cap finish
-it in a day.
-\item \textbf{Parameters.} Widths 45, 90, 180 and 360 at six layers, the gene
-embedding table counted separately, a learning rate tuned per width or transferred
-under $\mu$P once the parametrization is checked against the model code, three seeds
-at the two smallest widths, every run on the full store. About 42 card-hours. The
-width-180 collapse is the reason the per-size tuning is not optional.
+\item \textbf{Data.} Nested prefixes of one split-seeded permutation of the 1{,}103
+both-label training rows at 1, 1/2, 1/4, 1/8 and 1/16, validation and test untouched
+(\file{train\_cgt\_multitask.py}, \texttt{train\_fraction}). The budget is 1{,}200
+epochs for every fraction, so the small fractions take fewer optimizer steps (one per
+epoch at 1/16); the per-epoch validation curve is what the readout reads and the step
+mismatch is part of the result, not hidden by it.
+\item \textbf{Parameters.} Widths 45, 90, 180 and 360 at six layers (nine heads
+divide all four), the learning rate scaled as $1/\text{width}$ from $3\times10^{-4}$
+at 90. Hypothesis (untested): that rule keeps the wider trunks out of the collapse the
+width-180 arm fell into at the width-90 rate; it is not $\mu$P, and a width whose
+rate is wrong will show as a collapse rather than a point on the curve. Width 360 is
+last in the array so an out-of-memory there costs the sweep nothing else.
 \end{itemize}

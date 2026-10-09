@@ -1494,6 +1494,20 @@ class CellAdapter:
             "gene_interaction": gene_interaction,
             "gene_interaction_p_value": gene_interaction_p_value,
             "screen_id": phenotype.screen_id,
+            # #793: the replicate-design quartet, so a sourced eight-colony design is
+            # queryable from the graph instead of living beside the build.
+            "n_samples": phenotype.n_samples,
+            "sample_unit": (
+                str(phenotype.sample_unit.value)
+                if phenotype.sample_unit is not None
+                else None
+            ),
+            "gene_interaction_uncertainty": phenotype.gene_interaction_uncertainty,
+            "gene_interaction_uncertainty_type": (
+                str(phenotype.gene_interaction_uncertainty_type.value)
+                if phenotype.gene_interaction_uncertainty_type is not None
+                else None
+            ),
         }
 
         return BioCypherNode(
@@ -1616,6 +1630,13 @@ class CellAdapter:
             "category": str(category.value) if category is not None else None,
             "category_label": phenotype.category_label,
             "screen_id": phenotype.screen_id,
+            # #776: both limits of the released confidence interval plus its level
+            # (an asymmetric interval has no half-width), and the replicate id of a
+            # per-replicate release.
+            "environment_response_lower": phenotype.environment_response_lower,
+            "environment_response_upper": phenotype.environment_response_upper,
+            "confidence_level": phenotype.confidence_level,
+            "replicate_id": phenotype.replicate_id,
         }
 
     @data_chunker
@@ -1710,6 +1731,20 @@ class CellAdapter:
                 "gene_interaction": gene_interaction,
                 "gene_interaction_p_value": gene_interaction_p_value,
                 "screen_id": phenotype.screen_id,
+                # #793: the replicate-design quartet, so a sourced eight-colony design is
+                # queryable from the graph instead of living beside the build.
+                "n_samples": phenotype.n_samples,
+                "sample_unit": (
+                    str(phenotype.sample_unit.value)
+                    if phenotype.sample_unit is not None
+                    else None
+                ),
+                "gene_interaction_uncertainty": phenotype.gene_interaction_uncertainty,
+                "gene_interaction_uncertainty_type": (
+                    str(phenotype.gene_interaction_uncertainty_type.value)
+                    if phenotype.gene_interaction_uncertainty_type is not None
+                    else None
+                ),
             }
 
             node = BioCypherNode(

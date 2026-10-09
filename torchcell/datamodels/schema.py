@@ -4388,7 +4388,16 @@ class SyntheticRescuePhenotype(Phenotype, ModelStrict):
 
 
 class GeneInteractionPhenotype(Phenotype, ModelStrict):
-    """Phenotype holding a gene interaction score and its p-value."""
+    """Phenotype holding a gene interaction score, its p-value and its replicate design.
+
+    ``gene_interaction_p_value`` is a TEST of the score (the only p-value field in the
+    schema); ``n_samples`` + ``sample_unit`` + ``gene_interaction_uncertainty`` + its
+    type are the replicate/dispersion quartet the other quantitative phenotypes carry
+    (#793), so a sourced replicate design (Babu 2014's eight colonies per pair) is on
+    the record rather than beside the build. The two absences read differently and are
+    meant to: a gapped p-value is "the source tested the SET, not the pair", a gapped
+    ``n_samples`` is "the source states no replicate design".
+    """
 
     graph_level: str = "hyperedge"
     label_name: str = "gene_interaction"
@@ -4409,12 +4418,81 @@ class GeneInteractionPhenotype(Phenotype, ModelStrict):
         "measurement.",
     )
 
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#793): the replicate-design quartet every other quantitative
+    # phenotype carries (FitnessPhenotype, EnvironmentResponsePhenotype,
+    # MetabolitePhenotype, ProteinAbundancePhenotype). Nothing above changes.
+    # No derived SE field is added: `label_statistic_name` stays
+    # `gene_interaction_p_value`, because an interaction score's released
+    # statistic is a test of the score, not a dispersion of it.
+    # ----------------------------------------------------------------------- #
+    n_samples: int | None = Field(
+        default=None,
+        description="number of independent replicate measurements averaged into this "
+        "interaction score (Babu 2014: eight colonies per gene pair, exactly, from two "
+        "replicate screens x four biological replicate recipient colonies; Butland 2008: "
+        "counted off its own raw colony sheet per record, 4 to 182). None when the "
+        "source does not state a replicate design, which is then a typed ProvenanceGap.",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None,
+        description="what one sample in n_samples is (`colony` for a pinned colony "
+        "array, `screen` when the independent unit is the screen rather than the "
+        "colony). Required alongside n_samples for a dispersion that divides by n.",
+    )
+    gene_interaction_uncertainty: float | None = Field(
+        default=None,
+        description="source-reported uncertainty of the interaction score, verbatim; "
+        "its meaning is given by gene_interaction_uncertainty_type.",
+    )
+    gene_interaction_uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what gene_interaction_uncertainty IS (sample_sd, standard_error, "
+        "bootstrap_se, variance, ci95), so it converts to an SE correctly. Both or "
+        "neither: an unlabelled dispersion is not ingested.",
+    )
+    # ----------------------------------------------------------------------- #
+    # end ADDITIVE (#793)
+    # ----------------------------------------------------------------------- #
+
     @field_validator("gene_interaction")
     def validate_fitness(cls, v: float) -> float:
         """Reject NaN gene interaction values."""
         if math.isnan(v):
             raise ValueError("Gene interaction cannot be NaN")
         return v
+
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#793): the same two invariants the other phenotypes enforce.
+    # ----------------------------------------------------------------------- #
+    @field_validator("n_samples")
+    def validate_n_samples(cls, v: int | None) -> int | None:
+        """n_samples is a positive integer or None."""
+        if v is not None and (not isinstance(v, int) or v < 1):
+            raise ValueError(f"n_samples must be a positive integer or None, got: {v}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_uncertainty(self) -> "GeneInteractionPhenotype":
+        """A reported dispersion is labelled, and one that divides by n states its n."""
+        unc, typ = (
+            self.gene_interaction_uncertainty,
+            self.gene_interaction_uncertainty_type,
+        )
+        if (unc is None) != (typ is None):
+            raise ValueError(
+                "gene_interaction_uncertainty and its type must both be set or both be "
+                "None (no unlabelled uncertainty)"
+            )
+        if typ in (UncertaintyType.sample_sd, UncertaintyType.variance) and (
+            self.n_samples is None or self.sample_unit is None
+        ):
+            raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        return self
+
+    # ----------------------------------------------------------------------- #
+    # end ADDITIVE (#793)
+    # ----------------------------------------------------------------------- #
 
 
 class CalMorphPhenotype(Phenotype, ModelStrict):
@@ -5492,6 +5570,29 @@ CATEGORICAL_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
     {MeasurementType.categorical, MeasurementType.ordinal}
 )
 
+# --------------------------------------------------------------------------- #
+# ABSOLUTE environment-response readouts (#776). ADDITIVE: a name for the
+# measurement types that are a quantity on the assay's own scale rather than a
+# response relative to a control, so the verifier's reference rule can be relaxed
+# for exactly those and refuse to be relaxed for anything else.
+# --------------------------------------------------------------------------- #
+#: Measurement types whose number is an ABSOLUTE quantity in the assay's own units, so
+#: the record's reference states the reference condition's own measured value and NOT a
+#: centered 0. A relative readout (``log2_ratio``, ``z_score``, ``sensitivity_score``,
+#: ``differential_fitness``, ``control_regression_residual``, ``relative_growth_rate``)
+#: is 0 at the control by construction and is deliberately absent: the
+#: ``reference_centered=False`` branch of the environment-response verifier requires
+#: every record's type to be a member here, which is what keeps the relief from being a
+#: blanket relaxation. ``colony_size`` is here because Bloom 2019's two control-plate
+#: conditions release the raw colony radius; ``growth_rate`` because Caglar 2017 Table S5
+#: releases a doubling time in minutes.
+ABSOLUTE_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
+    {MeasurementType.growth_rate, MeasurementType.colony_size}
+)
+# --------------------------------------------------------------------------- #
+# end ABSOLUTE environment-response readouts (#776)
+# --------------------------------------------------------------------------- #
+
 
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     """A strain's fitness/growth RESPONSE to an environmental perturbation.
@@ -5583,6 +5684,52 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         "(compound, dose) alone, so the screen id is what keeps one strain x one "
         "condition L1-unique instead of silently merging independent measurements.",
     )
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#776): a two-sided confidence-interval carrier, and the
+    # per-replicate identifier a source that releases one row per replicate
+    # curve needs. Nothing above this block changes.
+    # ----------------------------------------------------------------------- #
+    environment_response_lower: float | None = Field(
+        default=None,
+        description="the SOURCE's lower confidence limit of the response, verbatim, at "
+        "`confidence_level`. The counterpart of FluxPhenotype.net_flux_lower: a "
+        "two-sided bound is not a single number, so naming one side as THE statistic "
+        "(feeding a half-width to UncertaintyType.ci95) would misreport it. Caglar 2017 "
+        "Table S5's interval is asymmetric in 55 of 55 rows (upper-to-lower half-width "
+        "ratio median 1.3187), which is what makes a half-width field unusable for it.",
+    )
+    environment_response_upper: float | None = Field(
+        default=None,
+        description="the SOURCE's upper confidence limit of the response, verbatim, at "
+        "`confidence_level`. Deliberately NOT validated to lie above "
+        "`environment_response`: a limit carried through a nonlinear transform can come "
+        "out below the value or negative (Caglar 2017 Table S5 Glycerol replicate 1 "
+        "releases 95p = -1027.769034, the image under DT = log_e 2 / slope of a slope "
+        "interval that straddles zero), and repairing or dropping it would substitute "
+        "our arithmetic for the released bytes. The environment-response verifier's L2 "
+        "`interval_orientation` rule counts such rows against a DECLARED oracle, so the "
+        "count is measured and a regression in it fails the gate.",
+    )
+    confidence_level: float | None = Field(
+        default=None,
+        description="the level the two limits are stated at, as a fraction (0.95 for a "
+        "95% interval). Required whenever either limit is set -- an unlabeled interval "
+        "is the state the typed uncertainty axis exists to prevent.",
+    )
+    replicate_id: str | None = Field(
+        default=None,
+        description="the source's own identifier for ONE replicate measurement of a "
+        "(strain, condition), when the release is per replicate rather than an "
+        "aggregate (Caglar 2017 Table S5's `replicate` column: one row per biological "
+        "replicate growth curve, each with its own interval and r^2). It joins the L1 "
+        "uniqueness key, so independently released replicate curves stay distinct "
+        "records instead of colliding as duplicates and nothing has to be aggregated "
+        "into a mean the source never released. None when the source releases one "
+        "aggregated measurement per (strain, condition), which is every other dataset.",
+    )
+    # ----------------------------------------------------------------------- #
+    # end ADDITIVE (#776)
+    # ----------------------------------------------------------------------- #
 
     @field_validator("environment_response")
     def validate_response(cls, v: float | None) -> float | None:
@@ -5649,6 +5796,31 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
             self.n_samples is None or self.sample_unit is None
         ):
             raise ValueError(f"n_samples and sample_unit are required for {typ}")
+        # ------------------------------------------------------------------- #
+        # ADDITIVE (#776): the interval invariant. Finite limits, and a level
+        # whenever either limit is set. The limits are NOT required to bracket
+        # the value -- see environment_response_upper's description.
+        # ------------------------------------------------------------------- #
+        for name in ("environment_response_lower", "environment_response_upper"):
+            limit = getattr(self, name)
+            if limit is not None and not math.isfinite(limit):
+                raise ValueError(f"{name} must be finite, got {limit}")
+        has_limit = (
+            self.environment_response_lower is not None
+            or self.environment_response_upper is not None
+        )
+        if has_limit and self.confidence_level is None:
+            raise ValueError(
+                "confidence_level is required when a confidence limit is stored "
+                "(an interval with no stated level is unlabelled)"
+            )
+        if self.confidence_level is not None and not 0.0 < self.confidence_level < 1.0:
+            raise ValueError(
+                f"confidence_level is a fraction in (0, 1), got {self.confidence_level}"
+            )
+        # ------------------------------------------------------------------- #
+        # end ADDITIVE (#776)
+        # ------------------------------------------------------------------- #
         return self
 
 

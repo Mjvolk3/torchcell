@@ -260,6 +260,11 @@ fitness phenotype:
         fitness_std: float
         screen_id: str
 
+# gene interaction phenotype also projects the replicate-design quartet (#793): a
+# sourced eight-colony design (Babu 2014) and a per-record measured colony count
+# (Butland 2008) are queryable properties of the score rather than a file beside the
+# build. Added with a FULL rebuild, never an increment: incremental import cannot
+# update the nodes the yeast interaction datasets already wrote.
 gene interaction phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -270,6 +275,10 @@ gene interaction phenotype:
         gene_interaction: float
         gene_interaction_p_value: float
         screen_id: str
+        n_samples: int
+        sample_unit: str
+        gene_interaction_uncertainty: float
+        gene_interaction_uncertainty_type: str
 
 gene essentiality phenotype:
     is_a: phenotypic feature
@@ -387,6 +396,11 @@ protein abundance phenotype:
 # too, else such a dataset is queryable only by parsing serialized_data. screen_id
 # names the screening run, which is what separates two independent screens of the
 # same compound at the same dose.
+# environment response phenotype also projects the two-sided confidence interval and
+# the per-replicate id (#776): an asymmetric interval (Caglar 2017 Table S5, asymmetric
+# in 55 of 55 rows) has no half-width, so storing it needs both limits plus the level,
+# and a release that is one row per replicate curve needs the replicate id to stay
+# L1-unique. Added with a FULL rebuild, never an increment.
 environment response phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -401,6 +415,10 @@ environment response phenotype:
         category: str
         category_label: str
         screen_id: str
+        environment_response_lower: float
+        environment_response_upper: float
+        confidence_level: float
+        replicate_id: str
 
 # How much of a named product a strain made (ProductTiterPhenotype). Every field but
 # provenance_gaps is projected: enums as their value, and the product, a typed

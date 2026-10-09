@@ -428,3 +428,136 @@ rule 6, and the rule's name would change with it), so it is flagged rather than 
 into a pin fix.
 
 Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.bacterial-perturbation-ontology]].
+
+## 2026.10.09 - The SPA-tag half is stored: the open decision above, taken
+
+The previous section flagged "should this loader store its own hypomorphs?" as an open
+data decision. It is taken here, in the direction issue #792's own shape note asks for:
+the 149 `SPA-tag essential` recipient rows are now typed on
+`BacterialMarkedAllelePerturbation`, the SPA-tag drop rule is gone, and the store grew
+from **296,390** to **301,803** records.
+
+### What the leaf states, and the one field it does not
+
+Footnote a of every Supplementary Table 4 sheet states four things about these strains in
+one sentence, which is the whole content of the recipient leaf:
+
+> a Hypomorphic, KanR- marked, strains with C-terminal Sequential Peptide Affinity (SPA)-tags on essential genes were included in the array collection (Butland et al., 2005).
+
+| leaf field | stored | source |
+|---|---|---|
+| `cassette` | `kan` | "KanR- marked" |
+| `tag` | `SPA` | "Sequential Peptide Affinity (SPA)-tags" |
+| `terminus` | `C` | "C-terminal" |
+| `allele_effect` | `hypomorphic` | "Hypomorphic" |
+| `collection` | `SPA-tag essential` | Supplementary Table 1's own per-row label |
+| `insertion_site` | `None` | no artifact of this release names it |
+| `construction` | `None` | the row's "Strain Versions" cell repeats the label |
+
+`insertion_site` is the one field the served Babu 2014 record of the SAME 149 strains
+carries and this one does not. Babu's Results state it ("a Kan-R marker was integrated
+into the 3'-UTR"); grepping this release's `paper.md`, the Supplementary Methods OCR
+(`si/si1.md`) and every sheet footnote for `UTR`, `3'` and `hypomorph` finds the
+construction deferred to Butland et al. 2005, which is not in the literature mirror. So
+the field stays `None` rather than borrowing a later paper's sentence, and the two stores
+describe one physical strain with one field's difference. A `bacterial perturbation` node
+id is the sha256 of the leaf dump, so that is one extra node -- exactly as the Keio
+recipients already are two nodes across the two stores, since this release carries the
+isolate as a construction `batch` and Babu does not.
+
+`construction` is `None` because the released "Strain Versions" cell of a SPA row reads
+`SPA-tag essential`, not `Isolate 1` / `Isolate 2`. That is asserted for all 149 rows at
+build time: a versioned SPA row would mean the release had constructed those strains
+twice, and it did not.
+
+### Measured, before and after
+
+| | before (#849) | after |
+|---|---|---|
+| records | 296,390 | **301,803** |
+| of which SPA-tag hypomorphs | 0 | **5,413** |
+| aggravating / alleviating / zero | 143,651 / 144,953 / 7,786 | **146,121 / 147,747 / 7,935** |
+| recipient genes | 3,829 | **3,978** |
+| `spa_tag_recipient_has_no_bacterial_perturbation_leaf` | 5,811 | rule removed |
+| `b_number_is_not_a_locus_tag_of_the_pinned_annotation` | 6,318 | 6,318 |
+| `b_number_remapped_by_the_annotation` | 4,407 | 4,407 |
+| `self_pair_is_not_a_digenic_genotype` | 78 | 78 |
+| `released_score_contradicts_its_own_raw_colonies` | 395 | 395 |
+| `already_served_by_gene_interaction_babu2014` | 1,448 | **1,846** |
+| dropped total | 18,457 | **13,044** |
+
+5,811 released SPA cells minus the 398 the served Babu store already holds = 5,413. The
+four later rules take nothing else from that half, which is measured rather than assumed:
+no SPA b-number is unresolvable or annotation-remapped, no query gene is a SPA row, and
+no SPA cell is a rule-4 contradiction.
+
+### The zeros of the SPA half were re-measured before they were stored
+
+149 of the 5,811 SPA cells carry an S of exactly 0, which is exactly one per row, and a
+regularity like that has to be read before it is stored. Three measurements say they are
+released values, the same three the non-essential half was settled on:
+
+- the mean |Z| of the SPA zero-S cells is **0.1087**, against **0.1145** for the SPA cells
+  whose |S| is nonzero but under 0.05, so the zeros sit at the small-magnitude end;
+- all **149** carry at least one non-zero raw colony measurement;
+- the one-zero-per-row shape is the whole release's shape, not this half's: **7,886 of the
+  7,924** Keio rows carry exactly one zero too.
+
+Script: `/scratch/tmp/claude-1000/-home-michaelvolk-Documents-projects-torchcell/ebf6929f-c5a0-46a3-a925-7ca89fee3498/scratchpad/butland-lim/measure_spa3.py` (scratch, not committed; the
+build itself re-derives every count in `preprocess/dropped_records.json`).
+
+### The partition against Babu: still three groups, now with containment
+
+The three groups still sum to the 1,125 served `Butland et al.` records, but the SPA-tag
+group has moved INSIDE the served rule rather than ahead of it:
+
+| group | pairs | cells | removed by |
+|---|---|---|---|
+| served pairs on a Keio-isolate recipient row | 725 | 1,448 | rule 5 (`already_served_...`) |
+| served pairs on a `SPA-tag essential` row | **398** | **398** | rule 5, where rule 1 used to take them |
+| served pairs this release does not name | 2 | - | rule 2 drops `b4344` before the proof |
+
+`assert_served_partition` now also asserts the SPA-tag group is a SUBSET of the served
+rule's own pairs. That is the check the old shape could not make: when those rows were
+dropped first, a served pair that had moved onto a storable row would have passed every
+count pin and been stored twice.
+
+Zero records are stored twice, measured on the two built stores rather than argued:
+`experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition.py`
+reports **0 shared content ids** and **0 shared oriented pairs** over 301,803 Butland and
+41,988 Babu experiment content ids (the id a KG build writes,
+`sha256(json.dumps(experiment.model_dump()))`), and every pin it prints matches the
+loader's constants.
+
+### L0 to L4 on the rebuilt dev store, 33 checks, PASS
+
+Rebuilt with `build_dataset_lmdb --dataset GeneInteractionButland2008Dataset
+--retire-existing` (216 s, gene_set 3,978, 1 reference).
+
+| level | check | result |
+|---|---|---|
+| L0 | `structural` | 301,803 records validated |
+| L1 | `count` | observed 301,803, expected 301,803 |
+| L1 | `digenic_pair_of_one_query_and_one_recipient` | 301,803 of 301,803 |
+| L1 | `recipient_leaf_states_its_array_row` | Isolate 1 148,408, Isolate 2 147,982, SPA-tag essential 5,413; 0 wrong |
+| L1 | `provenance_gaps` | 1,207,212 documented gaps over 301,803 of 301,803 |
+| L1 | `canonical_gene_names` | 3,978 names, one spelling each |
+| L2 | `gene_interaction_equals_its_matrix_cell` | 301,803 of 301,803 |
+| L2 | `uncertainty_sanity` | 0 labeled uncertainties |
+| L3 | `signed_unclamped_interaction_score_with_zero_reference` | 146,121 / 147,747, 7,935 zero |
+| L3 | `partitioned_from_the_served_babu2014_store` | 0 of 301,803 share a served pair |
+| L3 | `compound_identity`, `media_compound_identity`, `media_membership` | PASS |
+| L4 | `gene_containment_mg1655_locus_tags` | 3,978 of 3,978 |
+| L3 | `provenance_audit` x19 | every sourced value's quote re-read from its pinned bytes |
+
+The renamed L1 row (`recipient_leaf_carries_its_keio_isolate` ->
+`recipient_leaf_states_its_array_row`) now asserts the class each row's label names: a
+Keio recipient is a deletion carrying its isolate as `construction.batch`, a SPA row is a
+marked allele with the four stated fields, `insertion_site` absent and no construction,
+and the query leaf is a deletion with neither a batch nor a tag.
+
+Schema-impact verdict: `scripts/schema_impact_check.py --base origin/main` reports **no
+schema contract changes**. The leaf, its graph class and `BACTERIAL_PERTURBATION_LEAVES`
+all landed with #837; this branch only starts using them.
+
+Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.bacterial-perturbation-ontology]].

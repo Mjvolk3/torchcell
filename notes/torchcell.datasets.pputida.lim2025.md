@@ -731,3 +731,158 @@ of the genotype there.
 Flagged for the owner: this is a loader plus a representation decision, not a pin, so
 #770's Lim rows are left open rather than closed in the same pass that corrected the
 reason they were refused.
+
+## 2026.10.09 - The four isolate-over-IPL400 contrasts are loaded, and the pIY670 three are refused for the genotype rather than the medium
+
+The correction above left two things for the owner: how a strain-versus-strain contrast
+states its denominator, and whether the pIY670 arm's medium is a real blocker. Both are
+settled here, and the four `Proteome_*` sheets are loaded by a third dataset class,
+`ProteomeFoldChangeLim2025Dataset` (root `data/torchcell/proteome_fold_change_lim2025`).
+
+### The denominator is a stated genotype, not a sentence
+
+The question was whether `reference_basis` plus the existing reference-experiment
+machinery can say "denominator = genotype X" with X written out. It can, and in two places
+at once:
+
+- **typed**: each record's `genome_reference` carries IPL400's own
+  `BacterialStrainBackground` -- the seven `full_deletion` alleles plus `PP_2676` as a
+  `partial_deletion`, each with a typed `deleted_span` gap, with Supplementary Table 1's
+  genotype string as the background's `genotype_statement`. This is the SAME object
+  `ProteomeLim2025Dataset` already builds, and here it is EXACT rather than a floor: the
+  denominator arm of these four contrasts literally is IPL400, while an absolute
+  evolved-isolate record's reference arm is that isolate unstressed, whose called variants
+  no background allele can carry.
+- **named, in the source's own terms**: `reference_basis` names IPL400, quotes that
+  genotype string, and names the arm it came from, e.g.
+
+  > IPL400, the parent starting strain, in the same medium and the same export: the 'log2_mean_IPL400_M9G' arm of Supplementary Data 1's Proteome_A10F63I1vsIPL400_M9G sheet. Its genotype is 'KT2440 ΔPP_2675 Δ14-PP_2676 ΔPP_3839 ΔPP_4064-∆PP_4067 ΔttgB (PP_1385)' (Supplementary Table 1), carried typed on this record's genome_reference as a BacterialStrainBackground of seven full_deletion alleles plus PP_2676 as a partial_deletion
+
+  The sheet name is in there because two sheets carry the same denominator column
+  (`log2_mean_IPL400_M9G`), so the (column, sheet) pair is what locates a stored record
+  back in the workbook; the L2 verifier uses exactly that to re-read each record's bytes.
+
+The numerator rides the experiment's `genotype` as IPL400's seven designed deletions plus
+that isolate's own called variants, which is the shape
+`ProteomeFoldChangeCarruthers2025Dataset` already uses (its numerator genotype carries the
+pathway its non-targeting control also has). Nothing goes into `list[Genotype]`: order
+would be the only signal of which side is which, and the background says it with a type.
+
+Both arms of a contrast sit in ONE condition, so `environment_reference` is the record's
+own environment. That is the opposite of the absolute family, whose reference arm is the
+unstressed condition, and it is checked (`both_arms_of_the_contrast_share_one_condition`).
+
+### The four records, measured
+
+| sheet | numerator | condition | protein keys |
+|---|---|---|---|
+| `Proteome_A10F63I1vsIPL400_M9G` | A10_F63_I1 | M9 + 4 g/L glucose | 2,361 |
+| `Proteome_A10F63I1vsIPL400_G+4IP` | A10_F63_I1 | + 4 g/L isoprenol | **2,365** |
+| `Proteome_A12F53I1vsIPL400_M9G` | A12_F53_I1 | M9 + 4 g/L glucose | 2,361 |
+| `Proteome_A12F53I1vsIPL400_G+4IP` | A12_F53_I1 | + 4 g/L isoprenol | 2,332 |
+
+Each phenotype carries the released `log2_Fold_change_A/B` on the `log2` scale, its
+`p-value`, its `p_adjusted(BH)` under `p_value_adjustment_method="benjamini_hochberg"`,
+`n_replicates = 3` per key, and `measurement_type =
+dia_nn_top3_log2_fold_change_welch_two_sample_t_test`. The reference phenotype is the
+scale's neutral value per key, so experiment over reference reproduces the released number
+and nothing is imputed.
+
+`protein_fold_change_se` is `sqrt((sd_A^2 + sd_B^2) / 3)`. That is not a free derivation:
+it is the exact denominator the released `t-test_stat` divides by, and the build asserts
+that identity for every stored row with the module's existing
+`assert_sheet_statistics` (worst residual below the 1e-6 tolerance on all four sheets, as
+the earlier back-solve measured at 1.1e-12).
+
+### The direction is read off each sheet, never off its name
+
+`assert_fold_change_direction` asserts, per sheet, that the arm columns the module
+declares are the ones the header carries AND that the numerator's mean column comes
+BEFORE the denominator's, which is what `A/B` means. Measured on the pinned workbook
+(sha256 `a3cfd601...`): all four loaded sheets put `log2_mean_A1*` first and
+`log2_mean_IPL400*` second, and `IPL400vsA10F63I1_pIY670_M9G_12h` puts
+`log2_mean_IPL400_pIY670_M9G_12hr` first. A loader that reused the loaded shape on those
+three would store an inverted sign on every key.
+
+### Why the pIY670 three stay refused, and the correction to the stated reason
+
+The earlier section said they were blocked on the medium. **They are not: the Methods
+state the production culture verbatim** (`paper.md`, sha256 `26b88d81...`):
+
+> test tubes containing $5 ~ \mathrm { m L }$ NREL M9 minimal medium as described in Section 2.2 with $2 0 g / \mathrm { L }$ glucose as carbon source and $5 0 ~ \mu \mathrm { g / m L }$ kanamycin. The isoprenol pathway was induced by adding arabinose at ${ 2 } \ g / \mathrm { L }$ at $^ { 0 \mathrm { h } }$ .
+
+So 20 g/L glucose, 50 ug/mL kanamycin and 2 g/L arabinose at 0 h are sourced values, not
+gaps; `si1.docx` does not state them, which is why the first pass read the gap there. The
+operative refusal is the GENOTYPE, and it is the direction flip that creates it: those
+sheets put the evolved isolate in the DENOMINATOR, so a record would have to state an
+evolved clone's genomic content on the strain-BACKGROUND axis, and a called variant is no
+`BacterialBackgroundAllele` (`BacterialStrainBackground` also permits one allele per
+locus, which refuses A12_F53_I1's two `PP_3415` calls). The medium remains a second,
+weaker obstacle: `MEDIA_LIBRARY` carries no M9 at 20 g/L glucose with kanamycin, which is
+a value-surface addition rather than a provenance gap. Both reasons are stored in
+`FOLD_CHANGE_REFUSALS` and in `preprocess/dropped_records.json`.
+
+### Three protein keys dropped that the absolute family never meets
+
+| key | status on `pputida_KT2440_ASM756v2` |
+|---|---|
+| `PP_0985` | `non_gene_feature` |
+| `PP_2271` | `retired` |
+| `PP_5287` | `retired` |
+
+All three sit on `Proteome_A10F63I1vsIPL400_G+4IP` alone, and all three are among the
+seven loci released under isoprenol but absent from the unstressed arm. The absolute
+family never meets them because its key set is the INTERSECTION of each strain's two arms;
+a contrast's key set is one sheet's own rows. A key with no current gene has no gene node
+to key its ratio to, so it is dropped and ledgered. The other four of those seven ARE
+stored here, which is why the A10 isoprenol record carries 2,365 keys rather than 2,361.
+
+The six paralogous keys (`Ubid`, `Pyrc`, `Dapa` under two loci each) are dropped for the
+same measured reason as in the absolute family: one protein group's statistics cannot be
+attributed to either paralog, and those rows are exactly the ones whose released t does
+not reproduce at n = 3.
+
+### L0 to L4 on the built store, PASS
+
+Built with `build_dataset_lmdb --dataset ProteomeFoldChangeLim2025Dataset` (4 records,
+gene_set 28, 4 references), verified by `lim2025.run_fold_change_verification`, which is
+also registered as `proteome_fold_change_lim2025` in
+`runners.BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS`.
+
+| level | check | result |
+|---|---|---|
+| L0 | `structural` | 4 records validated |
+| L1 | `count` | observed 4, expected 4 |
+| L1 | `contrast_uniqueness` | 4 distinct contrasts, one record each |
+| L2 | `value_fidelity` | 9,419 values checked |
+| L2 | `p_values_are_probabilities` | all 9,419 p-values in (0, 1] |
+| L2 | `fold_change_equals_arm_a_minus_arm_b` | 9,419 of 9,419, re-read from the workbook |
+| L3 | `reference_is_the_scales_neutral_value` | all 9,419 reference values neutral and key-matched |
+| L3 | `fold_change_scale_consistent` | single scale `log2` |
+| L3 | `measurement_type_consistent` | single measurement type |
+| L3 | `reference_genome_is_the_named_denominator_strain` | 4 of 4, 8 alleles each |
+| L3 | `both_arms_of_the_contrast_share_one_condition` | 4 of 4 |
+| L4 | `gene_containment_kt2440_tested_and_perturbed_loci` | 2,373 of 2,373 |
+| L3 | `provenance_audit` | every sourced value's quote re-read from its pinned bytes |
+
+Schema-impact verdict: `scripts/schema_impact_check.py --base origin/main` reports **no
+schema contract changes**. `ProteinFoldChangePhenotype`,
+`BacterialProteinFoldChangeExperiment` and its reference class all landed with #770; this
+branch only adds a loader on them. The adapter gate's four pin places were re-derived from
+the merged files (`kg_bacteria.yaml` position, `_bacterial_adapter_cases.py` order, the
+two `test_bacterial_adapters.py` addends, the `dataset_adapter_map` total and the
+`BACTERIAL_DATASETS` set literal), and the new dataset ships its adapter module, its conf
+and its adapter test.
+
+### What is still refused after this, with the measurement
+
+- the three `IPL400vsA10F63I1_pIY670_M9G_<t>` sheets (above): the denominator arm is an
+  evolved clone, 2,350 / 2,350 / 2,378 released rows each.
+- the 16 LINEAGE final growth rates and the 46 isolates as tolerance records: unchanged,
+  and for the reasons the first section states.
+- `PP_2676`'s truncation on the perturbation axis: unchanged; it stays a
+  `BacterialBackgroundAllele(partial_deletion)` and a stated gap, which the fold-change
+  records inherit through IPL400's background.
+
+Related: [[torchcell.datasets.pputida.carruthers2025]] (the strain-versus-strain
+precedent), [[torchcell.datamodels.bacterial-perturbation-ontology]].

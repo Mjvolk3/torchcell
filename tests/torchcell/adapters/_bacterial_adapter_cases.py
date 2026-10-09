@@ -110,6 +110,7 @@ from torchcell.adapters import (
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
     ProteomeFoldChangeCarruthers2025Adapter,
+    ProteomeFoldChangeLim2025Adapter,
     ProteomeIshii2007Adapter,
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
@@ -220,6 +221,7 @@ from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dat
 from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
 from torchcell.datasets.pputida.lim2025 import (
     IsoprenolToleranceLim2025Dataset,
+    ProteomeFoldChangeLim2025Dataset,
     ProteomeLim2025Dataset,
 )
 from torchcell.datasets.pputida.menasalvas2025 import (
@@ -789,6 +791,14 @@ BACTERIAL: list[Bacterial] = [
         "proteome_lim2025",
         ProteomeLim2025Dataset,
         PROTEOME,
+        variant=True,
+    ),
+    _case(
+        ProteomeFoldChangeLim2025Adapter,
+        "lim2025_proteome_fold_change",
+        "proteome_fold_change_lim2025",
+        ProteomeFoldChangeLim2025Dataset,
+        FOLD_CHANGE,
         variant=True,
     ),
     _case(

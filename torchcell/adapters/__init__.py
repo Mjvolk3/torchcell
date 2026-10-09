@@ -157,6 +157,9 @@ from .lim2022_adapter import (
     PutidaPrecise321Lim2022Adapter as PutidaPrecise321Lim2022Adapter,
 )
 from .lim2025_proteome_adapter import ProteomeLim2025Adapter as ProteomeLim2025Adapter
+from .lim2025_proteome_fold_change_adapter import (
+    ProteomeFoldChangeLim2025Adapter as ProteomeFoldChangeLim2025Adapter,
+)
 from .lim2025_tolerance_adapter import (
     IsoprenolToleranceLim2025Adapter as IsoprenolToleranceLim2025Adapter,
 )
@@ -446,6 +449,7 @@ pputida_adapters = [
     "PutidaPrecise321Lim2022Adapter",
     "IsoprenolToleranceLim2025Adapter",
     "ProteomeLim2025Adapter",
+    "ProteomeFoldChangeLim2025Adapter",
     "IsoprenolSelectionMenasalvas2025Adapter",
     "MetaboliteGrowthPhaseMenasalvas2025Adapter",
     "MetaboliteProductionPhaseMenasalvas2025Adapter",

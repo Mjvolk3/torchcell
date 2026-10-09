@@ -522,6 +522,7 @@ def _column(
     kind: str = "deletion",
     token: str | None = None,
     base: str | None = None,
+    gene: str | None = None,
 ) -> s.StrainColumn:
     """One kept column, as resolve_columns would have produced it."""
     return s.StrainColumn(
@@ -531,6 +532,7 @@ def _column(
         allele_kind=cast(Any, kind),
         allele_token=token,
         resolved_label=base,
+        gene_name=gene if gene is not None or base is None else base,
     )
 
 
@@ -610,7 +612,7 @@ def test_a_strain_column_refuses_a_half_stated_allele() -> None:
         s.StrainColumn(
             index=0, source_label="thrA", locus_tag="BW25113_0002", allele_token="SPA"
         )
-    with pytest.raises(ValueError, match="names its token and the symbol"):
+    with pytest.raises(ValueError, match="names its token, the symbol"):
         s.StrainColumn(
             index=0,
             source_label="thrA-SPA",
@@ -779,17 +781,24 @@ def test_each_column_rule_claims_its_own_labels(
     monkeypatch.setattr(s, "MIN_RESOLVED_FRACTION", 0.4)
     resolution = s.resolve_columns(_SYNTHETIC_GENES, bw25113, label="synthetic")
     assert [
-        (c.index, c.source_label, c.locus_tag, c.allele_kind, c.allele_token)
+        (
+            c.index,
+            c.source_label,
+            c.locus_tag,
+            c.allele_kind,
+            c.allele_token,
+            c.gene_name,
+        )
         for c in resolution.kept
     ] == [
-        (0, "thrA", "BW25113_0002", "deletion", None),
-        (1, "hokC", "BW25113_4412", "deletion", None),
-        (2, "yaaP", "BW25113_0004", "deletion", None),
-        (3, "yaaX", "BW25113_0008", "deletion", None),
-        (11, "thrA-SPA", "BW25113_0002", "tag", "SPA"),
-        (12, "hokC-kan", "BW25113_4412", "marker", "kan"),
-        (13, "yaaP-DAS", "BW25113_0004", "degron", "DAS"),
-        (14, "yaaP-DAS+4", "BW25113_0004", "degron", "DAS+4"),
+        (0, "thrA", "BW25113_0002", "deletion", None, None),
+        (1, "hokC", "BW25113_4412", "deletion", None, None),
+        (2, "yaaP", "BW25113_0004", "deletion", None, None),
+        (3, "yaaX", "BW25113_0008", "deletion", None, None),
+        (11, "thrA-SPA", "BW25113_0002", "tag", "SPA", "thrA"),
+        (12, "hokC-kan", "BW25113_4412", "marker", "kan", "hokC"),
+        (13, "yaaP-DAS", "BW25113_0004", "degron", "DAS", "yaaP"),
+        (14, "yaaP-DAS+4", "BW25113_0004", "degron", "DAS+4", "yaaP"),
     ]
     # the allele columns' locus tags come from the SECOND pass, on the base symbol
     assert resolution.allele_resolutions == {

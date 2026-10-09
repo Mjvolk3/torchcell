@@ -1484,7 +1484,7 @@ def genotype(column: StrainColumn) -> Genotype:
     # conflict, and rightly: a tagged allele and a deletion of thrA perturb the same
     # gene. The released label survives verbatim on ``identifier_mapping``, and the
     # allele identity lives in the leaf's own ``tag`` / ``cassette`` / ``degron``.
-    gene_name = str(column.resolved_label)
+    gene_name = str(column.gene_name)
     if column.allele_kind == "degron":
         return Genotype(
             perturbations=[
@@ -1693,20 +1693,33 @@ class StrainColumn(BaseModel):
     allele_token: str | None = None
     #: the symbol that WAS resolved, when it is not the whole label
     resolved_label: str | None = None
+    #: the pinned annotation's own symbol for ``locus_tag``, used as the GENE's name on
+    #: an allele column. Not the released base spelling: the release writes ``lpxC-SPA``
+    #: and ``lpxc-kan`` for one locus, and two spellings of one gene would split it into
+    #: two common names, which the verifier's canonical-name rule flags.
+    gene_name: str | None = None
 
     @model_validator(mode="after")
     def _check_allele(self) -> StrainColumn:
         """A deletion carries no token; an allele column carries both."""
         if self.allele_kind == "deletion":
-            if self.allele_token is not None or self.resolved_label is not None:
+            if (
+                self.allele_token is not None
+                or self.resolved_label is not None
+                or self.gene_name is not None
+            ):
                 raise ValueError(
                     f"{self.source_label}: a deletion column carries no allele token"
                 )
             return self
-        if self.allele_token is None or self.resolved_label is None:
+        if (
+            self.allele_token is None
+            or self.resolved_label is None
+            or self.gene_name is None
+        ):
             raise ValueError(
-                f"{self.source_label}: an allele column names its token and the symbol "
-                "that was resolved"
+                f"{self.source_label}: an allele column names its token, the symbol "
+                "that was resolved and the annotation's own gene name"
             )
         return self
 
@@ -1731,6 +1744,22 @@ class ColumnResolution(BaseModel):
     #: Recorded separately from the reconciliation because the reconciliation ran on the
     #: SUFFIXED labels, which the annotation does not carry; this is the second pass.
     allele_resolutions: dict[str, tuple[str, str]] = {}
+
+
+def canonical_symbol(genome: EcoliK12BW25113Genome, tag: str) -> str:
+    """The pinned annotation's own gene symbol for ``tag``, when it resolves back to it.
+
+    One spelling per locus is what keeps a gene from splitting into two common names, so
+    an allele column's gene name comes from the annotation rather than from the
+    release's own base spelling: the release writes ``lpxC-SPA`` and ``lpxc-kan`` for
+    one locus. A locus with no symbol, or whose symbol resolves elsewhere, is named by
+    its tag.
+    """
+    symbol = genome.genbank.loci[tag].symbol
+    if symbol is None:
+        return tag
+    resolved = genome.resolve_gene_name(symbol).systematic_name
+    return symbol if resolved == tag else tag
 
 
 def resolve_columns(
@@ -1813,6 +1842,11 @@ def resolve_columns(
             else "deletion",
             allele_token=alleles[name].token if name in alleles else None,
             resolved_label=allele_resolutions[name][0] if name in alleles else None,
+            gene_name=(
+                canonical_symbol(genome, allele_resolutions[name][1])
+                if name in alleles
+                else None
+            ),
         )
         for index, name in enumerate(gene_labels)
         if name not in dropped

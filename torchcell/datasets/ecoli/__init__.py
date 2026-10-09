@@ -72,6 +72,9 @@ sourcing layer.
 - ``lamoureux2023_public_k12`` -- ``RnaseqPublicK12Lamoureux2023Dataset``: the Public K-12
   arm of the same release, one record per reprocessed public MG1655 RNA-seq library, keyed
   by its SRA experiment accession.
+- ``niu2019`` -- ``CrisprPineneToleranceNiu2019Dataset``: CRISPRa and CRISPRi of the
+  pinene-response genes in the designed parent BW25113(PT5-dxs), one record per stored
+  strain's OD600 ratio against the no-guide control under 0.5% pinene.
 - ``shiver2016`` -- ``EnvChemgenShiver2016Dataset``: the neglected-antibiotic
   chemical-genomic screen, KEIO deletion fitness-scores across the 57 conditions of
   its own batches in the integrated S1 Dataset matrix.
@@ -194,6 +197,9 @@ from .mohiuddin2022 import (
 from .mori2021 import ProteomeMori2021Dataset as ProteomeMori2021Dataset
 from .mutalik2020 import (
     PhageRbTnseqMutalik2020Dataset as PhageRbTnseqMutalik2020Dataset,
+)
+from .niu2019 import (
+    CrisprPineneToleranceNiu2019Dataset as CrisprPineneToleranceNiu2019Dataset,
 )
 from .price2018 import (
     GeneEssentialityPrice2018EcoliDataset as GeneEssentialityPrice2018EcoliDataset,

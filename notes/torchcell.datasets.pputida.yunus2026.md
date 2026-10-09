@@ -400,3 +400,258 @@ The per-strain isoprenol titers (bar charts only, no control titer stated, so a
 `ProductTiterExperimentReference` has no reference titer), the two Benchling pages, Table
 S6, the three sequencing primers, Fig. 5A's TCA metabolites, Fig. 3C/D/F and PRIDE
 PXD062697.
+
+## 2026.10.09 - The two manually deposited Benchling tables become two loaded datasets
+
+Issue #788 item 2 and issue #699. The titer gap the 2026.10.07 section records is closed
+by a manual deposit, and the same deposited table carries a protein panel beside it. Two
+new dataset classes:
+
+- `IsoprenolTiterYunus2026Dataset` (`data/torchcell/isoprenol_titer_yunus2026`), 125
+  records, `ProductTiterExperiment`.
+- `CrispriPanelProteomeYunus2026Dataset`
+  (`data/torchcell/crispri_panel_proteome_yunus2026`), 125 records,
+  `BacterialProteinAbundanceExperiment`.
+
+### The deposit, and its paste caveat
+
+Supplementary Note 1 links two Benchling share pages: the Pearson analysis and its
+per-strain input table. Both are a JavaScript single-page app whose data loads through an
+authenticated internal API (HTTP 401 to scripts, measured 2026-10-07), so the owner
+opened them in a browser and could not export a CSV. Both tables are therefore a
+COPY-PASTE of the rendered page, deposited under
+`$DATA_ROOT/torchcell-raw/yunusPredictiveCRISPRmediatedGene2026/data/benchling/` with
+`RetrievalMethod.manual_browser`:
+
+| file | bytes | sha256 | role |
+|---|---|---|---|
+| `strain_isoprenol_production_protein_abundance.tsv` | 269,377 | `4b5d70de2b858b93a5359a3d5f3c0c26db4c1b9387187cf39ec97456906c0838` | raw_data, loaded |
+| `protein_correlation_with_isoprenol_production.tsv` | 80,862 | `0e05f26b2686a2039dae70e2e87368f23e4c7a7f54fc9048c67adc5b4c986212` | si_data, recorded only |
+
+The caveat, verbatim from the deposit's own `DEPOSIT.md` and carried into
+`Provenance.method` and into the `protein_abundance_se` gap of the panel family:
+
+> These are therefore the page's DISPLAYED values, not an export: numeric precision is
+> whatever the page rendered (e.g. p-values appear as `1.30e-18`, correlations to 9
+> decimals, abundances as integers or with 2 decimals).
+
+The manual recipe, the page-to-file mapping (including the owner's own note that the
+mapping is not independently verified), `retrieved_by`, the deposit record and the
+checksum file are all in each record's `retrieval.params`, and
+`retrieval.sha256 == record.sha256` for both. The mirror manifest now carries three files:
+the publisher's `mmc1.docx` plus these two.
+
+### The correlation table is recorded, never stored
+
+Its three columns are `Protein`, `Correlation_with_isoprenol_production` and `p_value`,
+one row per protein. That is a derived statistic over a strain panel rather than a
+measurement of any one strain, and no phenotype class models a per-protein correlation
+with its own test, so it is in the manifest's `si_expected` and in `NOT_LOADED` and no
+record stores it. Measured on the pinned bytes: 2,659 rows with p up to 0.9989, so it is
+the UNFILTERED result frame of Supplementary Note 1's script rather than its p < 0.05
+output, and it covers a wider protein set than the panel (252 of the panel's 253
+accessions appear in it, one does not). Neither deposited file completes the other.
+
+### The sourced unit
+
+The deposited `isoprenol_production` column carries no unit. The unit is the paper's,
+quoted from `paper.md` (sha256
+`32ab4cd3753a930c6ad983809e7083a06159b7b0feb6b5252ace180273bbe563`) under the heading
+`# 3.3. Predictive CRISPRi downregulation for improved isoprenol production`:
+
+> The highest recorded isoprenol titer of $1 4 6 9 \mathrm { m g / L }$ (Fig. 4E) was
+> achieved by downregulating PP_4188, a gene identified by FluxRETAP
+
+`ConcentrationUnit` has no mg/L member and 1 mg/L is exactly 1 ug/mL, so the deposited
+number is stored verbatim under `ug_per_ml` and no arithmetic touches a source value.
+
+### Row-label reconciliation, measured 2026-10-09
+
+The 132 row labels are CRISPRi TARGET labels, not strain names. Reconciled against Table
+S3's `CRISPRi target gene` labels and tags plus Tables S1 and S2's locus tags:
+
+| route | count |
+|---|---|
+| matches a released target exactly | 123 |
+| matches after stripping the trailing `" (S)"` | 6 |
+| matches after also stripping a trailing `_NT<digit>` | 2 (`PP_1607_NT1`, `PP_1607_NT3`) |
+| matches nothing | 1 (`Control`, the reference row) |
+| **total** | **132** |
+
+The 121 distinct locus tags behind the 125 kept rows all resolve to current locus tags of
+`pputida_KT2440_ASM756v2` (121 of 121, `MIN_RESOLVED_FRACTION` 1.0); 105 of them are in
+Tables S1 or S2 and all 121 are in Table S3. Per-label routes are in
+`preprocess/label_reconciliation.csv`.
+
+`_NT<digit>` is read as the guide VARIANT number Table S3 already uses, not as a
+non-targeting filler. That is this paper's own measured meaning: Table S7 gives
+`PP_0339_NT1` and `PP_0339_NT2` distinct spacers, and Table S3 screens `PP_1607_NT2` and
+`PP_1607_NT4` as two separate strains. Either reading names the same single perturbed
+locus, so only the spacer lookup differs. 5 of the 125 kept records carry no sourced
+spacer, for the reasons already in `preprocess/guide_assignment.csv`.
+
+### Drop rules
+
+| rule | scope | count |
+|---|---|---|
+| `row_label_carries_an_undefined_marker` | record | 6 |
+| `no_locus_tag_in_the_goa_proteome_file` | protein_accession | 44 (panel family only) |
+| `accession_names_several_loci` | protein_accession | 2 (panel family only) |
+
+The `" (S)"` marker is dropped because NO mirrored byte defines it. The search, recorded
+in `BENCHLING_MARKER_SEARCH` and in the rule's own description: `paper.md` contains the
+string `(S)` zero times and names none of the six tags; the pinned `mmc1.docx` contains it
+exactly once, inside the chemical name "ADP-dependent (S)-NAD(P)H-hydrate dehydratase" in
+Supplementary Table S5, which defines nothing about a strain; Supplementary Note 1 states
+only the two Benchling links and the Pearson script; and Supplementary Tables S6 and S7
+carry each of the six tags as a plasmid or oligo name with no marker beside it. Every one
+of the six marked labels (`PP_0751 (S)`, `PP_0815 (S)`, `PP_1240 (S)`, `PP_1769 (S)`,
+`PP_4191 (S)`, `PP_4635 (S)`) also appears WITHOUT the marker as its own row, so the
+marker separates two rows for one target and dropping the marked one loses no gene. The
+alternative would be inventing a second strain identity this release never states.
+
+### Accession resolution, measured 2026-10-09
+
+The deposited columns are UniProt accessions and `ProteinAbundancePhenotype` keys by
+locus tag, so each goes through `uniprot_locus_crosswalk`, which reads the assembly set's
+GOA proteome file, the same sha256-pinned member the genome reads its GO from.
+
+| | count |
+|---|---|
+| accession columns | 253 |
+| reach exactly one KT2440 locus (**stored**) | **207** (0.8182) |
+| reach several | 2 (`Q877U6`, `Q877V8`) |
+| reach none | 44 |
+| locus tags reached by two accessions | 0 |
+
+`PANEL_MIN_RESOLVED_FRACTION` is pinned at 0.81, just under the measured 0.8182. Every
+dropped accession is in `preprocess/dropped_accessions.csv`. 0.82 is high enough for the
+family to fit, so the dataset is built rather than refused.
+
+Blank and zero policy: 5,978 of 33,396 released abundance cells are exactly 0 and NONE is
+blank. A released 0 is a present measurement and is kept verbatim, never imputed and never
+dropped; the reader refuses a blank cell outright, because a blank is an absence this
+loader has no sourced rule for.
+
+### Replicate design, and the range rule
+
+`ProductTiterPhenotype` requires neither an uncertainty nor a replicate count, but the
+Fig. 4 caption states the design as a RANGE:
+
+> All samples were extracted at $^ { 4 8 \mathrm { ~ h ~ } }$ . $\mathrm { O D } _ { 6 0
+> 0 }$ at $^ { 4 8 \mathrm { ~ h ~ } }$ is shown in Supplementary Fig. S7. Error bars
+> represent standard deviation from 3 to 6 biological replicates.
+
+The deposit releases one number per strain with no SD and no companion statistic, and the
+SD exists only as the figure's error bars, so a back-solve is precluded. CLAUDE.md's range
+rule then takes the **conservative lower end, 3**, with
+`sample_unit = biological_replicate`; `titer_uncertainty`, `titer_uncertainty_type` and
+`titer_se` are typed gaps. The panel family stores `n_replicates = 1` per key, which is
+the arithmetic of the deposit: one displayed number per (strain, protein), no replicate
+column, no uncertainty, so one sample is the support of one stored abundance.
+
+### measurement_type
+
+`dia_nn_top3_signal_benchling_displayed`, from the paper's own words in Methods 2.6:
+
+> Protein quantities were plotted using the Top 3 method, which averages the MS signal of
+> the three most intense tryptic peptides.
+
+It is an ABSOLUTE per-strain signal, distinct from this module's two ratio scales
+(`dia_nn_top3_relative_to_control_strain`,
+`dia_nn_top3_fold_change_relative_to_control_strain`) and from Carruthers 2025's
+`dia_nn_top3_peptide_signal_mean` and `dia_nn_top3_percent_of_proteome_mean`, so
+heterogeneous proteomics is never pooled. `benchling_displayed` is the half of the name
+that carries the paste caveat into the scale itself.
+
+### Cross-source proof: one agreement asserted, one disagreement recorded
+
+Written into `preprocess/benchling_proofs.json` at build time by
+`assert_benchling_titers_match_the_results_text`. The deposit is an independent retrieval
+of the same campaign, so the two titers the Results print are the available join.
+
+| strain | Results print | deposit | difference | treatment |
+|---|---|---|---|---|
+| `PP_0168` | 958 mg/L | 957.246595 | 0.7534 mg/L | ASSERTED, inside the 1 mg/L the paper prints to |
+| `PP_4188` | 1469 mg/L | 1494.98874 | 25.98874 mg/L (1.7691 %) | RECORDED, not reconciled |
+
+No mirrored byte says which number Fig. 4E was drawn from, so the deposited per-strain
+column is what every record stores and the difference is recorded exactly rather than
+repaired by preferring either source.
+
+### References are REAL released controls, not denominators
+
+The `Control` row of the deposited table is a genuine released control strain: isoprenol
+845.73 mg/L and a full protein profile. The titer family's
+`ProductTiterExperimentReference` carries that titer and the panel family's
+`BacterialProteinAbundanceExperimentReference` carries that profile. This is the thing the
+2026.10.07 section said was missing, and it is why neither family invents a denominator.
+Both are different in kind from this module's two ratio families, whose reference is 1.0
+by definition.
+
+### L0-L4 verification, on the built dev stores
+
+`verify_build(dataset_root, data_root, family=...)` dispatches `"titer"` and
+`"panel_proteome"`; the registry entries in `torchcell/verification/runners.py` add the
+family's own L4 containment.
+
+`isoprenol_titer_yunus2026`, 125 records, PASS:
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 125 records validated |
+| L1 | count | observed 125, expected 125 |
+| L2 | value_fidelity | 125 values checked |
+| L2 | uncertainty_nonnegative | 0 values (none released) |
+| L2 | se_is_the_uncertainty_over_sqrt_n | 0 pairs; 125 records release no uncertainty and store no titer_se |
+| L3 | titer_unit_is_the_pinned_unit | `ug/mL` |
+| L3 | uncertainty_is_typed_or_gapped | pass |
+| L3 | replicate_design_is_sourced_or_gapped | pass |
+| L3 | heterologous_pathway_gene_counts | [0]; the dataset declares [0] |
+| L3 | product_is_the_declared_one | isoprenol |
+| L3 | titer_reference_is_one_released_control | all 125 reference 845.73 |
+| L4 | titers_are_the_deposited_column | 125 stored titers are the deposited column verbatim |
+| L4 | perturbed_locus_containment_assembly | 1.000 of 121 |
+
+`crispri_panel_proteome_yunus2026`, 125 records, PASS:
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 125 records validated |
+| L1 | count | observed 125, expected 125 |
+| L1 | orf_uniqueness | 121 ORFs, 2 with multiple strains (expected) |
+| L1 | panel_key_set_is_shared | all 125 records carry the same 207 protein keys |
+| L2 | value_fidelity | 25,875 values checked |
+| L2 | se_nonnegative | 0 values (none released) |
+| L3 | reference_finite | finite and key-matched for all 25,875 |
+| L3 | measurement_type_consistent | `dia_nn_top3_signal_benchling_displayed` |
+| L3 | panel_reference_is_a_measured_control | one control profile of 188 distinct measured values |
+| L4 | panel_profiles_are_the_deposited_columns | 125 profiles over 207 of 253 accessions verbatim, 3,703 released zeros kept |
+| L4 | protein_and_perturbed_locus_containment_assembly | 1.000 of 317 |
+
+The three existing yunus stores were also rebuilt: they could no longer be read by
+`torchcell.verification.runners.load_records`, which raised
+`AttributeError: Can't get attribute 'FoldChangeScale'` on a class the loader no longer
+has. After the rebuild all three PASS too, at 102, 25 and 1 records.
+
+### Decisions taken by recommendation
+
+- `_NT<digit>` is read as this paper's guide VARIANT token rather than as the
+  non-targeting filler `carruthers2025.parse_construct` reads it as. The two readings name
+  the same single perturbed locus, and this module's own measured finding (distinct Table
+  S7 spacers; two separately screened `PP_1607` variants) is about these exact bytes.
+- `n_samples = 3` from the stated 3-to-6 range, by the conservative lower-end rule,
+  because no companion statistic exists to back-solve a per-strain count from.
+- `n_replicates = 1` per protein key on the panel family, the arithmetic of a deposit with
+  no replicate column.
+- `titer_environment()` is a separate `CultureEnvironment` builder, because
+  `ProductTiterExperiment.environment` is annotated as one and pydantic serializes by the
+  declared type; it finally carries the 5 mL working volume, 180 rpm and OD600 0.2 the
+  Methods state and that `production_environment()` has to leave in `SOURCED_VALUES`.
+  `vessel` stays a typed gap: the Methods say "5 mL M9 medium" and name no container.
+- `DropRule` gained a `scope` field defaulting to `"record"`, so an accession-scope rule
+  can sit in the same ledger with `n_records = 0` without breaking `DropLog.check()`'s
+  record arithmetic. This mirrors `carruthers2025.DropRule`.
+- `tests/torchcell/adapters/test_bacterial_adapters.py`'s three `== 57` pins were
+  re-derived from the merged tree as `== 60`. They were already stale by one before this
+  change.

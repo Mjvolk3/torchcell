@@ -28,6 +28,7 @@ current + 5 renamed + 1 pseudogene = 7 of 9.
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import os
 import os.path as osp
@@ -68,6 +69,7 @@ from torchcell.datamodels.schema import (
 from torchcell.sequence.genome.bacterial import GenomeAnnotationMismatchError
 from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
 from torchcell.sequence.genome.ecoli.k12 import (
+    BW25113_ASSEMBLY,
     MG1655_ASSEMBLY,
     EcoliK12BW25113Genome,
     EcoliK12Genome,
@@ -823,3 +825,188 @@ def test_tier_bacterial_genome_reopens_the_rel606_default_cache() -> None:
         "ecoli_b_rel606_locus_tag",
         (),
     )
+
+
+# --------------------------------------------------------------------------- #
+# uniprot_locus_crosswalk: the accession -> locus-tag map read from the GOA file
+#
+# Measured on the synthetic MG1655 GAF (``MG1655_GAF``, seven annotation rows over
+# five UniProt objects): ``UP_thrL``, ``UP_thrA`` and ``UP_proB`` each reach exactly
+# one locus tag, ``UP_insZ`` reaches two (its synonym column is ``insZ|ychG|b0004/b0099``
+# and the reader splits on ``/``), and ``UP_hokC`` reaches none because its only
+# locus-like synonym is ``b0005.1``, which the assembly's own locus-tag pattern
+# ``b\d{4}`` does not fully match.
+# --------------------------------------------------------------------------- #
+CROSSWALK_SINGLE: dict[str, str] = {
+    "UP_thrL": "b0001",
+    "UP_thrA": "b0002",
+    "UP_proB": "b0005",
+}
+CROSSWALK_MULTI: dict[str, tuple[str, ...]] = {"UP_insZ": ("b0004", "b0099")}
+CROSSWALK_NO_TAG = "UP_hokC"
+
+
+@pytest.fixture
+def crosswalk_genome(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[EcoliK12MG1655Genome, str]:
+    """The synthetic MG1655 genome on a genomes-root-shaped tier WITH a manifest.
+
+    The crosswalk reads the GOA member's pinned digest out of that manifest, so the
+    tier has to look like the real one: ``<data_root>/torchcell-genomes/<set>/``, with
+    a ``manifest.json`` whose record for the GOA file carries the bytes' own sha256.
+    """
+    from torchcell.literature.manifest import ROLE_ANNOTATIONS, ArtifactRecord
+    from torchcell.sequence.genome.registry import GenomeManifest
+
+    data_root = tmp_path / "data_root"
+    files = write_assembly(
+        data_root / "torchcell-genomes", MG1655_ASSEMBLY, MG1655_LOCI, MG1655_GAF
+    )
+    forbid_network(monkeypatch)
+    serve_tier(monkeypatch, files)
+    spec = MG1655_ASSEMBLY.go_source
+    goa = files[(spec.assembly_set, spec.member)]
+    manifest = GenomeManifest(
+        assembly_set=spec.assembly_set,
+        organism=MG1655_ASSEMBLY.organism,
+        strain_or_population=MG1655_ASSEMBLY.strain,
+        source="synthetic",
+        release="synthetic",
+        files=[
+            ArtifactRecord(
+                path=spec.member,
+                role=ROLE_ANNOTATIONS,
+                bytes=goa.stat().st_size,
+                sha256=hashlib.sha256(goa.read_bytes()).hexdigest(),
+            )
+        ],
+        provenance_complete=False,
+        created_at="2026-10-09T00:00:00+00:00",
+    )
+    (goa.parent / "manifest.json").write_text(manifest.model_dump_json(indent=2))
+    root = tmp_path / "mg1655"
+    root.mkdir()
+    genome = EcoliK12MG1655Genome(genome_root=str(root), overwrite=False)
+    return genome, str(data_root)
+
+
+def test_the_crosswalk_reads_the_goa_synonym_column_as_accession_to_locus_tag(
+    crosswalk_genome: tuple[EcoliK12MG1655Genome, str],
+) -> None:
+    """One locus per accession where the file gives one, and the rest kept apart."""
+    genome, data_root = crosswalk_genome
+    crosswalk = bc.uniprot_locus_crosswalk(genome, data_root)
+    spec = MG1655_ASSEMBLY.go_source
+    assert crosswalk.assembly_set == spec.assembly_set
+    assert crosswalk.member == spec.member
+    assert crosswalk.rows == len(MG1655_GAF)
+    assert crosswalk.single == CROSSWALK_SINGLE
+    assert crosswalk.multi == CROSSWALK_MULTI
+    assert CROSSWALK_NO_TAG not in crosswalk.single
+    assert CROSSWALK_NO_TAG not in crosswalk.multi
+    assert crosswalk.accessions == len(CROSSWALK_SINGLE) + len(CROSSWALK_MULTI)
+    assert (
+        crosswalk.sha256
+        == hashlib.sha256(
+            Path(
+                osp.join(data_root, "torchcell-genomes", spec.assembly_set, spec.member)
+            ).read_bytes()
+        ).hexdigest()
+    )
+
+
+def test_the_crosswalk_refuses_a_host_whose_go_comes_from_the_refseq_gff() -> None:
+    """A set with no GOA proteome file has no mirrored statement of the relation."""
+
+    class _Bw25113:
+        ASSEMBLY = BW25113_ASSEMBLY
+
+    with pytest.raises(ValueError, match="which has no GOA proteome file"):
+        bc.uniprot_locus_crosswalk(_Bw25113())  # type: ignore[arg-type]
+
+
+def test_the_crosswalk_refuses_a_gaf_row_with_the_wrong_column_count(
+    crosswalk_genome: tuple[EcoliK12MG1655Genome, str],
+) -> None:
+    """A GAF 2.x row has a fixed width; a short row is a different file.
+
+    The replacement bytes are re-pinned in the manifest first, because otherwise the
+    tier's own sha256 gate refuses the file before the reader ever sees the short row.
+    """
+    from torchcell.sequence.genome.registry import GenomeManifest
+
+    genome, data_root = crosswalk_genome
+    spec = MG1655_ASSEMBLY.go_source
+    directory = Path(data_root) / "torchcell-genomes" / spec.assembly_set
+    path = directory / spec.member
+    with gzip.open(path, "wt") as handle:
+        handle.write("!gaf-version: 2.2\nUniProtKB\tUP_x\tx\n")
+    manifest = GenomeManifest.model_validate_json(
+        (directory / "manifest.json").read_text()
+    )
+    record = manifest.record(spec.member)
+    repinned = manifest.model_copy(
+        update={
+            "files": [
+                record.model_copy(
+                    update={
+                        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+                        "bytes": path.stat().st_size,
+                    }
+                )
+            ]
+        }
+    )
+    (directory / "manifest.json").write_text(repinned.model_dump_json(indent=2))
+    with pytest.raises(ValueError, match="a GAF 2.x row has"):
+        bc.uniprot_locus_crosswalk(genome, data_root)
+
+
+def test_resolve_uniprot_accessions_splits_resolved_multi_locus_and_unmapped(
+    crosswalk_genome: tuple[EcoliK12MG1655Genome, str],
+) -> None:
+    """Three outcomes, each listed in full, and the fraction over what was asked."""
+    genome, data_root = crosswalk_genome
+    crosswalk = bc.uniprot_locus_crosswalk(genome, data_root)
+    asked = [*CROSSWALK_SINGLE, *CROSSWALK_MULTI, CROSSWALK_NO_TAG, "UP_absent"]
+    resolution = bc.resolve_uniprot_accessions(crosswalk, asked, label="t")
+    assert resolution.label == "t"
+    assert resolution.assembly_set == crosswalk.assembly_set
+    assert resolution.requested == len(asked)
+    assert resolution.resolved == CROSSWALK_SINGLE
+    assert resolution.multi_locus == CROSSWALK_MULTI
+    assert resolution.unmapped == ("UP_absent", CROSSWALK_NO_TAG)
+    assert resolution.collisions == {}
+    assert resolution.resolved_fraction == len(CROSSWALK_SINGLE) / len(asked)
+    resolution.require_resolved(0.5)
+    with pytest.raises(bc.LocusTagResolutionError, match="reach one"):
+        resolution.require_resolved(0.9)
+
+
+def test_resolve_uniprot_accessions_reports_a_locus_two_accessions_reach(
+    crosswalk_genome: tuple[EcoliK12MG1655Genome, str],
+) -> None:
+    """A collision is reported, never repaired: which column is the gene's is unknown."""
+    genome, data_root = crosswalk_genome
+    crosswalk = bc.uniprot_locus_crosswalk(genome, data_root)
+    collided = crosswalk.model_copy(
+        update={"single": {**crosswalk.single, "UP_other": "b0001"}}
+    )
+    resolution = bc.resolve_uniprot_accessions(
+        collided, [*collided.single], label="collide"
+    )
+    assert resolution.collisions == {"b0001": ("UP_other", "UP_thrL")}
+
+
+def test_resolve_uniprot_accessions_deduplicates_and_sorts_what_it_was_asked(
+    crosswalk_genome: tuple[EcoliK12MG1655Genome, str],
+) -> None:
+    """``requested`` counts distinct accessions, so a repeated column is asked once."""
+    genome, data_root = crosswalk_genome
+    crosswalk = bc.uniprot_locus_crosswalk(genome, data_root)
+    resolution = bc.resolve_uniprot_accessions(
+        crosswalk, ["UP_thrL", "UP_thrL", "UP_thrA"], label="dupes"
+    )
+    assert resolution.requested == 2
+    assert resolution.resolved_fraction == 1.0

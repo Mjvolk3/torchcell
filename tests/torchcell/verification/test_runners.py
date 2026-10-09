@@ -2490,6 +2490,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         desiqueira2025,
         kang2026,
         lim2025,
+        yunus2026,
     )
 
     calls: list[tuple[str, tuple[Any, ...], dict[str, Any]]] = []
@@ -2508,6 +2509,7 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     monkeypatch.setattr(kang2026, "verify_build", record("kang"))
     monkeypatch.setattr(lim2025, "run_proteome_verification", record("lim"))
     monkeypatch.setattr(caglar2017, "run_verification", record("caglar"))
+    monkeypatch.setattr(yunus2026, "verify_build", record("yunus"))
 
     assert runners._verify_foo_titer("/root", "/data").dataset_name == "foo"
     assert (
@@ -2530,6 +2532,10 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
     assert runners._verify_kang_titer("/root", "/data").dataset_name == "kang"
     assert runners._verify_lim_proteome("/root", "/data").dataset_name == "lim"
     assert runners._verify_caglar_proteome("/root", "/data").dataset_name == "caglar"
+    assert runners._verify_yunus_titer("/root", "/data").dataset_name == "yunus"
+    assert (
+        runners._verify_yunus_panel_proteome("/root", "/data").dataset_name == "yunus"
+    )
     assert calls == [
         ("foo", ("/root", "/data"), {}),
         ("banerjee", ("/root", "/data"), {}),
@@ -2540,6 +2546,8 @@ def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(
         ("kang", ("/root", "/data"), {}),
         ("lim", ("/data",), {}),
         ("caglar", ("proteome", "/data"), {}),
+        ("yunus", ("/root", "/data"), {"family": "titer"}),
+        ("yunus", ("/root", "/data"), {"family": "panel_proteome"}),
     ]
 
 
@@ -2558,6 +2566,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         "isoprenyl_acetate_titer_kang2026": (
             "data/torchcell/isoprenyl_acetate_titer_kang2026"
         ),
+        "isoprenol_titer_yunus2026": "data/torchcell/isoprenol_titer_yunus2026",
     }
     assert {
         name: spec["root"]
@@ -2578,4 +2587,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         "proteome_lim2025": "data/torchcell/proteome_lim2025",
         "proteome_caglar2017": "data/torchcell/proteome_caglar2017",
         "proteome_ishii2007": "data/torchcell/proteome_ishii2007",
+        "crispri_panel_proteome_yunus2026": (
+            "data/torchcell/crispri_panel_proteome_yunus2026"
+        ),
     }

@@ -32,6 +32,7 @@ bacterial loader needs that a yeast one does not. Section 4 of
   so a yeast-only build never touches the bacterial tier.
 """
 
+import gzip
 import inspect
 import logging
 import os
@@ -751,7 +752,12 @@ def uniprot_locus_crosswalk(
     pattern = re.compile(spec.identifier_pattern)
     tags: dict[str, set[str]] = {}
     rows = 0
-    with open(path) as handle:
+    # The deposited GOA file is served as it was released: uncompressed for
+    # ``pputida_KT2440_ASM756v2`` (109.P_putida_KT2440.goa) and gzipped for
+    # ``ecoli_K12_MG1655_ASM584v2`` (ECOLI-uniprot.gaf.gz). The member's own name says
+    # which, so the reader opens it accordingly rather than assuming one of the two.
+    opener = gzip.open if spec.member.endswith(".gz") else open
+    with opener(path, "rt") as handle:
         for line in handle:
             if line.startswith("!"):
                 continue
@@ -770,8 +776,13 @@ def uniprot_locus_crosswalk(
             }
             if found:
                 tags.setdefault(columns[1], set()).update(found)
+    if spec.assembly_set != genome.ASSEMBLY.assembly_set:
+        raise ValueError(
+            f"{genome.ASSEMBLY.assembly_set} reads its GO from {spec.assembly_set}'s "
+            "file, so the crosswalk would describe another assembly's annotation"
+        )
     return UniProtLocusCrosswalk(
-        assembly_set=spec.assembly_set,
+        assembly_set=_ASSEMBLY_SET.validate_python(spec.assembly_set),
         member=spec.member,
         sha256=pinned.sha256,
         rows=rows,

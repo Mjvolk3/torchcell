@@ -1114,16 +1114,17 @@ def test_si_retrieval_is_the_scriptable_elsevier_cdn_get() -> None:
 
 
 def test_deposit_raw_mirror_writes_the_file_and_a_complete_manifest(
-    synthetic_docx: Path, tmp_path: Path
+    synthetic_docx: Path, synthetic_benchling: tuple[str, str], tmp_path: Path
 ) -> None:
     """The deposit is one artifact with its retrieval, its extraction recipe and a hash."""
     data_root = tmp_path / "root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     root = y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
     assert (root / y26.SI_MIRROR_RELPATH).exists()
     manifest = Manifest.model_validate_json((root / "manifest.json").read_text())
     assert manifest.citation_key == y26.CITATION_KEY
     assert manifest.doi == y26.PAPER_DOI
-    assert len(manifest.files) == 1
+    assert len(manifest.files) == 3
     record = manifest.files[0]
     assert record.role == ROLE_RAW_DATA
     assert record.sha256 == y26.SI_DOCX_SHA256
@@ -1134,9 +1135,12 @@ def test_deposit_raw_mirror_writes_the_file_and_a_complete_manifest(
     assert any("Benchling" in line for line in manifest.si_expected)
 
 
-def test_deposit_raw_mirror_is_idempotent(synthetic_docx: Path, tmp_path: Path) -> None:
+def test_deposit_raw_mirror_is_idempotent(
+    synthetic_docx: Path, synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
     """A second deposit of the same bytes leaves the mirror file alone."""
     data_root = tmp_path / "root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     root = y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
     before = (root / y26.SI_MIRROR_RELPATH).stat().st_mtime_ns
     y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
@@ -1153,10 +1157,11 @@ def test_deposit_raw_mirror_refuses_a_source_with_another_hash(
 
 
 def test_deposit_raw_mirror_refuses_to_overwrite_a_differing_mirror_file(
-    synthetic_docx: Path, tmp_path: Path
+    synthetic_docx: Path, synthetic_benchling: tuple[str, str], tmp_path: Path
 ) -> None:
     """A mirror file whose bytes differ is a provenance break, not a cache miss."""
     data_root = tmp_path / "root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     root = y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
     (root / y26.SI_MIRROR_RELPATH).write_bytes(b"other")
     with pytest.raises(RuntimeError, match="different sha256; refusing"):
@@ -1164,9 +1169,10 @@ def test_deposit_raw_mirror_refuses_to_overwrite_a_differing_mirror_file(
 
 
 def test_manifest_sha256_raises_on_a_path_the_manifest_does_not_carry(
-    synthetic_docx: Path, tmp_path: Path
+    synthetic_docx: Path, synthetic_benchling: tuple[str, str], tmp_path: Path
 ) -> None:
     """A pin can only be checked against a recorded file."""
+    _write_benchling_deposit(tmp_path / "root" / y26.RAW_DIR_REL, synthetic_benchling)
     y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(tmp_path / "root"))
     manifest = y26.load_manifest(str(tmp_path / "root"))
     assert y26.manifest_sha256(manifest, y26.SI_MIRROR_RELPATH) == y26.SI_DOCX_SHA256
@@ -1211,10 +1217,19 @@ def test_raw_mirror_dir_reads_data_root_from_the_environment(
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def synthetic_mirror(
-    synthetic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    synthetic_docx: Path,
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> Path:
-    """A raw mirror of the synthetic docx, with ``DATA_ROOT`` pointed at it."""
+    """A raw mirror of the synthetic docx and both synthetic deposits.
+
+    The two Benchling tables are a MANUAL deposit, so they are written into the mirror
+    before ``deposit_raw_mirror`` runs: that function verifies them in place and never
+    copies them, exactly as the real deposit works.
+    """
     data_root = tmp_path / "data_root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     return data_root
@@ -1940,10 +1955,14 @@ def test_main_digests_prints_the_pinning_block(
 
 
 def test_main_deposit_uses_the_literature_mirrors_captured_file(
-    synthetic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    synthetic_docx: Path,
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Without ``--retrieve-into`` the deposit reads the literature mirror's si/ copy."""
     data_root = tmp_path / "root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     captured = data_root / y26.LIBRARY_DIR_REL / "si" / y26.SI_DOCX
     captured.parent.mkdir(parents=True)
     captured.write_bytes(synthetic_docx.read_bytes())
@@ -1953,7 +1972,10 @@ def test_main_deposit_uses_the_literature_mirrors_captured_file(
 
 
 def test_main_deposit_can_re_run_the_recorded_retrieval(
-    synthetic_docx: Path, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    synthetic_docx: Path,
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """``--retrieve-into`` re-runs the retriever and deposits the verified bytes."""
     import torchcell.literature.provenance as provenance
@@ -1961,6 +1983,7 @@ def test_main_deposit_can_re_run_the_recorded_retrieval(
     payload = synthetic_docx.read_bytes()
     monkeypatch.setattr(provenance, "run_retriever", lambda record: payload)
     data_root = tmp_path / "root"
+    _write_benchling_deposit(data_root / y26.RAW_DIR_REL, synthetic_benchling)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     assert y26.main(["deposit", "--retrieve-into", str(tmp_path / "dl")]) == 0
     mirrored = data_root / y26.RAW_DIR_REL / y26.SI_MIRROR_RELPATH
@@ -2059,3 +2082,1220 @@ def test_run_verification_skips_the_audits_when_the_library_is_not_mounted(
     assert report.passed
     assert not any(r.name == "provenance_audit" for r in report.results)
     assert "provenance audits" in caplog.text
+
+
+# --------------------------------------------------------------------------- #
+# The two hand-deposited Benchling tables (issues #699 and #788 item 2)
+# --------------------------------------------------------------------------- #
+#: The synthetic deposit's protein columns: ten reach one locus, one reaches two, one
+#: reaches none, so both accession drop rules and the 0.81 floor are exercised at once.
+PANEL_ACCESSIONS: tuple[str, ...] = tuple(f"UP_A{index:02d}" for index in range(12))
+PANEL_SINGLE: dict[str, str] = {
+    f"UP_A{index:02d}": tag for index, (tag, _) in enumerate(SCREEN_LOCI[:10])
+}
+PANEL_MULTI: dict[str, tuple[str, ...]] = {
+    "UP_A10": (SCREEN_LOCI[10][0], SCREEN_LOCI[11][0])
+}
+PANEL_UNMAPPED = "UP_A11"
+
+#: The synthetic deposit's row labels. Twelve match a Table S3 target exactly, one
+#: carries the undefined marker over a label whose bare twin is also a row, one matches
+#: only after the ``_NT<digit>`` strip, and one is the control.
+PANEL_ROWS: tuple[tuple[str, float], ...] = (
+    ("PP_0100", 957.5),
+    ("PP_0101", 1400.0),
+    ("PP_0102", 120.0),
+    ("PP_0103", 130.0),
+    ("PP_0104", 140.0),
+    ("PP_0105", 150.0),
+    ("PP_0106_NT2", 160.0),
+    ("PP_0106_NT3", 170.0),
+    ("PP_0107", 180.0),
+    ("PP_0108", 190.0),
+    ("PP_0109", 200.0),
+    ("PP_0110", 210.0),
+    ("PP_0100 (S)", 220.0),
+    ("PP_0107_NT1", 230.0),
+    ("Control", 845.73),
+)
+PANEL_MARKED = tuple(label for label, _ in PANEL_ROWS if label.endswith(" (S)"))
+PANEL_RECORDS = len(PANEL_ROWS) - 1 - len(PANEL_MARKED)
+#: The synthetic correlation table's rows.
+CORRELATION_ROWS: tuple[tuple[str, float, float], ...] = (
+    ("UP_A00", -0.671135904, 1.30e-18),
+    ("UP_A01", 0.459300000, 3.00e-08),
+    ("UP_A11", 0.012000000, 0.9988959),
+)
+
+
+def _panel_tsv(
+    rows: tuple[tuple[str, float], ...] = PANEL_ROWS,
+    accessions: tuple[str, ...] = PANEL_ACCESSIONS,
+    header: tuple[str, ...] = ("strain", "isoprenol_production"),
+) -> str:
+    """The synthetic ``strain, isoprenol_production, <accessions>`` TSV as text.
+
+    One cell per row is a released ``0``, so the zero-is-a-measurement rule is covered,
+    and every other cell is a distinct positive number.
+    """
+    lines = ["\t".join([*header, *accessions])]
+    for row_index, (label, titer) in enumerate(rows):
+        cells = [
+            "0" if column == 0 else f"{row_index * 100 + column * 7 + 1}.5"
+            for column in range(len(accessions))
+        ]
+        lines.append("\t".join([label, repr(titer), *cells]))
+    return "\n".join(lines) + "\n"
+
+
+def _correlation_tsv(
+    rows: tuple[tuple[str, float, float], ...] = CORRELATION_ROWS,
+    header: tuple[str, ...] = (
+        "Protein",
+        "Correlation_with_isoprenol_production",
+        "p_value",
+    ),
+) -> str:
+    """The synthetic Pearson-output TSV as text."""
+    lines = ["\t".join(header)]
+    for protein, correlation, p_value in rows:
+        lines.append("\t".join([protein, repr(correlation), repr(p_value)]))
+    return "\n".join(lines) + "\n"
+
+
+def _write_benchling_deposit(root: Path, texts: tuple[str, str]) -> None:
+    """Write both deposited tables under ``root`` at their mirror-relative paths."""
+    panel, correlation = texts
+    for relpath, text in (
+        (y26.BENCHLING_TITER_REL, panel),
+        (y26.BENCHLING_CORRELATION_REL, correlation),
+    ):
+        path = root / relpath
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text)
+
+
+@pytest.fixture
+def synthetic_crosswalk() -> Any:
+    """A ``UniProtLocusCrosswalk`` over :data:`PANEL_ACCESSIONS`.
+
+    The crosswalk is replaced rather than read: the synthetic assembly fixture carries
+    one GAF row, so a real crosswalk over it would resolve almost nothing. Everything
+    the loader does WITH the crosswalk, including the split and both drop rules, is the
+    code under test.
+    """
+    from torchcell.datasets.bacteria_common import UniProtLocusCrosswalk
+
+    return UniProtLocusCrosswalk(
+        assembly_set=y26.KT2440_ASSEMBLY_SET,
+        member="109.P_putida_KT2440.goa",
+        sha256="0" * 64,
+        rows=len(PANEL_ACCESSIONS),
+        single=dict(PANEL_SINGLE),
+        multi=dict(PANEL_MULTI),
+    )
+
+
+@pytest.fixture
+def synthetic_benchling(
+    monkeypatch: pytest.MonkeyPatch, synthetic_crosswalk: Any
+) -> tuple[str, str]:
+    """Both synthetic deposits' bytes, with every pin they are checked against.
+
+    The pinned digests, row counts and cross-source oracle labels are all module
+    constants read at call time, so re-pointing them here re-points the deposit records,
+    the shape assertion and the Results-text join at the synthetic bytes.
+    """
+    panel = _panel_tsv()
+    correlation = _correlation_tsv()
+    monkeypatch.setattr(
+        y26, "BENCHLING_TITER_SHA256", hashlib.sha256(panel.encode()).hexdigest()
+    )
+    monkeypatch.setattr(
+        y26,
+        "BENCHLING_CORRELATION_SHA256",
+        hashlib.sha256(correlation.encode()).hexdigest(),
+    )
+    monkeypatch.setattr(y26, "BENCHLING_TITER_ROWS", len(PANEL_ROWS))
+    monkeypatch.setattr(y26, "BENCHLING_ACCESSIONS", len(PANEL_ACCESSIONS))
+    monkeypatch.setattr(y26, "BENCHLING_CORRELATION_ROWS", len(CORRELATION_ROWS))
+    # PP_0100's titer is 957.5 against the real 958 mg/L the Results print, so the
+    # asserted agreement holds; PP_0101's 1400.0 is 69 mg/L off the printed 1469 and is
+    # the recorded disagreement.
+    monkeypatch.setattr(y26, "TITER_ORACLE_AGREES", "PP_0100")
+    monkeypatch.setattr(y26, "TITER_ORACLE_DISAGREES", "PP_0101")
+    monkeypatch.setattr(
+        y26, "uniprot_locus_crosswalk", lambda *a, **k: synthetic_crosswalk
+    )
+    return panel, correlation
+
+
+def test_benchling_deposits_name_both_files_with_their_pins() -> None:
+    """The deposit list reads its digests at call time, so a test can re-point them."""
+    deposits = y26.benchling_deposits()
+    assert [relpath for relpath, _, _, _ in deposits] == [
+        "data/benchling/strain_isoprenol_production_protein_abundance.tsv",
+        "data/benchling/protein_correlation_with_isoprenol_production.tsv",
+    ]
+    assert [role for _, role, _, _ in deposits] == [ROLE_RAW_DATA, "si_data"]
+    assert [digest for _, _, digest, _ in deposits] == [
+        y26.BENCHLING_TITER_SHA256,
+        y26.BENCHLING_CORRELATION_SHA256,
+    ]
+
+
+def test_benchling_artifact_records_carry_the_paste_caveat_and_the_recipe(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """Every record is manual_browser, and its params carry the deposit's own words."""
+    root = tmp_path / "mirror"
+    _write_benchling_deposit(root, synthetic_benchling)
+    records = y26.benchling_artifact_records(root)
+    assert len(records) == 2
+    for record in records:
+        retrieval = record.retrieval
+        assert retrieval is not None
+        assert retrieval.method is RetrievalMethod.manual_browser
+        assert retrieval.sha256 == record.sha256
+        params = retrieval.params
+        assert params["retrieval_command"] == y26.BENCHLING_MANUAL_RECIPE
+        assert params["paste_caveat"] == y26.BENCHLING_PASTE_CAVEAT
+        assert params["page_mapping"] == y26.BENCHLING_PAGE_MAPPING
+        assert params["retrieved_by"] == y26.BENCHLING_RETRIEVED_BY
+        assert params["deposit_record"] == "data/benchling/DEPOSIT.md"
+        assert params["checksums"] == "data/benchling/SHA256SUMS.txt"
+    assert records[0].source == y26.BENCHLING_INPUT_URL
+    assert records[1].source == y26.BENCHLING_ANALYSIS_URL
+
+
+def test_benchling_artifact_records_name_the_recipe_when_a_file_is_absent(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """An absent manual deposit cannot be refetched, so the refusal states the recipe."""
+    root = tmp_path / "mirror"
+    _write_benchling_deposit(root, synthetic_benchling)
+    (root / y26.BENCHLING_CORRELATION_REL).unlink()
+    with pytest.raises(RuntimeError, match="MANUAL RECIPE"):
+        y26.benchling_artifact_records(root)
+
+
+def test_benchling_artifact_records_refuse_drifted_bytes(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """Altered deposited bytes are a NEW provenance record, never a silent update."""
+    root = tmp_path / "mirror"
+    _write_benchling_deposit(root, synthetic_benchling)
+    path = root / y26.BENCHLING_TITER_REL
+    path.write_text(path.read_text() + "PP_0111\t1.0" + "\t1.0" * 12 + "\n")
+    with pytest.raises(RuntimeError, match="NEW provenance record"):
+        y26.benchling_artifact_records(root)
+
+
+def test_deposit_raw_mirror_records_both_manual_deposits(
+    synthetic_mirror: Path,
+) -> None:
+    """The mirror manifest carries the docx and both deposits, and nothing else."""
+    manifest = y26.load_manifest(str(synthetic_mirror))
+    assert [record.path for record in manifest.files] == [
+        y26.SI_MIRROR_RELPATH,
+        y26.BENCHLING_TITER_REL,
+        y26.BENCHLING_CORRELATION_REL,
+    ]
+    for record in manifest.files:
+        assert record.retrieval is not None
+        assert record.retrieval.sha256 == record.sha256
+    assert any(
+        "RECORDED ONLY" in entry and "p_value" in entry
+        for entry in manifest.si_expected
+    )
+    assert any(
+        "IS loaded" in entry and y26.BENCHLING_TITER_REL in entry
+        for entry in manifest.si_expected
+    )
+    assert not any("the family is not built" in entry for entry in manifest.si_expected)
+
+
+# --------------------------------------------------------------------------- #
+# The deposited readers and every refusal branch
+# --------------------------------------------------------------------------- #
+def test_read_benchling_strain_table_types_every_row(tmp_path: Path) -> None:
+    """Labels, the titer and all twelve abundances, with the control separated out."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv())
+    table = y26.read_benchling_strain_table(path)
+    assert table.accessions == PANEL_ACCESSIONS
+    assert len(table.rows) == len(PANEL_ROWS)
+    assert len(table.strains) == len(PANEL_ROWS) - 1
+    assert table.control.label == "Control"
+    assert table.control.isoprenol_production == 845.73
+    assert table.zero_cells == len(PANEL_ROWS)
+    assert [row.label for row in table.rows if row.marked] == list(PANEL_MARKED)
+    assert table.titer_by_label["PP_0100"] == 957.5
+
+
+def test_read_benchling_strain_table_refuses_a_changed_header(tmp_path: Path) -> None:
+    """The first two columns are the file's contract with Supplementary Note 1's script."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(header=("strain", "isoprenol_titer")))
+    with pytest.raises(y26.TableExtractionError, match="isoprenol_production"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_repeated_protein_column(
+    tmp_path: Path,
+) -> None:
+    """A repeated accession would key one gene from two columns."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(accessions=PANEL_ACCESSIONS[:-1] + ("UP_A00",)))
+    with pytest.raises(y26.TableExtractionError, match="repeats the protein"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_repeated_strain_row(
+    tmp_path: Path,
+) -> None:
+    """One row is one strain, so a repeat would store two titers for one identity."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(rows=PANEL_ROWS + (("PP_0100", 1.0),)))
+    with pytest.raises(y26.TableExtractionError, match="repeats the strain row"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_table_with_no_control_row(
+    tmp_path: Path,
+) -> None:
+    """The control row is the reference of both families and nothing else supplies one."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(rows=PANEL_ROWS[:-1]))
+    with pytest.raises(y26.TableExtractionError, match="0 rows labeled 'Control'"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_blank_cell(tmp_path: Path) -> None:
+    """A blank is an absence this loader has no sourced rule for, so it stops."""
+    path = tmp_path / "panel.tsv"
+    text = _panel_tsv()
+    lines = text.split("\n")
+    cells = lines[1].split("\t")
+    cells[3] = ""
+    lines[1] = "\t".join(cells)
+    path.write_text("\n".join(lines))
+    with pytest.raises(y26.TableExtractionError, match="is blank"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_short_row(tmp_path: Path) -> None:
+    """A row with fewer cells than the header is a changed release."""
+    path = tmp_path / "panel.tsv"
+    lines = _panel_tsv().split("\n")
+    lines[1] = "\t".join(lines[1].split("\t")[:-1])
+    path.write_text("\n".join(lines))
+    with pytest.raises(y26.TableExtractionError, match="cells, header has"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_negative_titer(tmp_path: Path) -> None:
+    """A titer is a measured amount."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(rows=(("PP_0100", -1.0), ("Control", 1.0))))
+    with pytest.raises(y26.TableExtractionError, match="isoprenol_production"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_correlation_table_types_every_row(tmp_path: Path) -> None:
+    """The recorded Pearson output parses to its three typed columns."""
+    path = tmp_path / "corr.tsv"
+    path.write_text(_correlation_tsv())
+    rows = y26.read_benchling_correlation_table(path)
+    assert [row.protein for row in rows] == [p for p, _, _ in CORRELATION_ROWS]
+    assert rows[0].correlation == -0.671135904
+    assert rows[2].p_value == 0.9988959
+
+
+def test_read_benchling_correlation_table_refuses_a_changed_header(
+    tmp_path: Path,
+) -> None:
+    """The three columns are what Supplementary Note 1's script writes."""
+    path = tmp_path / "corr.tsv"
+    path.write_text(_correlation_tsv(header=("Protein", "r", "p_value")))
+    with pytest.raises(y26.TableExtractionError, match="header is"):
+        y26.read_benchling_correlation_table(path)
+
+
+def test_read_benchling_correlation_table_refuses_an_out_of_range_correlation(
+    tmp_path: Path,
+) -> None:
+    """A Pearson r outside [-1, 1] is not a correlation."""
+    path = tmp_path / "corr.tsv"
+    path.write_text(_correlation_tsv(rows=(("UP_A00", 1.5, 0.01),)))
+    with pytest.raises(y26.TableExtractionError, match=r"outside \[-1, 1\]"):
+        y26.read_benchling_correlation_table(path)
+
+
+def test_read_benchling_correlation_table_refuses_an_out_of_range_p_value(
+    tmp_path: Path,
+) -> None:
+    """A p-value outside [0, 1] is not a p-value."""
+    path = tmp_path / "corr.tsv"
+    path.write_text(_correlation_tsv(rows=(("UP_A00", 0.5, 1.5),)))
+    with pytest.raises(y26.TableExtractionError, match=r"outside \[0, 1\]"):
+        y26.read_benchling_correlation_table(path)
+
+
+def test_read_benchling_correlation_table_refuses_a_repeated_protein(
+    tmp_path: Path,
+) -> None:
+    """One row is one protein's statistic."""
+    path = tmp_path / "corr.tsv"
+    path.write_text(_correlation_tsv(rows=CORRELATION_ROWS + CORRELATION_ROWS[:1]))
+    with pytest.raises(y26.TableExtractionError, match="repeats the protein row"):
+        y26.read_benchling_correlation_table(path)
+
+
+# --------------------------------------------------------------------------- #
+# Reconciling the deposited row labels
+# --------------------------------------------------------------------------- #
+def test_reconcile_benchling_labels_splits_by_the_three_documented_routes() -> None:
+    """Exact, marker-stripped, variant-stripped, and what no route reaches."""
+    reconciliation = y26.reconcile_benchling_labels(
+        ["PP_0100", "PP_0100 (S)", "PP_0107_NT1", "Control"], {"PP_0100", "PP_0107"}
+    )
+    assert reconciliation.exact == ("PP_0100",)
+    assert reconciliation.after_marker_strip == ("PP_0100 (S)",)
+    assert reconciliation.after_variant_strip == ("PP_0107_NT1",)
+    assert reconciliation.unmatched == ("Control",)
+    assert reconciliation.rows == 4
+    assert reconciliation.known_targets == 2
+
+
+def test_reconcile_benchling_labels_prefers_the_released_label_over_a_strip() -> None:
+    """A label the lists already name is matched as released, not re-parsed."""
+    reconciliation = y26.reconcile_benchling_labels(
+        ["PP_0106_NT2"], {"PP_0106_NT2", "PP_0106"}
+    )
+    assert reconciliation.exact == ("PP_0106_NT2",)
+    assert reconciliation.after_variant_strip == ()
+
+
+def test_benchling_target_reads_the_variant_as_part_of_the_key() -> None:
+    """``NT<n>`` is this paper's guide-variant number, measured on its own Table S7."""
+    assert y26.benchling_target("PP_0106_NT2") == ("PP_0106", "NT2")
+    assert y26.benchling_target("PP_0100") == ("PP_0100", None)
+
+
+def test_benchling_target_refuses_a_label_it_cannot_key() -> None:
+    """A label this loader cannot parse would store a titer against a guessed gene."""
+    with pytest.raises(y26.TableExtractionError, match="optional"):
+        y26.benchling_target("Control")
+
+
+# --------------------------------------------------------------------------- #
+# The build-time cross-source proofs
+# --------------------------------------------------------------------------- #
+def test_the_results_text_join_asserts_one_titer_and_records_the_other(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """One agreement is asserted; the other difference is recorded, not repaired."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(synthetic_benchling[0])
+    proofs = y26.assert_benchling_titers_match_the_results_text(
+        y26.read_benchling_strain_table(path)
+    )
+    assert "inside the 1.0 mg/L the paper prints to" in proofs[0]
+    assert proofs[1].startswith("MEASURED DISAGREEMENT, kept:")
+    assert "69.0 mg/L" in proofs[1]
+
+
+def test_the_results_text_join_refuses_a_deposit_that_moved_too_far(
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A deposit whose asserted titer drifts past the printed precision is not this campaign."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(rows=(("PP_0100", 900.0), ("Control", 1.0))))
+    with pytest.raises(RuntimeError, match="no longer the same campaign"):
+        y26.assert_benchling_titers_match_the_results_text(
+            y26.read_benchling_strain_table(path)
+        )
+
+
+def test_the_results_text_join_refuses_a_deposit_missing_an_oracle_row(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """Without the oracle row the only cross-source check there is cannot run."""
+    path = tmp_path / "panel.tsv"
+    path.write_text(_panel_tsv(rows=(("PP_0102", 1.0), ("Control", 1.0))))
+    with pytest.raises(RuntimeError, match="cannot run"):
+        y26.assert_benchling_titers_match_the_results_text(
+            y26.read_benchling_strain_table(path)
+        )
+
+
+def test_the_deposit_shape_proof_names_the_shared_protein_set(
+    synthetic_benchling: tuple[str, str], tmp_path: Path
+) -> None:
+    """The two deposits cover different protein sets, which the proof states."""
+    panel_path = tmp_path / "panel.tsv"
+    panel_path.write_text(synthetic_benchling[0])
+    corr_path = tmp_path / "corr.tsv"
+    corr_path.write_text(synthetic_benchling[1])
+    proofs = y26.assert_benchling_deposit_shape(
+        y26.read_benchling_strain_table(panel_path),
+        y26.read_benchling_correlation_table(corr_path),
+    )
+    assert "no blank cell" in proofs[0]
+    assert (
+        f"shares {len(CORRELATION_ROWS)} of the panel's {len(PANEL_ACCESSIONS)}"
+        in (proofs[1])
+    )
+
+
+def test_the_deposit_shape_proof_refuses_a_changed_row_count(
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The pinned shape is asserted, so a re-paste that gained a row stops the build."""
+    panel_path = tmp_path / "panel.tsv"
+    panel_path.write_text(synthetic_benchling[0])
+    corr_path = tmp_path / "corr.tsv"
+    corr_path.write_text(synthetic_benchling[1])
+    monkeypatch.setattr(y26, "BENCHLING_TITER_ROWS", len(PANEL_ROWS) + 1)
+    with pytest.raises(y26.TableExtractionError, match="rows, pinned"):
+        y26.assert_benchling_deposit_shape(
+            y26.read_benchling_strain_table(panel_path),
+            y26.read_benchling_correlation_table(corr_path),
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The deposited phenotypes
+# --------------------------------------------------------------------------- #
+def test_isoprenol_titer_phenotype_stores_the_number_under_the_identical_unit() -> None:
+    """mg/L is stored as ug/mL verbatim, with the uncertainty a typed gap."""
+    phenotype = y26.isoprenol_titer_phenotype(957.246595)
+    assert phenotype.titer == 957.246595
+    assert phenotype.titer_unit is ConcentrationUnit.ug_per_ml
+    assert phenotype.titer_uncertainty is None
+    assert phenotype.titer_se is None
+    assert phenotype.n_samples == 3
+    assert phenotype.sample_unit is not None
+    assert phenotype.sample_unit.value == "biological_replicate"
+    assert {gap.field for gap in phenotype.provenance_gaps} == {
+        "titer_uncertainty",
+        "titer_uncertainty_type",
+        "titer_se",
+        "product_yield",
+        "product_yield_unit",
+        "productivity",
+        "productivity_unit",
+    }
+
+
+def test_isoprenol_titer_phenotype_takes_the_conservative_end_of_the_range() -> None:
+    """The caption releases 3 to 6; a back-solve is precluded, so 3 is stored."""
+    assert y26.TITER_REPLICATE_RANGE == (3, 6)
+    assert y26.TITER_N_REPLICATES == 3
+    assert y26.isoprenol_titer_phenotype(1.0).n_samples == y26.TITER_REPLICATE_RANGE[0]
+
+
+def test_isoprenol_titer_phenotype_refuses_a_negative_number() -> None:
+    """A titer is a measured amount."""
+    with pytest.raises(RuntimeError, match="not a measured amount"):
+        y26.isoprenol_titer_phenotype(-1.0)
+
+
+def test_panel_proteome_phenotype_keeps_a_released_zero_and_names_its_scale() -> None:
+    """A released 0 is a present measurement, and the scale is its own string."""
+    phenotype = y26.panel_proteome_phenotype({"PP_0100": 0.0, "PP_0101": 12.5})
+    assert phenotype.protein_abundance == {"PP_0100": 0.0, "PP_0101": 12.5}
+    assert phenotype.measurement_type == "dia_nn_top3_signal_benchling_displayed"
+    assert phenotype.n_replicates == {"PP_0100": 1, "PP_0101": 1}
+    assert phenotype.protein_abundance_se is None
+    note = phenotype.provenance_gaps[0].note
+    assert note is not None and y26.BENCHLING_PASTE_CAVEAT in note
+
+
+def test_panel_proteome_measurement_type_is_not_any_other_proteome_scale() -> None:
+    """Heterogeneous proteomics is never pooled, so the strings must all differ."""
+    from torchcell.datasets.pputida import carruthers2025 as c25
+
+    others = {
+        y26.MEASUREMENT_TYPE,
+        y26.DIFFERENTIAL_MEASUREMENT_TYPE,
+        c25.PROTEOME_MEASUREMENT_TYPE,
+        c25.CAMPAIGN_MEASUREMENT_TYPE,
+    }
+    assert y26.PANEL_PROTEOME_MEASUREMENT_TYPE not in others
+
+
+def test_panel_proteome_phenotype_refuses_an_empty_profile() -> None:
+    """A record with no protein is not a proteome."""
+    with pytest.raises(RuntimeError, match="at least one protein"):
+        y26.panel_proteome_phenotype({})
+
+
+def test_panel_proteome_phenotype_refuses_a_negative_signal() -> None:
+    """An absolute Top3 signal cannot be negative."""
+    with pytest.raises(RuntimeError, match="not a measured signal"):
+        y26.panel_proteome_phenotype({"PP_0100": -1.0})
+
+
+def test_titer_environment_keeps_the_vessel_a_typed_gap() -> None:
+    """The Methods state the volume and never the container, so only the volume is set."""
+    environment = y26.titer_environment()
+    assert environment.culture_format is not None
+    assert environment.culture_format.working_volume_ul == 5000.0
+    assert environment.culture_format.shaking_rpm == 180.0
+    assert environment.culture_format.inoculum_od600 == 0.2
+    assert environment.culture_format.vessel is None
+    assert [gap.field for gap in environment.culture_format.provenance_gaps] == [
+        "vessel"
+    ]
+    assert environment.media == y26.production_environment().media
+    assert environment.duration_hours == 48.0
+
+
+def test_titer_environment_survives_the_dump_the_base_environment_loses() -> None:
+    """A CultureEnvironment in the narrowed slot keeps what Environment drops."""
+    assert "culture_format" in y26.titer_environment().model_dump()
+    assert "culture_format" not in y26.production_environment().model_dump()
+
+
+# --------------------------------------------------------------------------- #
+# Building both deposited families on synthetic bytes
+# --------------------------------------------------------------------------- #
+def test_titer_dataset_builds_one_record_per_deposited_strain_row(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The control row is the reference and the marked rows are dropped by their rule."""
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    assert len(dataset) == PANEL_RECORDS
+    log = json.loads(Path(dataset.preprocess_dir, "dropped_records.json").read_text())
+    assert log["source_rows"] == len(PANEL_ROWS)
+    assert log["candidate_records"] == len(PANEL_ROWS) - 1
+    assert log["kept_records"] == PANEL_RECORDS
+    assert log["dropped_records"] == len(PANEL_MARKED)
+    assert [rule["rule"] for rule in log["rules"]] == [
+        "row_label_carries_an_undefined_marker"
+    ]
+    assert log["rules"][0]["items"] == list(PANEL_MARKED)
+    assert log["rules"][0]["scope"] == "record"
+
+
+def test_the_marker_drop_rule_names_the_search_that_found_no_definition(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A marker nothing defines is dropped WITH the evidence that nothing defines it."""
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    log = json.loads(Path(dataset.preprocess_dir, "dropped_records.json").read_text())
+    description = log["rules"][0]["description"]
+    assert y26.BENCHLING_MARKER_SEARCH in description
+    assert "The unmarked twin is kept" in description
+
+
+def test_titer_record_stores_the_deposited_number_against_the_control_row(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Experiment titer is the row's number; the reference is the control's, not 1.0."""
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    titers = sorted(
+        _dump(dataset[index]["experiment"])["phenotype"]["titer"]
+        for index in range(len(dataset))
+    )
+    assert titers == sorted(
+        titer
+        for label, titer in PANEL_ROWS
+        if label != "Control" and not label.endswith(" (S)")
+    )
+    reference = _dump(dataset[0]["reference"])
+    assert reference["phenotype_reference"]["titer"] == 845.73
+    assert reference["environment_reference"]["culture_format"]["shaking_rpm"] == 180.0
+
+
+def test_titer_record_genotype_is_one_crispri_knockdown_of_its_label(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One CRISPRi leaf per record, on the locus the row label names."""
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    rows = pd.read_csv(Path(dataset.preprocess_dir, "benchling_titers.csv"))
+    assert set(rows["locus_tag"]) == {
+        y26.benchling_target(label)[0]
+        for label, _ in PANEL_ROWS
+        if label != "Control" and not label.endswith(" (S)")
+    }
+    for index in range(len(dataset)):
+        genotype = _dump(dataset[index]["experiment"])["genotype"]
+        assert len(genotype["perturbations"]) == 1
+        assert (
+            genotype["perturbations"][0]["perturbation_type"]
+            == "bacterial_crispr_interference"
+        )
+
+
+def test_titer_build_writes_the_label_reconciliation_and_the_proofs(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Every deposited label is in the ledger with the route that reached it."""
+    dataset = _build(
+        y26.IsoprenolTiterYunus2026Dataset,
+        tmp_path / "titer",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    rows = pd.read_csv(Path(dataset.preprocess_dir, "label_reconciliation.csv"))
+    assert len(rows) == len(PANEL_ROWS)
+    counts = rows["route"].value_counts().to_dict()
+    assert counts["exact"] == 12
+    assert counts["after_marker_strip"] == 1
+    assert counts["after_variant_strip"] == 1
+    assert counts["unmatched_reference_row"] == 1
+    proofs = json.loads(
+        Path(dataset.preprocess_dir, "benchling_proofs.json").read_text()
+    )
+    assert any(p.startswith("MEASURED DISAGREEMENT, kept:") for p in proofs)
+
+
+def test_the_build_refuses_a_deposited_label_no_route_reaches(
+    synthetic_benchling: tuple[str, str],
+    synthetic_docx: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A label outside the target lists would store a titer against a guessed gene."""
+    panel = _panel_tsv(rows=PANEL_ROWS + (("PP_0999", 1.0),))
+    monkeypatch.setattr(
+        y26, "BENCHLING_TITER_SHA256", hashlib.sha256(panel.encode()).hexdigest()
+    )
+    monkeypatch.setattr(y26, "BENCHLING_TITER_ROWS", len(PANEL_ROWS) + 1)
+    data_root = tmp_path / "data_root"
+    _write_benchling_deposit(
+        data_root / y26.RAW_DIR_REL, (panel, synthetic_benchling[1])
+    )
+    y26.deposit_raw_mirror(source=synthetic_docx, data_root=str(data_root))
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    with pytest.raises(RuntimeError, match="reach no target of Tables S1, S2 or S3"):
+        _build(
+            y26.IsoprenolTiterYunus2026Dataset,
+            tmp_path / "titer",
+            synthetic_kt2440,
+            monkeypatch,
+        )
+
+
+def test_panel_proteome_dataset_keys_every_record_by_locus_tag(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ten of twelve accessions resolve, so every record carries those ten loci."""
+    dataset = _build(
+        y26.CrispriPanelProteomeYunus2026Dataset,
+        tmp_path / "panel",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    assert len(dataset) == PANEL_RECORDS
+    phenotype = _dump(dataset[0]["experiment"])["phenotype"]
+    assert set(phenotype["protein_abundance"]) == set(PANEL_SINGLE.values())
+    assert phenotype["measurement_type"] == y26.PANEL_PROTEOME_MEASUREMENT_TYPE
+    reference = _dump(dataset[0]["reference"])["phenotype_reference"]
+    assert set(reference["protein_abundance"]) == set(PANEL_SINGLE.values())
+    assert set(reference["protein_abundance"].values()) != {1.0}
+
+
+def test_panel_proteome_build_lists_both_accession_drop_rules(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The unmapped and multi-locus accessions are two named rules of accession scope."""
+    dataset = _build(
+        y26.CrispriPanelProteomeYunus2026Dataset,
+        tmp_path / "panel",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    log = json.loads(Path(dataset.preprocess_dir, "dropped_records.json").read_text())
+    by_rule = {rule["rule"]: rule for rule in log["rules"]}
+    assert by_rule["no_locus_tag_in_the_goa_proteome_file"]["items"] == [PANEL_UNMAPPED]
+    assert by_rule["no_locus_tag_in_the_goa_proteome_file"]["scope"] == (
+        "protein_accession"
+    )
+    assert by_rule["no_locus_tag_in_the_goa_proteome_file"]["n_records"] == 0
+    assert by_rule["accession_names_several_loci"]["items"] == list(PANEL_MULTI)
+    assert by_rule["accession_names_several_loci"]["scope"] == "protein_accession"
+    dropped = pd.read_csv(Path(dataset.preprocess_dir, "dropped_accessions.csv"))
+    assert set(dropped["accession"]) == {PANEL_UNMAPPED, *PANEL_MULTI}
+
+
+def test_panel_proteome_build_keeps_every_released_zero(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """One cell per deposited row is a released 0 and every kept record carries it."""
+    dataset = _build(
+        y26.CrispriPanelProteomeYunus2026Dataset,
+        tmp_path / "panel",
+        synthetic_kt2440,
+        monkeypatch,
+    )
+    rows = pd.read_csv(Path(dataset.preprocess_dir, "benchling_panel.csv"))
+    assert set(rows["n_zero"]) == {1}
+    assert set(rows["n_proteins"]) == {len(PANEL_SINGLE)}
+
+
+def test_panel_proteome_build_refuses_a_resolution_below_its_floor(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    synthetic_crosswalk: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A crosswalk that stopped reaching the loci is a changed annotation, not a build."""
+    from torchcell.datasets.bacteria_common import LocusTagResolutionError
+
+    thin = synthetic_crosswalk.model_copy(
+        update={"single": dict(list(PANEL_SINGLE.items())[:4])}
+    )
+    monkeypatch.setattr(y26, "uniprot_locus_crosswalk", lambda *a, **k: thin)
+    with pytest.raises(LocusTagResolutionError, match="below 0.81"):
+        _build(
+            y26.CrispriPanelProteomeYunus2026Dataset,
+            tmp_path / "panel",
+            synthetic_kt2440,
+            monkeypatch,
+        )
+
+
+def test_panel_proteome_build_refuses_two_accessions_reaching_one_locus(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    synthetic_crosswalk: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A collision would store two proteins' abundance under one gene."""
+    collided = dict(PANEL_SINGLE)
+    collided["UP_A09"] = collided["UP_A00"]
+    monkeypatch.setattr(
+        y26,
+        "uniprot_locus_crosswalk",
+        lambda *a, **k: synthetic_crosswalk.model_copy(update={"single": collided}),
+    )
+    with pytest.raises(RuntimeError, match="name one locus from several"):
+        _build(
+            y26.CrispriPanelProteomeYunus2026Dataset,
+            tmp_path / "panel",
+            synthetic_kt2440,
+            monkeypatch,
+        )
+
+
+def test_the_deposited_loaders_refuse_a_mirror_whose_deposit_is_absent(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """``download`` names the missing mirror artifact rather than building without it."""
+    (synthetic_mirror / y26.RAW_DIR_REL / y26.BENCHLING_TITER_REL).unlink()
+    with pytest.raises(RuntimeError, match="missing from mirror"):
+        _build(
+            y26.IsoprenolTiterYunus2026Dataset,
+            tmp_path / "titer",
+            synthetic_kt2440,
+            monkeypatch,
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The L0-L4 battery of both deposited families on the synthetic build
+# --------------------------------------------------------------------------- #
+def test_titer_verification_passes_on_a_synthetic_build(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The shared titer gate plus both of this family's own rules pass on the LMDB."""
+    root = tmp_path / "titer"
+    _build(y26.IsoprenolTiterYunus2026Dataset, root, synthetic_kt2440, monkeypatch)
+    report = y26.verify_build(str(root), str(synthetic_mirror), family="titer")
+    assert report.passed, report.summary()
+    names = {result.name for result in report.results}
+    assert "titer_reference_is_one_released_control" in names
+    assert "titers_are_the_deposited_column" in names
+    oracle = next(
+        r for r in report.results if r.name == "titers_are_the_deposited_column"
+    )
+    assert oracle.level is Level.L4
+    assert oracle.details["control_titer"] == 845.73
+    assert oracle.details["n_stored"] == PANEL_RECORDS
+    assert (
+        json.loads(Path(root, "preprocess", "verification_report.json").read_text())[
+            "dataset_name"
+        ]
+        == "IsoprenolTiterYunus2026Dataset"
+    )
+
+
+def test_panel_proteome_verification_passes_on_a_synthetic_build(
+    synthetic_mirror: Path,
+    synthetic_kt2440: Any,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The shared protein gate plus all three of this family's own rules pass."""
+    root = tmp_path / "panel"
+    _build(
+        y26.CrispriPanelProteomeYunus2026Dataset, root, synthetic_kt2440, monkeypatch
+    )
+    monkeypatch.setattr(y26, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
+    report = y26.verify_build(str(root), str(synthetic_mirror), family="panel_proteome")
+    assert report.passed, report.summary()
+    oracle = next(
+        r
+        for r in report.results
+        if r.name == "panel_profiles_are_the_deposited_columns"
+    )
+    assert oracle.level is Level.L4
+    assert oracle.details["n_resolved_accessions"] == len(PANEL_SINGLE)
+    assert oracle.details["n_zeros_kept"] == PANEL_RECORDS
+    shared = next(r for r in report.results if r.name == "panel_key_set_is_shared")
+    assert shared.level is Level.L1
+
+
+def test_the_titer_l4_oracle_catches_a_rescaled_titer(synthetic_mirror: Path) -> None:
+    """A stored titer that is not the deposited number would silently rescale the label."""
+    result = y26._l4_titers_are_the_deposited_column(
+        [
+            {
+                "experiment": {"phenotype": {"titer": 1.0}},
+                "reference": {"phenotype_reference": {"titer": 2.0}},
+            }
+        ],
+        str(synthetic_mirror),
+    )
+    assert not result.passed
+
+
+def test_the_titer_l4_oracle_refuses_a_drifted_deposit(synthetic_mirror: Path) -> None:
+    """The oracle re-verifies the deposit's sha256 before reading it."""
+    path = synthetic_mirror / y26.RAW_DIR_REL / y26.BENCHLING_TITER_REL
+    path.write_text(path.read_text().replace("845.73", "900.0"))
+    with pytest.raises(RuntimeError, match="cannot read a deposit that drifted"):
+        y26._l4_titers_are_the_deposited_column([], str(synthetic_mirror))
+
+
+def test_the_titer_l3_rule_catches_a_second_reference_titer() -> None:
+    """Two reference titers would mean the build invented one."""
+    records = [
+        {"reference": {"phenotype_reference": {"titer": 845.73}}},
+        {"reference": {"phenotype_reference": {"titer": 1.0}}},
+    ]
+    assert not y26._l3_titer_reference_is_one_released_control(records).passed
+
+
+def test_the_panel_l3_rule_catches_a_denominator_reference() -> None:
+    """An all-1.0 reference is the ratio families' denominator, not a measured control."""
+    records = [
+        {"reference": {"phenotype_reference": {"protein_abundance": {"PP_0100": 1.0}}}}
+    ]
+    assert not y26._l3_panel_reference_is_a_measured_control(records).passed
+
+
+def test_the_panel_l1_rule_catches_a_record_with_its_own_key_set() -> None:
+    """Every deposited row carries every column, so one key set is the whole family."""
+    records = [
+        {"experiment": {"phenotype": {"protein_abundance": {"PP_0100": 1.0}}}},
+        {
+            "experiment": {
+                "phenotype": {"protein_abundance": {"PP_0100": 1.0, "PP_0101": 2.0}}
+            }
+        },
+    ]
+    assert not y26._l1_panel_key_set_is_shared(records).passed
+
+
+def test_bioproduction_provenance_names_the_deposit_each_family_consumes() -> None:
+    """The verifier's provenance points at the deposited bytes and their caveat."""
+    for name in y26.BIOPRODUCTION_DATASETS:
+        provenance = y26.bioproduction_provenance(name)
+        assert provenance.source_uri == y26.BENCHLING_TITER_REL
+        assert provenance.sha256 == y26.BENCHLING_TITER_SHA256
+        method = provenance.method
+        assert method is not None and y26.BENCHLING_PASTE_CAVEAT in method
+
+
+def test_all_datasets_holds_every_family_this_module_serves() -> None:
+    """The CLI builds and verifies all five, through two verification entry points."""
+    assert set(y26.ALL_DATASETS) == set(y26.DATASETS) | set(y26.BIOPRODUCTION_DATASETS)
+    assert set(y26.BIOPRODUCTION_DATASETS) == {
+        "isoprenol_titer_yunus2026",
+        "crispri_panel_proteome_yunus2026",
+    }
+    assert {spec["family"] for spec in y26.BIOPRODUCTION_DATASETS.values()} == {
+        "titer",
+        "panel_proteome",
+    }
+
+
+# --------------------------------------------------------------------------- #
+# The real manual deposit, pinned (data-gated)
+# --------------------------------------------------------------------------- #
+def _deposit_or_skip() -> Path:
+    """The real raw-mirror directory, or skip when the deposit is not present."""
+    root = y26.raw_mirror_dir(_data_root_or_skip())
+    if not (root / y26.BENCHLING_TITER_REL).exists():
+        pytest.skip("the Yunus 2026 Benchling deposit is not present")
+    return root
+
+
+@pytest.mark.data
+def test_real_deposit_matches_its_pinned_digests_and_sizes() -> None:
+    """Both deposited tables are the bytes this module was written against."""
+    root = _deposit_or_skip()
+    manifest = y26.load_manifest(str(root.parent.parent))
+    for relpath, _, expected, _ in y26.benchling_deposits():
+        path = root / relpath
+        assert _sha256_bytes(path) == expected, relpath
+        assert y26.manifest_sha256(manifest, relpath) == expected, relpath
+    assert (root / y26.BENCHLING_TITER_REL).stat().st_size == y26.BENCHLING_TITER_BYTES
+    assert (
+        root / y26.BENCHLING_CORRELATION_REL
+    ).stat().st_size == y26.BENCHLING_CORRELATION_BYTES
+
+
+@pytest.mark.data
+def test_real_deposit_holds_the_shape_the_pins_describe() -> None:
+    """132 rows x 255 columns, 253 accessions, 2,659 correlation rows, zero blanks."""
+    root = _deposit_or_skip()
+    panel = y26.read_benchling_strain_table(root / y26.BENCHLING_TITER_REL)
+    assert len(panel.rows) == y26.BENCHLING_TITER_ROWS == 132
+    assert len(panel.accessions) == y26.BENCHLING_ACCESSIONS == 253
+    assert len(panel.accessions) + 2 == y26.BENCHLING_TITER_COLUMNS == 255
+    assert panel.zero_cells == 5978
+    correlation = y26.read_benchling_correlation_table(
+        root / y26.BENCHLING_CORRELATION_REL
+    )
+    assert len(correlation) == y26.BENCHLING_CORRELATION_ROWS == 2659
+    assert max(row.p_value for row in correlation) > 0.05
+
+
+@pytest.mark.data
+def test_real_deposit_titers_span_the_measured_range() -> None:
+    """The deposited column's extremes and the control row, as measured 2026-10-09."""
+    panel = y26.read_benchling_strain_table(
+        _deposit_or_skip() / y26.BENCHLING_TITER_REL
+    )
+    titers = panel.titer_by_label
+    assert panel.control.isoprenol_production == 845.73
+    assert min(titers.values()) == titers["PP_5203"] == 1.58969662
+    assert max(titers.values()) == titers["PP_4188"] == 1494.98874
+    assert titers["PP_0168"] == 957.246595
+
+
+@pytest.mark.data
+def test_real_deposit_labels_reconcile_123_6_2_and_the_control() -> None:
+    """The reconciliation measured 2026-10-09 against Tables S1, S2 and S3."""
+    root = _deposit_or_skip()
+    tables = y26.supplementary_tables(root / y26.SI_MIRROR_RELPATH)
+    screen = y26.parse_table_s3(tables["S3"])
+    known = {row.target for row in screen} | {row.locus_tag for row in screen}
+    known |= {
+        row.locus_tag
+        for table in ("S1", "S2")
+        for row in y26.parse_target_list(tables[table], table=table)
+    }
+    panel = y26.read_benchling_strain_table(root / y26.BENCHLING_TITER_REL)
+    reconciliation = y26.reconcile_benchling_labels(
+        [row.label for row in panel.rows], known
+    )
+    assert len(reconciliation.exact) == y26.BENCHLING_EXACT_LABELS == 123
+    assert len(reconciliation.after_marker_strip) == y26.BENCHLING_MARKER_LABELS == 6
+    assert len(reconciliation.after_variant_strip) == y26.BENCHLING_VARIANT_LABELS == 2
+    assert reconciliation.unmatched == (y26.BENCHLING_CONTROL_LABEL,)
+    assert sorted(reconciliation.after_marker_strip) == sorted(
+        y26.BENCHLING_MARKED_LABELS
+    )
+    assert sorted(reconciliation.after_variant_strip) == ["PP_1607_NT1", "PP_1607_NT3"]
+
+
+@pytest.mark.data
+def test_real_marked_labels_all_have_an_unmarked_twin_in_the_table() -> None:
+    """Dropping the marked rows loses no target, which is why the rule is safe."""
+    panel = y26.read_benchling_strain_table(
+        _deposit_or_skip() / y26.BENCHLING_TITER_REL
+    )
+    labels = {row.label for row in panel.rows}
+    for marked in y26.BENCHLING_MARKED_LABELS:
+        assert marked in labels
+        assert marked[: -len(y26.BENCHLING_SOLID_MARKER)] in labels
+
+
+@pytest.mark.data
+def test_real_accessions_resolve_207_of_253_through_the_goa_crosswalk() -> None:
+    """The measured resolution split, and that the pinned floor sits just below it."""
+    from torchcell.datasets.bacteria_common import (
+        bacterial_genome,
+        resolve_uniprot_accessions,
+        uniprot_locus_crosswalk,
+    )
+
+    root = _deposit_or_skip()
+    data_root = _data_root_or_skip()
+    panel = y26.read_benchling_strain_table(root / y26.BENCHLING_TITER_REL)
+    genome = bacterial_genome("pputida", y26.KT2440_STRAIN, data_root)
+    resolution = resolve_uniprot_accessions(
+        uniprot_locus_crosswalk(genome, data_root), panel.accessions, label="pin"
+    )
+    assert len(resolution.resolved) == y26.PANEL_RESOLVED_ACCESSIONS == 207
+    assert len(resolution.multi_locus) == 2
+    assert sorted(resolution.multi_locus) == ["Q877U6", "Q877V8"]
+    assert len(resolution.unmapped) == 44
+    assert resolution.collisions == {}
+    assert y26.PANEL_MIN_RESOLVED_FRACTION < resolution.resolved_fraction
+    assert resolution.resolved_fraction == pytest.approx(0.8182, abs=1e-4)
+
+
+@pytest.mark.data
+def test_real_results_text_join_agrees_on_pp_0168_and_differs_on_pp_4188() -> None:
+    """One agreement inside the printed precision, one recorded 25.98874 mg/L gap."""
+    panel = y26.read_benchling_strain_table(
+        _deposit_or_skip() / y26.BENCHLING_TITER_REL
+    )
+    proofs = y26.assert_benchling_titers_match_the_results_text(panel)
+    assert "PP_0168" in proofs[0] and "0.7534" in proofs[0]
+    assert proofs[1].startswith("MEASURED DISAGREEMENT, kept:")
+    assert "PP_4188" in proofs[1] and "25.98874" in proofs[1]
+    assert "1.7691%" in proofs[1]
+
+
+@pytest.mark.data
+def test_real_deposited_stores_hold_125_records_each() -> None:
+    """Both built dev stores, measured: 132 rows less the control less the 6 marked."""
+    from torchcell.verification.runners import load_records
+
+    data_root = _data_root_or_skip()
+    for name, spec in y26.BIOPRODUCTION_DATASETS.items():
+        root = osp.join(data_root, str(spec["root"]))
+        if not osp.isdir(osp.join(root, "processed", "lmdb")):
+            pytest.skip(f"{name} is not built under $DATA_ROOT")
+        records = load_records(root)
+        assert len(records) == y26.BENCHLING_RECORDS == 125, name
+
+
+def test_read_benchling_strain_table_refuses_an_empty_file(tmp_path: Path) -> None:
+    """An empty paste is not a deposit."""
+    path = tmp_path / "panel.tsv"
+    path.write_text("")
+    with pytest.raises(y26.TableExtractionError, match="is empty"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_table_with_no_protein_column(
+    tmp_path: Path,
+) -> None:
+    """The protein columns are what the panel family stores."""
+    path = tmp_path / "panel.tsv"
+    path.write_text("strain\tisoprenol_production\nControl\t1.0\n")
+    with pytest.raises(y26.TableExtractionError, match="no protein column"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_strain_table_refuses_a_non_finite_abundance(
+    tmp_path: Path,
+) -> None:
+    """A rendered 'nan' is not a measurement this loader has a rule for."""
+    path = tmp_path / "panel.tsv"
+    path.write_text("strain\tisoprenol_production\tUP_A00\nControl\t1.0\tnan\n")
+    with pytest.raises(y26.TableExtractionError, match="UP_A00 is 'nan'"):
+        y26.read_benchling_strain_table(path)
+
+
+def test_read_benchling_correlation_table_refuses_a_short_row(tmp_path: Path) -> None:
+    """A row that is not three cells is a changed paste."""
+    path = tmp_path / "corr.tsv"
+    lines = _correlation_tsv().split("\n")
+    lines[1] = "\t".join(lines[1].split("\t")[:-1])
+    path.write_text("\n".join(lines))
+    with pytest.raises(y26.TableExtractionError, match="has 2 cells"):
+        y26.read_benchling_correlation_table(path)
+
+
+def test_the_deposit_shape_proof_refuses_a_changed_column_count(
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The pinned accession count is asserted, so a re-paste that lost one stops."""
+    panel_path = tmp_path / "panel.tsv"
+    panel_path.write_text(synthetic_benchling[0])
+    corr_path = tmp_path / "corr.tsv"
+    corr_path.write_text(synthetic_benchling[1])
+    monkeypatch.setattr(y26, "BENCHLING_ACCESSIONS", len(PANEL_ACCESSIONS) - 1)
+    with pytest.raises(y26.TableExtractionError, match="protein columns, pinned"):
+        y26.assert_benchling_deposit_shape(
+            y26.read_benchling_strain_table(panel_path),
+            y26.read_benchling_correlation_table(corr_path),
+        )
+
+
+def test_the_deposit_shape_proof_refuses_a_changed_correlation_row_count(
+    synthetic_benchling: tuple[str, str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The recorded table is pinned too, even though no record stores it."""
+    panel_path = tmp_path / "panel.tsv"
+    panel_path.write_text(synthetic_benchling[0])
+    corr_path = tmp_path / "corr.tsv"
+    corr_path.write_text(synthetic_benchling[1])
+    monkeypatch.setattr(y26, "BENCHLING_CORRELATION_ROWS", len(CORRELATION_ROWS) + 1)
+    with pytest.raises(y26.TableExtractionError, match="correlation table has"):
+        y26.assert_benchling_deposit_shape(
+            y26.read_benchling_strain_table(panel_path),
+            y26.read_benchling_correlation_table(corr_path),
+        )

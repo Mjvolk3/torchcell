@@ -1,0 +1,68 @@
+# Menasalvas 2025 deposited metabolites, growth-phase (GP): 3 records (one per released
+# strain), BacterialMetaboliteExperiment over the 48 Absolute rows of data S1-1. Every genotype
+# carries the five integrated pathway genes, the mCherry biosensor copies and (for the
+# two improved strains) seven deletions, served as `bacterial perturbation`. The
+# TEAM-2595 record additionally carries the 75 called variants of data S1-5, served as
+# their own class. The environment carries a SmallMoleculePerturbation (crystal violet)
+# and an EnvironmentPhysicalPerturbation (pH), so the environment-perturbation pair is
+# enabled.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "bacterial perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    # Issue #731: these records' genotypes carry CALLED variants, served as their own
+    # class. The two bacterial methods partition the leaves, so both are enabled and
+    # neither writes a perturbation the other does.
+    - method_name: "bacterial sequence variant perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "metabolite phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "metabolite phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

@@ -336,6 +336,19 @@ EXPECTED_CAMPAIGN_REFERENCES = 7
 #: proteome crosswalk: 1,842 of 2,187, measured 2026-10-09. The floor sits just below
 #: it; the 345 that do not are listed in ``preprocess/dropped_accessions.csv``.
 CAMPAIGN_MIN_RESOLVED_FRACTION = 0.84
+#: Accessions the Dryad matrix and ``SHEET_PROTEOME`` BOTH key, so that both the GOA
+#: crosswalk and the sheet's own accession -> symbol route reach a locus for them.
+#: Measured 2026-10-09 on the pinned bytes.
+CAMPAIGN_CROSSWALK_SHARED = 1224
+#: The accessions of those 1,224 the two routes send to DIFFERENT loci, as
+#: ``accession -> (GOA locus, sheet locus)``, measured 2026-10-09. Pinned EXACTLY and
+#: not under a tolerance: each one is a named symbol collision on the sheet's route,
+#: explained in :func:`assert_campaign_accession_crosswalk`, and a third disagreement
+#: would be a new fact about one of the two files rather than an accepted error rate.
+CAMPAIGN_CROSSWALK_DISAGREEMENTS: dict[str, tuple[str, str]] = {
+    "Q88G93": ("PP_3832", "PP_4472"),
+    "Q88L01": ("PP_2137", "PP_2051"),
+}
 
 #: Source Data sheets this module reads.
 SHEET_TITER = "Figure 4b"
@@ -1260,15 +1273,20 @@ def pmc_cloud_key(filename: str) -> str:
     return f"{PMC_PREFIX}/{filename}"
 
 
-#: ``(relpath, role, sha256)`` of the four files the owner deposited by hand. The zip
-#: is the bytes that ARRIVED and the three members are what loaders read, so all four
-#: are recorded: a rebuild re-runs the recipe, gets the zip, and verifies every member.
-DRYAD_DEPOSITS: tuple[tuple[str, str, str], ...] = (
-    (DRYAD_ZIP_REL, ROLE_RAW_DATA, DRYAD_ZIP_SHA256),
-    (DRYAD_TOP3_REL, ROLE_RAW_DATA, DRYAD_TOP3_SHA256),
-    (DRYAD_METADATA_REL, ROLE_RAW_DATA, DRYAD_METADATA_SHA256),
-    (DRYAD_README_REL, ROLE_SI_DATA, DRYAD_README_SHA256),
-)
+def dryad_deposits() -> tuple[tuple[str, str, str], ...]:
+    """``(relpath, role, sha256)`` of the four files the owner deposited by hand.
+
+    The zip is the bytes that ARRIVED and the three members are what loaders read, so
+    all four are recorded: a rebuild re-runs the recipe, gets the zip, and verifies
+    every member. The digests are read HERE rather than captured in a module constant,
+    so a test that re-points the pins at a synthetic deposit re-points this too.
+    """
+    return (
+        (DRYAD_ZIP_REL, ROLE_RAW_DATA, DRYAD_ZIP_SHA256),
+        (DRYAD_TOP3_REL, ROLE_RAW_DATA, DRYAD_TOP3_SHA256),
+        (DRYAD_METADATA_REL, ROLE_RAW_DATA, DRYAD_METADATA_SHA256),
+        (DRYAD_README_REL, ROLE_SI_DATA, DRYAD_README_SHA256),
+    )
 
 
 def dryad_artifact_records(root: Path) -> list[ArtifactRecord]:
@@ -1280,7 +1298,7 @@ def dryad_artifact_records(root: Path) -> list[ArtifactRecord]:
     only way to produce it again.
     """
     records: list[ArtifactRecord] = []
-    for relpath, role, expected in DRYAD_DEPOSITS:
+    for relpath, role, expected in dryad_deposits():
         path = root / relpath
         if not path.exists():
             raise RuntimeError(
@@ -4133,16 +4151,27 @@ def assert_campaign_metadata(
     culture_format = environment.culture_format
     if culture_format is None:
         raise RuntimeError("production_environment() carries no culture_format")
-    expected = {
-        "Growth_temperature_Celsius": environment.temperature.value,
+    if (
+        environment.temperature is None
+        or environment.duration_hours is None
+        or culture_format.working_volume_ul is None
+        or culture_format.shaking_rpm is None
+    ):
+        raise RuntimeError(
+            "production_environment() carries no temperature, duration, working volume "
+            f"or shaking speed, which the {DRYAD_METADATA_FILENAME} columns are "
+            "asserted against"
+        )
+    expected: dict[str, float] = {
+        "Growth_temperature_Celsius": float(environment.temperature.value),
         "Culture_volume": culture_format.working_volume_ul / 1000.0,
-        "Shaking_speed_rpm": culture_format.shaking_rpm,
-        "Assay_time_point": environment.duration_hours,
+        "Shaking_speed_rpm": float(culture_format.shaking_rpm),
+        "Assay_time_point": float(environment.duration_hours),
         "Inducer_concentration": float(INDUCER_G_PER_L.value),
     }
     for column, served in expected.items():
         released = float(CAMPAIGN_ENVIRONMENT_COLUMNS[column])
-        if served is None or float(served) != released:
+        if float(served) != released:
             raise RuntimeError(
                 f"{DRYAD_METADATA_FILENAME} states {column}={released}, the served "
                 f"environment {served}"
@@ -4203,13 +4232,15 @@ def assert_campaign_accession_crosswalk(
     """The GOA accession crosswalk against the paper's own accession -> symbol route.
 
     The panel sheet carries both an accession (``Protein.Group``) and a gene key
-    (``Protein``) for 1,503 accessions, so for every accession both files know, there
+    (``Protein``) for 1,426 accessions, so for every accession both files know, there
     are two independent routes to a locus. Measured 2026-10-09 on the pinned bytes:
-    1,225 of the campaign's accessions take both routes and 1,222 agree. The three that
-    do not are kept as a finding and the GOA route is the one used, because each
-    disagreement is a SYMBOL collision on the paper's route: the GOA file states the
-    accession's own locus tags in its synonym column, while the panel route goes through
-    a title-cased gene symbol that this assembly can carry at another locus.
+    :data:`CAMPAIGN_CROSSWALK_SHARED` (1,224) of the campaign's accessions take both
+    routes and 1,222 agree. The two that do not are
+    :data:`CAMPAIGN_CROSSWALK_DISAGREEMENTS`, pinned by accession and by both loci, and
+    the GOA route is the stored one, because each disagreement is a SYMBOL collision on
+    the paper's route: the GOA file states the accession's own locus tags in its synonym
+    column, while the panel route goes through a title-cased gene symbol that this
+    assembly can carry at another locus.
     """
     panel_route: dict[str, str] = {}
     for row in panel_rows:
@@ -4222,12 +4253,19 @@ def assert_campaign_accession_crosswalk(
         for accession in shared
         if resolution.resolved[accession] != panel_route[accession]
     }
-    if len(shared) - len(disagreements) < len(shared) * 0.99:
+    if len(shared) != CAMPAIGN_CROSSWALK_SHARED:
+        raise RuntimeError(
+            f"the Dryad matrix and {SHEET_PROTEOME} both key {len(shared)} accessions; "
+            f"{CAMPAIGN_CROSSWALK_SHARED} were measured 2026-10-09, so one of the two "
+            "files is not the one this loader was written against"
+        )
+    if disagreements != CAMPAIGN_CROSSWALK_DISAGREEMENTS:
         raise RuntimeError(
             f"the GOA crosswalk and {SHEET_PROTEOME}'s symbol route disagree on "
-            f"{len(disagreements)} of {len(shared)} shared accessions; more than 1% "
-            "means one of the two sources is not the file this loader was written "
-            f"against: {sorted(disagreements)[:10]}"
+            f"{sorted(disagreements)}, not on the measured "
+            f"{sorted(CAMPAIGN_CROSSWALK_DISAGREEMENTS)}; each disagreement is a named "
+            "symbol collision, so a different set is a new fact about one of the two "
+            "files and not an accepted error rate"
         )
     return [
         f"L4: of the {len(shared)} accessions the Dryad matrix and {SHEET_PROTEOME} "

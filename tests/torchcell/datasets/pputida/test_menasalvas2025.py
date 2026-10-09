@@ -4,21 +4,36 @@
 """Tests for the Menasalvas 2025 biosensor-coupled CRISPRi selection loader.
 
 Everything here runs with NO network and NO ``$DATA_ROOT``: the Supplementary
-Information markdown is synthesized to the shape the pinned OCR has, the raw mirror is
-deposited under ``tmp_path`` by the module's own ``deposit_raw_mirror`` with its pins
-monkeypatched to the synthetic digests, and the KT2440 annotation is the real genome
-class over a synthetic assembly. A separate block, skipped without the mirror, pins the
-numbers measured on the REAL bytes: 58 records, 60 distinct targets and 28/30 rows.
+Information markdown is synthesized to the shape the pinned OCR has, the two deposited
+Dryad workbooks are synthesized with openpyxl into a synthetic inner zip inside a
+synthetic arrival zip, the raw mirror is deposited under ``tmp_path`` by the module's
+own ``deposit_raw_mirror`` with its pins monkeypatched to the synthetic digests, and the
+KT2440 annotation is the real genome class over a synthetic assembly. All four families
+build and verify hermetically.
+
+A separate ``@pytest.mark.data`` block, skipped without the mirror and the built stores,
+pins the numbers measured on the REAL bytes: 58 selection records over 60 distinct
+targets from 28/30 rows, a 170-member inner zip holding the two workbooks, 48 Absolute
+and 10 Relative metabolite rows, 39,438 proteome rows over 2,187 protein keys, 584
+breseq calls, the growth-phase harvest OD600 of 2.4 / 1.2 / 2.7, and PP_2088's
+production folds of 31.895 and 18.555 against Supplementary Note 2's 34 and 20.
 """
 
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
+import math
+import os
 import os.path as osp
+import statistics
+import zipfile
+from collections import Counter
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+import openpyxl
 import pytest
 
 import torchcell.datasets.pputida.menasalvas2025 as mv
@@ -26,13 +41,34 @@ from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
+    BacterialVariantType,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import reconcile_locus_tags
+from torchcell.literature.manifest import ROLE_RAW_DATA, ROLE_SI_DATA, RetrievalMethod
 
 # --------------------------------------------------------------------------- #
 # Synthetic Supplementary Information markdown
 # --------------------------------------------------------------------------- #
+#: Loci Supplementary Note 2 names as measured; every one must key every stored record.
+NOTE2_LOCI: tuple[str, ...] = mv.NOTE2_MEASURED_LOCI
+#: Deletions the three designed strains carry, beyond those the selection tables name.
+DESIGNED_DELETION_LOCI: tuple[str, ...] = ("PP_2664", "PP_2675", "PP_3540", "PP_4622")
+#: Host protein keys that exist only to keep the resolved fraction above the loader's
+#: 0.95 floor beside the one retired key, and to carry the released-0 and the
+#: single-replicate protein.
+FILLER_PROTEIN_LOCI: tuple[str, ...] = (
+    "PP_0100",
+    "PP_0200",
+    "PP_0300",
+    "PP_0400",
+    "PP_0500",
+    "PP_0600",
+    "PP_0700",
+    "PP_0800",
+)
 #: Locus tags the synthetic assembly annotates, with the symbol it gives each one.
 LOCUS_SPECS: tuple[tuple[str, str | None], ...] = (
     ("PP_1815", "pyrF"),
@@ -47,6 +83,13 @@ LOCUS_SPECS: tuple[tuple[str, str | None], ...] = (
     ("PP_2710", None),
     ("PP_4485", "hisQ"),
     ("PP_2074", None),
+    # The deposited arms: the designed strains' deletions, Note 2's measured loci, the
+    # merged-key locus, the one locus data S1-5 names by symbol, and the filler keys.
+    *((tag, None) for tag in DESIGNED_DELETION_LOCI),
+    *((tag, None) for tag in NOTE2_LOCI),
+    ("PP_1000", None),
+    ("PP_1100", "cadA-I"),
+    *((tag, None) for tag in FILLER_PROTEIN_LOCI),
 )
 #: The ``Gene`` cells of the synthetic round-1 table, one per expected row.
 ROUND1_CELLS: tuple[str, ...] = (
@@ -449,9 +492,73 @@ def test_accounting_refuses_arithmetic_that_does_not_balance() -> None:
 
 
 def test_accounting_refuses_a_drop_with_no_declared_rule() -> None:
-    """This dataset declares no drop rule, so a drop is a build error."""
-    with pytest.raises(RuntimeError, match="records dropped, but this dataset"):
+    """A dropped record with no rule naming it is a silent loss, so it refuses."""
+    with pytest.raises(
+        RuntimeError, match=r"rules total 0, 1 records are missing from the build"
+    ):
         _accounting(kept_records=57, dropped_records=1).check()
+
+
+def test_accounting_accepts_a_drop_a_rule_accounts_for() -> None:
+    """A rule whose ``n_records`` totals the drop balances the arithmetic."""
+    accounting = _accounting(
+        kept_records=57,
+        dropped_records=1,
+        rules=[
+            mv.DropRule(
+                rule="synthetic_record_rule",
+                scope="record",
+                description="one record removed, and the rule says so",
+                n_records=1,
+                items=["row-57"],
+            )
+        ],
+    )
+    accounting.check()
+    assert sum(rule.n_records for rule in accounting.rules) == 1
+    assert accounting.rules[0].items == ["row-57"]
+
+
+def test_accounting_refuses_rules_that_do_not_total_the_drop() -> None:
+    """Two rules claiming three records against one drop is not accounting."""
+    with pytest.raises(
+        RuntimeError, match=r"rules total 3, 1 records are missing from the build"
+    ):
+        _accounting(
+            kept_records=57,
+            dropped_records=1,
+            rules=[
+                mv.DropRule(
+                    rule="a",
+                    scope="record",
+                    description="claims two",
+                    n_records=2,
+                    items=[],
+                ),
+                mv.DropRule(
+                    rule="b",
+                    scope="record",
+                    description="claims one",
+                    n_records=1,
+                    items=[],
+                ),
+            ],
+        ).check()
+
+
+def test_a_key_scope_rule_drops_no_record_and_names_its_keys() -> None:
+    """A rule whose scope is a measurement KEY leaves every record in place."""
+    rule = mv.DropRule(
+        rule="protein_key_merges_two_protein_groups",
+        scope="protein_key",
+        description="the key names two protein groups",
+        n_records=0,
+        items=["Aroe", "Asd"],
+    )
+    accounting = _accounting(rules=[rule])
+    accounting.check()
+    assert rule.n_records == 0
+    assert accounting.dropped_records == 0
 
 
 # --------------------------------------------------------------------------- #
@@ -462,9 +569,589 @@ def _sha256_bytes(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+# --------------------------------------------------------------------------- #
+# Synthetic deposited workbooks: Supplementary Data 1 and 2, in miniature
+#
+# Every shape the loader checks is reproduced and nothing else: the two merged banner
+# cells of data S1-1, its 18-column header and its class footnote, the seven columns of
+# data S1-5 with one row per released mutation form, and the seven columns of the
+# proteome sheet with six samples at three replicates. The SIZES are the fixture's own,
+# so the module's measured row counts are re-pointed by `_pin_synthetic_sizes`.
+# --------------------------------------------------------------------------- #
+#: The harvest OD600 the growth-phase ``Specific Concentration`` block must recover,
+#: taken from the module's own pins so the L4 row has something exact to agree with.
+GROWTH_OD600: dict[str, float] = {
+    strain: value
+    for (strain, phase), value in mv.RECOVERED_HARVEST_OD600.items()
+    if phase == "growth"
+}
+#: The production-phase OD600s, which the module pins no value for (its L4 row only
+#: pins which metabolites DISAGREE in that phase).
+PRODUCTION_OD600: dict[str, float] = {
+    "TEAM-2595": 3.0,
+    "TEAM-3174": 1.5,
+    "TEAM-3185": 3.3,
+}
+#: ``Absolute`` rows of the synthetic data S1-1. Every metabolite the module's
+#: production-phase disagreement pins name is here, because that row compares the
+#: recovered set to the pinned set EXACTLY.
+ABSOLUTE_METABOLITES: tuple[str, ...] = (
+    "2-Methylcitrate",
+    "ADP",
+    "ATP",
+    "Citrate",
+    "Malonate",
+    "NAD",
+    "NADH",
+    "Pyruvate",
+    "Methylmalonate",
+    "Succinate",
+    "Glutamate",
+    "4-Aminobutyric acid",
+    "Fumarate",
+    "Acetate",
+)
+#: ``Relative`` rows: a different scale, so the build must store none of them.
+RELATIVE_METABOLITES: tuple[str, ...] = (
+    "Glucose-6-phosphate",
+    "Mevalonate",
+    "Isoprenol",
+)
+#: The metabolite whose released cell carries a non-breaking space, so ``_norm`` is
+#: exercised on a key the records are built from.
+NBSP_METABOLITE = "4-Aminobutyric acid"
+NBSP_METABOLITE_CELL = f"4-Aminobutyric{mv.NBSP}acid"
+#: The metabolite whose released value is 0 for one strain-phase: a MEASUREMENT, stored.
+ZERO_METABOLITE = "Fumarate"
+ZERO_KEY: tuple[str, str] = ("TEAM-2595", "growth")
+#: The metabolite whose cell is BLANK for one strain-phase: an ABSENT measurement.
+BLANK_METABOLITE = "Acetate"
+BLANK_KEY: tuple[str, str] = ("TEAM-3174", "production")
+#: Per-strain and per-phase factors; one released average is their product times the
+#: metabolite's own base, which keeps every value distinct and finite.
+_STRAIN_FACTOR: dict[str, float] = {
+    "TEAM-2595": 1.0,
+    "TEAM-3174": 2.0,
+    "TEAM-3185": 3.0,
+}
+_PHASE_FACTOR: dict[str, float] = {"growth": 1.0, "production": 5.0}
+
+
+def _metabolite_average(name: str, strain: str, phase: str) -> float | None:
+    """One released ``Average Concentration`` cell, or ``None`` where it is blank."""
+    if (name, (strain, phase)) == (BLANK_METABOLITE, BLANK_KEY):
+        return None
+    if (name, (strain, phase)) == (ZERO_METABOLITE, ZERO_KEY):
+        return 0.0
+    base = 1.0 + float(
+        (ABSOLUTE_METABOLITES + RELATIVE_METABOLITES).index(name)
+    )
+    return base * _STRAIN_FACTOR[strain] * _PHASE_FACTOR[phase]
+
+
+def _metabolite_specific(name: str, strain: str, phase: str) -> float | None:
+    """The released ``Specific Concentration`` cell: the average over the harvest OD600.
+
+    A metabolite the module pins as DISAGREEING in the production phase is divided by
+    twice that strain's OD600, which is what makes the L4 row recover the pinned set
+    rather than an empty one.
+    """
+    average = _metabolite_average(name, strain, phase)
+    if average is None:
+        return None
+    od600 = (GROWTH_OD600 if phase == "growth" else PRODUCTION_OD600)[strain]
+    if name in mv.SPECIFIC_BLOCK_DISAGREEMENTS[(strain, phase)]:
+        return average / (2.0 * od600)
+    return average / od600
+
+
+def _metabolite_rows() -> list[tuple[str, str]]:
+    """``(released cell, class)`` of every synthetic data S1-1 row, in released order."""
+    rows = [
+        (NBSP_METABOLITE_CELL if name == NBSP_METABOLITE else name, "Absolute")
+        for name in ABSOLUTE_METABOLITES
+    ]
+    rows.extend((name, "Relative") for name in RELATIVE_METABOLITES)
+    return rows
+
+
+#: Released ``mutation`` cells, one per form :func:`mv.classify_mutation` accepts, with
+#: the variant type and multi-base verdict each one must get.
+MUTATION_FORMS: tuple[tuple[str, BacterialVariantType, bool], ...] = (
+    (f"A{mv.ARROW_RIGHT}G", BacterialVariantType.snv, False),
+    (f"C{mv.ARROW_RIGHT}T", BacterialVariantType.snv, False),
+    ("+C", BacterialVariantType.insertion, False),
+    ("+CGGG", BacterialVariantType.insertion, True),
+    ("Δ1 bp", BacterialVariantType.deletion, False),
+    (f"Δ1,227{mv.NBSP}bp", BacterialVariantType.deletion, True),
+    (f"(C)6{mv.ARROW_RIGHT}7", BacterialVariantType.insertion, False),
+    (f"(G)6{mv.ARROW_RIGHT}5", BacterialVariantType.deletion, False),
+    (f"2 bp{mv.ARROW_RIGHT}CT", BacterialVariantType.substitution, True),
+    (f"48 bp{mv.ARROW_RIGHT}33 bp", BacterialVariantType.substitution, True),
+)
+#: The released ``gene`` cell of the one row data S1-5 names by SYMBOL, carrying a
+#: non-breaking hyphen, so ``_norm`` is exercised on a name the resolver must reach.
+NB_HYPHEN_GENE_CELL = f"cadA{mv.NB_HYPHEN}I {mv.ARROW_RIGHT}"
+NB_HYPHEN_GENE = "cadA-I"
+NB_HYPHEN_LOCUS = "PP_1100"
+#: The in-locus annotation cell the module's docstring names, verbatim in shape.
+IN_LOCUS_ANNOTATION = f"A155A (GCG{mv.ARROW_RIGHT}GCA)"
+#: ``(sample, evidence, position, mutation, annotation, gene, description)`` of every
+#: synthetic data S1-5 row, in released order.
+WGS_ROWS: tuple[tuple[str, str, int, str, str, str, str], ...] = (
+    (
+        "TEAM-2595",
+        "RA",
+        100,
+        MUTATION_FORMS[0][0],
+        IN_LOCUS_ANNOTATION,
+        f"PP_2088 {mv.ARROW_RIGHT}",
+        "RNA polymerase sigma-70 factor",
+    ),
+    (
+        "TEAM-2595",
+        "RA",
+        200,
+        MUTATION_FORMS[1][0],
+        "intergenic (-133/-2)",
+        f"PP_4401 {mv.ARROW_LEFT} / {mv.ARROW_RIGHT} PP_4403",
+        "synthetic intergenic site",
+    ),
+    (
+        "TEAM-2595",
+        "RA",
+        300,
+        MUTATION_FORMS[2][0],
+        "coding (539/1299 nt)",
+        f"PP_3511 {mv.ARROW_RIGHT}",
+        "synthetic coding insertion",
+    ),
+    (
+        "TEAM-2595",
+        "RA",
+        400,
+        MUTATION_FORMS[3][0],
+        "coding (12/999 nt)",
+        f"PP_3839 {mv.ARROW_LEFT}",
+        "synthetic multibase insertion",
+    ),
+    (
+        "TEAM-2595",
+        "MC JC",
+        500,
+        MUTATION_FORMS[4][0],
+        "coding (100/900 nt)",
+        f"PP_4619 {mv.ARROW_RIGHT}",
+        "synthetic one-base deletion",
+    ),
+    (
+        "TEAM-2595",
+        "MC JC",
+        600,
+        MUTATION_FORMS[5][0],
+        "coding (1-1227/1227 nt)",
+        f"PP_4620 {mv.ARROW_RIGHT}",
+        "synthetic span deletion",
+    ),
+    (
+        "TEAM-2595",
+        "RA",
+        700,
+        MUTATION_FORMS[6][0],
+        "intergenic (+140/-75)",
+        f"PP_4621 {mv.ARROW_RIGHT} / {mv.ARROW_LEFT} PP_5210",
+        "synthetic repeat expansion",
+    ),
+    (
+        "TEAM-2595",
+        "RA",
+        800,
+        MUTATION_FORMS[7][0],
+        "coding (55/600 nt)",
+        NB_HYPHEN_GENE_CELL,
+        "synthetic repeat contraction",
+    ),
+    (
+        "TEAM-2595",
+        "JC",
+        900,
+        MUTATION_FORMS[8][0],
+        "coding (200/600 nt)",
+        f"PP_1816 {mv.ARROW_RIGHT}",
+        "synthetic two-base replacement",
+    ),
+    (
+        "TEAM-2595",
+        "JC",
+        1000,
+        MUTATION_FORMS[9][0],
+        "noncoding (10/100 nt)",
+        f"PP_0100 {mv.ARROW_LEFT}",
+        "synthetic length replacement",
+    ),
+    (
+        "TEAM-3175",
+        "RA",
+        1100,
+        f"A{mv.ARROW_RIGHT}T",
+        "coding (10/600 nt)",
+        f"PP_0200 {mv.ARROW_RIGHT}",
+        "refused clone call",
+    ),
+    (
+        "TEAM-3175",
+        "RA",
+        1200,
+        "Δ924 bp",
+        "coding (1-924/924 nt)",
+        f"PP_2074 {mv.ARROW_RIGHT}",
+        "refused clone deletion",
+    ),
+    (
+        "TEAM-3184",
+        "RA",
+        1300,
+        f"G{mv.ARROW_RIGHT}C",
+        "coding (20/600 nt)",
+        f"PP_0300 {mv.ARROW_RIGHT}",
+        "refused clone call",
+    ),
+    (
+        "TEAM-3184",
+        "RA",
+        1400,
+        "Δ924 bp",
+        "coding (1-924/924 nt)",
+        f"PP_2074 {mv.ARROW_LEFT}",
+        "refused clone deletion",
+    ),
+)
+#: Rows per clone the synthetic data S1-5 holds, which the module's measured pins are
+#: re-pointed to.
+SYNTHETIC_WGS_PER_CLONE: dict[str, int] = dict(
+    sorted(Counter(row[0] for row in WGS_ROWS).items())
+)
+#: The largest released deletion of the synthetic sheet, non-breaking space and all.
+SYNTHETIC_LARGEST_DELETION = MUTATION_FORMS[5][0]
+
+#: Host protein keys, as the released ``Protein`` cell -> the locus it must reach. The
+#: sheet title-cases a UniProt "tertiary Protein.ID", so every one reaches its locus by
+#: a case-insensitive match and one reaches it by GENE SYMBOL instead.
+HOST_PROTEIN_KEYS: dict[str, str] = {
+    **{f"Pp_{tag.removeprefix('PP_')}": tag for tag in NOTE2_LOCI},
+    **{f"Pp_{tag.removeprefix('PP_')}": tag for tag in FILLER_PROTEIN_LOCI},
+    "Sotb": "PP_2428",
+}
+#: The key the sheet files under TWO ``Protein.Group`` accessions, whose abundance
+#: therefore stands for two protein groups and reaches no record.
+MERGED_PROTEIN_KEY = "Pp_1000"
+MERGED_PROTEIN_GROUPS: tuple[str, str] = ("Q90001", "Q90002")
+#: The key whose released name is a retired symbol, so no locus of the assembly holds it.
+RETIRED_PROTEIN_KEY = "Oldsym"
+#: Every host key the synthetic sheet releases, kept or not.
+ALL_HOST_PROTEIN_KEYS: tuple[str, ...] = (
+    *sorted(HOST_PROTEIN_KEYS),
+    MERGED_PROTEIN_KEY,
+    RETIRED_PROTEIN_KEY,
+)
+#: Loci the proteome build keeps: every host key but the merged and the retired one.
+KEPT_PROTEOME_LOCI: tuple[str, ...] = tuple(sorted(set(HOST_PROTEIN_KEYS.values())))
+#: ``accession -> UniProt entry name`` of the four search-database contaminants, whose
+#: organism codes are what makes the loader read them as non-host.
+CONTAMINANT_NAMES: dict[str, str] = {
+    "P04264": "K2C1_HUMAN",
+    "P13645": "K1C10_HUMAN",
+    "P35527": "K1C9_HUMAN",
+    "P00761": "TRYP_PIG",
+}
+#: The nine non-host rows, as ``(Protein.Group, Protein.Names, Protein)``.
+NON_HOST_ROWS: tuple[tuple[str, str, str], ...] = (
+    *(
+        (accession, entry, entry.split("_")[0].title())
+        for accession, entry in sorted(dict(mv.PATHWAY_ENZYME_ORGANISMS.value).items())
+    ),
+    *(
+        (accession, CONTAMINANT_NAMES[accession], accession)
+        for accession in sorted(mv.PROTEOME_CONTAMINANTS.value)
+    ),
+)
+#: The protein ``PP_2088``'s production-phase mean per strain, chosen so the stored fold
+#: over the control is EXACTLY Supplementary Note 2's 34x and 20x.
+SIGX_PRODUCTION_MEAN: dict[str, float] = {
+    "TEAM-2595": 100.0,
+    "TEAM-3174": 100.0 * mv.NOTE2_SIGX_FOLD["TEAM-3174"],
+    "TEAM-3185": 100.0 * mv.NOTE2_SIGX_FOLD["TEAM-3185"],
+}
+SIGX_KEY = "Pp_2088"
+#: The key measured in exactly ONE replicate of every sample, whose SE is therefore nan.
+SINGLE_REPLICATE_KEY = "Pp_0800"
+#: The key whose first replicate of one sample is a released 0, averaged in verbatim.
+ZEROED_PROTEIN_KEY = "Pp_0700"
+ZEROED_PROTEIN_SAMPLE = "2595_growth"
+#: The six released samples, as the sheet's own ``Sample`` cells.
+PROTEOME_SAMPLES: tuple[str, ...] = tuple(
+    f"{strain.removeprefix('TEAM-')}_{phase}"
+    for strain in mv.RELEASED_STRAINS
+    for phase in mv.PHASES
+)
+PROTEOME_REPLICATES: tuple[str, ...] = ("R1", "R2", "R3")
+
+
+def _counts_sum(key: str, sample: str, replicate: str) -> float:
+    """One released ``Counts_sum`` cell."""
+    strain = f"TEAM-{sample.split('_')[0]}"
+    phase = sample.split("_")[1]
+    index = ALL_HOST_PROTEIN_KEYS.index(key)
+    if key == SIGX_KEY and phase == "production":
+        return SIGX_PRODUCTION_MEAN[strain]
+    if key == ZEROED_PROTEIN_KEY and sample == ZEROED_PROTEIN_SAMPLE:
+        return 0.0 if replicate == "R1" else 300.0
+    return (
+        (index + 1) * 100.0
+        + _STRAIN_FACTOR[strain] * 10.0
+        + _PHASE_FACTOR[phase]
+        + float(replicate.removeprefix("R"))
+    )
+
+
+def _proteome_rows() -> list[tuple[str, str, str, str, str, str, float]]:
+    """Every synthetic proteome row, in the sheet's own column order."""
+    rows: list[tuple[str, str, str, str, str, str, float]] = []
+    for sample in PROTEOME_SAMPLES:
+        for replicate in PROTEOME_REPLICATES:
+            for key in ALL_HOST_PROTEIN_KEYS:
+                if key == SINGLE_REPLICATE_KEY and replicate != "R1":
+                    continue
+                if key == MERGED_PROTEIN_KEY:
+                    group = MERGED_PROTEIN_GROUPS[
+                        PROTEOME_REPLICATES.index(replicate) % 2
+                    ]
+                else:
+                    group = f"Q{ALL_HOST_PROTEIN_KEYS.index(key):05d}"
+                rows.append(
+                    (
+                        group,
+                        f"{key.upper()}_{mv.HOST_ORGANISM_CODE}",
+                        key,
+                        f"synthetic host protein {key}",
+                        sample,
+                        replicate,
+                        _counts_sum(key, sample, replicate),
+                    )
+                )
+            for group, entry, protein in NON_HOST_ROWS:
+                rows.append(
+                    (
+                        group,
+                        entry,
+                        protein,
+                        f"synthetic non-host protein {group}",
+                        sample,
+                        replicate,
+                        50.0 + float(replicate.removeprefix("R")),
+                    )
+                )
+    return rows
+
+
+def _write_grid(sheet: Any, first_row: int, grid: list[list[Any]]) -> None:
+    """Write a rectangular block of cells at an exact 1-based row offset."""
+    for offset, values in enumerate(grid):
+        for column, value in enumerate(values, start=1):
+            if value is not None:
+                sheet.cell(row=first_row + offset, column=column, value=value)
+
+
+def write_data_1(
+    path: Path,
+    *,
+    header: tuple[str, ...] | None = None,
+    banner: str | None = None,
+    footnote: str | None = None,
+    drop_footnote: bool = False,
+    second_classless_row: bool = False,
+    bad_class: bool = False,
+    duplicate_metabolite: bool = False,
+    metabolite_sheet: str = mv.SHEET_METABOLITES,
+    wgs_sheet: str = mv.SHEET_WGS,
+    wgs_header: tuple[str, ...] | None = None,
+    wgs_rows: tuple[tuple[str, str, int, str, str, str, str], ...] = WGS_ROWS,
+    wgs_header_row: int = mv.WGS_HEADER_ROW,
+) -> None:
+    """Supplementary Data 1 in miniature: data S1-1 and data S1-5.
+
+    Every keyword re-points one checked shape, so one builder serves the happy path and
+    every refusal branch.
+    """
+    book = openpyxl.Workbook()
+    sheet = book.active
+    sheet.title = metabolite_sheet
+    width = len(mv.METABOLITE_HEADER)
+    index = mv._metabolite_column_index()
+    average_first = min(pair[0] for pair in index.values())
+    specific_first = min(pair[1] for pair in index.values())
+    sheet.cell(row=1, column=1, value="Supplementary Data 1, Sheet 1. Metabolites")
+    banner_row: list[Any] = [None] * width
+    banner_row[average_first] = banner or mv.METABOLITE_AVERAGE_BANNER
+    banner_row[specific_first] = mv.METABOLITE_SPECIFIC_BANNER
+    _write_grid(sheet, mv.METABOLITE_BANNER_ROW, [banner_row])
+    _write_grid(sheet, mv.METABOLITE_HEADER_ROW, [list(header or mv.METABOLITE_HEADER)])
+    body: list[list[Any]] = []
+    for cell, released_class in _metabolite_rows():
+        name = mv._norm(cell)
+        row: list[Any] = [None] * width
+        row[0] = cell
+        row[1] = "Approximate" if bad_class else released_class
+        for key, (average_column, specific_column) in index.items():
+            row[average_column] = _metabolite_average(name, *key)
+            row[specific_column] = _metabolite_specific(name, *key)
+        body.append(row)
+    if duplicate_metabolite:
+        body.append(list(body[0]))
+    if not drop_footnote:
+        footnote_row: list[Any] = [None] * width
+        footnote_row[0] = footnote or mv._Q_METABOLITE_FOOTNOTE
+        body.append(footnote_row)
+    if second_classless_row:
+        extra: list[Any] = [None] * width
+        extra[0] = "a second class-free row"
+        body.append(extra)
+    _write_grid(sheet, mv.METABOLITE_HEADER_ROW + 1, body)
+
+    wgs = book.create_sheet(wgs_sheet)
+    wgs.cell(row=1, column=1, value="Sheet 5. Illumina Genome Resequencing")
+    _write_grid(wgs, wgs_header_row, [list(wgs_header or mv.WGS_HEADER)])
+    _write_grid(wgs, wgs_header_row + 1, [list(row) for row in wgs_rows])
+    book.save(path)
+
+
+def write_data_2(
+    path: Path,
+    *,
+    sheet_name: str = mv.SHEET_PROTEOME,
+    header: tuple[str, ...] | None = None,
+    header_row: int = mv.PROTEOME_HEADER_ROW,
+    rows: list[tuple[str, str, str, str, str, str, float]] | None = None,
+    blank_counts: bool = False,
+    bad_replicate: bool = False,
+) -> None:
+    """Supplementary Data 2 in miniature: the one proteomics sheet the loader reads."""
+    book = openpyxl.Workbook()
+    sheet = book.active
+    sheet.title = sheet_name
+    sheet.cell(row=1, column=1, value="Sheet 4. Growth/Production phase Samples")
+    _write_grid(sheet, header_row, [list(header or mv.PROTEOME_HEADER)])
+    body = [list(row) for row in (rows if rows is not None else _proteome_rows())]
+    if blank_counts:
+        body[0][6] = None
+    if bad_replicate:
+        body[0][5] = "rep one"
+    _write_grid(sheet, header_row + 1, body)
+    book.save(path)
+
+
+#: Junk members the released inner zip ships beside the data, plus a member whose name
+#: traverses out of the destination. None of them may ever be written.
+JUNK_MEMBERS: tuple[str, ...] = (
+    f"__MACOSX/._{mv.INNER_ZIP_ROOT}",
+    f"{mv.INNER_ZIP_ROOT}/.DS_Store",
+    f"{mv.INNER_ZIP_ROOT}/~$Menasalvas et al Supplementary Data 1.xlsx",
+    f"{mv.INNER_ZIP_ROOT}/a.fcs",
+    f"{mv.INNER_ZIP_ROOT}/b.fastq",
+    f"{mv.INNER_ZIP_ROOT}/c.mp4",
+    "../evil.xlsx",
+)
+SYNTHETIC_DRYAD_README = (
+    "# Synthetic Dryad README\n\nSheet 1. Metabolite concentrations: Average value "
+    "from 3 biological replicates. GP = growth phase samples. PP = production phase "
+    "samples.\n\nSheet 5: Genomic Coordinates in P. putida AE015451.\n"
+)
+
+
+def write_inner_zip(
+    path: Path, data_1: Path, data_2: Path, *, members: tuple[str, ...] | None = None
+) -> None:
+    """The released inner zip: the two workbooks under their member names, plus junk."""
+    held = (
+        (mv.SI_DATA_1_MEMBER, mv.SI_DATA_2_MEMBER) if members is None else members
+    )
+    with zipfile.ZipFile(path, "w") as archive:
+        if mv.SI_DATA_1_MEMBER in held:
+            archive.writestr(mv.SI_DATA_1_MEMBER, data_1.read_bytes())
+        if mv.SI_DATA_2_MEMBER in held:
+            archive.writestr(mv.SI_DATA_2_MEMBER, data_2.read_bytes())
+        for junk in JUNK_MEMBERS:
+            archive.writestr(junk, b"junk the deposit ships beside the data")
+
+
+def write_dryad_deposit(root: Path, staging: Path) -> dict[str, str]:
+    """Write the three deposited Dryad files; return ``relpath -> sha256``.
+
+    The owner's browser download is the arrival zip; the recipe unzips it beside
+    itself, which is why all three files sit in the mirror and all three are pinned.
+    """
+    staging.mkdir(parents=True, exist_ok=True)
+    data_1 = staging / mv.SI_DATA_1_BASENAME
+    data_2 = staging / mv.SI_DATA_2_BASENAME
+    write_data_1(data_1)
+    write_data_2(data_2)
+    directory = root / mv.DRYAD_DIR_REL
+    directory.mkdir(parents=True, exist_ok=True)
+    inner = directory / mv.DRYAD_INNER_ZIP_FILENAME
+    readme = directory / mv.DRYAD_README_FILENAME
+    write_inner_zip(inner, data_1, data_2)
+    readme.write_text(SYNTHETIC_DRYAD_README, encoding="utf-8")
+    arrival = directory / mv.DRYAD_ZIP_FILENAME
+    with zipfile.ZipFile(arrival, "w") as archive:
+        archive.write(inner, arcname=inner.name)
+        archive.write(readme, arcname=readme.name)
+    return {
+        mv.DRYAD_ZIP_REL: _sha256_bytes(arrival),
+        mv.DRYAD_INNER_ZIP_REL: _sha256_bytes(inner),
+        mv.DRYAD_README_REL: _sha256_bytes(readme),
+        mv.SI_DATA_1_MEMBER: _sha256_bytes(data_1),
+        mv.SI_DATA_2_MEMBER: _sha256_bytes(data_2),
+    }
+
+
+#: Which module constant pins which deposited Dryad file.
+_DRYAD_PIN_OF_REL: dict[str, str] = {
+    mv.DRYAD_ZIP_REL: "DRYAD_ZIP_SHA256",
+    mv.DRYAD_INNER_ZIP_REL: "DRYAD_INNER_ZIP_SHA256",
+    mv.DRYAD_README_REL: "DRYAD_README_SHA256",
+}
+
+
+def _pin_synthetic_sizes(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Re-point every count the module measured on the REAL bytes at the fixture's own.
+
+    The fixture is a miniature of the released SHAPE, not of its size. The released
+    numbers are asserted by the ``@pytest.mark.data`` block instead.
+    """
+    monkeypatch.setattr(
+        mv,
+        "EXPECTED_METABOLITE_ROWS",
+        {
+            mv.CONCENTRATION_ABSOLUTE: len(ABSOLUTE_METABOLITES),
+            mv.CONCENTRATION_RELATIVE: len(RELATIVE_METABOLITES),
+        },
+    )
+    monkeypatch.setattr(mv, "EXPECTED_WGS_ROWS", len(WGS_ROWS))
+    monkeypatch.setattr(
+        mv, "EXPECTED_WGS_ROWS_PER_CLONE", dict(SYNTHETIC_WGS_PER_CLONE)
+    )
+
+
 @pytest.fixture
 def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """A raw mirror under ``tmp_path`` written by the module's own deposit function."""
+    """A raw mirror under ``tmp_path`` written by the module's own deposit function.
+
+    The SI PDF and its OCR are staged and their digests re-pointed; the three Dryad
+    files are a MANUAL deposit, so the fixture puts them in place exactly as the
+    owner's browser download does and re-points their pins too. ``dryad_deposits``
+    reads those module constants at CALL time, so the re-pointing reaches it, and
+    ``deposit_raw_mirror`` then verifies and describes all five files.
+    """
     staging = tmp_path / "staging"
     staging.mkdir()
     pdf = staging / mv.SI_PDF_FILENAME
@@ -477,13 +1164,50 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         mv, "EXPECTED_ROWS", {1: len(ROUND1_CELLS), 2: len(ROUND2_CELLS)}
     )
     monkeypatch.setattr(mv, "EXPECTED_RECORDS", len(ROUND1_CELLS) + len(ROUND2_CELLS))
+    _pin_synthetic_sizes(monkeypatch)
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
+    digests = write_dryad_deposit(
+        data_root / mv.RAW_DIR_REL, tmp_path / "dryad-staging"
+    )
+    for relpath, pin in _DRYAD_PIN_OF_REL.items():
+        monkeypatch.setattr(mv, pin, digests[relpath])
+    monkeypatch.setattr(
+        mv,
+        "EXTRACTED_MEMBERS",
+        {
+            mv.SI_DATA_1_MEMBER: (
+                mv.SI_DATA_1_BASENAME,
+                digests[mv.SI_DATA_1_MEMBER],
+            ),
+            mv.SI_DATA_2_MEMBER: (
+                mv.SI_DATA_2_BASENAME,
+                digests[mv.SI_DATA_2_MEMBER],
+            ),
+        },
+    )
     root = mv.deposit_raw_mirror(
         si_pdf_path=pdf, si_md_path=markdown, data_root=str(data_root)
     )
     assert root == mv.raw_mirror_dir(str(data_root))
     return data_root
+
+
+@pytest.fixture
+def deposited_workbooks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
+    """The two synthetic workbooks on disk, with the module's row counts re-pointed.
+
+    The readers take a path, so this is what every reader and refusal test uses; it
+    neither deposits a mirror nor builds a store.
+    """
+    _pin_synthetic_sizes(monkeypatch)
+    directory = tmp_path / "workbooks"
+    directory.mkdir()
+    data_1 = directory / mv.SI_DATA_1_BASENAME
+    data_2 = directory / mv.SI_DATA_2_BASENAME
+    write_data_1(data_1)
+    write_data_2(data_2)
+    return data_1, data_2
 
 
 def test_the_deposit_records_a_rerunnable_retrieval_and_an_ocr_processing_step(
@@ -619,7 +1343,7 @@ def synthetic_kt2440(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
         PPutidaKT2440Genome,
     )
 
-    monkeypatch.setattr(fixtures, "SEQUENCE", fixtures.SEQUENCE * 6)
+    monkeypatch.setattr(fixtures, "SEQUENCE", fixtures.SEQUENCE * 8)
     files = fixtures.write_assembly(
         tmp_path / "tier",
         KT2440_ASSEMBLY,
@@ -850,7 +1574,7 @@ def test_verify_build_passes_on_the_hermetic_store(
     monkeypatch.setattr(
         mv, "bacterial_genome", lambda *args, **kwargs: synthetic_kt2440
     )
-    report = mv.verify_build(built.root)
+    report = mv.verify_build(built.root, family="selection")
     assert report.passed, report.summary()
     names = {result.name for result in report.results}
     assert "stored_targets_are_loci_of_the_pinned_assembly" in names
@@ -903,7 +1627,7 @@ def test_main_builds_verifies_and_prints(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """The module's own runner builds, prints the accounting and prints the report."""
+    """The module's own runner builds all four families and verifies every one."""
     monkeypatch.setattr(
         mv, "bacterial_genome", lambda *args, **kwargs: synthetic_kt2440
     )
@@ -912,7 +1636,15 @@ def test_main_builds_verifies_and_prints(
     out = capsys.readouterr().out
     assert f"len = {len(ROUND1_CELLS) + len(ROUND2_CELLS)}" in out
     assert "distinct_targets" in out
-    assert "[PASS] L0 structural" in out
+    assert "[ok] L0 structural" in out
+    assert "[XX]" not in out
+    for cls, _rel in mv.FAMILY_BUILDS.values():
+        assert f"{cls.__name__}: len = " in out
+    assert "IsoprenolSelectionMenasalvas2025Dataset: PASS" in out
+    assert "proteome_menasalvas2025: PASS" in out
+    assert "metabolite_growth_menasalvas2025: PASS" in out
+    assert "metabolite_production_menasalvas2025: PASS" in out
+    assert out.count("ProteomeMenasalvas2025Dataset: len = 6") == 1
 
 
 # --------------------------------------------------------------------------- #

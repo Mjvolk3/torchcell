@@ -26,6 +26,7 @@ from torchcell.adapters import (
     CrispriGuideFitnessWang2018Adapter,
     CrispriKnockdownCui2018Adapter,
     CrispriKnockdownYunus2026Adapter,
+    CrispriPanelProteomeYunus2026Adapter,
     CrispriScreenRousset2018Adapter,
     CrisprPineneToleranceNiu2019Adapter,
     DmfCostanzo2016Adapter,
@@ -64,6 +65,7 @@ from torchcell.adapters import (
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
     IsoprenolTiterDeSiqueira2025Adapter,
+    IsoprenolTiterYunus2026Adapter,
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
     Lian2019Adapter,
@@ -217,6 +219,8 @@ from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
     CrispriKnockdownYunus2026Dataset,
+    CrispriPanelProteomeYunus2026Dataset,
+    IsoprenolTiterYunus2026Dataset,
 )
 from torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen import (
     InhibitorBioscreenVolk2021Dataset,
@@ -418,6 +422,8 @@ dataset_adapter_map: dict[type, type] = {
         CrispriDifferentialProteomeYunus2026Adapter
     ),
     CrispriKnockdownYunus2026Dataset: CrispriKnockdownYunus2026Adapter,
+    IsoprenolTiterYunus2026Dataset: IsoprenolTiterYunus2026Adapter,
+    CrispriPanelProteomeYunus2026Dataset: CrispriPanelProteomeYunus2026Adapter,
 }
 
 #: The PRIVATE datasets' adapters (``torchcell/datasets/private_torchcell/``). A private

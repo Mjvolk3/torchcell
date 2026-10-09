@@ -2319,6 +2319,22 @@ def _verify_carruthers_proteome(
     return carruthers2025.verify_build(dataset_root, data_root, family="proteome")
 
 
+def _verify_yunus_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Yunus 2026 isoprenol titer: the shared titer gate plus its own two rules."""
+    from torchcell.datasets.pputida import yunus2026
+
+    return yunus2026.verify_build(dataset_root, data_root, family="titer")
+
+
+def _verify_yunus_panel_proteome(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Yunus 2026 per-strain protein panel: the shared gate plus its own three rules."""
+    from torchcell.datasets.pputida import yunus2026
+
+    return yunus2026.verify_build(dataset_root, data_root, family="panel_proteome")
+
+
 def _verify_banerjee_proteome(dataset_root: str, data_root: str) -> VerificationReport:
     """Banerjee 2025 proteome: the shared gate plus its four own L1-L4 rows."""
     from torchcell.datasets.pputida import banerjee2025
@@ -2429,6 +2445,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
         "root": "data/torchcell/isoprenyl_acetate_titer_kang2026",
         "verify": _verify_kang_titer,
     },
+    "isoprenol_titer_yunus2026": {
+        "root": "data/torchcell/isoprenol_titer_yunus2026",
+        "verify": _verify_yunus_titer,
+    },
 }
 
 #: Every landed ``BacterialProteinAbundanceExperiment`` dataset. Caglar 2017 is here
@@ -2470,6 +2490,10 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
     "proteome_ishii2007": {
         "root": "data/torchcell/proteome_ishii2007",
         "verify": _verify_ishii_proteome,
+    },
+    "crispri_panel_proteome_yunus2026": {
+        "root": "data/torchcell/crispri_panel_proteome_yunus2026",
+        "verify": _verify_yunus_panel_proteome,
     },
 }
 

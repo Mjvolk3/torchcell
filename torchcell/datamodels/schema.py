@@ -14,6 +14,10 @@ from typing import Any, Literal, Self, get_args
 from pydantic import BaseModel, Field, field_validator, model_validator
 from sortedcontainers import SortedDict
 
+from torchcell.datamodels.bacterial_morphology_features import (
+    MorphologyAssay,
+    morphology_assay,
+)
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.verification.sourced import ProvenanceGap, SourcedValue
@@ -4195,6 +4199,12 @@ class SampleUnit(StrEnum):
     biological_replicate = "biological_replicate"
     technical_replicate = "technical_replicate"
     pooled = "pooled"
+    # One segmented cell of a microscopy screen. The sample unit of a per-strain
+    # morphology profile is the cell, not the well: Campos 2018 computes each mean and
+    # each CV over the strain's retained segmented cells (291 +/- 116 of them) from a
+    # single well, so `biological_replicate` would report 1 for a mean over hundreds of
+    # measurements.
+    cell = "cell"
 
 
 _Z95 = 1.959963984540054  # standard-normal two-sided 95% quantile
@@ -6748,6 +6758,145 @@ class BacterialVisualScoreExperiment(Experiment, ModelStrict):
     phenotype: VisualScorePhenotype
 
 
+# --------------------------------------------------------------------------- #
+# BACTERIAL MORPHOLOGY BLOCK START (issue #774)
+# A multi-feature bacterial cell-morphology profile: the CalMorph shape with the
+# vocabulary lifted out of the yeast imaging program and into the assay.
+# --------------------------------------------------------------------------- #
+class BacterialMorphologyPhenotype(Phenotype, ModelStrict):
+    """A bacterial strain's cell-morphology profile from one microscopy assay.
+
+    ``CalMorphPhenotype`` models exactly this: a dict of named per-strain values plus a
+    dict of named coefficients of variation. Its vocabulary is the wrong one, and not by
+    oversight: ``CALMORPH_LABELS`` and ``CALMORPH_STATISTICS`` are the 281 base and 220
+    CV parameters of CalMorph, a *S. cerevisiae* image-analysis program, and that set was
+    measured to be disjoint from every symbol a bacterial screen releases. Storing
+    ``<L>`` under a CalMorph key would assert a measurement nobody made.
+
+    So the shape is kept and the vocabulary becomes a property of the ASSAY.
+    ``assay`` names a :class:`~torchcell.datamodels.bacterial_morphology_features.MorphologyAssay`
+    in ``MORPHOLOGY_ASSAYS``, that assay's features are the only permitted keys, and each
+    feature declares WHAT STATISTIC its number is. The split between the two dicts is
+    that declaration and not a naming convention: a key whose statistic is
+    ``coefficient_of_variation`` belongs in ``morphology_coefficient_of_variation`` and
+    every other key belongs in ``morphology``, so a CV cannot be filed as a mean. A later
+    bacterial imaging screen registers its own assay and widens nobody else's label set.
+
+    ``morphology`` therefore holds several statistics side by side (a mean over the
+    strain's cells, a Pearson correlation across them, a fitted intercept, a population
+    fraction, an inferred relative timing), which is what the source releases in one row.
+    The assay says which is which, and a consumer that pools them across keys is pooling
+    quantities the source never claimed were comparable.
+
+    A record carries the features the source DETERMINED for that strain, not necessarily
+    the whole vocabulary: Campos 2018's release states that "NaN (Not a Number) values
+    are attributed to non-determined fields", and 278 of its 4,227 strains have no
+    nucleoid channel, so their 7 nucleoid-derived features do not exist. Demanding full
+    coverage would drop 21 real features to save 7 absent ones.
+
+    ``n_samples`` with ``sample_unit`` is the replicate design of the per-cell features:
+    the number of segmented cells the means and CVs are computed over. Some features are
+    computed over a stated SUBSET of those cells (Campos's ``CV_DR`` and ``rho_CD`` over
+    constricted cells only, its nucleoid features over DAPI-scored cells), and the
+    subset sizes are not released per strain; each such feature says so in its own
+    ``note`` rather than this field pretending to cover them.
+    """
+
+    graph_level: str = "global"
+    label_name: str = "morphology"
+    label_statistic_name: str = "morphology_coefficient_of_variation"
+    assay: str = Field(
+        description="the registered morphology assay whose vocabulary names the keys "
+        "(a key of torchcell.datamodels.bacterial_morphology_features.MORPHOLOGY_ASSAYS)"
+    )
+    morphology: dict[str, float] = Field(
+        description="per-strain feature values keyed by the assay's own symbol, for "
+        "every feature of the assay whose statistic is not a coefficient of variation"
+    )
+    morphology_coefficient_of_variation: dict[str, float] | None = Field(
+        default=None,
+        description="per-strain coefficients of variation keyed by the assay's own "
+        "symbol, for the features whose declared statistic is a coefficient of variation",
+    )
+    n_samples: int | None = Field(
+        default=None,
+        description="number of samples the per-cell features are computed over",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None, description="what one sample in n_samples physically is"
+    )
+
+    @property
+    def assay_vocabulary(self) -> MorphologyAssay:
+        """The assay this record names, which is the authority on its keys."""
+        return morphology_assay(self.assay)
+
+    @model_validator(mode="after")
+    def validate_against_the_assay(self) -> "BacterialMorphologyPhenotype":
+        """Every key is a feature of the named assay, filed under its own statistic.
+
+        The assay lookup raises on an unregistered name, so a record can never be
+        written against a vocabulary this version of the schema does not hold.
+        """
+        assay = morphology_assay(self.assay)
+        if not self.morphology:
+            raise ValueError(
+                f"morphology measurements cannot be empty (assay {self.assay!r})"
+            )
+        self._check_dict("morphology", self.morphology, assay.value_symbols, assay)
+        self._check_dict(
+            "morphology_coefficient_of_variation",
+            self.morphology_coefficient_of_variation or {},
+            assay.coefficient_of_variation_symbols,
+            assay,
+        )
+        return self
+
+    @staticmethod
+    def _check_dict(
+        field: str,
+        values: dict[str, float],
+        permitted: frozenset[str],
+        assay: MorphologyAssay,
+    ) -> None:
+        """Reject a key outside ``permitted``, a key of the wrong statistic, and NaN."""
+        for key, value in values.items():
+            if key not in permitted:
+                feature = assay.by_symbol.get(key)
+                if feature is None:
+                    raise ValueError(
+                        f"Invalid {assay.name} morphology feature: {key}. Must be one "
+                        f"of the {len(assay.features)} symbols the assay declares."
+                    )
+                raise ValueError(
+                    f"{key} is a {feature.statistic.value} of assay {assay.name}, so it "
+                    f"does not belong in {field}"
+                )
+            if math.isnan(value):
+                raise ValueError(f"{field} measurement {key} cannot be NaN")
+
+
+class BacterialMorphologyExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for a bacterial cell-morphology experiment."""
+
+    experiment_reference_type: str = "bacterial_morphology"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: BacterialMorphologyPhenotype
+
+
+class BacterialMorphologyExperiment(Experiment, ModelStrict):
+    """A bacterial strain's cell-morphology profile from one microscopy screen."""
+
+    experiment_type: str = "bacterial_morphology"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: BacterialMorphologyPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# BACTERIAL MORPHOLOGY BLOCK END (issue #774)
+# --------------------------------------------------------------------------- #
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -6767,6 +6916,7 @@ PhenotypeType = (
     | ProteinTurnoverPhenotype
     | FluxPhenotype
     | PromoterActivityPhenotype
+    | BacterialMorphologyPhenotype  # issue #774
 )
 
 ExperimentType = (
@@ -6798,6 +6948,7 @@ ExperimentType = (
     | BacterialMetaboliteExperiment
     | BacterialRNASeqExpressionExperiment
     | BacterialVisualScoreExperiment
+    | BacterialMorphologyExperiment  # issue #774
 )
 
 ExperimentReferenceType = (
@@ -6829,6 +6980,7 @@ ExperimentReferenceType = (
     | BacterialMetaboliteExperimentReference
     | BacterialRNASeqExpressionExperimentReference
     | BacterialVisualScoreExperimentReference
+    | BacterialMorphologyExperimentReference  # issue #774
 )
 
 
@@ -6860,6 +7012,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_metabolite": BacterialMetaboliteExperiment,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
     "bacterial_visual_score": BacterialVisualScoreExperiment,
+    "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -6890,6 +7043,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_metabolite": BacterialMetaboliteExperimentReference,
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,
+    "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
 }
 
 

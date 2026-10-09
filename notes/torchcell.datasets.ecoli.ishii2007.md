@@ -88,8 +88,8 @@ data it was fitted to. The fitting PROCEDURE is in the unmirrored supplement.
 
 Seven `Exch.` rows are exchange (reversibility) coefficients, not fluxes. They are
 written to `preprocess/exchange_coefficients.csv` and never reach `net_flux`; the sheet
-says so in as many words ("\"Exch\" denotes exchange coefficient of corresponding
-reaction."). A `-` is "reaction excluded from model" and is stored as KEY ABSENCE: the
+says so in as many words (`"Exch" denotes exchange coefficient of corresponding
+reaction.`). A `-` is "reaction excluded from model" and is stored as KEY ABSENCE: the
 zwf record, hand-checked in the tests, has no `G6P -> 6PG` key at all, because that is
 the reaction its own deletion removes.
 

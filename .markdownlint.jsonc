@@ -36,9 +36,9 @@
   // option, because the tree carries 7,580 MD009 + 5,626 MD010 + 688 MD012
   // violations in notes the hook has never touched (the hook only sees STAGED
   // files), so a reporting-only hook would block every commit that touches one of
-  // them on unrelated pre-existing whitespace. The rules kept enabled above
-  // (MD009 trailing space, MD012 blank runs, MD022/MD031/MD032 blank lines around
-  // blocks, MD047 final newline, the list/heading layout rules) only move whitespace
+  // them on unrelated pre-existing whitespace. The rules left enabled (listed above, or
+  // on by default: MD009 trailing space, MD012 blank runs, MD022/MD031/MD032 blank lines
+  // around blocks, MD047 final newline, the list/heading layout rules) only move whitespace
   // at a line's END and between blocks, and they were measured to leave a fenced
   // block untouched. A note joins a wrapped quote's lines with one space (the
   // convention the Menasalvas note states), so whitespace at a line end is layout and

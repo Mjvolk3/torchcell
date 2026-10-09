@@ -131,9 +131,14 @@
 <span class="sd">        --names torchcell/datamodels/compound_identity_inputs/hillenmeyer2008.txt \\</span>
 <span class="sd">        ... \\</span>
 <span class="sd">        --cids torchcell/datamodels/compound_identity_inputs/wildenhain2015_cids.txt \\</span>
-<span class="sd">        --out torchcell/datamodels/compound_identity_table.json</span>
+<span class="sd">        --out torchcell/datamodels/compound_identity_table.json \\</span>
+<span class="sd">        --cache /tmp/pubchem_cache.json --min-interval 1.0</span>
 
 <span class="sd">It prints the sha256 to re-pin into ``compound_identity.py::_TABLE_SHA256``.</span>
+<span class="sd">``--cache`` persists every response so an interrupted pass resumes without re-querying,</span>
+<span class="sd">and ``--min-interval`` slows the pass when PubChem's request-rate throttle engages</span>
+<span class="sd">(#676: it answers HTTP 429 with an HTML body, and at the published 5 requests/second</span>
+<span class="sd">ceiling a full pass hit it after about 300 name lookups on 2026.10.09).</span>
 
 <span class="sd">Input-file grammar (one entry per line; ``#`` starts a comment, and the first comment</span>
 <span class="sd">line must name the review the list came from)::</span>
@@ -194,6 +199,14 @@
 <span class="n">_MIN_INTERVAL_S</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># &lt;= 5 requests/s, PubChem's published ceiling</span>
 <span class="n">_MAX_BUSY_RETRIES</span> <span class="o">=</span> <span class="mi">6</span>
 <span class="n">_BUSY_BACKOFF_S</span> <span class="o">=</span> <span class="mf">5.0</span>
+<span class="c1">#: PubChem's request-rate throttle answers with this status and an HTML body (#676),</span>
+<span class="c1">#: unlike the dynamic throttle's HTTP 200 plus a ``PUGREST.ServerBusy`` JSON fault.</span>
+<span class="n">_TOO_MANY_REQUESTS</span> <span class="o">=</span> <span class="mi">429</span>
+<span class="c1">#: The 429 block is per window, not per request, so it takes a flat minute rather than</span>
+<span class="c1">#: the busy schedule's growing seconds, and many more tries: measured 2026.10.09, the</span>
+<span class="c1">#: block outlasted the busy schedule's 105 s ceiling and then cleared.</span>
+<span class="n">_RATE_LIMIT_BACKOFF_S</span> <span class="o">=</span> <span class="mf">60.0</span>
+<span class="n">_MAX_RATE_LIMIT_RETRIES</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="n">_CID_BATCH</span> <span class="o">=</span> <span class="mi">100</span>
 <span class="n">_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">_CHEBI_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"\bCHEBI:\d+\b"</span><span class="p">)</span>
@@ -358,10 +371,20 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">PubChemClient</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Rate-limited PUG REST client with an on-disk response cache."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Build the client; an existing cache file is loaded so a rerun skips the network."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">cache_path</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">min_interval_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_MIN_INTERVAL_S</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build the client; an existing cache file is loaded so a rerun skips the network.</span>
+
+<span class="sd">        ``min_interval_s`` is the floor between requests. The default is PubChem's</span>
+<span class="sd">        published 5 requests/second ceiling, but its request-rate throttle engages below</span>
+<span class="sd">        that on a long pass (#676; measured 2026.10.09: HTTP 429 after about 300 name</span>
+<span class="sd">        lookups at 4/s, and the 105 s of backoff did not clear it), so a full pass is</span>
+<span class="sd">        run slower from the command line rather than by changing the published ceiling.</span>
+<span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_opener</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">build_opener</span><span class="p">(</span><span class="n">_PassThroughErrorProcessor</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_interval_s</span> <span class="o">=</span> <span class="n">min_interval_s</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache_path</span> <span class="o">=</span> <span class="n">cache_path</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">cache_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">())</span>
@@ -371,8 +394,8 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_wait</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span>
-        <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="n">_MIN_INTERVAL_S</span><span class="p">:</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_MIN_INTERVAL_S</span> <span class="o">-</span> <span class="n">delta</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">delta</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_interval_s</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_min_interval_s</span> <span class="o">-</span> <span class="n">delta</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_request</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">body</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
@@ -382,6 +405,20 @@
 <span class="sd">        is a throttle signal and is retried after a growing pause; any other fault, or a</span>
 <span class="sd">        throttle that survives :data:`_MAX_BUSY_RETRIES`, aborts the run. Recording a</span>
 <span class="sd">        throttled call as "unresolved" would silently curate a compound out of existence.</span>
+
+<span class="sd">        PubChem has TWO throttles and they answer differently (#676, measured on a full</span>
+<span class="sd">        pass 2026.10.09): the dynamic one answers HTTP 200 with a JSON</span>
+<span class="sd">        ``PUGREST.ServerBusy`` fault, while the request-rate one answers **HTTP 429 with</span>
+<span class="sd">        an HTML body**, ``&lt;!doctype html&gt;...429 Too Many Requests``, carrying no</span>
+<span class="sd">        ``Retry-After`` and no ``X-Throttling-Control``. The 429 is a per-window block</span>
+<span class="sd">        rather than a momentary busy signal, so it has its OWN, flatter and far more</span>
+<span class="sd">        patient schedule (:data:`_RATE_LIMIT_BACKOFF_S` x</span>
+<span class="sd">        :data:`_MAX_RATE_LIMIT_RETRIES`): measured, it survived the 105 s the</span>
+<span class="sd">        ``ServerBusy`` schedule allows and then cleared, and the two counters are</span>
+<span class="sd">        separate so a long block does not consume the busy budget. A numeric</span>
+<span class="sd">        ``Retry-After`` is honored when one is sent. A non-JSON body on any OTHER status</span>
+<span class="sd">        aborts with the status and the first bytes, because that is a server fault</span>
+<span class="sd">        rather than a throttle.</span>
 <span class="sd">        """</span>
         <span class="n">request</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">Request</span><span class="p">(</span>
             <span class="n">url</span><span class="p">,</span>
@@ -395,10 +432,29 @@
                 <span class="p">),</span>
             <span class="p">},</span>
         <span class="p">)</span>
-        <span class="k">for</span> <span class="n">attempt</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_MAX_BUSY_RETRIES</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">busy</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">rate_limited</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="n">busy</span> <span class="o">&lt;=</span> <span class="n">_MAX_BUSY_RETRIES</span> <span class="ow">and</span> <span class="n">rate_limited</span> <span class="o">&lt;=</span> <span class="n">_MAX_RATE_LIMIT_RETRIES</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_wait</span><span class="p">()</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_opener</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span> <span class="k">as</span> <span class="n">response</span><span class="p">:</span>
-                <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">))</span>
+                <span class="n">status</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">response</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+                <span class="n">raw</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">retry_after</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">headers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Retry-After"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span> <span class="o">==</span> <span class="n">_TOO_MANY_REQUESTS</span><span class="p">:</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">retry_after</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">retry_after</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">retry_after</span><span class="o">.</span><span class="n">isdigit</span><span class="p">()</span>
+                    <span class="k">else</span> <span class="n">_RATE_LIMIT_BACKOFF_S</span>
+                <span class="p">)</span>
+                <span class="n">rate_limited</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">continue</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">text</span><span class="o">.</span><span class="n">lstrip</span><span class="p">()</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"{"</span><span class="p">,</span> <span class="s2">"["</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"PubChem answered </span><span class="si">{</span><span class="n">status</span><span class="si">}</span><span class="s2"> with a non-JSON body for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">text</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
             <span class="n">code</span> <span class="o">=</span> <span class="n">payload</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Fault"</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"Code"</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">code</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">code</span> <span class="o">==</span> <span class="s2">"PUGREST.NotFound"</span><span class="p">:</span>
                 <span class="k">return</span> <span class="n">payload</span>
@@ -406,9 +462,11 @@
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"PubChem fault </span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">payload</span><span class="p">[</span><span class="s1">'Fault'</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
-            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_BUSY_BACKOFF_S</span> <span class="o">*</span> <span class="p">(</span><span class="n">attempt</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">busy</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">_BUSY_BACKOFF_S</span> <span class="o">*</span> <span class="n">busy</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"PubChem stayed busy after </span><span class="si">{</span><span class="n">_MAX_BUSY_RETRIES</span><span class="si">}</span><span class="s2"> retries for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span>
+            <span class="sa">f</span><span class="s2">"PubChem stayed busy after </span><span class="si">{</span><span class="n">busy</span><span class="si">}</span><span class="s2"> busy and </span><span class="si">{</span><span class="n">rate_limited</span><span class="si">}</span><span class="s2"> rate-limited "</span>
+            <span class="sa">f</span><span class="s2">"retries for </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
 
 <div class="viewcode-block" id="PubChemClient.flush">
@@ -780,7 +838,10 @@
 <div class="viewcode-block" id="curate">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.compound_identity_curate.curate.html#torchcell.datamodels.compound_identity_curate.curate">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">curate</span><span class="p">(</span>
-    <span class="n">name_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">cid_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span> <span class="n">cache</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">name_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">cid_files</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">cache</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_interval_s</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">_MIN_INTERVAL_S</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="n">CuratedRow</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">"""Read the input lists, query PubChem, and assemble the rows."""</span>
     <span class="n">directives</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CurationDirective</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
@@ -789,7 +850,7 @@
     <span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="n">cid_files</span><span class="p">:</span>
         <span class="n">directives</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">read_cid_list</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
 
-    <span class="n">client</span> <span class="o">=</span> <span class="n">PubChemClient</span><span class="p">(</span><span class="n">cache</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">PubChemClient</span><span class="p">(</span><span class="n">cache</span><span class="p">,</span> <span class="n">min_interval_s</span><span class="p">)</span>
     <span class="n">cid_directives</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">skip_lookup</span><span class="p">]</span>
     <span class="n">name_directives</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">directives</span> <span class="k">if</span> <span class="n">d</span><span class="o">.</span><span class="n">cid</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">d</span><span class="o">.</span><span class="n">skip_lookup</span><span class="p">]</span>
 
@@ -837,9 +898,16 @@
     <span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--out"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"table JSON to write"</span><span class="p">)</span>
     <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s2">"--cache"</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="n">Path</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"response-cache JSON"</span><span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--min-interval"</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="n">_MIN_INTERVAL_S</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"seconds between PubChem requests; raise it above the default "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_MIN_INTERVAL_S</span><span class="si">}</span><span class="s2"> when the request-rate throttle engages (#676)"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
 
-    <span class="n">rows</span><span class="p">,</span> <span class="n">directives</span> <span class="o">=</span> <span class="n">curate</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cids</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache</span><span class="p">)</span>
+    <span class="n">rows</span><span class="p">,</span> <span class="n">directives</span> <span class="o">=</span> <span class="n">curate</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cids</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">cache</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">min_interval</span><span class="p">)</span>
     <span class="n">text</span> <span class="o">=</span> <span class="n">serialize</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span>
     <span class="n">args</span><span class="o">.</span><span class="n">out</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
 

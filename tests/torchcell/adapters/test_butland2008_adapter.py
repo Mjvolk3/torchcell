@@ -4,12 +4,14 @@
 """``torchcell/adapters/butland2008_adapter.py``: the conf it loads, the gate's view of
 it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Butland 2008 unfiltered eSGA interaction matrix: 296,390 (query strain, recipient
-isolate) records from Supplementary Table 4's S-score sheet,
-BacterialGeneInteractionExperiment. TWO gene-level BacterialDeletionPerturbation leaves
-per record, served as `bacterial perturbation`, and the signed S score as the
-already-served `gene interaction phenotype`; the recipient leaf also carries its Keio
-isolate as the construction batch. The screen is one condition and its two marker drugs
+Butland 2008 unfiltered eSGA interaction matrix: 301,803 (query strain, recipient
+strain) records from Supplementary Table 4's S-score sheet,
+BacterialGeneInteractionExperiment. TWO gene-level bacterial perturbation leaves per
+record, served as `bacterial perturbation`, and the signed S score as the already-served
+`gene interaction phenotype`. The query leaf is a BacterialDeletionPerturbation; the
+recipient is a BacterialDeletionPerturbation carrying its Keio isolate as the
+construction batch, or a BacterialMarkedAllelePerturbation for one of the 149 SPA-tag
+essential rows (issue #792), which the base adapter serves under the same graph class. The screen is one condition and its two marker drugs
 are selection_agent components of the medium, so no record carries an environment
 perturbation; no phage and no CRISPRi construct appears in any record.
 """

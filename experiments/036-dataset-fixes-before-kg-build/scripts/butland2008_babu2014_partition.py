@@ -1,7 +1,7 @@
 # experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition.py
 # [[experiments.036-dataset-fixes-before-kg-build.scripts.butland2008_babu2014_partition]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition
-"""Re-measure the Butland 2008 / Babu 2014 partition after Babu admitted its hypomorphs.
+"""Re-measure the Butland 2008 / Babu 2014 partition after both loaders took the leaf.
 
 PR #837 moved Babu 2014's 3,420 hypomorph pairs from a drop rule onto the new
 ``BacterialMarkedAllelePerturbation`` leaf, so the served Babu store grew from 38,579 to
@@ -9,6 +9,12 @@ PR #837 moved Babu 2014's 3,420 hypomorph pairs from a drop rule onto the new
 the set Butland 2008's loader partitions itself against, so the served-by-Babu side of
 that partition grew from 727 pairs to 1,125 and the Butland build stopped on its own pin
 (slurm array 3565 task 53).
+
+Butland 2008 has since taken the same leaf for its own 149 ``SPA-tag essential``
+recipient rows (issue #792), so its SPA-tag drop rule is gone and those cells now reach
+the served rule. That is what this script re-measures: where each of the 1,125 served
+pairs sits once BOTH halves of the array are storable, and the kept-record count the
+pins take.
 
 This script is the measurement behind the new pins. Nothing here is read from the
 loader's docstring or from a build log: the served side comes from the rebuilt Babu dev
@@ -26,8 +32,9 @@ What it measures:
 2. **Where each served Butland-screen pair sits in the release.** Each of the 1,125 is
    located in the 39 x 8,073 matrix and classified by the FIRST Butland retention rule
    that applies to it, which is what decides whether it reaches the served rule at all.
-3. **The new Butland ledger.** The six retention rules re-applied in order, giving the
-   kept-record and kept-pair counts, and the cells the served rule now removes.
+3. **The new Butland ledger.** The five retention rules re-applied in order, giving the
+   kept-record and kept-pair counts split by recipient row label, and the cells the
+   served rule now removes.
 4. **No measurement stored twice.** The experiment content ids of both built stores (the
    id a knowledge-graph build writes,
    ``sha256(json.dumps(experiment.model_dump()))``, from
@@ -63,6 +70,7 @@ from torchcell.datasets.ecoli.butland2008 import (
     BABU_SCREEN_TAG,
     DATASET_ROOT_REL,
     LABEL_NON_ESSENTIAL,
+    LABEL_SPA_TAG,
     QUERY_CASSETTE,
     RECIPIENT_CASSETTE,
     TABLE_S4,
@@ -157,10 +165,13 @@ def release_side(raw_dir: str) -> dict[str, Any]:
 def ledger(
     release: dict[str, Any], served: dict[tuple[str, str], str]
 ) -> dict[str, Any]:
-    """Re-apply the six retention rules in the loader's order over every released cell.
+    """Re-apply the five retention rules in the loader's order over every released cell.
 
     The per-cell rule the matrix assigns is also returned per oriented pair, which is
-    what locates each served pair in the release.
+    what locates each served pair in the release. There is no longer a SPA-tag rule:
+    this loader stores a ``SPA-tag essential`` recipient on
+    ``BacterialMarkedAllelePerturbation`` (issue #792), so those cells reach every later
+    rule and the kept records are counted by row label too.
     """
     scores = release["scores"]
     block, colonies, zero_colonies = (
@@ -171,15 +182,16 @@ def ledger(
     not_a_tag, remapped = release["not_a_tag"], release["remapped"]
     rules: Counter[str] = Counter()
     pair_rule: dict[tuple[str, str], set[str]] = {}
+    pair_label: dict[tuple[str, str], str] = {}
     stored_pairs: set[tuple[str, str]] = set()
+    kept_by_label: Counter[str] = Counter()
+    served_by_label: Counter[str] = Counter()
     kept = 0
     for row, recipient_tag in enumerate(scores.recipient_tags):
         label = scores.labels[row]
         for column, query_tag in enumerate(scores.query_tags):
             pair = (query_tag, recipient_tag)
-            if label != LABEL_NON_ESSENTIAL:
-                rule = b.RULE_SPA_TAG
-            elif recipient_tag in not_a_tag:
+            if recipient_tag in not_a_tag:
                 rule = b.RULE_NOT_A_TAG
             elif recipient_tag in remapped:
                 rule = b.RULE_REMAPPED
@@ -195,11 +207,15 @@ def ledger(
             else:
                 rule = "stored"
             pair_rule.setdefault(pair, set()).add(rule)
+            pair_label[pair] = label
             if rule == "stored":
                 kept += 1
+                kept_by_label[label] += 1
                 stored_pairs.add(pair)
             else:
                 rules[rule] += 1
+                if rule == b.RULE_SERVED:
+                    served_by_label[label] += 1
     released_cells = len(scores.recipient_tags) * len(scores.query_tags)
     dropped = sum(rules.values())
     if dropped + kept != released_cells:
@@ -210,30 +226,43 @@ def ledger(
         "kept_oriented_pairs": len(stored_pairs),
         "dropped_records": dropped,
         "dropped_by_rule": {rule: rules[rule] for rule in b.DROP_RULES},
+        "kept_by_row_label": dict(sorted(kept_by_label.items())),
+        "served_rule_cells_by_row_label": dict(sorted(served_by_label.items())),
         "pair_rule": pair_rule,
+        "pair_label": pair_label,
         "stored_pairs": stored_pairs,
     }
 
 
 def locate_served_pairs(
-    butland_pairs: set[tuple[str, str]], pair_rule: dict[tuple[str, str], set[str]]
+    butland_pairs: set[tuple[str, str]],
+    pair_rule: dict[tuple[str, str], set[str]],
+    pair_label: dict[tuple[str, str], str],
 ) -> dict[str, Any]:
-    """Classify each served Butland-screen pair by where it sits in the release."""
+    """Classify each served Butland-screen pair by where it sits in the release.
+
+    Each pair is reported twice: by the first retention rule that applies to it, and by
+    that rule crossed with its recipient row's released label, which is the split the
+    partition's three groups now rest on.
+    """
     by_rule: Counter[str] = Counter()
+    by_rule_and_label: Counter[str] = Counter()
     examples: dict[str, list[str]] = {}
     absent: list[str] = []
     for pair in sorted(butland_pairs):
-        label = f"{pair[0]} -> {pair[1]}"
+        name = f"{pair[0]} -> {pair[1]}"
         if pair not in pair_rule:
             by_rule["not_a_cell_of_this_release"] += 1
-            absent.append(label)
+            absent.append(name)
             continue
         for rule in sorted(pair_rule[pair]):
             by_rule[rule] += 1
-            examples.setdefault(rule, []).append(label)
+            by_rule_and_label[f"{rule} | {pair_label[pair]}"] += 1
+            examples.setdefault(rule, []).append(name)
     return {
         "n_served_butland_pairs": len(butland_pairs),
         "by_first_rule_that_applies": dict(sorted(by_rule.items())),
+        "by_first_rule_and_row_label": dict(sorted(by_rule_and_label.items())),
         "pairs_not_a_cell_of_this_release": absent,
         "examples_by_rule": {
             rule: items[:5] for rule, items in sorted(examples.items())
@@ -280,7 +309,9 @@ def main() -> int:
     }
     release = release_side(osp.join(butland_root, "raw"))
     counts = ledger(release, served["pairs"])
-    located = locate_served_pairs(butland_pairs, counts["pair_rule"])
+    located = locate_served_pairs(
+        butland_pairs, counts["pair_rule"], counts["pair_label"]
+    )
     stored = stored_side(butland_root)
     if stored is None:
         overlap: dict[str, Any] = {
@@ -313,6 +344,8 @@ def main() -> int:
             "kept_oriented_pairs": counts["kept_oriented_pairs"],
             "dropped_records": counts["dropped_records"],
             "dropped_by_rule": counts["dropped_by_rule"],
+            "kept_by_row_label": counts["kept_by_row_label"],
+            "served_rule_cells_by_row_label": counts["served_rule_cells_by_row_label"],
             "n_queries": len(set(release["scores"].query_tags)),
             "n_recipient_rows": len(release["scores"].recipient_tags),
         },
@@ -322,6 +355,15 @@ def main() -> int:
             "SERVED_BUTLAND_RECORDS": len(butland_pairs),
             "SERVED_BUTLAND_PAIRS": len(butland_pairs),
             "SERVED_OVERLAP_CELLS": counts["dropped_by_rule"][b.RULE_SERVED],
+            "SERVED_OVERLAP_PAIRS": located["by_first_rule_that_applies"].get(
+                b.RULE_SERVED, 0
+            ),
+            "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT": located[
+                "by_first_rule_and_row_label"
+            ].get(f"{b.RULE_SERVED} | {LABEL_SPA_TAG}", 0),
+            "SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT": located[
+                "by_first_rule_and_row_label"
+            ].get(f"{b.RULE_SERVED} | {LABEL_NON_ESSENTIAL}", 0),
             "EXPECTED_RECORDS": counts["kept_records"],
         },
     }

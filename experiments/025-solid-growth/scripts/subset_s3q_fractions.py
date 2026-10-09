@@ -32,6 +32,8 @@ Writes (``experiments/025-solid-growth/results/``):
 - ``subset_S3Q_frac4_indices.json.gz``, ``subset_S3Q_frac16_indices.json.gz``,
   ``subset_S3Q_frac64_indices.json.gz``
 - ``subset_s3q_fractions_summary.json``
+- ``subset_S3Q_double_pairs.json.gz``: the gene pair of every S3Q closure double, read once
+  from the LMDB and cached
 
     PYTHONPATH=$PWD python experiments/025-solid-growth/scripts/subset_s3q_fractions.py
 """
@@ -156,9 +158,19 @@ def main() -> None:
     rng.shuffle(train_pairs)
     print(f"train query pairs: {len(train_pairs)}; S3Q {len(s3q):,} records")
 
-    closure_doubles = [i for i in s3q if i not in triples and i not in set(singles)]
-    print(f"reading gene pairs of {len(closure_doubles):,} closure doubles from the 025 LMDB")
-    dpair = double_pairs(closure_doubles)
+    single_set = set(singles)
+    closure_doubles = [i for i in s3q if i not in triples and i not in single_set]
+    cache = osp.join(RESULTS_DIR, "subset_S3Q_double_pairs.json.gz")
+    if osp.exists(cache):
+        with gzip.open(cache, "rt") as f:
+            dpair = {int(k): frozenset(v) for k, v in json.load(f).items()}
+        print(f"gene pairs of {len(dpair):,} closure doubles read from {cache}")
+    else:
+        print(f"reading gene pairs of {len(closure_doubles):,} closure doubles from the 025 LMDB")
+        dpair = double_pairs(closure_doubles)
+        with gzip.open(cache, "wt") as f:
+            json.dump({str(k): sorted(v) for k, v in dpair.items()}, f)
+    assert set(dpair) == set(closure_doubles)
 
     s3q_train = sorted(s3q_set - held)
     out = S3QFractionsSummary(
@@ -168,8 +180,11 @@ def main() -> None:
         n_keep = math.ceil(len(train_pairs) / denom)
         kept_pairs = {frozenset(k.split("+")) for k in train_pairs[:n_keep]}
         kept_triples = [idx for idx, p in triple_pair.items() if p in kept_pairs]
-        kept_sets = [set(triples[idx]) for idx in kept_triples]
-        kept_doubles = [i for i, p in dpair.items() if any(p <= gs for gs in kept_sets)]
+        # every gene pair inside a kept triple, so the double test is one set lookup
+        kept_pairs_in_triples = {
+            frozenset(p) for idx in kept_triples for p in combinations(triples[idx], 2)
+        }
+        kept_doubles = [i for i, p in dpair.items() if p in kept_pairs_in_triples]
         pool = sorted(set(singles) | set(kept_doubles) | set(kept_triples) | held)
         train_records = sorted(set(pool) - held)
         dump_gz(f"subset_S3Q_frac{denom}_indices.json.gz", pool)

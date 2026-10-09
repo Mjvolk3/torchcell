@@ -506,6 +506,32 @@ a full rebuild, so the impacted stores are remade there; the two Campos dev stor
 rebuilt here with `--retire-existing` and read `fresh` under
 `python -m torchcell.provenance.build_manifest`.
 
+### Supported-query drift, which is the one thing this branch cannot close itself
+
+`python -m torchcell.knowledge_graphs.supported_queries check` reports 2 drifts on this
+branch and 0 on `origin/main`, so both are introduced here:
+
+| query | kind | detail |
+| --- | --- | --- |
+| `essentiality_smf` | `contract_changed` | `FitnessPhenotype`: contract of `SampleUnit` differs from the closure `2026.10.06-4b293d34` recorded for `SmfCostanzo2016Dataset` |
+| `solid_growth_025` | `contract_changed` | the same, for 13 Costanzo and Kuzmin datasets |
+
+The cause is `SampleUnit` gaining `cell`. `SampleUnit` is in `FitnessPhenotype`'s forward
+closure and no enum member can be added without moving the enum's contract fingerprint,
+so this follows from the change rather than being a defect in it. No stored value moves;
+the domain widens.
+
+None of the check's three suggested routes is available. Dropping `SampleUnit.cell` would
+mean writing `biological_replicate` for a mean over 291 cells, which is the misstatement
+`sample_unit` exists to prevent. The two queries are correct and untouched. Deprecating a
+supported query to get a check green is destructive and the owner's call. Re-running
+`validate --release 2026.10.06-4b293d34` cannot help either: the fingerprints it compares
+against live in `database/releases/2026.10.06-4b293d34.closures.json`, which records what
+was actually built, and editing it would falsify that record.
+
+The resolution is the KG 4.0 build, which re-stamps the snapshot and re-validates the four
+queries, the way commit `03b9d6bc8` did for the current one.
+
 ### No other loader in the repo is extended by this class
 
 Swept `notes/`, all 90 modules under `torchcell/datasets/`, the candidate-table

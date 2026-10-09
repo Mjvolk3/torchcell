@@ -617,3 +617,32 @@ family and why there is no `s_score`.
 Collins S-score, a modified t-statistic.** It follows from the deferral chain Shiver ->
 [8,18] -> Collins 2006, not from any sentence we hold. Mirroring Nichols 2011 and
 Collins 2006 (#691) is what would settle it.
+
+### L0 to L4 on the rebuilt store
+
+`verify_build` over the 210,998-record store: `ecoli_env_chemgen_shiver2016: PASS` on all
+17 checks. `python -m torchcell.provenance.build_manifest` reads it `fresh`.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | 210,998 records validated |
+| L1 | count | observed 210,998, expected 210,998 |
+| L1 | pair_uniqueness | 210,998 unique (study, strain, condition) records, one each |
+| L1 | provenance_gaps | 1,426,790 documented gaps over 210,998/210,998 records; deferred fields `inchikey`, `n_samples`, `sample_unit` |
+| L1 | canonical_gene_names | 3,838 systematic names, one canonical spelling each, each current; 89 pseudogene loci the genome resolves to themselves |
+| L2 | value_fidelity | 210,998 values checked |
+| L2 | se_nonnegative | 0 values checked (no SE is released) |
+| L2 | uncertainty_sanity | 0 labeled uncertainties; 0 records with n_samples >= 2 and no uncertainty |
+| L3 | measurement_type_consistent | single `z_score` |
+| L3 | reference_zero | reference response == 0 for all 210,998 |
+| L3 | environment_perturbed | all 210,998 carry an edit; baseline temp 37.0, baseline media the LB Lennox agar |
+| L3 | compound_identity | 77,736 references carry a structure identifier, 141,328 declare a typed gap (31 distinct compounds) |
+| L3 | media_compound_identity | 544,333 references carry a structure identifier, 0 gaps |
+| L3 | media_membership | 210,998 records on a medium deriving from a library base (2 distinct media) |
+| L4 | gene_containment_sgd | 1.000 of 3,838 measured genes are reference genes |
+| L4 | current_genome_genes | all 3,838 names are genes of the current genome |
+
+`pair_uniqueness` passing is again the interesting row, and for a new reason: the
+verifier's strain signature now carries `tag`, `terminus`, `degron`, `cassette` and
+`insertion_site`, which is what keeps `imp-DAS` and `imp-DAS+4` (two strains on
+`BW25113_0054` differing only in their degron) from colliding on one key.

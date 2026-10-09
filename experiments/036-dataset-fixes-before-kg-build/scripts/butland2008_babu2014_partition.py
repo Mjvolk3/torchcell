@@ -20,7 +20,9 @@ What it measures:
 1. **The served side.** Every record of the Babu dev store as an oriented
    (cat-marked donor, kan-marked recipient) gene pair, split by ``screen_id`` and by the
    perturbation leaf each side carries, so the 727 -> 1,125 growth is attributed to the
-   marked-allele leaf rather than assumed from the PR body.
+   marked-allele leaf rather than assumed from the PR body. The reciprocal unordered
+   pairs are counted here too, because the Butland docstring cites that number for why
+   the partition's unit is the ORIENTED pair.
 2. **Where each served Butland-screen pair sits in the release.** Each of the 1,125 is
    located in the 39 x 8,073 matrix and classified by the FIRST Butland retention rule
    that applies to it, which is what decides whether it reaches the served rule at all.
@@ -53,6 +55,8 @@ from typing import Any
 import numpy as np
 from dotenv import load_dotenv
 
+from torchcell.data import verify_raw_files
+from torchcell.datasets.bacteria_common import bacterial_genome
 from torchcell.datasets.ecoli import butland2008 as b
 from torchcell.datasets.ecoli.butland2008 import (
     BABU_ROOT_REL,
@@ -102,10 +106,12 @@ def served_side(served_root: str) -> dict[str, Any]:
         content_ids.add(
             hashlib.sha256(json.dumps(experiment).encode("utf-8")).hexdigest()
         )
+    reciprocal = {frozenset(pair) for pair in pairs if (pair[1], pair[0]) in pairs}
     return {
         "served_root": served_root,
         "records": sum(screens.values()),
         "oriented_pairs": len(pairs),
+        "reciprocal_unordered_pairs": len(reciprocal),
         "by_screen_id": dict(sorted(screens.items())),
         "by_perturbation_leaf": dict(sorted(leaves.items())),
         "butland_screen_by_perturbation_leaf": dict(sorted(butland_leaves.items())),
@@ -116,14 +122,14 @@ def served_side(served_root: str) -> dict[str, Any]:
 
 def release_side(raw_dir: str) -> dict[str, Any]:
     """Parse the pinned Supplementary Table 4 workbook and the identifier rule sets."""
-    b.verify_raw_files(raw_dir, b.DATA_SHA256)
+    verify_raw_files(raw_dir, b.DATA_SHA256)
     matrix_path = osp.join(raw_dir, TABLE_S4)
     scores = b.read_s_scores(matrix_path)
     raw_sizes = b.read_matrix_sheet(matrix_path, b.SHEET_RAW)
     order = [raw_sizes.query_tags.index(tag) for tag in scores.query_tags]
     colonies, zero_colonies, _ = b.colony_counts(raw_sizes)
     colonies, zero_colonies = colonies[:, order], zero_colonies[:, order]
-    genome = b.bacterial_genome("ecoli", b.REFERENCE_STRAIN_NAME)
+    genome = bacterial_genome("ecoli", b.REFERENCE_STRAIN_NAME)
     names = sorted(set(scores.query_tags) | set(scores.recipient_tags))
     resolutions = {name: genome.resolve_gene_name(name) for name in names}
     not_a_tag = {

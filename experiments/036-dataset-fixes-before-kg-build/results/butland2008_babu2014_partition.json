@@ -3,6 +3,7 @@
     "served_root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014",
     "records": 41988,
     "oriented_pairs": 41988,
+    "reciprocal_unordered_pairs": 100,
     "by_screen_id": {
       "Butland et al.": 1125,
       "This Study": 40863
@@ -63,8 +64,14 @@
     }
   },
   "nothing_stored_twice": {
-    "measured": false,
-    "reason": "the Butland dev store holds no processed/lmdb, so its content ids cannot be read; rebuild it and re-run"
+    "measured": true,
+    "butland_records": 296390,
+    "butland_content_ids": 296390,
+    "babu_records": 41988,
+    "babu_content_ids": 41988,
+    "shared_content_ids": 0,
+    "shared_oriented_pairs": 0,
+    "shared_examples": []
   },
   "pins": {
     "SERVED_BUTLAND_RECORDS": 1125,

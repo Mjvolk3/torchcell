@@ -304,3 +304,127 @@ after both branches are on `main`. The KG 4.0 full build remakes both regardless
 exactly one symbol, `GeneInteractionPhenotype`, which is this change.
 
 Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.schema]].
+
+## 2026.10.09 - The partition reverses: Babu now serves 1,125 of this screen, not 727
+
+The dev-store rebuild of this loader (slurm array 3565 task 53, log
+`/scratch/projects/torchcell/database/slurm/output/3565_53_build_dataset_lmdbs.out`)
+stopped on the loader's own pin:
+
+> RuntimeError: /scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014
+> holds 1125 records under screen_id 'Butland et al.', this build was measured against 727
+
+That is the pin doing its job rather than a bug. PR #837 put Babu 2014's 3,420 hypomorph
+pairs on the new `BacterialMarkedAllelePerturbation` leaf, so the served Babu store grew
+from 38,579 to 41,988 records, and 398 of the admitted pairs carry
+`screen_id="Butland et al."`. The served-by-Babu side of this partition is the set this
+loader excludes itself from, so it had to be re-measured before the store could be
+rebuilt.
+
+Measurement script:
+`experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition.py`,
+record `experiments/036-dataset-fixes-before-kg-build/results/butland2008_babu2014_partition.json`.
+It reads the rebuilt Babu LMDB and the sha256-pinned Supplementary Table 4, and re-applies
+the six retention rules in the loader's order; nothing below is cited from the build log.
+
+### What grew, and what it is made of
+
+| served under `screen_id="Butland et al."` | before #837 | after #837 |
+|---|---|---|
+| `cat` deletion + `kan` deletion | 727 | 727 |
+| `cat` deletion + `kan` marked allele | 0 | 398 |
+| total records, and oriented pairs | 727 | **1,125** |
+| as a fraction of this release's 314,847 cells | 0.23 percent | **0.36 percent** |
+
+The whole growth is the recipient side: 398 pairs whose Keio recipient is one of the 149
+SPA-tag essential strains, which Babu now types as a marked allele. No donor of this
+screen is a hypomorph, which is expected, because Butland's 39 queries are Hfr Cavalli
+deletions.
+
+### What this loader stores: unchanged, and that is a measurement
+
+All 398 of the new pairs sit on a recipient row the array roster labels `SPA-tag
+essential`, and rule 1 removes every cell of those rows before rule 6 is reached. So the
+rebuilt store is identical in content to the one `--retire-existing` replaced:
+
+| | before | after |
+|---|---|---|
+| records | 296,390 | 296,390 |
+| stored oriented pairs | 148,567 | 148,567 |
+| rule 6 (`already_served_by_gene_interaction_babu2014`) | 725 pairs, 1,448 cells | 725 pairs, 1,448 cells |
+| aggravating / alleviating / zero | 143,651 / 144,953 / 7,786 | 143,651 / 144,953 / 7,786 |
+
+### The reverse direction is now a three-way partition
+
+The old check held one list of names: the served pairs this release does not carry. With
+398 more served pairs that list would have run to 400 entries, so the reverse direction
+instead sorts every served pair of this screen into three groups whose counts are pinned
+and which must sum to `SERVED_BUTLAND_RECORDS`:
+
+| group | pairs | constant |
+|---|---|---|
+| storable cells of this matrix, removed by rule 6 | 725 | `SERVED_OVERLAP_PAIRS` |
+| on a SPA-tag essential recipient row, removed by rule 1 | 398 | `SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT` |
+| not a cell of this release under that name | 2 | `SERVED_PAIRS_NOT_IN_THIS_RELEASE` |
+
+725 + 398 + 2 = 1,125. The two by name are `b2528 -> b4486` and `b2531 -> b4486`, which
+the matrix names `b2528 -> b4344` and `b2531 -> b4344` (gene name `*`, absent from
+Genobase ver. 6) because the assembly carries `b4344` as a synonym of `b4486`.
+
+A served pair that falls in NO group raises. That residue check is the one that matters
+for the next drift: counts alone would have passed had Babu's 398 new records landed on
+storable rows, and the cells would then have entered the graph twice.
+
+### Nothing is stored twice, measured on both built stores
+
+The id a knowledge-graph build writes is `sha256(json.dumps(experiment.model_dump()))`
+(`torchcell/adapters/cell_adapter.py::_experiment_node`), so the two stores' id sets are
+the test:
+
+| | records | distinct content ids |
+|---|---|---|
+| `gene_interaction_butland2008` | 296,390 | 296,390 |
+| `gene_interaction_babu2014` | 41,988 | 41,988 |
+| shared content ids | | **0** |
+| shared oriented (query, recipient) pairs | | **0** |
+
+### L0 to L4 on the rebuilt store
+
+`python -m torchcell.datasets.ecoli.butland2008 verify` -> **PASS, 33 checks, 0
+failures**. The rows the rebuild moves:
+
+| level | rule | result |
+|---|---|---|
+| L0 | `structural` | 296,390 records validated |
+| L1 | `count` | observed 296,390, expected 296,390 |
+| L2 | `gene_interaction_equals_its_matrix_cell` | 296,390 of 296,390 equal their Supplementary Table 4 cell |
+| L3 | `partitioned_from_the_served_babu2014_store` | 296,390 stored against **41,988** served oriented pairs; 0 share one |
+| L4 | `gene_containment_mg1655_locus_tags` | 3,829 of 3,829 perturbed loci are MG1655 GenBank loci |
+
+`build_dataset_lmdb --list-stale --include-private` no longer names
+`GeneInteractionButland2008Dataset`; the two it still names, `DmfCostanzo2016Dataset` and
+`DmiCostanzo2016Dataset`, are the array job's remaining tasks. This closes the previous
+section's "Why the canonical dev store was NOT rebuilt by this branch": both branches are
+on `main` now, so the canonical rebuild is done and its partition proof reads the
+canonical Babu store.
+
+### Two stale facts corrected in passing
+
+- the docstring said Babu keeps **102** reciprocal pairs as two records each. Measured on
+  the served store, the unordered gene pairs that appear in both orientations number
+  **100**, which is what Babu's own docstring was corrected to in #837.
+- rule 1 said no bacterial leaf can type a SPA-tag hypomorph. `BacterialMarkedAllelePerturbation`
+  exists now (#792, closed), so the honest statement is that THIS loader has not adopted
+  it; see the open decision below.
+
+### Open decision, not taken here: should this loader store its own hypomorphs?
+
+Babu 2014 stores 3,409 marked-allele records; this release prints **5,811** cells on the
+same 149 SPA-tag essential strains (149 rows x 39 queries) and drops every one of them
+under rule 1. Issue #792's own shape note says both blocked sibling rows need the leaf,
+naming Butland 2008 (schedule row 43) and Typas 2008 (row 42). Adopting it here is a
+data decision with its own measurement (the 398 served pairs would move from rule 1 to
+rule 6, and the rule's name would change with it), so it is flagged rather than folded
+into a pin fix.
+
+Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.bacterial-perturbation-ontology]].

@@ -781,7 +781,9 @@ def test_list_stale_names_an_unreadable_store_and_prints_its_reason_on_stderr(
     monkeypatch.setitem(sys.modules, "tc_gone", lost)
     env = lmdb.open(str(root / "processed" / "lmdb"), map_size=10**8)
     with env.begin(write=True) as txn:
-        record = pickle.loads(txn.get(b"0"))
+        stored = txn.get(b"0")
+        assert stored is not None  # the toy build wrote three records
+        record = pickle.loads(stored)
         record["experiment"]["phenotype"]["censoring"] = Censoring()
         txn.put(b"0", pickle.dumps(record))
     env.close()

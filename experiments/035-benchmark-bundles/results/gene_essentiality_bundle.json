@@ -1,6 +1,6 @@
 {
   "script": "experiments/035-benchmark-bundles/scripts/gene_essentiality_bundle.py",
-  "built_at": "2026-10-08T21:11:34.208665Z",
+  "built_at": "2026-10-09T02:16:11.302188Z",
   "label_rule": "1 if the gene is in the served GeneEssentialitySgdDataset gene set (an SGD null mutant in S288C annotated inviable); 0 if it is an SGD ORF not in that set with an SGD null mutant in S288C annotated viable; otherwise excluded. Both labels come from SGD; no fitness dataset is used.",
   "split_rule": "within each class, genes sorted, shuffled with random.Random(0), cut 80/10/10 into train, validation, test",
   "seed": 0,
@@ -10,7 +10,7 @@
     "test": 0.1
   },
   "mirror_provenance_sha256": "338abbe57c0525229fb4bb71d8074efd943660bc940130fa5d96c693806fc5dd",
-  "torchcell_commit": "7860d2c29875986632172530124ec1404f46ec41",
+  "torchcell_commit": "b65a5e048d9502037bbe454c5f500e9b5119a216",
   "universe": 6613,
   "universe_by_qualifier": {
     "Dubious": 683,
@@ -133,6 +133,6 @@
       ]
     },
     "labels_sha256": "aceebdf269fc268ef3b9b68952eb6b4f468a5c4b58d402c376e175cf629124e9",
-    "built_at": "2026-10-08T21:11:34.208665Z"
+    "built_at": "2026-10-09T02:16:11.302188Z"
   }
 }

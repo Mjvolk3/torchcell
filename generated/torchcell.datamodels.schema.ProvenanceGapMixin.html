@@ -146,6 +146,14 @@ machine-checkable: (1) each <code class="docutils literal notranslate"><span cla
 (checked against <code class="docutils literal notranslate"><span class="pre">model_fields</span></code>, so inherited fields resolve too); (2) a gapped
 field must be <code class="docutils literal notranslate"><span class="pre">None</span></code> – you cannot both store a value and declare it missing.
 <code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> itself cannot be gapped.</p>
+<p>#753 adds the PER-KEY form of invariant (2). A dict-valued field that is sourced
+for some keys and unsourced for others (Rapp 2026’s <code class="docutils literal notranslate"><span class="pre">target_metabolite_ids</span></code>:
+1,077 features with a sourced identity, 244 merged isobaric features with 2 to 11
+candidates each and no sourced pick) cannot be <code class="docutils literal notranslate"><span class="pre">None</span></code>, so the whole-field rule
+refused the gap and the 244 keys had to live outside the record. A gap that names
+<code class="docutils literal notranslate"><span class="pre">keys</span></code> is admitted beside a populated mapping, on the strictly stronger
+condition that the mapping does NOT carry any of those keys: storing a value and
+declaring it missing is still refused, now key by key.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="torchcell.datamodels.schema.ProvenanceGapMixin.validate_provenance_gaps">
 <span class="sig-name descname"><span class="pre">validate_provenance_gaps</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#torchcell.datamodels.schema.ProvenanceGapMixin" title="torchcell.datamodels.schema.ProvenanceGapMixin"><span class="pre">ProvenanceGapMixin</span></a></span></span><a class="reference internal" href="../_modules/torchcell/datamodels/schema.html#ProvenanceGapMixin.validate_provenance_gaps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.schema.ProvenanceGapMixin.validate_provenance_gaps" title="Link to this definition"></a></dt>

@@ -122,6 +122,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">posixpath</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Self</span><span class="p">,</span> <span class="n">get_args</span>
 
@@ -290,6 +291,15 @@
 <span class="sd">    (checked against ``model_fields``, so inherited fields resolve too); (2) a gapped</span>
 <span class="sd">    field must be ``None`` -- you cannot both store a value and declare it missing.</span>
 <span class="sd">    ``provenance_gaps`` itself cannot be gapped.</span>
+
+<span class="sd">    #753 adds the PER-KEY form of invariant (2). A dict-valued field that is sourced</span>
+<span class="sd">    for some keys and unsourced for others (Rapp 2026's ``target_metabolite_ids``:</span>
+<span class="sd">    1,077 features with a sourced identity, 244 merged isobaric features with 2 to 11</span>
+<span class="sd">    candidates each and no sourced pick) cannot be ``None``, so the whole-field rule</span>
+<span class="sd">    refused the gap and the 244 keys had to live outside the record. A gap that names</span>
+<span class="sd">    ``keys`` is admitted beside a populated mapping, on the strictly stronger</span>
+<span class="sd">    condition that the mapping does NOT carry any of those keys: storing a value and</span>
+<span class="sd">    declaring it missing is still refused, now key by key.</span>
 <span class="sd">    """</span>
 
     <span class="n">provenance_gaps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ProvenanceGap</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -316,7 +326,25 @@
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span> <span class="o">==</span> <span class="s2">"provenance_gaps"</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"provenance_gaps cannot itself be gapped"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="p">)</span>
+            <span class="c1"># --- begin #753: per-key gaps beside a partially populated map ------- #</span>
+            <span class="k">if</span> <span class="n">gap</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' has a per-key ProvenanceGap but is "</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">, not a mapping (a per-key gap names "</span>
+                        <span class="s2">"keys of a dict-valued field)"</span>
+                    <span class="p">)</span>
+                <span class="n">present</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">gap</span><span class="o">.</span><span class="n">keys</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">value</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">present</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' declares keys </span><span class="si">{</span><span class="n">present</span><span class="si">}</span><span class="s2"> missing but "</span>
+                        <span class="s2">"carries them (cannot both store a value and declare it "</span>
+                        <span class="s2">"missing)"</span>
+                    <span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="c1"># --- end #753 -------------------------------------------------------- #</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"field '</span><span class="si">{</span><span class="n">gap</span><span class="o">.</span><span class="n">field</span><span class="si">}</span><span class="s2">' has a ProvenanceGap but is not None "</span>
                     <span class="s2">"(cannot both store a value and declare it missing)"</span>
@@ -528,9 +556,33 @@
                 <span class="sa">f</span><span class="s2">"an eck_crosswalk crosses namespaces, but </span><span class="si">{</span><span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span><span class="si">!r}</span><span class="s2"> "</span>
                 <span class="sa">f</span><span class="s2">"is already a </span><span class="si">{</span><span class="n">namespace</span><span class="si">}</span><span class="s2"> tag"</span>
             <span class="p">)</span>
+    <span class="c1"># --- begin #753: two routes two landed loaders could not name --------------- #</span>
+    <span class="k">if</span> <span class="n">mapping</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"locus_tag_synonym"</span><span class="p">:</span>
+        <span class="n">source_namespace</span> <span class="o">=</span> <span class="n">_namespace_of_locus_tag</span><span class="p">(</span><span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">source_namespace</span> <span class="o">!=</span> <span class="n">namespace</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"a locus_tag_synonym stays inside one namespace, but "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">mapping</span><span class="o">.</span><span class="n">source_identifier</span><span class="si">!r}</span><span class="s2"> is a </span><span class="si">{</span><span class="n">source_namespace</span><span class="si">}</span><span class="s2"> tag while "</span>
+                <span class="sa">f</span><span class="s2">"gene_namespace is </span><span class="si">{</span><span class="n">namespace</span><span class="si">!r}</span><span class="s2"> (a tag of another strain is an "</span>
+                <span class="s2">"eck_crosswalk)"</span>
+            <span class="p">)</span>
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
 
-<span class="n">DerivedIdentifierRoute</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"eck_crosswalk"</span><span class="p">,</span> <span class="s2">"jw_synonym"</span><span class="p">,</span> <span class="s2">"gene_symbol"</span><span class="p">]</span>
+<span class="n">UNIPROT_ACCESSION_PATTERN</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"^[OPQ][0-9][A-Z0-9]</span><span class="si">{3}</span><span class="s2">[0-9](-\d+)?$|^[A-NR-Z][0-9]([A-Z][A-Z0-9]</span><span class="si">{2}</span><span class="s2">[0-9]){1,2}"</span>
+    <span class="sa">r</span><span class="s2">"(-\d+)?$"</span>
+<span class="p">)</span>
+<span class="sd">"""A UniProtKB accession as the knowledgebase writes one, with an optional isoform</span>
+<span class="sd">suffix. UniProt's own published regular expression, which is what the pinned GenBank</span>
+<span class="sd">assemblies' ``/db_xref="UniProtKB/Swiss-Prot:&lt;acc&gt;"`` values are drawn from (Gupta 2024</span>
+<span class="sd">reads 4,275 of them off ``ecoli_K12_MG1655_ASM584v2``)."""</span>
+
+<span class="c1"># --- begin #753: two routes two landed loaders could not name ------------------- #</span>
+<span class="n">DerivedIdentifierRoute</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span>
+    <span class="s2">"eck_crosswalk"</span><span class="p">,</span> <span class="s2">"jw_synonym"</span><span class="p">,</span> <span class="s2">"gene_symbol"</span><span class="p">,</span> <span class="s2">"uniprot_db_xref"</span><span class="p">,</span> <span class="s2">"locus_tag_synonym"</span>
+<span class="p">]</span>
+<span class="c1"># --- end #753 ------------------------------------------------------------------- #</span>
 <span class="sd">"""How a bacterial record's stored locus tag was reached from the identifier its source</span>
 <span class="sd">released, when the two differ.</span>
 
@@ -545,6 +597,24 @@
 <span class="sd">- ``gene_symbol``: the source released a gene name (a current symbol or a symbol the</span>
 <span class="sd">  annotation lists as a synonym), resolved to exactly one locus by the genome's name</span>
 <span class="sd">  layers.</span>
+<span class="sd">- ``uniprot_db_xref``: the source keyed on a UniProtKB accession (a proteomics release</span>
+<span class="sd">  does this as a matter of course: ``sp|A5A614|YCIZ_ECOLI``), and the stored tag is the</span>
+<span class="sd">  one locus whose CDS feature carries that accession as a</span>
+<span class="sd">  ``/db_xref="UniProtKB/Swiss-Prot:&lt;acc&gt;"``. This is the PRIMARY route for a proteomics</span>
+<span class="sd">  dataset and it outranks the symbol layer, which Gupta 2024 measured: 3,225 of 3,262</span>
+<span class="sd">  accessions resolve through the cross-reference, and the one row where the two layers</span>
+<span class="sd">  disagree shows the symbol column is the imprecise one</span>
+<span class="sd">  (``sp|P0A6E9|BIOD2_ECOLI`` carries gene name ``bioD``, whose symbol resolves to</span>
+<span class="sd">  ``b0778`` (bioD1) while its accession resolves to ``b1593`` (bioD2)).</span>
+<span class="sd">- ``locus_tag_synonym``: the source released a RETIRED locus tag of the pinned strain's</span>
+<span class="sd">  OWN namespace, which the annotation carries as a ``/gene_synonym`` of exactly one</span>
+<span class="sd">  current locus. Not an ``eck_crosswalk`` (nothing crosses strains), not a</span>
+<span class="sd">  ``jw_synonym`` (no ``JW`` id) and not a ``gene_symbol`` (it is a tag). Rapp 2026's</span>
+<span class="sd">  ``phnE`` is released as ``b4104``, a ``/gene_synonym`` of the pseudogene ``b4583``</span>
+<span class="sd">  (``phnE1``) on the pinned MG1655 annotation; with no member to name that route the</span>
+<span class="sd">  loader dropped the record, which is the one record this member recovers. Four more</span>
+<span class="sd">  landed loaders (``babu2014``, ``butland2008``, ``girgis2009``,</span>
+<span class="sd">  ``rapp2026_platforms``) record the same unnameable route in their drop ledgers.</span>
 <span class="sd">"""</span>
 
 <span class="n">JW_IDENTIFIER_PATTERN</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^JW[RS]?\d</span><span class="si">{4}</span><span class="s2">$"</span>
@@ -598,7 +668,36 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2"> is a locus tag, not a gene symbol; a tag of another "</span>
                 <span class="s2">"strain is an eck_crosswalk"</span>
             <span class="p">)</span>
+        <span class="c1"># --- begin #753: two routes two landed loaders could not name ----------- #</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"uniprot_db_xref"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+            <span class="n">UNIPROT_ACCESSION_PATTERN</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">uniprot_accession</span><span class="p">()</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a uniprot_db_xref route starts from a UniProtKB accession, bare or "</span>
+                <span class="sa">f</span><span class="s2">"in a db|ACC|ENTRY header, got </span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">route</span> <span class="o">==</span> <span class="s2">"locus_tag_synonym"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_tag</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a locus_tag_synonym route starts from a retired locus tag of the "</span>
+                <span class="sa">f</span><span class="s2">"pinned strain's own namespace, got </span><span class="si">{</span><span class="n">identifier</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="c1"># --- end #753 ------------------------------------------------------------ #</span>
         <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="c1"># --- begin #753: two routes two landed loaders could not name --------------- #</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">uniprot_accession</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The accession inside ``source_identifier``, for a ``uniprot_db_xref`` route.</span>
+
+<span class="sd">        A proteomics release keys either on the bare accession (``A5A614``) or on the</span>
+<span class="sd">        FASTA header UniProt itself writes (``sp|A5A614|YCIZ_ECOLI``). Both are stored</span>
+<span class="sd">        verbatim, and this is the one place that reads the accession out of either, so</span>
+<span class="sd">        a consumer joining on the annotation's ``/db_xref`` never parses the string</span>
+<span class="sd">        itself.</span>
+<span class="sd">        """</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_identifier</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"|"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parts</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_identifier</span>
+
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="MatingType">
@@ -4858,6 +4957,21 @@
         <span class="s2">"generations); None if not applicable. Distinct exposure durations are distinct "</span>
         <span class="s2">"environments, so this is part of the environment identity."</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># --- begin #753: the chemostat dilution rate --------------------------------- #</span>
+    <span class="n">dilution_rate_per_hour</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the dilution rate of a CONTINUOUS (chemostat) culture, in h^-1; "</span>
+        <span class="s2">"None for a batch culture. In a chemostat the dilution rate IS the controlled "</span>
+        <span class="s2">"variable: at steady state it equals the specific growth rate and it sets the "</span>
+        <span class="s2">"residual concentration of the growth-limiting substrate, so two cultures that "</span>
+        <span class="s2">"differ only in dilution rate are two different environments and this is part "</span>
+        <span class="s2">"of the environment identity, as duration_generations is. It is a typed field "</span>
+        <span class="s2">"rather than free text on a phenotype's measurement_type (Gupta 2024) so it is "</span>
+        <span class="s2">"queryable, and naming it is what lets a dilution-rate series be loaded at all "</span>
+        <span class="s2">"(Ishii 2007 drops its wild-type series under culture_not_batch because its "</span>
+        <span class="s2">"cultures differ from one another ONLY here)."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="Environment.validate_aerobicity">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment.validate_aerobicity">[docs]</a>
@@ -4870,8 +4984,26 @@
                 <span class="sa">f</span><span class="s2">"aerobicity must be aerobic/anaerobic/microaerobic, got </span><span class="si">{</span><span class="n">v</span><span class="si">!r}</span><span class="s2">"</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span></div>
+
+
+    <span class="c1"># --- begin #753: the chemostat dilution rate --------------------------------- #</span>
+<div class="viewcode-block" id="Environment.validate_dilution_rate">
+<a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment.validate_dilution_rate">[docs]</a>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"dilution_rate_per_hour"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_dilution_rate</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A dilution rate is finite and strictly positive, or absent."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="ow">or</span> <span class="n">v</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"dilution_rate_per_hour must be finite and positive, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span></div>
 </div>
 
+
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="CultureEnvironment">
@@ -6453,6 +6585,192 @@
 
 
 
+<span class="c1"># --- begin #770: the protein fold-change family -------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">FoldChangeScale</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The scale a relative measurement is RELEASED on, which fixes its neutral value.</span>
+
+<span class="sd">    A fold change is dimensionless, so the number alone does not say whether ``0.5``</span>
+<span class="sd">    means halved (linear) or a four-fold increase (log2). The scale is therefore a</span>
+<span class="sd">    required, typed part of the measurement rather than a word in a free-text field:</span>
+<span class="sd">    without it, a linear ratio and a log2 ratio of the same contrast average together</span>
+<span class="sd">    into nothing. ``neutral_value`` is the value of no change on each scale, which is</span>
+<span class="sd">    also the value a reference phenotype carries by definition.</span>
+<span class="sd">    """</span>
+
+    <span class="n">linear</span> <span class="o">=</span> <span class="s2">"linear"</span>
+    <span class="n">log2</span> <span class="o">=</span> <span class="s2">"log2"</span>
+    <span class="n">log10</span> <span class="o">=</span> <span class="s2">"log10"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">neutral_value</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The value of "no change" on this scale: 1.0 linear, 0.0 on a log scale."""</span>
+        <span class="k">return</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="bp">self</span> <span class="ow">is</span> <span class="n">FoldChangeScale</span><span class="o">.</span><span class="n">linear</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinFoldChangePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-protein RELATIVE abundance: the ratio of a strain's proteome to a reference.</span>
+
+<span class="sd">    The sibling of ``ProteinAbundancePhenotype`` on the relative axis, and not a mode of</span>
+<span class="sd">    it: that class's docstring is explicit that its number is an "absolute per-strain</span>
+<span class="sd">    quantity on a log signal scale, NOT a ratio", because an absolute level and a ratio</span>
+<span class="sd">    answer different questions and must never pool. A differential-proteomics release</span>
+<span class="sd">    ships a fold change with a test result beside it, which this class carries and the</span>
+<span class="sd">    absolute class has no field for (``gene_interaction_p_value`` was the only p-value</span>
+<span class="sd">    anywhere in the schema).</span>
+
+<span class="sd">    ``fold_change_scale`` fixes what the number means and what "no change" is, so the</span>
+<span class="sd">    reference phenotype is the neutral value by definition rather than a measurement.</span>
+<span class="sd">    ``reference_basis`` names the DENOMINATOR, which one paper can vary within itself</span>
+<span class="sd">    (Carruthers 2025's Source Data carries ``POI:Control`` beside ``dCas9:Control`` on</span>
+<span class="sd">    one strain), so the pair (scale, basis) is what makes two columns comparable.</span>
+<span class="sd">    ``protein_fold_change_p_value`` and its BH-adjusted companion are per protein, with</span>
+<span class="sd">    ``p_value_adjustment_method`` naming the correction, because an unadjusted and an</span>
+<span class="sd">    adjusted p-value of one contrast are different numbers.</span>
+
+<span class="sd">    Keyed by the protein's systematic identifier in the record's namespace, with the</span>
+<span class="sd">    same ragged-key honesty as the other dict-valued families: a protein the contrast</span>
+<span class="sd">    did not test is simply not a key, never a 1.0 and never a 0. On the LINEAR scale a</span>
+<span class="sd">    stored ``0.0`` is therefore a measurement and not a placeholder: the numerator fell</span>
+<span class="sd">    below detection while the denominator did not, which is a complete loss of signal</span>
+<span class="sd">    rather than an absent value. Yunus 2026 releases the verbatim cell ``0`` for 37 of</span>
+<span class="sd">    its 102 single-target rows and counts them inside its own "51 of which were</span>
+<span class="sd">    downregulated by more than 95 %" census, so refusing zero would refuse a third of</span>
+<span class="sd">    that paper. A log scale cannot express it (``log2 0`` is not finite), which is one</span>
+<span class="sd">    more reason the scale is a required field.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_fold_change"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"protein_fold_change_se"</span>
+
+    <span class="n">protein_fold_change</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein systematic id -&gt; fold change on fold_change_scale "</span>
+        <span class="s2">"(SIGNED on a log scale; strictly positive on the linear scale)"</span>
+    <span class="p">)</span>
+    <span class="n">fold_change_scale</span><span class="p">:</span> <span class="n">FoldChangeScale</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the scale the released number is on, which fixes its neutral value"</span>
+    <span class="p">)</span>
+    <span class="n">reference_basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the denominator is, in the source's own terms, e.g. "</span>
+        <span class="s2">"'control strain carrying a non-targeting sgRNA' or 'protein of interest over "</span>
+        <span class="s2">"the same protein in the no-guide control'"</span>
+    <span class="p">)</span>
+    <span class="n">protein_fold_change_se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein systematic id -&gt; standard error of the fold change on "</span>
+        <span class="s2">"fold_change_scale"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">protein_fold_change_p_value</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein systematic id -&gt; the UNADJUSTED p-value of the contrast's "</span>
+        <span class="s2">"test for that protein, as a probability in [0, 1]. A release that publishes "</span>
+        <span class="s2">"-log10(p) is converted by exact arithmetic (p = 10**-x), which is reversible; "</span>
+        <span class="s2">"the test itself is named by measurement_type"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">protein_fold_change_p_value_adjusted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein systematic id -&gt; the multiple-testing-adjusted p-value, as "</span>
+        <span class="s2">"a probability in [0, 1]; p_value_adjustment_method names the correction"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_value_adjustment_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the multiple-testing correction behind "</span>
+        <span class="s2">"protein_fold_change_p_value_adjusted, e.g. 'benjamini_hochberg'. Required "</span>
+        <span class="s2">"whenever adjusted p-values are stored and forbidden otherwise"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein systematic id -&gt; number of independent samples/replicates "</span>
+        <span class="s2">"behind that protein's fold change"</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the number is and how it was tested, e.g. "</span>
+        <span class="s2">"'dia_top3_ratio_to_control' or "</span>
+        <span class="s2">"'dia_log2_fold_change_paired_two_tailed_t_test'"</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_protein_fold_change</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProteinFoldChangePhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Non-empty, scale-consistent values, matching replicate keys, valid p-values."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"protein_fold_change cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_replicates keys must match protein_fold_change keys"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_replicates for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be &gt;= 1"</span><span class="p">)</span>
+        <span class="n">linear</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fold_change_scale</span> <span class="ow">is</span> <span class="n">FoldChangeScale</span><span class="o">.</span><span class="n">linear</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"protein_fold_change for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">linear</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"protein_fold_change for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">, which is not a ratio; "</span>
+                    <span class="s2">"a linear fold change is non-negative (a log scale is signed). "</span>
+                    <span class="s2">"Zero is a measured numerator below detection, not a missing key"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">se</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change_se</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SE key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in protein_fold_change"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">se</span><span class="p">)</span> <span class="ow">and</span> <span class="n">se</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"SE for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"protein_fold_change_p_value"</span><span class="p">,</span>
+            <span class="s2">"protein_fold_change_p_value_adjusted"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in protein_fold_change"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">p</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">, not a probability in [0, 1]"</span>
+                    <span class="p">)</span>
+        <span class="n">adjusted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change_p_value_adjusted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">adjusted</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_adjustment_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"adjusted p-values name their correction: set p_value_adjustment_method"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">adjusted</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_adjustment_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"p_value_adjustment_method describes stored adjusted p-values; set "</span>
+                <span class="s2">"protein_fold_change_p_value_adjusted or leave the method None"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">neutral_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""The denominator's own value on this record's scale, for every stored key.</span>
+
+<span class="sd">        Not a measurement: a fold change's reference is its neutral value by</span>
+<span class="sd">        definition (1.0 linear, 0.0 on a log scale), so experiment over reference</span>
+<span class="sd">        reproduces the released number exactly and nothing is imputed.</span>
+<span class="sd">        """</span>
+        <span class="n">neutral</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fold_change_scale</span><span class="o">.</span><span class="n">neutral_value</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="o">.</span><span class="n">fromkeys</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">),</span> <span class="n">neutral</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinFoldChangeExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference (control) context for a protein fold-change experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_fold_change"</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProteinFoldChangePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinFoldChangeExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring a per-protein fold change against a reference strain."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_fold_change"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinFoldChangePhenotype</span>
+
+
+<span class="c1"># --- end #770 ------------------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="AssayType">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.AssayType.html#torchcell.datamodels.schema.AssayType">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">AssayType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
@@ -7253,6 +7571,39 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
+<span class="c1"># --- begin #753: per-key censoring on a turnover measurement ------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Censoring</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.</span>
+
+<span class="sd">    A pulse-labeling turnover assay cannot resolve a protein that barely turns over</span>
+<span class="sd">    within the labeling window, so the fit is capped and the released number is the cap:</span>
+<span class="sd">    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over</span>
+<span class="sd">    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set</span>
+<span class="sd">    to ceiling for this dilution rate". Averaging a censored value with uncensored ones</span>
+<span class="sd">    biases the mean toward the cap, so a consumer must be able to tell them apart.</span>
+
+<span class="sd">    ``uncensored`` is a member rather than being spelled by absence: a source whose</span>
+<span class="sd">    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state</span>
+<span class="sd">    it for every key, and a key MISSING from the map then means the source does not say</span>
+<span class="sd">    for that key. The two are different facts and the schema keeps them different.</span>
+
+<span class="sd">    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the</span>
+<span class="sd">    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true</span>
+<span class="sd">    half-life lies above the stored one and the cell is ``right`` censored; because</span>
+<span class="sd">    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the</span>
+<span class="sd">    RATE from above. A consumer reading ``right`` beside a rate alone would read it</span>
+<span class="sd">    backwards, so a loader that stores censoring names the censored quantity in its</span>
+<span class="sd">    ``measurement_type`` and in its note.</span>
+<span class="sd">    """</span>
+
+    <span class="n">uncensored</span> <span class="o">=</span> <span class="s2">"uncensored"</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="s2">"right"</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="s2">"left"</span>
+
+
+<span class="c1"># --- end #753 ------------------------------------------------------------------- #</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">ProteinTurnoverPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-protein turnover: how fast each protein is degraded and replaced.</span>
 
@@ -7267,6 +7618,17 @@
 <span class="sd">    optional companions a study may release instead of or beside it.</span>
 <span class="sd">    ``measurement_type`` records WHAT the numbers are, including their time unit, so two</span>
 <span class="sd">    assays are never silently compared.</span>
+
+<span class="sd">    Two further axes (#753) carry what a turnover release routinely publishes and this</span>
+<span class="sd">    class could not hold. ``degradation_rate_lower`` / ``degradation_rate_upper`` with</span>
+<span class="sd">    ``confidence_level`` and ``interval_method`` store a published INTERVAL as an</span>
+<span class="sd">    interval, reusing ``FluxPhenotype``'s lossless triple rather than inverting it into</span>
+<span class="sd">    a standard deviation the source does not give; ``label_statistic_name`` stays</span>
+<span class="sd">    ``degradation_rate_se`` because a replicate SE and a fitted interval are different</span>
+<span class="sd">    statistics and a release may carry either. ``censoring`` says per key whether the</span>
+<span class="sd">    stored number is an estimate or a BOUND: a pulse-labeling assay caps a protein that</span>
+<span class="sd">    barely turns over, and a capped half-life averaged in with estimates biases the mean</span>
+<span class="sd">    toward the cap.</span>
 <span class="sd">    """</span>
 
     <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
@@ -7294,6 +7656,40 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"what the numbers are, including the time unit, e.g. "</span>
         <span class="s2">"'pulse_silac_degradation_rate_per_hour'"</span>
     <span class="p">)</span>
+    <span class="c1"># --- begin #753: the published interval and the censoring flag -------------- #</span>
+    <span class="n">degradation_rate_lower</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; lower bound of the published interval on the "</span>
+        <span class="s2">"RATE scale (the scale label_name is on). Ragged by design: a key the source "</span>
+        <span class="s2">"publishes no interval for is simply not a key here."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">degradation_rate_upper</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; upper bound of the published interval on the "</span>
+        <span class="s2">"RATE scale"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">confidence_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the level the bounds are stated at, as a fraction (e.g. 0.95); "</span>
+        <span class="s2">"None when no interval is stored, or a typed gap when bounds are stored and "</span>
+        <span class="s2">"the source does not say what level they are"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">interval_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"HOW the interval was produced, so two studies' bounds are never "</span>
+        <span class="s2">"silently compared, e.g. 'curve_fit_parameter_variance_t_quantile' or "</span>
+        <span class="s2">"'bootstrap_percentile'. None when no interval is stored"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">censoring</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Censoring</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; whether the stored value is an estimate or a "</span>
+        <span class="s2">"BOUND, and on which side. A right-censored half-life capped at the labeling "</span>
+        <span class="s2">"window's ceiling is a bound, and averaging it with estimates biases the mean, "</span>
+        <span class="s2">"so it must travel with the record. None means the source reports no censoring "</span>
+        <span class="s2">"at all; a key absent from a present map means the source does not say for "</span>
+        <span class="s2">"that key."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">validate_turnover</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProteinTurnoverPhenotype"</span><span class="p">:</span>
@@ -7319,6 +7715,68 @@
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in degradation_rate"</span><span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="c1"># --- begin #753: the published interval and the censoring flag ---------- #</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"degradation_rate_lower"</span><span class="p">,</span> <span class="s2">"degradation_rate_upper"</span><span class="p">):</span>
+            <span class="n">mapping</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">mapping</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mapping</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in degradation_rate"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite and non-negative"</span>
+                    <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">lower</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate_lower</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">lower</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"degradation_rate_lower for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> exceeds the stored rate "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">lower</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">upper</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate_upper</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">upper</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">[</span><span class="n">key</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"degradation_rate_upper for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is below the stored rate "</span>
+                    <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="n">upper</span><span class="si">}</span><span class="s2"> &lt; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="si">}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+        <span class="n">has_bounds</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="n">gapped</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gapped_fields</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">has_bounds</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="s2">"confidence_level"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an interval states the level it covers: set confidence_level or "</span>
+                <span class="s2">"carry a ProvenanceGap on it"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">has_bounds</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_method</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="p">(</span><span class="s2">"interval_method"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">gapped</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an interval states how it was produced: set interval_method or "</span>
+                <span class="s2">"carry a ProvenanceGap on it"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">has_bounds</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">interval_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"confidence_level and interval_method describe stored bounds; set "</span>
+                <span class="s2">"degradation_rate_lower/upper or leave both None"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"confidence_level is a fraction in (0, 1), got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">confidence_level</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">censoring</span> <span class="ow">or</span> <span class="p">{}:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">degradation_rate</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"censoring key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in degradation_rate"</span><span class="p">)</span>
+        <span class="c1"># --- end #753 ------------------------------------------------------------ #</span>
         <span class="k">return</span> <span class="bp">self</span>
 
 
@@ -7778,6 +8236,26 @@
     <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinAbundancePhenotype</span>
 
 
+<span class="c1"># --- begin #770: the protein fold-change family -------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialProteinFoldChangeExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial protein fold-change experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_protein_fold_change"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProteinFoldChangePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">BacterialProteinFoldChangeExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Bacterial differential-proteomics experiment (a fold change against a control)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"bacterial_protein_fold_change"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinFoldChangePhenotype</span>
+
+
+<span class="c1"># --- end #770 ------------------------------------------------------------------- #</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">BacterialMetaboliteExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Assembly-pinned reference for a bacterial metabolite experiment."""</span>
 
@@ -7979,6 +8457,9 @@
     <span class="o">|</span> <span class="n">VisualScorePhenotype</span>
     <span class="o">|</span> <span class="n">MetabolitePhenotype</span>
     <span class="o">|</span> <span class="n">ProteinAbundancePhenotype</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="o">|</span> <span class="n">ProteinFoldChangePhenotype</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="o">|</span> <span class="n">EnvironmentResponsePhenotype</span>
     <span class="o">|</span> <span class="n">ProductTiterPhenotype</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
@@ -8001,6 +8482,9 @@
     <span class="o">|</span> <span class="n">VisualScoreExperiment</span>
     <span class="o">|</span> <span class="n">MetaboliteExperiment</span>
     <span class="o">|</span> <span class="n">ProteinAbundanceExperiment</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="o">|</span> <span class="n">ProteinFoldChangeExperiment</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="o">|</span> <span class="n">EnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperiment</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperiment</span>
@@ -8013,6 +8497,9 @@
     <span class="o">|</span> <span class="n">BacterialGeneInteractionExperiment</span>
     <span class="o">|</span> <span class="n">BacterialGeneEssentialityExperiment</span>
     <span class="o">|</span> <span class="n">BacterialProteinAbundanceExperiment</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="o">|</span> <span class="n">BacterialProteinFoldChangeExperiment</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperiment</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
@@ -8033,6 +8520,9 @@
     <span class="o">|</span> <span class="n">VisualScoreExperimentReference</span>
     <span class="o">|</span> <span class="n">MetaboliteExperimentReference</span>
     <span class="o">|</span> <span class="n">ProteinAbundanceExperimentReference</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="o">|</span> <span class="n">ProteinFoldChangeExperimentReference</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="o">|</span> <span class="n">EnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">StrainEnvironmentResponseExperimentReference</span>
     <span class="o">|</span> <span class="n">SegregantGrowthExperimentReference</span>
@@ -8045,6 +8535,9 @@
     <span class="o">|</span> <span class="n">BacterialGeneInteractionExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialGeneEssentialityExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialProteinAbundanceExperimentReference</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="o">|</span> <span class="n">BacterialProteinFoldChangeExperimentReference</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="o">|</span> <span class="n">BacterialMetaboliteExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
@@ -8065,6 +8558,9 @@
     <span class="s2">"visual_score"</span><span class="p">:</span> <span class="n">VisualScoreExperiment</span><span class="p">,</span>
     <span class="s2">"metabolite"</span><span class="p">:</span> <span class="n">MetaboliteExperiment</span><span class="p">,</span>
     <span class="s2">"protein_abundance"</span><span class="p">:</span> <span class="n">ProteinAbundanceExperiment</span><span class="p">,</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="s2">"protein_fold_change"</span><span class="p">:</span> <span class="n">ProteinFoldChangeExperiment</span><span class="p">,</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperiment</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperiment</span><span class="p">,</span>
@@ -8077,6 +8573,9 @@
     <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_gene_essentiality"</span><span class="p">:</span> <span class="n">BacterialGeneEssentialityExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_protein_abundance"</span><span class="p">:</span> <span class="n">BacterialProteinAbundanceExperiment</span><span class="p">,</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="s2">"bacterial_protein_fold_change"</span><span class="p">:</span> <span class="n">BacterialProteinFoldChangeExperiment</span><span class="p">,</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
@@ -8096,6 +8595,9 @@
     <span class="s2">"visual_score"</span><span class="p">:</span> <span class="n">VisualScoreExperimentReference</span><span class="p">,</span>
     <span class="s2">"metabolite"</span><span class="p">:</span> <span class="n">MetaboliteExperimentReference</span><span class="p">,</span>
     <span class="s2">"protein_abundance"</span><span class="p">:</span> <span class="n">ProteinAbundanceExperimentReference</span><span class="p">,</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="s2">"protein_fold_change"</span><span class="p">:</span> <span class="n">ProteinFoldChangeExperimentReference</span><span class="p">,</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="s2">"environment_response"</span><span class="p">:</span> <span class="n">EnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"strain_environment_response"</span><span class="p">:</span> <span class="n">StrainEnvironmentResponseExperimentReference</span><span class="p">,</span>
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperimentReference</span><span class="p">,</span>
@@ -8108,6 +8610,9 @@
     <span class="s2">"bacterial_gene_interaction"</span><span class="p">:</span> <span class="n">BacterialGeneInteractionExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_gene_essentiality"</span><span class="p">:</span> <span class="n">BacterialGeneEssentialityExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_protein_abundance"</span><span class="p">:</span> <span class="n">BacterialProteinAbundanceExperimentReference</span><span class="p">,</span>
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="s2">"bacterial_protein_fold_change"</span><span class="p">:</span> <span class="p">(</span><span class="n">BacterialProteinFoldChangeExperimentReference</span><span class="p">),</span>
+    <span class="c1"># --- end #770 ---</span>
     <span class="s2">"bacterial_metabolite"</span><span class="p">:</span> <span class="n">BacterialMetaboliteExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>

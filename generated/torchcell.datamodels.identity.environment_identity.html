@@ -135,7 +135,14 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="torchcell.datamodels.identity.environment_identity">
 <span class="sig-name descname"><span class="pre">environment_identity</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">environment</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="torchcell.datamodels.schema.Environment.html#torchcell.datamodels.schema.Environment" title="torchcell.datamodels.schema.Environment"><span class="pre">Environment</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#dict" title="(in Python v3.15)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Any" title="(in Python v3.15)"><span class="pre">Any</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../_modules/torchcell/datamodels/identity.html#environment_identity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.datamodels.identity.environment_identity" title="Link to this definition"></a></dt>
-<dd><p>Project an environment onto medium, temperature, edits, oxygen and duration.</p>
+<dd><p>Project an environment onto medium, temperature, edits, oxygen, duration and rate.</p>
+<p><code class="docutils literal notranslate"><span class="pre">dilution_rate_per_hour</span></code> is projected because it is a CONTROLLED variable, not a
+protocol detail: in a chemostat it sets the specific growth rate and the residual
+concentration of the growth-limiting substrate, so two cultures differing only in it
+are two environments and must be two environment nodes. Measured on Ishii 2007,
+which is the reason the field exists: its recovered wild-type series holds four
+records differing ONLY here, and without this line all four collapse onto one
+environment node (#753).</p>
 <p><code class="docutils literal notranslate"><span class="pre">provenance_gaps</span></code> is dropped, but what a gap MEANS is kept: the gapped field is
 <code class="docutils literal notranslate"><span class="pre">None</span></code>, and a <code class="docutils literal notranslate"><span class="pre">None</span></code> temperature projects as <code class="docutils literal notranslate"><span class="pre">None</span></code>, so a record that never
 carried a temperature does not merge with one measured at 30 C. A

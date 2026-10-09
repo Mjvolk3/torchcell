@@ -404,6 +404,12 @@
                 <span class="s2">"protein abundance phenotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_protein_abundance_phenotype_node</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+            <span class="p">(</span>
+                <span class="s2">"protein fold change phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_protein_fold_change_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="c1"># --- end #770 ---</span>
             <span class="p">(</span>
                 <span class="s2">"environment response phenotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_environment_response_phenotype_node</span><span class="p">,</span>
@@ -470,6 +476,12 @@
                 <span class="s2">"protein abundance phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_protein_abundance_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+            <span class="p">(</span>
+                <span class="s2">"protein fold change phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_protein_fold_change_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="c1"># --- end #770 ---</span>
             <span class="p">(</span>
                 <span class="s2">"environment response phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_environment_response_phenotype_reference_nodes</span><span class="p">,</span>
@@ -2472,6 +2484,72 @@
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">nodes</span>
 
+    <span class="c1"># --- begin #770: the protein fold-change family ---</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_protein_fold_change_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``ProteinFoldChangePhenotype`` (experiment or reference)."""</span>
+        <span class="n">standard_errors</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">protein_fold_change_se</span>
+        <span class="n">p_values</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">protein_fold_change_p_value</span>
+        <span class="n">p_values_adjusted</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">protein_fold_change_p_value_adjusted</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"protein_fold_change"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">protein_fold_change</span><span class="p">),</span>
+            <span class="s2">"protein_fold_change_se"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">standard_errors</span><span class="p">)</span> <span class="k">if</span> <span class="n">standard_errors</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"protein_fold_change_p_value"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">p_values</span><span class="p">)</span> <span class="k">if</span> <span class="n">p_values</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"protein_fold_change_p_value_adjusted"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">p_values_adjusted</span><span class="p">)</span> <span class="k">if</span> <span class="n">p_values_adjusted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"p_value_adjustment_method"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">p_value_adjustment_method</span><span class="p">,</span>
+            <span class="s2">"fold_change_scale"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">fold_change_scale</span><span class="p">),</span>
+            <span class="s2">"reference_basis"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">reference_basis</span><span class="p">,</span>
+            <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">),</span>
+            <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_protein_fold_change_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"protein fold change phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_protein_fold_change_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_protein_fold_change_phenotype_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"protein fold change phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"protein fold change phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_protein_fold_change_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- end #770 ---</span>
+
     <span class="nd">@staticmethod</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_protein_turnover_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Node properties of a ``ProteinTurnoverPhenotype`` (experiment or reference)."""</span>
@@ -2494,6 +2572,27 @@
             <span class="p">),</span>
             <span class="s2">"n_replicates"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">),</span>
             <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+            <span class="c1"># --- begin #753: the published interval and the censoring flag ---</span>
+            <span class="s2">"degradation_rate_lower"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">degradation_rate_lower</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">degradation_rate_lower</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"degradation_rate_upper"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">degradation_rate_upper</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">degradation_rate_upper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"confidence_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">confidence_level</span><span class="p">,</span>
+            <span class="s2">"interval_method"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">interval_method</span><span class="p">,</span>
+            <span class="s2">"censoring"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                    <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">censoring</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">censoring</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="c1"># --- end #753 ---</span>
         <span class="p">}</span>
 
     <span class="nd">@data_chunker</span>

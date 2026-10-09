@@ -309,11 +309,32 @@
     <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"optional human reasoning for the gap."</span>
     <span class="p">)</span>
+    <span class="c1"># --- begin #753: per-key gaps beside a partially populated map --------------- #</span>
+    <span class="n">keys</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"for a DICT-valued field that is sourced for some keys and "</span>
+        <span class="s2">"unsourced for others: the keys this absence covers. Empty (the default) "</span>
+        <span class="s2">"means the WHOLE field is absent, which is the original contract and "</span>
+        <span class="s2">"requires the field to be None. Non-empty narrows the gap to these keys, "</span>
+        <span class="s2">"which must then be absent from the mapping (Rapp 2026's 244 merged "</span>
+        <span class="s2">"isobaric features, each with 2 to 11 candidate identities and no sourced "</span>
+        <span class="s2">"pick, beside 1,077 sourced ones). A LIST, not a tuple, so a gap dumps to the "</span>
+        <span class="s2">"same value a JSON round trip yields and a live model compares equal to the "</span>
+        <span class="s2">"record an LMDB returns."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #753 ---------------------------------------------------------------- #</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_require_field</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ProvenanceGap</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">field</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ProvenanceGap.field cannot be empty"</span><span class="p">)</span>
+        <span class="c1"># --- begin #753: per-key gaps beside a partially populated map ----------- #</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ProvenanceGap.keys cannot hold an empty key"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"ProvenanceGap.keys cannot repeat a key"</span><span class="p">)</span>
+        <span class="c1"># --- end #753 ------------------------------------------------------------ #</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
 

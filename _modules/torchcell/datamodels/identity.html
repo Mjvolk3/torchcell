@@ -288,6 +288,9 @@
     <span class="s2">"aerobicity"</span><span class="p">,</span>
     <span class="s2">"duration_hours"</span><span class="p">,</span>
     <span class="s2">"duration_generations"</span><span class="p">,</span>
+    <span class="c1"># --- begin #753: the chemostat dilution rate ---</span>
+    <span class="s2">"dilution_rate_per_hour"</span><span class="p">,</span>
+    <span class="c1"># --- end #753 ---</span>
 <span class="p">)</span>
 <span class="n">ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
     <span class="s2">"culture_format"</span><span class="p">,</span>
@@ -528,7 +531,15 @@
 <div class="viewcode-block" id="environment_identity">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.identity.environment_identity.html#torchcell.datamodels.identity.environment_identity">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">environment_identity</span><span class="p">(</span><span class="n">environment</span><span class="p">:</span> <span class="n">Environment</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Project an environment onto medium, temperature, edits, oxygen and duration.</span>
+<span class="w">    </span><span class="sd">"""Project an environment onto medium, temperature, edits, oxygen, duration and rate.</span>
+
+<span class="sd">    ``dilution_rate_per_hour`` is projected because it is a CONTROLLED variable, not a</span>
+<span class="sd">    protocol detail: in a chemostat it sets the specific growth rate and the residual</span>
+<span class="sd">    concentration of the growth-limiting substrate, so two cultures differing only in it</span>
+<span class="sd">    are two environments and must be two environment nodes. Measured on Ishii 2007,</span>
+<span class="sd">    which is the reason the field exists: its recovered wild-type series holds four</span>
+<span class="sd">    records differing ONLY here, and without this line all four collapse onto one</span>
+<span class="sd">    environment node (#753).</span>
 
 <span class="sd">    ``provenance_gaps`` is dropped, but what a gap MEANS is kept: the gapped field is</span>
 <span class="sd">    ``None``, and a ``None`` temperature projects as ``None``, so a record that never</span>
@@ -552,6 +563,9 @@
         <span class="s2">"aerobicity"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">aerobicity</span><span class="p">,</span>
         <span class="s2">"duration_hours"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">duration_hours</span><span class="p">,</span>
         <span class="s2">"duration_generations"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">duration_generations</span><span class="p">,</span>
+        <span class="c1"># --- begin #753: the chemostat dilution rate ---</span>
+        <span class="s2">"dilution_rate_per_hour"</span><span class="p">:</span> <span class="n">environment</span><span class="o">.</span><span class="n">dilution_rate_per_hour</span><span class="p">,</span>
+        <span class="c1"># --- end #753 ---</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">environment</span><span class="p">,</span> <span class="n">CultureEnvironment</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">identity</span>

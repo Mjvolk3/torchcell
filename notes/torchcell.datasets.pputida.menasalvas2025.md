@@ -452,9 +452,11 @@ members where Carruthers 2025's held three. Each of the three is an
 the record's own, carrying the recipe from `DEPOSIT.md` verbatim as its
 `retrieval_command` (`DRYAD_MANUAL_RECIPE`):
 
-> "open https://doi.org/10.5061/dryad.sbcc2frjq in a browser, solve the challenge,
-> click "Download dataset", save the zip unchanged, then unzip it into this directory
-> beside the zip."
+```text
+"open https://doi.org/10.5061/dryad.sbcc2frjq in a browser, solve the challenge,
+click "Download dataset", save the zip unchanged, then unzip it into this directory
+beside the zip."
+```
 
 plus `retrieved_by` ("the owner (mjvolk3), browser download"), `deposit_note`,
 `deposit_record` (`data/dryad/DEPOSIT.md`) and `checksums`
@@ -498,7 +500,7 @@ nothing else:
 Supplementary Table 4 (`si/si1.md`, sha256
 `2afa42609d20500f80d5edbddf0bb41b88b4e7f1ea0abefb40fa4b969e4e5e8e`) states the same
 sets independently and adds what the Results do not: TEAM-3185 is
-"Pp TEAM-2777 ΔPP_ 2428 ΔPP_ 4622 ΔPP_ 3540 ΔPP_4373ΔPP_2074", so both improved strains
+`"Pp TEAM-2777 ΔPP_ 2428 ΔPP_ 4622 ΔPP_ 3540 ΔPP_4373ΔPP_2074"`, so both improved strains
 inherit TEAM-2777's ΔPP_2664 and ΔPP_2675, and TEAM-3174's two mvaS copies sit at
 `PP_1117intergenic` and `PP_5464intergenic` under `Pcv`. The organism of those copies is
 sourced from the Results ("identified overexpression of Enterococcus faecalis mvaS as

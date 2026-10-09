@@ -33,6 +33,8 @@ python experiments/041-scaling-laws/scripts/scaling_law_forms.py
 
 Each is one sweep of one quantity with everything else pinned. The title of every frame carries the equation, the constants and their source, and the swept value with what it implies, so a frame reads on its own. Legends name every line, dotted ones included, and hold still from frame to frame.
 
+The frames are typeset by real LaTeX (Computer Modern, `amsmath`) rather than matplotlib's mathtext, at 200 dpi on a 150 mm canvas. matplotlib's Agg backend cannot rasterize `usetex` text without `dvipng`, which GilaHyper lacks, so each frame is written through the PDF backend (which reads the DVI itself) and rasterized with `pdftoppm`. The system TeX Live also omits `type1cm.sty`, which matplotlib's `usetex` preamble loads; it is installed in the user tree at `~/texmf/tex/latex/type1cm/type1cm.sty` (built from the CTAN `type1cm.ins` on 2026.10.09). The static 3x3 figure stays in Arial mathtext per the repo figure standard.
+
 **Data sweep.** `L` vs `N` while `D` rises from 10^7.5 to 10^12.5: the plateau `E + B D^-beta` drops toward `E`, and the N-curve runs into it later and later.
 
 ![](./assets/images/041-scaling-laws/scaling_gif_data_sweep.gif)

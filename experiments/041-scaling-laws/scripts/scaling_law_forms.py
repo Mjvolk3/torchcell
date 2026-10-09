@@ -53,6 +53,8 @@ import argparse
 import json
 import os
 import os.path as osp
+import subprocess
+import tempfile
 from typing import Any
 
 import imageio.v3 as iio
@@ -717,16 +719,56 @@ JOINT = r"$L(N, D) = E + A\,N^{-\alpha} + B\,D^{-\beta}$"
 
 
 def frames_to_gif(frames: list[FArray], path: str, duration_ms: int = 120) -> None:
+    shapes = {f.shape for f in frames}
+    if len(shapes) != 1:
+        raise ValueError(f"frames of {path} differ in shape: {shapes}")
     # Hold the last frame so the loop reads as a sweep, then a pause, then a restart.
     frames = frames + [frames[-1]] * 8
     iio.imwrite(path, frames, duration=duration_ms, loop=0)
     print(f"wrote {path} ({len(frames)} frames)")
 
 
+GIF_DPI = 200
+# The GIF frames are typeset by real LaTeX (Computer Modern, amsmath), not mathtext.
+# Agg cannot rasterize usetex text without dvipng, which this machine lacks, so a frame
+# is written as a PDF (the PDF backend reads the DVI itself) and rasterized with
+# pdftoppm. type1cm.sty, which matplotlib's usetex preamble loads, is installed in the
+# user texmf tree (~/texmf/tex/latex/type1cm/) because the system TeX Live omits it.
+GIF_RC: dict[str, object] = {
+    "text.usetex": True,
+    "text.latex.preamble": r"\usepackage{amsmath}\usepackage{amssymb}",
+    "font.family": "serif",
+    "font.size": 7.0,
+    "axes.labelsize": 7.0,
+    "axes.titlesize": 7.0,
+    "xtick.labelsize": 6.5,
+    "ytick.labelsize": 6.5,
+    "legend.fontsize": 6.0,
+    "mathtext.fontset": "cm",
+}
+
+
 def rasterize(fig: Figure) -> FArray:
-    fig.canvas.draw()
-    # Agg's canvas exposes the pixel buffer; the base-class stub does not declare it.
-    return np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()  # type: ignore[attr-defined]
+    """One GIF frame: the figure through the PDF backend and pdftoppm, as RGB."""
+    with tempfile.TemporaryDirectory() as tmp:
+        pdf = osp.join(tmp, "frame.pdf")
+        fig.savefig(pdf, format="pdf")
+        subprocess.run(
+            [
+                "pdftoppm",
+                "-r",
+                str(GIF_DPI),
+                "-png",
+                "-singlefile",
+                pdf,
+                osp.join(tmp, "frame"),
+            ],
+            check=True,
+        )
+        frame: FArray = np.asarray(iio.imread(osp.join(tmp, "frame.png")))[
+            ..., :3
+        ].copy()
+    return frame
 
 
 def gif_figure(*lines: str) -> tuple[Figure, Axes]:
@@ -734,9 +776,9 @@ def gif_figure(*lines: str) -> tuple[Figure, Axes]:
     what is held fixed, line 2 the constants and their source, line 3 the swept value
     and what it implies, in fixed-width numbers so the text does not jump.
     """
-    fig, ax = plt.subplots(figsize=(mm_to_in(130), mm_to_in(84)), dpi=150)
-    fig.subplots_adjust(left=0.09, right=0.97, bottom=0.12, top=0.82)
-    ax.set_title("\n".join(lines), fontsize=5.5, linespacing=1.6)
+    fig, ax = plt.subplots(figsize=(mm_to_in(150), mm_to_in(95)), dpi=GIF_DPI)
+    fig.subplots_adjust(left=0.08, right=0.97, bottom=0.11, top=0.83)
+    ax.set_title("\n".join(lines), fontsize=7, linespacing=1.6)
     box(ax)
     return fig, ax
 
@@ -744,7 +786,7 @@ def gif_figure(*lines: str) -> tuple[Figure, Axes]:
 def loss_axis(ax: Axes, lo: float, hi: float, ticks: list[float]) -> None:
     ax.set_ylim(lo, hi)
     plain_log_y(ax, ticks)
-    ax.set_ylabel("loss L")
+    ax.set_ylabel(r"loss $L$")
 
 
 def gif_data_sweep(path: str) -> None:
@@ -758,7 +800,7 @@ def gif_data_sweep(path: str) -> None:
             JOINT + r" against $N$ at a fixed $D$",
             HOFF,
             rf"$D = 10^{{{logD:4.1f}}}$ examples:  plateau $E + B D^{{-\beta}}$ = {plateau:4.2f};"
-            r"  the gap from the curve down to its plateau is what more parameters can still buy",
+            r"  curve minus plateau is what more parameters can still buy",
         )
         ax.loglog(N, f.loss(N, D), color=AMBER, lw=1.2, label=r"$L(N, D)$ at this $D$")
         ax.loglog(
@@ -774,7 +816,7 @@ def gif_data_sweep(path: str) -> None:
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e6, 1e12)
         loss_axis(ax, 1.5, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel("parameters N")
+        ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -792,7 +834,7 @@ def gif_params_sweep(path: str) -> None:
             JOINT + r" against $D$ at a fixed $N$",
             HOFF,
             rf"$N = 10^{{{logN:4.1f}}}$ parameters:  plateau $E + A N^{{-\alpha}}$ = {plateau:4.2f};"
-            r"  the gap from the curve down to its plateau is what more data can still buy",
+            r"  curve minus plateau is what more data can still buy",
         )
         ax.loglog(D, f.loss(N, D), color=BRICK, lw=1.2, label=r"$L(N, D)$ at this $N$")
         ax.loglog(
@@ -808,7 +850,7 @@ def gif_params_sweep(path: str) -> None:
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e7, 1e13)
         loss_axis(ax, 1.5, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel("training examples D")
+        ax.set_xlabel(r"training examples $D$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -835,7 +877,7 @@ def gif_compute_sweep(path: str) -> None:
             HOFF,
             rf"$C = 10^{{{logC:4.1f}}}$ FLOPs:  $N^* = 10^{{{np.log10(n_star):4.1f}}}$, "
             rf"$D^* = 10^{{{np.log10(d_star):4.1f}}}$, $L^*$ = {l_star:4.2f};"
-            rf"  minimum at $N^* = G\,(C/6)^{{\beta/(\alpha+\beta)}}$, $\beta/(\alpha+\beta)$ = {f.a:.2f}",
+            rf"  minimum at $N^* = G\,(C/6)^{{\beta/(\alpha+\beta)}}$, exponent {f.a:.2f}",
         )
         ax.loglog(
             N, f.isoflop(N, C), color=LILAC, lw=1.2, label=r"$L$ along the budget line"
@@ -860,7 +902,7 @@ def gif_compute_sweep(path: str) -> None:
         )
         ax.set_xlim(N[0], N[-1])
         loss_axis(ax, 1.8, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel("parameters N  (D = C / 6N)")
+        ax.set_xlabel(r"parameters $N$  ($D = C / 6N$)")
         legend(ax, loc="upper left")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -887,10 +929,10 @@ def gif_exponent_sweep(path: str) -> None:
         fig, ax = gif_figure(
             r"Kaplan: $L = (N_c / N)^{\alpha_N}$, straight on log-log axes with slope $-\alpha_N$;"
             r"  published $\alpha_N$ = 0.076, $N_c = 8.8 \times 10^{13}$",
-            r"every curve is pinned through the same loss at $N = 10^{7.5}$, the center of the fitted range,"
-            r" which is why the sweep pivots there",
+            r"every curve is pinned through the same loss at $N = 10^{7.5}$ (center of the fitted range),"
+            r" so the sweep pivots there",
             rf"$\alpha_N$ = {alpha:5.3f}:  forecast $L(10^{{12}})$ = {L12:4.2f} (published {L12_pub:4.2f});"
-            rf"  the fitted runs move by at most {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_N)) - 1):3.0f}%",
+            rf"  the fitted runs move by at most {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_N)) - 1):3.0f}\%",
         )
         ax.axvspan(grid[0], 1.6e9, color="#F2F2F2", lw=0, label="fitted range (shaded)")
         ax.loglog(
@@ -924,7 +966,7 @@ def gif_exponent_sweep(path: str) -> None:
         )
         ax.set_xlim(1e6, 1e12)
         loss_axis(ax, 0.7, 7, [1, 2, 3, 4, 5, 6, 7])
-        ax.set_xlabel("parameters N")
+        ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -964,8 +1006,8 @@ def gif_floor_sweep(path: str) -> None:
             ax.plot([], [], color=GRAY, lw=0.6, ls=":", label=r"floor $E$")
         ax.set_xlim(1e6, 1e12)
         ax.set_ylim(0.02, 10)
-        ax.set_ylabel("loss L")
-        ax.set_xlabel("parameters N")
+        ax.set_ylabel(r"loss $L$")
+        ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="lower left")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -1018,10 +1060,10 @@ def gif_surface_sweep(path: str) -> None:
         )
         ax.set_xlim(6, 12)
         ax.set_ylim(7, 13)
-        ax.set_xlabel(r"$\log_{10}$ parameters N")
-        ax.set_ylabel(r"$\log_{10}$ training examples D")
+        ax.set_xlabel(r"$\log_{10}$ parameters $N$")
+        ax.set_ylabel(r"$\log_{10}$ training examples $D$")
         cb = fig.colorbar(cf, ax=ax, fraction=0.045, pad=0.02)
-        cb.ax.set_title("L", fontsize=6, pad=2)
+        cb.ax.set_title(r"$L$", fontsize=7, pad=2)
         cb.set_ticks([2, 3, 4, 5, 6, 7])
         cb.ax.tick_params(labelsize=5, width=0.5, length=2)
         cb.outline.set_linewidth(0.5)  # type: ignore[operator]
@@ -1060,8 +1102,8 @@ def gif_bootstrap(path: str) -> None:
         )
         fig, ax = gif_figure(
             r"bootstrap over runs: redraw the 15 fitted runs with replacement, refit $L = E + A\,N^{-\alpha}$",
-            rf"synthetic runs from $\alpha$ = 0.34, $E$ = 1.69 with 2% noise;  full-sample fit $\alpha$ = {al0:5.3f}",
-            rf"resample {i + 1:2d}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90% interval on $\alpha$ so far {interval}",
+            rf"synthetic runs from $\alpha$ = 0.34, $E$ = 1.69 with 2\% noise;  full-sample fit $\alpha$ = {al0:5.3f}",
+            rf"resample {i + 1:2d}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90\% interval on $\alpha$ so far {interval}",
         )
         ax.axvspan(
             grid[0],
@@ -1103,7 +1145,7 @@ def gif_bootstrap(path: str) -> None:
         previous.append(E + A * grid ** (-al))
         ax.set_xlim(grid[0], grid[-1])
         loss_axis(ax, 1.5, 7, [2, 3, 4, 5, 6, 7])
-        ax.set_xlabel("parameters N")
+        ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -1145,8 +1187,8 @@ def gif_allocation_sweep(path: str) -> None:
         ax.loglog(C, g.D_opt(C), color=BRICK, lw=1.2, label=r"$D^*$ in the sweep")
         ax.set_xlim(C[0], C[-1])
         ax.set_ylim(1e6, 1e17)
-        ax.set_xlabel("compute C (FLOPs)")
-        ax.set_ylabel("optimal size N*, optimal data D*")
+        ax.set_xlabel(r"compute $C$ (FLOPs)")
+        ax.set_ylabel(r"optimal size $N^*$, optimal data $D^*$")
         legend(ax, loc="upper left")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -1249,8 +1291,9 @@ def main() -> None:
     summary.update(figure_1())
     write_constants_table()
     if not args.no_gifs:
-        for name, draw in GIFS.items():
-            draw(osp.join(IMAGES_DIR, name))
+        with matplotlib.rc_context(GIF_RC):
+            for name, draw in GIFS.items():
+                draw(osp.join(IMAGES_DIR, name))
     out = osp.join(RESULTS_DIR, "scaling_law_forms_summary.json")
     with open(out, "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2)

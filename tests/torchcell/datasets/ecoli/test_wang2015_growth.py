@@ -446,6 +446,10 @@ def test_download_links_every_pinned_mirror_file_and_refuses_an_absent_one(
         for raw in wg.RAW_FILES
     )
     monkeypatch.setattr(wg, "RAW_FILES", pinned)
+    # `deposit_raw_mirror` records the pdftotext extraction step for the SI PDF, which
+    # shells out to the binary; the CI runner has no poppler, so the version string is
+    # stubbed exactly as `test_wang2015.py`'s own synthetic fixture stubs it.
+    monkeypatch.setattr(wg, "pdftotext_version", lambda: "pdftotext version test")
     data_root = tmp_path / "root"
     wg.deposit_raw_mirror(
         sources={name: path for name, path in sources.items()}, data_root=str(data_root)

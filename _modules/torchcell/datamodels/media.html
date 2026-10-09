@@ -3758,6 +3758,155 @@
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Fang 2025 (row 43, E. coli MG1655(DE3)): the "modified M9" of the CRISPRi-FACS screen</span>
+<span class="c1"># and of every flask fermentation. Stated in full, which is why it is a recipe and not a</span>
+<span class="c1"># deferral, and distinctive on three counts: 2 g/L yeast extract makes it SEMI-defined</span>
+<span class="c1"># rather than minimal, 30 g/L glycerol is the screen's carbon source, and 0.1% (v/v)</span>
+<span class="c1"># Triton X-100 is a surfactant no other medium in this library carries. The glucose</span>
+<span class="c1"># variant the same sentence offers ("or 30 g/L glucose, specifically used in Fig. 4") is</span>
+<span class="c1"># NOT a second object: no screen record uses it, and the one figure that does is a</span>
+<span class="c1"># titer panel this loader does not read.</span>
+<span class="c1">#</span>
+<span class="c1"># The phosphate is weighed as the DODECAHYDRATE, a different reagent with its own</span>
+<span class="c1"># InChIKey, so this medium does not derive from ``M9`` by dropout; it states its own</span>
+<span class="c1"># salts against the ``M9`` label. The trace solution is a 1000-fold dilution of a stock</span>
+<span class="c1"># whose five salts the Methods DO print, but the diluted amounts are a derivation rather</span>
+<span class="c1"># than a stated value, so it is carried as one mixture at the stated 1 mL/L with the</span>
+<span class="c1"># stock recipe in its note -- the Menasalvas convention for a trace mixture, without</span>
+<span class="c1"># that row's open gap, because here the composition is published.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_FANG2025</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"fangGenomescaleCRISPRiScreen2025"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"93d4303ce7aad2cec712ad09fd41319e08f4b735dc8dfc69659d55e590f2ee3d"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_Q_FANG_M9</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Modified M9 medium58 $</span><span class="se">\\</span><span class="s2">mathrm { ( pH } 7 . 2 </span><span class="se">\\</span><span class="s2">mathrm { ) }$ for tube and flask "</span>
+    <span class="s2">"fermentation was prepared as follows: $1 7 . 1 </span><span class="se">\\</span><span class="s2">mathrm { g } </span><span class="se">\\</span><span class="s2">mathrm { L } ^ { -1 "</span>
+    <span class="s2">"}$ $</span><span class="se">\\</span><span class="s2">mathrm { N a _ { 2 } H P O _ { 4 } } { </span><span class="se">\\</span><span class="s2">cdot } 1 2 </span><span class="se">\\</span><span class="s2">mathrm { H } _ { 2 } O$ "</span>
+    <span class="s2">", $3 { </span><span class="se">\\</span><span class="s2">bf g } { </span><span class="se">\\</span><span class="s2">bf L } ^ { -1 } { </span><span class="se">\\</span><span class="s2">bf </span><span class="se">\\</span><span class="s2"> K H } _ { 2 } { </span><span class="se">\\</span><span class="s2">bf P O } _ { 4 } ,$ "</span>
+    <span class="s2">"$0 . 5 </span><span class="se">\\</span><span class="s2">mathrm { g L } ^ { -1 }$ NaCl, $2 { </span><span class="se">\\</span><span class="s2">bf g } { </span><span class="se">\\</span><span class="s2">bf L } ^ { -1 } </span><span class="se">\\</span><span class="s2"> { </span><span class="se">\\</span><span class="s2">sf "</span>
+    <span class="s2">"N H } _ { 4 } { </span><span class="se">\\</span><span class="s2">bf C } { </span><span class="se">\\</span><span class="s2">bf l }$ , $2 { </span><span class="se">\\</span><span class="s2">tt g } { </span><span class="se">\\</span><span class="s2">tt L } ^ { -1 }$ yeast "</span>
+    <span class="s2">"extract, $3 0 { </span><span class="se">\\</span><span class="s2">bf g } { </span><span class="se">\\</span><span class="s2">bf L } ^ { -1 }$ glycerol (or $3 0 { </span><span class="se">\\</span><span class="s2">bf g } { </span><span class="se">\\</span><span class="s2">bf L "</span>
+    <span class="s2">"} ^ { -1 }$ glucose, specifically used in Fig. 4), $0 . 2 5 { </span><span class="se">\\</span><span class="s2">bf g } { </span><span class="se">\\</span><span class="s2">bf L } ^ "</span>
+    <span class="s2">"{ -1 }$ $</span><span class="se">\\</span><span class="s2">mathrm { M g S O _ { 4 } } { </span><span class="se">\\</span><span class="s2">cdot } 7 </span><span class="se">\\</span><span class="s2">mathrm { H } _ { 2 } </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ O }$ , $</span><span class="se">\\</span><span class="s2">mathrm { 1 1 . 1 m g L ^ { -1 } </span><span class="se">\\</span><span class="s2"> C a C l _ { 2 } } ,$ $1 0 </span><span class="se">\\</span><span class="s2">mathrm { "</span>
+    <span class="s2">"m g L ^ { -1 } }$ thiamine,"</span>
+<span class="p">)</span>
+<span class="n">_Q_FANG_TRACE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"$0 . 1 </span><span class="se">\\</span><span class="s2">%$ (v/v) Triton-X100, and $1 </span><span class="se">\\</span><span class="s2">mathsf { m L L } ^ { -1 }$ metal trace "</span>
+    <span class="s2">"stock solution."</span>
+<span class="p">)</span>
+<span class="n">_FANG_TRACE_STOCK</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a 1 mL/L dilution of the stock the same Methods paragraph states: 27 g/L "</span>
+    <span class="s2">"FeCl3.6H2O, 2 g/L ZnCl2, 2 g/L Na2MoO4.2H2O, 1.9 g/L CuSO4.5H2O and 0.5 g/L "</span>
+    <span class="s2">"H3BO3. The five salts are published, so this is not a composition gap; the "</span>
+    <span class="s2">"DILUTED amounts would be a derivation, so the component carries the stated 1 mL/L "</span>
+    <span class="s2">"and the stock recipe stays verbatim here"</span>
+<span class="p">)</span>
+
+<span class="n">M9_MODIFIED_FANG2025</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"modified M9 + 2 g/L yeast extract + 30 g/L glycerol + 0.1% Triton X-100 "</span>
+    <span class="s2">"(pH 7.2; Fang 2025)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"disodium hydrogen phosphate dodecahydrate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">17.1</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"17.1 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"potassium dihydrogen phosphate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">3.0</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"3 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"sodium chloride"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"0.5 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"ammonium chloride"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"2 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"yeast extract"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">complex_ingredient</span><span class="p">,</span>
+            <span class="n">_UNDEFINED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">_GL</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"2 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">)],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"2 g/L yeast extract is what makes this medium semi-defined rather "</span>
+            <span class="s2">"than minimal, so is_synthetic is False"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span><span class="s2">"glycerol"</span><span class="p">,</span> <span class="n">_CSRC</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">,</span> <span class="n">_GL</span><span class="p">,</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"30 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">)),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"magnesium sulfate heptahydrate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.25</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"0.25 g/L"</span><span class="p">,</span> <span class="n">_Q_FANG_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"calcium chloride"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.0111</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_FANG2025</span><span class="p">,</span>
+                <span class="s2">"11.1 mg/L"</span><span class="p">,</span>
+                <span class="n">_Q_FANG_M9</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="s2">"stated in mg/L; the library has no mg/L unit, so the same amount "</span>
+                <span class="s2">"is carried in g/L"</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"thiamine"</span><span class="p">,</span>
+            <span class="n">_VITAMIN</span><span class="p">,</span>
+            <span class="mf">0.01</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_FANG2025</span><span class="p">,</span>
+                <span class="s2">"10 mg/L"</span><span class="p">,</span>
+                <span class="n">_Q_FANG_M9</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="s2">"stated in mg/L; the library has no mg/L unit, so the same amount "</span>
+                <span class="s2">"is carried in g/L"</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"Triton X-100"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
+            <span class="n">_UNDEFINED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"0.1% (v/v)"</span><span class="p">,</span> <span class="n">_Q_FANG_TRACE</span><span class="p">)],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"a polydisperse octylphenol ethoxylate, so it is a preparation rather "</span>
+            <span class="s2">"than one substance; no other medium in this library carries a surfactant"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"metal trace stock solution"</span><span class="p">,</span>
+            <span class="n">_TRACE</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">ConcentrationUnit</span><span class="o">.</span><span class="n">percent_v_v</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_cite</span><span class="p">(</span><span class="n">_FANG2025</span><span class="p">,</span> <span class="s2">"1 mL/L"</span><span class="p">,</span> <span class="n">_Q_FANG_TRACE</span><span class="p">)],</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_FANG_TRACE_STOCK</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[</span><span class="n">_M9_ANHYDROUS_PHOSPHATE</span><span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_FANG2025</span><span class="p">,</span>
+            <span class="s2">"modified M9 medium (pH 7.2)"</span><span class="p">,</span>
+            <span class="n">_Q_FANG_M9</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_HYDRATE_DROPOUT_NOTE</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Fang 2025's modified M9: the CRISPRi-FACS screen medium and every flask run (row 43)."""</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Foo 2014 (E. coli DH1): "1x M9 salt (Difco)" is a commercial salts powder whose</span>
 <span class="c1"># composition the paper does not print, so the two Foo media derive from their own</span>
 <span class="c1"># ``M9_DIFCO`` base rather than from the stated ``M9`` salts.</span>
@@ -4180,6 +4329,11 @@
         <span class="s2">"25 Wang 2018: the L-Trp-biosynthesis selective condition (0.5 g/L casamino "</span>
         <span class="s2">"acid in MOPS)"</span><span class="p">,</span>
     <span class="p">),</span>
+    <span class="s2">"M9_MODIFIED_FANG2025"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"43 Fang 2025: both rounds of the CRISPRi-FACS screen (500 mL flasks holding "</span>
+        <span class="s2">"100 mL), and every tube and flask fermentation; the glucose variant the same "</span>
+        <span class="s2">"sentence offers is used by one titer figure and by no screen record"</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
 
@@ -4255,6 +4409,7 @@
     <span class="s2">"DM500"</span><span class="p">:</span> <span class="n">DM500</span><span class="p">,</span>
     <span class="s2">"MOPS_MINIMAL"</span><span class="p">:</span> <span class="n">MOPS_MINIMAL</span><span class="p">,</span>
     <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="n">MOPS_CASAMINO_WANG2018</span><span class="p">,</span>
+    <span class="s2">"M9_MODIFIED_FANG2025"</span><span class="p">:</span> <span class="n">M9_MODIFIED_FANG2025</span><span class="p">,</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>

@@ -19,10 +19,20 @@ repos:
     hooks:
       - id: markdownlint-cli2
         args: [--fix]
-        files: ^notes/.*\.md$
+        # notes/, plus the #846 canary: the canary carries every inline-autofix shape
+        # that used to falsify a verbatim quote, so the hook rewriting it is caught by
+        # tests/torchcell/test_markdownlint_quote_protection.py instead of by a reader.
+        # One line on purpose: a YAML folded scalar would join these with spaces.
+        files: ^(notes/.*|tests/torchcell/data/markdownlint_canary/.*)\.md$
         # Raw verifier reports are committed byte-verbatim as evidence; --fix would
         # rewrite URLs inside their verbatim source quotes.
         exclude: ^notes/assets/verification/
+        # --fix is safe ONLY because .markdownlint.jsonc disables every rule whose fix
+        # edits characters inside a line (MD011/MD027/MD034/MD037/MD038/MD039/MD044/
+        # MD049/MD050/MD053, and MD010 inside fences). A dendron note carries the same
+        # verbatim quote a loader pins in SourcedValue.quote, and #846 measured two of
+        # them falsified in place. The reasoning, and why check-only mode for notes/ is
+        # not the fix, is in .markdownlint.jsonc.
 
   - repo: local
     hooks:

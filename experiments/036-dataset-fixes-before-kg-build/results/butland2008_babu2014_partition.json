@@ -21,16 +21,23 @@
   },
   "release_butland2008": {
     "released_cells": 314847,
-    "kept_records": 296390,
-    "kept_oriented_pairs": 148567,
-    "dropped_records": 18457,
+    "kept_records": 301803,
+    "kept_oriented_pairs": 153980,
+    "dropped_records": 13044,
     "dropped_by_rule": {
-      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": 5811,
       "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 6318,
       "b_number_remapped_by_the_annotation": 4407,
       "self_pair_is_not_a_digenic_genotype": 78,
       "released_score_contradicts_its_own_raw_colonies": 395,
-      "already_served_by_gene_interaction_babu2014": 1448
+      "already_served_by_gene_interaction_babu2014": 1846
+    },
+    "kept_by_row_label": {
+      "Non-essential": 296390,
+      "SPA-tag essential": 5413
+    },
+    "served_rule_cells_by_row_label": {
+      "Non-essential": 1448,
+      "SPA-tag essential": 398
     },
     "n_queries": 39,
     "n_recipient_rows": 8073
@@ -38,9 +45,12 @@
   "served_butland_screen_pairs_located": {
     "n_served_butland_pairs": 1125,
     "by_first_rule_that_applies": {
-      "already_served_by_gene_interaction_babu2014": 725,
-      "not_a_cell_of_this_release": 2,
-      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": 398
+      "already_served_by_gene_interaction_babu2014": 1123,
+      "not_a_cell_of_this_release": 2
+    },
+    "by_first_rule_and_row_label": {
+      "already_served_by_gene_interaction_babu2014 | Non-essential": 725,
+      "already_served_by_gene_interaction_babu2014 | SPA-tag essential": 398
     },
     "pairs_not_a_cell_of_this_release": [
       "b2528 -> b4486",
@@ -48,25 +58,18 @@
     ],
     "examples_by_rule": {
       "already_served_by_gene_interaction_babu2014": [
+        "b0119 -> b0098",
         "b0119 -> b2040",
         "b0119 -> b2199",
         "b0119 -> b2631",
-        "b0119 -> b2786",
-        "b0119 -> b3878"
-      ],
-      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": [
-        "b0119 -> b0098",
-        "b0119 -> b4052",
-        "b0130 -> b0420",
-        "b0130 -> b0923",
-        "b0130 -> b4052"
+        "b0119 -> b2786"
       ]
     }
   },
   "nothing_stored_twice": {
     "measured": true,
-    "butland_records": 296390,
-    "butland_content_ids": 296390,
+    "butland_records": 301803,
+    "butland_content_ids": 301803,
     "babu_records": 41988,
     "babu_content_ids": 41988,
     "shared_content_ids": 0,
@@ -76,7 +79,10 @@
   "pins": {
     "SERVED_BUTLAND_RECORDS": 1125,
     "SERVED_BUTLAND_PAIRS": 1125,
-    "SERVED_OVERLAP_CELLS": 1448,
-    "EXPECTED_RECORDS": 296390
+    "SERVED_OVERLAP_CELLS": 1846,
+    "SERVED_OVERLAP_PAIRS": 1123,
+    "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT": 398,
+    "SERVED_OVERLAP_PAIRS_ON_A_KEIO_RECIPIENT": 725,
+    "EXPECTED_RECORDS": 301803
   }
 }

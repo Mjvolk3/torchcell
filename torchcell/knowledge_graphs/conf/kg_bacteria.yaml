@@ -116,6 +116,7 @@ datasets:
   - PutidaPrecise321Lim2022Dataset
   - IsoprenolToleranceLim2025Dataset
   - ProteomeLim2025Dataset
+  - ProteomeFoldChangeLim2025Dataset
   - IsoprenolSelectionMenasalvas2025Dataset
   - ProteomeMenasalvas2025Dataset
   - MetaboliteGrowthPhaseMenasalvas2025Dataset

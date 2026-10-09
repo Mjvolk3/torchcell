@@ -2386,6 +2386,19 @@ def _verify_carruthers_proteome_fold_change(
     return carruthers2025.verify_build(dataset_root, data_root, family="fold_change")
 
 
+def _verify_lim_proteome_fold_change(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Lim 2025's four isolate-over-IPL400 contrasts: the fold-change gate plus its rows.
+
+    ``dataset_root`` is unused, as in :func:`_verify_lim_proteome`: the loader's own entry
+    point resolves the root itself.
+    """
+    from torchcell.datasets.pputida import lim2025
+
+    return lim2025.run_fold_change_verification(data_root)
+
+
 def _verify_banerjee_proteome(dataset_root: str, data_root: str) -> VerificationReport:
     """Banerjee 2025 proteome: the shared gate plus its four own L1-L4 rows."""
     from torchcell.datasets.pputida import banerjee2025
@@ -2598,6 +2611,10 @@ BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS: dict[str, dict[str, Any]] = {
     "protein_fold_change_caglar2017": {
         "root": "data/torchcell/protein_fold_change_caglar2017",
         "verify": _verify_caglar_protein_fold_change,
+    },
+    "proteome_fold_change_lim2025": {
+        "root": "data/torchcell/proteome_fold_change_lim2025",
+        "verify": _verify_lim_proteome_fold_change,
     },
 }
 

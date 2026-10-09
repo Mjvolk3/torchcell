@@ -47,6 +47,7 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialDeletionPerturbation,
     ConcentrationUnit,
+    FoldChangeScale,
     MeasurementType,
     SampleUnit,
     SequenceVariantPerturbation,
@@ -460,6 +461,8 @@ def _proteome_row(**overrides: Any) -> l25.ProteomeRow:
         "parent_mean": 21.14,
         "parent_sd": 0.294,
         "t_statistic": 0.0,
+        "p_value": 0.28,
+        "p_value_adjusted": 0.45,
         "log2_fold_change": 0.25,
     }
     payload.update(overrides)
@@ -511,6 +514,8 @@ def test_a_zero_denominator_row_is_skipped_rather_than_dividing_by_zero() -> Non
         parent_mean=20.0,
         parent_sd=0.0,
         t_statistic=0.0,
+        p_value=1.0,
+        p_value_adjusted=1.0,
         log2_fold_change=1.0,
     )
     assert l25.assert_sheet_statistics([row], sheet="probe") == 0.0
@@ -2205,6 +2210,82 @@ def test_the_mirror_manifest_records_the_digests_the_module_pins() -> None:
 
 @pytest.mark.data
 @pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
+def test_the_real_contrast_sheets_place_the_isolate_in_arm_a() -> None:
+    """All four loaded sheets, measured; the three refused ones are the mirror image.
+
+    The ``IPL400vs*`` sheets are read with the loaded sheets' own declaration to show the
+    flip is real on these bytes rather than a naming convention: their arm A is the
+    parent, so a loader that reused the loaded shape would store an inverted sign.
+    """
+    xlsx = osp.join(DATA_ROOT or "", l25.RAW_DIR_REL, "data", l25.SI2_XLSX)
+    for contrast in l25.FOLD_CHANGE_CONTRASTS:
+        measured = l25.assert_fold_change_direction(xlsx, contrast)
+        assert measured["arm_a"].startswith("log2_mean_A1")
+        assert measured["arm_b"].startswith("log2_mean_IPL400")
+    header, _ = l25._sheet_rows(xlsx, l25.SHEETS_PIY670[0])  # noqa: SLF001
+    means = [name for name in header if name.startswith("log2_mean_")]
+    assert means[0].startswith("log2_mean_IPL400_pIY670")
+    assert means[1].startswith("log2_mean_A10F63I1_pIY670")
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
+def test_the_real_contrast_sheets_drop_three_keys_with_no_current_gene() -> None:
+    """Measured over the union of the four sheets: three keys, all on the A10 +4IP one."""
+    xlsx = osp.join(DATA_ROOT or "", l25.RAW_DIR_REL, "data", l25.SI2_XLSX)
+    from torchcell.datasets.bacteria_common import bacterial_genome
+
+    genome = bacterial_genome("pputida", "KT2440", DATA_ROOT)
+    rows = {
+        contrast.sheet: l25.read_proteome_sheet(xlsx, contrast.sheet)
+        for contrast in l25.FOLD_CHANGE_CONTRASTS
+    }
+    keys = sorted({row.locus_tag for sheet in rows.values() for row in sheet})
+    shared = sorted(
+        set().union(*(set(l25.shared_symbol_loci(sheet)) for sheet in rows.values()))
+    )
+    assert (len(keys), len(shared)) == (2374, 6)
+    assert l25.unplaceable_protein_keys(genome, keys) == {
+        "PP_0985": "non_gene_feature",
+        "PP_2271": "retired",
+        "PP_5287": "retired",
+    }
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isdir(
+        osp.join(DATA_ROOT or "", l25.PROTEOME_FOLD_CHANGE_ROOT_REL, "processed")
+    ),
+    reason="the Lim 2025 fold-change dev store is not built",
+)
+def test_the_real_fold_change_store_holds_the_four_measured_contrasts() -> None:
+    """The built store's record count, per-sheet key counts and denominator background."""
+    from torchcell.verification.runners import stream_records
+
+    root = osp.join(DATA_ROOT or "", l25.PROTEOME_FOLD_CHANGE_ROOT_REL)
+    counts: dict[str, int] = {}
+    for record in stream_records(root):
+        phenotype = record["experiment"]["phenotype"]
+        sheet = next(
+            contrast.sheet
+            for contrast in l25.FOLD_CHANGE_CONTRASTS
+            if contrast.sheet in str(phenotype["reference_basis"])
+        )
+        counts[sheet] = len(phenotype["protein_fold_change"])
+        background = record["reference"]["genome_reference"]["background"]
+        assert len(background["alleles"]) == 8
+        assert phenotype["n_replicates"][next(iter(phenotype["n_replicates"]))] == 3
+    assert counts == {
+        l25.SHEET_PROTEOME_M9G: 2361,
+        l25.SHEET_PROTEOME_IPL: 2365,
+        l25.SHEET_PROTEOME_M9G_ALT: 2361,
+        l25.SHEET_PROTEOME_IPL_ALT: 2332,
+    }
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRROR_PRESENT, reason="the Lim 2025 raw mirror is not mounted")
 def test_the_real_table_three_parses_to_the_pinned_digest() -> None:
     """The pinned Supplementary Table 3 digest is the one this extraction produces."""
     docx = osp.join(DATA_ROOT or "", l25.RAW_DIR_REL, "data", l25.SI1_DOCX)
@@ -2396,7 +2477,7 @@ def test_the_count_oracle_is_the_ledger_the_build_wrote(
     assert l25._expected_count(built_tolerance.root) == 3
 
 
-def test_both_verification_runners_pass_on_the_synthetic_builds(
+def test_all_three_verification_runners_pass_on_the_synthetic_builds(
     synthetic_mirror: Path,
     synthetic_kt2440: Any,
     tmp_path: Path,
@@ -2408,6 +2489,9 @@ def test_both_verification_runners_pass_on_the_synthetic_builds(
     monkeypatch.setattr(l25, "bacterial_genome", lambda *a, **k: synthetic_kt2440)
     monkeypatch.setattr(l25, "TOLERANCE_ROOT_REL", "verify/tolerance")
     monkeypatch.setattr(l25, "PROTEOME_ROOT_REL", "verify/proteome")
+    monkeypatch.setattr(
+        l25, "PROTEOME_FOLD_CHANGE_ROOT_REL", "verify/proteome_fold_change"
+    )
     assert l25.main(["build"]) == 0
     universe = {locus for locus, _ in LOCUS_SPECS}
     monkeypatch.setattr(
@@ -2416,13 +2500,265 @@ def test_both_verification_runners_pass_on_the_synthetic_builds(
     monkeypatch.setattr(runners, "_gene_set_for_reference", lambda *a, **k: universe)
     monkeypatch.setattr(l25, "_audit_sourced_values", lambda report, data_root: None)
     reports = l25.run_verification(str(synthetic_mirror))
-    assert len(reports) == 2
+    assert len(reports) == 3
     for report in reports:
         assert report.passed, report.summary()
     names = {result.name for result in reports[0].results}
     assert "gene_containment_kt2440_locus_tags" in names
     proteome_names = {result.name for result in reports[1].results}
     assert "gene_containment_kt2440_quantified_loci" in proteome_names
+    fold_change = {result.name: result for result in reports[2].results}
+    assert fold_change["fold_change_equals_arm_a_minus_arm_b"].details["n_checked"] == (
+        17
+    )
+    assert fold_change[
+        "reference_genome_is_the_named_denominator_strain"
+    ].message.count("4 of 4")
+    assert fold_change["both_arms_of_the_contrast_share_one_condition"].passed
+
+
+# --------------------------------------------------------------------------- #
+# Synthetic: the released isolate-over-IPL400 fold changes (#770's four Lim rows)
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def built_fold_change(
+    synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path
+) -> Any:
+    """The fold-change loader built from the synthetic mirror and assembly."""
+    return l25.ProteomeFoldChangeLim2025Dataset(
+        root=str(tmp_path / "build" / "fold_change"), pputida_genome=synthetic_kt2440
+    )
+
+
+def test_the_four_contrasts_put_the_evolved_isolate_in_the_numerator() -> None:
+    """Two isolates x two conditions, each over IPL400, declared sheet by sheet."""
+    assert len(l25.FOLD_CHANGE_CONTRASTS) == 4
+    assert [c.sheet for c in l25.FOLD_CHANGE_CONTRASTS] == [
+        l25.SHEET_PROTEOME_M9G,
+        l25.SHEET_PROTEOME_IPL,
+        l25.SHEET_PROTEOME_M9G_ALT,
+        l25.SHEET_PROTEOME_IPL_ALT,
+    ]
+    assert {c.numerator_strain for c in l25.FOLD_CHANGE_CONTRASTS} == {
+        "A10_F63_I1",
+        "A12_F53_I1",
+    }
+    assert {c.denominator_strain for c in l25.FOLD_CHANGE_CONTRASTS} == {"IPL400"}
+    assert sorted(
+        c.isoprenol_g_per_l for c in l25.FOLD_CHANGE_CONTRASTS if c.isoprenol_g_per_l
+    ) == [4.0, 4.0]
+
+
+def test_the_three_piy670_sheets_are_refused_for_the_genotype_not_the_medium() -> None:
+    """The refusal names the inverted direction first; the medium IS stated."""
+    assert set(l25.FOLD_CHANGE_REFUSALS) == set(l25.SHEETS_PIY670)
+    for reason in l25.FOLD_CHANGE_REFUSALS.values():
+        assert "EVOLVED ISOLATE in the denominator" in reason
+        assert "BacterialBackgroundAllele" in reason
+        assert "which the Methods DO state" in reason
+    medium = l25.SOURCED_VALUES["piy670_production_medium"]
+    assert medium.value == {
+        "glucose_g_per_l": 20.0,
+        "kanamycin_mg_per_l": 50.0,
+        "arabinose_g_per_l": 2.0,
+    }
+    assert "20 g / \\mathrm { L }$ glucose" in str(medium.quote).replace("$2 0", "20")
+    assert "kanamycin" in str(medium.quote)
+    assert "corrects the earlier refusal reason" in str(medium.note)
+
+
+def test_the_direction_check_reads_the_sheets_own_arm_order(
+    synthetic_mirror: Path,
+) -> None:
+    """Arm A must be the numerator column, which is what ``A/B`` means."""
+    path = str(l25.raw_mirror_dir(str(synthetic_mirror)) / "data" / l25.SI2_XLSX)
+    measured = l25.assert_fold_change_direction(path, l25.FOLD_CHANGE_CONTRASTS[0])
+    assert measured == {
+        "sheet": l25.SHEET_PROTEOME_M9G,
+        "arm_a": "log2_mean_A10_F63_I1_M9G",
+        "arm_b": "log2_mean_IPL400_M9G",
+        "numerator_strain": "A10_F63_I1",
+        "denominator_strain": "IPL400",
+    }
+
+
+def test_the_direction_check_refuses_a_sheet_whose_arms_are_swapped(
+    tmp_path: Path,
+) -> None:
+    """A flipped export is the ``IPL400vs*`` shape, and it raises rather than inverting.
+
+    Written by swapping the two mean columns of one sheet, which is exactly how the three
+    refused production sheets differ from the four loaded ones.
+    """
+    path = tmp_path / "flipped.xlsx"
+    write_si2_xlsx(path)
+    book = openpyxl.load_workbook(path)
+    worksheet = book[l25.SHEET_PROTEOME_M9G]
+    numerator, denominator = l25.PROTEOME_ARMS[l25.SHEET_PROTEOME_M9G]
+    worksheet.cell(row=1, column=6).value = f"log2_mean_{denominator}"
+    worksheet.cell(row=1, column=7).value = f"log2_mean_{numerator}"
+    book.save(path)
+    with pytest.raises(l25.CrossSourceError, match="the stored sign would be inverted"):
+        l25.assert_fold_change_direction(str(path), l25.FOLD_CHANGE_CONTRASTS[0])
+
+
+def test_the_fold_change_phenotype_stores_the_released_test_and_its_welch_se() -> None:
+    """The SE is the denominator the released t divides by, not a free derivation."""
+    row = _proteome_row()
+    phenotype = l25.fold_change_phenotype([row], reference_basis="probe")
+    assert phenotype.fold_change_scale is FoldChangeScale.log2
+    assert phenotype.reference_basis == "probe"
+    assert phenotype.measurement_type == l25.FOLD_CHANGE_MEASUREMENT_TYPE
+    assert phenotype.p_value_adjustment_method == "benjamini_hochberg"
+    assert phenotype.n_replicates == {row.locus_tag: 3}
+    assert phenotype.protein_fold_change == {row.locus_tag: row.log2_fold_change}
+    assert phenotype.protein_fold_change_p_value == {row.locus_tag: row.p_value}
+    assert phenotype.protein_fold_change_p_value_adjusted == {
+        row.locus_tag: row.p_value_adjusted
+    }
+    se = phenotype.protein_fold_change_se
+    assert se is not None
+    assert row.log2_fold_change / se[row.locus_tag] == pytest.approx(
+        row.t_statistic, rel=1e-12
+    )
+    assert l25.fold_change_reference_phenotype(phenotype).protein_fold_change == {
+        row.locus_tag: 0.0
+    }
+    assert l25.fold_change_reference_phenotype(phenotype).protein_fold_change_se is None
+
+
+def test_the_reference_basis_names_the_sheet_the_column_and_the_genotype() -> None:
+    """Two sheets share a denominator column, so the sheet locates the record."""
+    basis = l25.fold_change_reference_basis(
+        l25.FOLD_CHANGE_CONTRASTS[0], "log2_mean_IPL400_M9G"
+    )
+    assert "IPL400, the parent starting strain" in basis
+    assert "'log2_mean_IPL400_M9G'" in basis
+    assert l25.SHEET_PROTEOME_M9G in basis
+    assert l25.SI1_STATEMENTS["ipl400_genotype"] in basis
+    assert "BacterialStrainBackground" in basis
+
+
+def test_unplaceable_protein_keys_names_a_key_with_no_current_gene(
+    synthetic_kt2440: Any,
+) -> None:
+    """A released key the assembly has no CURRENT gene at is reported with its status."""
+    placed = {locus for locus, _ in LOCUS_SPECS}
+    assert l25.unplaceable_protein_keys(synthetic_kt2440, sorted(placed)) == {}
+    assert l25.unplaceable_protein_keys(synthetic_kt2440, ["PP_9999"]) == {
+        "PP_9999": "retired"
+    }
+
+
+def test_the_fold_change_loader_builds_one_record_per_contrast(
+    built_fold_change: Any,
+) -> None:
+    """Four records, each a log2 ratio whose reference is the scale's neutral value."""
+    assert len(built_fold_change) == 4
+    bases = set()
+    for index in range(len(built_fold_change)):
+        item = built_fold_change[index]
+        phenotype = item["experiment"]["phenotype"]
+        reference = item["reference"]
+        assert phenotype["fold_change_scale"] == "log2"
+        assert phenotype["measurement_type"] == l25.FOLD_CHANGE_MEASUREMENT_TYPE
+        assert phenotype["p_value_adjustment_method"] == "benjamini_hochberg"
+        assert set(phenotype["protein_fold_change"]) == set(
+            phenotype["protein_fold_change_p_value"]
+        )
+        assert set(
+            reference["phenotype_reference"]["protein_fold_change"].values()
+        ) == ({0.0})
+        assert (
+            reference["genome_reference"]["background"]["genotype_statement"]
+            == l25.SI1_STATEMENTS["ipl400_genotype"]
+        )
+        assert item["experiment"]["environment"] == reference["environment_reference"]
+        bases.add(phenotype["reference_basis"])
+    assert len(bases) == 4
+
+
+def test_each_fold_change_genotype_is_the_isolate_on_top_of_ipl400(
+    built_fold_change: Any,
+) -> None:
+    """IPL400's designed deletions plus that isolate's called variants, nothing else."""
+    designed = set(l25.designed_deletion_tags("IPL400"))
+    variants = 0
+    for index in range(len(built_fold_change)):
+        perturbations = built_fold_change[index]["experiment"]["genotype"][
+            "perturbations"
+        ]
+        kinds = Counter(str(p["perturbation_type"]) for p in perturbations)
+        deleted = {
+            str(p["systematic_gene_name"])
+            for p in perturbations
+            if p["perturbation_type"] == "bacterial_deletion"
+        }
+        assert deleted == designed
+        assert kinds["bacterial_deletion"] == len(designed)
+        variants += sum(count for kind, count in kinds.items() if "variant" in kind)
+    assert variants > 0
+
+
+def test_the_two_conditions_differ_only_by_the_isoprenol_perturbation(
+    built_fold_change: Any,
+) -> None:
+    """Two records are the unstressed medium and two carry 4 g/L isoprenol."""
+    doses: list[float] = []
+    unstressed = 0
+    for index in range(len(built_fold_change)):
+        environment = built_fold_change[index]["experiment"]["environment"]
+        assert environment["media"]["base_medium"] == M9_NREL_LIM2025.base_medium
+        perturbations = environment["perturbations"]
+        if not perturbations:
+            unstressed += 1
+            continue
+        assert len(perturbations) == 1
+        doses.append(float(perturbations[0]["concentration"]["value"]))
+    assert unstressed == 2
+    assert doses == [l25.TALE_DOSE_G_PER_L, l25.TALE_DOSE_G_PER_L]
+
+
+def test_the_fold_change_drop_log_counts_the_refusals_and_the_dropped_keys(
+    built_fold_change: Any,
+) -> None:
+    """Three refused sheets, the paralogous symbols, and the unplaceable keys."""
+    drops = json.loads(
+        Path(built_fold_change.preprocess_dir, "dropped_records.json").read_text()
+    )
+    assert drops["candidate_records"] == 7
+    assert drops["kept_records"] == 4
+    assert drops["dropped_records"] == 3
+    by_rule = {rule["rule"]: rule for rule in drops["rules"]}
+    assert by_rule["denominator_arm_is_an_evolved_clone"]["n_items"] == 3
+    assert sorted(by_rule["denominator_arm_is_an_evolved_clone"]["items"]) == sorted(
+        l25.SHEETS_PIY670
+    )
+    assert (
+        "The medium is NOT the reason"
+        in (by_rule["denominator_arm_is_an_evolved_clone"]["description"])
+    )
+    paralogs = by_rule["gene_symbol_filed_under_two_paralogous_loci"]
+    assert paralogs["n_items"] == len(paralogs["items"]) == 2
+    assert "released_key_is_not_a_current_gene_locus_of_the_assembly" in by_rule
+
+
+def test_the_fold_change_build_records_the_direction_it_measured(
+    built_fold_change: Any,
+) -> None:
+    """``fold_change_direction.json`` holds the arms, the refusals and the medium quote."""
+    recorded = json.loads(
+        Path(built_fold_change.preprocess_dir, "fold_change_direction.json").read_text()
+    )
+    assert [row["sheet"] for row in recorded["loaded"]] == [
+        c.sheet for c in l25.FOLD_CHANGE_CONTRASTS
+    ]
+    assert {row["denominator_strain"] for row in recorded["loaded"]} == {"IPL400"}
+    assert set(recorded["refused"]) == set(l25.SHEETS_PIY670)
+    assert "glucose as carbon source" in recorded["refused_medium_quote"]
+    assert "with respect to IPL400" in recorded["denominator_statement"]
+    assert recorded["n_replicates"] == 3
+    assert max(recorded["welch_t_worst_residual"].values()) < l25.WELCH_TOLERANCE
 
 
 def test_the_cli_verify_returns_zero_when_both_reports_pass(

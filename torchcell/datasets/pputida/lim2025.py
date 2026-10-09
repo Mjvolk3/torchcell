@@ -267,6 +267,8 @@ from torchcell.datamodels.schema import (
     BacterialGeneNamespace,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialProteinFoldChangeExperiment,
+    BacterialProteinFoldChangeExperimentReference,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -281,10 +283,12 @@ from torchcell.datamodels.schema import (
     EnvironmentResponsePhenotype,
     Experiment,
     ExperimentReference,
+    FoldChangeScale,
     GenePerturbationType,
     Genotype,
     MeasurementType,
     ProteinAbundancePhenotype,
+    ProteinFoldChangePhenotype,
     Publication,
     SampleUnit,
     SmallMoleculePerturbation,
@@ -309,6 +313,7 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
 )
 from torchcell.literature.provenance import run_retriever
+from torchcell.sequence.genome.base import GeneNameStatus
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.verification.report import (
     Level,
@@ -339,6 +344,7 @@ PAPER_TITLE = (
 RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
 TOLERANCE_ROOT_REL = "data/torchcell/isoprenol_tolerance_lim2025"
 PROTEOME_ROOT_REL = "data/torchcell/proteome_lim2025"
+PROTEOME_FOLD_CHANGE_ROOT_REL = "data/torchcell/proteome_fold_change_lim2025"
 
 #: MinerU OCR of the publisher PDF in the literature mirror; every ``SourcedValue``
 #: quotes a verbatim substring of exactly these bytes, which is what makes the
@@ -753,6 +759,21 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         f"with the dataset identifier {PRIDE_ACCESSION}",
         note="raw DIA spectra; the loaded abundances are the processed Supplementary "
         "Data 1 sheets, not the spectra",
+    ),
+    "piy670_production_medium": _paper(
+        {"glucose_g_per_l": 20.0, "kanamycin_mg_per_l": 50.0, "arabinose_g_per_l": 2.0},
+        "test tubes containing $5 ~ \\mathrm { m L }$ NREL M9 minimal medium as "
+        "described in Section 2.2 with $2 0 g / \\mathrm { L }$ glucose as carbon "
+        "source and $5 0 ~ \\mu \\mathrm { g / m L }$ kanamycin. The isoprenol "
+        "pathway was induced by adding arabinose at ${ 2 } \\ g / \\mathrm { L }$ at "
+        "$^ { 0 \\mathrm { h } }$ .",
+        note="the pIY670 production culture IS fully specified by the Methods, which "
+        "corrects the earlier refusal reason: those three sheets were said to be blocked "
+        "on an unstated medium, and they are not. They stay refused for the genotype "
+        "reason instead (FOLD_CHANGE_REFUSALS): their denominator arm is an evolved "
+        "isolate, which has no representation on the strain-background axis. "
+        "MEDIA_LIBRARY still carries no M9 at 20 g/L glucose with kanamycin, so loading "
+        "them would also need that entry",
     ),
 }
 
@@ -1293,6 +1314,11 @@ SI1_STATEMENTS: dict[str, str] = {
         "KT2440 with the complete internal in-frame deletion of PP_2675 and partial "
         "truncation of the first fourteen amino acids of PP_2676"
     ),
+    "proteome_contrast_denominator": (
+        "Details of the mutations in the A10_F63_I1 and A12_F53_I1 strains and their "
+        "corresponding proteomics shifts on glucose minimal medium with respect to "
+        "IPL400"
+    ),
     "pp3024_strain": "KT2440 ΔPP_3024",
     "pp3024_accession": "KT2440 ΔPP_3024 (JBEI-235868)",
 }
@@ -1308,7 +1334,13 @@ PP2676_LOCUS = "PP_2676"
 # Supplementary Data 1 (si2.xlsx)
 # --------------------------------------------------------------------------- #
 class ProteomeRow(BaseModel):
-    """One proteome sheet row: a locus, its symbol, and both arms' log2 statistics."""
+    """One proteome sheet row: a locus, its symbol, and both arms' log2 statistics.
+
+    ``p_value`` and ``p_value_adjusted`` are the sheet's own ``p-value`` and
+    ``p_adjusted(BH)`` columns of the SAME two-arm test ``t_statistic`` reports. Both are
+    required because every one of the seven sheets prints both for every row; the
+    absolute-abundance records have no field for them and the fold-change records do.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1322,6 +1354,8 @@ class ProteomeRow(BaseModel):
     parent_mean: float
     parent_sd: float
     t_statistic: float
+    p_value: float
+    p_value_adjusted: float
     log2_fold_change: float
 
 
@@ -1367,6 +1401,8 @@ def read_proteome_sheet(path: str, sheet: str) -> list[ProteomeRow]:
         f"log2_std_{test_suffix}",
         f"log2_std_{parent_suffix}",
         "t-test_stat",
+        "p-value",
+        "p_adjusted(BH)",
         "log2_Fold_change_A/B",
     ]
     absent = [name for name in required if name not in index]
@@ -1394,6 +1430,8 @@ def read_proteome_sheet(path: str, sheet: str) -> list[ProteomeRow]:
                 parent_mean=float(row[index[f"log2_mean_{parent_suffix}"]]),
                 parent_sd=float(row[index[f"log2_std_{parent_suffix}"]]),
                 t_statistic=float(row[index["t-test_stat"]]),
+                p_value=float(row[index["p-value"]]),
+                p_value_adjusted=float(row[index["p_adjusted(BH)"]]),
                 log2_fold_change=float(row[index["log2_Fold_change_A/B"]]),
             )
         )
@@ -2426,6 +2464,195 @@ def abundance_phenotype(
 
 
 # --------------------------------------------------------------------------- #
+# The released isolate-vs-parent contrasts (issue #770's four Lim rows)
+# --------------------------------------------------------------------------- #
+class FoldChangeContrast(BaseModel):
+    """One released proteome contrast: its sheet, its two strains and its condition.
+
+    The NUMERATOR is the evolved isolate and the DENOMINATOR is IPL400 for all four
+    loaded sheets, which is read off each sheet's own arm columns rather than taken from
+    the sheet name: the three ``IPL400vs*`` sheets of the same workbook put the parent in
+    arm A, so ``log2_Fold_change_A/B`` means the opposite thing there.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sheet: str
+    numerator_strain: str
+    denominator_strain: str
+    isoprenol_g_per_l: float | None
+
+
+#: The four contrasts this loader stores: two evolved isolates x two conditions.
+FOLD_CHANGE_CONTRASTS: tuple[FoldChangeContrast, ...] = (
+    FoldChangeContrast(
+        sheet=SHEET_PROTEOME_M9G,
+        numerator_strain="A10_F63_I1",
+        denominator_strain=EVOLVED_ISOLATE_PARENT,
+        isoprenol_g_per_l=None,
+    ),
+    FoldChangeContrast(
+        sheet=SHEET_PROTEOME_IPL,
+        numerator_strain="A10_F63_I1",
+        denominator_strain=EVOLVED_ISOLATE_PARENT,
+        isoprenol_g_per_l=TALE_DOSE_G_PER_L,
+    ),
+    FoldChangeContrast(
+        sheet=SHEET_PROTEOME_M9G_ALT,
+        numerator_strain="A12_F53_I1",
+        denominator_strain=EVOLVED_ISOLATE_PARENT,
+        isoprenol_g_per_l=None,
+    ),
+    FoldChangeContrast(
+        sheet=SHEET_PROTEOME_IPL_ALT,
+        numerator_strain="A12_F53_I1",
+        denominator_strain=EVOLVED_ISOLATE_PARENT,
+        isoprenol_g_per_l=TALE_DOSE_G_PER_L,
+    ),
+)
+#: What one stored fold change IS: the difference of the two arms' Top3 log2 means,
+#: tested by Welch's two-sample t. The test is MEASURED rather than named by the release:
+#: :func:`assert_sheet_statistics` reproduces the released ``t-test_stat`` from the two
+#: sample SDs at n = 3 to 1.1e-12, and a population SD misses by a median of 0.45 t units.
+FOLD_CHANGE_MEASUREMENT_TYPE = "dia_nn_top3_log2_fold_change_welch_two_sample_t_test"
+FOLD_CHANGE_SCALE = FoldChangeScale.log2
+#: The correction behind the sheets' own ``p_adjusted(BH)`` column, named in its header.
+FOLD_CHANGE_P_VALUE_ADJUSTMENT = "benjamini_hochberg"
+
+
+def unplaceable_protein_keys(
+    genome: PPutidaKT2440Genome, keys: Iterable[str]
+) -> dict[str, str]:
+    """``{released key: its resolution status}`` for keys the assembly has no gene at.
+
+    Measured on the pinned workbook: three keys of the union over the four contrast
+    sheets, all three on ``Proteome_A10F63I1vsIPL400_G+4IP`` alone -- ``PP_0985``
+    (``non_gene_feature``), ``PP_2271`` and ``PP_5287`` (``retired``). The absolute family
+    never meets them because its key set is the INTERSECTION of each strain's two arms,
+    and a contrast's key set is one sheet's own rows. A key with no gene locus has no gene
+    node to key its ratio to, so it is dropped and ledgered rather than stored.
+    """
+    out: dict[str, str] = {}
+    for key in keys:
+        resolution = genome.resolve_gene_name(key)
+        if (
+            resolution.status is not GeneNameStatus.CURRENT
+            or str(resolution.systematic_name) != key
+        ):
+            out[key] = str(resolution.status)
+    return out
+
+
+def fold_change_reference_basis(
+    contrast: FoldChangeContrast, denominator_column: str
+) -> str:
+    """Name the denominator in the source's own terms, per sheet.
+
+    The column name is carried because it is what proves the direction on these bytes,
+    and the sheet name because two sheets name the same denominator column (both M9G
+    exports carry ``log2_mean_IPL400_M9G``), so the pair is what locates a stored record
+    back in the workbook. The genotype string is Supplementary Table 1's own, and the
+    SAME content rides this record's ``genome_reference`` typed as a
+    ``BacterialStrainBackground``, so the denominator is a stated genotype and not only a
+    sentence.
+    """
+    return (
+        f"{contrast.denominator_strain}, the parent starting strain, in the same medium "
+        f"and the same export: the {denominator_column!r} arm of Supplementary Data 1's "
+        f"{contrast.sheet} sheet. Its genotype is "
+        f"'{SI1_STATEMENTS['ipl400_genotype']}' (Supplementary Table 1), carried typed "
+        "on this record's genome_reference as a BacterialStrainBackground of seven "
+        "full_deletion alleles plus PP_2676 as a partial_deletion"
+    )
+
+
+def assert_fold_change_direction(
+    path: str, contrast: FoldChangeContrast
+) -> dict[str, str]:
+    """Prove arm A is the NUMERATOR strain on this sheet's own bytes.
+
+    Two things are asserted and neither is inferred from the sheet's name: the arm
+    columns ``PROTEOME_ARMS`` declares are the ones the header carries, and the
+    numerator's mean column comes BEFORE the denominator's, which is what ``A/B`` means.
+    The sibling ``IPL400vs*`` sheets fail the second, which is the flip this guards.
+    """
+    numerator_suffix, denominator_suffix = PROTEOME_ARMS[contrast.sheet]
+    header, _ = _sheet_rows(path, contrast.sheet)
+    numerator_column = f"log2_mean_{numerator_suffix}"
+    denominator_column = f"log2_mean_{denominator_suffix}"
+    absent = [c for c in (numerator_column, denominator_column) if c not in header]
+    if absent:
+        raise SheetExtractionError(f"{contrast.sheet} is missing columns {absent}")
+    if header.index(numerator_column) > header.index(denominator_column):
+        raise CrossSourceError(
+            f"{contrast.sheet}: {denominator_column} comes before {numerator_column}, so "
+            f"log2_Fold_change_A/B is {contrast.denominator_strain} over "
+            f"{contrast.numerator_strain} and the stored sign would be inverted"
+        )
+    if not denominator_suffix.startswith(contrast.denominator_strain):
+        raise CrossSourceError(
+            f"{contrast.sheet}: arm B is {denominator_suffix!r}, not an arm of "
+            f"{contrast.denominator_strain}"
+        )
+    return {
+        "sheet": contrast.sheet,
+        "arm_a": numerator_column,
+        "arm_b": denominator_column,
+        "numerator_strain": contrast.numerator_strain,
+        "denominator_strain": contrast.denominator_strain,
+    }
+
+
+def fold_change_phenotype(
+    rows: Sequence[ProteomeRow], *, reference_basis: str
+) -> ProteinFoldChangePhenotype:
+    """One sheet's released log2 fold changes with their test, SE and replicate count.
+
+    ``protein_fold_change_se`` is the Welch standard error of the stored difference,
+    ``sqrt((sd_A^2 + sd_B^2) / n)``, which is not a free derivation: it is the exact
+    denominator the released ``t-test_stat`` divides by, and
+    :func:`assert_sheet_statistics` has already proved that identity on every stored row.
+    """
+    fold_change: dict[str, float] = {}
+    standard_error: dict[str, float] = {}
+    p_values: dict[str, float] = {}
+    adjusted: dict[str, float] = {}
+    for row in rows:
+        fold_change[row.locus_tag] = row.log2_fold_change
+        standard_error[row.locus_tag] = math.sqrt(
+            (row.test_sd**2 + row.parent_sd**2) / PROTEOME_N_REPLICATES
+        )
+        p_values[row.locus_tag] = row.p_value
+        adjusted[row.locus_tag] = row.p_value_adjusted
+    if not fold_change:
+        raise SheetExtractionError("a contrast with no stored protein key")
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=fold_change,
+        fold_change_scale=FOLD_CHANGE_SCALE,
+        reference_basis=reference_basis,
+        protein_fold_change_se=standard_error,
+        protein_fold_change_p_value=p_values,
+        protein_fold_change_p_value_adjusted=adjusted,
+        p_value_adjustment_method=FOLD_CHANGE_P_VALUE_ADJUSTMENT,
+        n_replicates=dict.fromkeys(fold_change, PROTEOME_N_REPLICATES),
+        measurement_type=FOLD_CHANGE_MEASUREMENT_TYPE,
+    )
+
+
+def fold_change_reference_phenotype(
+    phenotype: ProteinFoldChangePhenotype,
+) -> ProteinFoldChangePhenotype:
+    """The denominator arm: the neutral value of this record's scale, per stored key."""
+    return ProteinFoldChangePhenotype(
+        protein_fold_change=phenotype.neutral_reference(),
+        fold_change_scale=phenotype.fold_change_scale,
+        reference_basis=phenotype.reference_basis,
+        n_replicates=dict(phenotype.n_replicates),
+        measurement_type=phenotype.measurement_type,
+    )
+
+
+# --------------------------------------------------------------------------- #
 # The retention ledger
 # --------------------------------------------------------------------------- #
 class DropRule(BaseModel):
@@ -3415,6 +3642,417 @@ class ProteomeLim2025Dataset(ExperimentDataset):
 
 
 # --------------------------------------------------------------------------- #
+# Family 3: the released isolate-vs-parent proteome fold changes
+# --------------------------------------------------------------------------- #
+#: The three sheets this loader does NOT store, each with the measurement that refused
+#: it. Both reasons are read off the pinned workbook and the pinned paper.md, and the
+#: FIRST one is the operative one: the medium is fully stated by the Methods
+#: (``SOURCED_VALUES["piy670_production_medium"]``), which corrects the reason the note
+#: first recorded.
+FOLD_CHANGE_REFUSALS: dict[str, str] = {
+    sheet: "the released contrast puts the EVOLVED ISOLATE in the denominator "
+    "(log2_Fold_change_A/B is log2_mean_IPL400_pIY670 over "
+    "log2_mean_A10F63I1_pIY670, measured off this sheet's own header), so the "
+    "denominator arm's genomic content would have to be stated on the "
+    "strain-BACKGROUND axis. A called variant is no BacterialBackgroundAllele "
+    "(genotype_gaps.json), so a record here would either name a denominator it cannot "
+    "write or invert the sign. Separately, MEDIA_LIBRARY carries no M9 at 20 g/L "
+    "glucose with 50 mg/L kanamycin and 2 g/L arabinose, which the Methods DO state, so "
+    "that entry is a value-surface addition and not a provenance gap"
+    for sheet in SHEETS_PIY670
+}
+
+
+@register_dataset
+class ProteomeFoldChangeLim2025Dataset(ExperimentDataset):
+    """Lim 2025's four released evolved-isolate-over-IPL400 proteome contrasts.
+
+    The RELATIVE sibling of :class:`ProteomeLim2025Dataset`: that class stores each
+    strain's absolute Top3 log2 level against its OWN unstressed arm, this one stores the
+    ratio the release itself publishes, which is a different measurement and so a
+    different experiment class. One record per ``Proteome_<isolate>vsIPL400_<medium>``
+    sheet: two evolved isolates (A10_F63_I1, A12_F53_I1) x two conditions (M9 at 4 g/L
+    glucose, and the same with 4 g/L isoprenol), each carrying that sheet's
+    ``log2_Fold_change_A/B``, its ``p-value``, its ``p_adjusted(BH)`` and the Welch
+    standard error of the stored difference.
+
+    THE DENOMINATOR IS A STATED GENOTYPE, NOT A SENTENCE. ``reference_basis`` names
+    IPL400 in the source's own terms and quotes Supplementary Table 1's genotype string,
+    and the same content rides ``genome_reference`` as the IPL400
+    ``BacterialStrainBackground`` -- seven ``full_deletion`` alleles plus ``PP_2676`` as a
+    ``partial_deletion``, each with a typed ``deleted_span`` gap. That background is EXACT
+    here rather than a floor, which is the one way this family is better off than the
+    absolute one: the denominator arm of these four contrasts literally IS IPL400, while
+    an absolute evolved-isolate record's reference arm is that isolate unstressed, whose
+    called variants no background allele can carry. The numerator rides the experiment's
+    ``genotype`` as IPL400's seven designed deletions plus the isolate's own called
+    variants, which is the shape ``ProteomeFoldChangeCarruthers2025Dataset`` uses (its
+    numerator genotype carries the pathway its non-targeting control also has).
+
+    BOTH ARMS SHARE ONE CONDITION, so ``environment_reference`` is this record's own
+    environment: a fold change between two strains in the same medium at the same dose
+    has no second condition, unlike the absolute records whose reference arm is the
+    unstressed one.
+
+    THE DIRECTION IS READ OFF EACH SHEET, NEVER OFF ITS NAME
+    (:func:`assert_fold_change_direction`). The same workbook's three ``IPL400vs*``
+    sheets put the PARENT in arm A, so ``log2_Fold_change_A/B`` means the opposite thing
+    there; a loader that trusted the family name would store four inverted signs. Those
+    three sheets are refused, and for the genotype reason rather than the medium one:
+    their denominator is an evolved isolate, and an evolved clone cannot be written on
+    the background axis (:data:`FOLD_CHANGE_REFUSALS`). The Methods DO state their medium
+    verbatim (20 g/L glucose, 50 ug/mL kanamycin, 2 g/L arabinose induction), which
+    corrects the medium-only reason recorded when #731 was still open; that medium would
+    additionally need a ``MEDIA_LIBRARY`` entry.
+
+    SIX PROTEIN KEYS GO, AND SEVEN STAY THAT THE ABSOLUTE RECORDS DROP. The three gene
+    symbols the sheets file under two paralogous loci each (``Ubid``, ``Pyrc``, ``Dapa``)
+    are dropped for the same measured reason as in the absolute family: one protein
+    group's statistics cannot be attributed to either paralog, and those are exactly the
+    rows whose released t does not reproduce at n = 3. The seven loci released under
+    isoprenol but not in the unstressed arm are NOT dropped here, because a contrast needs
+    no key-matched second arm: both of its arms are columns of one sheet.
+    """
+
+    REFERENCE_STRAIN: ClassVar[str] = "KT2440"
+    PARENT_STRAIN: ClassVar[str] = EVOLVED_ISOLATE_PARENT
+
+    def __init__(
+        self,
+        root: str = PROTEOME_FOLD_CHANGE_ROOT_REL,
+        io_workers: int = 0,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        pputida_genome: PPutidaKT2440Genome | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; ``pputida_genome`` is injected by the build entry points."""
+        self.pputida_genome = pputida_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinFoldChangeExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Both consumed supplements, linked from the raw mirror."""
+        return [raw.name for raw in RAW_FILES]
+
+    def download(self) -> None:
+        """Link each mirror file into ``raw/`` after checking its manifest pin."""
+        _link_mirror_files(self.raw_dir, _data_root())
+        log.info("Lim 2025 raw files linked into %s (sha256 verified)", self.raw_dir)
+
+    def _genome(self) -> PPutidaKT2440Genome:
+        """The injected KT2440 genome, or the pinned assembly's default cache."""
+        if self.pputida_genome is None:
+            self.pputida_genome = bacterial_genome("pputida", "KT2440")
+        expected = BACTERIAL_ASSEMBLY_SETS["KT2440"]
+        if self.pputida_genome.ASSEMBLY_SET != expected:
+            raise ValueError(
+                f"{type(self).__name__} needs the {expected} genome, got "
+                f"{self.pputida_genome.ASSEMBLY_SET}"
+            )
+        return self.pputida_genome
+
+    def _drop_log(
+        self,
+        *,
+        n_rows: int,
+        shared_symbols: Sequence[str],
+        unplaceable: Mapping[str, str],
+        kept_proteins: Mapping[str, int],
+    ) -> DropLog:
+        """Every released contrast and every dropped protein key, counted."""
+        return DropLog(
+            dataset=self.name,
+            source_rows=n_rows,
+            reference_rows=[
+                f"{contrast.denominator_strain} in the same condition (arm B of "
+                f"{contrast.sheet}), which is the denominator of the stored ratio and "
+                "so the neutral value of its scale"
+                for contrast in FOLD_CHANGE_CONTRASTS
+            ],
+            candidate_records=len(FOLD_CHANGE_CONTRASTS) + len(FOLD_CHANGE_REFUSALS),
+            kept_records=len(FOLD_CHANGE_CONTRASTS),
+            dropped_records=len(FOLD_CHANGE_REFUSALS),
+            rules=[
+                DropRule(
+                    rule="denominator_arm_is_an_evolved_clone",
+                    scope="record",
+                    description="the pIY670 production contrasts invert the direction: "
+                    "arm A is IPL400 and arm B is the evolved isolate, so the record's "
+                    "denominator would be a clone whose called variants no "
+                    "BacterialBackgroundAllele can state. The medium is NOT the reason, "
+                    "which this build corrects: the Methods state it verbatim "
+                    "(SOURCED_VALUES['piy670_production_medium']), although MEDIA_LIBRARY "
+                    "would still need an M9 at 20 g/L glucose with kanamycin",
+                    n_items=len(FOLD_CHANGE_REFUSALS),
+                    items=sorted(FOLD_CHANGE_REFUSALS),
+                ),
+                DropRule(
+                    rule="gene_symbol_filed_under_two_paralogous_loci",
+                    scope="protein_key",
+                    description="the sheets give one protein group's mean and SD to both "
+                    "loci of three symbols (Ubid, Pyrc, Dapa) under distinct UniProt "
+                    "accessions, and those rows are exactly the ones whose released t "
+                    "statistic does not reproduce at n = 3; the statistics cannot be "
+                    "attributed to either paralog, so neither can their ratio",
+                    n_items=len(shared_symbols),
+                    items=list(shared_symbols),
+                ),
+                DropRule(
+                    rule="released_key_is_not_a_current_gene_locus_of_the_assembly",
+                    scope="protein_key",
+                    description="the pinned pputida_KT2440_ASM756v2 annotation carries no "
+                    "CURRENT gene at these released keys, so there is no gene node to "
+                    "key their ratio to. Measured over the union of the four sheets, and "
+                    "all of them sit on Proteome_A10F63I1vsIPL400_G+4IP alone; the "
+                    "absolute family never meets them because its key set is the "
+                    "intersection of each strain's two arms. Statuses: "
+                    + ", ".join(
+                        f"{key} ({status})"
+                        for key, status in sorted(unplaceable.items())
+                    ),
+                    n_items=len(unplaceable),
+                    items=sorted(unplaceable),
+                ),
+            ],
+            notes=[
+                "one record per released contrast column: "
+                + "; ".join(
+                    f"{contrast.sheet} -> {contrast.numerator_strain} over "
+                    f"{contrast.denominator_strain} "
+                    f"({kept_proteins[contrast.sheet]} protein keys)"
+                    for contrast in FOLD_CHANGE_CONTRASTS
+                ),
+                "the seven loci released under isoprenol but absent from the unstressed "
+                "arm are kept here and dropped by the absolute family: a ratio is built "
+                "from two columns of ONE sheet, so it needs no key-matched second arm",
+            ],
+        )
+
+    @post_process
+    def process(self) -> None:
+        """Build one fold-change record per released contrast sheet; write the LMDB."""
+        verify_raw_files(self.raw_dir, DATA_SHA256)
+        path = osp.join(self.raw_dir, SI2_XLSX)
+
+        genome = self._genome()
+        sheet_rows = {
+            contrast.sheet: read_proteome_sheet(path, contrast.sheet)
+            for contrast in FOLD_CHANGE_CONTRASTS
+        }
+        shared_symbols = sorted(
+            set().union(
+                *(set(shared_symbol_loci(rows)) for rows in sheet_rows.values())
+            )
+        )
+        unplaceable = unplaceable_protein_keys(
+            genome,
+            sorted({row.locus_tag for rows in sheet_rows.values() for row in rows}),
+        )
+        skip = set(shared_symbols) | set(unplaceable)
+        kept_rows = {
+            sheet: [row for row in rows if row.locus_tag not in skip]
+            for sheet, rows in sheet_rows.items()
+        }
+        residuals = {
+            sheet: assert_sheet_statistics(rows, sheet=sheet)
+            for sheet, rows in kept_rows.items()
+        }
+        directions = [
+            assert_fold_change_direction(path, contrast)
+            for contrast in FOLD_CHANGE_CONTRASTS
+        ]
+
+        sample_key = read_sample_key(path)
+        for strain in (*EVOLVED_ISOLATE_CLONE_COLUMNS, self.PARENT_STRAIN):
+            for sample in PROTEOME_SAMPLE_NAMES[strain]:
+                token = sample_key.get(sample)
+                if token != PROTEOME_REPLICATE_TOKEN:
+                    raise SheetExtractionError(
+                        f"{SHEET_SAMPLE_KEY} gives {sample!r} replicates {token!r}, not "
+                        f"{PROTEOME_REPLICATE_TOKEN!r}; the stored n_replicates would be "
+                        "wrong"
+                    )
+
+        all_keys = sorted(
+            {row.locus_tag for rows in kept_rows.values() for row in rows}
+        )
+        stored, report = reconcile_locus_tags(
+            genome, pd.Series(all_keys), label=self.name
+        )
+        report.require_resolved(MIN_RESOLVED_FRACTION)
+        if sorted(stored.tolist()) != all_keys:
+            raise RuntimeError(
+                f"{self.name}: reconciliation moved a released locus tag, which would "
+                "re-key the fold-change map"
+            )
+        symbols, genotype_report = reconcile_genotype_loci(
+            genome, label=f"{self.name} genotype"
+        )
+
+        variant_calls = read_variant_calls(path)
+        founder_check = assert_founder_columns(variant_calls)
+        clone_columns = list(EVOLVED_ISOLATE_CLONE_COLUMNS.values())
+        variant_loci, variant_report = resolve_variant_loci(
+            genome,
+            clone_variant_tokens(variant_calls, clone_columns),
+            label=f"{self.name} called-variant loci",
+        )
+        called: dict[str, list[GenePerturbationType]] = {}
+        accounting: list[CalledVariantAccounting] = []
+        for isolate, clone_column in EVOLVED_ISOLATE_CLONE_COLUMNS.items():
+            perturbations, row_accounting = called_variant_perturbations(
+                clone_column, strain=isolate, calls=variant_calls, loci=variant_loci
+            )
+            called[isolate] = perturbations
+            accounting.append(row_accounting)
+
+        drop_log = self._drop_log(
+            n_rows=sum(len(rows) for rows in sheet_rows.values()),
+            shared_symbols=shared_symbols,
+            unplaceable=unplaceable,
+            kept_proteins={sheet: len(rows) for sheet, rows in kept_rows.items()},
+        )
+        drop_log.check()
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        # The denominator arm of all four contrasts: IPL400's own designed content,
+        # stated typed rather than only named in reference_basis.
+        genome_reference = assembly_reference(
+            "KT2440", background=ipl_background(self.PARENT_STRAIN, symbols)
+        )
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        contrast_rows: list[dict[str, Any]] = []
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for index, contrast in enumerate(
+                tqdm(FOLD_CHANGE_CONTRASTS, desc="lim2025-proteome-fold-change")
+            ):
+                basis = fold_change_reference_basis(
+                    contrast, directions[index]["arm_b"]
+                )
+                phenotype = fold_change_phenotype(
+                    kept_rows[contrast.sheet], reference_basis=basis
+                )
+                environment = (
+                    unstressed_environment()
+                    if contrast.isoprenol_g_per_l is None
+                    else isoprenol_environment(
+                        contrast.isoprenol_g_per_l, PROTEOME_DURATION_GAP
+                    )
+                )
+                experiment = BacterialProteinFoldChangeExperiment(
+                    dataset_name=self.name,
+                    genotype=strain_genotype(
+                        contrast.numerator_strain,
+                        symbols,
+                        called[contrast.numerator_strain],
+                    ),
+                    environment=environment,
+                    phenotype=phenotype,
+                )
+                reference = BacterialProteinFoldChangeExperimentReference(
+                    dataset_name=self.name,
+                    genome_reference=genome_reference,
+                    environment_reference=environment.model_copy(),
+                    phenotype_reference=fold_change_reference_phenotype(phenotype),
+                )
+                txn.put(
+                    f"{index}".encode(),
+                    self._intern_record(experiment, reference, PUBLICATION, itxn),
+                )
+                contrast_rows.append(
+                    {
+                        "sheet": contrast.sheet,
+                        "numerator_strain": contrast.numerator_strain,
+                        "denominator_strain": contrast.denominator_strain,
+                        "isoprenol_g_per_l": contrast.isoprenol_g_per_l,
+                        "n_released_rows": len(sheet_rows[contrast.sheet]),
+                        "n_protein_keys": len(phenotype.protein_fold_change),
+                        "reference_basis": basis,
+                    }
+                )
+        env.close()
+        interned_env.close()
+
+        out = Path(self.preprocess_dir)
+        (out / "dropped_records.json").write_text(drop_log.model_dump_json(indent=2))
+        (out / "identifier_reconciliation.json").write_text(
+            report.model_dump_json(indent=2)
+        )
+        (out / "genotype_reconciliation.json").write_text(
+            genotype_report.model_dump_json(indent=2)
+        )
+        (out / "genotype_gaps.json").write_text(
+            json.dumps([gap.model_dump() for gap in genotype_gaps()], indent=2)
+        )
+        (out / "called_variant_perturbations.json").write_text(
+            json.dumps(
+                {
+                    "founder_check": founder_check.model_dump(),
+                    "evolved_isolate_parent": EVOLVED_ISOLATE_PARENT,
+                    "parent_quote": SOURCED_VALUES["evolved_isolate_parent"].quote,
+                    "locus_reconciliation": json.loads(
+                        variant_report.model_dump_json()
+                    ),
+                    "per_record": [row.model_dump() for row in accounting],
+                },
+                indent=2,
+            )
+        )
+        (out / "fold_change_direction.json").write_text(
+            json.dumps(
+                {
+                    "si2_xlsx_sha256": SI2_XLSX_SHA256,
+                    "loaded": directions,
+                    "refused": FOLD_CHANGE_REFUSALS,
+                    "refused_medium_quote": str(
+                        SOURCED_VALUES["piy670_production_medium"].quote
+                    ),
+                    "denominator_statement": SI1_STATEMENTS[
+                        "proteome_contrast_denominator"
+                    ],
+                    "welch_t_worst_residual": residuals,
+                    "welch_tolerance": WELCH_TOLERANCE,
+                    "n_replicates": PROTEOME_N_REPLICATES,
+                    "se_definition": "sqrt((sd_A^2 + sd_B^2) / n), the denominator the "
+                    "released t-test_stat divides by",
+                },
+                indent=2,
+            )
+        )
+        pd.DataFrame(contrast_rows).to_csv(out / "contrasts.csv", index=False)
+        log.info(
+            "Lim 2025 proteome fold change: %d records (%s) over %s protein keys; %d "
+            "keys dropped as shared symbols; %d sheets refused (%s)",
+            len(FOLD_CHANGE_CONTRASTS),
+            ", ".join(c.sheet for c in FOLD_CHANGE_CONTRASTS),
+            {sheet: len(rows) for sheet, rows in kept_rows.items()},
+            len(shared_symbols),
+            len(FOLD_CHANGE_REFUSALS),
+            ", ".join(sorted(FOLD_CHANGE_REFUSALS)),
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError
+
+
+# --------------------------------------------------------------------------- #
 # Verification (L0-L4) of the built LMDBs
 # --------------------------------------------------------------------------- #
 TOLERANCE_PROVENANCE = Provenance(
@@ -3424,6 +4062,16 @@ TOLERANCE_PROVENANCE = Provenance(
     method="log2 of each starting strain's mean initial TALE growth rate over KT2440's, "
     "plus the Fig. 3A text's 1.6-fold for dPP_3024; reference = KT2440 (0)",
     page="Metab. Eng. 2025, Supplementary Table 3",
+)
+FOLD_CHANGE_PROVENANCE = Provenance(
+    source_uri=f"https://doi.org/{PAPER_DOI} (Supplementary Data 1, proteome sheets)",
+    citation_key=CITATION_KEY,
+    sha256=SI2_XLSX_SHA256,
+    method="each Proteome_<isolate>vsIPL400_<medium> sheet's released "
+    "log2_Fold_change_A/B with its p-value, its p_adjusted(BH) and the Welch SE "
+    "sqrt((sd_A^2 + sd_B^2) / 3); reference = IPL400 in the same condition, the neutral "
+    "value of the log2 scale",
+    page="Metab. Eng. 2025, Supplementary Data 1",
 )
 PROTEOME_PROVENANCE = Provenance(
     source_uri=f"https://doi.org/{PAPER_DOI} (Supplementary Data 1, proteome sheets)",
@@ -3611,10 +4259,186 @@ def run_proteome_verification(data_root: str | None = None) -> VerificationRepor
     return report
 
 
-def run_verification(data_root: str | None = None) -> tuple[VerificationReport, ...]:
-    """Run L0-L4 on both built LMDBs."""
+def run_fold_change_verification(data_root: str | None = None) -> VerificationReport:
+    """Run L0-L4 on the built fold-change LMDB and write its report.
+
+    Three rows beyond the shared fold-change gate, each a claim this family can make
+    that the absolute one cannot: every stored ratio is the difference of its sheet's own
+    two arm means (L2, re-read off the pinned workbook, which is also the direction
+    proof), every record's reference genome carries the DENOMINATOR strain's background
+    and its ``reference_basis`` names that strain (L3), and both arms of each record sit
+    in the same condition (L3).
+    """
+    from torchcell.verification.protein_fold_change import (
+        verify_protein_fold_change_dataset,
+    )
+    from torchcell.verification.runners import (
+        _gene_set_for_reference,
+        _write_report,
+        bacterial_protein_fold_change_locus_set,
+        load_records,
+    )
+
     base = data_root or _data_root()
-    return (run_tolerance_verification(base), run_proteome_verification(base))
+    abs_root = osp.join(base, PROTEOME_FOLD_CHANGE_ROOT_REL)
+    records = load_records(abs_root)
+    report = verify_protein_fold_change_dataset(
+        records,
+        dataset_name=ProteomeFoldChangeLim2025Dataset.__name__,
+        provenance=FOLD_CHANGE_PROVENANCE,
+        expected_count=_expected_count(abs_root),
+    )
+    report.add(_l2_fold_change_equals_its_sheet(records, abs_root))
+    report.add(_l3_reference_is_the_denominator_strain(records))
+    report.add(_l3_both_arms_share_one_condition(records))
+    references = {
+        json.dumps(rec["reference"]["genome_reference"], sort_keys=True)
+        for rec in records
+    }
+    universe: set[str] = set()
+    for reference in references:
+        universe |= _gene_set_for_reference(json.loads(reference), base)
+    # No ``_assert_site_identifiers`` row here: the family's own locus set already
+    # replaces a site-keyed leaf with its flanking loci, so the stored identifiers
+    # reaching this row are locus tags by construction and the split would be vacuous.
+    measured = bacterial_protein_fold_change_locus_set(records)
+    missing = sorted(measured - universe)
+    report.add(
+        LevelResult(
+            level=Level.L4,
+            name="gene_containment_kt2440_tested_and_perturbed_loci",
+            passed=not missing,
+            message=f"{len(measured) - len(missing)} of {len(measured)} tested and "
+            f"perturbed loci are {KT2440_ASSEMBLY_SET} gene rows",
+            details={
+                "n_measured": len(measured),
+                "n_universe": len(universe),
+                "missing_examples": missing[:20],
+            },
+        )
+    )
+    _audit_sourced_values(report, base)
+    _write_report(report, osp.join(abs_root, "preprocess"))
+    return report
+
+
+def _l2_fold_change_equals_its_sheet(
+    records: Sequence[Mapping[str, Any]], abs_root: str
+) -> LevelResult:
+    """L2: each stored ratio is its sheet's arm A minus arm B, re-read from the workbook.
+
+    This is also the direction row: the difference is taken numerator-minus-denominator
+    off ``PROTEOME_ARMS``, so a sheet whose arms had swapped would show up here as a
+    sign error on every key rather than as a silently inverted record.
+    """
+    path = osp.join(abs_root, "raw", SI2_XLSX)
+    by_basis = {
+        contrast.sheet: {
+            row.locus_tag: row.test_mean - row.parent_mean
+            for row in read_proteome_sheet(path, contrast.sheet)
+        }
+        for contrast in FOLD_CHANGE_CONTRASTS
+    }
+    mismatched: list[str] = []
+    checked = 0
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        basis = str(phenotype["reference_basis"])
+        sheets = [sheet for sheet in by_basis if sheet in basis]
+        if len(sheets) != 1:
+            raise RuntimeError(
+                f"a stored reference_basis names {len(sheets)} of the four contrast "
+                "sheets, so the record cannot be matched to its own bytes"
+            )
+        released = by_basis[sheets[0]]
+        for tag, stored in phenotype["protein_fold_change"].items():
+            checked += 1
+            if tag not in released or abs(released[tag] - float(stored)) > (
+                FOLD_CHANGE_TOLERANCE
+            ):
+                mismatched.append(f"{sheets[0]}/{tag} stored {stored}")
+    return LevelResult(
+        level=Level.L2,
+        name="fold_change_equals_arm_a_minus_arm_b",
+        passed=bool(checked) and not mismatched,
+        message=f"{checked - len(mismatched)} of {checked} stored log2 ratios equal "
+        "their sheet's numerator mean minus its denominator mean",
+        details={"n_checked": checked, "examples": mismatched[:20]},
+    )
+
+
+def _l3_reference_is_the_denominator_strain(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L3: the reference genome carries the denominator strain, typed and named.
+
+    The denominator is not prose here: ``reference_basis`` names IPL400 and the record's
+    ``genome_reference`` background states the SAME content as ``full_deletion`` alleles
+    plus the ``PP_2676`` truncation, so the two must agree record by record.
+    """
+    bad: list[str] = []
+    alleles: set[int] = set()
+    for index, record in enumerate(records):
+        basis = str(record["experiment"]["phenotype"]["reference_basis"])
+        background = record["reference"]["genome_reference"].get("background")
+        if background is None:
+            bad.append(f"record {index}: no background on the reference genome")
+            continue
+        names = {
+            str(allele["systematic_gene_name"]) for allele in background["alleles"]
+        }
+        statement = str(background["genotype_statement"])
+        alleles.add(len(background["alleles"]))
+        if (
+            EVOLVED_ISOLATE_PARENT not in basis
+            or statement != SI1_STATEMENTS["ipl400_genotype"]
+            or names != {*designed_deletion_tags(EVOLVED_ISOLATE_PARENT), PP2676_LOCUS}
+        ):
+            bad.append(f"record {index}: {statement!r} against basis {basis[:60]!r}")
+    return LevelResult(
+        level=Level.L3,
+        name="reference_genome_is_the_named_denominator_strain",
+        passed=bool(records) and not bad,
+        message=f"{len(records) - len(bad)} of {len(records)} records state "
+        f"{EVOLVED_ISOLATE_PARENT} as both the named denominator and the reference "
+        f"genome's background ({sorted(alleles)} alleles)",
+        details={"n_bad": len(bad), "examples": bad[:20]},
+    )
+
+
+def _l3_both_arms_share_one_condition(
+    records: Sequence[Mapping[str, Any]],
+) -> LevelResult:
+    """L3: a strain-vs-strain ratio has ONE condition, so the two arms must match.
+
+    The absolute family's reference arm is the unstressed condition; here the denominator
+    is a different strain in the SAME medium at the SAME dose, so an environment that
+    differed between the arms would make the stored number a two-factor contrast.
+    """
+    differing: list[str] = []
+    for index, record in enumerate(records):
+        if json.dumps(
+            record["experiment"]["environment"], sort_keys=True
+        ) != json.dumps(record["reference"]["environment_reference"], sort_keys=True):
+            differing.append(f"record {index}")
+    return LevelResult(
+        level=Level.L3,
+        name="both_arms_of_the_contrast_share_one_condition",
+        passed=bool(records) and not differing,
+        message=f"{len(records) - len(differing)} of {len(records)} records measure "
+        "both arms in one environment",
+        details={"n_differing": len(differing), "examples": differing[:20]},
+    )
+
+
+def run_verification(data_root: str | None = None) -> tuple[VerificationReport, ...]:
+    """Run L0-L4 on all three built LMDBs."""
+    base = data_root or _data_root()
+    return (
+        run_tolerance_verification(base),
+        run_proteome_verification(base),
+        run_fold_change_verification(base),
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -3634,8 +4458,8 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="run the recorded Elsevier retriever into --download-dir first",
     )
-    sub.add_parser("build", help="build (or load) both dev-tree LMDBs")
-    sub.add_parser("verify", help="run L0-L4 on both built dev-tree LMDBs")
+    sub.add_parser("build", help="build (or load) all three dev-tree LMDBs")
+    sub.add_parser("verify", help="run L0-L4 on all three built dev-tree LMDBs")
     args = parser.parse_args(argv)
 
     load_dotenv()
@@ -3652,6 +4476,7 @@ def main(argv: list[str] | None = None) -> int:
         for cls, rel in (
             (IsoprenolToleranceLim2025Dataset, TOLERANCE_ROOT_REL),
             (ProteomeLim2025Dataset, PROTEOME_ROOT_REL),
+            (ProteomeFoldChangeLim2025Dataset, PROTEOME_FOLD_CHANGE_ROOT_REL),
         ):
             dataset = cls(root=osp.join(data_root, rel), pputida_genome=genome)
             print(f"{cls.__name__}: len = {len(dataset)}")

@@ -2653,4 +2653,5 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         "protein_fold_change_caglar2017": (
             "data/torchcell/protein_fold_change_caglar2017"
         ),
+        "proteome_fold_change_lim2025": ("data/torchcell/proteome_fold_change_lim2025"),
     }

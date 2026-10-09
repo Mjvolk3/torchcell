@@ -204,3 +204,33 @@ eleven.
 the reference), and the `environment response phenotype` pair. No record carries a phage,
 so that lane is off, and the aTc inducer is in the medium rather than the environment,
 which is what leaves pinene as the only environment perturbation.
+
+### Release discrepancies this loader resolved, and how
+
+Recorded first in
+[[experiments.036-dataset-fixes-before-kg-build.scripts.niu2019_release_loadability]];
+what the loader did with each:
+
+- **The growth timepoint is 10 h in the SI footnote and 12 h in Methods 2.4.** The loader
+  stores 12 h, on Methods ("The cultures were incubated at 37 C (200 rpm) for 12 h") plus
+  an arithmetic check the release supplies itself: the main text's absolute ODs at 12 h,
+  0.451 +- 0.013 against 0.127 +- 0.009, divide to 3.5512, which is the 3.55 printed for
+  the activation combination strain. The ratio and the 12 h reading agree, so 12 h is the
+  reading the numbers support.
+- **`muts` in Suppl. Table 3 is `mutS` in the main table.** `spacer_of` matches
+  case-insensitively, because a case difference in one symbol is not a second gene, and
+  `perturbed_gene_name` is the pinned annotation's own spelling rather than either
+  released one. That is also what keeps one locus from acquiring two common names, which
+  the verifier's canonical-name rule flags.
+- **`paper.md` lines 186 to 222 are a DIFFERENT article** (DeMott and Dedon on a
+  phosphorothioate antiviral mechanism), bundled into the same PDF by the 2020 erratum
+  list. The loader never parses `paper.md`; it reads it only through `SourcedValue`
+  quotes, each of which is audited for presence, so the foreign tail cannot reach a
+  record. The two combination strains' numbers are module constants with their quotes
+  beside them rather than a parse of that file.
+- **Suppl. Table 2's footnote says the variants "were identified with a frequency of 1.0"
+  while ten rows are below 1.00 and one is blank**, and main Table 2's synonymous /
+  nonsynonymous tallies do not match the SI rows. Both belong to the variant table, which
+  this dataset does not store; they are #731's to carry when a release measures `YZFP`.
+- **The erratum** (doi `10.1016/j.synbio.2020.10.004`) corrects a missing
+  competing-interest statement and no data, so nothing here is affected.

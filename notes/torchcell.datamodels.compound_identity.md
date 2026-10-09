@@ -284,8 +284,10 @@ The pass requires re-querying PubChem for every row. Measured on 2026.10.09 from
 GilaHyper: PubChem answers **HTTP 429 with an HTML body** to every request, including
 trivial ones (`water`, `glucose`, `ethanol`), from any User-Agent and with no
 `Retry-After` and no `X-Throttling-Control` header. The block is IP-based: a
-browser-like User-Agent, no User-Agent, and IPv6 all behave the same, and it outlasted
-over an hour of retries at one request per 1.2 s and a 20-minute backoff. So the table was
+browser-like User-Agent, no User-Agent, and IPv6 all behave the same. The curator's own
+abort names the shape of it: `PubChem stayed busy after 0 busy and 21 rate-limited
+retries for .../name/tolfenamic%20acid/...`, i.e. 21 consecutive attempts spaced a minute
+apart, every one a 429, with the dynamic-throttle budget untouched. So the table was
 NOT regenerated and `_TABLE_SHA256` is unchanged; a partially built table is not committed,
 because a missing row and an unqueried row are different claims.
 

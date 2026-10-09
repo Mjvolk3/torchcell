@@ -55,7 +55,9 @@ passes a prepared `_Response` through, so a non-200 answer can be scripted.
 
 Measured the same day from GilaHyper: PubChem answered 429 to EVERY request, including
 `water` and `glucose`, from any User-Agent, with no `Retry-After`, for over an hour. The
-block is IP-based (a browser-like User-Agent, no User-Agent and IPv6 behave identically),
+new abort message is the measurement: `0 busy and 21 rate-limited retries` for
+`tolfenamic acid`, i.e. 21 consecutive minute-spaced attempts, all 429. The block is
+IP-based (a browser-like User-Agent, no User-Agent and IPv6 behave identically),
 so the fix makes the pass survivable but cannot make it run. Resume with the command in
 the module docstring; `--cache` makes an interrupted pass resume without re-querying, so a
 block costs time rather than progress.

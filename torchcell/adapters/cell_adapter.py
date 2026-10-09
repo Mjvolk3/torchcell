@@ -1139,6 +1139,16 @@ class CellAdapter:
     # An added compound / physical factor / biologic is its own node, content-addressed
     # like a gene perturbation, so a condition such as "YPD + 0.4 M NaCl" is queryable
     # rather than only embedded in the environment's serialized_data.
+    #
+    # A `PhagePerturbation` is NOT emitted here: it has its own node class and its own
+    # method below, and both ids are the same composition projection, so a conf enabling
+    # both lanes would otherwise write one content id under two labels (issue #756). The
+    # two lanes PARTITION `environment.perturbations` -- phages to `phage perturbation`,
+    # every other leaf to `environment perturbation` -- so a dataset whose environment
+    # carries a phage AND a compound enables both and each leaf is written exactly once.
+    # The filter edits a SERVED method, which is adapter drift on every served dataset
+    # enabling it and therefore a full rebuild; it changes no served OUTPUT, since no
+    # served dataset's environment carries a phage.
 
     @staticmethod
     def _environment_perturbation_node_from(perturbation: Any) -> BioCypherNode:
@@ -1176,9 +1186,11 @@ class CellAdapter:
     def _environment_perturbation_node(
         self, data: dict[str, Any], method_name: str
     ) -> list[BioCypherNode]:
+        """One node per NON-phage perturbation of the environment; phages have their own."""
         return [
             self._environment_perturbation_node_from(perturbation)
             for perturbation in data["experiment"].environment.perturbations
+            if not isinstance(perturbation, PhagePerturbation)
         ]
 
     def _get_environment_perturbation_reference_nodes(self) -> list[BioCypherNode]:
@@ -1186,6 +1198,8 @@ class CellAdapter:
         seen_node_ids: set[str] = set()
         for data in tqdm(self.dataset.experiment_reference_index):
             for perturbation in data.reference.environment_reference.perturbations:
+                if isinstance(perturbation, PhagePerturbation):
+                    continue
                 node = self._environment_perturbation_node_from(perturbation)
                 if node.get_id() not in seen_node_ids:
                     seen_node_ids.add(node.get_id())
@@ -1194,13 +1208,13 @@ class CellAdapter:
 
     # --- Phage challenges (the environment axis of a phage-resistance screen) ---
     # A phage gets its OWN node class and method for the same reason `crispr construct`
-    # and `bacterial perturbation` do: `environment perturbation` is served, so giving it
-    # the MOI, the taxon and the accession as properties is a full rebuild, and the dose
-    # is not a concentration so it cannot ride the concentration columns. The served
-    # `_environment_perturbation_node` is NOT touched, which is what keeps this additive
-    # (it would emit a phage under the `environment perturbation` label, so a conf
-    # enables one class or the other and never both -- see the conf rule below).
-    # The id is the same composition projection the other environment-side nodes use, so
+    # and `bacterial perturbation` do: giving `environment perturbation` the MOI, the
+    # taxon and the accession as properties would change a served class, and the dose is
+    # not a concentration so it cannot ride the concentration columns.
+    # This method and `_environment_perturbation_node` PARTITION the environment's
+    # perturbations on `isinstance(..., PhagePerturbation)`, so a conf may enable both
+    # lanes and no content id is written under two labels (issue #756). The id is the
+    # same composition projection the other environment-side nodes use, so
     # `_environment_perturbation_to_environment_edges` addresses these nodes unchanged.
 
     @staticmethod

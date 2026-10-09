@@ -235,3 +235,110 @@ def test_a_dose_change_is_a_different_environment_and_perturbation_node() -> Non
         adapter, _record(strong), "environment perturbation"
     )
     assert weak_perturbation.get_id() != strong_perturbation.get_id()
+
+
+# --- The two environment-perturbation lanes partition the environment (issue #756) ---
+
+
+def _phage() -> s.PhagePerturbation:
+    return s.PhagePerturbation(
+        name="lambda", ncbi_taxid=10710, multiplicity_of_infection=1.0
+    )
+
+
+def _phage_and_compound() -> s.Environment:
+    """An environment carrying a phage AND a non-phage perturbation, in that order."""
+    environment = _environment(s.Temperature(value=37.0))
+    return environment.model_copy(
+        update={"perturbations": [_phage(), *environment.perturbations]}
+    )
+
+
+class _FakeReference:
+    def __init__(self, environment: s.Environment) -> None:
+        self.environment_reference = environment
+
+
+class _FakeReferenceIndexEntry:
+    def __init__(self, environment: s.Environment) -> None:
+        self.reference = _FakeReference(environment)
+
+
+class _FakeDataset:
+    def __init__(self, environment: s.Environment) -> None:
+        self.experiment_reference_index = [_FakeReferenceIndexEntry(environment)]
+
+
+def test_a_phage_is_written_by_the_phage_lane_only() -> None:
+    """A conf may enable BOTH lanes: each perturbation is written exactly once.
+
+    Before the fix the served ``_environment_perturbation_node`` emitted every
+    perturbation, a phage included, so enabling both classes wrote one content id under
+    ``environment perturbation`` and again under ``phage perturbation``, and the import
+    kept whichever row it read first. The lanes now split on the leaf's type.
+    """
+    adapter = _adapter()
+    environment = _phage_and_compound()
+    record = _record(environment)
+    phage, compound = environment.perturbations
+
+    environment_lane = _undecorated(CellAdapter._environment_perturbation_node)(
+        adapter, record, "environment perturbation"
+    )
+    phage_lane = _undecorated(CellAdapter._phage_perturbation_node)(
+        adapter, record, "phage perturbation"
+    )
+
+    assert [node.get_label() for node in environment_lane] == [
+        "environment perturbation"
+    ]
+    assert [node.get_label() for node in phage_lane] == ["phage perturbation"]
+    assert [node.get_id() for node in environment_lane] == [
+        identity_sha256(environment_perturbation_identity(compound))
+    ]
+    assert [node.get_id() for node in phage_lane] == [
+        identity_sha256(environment_perturbation_identity(phage))
+    ]
+    assert not {node.get_id() for node in environment_lane} & {
+        node.get_id() for node in phage_lane
+    }
+
+
+def test_both_lanes_together_cover_every_perturbation_edge() -> None:
+    """The edge method still emits one edge per perturbation, and both ends exist.
+
+    The edge lane is unchanged, so a conf that enables it must enable the node lane of
+    every perturbation KIND its records carry; with both lanes on, every edge source is a
+    node one lane emitted.
+    """
+    adapter = _adapter()
+    record = _record(_phage_and_compound())
+    emitted = {
+        node.get_id()
+        for lane in (
+            CellAdapter._environment_perturbation_node,
+            CellAdapter._phage_perturbation_node,
+        )
+        for node in _undecorated(lane)(adapter, record, "node")
+    }
+    edges = _undecorated(CellAdapter._environment_perturbation_to_environment_edges)(
+        adapter, record, "environment perturbation to environment"
+    )
+    assert len(edges) == 2
+    assert {edge.get_source_id() for edge in edges} == emitted
+
+
+def test_the_reference_lanes_split_the_same_way() -> None:
+    """The reference-side pair splits on the same predicate as the chunked pair."""
+    adapter = _adapter()
+    environment = _phage_and_compound()
+    adapter.dataset = cast(Any, _FakeDataset(environment))
+    phage, compound = environment.perturbations
+
+    assert [
+        node.get_id()
+        for node in adapter._get_environment_perturbation_reference_nodes()
+    ] == [identity_sha256(environment_perturbation_identity(compound))]
+    assert [
+        node.get_id() for node in adapter._get_phage_perturbation_reference_nodes()
+    ] == [identity_sha256(environment_perturbation_identity(phage))]

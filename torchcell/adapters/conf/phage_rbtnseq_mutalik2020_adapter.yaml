@@ -2,9 +2,11 @@
 # One TransposonInsertionPerturbation per record (`build_genotype`), served as `bacterial
 # perturbation`. The environment of a phage challenge carries exactly one
 # PhagePerturbation and a no-phage control carries none, so the environment-perturbation
-# side enables `phage perturbation`, NOT `environment perturbation`: the served
-# `_environment_perturbation_node` does not filter phages out, so enabling both would
-# write every phage twice under two labels on one content id. The two
+# side enables `phage perturbation` and not `environment perturbation`: no record carries
+# a non-phage environment perturbation, so that lane would emit nothing. Since issue #756
+# the two lanes partition the environment's perturbations, so enabling both is permitted
+# and writes no content id twice; a revision that adds a non-phage perturbation here
+# enables `environment perturbation` beside the phage lane. The two
 # `environment perturbation to environment` edge methods stay enabled -- a phage node's
 # id is the same composition projection, so those edges address it unchanged.
 cell_adapter:

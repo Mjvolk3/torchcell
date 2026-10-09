@@ -2,11 +2,12 @@
 # One BacterialCrisprInterferencePerturbation per record, served as `bacterial
 # perturbation` with its 20-nt spacer on a `crispr construct` node. The environment of
 # each of the four stored phage-derived screens carries exactly one PhagePerturbation, so
-# `phage perturbation` is enabled and `environment perturbation` is NOT: the served
-# `_environment_perturbation_node` does not filter phages out, so enabling both would
-# emit each phage twice under two labels on one content id. The aTc inducer is a
-# component of the medium (the paper lists it with the maltose and CaCl2), which is what
-# leaves the phage as the only environment perturbation. The released growth screen is
+# `phage perturbation` is enabled and `environment perturbation` is not: no record carries
+# a non-phage environment perturbation, so that lane would emit nothing. Since issue #756
+# the two lanes partition the environment's perturbations, so enabling both is permitted
+# and writes no content id twice. The aTc inducer is a component of the medium, where the
+# paper's own recipes put it beside the maltose and the CaCl2 (see the loader), which is
+# what leaves the phage as the only environment perturbation. The released growth screen is
 # Cui 2018's and is not stored, so no record is phage-free. The phage nodes are linked by
 # `environment perturbation to environment`, whose graph class declares both
 # `environment perturbation` and `phage perturbation` as sources.

@@ -31,6 +31,11 @@ written; edits made afterwards are drift. Neo4j is a scripted fake installed at
 
 The baseline manifest is ``bootstrap_manifest`` of ``ServedDataset`` at that commit, so
 every drift test starts from a manifest that matches the tree and changes one thing.
+
+A second fixture (``toy_multi``) adds ONE adapter module serving TWO datasets, each class
+binding its own conf, which is the shape issue #743 was about: it pins that a bootstrap
+entry records its own class's conf and that a changed enable-list is drift for that class
+alone, in both directions.
 """
 
 from __future__ import annotations
@@ -1598,3 +1603,136 @@ def test_a_recorded_entry_carries_the_loader_visibility(toy: _Toy) -> None:
         previous=None,
     )
     assert entry.visibility == "public"
+
+
+# --------------------------------------- drift on a multi-class module's second class
+
+MULTI_TWO_CLASS_PY = """class FirstMultiAdapter:
+    CONF = "first_multi_adapter.yaml"
+
+
+class SecondMultiAdapter:
+    CONF = "second_multi_adapter.yaml"
+"""
+#: ``second`` enables one node method fewer, so the two confs differ in CONTENT as well
+#: as in name: the drift here is a real change of enable-list, not a renamed file.
+SECOND_CONF_YAML = """cell_adapter:
+  node_methods:
+    - method_name: experiment (chunked)
+  edge_methods:
+    - method_name: genotype to experiment (chunked)
+"""
+
+
+@pytest.fixture
+def toy_multi(toy: _Toy, monkeypatch: pytest.MonkeyPatch) -> _Toy:
+    """``toy`` plus ONE adapter module serving two datasets, each binding its own conf.
+
+    The module is written with ``FirstMultiAdapter`` first, so a module-text resolution
+    hands ``SecondMultiDataset`` the FIRST conf, which is the defect of issue #743.
+    """
+    toy.write("torchcell/adapters/multi_adapter.py", MULTI_TWO_CLASS_PY)
+    toy.write("torchcell/adapters/conf/first_multi_adapter.yaml", CONF_YAML)
+    toy.write("torchcell/adapters/conf/second_multi_adapter.yaml", SECOND_CONF_YAML)
+    adapters = _import(
+        "toy_multi_two_class_adapter",
+        toy.repo / "torchcell/adapters/multi_adapter.py",
+        monkeypatch,
+    )
+    fp = toy.surface_fingerprints()
+    for stem in ("first", "second"):
+        cls = f"{stem.capitalize()}MultiDataset"
+        slug = f"{stem}_multi"
+        toy.write(
+            f"torchcell/datasets/{slug}_loader.py",
+            LOADER_TEMPLATE.format(imports="Media", cls=cls, slug=slug),
+        )
+        loader = _import(
+            f"toy_{slug}_loader",
+            toy.repo / f"torchcell/datasets/{slug}_loader.py",
+            monkeypatch,
+        )
+        dataset_cls = getattr(loader, cls)
+        toy.classes[cls] = dataset_cls
+        monkeypatch.setitem(dataset_registry, cls, dataset_cls)
+        monkeypatch.setitem(
+            dataset_adapter_map,
+            dataset_cls,
+            getattr(adapters, f"{stem.capitalize()}MultiAdapter"),
+        )
+        toy.build_dev_lmdb(
+            slug, cls, {k: fp[k] for k in ("Media", "ModelStrict")}, SERVED_RECORDS
+        )
+    return toy
+
+
+def _bootstrap_multi(toy: _Toy) -> km.KgBuildManifest:
+    return km.bootstrap_manifest(
+        repo_root=toy.repo,
+        commit=COMMIT,
+        dataset_classes=["FirstMultiDataset", "SecondMultiDataset"],
+        n_experiments={"FirstMultiDataset": 3, "SecondMultiDataset": 3},
+        database="torchcell",
+        store_host="gilahyper",
+        neo4j_version="5.26.28",
+        biocypher_version="0.5.43",
+        biocypher_out=BIOCYPHER_OUT,
+        built_at=BUILT_AT,
+    )
+
+
+def test_a_served_entry_records_its_own_conf_not_the_modules_first(
+    toy_multi: _Toy,
+) -> None:
+    manifest = _bootstrap_multi(toy_multi)
+    assert manifest.datasets["FirstMultiDataset"].adapter_files == [
+        "torchcell/adapters/multi_adapter.py",
+        "torchcell/adapters/conf/first_multi_adapter.yaml",
+    ]
+    assert manifest.datasets["SecondMultiDataset"].adapter_files == [
+        "torchcell/adapters/multi_adapter.py",
+        "torchcell/adapters/conf/second_multi_adapter.yaml",
+    ]
+    assert km.dataset_conf_methods(
+        toy_multi.classes["SecondMultiDataset"], toy_multi.repo
+    ) == ["experiment (chunked)", "genotype to experiment (chunked)"]
+
+
+def test_a_changed_enable_list_on_the_second_class_is_drift_for_that_class_only(
+    toy_multi: _Toy,
+) -> None:
+    """Issue #743's wrongly-admitted half: the dmf conf change the gate used to miss.
+
+    Enabling a method on the SECOND class's conf changes which methods that build runs.
+    Under the module-text resolution the second class watched the FIRST conf, so this
+    edit moved no hash and the dataset read admissible.
+    """
+    manifest = _bootstrap_multi(toy_multi)
+    toy_multi.replace(
+        "torchcell/adapters/conf/second_multi_adapter.yaml",
+        "    - method_name: experiment (chunked)\n",
+        "    - method_name: experiment (chunked)\n"
+        "    - method_name: fitness phenotype (chunked)\n",
+    )
+    drift, added = km.adapter_drift_against(manifest, toy_multi.repo)
+    assert added == []
+    assert drift.served_files == {
+        "torchcell/adapters/conf/second_multi_adapter.yaml": ["SecondMultiDataset"]
+    }
+    assert drift.served_methods == {}
+
+
+def test_a_changed_enable_list_on_the_first_class_does_not_blame_the_second(
+    toy_multi: _Toy,
+) -> None:
+    """Issue #743's wrongly-blocked half: the smf conf change attributed to dmf and dmi."""
+    manifest = _bootstrap_multi(toy_multi)
+    toy_multi.replace(
+        "torchcell/adapters/conf/first_multi_adapter.yaml",
+        "    - method_name: fitness phenotype (chunked)\n",
+        "",
+    )
+    drift, _ = km.adapter_drift_against(manifest, toy_multi.repo)
+    assert drift.served_files == {
+        "torchcell/adapters/conf/first_multi_adapter.yaml": ["FirstMultiDataset"]
+    }

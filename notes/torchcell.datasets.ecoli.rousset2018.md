@@ -383,3 +383,73 @@ adapter method was touched.
 No knowledge-graph build, no `kg_bacteria` rehearsal generation and no slurm job. The
 adapter is wired and its graph is checked against the dev store by
 `assert_dev_store_graph` under `--data`; generating CSVs is plan step 10's call.
+
+## 2026.10.09 - Where the paper puts the aTc, read again from the bytes (#756)
+
+Issue #756 recorded that this loader moved anhydrotetracycline from
+`Environment.perturbations` into the two media, and that the move was prompted by an
+adapter constraint rather than by the source. The constraint is now gone (the served
+`_environment_perturbation_node` filters phages, so a conf may enable both
+environment-side lanes), so the placement was re-derived from the paper alone, with no
+adapter consideration in it.
+
+Read from the mirror,
+`/scratch/projects/torchcell-scratch/torchcell-library/roussetGenomewideCRISPRdCas9Screens2018/paper.md`,
+sha256 `46ea72979c7f11855477b557824fb62baa7a4937ae4787d930e706cd2b93db3f` (role
+`paper_ocr`, MinerU 2.7.6, 200 dpi). The OCR renders numerals as inline LaTeX, so the
+quotes below are the mirror bytes, not the printed glyphs.
+
+**The paper writes aTc in recipe form twice, as an item of a medium's composition.**
+
+Methods, `High-throughput screens`, line 196, the culture the sgRNA distributions are
+sampled from:
+
+> The culture was grown to stationary phase $\mathrm { \Delta } \mathrm { \langle { O D } } _ { 6 0 0 } = 2$ ) and diluted 100-fold in LB containing $1 \mu \mathrm { M }$ aTc, $0 . 2 \%$ Maltose and $5 \mathrm { m M } \mathrm { C a C l } _ { 2 }$ .
+
+Methods, `Infection dynamics`, line 210, the same form with the kanamycin added:
+
+> Strains were grown overnight and diluted 100-fold in LB medium containing $0 . 2 \%$ maltose, $1 \mu \mathrm { M }$ aTc, 5 mM $\mathrm { C a C l } _ { 2 }$ and kanamycin.
+
+Methods, `RT-qPCR`, line 218:
+
+> Overnight cultures were diluted 1:100 in $3 \mathrm { m L }$ LB containing $1 \mu \mathrm { M }$ aTc.
+
+**The paper also writes it once as an event**, in the sentence immediately before the
+first of those, which is why the reading is a judgment and not a transcription. Methods,
+`High-throughput screens`, line 196:
+
+> At $\mathrm { O D } _ { 6 0 0 } = 0 . 2$ , dCas9 expression was induced by addition of $1 \mu \mathrm { M }$ aTc (Acros Organics) to trigger the silencing of the target genes.
+
+and the S6 Fig legend, line 235, uses aTc as a two-level variable in a control experiment
+this dataset does not store:
+
+> (A) Relative lexA or rho expression was measured in presence of a lexA- or rho-targeted sgRNA respectively, with or without dCas9 repression (± aTc), showing a low repression activity $6 6 . 4 \%$ and $8 5 . 2 \%$ respectively).
+
+**Decision: aTc stays a `MediaComponent`, on the paper's own recipes.** The treatment
+sentence is the initiating addition in the pre-infection outgrowth; every culture
+downstream of it, including the one that is sampled and the one `Infection dynamics`
+describes, is written as a medium containing aTc at 1 uM beside the maltose and the
+CaCl2, both of which this loader already carries as components. The recipe reading is the
+one that covers the stored records. Both quotes are in the loader, as
+`PHAGE_SCREEN_MEDIUM` and `PHAGE_SCREEN_INDUCTION`, so the competing reading is on the
+record rather than argued away.
+
+Supporting, and NOT the reason: S4 Table (`si/si14.csv`, sha256
+`3ee887e7596d2917f1fde1ce41dfcea0b79538ece0f0d654e01dad31ec1686a2`) has the columns
+`target,position,ori,gene,essential,gene_left,gene_right,gene_ori,log2FC_lambda,log2FC_T4,log2FC_186`,
+so the released condition axis is the phage alone and aTc is constant at 1 uM across
+every scored arm and the reference. On the environment axis it would be a perturbation
+nothing in the dataset contrasts.
+
+A genuine gap, stated rather than filled: the growth-screen arm's aTc protocol is deferred
+to reference [26] (Cui 2018) and does not appear in this paper. That arm is not stored
+here, so nothing in this build depends on it.
+
+### What changed in the tree
+
+No record changed, so the dev store was not rebuilt: the loader edit is confined to
+docstrings (`_atc` and the ENVIRONMENT bullet), which no fingerprint reads. The conf
+header no longer gives the adapter as a reason for the phage-only enable-list; the reason
+is that no record carries a non-phage environment perturbation, so the served lane would
+emit nothing. Verified on the dev store with `--data`: the phage lane emits the phage and
+the served lane emits nothing over the same records.

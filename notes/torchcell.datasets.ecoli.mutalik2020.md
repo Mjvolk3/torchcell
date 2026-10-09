@@ -656,3 +656,55 @@ real phage records for every phage dataset instead of depending on what the stor
 to order first. The `phage perturbation` label still appears in the prefix run's labels
 for this dataset, through `_get_phage_perturbation_reference_nodes`: 68 of its 78
 references carry a phage, and the 10 that do not are the control arms.
+
+## 2026.10.09 - The collision #756 predicted for this row does not arise
+
+Issue #756 named this dataset as the next one to hit the environment-side either-or, with
+68 phage challenges and two assay formats. Checked against the paper rather than assumed:
+it does not arise, and it would not have even under the old rule.
+
+Read from the mirror,
+`/scratch/projects/torchcell-scratch/torchcell-library/mutalikHighthroughputMappingPhage2020/paper.md`,
+sha256 `c7aab1a1c4384a37f1f75f6ecafe2f538fc6ff22c7c39aceeebe988aba2e6cb5`.
+
+- **aTc appears exactly twice in the whole corpus, both in the CRISPRi arm this dataset
+  does not serve.** `anhydrotetracycline` is spelled out nowhere, and aTc is absent from
+  `si/si10.md`, `si/si11.md`, `si/si22.docx` (S1 Text) and the review responses. The
+  first occurrence is a strain genotype (`a genomically encoded aTc-inducible dCas9
+  gene`); the second is a named medium recipe, `# E. coli MG1655 CRISPRi library`, line
+  256:
+
+  > diluted the remaining culture in induction media (LB broth with arabinose $\left[ 0 . 1 \% \right]$ , aTc $[ 2 0 0 \mathrm { n g / m L } ]$ , carbenicillin $1 0 0 \mu \mathrm { g } /$ mL, and kanamycin $3 0 \mu \mathrm { g / m L }$ ) to initiate dCas9 and sgRNA expression for about six doublings (to OD600 about 0.5).
+
+  So where this paper does state aTc, it states it as a constituent of a medium, between
+  the arabinose and two antibiotics, and carries that medium into the challenge culture
+  (`2X LB supplemented with induction media`). Same verdict as Rousset 2018, reached on a
+  recipe with no competing treatment sentence beside it.
+
+- **The served RB-TnSeq arms carry no aTc at all**, and their non-phage additives are
+  already media components here: kanamycin on the solid plates
+  (`MUTALIK2020_LB_AGAR_KAN`, 50 ug/mL from the release metadata) and the SM buffer of
+  the planktonic format. `# Bacterial strains and growth conditions`, line 212:
+
+  > Unless noted, all strains were grown in LB supplemented with appropriate antibiotics at $3 7 ~ ^ { \circ } \mathrm { C }$ in the Multitron shaker.
+
+  The calcium chloride of this paper is in the phage DILUENT, not the growth medium, line
+  216: `SM buffer was supplemented with $1 0 \mathrm { m M }$ calcium chloride and magnesium sulphate (Sigma).`
+
+- **The phage is a challenge, not a constituent**, which is what `PhagePerturbation`
+  already encodes. Its dose is an MOI backed by pfu/ml (S13 Table `MOI_used_runs`, sha256
+  `86221e234567b2e87e07b9619f705ce7afcc47b4a82b617d03bf6d37238c6110`), and the control is
+  defined by replacing it with buffer, line 230:
+
+  > We also set up control “no-phage” competitive mutant fitness assays wherein we replaced phages with simply the phage dilution buffer.
+
+So every record's environment carries a phage or nothing, and the conf keeps its
+phage-only enable-list because the served lane would emit nothing, not because the
+adapter forbids the pair. Since #756 the two lanes partition the leaves, so a later
+revision that adds a non-phage environment perturbation here enables
+`environment perturbation (chunked)` beside the phage lane and each leaf is written once.
+
+No loader change and no rebuild: nothing about the stored records moved. Verified on the
+dev store with `--data`, `DATA_ROOT=/scratch/projects/torchcell-scratch`: over the records
+of a phage-bearing reference the phage lane emits one node per phage leaf and the served
+lane emits nothing.

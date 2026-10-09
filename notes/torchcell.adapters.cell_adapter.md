@@ -74,3 +74,73 @@ collector and a static `_*_properties` builder. Seven table entries:
 declare `gene_namespace`). A bacterial conf enables `bacterial perturbation (chunked)`
 instead of `perturbation (chunked)`. Classes, id rule, projection and the measurement:
 [[torchcell.adapters.bacterial-graph-classes]].
+
+## 2026.10.09 - The two environment-perturbation lanes partition the leaves (#756)
+
+`_environment_perturbation_node` emitted every perturbation of an environment, a phage
+included, and `_phage_perturbation_node` emitted the same leaf under the same content id
+(both ids are `environment_perturbation_identity`) with the `phage perturbation` label.
+Enabling both classes in one conf therefore wrote one id under two labels and the import
+kept whichever row it read first, so the rule was "a conf enables one class or the other,
+never both". Being per-conf rather than per-perturbation, it also meant a dataset whose
+environment carries a phage AND a genuine non-phage perturbation could express only one
+of the two, which is a graph layer selecting a data representation instead of serializing
+it.
+
+Both served methods now skip a `PhagePerturbation`:
+
+| method | before | after |
+|---|---|---|
+| `_environment_perturbation_node` | every leaf | every NON-phage leaf |
+| `_get_environment_perturbation_reference_nodes` | every leaf of every reference | every non-phage leaf |
+| `_phage_perturbation_node` | phages only | unchanged |
+| `_get_phage_perturbation_reference_nodes` | phages only | unchanged |
+
+The lanes are now a partition of `environment.perturbations`, so a conf may enable both
+and every leaf is written exactly once. The edge methods are untouched: they still emit
+one `environment perturbation member of` per perturbation, and that class already
+declares both `environment perturbation` and `phage perturbation` as sources. What
+replaces the exclusivity rule is the dangling-edge rule that was always behind it: a conf
+enabling either edge method must enable at least one node lane, pinned by
+`test_an_environment_perturbation_edge_has_a_node_lane_to_address` in
+`tests/torchcell/knowledge_graphs/test_adapter_schema_consistency.py`.
+
+### Measured drift against the served store
+
+Read from a copy of the served manifest `/scratch/projects/torchcell/database/kg_manifest.json`
+(store built at `4b293d3432ca1a08ad132d73c97ac12204bbf639`) by
+`python -m torchcell.knowledge_graphs.kg_manifest --manifest <copy> drift`. Both methods
+matched the served store at `origin/main` and no longer match, so these 14 served
+datasets are this change's own drift and nothing else's:
+
+Bloom2019Dataset, CrisprMagicLian2019Dataset, CrispriChemgenSmith2016Dataset,
+CrispriMormino2022Dataset, EnvChemgenAuesukaree2009Dataset, EnvChemgenCostanzo2021Dataset,
+EnvChemgenHoepfner2014Dataset, EnvChemgenMota2024Dataset, EnvChemgenVanacloig2022Dataset,
+EnvChemgenWildenhain2015Dataset, FattyAcidSmith2006Dataset, HetHillenmeyer2008Dataset,
+HomHillenmeyer2008Dataset, NadalRibellesPerturbSeq2025Dataset.
+
+That is 14 for `_environment_perturbation_node` and the same 14 for
+`_get_environment_perturbation_reference_nodes`. No graph-schema class changes and no
+value-surface change comes from this edit.
+
+**No served node changes.** `_environment_perturbation_node_from`, which builds the node
+and its id, is byte-identical, so every non-phage perturbation serializes exactly as
+before. And none of the 51 served datasets' recorded closures names `PhagePerturbation`,
+so no served loader can construct one and the filter removes nothing from any served
+build. The environment-perturbation leaves those 14 closures do name are
+`SmallMoleculePerturbation` (13 of them), `BiologicPerturbation` (Auesukaree 2009 only)
+and, for FattyAcidSmith2006Dataset, none at all. This is a fingerprint-only change, which
+is why it waits for a full rebuild rather than an increment: `neo4j-admin database import
+incremental` cannot update existing nodes, so a changed served method is a full-build
+event even when its output is identical.
+
+### Verification
+
+`tests/torchcell/adapters/test_environment_node_identity.py` drives both lanes on one
+synthetic environment carrying a phage and 0.4 M NaCl: the served lane emits the NaCl
+alone, the phage lane the phage alone, the two id sets are disjoint, and the two edges
+the edge method emits address exactly the union. The reference-side pair splits the same
+way. On the real stores (`--data`, `DATA_ROOT=/scratch/projects/torchcell-scratch`),
+`assert_dev_store_graph` for Rousset 2018 and Mutalik 2020 passes with the phage conf's
+left-off check now run UNEXEMPTED: before the fix that check had to skip
+`environment perturbation (chunked)`, because running it re-emitted the records' phages.

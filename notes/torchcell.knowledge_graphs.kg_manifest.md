@@ -74,3 +74,53 @@ The refs come from the DEV tree, not from the store: the full build reads those 
 The recorded pointer is a local model, `ArtifactPointer` (`tier`, `key`, `path`, `sha256`, a `uri` property, `from_ref`), not `ArtifactRef`, because the docs workflow's query-drift job imports this module, `releases` and `release_snapshot` with only pydantic, PyYAML and python-dotenv installed, and `torchcell.datamodels.schema` reaches lmdb through the datamodels package (the CI failure at commit 3d459540b); the walk and `ArtifactRef` are imported inside `dataset_artifact_refs` only, and `test_release_modules_import_without_the_heavy_closure` pins the slim closure. Measured after the change: `python -X importtime -c "import torchcell.knowledge_graphs.releases"` 129 ms cumulative, one run.
 
 Tests (`tests/torchcell/knowledge_graphs/test_kg_manifest.py`): `test_record_artifact_refs_walks_only_ref_bearing_closures`, `test_record_artifact_refs_only_records_the_named_subset`, `test_cli_artifact_refs_saves_the_manifest_and_prints_one_line_per_dataset`, `test_manifest_entry_without_artifact_refs_loads_as_unrecorded`.
+
+## 2026.10.09 - The eight multi-class modules are pinned as a table, and a second-class conf change is drift (#743)
+
+The resolution fix landed on `main` as `adapter_conf_name` / `class_conf_names`: the conf
+is read from the adapter CLASS body, and a class naming no conf, or two, raises. What was
+missing was the two pins the issue asked for, both added here.
+
+**The table.** `MULTI_CLASS_MODULE_CONFS` in
+`tests/torchcell/knowledge_graphs/test_adapter_schema_consistency.py` is a literal
+module -> {dataset class -> conf} map of the eight modules that serve more than one
+class, written out rather than derived. Derived expectations were the problem in the first
+place: a test that computed the expectation the same way the gate did would have agreed
+with the first-conf regex. Measured 2026-10-09 over `build_adapter_map(include_private=True)`,
+which now holds 109 mapped datasets:
+
+| module | classes | confs |
+|---|---|---|
+| `costanzo2016_adapter.py` | 3 | `smf_`, `dmf_`, `dmi_costanzo2016_adapter.yaml` |
+| `hillenmeyer2008_adapter.py` | 2 | `het_`, `hom_hillenmeyer2008_adapter.yaml` |
+| `kuzmin2018_adapter.py` | 5 | `smf_`, `dmf_`, `tmf_`, `dmi_`, `tmi_kuzmin2018_adapter.yaml` |
+| `kuzmin2020_adapter.py` | 5 | `smf_`, `dmf_`, `tmf_`, `dmi_`, `tmi_kuzmin2020_adapter.yaml` |
+| `lopez2024_adapter.py` | 2 | `isobutanol_screen_`, `isobutanol_validated_lopez2024_adapter.yaml` |
+| `sameith2015_adapter.py` | 2 | `sm_`, `dm_microarray_sameith2015_adapter.yaml` |
+| `synth_leth_db_adapter.py` | 2 | `synth_lethality_yeast_`, `synth_rescue_yeast_synth_leth_db_adapter.yaml` |
+| `zelezniak2018_adapter.py` | 2 | `metabolite_`, `proteome_zelezniak2018_adapter.yaml` |
+
+`test_the_multi_class_modules_are_exactly_these_eight` asserts both directions: every
+class the table names resolves to the files the table states, and the set of classes that
+SHARE an adapter module is exactly the set the table names. So a ninth multi-class module,
+or a class added to one of the eight, fails until the conf it binds is stated. A
+parametrized case then pins each of the 23 class-to-conf pairs on its own through
+`dataset_adapter_files`.
+
+**The drift pin.** `test_kg_manifest_admission.py` gains a `toy_multi` fixture: the toy
+repo plus ONE adapter module serving two datasets, `FirstMultiAdapter` written first, each
+class binding its own conf and the two confs differing in enable-list content as well as
+in name. Three tests on it:
+
+- the bootstrap entry of the SECOND dataset records `conf/second_multi_adapter.yaml`, and
+  `dataset_conf_methods` reads that conf's own (shorter) list;
+- adding a method to the second conf is `served_files` drift for `SecondMultiDataset`
+  ALONE, which is the wrongly-admitted half of the issue (the dmf conf change the gate
+  used to miss);
+- removing a method from the first conf is drift for `FirstMultiDataset` alone, which is
+  the wrongly-blocked half (the smf conf change that used to be attributed to dmf and dmi
+  as well).
+
+The synthetic-source tests that already existed (`class_conf_names` scoping, the refusal
+of a class binding zero or two confs) are unchanged; these sit beside them and cover the
+gate end to end instead of the parser.

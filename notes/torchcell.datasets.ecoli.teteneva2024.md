@@ -111,9 +111,12 @@ There is no dataset class, so there is no build and no store. L0 (store opens), 
 (record schema), L2 (counts), L3 (provenance audit) and L4 (cross-source) all have no
 subject here. Recording a table of levels would be recording a build that did not happen.
 What this branch verified instead is the tier deposit: `verify_assembly_set` re-hashed all
-ten members, and the thirteen tests of
-`tests/torchcell/datasets/ecoli/test_teteneva2024.py` pass (8 hermetic, 5 data-gated with
-`DATA_ROOT` exported).
+ten members, and the sixteen tests of
+`tests/torchcell/datasets/ecoli/test_teteneva2024.py` pass (11 hermetic, 5 data-gated with
+`DATA_ROOT` exported). The three measurement functions are covered hermetically as well,
+on synthetic one-locus flat files written with Biopython and served through a stubbed
+`resolve`, so `annotation_routes` is exercised in CI where the tier is absent: the module
+reports 100% statement coverage without the data-gated tests.
 
 ### What unblocks it, in order
 

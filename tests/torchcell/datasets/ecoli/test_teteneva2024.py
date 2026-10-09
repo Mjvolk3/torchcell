@@ -15,11 +15,17 @@ mirror. It is a TRIPWIRE and it is meant to fail the day the paper is curated, w
 message naming the work that then becomes possible.
 """
 
+import gzip
 import os
 import os.path as osp
 import re
+from pathlib import Path
 
 import pytest
+from Bio import SeqIO
+from Bio.Seq import Seq
+from Bio.SeqFeature import SeqFeature, SimpleLocation
+from Bio.SeqRecord import SeqRecord
 
 from torchcell.datamodels.schema import ASSEMBLY_SET_ACCESSIONS, BACTERIAL_ASSEMBLY_SETS
 from torchcell.datasets.ecoli import teteneva2024 as te
@@ -241,3 +247,97 @@ def test_the_paper_is_still_in_neither_mirror_so_the_loader_stays_blocked() -> N
     )
     assert te.LIBRARY_MIRROR_KEYS_MATCHING_TETENEVA == 0
     assert te.RAW_MIRROR_KEYS_MATCHING_TETENEVA == 0
+
+
+# --------------------------------------------------------------------------------------
+# Gate 1a: the measurement functions, on synthetic flat files
+# --------------------------------------------------------------------------------------
+def _write_gbff(path: Path, *, tagged: bool, notes: tuple[str, ...] = ()) -> None:
+    """A one-locus GenBank flat file, gzipped, with or without a ``locus_tag``."""
+    record = SeqRecord(
+        Seq("ATGAAACCCGGGTTTAAACCCGGGTTTAAACCCGGGTTTAAACCCGGGTTTAAACCCTAA"),
+        id="XX000001.1",
+        name="XX000001",
+        annotations={"molecule_type": "DNA", "topology": "circular"},
+    )
+    gene_qualifiers: dict[str, list[str]] = {"gene": ["thrL"]}
+    cds_qualifiers: dict[str, list[str]] = {
+        "gene": ["thrL"],
+        "product": ["thr operon leader peptide"],
+    }
+    if tagged:
+        gene_qualifiers["locus_tag"] = ["Y75_RS00005"]
+        cds_qualifiers["locus_tag"] = ["Y75_RS00005"]
+    if notes:
+        cds_qualifiers["note"] = list(notes)
+    location = SimpleLocation(0, 60, strand=1)
+    record.features.append(
+        SeqFeature(location, type="gene", qualifiers=gene_qualifiers)
+    )
+    record.features.append(SeqFeature(location, type="CDS", qualifiers=cds_qualifiers))
+    with gzip.open(path, "wt") as handle:
+        SeqIO.write(record, handle, "genbank")
+
+
+def _serve(
+    monkeypatch: pytest.MonkeyPatch, members: dict[str, Path]
+) -> list[tuple[str, str]]:
+    """Stub ``resolve`` in the module under test; record every ``(set, member)`` asked."""
+    calls: list[tuple[str, str]] = []
+
+    def serve(assembly_set: str, filename: str, **_: object) -> str:
+        calls.append((assembly_set, filename))
+        return str(members[filename])
+
+    monkeypatch.setattr(te, "resolve", serve)
+    return calls
+
+
+def test_gene_feature_counts_separate_tagged_from_untagged_features(
+    tmp_path: Path,
+) -> None:
+    """One gene feature each way: the tagged file counts 1 of 1, the other 0 of 1."""
+    tagged, untagged = tmp_path / "tagged.gbff.gz", tmp_path / "untagged.gbff.gz"
+    _write_gbff(tagged, tagged=True)
+    _write_gbff(untagged, tagged=False)
+    assert te._gene_feature_counts(str(tagged)) == (1, 1)
+    assert te._gene_feature_counts(str(untagged)) == (1, 0)
+
+
+def test_annotation_routes_refuses_the_untagged_member_and_parses_the_tagged_one(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The route pair is built from whichever bytes the tier serves, GenBank first."""
+    members = {
+        te.GENBANK_MEMBER: tmp_path / "gca.gbff.gz",
+        te.REFSEQ_MEMBER: tmp_path / "gcf.gbff.gz",
+    }
+    _write_gbff(members[te.GENBANK_MEMBER], tagged=False)
+    _write_gbff(members[te.REFSEQ_MEMBER], tagged=True)
+    calls = _serve(monkeypatch, members)
+    genbank, refseq = te.annotation_routes()
+    assert calls == [
+        (ECOLI_K12_W3110, te.GENBANK_MEMBER),
+        (ECOLI_K12_W3110, te.REFSEQ_MEMBER),
+    ]
+    assert genbank.gene_features == 1
+    assert genbank.gene_features_with_locus_tag == 0
+    assert genbank.read_genbank_error == (
+        f"{te.GENBANK_MEMBER}: a gene feature at [0:60](+) has no locus_tag"
+    )
+    assert genbank.loci is None
+    assert genbank.replicon is None
+    assert refseq.gene_features_with_locus_tag == 1
+    assert refseq.read_genbank_error is None
+    assert refseq.loci == 1
+    assert refseq.replicon == "XX000001.1"
+
+
+def test_eck_jw_b_notes_reads_only_the_crosswalk_notes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The triple note is read apart; any other note on the same CDS is not a triple."""
+    member = tmp_path / "gca.gbff.gz"
+    _write_gbff(member, tagged=False, notes=("ECK0001:JW4367:b0001", "not a crosswalk"))
+    _serve(monkeypatch, {te.GENBANK_MEMBER: member})
+    assert te.eck_jw_b_notes() == (("ECK0001", "JW4367", "b0001"),)

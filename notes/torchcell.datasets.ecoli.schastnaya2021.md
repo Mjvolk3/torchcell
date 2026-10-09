@@ -42,7 +42,7 @@ Every value the loader needs, with the artifact it is pinned to. All of these ar
 
 | Value | Stored as | Verbatim quote (abridged where marked) | Source + sha256 |
 |---|---|---|---|
-| What SD3 is | the consumed table | "File name: Supplementary data 3 / Description: Changes in metabolites for phosphomutant and knockout strains" | `si/si3.md` `32bb2072...ab5e` |
+| What SD3 is | the consumed table | "File name: Supplementary data 3 Description: Changes in metabolites for phosphomutant and knockout strains" | `si/si3.md` `32bb2072...ab5e` |
 | The statistic | `measurement_type` | see the block quote above | `paper.md` `f299eee7...46c3` |
 | Ion annotation | the key's meaning | "Deprotonated ions were annotated based on mass using 0.001 Da tolerance using a genome-wide reconstruction model of $E$ . coli metabolism41." | `paper.md` |
 | Ionization mode | note on the keys | "Mass spectra were recorded in negative ionization mode within a mass/charge ratio range of $5 0 { - } 1 0 0 0 \mathrm { m / z }$ ..." | `paper.md` |

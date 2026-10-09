@@ -52,6 +52,7 @@ from torchcell.adapters import (
     GeneInteractionButland2008Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
+    MorphologyCampos2018Adapter,
     GrowthRateChoe2019Adapter,
     GrowthRateSchmidt2016Adapter,
     HetHillenmeyer2008Adapter,
@@ -133,7 +134,10 @@ from torchcell.datasets.ecoli.caglar2017 import (
 from torchcell.datasets.ecoli.caglar2017_doubling_time import (
     DoublingTimeCaglar2017Dataset,
 )
-from torchcell.datasets.ecoli.campos2018 import GrowthRateCampos2018Dataset
+from torchcell.datasets.ecoli.campos2018 import (
+    GrowthRateCampos2018Dataset,
+    MorphologyCampos2018Dataset,
+)
 from torchcell.datasets.ecoli.choe2019_growth_rate import (
     GrowthRateChoe2019Dataset,
     TranscriptionFactorKnockoutChoe2019Dataset,
@@ -353,6 +357,7 @@ dataset_adapter_map: dict[type, type] = {
     CrispriChemgenChoe2025Dataset: CrispriChemgenChoe2025Adapter,
     CrispriKnockdownCui2018Dataset: CrispriKnockdownCui2018Adapter,
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
+    MorphologyCampos2018Dataset: MorphologyCampos2018Adapter,
     GrowthRateChoe2019Dataset: GrowthRateChoe2019Adapter,
     IsopentenolTiterFoo2014Dataset: IsopentenolTiterFoo2014Adapter,
     TranscriptionFactorKnockoutChoe2019Dataset: TranscriptionFactorKnockoutChoe2019Adapter,

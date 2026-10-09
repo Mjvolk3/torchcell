@@ -186,6 +186,7 @@ import argparse
 import hashlib
 import json
 import logging
+import math
 import os
 import os.path as osp
 import re
@@ -211,6 +212,7 @@ from torchcell.data import (
 from torchcell.datamodels.bacterial_morphology_features import (
     CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
 )
+from torchcell.datamodels.bacterial_morphology_features import MorphologyFeature
 from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import M9
 from torchcell.datamodels.schema import (
@@ -280,6 +282,7 @@ TITLE = (
 CITATION_KEY = "camposGenomewidePhenotypicAnalysis2018"
 RAW_DIR_REL = f"torchcell-raw/{CITATION_KEY}"
 DATASET_ROOT_REL = "data/torchcell/ecoli_growth_rate_campos2018"
+MORPHOLOGY_ROOT_REL = "data/torchcell/ecoli_morphology_campos2018"
 
 #: Dataset EV2: the normalized-data and scores sheets. The loader's only raw input.
 DATA_FILENAME = "MSB-14-e7573-s004.xlsx"
@@ -382,6 +385,50 @@ SERVED_FEATURE = "alpha_max"
 MORPHOLOGY_FEATURES: tuple[str, ...] = tuple(
     feature.symbol for feature in MORPHOLOGY_ASSAY.features
 )
+#: The 7 symbols the release leaves non-determined for some strains, and the 19 it
+#: determines for every one. The split is MEASURED on the release, not assumed from what
+#: a feature is derived from: over the 4,227 imaged strains, these 7 columns are NaN on
+#: exactly the same 278 rows and the other 19 are never NaN, and no wild-type row is
+#: among the 278. All 7 need the DAPI channel, directly (the nucleoid area and its
+#: variability) or through a nucleoid constriction degree. ``Rel.timing div`` is inferred
+#: from a phase-contrast proportion yet is absent on those same rows, which is why the
+#: set is read off the data rather than reasoned out from the derivations.
+MORPHOLOGY_DAPI_FEATURES: frozenset[str] = frozenset(
+    {"<NA>", "CV_NA", "rho_CD", "CDN_C0", "Rel.timing div", "Rel.timing nuc", "%2N"}
+)
+MORPHOLOGY_REQUIRED_FEATURES: frozenset[str] = (
+    frozenset(MORPHOLOGY_FEATURES) - MORPHOLOGY_DAPI_FEATURES
+)
+#: Strains with no DAPI channel, so the 7 features above do not exist for them.
+STRAINS_WITHOUT_A_NUCLEOID_CHANNEL = 278
+#: Dataset EV2 releases 30 numeric feature columns against Table S1's 28 symbols. The
+#: two extra ones are NOT dropped for want of a class, so they are recorded here rather
+#: than in :data:`UNSERVED_FEATURES`: each is an exact deterministic inverse of a feature
+#: the morphology dataset stores, measured on the release over the 3,949 strains that
+#: determined them. ``Rel.timing div`` equals ``-log2(1 - %non-div / 2)`` to a maximum
+#: absolute error of 1.3e-15 and ``Rel.timing nuc`` equals ``-log2(1 - %1N / 2)`` to
+#: 1.2e-15, which is the steady-state cell-age inversion Appendix Table S1's caption
+#: describes ("estimated as the proportions of cells without any significant
+#: constriction (constriction degree <0.15) or with a single nucleoid, respectively").
+#: Storing both sides would write the same measurement twice under two names.
+RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY: dict[str, str] = {
+    "%non-div": "the proportion Rel.timing div is inferred from, and recoverable from "
+    "it exactly: Rel.timing div = -log2(1 - %non-div / 2) to a maximum absolute error "
+    "of 1.3e-15 over the 3,949 strains that determined both. Appendix Table S1 names "
+    "the inferred timing and not this proportion, and the release's own two legends "
+    "disagree about which way it points (Dataset EV1 calls it 'Fraction of "
+    "constricting cells', Dataset EV2 'Fraction of non-constricted cells'), so the "
+    "stored side is the one Table S1 names and whose direction the inversion fixes",
+    "%1N": "the proportion Rel.timing nuc is inferred from, and recoverable from it "
+    "exactly: Rel.timing nuc = -log2(1 - %1N / 2) to a maximum absolute error of "
+    "1.2e-15 over the same 3,949 strains. Not the complement of the stored %2N: "
+    "measured, |%1N + %2N - 1| reaches 0.129, so cells with more than two nucleoids "
+    "exist and %2N is independent information that IS stored",
+}
+#: The two released island assignments are not measurements of a strain at all: they are
+#: the paper's own clustering labels over the screen, so they are no dataset's phenotype.
+RELEASED_CLUSTER_COLUMNS: tuple[str, ...] = ("MorphoIsland", "CellCyleIsland")
+
 #: The one feature of the release with no phenotype class left (issue #774 closed the
 #: other 25 by adding ``BacterialMorphologyPhenotype``).
 UNSERVED_FEATURES: dict[str, str] = {
@@ -873,44 +920,82 @@ def dataset_ev2_retrieval(retrieved_at: str = DATA_RETRIEVED_AT) -> RetrievalRec
     )
 
 
-def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
-    """Run the recorded retrieval and write the verified bytes into ``dest_dir``.
+def dataset_ev1_retrieval(
+    retrieved_at: str = CELL_COUNTS_RETRIEVED_AT,
+) -> RetrievalRecord:
+    """The recorded retrieval of Dataset EV1: one PMC Article Datasets object.
 
-    The recorded ``RetrievalRecord`` is what runs, so this IS the re-runnable retrieval;
-    a byte mismatch raises before anything is written.
+    The morphology dataset consumes this file's ``nb Cells`` column, so it is a build
+    input with its own retrieval record, not a referenced-but-unused supplement.
+    """
+    return RetrievalRecord(
+        method=RetrievalMethod.pmc_cloud,
+        source_url=CELL_COUNTS_URL,
+        retriever="torchcell.literature.retrieve.pmc_cloud_object",
+        params={"key": CELL_COUNTS_PMC_CLOUD_KEY},
+        sha256=DATASET_EV1_SHA256,
+        retrieved_at=retrieved_at,
+    )
+
+
+def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
+    """Run both recorded retrievals and write the verified bytes into ``dest_dir``.
+
+    The recorded ``RetrievalRecord``\\ s are what run, so this IS the re-runnable
+    retrieval; a byte mismatch raises before anything is written.
     """
     dest = Path(dest_dir)
     dest.mkdir(parents=True, exist_ok=True)
-    path = dest / DATA_FILENAME
-    write_verified(run_retriever(dataset_ev2_retrieval()), path, DATA_SHA256, DATA_URL)
-    return {DATA_FILENAME: path}
+    data_path = dest / DATA_FILENAME
+    write_verified(
+        run_retriever(dataset_ev2_retrieval()), data_path, DATA_SHA256, DATA_URL
+    )
+    counts_path = dest / RAW_CELL_COUNTS_FILENAME
+    write_verified(
+        run_retriever(dataset_ev1_retrieval()),
+        counts_path,
+        DATASET_EV1_SHA256,
+        CELL_COUNTS_URL,
+    )
+    return {DATA_FILENAME: data_path, RAW_CELL_COUNTS_FILENAME: counts_path}
+
+
+def _deposit_one(root: Path, relpath: str, source: str | Path, sha256: str) -> Path:
+    """Copy one verified artifact into the raw mirror, idempotently by sha256."""
+    got = _sha256(source)
+    if got != sha256:
+        raise RuntimeError(f"{source} sha256 mismatch: got {got}, expected {sha256}")
+    dest = root / relpath
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if dest.exists():
+        if _sha256(dest) != sha256:
+            raise RuntimeError(f"{dest} exists with a different sha256; refusing")
+    else:
+        shutil.copy2(source, dest)
+    return dest
 
 
 def deposit_raw_mirror(
     *,
     data_path: str | Path,
+    cell_counts_path: str | Path,
     retrieved_at: str = DATA_RETRIEVED_AT,
+    counts_retrieved_at: str = CELL_COUNTS_RETRIEVED_AT,
     data_root: str | None = None,
 ) -> Path:
-    """Write the raw mirror from Dataset EV2 plus its ``manifest.json``.
+    """Write the raw mirror from Dataset EV2 and Dataset EV1 plus their ``manifest.json``.
 
-    Idempotent by sha256: an existing mirror file with the recorded hash is left alone
-    and a differing one raises rather than being overwritten. The bytes are verified
-    against ``DATA_SHA256`` before anything is written.
+    Both files are build inputs: the fitness dataset consumes Dataset EV2 and the
+    morphology dataset consumes both (EV2 for the corrected feature values, EV1 for the
+    per-strain segmented-cell count that is the morphology ``n_samples``). Idempotent by
+    sha256: an existing mirror file with the recorded hash is left alone and a differing
+    one raises rather than being overwritten.
     """
-    got = _sha256(data_path)
-    if got != DATA_SHA256:
-        raise RuntimeError(
-            f"{data_path} sha256 mismatch: got {got}, expected {DATA_SHA256}"
-        )
     root = raw_mirror_dir(data_root)
-    dest = root / DATA_REL
-    dest.parent.mkdir(parents=True, exist_ok=True)
-    if dest.exists():
-        if _sha256(dest) != DATA_SHA256:
-            raise RuntimeError(f"{dest} exists with a different sha256; refusing")
-    else:
-        shutil.copy2(data_path, dest)
+    data_dest = _deposit_one(root, DATA_REL, data_path, DATA_SHA256)
+    counts_dest = _deposit_one(
+        root, CELL_COUNTS_REL, cell_counts_path, DATASET_EV1_SHA256
+    )
     manifest = Manifest(
         citation_key=CITATION_KEY,
         doi=DOI,
@@ -919,26 +1004,38 @@ def deposit_raw_mirror(
             ArtifactRecord(
                 path=DATA_REL,
                 role=ROLE_RAW_DATA,
-                bytes=dest.stat().st_size,
+                bytes=data_dest.stat().st_size,
                 sha256=DATA_SHA256,
                 source=DATA_URL,
                 retrieval=dataset_ev2_retrieval(retrieved_at),
-            )
+            ),
+            ArtifactRecord(
+                path=CELL_COUNTS_REL,
+                role=ROLE_RAW_DATA,
+                bytes=counts_dest.stat().st_size,
+                sha256=DATASET_EV1_SHA256,
+                source=CELL_COUNTS_URL,
+                retrieval=dataset_ev1_retrieval(counts_retrieved_at),
+            ),
         ],
-        si_data_sources=[DATA_URL],
+        si_data_sources=[DATA_URL, CELL_COUNTS_URL],
         si_expected=[
             f"Dataset EV2 ({DATA_FILENAME}): the corrected per-strain table. The "
-            f"loader consumes the '{NORMALIZED_SHEET}' sheet's '{ALPHA_COLUMN}' "
-            "column; the 'Scores' sheet is the released robust z-score of the same "
-            "value and is the derivation's cross-check",
-            f"Dataset EV1 (MSB-14-e7573-s003.xlsx): the pre-normalization raw table "
-            f"(cell counts, sampling OD, elapsed time). Already mirrored under the "
-            f"literature key as {DATASET_EV1_REL} (sha256 {DATASET_EV1_SHA256}), and "
-            "not consumed by this loader, so it is NOT duplicated here",
+            f"fitness loader consumes the '{NORMALIZED_SHEET}' sheet's "
+            f"'{ALPHA_COLUMN}' column and the morphology loader its 26 morphology "
+            "columns; the 'Scores' sheet is the released robust z-score of the same "
+            "values and is the fitness derivation's cross-check",
+            f"Dataset EV1 ({RAW_CELL_COUNTS_FILENAME}): the pre-normalization raw "
+            f"table. The morphology loader consumes its '{RAW_SHEET}' sheet's "
+            f"'{CELL_COUNT_COLUMN}' column, the per-strain segmented-cell count that "
+            "is the morphology n_samples. Its feature columns are the uncorrected "
+            "siblings of Dataset EV2's and are NOT read. The literature mirror holds "
+            f"the same bytes as {DATASET_EV1_REL}",
             f"Appendix (MSB-14-e7573-s001.docx): Table S1 names every feature and its "
-            f"symbol, which is how the 26-feature count was established. Already "
-            f"mirrored under the literature key as {APPENDIX_REL} (sha256 "
-            f"{APPENDIX_SHA256}), so it is NOT duplicated here",
+            f"symbol, which is how the 26-feature morphology vocabulary was "
+            f"established. Already mirrored under the literature key as {APPENDIX_REL} "
+            f"(sha256 {APPENDIX_SHA256}), and read only to source the vocabulary, not "
+            "at build time, so it is NOT duplicated here",
             "Computer Code EV1/EV2 (MSB-14-e7573-s005.zip, -s006.zip): the authors' "
             "analysis scripts, not data. NOT mirrored",
         ],
@@ -1046,6 +1143,117 @@ def read_normalized_table(path: str | Path) -> NormalizedTable:
     return NormalizedTable(
         released_rows=released, footer_rows=footer, wild_type=wild_type, mutants=mutants
     )
+
+
+#: The "Normalized data" header of each morphology symbol: the symbol, then the unit in
+#: parentheses when the release states one. Built from the vocabulary rather than
+#: transcribed, so a header that moved stops the build instead of being guessed at.
+def morphology_column(feature: MorphologyFeature) -> str:
+    """Dataset EV2's "Normalized data" column header for one morphology feature."""
+    if feature.unit is None:
+        return feature.symbol
+    return f"{feature.symbol} ({feature.unit})"
+
+
+MORPHOLOGY_COLUMNS: dict[str, str] = {
+    feature.symbol: morphology_column(feature)
+    for feature in MORPHOLOGY_ASSAY.features
+}
+
+
+class MorphologyRow(BaseModel):
+    """One strain's morphology profile, as the two released sheets hold it.
+
+    ``values`` and ``coefficients_of_variation`` carry only the features the release
+    DETERMINED for this strain: "NaN (Not a Number) values are attributed to
+    non-determined fields", and 278 of the 4,227 imaged strains have no nucleoid
+    channel, so their seven nucleoid-derived features do not exist.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    plate: str
+    well: str
+    n_cells: int
+    values: dict[str, float]
+    coefficients_of_variation: dict[str, float]
+
+
+def read_morphology_rows(
+    data_path: str | Path, cell_counts_path: str | Path
+) -> dict[tuple[str, str], MorphologyRow]:
+    """Join Dataset EV2's morphology columns to Dataset EV1's segmented-cell count.
+
+    The two sheets are row-aligned on the Keio position: measured on the release, both
+    carry the same 4,467 ``(plate, well)`` pairs with the same gene label in the same
+    order, so the join key is the position and a key present in one sheet and absent
+    from the other stops the build.
+
+    Keyed by ``(plate, well)`` rather than by gene label because the release names
+    several distinct strains identically; the position is what the fitness reader's row
+    identity already uses, so the two datasets drop exactly the same rows.
+    """
+    frame = pd.read_excel(data_path, sheet_name=NORMALIZED_SHEET)
+    missing = [
+        column
+        for column in (PLATE_COLUMN, WELL_COLUMN, *MORPHOLOGY_COLUMNS.values())
+        if column not in frame.columns
+    ]
+    if missing:
+        raise ValueError(
+            f"{data_path}: {NORMALIZED_SHEET} is missing morphology columns {missing}"
+        )
+    counts_frame = pd.read_excel(cell_counts_path, sheet_name=RAW_SHEET)
+    for column in (PLATE_COLUMN, WELL_COLUMN, CELL_COUNT_COLUMN):
+        if column not in counts_frame.columns:
+            raise ValueError(
+                f"{cell_counts_path}: {RAW_SHEET} is missing column {column!r}"
+            )
+    counts = {
+        (str(plate).strip(), str(well).strip()): int(n_cells)
+        for plate, well, n_cells in zip(
+            counts_frame[PLATE_COLUMN],
+            counts_frame[WELL_COLUMN],
+            counts_frame[CELL_COUNT_COLUMN],
+            strict=True,
+        )
+    }
+    if len(counts) != len(counts_frame):
+        raise ValueError(
+            f"{cell_counts_path}: {RAW_SHEET} repeats a (plate, well) position"
+        )
+
+    labelled = frame[frame[LABEL_COLUMN].notna()]
+    cv_symbols = MORPHOLOGY_ASSAY.coefficient_of_variation_symbols
+    rows: dict[tuple[str, str], MorphologyRow] = {}
+    for record in labelled.to_dict(orient="records"):
+        key = (str(record[PLATE_COLUMN]).strip(), str(record[WELL_COLUMN]).strip())
+        if key not in counts:
+            raise ValueError(
+                f"{cell_counts_path}: {RAW_SHEET} has no cell count for position {key}"
+            )
+        values: dict[str, float] = {}
+        coefficients: dict[str, float] = {}
+        for symbol, column in MORPHOLOGY_COLUMNS.items():
+            number = float(record[column])
+            if math.isnan(number):
+                continue  # a non-determined field, which the release writes as NaN
+            if symbol in cv_symbols:
+                coefficients[symbol] = number
+            else:
+                values[symbol] = number
+        rows[key] = MorphologyRow(
+            plate=key[0],
+            well=key[1],
+            n_cells=counts[key],
+            values=values,
+            coefficients_of_variation=coefficients,
+        )
+    if len(rows) != len(counts):
+        raise ValueError(
+            f"{data_path}: {len(rows)} labelled rows against {len(counts)} cell counts"
+        )
+    return rows
 
 
 def released_alpha_max_scores(path: str | Path) -> dict[tuple[str, str], float]:
@@ -1255,6 +1463,79 @@ def reference_phenotype(n_replicates: int = WILD_TYPE_ROWS) -> FitnessPhenotype:
         n_samples=n_replicates,
         sample_unit=SampleUnit.biological_replicate,
         provenance_gaps=list(PHENOTYPE_GAPS),
+    )
+
+
+#: The assay name every morphology record declares.
+MORPHOLOGY_ASSAY_NAME = MORPHOLOGY_ASSAY.name
+
+
+def morphology_phenotype(row: MorphologyRow) -> BacterialMorphologyPhenotype:
+    """One strain's morphology profile over the features the release determined for it.
+
+    ``n_samples`` is Dataset EV1's ``nb Cells``, the strain's retained segmented cells,
+    and the sample unit is the CELL: each mean and each CV is computed over those cells
+    from one well, so ``biological_replicate`` would report 1 for a mean over hundreds.
+    """
+    return BacterialMorphologyPhenotype(
+        assay=MORPHOLOGY_ASSAY_NAME,
+        morphology=dict(row.values),
+        morphology_coefficient_of_variation=dict(row.coefficients_of_variation),
+        n_samples=row.n_cells,
+        sample_unit=SampleUnit.cell,
+    )
+
+
+def morphology_reference_phenotype(
+    rows: Sequence[MorphologyRow],
+) -> BacterialMorphologyPhenotype:
+    """The parent in the same medium: the per-feature MEDIAN over its replicate wells.
+
+    The reference is a different statistic from a record, and saying so is the point.
+    A record's number is one well's mean (or CV, or correlation) over that well's
+    segmented cells; the reference's is the median of that number across the parental
+    replicate wells, so its sample unit is the biological replicate and its
+    ``n_samples`` is the number of those wells, the same convention
+    :func:`reference_phenotype` uses for the fitness reference. The median is taken per
+    feature over the wells that determined it, so a feature no replicate determined is
+    absent rather than imputed.
+    """
+    if not rows:
+        raise ValueError("no parental replicate rows: no morphology reference")
+    cv_symbols = MORPHOLOGY_ASSAY.coefficient_of_variation_symbols
+    values: dict[str, float] = {}
+    coefficients: dict[str, float] = {}
+    for feature in MORPHOLOGY_ASSAY.features:
+        observed = sorted(
+            row.coefficients_of_variation[feature.symbol]
+            if feature.symbol in cv_symbols
+            else row.values[feature.symbol]
+            for row in rows
+            if feature.symbol
+            in (
+                row.coefficients_of_variation
+                if feature.symbol in cv_symbols
+                else row.values
+            )
+        )
+        if not observed:
+            continue
+        middle = len(observed) // 2
+        median = (
+            observed[middle]
+            if len(observed) % 2
+            else (observed[middle - 1] + observed[middle]) / 2
+        )
+        if feature.symbol in cv_symbols:
+            coefficients[feature.symbol] = median
+        else:
+            values[feature.symbol] = median
+    return BacterialMorphologyPhenotype(
+        assay=MORPHOLOGY_ASSAY_NAME,
+        morphology=values,
+        morphology_coefficient_of_variation=coefficients,
+        n_samples=len(rows),
+        sample_unit=SampleUnit.biological_replicate,
     )
 
 
@@ -1481,6 +1762,244 @@ class GrowthRateCampos2018Dataset(ExperimentDataset):
         )
 
 
+@register_dataset
+class MorphologyCampos2018Dataset(ExperimentDataset):
+    """Campos 2018 Keio cell-morphology profiles: 26 features per imaged strain.
+
+    The same 3,664 strains, the same medium and the same row rules as
+    :class:`GrowthRateCampos2018Dataset` -- deliberately, since both datasets read one
+    release and a row either names a writable BW25113 locus or it does not. What differs
+    is the phenotype: a ``BacterialMorphologyPhenotype`` over the 26 morphology symbols
+    of Appendix Table S1, against the ``campos2018`` assay vocabulary.
+
+    Two sheets are read. Dataset EV2's "Normalized data" gives the corrected per-strain
+    feature values, and Dataset EV1's "Raw data" gives ``nb Cells``, the segmented cells
+    each of those means and CVs is computed over, which is the phenotype's
+    ``n_samples``. Nothing else of Dataset EV1 is read: its feature columns are the
+    uncorrected siblings of EV2's.
+    """
+
+    #: The strain whose genome the build entry points inject as ``ecoli_genome``.
+    REFERENCE_STRAIN: ClassVar[EcoliK12StrainName] = "BW25113"
+
+    def __init__(
+        self,
+        root: str = MORPHOLOGY_ROOT_REL,
+        io_workers: int = 0,
+        ecoli_genome: EcoliK12Genome | None = None,
+        transform: Callable[..., Any] | None = None,
+        pre_transform: Callable[..., Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize the dataset; the BW25113 genome is injected or opened in process."""
+        self.ecoli_genome = ecoli_genome
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialMorphologyExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialMorphologyExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """Dataset EV2 and Dataset EV1, both mirrored."""
+        return [DATA_FILENAME, RAW_CELL_COUNTS_FILENAME]
+
+    def download(self) -> None:
+        """Link both mirror files into ``raw/`` after verifying their pinned sha256."""
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        mirror = raw_mirror_dir(data_root)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for relpath, filename, sha256 in (
+            (DATA_REL, DATA_FILENAME, DATA_SHA256),
+            (CELL_COUNTS_REL, RAW_CELL_COUNTS_FILENAME, DATASET_EV1_SHA256),
+        ):
+            check_manifest_pin(relpath, manifest_sha256(manifest, relpath), sha256)
+            src = mirror / relpath
+            if not src.exists():
+                raise RuntimeError(f"required raw artifact missing from mirror: {src}")
+            link_verified(src, osp.join(self.raw_dir, filename), sha256)
+        log.info(
+            "Campos 2018 Dataset EV2 + EV1 linked into %s (sha256 verified)",
+            self.raw_dir,
+        )
+
+    def _genome(self) -> EcoliK12BW25113Genome:
+        """The BW25113 genome, injected by a build or opened from its cache root."""
+        if self.ecoli_genome is None:  # a direct run; the build entry points inject it
+            self.ecoli_genome = bacterial_genome("ecoli", self.REFERENCE_STRAIN)
+        genome = self.ecoli_genome
+        if not isinstance(genome, EcoliK12BW25113Genome):
+            raise TypeError(
+                f"{self.name} needs the BW25113 genome, got {type(genome).__name__}"
+            )
+        return genome
+
+    @post_process
+    def process(self) -> None:
+        """Parse both sheets into one morphology record per kept strain; write the LMDB."""
+        verify_raw_files(
+            self.raw_dir,
+            {DATA_FILENAME: DATA_SHA256, RAW_CELL_COUNTS_FILENAME: DATASET_EV1_SHA256},
+        )
+        data_path = osp.join(self.raw_dir, DATA_FILENAME)
+        counts_path = osp.join(self.raw_dir, RAW_CELL_COUNTS_FILENAME)
+        table = read_normalized_table(data_path)
+        morphology = read_morphology_rows(data_path, counts_path)
+        genome = self._genome()
+        resolution = resolve_rows(table, genome, label=self.name)
+        env = environment()
+        parental = [morphology[(row.plate, row.well)] for row in table.wild_type]
+        reference = BacterialMorphologyExperimentReference(
+            dataset_name=self.name,
+            genome_reference=assembly_reference(self.REFERENCE_STRAIN),
+            environment_reference=env.model_copy(),
+            phenotype_reference=morphology_reference_phenotype(parental),
+        )
+        publication = Publication(doi=DOI, doi_url=f"https://doi.org/{DOI}")
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        lmdb_env, interned_env = self._open_write_lmdb(
+            osp.join(self.processed_dir, "lmdb")
+        )
+        idx = 0
+        determined = Counter[str]()
+        with lmdb_env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for record in tqdm(resolution.kept, desc="campos2018-morphology"):
+                row = morphology[(record.row.plate, record.row.well)]
+                # .keys(), not the dicts: Counter.update(mapping) ADDS the mapping's
+                # values as counts, which would sum the measurements themselves.
+                determined.update(row.values.keys())
+                determined.update(row.coefficients_of_variation.keys())
+                experiment = BacterialMorphologyExperiment(
+                    dataset_name=self.name,
+                    genotype=genotype(record),
+                    environment=env,
+                    phenotype=morphology_phenotype(row),
+                )
+                txn.put(
+                    f"{idx}".encode(),
+                    self._intern_record(experiment, reference, publication, itxn),
+                )
+                idx += 1
+        lmdb_env.close()
+        interned_env.close()
+
+        self._write_reports(table, resolution, determined, kept_records=idx)
+        log.info(
+            "Campos2018 morphology: wrote %d records over %d features; %d determined "
+            "feature values; dropped rows %s",
+            idx,
+            len(MORPHOLOGY_ASSAY.features),
+            sum(determined.values()),
+            resolution.dropped_rows,
+        )
+
+    def _write_reports(
+        self,
+        table: NormalizedTable,
+        resolution: RowResolution,
+        determined: Counter[str],
+        *,
+        kept_records: int,
+    ) -> None:
+        """Write the drop log, the identifier report and the per-feature coverage."""
+        dropped = sum(resolution.dropped_rows.values())
+        if table.released_rows - dropped != kept_records:
+            raise RuntimeError(
+                f"drop accounting mismatch: {table.released_rows} released rows - "
+                f"{dropped} dropped != {kept_records} records"
+            )
+        out = Path(self.preprocess_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        (out / "dropped_records.json").write_text(
+            json.dumps(
+                {
+                    "dataset": self.name,
+                    "released_rows": table.released_rows,
+                    "kept_records": kept_records,
+                    "dropped_records": dropped,
+                    "rules": [
+                        {
+                            "rule": rule,
+                            "scope": "row",
+                            "description": description,
+                            "n_rows": resolution.dropped_rows[rule],
+                            "labels": resolution.dropped_labels[rule],
+                        }
+                        for rule, description in ROW_RULES
+                    ],
+                },
+                indent=2,
+            )
+        )
+        (out / "identifier_reconciliation.json").write_text(
+            json.dumps(
+                {
+                    "dataset": self.name,
+                    "released_rows": table.released_rows,
+                    "imaged_strains": len(table.mutants),
+                    "kept_records": kept_records,
+                    "min_resolved_fraction": MIN_RESOLVED_FRACTION,
+                    "reconciliation": resolution.reconciliation.model_dump(mode="json"),
+                    "identifier_route": "gene_symbol",
+                },
+                indent=2,
+            )
+        )
+        (out / "served_features.json").write_text(
+            json.dumps(
+                {
+                    "dataset": self.name,
+                    "assay": MORPHOLOGY_ASSAY_NAME,
+                    "paper_features": list(PAPER_FEATURES),
+                    "served": list(MORPHOLOGY_FEATURES),
+                    "unserved": UNSERVED_FEATURES,
+                    "released_columns_not_in_the_vocabulary": (
+                        RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY
+                    ),
+                    "determined_values": sum(determined.values()),
+                    "determined_values_by_feature": {
+                        feature.symbol: determined[feature.symbol]
+                        for feature in MORPHOLOGY_ASSAY.features
+                    },
+                    "features_by_statistic": {
+                        statistic: sorted(
+                            feature.symbol
+                            for feature in MORPHOLOGY_ASSAY.features
+                            if feature.statistic == statistic
+                        )
+                        for statistic in sorted(
+                            {f.statistic.value for f in MORPHOLOGY_ASSAY.features}
+                        )
+                    },
+                    "feature_units": {
+                        feature.symbol: feature.unit
+                        for feature in MORPHOLOGY_ASSAY.features
+                    },
+                },
+                indent=2,
+            )
+        )
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError(
+            "MorphologyCampos2018Dataset builds records in process()"
+        )
+
+
 # --------------------------------------------------------------------------- #
 # Verification
 # --------------------------------------------------------------------------- #
@@ -1539,6 +2058,56 @@ def verify_build(
     return report
 
 
+def verify_morphology_build(
+    dataset_root: str,
+    *,
+    genome: EcoliK12BW25113Genome | None = None,
+    data_root: str | None = None,
+    expected_count: int = EXPECTED_RECORDS,
+) -> VerificationReport:
+    """Run the bacterial-morphology L0-L4 verifier on a built tree and write its report.
+
+    ``required_features`` is the measured 19 the release determines for every strain, so
+    the 7 it leaves non-determined for the 278 strains with no DAPI channel are absent
+    without failing the gate. The gene universe and the canonical-name resolver come from
+    the BW25113 assembly the records pin, as they do for the fitness build.
+    """
+    from torchcell.verification.bacterial_morphology import (
+        verify_bacterial_morphology_dataset,
+    )
+    from torchcell.verification.runners import stream_records
+
+    if genome is None:
+        genome = _bw25113(data_root)
+    records: Sequence[Any] = list(stream_records(dataset_root))
+    report = verify_bacterial_morphology_dataset(
+        records,
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{DATA_REL}",
+            citation_key=CITATION_KEY,
+            sha256=DATA_SHA256,
+            method="Dataset EV2 'Normalized data' sheet, the 26 morphology columns of "
+            "Appendix Table S1, joined on the Keio (plate, well) to Dataset EV1 'Raw "
+            "data' column 'nb Cells'; one BacterialMorphologyExperiment per kept Keio "
+            "deletion row against the campos2018 assay vocabulary, n_samples = that "
+            "strain's segmented cells",
+            page=f"Dataset EV2 ({DATA_FILENAME}), sheet '{NORMALIZED_SHEET}'",
+            retrieved=DATA_RETRIEVED_AT,
+        ),
+        expected_count=expected_count,
+        required_features=MORPHOLOGY_REQUIRED_FEATURES,
+        sgd_genes=set(genome.genbank.loci),
+        gene_universe_label=f"BW25113 ({genome.ASSEMBLY_SET})",
+        resolve_gene_name=genome.resolve_gene_name,
+    )
+    preprocess = osp.join(dataset_root, "preprocess")
+    os.makedirs(preprocess, exist_ok=True)
+    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI: ``deposit`` the raw mirror, ``build`` the dev LMDB, or ``verify`` it."""
     from dotenv import load_dotenv
@@ -1554,19 +2123,44 @@ def main(argv: list[str] | None = None) -> int:
         help="re-run the recorded PMC retrieval into this directory and deposit those "
         "bytes; without it the literature mirror's captured Dataset EV2 is used",
     )
-    sub.add_parser("build", help="build (or load) the dev-tree LMDB")
-    sub.add_parser("verify", help="run L0-L4 on the built dev-tree LMDB")
+    for command, help_text in (
+        ("build", "build (or load) the fitness dev-tree LMDB"),
+        ("verify", "run L0-L4 on the built fitness dev-tree LMDB"),
+        ("build-morphology", "build (or load) the morphology dev-tree LMDB"),
+        ("verify-morphology", "run L0-L4 on the built morphology dev-tree LMDB"),
+    ):
+        sub.add_parser(command, help=help_text)
     args = parser.parse_args(argv)
 
     load_dotenv()
     data_root = _data_root()
     if args.command == "deposit":
         if args.retrieve_into is not None:
-            source: str | Path = retrieve_raw_files(args.retrieve_into)[DATA_FILENAME]
+            retrieved = retrieve_raw_files(args.retrieve_into)
+            data_source: str | Path = retrieved[DATA_FILENAME]
+            counts_source: str | Path = retrieved[RAW_CELL_COUNTS_FILENAME]
         else:
-            source = library_dir(data_root) / "si" / "si4.xlsx"
-        print(deposit_raw_mirror(data_path=source, data_root=data_root))
+            library = library_dir(data_root) / "si"
+            data_source = library / "si4.xlsx"
+            counts_source = library / "si3.xlsx"
+        print(
+            deposit_raw_mirror(
+                data_path=data_source,
+                cell_counts_path=counts_source,
+                data_root=data_root,
+            )
+        )
         return 0
+    if args.command.endswith("morphology"):
+        morphology_root = osp.join(data_root, MORPHOLOGY_ROOT_REL)
+        if args.command == "build-morphology":
+            print(f"len = {len(MorphologyCampos2018Dataset(root=morphology_root))}")
+            return 0
+        morphology_report = verify_morphology_build(
+            morphology_root, data_root=data_root
+        )
+        print(morphology_report.summary())
+        return 0 if morphology_report.passed else 1
     root = osp.join(data_root, DATASET_ROOT_REL)
     if args.command == "build":
         dataset = GrowthRateCampos2018Dataset(root=root)

@@ -943,6 +943,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "promoter activity phenotype reference": (
             "_get_promoter_activity_phenotype_reference_nodes"
         ),
+        "bacterial morphology phenotype (chunked)": (
+            "_bacterial_morphology_phenotype_node"
+        ),
+        "bacterial morphology phenotype reference": (
+            "_get_bacterial_morphology_phenotype_reference_nodes"
+        ),
     }.items():
         assert table[name] == fn
     assert SCHEMA["perturbation member of"]["source"] == [
@@ -953,11 +959,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
     sources = SCHEMA["phenotype member of"]["source"]
-    assert sources[-4:] == [
+    assert sources[-5:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "flux phenotype",
         "promoter activity phenotype",
+        "bacterial morphology phenotype",
     ]
 
 

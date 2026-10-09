@@ -1021,6 +1021,7 @@ def test_genotype_of_mixed_leaves_round_trips_and_sorts_by_gene() -> None:
                 "biological_replicate",
                 "technical_replicate",
                 "pooled",
+                "cell",
             ],
         ),
         (s.TemperatureUnit, ["Celsius", "Kelvin", "Fahrenheit"]),

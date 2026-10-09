@@ -418,8 +418,9 @@ CAMPOS2018_MORPHOLOGY_FEATURES: tuple[MorphologyFeature, ...] = (
         note="inferred from the proportion of cells without any significant "
         "constriction under a steady-state cell-age assumption, so it is a relative "
         "cell-cycle age and no absolute duration follows from it. Measured on the "
-        "release: it is age(F) = -ln(1 - F/2)/ln(2) applied to the %non-div column, to "
-        "a maximum absolute error of 1.2e-15",
+        "release over the 3,949 strains that determined both: it is "
+        "age(F) = -ln(1 - F/2)/ln(2) applied to the %non-div column, to a maximum "
+        "absolute error of 1.3e-15",
     ),
     MorphologyFeature(
         symbol="Rel.timing nuc",
@@ -427,8 +428,9 @@ CAMPOS2018_MORPHOLOGY_FEATURES: tuple[MorphologyFeature, ...] = (
         group=_CYCLE,
         statistic=MorphologyStatistic.inferred_relative_timing,
         note="inferred the same way from the proportion of cells with a single "
-        "nucleoid. Measured on the release: it is age(F) = -ln(1 - F/2)/ln(2) applied to "
-        "the %1N column, to a maximum absolute error of 1.3e-15",
+        "nucleoid. Measured on the same 3,949 strains: it is "
+        "age(F) = -ln(1 - F/2)/ln(2) applied to the %1N column, to a maximum absolute "
+        "error of 1.2e-15",
     ),
     MorphologyFeature(
         symbol="%2N",

@@ -37,6 +37,9 @@ from .caglar2017_rnaseq_adapter import (
 from .campos2018_adapter import (
     GrowthRateCampos2018Adapter as GrowthRateCampos2018Adapter,
 )
+from .campos2018_morphology_adapter import (
+    MorphologyCampos2018Adapter as MorphologyCampos2018Adapter,
+)
 from .carruthers2025_proteome_adapter import (
     ProteomeCarruthers2025Adapter as ProteomeCarruthers2025Adapter,
 )
@@ -356,6 +359,7 @@ ecoli_adapters = [
     "CrispriChemgenChoe2025Adapter",
     "CrispriKnockdownCui2018Adapter",
     "GrowthRateCampos2018Adapter",
+    "MorphologyCampos2018Adapter",
     "GrowthRateChoe2019Adapter",
     "IsopentenolTiterFoo2014Adapter",
     "TranscriptionFactorKnockoutChoe2019Adapter",

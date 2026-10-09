@@ -1,0 +1,75 @@
+{
+  "served_babu2014": {
+    "served_root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014",
+    "records": 41988,
+    "oriented_pairs": 41988,
+    "by_screen_id": {
+      "Butland et al.": 1125,
+      "This Study": 40863
+    },
+    "by_perturbation_leaf": {
+      "cat:bacterial_deletion+kan:bacterial_deletion": 38579,
+      "cat:bacterial_deletion+kan:bacterial_marked_allele": 2396,
+      "cat:bacterial_marked_allele+kan:bacterial_deletion": 930,
+      "cat:bacterial_marked_allele+kan:bacterial_marked_allele": 83
+    },
+    "butland_screen_by_perturbation_leaf": {
+      "cat:bacterial_deletion+kan:bacterial_deletion": 727,
+      "cat:bacterial_deletion+kan:bacterial_marked_allele": 398
+    }
+  },
+  "release_butland2008": {
+    "released_cells": 314847,
+    "kept_records": 296390,
+    "kept_oriented_pairs": 148567,
+    "dropped_records": 18457,
+    "dropped_by_rule": {
+      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": 5811,
+      "b_number_is_not_a_locus_tag_of_the_pinned_annotation": 6318,
+      "b_number_remapped_by_the_annotation": 4407,
+      "self_pair_is_not_a_digenic_genotype": 78,
+      "released_score_contradicts_its_own_raw_colonies": 395,
+      "already_served_by_gene_interaction_babu2014": 1448
+    },
+    "n_queries": 39,
+    "n_recipient_rows": 8073
+  },
+  "served_butland_screen_pairs_located": {
+    "n_served_butland_pairs": 1125,
+    "by_first_rule_that_applies": {
+      "already_served_by_gene_interaction_babu2014": 725,
+      "not_a_cell_of_this_release": 2,
+      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": 398
+    },
+    "pairs_not_a_cell_of_this_release": [
+      "b2528 -> b4486",
+      "b2531 -> b4486"
+    ],
+    "examples_by_rule": {
+      "already_served_by_gene_interaction_babu2014": [
+        "b0119 -> b2040",
+        "b0119 -> b2199",
+        "b0119 -> b2631",
+        "b0119 -> b2786",
+        "b0119 -> b3878"
+      ],
+      "spa_tag_recipient_has_no_bacterial_perturbation_leaf": [
+        "b0119 -> b0098",
+        "b0119 -> b4052",
+        "b0130 -> b0420",
+        "b0130 -> b0923",
+        "b0130 -> b4052"
+      ]
+    }
+  },
+  "nothing_stored_twice": {
+    "measured": false,
+    "reason": "the Butland dev store holds no processed/lmdb, so its content ids cannot be read; rebuild it and re-run"
+  },
+  "pins": {
+    "SERVED_BUTLAND_RECORDS": 1125,
+    "SERVED_BUTLAND_PAIRS": 1125,
+    "SERVED_OVERLAP_CELLS": 1448,
+    "EXPECTED_RECORDS": 296390
+  }
+}

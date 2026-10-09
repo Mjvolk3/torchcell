@@ -20,8 +20,8 @@ WHY THIS IS A LOADER AND NOT A PROVENANCE RECORD. Two earlier passes concluded t
 opposite and both were wrong, so the measurement is restated here and re-run at build
 time. Issue #794 recommended a provenance record on the premise that Babu 2014 subsumes
 these screens; Babu's Table S1 does attribute 39 of its 163 donors to ``Butland et al.``
-and the served ``GeneInteractionBabu2014Dataset`` does tag 727 records
-``screen_id="Butland et al."``. But 727 is **0.23 percent** of the 314,847 S scores this
+and the served ``GeneInteractionBabu2014Dataset`` does tag 1,125 records
+``screen_id="Butland et al."``. But 1,125 is **0.36 percent** of the 314,847 S scores this
 release prints, so Babu publishes the high-confidence tail of a re-analysis rather than a
 superset: it releases 1,129 rows over these same 39 donors and omits 490 of Butland's own
 1,270 high-confidence gene pairs, 321 of them non-essential. Where the two overlap the
@@ -109,10 +109,13 @@ removed.
 
 1. ``spa_tag_recipient_has_no_bacterial_perturbation_leaf`` -- 5,811 cells (the 149
    SPA-tag essential recipient rows x 39 queries). A ``kan``-marked C-terminal SPA tag on
-   an essential gene lowers transcript abundance and is neither a deletion, a mapped
-   transposon insertion, a CRISPRi knockdown nor a promoter replacement, so no bacterial
-   gene-perturbation leaf can type it (issue #792). This is the same blocker the Babu
-   loader filed, and it is why the scope is the non-essential half of the array.
+   an essential gene lowers transcript abundance, which no deletion, transposon,
+   CRISPRi or promoter-replacement leaf can type. That gap is now closed in the schema:
+   ``BacterialMarkedAllelePerturbation`` landed with issue #792 and the Babu 2014 loader
+   stores its 3,409 hypomorph records on it (PR #837). THIS loader has not adopted the
+   leaf, so the 149 rows stay dropped under this rule and the scope stays the
+   non-essential half of the array; adopting it is what would store them, and the rule's
+   name belongs to that change rather than to this one.
 2. ``b_number_is_not_a_locus_tag_of_the_pinned_annotation`` -- 6,318 cells on one of 82
    released recipient ids GCA_000005845.2 does not carry under any layer (78 ``JW`` Keio
    ids, ``CSCR``, and the ids the annotation resolves to more than one locus). A leaf's
@@ -142,20 +145,27 @@ THE PARTITION AGAINST THE SERVED BABU STORE, PROVED BOTH WAYS AT BUILD TIME
 (``assert_served_partition``, ``preprocess/served_partition.json``). The unit of the
 proof is the ORIENTED gene pair, because that is what identifies a strain in this family:
 swapping query and recipient swaps the ``cat`` and ``kan`` cassettes, which the Babu
-loader already relies on to keep its 102 reciprocal pairs as two records each.
+loader already relies on to keep its 100 reciprocal pairs as two records each.
 
 - FORWARD: not one stored cell shares an oriented (query, recipient) gene pair with a
   served record, so nothing enters the graph twice. Dropping a pair drops BOTH its isolate
   cells, since Babu's single score is derived from the same colonies.
-- REVERSE: 725 of the 727 served ``Butland et al.`` records ARE cells of this release, so
-  the overlap is accounted for rather than assumed. The 2 exceptions are pinned by name:
-  ``b2528 -> b4486`` and ``b2531 -> b4486``, which this release names ``b2528 -> b4344``
-  and ``b2531 -> b4344`` (gene name ``*``, absent from Genobase ver. 6) and rule 3 drops,
-  because the assembly carries ``b4344`` as a synonym of ``b4486``. No record of Babu's
-  other screen set (``This Study``) collides with any cell of this matrix.
+- REVERSE: every one of the 1,125 served ``Butland et al.`` records is accounted for in
+  this release rather than assumed, in three groups that sum to 1,125. 725 are storable
+  cells of this matrix, and rule 6 removes their 1,448 cells. 398 sit on a recipient row
+  the roster labels ``SPA-tag essential``, so rule 1 removes them first and they never
+  reach rule 6: Babu stores those pairs on ``BacterialMarkedAllelePerturbation`` (PR
+  #837), a leaf this loader does not yet use. 2 are pinned by name because this release
+  does not name them at all: ``b2528 -> b4486`` and ``b2531 -> b4486``, which the matrix
+  names ``b2528 -> b4344`` and ``b2531 -> b4344`` (gene name ``*``, absent from Genobase
+  ver. 6), because the assembly carries ``b4344`` as a synonym of ``b4486``. No record of
+  Babu's other screen set (``This Study``) collides with any cell of this matrix, and any
+  served pair that falls in none of the three groups raises.
 
-Both counts are constants (:data:`SERVED_OVERLAP_CELLS`, :data:`SERVED_BUTLAND_PAIRS`,
-:data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`), so a drift in either store stops the build.
+Every count is a constant (:data:`SERVED_BUTLAND_RECORDS`, :data:`SERVED_BUTLAND_PAIRS`,
+:data:`SERVED_OVERLAP_PAIRS`, :data:`SERVED_OVERLAP_CELLS`,
+:data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`, :data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`),
+so a drift in either store stops the build.
 
 STRAIN. The same conjugant chassis as Babu 2014, for the same reason: every released
 identifier is an MG1655 b-number, so records pin
@@ -1470,9 +1480,11 @@ DROP_RULE_DESCRIPTIONS: dict[str, str] = {
     "exact zero is NOT a sentinel in general (310 of the 798 all-zero-colony cells carry "
     "a nonzero score, down to -17.8), so only the contradictory cells are dropped",
     RULE_SERVED: "the oriented (query, recipient) gene pair is already a record of the "
-    "served GeneInteractionBabu2014Dataset, which re-released 727 of this screen's "
+    "served GeneInteractionBabu2014Dataset, which re-released 1,125 of this screen's "
     "measurements under screen_id 'Butland et al.'. Both isolate cells of such a pair "
-    "are dropped, because Babu's single score is derived from the same colonies",
+    "are dropped, because Babu's single score is derived from the same colonies. 725 of "
+    "the 1,125 reach this rule; the other 400 are removed by rule 1 or are not cells of "
+    "this release at all, which the partition proves pair by pair",
 }
 
 
@@ -1590,7 +1602,9 @@ class ServedPartition(BaseModel):
     stored_records: int
     stored_pairs: int
     shared_pairs: int
+    overlap_pairs_dropped: int
     overlap_cells_dropped: int
+    served_pairs_on_a_spa_tag_recipient: int
     served_pairs_not_in_this_release: list[str]
 
 
@@ -1782,13 +1796,24 @@ def build_reference(
 # The partition against the served Babu 2014 store
 # --------------------------------------------------------------------------- #
 #: The served store's records tagged ``screen_id="Butland et al."``, measured on the dev
-#: tree on 2026-10-08. A drift in either store moves this and stops the build.
-SERVED_BUTLAND_RECORDS: Final = 727
-#: Those records as oriented (query, recipient) gene pairs: no two of the 727 share one.
-SERVED_BUTLAND_PAIRS: Final = 727
+#: tree on 2026-10-09 by
+#: ``experiments/036-dataset-fixes-before-kg-build/scripts/butland2008_babu2014_partition.py``.
+#: It was 727 until PR #837 put Babu 2014's hypomorph pairs on
+#: ``BacterialMarkedAllelePerturbation``, which admitted 398 more records of this screen.
+#: A drift in either store moves this and stops the build.
+SERVED_BUTLAND_RECORDS: Final = 1125
+#: Those records as oriented (query, recipient) gene pairs: no two of the 1,125 share one.
+SERVED_BUTLAND_PAIRS: Final = 1125
+#: Served pairs that are storable cells of this release, so rule 6 removes them.
+SERVED_OVERLAP_PAIRS: Final = 725
 #: Cells of this release dropped because their oriented pair is one of those served. It
 #: is not 2 x 725 because two of the shared pairs have only one isolate row.
 SERVED_OVERLAP_CELLS: Final = 1448
+#: Served pairs whose recipient row the roster labels ``SPA-tag essential``, so rule 1
+#: removes them before rule 6 is reached. Every one of the 398 records Babu admitted
+#: under this screen is one of these: Babu types the SPA-tagged recipient as a marked
+#: allele, a leaf this loader does not use, so no cell of them is stored here either way.
+SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT: Final = 398
 #: The served pairs this release does NOT carry under those names, pinned by name
 #: because the reverse direction of the partition is a measurement, not an assumption.
 #: This release names both recipients ``b4344`` (gene name ``*``, absent from Genobase
@@ -1840,7 +1865,9 @@ def assert_served_partition(
     served: Mapping[tuple[str, str], str],
     served_records: int,
     stored_pairs: Sequence[tuple[str, str]],
-    release_pairs: Sequence[tuple[str, str]],
+    released_pairs: Sequence[tuple[str, str]],
+    spa_tag_pairs: Sequence[tuple[str, str]],
+    overlap_pairs: Sequence[tuple[str, str]],
     *,
     stored_records: int,
     released_cells: int,
@@ -1849,13 +1876,19 @@ def assert_served_partition(
     """Prove the partition against the served store, in both directions.
 
     FORWARD: not one stored oriented pair is a pair the served store holds, so nothing
-    enters the graph twice. REVERSE: every served record tagged with this screen IS a
-    pair of this release, except the ones pinned in
-    :data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`, so the overlap is accounted for rather
-    than assumed and a drift in either store raises.
+    enters the graph twice.
+
+    REVERSE: every served record tagged with this screen is accounted for in this
+    release, in three groups whose counts are pinned and which must sum to
+    :data:`SERVED_BUTLAND_RECORDS`: the storable cells rule 6 removes
+    (:data:`SERVED_OVERLAP_PAIRS`), the pairs rule 1 removes first because their
+    recipient row is SPA-tag essential (:data:`SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT`),
+    and the pairs this release does not name at all
+    (:data:`SERVED_PAIRS_NOT_IN_THIS_RELEASE`). A served pair in none of the three
+    raises, as does a drift in either store.
     """
     stored = set(stored_pairs)
-    release = set(release_pairs)
+    released = set(released_pairs)
     shared = sorted(stored & set(served))
     if shared:
         raise RuntimeError(
@@ -1875,11 +1908,42 @@ def assert_served_partition(
             f"{BABU_SCREEN_TAG!r}, this build was measured against "
             f"{SERVED_BUTLAND_PAIRS}"
         )
+    overlap = set(overlap_pairs)
+    if not overlap <= butland:
+        raise RuntimeError(
+            f"{len(overlap - butland)} pairs were dropped as served by this screen but "
+            f"the served store does not tag them with {BABU_SCREEN_TAG!r}: "
+            f"{sorted(overlap - butland)[:5]}"
+        )
+    if len(overlap) != SERVED_OVERLAP_PAIRS:
+        raise RuntimeError(
+            f"{len(overlap)} served pairs are storable cells of this release, this "
+            f"build was measured against {SERVED_OVERLAP_PAIRS}"
+        )
+    on_spa_tag = butland & set(spa_tag_pairs)
+    if len(on_spa_tag) != SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT:
+        raise RuntimeError(
+            f"{len(on_spa_tag)} served pairs sit on a SPA-tag essential recipient row, "
+            f"this build was measured against {SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT}"
+        )
     outside = tuple(
         f"{query} -> {recipient}"
         for query, recipient in sorted(butland)
-        if (query, recipient) not in release
+        if (query, recipient) not in released
     )
+    unaccounted = sorted(
+        f"{query} -> {recipient}"
+        for query, recipient in butland
+        - overlap
+        - on_spa_tag
+        - {pair for pair in butland if pair not in released}
+    )
+    if unaccounted:
+        raise RuntimeError(
+            f"{len(unaccounted)} served pairs of this screen are cells of this release "
+            "that neither rule 1 nor rule 6 removes, so the partition no longer "
+            f"accounts for them: {unaccounted[:5]}"
+        )
     return ServedPartition(
         served_root=served_root,
         served_records=served_records,
@@ -1889,7 +1953,9 @@ def assert_served_partition(
         stored_records=stored_records,
         stored_pairs=len(stored),
         shared_pairs=0,
+        overlap_pairs_dropped=len(overlap),
         overlap_cells_dropped=overlap_cells,
+        served_pairs_on_a_spa_tag_recipient=len(on_spa_tag),
         served_pairs_not_in_this_release=list(outside),
     )
 
@@ -2018,6 +2084,7 @@ def retain(
     sample_counts = Counter[int]()
     screen_counts = Counter[int]()
     stored_pairs: list[tuple[str, str]] = []
+    overlap_pairs: set[tuple[str, str]] = set()
     for row, recipient_tag in enumerate(scores.recipient_tags):
         label = scores.labels[row]
         version = scores.versions[row]
@@ -2042,6 +2109,7 @@ def retain(
                 continue
             if (query_tag, recipient_tag) in served:
                 dropped[RULE_SERVED].append(item)
+                overlap_pairs.add((query_tag, recipient_tag))
                 continue
             cells.append(
                 StoredCell(
@@ -2062,15 +2130,20 @@ def retain(
             screen_counts[int(screens[row, column])] += 1
 
     released_cells = len(scores.recipient_tags) * len(scores.query_tags)
-    release_pairs = [
+    #: Every oriented pair this matrix prints a cell for, whatever any rule then does
+    #: with it: the reverse direction of the partition asks whether a served pair is
+    #: NAMED by this release, which is a different question from whether it is stored.
+    released_pairs = {
+        (query_tag, recipient_tag)
+        for recipient_tag in scores.recipient_tags
+        for query_tag in scores.query_tags
+    }
+    spa_tag_pairs = {
         (query_tag, recipient_tag)
         for row, recipient_tag in enumerate(scores.recipient_tags)
-        if scores.labels[row] == LABEL_NON_ESSENTIAL
-        and recipient_tag not in not_a_tag
-        and recipient_tag not in remapped
+        if scores.labels[row] == LABEL_SPA_TAG
         for query_tag in scores.query_tags
-        if query_tag != recipient_tag
-    ]
+    }
     rules = [
         DropRule(
             rule=rule,
@@ -2103,7 +2176,9 @@ def retain(
         served,
         served_records,
         stored_pairs,
-        release_pairs,
+        sorted(released_pairs),
+        sorted(spa_tag_pairs),
+        sorted(overlap_pairs),
         stored_records=len(cells),
         released_cells=released_cells,
         overlap_cells=len(dropped[RULE_SERVED]),

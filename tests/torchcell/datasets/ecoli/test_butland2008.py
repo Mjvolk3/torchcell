@@ -132,10 +132,14 @@ KEPT_CELLS: tuple[tuple[str, str, str, float], ...] = (
     ("b0005", "b0007", "Isolate 1", -2.0),
     ("b0007", "b0002", "Isolate 1", 3.5),
 )
-#: The stubbed served Babu store: two pairs tagged with this screen, one of which this
-#: release carries, and one "This Study" pair that the reverse check must ignore.
+#: The stubbed served Babu store, one pair per group of the reverse proof: a storable
+#: cell of this release (dropped by rule 6), a cell whose recipient row is SPA-tag
+#: essential (dropped by rule 1, which is where Babu's marked-allele records land), a
+#: pair this release does not name at all, and a "This Study" pair the reverse check
+#: must ignore.
 SERVED_STUB: dict[tuple[str, str], str] = {
     ("b0005", "b0002"): m.BABU_SCREEN_TAG,
+    ("b0007", "b0006"): m.BABU_SCREEN_TAG,
     ("b0005", "b4486"): m.BABU_SCREEN_TAG,
     ("b0003", "b0001"): "This Study",
 }
@@ -341,9 +345,11 @@ def synthetic_counts(monkeypatch: pytest.MonkeyPatch) -> None:
         sum(1 for row in SYNTHETIC_ARRAY if row[0] == m.LABEL_SPA_TAG),
     )
     monkeypatch.setattr(m, "N_HIGH_CONFIDENCE_PAIRS", len(SYNTHETIC_HIGH_CONFIDENCE))
-    monkeypatch.setattr(m, "SERVED_BUTLAND_RECORDS", 2)
-    monkeypatch.setattr(m, "SERVED_BUTLAND_PAIRS", 2)
+    monkeypatch.setattr(m, "SERVED_BUTLAND_RECORDS", 3)
+    monkeypatch.setattr(m, "SERVED_BUTLAND_PAIRS", 3)
+    monkeypatch.setattr(m, "SERVED_OVERLAP_PAIRS", 1)
     monkeypatch.setattr(m, "SERVED_OVERLAP_CELLS", 1)
+    monkeypatch.setattr(m, "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT", 1)
     monkeypatch.setattr(m, "SERVED_PAIRS_NOT_IN_THIS_RELEASE", ("b0005 -> b4486",))
 
 
@@ -848,11 +854,13 @@ def test_the_build_proves_the_partition_against_the_served_store(
         Path(built.preprocess_dir, "served_partition.json").read_text()
     )
     assert partition["shared_pairs"] == 0
+    assert partition["overlap_pairs_dropped"] == 1
     assert partition["overlap_cells_dropped"] == 1
-    assert partition["served_butland_pairs"] == 2
+    assert partition["served_butland_pairs"] == 3
+    assert partition["served_pairs_on_a_spa_tag_recipient"] == 1
     assert partition["served_pairs_not_in_this_release"] == ["b0005 -> b4486"]
     assert partition["stored_records"] == len(KEPT_CELLS)
-    assert partition["served_fraction_of_this_release"] == pytest.approx(2 / 18)
+    assert partition["served_fraction_of_this_release"] == pytest.approx(3 / 18)
 
 
 def test_the_build_writes_the_identifier_and_not_loaded_ledgers(
@@ -911,18 +919,66 @@ def test_the_build_refuses_a_query_the_annotation_does_not_carry(
         )
 
 
+#: The three groups of the stubbed release, as the partition's reverse proof sees them:
+#: every pair the synthetic matrix prints a cell for, the ones on its SPA-tag row, and
+#: the one served pair rule 6 removes.
+STUB_RELEASED_PAIRS: tuple[tuple[str, str], ...] = tuple(
+    (query, recipient)
+    for _, _, recipient, _ in SYNTHETIC_ARRAY
+    for _, query in SYNTHETIC_QUERIES
+)
+STUB_SPA_TAG_PAIRS: tuple[tuple[str, str], ...] = tuple(
+    (query, recipient)
+    for label, _, recipient, _ in SYNTHETIC_ARRAY
+    if label == m.LABEL_SPA_TAG
+    for _, query in SYNTHETIC_QUERIES
+)
+STUB_OVERLAP_PAIRS: tuple[tuple[str, str], ...] = (("b0005", "b0002"),)
+
+
+def _partition(
+    *,
+    stored_pairs: Sequence[tuple[str, str]] = (),
+    released_pairs: Sequence[tuple[str, str]] = STUB_RELEASED_PAIRS,
+    spa_tag_pairs: Sequence[tuple[str, str]] = STUB_SPA_TAG_PAIRS,
+    overlap_pairs: Sequence[tuple[str, str]] = STUB_OVERLAP_PAIRS,
+    stored_records: int = 0,
+    overlap_cells: int = 1,
+) -> m.ServedPartition:
+    """Run the partition over the stubbed served store and the synthetic release."""
+    return m.assert_served_partition(
+        "stubbed",
+        dict(SERVED_STUB),
+        len(SERVED_STUB),
+        stored_pairs,
+        released_pairs,
+        spa_tag_pairs,
+        overlap_pairs,
+        stored_records=stored_records,
+        released_cells=18,
+        overlap_cells=overlap_cells,
+    )
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_accounts_for_every_served_pair_of_this_screen() -> None:
+    """The three groups of the reverse proof sum to the served record count."""
+    partition = _partition()
+    assert partition.served_butland_records == partition.served_butland_pairs == 3
+    assert partition.overlap_pairs_dropped == 1
+    assert partition.served_pairs_on_a_spa_tag_recipient == 1
+    assert partition.served_pairs_not_in_this_release == ["b0005 -> b4486"]
+    groups = (
+        partition.overlap_pairs_dropped
+        + partition.served_pairs_on_a_spa_tag_recipient
+        + len(partition.served_pairs_not_in_this_release)
+    )
+    assert groups == partition.served_butland_records
+
+
 def test_the_partition_refuses_a_stored_pair_the_served_store_holds() -> None:
     with pytest.raises(RuntimeError, match="already served by Babu 2014"):
-        m.assert_served_partition(
-            "stubbed",
-            dict(SERVED_STUB),
-            len(SERVED_STUB),
-            [("b0005", "b0002")],
-            [("b0005", "b0002")],
-            stored_records=1,
-            released_cells=18,
-            overlap_cells=0,
-        )
+        _partition(stored_pairs=[("b0005", "b0002")], stored_records=1)
 
 
 def test_the_partition_refuses_a_served_butland_count_it_was_not_measured_against(
@@ -930,16 +986,56 @@ def test_the_partition_refuses_a_served_butland_count_it_was_not_measured_agains
 ) -> None:
     monkeypatch.setattr(m, "SERVED_BUTLAND_RECORDS", 727)
     with pytest.raises(RuntimeError, match="records under screen_id"):
-        m.assert_served_partition(
-            "stubbed",
-            dict(SERVED_STUB),
-            len(SERVED_STUB),
-            [],
-            [],
-            stored_records=0,
-            released_cells=18,
-            overlap_cells=0,
-        )
+        _partition()
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_a_served_pair_count_that_disagrees_with_the_pairs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(m, "SERVED_BUTLAND_PAIRS", 727)
+    with pytest.raises(RuntimeError, match="oriented pairs under screen_id"):
+        _partition()
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_an_overlap_pair_the_screen_does_not_tag() -> None:
+    """Rule 6 may only drop pairs the served store tags with THIS screen."""
+    with pytest.raises(RuntimeError, match="does not tag them"):
+        _partition(overlap_pairs=[("b0003", "b0001")])
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_an_overlap_pair_count_it_was_not_measured_against(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(m, "SERVED_OVERLAP_PAIRS", 725)
+    with pytest.raises(RuntimeError, match="storable cells of this release"):
+        _partition()
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_a_spa_tag_group_it_was_not_measured_against(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(m, "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT", 398)
+    with pytest.raises(RuntimeError, match="SPA-tag essential recipient row"):
+        _partition()
+
+
+@pytest.mark.usefixtures("synthetic_counts")
+def test_the_partition_refuses_a_served_pair_no_group_accounts_for(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """A served cell of this release that neither rule 1 nor rule 6 removed raises.
+
+    This is the drift the 727 -> 1,125 growth would have produced had Babu's new records
+    landed on storable rows: the count pins would still pass and the cells would be
+    stored twice, so the residue is checked pair by pair rather than by arithmetic.
+    """
+    monkeypatch.setattr(m, "SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT", 0)
+    with pytest.raises(RuntimeError, match="neither rule 1 nor rule 6 removes"):
+        _partition(spa_tag_pairs=())
 
 
 def test_reading_the_served_store_refuses_two_records_of_one_oriented_pair(
@@ -1116,22 +1212,38 @@ def test_the_dev_store_ledgers_state_the_measured_build() -> None:
 
 
 @pytest.mark.data
-def test_the_dev_store_partition_is_the_measured_0_23_percent() -> None:
+def test_the_dev_store_partition_is_the_measured_0_36_percent() -> None:
+    """The partition as rebuilt against the Babu store that holds its hypomorphs.
+
+    Babu's own store grew from 38,579 to 41,988 records with PR #837, and 398 of the
+    admitted records carry this screen, so the served-by-Babu side of the partition is
+    1,125 rather than the 727 the first build measured. None of the 398 changes what is
+    stored here: every one of them sits on a SPA-tag essential recipient row, which rule
+    1 removes before rule 6 is reached.
+    """
     preprocess = Path(_data_root(), m.DATASET_ROOT_REL, "preprocess")
     if not preprocess.is_dir():
         pytest.skip("the dev store is not built")
     partition = json.loads((preprocess / "served_partition.json").read_text())
-    assert partition["served_records"] == 38579
-    assert partition["served_butland_records"] == m.SERVED_BUTLAND_RECORDS == 727
+    assert partition["served_records"] == 41988
+    assert partition["served_butland_records"] == m.SERVED_BUTLAND_RECORDS == 1125
+    assert partition["served_butland_pairs"] == m.SERVED_BUTLAND_PAIRS == 1125
     assert partition["served_fraction_of_this_release"] == pytest.approx(
-        727 / 314847, rel=1e-9
+        1125 / 314847, rel=1e-9
     )
-    assert round(partition["served_fraction_of_this_release"] * 100, 2) == 0.23
+    assert round(partition["served_fraction_of_this_release"] * 100, 2) == 0.36
     assert partition["shared_pairs"] == 0
+    assert partition["overlap_pairs_dropped"] == m.SERVED_OVERLAP_PAIRS == 725
     assert partition["overlap_cells_dropped"] == m.SERVED_OVERLAP_CELLS == 1448
+    assert (
+        partition["served_pairs_on_a_spa_tag_recipient"]
+        == m.SERVED_PAIRS_ON_A_SPA_TAG_RECIPIENT
+        == 398
+    )
     assert partition["served_pairs_not_in_this_release"] == list(
         m.SERVED_PAIRS_NOT_IN_THIS_RELEASE
     )
+    assert 725 + 398 + 2 == m.SERVED_BUTLAND_RECORDS
 
 
 @pytest.mark.data

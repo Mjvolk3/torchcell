@@ -1296,8 +1296,14 @@ can settle.
 ## 2026.10.09 - The ledger's revised totals
 
 Three of the ledger's six open ranks landed on the E. coli side (ranks 11, 12 and 13),
-so the totals over both audits move from 15 landed / 6 open to 18 landed / 3 open. The
-revised table and the per-rank record counts are recorded once, in
-[[plan.bacteria-si-phenotype-audit-ecoli]]'s section of the same date. Nothing on the
-P. putida side changed: rank 6 (Menasalvas) stays assigned to the #739/#788 branch and
-rank 9 (Lim 2025) stays conditional on a `MEDIA_LIBRARY` entry and a pairing decision.
+so the re-measured totals over both audits move from 15 landed / 6 open to **18 landed /
+2 open**, with 3 in flight. The revised table and the per-rank record counts are recorded
+once, in [[plan.bacteria-si-phenotype-audit-ecoli]]'s section of the same date.
+
+One row of this table moved: **rank 6, Menasalvas, is now in flight rather than open.**
+At the 6cf257308 measurement the `feat/739-788-manual-deposits-consumed` branch had
+touched `carruthers2025.py` and `bacteria_common.py` and not `menasalvas2025.py`, which is
+why the ledger reported it open with the assignment declared beside the measurement; the
+re-run on this branch finds that branch adding lines to `menasalvas2025.py`, so the probe
+now reports it in flight. Rank 9 (Lim 2025) stays conditional on a `MEDIA_LIBRARY` entry
+for the production medium and a pairing decision against an evolved strain.

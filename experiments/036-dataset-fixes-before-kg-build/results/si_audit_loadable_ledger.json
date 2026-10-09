@@ -1,16 +1,16 @@
 {
-  "measured_at": "2026-10-09T10:48:34.273991+00:00",
-  "head": "6cf257308cee5a6fa32f3bacee33fd1537bcb90d",
+  "measured_at": "2026-10-09T15:11:27.323412+00:00",
+  "head": "e87526d3f80f3bebdfcb8fa840fdc718a79623b9",
   "data_root": "/scratch/projects/torchcell-scratch",
   "ecoli_audit": "notes/plan.bacteria-si-phenotype-audit-ecoli.md",
   "pputida_audit": "notes/plan.bacteria-si-phenotype-audit-pputida.md",
-  "prs_resolved": true,
+  "prs_resolved": false,
   "n_rows": 31,
   "totals": {
     "excluded": 1,
-    "in_flight": 2,
-    "landed": 15,
-    "open": 6,
+    "in_flight": 3,
+    "landed": 18,
+    "open": 2,
     "refused": 7
   },
   "rows": [
@@ -67,7 +67,7 @@
           "entries": 240,
           "landing_commit": "96ec133f3179c740d1c0e8e07fda2a82105c80ff",
           "landing_subject": "FEAT(datasets): Lamoureux 2023 Public K-12, the 1,675 reprocessed public E. coli RNA-seq samples",
-          "landing_pr": 779
+          "landing_pr": null
         }
       ],
       "records_now": 240,
@@ -77,9 +77,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        779
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -98,7 +96,7 @@
           "entries": 1515,
           "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
           "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
-          "landing_pr": 781
+          "landing_pr": null
         }
       ],
       "records_now": 1515,
@@ -108,9 +106,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        781
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -129,7 +125,7 @@
           "entries": 407,
           "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
           "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
-          "landing_pr": 781
+          "landing_pr": null
         }
       ],
       "records_now": 407,
@@ -139,9 +135,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        781
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -160,7 +154,7 @@
           "entries": 407,
           "landing_commit": "f99d3dfa278c8eaf49cb977c7ae45d7bb2f7ff19",
           "landing_subject": "FEAT(datasets): three further Rapp 2026 quantity families, one dataset per released scale",
-          "landing_pr": 781
+          "landing_pr": null
         }
       ],
       "records_now": 407,
@@ -170,9 +164,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        781
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -231,7 +223,7 @@
           "entries": 320,
           "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
           "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
-          "landing_pr": 782
+          "landing_pr": null
         }
       ],
       "records_now": 320,
@@ -241,9 +233,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        782
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -272,20 +262,20 @@
       "rank": "11",
       "item": "Lamoureux 2023 per-sample growth rate (metadata_qc.csv)",
       "audit_records": "103 of 241, ceiling 354",
-      "state": "open",
+      "state": "landed",
       "stores": [
         {
           "name": "GrowthRateLamoureux2023Dataset",
-          "registered": false,
-          "root": null,
-          "store_path": null,
-          "entries": null,
-          "landing_commit": null,
-          "landing_subject": null,
+          "registered": true,
+          "root": "data/torchcell/growth_rate_lamoureux2023",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_lamoureux2023/processed/lmdb",
+          "entries": 89,
+          "landing_commit": "d84ddc8ab49152af2eac39d59f1608f6784b5143",
+          "landing_subject": "feat(datasets): load Lamoureux 2023's released growth rate as 89 absolute rates (#826)",
           "landing_pr": null
         }
       ],
-      "records_now": 0,
+      "records_now": 89,
       "enrichment": [],
       "enrichment_missing": [],
       "refusal_found": [],
@@ -301,20 +291,20 @@
       "rank": "12",
       "item": "Wang 2015 no-isoprenol OD600",
       "audit_records": "46 plus 1 reference",
-      "state": "open",
+      "state": "landed",
       "stores": [
         {
           "name": "GrowthWang2015Dataset",
-          "registered": false,
-          "root": null,
-          "store_path": null,
-          "entries": null,
-          "landing_commit": null,
-          "landing_subject": null,
+          "registered": true,
+          "root": "data/torchcell/growth_wang2015",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/growth_wang2015/processed/lmdb",
+          "entries": 46,
+          "landing_commit": "3123f68ed87ff85675deaa0a23db6dc02b560ab9",
+          "landing_subject": "feat(datasets): load Wang 2015's no-isoprenol OD600 as 46 fitness ratios (#826)",
           "landing_pr": null
         }
       ],
-      "records_now": 0,
+      "records_now": 46,
       "enrichment": [],
       "enrichment_missing": [],
       "refusal_found": [],
@@ -330,20 +320,20 @@
       "rank": "13",
       "item": "Schmidt 2016 Table S23 per-condition growth rate + Stdev",
       "audit_records": "26",
-      "state": "open",
+      "state": "landed",
       "stores": [
         {
-          "name": "EnvGrowthRateSchmidt2016Dataset",
-          "registered": false,
-          "root": null,
-          "store_path": null,
-          "entries": null,
-          "landing_commit": null,
-          "landing_subject": null,
+          "name": "GrowthRateS23Schmidt2016Dataset",
+          "registered": true,
+          "root": "data/torchcell/growth_rate_s23_schmidt2016",
+          "store_path": "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_s23_schmidt2016/processed/lmdb",
+          "entries": 15,
+          "landing_commit": "0e56c98c8400fe942a9be7c0c61e7406096006da",
+          "landing_subject": "feat(datasets): load Schmidt 2016 Table S23 as 15 absolute growth rates (#826)",
           "landing_pr": null
         }
       ],
-      "records_now": 0,
+      "records_now": 15,
       "enrichment": [],
       "enrichment_missing": [],
       "refusal_found": [],
@@ -369,7 +359,7 @@
           "entries": 11,
           "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
           "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
-          "landing_pr": 780
+          "landing_pr": null
         },
         {
           "name": "ProteomeSrmSet2Schmidt2016Dataset",
@@ -379,7 +369,7 @@
           "entries": 14,
           "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
           "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
-          "landing_pr": 780
+          "landing_pr": null
         }
       ],
       "records_now": 25,
@@ -389,9 +379,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        780
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -410,7 +398,7 @@
           "entries": 55,
           "landing_commit": "4a7ab07bffb8d32955542514cd20bbd385c51163",
           "landing_subject": "FEAT(datasets): load Caglar 2017 Table S5's 55 per-replicate doubling times as an absolute growth readout",
-          "landing_pr": 836
+          "landing_pr": null
         }
       ],
       "records_now": 55,
@@ -420,9 +408,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        836
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -441,7 +427,7 @@
           "entries": 6,
           "landing_commit": "a9193a1450c1dff4ff3aa286cdc64fcd26efcb74",
           "landing_subject": "FEAT(datasets): Schmidt 2016 SRM absolute abundances and rim-deletion growth rates, in sibling modules that keep the served store fresh",
-          "landing_pr": 780
+          "landing_pr": null
         }
       ],
       "records_now": 6,
@@ -451,9 +437,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        780
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -482,6 +466,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [
+        "backup/pre-rebase-1def6f4c",
         "feat/770-753-protein-phenotype-fields"
       ],
       "landing_prs": [],
@@ -503,7 +488,7 @@
           "entries": 553896,
           "landing_commit": "f62db511cbd50daaa925c39c40319e18d21f9649",
           "landing_subject": "FEAT(datasets): Price 2018 Fitness Browser compendium, E. coli BW25113 arm (rank 21, the superset of Wetmore 2015): 553,896 RB-TnSeq gene-fitness records over 147 samples x 3,768 genes",
-          "landing_pr": 725
+          "landing_pr": null
         }
       ],
       "records_now": 553896,
@@ -514,7 +499,7 @@
           "present": true,
           "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
           "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
-          "landing_pr": 782
+          "landing_pr": null
         },
         {
           "path": "torchcell/datasets/ecoli/price2018.py",
@@ -522,7 +507,7 @@
           "present": true,
           "landing_commit": "a21d184f8195b7ea143f8cf9c8eb0275e6c348d3",
           "landing_subject": "FEAT(datasets): Price 2018 Table S1 essentiality, and Table S4's solvent on the stress records",
-          "landing_pr": 782
+          "landing_pr": null
         }
       ],
       "enrichment_missing": [],
@@ -530,9 +515,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        782
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -551,7 +534,7 @@
           "present": true,
           "landing_commit": "96ec133f3179c740d1c0e8e07fda2a82105c80ff",
           "landing_subject": "FEAT(datasets): Lamoureux 2023 Public K-12, the 1,675 reprocessed public E. coli RNA-seq samples",
-          "landing_pr": 779
+          "landing_pr": null
         }
       ],
       "enrichment_missing": [],
@@ -559,9 +542,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        779
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -640,7 +621,7 @@
           "entries": 55,
           "landing_commit": "4a7ab07bffb8d32955542514cd20bbd385c51163",
           "landing_subject": "FEAT(datasets): load Caglar 2017 Table S5's 55 per-replicate doubling times as an absolute growth readout",
-          "landing_pr": 836
+          "landing_pr": null
         }
       ],
       "records_now": 55,
@@ -650,9 +631,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        836
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -671,7 +650,7 @@
           "entries": 502,
           "landing_commit": "3b697978a6249b2766d707b4a27e201e94d4e1bb",
           "landing_subject": "FEAT(datasets): the first P. putida loader, Carruthers 2025 CRISPRi isoprenol production: 465 (construct, DBTL cycle) product-titer strains on the IY1449b chassis with its 8 typed deletion alleles and the 5 pIY670 pathway genes, plus the released 19-sample Top3 proteome panel, every sourced value quoting sha256-pinned mirrored bytes",
-          "landing_pr": 720
+          "landing_pr": null
         }
       ],
       "records_now": 502,
@@ -682,7 +661,7 @@
           "present": true,
           "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
           "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
-          "landing_pr": 783
+          "landing_pr": null
         },
         {
           "path": "torchcell/datasets/pputida/carruthers2025.py",
@@ -690,7 +669,7 @@
           "present": true,
           "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
           "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
-          "landing_pr": 783
+          "landing_pr": null
         }
       ],
       "enrichment_missing": [],
@@ -698,9 +677,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        783
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -719,7 +696,7 @@
           "entries": 21,
           "landing_commit": "3b697978a6249b2766d707b4a27e201e94d4e1bb",
           "landing_subject": "FEAT(datasets): the first P. putida loader, Carruthers 2025 CRISPRi isoprenol production: 465 (construct, DBTL cycle) product-titer strains on the IY1449b chassis with its 8 typed deletion alleles and the 5 pIY670 pathway genes, plus the released 19-sample Top3 proteome panel, every sourced value quoting sha256-pinned mirrored bytes",
-          "landing_pr": 720
+          "landing_pr": null
         }
       ],
       "records_now": 21,
@@ -730,7 +707,7 @@
           "present": true,
           "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
           "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
-          "landing_pr": 783
+          "landing_pr": null
         },
         {
           "path": "torchcell/datasets/pputida/carruthers2025.py",
@@ -738,7 +715,7 @@
           "present": true,
           "landing_commit": "c18cf1cc77251287306d39ae6397d5523abbef5d",
           "landing_subject": "FEAT(datasets): serve Carruthers 2025's four unstored titer panels and its second proteome matrix",
-          "landing_pr": 783
+          "landing_pr": null
         }
       ],
       "enrichment_missing": [],
@@ -746,9 +723,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        783
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -787,7 +762,7 @@
           "entries": 17,
           "landing_commit": "31ccd7f5ddd02ed881d0ebcf02258305c7c0ba3e",
           "landing_subject": "FEAT(datasets): serve de Siqueira 2025's two further proteome normalizations",
-          "landing_pr": 784
+          "landing_pr": null
         },
         {
           "name": "ProteomeLog10PercentDeSiqueira2025Dataset",
@@ -797,7 +772,7 @@
           "entries": 17,
           "landing_commit": "31ccd7f5ddd02ed881d0ebcf02258305c7c0ba3e",
           "landing_subject": "FEAT(datasets): serve de Siqueira 2025's two further proteome normalizations",
-          "landing_pr": 784
+          "landing_pr": null
         }
       ],
       "records_now": 34,
@@ -807,9 +782,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        784
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -818,7 +791,7 @@
       "rank": "6",
       "item": "Menasalvas 2025 metabolites and five proteomics sheets (Dryad)",
       "audit_records": "about 4 metabolite records plus the designed-strain arms",
-      "state": "open",
+      "state": "in_flight",
       "stores": [
         {
           "name": "MetaboliteMenasalvas2025Dataset",
@@ -839,7 +812,9 @@
         "/scratch/projects/torchcell-scratch/torchcell-raw/menasalvasBiosensordrivenStrainEngineering2025/data/dryad/doi_10_5061_dryad_sbcc2frjq__v20250919.zip"
       ],
       "retrieval_absent": [],
-      "in_flight_branches": [],
+      "in_flight_branches": [
+        "feat/739-788-manual-deposits-consumed"
+      ],
       "landing_prs": [],
       "blocker": "the Dryad deposit the audit calls unfetched IS now in the raw mirror, so the row is no longer retrieval-gated; it is assigned to the #739/#788 branch, which has not yet touched the loader (measured)",
       "excluded_reason": null
@@ -859,7 +834,7 @@
           "entries": 1,
           "landing_commit": "5556aae6ab3e4a4d089c055e1b09b100c396b133",
           "landing_subject": "FEAT(datasets): load Yunus 2026's PP_4188 differential fold changes",
-          "landing_pr": 784
+          "landing_pr": null
         }
       ],
       "records_now": 1,
@@ -869,9 +844,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [],
-      "landing_prs": [
-        784
-      ],
+      "landing_prs": [],
       "blocker": null,
       "excluded_reason": null
     },
@@ -900,6 +873,7 @@
       "retrieval_present": [],
       "retrieval_absent": [],
       "in_flight_branches": [
+        "backup/pre-rebase-1def6f4c",
         "feat/739-788-manual-deposits-consumed",
         "feat/770-753-protein-phenotype-fields"
       ],

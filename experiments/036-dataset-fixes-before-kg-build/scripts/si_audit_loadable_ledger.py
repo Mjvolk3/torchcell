@@ -347,7 +347,7 @@ ECOLI_ROWS: Final = (
         classes=(
             ClassProbe(
                 name="GrowthRateLamoureux2023Dataset",
-                module="torchcell/datasets/ecoli/lamoureux2023_growth_rate.py",
+                module="torchcell/datasets/ecoli/lamoureux2023_growth.py",
             ),
         ),
         owner_paths=(
@@ -384,8 +384,8 @@ ECOLI_ROWS: Final = (
         audit_records="26",
         classes=(
             ClassProbe(
-                name="EnvGrowthRateSchmidt2016Dataset",
-                module="torchcell/datasets/ecoli/schmidt2016_env_growth_rate.py",
+                name="GrowthRateS23Schmidt2016Dataset",
+                module="torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
             ),
         ),
         owner_paths=(

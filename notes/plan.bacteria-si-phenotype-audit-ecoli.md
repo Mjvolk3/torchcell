@@ -4024,16 +4024,22 @@ each case rather than an omission:
 
 ### Revised totals over both audits, 31 ledger rows
 
+Re-measured, not recomputed: the ledger script was re-run on this branch after the rebase
+onto `origin/main`, with rank 13's declared class corrected (it named a loader that was
+never written, `EnvGrowthRateSchmidt2016Dataset`, so the probe could not see the one that
+now exists) and rank 11's declared module path corrected to `lamoureux2023_growth.py`.
+
 | state | rows at 6cf257308 | rows now |
 |---|---|---|
-| landed | 15 | 18 |
+| landed | 15 | **18** |
 | refused | 7 | 7 |
-| open | 6 | 3 |
-| in flight | 2 | 2 |
+| in flight | 2 | **3** |
+| open | 6 | **2** |
 | excluded by owner decision | 1 | 1 |
 
-The three still open are rank 1 (Price 2018's `strain_fit.tab`, retrieval-gated and not
-in the raw mirror), P. putida rank 6 (Menasalvas, assigned to the #739/#788 branch, whose
-Dryad deposit IS mirrored) and P. putida rank 9 (Lim 2025, needing a `MEDIA_LIBRARY`
-entry and a pairing decision). None of the three is a measurement this branch could
-settle.
+Two rows are still open and neither is a measurement this branch could settle: rank 1
+(Price 2018's `strain_fit.tab`, retrieval-gated and absent from the raw mirror) and
+P. putida rank 9 (Lim 2025, needing a `MEDIA_LIBRARY` entry for the production medium and
+a pairing decision). The third change is P. putida rank 6, Menasalvas, which moved from
+open to **in flight**: at the 6cf257308 measurement the #739/#788 branch had not touched
+`menasalvas2025.py`, and it now has.

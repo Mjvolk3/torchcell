@@ -13,7 +13,9 @@ from .schema import (
     AssayType,
     AssemblyReferenceGenome,
     BacterialBackgroundAllele,
+    BacterialCrisprActivationPerturbation,
     BacterialCrisprInterferencePerturbation,
+    BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
@@ -23,6 +25,7 @@ from .schema import (
     BacterialGeneEssentialityExperimentReference,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
+    BacterialMarkedAllelePerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialMorphologyExperiment,
@@ -180,7 +183,10 @@ __all__ = [
     # bacterial perturbation leaves, assembly pin + backgrounds (plan 3a, 3b, 3e)
     "BacterialDeletionPerturbation",
     "TransposonInsertionPerturbation",
+    "BacterialCrisprActivationPerturbation",
     "BacterialCrisprInterferencePerturbation",
+    "BacterialDegronPerturbation",
+    "BacterialMarkedAllelePerturbation",
     "PromoterReplacementPerturbation",
     "HeterologousPathwayPerturbation",
     # bacterial called-variant leaves + the composed call (issue #731)

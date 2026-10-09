@@ -34,8 +34,11 @@ from torchcell.datamodels.identity import (
 )
 from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
+    BacterialCrisprActivationPerturbation,
     BacterialCrisprInterferencePerturbation,
+    BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
+    BacterialMarkedAllelePerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
@@ -77,6 +80,14 @@ BACTERIAL_PERTURBATION_LEAVES: tuple[type, ...] = (
     BacterialCrisprInterferencePerturbation,
     PromoterReplacementPerturbation,
     HeterologousPathwayPerturbation,
+    # round-2 leaves (#749, #792, #799). Each projects the same five properties the
+    # `bacterial perturbation` graph class declares; their leaf-specific fields
+    # (cassette, tag, degron, insertion_site, collection) carry no node property, as
+    # `BacterialDeletionPerturbation.collection` does not, and travel in the
+    # serialized record.
+    BacterialMarkedAllelePerturbation,
+    BacterialDegronPerturbation,
+    BacterialCrisprActivationPerturbation,
 )
 """The gene-perturbation leaves written as ``bacterial perturbation`` nodes.
 

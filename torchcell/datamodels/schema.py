@@ -3203,6 +3203,293 @@ class BacterialSpanDeletionPerturbation(
         return f"{call.reference_sequence}:{call.position_start} {call.sequence_change}"
 
 
+# --------------------------------------------------------------------------- #
+# Bacterial perturbation leaves, round 2 (issues #749, #792, #799).
+#
+# Three more leaves on the same contract as the five above: each subclasses the
+# axis leaf its OUTCOME already belongs to, carries a required ``gene_namespace``
+# and overrides the name validator with the bacterial patterns, so the yeast
+# validator on ``GenePerturbation`` is untouched. The block is additive and
+# self-contained; nothing above it is edited.
+#
+# Each leaf exists because a landed loader MEASURED released rows it could not
+# type, and the counts are in the PR body and the dataset notes:
+#
+# - ``BacterialMarkedAllelePerturbation``: Shiver 2016 drops 134 Nichols 2011
+#   columns whose strains are tags and marked insertions rather than deletions
+#   (#749), and Babu 2014 drops 3,420 of 42,705 released interaction pairs whose
+#   donor or recipient is one of Butland 2008's 149 kan-marked, SPA-tagged
+#   essential-gene strains (#792). ONE leaf serves both, because the two issues
+#   describe the same construct: a selectable cassette integrated at a gene's
+#   terminus with the open reading frame intact, with or without an in-frame tag.
+#   Splitting them would file one physical collection under two labels.
+# - ``BacterialDegronPerturbation``: the Nichols ``-DAS`` columns, whose construct
+#   asserts regulated PROTEOLYSIS of the product conditional on an adaptor, which a
+#   marked allele does not assert (#749).
+# - ``BacterialCrisprActivationPerturbation``: Niu 2019's 57-target activation arm,
+#   four fifths of that release's numeric cells (#799).
+#
+# Point mutants and codon substitutions are deliberately NOT here: a called or
+# designed single-base allele is issue #731's leaf, and inventing a second one
+# would put one kind of record in two classes.
+# --------------------------------------------------------------------------- #
+class BacterialMarkedAllelePerturbation(SequencePerturbation, ModelStrict):
+    """A bacterial gene carrying a selectable cassette at a terminus, ORF intact.
+
+    The leaf #749 asks for as a tagged-allele leaf and #792 as a hypomorph leaf. It is
+    one class because the two releases describe one construct: a selectable marker
+    integrated at the gene's own locus, optionally fusing an in-frame peptide tag, with
+    the coding sequence otherwise intact. Butland 2008's 149 essential-gene strains are
+    simultaneously "kan-marked", "tagged with ... a C-terminal sequential peptide
+    affinity tag (SPA)" and "potentially hypomorphic", so a tagged leaf and a hypomorph
+    leaf would both claim the same strain set.
+
+    It sits on AXIS 3 (a sequence-level allelic change at the locus) for the same reason
+    the yeast ``DampPerturbation`` does: a cassette in the 3' UTR is an edit to the
+    gene's own sequence, not a trans-acting effector, and the gene is neither absent nor
+    copy-number-changed. The mechanism is SO:0001218 ``transgenic_insertion`` -- what was
+    done to the DNA is the insertion of recombinant bases -- which is the same honest
+    state/mechanism pairing ``TransposonInsertionPerturbation`` carries, minus its
+    ``state="absent"``: here the gene still makes a product.
+
+    ``allele_effect`` is REQUIRED with no default, because it is a claim about the
+    strain that only the source can make: a C-terminal tag on a non-essential gene may
+    be a purification handle with no growth consequence, while the same cassette on an
+    essential gene is how an essential gene is interrogated at all. It is three-valued
+    rather than a bool so a silent release is written as ``not_stated`` instead of being
+    asserted not to be hypomorphic. There is deliberately NO fold-change or
+    ``expression_range`` field: Butland 2008 states the magnitude is unknown ("in the
+    majority of cases the nature of the observed hypomorphic defect is unknown"), and
+    the yeast DAmP leaf's 4-to-10-fold default would assert a number no bacterial source
+    releases. ``tag``, ``terminus``, ``cassette`` and ``insertion_site`` are each
+    optional and each stated only when a mirrored source states it, so an untagged
+    marked allele and a SPA-tagged one are the same class with the fusion present or
+    absent.
+    """
+
+    description: str = (
+        "Bacterial gene with a selectable cassette integrated at a terminus, "
+        "optionally fusing an in-frame tag; the open reading frame is intact"
+    )
+    perturbation_type: Literal["bacterial_marked_allele"] = "bacterial_marked_allele"
+    mechanism_so_id: str = "SO:0001218"
+    mechanism_so_name: str = "transgenic_insertion"
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="the selectable cassette integrated at the locus, verbatim (e.g. "
+        "'kan'); None when the source does not name it. Optional for the same reason "
+        "``BacterialDeletionPerturbation.cassette`` is: a gene-perturbation leaf is not "
+        "a ``ProvenanceGapMixin`` carrier, and an array whose strain construction lives "
+        "in an unmirrored method paper names no marker",
+    )
+    insertion_site: str | None = Field(
+        default=None,
+        description='where in the locus the cassette went, verbatim (e.g. "3\'-UTR"); '
+        "None when the source states only that the strain is marked",
+    )
+    tag: str | None = Field(
+        default=None,
+        description="the in-frame peptide tag fused to the product, verbatim "
+        "(e.g. 'SPA'); None when the cassette carries no fusion",
+    )
+    terminus: Literal["N", "C"] | None = Field(
+        default=None,
+        description="which end of the product the tag is fused to, when the SOURCE "
+        "states it; None when there is no fusion, and None when a release names the tag "
+        "but not its end (Shiver's '-SPA' columns, whose strain construction is in an "
+        "unmirrored method paper)",
+    )
+    allele_effect: Literal["hypomorphic", "unaffected", "not_stated"] = Field(
+        description="what the SOURCE says the cassette does to the gene's function: "
+        "``hypomorphic`` (reduced function or reduced transcript), ``unaffected`` (the "
+        "source states the tagged allele behaves as wild type), or ``not_stated``. "
+        "Required with no default, and three-valued rather than a bool, because a "
+        "gene-perturbation leaf cannot carry a ``ProvenanceGap``: without an explicit "
+        "``not_stated`` member, a release that is silent would have to be written as "
+        "False, which asserts the allele is NOT hypomorphic"
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the physical strain set this allele came from, verbatim (e.g. "
+        "'SPA-tagged essential-gene collection'); None when unsourced",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+    @model_validator(mode="after")
+    def _check_namespace_and_fusion(self) -> "BacterialMarkedAllelePerturbation":
+        """The tag's own namespace agrees, and a terminus names a tag."""
+        _check_gene_namespace(self)
+        if self.tag is None and self.terminus is not None:
+            raise ValueError(
+                f"terminus {self.terminus!r} is stated with no tag; a terminus without "
+                "a fusion names nothing"
+            )
+        return self
+
+
+class BacterialDegronPerturbation(SequencePerturbation, ModelStrict):
+    """A bacterial gene fused to a degron that directs its product to a protease.
+
+    The Nichols 2011 ``-DAS`` columns (#749). It is a SEPARATE leaf from
+    ``BacterialMarkedAllelePerturbation`` although the DNA edit is the same kind of
+    in-frame cassette, because the construct asserts something the marked allele does
+    not: the product is targeted for REGULATED PROTEOLYSIS, and in the ssrA/DAS system
+    that degradation happens only when the adaptor is present. The adaptor's inducing
+    condition is therefore part of what the strain is, and a leaf without a slot for it
+    would make an induced depletion indistinguishable from an uninduced control.
+
+    AXIS 3 and SO:0001218 ``transgenic_insertion`` for the same reason the marked-allele
+    leaf carries them: the gene is present and its own sequence is what changed. The
+    CONSEQUENCE (how much product is left) is a phenotype, never a field here (M1).
+    """
+
+    description: str = (
+        "Bacterial gene fused to a degron directing its product to a protease"
+    )
+    perturbation_type: Literal["bacterial_degron"] = "bacterial_degron"
+    mechanism_so_id: str = "SO:0001218"
+    mechanism_so_name: str = "transgenic_insertion"
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
+    degron: str = Field(
+        description="the degron fused to the product, verbatim (e.g. 'DAS+4', "
+        "'ssrA-DAS')"
+    )
+    terminus: Literal["N", "C"] = Field(
+        description="which end of the product the degron is fused to; required, since "
+        "a degron's recognition depends on the end it sits at"
+    )
+    protease: str | None = Field(
+        default=None,
+        description="the protease the degron directs the product to, verbatim (e.g. "
+        "'ClpXP'); None when the source does not name it",
+    )
+    adaptor: str | None = Field(
+        default=None,
+        description="the adaptor the degron needs to be recognized, verbatim (e.g. "
+        "'SspB'); None when the source does not name it",
+    )
+    inducing_condition: str | None = Field(
+        default=None,
+        description="what must be present for the degradation to happen, verbatim "
+        "(e.g. 'sspB expressed from an arabinose-inducible promoter'); None when the "
+        "construct is constitutive or the source does not state it. The INDUCER "
+        "molecule and its dose stay a ``SmallMoleculePerturbation`` on the "
+        "environment, as on ``PromoterReplacementPerturbation``, so the compound layer "
+        "is not restated here",
+    )
+    cassette: str | None = Field(
+        default=None,
+        description="the selectable cassette carrying the degron, verbatim (e.g. "
+        "'kan'); None when unsourced",
+    )
+    collection: str | None = Field(
+        default=None,
+        description="the physical strain set this allele came from, verbatim; None "
+        "when unsourced",
+    )
+    construction: StrainConstruction | None = Field(
+        default=None, description="accession / lab / batch / plate of this strain"
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @field_validator("mechanism_so_id", mode="after")
+    @classmethod
+    def validate_mechanism_so_id(cls, v: str) -> str:
+        """Mechanism SO id is well-formed."""
+        return _validate_so_id(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "BacterialDegronPerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+class BacterialCrisprActivationPerturbation(CrisprActivationPerturbation, ModelStrict):
+    """CRISPRa of a bacterial gene, reusing the shared guide construct.
+
+    The mirror image of ``BacterialCrisprInterferencePerturbation``, and the same
+    justification: the whole expression axis is inherited unchanged -- present gene,
+    ``sgRNA`` mechanism, ``expression_direction="increased"`` -- and the ``crispr``
+    construct the yeast CRISPRa leaf already defines carries the guide and the
+    dead-Cas activator, so the payload is described once for both families. Only the
+    identifier space differs.
+
+    Niu 2019's activation arm is what it was added for: a ``dCas9*-MCPSoxS`` activator
+    directed by a released ``N20`` spacer against a BW25113 locus. Before it, the only
+    bacterial leaf that could state ``increased`` was
+    ``PromoterReplacementPerturbation``, which asserts SO:1000032 ``delins`` -- a native
+    promoter removed and a characterized part put in its place -- an edit a
+    guide-directed activator never makes.
+    """
+
+    description: str = (
+        "CRISPR activation (increased expression) of a bacterial gene by locus tag"
+    )
+    perturbation_type: Literal["bacterial_crispr_activation"] = (
+        "bacterial_crispr_activation"  # type: ignore[assignment]
+    )
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="which host's locus-tag namespace systematic_gene_name is written in"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "source released; None when the source released it as stored",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name."""
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "BacterialCrisprActivationPerturbation":
+        """The locus tag's own namespace is the one the record declares."""
+        _check_gene_namespace(self)
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# End of the round-2 bacterial perturbation leaves.
+# --------------------------------------------------------------------------- #
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -3238,6 +3525,10 @@ GenePerturbationType = (
     | BacterialSequenceVariantPerturbation
     | BacterialSiteVariantPerturbation
     | BacterialSpanDeletionPerturbation
+    # round-2 bacterial leaves (#749, #792, #799)
+    | BacterialMarkedAllelePerturbation
+    | BacterialDegronPerturbation
+    | BacterialCrisprActivationPerturbation
 )
 
 
@@ -3903,11 +4194,102 @@ class PhagePerturbation(EnvironmentPerturbation, ModelStrict):
         return self
 
 
+# --------------------------------------------------------------------------- #
+# A physical exposure whose DOSE is not a concentration (issue #749 item 3).
+#
+# Follows ``PhagePerturbation``'s precedent exactly: a dose that is not a
+# concentration gets its own named field rather than a new ``ConcentrationUnit``
+# member that would make a time look like a dose unit. Additive, a sibling of the
+# other environment leaves, and nothing above it is edited.
+# --------------------------------------------------------------------------- #
+class PhysicalExposurePerturbation(EnvironmentPerturbation, ModelStrict):
+    """A timed physical exposure (irradiation, heat shock, ...) dosed by time or fluence.
+
+    ``EnvironmentPhysicalPerturbation`` carries a scalar factor whose magnitude is a
+    ``Concentration``, which works for pH and osmolarity and fails for an exposure: a
+    UV dose is an irradiance times a time, and when a release states only the time there
+    is no concentration to write. Shiver 2016 releases its UV conditions as
+    ``UV [12 sec] {4}`` with no irradiance anywhere in the paper or its SI, measured over
+    every text-searchable mirrored file, so no fluence exists to compute.
+
+    The fix is the one ``PhagePerturbation`` already made for the multiplicity of
+    infection: the dose takes its own field in the unit its name states, instead of a
+    ``ConcentrationUnit`` member (``sec``, ``J/m2``) that would make an exposure time
+    look like a concentration. ``factor`` reuses the ``PhysicalFactor`` vocabulary so a
+    radiation exposure and a qualitative ``EnvironmentPhysicalPerturbation(factor=
+    radiation)`` name the same variable.
+
+    An exposure always HAS a dose, so one of the three dose fields is stated or the
+    absent one is a typed ``ProvenanceGap``, never a silent ``None``. The three are not
+    redundant: a release may state the time alone (Shiver), the fluence alone, or the
+    irradiance and the time from which a fluence follows. No cross-field arithmetic is
+    asserted, because an irradiance a source reports may be nominal or time-averaged and
+    multiplying it would manufacture a fluence the source never released.
+    """
+
+    perturbation_type: Literal["physical_exposure"] = "physical_exposure"
+    description: str = (
+        "Timed physical exposure dosed by duration, irradiance or fluence"
+    )
+    factor: PhysicalFactor = Field(
+        description="the neutral physical variable the culture was exposed to, from the "
+        "same vocabulary the scalar physical leaf uses (e.g. ``radiation``)"
+    )
+    exposure_duration_seconds: float | None = Field(
+        default=None,
+        description="how long the exposure lasted, unit seconds; None only with a "
+        "ProvenanceGap",
+    )
+    irradiance_w_per_m2: float | None = Field(
+        default=None,
+        description="the delivered power per area, unit W/m^2, when the source states "
+        "it; None only with a ProvenanceGap",
+    )
+    fluence_j_per_m2: float | None = Field(
+        default=None,
+        description="the delivered energy per area, unit J/m^2, when the source "
+        "releases it; None only with a ProvenanceGap. NOT back-computed from the two "
+        "fields above",
+    )
+    source_description: str | None = Field(
+        default=None,
+        description="the exposure apparatus and its spectrum as the source states them, "
+        "verbatim (e.g. 'germicidal lamp, 254 nm'); None when unstated",
+    )
+
+    @model_validator(mode="after")
+    def _check_dose(self) -> "PhysicalExposurePerturbation":
+        """At least one dose field is stated or gapped, and every stated one is > 0."""
+        dose_fields = (
+            "exposure_duration_seconds",
+            "irradiance_w_per_m2",
+            "fluence_j_per_m2",
+        )
+        gapped = self.gapped_fields()
+        if not any(
+            getattr(self, field) is not None or field in gapped for field in dose_fields
+        ):
+            raise ValueError(
+                "PhysicalExposurePerturbation states no dose and declares no "
+                f"ProvenanceGap on any of {dose_fields}; an exposure always has a dose, "
+                "so an unreleased one is a typed gap, never a silent None"
+            )
+        for field in dose_fields:
+            value = getattr(self, field)
+            if value is not None and not (math.isfinite(value) and value > 0):
+                raise ValueError(
+                    f"PhysicalExposurePerturbation.{field} must be > 0, got {value}"
+                )
+        return self
+
+
 EnvironmentPerturbationType = (
     SmallMoleculePerturbation
     | EnvironmentPhysicalPerturbation
     | BiologicPerturbation
     | PhagePerturbation
+    # a dose that is not a concentration (#749 item 3)
+    | PhysicalExposurePerturbation
 )
 
 
@@ -5478,7 +5860,22 @@ class MeasurementType(StrEnum):
     - ``log2_ratio``: log2(treatment/control) barcode abundance / fitness ratio
       (Vanacloig).
     - ``z_score``: standardized fitness/growth deviation (Wildenhain; Hoepfner z-score
-      columns).
+      columns). It ALSO covers the variance-normalized colony-size score the
+      *E. coli* chemical-genomics arrays release as a "fitness-score" (Shiver 2016,
+      Nichols 2011 and the Collins 2006 pipeline they are computed with), and there is
+      deliberately NO ``s_score`` member for that family. The reason is the sourcing
+      rather than the statistics: no mirrored text calls the released number an S-score.
+      Shiver 2016 says only that "These fitness-scores represent the statistical
+      significance of a change in colony size for a particular condition, with negative
+      and positive fitness-scores representing sensitivity and resistance,
+      respectively", and that its pipeline "built upon previous analyses [8,18]" --
+      Nichols 2011 and Collins 2006, NEITHER of which is in the literature mirror
+      (#691). Its own Methods name the standardizing step, "variance normalization of
+      the data (to improve reproducibility of measurements between plates)", which is
+      what this member's "standardized" means. A member named after a statistic whose
+      definition we cannot read would be a label with no provenance behind it, so the
+      S-score identification stays an explicitly labeled inference in the loader and in
+      ``[[torchcell.datasets.ecoli.shiver2016]]`` (issue #749).
     - ``sensitivity_score``: HIP/HOP sensitivity / fitness-defect score (Hoepfner MADL,
       Hillenmeyer, Lee).
     - ``categorical``: NOMINAL qualitative call with no order among its terms

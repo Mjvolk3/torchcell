@@ -285,6 +285,37 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "expression_direction": "increased",
         "promoter_name": "Ptac",
     },
+    # The round-2 bacterial leaves (#749, #792, #799): each needs a real locus tag of
+    # the namespace it declares, which the generic builder cannot invent.
+    "torchcell.datamodels.schema.BacterialMarkedAllelePerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "cassette": "kan",
+        "insertion_site": "3'-UTR",
+        "tag": "SPA",
+        "terminus": "C",
+        "allele_effect": "hypomorphic",
+    },
+    "torchcell.datamodels.schema.BacterialDegronPerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "degron": "DAS+4",
+        "terminus": "C",
+    },
+    "torchcell.datamodels.schema.BacterialCrisprActivationPerturbation": {
+        "systematic_gene_name": "b0002",
+        "perturbed_gene_name": "thrA",
+        "gene_namespace": "ecoli_k12_mg1655_bnumber",
+        "crispr": {"effector": "dCas9*-MCPSoxS"},
+    },
+    # An exposure states a dose or declares a typed gap; the generic builder sets
+    # neither, so the example carries the one Shiver 2016 releases.
+    "torchcell.datamodels.schema.PhysicalExposurePerturbation": {
+        "factor": "radiation",
+        "exposure_duration_seconds": 12.0,
+    },
     "torchcell.datamodels.schema.VisualScorePhenotype": {
         "visual_score": 2.0,
         "n_replicates": 3,

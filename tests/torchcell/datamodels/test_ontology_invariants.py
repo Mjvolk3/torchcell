@@ -28,7 +28,9 @@ from torchcell.datamodels import schema
 from torchcell.datamodels.schema import (
     AllelePerturbation,
     ArtifactRef,
+    BacterialCrisprActivationPerturbation,
     BacterialCrisprInterferencePerturbation,
+    BacterialDegronPerturbation,
     BacterialDeletionPerturbation,
     BacterialSequenceVariantPerturbation,
     BacterialSiteVariantPerturbation,
@@ -36,6 +38,7 @@ from torchcell.datamodels.schema import (
     BacterialVariantCall,
     BacterialVariantPerturbation,
     BacterialVariantType,
+    BacterialMarkedAllelePerturbation,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
     CopyNumberVariantPerturbation,
@@ -343,6 +346,36 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         span_designation="AE015451:4588139 \u03945,553 bp",
         span_systematic_gene_names=("PP_4061", "PP_4063"),
     ),
+    # Round-2 bacterial leaves (#749, #792, #799). Each identity is a REAL tag of the
+    # host it declares, as the five above are.
+    BacterialMarkedAllelePerturbation: {
+        "systematic_gene_name": "BW25113_0344",
+        "perturbed_gene_name": "lacZ-SPA",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "cassette": "kan",
+        "insertion_site": "3'-UTR",
+        "tag": "SPA",
+        "terminus": "C",
+        "allele_effect": "hypomorphic",
+        "collection": "SPA-tag essential",
+    },
+    BacterialDegronPerturbation: {
+        "systematic_gene_name": "BW25113_0344",
+        "perturbed_gene_name": "lacZ-DAS",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "degron": "DAS+4",
+        "terminus": "C",
+        "protease": "ClpXP",
+        "adaptor": "SspB",
+    },
+    BacterialCrisprActivationPerturbation: {
+        "systematic_gene_name": "BW25113_0344",
+        "perturbed_gene_name": "lacZ",
+        "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+        "crispr": CrisprConstruct(
+            effector="dCas9*-MCPSoxS", guide_sequence="CGTACTACCAGATAACCTAA"
+        ),
+    },
     HeterologousPathwayPerturbation: dict(
         systematic_gene_name="Efa:mvaE",
         perturbed_gene_name="mvaE",

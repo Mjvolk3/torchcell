@@ -229,6 +229,13 @@ _ENV_FACTORY: dict[type[EnvironmentPerturbation], dict[str, Any]] = {
     s.PhagePerturbation: dict(
         name="T4", ncbi_taxid=10665, multiplicity_of_infection=0.01875
     ),
+    # the dose is Shiver 2016's released UV exposure time, the case the leaf exists
+    # for: a dose with no concentration to write (#749 item 3)
+    s.PhysicalExposurePerturbation: dict(
+        factor=s.PhysicalFactor.radiation,
+        exposure_duration_seconds=12.0,
+        source_description="germicidal lamp",
+    ),
 }
 _ENV_ADAPTER: TypeAdapter[EnvironmentPerturbation] = TypeAdapter(
     EnvironmentPerturbationType

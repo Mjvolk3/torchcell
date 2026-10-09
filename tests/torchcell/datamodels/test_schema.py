@@ -1195,6 +1195,22 @@ _BACTERIAL_LEAF_CASES: list[tuple[type[s.GenePerturbation], dict[str, Any]]] = [
             pathway_name="isoprenol via mevalonate",
         ),
     ),
+    (
+        s.BacterialMarkedAllelePerturbation,
+        {
+            **_MG1655,
+            "cassette": "kan",
+            "insertion_site": "3'-UTR",
+            "tag": "SPA",
+            "terminus": "C",
+            "allele_effect": "hypomorphic",
+        },
+    ),
+    (s.BacterialDegronPerturbation, {**_MG1655, "degron": "DAS+4", "terminus": "C"}),
+    (
+        s.BacterialCrisprActivationPerturbation,
+        {**_MG1655, "crispr": s.CrisprConstruct(effector="dCas9*-MCPSoxS")},
+    ),
 ]
 _LEAF_IDS = [cls.__name__ for cls, _ in _BACTERIAL_LEAF_CASES]
 
@@ -1403,7 +1419,7 @@ def test_a_bacterial_leaf_round_trips_through_genotype(
 
 
 def test_every_bacterial_leaf_round_trips_in_one_genotype() -> None:
-    """All five in one genotype, so the union resolves each tag unambiguously."""
+    """All eight in one genotype, so the union resolves each tag unambiguously."""
     leaves: list[Any] = [cls(**kwargs) for cls, kwargs in _BACTERIAL_LEAF_CASES]
     genotype = Genotype(
         perturbations=[
@@ -1413,7 +1429,7 @@ def test_every_bacterial_leaf_round_trips_in_one_genotype() -> None:
     )
     back = Genotype.model_validate(genotype.model_dump())
     assert {type(p) for p in back.perturbations} == {type(leaf) for leaf in leaves}
-    assert len(back) == 5
+    assert len(back) == 8
 
 
 # --- 2. the assembly pin, and where it survives ---------------------------- #
@@ -2330,3 +2346,169 @@ def test_gene_interaction_uncertainty_is_both_or_neither() -> None:
         ).gene_interaction_uncertainty
         == 0.05
     )
+# --------------------------------------------------------------------------- #
+# The round-2 bacterial leaves (#749, #792, #799) and the exposure dose.
+# --------------------------------------------------------------------------- #
+def test_a_marked_allele_is_a_sequence_change_and_not_an_absence() -> None:
+    """The one leaf #749 and #792 both need, and what it refuses to assert.
+
+    The gene is still there and still makes a product, so a marked allele must not be
+    catchable by an "every knockout" filter, and it must carry no presence/absence
+    state at all. Its mechanism is the insertion of recombinant bases, which is what
+    was done to the DNA.
+    """
+    allele = s.BacterialMarkedAllelePerturbation(
+        **_MG1655,
+        cassette="kan",
+        insertion_site="3'-UTR",
+        tag="SPA",
+        terminus="C",
+        allele_effect="hypomorphic",
+        collection="SPA-tag essential",
+    )
+    assert allele.perturbation_type == "bacterial_marked_allele"
+    assert isinstance(allele, s.SequencePerturbation)
+    assert not isinstance(allele, s.PresenceAbsencePerturbation)
+    assert not isinstance(allele, s.DeletionPerturbation)
+    assert "state" not in s.BacterialMarkedAllelePerturbation.model_fields
+    assert allele.mechanism_so_id == "SO:0001218"
+    assert allele.mechanism_so_name == "transgenic_insertion"
+    # no magnitude field: no bacterial source releases a knockdown fold change
+    assert "expression_range" not in s.BacterialMarkedAllelePerturbation.model_fields
+    assert "expression_direction" not in (
+        s.BacterialMarkedAllelePerturbation.model_fields
+    )
+
+
+def test_a_marked_allele_must_say_what_the_source_says_about_its_function() -> None:
+    """``allele_effect`` is required and three-valued, so silence is not a False."""
+    assert s.BacterialMarkedAllelePerturbation.model_fields[
+        "allele_effect"
+    ].is_required()
+    with pytest.raises(ValidationError):
+        s.BacterialMarkedAllelePerturbation(**_MG1655, cassette="kan")
+    unstated = s.BacterialMarkedAllelePerturbation(
+        **_MG1655, cassette="kan", allele_effect="not_stated"
+    )
+    assert unstated.allele_effect == "not_stated"
+    assert unstated.tag is None and unstated.terminus is None
+    with pytest.raises(ValidationError):
+        # an effect outside the vocabulary; typed as Any so mypy sees the runtime path
+        bad: Any = "maybe"
+        s.BacterialMarkedAllelePerturbation(
+            **_MG1655, cassette="kan", allele_effect=bad
+        )
+
+
+def test_a_marked_allele_terminus_names_a_tag() -> None:
+    """A terminus with no fusion names nothing, so it is refused."""
+    with _refuses(
+        "terminus 'C' is stated with no tag; a terminus without a fusion names nothing"
+    ):
+        s.BacterialMarkedAllelePerturbation(
+            **_MG1655, cassette="kan", terminus="C", allele_effect="not_stated"
+        )
+    # a tag whose end the source does not state is legal: Shiver's '-SPA' columns
+    tag_only = s.BacterialMarkedAllelePerturbation(
+        **_MG1655, tag="SPA", allele_effect="not_stated"
+    )
+    assert tag_only.terminus is None
+    assert tag_only.cassette is None
+
+
+def test_a_degron_is_its_own_leaf_carrying_its_inducing_condition() -> None:
+    """A degron asserts regulated proteolysis, which a marked allele does not."""
+    degron = s.BacterialDegronPerturbation(
+        **_MG1655,
+        degron="DAS+4",
+        terminus="C",
+        protease="ClpXP",
+        adaptor="SspB",
+        inducing_condition="sspB expressed from an arabinose-inducible promoter",
+    )
+    assert degron.perturbation_type == "bacterial_degron"
+    assert isinstance(degron, s.SequencePerturbation)
+    assert not isinstance(degron, s.BacterialMarkedAllelePerturbation)
+    assert s.BacterialDegronPerturbation.model_fields["terminus"].is_required()
+    with pytest.raises(ValidationError):
+        s.BacterialDegronPerturbation(**_MG1655, degron="DAS+4")
+
+
+def test_the_bacterial_crispra_leaf_states_increased_where_crispri_cannot() -> None:
+    """The expression axis's missing direction, and the leaf that supplies it."""
+    activation = s.BacterialCrisprActivationPerturbation(
+        **_MG1655, crispr=s.CrisprConstruct(effector="dCas9*-MCPSoxS")
+    )
+    assert activation.perturbation_type == "bacterial_crispr_activation"
+    assert activation.expression_direction == "increased"
+    assert activation.state == "present"
+    assert activation.mechanism_so_id == "SO:0001998"
+    assert isinstance(activation, s.CrisprActivationPerturbation)
+    assert isinstance(activation, s.ExpressionModulationPerturbation)
+    # the interference leaf cannot state it, which is why this leaf exists
+    interference = s.BacterialCrisprInterferencePerturbation(
+        **_MG1655, crispr=s.CrisprConstruct(effector="dCas9-Mxi1")
+    )
+    assert interference.expression_direction == "decreased"
+    # and the yeast CRISPRa leaf still refuses the identifier
+    with _refuses("Invalid systematic gene name format"):
+        s.CrisprActivationPerturbation(
+            systematic_gene_name="b0002",
+            perturbed_gene_name="thrA",
+            crispr=s.CrisprConstruct(effector="dCas9*-MCPSoxS"),
+        )
+
+
+def test_an_exposure_dose_is_a_time_not_a_concentration() -> None:
+    """Shiver 2016's UV dose is 12 seconds with no irradiance anywhere in the mirror."""
+    exposure = s.PhysicalExposurePerturbation(
+        factor=s.PhysicalFactor.radiation,
+        exposure_duration_seconds=12.0,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="irradiance_w_per_m2",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            )
+        ],
+    )
+    assert exposure.perturbation_type == "physical_exposure"
+    assert exposure.irradiance_w_per_m2 is None
+    assert exposure.fluence_j_per_m2 is None
+    assert "concentration" not in s.PhysicalExposurePerturbation.model_fields
+    assert "magnitude" not in s.PhysicalExposurePerturbation.model_fields
+    assert s.PhysicalExposurePerturbation in typing.get_args(
+        s.EnvironmentPerturbationType
+    )
+    environment = Environment(media=_lb(), perturbations=[exposure])
+    adapter: TypeAdapter[Any] = TypeAdapter(Environment)
+    assert (
+        adapter.validate_python(environment.model_dump()).perturbations[0] == exposure
+    )
+
+
+def test_an_exposure_states_a_dose_or_declares_the_gap() -> None:
+    """An exposure always has a dose, so none of the three silently stays None."""
+    with _refuses("PhysicalExposurePerturbation states no dose"):
+        s.PhysicalExposurePerturbation(factor=s.PhysicalFactor.radiation)
+    with _refuses(
+        "PhysicalExposurePerturbation.exposure_duration_seconds must be > 0, got 0.0"
+    ):
+        s.PhysicalExposurePerturbation(
+            factor=s.PhysicalFactor.radiation, exposure_duration_seconds=0.0
+        )
+    with _refuses(
+        "PhysicalExposurePerturbation.fluence_j_per_m2 must be > 0, got -1.0"
+    ):
+        s.PhysicalExposurePerturbation(
+            factor=s.PhysicalFactor.radiation, fluence_j_per_m2=-1.0
+        )
+    gapped = s.PhysicalExposurePerturbation(
+        factor=s.PhysicalFactor.radiation,
+        provenance_gaps=[
+            ProvenanceGap(
+                field="exposure_duration_seconds",
+                reason=ProvenanceGapReason.not_reported_by_primary,
+            )
+        ],
+    )
+    assert gapped.exposure_duration_seconds is None

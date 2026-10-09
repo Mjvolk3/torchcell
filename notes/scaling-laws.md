@@ -9,7 +9,7 @@ created: 1791533054495
 
 ## 2026.10.09 - Scaling laws for the paper and the thesis
 
-Working note paired with `notes-tex/modeling/scaling-laws/` (new `modeling/` group). Figure, GIFs and constants table come from [[experiments.041-scaling-laws.scripts.scaling_law_forms]]. The document covers: the Kaplan and Chinchilla forms and the compute-optimal allocation; a 3 x 3 figure that walks through both; how to count `N`, `D` and `C` for genotype-to-phenotype records (instances consumed, not dimensions; epochs are not a multiplier on `D`; subsample by the leaking unit); the minimal ablation and what makes a curve defensible; and a plan for the trigenic build, which has not been run.
+Working note paired with `notes-tex/modeling/scaling-laws/` (new `modeling/` group). Figure, eight GIFs and the constants table come from [[experiments.041-scaling-laws.scripts.scaling_law_forms]]. The document covers: the Kaplan and Chinchilla forms and the compute-optimal allocation; a 3 x 3 figure that walks through both; how to count `N`, `D` and `C` for genotype-to-phenotype records (instances consumed, not dimensions; epochs are not a multiplier on `D`; subsample by the leaking unit); the minimal ablation and what makes a curve defensible; and a plan for the trigenic build, which has not been run.
 
 Status: every section `todo`. No torchcell number anywhere in it.
 

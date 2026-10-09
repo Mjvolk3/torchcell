@@ -31,7 +31,7 @@ python experiments/041-scaling-laws/scripts/scaling_law_forms.py
 
 ### GIFs
 
-Each is one sweep of one variable with everything else pinned.
+Each is one sweep of one quantity with everything else pinned. The title of every frame carries the equation, the constants and their source, and the swept value with what it implies, so a frame reads on its own. Legends name every line, dotted ones included, and hold still from frame to frame.
 
 **Data sweep.** `L` vs `N` while `D` rises from 10^7.5 to 10^12.5: the plateau `E + B D^-beta` drops toward `E`, and the N-curve runs into it later and later.
 
@@ -45,9 +45,25 @@ Each is one sweep of one variable with everything else pinned.
 
 ![](./assets/images/041-scaling-laws/scaling_gif_compute_sweep.gif)
 
-**Exponent sweep.** Kaplan's pure power law with `alpha_N` moving by plus or minus 0.02 about the published 0.076, pinned at the center of the fitted range (`N = 10^7.5`): every curve passes within about 7% of the runs the fit sees, which 2% replicate noise and five points cannot rule out, while the forecast at `N = 10^12` moves by about a quarter each way. This is why an interval on the exponent is the result, not the point.
+**Exponent sweep.** Kaplan's pure power law with `alpha_N` moving by plus or minus 0.02 about the published 0.076. Every curve is pinned through the same loss at `N = 10^7.5`, the center of the fitted range, which is why the sweep pivots there: the five runs the fit sees stay within a few percent of every curve, which 2% replicate noise cannot rule out, while the forecast at `N = 10^12` moves by about a quarter each way. This is why an interval on the exponent is the result, not the point.
 
 ![](./assets/images/041-scaling-laws/scaling_gif_exponent_sweep.gif)
+
+**Floor sweep.** `E` rises from 0 to 2.5 under a fixed `A N^-alpha`: on log-log axes the curve bends where `A N^-alpha = E`, and `L - E` is the same straight line in every frame. This is the diagnostic behind panel c.
+
+![](./assets/images/041-scaling-laws/scaling_gif_floor_sweep.gif)
+
+**Surface sweep.** The joint surface `L(N, D)` with one budget line `6ND = C` sliding across it. The optimum is where the line touches its lowest contour, and the optima lie on the frontier.
+
+![](./assets/images/041-scaling-laws/scaling_gif_surface_sweep.gif)
+
+**Bootstrap.** One resample per frame: the fifteen fitted runs are redrawn with replacement (ring size = times drawn), the floored form is refit, and the refits pile up into the band panel i shows at once. The 90% interval on `alpha` in the title settles as the resamples accumulate.
+
+![](./assets/images/041-scaling-laws/scaling_gif_bootstrap.gif)
+
+**Allocation sweep.** `beta` moves from 0.2 to 0.4 with `alpha` fixed at 0.34: `a = beta / (alpha + beta)` and `b = alpha / (alpha + beta)` move with it, and the `N*` and `D*` lines tilt against the Hoffmann allocation (dashed). A steeper data term tilts a budget toward parameters.
+
+![](./assets/images/041-scaling-laws/scaling_gif_allocation_sweep.gif)
 
 ### Counting D: instances, not dimensions
 

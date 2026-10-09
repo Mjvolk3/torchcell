@@ -1407,6 +1407,7 @@ def test_run_environment_response_dispatches_eager_and_streaming(
         "pair_uniqueness",
         "value_fidelity",
         "se_nonnegative",
+        "interval_orientation",
         "measurement_type_consistent",
         "reference_zero",
         "environment_perturbed",

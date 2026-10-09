@@ -72,6 +72,7 @@ OWN = {
     "pair_uniqueness",
     "value_fidelity",
     "se_nonnegative",
+    "interval_orientation",
     "measurement_type_consistent",
     "reference_zero",
     "environment_perturbed",
@@ -202,8 +203,8 @@ def _details(report: VerificationReport, name: str) -> dict[str, Any]:
 
 
 def test_passing_release_rows_and_result_order() -> None:
-    """Every own row passes with its exact message; the 16 results come in the same
-    order from both entry points (the eight own rows, then the eight shared ones),
+    """Every own row passes with its exact message; the 17 results come in the same
+    order from both entry points (the nine own rows, then the eight shared ones),
     and the two reports are equal.
     """
     eager, streaming = _both(_release())
@@ -218,6 +219,12 @@ def test_passing_release_rows_and_result_order() -> None:
         ),
         ("L2", "value_fidelity", True, "3 values checked"),
         ("L2", "se_nonnegative", True, "3 values checked"),
+        (
+            "L2",
+            "interval_orientation",
+            True,
+            "0 of 0 stored intervals do not bracket their value, as declared",
+        ),
         ("L3", "measurement_type_consistent", True, f"single measurement_type: {LOG2}"),
         (
             "L3",
@@ -235,6 +242,7 @@ def test_passing_release_rows_and_result_order() -> None:
         "pair_uniqueness",
         "value_fidelity",
         "se_nonnegative",
+        "interval_orientation",
         "measurement_type_consistent",
         "reference_zero",
         "environment_perturbed",
@@ -271,13 +279,14 @@ def test_summary_is_sorted_by_level_with_a_mark_per_row() -> None:
         "  [ok] L1 pair_uniqueness: 3 unique (study, strain, condition) records, "
         "one each",
     ]
-    assert len(lines) == 17
+    assert len(lines) == 18
     assert [line.split("] ")[1].split(" ")[0] for line in lines[1:]] == [
         "L0",
         "L1",
         "L1",
         "L1",
         "L1",
+        "L2",
         "L2",
         "L2",
         "L2",
@@ -517,11 +526,12 @@ def test_unperturbed_record_at_baseline_is_flagged_and_shifts_are_edits() -> Non
             "environment_perturbed",
             False,
             "1 experiments have no environmental edit (no perturbation, baseline "
-            "temperature 30.0, baseline media)",
+            "temperature 30.0, baseline media); 0 declared",
         )
         assert _details(report, "environment_perturbed") == {
             "n_records": 6,
             "n_missing": 1,
+            "expected_unperturbed": 0,
             "baseline_temperature": 30.0,
             "baseline_media": "YP + 2% galactose",
         }
@@ -639,7 +649,7 @@ def test_eager_and_streaming_reports_are_equal() -> None:
         _record("YCR001W", _numeric(0.1), _numeric(0.0), _environment(perturbed=False))
     )
     eager, streaming = _both(records, expected_count=6)
-    assert len(eager.results) == len(streaming.results) == 16
+    assert len(eager.results) == len(streaming.results) == 17
     for left, right in zip(eager.results, streaming.results, strict=True):
         assert (left.level, left.name, left.passed, left.message) == (
             right.level,
@@ -677,7 +687,7 @@ def test_eager_and_streaming_reports_are_equal() -> None:
             "environment_perturbed",
             False,
             "1 experiments have no environmental edit (no perturbation, baseline "
-            "temperature 30.0, baseline media)",
+            "temperature 30.0, baseline media); 0 declared",
         ),
     ]
     assert _details(eager, "value_fidelity")["bad"] == [
@@ -731,4 +741,233 @@ def test_genotype_signature_construction_without_fields_adds_five_nones() -> Non
     }
     assert _genotype_signature(experiment, frozenset()) == (
         ("YAL001C", "kanmx_deletion", "YAL001C", None, None, None, None, None),
+    )
+
+
+# #776: the ABSOLUTE-readout declarations. Each of the three is an oracle the caller
+# states, so the tests pin both the satisfied count and the count that moved.
+
+
+def _absolute(
+    minutes: float,
+    *,
+    lower: float | None = None,
+    upper: float | None = None,
+    replicate_id: str | None = None,
+) -> EnvironmentResponsePhenotype:
+    """An absolute doubling time, optionally with its released two-sided interval."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.growth_rate,
+        environment_response=minutes,
+        environment_response_lower=lower,
+        environment_response_upper=upper,
+        confidence_level=None if lower is None and upper is None else 0.95,
+        replicate_id=replicate_id,
+        units="doubling time in minutes",
+    )
+
+
+def _absolute_release(replicate_ids: list[str | None]) -> list[dict[str, Any]]:
+    """One record per replicate of ONE strain in ONE condition, reference at 53.68."""
+    return [
+        _record("YAL001C", _absolute(60.0 + i, replicate_id=rid), _absolute(53.679955))
+        for i, rid in enumerate(replicate_ids)
+    ]
+
+
+def test_replicate_id_keeps_per_replicate_rows_distinct() -> None:
+    """Three replicate curves of one (strain, condition) are three records, not two
+    duplicates, once each carries the source's own replicate id. Dropping the id
+    collapses them, which is what the field exists to prevent.
+    """
+    with_ids = _absolute_release(["1", "2", "3"])
+    eager = verify_environment_response_dataset(
+        with_ids,
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    assert _details(eager, "pair_uniqueness") == {"n_pairs": 3, "n_duplicated": 0}
+
+    without_ids = _absolute_release([None, None, None])
+    eager = verify_environment_response_dataset(
+        without_ids,
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    assert _details(eager, "pair_uniqueness") == {"n_pairs": 1, "n_duplicated": 2}
+
+
+def test_absolute_reference_branch_states_its_own_value_and_names_itself() -> None:
+    """``reference_centered=False``: the reference carries the base condition's own
+    finite doubling time on the record's own scale, and the row says which rule ran.
+    """
+    records = _absolute_release(["1", "2", "3"])
+    eager = verify_environment_response_dataset(
+        records,
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    streaming = verify_environment_response_dataset_streaming(
+        iter(records),
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    for report in (eager, streaming):
+        assert _row(report, "reference_zero") == (
+            "L3",
+            "reference_zero",
+            True,
+            "absolute rule: reference value finite and on the record's own scale for "
+            "all 3 records (['growth_rate'])",
+        )
+        assert _details(report, "reference_zero") == {
+            "rule": "absolute_reference",
+            "n_values": 3,
+            "n_bad_reference": 0,
+            "n_relative_measurement_type": 0,
+            "n_reference_type_mismatch": 0,
+            "measurement_types": ["growth_rate"],
+        }
+
+
+def test_absolute_branch_refuses_a_relative_measurement_type() -> None:
+    """The relief is gated: a log2-ratio dataset asking for it FAILS rather than
+    skipping the zero check, because a log2 ratio is 0 at its control by construction.
+    """
+    eager = verify_environment_response_dataset(
+        _release(),
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    assert _details(eager, "reference_zero") == {
+        "rule": "absolute_reference",
+        "n_values": 3,
+        "n_bad_reference": 0,
+        "n_relative_measurement_type": 3,
+        "n_reference_type_mismatch": 0,
+        "measurement_types": ["log2_ratio"],
+    }
+    assert not _row(eager, "reference_zero")[2]
+
+
+def test_declared_unperturbed_count_passes_and_a_moved_count_fails() -> None:
+    """An absolute readout's base condition is a measured condition, so its records
+    carry no environmental edit; the count is DECLARED and has to match exactly.
+    """
+    records = _absolute_release(["1", "2"])
+    records.append(
+        _record(
+            "YBR085W",
+            _absolute(53.7, replicate_id="1"),
+            _absolute(53.679955),
+            _environment(perturbed=False),
+        )
+    )
+    for declared, passed in ((1, True), (0, False), (2, False)):
+        eager = verify_environment_response_dataset(
+            records,
+            dataset_name="release",
+            provenance=PROV,
+            expected_count=3,
+            sgd_genes=set(GENES),
+            reference_centered=False,
+            expected_unperturbed=declared,
+        )
+        row = _row(eager, "environment_perturbed")
+        assert row[2] is passed
+        assert _details(eager, "environment_perturbed")["expected_unperturbed"] == (
+            declared
+        )
+        assert _details(eager, "environment_perturbed")["n_missing"] == 1
+
+
+def test_interval_orientation_counts_a_non_bracketing_interval() -> None:
+    """Caglar 2017's Glycerol replicate 1 in miniature: a released upper limit of
+    -1027.769034 against a value of 80.95212424 is stored verbatim, counted, and
+    passes only against the declared count.
+    """
+    records = [
+        _record(
+            "YAL001C",
+            _absolute(
+                80.95212424, lower=38.94241445, upper=-1027.769034, replicate_id="1"
+            ),
+            _absolute(53.679955),
+        ),
+        _record(
+            "YBR085W",
+            _absolute(
+                60.42473355, lower=52.37822925, upper=71.39222644, replicate_id="1"
+            ),
+            _absolute(53.679955),
+        ),
+    ]
+    eager, streaming = (
+        verify_environment_response_dataset(
+            records,
+            dataset_name="release",
+            provenance=PROV,
+            expected_count=2,
+            sgd_genes=set(GENES),
+            reference_centered=False,
+            expected_non_bracketing=1,
+        ),
+        verify_environment_response_dataset_streaming(
+            iter(records),
+            dataset_name="release",
+            provenance=PROV,
+            expected_count=2,
+            sgd_genes=set(GENES),
+            reference_centered=False,
+            expected_non_bracketing=1,
+        ),
+    )
+    for report in (eager, streaming):
+        assert _row(report, "interval_orientation") == (
+            "L2",
+            "interval_orientation",
+            True,
+            "1 of 2 stored intervals do not bracket their value, as declared",
+        )
+        assert _details(report, "interval_orientation") == {
+            "n_intervals": 2,
+            "n_non_bracketing": 1,
+            "expected_non_bracketing": 1,
+            "examples": [
+                {
+                    "index": 0,
+                    "value": 80.95212424,
+                    "lower": 38.94241445,
+                    "upper": -1027.769034,
+                }
+            ],
+        }
+    undeclared = verify_environment_response_dataset(
+        records,
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=2,
+        sgd_genes=set(GENES),
+        reference_centered=False,
+    )
+    assert _row(undeclared, "interval_orientation") == (
+        "L2",
+        "interval_orientation",
+        False,
+        "1 of 2 stored intervals do not bracket their value; 0 declared",
     )

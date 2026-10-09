@@ -15,13 +15,20 @@ this verifier adds:
 3. L2 ``response_finiteness`` -- numeric responses are finite (SIGNED; negatives allowed).
 4. L2 ``se_nonnegative`` -- reported SEs are non-negative.
 5. L3 ``measurement_type_consistent`` -- one measurement_type across the dataset.
-6. L3 ``reference_zero`` -- the reference (parent-strain) response is 0 for a numeric
+6. L2 ``interval_orientation`` -- how many stored two-sided intervals do not bracket
+   their value, against a count the loader declares (a limit carried through a nonlinear
+   transform can land on the wrong side of the estimate; #776).
+7. L3 ``reference_zero`` -- the reference (parent-strain) response is 0 for a numeric
    readout; for a purely CATEGORICAL dataset the numeric rule has nothing to look at, so
-   the reference instead has to carry the dataset's neutral baseline category, and the
-   result says which of the two rules ran.
-7. L3 ``environment_perturbed`` -- every experiment carries a genuine environmental edit
-   (>= 1 perturbation, or a temperature shift off the dataset baseline, e.g. heat).
-8. L4 ``gene_containment`` -- screened deletions overlap the deletion collection.
+   the reference instead has to carry the dataset's neutral baseline category; for an
+   ABSOLUTE readout (``reference_centered=False``) the reference instead states its own
+   finite value on the record's own scale, and that branch refuses any record whose
+   ``measurement_type`` is not in ``ABSOLUTE_MEASUREMENT_TYPES``. The result says which
+   of the three rules ran.
+8. L3 ``environment_perturbed`` -- every experiment carries a genuine environmental edit
+   (>= 1 perturbation, or a temperature shift off the dataset baseline, e.g. heat),
+   except for a declared count of base-condition records an absolute readout measures.
+9. L4 ``gene_containment`` -- screened deletions overlap the deletion collection.
 
 On top of these it runs :class:`torchcell.verification.common.SharedRecordRules`, the
 rules that are not specific to this readout: the gap + silent-None census over every
@@ -179,7 +186,7 @@ def _genotype_signature(
     )
 
 
-def _study_key(record: Record) -> tuple[str, str, str]:
+def _study_key(record: Record) -> tuple[str, str, str, str]:
     """Measurement-context discriminator: (publication, readout ``units``, ``screen_id``).
 
     A single-study, single-assay dataset has a constant context, so this does not affect
@@ -191,6 +198,14 @@ def _study_key(record: Record) -> tuple[str, str, str]:
     duplicates -- the context joins the uniqueness key. A true duplicate (same context, same
     strain, same condition) is still caught. ``screen_id`` is read with ``.get`` so a
     dataset without the field keys exactly as before.
+
+    ``replicate_id`` (#776) joins it for the same reason one step finer: a source that
+    releases one row PER REPLICATE CURVE, each with its own confidence interval and fit
+    quality (Caglar 2017 Table S5: 55 rows over 19 conditions), has measured 55 things,
+    not 19 with 36 duplicates. Aggregating them would mean computing a condition mean the
+    paper never released. It is read with ``.get`` and an absent or ``None`` value keys as
+    ``""``, so every dataset that releases one aggregated measurement per (strain,
+    condition) -- every other dataset -- keys exactly as before.
     """
     pub = record.get("publication") or {}
     phenotype = record["experiment"]["phenotype"]
@@ -198,6 +213,7 @@ def _study_key(record: Record) -> tuple[str, str, str]:
         str(pub.get("pubmed_id") or pub.get("doi") or ""),
         str(phenotype.get("units") or ""),
         str(phenotype.get("screen_id") or ""),
+        str(phenotype.get("replicate_id") or ""),
     )
 
 
@@ -429,6 +445,240 @@ def _l3_reference_zero(records: Sequence[Record]) -> LevelResult:
     )
 
 
+# --------------------------------------------------------------------------- #
+# ABSOLUTE readouts and two-sided intervals (#776). Two DECLARED reliefs, each
+# gated on a measurement the caller has to state, so neither is a blanket
+# relaxation: `reference_centered=False` refuses any record whose
+# measurement_type is not in ABSOLUTE_MEASUREMENT_TYPES, and the two counts are
+# oracles (observed must EQUAL declared), so a regression in either fails.
+# --------------------------------------------------------------------------- #
+def _reference_absolute_result(
+    *,
+    n_values: int,
+    n_bad_reference: int,
+    n_relative_type: int,
+    n_type_mismatch: int,
+    types: set[str],
+) -> LevelResult:
+    """L3 ``reference_zero``, the ABSOLUTE branch: the reference states its own value.
+
+    An absolute readout cannot have a reference of 0 and be honest: Caglar 2017's base
+    condition doubles in 53.68 min, and a stored 0 would assert instant growth. So the
+    rule becomes the one the metabolite verifier's ``reference_finite`` branch uses for
+    absolute quantities -- the reference is WELL-DEFINED rather than centered: a finite
+    number is present, and it is on the SAME measurement scale as the experiment record
+    it references. The relief is gated: every record's ``measurement_type`` must be a
+    member of ``ABSOLUTE_MEASUREMENT_TYPES``, so asking for it on a log2-ratio or z-score
+    dataset FAILS instead of quietly skipping the zero check. The message names the
+    branch that ran, as the categorical branch does.
+    """
+    passed = n_bad_reference == 0 and n_relative_type == 0 and n_type_mismatch == 0
+    return LevelResult(
+        level=Level.L3,
+        name="reference_zero",
+        passed=passed,
+        message=(
+            f"absolute rule: reference value finite and on the record's own scale for "
+            f"all {n_values} records ({sorted(types)})"
+            if passed
+            else f"absolute rule: {n_bad_reference} references absent or non-finite; "
+            f"{n_relative_type} records carry a RELATIVE measurement_type, which is 0 "
+            f"at its control by construction and may not take this relief; "
+            f"{n_type_mismatch} references on a different scale than their experiment "
+            f"({sorted(types)})"
+        ),
+        details={
+            "rule": "absolute_reference",
+            "n_values": n_values,
+            "n_bad_reference": n_bad_reference,
+            "n_relative_measurement_type": n_relative_type,
+            "n_reference_type_mismatch": n_type_mismatch,
+            "measurement_types": sorted(types),
+        },
+    )
+
+
+def _l3_reference_absolute(records: Sequence[Record]) -> LevelResult:
+    """L3: the reference of an ABSOLUTE readout states its own measured value."""
+    from torchcell.datamodels.schema import ABSOLUTE_MEASUREMENT_TYPES
+
+    absolute = {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES}
+    accumulator = _AbsoluteReferenceAccumulator(absolute)
+    for rec in records:
+        accumulator.add(rec)
+    return accumulator.result()
+
+
+class _AbsoluteReferenceAccumulator:
+    """Single-pass accumulator for the absolute-reference rule (eager + streaming)."""
+
+    def __init__(self, absolute_types: set[str]) -> None:
+        self._absolute = absolute_types
+        self.n_values = 0
+        self.n_bad_reference = 0
+        self.n_relative_type = 0
+        self.n_type_mismatch = 0
+        self.types: set[str] = set()
+
+    def add(self, record: Record) -> None:
+        """Score one record's reference against its experiment's scale."""
+        phenotype = record["experiment"]["phenotype"]
+        kind = str(phenotype["measurement_type"])
+        self.types.add(kind)
+        self.n_values += 1
+        if kind not in self._absolute:
+            self.n_relative_type += 1
+        reference = record["reference"]["phenotype_reference"]
+        value = reference["environment_response"]
+        if value is None or not math.isfinite(float(value)):
+            self.n_bad_reference += 1
+        if str(reference["measurement_type"]) != kind:
+            self.n_type_mismatch += 1
+
+    def result(self) -> LevelResult:
+        """The L3 row this accumulator's counts imply."""
+        return _reference_absolute_result(
+            n_values=self.n_values,
+            n_bad_reference=self.n_bad_reference,
+            n_relative_type=self.n_relative_type,
+            n_type_mismatch=self.n_type_mismatch,
+            types=self.types,
+        )
+
+
+def _interval_orientation_result(
+    *,
+    n_intervals: int,
+    n_non_bracketing: int,
+    expected: int,
+    examples: list[dict[str, Any]],
+) -> LevelResult:
+    """L2 ``interval_orientation``: how many stored intervals do NOT bracket their value.
+
+    A confidence limit carried through a nonlinear transform can land on the wrong side
+    of the estimate -- Caglar 2017 Table S5 releases ``95p = -1027.769034`` against a
+    doubling time of 80.95 min, which is what the image of a slope interval straddling
+    zero becomes under ``DT = log_e 2 / slope``. The schema stores the released bytes
+    rather than repairing them, so this rule is the measurement of how many such rows a
+    dataset holds, against a count the loader DECLARES. ``expected=0`` (the default) is
+    the ordinary case and makes any inverted interval a failure; a dataset that declares
+    a nonzero count passes only while the count holds exactly, so neither a new inverted
+    row nor a vanished one goes unnoticed.
+    """
+    passed = n_non_bracketing == expected
+    return LevelResult(
+        level=Level.L2,
+        name="interval_orientation",
+        passed=passed,
+        message=(
+            f"{n_non_bracketing} of {n_intervals} stored intervals do not bracket their "
+            f"value, as declared"
+            if passed
+            else f"{n_non_bracketing} of {n_intervals} stored intervals do not bracket "
+            f"their value; {expected} declared"
+        ),
+        details={
+            "n_intervals": n_intervals,
+            "n_non_bracketing": n_non_bracketing,
+            "expected_non_bracketing": expected,
+            "examples": examples[:10],
+        },
+    )
+
+
+class _IntervalAccumulator:
+    """Counts stored two-sided intervals and the ones that do not bracket the value."""
+
+    def __init__(self) -> None:
+        self.n_intervals = 0
+        self.n_non_bracketing = 0
+        self.examples: list[dict[str, Any]] = []
+
+    def add(self, index: int, record: Record) -> None:
+        """Score one record's stored interval, if it carries one."""
+        phenotype = record["experiment"]["phenotype"]
+        lower = phenotype.get("environment_response_lower")
+        upper = phenotype.get("environment_response_upper")
+        if lower is None and upper is None:
+            return
+        self.n_intervals += 1
+        value = phenotype.get("environment_response")
+        if value is None:
+            return
+        value = float(value)
+        brackets = (lower is None or float(lower) <= value) and (
+            upper is None or float(upper) >= value
+        )
+        if brackets:
+            return
+        self.n_non_bracketing += 1
+        if len(self.examples) < 10:
+            self.examples.append(
+                {"index": index, "value": value, "lower": lower, "upper": upper}
+            )
+
+    def result(self, expected: int) -> LevelResult:
+        """The L2 row this accumulator's counts imply, against the declared count."""
+        return _interval_orientation_result(
+            n_intervals=self.n_intervals,
+            n_non_bracketing=self.n_non_bracketing,
+            expected=expected,
+            examples=self.examples,
+        )
+
+
+def _environment_perturbed_result(
+    *,
+    n_records: int,
+    n_missing: int,
+    expected: int,
+    baseline_temp: Any,
+    baseline_media: Any,
+) -> LevelResult:
+    """L3 ``environment_perturbed`` row, shared by the eager and streaming verifiers.
+
+    ``expected`` is how many records the loader DECLARES carry no environmental edit.
+    It is 0 for a response dataset, where an unperturbed record is a defect. For an
+    ABSOLUTE readout the base condition is itself a measured condition, so the declared
+    count is the number of its records (Caglar 2017: the base condition was run in three
+    separate experiments, 9 of 55 rows). Declared rather than waived: observed must equal
+    declared, so the base-condition rows cannot silently grow or disappear. This is the
+    same shape as Bloom 2019's ``conditions_documented``, which requires the no-edit
+    columns to be exactly the absolute-readout columns.
+    """
+    passed = n_missing == expected
+    return LevelResult(
+        level=Level.L3,
+        name="environment_perturbed",
+        passed=passed,
+        message=(
+            f"all {n_records} experiments carry an environmental edit "
+            f"(perturbation, non-baseline temperature, or non-baseline media; "
+            f"baseline temp={baseline_temp}, media={baseline_media!r})"
+            if passed and expected == 0
+            else f"{n_missing} of {n_records} experiments carry no environmental edit, "
+            f"as declared (the absolute readout's base condition; baseline temp="
+            f"{baseline_temp}, media={baseline_media!r})"
+            if passed
+            else f"{n_missing} experiments have no environmental edit "
+            f"(no perturbation, baseline temperature {baseline_temp}, baseline media); "
+            f"{expected} declared"
+        ),
+        details={
+            "n_records": n_records,
+            "n_missing": n_missing,
+            "expected_unperturbed": expected,
+            "baseline_temperature": baseline_temp,
+            "baseline_media": baseline_media,
+        },
+    )
+
+
+# --------------------------------------------------------------------------- #
+# end ABSOLUTE readouts and two-sided intervals (#776)
+# --------------------------------------------------------------------------- #
+
+
 def _modal_scalar(
     records: Sequence[Record], getter: Callable[[dict[str, Any]], Any]
 ) -> Any:
@@ -444,7 +694,9 @@ def _modal_scalar(
     return values.most_common(1)[0][0] if values else None
 
 
-def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
+def _l3_environment_perturbed(
+    records: Sequence[Record], expected_unperturbed: int = 0
+) -> LevelResult:
     """L3: every experiment carries a genuine environmental edit.
 
     The edit is >= 1 environment perturbation (an added small molecule / physical factor)
@@ -453,6 +705,10 @@ def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
     ``Environment.temperature`` / ``Environment.media`` with NO perturbation object (M2),
     and is a valid edit. A record is flagged only when it has NO perturbation AND sits at
     the baseline temperature AND the baseline media (a genuinely unperturbed record).
+
+    ``expected_unperturbed`` is the count the loader DECLARES (#776): 0 for a response
+    dataset, and the base condition's record count for an absolute readout, whose base
+    condition is a measured condition rather than a defect.
     """
     baseline_temp = _modal_scalar(
         records, lambda e: (e.get("temperature") or {}).get("value")
@@ -472,24 +728,12 @@ def _l3_environment_perturbed(records: Sequence[Record]) -> LevelResult:
         if media is not None and media != baseline_media:
             continue  # base-medium swap (minimal / synthetic complete) -- genuine edit
         n_missing += 1
-    return LevelResult(
-        level=Level.L3,
-        name="environment_perturbed",
-        passed=n_missing == 0,
-        message=(
-            f"all {len(records)} experiments carry an environmental edit "
-            f"(perturbation, non-baseline temperature, or non-baseline media; "
-            f"baseline temp={baseline_temp}, media={baseline_media!r})"
-            if n_missing == 0
-            else f"{n_missing} experiments have no environmental edit "
-            f"(no perturbation, baseline temperature {baseline_temp}, baseline media)"
-        ),
-        details={
-            "n_records": len(records),
-            "n_missing": n_missing,
-            "baseline_temperature": baseline_temp,
-            "baseline_media": baseline_media,
-        },
+    return _environment_perturbed_result(
+        n_records=len(records),
+        n_missing=n_missing,
+        expected=expected_unperturbed,
+        baseline_temp=baseline_temp,
+        baseline_media=baseline_media,
     )
 
 
@@ -504,6 +748,9 @@ def verify_environment_response_dataset(
     sgd_genes: set[str] | None = None,
     gene_universe_label: str = "reference",
     min_containment: float = 0.90,
+    reference_centered: bool = True,
+    expected_unperturbed: int = 0,
+    expected_non_bracketing: int = 0,
 ) -> VerificationReport:
     """Run the L0-L4 record-level gate for an environment-response dataset.
 
@@ -515,6 +762,21 @@ def verify_environment_response_dataset(
     the host's and not always S288C's; ``resolve_gene_name`` turns on the annotation half
     of the canonical-gene-name rule. Both are optional so this verifier still runs where
     no genome is mounted.
+
+    The three ABSOLUTE-readout declarations (#776), each an oracle rather than a waiver:
+
+    - ``reference_centered`` (default True) asserts the reference response is identically
+      0, which is what a relative readout is at its control. Set False for an ABSOLUTE
+      quantity (Caglar 2017's doubling time in minutes), where the reference states the
+      reference condition's own measured value; the absolute branch then REFUSES any
+      record whose ``measurement_type`` is not in ``ABSOLUTE_MEASUREMENT_TYPES``, so it
+      cannot be used to skip the zero check on a log2-ratio dataset.
+    - ``expected_unperturbed`` (default 0) is how many records carry no environmental
+      edit. Nonzero only for an absolute readout, whose base condition is a measured
+      condition; observed must EQUAL declared.
+    - ``expected_non_bracketing`` (default 0) is how many stored two-sided intervals do
+      not bracket their value, which a nonlinear transform of a released interval can
+      produce; observed must EQUAL declared.
     """
     from pydantic import TypeAdapter
 
@@ -567,9 +829,18 @@ def verify_environment_response_dataset(
         )
     )
 
+    intervals = _IntervalAccumulator()
+    for i, rec in enumerate(records):
+        intervals.add(i, rec)
+    report.add(intervals.result(expected_non_bracketing))
+
     report.add(_l3_measurement_type_consistent(records))
-    report.add(_l3_reference_zero(records))
-    report.add(_l3_environment_perturbed(records))
+    report.add(
+        _l3_reference_zero(records)
+        if reference_centered
+        else _l3_reference_absolute(records)
+    )
+    report.add(_l3_environment_perturbed(records, expected_unperturbed))
     for result in shared.results():
         report.add(result)
     return report
@@ -596,6 +867,9 @@ def verify_environment_response_dataset_streaming(
     gene_universe_label: str = "reference",
     min_containment: float = 0.90,
     resolve_gene_name: GeneNameResolver | None = None,
+    reference_centered: bool = True,
+    expected_unperturbed: int = 0,
+    expected_non_bracketing: int = 0,
 ) -> VerificationReport:
     """Single-pass, memory-bounded L0-L4 gate for LARGE environment-response datasets.
 
@@ -634,6 +908,14 @@ def verify_environment_response_dataset_streaming(
     temp_counts: Counter[Any] = Counter()
     media_counts: Counter[Any] = Counter()
     no_pert_env: list[tuple[Any, Any]] = []
+    # #776: the two declared-count rules and the absolute-reference branch, as
+    # accumulators, so the streaming report carries exactly the eager one's rows.
+    from torchcell.datamodels.schema import ABSOLUTE_MEASUREMENT_TYPES
+
+    intervals = _IntervalAccumulator()
+    absolute_reference = _AbsoluteReferenceAccumulator(
+        {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES}
+    )
     shared = SharedRecordRules(
         background_genes=background_genes,
         resolve_gene_name=resolve_gene_name,
@@ -672,6 +954,9 @@ def verify_environment_response_dataset_streaming(
             if (bad := _value_problem(i, se, minimum=0.0)) is not None:
                 bad_se.append(bad)
         measurement_types.add(str(exp["phenotype"]["measurement_type"]))
+
+        intervals.add(i, rec)
+        absolute_reference.add(rec)
 
         reference = rec["reference"]["phenotype_reference"]
         ref_val = reference["environment_response"]
@@ -726,6 +1011,7 @@ def verify_environment_response_dataset_streaming(
     report.add(_pair_uniqueness_result(n_pairs=n_pairs, n_duplicated=n_pair_dups))
     report.add(_value_result("value_fidelity", n_responses, bad_responses))
     report.add(_value_result("se_nonnegative", n_se, bad_se))
+    report.add(intervals.result(expected_non_bracketing))
     report.add(_measurement_type_result(measurement_types))
     report.add(
         _reference_baseline_result(
@@ -735,6 +1021,8 @@ def verify_environment_response_dataset_streaming(
             n_reference_missing_category=n_reference_missing_category,
             experiment_categories=experiment_categories,
         )
+        if reference_centered
+        else absolute_reference.result()
     )
     baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
     baseline_media = media_counts.most_common(1)[0][0] if media_counts else None
@@ -745,24 +1033,12 @@ def verify_environment_response_dataset_streaming(
         and not (media is not None and media != baseline_media)
     )
     report.add(
-        LevelResult(
-            level=Level.L3,
-            name="environment_perturbed",
-            passed=n_env_missing == 0,
-            message=(
-                f"all {n_records} experiments carry an environmental edit (perturbation, "
-                f"non-baseline temperature, or non-baseline media; baseline temp="
-                f"{baseline_temp}, media={baseline_media!r})"
-                if n_env_missing == 0
-                else f"{n_env_missing} experiments have no environmental edit "
-                f"(no perturbation, baseline temperature {baseline_temp}, baseline media)"
-            ),
-            details={
-                "n_records": n_records,
-                "n_missing": n_env_missing,
-                "baseline_temperature": baseline_temp,
-                "baseline_media": baseline_media,
-            },
+        _environment_perturbed_result(
+            n_records=n_records,
+            n_missing=n_env_missing,
+            expected=expected_unperturbed,
+            baseline_temp=baseline_temp,
+            baseline_media=baseline_media,
         )
     )
     # L1 census + canonical names, L2 uncertainty, L3 identity/media and the two L4 gene

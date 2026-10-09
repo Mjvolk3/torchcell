@@ -292,6 +292,10 @@ class CellAdapter:
                 self._promoter_activity_phenotype_node,
             ),
             (
+                "bacterial morphology phenotype (chunked)",
+                self._bacterial_morphology_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -355,6 +359,10 @@ class CellAdapter:
             (
                 "promoter activity phenotype reference",
                 self._get_promoter_activity_phenotype_reference_nodes,
+            ),
+            (
+                "bacterial morphology phenotype reference",
+                self._get_bacterial_morphology_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -2501,6 +2509,67 @@ class CellAdapter:
                     preferred_id="promoter activity phenotype",
                     node_label="promoter activity phenotype",
                     properties=self._promoter_activity_properties(phenotype),
+                )
+            )
+        return nodes
+
+    @staticmethod
+    def _bacterial_morphology_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``BacterialMorphologyPhenotype`` (experiment or reference).
+
+        The two dict-valued fields serialize to JSON strings, the CalMorph convention,
+        and ``assay`` rides beside them because the keys inside those strings are only
+        interpretable against the assay vocabulary that named them.
+        """
+        coefficients = phenotype.morphology_coefficient_of_variation
+        sample_unit = phenotype.sample_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "assay": phenotype.assay,
+            "morphology": json.dumps(phenotype.morphology),
+            "morphology_coefficient_of_variation": (
+                json.dumps(coefficients) if coefficients else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": sample_unit.value if sample_unit is not None else None,
+        }
+
+    @data_chunker
+    def _bacterial_morphology_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="bacterial morphology phenotype",
+            properties=self._bacterial_morphology_properties(phenotype),
+        )
+
+    def _get_bacterial_morphology_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="bacterial morphology phenotype",
+                    node_label="bacterial morphology phenotype",
+                    properties=self._bacterial_morphology_properties(phenotype),
                 )
             )
         return nodes

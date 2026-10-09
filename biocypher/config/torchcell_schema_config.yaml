@@ -508,6 +508,24 @@ promoter activity phenotype:
         reporter_gene: str
         activity_units: str
         well_id: str
+# A bacterial strain's cell-morphology profile from one microscopy assay
+# (BacterialMorphologyPhenotype, issue #774). The dict-valued fields serialize to JSON
+# strings, the CalMorph convention; `assay` names the vocabulary the keys belong to, so a
+# query can tell a Campos symbol from a later screen's symbol of the same name. A
+# property is named by its field so the phenotype <-> node class bijection
+# (torchcell/datamodels/ontology_checks.py) matches it without an alias table.
+bacterial morphology phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        assay: str
+        morphology: str
+        morphology_coefficient_of_variation: str
+        n_samples: int
+        sample_unit: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -572,6 +590,7 @@ phenotype member of:
             protein turnover phenotype,
             flux phenotype,
             promoter activity phenotype,
+            bacterial morphology phenotype,
         ]
     target: [experiment, experiment reference]
 

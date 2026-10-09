@@ -17,9 +17,14 @@ Run from the repo root::
         --names torchcell/datamodels/compound_identity_inputs/hillenmeyer2008.txt \\
         ... \\
         --cids torchcell/datamodels/compound_identity_inputs/wildenhain2015_cids.txt \\
-        --out torchcell/datamodels/compound_identity_table.json
+        --out torchcell/datamodels/compound_identity_table.json \\
+        --cache /tmp/pubchem_cache.json --min-interval 1.0
 
 It prints the sha256 to re-pin into ``compound_identity.py::_TABLE_SHA256``.
+``--cache`` persists every response so an interrupted pass resumes without re-querying,
+and ``--min-interval`` slows the pass when PubChem's request-rate throttle engages
+(#676: it answers HTTP 429 with an HTML body, and at the published 5 requests/second
+ceiling a full pass hit it after about 300 name lookups on 2026.10.09).
 
 Input-file grammar (one entry per line; ``#`` starts a comment, and the first comment
 line must name the review the list came from)::
@@ -80,6 +85,9 @@ _RETRIEVAL_METHOD = "pubchem_api"
 _MIN_INTERVAL_S = 0.25  # <= 5 requests/s, PubChem's published ceiling
 _MAX_BUSY_RETRIES = 6
 _BUSY_BACKOFF_S = 5.0
+#: PubChem's request-rate throttle answers with this status and an HTML body (#676),
+#: unlike the dynamic throttle's HTTP 200 plus a ``PUGREST.ServerBusy`` JSON fault.
+_TOO_MANY_REQUESTS = 429
 _CID_BATCH = 100
 _SCHEMA_VERSION = 2
 _CHEBI_RE = re.compile(r"\bCHEBI:\d+\b")
@@ -227,10 +235,20 @@ class PubChemProperty(BaseModel):
 class PubChemClient:
     """Rate-limited PUG REST client with an on-disk response cache."""
 
-    def __init__(self, cache_path: Path | None) -> None:
-        """Build the client; an existing cache file is loaded so a rerun skips the network."""
+    def __init__(
+        self, cache_path: Path | None, min_interval_s: float = _MIN_INTERVAL_S
+    ) -> None:
+        """Build the client; an existing cache file is loaded so a rerun skips the network.
+
+        ``min_interval_s`` is the floor between requests. The default is PubChem's
+        published 5 requests/second ceiling, but its request-rate throttle engages below
+        that on a long pass (#676; measured 2026.10.09: HTTP 429 after about 300 name
+        lookups at 4/s, and the 105 s of backoff did not clear it), so a full pass is
+        run slower from the command line rather than by changing the published ceiling.
+        """
         self._opener = urllib.request.build_opener(_PassThroughErrorProcessor)
         self._last = 0.0
+        self._min_interval_s = min_interval_s
         self._cache_path = cache_path
         self._cache: dict[str, Any] = (
             json.loads(cache_path.read_text())
@@ -240,8 +258,8 @@ class PubChemClient:
 
     def _wait(self) -> None:
         delta = time.monotonic() - self._last
-        if delta < _MIN_INTERVAL_S:
-            time.sleep(_MIN_INTERVAL_S - delta)
+        if delta < self._min_interval_s:
+            time.sleep(self._min_interval_s - delta)
         self._last = time.monotonic()
 
     def _request(self, url: str, body: bytes | None = None) -> dict[str, Any]:
@@ -251,6 +269,14 @@ class PubChemClient:
         is a throttle signal and is retried after a growing pause; any other fault, or a
         throttle that survives :data:`_MAX_BUSY_RETRIES`, aborts the run. Recording a
         throttled call as "unresolved" would silently curate a compound out of existence.
+
+        PubChem has TWO throttles and they answer differently (#676, measured on a full
+        pass 2026.10.09): the dynamic one answers HTTP 200 with a JSON
+        ``PUGREST.ServerBusy`` fault, while the request-rate one answers **HTTP 429 with
+        an HTML body**, ``<!doctype html>...429 Too Many Requests``. Both are the same
+        signal, so a 429 takes the same backoff; it honors ``Retry-After`` when the
+        response carries one. A non-JSON body on any OTHER status aborts with the status
+        and the first bytes, because that is a server fault rather than a throttle.
         """
         request = urllib.request.Request(
             url,
@@ -267,7 +293,23 @@ class PubChemClient:
         for attempt in range(_MAX_BUSY_RETRIES + 1):
             self._wait()
             with self._opener.open(request, timeout=60) as response:
-                payload: dict[str, Any] = json.loads(response.read().decode("utf-8"))
+                status = int(response.status)
+                raw = response.read()
+                retry_after = response.headers.get("Retry-After")
+            if status == _TOO_MANY_REQUESTS:
+                time.sleep(
+                    float(retry_after)
+                    if retry_after is not None and retry_after.isdigit()
+                    else _BUSY_BACKOFF_S * (attempt + 1)
+                )
+                continue
+            text = raw.decode("utf-8")
+            if not text.lstrip().startswith(("{", "[")):
+                raise RuntimeError(
+                    f"PubChem answered {status} with a non-JSON body for {url}: "
+                    f"{text[:200]!r}"
+                )
+            payload: dict[str, Any] = json.loads(text)
             code = payload.get("Fault", {}).get("Code")
             if code is None or code == "PUGREST.NotFound":
                 return payload
@@ -616,7 +658,10 @@ def serialize(rows: list[CuratedRow]) -> str:
 # Entry point
 # --------------------------------------------------------------------------- #
 def curate(
-    name_files: list[Path], cid_files: list[Path], cache: Path | None
+    name_files: list[Path],
+    cid_files: list[Path],
+    cache: Path | None,
+    min_interval_s: float = _MIN_INTERVAL_S,
 ) -> tuple[list[CuratedRow], list[CurationDirective]]:
     """Read the input lists, query PubChem, and assemble the rows."""
     directives: list[CurationDirective] = []
@@ -625,7 +670,7 @@ def curate(
     for path in cid_files:
         directives.extend(read_cid_list(path))
 
-    client = PubChemClient(cache)
+    client = PubChemClient(cache, min_interval_s)
     cid_directives = [d for d in directives if d.cid is not None and not d.skip_lookup]
     name_directives = [d for d in directives if d.cid is None and not d.skip_lookup]
 
@@ -672,9 +717,16 @@ def main() -> None:
     )
     parser.add_argument("--out", type=Path, required=True, help="table JSON to write")
     parser.add_argument("--cache", type=Path, default=None, help="response-cache JSON")
+    parser.add_argument(
+        "--min-interval",
+        type=float,
+        default=_MIN_INTERVAL_S,
+        help="seconds between PubChem requests; raise it above the default "
+        f"{_MIN_INTERVAL_S} when the request-rate throttle engages (#676)",
+    )
     args = parser.parse_args()
 
-    rows, directives = curate(args.names, args.cids, args.cache)
+    rows, directives = curate(args.names, args.cids, args.cache, args.min_interval)
     text = serialize(rows)
     args.out.write_text(text, encoding="utf-8")
 

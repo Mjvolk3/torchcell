@@ -22,6 +22,7 @@ table.
 from __future__ import annotations
 
 import hashlib
+import inspect
 import os
 import os.path as osp
 from collections import Counter
@@ -32,6 +33,7 @@ from typing import Any, cast
 import pandas as pd
 import pytest
 
+import torchcell.datasets.ecoli.cui2018 as cui
 import torchcell.datasets.ecoli.rousset2018 as r
 from tests.torchcell.datasets._genome_injection_fakes import (
     FakeMG1655Genome,
@@ -228,6 +230,82 @@ def test_only_the_transduction_arm_is_not_a_pooled_barcode_growth_assay() -> Non
     } == {AssayType.pooled_competitive_growth_barcode}
     transduction = next(c for c in r.CONDITIONS if c.screen_id == "lambda_transduction")
     assert "packaged cosmid, not the surviving cell pool" in transduction.units
+
+
+# --------------------------------------------------------------------------- #
+# #760: the PAIR of loaders cannot store one measurement twice
+#
+# Each loader is correct alone; only the pair could be wrong, so these read BOTH
+# modules. The de-duplication is structural: Rousset's screens do not include the
+# growth screen, and the two loaders' screen vocabularies are disjoint, so no
+# (spacer, screen_id) measurement key can exist in both stores. Measured on the built
+# dev LMDBs by
+# ``experiments/036-dataset-fixes-before-kg-build/scripts/rousset2018_cui2018_overlap_verification.py``:
+# 0 shared experiment content ids and 0 shared (spacer, screen_id) keys over 68,436 +
+# 141,542 records, on 16,979 spacers both libraries carry.
+# --------------------------------------------------------------------------- #
+def test_the_two_loaders_screen_vocabularies_are_disjoint() -> None:
+    """No (spacer, screen_id) key can be written by both loaders.
+
+    A record's measurement identity is its spacer plus its screen. The two libraries
+    DO share spacers (16,979 of them in the dev stores, since both screened the same
+    guide library), so disjoint screen ids are what makes the pair non-duplicative.
+    """
+    rousset_screens = {c.screen_id for c in r.CONDITIONS}
+    cui_screens = {screen_id for screen_id, _ in cui.SCREENS}
+    assert rousset_screens == {
+        "phage_lambda",
+        "phage_T4",
+        "phage_186cIts",
+        "lambda_transduction",
+    }
+    assert cui_screens == {"LC-E18", "LC-E75"}
+    assert rousset_screens.isdisjoint(cui_screens)
+
+
+def test_the_growth_screen_rule_names_a_dataset_and_screen_cui_really_serves() -> None:
+    """``served_by`` is attributable: the class, the slug and the screen all exist.
+
+    A drop rule that names a dataset nobody serves is a disappearance rather than an
+    attribution, so the three strings are checked against the Cui module itself.
+    """
+    assert r.CUI2018_DATASET_CLASS == cui.CrispriKnockdownCui2018Dataset.__name__
+    default_root = (
+        inspect.signature(cui.CrispriKnockdownCui2018Dataset.__init__)
+        .parameters["root"]
+        .default
+    )
+    assert r.CUI2018_DATASET == osp.basename(default_root)
+    assert r.CUI2018_SCREEN_ID in {screen_id for screen_id, _ in cui.SCREENS}
+    column = dict(cui.SCREENS)[r.CUI2018_SCREEN_ID]
+    assert column == "fit75"
+    assert column in cui.SCREEN_COLUMNS
+
+
+def test_the_growth_screen_deferral_quote_names_cui_as_the_source() -> None:
+    """The decision rests on Rousset's own sentence, read from the pinned OCR."""
+    deferral = r.GROWTH_SCREEN_DEFERRAL
+    assert deferral.provenance.citation_key == r.CITATION_KEY
+    assert deferral.provenance.sha256 == r.PAPER_MD_SHA256
+    assert (
+        "The data for the screen performed with strain LC-E75 grown in rich medium was "
+        "obtained from our previous study [26]"
+    ) in deferral.quote
+    assert deferral.note is not None
+    assert "Cui 2018" in deferral.note
+
+
+def test_the_synthetic_build_stores_no_cui_screen_id(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    """End to end: every stored screen is one of the four, and none is Cui's."""
+    dataset = r.CrispriScreenRousset2018Dataset(root=str(tmp_path / "dataset"))
+    stored = {
+        dataset[index]["experiment"]["phenotype"]["screen_id"]
+        for index in range(len(dataset))
+    }
+    assert stored == {c.screen_id for c in r.CONDITIONS}
+    assert stored.isdisjoint({screen_id for screen_id, _ in cui.SCREENS})
 
 
 # --------------------------------------------------------------------------- #

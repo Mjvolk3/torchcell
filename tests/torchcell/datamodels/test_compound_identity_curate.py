@@ -68,8 +68,24 @@ TODAY = "2026-10-06"
 
 
 class _Response:
-    def __init__(self, payload: Any) -> None:
-        self._bytes = json.dumps(payload).encode("utf-8")
+    """A PubChem answer: a JSON payload by default, or raw bytes with any status.
+
+    ``status`` and ``headers`` exist because PubChem's request-rate throttle answers
+    HTTP 429 with an HTML body and sometimes a ``Retry-After`` header (#676), which the
+    client reads off the response rather than out of the body.
+    """
+
+    def __init__(
+        self,
+        payload: Any = None,
+        *,
+        raw: bytes | None = None,
+        status: int = 200,
+        headers: dict[str, str] | None = None,
+    ) -> None:
+        self._bytes = raw if raw is not None else json.dumps(payload).encode("utf-8")
+        self.status = status
+        self.headers = headers if headers is not None else {}
 
     def __enter__(self) -> _Response:
         return self
@@ -116,7 +132,9 @@ class _Net:
         for hook in self.on_request:
             hook()
         self.now += self.latency
-        return _Response(self.answers[request.full_url].pop(0))
+        answer = self.answers[request.full_url].pop(0)
+        # An answer may be a prepared _Response (a non-200 status or a raw body).
+        return answer if isinstance(answer, _Response) else _Response(answer)
 
 
 @pytest.fixture
@@ -382,6 +400,17 @@ def test_requests_are_spaced_by_the_rate_limit(net_factory: Any) -> None:
     assert min(gaps) >= 0.25
 
 
+def test_a_raised_min_interval_spaces_the_requests_further(net_factory: Any) -> None:
+    """``--min-interval`` slows a full pass without moving the published ceiling (#676)."""
+    names = ["a", "b", "c"]
+    net = net_factory({name_property_url(n): [NOT_FOUND] for n in names})
+    client = PubChemClient(None, 1.5)
+    for name in names:
+        client.property_by_name(name)
+    assert [r["at"] for r in net.requests] == [1000.0, 1001.5, 1003.0]
+    assert net.sleeps == [1.5, 1.5]
+
+
 def test_latency_counts_toward_the_interval(net_factory: Any) -> None:
     """A 0.125 s answer leaves 0.125 s to wait; departures stay 0.25 apart."""
     net = net_factory(
@@ -465,6 +494,106 @@ def test_server_busy_on_every_attempt_aborts(net_factory: Any) -> None:
         PubChemClient(None).property_by_name("a")
     assert len(net.requests) == 7
     assert net.sleeps == [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0]
+
+
+#: PubChem's request-rate throttle, verbatim from a 2026.10.09 full curator pass (#676).
+TOO_MANY_HTML = (
+    b'<!doctype html><meta charset="utf-8"><meta name=viewport '
+    b'content="width=device-width, initial-scale=1"><title>429</title>'
+    b"429 Too Many Requests"
+)
+
+
+def test_http_429_with_an_html_body_backs_off_then_succeeds(net_factory: Any) -> None:
+    """The request-rate throttle (#676): HTTP 429 plus HTML, not a JSON ServerBusy fault.
+
+    Measured on the full pass of 2026.10.09: at 4 requests/s PubChem answered 429 with
+    this HTML body partway through the name lookups, which the JSON-only reader could
+    not parse. It takes the same growing backoff as ``PUGREST.ServerBusy``.
+    """
+    url = name_property_url("a")
+    net = net_factory(
+        {
+            url: [
+                _Response(raw=TOO_MANY_HTML, status=429),
+                _Response(raw=TOO_MANY_HTML, status=429),
+                _table(_prop(1, "A", "K")),
+            ]
+        }
+    )
+    assert PubChemClient(None).property_by_name("a") == PubChemProperty.model_validate(
+        _prop(1, "A", "K")
+    )
+    assert net.sleeps == [5.0, 10.0]
+    assert [r["at"] for r in net.requests] == [1000.0, 1005.0, 1015.0]
+
+
+def test_http_429_honors_an_integer_retry_after(net_factory: Any) -> None:
+    """A numeric ``Retry-After`` replaces the computed backoff for that attempt."""
+    url = name_property_url("a")
+    net = net_factory(
+        {
+            url: [
+                _Response(raw=TOO_MANY_HTML, status=429, headers={"Retry-After": "7"}),
+                _table(_prop(1, "A", "K")),
+            ]
+        }
+    )
+    PubChemClient(None).property_by_name("a")
+    assert net.sleeps == [7.0]
+
+
+def test_http_429_with_a_date_retry_after_uses_the_computed_backoff(
+    net_factory: Any,
+) -> None:
+    """``Retry-After`` may be an HTTP date; only an all-digit value is a seconds count."""
+    url = name_property_url("a")
+    net = net_factory(
+        {
+            url: [
+                _Response(
+                    raw=TOO_MANY_HTML,
+                    status=429,
+                    headers={"Retry-After": "Wed, 21 Oct 2026 07:28:00 GMT"},
+                ),
+                _table(_prop(1, "A", "K")),
+            ]
+        }
+    )
+    PubChemClient(None).property_by_name("a")
+    assert net.sleeps == [5.0]
+
+
+def test_http_429_on_every_attempt_aborts_as_a_throttle(net_factory: Any) -> None:
+    """Seven 429s abort with the same message the JSON throttle aborts with."""
+    url = name_property_url("a")
+    net = net_factory({url: [_Response(raw=TOO_MANY_HTML, status=429)] * 7})
+    with pytest.raises(
+        RuntimeError, match=re.escape(f"PubChem stayed busy after 6 retries for {url}")
+    ):
+        PubChemClient(None).property_by_name("a")
+    assert len(net.requests) == 7
+    assert net.sleeps == [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0]
+
+
+def test_a_non_json_body_on_another_status_aborts_with_the_status(
+    net_factory: Any,
+) -> None:
+    """An HTML body on a status that is NOT 429 is a server fault, not a throttle."""
+    url = name_property_url("a")
+    net = net_factory(
+        {url: [_Response(raw=b"<html>503 Service Unavailable</html>", status=503)]}
+    )
+    with pytest.raises(
+        RuntimeError,
+        match=re.escape(
+            f"PubChem answered 503 with a non-JSON body for {url}: "
+            "'<html>503 Service Unavailable</html>'"
+        ),
+    ):
+        PubChemClient(None).property_by_name("a")
+    assert len(net.requests) == 1
+    assert net.sleeps == []
 
 
 def test_any_other_fault_aborts_with_the_fault(net_factory: Any) -> None:
@@ -1102,23 +1231,23 @@ def test_main_writes_the_table_and_prints_every_summary_line(
         CurationDirective(label="Mystery", source="vana"),
         CurationDirective(label="Dropped", source="vana"),
     ]
-    calls: list[tuple[list[Path], list[Path], Path | None]] = []
+    calls: list[tuple[list[Path], list[Path], Path | None, float]] = []
 
     def fake_curate(
-        names: list[Path], cids: list[Path], cache: Path | None
+        names: list[Path], cids: list[Path], cache: Path | None, min_interval: float
     ) -> tuple[list[CuratedRow], list[CurationDirective]]:
-        calls.append((names, cids, cache))
+        calls.append((names, cids, cache, min_interval))
         return rows, directives
 
     monkeypatch.setattr(cur, "curate", fake_curate)
     out = tmp_path / "table.json"
     argv = ["prog", "--names", "a.txt", "--names", "b.txt", "--cids", "c.txt"]
-    argv += ["--out", str(out), "--cache", "cache.json"]
+    argv += ["--out", str(out), "--cache", "cache.json", "--min-interval", "1.0"]
     monkeypatch.setattr(sys, "argv", argv)
     cur.main()
 
     assert calls == [
-        ([Path("a.txt"), Path("b.txt")], [Path("c.txt")], Path("cache.json"))
+        ([Path("a.txt"), Path("b.txt")], [Path("c.txt")], Path("cache.json"), 1.0)
     ]
     text = serialize(rows)
     assert out.read_text(encoding="utf-8") == text
@@ -1139,19 +1268,19 @@ def test_main_without_drops_omits_the_dropped_line(
     """Defaults: no ``--names``/``--cids`` gives empty lists and ``--cache`` gives None."""
     rows = [CuratedRow(name="Glucose", resolution_status="RESOLVED")]
     directives = [CurationDirective(label="Glucose", source="hil")]
-    calls: list[tuple[list[Path], list[Path], Path | None]] = []
+    calls: list[tuple[list[Path], list[Path], Path | None, float]] = []
 
     def fake_curate(
-        names: list[Path], cids: list[Path], cache: Path | None
+        names: list[Path], cids: list[Path], cache: Path | None, min_interval: float
     ) -> tuple[list[CuratedRow], list[CurationDirective]]:
-        calls.append((names, cids, cache))
+        calls.append((names, cids, cache, min_interval))
         return rows, directives
 
     monkeypatch.setattr(cur, "curate", fake_curate)
     out = tmp_path / "t.json"
     monkeypatch.setattr(sys, "argv", ["prog", "--out", str(out)])
     cur.main()
-    assert calls == [([], [], None)]
+    # --min-interval defaults to the published 5 requests/second ceiling.\n    assert calls == [([], [], None, cur._MIN_INTERVAL_S)]
     lines = capsys.readouterr().out.splitlines()
     assert lines[0] == f"wrote {out} (1 records)"
     assert lines[2:] == ["  hil: {'RESOLVED': 1}"]

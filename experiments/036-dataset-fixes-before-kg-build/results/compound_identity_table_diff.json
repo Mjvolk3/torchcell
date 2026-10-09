@@ -1,0 +1,29 @@
+{
+  "old": {
+    "path": "torchcell/datamodels/compound_identity_table.json",
+    "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
+    "records": 5533,
+    "keys": 10829
+  },
+  "new": {
+    "path": "torchcell/datamodels/compound_identity_table.json",
+    "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
+    "records": 5533,
+    "keys": 10829
+  },
+  "keys_added": [],
+  "keys_removed": [],
+  "renames": [],
+  "newly_resolved": [],
+  "lost": [],
+  "identifier_changes": [],
+  "verdict": {
+    "bytes_identical": true,
+    "no_key_renames_a_node": true,
+    "nothing_lost": true,
+    "no_key_removed": true,
+    "keys_added": 0,
+    "newly_resolved": 0,
+    "identifier_changes": 0
+  }
+}

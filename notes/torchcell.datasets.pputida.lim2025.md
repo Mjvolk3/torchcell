@@ -645,6 +645,7 @@ rather than loosened:
 
 `pytest tests/torchcell/datasets/pputida/test_lim2025.py` and its de Siqueira sibling run
 200 passed, 11 skipped; the anti-padding lint reports 485 files clean.
+
 ## 2026.10.09 - The seven proteome sheets stay refused after #770, because every released contrast has an evolved isolate on one side
 
 Issue #770 names Lim 2025's proteome sheets as one of five places a protein-level fold
@@ -685,3 +686,38 @@ absolute-abundance record and its refusals stand as written. When #731 lands, th
 `Proteome_*` sheets become four fold-change records (two isolates, two media) with their
 `p-value` and `p_adjusted(BH)` columns, which is what `ProteinFoldChangePhenotype` was
 shaped for.
+
+## 2026.10.09 - Correction: #731 landed, so the four isolate-vs-parent sheets are no longer refused
+
+The section above was written while #731 was open and says in so many words that an
+evolved clone's genotype cannot be written. #731 landed on main the same day
+(`e1acbb28b`, `9db9b2fcb`), and `ProteomeLim2025Dataset` now stores three records whose
+two evolved isolates carry their called variants on top of IPL400's designed deletions.
+The refusal above therefore no longer holds, and this correction supersedes it rather than
+being merged into it.
+
+What that changes, and what it does not, measured on `si/si2.xlsx` (sha256
+`a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612`) by the same script:
+
+| sheet family | sheets | rows each | status after #731 |
+|---|---|---|---|
+| `Proteome_<isolate>vsIPL400_<medium>` | 4 | 2,338 to 2,374 | **unblocked**: both arms are strains the loader already writes, in M9G and M9G+4IP, both media it already serves |
+| `IPL400vsA10F63I1_pIY670_M9G_<t>` | 3 | 2,350 to 2,378 | still blocked: the `pIY670` production arm's medium has no `MEDIA_LIBRARY` entry (20 g/L glucose with kanamycin) |
+
+Two things a loader for the four must still settle, and neither is settled here:
+
+1. **The direction flips between the families.** In `Proteome_*` arm A is the evolved
+   isolate; in `IPL400vs*` arm A is the parent. `log2_Fold_change_A/B` means the opposite
+   thing in the two, so `reference_basis` has to be read per sheet from its own arm
+   labels, never from the family name.
+2. **A strain-versus-strain contrast has no reference genotype slot.**
+   `BacterialProteinFoldChangeExperimentReference` carries `genome_reference` and
+   `phenotype_reference` and NO genotype, because the class was shaped for a perturbation
+   against the reference strain. The denominator here is IPL400, which is itself a
+   deletion strain, so writing these four records either puts both genotypes in the
+   experiment's `Genotype | list[Genotype]` field (which the class permits) or adds a
+   genotype to the reference class (which is another schema change).
+
+Flagged for the owner: this is a loader plus a representation decision, not a pin, so
+#770's Lim rows are left open rather than closed in the same pass that corrected the
+reason they were refused.

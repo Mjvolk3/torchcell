@@ -305,8 +305,10 @@ raised rather than worked around (the schema was not touched):
    the censoring oracle and are not stored. `UncertaintyType.ci95` exists and documents
    `SE = hw / 1.96`, but the class has no `uncertainty_type` field to declare it with, and
    the exact t quantile is unrecoverable, so relabeling a half-width as an SE was refused.
-2. **No per-protein censoring flag.** 2,082 stored cells are right-censored at a known
-   ceiling and the record cannot say which. They live in `preprocess/ceiling_cells.csv`.
+2. **No per-protein censoring flag.** 2,082 released cells carry the ceiling flag, which
+   collapse to 1,989 per-protein keys once the replicates of a condition are one record,
+   and the record cannot say which are censored. They live in
+   `preprocess/ceiling_cells.csv`.
 
 A third, outside this class: `Environment` cannot express a chemostat dilution rate, which
 every continuous-culture dataset will want.

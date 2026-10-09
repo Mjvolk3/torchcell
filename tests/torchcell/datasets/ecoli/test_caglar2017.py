@@ -1801,7 +1801,10 @@ def test_the_raw_mirror_holds_every_pinned_file_intact() -> None:
     root = c.raw_mirror_dir(str(_data_root()))
     manifest = c.load_manifest(str(_data_root()))
     specs = c.raw_file_specs(c.read_table_ids(root / c.si_table_relpath("S3")))
-    assert len(specs) == 47
+    # 6 SI tables (S1 to S4, plus S5 from #776 and S8 from #770, each deposited by its
+    # own loader) and the 42 GenPept batches of Table S3's 4,196 YP_ accessions at
+    # YP_BATCH_SIZE = 100.
+    assert len(specs) == len(c.SI_TABLES) + 42 == 48
     recorded = {r.path: r.sha256 for r in manifest.files}
     assert {s.relpath: s.sha256 for s in specs}.items() <= recorded.items()
     pinned_order = [

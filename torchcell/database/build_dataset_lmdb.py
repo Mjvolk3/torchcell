@@ -194,11 +194,12 @@ def _reports_of(returned: Any) -> list[Any]:
     """
     from torchcell.verification.report import VerificationReport
 
-    candidates = (
-        list(returned.values()) if isinstance(returned, dict) else list(returned)
-        if isinstance(returned, tuple | list)
-        else [returned]
-    )
+    if isinstance(returned, dict):
+        candidates = list(returned.values())
+    elif isinstance(returned, tuple | list):
+        candidates = list(returned)
+    else:
+        candidates = [returned]
     return [item for item in candidates if isinstance(item, VerificationReport)]
 
 
@@ -306,7 +307,9 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
             f"{type(error).__name__}: {error}",
             file=sys.stderr,
         )
-        print(f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr)
+        print(
+            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
+        )
         return False
     for report in reports:
         print(report.summary())
@@ -317,11 +320,15 @@ def verify_after_build(dataset_class: type, data_root: str) -> bool:
             f"{dataset_class.__name__}",
             file=sys.stderr,
         )
-        print(f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr)
+        print(
+            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
+        )
         return False
     if failed:
         print(f"ERROR: verification FAILED for {sorted(failed)}", file=sys.stderr)
-        print(f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr)
+        print(
+            f"ERROR: build manifest retired to {retire_manifest(root)}", file=sys.stderr
+        )
         return False
     print(f"verification PASSED: {len(reports)} report(s) by {kind}")
     return True

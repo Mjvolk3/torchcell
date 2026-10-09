@@ -247,3 +247,56 @@ fewer symbols than the loader now reaches" would be honest but would change the 
 verdict for the whole fleet, which is the owner's call, and the rebuild that re-records
 these seven answers it either way. The gate was left as it is and the seven are named so
 the decision is made on a list rather than on a guess.
+
+## 2026.10.09 - An unreadable store is stale: the bounded first-record read (#833)
+
+Fingerprints cannot see a store whose records name a class the local schema does not
+DEFINE. The symbol is in no closure, so the stored closure compares equal and the store
+reads `fresh`; nothing can deserialize it. Measured on 2026-10-09 by the PR #830 agent:
+5 bacterial dev stores under `$DATA_ROOT/data/torchcell/` could not be unpickled by the
+code on `main` (their records named `Censoring`, `BacterialVariantType`,
+`FoldChangeScale`, each added on a wave-1 branch), and `--list-stale` named 1 of the 5.
+
+### The one function the three callers share
+
+`check_store(root, surface)` in `torchcell/provenance/build_manifest.py` decides one
+store, in order: `no_lmdb`, `no_manifest`, `stale` (a fingerprint differs), then
+`unreadable`, then `fresh`. The new state carries `reason` as
+`"<ExcClass>: <message>"`. Three callers, and they now cannot drift:
+
+| caller | what it was | what it is |
+|---|---|---|
+| `python -m torchcell.provenance.build_manifest` | manifest compare | `check_store` per directory; new `[UNREADABLE]` line, exit 1 |
+| `build_dataset_lmdb --list-stale` | manifest compare | `check_store` per mapped dataset; class on stdout, reason on stderr |
+| live rebuild preflight (`gilahyper_live_rebuild-slurm_docker.slurm`) | its own inline python re-stating the compare | calls `mapped_store_status`, the same function `--list-stale` prints from |
+
+`read_first_record(root)` is the probe, and it is the store's own read path: the sibling
+`processed/interned` env, `pickle.loads`, `resolve_interned`, then the three stored dicts
+validated into the classes their own `experiment_type` / `experiment_reference_type`
+name (`EXPERIMENT_TYPE_MAP`, `EXPERIMENT_REFERENCE_TYPE_MAP`, `Publication`). Both ways a
+store goes unreadable raise in it: a lost class fails `pickle.loads` (in the record or in
+an interned sub-object, which is where the per-dataset reference and publication live),
+and a field the class no longer accepts fails pydantic with `extra_forbidden`.
+
+ONE record, not a sample: unpickling is per-record and the classes a store uses are
+fixed at build time, so record 0 exercises every class its records name, and the
+interned table it loads first carries the whole store's constants.
+
+The read runs LAST and only on a store whose fingerprints all match: a store already
+reported `stale` is rebuilt either way, so the probe never pays for it.
+
+### Measured cost and verdict on the real tree
+
+`PYTHONPATH=<wt> python -m torchcell.database.build_dataset_lmdb --list-stale
+--include-private` over **123 mapped datasets** on GilaHyper
+(`/scratch/projects/torchcell-scratch`, read-only): **no output, 16.8 s wall**
+(25.9 s user). So the tree is fresh AND readable under this branch's schema, and the read
+adds no false positive. Not measured: how long the probe takes on a store that IS
+unreadable (it raises on the first record, so it is bounded by one LMDB open either way).
+
+### Not changed
+
+`kg_manifest admit` (`torchcell/knowledge_graphs/kg_manifest.py`) still compares
+fingerprints with `check_manifest` alone. An incremental admission stages and reads the
+dev LMDB afterwards, so an unreadable store fails there rather than silently; wiring
+`check_store` into the admission check is a separate decision.

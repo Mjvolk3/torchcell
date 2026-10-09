@@ -27,6 +27,12 @@ Derived expectations: LMDB iterates keys in byte order, so eleven records writte
 Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls fourteen family
 runners in a fixed order (``RUN_ALL_ORDER``, which is the list this module stubs) and
 evaluates every one before combining with ``and``.
+
+2026.10.09 (#833): the per-dataset half of the four bioproduction families.
+``verify_bacterial_dataset(name, data_root)`` verifies ONE registry entry, family L4
+included, and writes only that store's report; ``bacterial_registry_names()`` is the set
+``build_dataset_lmdb --verify`` resolves against. The registry-to-measured-set pairing
+the family runners and that lookup share is pinned in one assertion.
 """
 
 from __future__ import annotations
@@ -2487,6 +2493,86 @@ def test_run_bacterial_protein_abundance_names_its_own_l4_over_the_union(
     containment = _result(report, "protein_and_perturbed_locus_containment_assembly")
     assert containment["details"]["n_measured"] == 3
     assert containment["passed"] is True
+
+
+def test_verify_bacterial_dataset_verifies_one_store_by_registry_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """One dataset of a family, with the family L4 still appended and the report written.
+
+    What ``build_dataset_lmdb --verify`` calls after a single rebuild (#833): a family
+    runner reads every store in its family, which a per-dataset build task has no
+    reason to require. The lookup reads the registries out of the module on each call,
+    so a replaced registry is seen here exactly as the family runner sees it.
+    """
+    _write_lmdb(_root(tmp_path, "titer_a"), [_titer_record(["PP_5003"])])
+    _write_lmdb(_root(tmp_path, "titer_b"), [_titer_record(["PP_3540"], 210.0)])
+    seen: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        runners,
+        "PRODUCT_TITER_DATASETS",
+        {
+            "titer_a": {
+                "root": "data/torchcell/titer_a",
+                "verify": _fake_family_verify(seen),
+            },
+            "titer_b": {
+                "root": "data/torchcell/titer_b",
+                "verify": _fake_family_verify(seen),
+            },
+        },
+    )
+    _stub_bacterial_universe(monkeypatch, {"PP_5003", "PP_3540"})
+    report = runners.verify_bacterial_dataset("titer_a", str(tmp_path))
+    assert report.passed is True
+    assert seen == [(str(_root(tmp_path, "titer_a")), str(tmp_path))]
+    assert _names(_read_report(_root(tmp_path, "titer_a"))) == [
+        "structural",
+        "perturbed_gene_containment_assembly",
+    ]
+    assert not (
+        _root(tmp_path, "titer_b") / "preprocess" / "verification_report.json"
+    ).exists()
+    assert {"titer_a", "titer_b"} <= runners.bacterial_registry_names()
+    with pytest.raises(KeyError, match="no bioproduction registry holds 'nope'"):
+        runners.verify_bacterial_dataset("nope", str(tmp_path))
+
+
+def test_each_bioproduction_registry_is_paired_with_its_own_measured_set() -> None:
+    """The four families, their measured set and the L4 name they add, in one place.
+
+    Abundance and fold change share the L4 rule NAME and take DIFFERENT sets (one reads
+    ``protein_abundance``, the other ``protein_fold_change``), so pairing keyed on that
+    name would check a fold-change store's proteins against nothing. Pinned because the
+    single-dataset lookup and the four family runners now read this one pairing.
+    """
+    families = runners._bacterial_families()
+    assert [
+        (f.datasets is reg, f.measured_set, f.l4_name)
+        for f, reg in zip(
+            families,
+            [
+                runners.PRODUCT_TITER_DATASETS,
+                runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS,
+                runners.BACTERIAL_METABOLITE_DATASETS,
+                runners.BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS,
+            ],
+            strict=True,
+        )
+    ] == [
+        (True, runners.host_perturbed_gene_set, "perturbed_gene_containment_assembly"),
+        (
+            True,
+            runners.bacterial_protein_locus_set,
+            "protein_and_perturbed_locus_containment_assembly",
+        ),
+        (True, runners.host_perturbed_gene_set, "perturbed_gene_containment_assembly"),
+        (
+            True,
+            runners.bacterial_protein_fold_change_locus_set,
+            "protein_and_perturbed_locus_containment_assembly",
+        ),
+    ]
 
 
 def test_each_bioproduction_adapter_calls_its_own_loader_entry_point(

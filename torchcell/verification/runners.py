@@ -39,7 +39,7 @@ import os
 import os.path as osp
 import pickle
 from collections.abc import Callable, Mapping, Sequence
-from typing import Any, NamedTuple
+from typing import Any, NamedTuple, cast
 
 import lmdb
 
@@ -2681,7 +2681,7 @@ def _verify_one_bacterial(
     so one that is not a locus of that assembly is a build error, not an accepted edge.
     """
     abs_root = osp.join(data_root, spec["root"])
-    report = spec["verify"](abs_root, data_root)
+    report = cast("VerificationReport", spec["verify"](abs_root, data_root))
     records = load_records(abs_root)
     universe, assembly_sets = _dataset_gene_universe(records, data_root)
     report.add(

@@ -74,10 +74,28 @@ def test_an_unparseable_value_stops_the_job() -> None:
 def test_the_preflight_the_fence_and_the_generator_read_one_switch() -> None:
     """All three places take the same variable, so none can disagree with the others.
 
-    The freshness preflight and the dev fence pass ``$INCLUDE_PRIVATE`` into
-    ``build_adapter_map(include_private=...)`` (a public-only preflight would not notice
-    a stale private store), and the generator line carries ``$PRIVATE_FLAG``.
+    The freshness preflight and the dev fence pass ``$INCLUDE_PRIVATE`` into the call
+    that enumerates the mapped datasets (a public-only preflight would not notice a
+    stale private store), and the generator line carries ``$PRIVATE_FLAG``.
     """
-    assert TEXT.count('build_adapter_map(include_private=sys.argv[2] == "1")') == 2
+    assert TEXT.count('include_private=sys.argv[2] == "1"') == 2
     assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE"') == 3
     assert "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG" in TEXT
+
+
+def test_the_preflight_is_the_same_function_list_stale_prints_from() -> None:
+    """The preflight calls ``mapped_store_status`` rather than re-stating the check.
+
+    Issue #833: the inline block it replaced compared fingerprints and stopped there, so
+    a store pickled under a class the build commit's schema does not define read fresh
+    at preflight and failed hours later inside an adapter. The one function it now calls
+    ends with a bounded read of each store's first record, and because it is literally
+    the function behind ``build_dataset_lmdb --list-stale``, the list the owner rebuilds
+    from and the list this job refuses on cannot disagree.
+    """
+    assert (
+        "from torchcell.database.build_dataset_lmdb import mapped_store_status" in TEXT
+    )
+    assert "bad = [s.describe() for s in statuses if s.needs_rebuild]" in TEXT
+    # the superseded re-statement of the check is gone from the script
+    assert "check_manifest(BuildManifest.model_validate_json" not in TEXT

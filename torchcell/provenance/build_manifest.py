@@ -378,7 +378,9 @@ def check_all(data_root: Path, surface: SchemaSurface) -> list[DatasetCheck]:
                 manifest_path.read_text(encoding="utf-8")
             )
             name = manifest.dataset_name
-            drift = check_manifest(manifest, surface, str(slug_dir / "preprocess")).drift
+            drift = check_manifest(
+                manifest, surface, str(slug_dir / "preprocess")
+            ).drift
         results.append(
             DatasetCheck(
                 dataset_name=name,

@@ -21,10 +21,13 @@ from torchcell.provenance.build_manifest import (
     BuildManifest,
     DatasetCheck,
     StaleResult,
+    StoreFreshness,
     SymbolDrift,
     check_all,
     check_manifest,
+    check_store,
     compute_manifest,
+    read_first_record,
     write_build_manifest,
 )
 from torchcell.provenance.schema_deps import (
@@ -85,9 +88,12 @@ __all__ = [
     "BuildManifest",
     "DatasetCheck",
     "StaleResult",
+    "StoreFreshness",
     "SymbolDrift",
     "check_all",
     "check_manifest",
+    "check_store",
     "compute_manifest",
+    "read_first_record",
     "write_build_manifest",
 ]

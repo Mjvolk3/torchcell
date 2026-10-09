@@ -209,3 +209,37 @@ Right after `BUILD_COMMIT` is fixed, the script requires `git describe --tags --
 ## 2026.10.08 - Record the artifact pointer set before the stamp
 
 Stage 5 runs `kg_manifest ... artifact-refs --data-root "$DEV_DATA_ROOT"` between the bootstrap and `releases stamp`, so the stamped manifest, the `KgRelease` node (`write-node`) and the committed snapshot carry each dataset's file-level `ArtifactRef` set, which `make ops` checks against tc-data. Only datasets whose closure names `ArtifactRef` are opened. Cost, estimated and not yet measured on a build: the walk is 0.26 ms per record, and on main at `1b180c7e8` thirteen loaders' closures name `ArtifactRef` (bloom2019, caudal2024, lian2019, mormino2022, smith2016, choe2025, cui2018, rapp2026, rousset2018, wang2018, carruthers2025, menasalvas2025, yunus2026), so the step walks all of their records once per release; Bloom 2019 alone (530,100 records) is about 2.3 min of walking plus the LMDB reads and `transform_item`. The step runs after the swap, under `set -euo pipefail`: a walk failure aborts before stamp, write-node, the aliases and the archive, with the new store already serving, so the recovery is to fix the dev tree and rerun from the stamp.
+
+## 2026.10.09 - The preflight calls the function `--list-stale` prints from (#833)
+
+The freshness preflight was its own inline python block that re-stated the check:
+existence, manifest present, `check_manifest` not stale. Two consequences, one of them
+already paid for.
+
+- A store pickled under a class the build commit's schema does not define read `fresh`
+  at preflight and failed hours later inside an adapter. Job 3547 died that way; 5
+  bacterial dev stores were in that state on 2026-10-09 while `--list-stale` named 1.
+- Two copies of one rule drift. The list the owner rebuilds from
+  (`build_dataset_lmdb --list-stale --include-private`) and the list this job refuses on
+  were different code.
+
+Now the block is:
+
+```python
+from torchcell.database.build_dataset_lmdb import mapped_store_status
+statuses = mapped_store_status(sys.argv[1], include_private=sys.argv[2] == "1")
+bad = [s.describe() for s in statuses if s.needs_rebuild]
+```
+
+`mapped_store_status` is `torchcell.provenance.build_manifest.check_store` per mapped
+dataset, which ends with a bounded read of the store's first record and reports
+`unreadable: <ExcClass>: <message>`
+([[torchcell.provenance.schema-dependency-tracking]], section 2026.10.09). The refusal
+list keeps its shape (`<Class>: <what is wrong>`, one per line, stderr, exit 1) and the
+`$INCLUDE_PRIVATE` switch still reaches it, so the dev fence and the generator are
+unchanged. `N_DATASETS` is now `len(statuses)` rather than `len(dataset_adapter_map)`,
+which is the same number by construction.
+
+Tests: `tests/torchcell/database/test_live_rebuild_slurm.py` (5) pins that the preflight
+calls `mapped_store_status`, that the superseded inline compare is gone from the script,
+and that the preflight, the dev fence and the generator still read one switch.

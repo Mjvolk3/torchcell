@@ -23,18 +23,43 @@ of a loader importing that class holds both, so narrowing the ``Literal``, widen
 changing one namespace's regex stales the store, with the drift reported on the BINDING
 while the class fingerprint stays equal. A vocabulary the closure does not reach leaves it
 fresh.
+
+2026.10.09 (#833). Every synthetic store now holds a real one-record LMDB, since
+``check_store`` ends in a bounded read of the first record and ``fresh`` therefore means
+readable as well as fingerprint-equal. Added: the read resolves an interned ``$ref``
+reference; a record (and an interned sub-object) pickled under a class a throwaway module
+carried and no longer does reads ``unreadable: ModuleNotFoundError: ...`` while every
+fingerprint still matches; a record carrying a field its class forbids reads
+``unreadable`` with ``extra_forbidden``; an empty LMDB reads ``unreadable``; the states
+are decided in order and a stale store is never read (pinned with a read that raises);
+and the fleet CLI prints the ``[UNREADABLE]`` line and exits 1.
 """
 
 from __future__ import annotations
 
 import importlib.util
+import pickle
 import subprocess
 import sys
+import types
 from pathlib import Path
+from typing import Any
 
+import lmdb
 import pydantic
 import pytest
 
+from torchcell.datamodels.schema import (
+    Environment,
+    FitnessExperiment,
+    FitnessExperimentReference,
+    FitnessPhenotype,
+    Genotype,
+    KanMxDeletionPerturbation,
+    Media,
+    Publication,
+    ReferenceGenome,
+)
 from torchcell.provenance import build_manifest as bm
 from torchcell.provenance import schema_deps as sd
 
@@ -120,10 +145,72 @@ def test_check_manifest_detects_removed_symbol(tmp_path: Path) -> None:
     assert media_drift and media_drift[0].current_fingerprint is None
 
 
+_ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
+_PUBLICATION = Publication(pubmed_id="1", pubmed_url="u", doi="d", doi_url="du")
+
+
+def _fitness_record(gene: str = "YAL001C") -> dict[str, Any]:
+    """One stored record, exactly as a loader serializes it: three dumped dicts."""
+    experiment = FitnessExperiment(
+        dataset_name="ds",
+        genotype=Genotype(
+            perturbations=[
+                KanMxDeletionPerturbation(
+                    systematic_gene_name=gene, perturbed_gene_name=gene
+                )
+            ]
+        ),
+        environment=_ENVIRONMENT,
+        phenotype=FitnessPhenotype(fitness=0.5),
+    )
+    reference = FitnessExperimentReference(
+        dataset_name="ds",
+        genome_reference=ReferenceGenome(
+            species="Saccharomyces cerevisiae", strain="S288C"
+        ),
+        environment_reference=_ENVIRONMENT,
+        phenotype_reference=FitnessPhenotype(fitness=1.0),
+    )
+    return {
+        "experiment": experiment.model_dump(),
+        "reference": reference.model_dump(),
+        "publication": _PUBLICATION.model_dump(),
+    }
+
+
+def _write_store(
+    slug_dir: Path, records: list[Any], interned: dict[str, Any] | None = None
+) -> None:
+    """Write ``records`` into ``processed/lmdb`` (and ``interned`` into its sibling env).
+
+    A record given as ``bytes`` is stored as those bytes, so a test can plant a pickle
+    this process can write and a later read cannot resolve.
+    """
+    env = lmdb.open(str(slug_dir / "processed" / "lmdb"), map_size=10**7)
+    with env.begin(write=True) as txn:
+        for i, record in enumerate(records):
+            txn.put(
+                f"{i}".encode(),
+                record if isinstance(record, bytes) else pickle.dumps(record),
+            )
+    env.close()
+    if interned is None:
+        return
+    ienv = lmdb.open(str(slug_dir / "processed" / "interned"), map_size=10**7)
+    with ienv.begin(write=True) as txn:
+        for ref, value in interned.items():
+            txn.put(
+                ref.encode(), value if isinstance(value, bytes) else pickle.dumps(value)
+            )
+    ienv.close()
+
+
 def _build_dataset_dir(root: Path, slug: str) -> Path:
+    """A built store: one readable fitness record, so ``fresh`` means readable too."""
     slug_dir = root / "data" / "torchcell" / slug
     (slug_dir / "processed" / "lmdb").mkdir(parents=True)
     (slug_dir / "preprocess").mkdir(parents=True)
+    _write_store(slug_dir, [_fitness_record()])
     return slug_dir
 
 
@@ -152,7 +239,7 @@ def test_check_all_reports_fresh_stale_unmanifested(tmp_path: Path) -> None:
     assert status == {
         "ds_fresh": "fresh",
         "ds_stale": "stale",
-        "ds_bare": "unmanifested",
+        "ds_bare": "no_manifest",
     }
 
 
@@ -326,7 +413,7 @@ def test_cli_all_fresh_exits_zero(
     surface = _fleet(tmp_path, stale=False, bare=False)
     assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 0
     assert capsys.readouterr().out == (
-        "Built datasets: 1  (fresh 1, stale 0, unmanifested 0)\n"
+        "Built datasets: 1  (fresh 1, stale 0, unreadable 0, unmanifested 0)\n"
         "\n"
         "  All built datasets are fresh against the local schema.\n"
     )
@@ -339,7 +426,7 @@ def test_cli_stale_exits_one_and_names_the_changed_symbols(
     surface = _fleet(tmp_path, stale=True, bare=True)
     assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 1
     assert capsys.readouterr().out == (
-        "Built datasets: 3  (fresh 1, stale 1, unmanifested 1)\n"
+        "Built datasets: 3  (fresh 1, stale 1, unreadable 0, unmanifested 1)\n"
         "\n"
         "  [STALE] ds_stale  -> rebuild; changed: Media, ModelStrict\n"
         "  [no manifest] ds_bare  -> written on next rebuild\n"
@@ -357,7 +444,7 @@ def test_cli_unmanifested_only_exits_zero(
     surface = _fleet(tmp_path, stale=False, bare=True)
     assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 0
     assert capsys.readouterr().out.splitlines() == [
-        "Built datasets: 2  (fresh 1, stale 0, unmanifested 1)",
+        "Built datasets: 2  (fresh 1, stale 0, unreadable 0, unmanifested 1)",
         "",
         "  [no manifest] ds_bare  -> written on next rebuild",
     ]
@@ -371,7 +458,7 @@ def test_cli_defaults_to_the_data_root_environment_variable(
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     assert _cli(monkeypatch, surface, []) == 1
     assert capsys.readouterr().out.splitlines()[0] == (
-        "Built datasets: 2  (fresh 1, stale 1, unmanifested 0)"
+        "Built datasets: 2  (fresh 1, stale 1, unreadable 0, unmanifested 0)"
     )
 
 
@@ -556,3 +643,237 @@ def test_a_vocabulary_outside_the_closure_leaves_the_store_fresh(
     result = bm.check_manifest(manifest, unrelated, str(tmp_path))
     assert result.is_stale is False
     assert result.drift == []
+
+
+# --------------------------------------------------------------------------- #
+# The bounded first-record read: the unreadable state (#833)
+# --------------------------------------------------------------------------- #
+LOST_MODULE = "tc_lost_schema_module"
+
+
+@pytest.fixture
+def lost_class(monkeypatch: pytest.MonkeyPatch) -> type:
+    """A class that pickles now and cannot be unpickled once the fixture is torn down.
+
+    The shape of the five bacterial stores of #833: records were written under a schema
+    that declared ``Censoring`` / ``BacterialVariantType`` / ``FoldChangeScale``, and
+    the code that reads them does not declare it. Standing in a throwaway module makes
+    that hermetic: the pickle names ``tc_lost_schema_module.Censoring``, and the module
+    is gone by the time anything reads it.
+    """
+    module = types.ModuleType(LOST_MODULE)
+
+    class Censoring:
+        pass
+
+    Censoring.__module__ = LOST_MODULE
+    Censoring.__qualname__ = "Censoring"  # else pickle names a local object
+    module.Censoring = Censoring  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, LOST_MODULE, module)
+    return Censoring
+
+
+def _fresh_manifest(tmp_path: Path, slug_dir: Path, surface: sd.SchemaSurface) -> None:
+    _write(slug_dir, _manifest(tmp_path, surface, name=slug_dir.name))
+
+
+def test_read_first_record_resolves_the_interned_reference(tmp_path: Path) -> None:
+    """The probe is the store's own read path: the ``$ref`` is spliced back in.
+
+    A loader interns the reference object (one per dataset) and leaves a pointer in
+    every record, so a reader that skipped the interned env would hand pydantic
+    ``{"$ref": ...}`` and fail a readable store.
+    """
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_interned"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    record = _fitness_record()
+    reference = record["reference"]
+    _write_store(
+        slug_dir,
+        [{**record, "reference": {"$ref": "abc123", "name": "ds"}}],
+        interned={"abc123": reference},
+    )
+    assert bm.read_first_record(slug_dir) == record
+
+
+def test_a_record_pickled_under_a_class_the_schema_lost_reads_unreadable(
+    tmp_path: Path, lost_class: type, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The #833 store: the manifest compares equal and only the read sees the problem.
+
+    The fingerprints match (the lost class is in no closure, so nothing drifted), so
+    ``stale`` cannot name it; the first-record read raises ``ModuleNotFoundError`` and
+    the verdict is ``unreadable`` with that exception on it.
+    """
+    surface = _surface(SCHEMA)
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_lost"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    record = _fitness_record()
+    record["experiment"]["phenotype"]["censoring"] = lost_class()
+    _write_store(slug_dir, [record])
+    _fresh_manifest(tmp_path, slug_dir, surface)
+    monkeypatch.delitem(sys.modules, LOST_MODULE)
+
+    freshness = bm.check_store(slug_dir, surface)
+    assert freshness.state == "unreadable"
+    assert freshness.drift == []
+    assert freshness.reason == (f"ModuleNotFoundError: No module named '{LOST_MODULE}'")
+    assert freshness.needs_rebuild is True
+    assert freshness.describe() == f"unreadable: {freshness.reason}"
+    with pytest.raises(ModuleNotFoundError):
+        bm.read_first_record(slug_dir)
+
+
+def test_an_interned_sub_object_of_a_lost_class_reads_unreadable(
+    tmp_path: Path, lost_class: type, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The interned env is read first, so a lost class there is caught as well.
+
+    The reference and publication objects live in ``processed/interned``, which is
+    where a per-dataset constant built under an extended schema sits.
+    """
+    surface = _surface(SCHEMA)
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_lost_interned"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    record = _fitness_record()
+    _write_store(
+        slug_dir,
+        [{**record, "reference": {"$ref": "abc123", "name": "ds"}}],
+        interned={"abc123": {**record["reference"], "censoring": lost_class()}},
+    )
+    _fresh_manifest(tmp_path, slug_dir, surface)
+    monkeypatch.delitem(sys.modules, LOST_MODULE)
+    assert bm.check_store(slug_dir, surface).reason == (
+        f"ModuleNotFoundError: No module named '{LOST_MODULE}'"
+    )
+
+
+def test_a_record_carrying_a_field_its_class_forbids_reads_unreadable(
+    tmp_path: Path,
+) -> None:
+    """The second way a store goes unreadable: ``extra_forbidden`` on a stored field.
+
+    A field removed from the schema leaves records that unpickle (dicts always do) and
+    fail validation, which is why the probe types the record through the class its own
+    ``experiment_type`` names rather than stopping at ``pickle.loads``.
+    """
+    surface = _surface(SCHEMA)
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_extra"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    record = _fitness_record()
+    record["experiment"]["retired_field"] = 1
+    _write_store(slug_dir, [record])
+    _fresh_manifest(tmp_path, slug_dir, surface)
+
+    freshness = bm.check_store(slug_dir, surface)
+    assert freshness.state == "unreadable"
+    assert freshness.reason is not None
+    assert freshness.reason.startswith("ValidationError: ")
+    assert "extra_forbidden" in freshness.reason
+    assert "retired_field" in freshness.reason
+
+
+def test_a_store_with_no_records_reads_unreadable(tmp_path: Path) -> None:
+    """An LMDB that holds nothing is not a store the graph can be built from."""
+    surface = _surface(SCHEMA)
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_empty"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    _write_store(slug_dir, [])
+    _fresh_manifest(tmp_path, slug_dir, surface)
+    freshness = bm.check_store(slug_dir, surface)
+    assert freshness.state == "unreadable"
+    assert freshness.reason == (
+        f"ValueError: {slug_dir / 'processed' / 'lmdb'} holds no records"
+    )
+
+
+def test_check_store_states_in_order_and_reads_only_a_fingerprint_fresh_store(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Existence, then the manifest, then the fingerprints, then the read.
+
+    The read runs last and only when every fingerprint matches: a store already
+    reported ``stale`` is rebuilt either way, so the probe never pays for it. Pinned by
+    making the read raise -- a stale store still reports ``stale``.
+    """
+    surface = _surface(SCHEMA)
+    unbuilt = tmp_path / "data" / "torchcell" / "ds_unbuilt"
+    unbuilt.mkdir(parents=True)
+    assert bm.check_store(unbuilt, surface).state == "no_lmdb"
+
+    bare = _build_dataset_dir(tmp_path, "ds_bare")
+    assert bm.check_store(bare, surface).state == "no_manifest"
+
+    stale_dir = _build_dataset_dir(tmp_path, "ds_stale")
+    _write(
+        stale_dir,
+        _manifest(tmp_path, surface, name="ds_stale").model_copy(
+            update={"closure": {"Media": "deadbeef"}}
+        ),
+    )
+
+    def refuse(_root: str | Path) -> dict[str, Any]:
+        raise AssertionError("the read must not run on a stale store")
+
+    monkeypatch.setattr(bm, "read_first_record", refuse)
+    stale = bm.check_store(stale_dir, surface)
+    assert (stale.state, stale.drift) == ("stale", ["Media"])
+
+
+def test_the_fleet_scan_and_cli_report_an_unreadable_store_and_exit_one(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    lost_class: type,
+) -> None:
+    """``python -m torchcell.provenance.build_manifest`` names it and exits 1.
+
+    The CLI is what the live rebuild's runbook has the owner run before a full build,
+    so an unreadable store has to fail it: before this it exited 0 on all five.
+    """
+    surface = _fleet(tmp_path, stale=False, bare=False)
+    slug_dir = tmp_path / "data" / "torchcell" / "ds_lost"
+    (slug_dir / "processed" / "lmdb").mkdir(parents=True)
+    (slug_dir / "preprocess").mkdir(parents=True)
+    record = _fitness_record()
+    record["experiment"]["phenotype"]["censoring"] = lost_class()
+    _write_store(slug_dir, [record])
+    _write(slug_dir, _manifest(tmp_path, surface, name="ds_lost"))
+    monkeypatch.delitem(sys.modules, LOST_MODULE)
+
+    assert _cli(monkeypatch, surface, ["--data-root", str(tmp_path)]) == 1
+    assert capsys.readouterr().out.splitlines() == [
+        "Built datasets: 2  (fresh 1, stale 0, unreadable 1, unmanifested 0)",
+        "",
+        "  [UNREADABLE] ds_lost  -> rebuild; unreadable: ModuleNotFoundError: "
+        f"No module named '{LOST_MODULE}'",
+    ]
+
+
+def test_describe_words_every_state_for_a_preflight_refusal(tmp_path: Path) -> None:
+    """The line the live rebuild's preflight refuses with, one per state.
+
+    The preflight prints these and exits; the wording is what tells the owner whether
+    to rebuild a store, build it for the first time, or look at what the records carry.
+    """
+    assert bm.StoreFreshness(root="/r", state="fresh").describe() == "fresh"
+    assert (
+        bm.StoreFreshness(root="/r", state="stale", drift=["Media"]).describe()
+        == "stale on ['Media']"
+    )
+    assert bm.StoreFreshness(root="/r", state="no_lmdb").describe() == "no LMDB at /r"
+    assert (
+        bm.StoreFreshness(root="/r", state="no_manifest").describe()
+        == "no build manifest"
+    )
+    assert (
+        bm.StoreFreshness(
+            root="/r", state="unreadable", reason="KeyError: 'x'"
+        ).describe()
+        == "unreadable: KeyError: 'x'"
+    )

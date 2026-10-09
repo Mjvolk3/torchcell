@@ -30,12 +30,26 @@ built; a bacterial loader naming ``genome`` is refused before anything is built.
 genome classes are recording subclasses of the real ones
 (``tests/torchcell/datasets/_genome_injection_fakes.py``), so ``isinstance`` holds and
 nothing is constructed.
+
+2026.10.09 (#833): the unreadable state and ``--verify``. A toy store whose record is
+re-pickled with an instance of a class from a throwaway module reads ``unreadable`` with
+``ModuleNotFoundError`` although every fingerprint matches, is named by ``--list-stale``
+on stdout, and carries its reason on stderr. ``--verify`` resolves the entry point that
+covers the dataset (a bioproduction registry first, then the loader module's
+``run_verification`` or ``verify_build``), writes a ``verify_build`` report into
+``preprocess/``, and on a raised exception or a failed report RENAMES the build manifest
+to ``build_manifest.json.unverified.<stamp>``, so the store reads ``no_manifest``
+instead of ``fresh``; an entry point needing a ``family``, ``arm`` or ``name`` is refused
+rather than guessed at, and a dataset with none says so and keeps its manifest.
 """
 
 from __future__ import annotations
 
+import json
 import os
 import pickle
+import sys
+import types
 from collections.abc import Iterator
 from pathlib import Path
 from types import SimpleNamespace
@@ -78,6 +92,12 @@ from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.sequence.genome.ecoli.k12 import EcoliK12BW25113Genome, EcoliK12Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 
 _ENVIRONMENT = Environment(media=Media(name="YPD", state="solid", is_synthetic=False))
 _PUBLICATION = Publication(pubmed_id="1", pubmed_url="u", doi="d", doi_url="du")
@@ -660,3 +680,469 @@ def test_list_stale_reports_a_store_whose_closure_drifted(
     manifest.write_text(_json.dumps(doc))
     (status,) = m.mapped_store_status(str(tmp_path), include_private=False)
     assert (status.state, status.drift) == ("stale", [symbol])
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.09 (#833): the unreadable state, and --verify after a build.
+#
+# ``ToyBuildDataset``'s records are real fitness records, so the toy store is readable
+# and reads ``fresh``. A toy whose module is a throwaway ``types.ModuleType`` is how a
+# verification entry point is given to the resolver without a second loader file: the
+# class's ``__module__`` names the fake module, which is exactly what
+# ``resolve_verifier`` imports.
+# --------------------------------------------------------------------------- #
+VERIFIER_PROVENANCE = Provenance(
+    source_uri="https://example.invalid/toy",
+    citation_key="toy",
+    method="synthetic",
+    page="n/a",
+    sha256="0" * 64,
+)
+
+
+def _report(name: str, passed: bool) -> VerificationReport:
+    report = VerificationReport(dataset_name=name, provenance=VERIFIER_PROVENANCE)
+    report.add(
+        LevelResult(level=Level.L0, name="structural", passed=passed, message="toy")
+    )
+    return report
+
+
+def _loader_module(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, name: str, **members: Any
+) -> types.ModuleType:
+    """A throwaway loader module carrying the given verification entry points.
+
+    It gets a real ``__file__`` on disk importing one schema symbol, because the build
+    manifest is computed from the loader file's own import closure.
+    """
+    path = tmp_path / f"{name}.py"
+    path.write_text("from torchcell.datamodels.schema import FitnessExperiment\n")
+    module = types.ModuleType(name)
+    module.__file__ = str(path)
+    for member, value in members.items():
+        setattr(module, member, value)
+    monkeypatch.setitem(sys.modules, name, module)
+    return module
+
+
+def _toy_in_module(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    slug: str,
+    module_name: str,
+    **members: Any,
+) -> type:
+    """A ``ToyBuildDataset`` under its own slug whose module carries the verifier."""
+    _loader_module(monkeypatch, tmp_path, module_name, **members)
+
+    class Toy(ToyBuildDataset):
+        def __init__(self, root: str = f"data/torchcell/{slug}", **kw: Any) -> None:
+            super().__init__(root=root, **kw)
+
+    Toy.__name__ = f"Toy{slug.title().replace('_', '')}Dataset"
+    Toy.__module__ = module_name
+    monkeypatch.setitem(dataset_registry, Toy.__name__, Toy)
+    return Toy
+
+
+def test_list_stale_names_an_unreadable_store_and_prints_its_reason_on_stderr(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A store whose records name a class this code lacks is listed, with the exception.
+
+    The #833 failure: the manifest's fingerprints all match (a class the schema does not
+    declare is in no closure), so the store read ``fresh`` and the array rebuild skipped
+    it. stdout stays the bare class list an array job reads line by line; the reason
+    goes to stderr.
+    """
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+
+    monkeypatch.setattr(
+        adapter_map,
+        "build_adapter_map",
+        lambda include_private=False: {ToyBuildDataset: object},
+    )
+    assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
+    capsys.readouterr()
+    root = tmp_path / "data" / "torchcell" / "toy_build"
+
+    lost = types.ModuleType("tc_gone")
+
+    class Censoring:
+        pass
+
+    Censoring.__module__ = "tc_gone"
+    Censoring.__qualname__ = "Censoring"
+    lost.Censoring = Censoring  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "tc_gone", lost)
+    env = lmdb.open(str(root / "processed" / "lmdb"), map_size=10**8)
+    with env.begin(write=True) as txn:
+        record = pickle.loads(txn.get(b"0"))
+        record["experiment"]["phenotype"]["censoring"] = Censoring()
+        txn.put(b"0", pickle.dumps(record))
+    env.close()
+    monkeypatch.delitem(sys.modules, "tc_gone")
+
+    (status,) = m.mapped_store_status(str(tmp_path), include_private=False)
+    assert (status.state, status.needs_rebuild) == ("unreadable", True)
+    assert status.reason == "ModuleNotFoundError: No module named 'tc_gone'"
+    assert m.main(["--list-stale", "--data-root", str(tmp_path)]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == "ToyBuildDataset\n"
+    assert captured.err.splitlines() == [
+        "ToyBuildDataset: unreadable: ModuleNotFoundError: No module named 'tc_gone'"
+    ]
+
+
+def test_verify_runs_the_modules_run_verification_and_keeps_the_manifest(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``--verify`` calls ``run_verification(data_root)`` and the store stays fresh."""
+    calls: list[str] = []
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        calls.append(str(data_root))
+        return _report("toy_rv", passed=True)
+
+    toy = _toy_in_module(
+        monkeypatch, tmp_path, "toy_rv", "tc_toy_rv", run_verification=run_verification
+    )
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 0
+    )
+    out = capsys.readouterr().out.splitlines()
+    assert calls == [str(tmp_path)]
+    assert f"verifying {toy.__name__} with tc_toy_rv.run_verification" in out
+    assert "verification PASSED: 1 report(s) by tc_toy_rv.run_verification" in out
+    manifest = tmp_path / "data/torchcell/toy_rv/preprocess/build_manifest.json"
+    assert manifest.is_file()
+
+
+def test_verify_writes_the_report_a_verify_build_entry_point_returns(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A ``verify_build(dataset_root, data_root)`` report is written to the store.
+
+    The gap the 105-store array rebuild of 2026-10-09 left: a build writes a build
+    manifest and nothing else, so ``preprocess/verification_report.json`` -- which each
+    dataset's own ``--data`` test reads -- was absent. The runner writes it in a family
+    run; here the builder does.
+    """
+    seen: list[tuple[str, str | None]] = []
+
+    def verify_build(
+        dataset_root: str, data_root: str | None = None
+    ) -> VerificationReport:
+        seen.append((dataset_root, data_root))
+        return _report("toy_vb", passed=True)
+
+    toy = _toy_in_module(
+        monkeypatch, tmp_path, "toy_vb", "tc_toy_vb", verify_build=verify_build
+    )
+    root = tmp_path / "data" / "torchcell" / "toy_vb"
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 0
+    )
+    assert seen == [(str(root), str(tmp_path))]
+    report = json.loads((root / "preprocess" / "verification_report.json").read_text())
+    assert report["dataset_name"] == "toy_vb"
+    assert [result["name"] for result in report["results"]] == ["structural"]
+    assert all(result["passed"] for result in report["results"])
+
+
+def test_verify_retires_the_manifest_when_the_verification_raises(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A raising verifier exits 1 and the store stops reading fresh.
+
+    The manifest is RENAMED to ``build_manifest.json.unverified.<stamp>``, never
+    deleted, so the store reads ``no_manifest`` to ``--list-stale`` and the live
+    rebuild's preflight refuses it instead of serializing unverified records.
+    """
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        raise RuntimeError("raw mirror absent")
+
+    toy = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_raise",
+        "tc_toy_raise",
+        run_verification=run_verification,
+    )
+    monkeypatch.setattr(
+        adapter_map, "build_adapter_map", lambda include_private=False: {toy: object}
+    )
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 1
+    )
+    captured = capsys.readouterr()
+    assert (
+        "ERROR: verification of "
+        f"{toy.__name__} raised RuntimeError: raw mirror absent" in captured.err
+    )
+    preprocess = tmp_path / "data" / "torchcell" / "toy_raise" / "preprocess"
+    assert not (preprocess / "build_manifest.json").exists()
+    retired = [p.name for p in preprocess.iterdir() if ".unverified." in p.name]
+    assert len(retired) == 1
+    assert retired[0].startswith("build_manifest.json.unverified.")
+    assert f"ERROR: build manifest retired to {preprocess / retired[0]}" in captured.err
+    (status,) = m.mapped_store_status(str(tmp_path), include_private=False)
+    assert (status.state, status.needs_rebuild) == ("no_manifest", True)
+
+
+def test_verify_retires_the_manifest_when_a_report_does_not_pass(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A FAILED report is treated as a failed build: same retirement, exit 1.
+
+    A store whose L0-L4 gate fails is not a store the knowledge graph may be built
+    from, and the preflight reads manifests, not reports -- so the manifest is where
+    the refusal has to land.
+    """
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        return _report("toy_fail", passed=False)
+
+    toy = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_fail",
+        "tc_toy_fail",
+        run_verification=run_verification,
+    )
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 1
+    )
+    captured = capsys.readouterr()
+    assert "ERROR: verification FAILED for ['toy_fail']" in captured.err
+    preprocess = tmp_path / "data" / "torchcell" / "toy_fail" / "preprocess"
+    assert not (preprocess / "build_manifest.json").exists()
+
+
+def test_verify_reports_a_dataset_with_no_per_dataset_entry_point(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """No entry point is said out loud and leaves the manifest: the family runner covers it.
+
+    38 of the 123 mapped datasets are verified only by a family runner, which reads
+    every store in its family and so is not a per-dataset build step.
+    """
+    toy = _toy_in_module(monkeypatch, tmp_path, "toy_none", "tc_toy_none")
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 0
+    )
+    out = capsys.readouterr().out
+    assert "NO PER-DATASET VERIFIER -- " in out
+    assert "tc_toy_none declares no run_verification()/verify_build()" in out
+    assert (
+        tmp_path / "data/torchcell/toy_none/preprocess/build_manifest.json"
+    ).is_file()
+
+
+def test_a_build_without_verify_runs_no_verification(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The flag is opt-in: the array script passes it, a bare build is unchanged."""
+    calls: list[str] = []
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        calls.append("called")
+        return _report("toy_off", passed=True)
+
+    toy = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_off",
+        "tc_toy_off",
+        run_verification=run_verification,
+    )
+    assert m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path)]) == 0
+    assert calls == []
+    assert "verifying" not in capsys.readouterr().out
+
+
+def test_resolve_verifier_prefers_a_bioproduction_registry_over_the_module(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A registry entry wins: it adds the family L4 the loader's own gate does not.
+
+    Resolution is registry, then ``run_verification`` with no required parameter, then
+    ``verify_build`` whose only required parameter is ``dataset_root``.
+    """
+    from torchcell.verification import runners
+
+    def run_verification(data_root: str | None = None) -> VerificationReport:
+        return _report("unused", passed=True)
+
+    toy = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_reg",
+        "tc_toy_reg",
+        run_verification=run_verification,
+    )
+    calls: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        runners,
+        "PRODUCT_TITER_DATASETS",
+        {"toy_reg": {"root": "data/torchcell/toy_reg", "verify": object()}},
+    )
+
+    def verify_bacterial_dataset(name: str, data_root: str) -> VerificationReport:
+        calls.append((name, data_root))
+        return _report("toy_reg", passed=True)
+
+    monkeypatch.setattr(runners, "verify_bacterial_dataset", verify_bacterial_dataset)
+    kind, run = m.resolve_verifier(toy)
+    assert kind == "runners.verify_bacterial_dataset('toy_reg')"
+    assert [report.dataset_name for report in run("/dr")] == ["toy_reg"]
+    assert calls == [("toy_reg", "/dr")]
+
+
+def test_resolve_verifier_refuses_an_entry_point_it_cannot_call(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``family`` / ``arm`` / ``name`` argument makes an entry point unresolvable.
+
+    Those modules build several stores from one reader set, and nothing here can choose
+    which one a given class wants; the registries name that choice, which is rule 1.
+    """
+
+    def verify_build(
+        dataset_root: str, data_root: str | None = None, *, family: str
+    ) -> VerificationReport:
+        return _report("multi", passed=True)
+
+    def run_verification(name: str, data_root: str | None = None) -> VerificationReport:
+        return _report("multi", passed=True)
+
+    needs_family = _toy_in_module(
+        monkeypatch, tmp_path, "toy_fam", "tc_toy_fam", verify_build=verify_build
+    )
+    needs_name = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_name",
+        "tc_toy_name",
+        run_verification=run_verification,
+    )
+    for toy in (needs_family, needs_name):
+        with pytest.raises(LookupError, match="no run_verification"):
+            m.resolve_verifier(toy)
+
+
+def test_retire_manifest_is_a_rename_and_refuses_a_taken_stamp(tmp_path: Path) -> None:
+    """Nothing is deleted, and a second retirement under one stamp is refused."""
+    preprocess = tmp_path / "store" / "preprocess"
+    preprocess.mkdir(parents=True)
+    assert m.retire_manifest(str(tmp_path / "store")) is None
+    (preprocess / "build_manifest.json").write_text('{"a": 1}')
+    dest = m.retire_manifest(str(tmp_path / "store"), stamp="20261009-000000")
+    assert dest == str(preprocess / "build_manifest.json.unverified.20261009-000000")
+    assert Path(dest).read_text() == '{"a": 1}'
+    (preprocess / "build_manifest.json").write_text('{"a": 2}')
+    with pytest.raises(FileExistsError, match="refusing to retire over it"):
+        m.retire_manifest(str(tmp_path / "store"), stamp="20261009-000000")
+
+
+def test_the_array_script_builds_with_retire_existing_and_verify() -> None:
+    """``--verify`` is ON where the rebuilds actually happen, per array task.
+
+    The flag is opt-in on the CLI and passed by the script that rebuilds the fleet, so
+    the 105-store rebuild that produced no verification report cannot recur.
+    """
+    script = (
+        Path(__file__).resolve().parents[3]
+        / "database"
+        / "slurm"
+        / "scripts"
+        / "gilahyper_build_dataset_lmdbs_array.slurm"
+    ).read_text(encoding="utf-8")
+    assert (
+        "python -m torchcell.database.build_dataset_lmdb \\\n"
+        '    --dataset "$DATASET_CLASS" --io-workers "$SLURM_CPUS_PER_TASK" '
+        "--retire-existing \\\n"
+        "    --verify" in script
+    )
+
+
+def test_reports_of_flattens_a_tuple_a_dict_and_a_single_report() -> None:
+    """Three shapes the entry points return; anything that is not a report is dropped.
+
+    ``run_verification`` returns one report in most modules, a tuple of them where one
+    module builds several arms, and a dict keyed by arm in one. ``--verify`` judges
+    ``passed`` over all of them, so they are flattened to one list.
+    """
+    one = _report("one", passed=True)
+    two = _report("two", passed=False)
+    assert [r.dataset_name for r in m._reports_of(one)] == ["one"]
+    assert [r.dataset_name for r in m._reports_of((one, two))] == ["one", "two"]
+    assert [r.dataset_name for r in m._reports_of({"a": one, "b": two})] == [
+        "one",
+        "two",
+    ]
+    assert m._reports_of(None) == []
+
+
+def test_verify_retires_the_manifest_when_the_entry_point_returns_no_report(
+    tmp_path: Path,
+    cli: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A verifier that returns nothing verified nothing: the store stops reading fresh.
+
+    An entry point that printed its findings and returned ``None`` would otherwise pass
+    the gate with no report on disk, which is the state the array rebuild left.
+    """
+
+    def run_verification(data_root: str | None = None) -> None:
+        return None
+
+    toy = _toy_in_module(
+        monkeypatch,
+        tmp_path,
+        "toy_empty",
+        "tc_toy_empty",
+        run_verification=run_verification,
+    )
+    assert (
+        m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])
+        == 1
+    )
+    captured = capsys.readouterr()
+    assert (
+        "ERROR: tc_toy_empty.run_verification returned no verification report for "
+        f"{toy.__name__}" in captured.err
+    )
+    preprocess = tmp_path / "data" / "torchcell" / "toy_empty" / "preprocess"
+    assert not (preprocess / "build_manifest.json").exists()

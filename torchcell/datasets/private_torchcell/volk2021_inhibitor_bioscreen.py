@@ -106,11 +106,21 @@ from torchcell.datamodels.schema import (
     Temperature,
     UncertaintyType,
 )
-from torchcell.datamodels.strain_background import BAID_STRAIN, baid_background
+from torchcell.datamodels.strain_background import (
+    BAID_GENOTYPE,
+    BAID_STRAIN,
+    baid_background,
+)
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.private_torchcell import bioscreen as b
 from torchcell.datasets.private_torchcell import volk2021_sources as s
 from torchcell.literature.manifest import Manifest
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import SourcedValue
 
 log = logging.getLogger(__name__)
@@ -623,8 +633,418 @@ class InhibitorBioscreenVolk2021Dataset(ExperimentDataset):
         raise NotImplementedError
 
 
+# --------------------------------------------------------------------------- #
+# L0-L4 verification of a built store (#827)
+#
+# The dataset carries its own gate, as the bioproduction loaders do, instead of a row in
+# ``runners.ENVIRONMENT_RESPONSE_DATASETS``: that registry's rules are written for a
+# deletion-collection screen (one record per (ORF, condition), a reference centered on 0,
+# one measurement type, a gene universe to contain) and FIVE of them do not describe this
+# dataset, which is one unedited strain measured in 977 wells. The measurements that say
+# so are in the dendron note's 2026.10.09 section.
+# --------------------------------------------------------------------------- #
+#: Records a build must produce per run: every inoculated well the layout assigns.
+EXPECTED_RECORDS: dict[str, int] = {
+    "ex21": 180,
+    "ex23": 197,
+    "ex26": 200,
+    "ex27": 200,
+    "ex28": 200,
+}
+#: Records per run whose readout is the no-growth CALL rather than a rate: the wells whose
+#: raw curve never rose by ``bioscreen.GROWTH_RISE``.
+EXPECTED_NO_GROWTH: dict[str, int] = {
+    "ex21": 63,
+    "ex23": 128,
+    "ex26": 155,
+    "ex27": 124,
+    "ex28": 147,
+}
+#: Inhibitor-free (``WT``) wells per run: the baseline every rate of that run is taken
+#: against, served as records of their own.
+EXPECTED_WILD_TYPE_WELLS: dict[str, int] = {
+    "ex21": 18,
+    "ex23": 8,
+    "ex26": 2,
+    "ex27": 2,
+    "ex28": 2,
+}
+#: L4, the independent second source: the fraction of wells on which the SERVED
+#: raw-curve grew / did-not-grow call equals the Bioscreen software's, for the three runs
+#: the software processed. Declared rather than floored -- observed must EQUAL these, so
+#: a derivation change fails here instead of drifting under a threshold.
+SOFTWARE_GREW_AGREEMENT: dict[str, float] = {
+    "ex21": 0.977778,
+    "ex23": 0.939086,
+    "ex26": 0.985000,
+}
+#: Tolerance of the agreement oracles above (the values are pinned to 6 decimals).
+AGREEMENT_TOL = 5e-6
+#: The parent strain and the integrated cassette, split off the SOURCED genotype string
+#: Lian 2019's Supplementary Table 11 gives for bAID
+#: (``BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]``), so the L3 row
+#: checks the served background against the SOURCE and not against the constructor that
+#: wrote it.
+BAID_PARENT, BAID_CASSETTE_NAME = BAID_GENOTYPE.value.split("-", 1)
+
+
+def _run_of(screen_id: str) -> str:
+    """``ex23`` from ``ex23:well150``."""
+    return screen_id.split(":well")[0]
+
+
+def _per_run(records: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """The records of each run, keyed by the run of their ``screen_id``."""
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for record in records:
+        run = _run_of(record["experiment"]["phenotype"]["screen_id"])
+        grouped.setdefault(run, []).append(record)
+    return grouped
+
+
+def l1_wells_per_run(records: list[dict[str, Any]]) -> LevelResult:
+    """L1: the records of each run are exactly the wells its layout assigns."""
+    observed = {run: len(group) for run, group in _per_run(records).items()}
+    holds = observed == EXPECTED_RECORDS
+    return LevelResult(
+        level=Level.L1,
+        name="wells_per_run",
+        passed=holds,
+        message=(
+            f"records per run {observed} == the layouts' wells"
+            if holds
+            else f"records per run {observed} != {EXPECTED_RECORDS}"
+        ),
+        details={"observed": observed, "expected": EXPECTED_RECORDS},
+    )
+
+
+def l2_readout_split(records: list[dict[str, Any]]) -> LevelResult:
+    """L2: a record carries a rate or a no-growth call, never both or neither.
+
+    The dataset's readout is MIXED by construction: a well that never grew has no
+    generation time, so there is no rate to store and the call is the measurement. The
+    per-run no-growth counts are oracles, and a record holding both a numeric response
+    and a category (or neither) is a defect.
+    """
+    no_growth: dict[str, int] = {run: 0 for run in EXPECTED_NO_GROWTH}
+    malformed: list[dict[str, Any]] = []
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        run = _run_of(phenotype["screen_id"])
+        rate = phenotype["environment_response"]
+        category = phenotype.get("category")
+        measurement = str(phenotype["measurement_type"])
+        rated = measurement == MeasurementType.relative_growth_rate.value
+        called = measurement == MeasurementType.categorical.value
+        if rated and (rate is None or category is not None):
+            malformed.append({"screen_id": phenotype["screen_id"], "rule": "rate"})
+        if called and (rate is not None or category is None):
+            malformed.append({"screen_id": phenotype["screen_id"], "rule": "call"})
+        if not rated and not called:
+            malformed.append({"screen_id": phenotype["screen_id"], "rule": measurement})
+        if called:
+            no_growth[run] += 1
+    holds = not malformed and no_growth == EXPECTED_NO_GROWTH
+    return LevelResult(
+        level=Level.L2,
+        name="readout_split",
+        passed=holds,
+        message=(
+            f"{sum(no_growth.values())} no-growth calls and "
+            f"{len(records) - sum(no_growth.values())} rates, split per run {no_growth}"
+            if holds
+            else f"{len(malformed)} records malformed; no-growth per run {no_growth} "
+            f"vs declared {EXPECTED_NO_GROWTH}"
+        ),
+        details={
+            "no_growth_per_run": no_growth,
+            "expected_no_growth_per_run": EXPECTED_NO_GROWTH,
+            "n_malformed": len(malformed),
+            "malformed": malformed[:20],
+        },
+    )
+
+
+def l3_reference_one(records: list[dict[str, Any]]) -> LevelResult:
+    """L3: the reference is the run's own WT baseline, a relative growth rate of 1.0.
+
+    The env-response verifier's ``reference_zero`` rule does not apply: this readout is a
+    RATIO against the wild type measured in the same run, so its control is 1.0, not 0.
+    The reference also carries the sample SD of the grown WT wells' own rates and their
+    count, so the baseline's spread is served with it.
+    """
+    worst = 0.0
+    counts: dict[str, int] = {}
+    bad: list[str] = []
+    for record in records:
+        reference = record["reference"]["phenotype_reference"]
+        run = _run_of(record["experiment"]["phenotype"]["screen_id"])
+        value = reference["environment_response"]
+        if value is None:
+            bad.append(f"{run}: no reference response")
+            continue
+        worst = max(worst, abs(float(value) - 1.0))
+        counts[run] = int(reference["n_samples"])
+        if (
+            reference["environment_response_uncertainty"] is None
+            or float(reference["environment_response_uncertainty"]) <= 0.0
+            or str(reference["environment_response_uncertainty_type"])
+            != UncertaintyType.sample_sd.value
+            or str(reference["measurement_type"])
+            != MeasurementType.relative_growth_rate.value
+        ):
+            bad.append(f"{run}: reference carries no positive sample SD")
+    holds = not bad and worst == 0.0
+    return LevelResult(
+        level=Level.L3,
+        name="reference_one",
+        passed=holds,
+        message=(
+            f"reference relative growth rate == 1.0 for all {len(records)} records, "
+            f"with the sample SD of {counts} grown WT wells per run"
+            if holds
+            else f"max|v-1|={worst:.3g}; {len(set(bad))} reference defects"
+        ),
+        details={
+            "worst_abs_deviation": worst,
+            "n_wild_type_wells": counts,
+            "defects": sorted(set(bad))[:20],
+        },
+    )
+
+
+def l3_wild_type_wells(records: list[dict[str, Any]]) -> LevelResult:
+    """L3: the only records with no environmental edit are the declared ``WT`` wells.
+
+    Every other well carries at least one dosed inhibitor, and the inhibitor-free wells
+    are served as records rather than collapsed into the reference, so a run's baseline
+    keeps its replicates. Declared per run, so a layout change cannot quietly add or
+    drop one.
+    """
+    observed = {run: 0 for run in EXPECTED_WILD_TYPE_WELLS}
+    for record in records:
+        if record["experiment"]["environment"]["perturbations"]:
+            continue
+        run = _run_of(record["experiment"]["phenotype"]["screen_id"])
+        observed[run] = observed.get(run, 0) + 1
+    holds = observed == EXPECTED_WILD_TYPE_WELLS
+    return LevelResult(
+        level=Level.L3,
+        name="wild_type_wells",
+        passed=holds,
+        message=(
+            f"{sum(observed.values())} inhibitor-free wells, {observed} per run; every "
+            "other record carries a dosed inhibitor"
+            if holds
+            else f"inhibitor-free wells {observed} != declared "
+            f"{EXPECTED_WILD_TYPE_WELLS}"
+        ),
+        details={"observed": observed, "expected": EXPECTED_WILD_TYPE_WELLS},
+    )
+
+
+def l3_no_growth_label(records: list[dict[str, Any]]) -> LevelResult:
+    """L3: every no-growth call is ``severely_reduced`` labelled with its RUN's length.
+
+    No run was 48 h; 48 h is the lag the Bioscreen software assigns to a well that never
+    grew. A label naming the wrong window would read as an endpoint the run never had.
+    """
+    expected = {run.value: no_growth_label(run) for run in RUNS}
+    observed: dict[str, set[str]] = {}
+    wrong_category: list[str] = []
+    for record in records:
+        phenotype = record["experiment"]["phenotype"]
+        if str(phenotype["measurement_type"]) != MeasurementType.categorical.value:
+            continue
+        run = _run_of(phenotype["screen_id"])
+        observed.setdefault(run, set()).add(str(phenotype["category_label"]))
+        if str(phenotype["category"]) != ResponseCategory.severely_reduced.value:
+            wrong_category.append(phenotype["screen_id"])
+    labels = {run: sorted(values) for run, values in sorted(observed.items())}
+    holds = not wrong_category and all(
+        labels.get(run) == [expected[run]] for run in expected
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="no_growth_label",
+        passed=holds,
+        message=(
+            f"every no-growth call is severely_reduced, labelled {labels}"
+            if holds
+            else f"{len(wrong_category)} wrong categories; labels {labels} != {expected}"
+        ),
+        details={
+            "labels_per_run": labels,
+            "expected_per_run": expected,
+            "wrong_category": wrong_category[:20],
+        },
+    )
+
+
+def l3_strain_background(records: list[dict[str, Any]]) -> LevelResult:
+    """L3: every record's reference carries bAID with its typed pAID6 integration.
+
+    The genotype is empty (no edit relative to the host), so the strain's identity lives
+    entirely on the reference's background: BY4742 as the parent and the
+    ``Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]`` cassette as a typed
+    integration with its source quotes. If that object were dropped, the records would
+    describe a wild-type BY4742 screen.
+    """
+    cassette = BAID_CASSETTE_NAME
+    defects: list[str] = []
+    for record in records:
+        reference = record["reference"]["genome_reference"]
+        background = reference["background"]
+        integrations = [str(entry["name"]) for entry in background["integrations"]]
+        if (
+            str(reference["strain"]) != BAID_STRAIN
+            or str(background["name"]) != BAID_STRAIN
+            or list(background["parents"]) != [BAID_PARENT]
+            or integrations != [cassette]
+            or not background["integrations"][0]["provenance"]
+        ):
+            defects.append(record["experiment"]["phenotype"]["screen_id"])
+    holds = not defects
+    return LevelResult(
+        level=Level.L3,
+        name="strain_background",
+        passed=holds,
+        message=(
+            f"all {len(records)} references carry {BAID_STRAIN} (parent {BAID_PARENT}) "
+            f"with the integration {cassette!r}"
+            if holds
+            else f"{len(defects)} records lack the bAID background or its integration"
+        ),
+        details={
+            "strain": BAID_STRAIN,
+            "parent": BAID_PARENT,
+            "integration": cassette,
+            "defects": defects[:20],
+        },
+    )
+
+
+def l4_software_agreement(records: list[dict[str, Any]], mirror: Path) -> LevelResult:
+    """L4: the served grew / did-not-grow call against the Bioscreen software's.
+
+    The software's own trait files are an INDEPENDENT derivation of the same curves (it
+    worked from estimated cell counts through a calibration, this loader from the raw
+    OD600), and it processed ex21, ex23 and ex26. Agreement is the cross-source row;
+    the two disagree in SCALE on ex21 and ex23 (the note's table), which is why the
+    served value is one source throughout and never a blend.
+    """
+    grouped = _per_run(records)
+    observed: dict[str, float] = {}
+    for run_name in SOFTWARE_GREW_AGREEMENT:
+        software = b.software_generation_times(b.Run(run_name), mirror)
+        group = grouped[run_name]
+        agree = 0
+        for record in group:
+            phenotype = record["experiment"]["phenotype"]
+            well = int(phenotype["screen_id"].split("well")[1])
+            served_grew = (
+                str(phenotype["measurement_type"])
+                == MeasurementType.relative_growth_rate.value
+            )
+            if served_grew == (software[well] is not None):
+                agree += 1
+        observed[run_name] = agree / len(group)
+    holds = all(
+        abs(observed[run] - declared) <= AGREEMENT_TOL
+        for run, declared in SOFTWARE_GREW_AGREEMENT.items()
+    )
+    return LevelResult(
+        level=Level.L4,
+        name="software_trait_agreement",
+        passed=holds,
+        message=(
+            "the served grew/no-grew call equals the Bioscreen software's on "
+            + ", ".join(f"{run} {value:.4f}" for run, value in sorted(observed.items()))
+            if holds
+            else f"agreement {observed} != declared {SOFTWARE_GREW_AGREEMENT}"
+        ),
+        details={"observed": observed, "declared": SOFTWARE_GREW_AGREEMENT},
+    )
+
+
+#: Where the records came from, recorded with the verification report.
+VERIFICATION_PROVENANCE = Provenance(
+    source_uri=(
+        f"$DATA_ROOT/{b.RAW_DIR_REL} (the raw mirror of {b.ARCHIVE_ROOT}, every file "
+        "checked against the archive's MANIFEST.tsv sha256 on deposit)"
+    ),
+    citation_key=b.CITATION_KEY,
+    sha256=b.REPORT_PDF_SHA256,
+    method=UNITS,
+    page=(
+        "the five Bioscreen C OD600 exports (bioscreen.RAW_CSV), the ex23 well map "
+        "(MV_ex23_preprocessed.csv) and the ex21 stock + titration tables"
+    ),
+    retrieved=b.RETRIEVED_AT,
+)
+
+
+def verify_build(dataset_root: str, data_root: str | None = None) -> VerificationReport:
+    """Run the L0-L4 gate on a built store; write ``preprocess/verification_report.json``.
+
+    ``data_root`` locates the raw mirror the L4 row reads the Bioscreen software's trait
+    files from (they are a cross-source oracle, not a build input, so the loader never
+    links them into ``raw/``); it defaults to ``$DATA_ROOT``.
+    """
+    from pydantic import TypeAdapter
+
+    from torchcell.datamodels.schema import ExperimentType
+    from torchcell.verification.levels import (
+        l0_structural,
+        l1_completeness,
+        l1_count,
+        l2_value_fidelity,
+    )
+    from torchcell.verification.runners import load_records
+
+    records = load_records(dataset_root)
+    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    mirror = b.raw_mirror_dir(data_root or os.environ["DATA_ROOT"])
+    expected_ids = [
+        f"{run.value}:well{well.well}"
+        for run in RUNS
+        for well in b.layout(run, Path(dataset_root) / "raw").wells
+    ]
+    rates = [
+        record["experiment"]["phenotype"]["environment_response"]
+        for record in records
+        if record["experiment"]["phenotype"]["environment_response"] is not None
+    ]
+    report = VerificationReport(
+        dataset_name=InhibitorBioscreenVolk2021Dataset.__name__,
+        provenance=VERIFICATION_PROVENANCE,
+    )
+    report.add(l0_structural((record["experiment"] for record in records), validate))
+    report.add(l1_count(len(records), sum(EXPECTED_RECORDS.values())))
+    report.add(
+        l1_completeness(
+            [record["experiment"]["phenotype"]["screen_id"] for record in records],
+            expected_ids,
+            allow_extra=False,
+        )
+    )
+    report.add(l1_wells_per_run(records))
+    report.add(l2_value_fidelity(rates, minimum=0.0))
+    report.add(l2_readout_split(records))
+    report.add(l3_reference_one(records))
+    report.add(l3_wild_type_wells(records))
+    report.add(l3_no_growth_label(records))
+    report.add(l3_strain_background(records))
+    report.add(l4_software_agreement(records, mirror))
+    out = osp.join(dataset_root, "preprocess", "verification_report.json")
+    with open(out, "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
 def main() -> None:
-    """Build/load the dataset under ``$DATA_ROOT`` for interactive inspection."""
+    """Build/load the dataset under ``$DATA_ROOT`` and verify it (L0-L4)."""
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -634,6 +1054,7 @@ def main() -> None:
     dataset = InhibitorBioscreenVolk2021Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
+    print(verify_build(root, os.environ["DATA_ROOT"]).summary())
 
 
 if __name__ == "__main__":

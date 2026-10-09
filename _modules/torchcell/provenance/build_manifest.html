@@ -130,6 +130,15 @@
 <span class="sd">  - ``torchcell_commit`` is recorded for provenance only and is NEVER used for the staleness</span>
 <span class="sd">    decision (a schema commit that doesn't touch a loader's closure leaves it fresh). It is</span>
 <span class="sd">    ``None`` when the built code is not a git checkout (e.g. an installed wheel).</span>
+
+<span class="sd">Fingerprints alone cannot see every stale store (issue #833). A record pickled under a</span>
+<span class="sd">class the local schema no longer DEFINES is in no closure, so its manifest compares equal</span>
+<span class="sd">and the store reads fresh while nothing can deserialize it: 5 bacterial dev stores were in</span>
+<span class="sd">that state on 2026-10-09 and ``--list-stale`` named 1. :func:`check_store` therefore ends</span>
+<span class="sd">with a bounded read of the store's FIRST record (:func:`read_first_record`) and reports</span>
+<span class="sd">``unreadable`` with the exception when it fails. It is the ONE freshness function: the</span>
+<span class="sd">``build_manifest`` CLI (:func:`check_all`), ``build_dataset_lmdb --list-stale`` and the</span>
+<span class="sd">live rebuild's preflight all call it, so the three cannot drift apart.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
@@ -145,7 +154,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span><span class="p">,</span> <span class="n">Field</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">SchemaSurface</span><span class="p">,</span>
@@ -158,15 +167,22 @@
     <span class="s2">"SymbolDrift"</span><span class="p">,</span>
     <span class="s2">"StaleResult"</span><span class="p">,</span>
     <span class="s2">"DatasetCheck"</span><span class="p">,</span>
+    <span class="s2">"StoreFreshness"</span><span class="p">,</span>
+    <span class="s2">"StoreState"</span><span class="p">,</span>
     <span class="s2">"compute_manifest"</span><span class="p">,</span>
     <span class="s2">"write_build_manifest"</span><span class="p">,</span>
     <span class="s2">"check_manifest"</span><span class="p">,</span>
+    <span class="s2">"check_store"</span><span class="p">,</span>
+    <span class="s2">"read_first_record"</span><span class="p">,</span>
     <span class="s2">"check_all"</span><span class="p">,</span>
     <span class="s2">"MANIFEST_FILENAME"</span><span class="p">,</span>
 <span class="p">]</span>
 
 <span class="n">MANIFEST_FILENAME</span> <span class="o">=</span> <span class="s2">"build_manifest.json"</span>
 <span class="n">MANIFEST_SCHEMA_VERSION</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">StoreState</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"no_lmdb"</span><span class="p">,</span> <span class="s2">"no_manifest"</span><span class="p">,</span> <span class="s2">"unreadable"</span><span class="p">]</span>
+<span class="sd">"""What one built store is, against the local schema. Only ``fresh`` needs no rebuild."""</span>
 
 
 <div class="viewcode-block" id="BuildManifest">
@@ -214,14 +230,43 @@
 
 
 
+<span class="k">class</span><span class="w"> </span><span class="nc">StoreFreshness</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One built store's state: the answer :func:`check_store` gives about one directory."""</span>
+
+    <span class="n">model_config</span> <span class="o">=</span> <span class="n">ConfigDict</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">StoreState</span>
+    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># set only for ``unreadable``: "&lt;ExcClass&gt;: &lt;message&gt;"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">needs_rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Everything but ``fresh`` is rebuilt before a full knowledge-graph build."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">"fresh"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One line naming what is wrong, for a preflight's refusal list."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"fresh"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"fresh"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"stale"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"stale on </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">drift</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"no_lmdb"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"no LMDB at </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"no_manifest"</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">"no build manifest"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"unreadable: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span>
+
+
 <div class="viewcode-block" id="DatasetCheck">
 <a class="viewcode-back" href="../../../generated/torchcell.provenance.DatasetCheck.html#torchcell.provenance.DatasetCheck">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">DatasetCheck</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-dataset outcome of a fleet-wide staleness scan."""</span>
 
     <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">status</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"unmanifested"</span><span class="p">]</span>
-    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+    <span class="n">status</span><span class="p">:</span> <span class="n">StoreState</span>
+    <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 
 
@@ -342,6 +387,103 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">read_first_record</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Deserialize the FIRST record of ``&lt;root&gt;/processed/lmdb`` and type it; return it.</span>
+
+<span class="sd">    The bounded read behind the ``unreadable`` state. It is the store's own read path:</span>
+<span class="sd">    the interned sibling env, ``pickle.loads``, ``resolve_interned`` (what</span>
+<span class="sd">    ``ExperimentDataset.get_single_item`` does), then the three stored dicts validated</span>
+<span class="sd">    into the classes their own ``experiment_type`` /</span>
+<span class="sd">    ``experiment_reference_type`` name. Both ways a store goes unreadable raise here:</span>
+<span class="sd">    a record (or an interned sub-object) pickled under a class the local schema no</span>
+<span class="sd">    longer defines fails in ``pickle.loads``, and a record carrying a field the class</span>
+<span class="sd">    no longer accepts fails pydantic with ``extra_forbidden``.</span>
+
+<span class="sd">    ONE record, because unpickling is per-record and the classes a store uses are fixed</span>
+<span class="sd">    at build time: reading record 0 exercises every class in its records' closure, and</span>
+<span class="sd">    the interned table it loads first carries the reference and publication objects of</span>
+<span class="sd">    the whole store. Raises for the caller to report; never returns a verdict.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
+
+    <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">,</span>
+        <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">,</span>
+        <span class="n">Publication</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">processed</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"processed"</span>
+    <span class="n">interned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"interned"</span><span class="p">)</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"interned"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">itxn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
+                    <span class="n">interned</span><span class="p">[</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()]</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>  <span class="c1"># noqa: S301</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">processed</span> <span class="o">/</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cursor</span><span class="o">.</span><span class="n">first</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">processed</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="s1">'lmdb'</span><span class="si">}</span><span class="s2"> holds no records"</span><span class="p">)</span>
+            <span class="n">raw</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">value</span><span class="p">()</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="n">record</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="n">interned</span><span class="p">)</span>  <span class="c1"># noqa: S301</span>
+    <span class="n">experiment</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+    <span class="n">EXPERIMENT_TYPE_MAP</span><span class="p">[</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"experiment_type"</span><span class="p">]](</span><span class="o">**</span><span class="n">experiment</span><span class="p">)</span>
+    <span class="n">reference</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">]</span>
+    <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span><span class="p">[</span><span class="n">reference</span><span class="p">[</span><span class="s2">"experiment_reference_type"</span><span class="p">]](</span><span class="o">**</span><span class="n">reference</span><span class="p">)</span>
+    <span class="n">Publication</span><span class="p">(</span><span class="o">**</span><span class="n">record</span><span class="p">[</span><span class="s2">"publication"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">record</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">check_store</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Path</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StoreFreshness</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ONE freshness verdict on one built dataset directory.</span>
+
+<span class="sd">    In order: the LMDB must exist, its build manifest must exist, every fingerprint in</span>
+<span class="sd">    the manifest's closure must equal the current surface's, and the store's first</span>
+<span class="sd">    record must deserialize. The read runs LAST and only on a store whose fingerprints</span>
+<span class="sd">    all match, since a store already reported ``stale`` is rebuilt either way and the</span>
+<span class="sd">    read costs an LMDB open.</span>
+
+<span class="sd">    ``except Exception`` around the read is the probe's product, not a swallowed error:</span>
+<span class="sd">    the state and the exception text are reported as the verdict, and nothing continues</span>
+<span class="sd">    as though the store were readable.</span>
+<span class="sd">    """</span>
+    <span class="n">lmdb_dir</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"processed"</span> <span class="o">/</span> <span class="s2">"lmdb"</span>
+    <span class="n">preprocess</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">root</span><span class="p">)</span> <span class="o">/</span> <span class="s2">"preprocess"</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">lmdb_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_lmdb"</span><span class="p">)</span>
+    <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">preprocess</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+        <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_manifest"</span><span class="p">)</span>
+    <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+        <span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">preprocess</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_stale</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"stale"</span><span class="p">,</span>
+            <span class="n">drift</span><span class="o">=</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">}),</span>
+        <span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">read_first_record</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>  <span class="c1"># the probe's verdict; reported, never ignored</span>
+        <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span>
+            <span class="n">state</span><span class="o">=</span><span class="s2">"unreadable"</span><span class="p">,</span>
+            <span class="n">reason</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span><span class="n">root</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="s2">"fresh"</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_built_dataset_dirs</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Path</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""Directories under DATA_ROOT that hold a built LMDB (``&lt;slug&gt;/processed/lmdb``)."""</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
@@ -355,24 +497,33 @@
 <div class="viewcode-block" id="check_all">
 <a class="viewcode-back" href="../../../generated/torchcell.provenance.check_all.html#torchcell.provenance.check_all">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">check_all</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="n">Path</span><span class="p">,</span> <span class="n">surface</span><span class="p">:</span> <span class="n">SchemaSurface</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Check every built dataset under DATA_ROOT for schema staleness."""</span>
+<span class="w">    </span><span class="sd">"""Check every built dataset under DATA_ROOT for schema staleness.</span>
+
+<span class="sd">    Per directory this is :func:`check_store`, so the scan sees an unreadable store the</span>
+<span class="sd">    same way ``build_dataset_lmdb --list-stale`` and the live rebuild's preflight do.</span>
+<span class="sd">    The reported name is the manifest's own ``dataset_name`` where there is a manifest</span>
+<span class="sd">    to read it from, and the directory name otherwise.</span>
+<span class="sd">    """</span>
     <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">slug_dir</span> <span class="ow">in</span> <span class="n">_built_dataset_dirs</span><span class="p">(</span><span class="n">data_root</span><span class="p">):</span>
+        <span class="n">freshness</span> <span class="o">=</span> <span class="n">check_store</span><span class="p">(</span><span class="n">slug_dir</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
         <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span> <span class="o">/</span> <span class="n">MANIFEST_FILENAME</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
-            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">DatasetCheck</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">slug_dir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"unmanifested"</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">slug_dir</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">SymbolDrift</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">manifest_path</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
+                <span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
             <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span>
-            <span class="n">manifest_path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span><span class="p">))</span>
+            <span class="n">name</span> <span class="o">=</span> <span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span>
+            <span class="n">drift</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span>
+                <span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">slug_dir</span> <span class="o">/</span> <span class="s2">"preprocess"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">drift</span>
         <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">DatasetCheck</span><span class="p">(</span>
-                <span class="n">dataset_name</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">dataset_name</span><span class="p">,</span>
-                <span class="n">status</span><span class="o">=</span><span class="s2">"stale"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_stale</span> <span class="k">else</span> <span class="s2">"fresh"</span><span class="p">,</span>
-                <span class="n">drift</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">,</span>
+                <span class="n">dataset_name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">status</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">drift</span><span class="o">=</span><span class="n">drift</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">results</span></div>
@@ -381,21 +532,28 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_format_report</span><span class="p">(</span><span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DatasetCheck</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">stale</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"stale"</span><span class="p">]</span>
-    <span class="n">unmanifested</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"unmanifested"</span><span class="p">]</span>
+    <span class="n">unreadable</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"unreadable"</span><span class="p">]</span>
+    <span class="n">unmanifested</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"no_manifest"</span><span class="p">,</span> <span class="s2">"no_lmdb"</span><span class="p">)]</span>
     <span class="n">fresh</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"fresh"</span><span class="p">]</span>
     <span class="n">lines</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
         <span class="sa">f</span><span class="s2">"Built datasets: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span><span class="si">}</span><span class="s2">  "</span>
-        <span class="sa">f</span><span class="s2">"(fresh </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span><span class="si">}</span><span class="s2">, stale </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stale</span><span class="p">)</span><span class="si">}</span><span class="s2">, unmanifested </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmanifested</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"(fresh </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">fresh</span><span class="p">)</span><span class="si">}</span><span class="s2">, stale </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">stale</span><span class="p">)</span><span class="si">}</span><span class="s2">, unreadable </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unreadable</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"unmanifested </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">unmanifested</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
         <span class="s2">""</span><span class="p">,</span>
     <span class="p">]</span>
     <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">stale</span><span class="p">:</span>
         <span class="n">symbols</span> <span class="o">=</span> <span class="s2">", "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">check</span><span class="o">.</span><span class="n">drift</span><span class="p">))</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [STALE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; changed: </span><span class="si">{</span><span class="n">symbols</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">unreadable</span><span class="p">:</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  [UNREADABLE] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; rebuild; unreadable: "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
     <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">unmanifested</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">"  [no manifest] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">dataset_name</span><span class="si">}</span><span class="s2">  -&gt; written on next rebuild"</span>
         <span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">stale</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">unmanifested</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">stale</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">unreadable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">unmanifested</span><span class="p">:</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  All built datasets are fresh against the local schema."</span><span class="p">)</span>
     <span class="k">return</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
 
@@ -416,7 +574,7 @@
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">])</span>
     <span class="n">checks</span> <span class="o">=</span> <span class="n">check_all</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">load_default_surface</span><span class="p">())</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">_format_report</span><span class="p">(</span><span class="n">checks</span><span class="p">))</span>
-    <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="s2">"stale"</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"unreadable"</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
 
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>

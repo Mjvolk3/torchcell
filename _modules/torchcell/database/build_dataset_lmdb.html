@@ -143,27 +143,41 @@
 <span class="sd">A full knowledge-graph rebuild needs EVERY mapped dev store fresh under the current schema</span>
 <span class="sd">(the live-rebuild slurm script refuses otherwise), and a shared-class change such as</span>
 <span class="sd">``Publication`` makes all of them stale at once. ``--list-stale`` prints, one class per</span>
-<span class="sd">line, every mapped dataset whose store is stale, missing, or without a manifest (the same</span>
-<span class="sd">check the live rebuild's preflight runs; ``--include-private`` adds the private map), and</span>
+<span class="sd">line, every mapped dataset whose store is stale, missing, without a manifest, or</span>
+<span class="sd">UNREADABLE (the same :func:`torchcell.provenance.build_manifest.check_store` the live</span>
+<span class="sd">rebuild's preflight runs; ``--include-private`` adds the private map), and</span>
 <span class="sd">``--retire-existing`` moves an existing ``processed/`` and ``preprocess/`` aside as</span>
 <span class="sd">``&lt;name&gt;.superseded.&lt;timestamp&gt;`` siblings before the build instead of refusing, which is</span>
 <span class="sd">what ``database/slurm/scripts/gilahyper_build_dataset_lmdbs_array.slurm`` runs per array</span>
 <span class="sd">task over that list. Nothing is deleted: a superseded store is a rename.</span>
+
+<span class="sd">``--verify`` (what the array script passes, so a rebuilt store is verified in the same</span>
+<span class="sd">task that built it) runs the verification that covers the dataset and writes its</span>
+<span class="sd">``preprocess/verification_report.json``, which is where that dataset's own tests read it</span>
+<span class="sd">from: the 105-store array rebuild of 2026-10-09 left those reports absent, because a</span>
+<span class="sd">build writes a build manifest and nothing else. Resolution order is</span>
+<span class="sd">:func:`resolve_verifier`; a verification that raises or fails retires the build manifest</span>
+<span class="sd">(:func:`retire_manifest`), so an unverified store reads ``no_manifest`` rather than</span>
+<span class="sd">``fresh`` and is rebuilt before the graph is built from it.</span>
 <span class="sd">"""</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">argparse</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">importlib</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">os.path</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">osp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">dotenv</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_dotenv</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">ConfigDict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">StoreFreshness</span><span class="p">,</span> <span class="n">StoreState</span>
 
 
 <div class="viewcode-block" id="dataset_default_root">
@@ -192,9 +206,6 @@
 
 
 
-<span class="n">StoreState</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"fresh"</span><span class="p">,</span> <span class="s2">"stale"</span><span class="p">,</span> <span class="s2">"no_lmdb"</span><span class="p">,</span> <span class="s2">"no_manifest"</span><span class="p">]</span>
-
-
 <span class="k">class</span><span class="w"> </span><span class="nc">StoreStatus</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""One mapped dataset's dev store against the current schema surface."""</span>
 
@@ -204,49 +215,52 @@
     <span class="n">root</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">state</span><span class="p">:</span> <span class="n">StoreState</span>
     <span class="n">drift</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">reason</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># set only for ``unreadable``: "&lt;ExcClass&gt;: &lt;message&gt;"</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">needs_rebuild</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Everything but ``fresh`` is rebuilt before a full knowledge-graph build."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">state</span> <span class="o">!=</span> <span class="s2">"fresh"</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">describe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""``&lt;class&gt;: &lt;what is wrong&gt;``, the line a preflight refuses with."""</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset_class</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">freshness</span><span class="o">.</span><span class="n">describe</span><span class="p">()</span><span class="si">}</span><span class="s2">"</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">freshness</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StoreFreshness</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The verdict this status was built from, for its wording."""</span>
+        <span class="k">return</span> <span class="n">StoreFreshness</span><span class="p">(</span>
+            <span class="n">root</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">drift</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">drift</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">reason</span>
+        <span class="p">)</span>
+
 
 <span class="k">def</span><span class="w"> </span><span class="nf">mapped_store_status</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreStatus</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">"""The state of every mapped dataset's dev store, in adapter-map order.</span>
 
-<span class="sd">    The same check the live rebuild's preflight runs: an LMDB must exist, its build</span>
-<span class="sd">    manifest must exist, and every fingerprint in the manifest's closure must equal the</span>
-<span class="sd">    current schema surface's.</span>
+<span class="sd">    One call to :func:`torchcell.provenance.build_manifest.check_store` per mapped</span>
+<span class="sd">    dataset, which is also what the live rebuild's preflight and the</span>
+<span class="sd">    ``build_manifest`` CLI call: an LMDB must exist, its build manifest must exist,</span>
+<span class="sd">    every fingerprint in the manifest's closure must equal the current schema</span>
+<span class="sd">    surface's, and the store's first record must deserialize under the local schema</span>
+<span class="sd">    (issue #833 -- a record pickled under a class the schema no longer has is in no</span>
+<span class="sd">    closure, so fingerprints alone read it as fresh).</span>
 <span class="sd">    """</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_adapter_map</span>
-    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildManifest</span><span class="p">,</span> <span class="n">check_manifest</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.build_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="n">check_store</span>
     <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.provenance.schema_deps</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_default_surface</span>
 
     <span class="n">surface</span> <span class="o">=</span> <span class="n">load_default_surface</span><span class="p">()</span>
     <span class="n">statuses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">StoreStatus</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="o">=</span><span class="n">include_private</span><span class="p">):</span>
         <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="bp">cls</span><span class="p">))</span>
-        <span class="n">preprocess_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">)</span>
-        <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="s2">"build_manifest.json"</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"processed"</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">)):</span>
-            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">StoreStatus</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_lmdb"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">):</span>
-            <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="n">StoreStatus</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="s2">"no_manifest"</span><span class="p">)</span>
-            <span class="p">)</span>
-            <span class="k">continue</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span> <span class="k">as</span> <span class="n">handle</span><span class="p">:</span>
-            <span class="n">manifest</span> <span class="o">=</span> <span class="n">BuildManifest</span><span class="o">.</span><span class="n">model_validate_json</span><span class="p">(</span><span class="n">handle</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">check_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">surface</span><span class="p">,</span> <span class="n">preprocess_dir</span><span class="p">)</span>
+        <span class="n">freshness</span> <span class="o">=</span> <span class="n">check_store</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">surface</span><span class="p">)</span>
         <span class="n">statuses</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
             <span class="n">StoreStatus</span><span class="p">(</span>
                 <span class="n">dataset_class</span><span class="o">=</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
                 <span class="n">root</span><span class="o">=</span><span class="n">root</span><span class="p">,</span>
-                <span class="n">state</span><span class="o">=</span><span class="s2">"stale"</span> <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">is_stale</span> <span class="k">else</span> <span class="s2">"fresh"</span><span class="p">,</span>
-                <span class="n">drift</span><span class="o">=</span><span class="nb">sorted</span><span class="p">({</span><span class="n">d</span><span class="o">.</span><span class="n">symbol</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">drift</span><span class="p">}),</span>
+                <span class="n">state</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">drift</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">drift</span><span class="p">,</span>
+                <span class="n">reason</span><span class="o">=</span><span class="n">freshness</span><span class="o">.</span><span class="n">reason</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">statuses</span>
@@ -270,6 +284,168 @@
         <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
         <span class="n">moved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dest</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">moved</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_slug</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The store's directory name, e.g. ``gene_interaction_babu2014``."""</span>
+    <span class="k">return</span> <span class="n">osp</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">dataset_default_root</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_required_parameters</span><span class="p">(</span><span class="n">function</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The names of ``function``'s parameters that have no default."""</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">name</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">parameter</span> <span class="ow">in</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">function</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">parameter</span><span class="o">.</span><span class="n">default</span> <span class="ow">is</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">empty</span>
+        <span class="ow">and</span> <span class="n">parameter</span><span class="o">.</span><span class="n">kind</span>
+        <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">POSITIONAL_ONLY</span><span class="p">,</span>
+            <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">POSITIONAL_OR_KEYWORD</span><span class="p">,</span>
+            <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">KEYWORD_ONLY</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reports_of</span><span class="p">(</span><span class="n">returned</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Every ``VerificationReport`` a verification entry point returned.</span>
+
+<span class="sd">    The entry points return one report, a tuple of them, or a dict of them keyed by</span>
+<span class="sd">    arm, so the caller is given a flat list and judges ``passed`` over all of it.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">VerificationReport</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returned</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">returned</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">returned</span><span class="p">,</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">returned</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="n">returned</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">candidates</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">VerificationReport</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">resolve_verifier</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]]]:</span>
+<span class="w">    </span><span class="sd">"""The verification entry point that covers ONE dataset, with the name to print.</span>
+
+<span class="sd">    Resolution order, first match wins; ``LookupError`` when none matches:</span>
+
+<span class="sd">    1. a bioproduction registry in :mod:`torchcell.verification.runners` holds the</span>
+<span class="sd">       dataset's name (:func:`~torchcell.verification.runners.verify_bacterial_dataset`),</span>
+<span class="sd">       which runs the loader's own gate AND the family's L4 containment;</span>
+<span class="sd">    2. the loader module's ``run_verification`` with no required parameter, called with</span>
+<span class="sd">       the data root (it writes its own report, as ``babu2014`` does);</span>
+<span class="sd">    3. the loader module's ``verify_build`` whose only required parameter is</span>
+<span class="sd">       ``dataset_root``, called with the store root and the data root; its report is</span>
+<span class="sd">       written here, since in a family run the runner writes it.</span>
+
+<span class="sd">    A module whose entry point needs an argument this CLI cannot supply (a ``family``,</span>
+<span class="sd">    an ``arm``, a dataset ``name`` -- the modules that build several stores) does NOT</span>
+<span class="sd">    match: those stores are either held by a registry, which is rule 1, or verified by</span>
+<span class="sd">    their family runner, which reads every store in the family and is not a per-dataset</span>
+<span class="sd">    build step.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification</span><span class="w"> </span><span class="kn">import</span> <span class="n">runners</span>
+
+    <span class="n">slug</span> <span class="o">=</span> <span class="n">dataset_slug</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">slug</span> <span class="ow">in</span> <span class="n">runners</span><span class="o">.</span><span class="n">bacterial_registry_names</span><span class="p">():</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"runners.verify_bacterial_dataset(</span><span class="si">{</span><span class="n">slug</span><span class="si">!r}</span><span class="s2">)"</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">data_root</span><span class="p">:</span> <span class="p">[</span><span class="n">runners</span><span class="o">.</span><span class="n">verify_bacterial_dataset</span><span class="p">(</span><span class="n">slug</span><span class="p">,</span> <span class="n">data_root</span><span class="p">)],</span>
+        <span class="p">)</span>
+    <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+    <span class="n">run_verification</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"run_verification"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">run_verification</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_required_parameters</span><span class="p">(</span><span class="n">run_verification</span><span class="p">)</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.run_verification"</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">data_root</span><span class="p">:</span> <span class="n">_reports_of</span><span class="p">(</span><span class="n">run_verification</span><span class="p">(</span><span class="n">data_root</span><span class="p">)),</span>
+        <span class="p">)</span>
+    <span class="n">verify_build</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">"verify_build"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">verify_build</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">_required_parameters</span><span class="p">(</span><span class="n">verify_build</span><span class="p">)</span> <span class="o">==</span> <span class="p">[</span>
+        <span class="s2">"dataset_root"</span>
+    <span class="p">]:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">))</span>
+            <span class="n">reports</span> <span class="o">=</span> <span class="n">_reports_of</span><span class="p">(</span><span class="n">verify_build</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">data_root</span><span class="o">=</span><span class="n">data_root</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">:</span>
+                <span class="n">runners</span><span class="o">.</span><span class="n">_write_report</span><span class="p">(</span><span class="n">report</span><span class="p">,</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">reports</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">module</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.verify_build"</span><span class="p">,</span> <span class="n">run</span>
+    <span class="k">raise</span> <span class="ne">LookupError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2"> declares no "</span>
+        <span class="s2">"run_verification()/verify_build() this CLI can call and no bioproduction "</span>
+        <span class="s2">"registry holds it; its family runner in torchcell.verification.runners is "</span>
+        <span class="s2">"what covers it"</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">retire_manifest</span><span class="p">(</span><span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">stamp</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Rename ``preprocess/build_manifest.json`` aside so the store stops reading fresh.</span>
+
+<span class="sd">    A rename to ``build_manifest.json.unverified.&lt;stamp&gt;``, never a delete, so the</span>
+<span class="sd">    manifest a failed verification rejected is still on disk to read. With no manifest</span>
+<span class="sd">    the store reads ``no_manifest``, which ``--list-stale`` names and the live</span>
+<span class="sd">    rebuild's preflight refuses. ``None`` when there was no manifest to retire.</span>
+<span class="sd">    """</span>
+    <span class="n">stamp</span> <span class="o">=</span> <span class="n">stamp</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">"%Y%m</span><span class="si">%d</span><span class="s2">-%H%M%S"</span><span class="p">)</span>
+    <span class="n">src</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">"preprocess"</span><span class="p">,</span> <span class="s2">"build_manifest.json"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">src</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">dest</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">src</span><span class="si">}</span><span class="s2">.unverified.</span><span class="si">{</span><span class="n">stamp</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="n">osp</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">dest</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">FileExistsError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dest</span><span class="si">}</span><span class="s2"> already exists; refusing to retire over it"</span><span class="p">)</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dest</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dest</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">,</span> <span class="n">data_root</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Run the verification covering ``dataset_class``; True when its store stays fresh.</span>
+
+<span class="sd">    What ``--verify`` does after a build. A dataset whose verification raises OR whose</span>
+<span class="sd">    report does not pass has its build manifest retired (:func:`retire_manifest`), so</span>
+<span class="sd">    an unverified store cannot read fresh to the knowledge-graph preflight -- the</span>
+<span class="sd">    builder wrote the records, and nothing else re-checks them before they are</span>
+<span class="sd">    serialized into the graph. A dataset with no per-dataset entry point is reported as</span>
+<span class="sd">    such and keeps its manifest: its family runner is what covers it, and that runner</span>
+<span class="sd">    reads every store in the family.</span>
+
+<span class="sd">    ``except Exception`` is the point of the flag: a raising verifier is turned into a</span>
+<span class="sd">    retired manifest and a non-zero exit, not into a silent pass.</span>
+<span class="sd">    """</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">dataset_default_root</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">))</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">kind</span><span class="p">,</span> <span class="n">run</span> <span class="o">=</span> <span class="n">resolve_verifier</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">LookupError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"NO PER-DATASET VERIFIER -- </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">True</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verifying </span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">refuse</span><span class="p">(</span><span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Report ``message``, retire the manifest, and answer False."""</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ERROR: </span><span class="si">{</span><span class="n">message</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"ERROR: build manifest retired to </span><span class="si">{</span><span class="n">retire_manifest</span><span class="p">(</span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">reports</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">data_root</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>  <span class="c1"># reported and acted on, never swallowed</span>
+        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"verification of </span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> raised "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">error</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">error</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="n">reports</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">summary</span><span class="p">())</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">reports</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2"> returned no verification report for </span><span class="si">{</span><span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">failed</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">dataset_name</span> <span class="k">for</span> <span class="n">report</span> <span class="ow">in</span> <span class="n">reports</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">passed</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">failed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">refuse</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verification FAILED for </span><span class="si">{</span><span class="n">failed</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"verification PASSED: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">reports</span><span class="p">)</span><span class="si">}</span><span class="s2"> report(s) by </span><span class="si">{</span><span class="n">kind</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="build_dataset">
@@ -345,14 +521,25 @@
         <span class="n">help</span><span class="o">=</span><span class="s2">"move an existing processed/ and preprocess/ aside as "</span>
         <span class="s2">"*.superseded.&lt;timestamp&gt; before building instead of refusing"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--verify"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"after the build, run the verification that covers this dataset and "</span>
+        <span class="s2">"write its report; a verification that raises or fails retires the build "</span>
+        <span class="s2">"manifest, so the store does not read fresh"</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">args</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">argv</span><span class="p">)</span>
 
     <span class="n">load_dotenv</span><span class="p">()</span>
     <span class="n">data_root</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">data_root</span> <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DATA_ROOT"</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">list_stale</span><span class="p">:</span>
+        <span class="c1"># stdout is the class list an array job reads line by line; the reason a store</span>
+        <span class="c1"># is unreadable goes to stderr so it is visible without corrupting that list.</span>
         <span class="k">for</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">mapped_store_status</span><span class="p">(</span><span class="n">data_root</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">):</span>
             <span class="k">if</span> <span class="n">status</span><span class="o">.</span><span class="n">needs_rebuild</span><span class="p">:</span>
                 <span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">status</span><span class="o">.</span><span class="n">state</span> <span class="o">==</span> <span class="s2">"unreadable"</span><span class="p">:</span>
+                <span class="nb">print</span><span class="p">(</span><span class="n">status</span><span class="o">.</span><span class="n">describe</span><span class="p">(),</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">parser</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">"--dataset is required unless --list-stale is given"</span><span class="p">)</span>
@@ -375,6 +562,8 @@
         <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ERROR: build manifest missing at </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">file</span><span class="o">=</span><span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="p">)</span>
         <span class="k">return</span> <span class="mi">1</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"build manifest: </span><span class="si">{</span><span class="n">manifest</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verify</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">verify_after_build</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">data_root</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="mi">0</span>
 
 

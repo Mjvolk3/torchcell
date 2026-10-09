@@ -2855,6 +2855,29 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
                 f"(all of {require_head_targets})"
             )
 
+    # ---- train_fraction: the data axis of a scaling sweep ----
+    # `+data_module.train_fraction=0.25` keeps that fraction of the TRAINING rows and leaves
+    # validation and test untouched, so every point of the sweep is scored on the same
+    # held-out strains. The subsets are NESTED: one permutation of the training rows, seeded
+    # by the split seed, and each fraction keeps a prefix of it, so the 1/4 set contains the
+    # 1/16 set. Applied after every filter above, so the fraction is of the rows the run
+    # would otherwise train on (the both-label rows, not the whole store), and before
+    # materialization, so only the kept rows are fetched. The unit is the record, which on
+    # these stores is one strain, the unit that leaks.
+    train_fraction = float(cfg.data_module.get("train_fraction", 1.0))
+    if not 0.0 < train_fraction <= 1.0:
+        raise ValueError(f"data_module.train_fraction must be in (0, 1], got {train_fraction}")
+    if train_fraction < 1.0:
+        sub = data_module.train_dataset
+        before = len(sub.indices)
+        order = np.random.default_rng(split_seed).permutation(sorted(sub.indices))
+        keep = max(1, int(round(train_fraction * before)))
+        sub.indices = sorted(int(i) for i in order[:keep])
+        print(
+            f"[train_fraction] train_dataset: {before} -> {len(sub.indices)} rows "
+            f"(fraction {train_fraction}, permutation seeded by split_seed={split_seed})"
+        )
+
     # `+data_module.materialize=true`: fetch every sample of every split once, now, and
     # train from memory (see MaterializedSplit). Runs after every index filter above so
     # the materialized rows are exactly the rows the run would have read.

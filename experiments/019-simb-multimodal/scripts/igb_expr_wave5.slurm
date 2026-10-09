@@ -123,6 +123,8 @@ STAGE="${W5_STAGE:?set W5_STAGE=canary|h2|probe|long|wave6 via --export=ALL,W5_S
 # SAME index_seed_0.json and these vary weight initialization only. That also removes the old
 # constraint that seeds be drawn from {0,1,2,42}: concurrent tasks can no longer race to
 # build a split cache, because there is only ever one split.
+# Per-run override sets for the scaling sweeps, indexed like JOBS; empty for other stages.
+SWEEP_OV=()
 case "$STAGE" in
   # H2 -- does mixing genes AFTER the perturbation tell other genes how to express? The
   # encoder runs on the wildtype graph at batch 1, so H_genes is strain-independent and
@@ -518,6 +520,39 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=3; STAGE_CONFIG=cgt_expr_v21_small
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_expr_v22" ;;
+  # THE SCALING SWEEPS (2026-10-09, notes-tex/modeling/scaling-laws section 6): the data
+  # axis and the parameter axis of the expression head on the both-label store, on the
+  # fast recipe with the mask schedule on (the one v21 arm with zero collapses in twelve
+  # seeds) at batch 128 and the unscaled rate. One run per card (RTX6000, 24 GB; batch 128
+  # at width 90 took 12.2 GB on an A40), one task per run, split seeds 0 to 2 as the
+  # replicates. Both sweeps share the 1,200-epoch budget, so the small data fractions
+  # take fewer optimizer steps (one step per epoch at 1/16); the per-epoch validation
+  # curve is what the readout reads, and the step mismatch is stated in the document.
+  #   scale_d  train_fraction 1, 1/2, 1/4, 1/8, 1/16 of the 1,103 both-label training rows,
+  #            nested (train_cgt_multitask.py `train_fraction`); validation and test untouched.
+  #   scale_n  hidden width 45, 90, 180, 360 at six layers (nine heads divide all four),
+  #            learning rate scaled as 1/width from 3e-4 at 90 (hypothesis, not mu-P: the
+  #            width-180 arm of v22 collapsed at the width-90 rate). Width 360 is last so an
+  #            out-of-memory there costs the sweep nothing else.
+  #   sbatch -J 019-scale1w1-d -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=2-00:00:00 --array=0-14%3 --export=ALL,W5_STAGE=scale_d,... igb_expr_wave5.slurm
+  #   sbatch -J 019-scale1w1-n ... --array=0-11%3 --export=ALL,W5_STAGE=scale_n,...
+  scale_d) JOBS=(); SWEEP_OV=()
+          for f in 1 0.5 0.25 0.125 0.0625; do for s in 0 1 2; do
+            JOBS+=("S_mask_s${s}:0")
+            SWEEP_OV+=("+data_module.train_fraction=${f} wandb.tags=[scaling,D_frac${f},cabbi,split${s}]")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v21_small
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_scaling" ;;
+  scale_n) JOBS=(); SWEEP_OV=()
+          for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
+            JOBS+=("S_mask_s${s}:0")
+            SWEEP_OV+=("model.hidden_channels=${wl%%:*} regression_task.optimizer.lr=${wl##*:} wandb.tags=[scaling,N_w${wl%%:*},cabbi,split${s}]")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v21_small
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_scaling" ;;
   conditioned) JOBS=()
           for s in 0 1 2 3 4 5 6 7 8 9 10 11; do
             JOBS+=("C_expr_s${s}:0" "C_exprperm_s${s}:0" "C_prot_s${s}:0" "C_protperm_s${s}:0")
@@ -724,6 +759,11 @@ for k in $(seq 0 $((RUNS_PER_GPU - 1))); do
   # list comes earlier on the command line, so this one wins.
   if [[ "$STAGE" == "v22_b128_seeds" ]]; then
     RUN_OV=" wandb.tags=[v22,F_b128lr1,igb,split${ARM##*_s}]"
+  fi
+  # The scaling sweeps carry one override set per run (fraction, or width and rate),
+  # indexed like JOBS.
+  if [[ -n "${SWEEP_OV[$IDX]:-}" ]]; then
+    RUN_OV="$RUN_OV ${SWEEP_OV[$IDX]}"
   fi
   if [[ "$STAGE" == "resume_many" ]]; then
     RUN_OV=" trainer.resume_ckpt_path=${RESUME_CKPTS[$IDX]}"

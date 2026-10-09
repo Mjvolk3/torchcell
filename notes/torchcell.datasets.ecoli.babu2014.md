@@ -258,4 +258,10 @@ root, and the canonical store needs ONE rebuild once both #792 and #793 are on `
 (each change alone already moves the Babu schema closure, so a rebuild is due either way,
 and the KG 4.0 full build remakes it regardless).
 
+`build_manifest` on the shared tree reports `gene_interaction_babu2014` STALE on four
+symbols, of which exactly one is this branch's (`GeneInteractionPhenotype`); the other
+three (`BacterialMarkedAllelePerturbation`, whose current fingerprint is `None` because
+this branch's closure has no such symbol, plus `EnvironmentPerturbationType` and
+`GenePerturbationType`) are the parallel branches whose builds are in that tree.
+
 Related: [[torchcell.datasets.ecoli.butland2008]], [[torchcell.datamodels.schema]].

@@ -300,4 +300,7 @@ parallel #792 branch's build (41,988 records with the marked-allele leaf), and a
 rebuild reads that store for its partition proof, so a canonical Butland rebuild belongs
 after both branches are on `main`. The KG 4.0 full build remakes both regardless.
 
+`build_manifest` on the shared tree reports `gene_interaction_butland2008` STALE on
+exactly one symbol, `GeneInteractionPhenotype`, which is this change.
+
 Related: [[torchcell.datasets.ecoli.babu2014]], [[torchcell.datamodels.schema]].

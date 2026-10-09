@@ -369,3 +369,61 @@ datasets that run reports).
    strains in TEAM-2777 and the stacked combinations) is a real genotype set with no
    released phenotype. If the authors ever release the figure source data, those strains
    plus the titers become a second loader; until then they are not records.
+
+## 2026.10.09 - The #731 leaves do not unblock this row, and the measurement that says so
+
+Issue #731 landed `BacterialSequenceVariantPerturbation`,
+`BacterialSiteVariantPerturbation` and `BacterialSpanDeletionPerturbation`, and this
+loader was on the list of rows they were expected to extend. It does not extend, and the
+reason is the release rather than the schema: **the per-variant table is not in the
+mirror and cannot be scripted into it.**
+
+What this paper DOES state about its evolved producers, verbatim from
+`paper.md` (sha256 `d14536948af5ba67d52362ae71fb804a2fac03a1f7ab152817a01df3aa92d080`):
+
+> "WGS identified 74 additional nonsynonymous single-nucleotide polymorphisms (SNPs) of
+> unknown function in both improved producer strains, and a 26.1-kb deletion surrounding
+> the fleQ/PP_4373 locus containing 24 flagellarelated genes. A comprehensive tabulation
+> of all polymorphisms is described in data S1-5."
+
+And Supplementary Table 3's footnote, verbatim from `si/si1.md` (sha256
+`2afa42609d20500f80d5edbddf0bb41b88b4e7f1ea0abefb40fa4b969e4e5e8e`):
+
+> "^candidate identified from gRNA selection. \*candidate identified from literature. #
+> Spontaneous polymorphisms characterized by WGS are described in Supplementary Data
+> 1-5."
+
+So the aggregate is sourceable (74 nonsynonymous SNPs, one 26.1 kb deletion at
+`fleQ`/`PP_4373` covering 24 flagellar genes) and **not one per-SNP position, reference
+base, alternate base or frequency is**. Every leaf field a call needs is in Dryad
+`data S1-5`, which this loader's `manifest.json` already declares NOT deposited with a
+manual recipe, because `datadryad.org` serves an Anubis JavaScript proof-of-work
+challenge (measured 2026-10-07: `/downloads/file_stream/<id>` returns the challenge page
+with HTTP 200 and `/api/v2/files/<id>/download` returns HTTP 401). The resequencing reads
+are BioProject `PRJNA1226229`, and no loader consumes reads.
+
+Two further blockages that survive the leaves even if the Dryad bytes were deposited:
+
+- **No per-strain phenotype exists for the resequenced isolates.** The GC-FID isoprenol
+  titers are figure-only; the accounting already records that "this paper releases no
+  per-strain isoprenol titer anywhere, only plotted figure panels". A genotype with no
+  released measurement is not a record.
+- **A strain-name disagreement in the data-availability statement.** It names BioSample
+  `SAMN46924003` as strain `TEAM-3175`, and `TEAM-3175` occurs twice in `paper.md` (both
+  in that one sentence) and zero times in the SI, while `TEAM-3174` occurs 12 times in
+  `paper.md`, 8 times in the SI, and is the strain name in Supplementary Table 4.
+  *Hypothesis (untested):* the data-availability `TEAM-3175` is a typo for `TEAM-3174`.
+  This needs the BioSample record itself and must not be resolved by preference.
+
+The record count is therefore unchanged at 58, and the correct next step for this row is
+the manual-browser Dryad retrieval already written into `si_expected`, not a schema
+change.
+
+**One gap of this row that #731 did NOT close.** `GeneAdditionPerturbation.source_organism`
+is a required `str`, so the five integrated pathway genes whose source organism this
+paper never states carry the sentinel `"unreported"` (`SOURCE_ORGANISM_UNREPORTED`). A
+sentinel standing in for an unknown is what the strain-background contract forbids
+elsewhere. The fix is the same shape as the variant leaves and is additive: make
+`source_organism` optional so a `ProvenanceGap` can cover it, then backfill those five
+records. It is recorded on #731 and left open there deliberately, because it is an
+addition-axis gap rather than a variant-representation one.

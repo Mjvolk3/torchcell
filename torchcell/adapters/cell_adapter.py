@@ -36,8 +36,8 @@ from torchcell.datamodels.interned_constant import split_experiment_dump
 from torchcell.datamodels.schema import (
     BacterialCrisprInterferencePerturbation,
     BacterialDeletionPerturbation,
-    BacterialIntergenicVariantPerturbation,
     BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
     HeterologousPathwayPerturbation,
     PhagePerturbation,
@@ -88,7 +88,7 @@ instead of ``perturbation (chunked)``.
 """
 BACTERIAL_VARIANT_PERTURBATION_LEAVES: tuple[type, ...] = (
     BacterialSequenceVariantPerturbation,
-    BacterialIntergenicVariantPerturbation,
+    BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
 )
 """The leaves written as ``bacterial sequence variant perturbation`` nodes (#731).

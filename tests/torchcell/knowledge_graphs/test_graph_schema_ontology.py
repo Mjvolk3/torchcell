@@ -173,4 +173,5 @@ def test_widened_served_edges_keep_their_own_ancestry(
     } == {
         "perturbation.perturbation member of",
         "bacterial perturbation.perturbation member of",
+        "bacterial sequence variant perturbation.perturbation member of",
     }

@@ -532,3 +532,111 @@ retrieval did not re-run. `PLAIN_UA_HOSTS = {"zenodo.org"}` now gets
 boundary (so `sandbox.zenodo.org` is covered and `notzenodo.org` is not). The browser
 string stays the default, because the publisher CDNs the other retrievers use were
 chosen against it.
+
+## 2026.10.09 - Called bacterial variants: three leaves and one composed call (#731)
+
+An evolved clone's genotype is its parent plus the variants a caller found in its
+resequencing, and before this step no leaf could hold one of those calls. Two landed
+loaders had already measured the blockage on their own bytes and counted every refused
+row rather than forcing it into a class that did not fit: de Siqueira 2025 (173 Geneious
+calls over 5 sequenced clones) and Lim 2025 (159 breseq rows over 49 clone columns).
+
+### What the releases actually carry, measured
+
+| release | rows | in a locus | no locus | spanning loci | position end | frequency |
+|---|---|---|---|---|---|---|
+| de Siqueira Data Set S2 (`aem.02123-24-s0002.xlsx`, sha256 `7ba609170ec7233e09e0ffbbfdb59a190353180ad48b50c45ab60850cd713633`) | 173 | 58 GenBank tag + 10 RefSeq only | 105 | 0 | released (`Maximum`) | 157 bare fractions, 16 percent RANGES |
+| Lim `Fig 2B_Mutation List` (`si2.xlsx`, sha256 `a3cfd6014cc611b206af9c7e7c8770c23189ae96986d23981da0b11236721612`) | 159 | 123 | 17 intergenic | 19 multi-locus (25 counting single-locus DEL rows with an empty `Details`) | NOT released, only a start plus a length | 431 cells `1`, 12 cells `0.9` |
+
+Four further shapes the first design would have missed, each measured:
+
+- **A zero-length insertion interval.** 21 of de Siqueira's 173 rows are insertions
+  released with `Maximum == Minimum - 1` and `Length` 0, which is the interval BETWEEN
+  two reference bases. The coordinates are stored as released; `span_length` is then 0.
+- **The frequency column is not one scale.** 157 de Siqueira cells are fractions in
+  (0, 1] and 16 are percent RANGES (`95.1% -> 97.6%`). No float holds a range, so those
+  calls carry the verbatim cell with a null numeric frequency, and the scale is a stated
+  field rather than inferred from whether a value exceeds 1.
+- **A RefSeq-only locus does not resolve.** The 10 RefSeq-only de Siqueira calls name
+  `PP_RS21780` (9 rows) and `PP_RS19075` (1), and `resolve_gene_name` on the pinned
+  KT2440 GenBank assembly returns `retired`, "not found in GCA_000007565.2_ASM756v2;
+  retained as given", for both. So "no locus tag of the pinned assembly holds this call"
+  has TWO reasons, not one.
+- **One side of a call can legitimately be blank.** One de Siqueira insertion row has an
+  empty `Sequence` cell, because an insertion replaces no reference bases.
+
+### The classes
+
+`BacterialVariantCall(ProvenanceGapMixin)` is COMPOSED onto all three leaves, so what a
+call is is defined once and the leaves differ only in where it sits. It carries the
+replicon verbatim, the 1-based end-inclusive interval, the released change and type
+cells verbatim, the annotation / amino-acid / codon cells, the caller, `call_mode`
+(`clone` vs `population`), and a frequency that is nullable AND gappable with its
+`frequency_basis` required whenever a number is present.
+
+| class | parent | `perturbation_type` | state | keyed on |
+|---|---|---|---|---|
+| `BacterialSequenceVariantPerturbation` | `BacterialVariantPerturbation` (abstract, AXIS 3) | `bacterial_sequence_variant` | n/a | a locus tag |
+| `BacterialSiteVariantPerturbation` | the same | `bacterial_site_variant` | n/a | the derived site id `<replicon>:<position>` |
+| `BacterialSpanDeletionPerturbation` | `BacterialDeletionPerturbation` (AXIS 1) | `bacterial_span_deletion` | `absent` | a locus tag, one per covered locus |
+
+No new Sequence Ontology term: `BACTERIAL_VARIANT_TYPE_SO` maps the four variant kinds
+onto pairs the schema already pins (SNV, insertion, deletion, `delins`). The leaves keep
+the generic `SO:0001060 sequence_variant` as their class-default `mechanism_so_id`, true
+of every call whatever its kind, and expose the specific pair as a property, so the
+mechanism field cannot desync from `variant_type`.
+
+### Six decisions worth recording
+
+- **A site id, not a borrowed neighbor.** An intergenic call is keyed on
+  `<replicon>:<position>`, DERIVED from the call and checked against it by a model
+  validator, and the leaf REFUSES a locus tag in that field. Keying it to a flanking
+  gene would assert the variant is in that gene, which is the inference both loaders
+  refused to make. `GeneAdditionPerturbation` already establishes the shape: a
+  perturbation whose identifier is legitimately not a host locus tag.
+- **A site id is not a gene, so it is not in the gene set.**
+  `ExperimentDataset.extract_systematic_gene_names` leaves a `bacterial_site_variant`
+  identifier out and collects its `flanking_systematic_gene_names` instead. Without this
+  a site id becomes a gene node for a place that is not a gene; measured on the de
+  Siqueira proteome store, the gene set went 71 -> 30 and the loader's own L4 gene
+  containment went from 41 identifiers outside the KT2440 universe to 0.
+- **A partial deletion of a locus is a sequence variant, not an absence.** Lim's
+  `PP_2675` row reads `coding (4-459/462 nt)`: the locus is still there. `state="absent"`
+  would assert a consequence the release did not.
+- **A span deletion is one perturbation PER COVERED LOCUS**, not one per event, because a
+  gene-keyed consumer must see all 53 genes of `PP_3024-PP_5558` as absent and not only
+  an endpoint. The event stays one query through `span_designation`, which every locus of
+  one deletion carries identically, the way `pathway_name` groups a pathway's genes.
+- **The frequency is part of the call, so the same change at two frequencies is two
+  perturbation identities.** Deliberate: an isolate that is 90% mutant at a site is not
+  genotypically the same as one that is 100% mutant. A convergence query joins on
+  `systematic_gene_name` and `position_start`, never on the node id.
+- **Which reference the call is against is on the call.** `reference_sequence` is
+  required, because a position means nothing without it and because it is the only thing
+  that exposes a call made against a genome that is not the record's own host. Niu 2019
+  aligned a BW25113 derivative to MG1655, so its calls mix evolution-acquired mutations
+  with strain-background differences; the disagreement between this field and the
+  record's `AssemblyReferenceGenome` is what a consumer can see it by.
+
+### The graph side: a sibling of `bacterial perturbation`
+
+`bacterial sequence variant perturbation`, `is_a: genotype`, serves all three leaves.
+Its own class rather than rows of `bacterial perturbation`, for the reason
+`phage perturbation` is its own class: the replicon, the interval, the variant kind, the
+frequency and the call mode are what a variant record is asked about, and they would be
+null on all five of the other bacterial leaves, which is exactly the argument that keeps
+`strain_id` off that class. A SIBLING, so no served `MATCH (:BacterialPerturbation)`
+changes. `BACTERIAL_PERTURBATION_LEAVES` and `BACTERIAL_VARIANT_PERTURBATION_LEAVES`
+PARTITION the namespaced leaves and the plain method excludes the variant tuple
+explicitly: `BacterialSpanDeletionPerturbation` IS a `BacterialDeletionPerturbation`, so
+an isinstance test alone would write it under both labels. The served
+`perturbation member of` edge gains the class as a third source and the adapter's edge
+methods are untouched, because the node id is the same sha256 of the leaf's
+`model_dump` they already address.
+
+### Schema-impact verdict
+
+`scripts/schema_impact_check.py --base origin/main`: 13 changed symbols, **80 impacted
+datasets, 0 breaking**, exit 0. Every dataset whose closure reaches `Genotype` is marked
+stale because `GenePerturbationType` gained three members; nothing is breaking, and the
+KG 4.0 full rebuild that follows this wave covers the rebuild.

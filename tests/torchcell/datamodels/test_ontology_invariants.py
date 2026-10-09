@@ -30,8 +30,8 @@ from torchcell.datamodels.schema import (
     ArtifactRef,
     BacterialCrisprInterferencePerturbation,
     BacterialDeletionPerturbation,
-    BacterialIntergenicVariantPerturbation,
     BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
     BacterialVariantCall,
     BacterialVariantPerturbation,
@@ -73,6 +73,7 @@ from torchcell.datamodels.schema import (
     TsAllelePerturbation,
     VariantCallMode,
     VariantFrequencyBasis,
+    VariantSiteKind,
 )
 
 SO_ID_RE = re.compile(r"^SO:\d{7}$")
@@ -325,11 +326,12 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         gene_namespace="pputida_kt2440_locus_tag",
         call=_SNV_CALL,
     ),
-    BacterialIntergenicVariantPerturbation: dict(
+    BacterialSiteVariantPerturbation: dict(
         systematic_gene_name="AE015451:4586057",
         perturbed_gene_name="PP_4061, PP_4063",
         gene_namespace="pputida_kt2440_locus_tag",
         call=_INTERGENIC_CALL,
+        site_kind=VariantSiteKind.intergenic,
         flanking_systematic_gene_names=("PP_4061", "PP_4063"),
         flanking_gene_statement="PP_4061, PP_4063",
     ),

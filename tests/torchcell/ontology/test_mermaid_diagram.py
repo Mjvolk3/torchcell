@@ -477,8 +477,10 @@ def test_real_schema_diagram(md: ModuleType) -> None:
             n_data_lines += (1 if isinstance(src, str) else len(src)) * (
                 1 if isinstance(tgt, str) else len(tgt)
             )
-    assert (len(gen.nodes), n_edges, n_data_lines) == (33, 13, 51)
-    assert len(lines) == 147
+    # 34 nodes and 52 data lines since `bacterial sequence variant perturbation`
+    # joined (issue #731): one node, and one more source on `perturbation member of`.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (34, 13, 52)
+    assert len(lines) == 150
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

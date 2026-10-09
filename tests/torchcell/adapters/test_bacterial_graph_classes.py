@@ -169,13 +169,12 @@ def _variant_leaves() -> list[Any]:
             gene_namespace=KT2440,
             call=_call(),
         ),
-        s.BacterialIntergenicVariantPerturbation(
-            systematic_gene_name=s.BacterialIntergenicVariantPerturbation.site_id(
-                intergenic
-            ),
+        s.BacterialSiteVariantPerturbation(
+            systematic_gene_name=s.BacterialSiteVariantPerturbation.site_id(intergenic),
             perturbed_gene_name="PP_4061, PP_4063",
             gene_namespace=KT2440,
             call=intergenic,
+            site_kind=s.VariantSiteKind.intergenic,
             flanking_systematic_gene_names=("PP_4061", "PP_4063"),
             flanking_gene_statement="PP_4061, PP_4063",
         ),
@@ -520,16 +519,17 @@ def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
     # Genotype sorts by systematic_gene_name, so the site id sorts before the PP_ tags
     # and PP_3415 before PP_4062.
     assert [n.get_preferred_id() for n in nodes] == [
-        "bacterial_intergenic_variant",
+        "bacterial_site_variant",
         "bacterial_sequence_variant",
         "bacterial_span_deletion",
     ]
     assert nodes[0].get_properties() == {
         "systematic_gene_name": "AE015451:4586057",
         "perturbed_gene_name": "PP_4061, PP_4063",
-        "perturbation_type": "bacterial_intergenic_variant",
+        "perturbation_type": "bacterial_site_variant",
         "description": (
-            "Called sequence variant between bacterial loci, keyed on its genomic site"
+            "Called sequence variant keyed on its genomic site, because no locus tag "
+            "of the pinned assembly holds it"
         ),
         "gene_namespace": KT2440,
         "reference_sequence": "AE015451",
@@ -539,7 +539,7 @@ def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
         "variant_frequency": 1.0,
         "call_mode": "clone",
         "id": _sha(leaves[0]),
-        "preferred_id": "bacterial_intergenic_variant",
+        "preferred_id": "bacterial_site_variant",
     }
     assert nodes[1].get_properties()["systematic_gene_name"] == "PP_3415"
     assert nodes[1].get_properties()["variant_type"] == "snv"

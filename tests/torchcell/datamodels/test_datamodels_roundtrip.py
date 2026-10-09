@@ -241,11 +241,12 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "gene_namespace": "pputida_kt2440_locus_tag",
         "call": _VARIANT_CALL_EXAMPLE,
     },
-    "torchcell.datamodels.schema.BacterialIntergenicVariantPerturbation": {
+    "torchcell.datamodels.schema.BacterialSiteVariantPerturbation": {
         "systematic_gene_name": "AE015451:4586057",
         "perturbed_gene_name": "PP_4061, PP_4063",
         "gene_namespace": "pputida_kt2440_locus_tag",
         "call": _INTERGENIC_CALL_EXAMPLE,
+        "site_kind": "intergenic",
         "flanking_systematic_gene_names": ["PP_4061", "PP_4063"],
         "flanking_gene_statement": "PP_4061, PP_4063",
     },

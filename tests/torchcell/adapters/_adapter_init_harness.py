@@ -104,7 +104,11 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
         ("experiment (chunked)",),
     ],
     "perturbation to genotype (chunked)": [
-        ("perturbation (chunked)", "bacterial perturbation (chunked)"),
+        (
+            "perturbation (chunked)",
+            "bacterial perturbation (chunked)",
+            "bacterial sequence variant perturbation (chunked)",
+        ),
         ("genotype (chunked)",),
     ],
     "crispr construct to perturbation (chunked)": [
@@ -158,6 +162,9 @@ NODE_LINK: dict[str, str] = {
     "segregant genotype (chunked)": "genotype to experiment (chunked)",
     "perturbation (chunked)": "perturbation to genotype (chunked)",
     "bacterial perturbation (chunked)": "perturbation to genotype (chunked)",
+    "bacterial sequence variant perturbation (chunked)": (
+        "perturbation to genotype (chunked)"
+    ),
     "crispr construct (chunked)": "crispr construct to perturbation (chunked)",
     "environment (chunked)": "environment to experiment (chunked)",
     "media (chunked)": "media to environment (chunked)",
@@ -190,6 +197,11 @@ class Shape(NamedTuple):
     # A bacterial genotype's leaves are served as `bacterial perturbation`, never as the
     # yeast `perturbation` class (cell_adapter.BACTERIAL_PERTURBATION_LEAVES).
     bacterial: bool = False
+    # A CALLED variant (issue #731) is served as `bacterial sequence variant
+    # perturbation`, its own class, and a dataset whose genotypes carry one enables that
+    # method BESIDE `bacterial perturbation`: the two classes partition the bacterial
+    # leaves, so a record with both kinds needs both methods and neither double-writes.
+    variant: bool = False
 
 
 class AdapterCase(NamedTuple):
@@ -214,6 +226,13 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
             if shape.bacterial
             else "perturbation (chunked)"
         )
+    if shape.variant:
+        if not shape.bacterial:
+            raise ValueError(
+                "`bacterial sequence variant perturbation` serves the bacterial "
+                "called-variant leaves only"
+            )
+        nodes.append("bacterial sequence variant perturbation (chunked)")
     if shape.crispr:
         nodes.append("crispr construct (chunked)")
     nodes += [

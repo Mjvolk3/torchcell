@@ -4,10 +4,10 @@
 """The de Siqueira 2025 P. putida acetate-tolerization loaders.
 
 Synthetic tests run everywhere: they exercise the two released-file readers, the variant
-ledger that types what cannot be written, the Table S2 census, the PT background and
-genotype builders against a recording fake genome, both environments, the two
-cross-source assertions, the retention arithmetic, and both loaders built end to end
-under ``tmp_path`` with no network and no ``$DATA_ROOT``.
+ledger and the three perturbation leaves one released call becomes, the Table S2 census,
+the PT background and genotype builders against a recording fake genome, both
+environments, the two cross-source assertions, the retention arithmetic, and both loaders
+built end to end under ``tmp_path`` with no network and no ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real ``$DATA_ROOT``: they assert that every
 module quote is a verbatim substring of the sha256-pinned mirrored bytes, pin the raw
@@ -15,12 +15,13 @@ mirror's recorded digests against the module constants, and run L0 to L4 over bo
 LMDBs.
 
 Derived expectations for the pinned released files, every one measured: Data Set S1
-holds 34,600 cells over 1,730 protein groups and 20 samples, of which 5 are of a
+holds 34,600 cells over 1,730 protein groups and 20 samples, of which 17 are of a
 writable strain and 1,531 protein keys survive into a record's abundance map; Data Set
 S2 holds 173 variant calls over 5 sequenced clones at 83 distinct sites, 58 with a
-GenBank locus tag, 10 with a RefSeq tag only and 105 with none; Table S2 holds 24 cells,
-of which 6 are ``n.d.``, 14 belong to an unwritable strain, 2 sit in a medium the
-library does not hold and 2 become records.
+GenBank locus tag, 10 with a RefSeq tag only and 105 with none, encoded as 53 in-locus
+sequence variants, 115 site-keyed variants and 5 restatements of PT's designed deletion;
+Table S2 holds 24 cells, of which 6 are ``n.d.``, 4 belong to the isolate that was never
+sequenced, 4 sit in a medium the library does not hold and 10 become records.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ import json
 import math
 import os
 import os.path as osp
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -43,6 +45,7 @@ from torchcell.datamodels.schema import (
     AlleleEdit,
     BacterialProteinAbundanceExperiment,
     BacterialProteinAbundanceExperimentReference,
+    BacterialVariantType,
     ConcentrationUnit,
     EnvironmentPhysicalPerturbation,
     PhysicalFactor,
@@ -51,6 +54,9 @@ from torchcell.datamodels.schema import (
     ProductTiterPhenotype,
     SampleUnit,
     SmallMoleculePerturbation,
+    VariantCallMode,
+    VariantFrequencyBasis,
+    VariantSiteKind,
 )
 from torchcell.datasets.pputida.carruthers2025 import PATHWAY_GENES, PIY670_PARTS
 from torchcell.literature.manifest import ROLE_SI_DATA, RetrievalMethod
@@ -147,26 +153,59 @@ def test_the_wild_type_reference_carries_no_background_and_pt_carries_one(
     assert pt.strain == ds.PT_STRAIN
 
 
-@pytest.mark.parametrize("strain", list(ds.SIGMA_STRAINS))
-def test_a_tolerized_isolate_has_no_reference_because_it_cannot_be_written(
-    strain: str,
+@pytest.mark.parametrize("strain", list(ds.SEQUENCED_SIGMA_STRAINS))
+def test_a_sequenced_isolate_is_referenced_against_pts_background(
+    strain: str, served_assembly_report: None
 ) -> None:
-    """Asking for a Sigma strain's reference refuses rather than inventing one."""
-    with pytest.raises(RuntimeError, match="not a writable strain"):
-        ds.strain_reference(strain)
-    with pytest.raises(RuntimeError, match="not a writable strain"):
-        ds.strain_genotype(strain, with_pathway=False)
+    """PT's deletion is the content an isolate HOLDS CONSTANT, so it is the reference."""
+    reference = ds.strain_reference(strain)
+    assert reference.background is not None
+    assert reference.background == ds.pt_background()
+    assert reference.strain == ds.PT_STRAIN
+    assert reference.assembly_set == ds.KT2440_ASSEMBLY_SET
 
 
-def test_the_two_writable_genotypes_are_distinguishable() -> None:
-    """WT carries nothing, PT carries its deletion, and a titer strain adds pIY670."""
-    assert ds.strain_genotype(ds.WT_LABEL, with_pathway=False).perturbations == []
-    pt = ds.strain_genotype(ds.PT_STRAIN, with_pathway=False)
-    assert pt.systematic_gene_names == [ds.PT_FULL_DELETION]
-    assert pt.perturbation_types == ["bacterial_deletion"]
-    with_plasmid = ds.strain_genotype(ds.PT_STRAIN, with_pathway=True)
-    assert len(with_plasmid) == 1 + len(PATHWAY_GENES)
+def test_the_unsequenced_isolate_has_no_reference_and_no_genotype() -> None:
+    """Data Set S2 releases no row for Sigma3, so its genotype is unknown."""
+    assert ds.UNSEQUENCED_SIGMA not in ds.WRITABLE_STRAINS
+    with pytest.raises(RuntimeError, match="was never sequenced"):
+        ds.strain_reference(ds.UNSEQUENCED_SIGMA)
+    with pytest.raises(RuntimeError, match="not a writable strain"):
+        ds.strain_genotype(ds.UNSEQUENCED_SIGMA, with_pathway=False, calls=[])
+
+
+def test_the_writable_genotypes_are_the_deletion_plus_each_strains_own_calls(
+    tmp_path: Path,
+) -> None:
+    """WT carries nothing, PT its deletion plus its calls, and pIY670 adds five genes."""
+    calls = ds.read_variant_calls(str(_variants_workbook(tmp_path)))
+    assert (
+        ds.strain_genotype(ds.WT_LABEL, with_pathway=False, calls=calls).perturbations
+        == []
+    )
+    pt = ds.strain_genotype(ds.PT_STRAIN, with_pathway=False, calls=calls)
+    assert len(pt) == 1 + VARIANT_PERTURBATIONS_PER_STRAIN["PT"]
+    assert pt.perturbation_types.count("bacterial_deletion") == 1
+    assert ds.PT_FULL_DELETION in pt.systematic_gene_names
+    with_plasmid = ds.strain_genotype(ds.PT_STRAIN, with_pathway=True, calls=calls)
+    assert len(with_plasmid) == len(pt) + len(PATHWAY_GENES)
     assert with_plasmid != pt
+
+
+def test_two_sequenced_isolates_have_unequal_genotypes(tmp_path: Path) -> None:
+    """``Genotype.__eq__`` compares the perturbation SET, and the call sets differ."""
+    calls = ds.read_variant_calls(str(_variants_workbook(tmp_path)))
+    genotypes = {
+        strain: ds.strain_genotype(strain, with_pathway=False, calls=calls)
+        for strain in (ds.PT_STRAIN, *ds.SEQUENCED_SIGMA_STRAINS)
+    }
+    assert {strain: len(genotype) for strain, genotype in genotypes.items()} == {
+        strain: 1 + VARIANT_PERTURBATIONS_PER_STRAIN[strain] for strain in genotypes
+    }
+    for left in genotypes:
+        for right in genotypes:
+            if left != right:
+                assert genotypes[left] != genotypes[right], (left, right)
 
 
 def test_the_pt_perturbation_carries_the_registry_accession() -> None:
@@ -210,23 +249,61 @@ VARIANT_HEADER_ROW: tuple[str, ...] = (
     "product",
 )
 
-#: (strain, old_locus_tag, refseq_locus_tag, protein effect) of the synthetic calls.
-VARIANT_SPECS: tuple[tuple[str, str | None, str | None, str], ...] = (
-    ("PT", None, None, "None"),
-    ("PT", "PP_0180", "PP_RS00965", "None"),
-    (ds.SIGMA_STRAINS[0], "PP_1656", "PP_RS08530", "Substitution"),
-    (ds.SIGMA_STRAINS[0], "PP_1656", "PP_RS08530", "Substitution"),
-    (ds.SIGMA_STRAINS[0], None, "PP_RS21780", "Substitution"),
-    (ds.SIGMA_STRAINS[3], None, None, "None"),
+#: (strain, old_locus_tag, refseq_locus_tag, protein effect, Polymorphism Type) of the
+#: synthetic calls. Every sequenced clone of the real release carries at least one, so
+#: the ledger's assertion that Data Set S2 releases calls for PT and the four sequenced
+#: isolates holds on the synthetic workbook too; the GenBank tags are loci of
+#: :data:`LOCUS_SPECS`, so a written in-locus variant is a locus of the pinned assembly.
+VARIANT_SPECS: tuple[tuple[str, str | None, str | None, str, str], ...] = (
+    ("PT", None, None, "None", "SNP (transition)"),
+    ("PT", "PP_0168", "PP_RS00965", "None", "SNP (transversion)"),
+    ("PT", ds.PT_FULL_DELETION, None, "None", "Deletion"),
+    (ds.SIGMA_STRAINS[0], "PP_1656", "PP_RS08530", "Substitution", "Substitution"),
+    (ds.SIGMA_STRAINS[0], "PP_1656", "PP_RS08530", "Substitution", "Substitution"),
+    (ds.SIGMA_STRAINS[0], None, "PP_RS21780", "Substitution", "SNP (transition)"),
+    (ds.SIGMA_STRAINS[1], "PP_0673", None, "None", "Insertion"),
+    (ds.SIGMA_STRAINS[3], None, None, "None", "Deletion (tandem repeat)"),
+    (ds.SIGMA_STRAINS[4], "PP_4264", "PP_RS21360", "Substitution", "Insertion"),
 )
+#: The encoding each :data:`VARIANT_SPECS` row is read as, in the same order.
+VARIANT_ENCODINGS: tuple[str, ...] = (
+    ds.ENCODING_INTERGENIC,
+    ds.ENCODING_IN_LOCUS,
+    ds.ENCODING_RESTATES_DESIGNED_DELETION,
+    ds.ENCODING_IN_LOCUS,
+    ds.ENCODING_IN_LOCUS,
+    ds.ENCODING_LOCUS_NOT_IN_ASSEMBLY,
+    ds.ENCODING_IN_LOCUS,
+    ds.ENCODING_INTERGENIC,
+    ds.ENCODING_IN_LOCUS,
+)
+#: ``{strain: the perturbations its written calls become}``, derived from the specs: one
+#: per call less the row that restates PT's designed deletion.
+VARIANT_PERTURBATIONS_PER_STRAIN: dict[str, int] = {
+    "PT": 2,
+    ds.SIGMA_STRAINS[0]: 3,
+    ds.SIGMA_STRAINS[1]: 1,
+    ds.SIGMA_STRAINS[3]: 1,
+    ds.SIGMA_STRAINS[4]: 1,
+}
+
+
+def _variant_position(index: int) -> int:
+    """The coordinate the synthetic row at ``index`` is called at."""
+    return 100 + index
 
 
 def _variant_row(
-    index: int, strain: str, tag: str | None, refseq: str | None, effect: str
+    index: int,
+    strain: str,
+    tag: str | None,
+    refseq: str | None,
+    effect: str,
+    polymorphism: str,
 ) -> list[Any]:
     """One synthetic Data Set S2 row, with the released column order and cell types."""
     row: list[Any] = [None] * len(VARIANT_HEADER_ROW)
-    position = 100 + index
+    position = _variant_position(index)
     row[0] = effect
     row[1] = tag
     row[2] = "G"
@@ -237,10 +314,11 @@ def _variant_row(
     row[7] = 1
     row[8] = 1
     row[9] = "61 -> 63" if index == 0 else str(20 + index)
-    row[10] = "SNP (transition)"
+    row[10] = polymorphism
     row[11] = "0.5 -> 0.6" if index == 0 else "0.97"
     row[12] = f"Variants: GS_{index}"
     row[13] = strain
+    row[15] = ds.VARIANT_REPLICON
     row[17] = "A -> G"
     row[20] = 12 if effect != "None" else None
     row[22] = "GGT -> GAT" if effect != "None" else None
@@ -255,10 +333,17 @@ def _write_variants(path: Path) -> None:
     book = openpyxl.Workbook()
     sheet = book.active
     sheet.append(list(VARIANT_HEADER_ROW))
-    for index, (strain, tag, refseq, effect) in enumerate(VARIANT_SPECS):
-        sheet.append(_variant_row(index, strain, tag, refseq, effect))
+    for index, spec in enumerate(VARIANT_SPECS):
+        sheet.append(_variant_row(index, *spec))
     book.save(path)
     book.close()
+
+
+def _variants_workbook(tmp_path: Path) -> Path:
+    """The synthetic Data Set S2, written once per test that reads its calls."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    return path
 
 
 def test_read_variant_calls_types_every_released_cell(tmp_path: Path) -> None:
@@ -269,49 +354,206 @@ def test_read_variant_calls_types_every_released_cell(tmp_path: Path) -> None:
     assert len(calls) == len(VARIANT_SPECS)
     assert calls[0].coverage == "61 -> 63"
     assert calls[0].variant_frequency == "0.5 -> 0.6"
-    assert calls[1].genbank_locus_tag == "PP_0180"
+    assert calls[0].reference_sequence == ds.VARIANT_REPLICON
+    assert calls[0].reference_allele == "A"
+    assert calls[0].alternate_allele == "G"
+    assert calls[1].genbank_locus_tag == "PP_0168"
     assert calls[1].refseq_locus_tag == "PP_RS00965"
-    assert calls[2].gene_symbol == "relA"
-    assert calls[2].cds_codon_number == 12
+    assert calls[3].gene_symbol == "relA"
+    assert calls[3].cds_codon_number == 12
     assert calls[0].protein_effect is None
 
 
-def test_every_call_names_the_missing_variant_leaf_and_its_own_blocker(
+def test_read_variant_calls_refuses_a_row_on_another_replicon(tmp_path: Path) -> None:
+    """A coordinate on another sequence is not a coordinate on this assembly."""
+    path = tmp_path / "variants.xlsx"
+    book = openpyxl.Workbook()
+    book.active.append(list(VARIANT_HEADER_ROW))
+    row = _variant_row(0, *VARIANT_SPECS[0])
+    row[15] = "NC_002947 (1)"
+    book.active.append(row)
+    book.save(path)
+    book.close()
+    with pytest.raises(RuntimeError, match="names replicon 'NC_002947 \\(1\\)'"):
+        ds.read_variant_calls(str(path))
+
+
+def test_read_variant_calls_refuses_a_polymorphism_type_it_cannot_type(
     tmp_path: Path,
 ) -> None:
-    """The four typed blockers, each assigned from the row it is measured on."""
+    """A released spelling outside the map would otherwise default to a wrong kind."""
+    path = tmp_path / "variants.xlsx"
+    book = openpyxl.Workbook()
+    book.active.append(list(VARIANT_HEADER_ROW))
+    row = _variant_row(0, *VARIANT_SPECS[0])
+    row[10] = "Rearrangement"
+    book.active.append(row)
+    book.save(path)
+    book.close()
+    with pytest.raises(RuntimeError, match="unmapped Polymorphism Type"):
+        ds.read_variant_calls(str(path))
+
+
+def test_every_call_is_encoded_as_the_leaf_its_released_shape_names(
+    tmp_path: Path,
+) -> None:
+    """The four encodings, each assigned from the row it is measured on."""
     path = tmp_path / "variants.xlsx"
     _write_variants(path)
     calls = ds.read_variant_calls(str(path))
-    assert all(ds.REASON_NO_VARIANT_LEAF in c.blocking_reasons for c in calls)
-    assert ds.REASON_NO_LOCUS in calls[0].blocking_reasons
-    assert ds.REASON_FUNCTIONAL_UNSTATED in calls[1].blocking_reasons
-    assert ds.REASON_LOCUS_SEEN_TWICE not in calls[1].blocking_reasons
-    assert ds.REASON_LOCUS_SEEN_TWICE in calls[2].blocking_reasons
-    assert ds.REASON_LOCUS_SEEN_TWICE in calls[3].blocking_reasons
-    assert ds.REASON_REFSEQ_ONLY in calls[4].blocking_reasons
+    assert [call.encoding for call in calls] == list(VARIANT_ENCODINGS)
+    assert calls[2].genbank_locus_tag == ds.PT_FULL_DELETION
+    assert calls[5].genbank_locus_tag is None
+    assert calls[5].refseq_locus_tag == "PP_RS21780"
+    assert calls[7].refseq_locus_tag is None
+
+
+def test_an_in_locus_call_becomes_a_sequence_variant_of_that_locus(
+    tmp_path: Path,
+) -> None:
+    """Every released cell reaches the call, and the locus keys the perturbation."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    calls = ds.read_variant_calls(str(path))
+    perturbations = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[0])
+    in_locus = [
+        p for p in perturbations if p.perturbation_type == "bacterial_sequence_variant"
+    ]
+    assert len(in_locus) == 2
+    first = in_locus[0]
+    assert first.systematic_gene_name == "PP_1656"
+    assert first.perturbed_gene_name == "relA"
+    assert first.gene_namespace == ds.KT2440_NAMESPACE
+    call = first.call
+    assert call.variant_type is BacterialVariantType.substitution
+    assert call.type_statement == "Substitution"
+    assert call.reference_sequence == ds.VARIANT_REPLICON
+    assert call.position_start == _variant_position(3)
+    assert call.position_end == _variant_position(3)
+    assert call.sequence_change == "A -> G"
+    assert call.reference_allele == "A"
+    assert call.alternate_allele == "G"
+    assert call.annotation == "Substitution"
+    assert call.codon_change == "GGT -> GAT"
+    assert call.codon_number == 12
+    assert call.call_mode is VariantCallMode.clone
+    assert call.frequency_statement == "0.97"
+    assert call.frequency == 0.97
+    assert call.frequency_basis is VariantFrequencyBasis.fraction
+    assert call.caller == str(dict(ds.WGS_METHOD.value)["caller"])
+
+
+def test_an_intergenic_call_is_keyed_on_its_site_and_names_no_locus(
+    tmp_path: Path,
+) -> None:
+    """A call the release places in no gene carries the derived site id, not a tag."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    calls = ds.read_variant_calls(str(path))
+    (site,) = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[3])
+    assert site.perturbation_type == "bacterial_site_variant"
+    assert site.site_kind is VariantSiteKind.intergenic
+    expected = f"{ds.VARIANT_REPLICON}:{_variant_position(7)}"
+    assert site.systematic_gene_name == expected
+    assert site.perturbed_gene_name == expected
+    assert site.released_locus_statement is None
+    assert site.flanking_systematic_gene_names == ()
+
+
+def test_a_refseq_only_call_keeps_its_released_tag_and_claims_no_neighbor(
+    tmp_path: Path,
+) -> None:
+    """The refusal the ``locus_not_in_assembly`` kind exists to state."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    calls = ds.read_variant_calls(str(path))
+    perturbations = ds.called_variant_perturbations(calls, ds.SIGMA_STRAINS[0])
+    (unmapped,) = [
+        p for p in perturbations if p.perturbation_type == "bacterial_site_variant"
+    ]
+    assert unmapped.site_kind is VariantSiteKind.locus_not_in_assembly
+    assert unmapped.released_locus_statement == "PP_RS21780"
+    assert unmapped.perturbed_gene_name == "PP_RS21780"
+    assert unmapped.systematic_gene_name == (
+        f"{ds.VARIANT_REPLICON}:{_variant_position(5)}"
+    )
+    assert unmapped.flanking_systematic_gene_names == ()
+
+
+def test_the_designed_deletion_is_not_written_a_second_time_as_a_call(
+    tmp_path: Path,
+) -> None:
+    """PT's PP_2675 row restates the lesion ``pt_perturbation`` already writes."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    calls = ds.read_variant_calls(str(path))
+    perturbations = ds.called_variant_perturbations(calls, ds.PT_STRAIN)
+    assert len(perturbations) == VARIANT_PERTURBATIONS_PER_STRAIN["PT"]
+    assert ds.PT_FULL_DELETION not in {p.systematic_gene_name for p in perturbations}
+
+
+def test_the_released_frequency_is_a_fraction_or_nothing_at_all() -> None:
+    """A percent range has no single value, so it carries no number and no basis."""
+    assert ds.released_frequency("0.96") == (0.96, VariantFrequencyBasis.fraction)
+    assert ds.released_frequency("95.1% -> 97.6%") == (None, None)
+    with pytest.raises(RuntimeError, match="outside \\(0, 1\\]"):
+        ds.released_frequency("97.6")
 
 
 def test_the_variant_ledger_counts_sites_strains_and_unsequenced_isolates(
     tmp_path: Path,
 ) -> None:
-    """The ledger is what the additive schema proposal in the PR rests on."""
+    """The ledger every build writes beside its store."""
     path = tmp_path / "variants.xlsx"
     _write_variants(path)
     ledger = ds.variant_ledger(ds.read_variant_calls(str(path)))
     assert ledger.n_calls == len(VARIANT_SPECS)
     assert ledger.n_distinct_sites == len(VARIANT_SPECS)
     assert ledger.n_sites_in_more_than_one_strain == 0
-    assert ledger.calls_with_genbank_locus == 3
+    assert ledger.calls_with_genbank_locus == 6
     assert ledger.calls_with_refseq_locus_only == 1
     assert ledger.calls_with_no_locus == 2
     assert ledger.loci_claimed_twice == {ds.SIGMA_STRAINS[0]: ["PP_1656 x2"]}
-    assert ledger.unsequenced_strains == [
-        ds.SIGMA_STRAINS[1],
-        ds.SIGMA_STRAINS[2],
-        ds.SIGMA_STRAINS[4],
+    assert ledger.unsequenced_strains == [ds.UNSEQUENCED_SIGMA]
+    assert ledger.encodings == {
+        ds.ENCODING_IN_LOCUS: 5,
+        ds.ENCODING_INTERGENIC: 2,
+        ds.ENCODING_LOCUS_NOT_IN_ASSEMBLY: 1,
+        ds.ENCODING_RESTATES_DESIGNED_DELETION: 1,
+    }
+    assert ledger.perturbations_per_strain == VARIANT_PERTURBATIONS_PER_STRAIN
+
+
+def test_the_ledger_refuses_a_count_of_encodings_that_loses_a_call(
+    tmp_path: Path,
+) -> None:
+    """Every call is encoded, and a written call is a perturbation of its strain."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    ledger = ds.variant_ledger(ds.read_variant_calls(str(path)))
+    short = ledger.model_copy(update={"encodings": {ds.ENCODING_IN_LOCUS: 5}})
+    with pytest.raises(RuntimeError, match="5 encodings over 9 calls"):
+        short.check()
+    miscounted = ledger.model_copy(
+        update={"perturbations_per_strain": {ds.PT_STRAIN: 2}}
+    )
+    with pytest.raises(RuntimeError, match="2 perturbations over 9 calls less 1"):
+        miscounted.check()
+
+
+def test_the_ledger_refuses_a_release_that_sequenced_another_strain_set(
+    tmp_path: Path,
+) -> None:
+    """The four sequenced isolates are asserted against the workbook, not assumed."""
+    path = tmp_path / "variants.xlsx"
+    _write_variants(path)
+    calls = [
+        call
+        for call in ds.read_variant_calls(str(path))
+        if call.strain != ds.SIGMA_STRAINS[4]
     ]
-    assert ledger.reasons[ds.REASON_NO_VARIANT_LEAF] == len(VARIANT_SPECS)
+    with pytest.raises(RuntimeError, match="releases calls for"):
+        ds.variant_ledger(calls)
 
 
 def test_read_variant_calls_refuses_a_changed_header(tmp_path: Path) -> None:
@@ -341,13 +583,16 @@ def test_read_variant_calls_refuses_an_empty_release(tmp_path: Path) -> None:
 # Synthetic: Table S2 and the two cross-source assertions
 # --------------------------------------------------------------------------- #
 def test_the_table_s2_census_partitions_every_released_cell() -> None:
-    """24 cells: 6 n.d., 14 unwritable, 2 in an absent medium, 2 loaded."""
+    """24 cells: 6 n.d., 4 of the unsequenced isolate, 4 in an absent medium, 10 loaded."""
     census = ds.titer_census()
     assert census.n_cells == len(ds.TITER_COLUMNS) * (1 + len(ds.SIGMA_STRAINS))
     assert census.n_not_determined == 6
-    assert census.n_unwritable_strain == 14
-    assert census.n_medium_not_in_library == 2
-    assert census.n_loaded == len(ds.TITER_COLUMNS_LOADED) == 2
+    assert census.n_unwritable_strain == 4
+    assert census.n_medium_not_in_library == 4
+    assert census.n_loaded == 10
+    assert census.n_loaded == len(ds.TITER_STRAINS_LOADED) * len(
+        ds.TITER_COLUMNS_LOADED
+    )
 
 
 def test_the_census_refuses_a_partition_that_loses_a_cell() -> None:
@@ -355,9 +600,9 @@ def test_the_census_refuses_a_partition_that_loses_a_cell() -> None:
     census = ds.TiterCensus(
         n_cells=24,
         n_not_determined=6,
-        n_unwritable_strain=14,
-        n_medium_not_in_library=2,
-        n_loaded=1,
+        n_unwritable_strain=4,
+        n_medium_not_in_library=4,
+        n_loaded=9,
     )
     with pytest.raises(RuntimeError, match="does not partition"):
         census.check()
@@ -1072,18 +1317,41 @@ def built_titer(synthetic_mirror: Path, synthetic_kt2440: Any, tmp_path: Path) -
 def test_the_proteome_loader_writes_only_the_writable_strains(
     built_proteome: Any,
 ) -> None:
-    """Five records out of the released samples, and the Sigma samples left out."""
-    assert len(built_proteome) == ds.EXPECTED_PROTEOME_RECORDS
+    """17 of the 20 released samples; the unsequenced isolate's three are left out."""
+    assert len(built_proteome) == ds.EXPECTED_PROTEOME_RECORDS == 17
     assert built_proteome.experiment_class is BacterialProteinAbundanceExperiment
     assert (
         built_proteome.reference_class is BacterialProteinAbundanceExperimentReference
     )
     assert built_proteome.raw_file_names == [ds.PROTEOME_FILENAME, ds.VARIANTS_FILENAME]
     strains = set()
+    genotypes = set()
     for index in range(len(built_proteome)):
         record = built_proteome[index]
         strains.add(str(record["reference"]["genome_reference"]["strain"]))
+        genotypes.add(json.dumps(record["experiment"]["genotype"], sort_keys=True))
     assert strains == {ds.WT_STRAIN, ds.PT_STRAIN}
+    assert len(genotypes) == len(ds.WRITABLE_STRAINS) == 6
+
+
+def test_a_site_keyed_call_stays_out_of_the_gene_set(built_proteome: Any) -> None:
+    """A site id names a place that is not a gene, so it is no gene node."""
+    site_ids = {
+        str(perturbation["systematic_gene_name"])
+        for index in range(len(built_proteome))
+        for perturbation in built_proteome[index]["experiment"]["genotype"][
+            "perturbations"
+        ]
+        if perturbation["perturbation_type"] == "bacterial_site_variant"
+    }
+    assert site_ids == {
+        f"{ds.VARIANT_REPLICON}:{_variant_position(index)}"
+        for index, encoding in enumerate(VARIANT_ENCODINGS)
+        if encoding in (ds.ENCODING_INTERGENIC, ds.ENCODING_LOCUS_NOT_IN_ASSEMBLY)
+    }
+    gene_set = set(built_proteome.gene_set)
+    assert not site_ids & gene_set
+    assert "PP_1656" in gene_set
 
 
 def test_the_proteome_records_drop_the_unresolvable_and_merged_keys(
@@ -1193,9 +1461,10 @@ def test_the_proteome_loader_writes_its_accounting_and_its_variant_ledger(
     )
     rules = {rule["rule"]: rule for rule in accounting["rules"]}
     assert (
-        rules["strain_genotype_is_not_representable"]["n_records"]
+        rules["strain_was_never_sequenced"]["n_records"]
         == (accounting["dropped_records"])
     )
+    assert rules["strain_was_never_sequenced"]["items"] == [ds.UNSEQUENCED_SIGMA]
     assert (
         PROTEOME_UNRESOLVED_KEY
         in (rules["protein_key_is_not_a_locus_of_the_pinned_assembly"]["items"])
@@ -1230,15 +1499,26 @@ def test_the_proteome_reference_is_the_wild_type_in_the_glucose_condition(
 def test_the_titer_loader_writes_one_record_per_loaded_table_cell(
     built_titer: Any,
 ) -> None:
-    """Two records, both PT carrying pIY670."""
-    assert len(built_titer) == len(ds.TITER_COLUMNS_LOADED)
+    """Ten records: PT and the four sequenced isolates, each in two media."""
+    assert len(built_titer) == len(ds.TITER_STRAINS_LOADED) * len(
+        ds.TITER_COLUMNS_LOADED
+    )
+    assert len(built_titer) == 10
     assert built_titer.experiment_class is ProductTiterExperiment
     assert built_titer.reference_class is ProductTiterExperimentReference
     assert built_titer.raw_file_names == [ds.VARIANTS_FILENAME]
     record = built_titer[0]
     experiment = record["experiment"]
     kinds = {p["perturbation_type"] for p in experiment["genotype"]["perturbations"]}
-    assert kinds == {"bacterial_deletion", "heterologous_pathway"}
+    assert kinds == {
+        "bacterial_deletion",
+        "heterologous_pathway",
+        "bacterial_sequence_variant",
+        "bacterial_site_variant",
+    }
+    assert len(experiment["genotype"]["perturbations"]) == (
+        1 + len(PATHWAY_GENES) + VARIANT_PERTURBATIONS_PER_STRAIN["PT"]
+    )
     assert experiment["phenotype"]["titer_unit"] == ConcentrationUnit.millimolar.value
     assert record["reference"]["genome_reference"]["strain"] == ds.PT_STRAIN
 
@@ -1246,17 +1526,17 @@ def test_the_titer_loader_writes_one_record_per_loaded_table_cell(
 def test_the_titer_accounting_names_all_three_reasons_a_cell_is_left_out(
     built_titer: Any,
 ) -> None:
-    """The unwritable strains, the n.d. cells and the absent medium, each counted."""
+    """The unsequenced isolate, the n.d. cells and the absent medium, each counted."""
     preprocess = Path(built_titer.preprocess_dir)
     accounting = json.loads((preprocess / "build_accounting.json").read_text())
     assert accounting["candidate_records"] == 24
-    assert accounting["kept_records"] == 2
-    assert accounting["dropped_records"] == 22
+    assert accounting["kept_records"] == 10
+    assert accounting["dropped_records"] == 14
     rules = {rule["rule"]: rule["n_records"] for rule in accounting["rules"]}
     assert rules == {
-        "strain_genotype_is_not_representable": 14,
+        "strain_was_never_sequenced": 4,
         "cell_is_not_determined": 6,
-        "medium_is_not_in_the_media_library": 2,
+        "medium_is_not_in_the_media_library": 4,
     }
     notes = " ".join(accounting["notes"])
     assert "DISAGREEMENT" in notes
@@ -1305,15 +1585,25 @@ def test_the_supplementary_uniqueness_row_catches_a_repeated_pair(
     assert not ds.strain_condition_uniqueness([*records, records[0]]).passed
 
 
-def test_the_gene_containment_row_exempts_the_heterologous_pathway_parts(
+def test_the_gene_containment_row_exempts_the_pathway_parts_and_the_sites(
     built_titer: Any,
 ) -> None:
-    """A pIY670 part is not a KT2440 locus, which is what its leaf exists to say."""
+    """A pIY670 part and a site id are not KT2440 loci, which is what their leaves say."""
     from torchcell.verification.runners import load_records
 
     records = load_records(built_titer.root)
     universe = {tag for tag, _ in LOCUS_SPECS}
-    assert ds.gene_containment_rule(records, universe).passed
+    result = ds.gene_containment_rule(records, universe)
+    assert result.passed
+    assert result.details["outside"] == []
+    site_ids = {
+        str(p["systematic_gene_name"])
+        for record in records
+        for p in record["experiment"]["genotype"]["perturbations"]
+        if p["perturbation_type"] == "bacterial_site_variant"
+    }
+    assert site_ids
+    assert not site_ids & universe
     assert not ds.gene_containment_rule(records, set()).passed
 
 
@@ -1419,8 +1709,8 @@ def test_main_builds_both_families_and_verifies_them(
     monkeypatch.setenv("DATA_ROOT", str(synthetic_mirror))
     ds.main()
     out = capsys.readouterr().out
-    assert "ProteomeDeSiqueira2025Dataset: len = 5" in out
-    assert "IsoprenolTiterDeSiqueira2025Dataset: len = 2" in out
+    assert "ProteomeDeSiqueira2025Dataset: len = 17" in out
+    assert "IsoprenolTiterDeSiqueira2025Dataset: len = 10" in out
     assert "PASS" in out
 
 
@@ -1516,6 +1806,53 @@ def test_the_released_variant_table_has_the_shape_the_module_states() -> None:
         ds.SIGMA_STRAINS[1],
         ds.SIGMA_STRAINS[3],
     }
+    assert ledger.encodings == {
+        ds.ENCODING_IN_LOCUS: 53,
+        ds.ENCODING_INTERGENIC: 105,
+        ds.ENCODING_LOCUS_NOT_IN_ASSEMBLY: 10,
+        ds.ENCODING_RESTATES_DESIGNED_DELETION: 5,
+    }
+    assert ledger.perturbations_per_strain == {
+        ds.PT_STRAIN: 32,
+        ds.SIGMA_STRAINS[0]: 33,
+        ds.SIGMA_STRAINS[1]: 27,
+        ds.SIGMA_STRAINS[3]: 42,
+        ds.SIGMA_STRAINS[4]: 34,
+    }
+    assert ledger.calls_per_strain == {
+        ds.PT_STRAIN: 33,
+        ds.SIGMA_STRAINS[0]: 34,
+        ds.SIGMA_STRAINS[1]: 28,
+        ds.SIGMA_STRAINS[3]: 43,
+        ds.SIGMA_STRAINS[4]: 35,
+    }
+
+
+@pytest.mark.data
+def test_the_released_refseq_only_calls_name_the_two_retired_tags() -> None:
+    """The 10 ``locus_not_in_assembly`` calls, and the tags they keep verbatim."""
+    if "DATA_ROOT" not in os.environ:
+        pytest.skip("DATA_ROOT is not set")
+    path = ds.raw_mirror_dir() / ds.VARIANTS_REL
+    if not path.exists():
+        pytest.skip("the raw mirror has not been deposited on this machine")
+    calls = ds.read_variant_calls(str(path))
+    unmapped = [
+        call for call in calls if call.encoding == ds.ENCODING_LOCUS_NOT_IN_ASSEMBLY
+    ]
+    assert len(unmapped) == 10
+    assert Counter(call.refseq_locus_tag for call in unmapped) == {
+        "PP_RS21780": 9,
+        "PP_RS19075": 1,
+    }
+    for strain in {call.strain for call in unmapped}:
+        for perturbation in ds.called_variant_perturbations(calls, strain):
+            if perturbation.perturbation_type != "bacterial_site_variant":
+                continue
+            if perturbation.site_kind is not VariantSiteKind.locus_not_in_assembly:
+                continue
+            assert perturbation.released_locus_statement in ("PP_RS21780", "PP_RS19075")
+            assert perturbation.flanking_systematic_gene_names == ()
 
 
 @pytest.mark.data
@@ -1524,15 +1861,16 @@ def test_the_built_stores_pass_l0_to_l4() -> None:
     if "DATA_ROOT" not in os.environ:
         pytest.skip("DATA_ROOT is not set")
     data_root = os.environ["DATA_ROOT"]
-    for rel, family, expected in (
-        ("data/torchcell/proteome_desiqueira2025", "proteome", 5),
-        ("data/torchcell/proteome_percent_desiqueira2025", "proteome_percent", 5),
+    for rel, family, expected, n_genes in (
+        ("data/torchcell/proteome_desiqueira2025", "proteome", 17, 30),
+        ("data/torchcell/proteome_percent_desiqueira2025", "proteome_percent", 17, 30),
         (
             "data/torchcell/proteome_log10_percent_desiqueira2025",
             "proteome_log10_percent",
-            5,
+            17,
+            30,
         ),
-        ("data/torchcell/isoprenol_titer_desiqueira2025", "titer", 2),
+        ("data/torchcell/isoprenol_titer_desiqueira2025", "titer", 10, 35),
     ):
         root = osp.join(data_root, rel)
         if not osp.exists(osp.join(root, "processed", "lmdb")):
@@ -1542,6 +1880,9 @@ def test_the_built_stores_pass_l0_to_l4() -> None:
         from torchcell.verification.runners import load_records
 
         assert len(load_records(root)) == expected
+        gene_set = json.loads(Path(root, "preprocess", "gene_set.json").read_text())
+        assert len(gene_set) == n_genes
+        assert not [tag for tag in gene_set if ":" in tag]
 
 
 @pytest.mark.data

@@ -23,7 +23,6 @@ from .schema import (
     BacterialGeneEssentialityExperimentReference,
     BacterialGeneInteractionExperiment,
     BacterialGeneInteractionExperimentReference,
-    BacterialIntergenicVariantPerturbation,
     BacterialMetaboliteExperiment,
     BacterialMetaboliteExperimentReference,
     BacterialProteinAbundanceExperiment,
@@ -31,6 +30,7 @@ from .schema import (
     BacterialRNASeqExpressionExperiment,
     BacterialRNASeqExpressionExperimentReference,
     BacterialSequenceVariantPerturbation,
+    BacterialSiteVariantPerturbation,
     BacterialSpanDeletionPerturbation,
     BacterialStrainBackground,
     BacterialVariantCall,
@@ -109,6 +109,7 @@ from .schema import (
     TsAllelePerturbation,
     VariantCallMode,
     VariantFrequencyBasis,
+    VariantSiteKind,
 )
 
 # from .gene_essentiality_to_fitness_conversion import GeneEssentialityToFitnessConverter
@@ -184,8 +185,9 @@ __all__ = [
     "BacterialVariantCall",
     "VariantCallMode",
     "VariantFrequencyBasis",
+    "VariantSiteKind",
     "BacterialSequenceVariantPerturbation",
-    "BacterialIntergenicVariantPerturbation",
+    "BacterialSiteVariantPerturbation",
     "BacterialSpanDeletionPerturbation",
     "AssemblyReferenceGenome",
     "BacterialBackgroundAllele",

@@ -90,3 +90,159 @@ Records read back from the build (the WT well's rate is its own generation time 
 - ex21 WT well (index 0): no perturbation, 71.97 h, `relative_growth_rate` 0.669.
 
 Serving: `visibility = private`. The GilaHyper live-rebuild and increment slurm scripts now default to `INCLUDE_PRIVATE=1` (`--include-private` to the generator and to the admission check); the generator unions `PRIVATE_DATASET_ADAPTER_MAP` only under that flag and refuses a private dataset named without it; `scripts/package_dataset_lmdb.py` (tc-data) refuses it either way. The admission check against the served manifest (store 4b293d34, run 2026-10-08 with `--include-private`) reports the dev LMDB fresh and the dataset BLOCKED for the expected reason: `Publication` and `SourceType` moved the schema closure of all 51 served datasets (PR #778), the `publication` and `crispr construct` graph classes changed, and the compound and media value surfaces changed. So this dataset enters the served store through the next FULL rebuild, not an increment.
+
+## 2026.10.09 - The private path into KG 4.0, verified by running it (#827)
+
+Every row below was measured today against the store this branch rebuilt, not read off
+the code. Scripts and logs are in the session scratchpad
+(`run_generator.py`, `measure_store.py`, `measure_plots.py`, `run_verify.py` under
+`/scratch/tmp/claude-1000/.../scratchpad/feat-827-bioscreen/`); the gate itself is
+committed as `verify_build` in the loader module and `test_live_rebuild_slurm.py`,
+`test_create_scerevisiae_kg_small.py` and the dataset's own test file carry the pins.
+
+### 1. The generator emits the private dataset's CSVs only with `--include-private`
+
+`create_scerevisiae_kg_small` run on the real dev store with
+`--config-name kg_uncapped --include-private '+datasets=[InhibitorBioscreenVolk2021Dataset]'`,
+writing to a scratch output directory (nothing touched the served `torchcell` database or
+`$DATA_ROOT/database/`, and no slurm job was submitted):
+
+| measured | with `--include-private` | without it |
+|---|---|---|
+| exit | 0 | 1, `PrivateDatasetRefused: ... Pass --include-private` |
+| nodes / edges | 9652 / 9654 | none written |
+| CSV families | 24 node + edge families | 0 CSVs |
+| `Experiment-part000.csv` | 977 rows | absent |
+| `ExperimentReference-part000.csv` | 5 rows | absent |
+| `EnvironmentResponsePhenotype-part000.csv` | 982 rows (977 + 5) | absent |
+| `Dataset-part000.csv`, `Publication-part000.csv` | 1 row each | absent |
+
+Two local-environment notes, neither a defect of the build: the rehearsal redirects
+`build_telemetry.CGROUP_ROOT`, because the sampler reads cgroup v2 files that exist in the
+build container and not in a login shell, and it runs with `adapters.fast_writer=false`,
+because `fast_csv.build_row_specs` calls `BioCypher._initialize_writer`, which the
+container's pinned `biocypher==0.15.2` (`env/requirements.txt`) has and the local
+conda env's 0.5.43 does not. The fast-CSV writer path is therefore **not** exercised
+here; it is exercised by the build itself.
+
+`INCLUDE_PRIVATE` in `database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm`
+defaults to `1`, so a FULL rebuild serves this dataset unless someone opts out: measured
+by running the script's own dispatch block (`INCLUDE_PRIVATE` unset -> `--include-private`,
+`0` -> no flag, `yes` -> exit 1). The freshness preflight and the dev fence both take the
+same switch into `build_adapter_map(include_private=...)`, so a public-only preflight
+cannot miss a stale private store.
+
+### 2. tc-data refuses it
+
+`python scripts/package_dataset_lmdb.py --dataset-dir $DATA_ROOT/data/torchcell/inhibitor_bioscreen_volk2021 --store <tmp>`
+exits 1 with `refused: InhibitorBioscreenVolk2021Dataset is PRIVATE (visibility=private):
+in-house data is never published in a tc-data release`, and the store directory is left
+empty. The refusal reads `visibility` off the loader class named by the build manifest, so
+no spelling of the command publishes it.
+
+### 3. The dev store, and its L0 to L4 table
+
+`--list-stale --include-private` read the store STALE twice today, and both times the
+drift was a shared symbol rather than anything of this dataset's: first on `SampleUnit`,
+then, after rebasing onto the bacterial-perturbation-leaf land, on
+`EnvironmentPerturbationType` and `GenePerturbationType`. 109 of the 112 mapped stores
+are stale on the same symbols, which is the expected state before a full rebuild. Rebuilt
+with `--retire-existing` (dev tree only; the previous `processed/` and `preprocess/` are
+`*.superseded.20261009-093436` siblings): 977 records, 5 references, empty gene set, 5 s.
+The store then reads `fresh`.
+
+`verify_build` (`torchcell/datasets/private_torchcell/volk2021_inhibitor_bioscreen.py`,
+report written to `preprocess/verification_report.json`):
+
+| level | row | measured |
+|---|---|---|
+| L0 | structural | 977 records validate as `ExperimentType` |
+| L1 | count | 977 == 180 + 197 + 200 + 200 + 200 |
+| L1 | completeness | 977 / 977 `<run>:well<n>` keys, no extras |
+| L1 | wells_per_run | ex21 180, ex23 197, ex26 200, ex27 200, ex28 200 |
+| L2 | value_fidelity | 360 rates, all finite and >= 0 (range 0.247 to 1.350) |
+| L2 | readout_split | 360 rates + 617 no-growth calls; per run 63 / 128 / 155 / 124 / 147; no record carries both |
+| L3 | reference_one | reference relative growth rate 1.0 for all 977, with the sample SD of 17 / 8 / 2 / 2 / 2 grown WT wells |
+| L3 | wild_type_wells | 32 inhibitor-free wells (18 / 8 / 2 / 2 / 2); every other record carries a dosed inhibitor |
+| L3 | no_growth_label | severely_reduced, labelled 72 h / 85 h / 96 h / 96 h / 96 h by run |
+| L3 | strain_background | all 977 references carry bAID, parent BY4742, integration `Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]` |
+| L4 | software_trait_agreement | the served raw-curve grew call equals the Bioscreen software's on ex21 0.9778, ex23 0.9391, ex26 0.9850 |
+
+The gate lives in the loader rather than in `runners.ENVIRONMENT_RESPONSE_DATASETS`
+because five of that registry's rules describe a deletion-collection screen and not this
+dataset, each measured on these records: `pair_uniqueness` keys on (ORF, compound) and
+every ex23 condition has 3 replicate wells with an empty ORF set; `measurement_type_consistent`
+requires one type and this readout is 360 rates + 617 calls; `reference_zero` requires 0
+and this reference is 1.0, with `reference_centered=False` closed off because
+`relative_growth_rate` is deliberately absent from `ABSOLUTE_MEASUREMENT_TYPES`;
+`environment_perturbed` counts 32 unperturbed records (the WT wells, which are the
+baseline, not defects); and the whole L4 gene layer is vacuous on an empty gene set.
+Giving it a registry row would mean five declared reliefs on rules every public screen
+shares. **Owner decision open:** either keep the loader-owned gate (what this PR does) or
+add a one-strain-environment-panel family to `torchcell/verification/`. One stale comment
+was found and left for the owner: `schema.py`'s `ABSOLUTE_MEASUREMENT_TYPES` block says
+`relative_growth_rate` "is 0 at the control by construction", which contradicts the
+`MeasurementType` docstring 40 lines above it ("1.0 = grows like the wild type"). The
+enum doc is right; the comment needs a one-line fix in a schema PR.
+
+### 4. Coverage of every run PR #740 plots
+
+The wells each figure of `experiments/039-inhibitor-combinations-wetlab/scripts/plot_inhibitor_runs.py`
+consumes, counted from the raw mirror, against the store:
+
+| run | wells the figures use | records stored | source the figure reads |
+|---|---|---|---|
+| ex21 | 180 (6 inhibitors x 3 blocks x (1 control + 9 steps)) | 180 | `MV_ex21_inhibitor_titration.tsv` (software traits) |
+| ex23 | 197 (189 condition wells + 8 WT; 3 blanks excluded) | 197 | `MV_ex23_preprocessed.csv` (software traits) |
+| ex26 | 200 | 200 | `MV_ex26_..._Traits.txt` (software traits) |
+| ex27 | 200 | 200 | raw export, this derivation |
+| ex28 | 200 | 200 | raw export, this derivation |
+| total | 977 | 977 | |
+
+So no run and no well the figures plot is missing from the loader: the 977 records are
+exactly the plotted wells. Two differences that are NOT coverage gaps:
+
+- **The 25 grew / 38 did not of the ex23 table is the SOFTWARE's call.** Re-derived from
+  `MV_ex23_preprocessed.csv`: 63 combinations, 25 with at least one grown replicate
+  (6 singles, 14 pairs, 5 triples), 38 with none. The store's raw-curve derivation gives
+  21 (6 singles, 12 pairs, 3 triples) over the same 63 combinations and the same 189
+  wells. The two sources disagree on 12 of 197 ex23 wells (agreement 0.9391, the L4 row),
+  which is the known scale disagreement of the 2026.10.08 table, not a missing record.
+  The served label is the raw curve, per the 2026.10.08 decision.
+- **One plot input is not in the raw mirror**: `plot_ex23_curves` draws the OD traces from
+  `MV_ex23_Magic_inhibitor_combinations_curves_Processed.tsv`, the software's blanked
+  curves. It adds no well (the same 197) and no record value, so the loader does not
+  consume it; the raw export it was computed from is mirrored.
+
+### 5. The served label and the strain
+
+The served value is the raw-curve generation-time derivation on all five runs, defined
+verbatim in every record's `units`, and the two L3 rows above assert the reference (1.0
+with the WT wells' sample SD) and the typed background on all 977 records. The background
+oracle is the genotype string Lian 2019's Supplementary Table 11 states for bAID
+(`BY4742-Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]`), split into parent
+and cassette, so the row checks the store against the SOURCE and not against the
+`baid_background()` constructor that wrote it. The integration object carries its two
+source quotes (Supplementary Table 11 and the Methods construction sentence) with their
+mirror sha256s.
+
+### 6. What will list the dataset after the build, and what cannot be checked yet
+
+- **`kg_manifest`**: the build writes a `KgDatasetEntry` per served dataset carrying
+  `visibility`, which `dataset_visibility` reads off the loader class, so the manifest
+  will name this dataset `private`. Checkable only after the build stamps the manifest.
+- **The release snapshot and the docs' served-count fragment**: `SnapshotDataset` has NO
+  visibility field, so a snapshot of a store built with `--include-private` lists the
+  in-house dataset exactly like a public one, and
+  `experiments/034-showcase-datasets/scripts/served_dataset_counts.py` generates
+  `docs/source/datasets/_generated/served_counts.md` from the newest snapshot. The row
+  will therefore appear on a public page with its record count and no marker saying it
+  cannot be downloaded, while `tc-data` refuses the archive (section 2). Pinned as
+  today's behavior in `test_release_snapshot.py`. **Owner decision open:** whether the
+  snapshot should carry the marker.
+- **The supported-queries page**: no supported query selects this dataset
+  (`registry.json` has no entry whose Cypher names it), so it gets no `docs_page` column
+  and no dataset page. Adding one is a separate curation decision.
+- **Cannot be checked before the build**: the manifest entry and its closure, the
+  snapshot, the served node counts, the fast-CSV writer path (needs the container's
+  `biocypher==0.15.2`), and the neo4j-admin import of these CSVs.

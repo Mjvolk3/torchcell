@@ -1197,6 +1197,123 @@ def test_the_proteome_build_keys_table_s3_by_rel606_locus(
     assert [p["compound"]["name"] for p in sodium] == ["sodium chloride"]
 
 
+# --------------------------------------------------------------------------- #
+# #771: per-record attribution to the study that first reported the sample
+#
+# 27 of the 152 real mRNA samples and 27 of the 105 real protein samples are Houser
+# 2015's glucose time course. The synthetic sheet carries the same shape in miniature:
+# MURI_002, MURI_003 and MURI_004 are `glucose_time_course`, so 3 of the 5 records of
+# each family are Houser's and 2 are this paper's.
+# --------------------------------------------------------------------------- #
+HOUSER_PUBLICATION = {
+    "doi": "10.1371/journal.pcbi.1004400",
+    "doi_url": "https://doi.org/10.1371/journal.pcbi.1004400",
+    "pubmed_id": "26275208",
+    "pubmed_url": "https://pubmed.ncbi.nlm.nih.gov/26275208/",
+}
+
+
+def test_attribute_sample_splits_on_table_s1_s_experiment_column(
+    tmp_path: Path,
+) -> None:
+    """The glucose time course is Houser 2015's; every other condition is Caglar's."""
+    rows = _rows(tmp_path / "s1.csv")
+    attributions = {row.sample: c.attribute_sample(row) for row in rows}
+    assert {s: a.study for s, a in attributions.items()} == {
+        "MURI_002": "houser2015",
+        "MURI_003": "houser2015",
+        "MURI_004": "houser2015",
+        "MURI_005": "caglar2017",
+        "MURI_006": "caglar2017",
+        "MURI_007": "caglar2017",
+    }
+    houser = attributions["MURI_002"]
+    assert houser.experiment == c.HOUSER2015_EXPERIMENT == "glucose_time_course"
+    assert houser.doi == c.HOUSER2015_DOI
+    assert houser.evidence == (
+        "HOUSER2015_DEFERRAL",
+        "HOUSER2015_CITATION",
+        "HOUSER2015_DEPOSITS",
+    )
+    assert attributions["MURI_005"].evidence == ()
+    assert attributions["MURI_005"].doi == c.PAPER_DOI
+
+
+def test_houser_2015_is_an_unmirrored_source_study_named_by_caglar_only() -> None:
+    """The attribution is sourced from Caglar's citation; the paper itself is unread.
+
+    No mirror key, so nothing re-reads Houser. The DOI is not in Caglar's citation, so
+    the article number in the DOI must be the article id the citation prints, which is
+    what ties the resolved record to the cited one.
+    """
+    houser = c.SOURCE_STUDIES["houser2015"]
+    assert houser.is_mirrored is c.HOUSER2015_IS_MIRRORED is False
+    assert houser.citation_key is None
+    assert c.SOURCE_STUDIES["caglar2017"].citation_key == c.CITATION_KEY
+    assert c.SOURCE_STUDIES["caglar2017"].is_mirrored is True
+    assert houser.title is not None and houser.title in c.HOUSER2015_CITATION.quote
+    assert "e1004400" in c.HOUSER2015_CITATION.quote
+    assert c.HOUSER2015_DOI.rsplit(".", 1)[1] == "1004400"
+    assert houser.publication.model_dump(include=set(HOUSER_PUBLICATION)) == (
+        HOUSER_PUBLICATION
+    )
+
+
+def test_the_three_attribution_quotes_come_from_the_pinned_paper_ocr() -> None:
+    """Each quote is anchored to the same sha256 the rest of the loader's values are."""
+    for value in (c.HOUSER2015_DEFERRAL, c.HOUSER2015_CITATION, c.HOUSER2015_DEPOSITS):
+        assert value.provenance.citation_key == c.CITATION_KEY
+        assert value.provenance.sha256 == c.PAPER_MD_SHA256
+    assert "presented previously10" in c.HOUSER2015_DEFERRAL.quote
+    assert c.HOUSER2015_DEPOSITS.value == ("GSE67402", "PXD002140")
+    assert "GSE67402 for the glucose time-course" in c.HOUSER2015_DEPOSITS.quote
+
+
+@pytest.mark.parametrize("family", ["rnaseq", "proteome"])
+def test_each_record_cites_the_study_that_first_reported_its_sample(
+    family: str,
+    rnaseq: c.RnaseqCaglar2017Dataset,
+    proteome: c.ProteomeCaglar2017Dataset,
+) -> None:
+    """The three glucose-time-course records cite Houser 2015, the other two Caglar."""
+    dataset: Any = rnaseq if family == "rnaseq" else proteome
+    samples = [s["sample"] for s in _ledger(dataset, "record_samples.json")]
+    by_sample = {
+        sample: _record(dataset, index)["publication"]
+        for index, sample in enumerate(samples)
+    }
+    houser = {s: p for s, p in by_sample.items() if p["doi"] == c.HOUSER2015_DOI}
+    caglar = {s: p for s, p in by_sample.items() if p["doi"] == c.PAPER_DOI}
+    assert sorted(houser) == ["MURI_002", "MURI_003", "MURI_004"]
+    assert len(caglar) == 2
+    assert set(houser) | set(caglar) == set(samples)
+    one = next(iter(houser.values()))
+    assert {k: one[k] for k in HOUSER_PUBLICATION} == HOUSER_PUBLICATION
+    assert next(iter(caglar.values()))["pubmed_id"] is None
+
+
+@pytest.mark.parametrize("family", ["rnaseq", "proteome"])
+def test_the_build_writes_the_source_study_ledger(
+    family: str,
+    rnaseq: c.RnaseqCaglar2017Dataset,
+    proteome: c.ProteomeCaglar2017Dataset,
+) -> None:
+    """The ledger carries the rule, both studies, and one row per sample."""
+    dataset: Any = rnaseq if family == "rnaseq" else proteome
+    ledger = _ledger(dataset, "source_study_attribution.json")
+    assert ledger["issue"] == "771"
+    assert "glucose_time_course" in ledger["rule"]
+    assert ledger["samples_by_study"] == {"caglar2017": 2, "houser2015": 3}
+    assert ledger["studies"]["houser2015"]["is_mirrored"] is False
+    assert ledger["studies"]["houser2015"]["doi"] == c.HOUSER2015_DOI
+    assert ledger["studies"]["caglar2017"]["citation_key"] == c.CITATION_KEY
+    rows = {row["sample"]: row for row in ledger["samples"]}
+    assert len(rows) == 5
+    assert rows["MURI_002"]["study"] == "houser2015"
+    assert rows["MURI_002"]["experiment"] == "glucose_time_course"
+    assert rows["MURI_006"]["study"] == "caglar2017"
+
+
 def test_a_released_id_outside_rel606_stops_the_build(
     genome: EcoliBREL606Genome,
 ) -> None:
@@ -1293,8 +1410,9 @@ def test_main_dispatches_build_and_verify(
     assert c.main(["verify", "--family", "rnaseq"]) == 1
 
 
-#: Module-level SourcedValues: 26 from the raw-mirror branch plus 19 the loaders add.
-SOURCED_VALUE_COUNT = 45
+#: Module-level SourcedValues: 26 from the raw-mirror branch, 19 the loaders add, and
+#: the 3 Houser 2015 attribution quotes (#771).
+SOURCED_VALUE_COUNT = 26 + 19 + 3
 
 
 def test_every_sourced_value_is_collected_by_name() -> None:

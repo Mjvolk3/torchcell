@@ -68,6 +68,25 @@ Mg2+ concentrations", one per phase (``REFERENCE_CONDITIONS``). Each record's re
 is that condition in the record's phase (the late-stationary one applies the same rule to
 the third phase), with the phenotype averaged over the condition's samples.
 
+PER-RECORD ATTRIBUTION (#771). 27 of the 152 mRNA samples and 27 of the 105 protein
+samples are not this paper's measurements: they are Houser 2015's glucose time course,
+released again here. Caglar says so three times, and each sentence is quoted from the
+pinned OCR: the Results ("Results from one of these conditions, long-term glucose
+starvation, have been presented previously10", ``HOUSER2015_DEFERRAL``), reference 10
+itself (``HOUSER2015_CITATION``), and the Data availability sentence, which splits the
+deposits along the same line ("accession GSE67402 for the glucose time-course previously
+published10, accession GSE94117 for all other experiments", ``HOUSER2015_DEPOSITS``).
+Every record therefore stores the ``Publication`` of the study that FIRST reported its
+sample (``SOURCE_STUDIES``, ``attribute_sample``), which is the Borchert 2024 pattern
+already set on this program; the split is Table S1's own ``experiment`` column, and the
+ledger goes to ``preprocess/source_study_attribution.json``.
+
+HOUSER 2015 IS NOT MIRRORED (``HOUSER2015_IS_MIRRORED``), has no raw mirror and no
+loader, so nothing in the graph stores those measurements twice and the paper itself is
+unread here: the attribution is sourced entirely from Caglar's own citation of it. That
+citation gives journal, volume and article id but no DOI, so ``HOUSER2015_DOI`` records
+how the DOI string was fixed and the check that it names the right record.
+
 The flux arm (Table S4) is not loaded: it holds flux RATIOS, which neither
 ``MetabolitePhenotype`` (pool sizes) nor ``FluxPhenotype`` (signed net flux) can store.
 """
@@ -1823,9 +1842,170 @@ def protein_reference_phenotype(
     )
 
 
-def publication() -> Publication:
-    """The paper every record cites."""
-    return Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
+# --------------------------------------------------------------------------- #
+# Source studies (#771): which paper FIRST reported each sample
+#
+# 27 of the 152 mRNA samples and 27 of the 105 protein samples are Houser 2015's
+# glucose time course, released again here. Caglar says so in three places, all quoted
+# below from the sha256-pinned OCR, and splits its deposits to match. Houser 2015 is NOT
+# mirrored, so there is no second copy in the graph and this is an attribution question
+# rather than a de-duplication one: before this, those 54 records asserted Caglar 2017
+# as the source of measurements Houser 2015 published. Each record now carries the
+# ``Publication`` of the study that first reported it, which is the Borchert 2024
+# pattern (``torchcell/datasets/pputida/borchert2024.py``, ``SOURCE_STUDIES`` +
+# ``attribute_sample``) already set on this program. No schema class changes.
+# --------------------------------------------------------------------------- #
+#: The Table S1 ``experiment`` value whose samples Houser 2015 first reported.
+HOUSER2015_EXPERIMENT = "glucose_time_course"
+#: Houser 2015's DOI. NOT stated by Caglar, which cites it by journal, volume and
+#: article id only (``HOUSER2015_CITATION``). PLOS mints DOIs as
+#: ``10.1371/journal.<journal code>.<article number>``, so the citation's "PLOS Comput
+#: Biol 11, e1004400" fixes this string; resolving it on 2026.10.09 by DOI content
+#: negotiation (``curl -LH 'Accept: application/vnd.citationstyles.csl+json'
+#: https://doi.org/10.1371/journal.pcbi.1004400``) returned title, container-title,
+#: volume and page equal to the citation's, which is the check that it is the right
+#: record rather than a guess.
+HOUSER2015_DOI = "10.1371/journal.pcbi.1004400"
+#: From the same resolution, confirmed by an esearch of PubMed on that DOI.
+HOUSER2015_PUBMED_ID = "26275208"
+#: Houser 2015 has NO mirror and no loader: no `torchcell-library` key, no
+#: `torchcell-raw` key, no dataset class. The attribution is therefore sourced entirely
+#: from Caglar's own citation of it, and the paper itself is unread here.
+HOUSER2015_IS_MIRRORED = False
+
+HOUSER2015_DEFERRAL = _paper(
+    HOUSER2015_EXPERIMENT,
+    "Results from one of these conditions, long-term glucose starvation, have been "
+    "presented previously10.",
+    page="Results, Experimental design and data collection",
+    note="reference 10 is Houser 2015 (HOUSER2015_CITATION). 'long-term glucose "
+    "starvation' is Table S1's experiment == 'glucose_time_course', the 27 samples "
+    "that appear as columns of BOTH Table S2 (mRNA) and Table S3 (protein); those 54 "
+    "records are attributed to Houser 2015 rather than to this paper (#771)",
+)
+HOUSER2015_CITATION = _paper(
+    HOUSER2015_DOI,
+    "Houser, J. R. et al. Controlled Measurement and Comparative Analysis of Cellular "
+    "Components in E. coli Reveals Broad Regulatory Changes in Response to Glucose "
+    "Starvation. PLOS Comput Biol 11, e1004400 (2015).",
+    page="References, reference 10",
+    note="the full identity of the originating study, as this paper gives it. It "
+    "carries no DOI, so HOUSER2015_DOI records how that string was fixed and checked",
+)
+HOUSER2015_DEPOSITS = _paper(
+    ("GSE67402", "PXD002140"),
+    "accession GSE67402 for the glucose time-course previously published10, accession "
+    "GSE94117 for all other experiments",
+    page="Data availability",
+    note="the authors split the deposits along the same line: GSE67402 and PXD002140 "
+    "are the glucose time course's earlier accessions, GSE94117 and PXD005721 this "
+    "paper's own. The proteomics half reads 'accession PXD002140 for the glucose "
+    "time-course previously published10, accession PXD005721 for all other "
+    "experiments'",
+)
+
+SourceStudyKey = Literal["caglar2017", "houser2015"]
+
+
+class SourceStudy(BaseModel):
+    """A paper a sample of this release is attributed to."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    key: SourceStudyKey
+    citation: str = Field(description="how the release itself names the study")
+    doi: str
+    pubmed_id: str | None = None
+    title: str | None = Field(
+        default=None, description="verbatim title, for a study with no mirror key"
+    )
+    citation_key: str | None = Field(
+        default=None, description="the mirrored library key, None when unmirrored"
+    )
+    is_mirrored: bool
+
+    @property
+    def publication(self) -> Publication:
+        """The ``Publication`` every record attributed to this study stores."""
+        return Publication(
+            doi=self.doi,
+            doi_url=f"https://doi.org/{self.doi}",
+            pubmed_id=self.pubmed_id,
+            pubmed_url=(
+                None
+                if self.pubmed_id is None
+                else f"https://pubmed.ncbi.nlm.nih.gov/{self.pubmed_id}/"
+            ),
+        )
+
+
+SOURCE_STUDIES: dict[SourceStudyKey, SourceStudy] = {
+    "caglar2017": SourceStudy(
+        key="caglar2017",
+        citation="Caglar MU et al. 2017, Sci Rep 7:45303 (this release)",
+        doi=PAPER_DOI,
+        citation_key=CITATION_KEY,
+        is_mirrored=True,
+    ),
+    "houser2015": SourceStudy(
+        key="houser2015",
+        citation=HOUSER2015_CITATION.quote,
+        doi=HOUSER2015_DOI,
+        pubmed_id=HOUSER2015_PUBMED_ID,
+        title="Controlled Measurement and Comparative Analysis of Cellular Components "
+        "in E. coli Reveals Broad Regulatory Changes in Response to Glucose Starvation",
+        citation_key=None,
+        is_mirrored=HOUSER2015_IS_MIRRORED,
+    ),
+}
+
+
+class SampleAttribution(BaseModel):
+    """Which paper first reported one sample, and on what evidence."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    sample: str
+    experiment: str
+    study: SourceStudyKey
+    doi: str
+    evidence: tuple[str, ...] = Field(
+        description="module-level SourcedValue names whose quotes carry this attribution"
+    )
+
+
+#: The ``SourcedValue`` names that carry the Houser 2015 attribution.
+HOUSER2015_EVIDENCE: tuple[str, ...] = (
+    "HOUSER2015_DEFERRAL",
+    "HOUSER2015_CITATION",
+    "HOUSER2015_DEPOSITS",
+)
+
+
+def attribute_sample(row: SampleRow) -> SampleAttribution:
+    """The study that first reported ``row``'s sample.
+
+    The split is Table S1's own ``experiment`` column: ``glucose_time_course`` is the
+    condition Caglar says was "presented previously", everything else is this paper's.
+    """
+    study: SourceStudyKey = (
+        "houser2015" if row.experiment == HOUSER2015_EXPERIMENT else "caglar2017"
+    )
+    return SampleAttribution(
+        sample=row.sample,
+        experiment=row.experiment,
+        study=study,
+        doi=SOURCE_STUDIES[study].doi,
+        evidence=HOUSER2015_EVIDENCE if study == "houser2015" else (),
+    )
+
+
+def source_publications(rows: Sequence[SampleRow]) -> dict[str, Publication]:
+    """One ``Publication`` per sample id, keyed by the study that first reported it."""
+    return {
+        row.sample: SOURCE_STUDIES[attribute_sample(row).study].publication
+        for row in rows
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -1975,6 +2155,32 @@ def replicate_groups(rows: Sequence[SampleRow]) -> list[ReplicateGroup]:
         group.batches.append(row.batch)
         group.experiments.append(row.experiment)
     return [groups[key] for key in sorted(groups)]
+
+
+def _attribution_ledger(rows: Sequence[SampleRow]) -> dict[str, Any]:
+    """The per-sample source-study ledger this build wrote (#771).
+
+    Named rather than inlined so the attribution is auditable from the store without
+    re-reading Table S1: it carries each study's identity, whether we mirror it, the
+    per-study sample counts, and one row per sample naming its study and the quotes the
+    attribution rests on.
+    """
+    attributions = [attribute_sample(row) for row in rows]
+    return {
+        "issue": "771",
+        "rule": (
+            "a sample whose Table S1 experiment column is "
+            f"{HOUSER2015_EXPERIMENT!r} was first reported by Houser 2015; every other "
+            "sample is this release's own"
+        ),
+        "studies": {
+            key: study.model_dump(mode="json") for key, study in SOURCE_STUDIES.items()
+        },
+        "samples_by_study": dict(
+            sorted(Counter(a.study for a in attributions).items())
+        ),
+        "samples": [a.model_dump(mode="json") for a in attributions],
+    }
 
 
 def _write_json(directory: str, name: str, payload: Any) -> None:
@@ -2224,7 +2430,9 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
         }
         environment_of = environment_cache()
         genotype = Genotype(perturbations=[])
-        pub = publication()
+        # #771: the record cites the study that FIRST reported its sample, which for
+        # the 27 glucose-time-course samples is Houser 2015, not this paper.
+        pub_of = source_publications(rows)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(rows):
@@ -2237,7 +2445,10 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
                 txn.put(
                     f"{index}".encode(),
                     self._intern_record(
-                        experiment, references[row.growth_phase], pub, itxn
+                        experiment,
+                        references[row.growth_phase],
+                        pub_of[row.sample],
+                        itxn,
                     ),
                 )
         env.close()
@@ -2266,6 +2477,7 @@ class RnaseqCaglar2017Dataset(ExperimentDataset):
             "replicate_groups.json",
             [g.model_dump(mode="json") for g in replicate_groups(rows)],
         )
+        _write_json(out, "source_study_attribution.json", _attribution_ledger(rows))
         _write_model(
             out,
             "build_accounting.json",
@@ -2408,7 +2620,8 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
         }
         environment_of = environment_cache()
         genotype = Genotype(perturbations=[])
-        pub = publication()
+        # #771: see the RNA-seq family; the same 27 samples are Houser 2015's here.
+        pub_of = source_publications(rows)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for index, row in enumerate(rows):
@@ -2423,7 +2636,10 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
                 txn.put(
                     f"{index}".encode(),
                     self._intern_record(
-                        experiment, references[row.growth_phase], pub, itxn
+                        experiment,
+                        references[row.growth_phase],
+                        pub_of[row.sample],
+                        itxn,
                     ),
                 )
         env.close()
@@ -2452,6 +2668,7 @@ class ProteomeCaglar2017Dataset(ExperimentDataset):
             "replicate_groups.json",
             [g.model_dump(mode="json") for g in replicate_groups(rows)],
         )
+        _write_json(out, "source_study_attribution.json", _attribution_ledger(rows))
         _write_model(
             out,
             "build_accounting.json",

@@ -573,3 +573,81 @@ that condition's replicate curves, which equals the harmonic mean of the per-rep
 doubling times exactly when the replicates share a time grid. Either way the two tables are
 two fits of one OD600 experiment, so the duplication is at the level of the experiment even
 though 14 of 19 numbers differ; the per-replicate table is the finer grain.
+
+## 2026.10.09 - #771: each record cites the study that first reported its sample
+
+27 of the 152 mRNA records and 27 of the 105 protein records are Houser 2015's glucose
+time course, released again here. Before this, all 257 records asserted Caglar 2017 as
+the source, including the 54 whose measurements Houser 2015 published.
+
+**Decision: per-record attribution (option 1 of #771), the Borchert 2024 pattern.** Each
+record now stores the `Publication` of the study that FIRST reported its sample, exactly
+as `torchcell/datasets/pputida/borchert2024.py` does for the three rows its compendium
+subsumes (`SOURCE_STUDIES` + `attribute_sample`). Options 2 (mirror Houser and apply the
+superset rule) and 3 (leave it) are not taken: 2 is work that only pays off if Houser is
+loaded separately, and 3 leaves a false provenance claim in the store.
+
+No schema class changes, no new field: `publication` is already per record, and
+`scripts/schema_impact_check.py --base origin/main` reports **no schema contract
+changes**. The experiment content id is `sha256` of the EXPERIMENT dump only, so the ids
+of all 257 records are unchanged; what changes is which publication node each record
+points at. That is still a changed served record, so it needs the full KG rebuild rather
+than incremental admission.
+
+### The split rule, and the three quotes it rests on
+
+The rule is Table S1's own `experiment` column: `glucose_time_course` is Houser 2015's,
+everything else is this paper's. All three quotes are re-read from `paper.md` at the
+pinned sha256 `0878d5e7d49bcea4570aa2db225318a8469f4755645f1ddf73563effe7b3109b` and
+found verbatim (a hash pin does not make a transcription verbatim, #758).
+
+| constant | page | quote |
+|---|---|---|
+| `HOUSER2015_DEFERRAL` | Results, Experimental design and data collection | "Results from one of these conditions, long-term glucose starvation, have been presented previously10." |
+| `HOUSER2015_CITATION` | References, reference 10 | "Houser, J. R. et al. Controlled Measurement and Comparative Analysis of Cellular Components in E. coli Reveals Broad Regulatory Changes in Response to Glucose Starvation. PLOS Comput Biol 11, e1004400 (2015)." |
+| `HOUSER2015_DEPOSITS` | Data availability | "accession GSE67402 for the glucose time-course previously published10, accession GSE94117 for all other experiments" |
+
+### Houser 2015 is unmirrored, and the DOI is derived rather than quoted
+
+Measured: no `torchcell-library` key and no `torchcell-raw` key for Houser 2015 exists on
+disk, and there is no loader. So nothing in the graph stores those measurements twice and
+the paper itself is unread here; the attribution is sourced entirely from Caglar's own
+citation of it, which is what #771 asked for in that case.
+
+That citation gives journal, volume and article id but NO DOI. `HOUSER2015_DOI` is
+`10.1371/journal.pcbi.1004400`, fixed from the citation because PLOS mints DOIs as
+`10.1371/journal.<journal code>.<article number>`, then CHECKED by resolving it on
+2026.10.09 (`curl -LH 'Accept: application/vnd.citationstyles.csl+json'
+https://doi.org/10.1371/journal.pcbi.1004400`), which returned title, container-title
+`PLOS Computational Biology`, volume `11` and page `e1004400` equal to the citation's.
+`HOUSER2015_PUBMED_ID` is `26275208`, from an esearch of PubMed on that DOI. A test pins
+that the DOI's article number is the article id the quote prints, so a mis-typed DOI
+cannot pass silently.
+
+### Measured: the released overlap and the stores after the rebuild
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/caglar2017_houser2015_attribution.py`
+Results: `experiments/036-dataset-fixes-before-kg-build/results/caglar2017_houser2015_attribution.json`
+
+Table S1 holds 171 rows over 10 `experiment` values. `glucose_time_course` is 27 samples,
+and all 27 are columns of BOTH Table S2 (152 sample columns) and Table S3 (105). A
+separate 9 rows, `glucose_time_course (repeated between MURI 97- 105)` (MURI_007 to
+MURI_015), are columns of neither table and so are not records of either family.
+
+| dataset | records | cite Caglar 2017 (`10.1038/srep45303`) | cite Houser 2015 (`10.1371/journal.pcbi.1004400`) |
+|---|---|---|---|
+| `RnaseqCaglar2017Dataset` | 152 | 125 | **27** |
+| `ProteomeCaglar2017Dataset` | 105 | 78 | **27** |
+
+Both dev LMDBs were rebuilt with `--retire-existing`: 152 and 105 records before and
+after, so the attribution moves no record. Each build also writes
+`preprocess/source_study_attribution.json`, holding the rule, both studies' identities
+(with `is_mirrored`), the per-study counts and one row per sample, so the attribution is
+auditable from the store without re-reading Table S1.
+
+### What this changes about the duplication risk
+
+It does not remove it: if Houser 2015 is ever mirrored and loaded, those 27 plus 27
+samples become a real duplication and the superset rule applies, the same shape as #760.
+The attribution is what makes that detectable, because a Houser 2015 admission check can
+now ask which records already name it.

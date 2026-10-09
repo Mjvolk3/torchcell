@@ -489,7 +489,10 @@ def test_server_busy_on_every_attempt_aborts(net_factory: Any) -> None:
     url = name_property_url("a")
     net = net_factory({url: [BUSY] * 7})
     with pytest.raises(
-        RuntimeError, match=re.escape(f"PubChem stayed busy after 6 retries for {url}")
+        RuntimeError,
+        match=re.escape(
+            f"PubChem stayed busy after 7 busy and 0 rate-limited retries for {url}"
+        ),
     ):
         PubChemClient(None).property_by_name("a")
     assert len(net.requests) == 7
@@ -509,7 +512,8 @@ def test_http_429_with_an_html_body_backs_off_then_succeeds(net_factory: Any) ->
 
     Measured on the full pass of 2026.10.09: at 4 requests/s PubChem answered 429 with
     this HTML body partway through the name lookups, which the JSON-only reader could
-    not parse. It takes the same growing backoff as ``PUGREST.ServerBusy``.
+    not parse. The block is per window rather than per request, so it takes a FLAT
+    minute rather than the ``PUGREST.ServerBusy`` schedule's growing seconds.
     """
     url = name_property_url("a")
     net = net_factory(
@@ -524,12 +528,12 @@ def test_http_429_with_an_html_body_backs_off_then_succeeds(net_factory: Any) ->
     assert PubChemClient(None).property_by_name("a") == PubChemProperty.model_validate(
         _prop(1, "A", "K")
     )
-    assert net.sleeps == [5.0, 10.0]
-    assert [r["at"] for r in net.requests] == [1000.0, 1005.0, 1015.0]
+    assert net.sleeps == [60.0, 60.0]
+    assert [r["at"] for r in net.requests] == [1000.0, 1060.0, 1120.0]
 
 
 def test_http_429_honors_an_integer_retry_after(net_factory: Any) -> None:
-    """A numeric ``Retry-After`` replaces the computed backoff for that attempt."""
+    """A numeric ``Retry-After`` replaces the flat minute for that attempt."""
     url = name_property_url("a")
     net = net_factory(
         {
@@ -543,7 +547,7 @@ def test_http_429_honors_an_integer_retry_after(net_factory: Any) -> None:
     assert net.sleeps == [7.0]
 
 
-def test_http_429_with_a_date_retry_after_uses_the_computed_backoff(
+def test_http_429_with_a_date_retry_after_uses_the_flat_minute(
     net_factory: Any,
 ) -> None:
     """``Retry-After`` may be an HTTP date; only an all-digit value is a seconds count."""
@@ -561,19 +565,28 @@ def test_http_429_with_a_date_retry_after_uses_the_computed_backoff(
         }
     )
     PubChemClient(None).property_by_name("a")
-    assert net.sleeps == [5.0]
+    assert net.sleeps == [60.0]
 
 
-def test_http_429_on_every_attempt_aborts_as_a_throttle(net_factory: Any) -> None:
-    """Seven 429s abort with the same message the JSON throttle aborts with."""
+def test_http_429_on_every_attempt_aborts_after_its_own_budget(
+    net_factory: Any,
+) -> None:
+    """The 429 budget is separate: 21 tries of a flat minute, then abort.
+
+    A long block must not consume the ``ServerBusy`` budget, so the abort message names
+    both counters and the busy one is still 0.
+    """
     url = name_property_url("a")
-    net = net_factory({url: [_Response(raw=TOO_MANY_HTML, status=429)] * 7})
+    net = net_factory({url: [_Response(raw=TOO_MANY_HTML, status=429)] * 21})
     with pytest.raises(
-        RuntimeError, match=re.escape(f"PubChem stayed busy after 6 retries for {url}")
+        RuntimeError,
+        match=re.escape(
+            f"PubChem stayed busy after 0 busy and 21 rate-limited retries for {url}"
+        ),
     ):
         PubChemClient(None).property_by_name("a")
-    assert len(net.requests) == 7
-    assert net.sleeps == [5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0]
+    assert len(net.requests) == 21
+    assert net.sleeps == [60.0] * 21
 
 
 def test_a_non_json_body_on_another_status_aborts_with_the_status(

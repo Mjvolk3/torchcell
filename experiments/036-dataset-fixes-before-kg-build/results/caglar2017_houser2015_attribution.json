@@ -1,0 +1,99 @@
+{
+  "released_overlap": {
+    "table_s1_rows": 171,
+    "experiment_values": {
+      "MgSO4_stress_high": 36,
+      "MgSO4_stress_low": 30,
+      "NaCl_stress": 24,
+      "gluconate_growth": 6,
+      "glucose_time_course": 27,
+      "glucose_time_course (repeated between MURI 97- 105)": 9,
+      "glycerol_time_course": 27,
+      "lactate_growth": 6,
+      "pilot_24_hour": 3,
+      "pilot_mid-log": 3
+    },
+    "glucose_time_course_samples": 27,
+    "repeated_time_course_samples": [
+      "MURI_007",
+      "MURI_008",
+      "MURI_009",
+      "MURI_010",
+      "MURI_011",
+      "MURI_012",
+      "MURI_013",
+      "MURI_014",
+      "MURI_015"
+    ],
+    "table_s2": {
+      "sample_columns": 152,
+      "glucose_time_course_columns": 27
+    },
+    "table_s3": {
+      "sample_columns": 105,
+      "glucose_time_course_columns": 27
+    }
+  },
+  "dev_stores": {
+    "RnaseqCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_caglar2017",
+      "records": 152,
+      "records_by_publication_doi": {
+        "10.1038/srep45303": 125,
+        "10.1371/journal.pcbi.1004400": 27
+      },
+      "ledger_samples_by_study": {
+        "caglar2017": 125,
+        "houser2015": 27
+      },
+      "ledger_rows": 152
+    },
+    "ProteomeCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_caglar2017",
+      "records": 105,
+      "records_by_publication_doi": {
+        "10.1038/srep45303": 78,
+        "10.1371/journal.pcbi.1004400": 27
+      },
+      "ledger_samples_by_study": {
+        "caglar2017": 78,
+        "houser2015": 27
+      },
+      "ledger_rows": 105
+    }
+  },
+  "attribution_quotes": {
+    "HOUSER2015_DEFERRAL": {
+      "sha256_matches_the_pin": true,
+      "quote_found_verbatim": true,
+      "page": "Results, Experimental design and data collection",
+      "quote": "Results from one of these conditions, long-term glucose starvation, have been presented previously10."
+    },
+    "HOUSER2015_CITATION": {
+      "sha256_matches_the_pin": true,
+      "quote_found_verbatim": true,
+      "page": "References, reference 10",
+      "quote": "Houser, J. R. et al. Controlled Measurement and Comparative Analysis of Cellular Components in E. coli Reveals Broad Regulatory Changes in Response to Glucose Starvation. PLOS Comput Biol 11, e1004400 (2015)."
+    },
+    "HOUSER2015_DEPOSITS": {
+      "sha256_matches_the_pin": true,
+      "quote_found_verbatim": true,
+      "page": "Data availability",
+      "quote": "accession GSE67402 for the glucose time-course previously published10, accession GSE94117 for all other experiments"
+    }
+  },
+  "houser2015": {
+    "doi": "10.1371/journal.pcbi.1004400",
+    "pubmed_id": "26275208",
+    "is_mirrored_flag": false,
+    "library_keys_on_disk": [],
+    "raw_keys_on_disk": []
+  },
+  "verdict": {
+    "every_glucose_time_course_sample_is_in_both_omics_tables": true,
+    "every_record_cites_one_of_the_two_studies": true,
+    "the_houser_record_count_equals_the_table_s1_split": true,
+    "every_attribution_quote_is_verbatim_in_the_pinned_bytes": true,
+    "houser2015_is_still_unmirrored": true
+  }
+}

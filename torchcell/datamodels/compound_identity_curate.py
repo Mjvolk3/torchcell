@@ -88,6 +88,11 @@ _BUSY_BACKOFF_S = 5.0
 #: PubChem's request-rate throttle answers with this status and an HTML body (#676),
 #: unlike the dynamic throttle's HTTP 200 plus a ``PUGREST.ServerBusy`` JSON fault.
 _TOO_MANY_REQUESTS = 429
+#: The 429 block is per window, not per request, so it takes a flat minute rather than
+#: the busy schedule's growing seconds, and many more tries: measured 2026.10.09, the
+#: block outlasted the busy schedule's 105 s ceiling and then cleared.
+_RATE_LIMIT_BACKOFF_S = 60.0
+_MAX_RATE_LIMIT_RETRIES = 20
 _CID_BATCH = 100
 _SCHEMA_VERSION = 2
 _CHEBI_RE = re.compile(r"\bCHEBI:\d+\b")
@@ -273,10 +278,16 @@ class PubChemClient:
         PubChem has TWO throttles and they answer differently (#676, measured on a full
         pass 2026.10.09): the dynamic one answers HTTP 200 with a JSON
         ``PUGREST.ServerBusy`` fault, while the request-rate one answers **HTTP 429 with
-        an HTML body**, ``<!doctype html>...429 Too Many Requests``. Both are the same
-        signal, so a 429 takes the same backoff; it honors ``Retry-After`` when the
-        response carries one. A non-JSON body on any OTHER status aborts with the status
-        and the first bytes, because that is a server fault rather than a throttle.
+        an HTML body**, ``<!doctype html>...429 Too Many Requests``, carrying no
+        ``Retry-After`` and no ``X-Throttling-Control``. The 429 is a per-window block
+        rather than a momentary busy signal, so it has its OWN, flatter and far more
+        patient schedule (:data:`_RATE_LIMIT_BACKOFF_S` x
+        :data:`_MAX_RATE_LIMIT_RETRIES`): measured, it survived the 105 s the
+        ``ServerBusy`` schedule allows and then cleared, and the two counters are
+        separate so a long block does not consume the busy budget. A numeric
+        ``Retry-After`` is honored when one is sent. A non-JSON body on any OTHER status
+        aborts with the status and the first bytes, because that is a server fault
+        rather than a throttle.
         """
         request = urllib.request.Request(
             url,
@@ -290,7 +301,9 @@ class PubChemClient:
                 ),
             },
         )
-        for attempt in range(_MAX_BUSY_RETRIES + 1):
+        busy = 0
+        rate_limited = 0
+        while busy <= _MAX_BUSY_RETRIES and rate_limited <= _MAX_RATE_LIMIT_RETRIES:
             self._wait()
             with self._opener.open(request, timeout=60) as response:
                 status = int(response.status)
@@ -300,8 +313,9 @@ class PubChemClient:
                 time.sleep(
                     float(retry_after)
                     if retry_after is not None and retry_after.isdigit()
-                    else _BUSY_BACKOFF_S * (attempt + 1)
+                    else _RATE_LIMIT_BACKOFF_S
                 )
+                rate_limited += 1
                 continue
             text = raw.decode("utf-8")
             if not text.lstrip().startswith(("{", "[")):
@@ -317,9 +331,11 @@ class PubChemClient:
                 raise RuntimeError(
                     f"PubChem fault {code} for {url}: {payload['Fault']}"
                 )
-            time.sleep(_BUSY_BACKOFF_S * (attempt + 1))
+            busy += 1
+            time.sleep(_BUSY_BACKOFF_S * busy)
         raise RuntimeError(
-            f"PubChem stayed busy after {_MAX_BUSY_RETRIES} retries for {url}"
+            f"PubChem stayed busy after {busy} busy and {rate_limited} rate-limited "
+            f"retries for {url}"
         )
 
     def flush(self) -> None:

@@ -17,7 +17,12 @@ ontology, plus the E. coli B REL606 set the Caglar 2017 row needs:
 - ``go_release_2026-08-05``: ``go-basic.obo`` from the dated GO release;
 - ``ecoli_B_REL606_ASM1798v1``: NCBI GCA_000017985.1 and GCF_000017985.1 with the RefSeq
   GAF. No GO Consortium or EBI GOA file covers REL606, so its GO is the RefSeq GFF's
-  inline ``Ontology_term`` rows (a member already).
+  inline ``Ontology_term`` rows (a member already);
+- ``ecoli_K12_W3110_ASM1024v1``: NCBI GCA_000010245.1 and GCF_000010245.2 with the RefSeq
+  GAF, for the Teteneva 2024 row. Its GCF ``_assembly_report.txt`` is a member too,
+  which no other set needs, because the GCA report still names the 2006 RefSeq release.
+  The GCA flat file carries NO ``locus_tag``, so this set is deposited but is not yet
+  readable by ``BacterialGenome`` (``torchcell/datasets/ecoli/teteneva2024.py``).
 
 ``--set`` (repeatable) provisions only the named sets; without it every set is
 provisioned. A set whose manifest already exists in the tier stops the run, so adding a
@@ -74,6 +79,7 @@ from torchcell.sequence.genome.registry import (
     ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
+    ECOLI_K12_W3110,
     GO_RELEASE_20260805,
     MANIFEST_FILENAME,
     PPUTIDA_KT2440,
@@ -266,6 +272,49 @@ PLAN_DIGESTS: dict[str, tuple[int, str]] = {
         158466,
         "4cbd6f5767d0f8651346891af174eaf9fd3353c25b6916fdee1f3d6c399374b1",
     ),
+    # E. coli K-12 W3110 (ASM1024v1), measured on 2026-10-09 for the Teteneva 2024 row:
+    # ``W3110_TIER_ADDITION`` in torchcell/datasets/ecoli/teteneva2024.py. Every md5
+    # below was matched against the directory's own md5checksums.txt on retrieval.
+    "GCA_000010245.1_ASM1024v1_genomic.gbff.gz": (
+        3286152,
+        "7e22368bc1783fe3b56b07a7196dd0abe3104ef88cd795ad0970ab546418a157",
+    ),
+    "GCA_000010245.1_ASM1024v1_genomic.fna.gz": (
+        1381336,
+        "57709b8e4bf6a66951db1779bb61a75fbca2db416aa3a1ba245365fdebff93a0",
+    ),
+    "GCA_000010245.1_ASM1024v1_genomic.gff.gz": (
+        287541,
+        "8aa0069b3715239d16103653b7becd27c5e59676f711d20854f43882c033bb6e",
+    ),
+    "GCA_000010245.1_ASM1024v1_protein.faa.gz": (
+        892689,
+        "dfb59618a7c2c993859ad6b05c9c613a9ae1f7e2605cc7298ac286652ad33ff5",
+    ),
+    "GCA_000010245.1_ASM1024v1_feature_table.txt.gz": (
+        167217,
+        "21b04994e343fa3bf892492f70180bc215110f4016ad463a47acce6a24112ec8",
+    ),
+    "GCA_000010245.1_ASM1024v1_assembly_report.txt": (
+        1283,
+        "d3f6d0fc9bd9e8ef9479c9554239e8618a7d0bc464c362304b25385e646ce267",
+    ),
+    "GCF_000010245.2_ASM1024v1_genomic.gbff.gz": (
+        3452629,
+        "3edf6662a5aac6a28f3550622f66328e88ae775da117cc0004eedb1f066b991e",
+    ),
+    "GCF_000010245.2_ASM1024v1_genomic.gff.gz": (
+        435483,
+        "1501e3787567e224ccd03e81b3467f00e1bad7db719b1e41db5200d46edce4f3",
+    ),
+    "GCF_000010245.2_ASM1024v1_gene_ontology.gaf.gz": (
+        156751,
+        "cd8de975cf31e31145c1254f6bf4f393ec275f56e1dba706f850bf1714b611a8",
+    ),
+    "GCF_000010245.2_ASM1024v1_assembly_report.txt": (
+        1200,
+        "98015272fe4acd3171174109f666137bd310885f580100e11c2ed1ae132b8c1c",
+    ),
 }
 
 #: Header keys worth recording from the annotation and ontology files themselves.
@@ -334,7 +383,7 @@ def ncbi_members(name: str, suffixes: dict[str, str]) -> list[MemberSpec]:
 
 
 def set_specs() -> list[SetSpec]:
-    """The four sets of plan section 1, then REL606, in deposit order."""
+    """The four sets of plan section 1, then REL606 and W3110, in deposit order."""
     go_ref = (
         f"The GO ontology is pinned by set id {GO_RELEASE_20260805} (go-basic.obo), "
         "not copied here."
@@ -343,6 +392,7 @@ def set_specs() -> list[SetSpec]:
     bw_gca, bw_gcf = "GCA_000750555.1_ASM75055v1", "GCF_000750555.1_ASM75055v1"
     kt_gca, kt_gcf = "GCA_000007565.2_ASM756v2", "GCF_000007565.2_ASM756v2"
     rel_gca, rel_gcf = "GCA_000017985.1_ASM1798v1", "GCF_000017985.1_ASM1798v1"
+    w3110_gca, w3110_gcf = "GCA_000010245.1_ASM1024v1", "GCF_000010245.2_ASM1024v1"
     ecoli_gaf = f"{GO_RELEASE_URL}/annotations/gaf/ECOLI-uniprot.gaf.gz"
     kt_goa = f"{EBI_GOA_PROTEOMES}/109.P_putida_KT2440.goa"
     gaf_with_refseq = {**GCF_SUFFIXES, NCBI_GAF_SUFFIX: ROLE_ANNOTATION}
@@ -461,6 +511,43 @@ def set_specs() -> list[SetSpec]:
                 "inline Ontology_term rows through old_locus_tag. NCBI's WP_-keyed GAF "
                 "is a member because the GCF listing names it; it carries no locus "
                 "tag. " + go_ref
+            ),
+        ),
+        SetSpec(
+            assembly_set=ECOLI_K12_W3110,
+            organism="Escherichia coli",
+            strain_or_population="K-12 W3110",
+            source="NCBI",
+            release="ASM1024v1",
+            source_url=ncbi_dir(w3110_gca),
+            members=[
+                *ncbi_members(w3110_gca, GCA_SUFFIXES),
+                *ncbi_members(
+                    w3110_gcf, {**gaf_with_refseq, "_assembly_report.txt": ROLE_INDEX}
+                ),
+            ],
+            notes=(
+                "E. coli K-12 W3110, the host of the Teteneva 2024 lake-water RB-TnSeq "
+                "row; a third K-12 strain, so neither MG1655's b-numbers nor "
+                "BW25113's BW25113_ numbers are its locus tags. GenBank (GCA) and "
+                "RefSeq (GCF) annotations of one sequence, AP009048.1 / NC_007779.1. "
+                "The FASTA is deposited once, from GCA. TWO deviations from the other "
+                "sets, both measured on these bytes on 2026-10-09 and neither "
+                "worked around. (1) The GCA flat file carries 4,444 gene features and "
+                "NOT ONE locus_tag: the 2006 DDBJ/NIG annotation keys genes by symbol "
+                "and carries the ECK:JW:b crosswalk as a /note on 3,730 CDS features "
+                "(3,730 distinct JW numbers, 3,726 distinct b-numbers), so "
+                "read_genbank refuses it ('a gene feature at [189:255](+) has no "
+                "locus_tag') and the GenBank-first ingest does not apply to this set. "
+                "The GCF flat file parses, 4,531 loci on NC_007779.1 with Y75_RS "
+                "locus tags and Y75_p old_locus_tags on 4,254 of them, and its GFF "
+                "carries 2,298 Ontology_term rows, so a RefSeq-primary route exists; "
+                "which route this set is read through is an OPEN decision, not "
+                "settled here. (2) The GCF _assembly_report.txt is a member, which no "
+                "other set needs: the GCA report still names the 2006 RefSeq release "
+                "(GCF_000010245.1, RefSeq-Accn AC_000091.1) while the current RefSeq "
+                "release is GCF_000010245.2 (RefSeq-Accn NC_007779.1), so the "
+                "accession PAIR can only be read off the GCF report. " + go_ref
             ),
         ),
     ]

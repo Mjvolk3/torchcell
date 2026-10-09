@@ -50,6 +50,16 @@ ECOLI_K12_BW25113 = "ecoli_K12_BW25113_ASM75055v1"
 #: locus tags. A B strain, not K-12, so neither K-12 set stands in for it. No GO
 #: Consortium or EBI GOA file covers it; its GO is the RefSeq GFF's inline terms.
 ECOLI_B_REL606 = "ecoli_B_REL606_ASM1798v1"
+#: E. coli K-12 W3110, NCBI assembly ASM1024v1 (GCA_000010245.1 / GCF_000010245.2,
+#: replicon AP009048.1 / NC_007779.1): a third K-12 strain, so neither MG1655's
+#: b-numbers nor BW25113's ``BW25113_`` numbers are its locus tags. Deposited for the
+#: Teteneva 2024 RB-TnSeq row, and NOT yet readable by ``BacterialGenome``: the GenBank
+#: member carries 4,444 gene features and NOT ONE ``locus_tag`` (the 2006 DDBJ/NIG
+#: annotation keys genes by symbol and carries ``ECK:JW:b`` crosswalk notes on the CDS),
+#: so the tier's GenBank-first ingest refuses it and the primary-annotation choice is
+#: open. ``ecoli_K12_W3110_ASM1024v1`` is therefore in no schema vocabulary yet; see
+#: ``torchcell/datasets/ecoli/teteneva2024.py``.
+ECOLI_K12_W3110 = "ecoli_K12_W3110_ASM1024v1"
 #: P. putida KT2440, NCBI assembly ASM756v2 (GCA_000007565.2 / GCF_000007565.2):
 #: ``PP_`` locus tags, plus the EBI GOA proteome file keyed to them.
 PPUTIDA_KT2440 = "pputida_KT2440_ASM756v2"

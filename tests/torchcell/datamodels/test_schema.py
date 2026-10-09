@@ -2346,6 +2346,8 @@ def test_gene_interaction_uncertainty_is_both_or_neither() -> None:
         ).gene_interaction_uncertainty
         == 0.05
     )
+
+
 # --------------------------------------------------------------------------- #
 # The round-2 bacterial leaves (#749, #792, #799) and the exposure dose.
 # --------------------------------------------------------------------------- #

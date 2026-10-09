@@ -779,16 +779,15 @@ def assert_conf_registered_and_declared(bacterial: Bacterial) -> None:
     # serves a segregant genotype
     assert "perturbation (chunked)" not in names
     assert "segregant genotype (chunked)" not in names
-    # a phage challenge is served as `phage perturbation` and NEVER beside
-    # `environment perturbation`: the served `_environment_perturbation_node` does not
-    # filter phages out, so a conf enabling both writes every phage twice under two
-    # labels on one content id (cell_adapter.py, above `_phage_perturbation_node_from`).
-    phage = bacterial.case.shape.phage
-    assert ("phage perturbation (chunked)" in names) is phage
+    # a phage challenge is served as `phage perturbation`, and since issue #756 the two
+    # environment-side node methods PARTITION the environment's perturbations, so a conf
+    # may enable both: each case pins exactly which lanes its conf enables, and the two
+    # phage confs here enable the phage lane alone because no record of theirs carries a
+    # non-phage environment perturbation.
+    assert ("phage perturbation (chunked)" in names) is bacterial.case.shape.phage
     assert ("environment perturbation (chunked)" in names) is (
         bacterial.case.shape.env_perturbation
     )
-    assert not (phage and bacterial.case.shape.env_perturbation)
 
 
 def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:
@@ -805,7 +804,6 @@ def assert_gate_resolves_own_files(bacterial: Bacterial) -> None:
 RECORDS = 200
 # Chunked node methods a conf enables only when the records carry that sub-object.
 ENV_PERTURBATION_NODE = "environment perturbation (chunked)"
-ENV_PERTURBATION_NODE_LABEL = "environment perturbation"
 PHAGE_NODE = "phage perturbation (chunked)"
 PHAGE_NODE_LABEL = "phage perturbation"
 OPTIONAL_FAMILIES = (
@@ -894,14 +892,14 @@ def _phage_bearing_view(dataset: Any) -> Any:
 def _phage_pair(adapter: Any, records: Any) -> list[Any]:
     """The phage and the environment-perturbation node method over the SAME records.
 
-    A phage conf exempts ``environment perturbation (chunked)`` from the left-off check,
-    and this pair is what stands in for it. The two methods must agree node for node by
-    id: equal ids prove the served method would emit nothing the phage class does not
-    already serve -- one content id written under two labels, which is the double write
-    the one-class rule forbids (issue #756) -- and nothing beyond it either, so the
-    exemption drops no perturbation the records carry. The phage node count is then
-    checked against the phage leaves read straight off the records, so a view that
-    carries none asserts that both methods emit nothing instead of passing vacuously.
+    The two lanes PARTITION the environment's perturbations since issue #756: the served
+    ``_environment_perturbation_node`` skips a ``PhagePerturbation`` and the phage method
+    emits only one. Run side by side on records that do carry a phage, the phage lane
+    emits it and the served lane emits nothing, which is what proves the one content id
+    is written under one label. Before the filter both lanes emitted the same ids, so
+    enabling both classes wrote every phage twice. The phage node count is checked
+    against the phage leaves read straight off the records, so a view that carries none
+    asserts that both methods emit nothing instead of passing vacuously.
 
     Returns the phage nodes.
     """
@@ -911,13 +909,11 @@ def _phage_pair(adapter: Any, records: Any) -> list[Any]:
         adapter._single_pass_methods = [(name, by_name[name])]
         ran[name] = adapter._all_chunked(records, SINGLE_PASS_NODES, inprocess=True)
     assert {n.get_label() for n in ran[PHAGE_NODE]} <= {PHAGE_NODE_LABEL}
-    assert {n.get_label() for n in ran[ENV_PERTURBATION_NODE]} <= {
-        ENV_PERTURBATION_NODE_LABEL
-    }
-    assert {n.get_id() for n in ran[ENV_PERTURBATION_NODE]} == {
-        n.get_id() for n in ran[PHAGE_NODE]
-    }
     assert len(ran[PHAGE_NODE]) == _phage_leaves(records)
+    # these two datasets carry NO non-phage environment perturbation, so the served lane
+    # is empty here; a dataset carrying both would enable both lanes and see each leaf
+    # exactly once, which `test_environment_node_identity.py` drives on a record
+    assert ran[ENV_PERTURBATION_NODE] == []
     return ran[PHAGE_NODE]
 
 
@@ -962,28 +958,25 @@ def assert_dev_store_graph(
     assert ("phage perturbation" in labels) is shape.phage
 
     # The converse: a sub-object family the conf leaves OFF is absent from the records,
-    # so the enable-list drops nothing they carry. `environment perturbation (chunked)`
-    # is exempt for a phage conf, and only there: that method does NOT filter phages
-    # out, so running it would re-emit the records' phages under the served label --
-    # which is the documented reason a conf enables one of the two classes and never
-    # both, not evidence that the phage conf drops anything. What the exemption leaves
-    # unproved, `_phage_pair` below proves instead, record for record.
+    # so the enable-list drops nothing they carry. A phage conf used to be exempted on
+    # `environment perturbation (chunked)`, because that method re-emitted the records'
+    # phages under the served label; since issue #756 it filters them, so the check runs
+    # unexempted on every family and a phage conf leaving the served lane off is held to
+    # the same standard as any other conf.
     enabled = {m["method_name"] for m in adapter.config.cell_adapter.node_methods}
-    overlapping = {ENV_PERTURBATION_NODE} if bacterial.case.shape.phage else set()
     left_off = [
         (name, method)
         for name, method in adapter.node_methods
-        if name in OPTIONAL_FAMILIES and name not in enabled | overlapping
+        if name in OPTIONAL_FAMILIES and name not in enabled
     ]
     adapter._single_pass_methods = left_off
     assert adapter._all_chunked(view, SINGLE_PASS_NODES, inprocess=True) == []
 
     if not bacterial.case.shape.phage:
         return
-    # The phage pair over the first records, which is where the
-    # `environment perturbation (chunked)` exemption above applies, and then over records
-    # that carry a phage by construction, which is what keeps the pair's property from
-    # being vacuous for a dataset whose leading records are unchallenged controls.
+    # The phage pair over the first records, and then over records that carry a phage by
+    # construction, which is what keeps the pair's property from being vacuous for a
+    # dataset whose leading records are unchallenged controls.
     _phage_pair(adapter, view)
     phage_nodes = _phage_pair(adapter, _phage_bearing_view(dataset))
     assert phage_nodes

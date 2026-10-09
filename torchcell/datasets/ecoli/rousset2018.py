@@ -29,14 +29,14 @@ RECORD = one (sgRNA x screen) ``BacterialEnvironmentResponseExperiment``:
 - ENVIRONMENT: the screen's own culture, which is one medium for all four screens: LB
   plus 1 microM aTc, 0.2% maltose and 5 mM CaCl2 at 37 C for 2 h, each record carrying
   exactly one ``PhagePerturbation`` at ``multiplicity_of_infection=1``. The aTc that
-  induces dCas9 is a COMPONENT of that medium, not an ``Environment.perturbation``: the
-  paper puts it there ("diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and
-  5 mM CaCl2" lists it beside the two components the medium already carries), and it is
-  constant across the dataset rather than the varied condition. That leaves the phage as
-  the only environment perturbation any record carries, which is what lets the adapter
-  conf enable ``phage perturbation`` and not ``environment perturbation``: the served
-  ``_environment_perturbation_node`` does not filter phages out, so a conf enabling both
-  would emit each phage twice under two labels on one id.
+  induces dCas9 is a COMPONENT of that medium, not an ``Environment.perturbation``,
+  because the paper's own recipes put it there, twice, beside the maltose and the CaCl2;
+  the full sourcing, including the one sentence that reads as a treatment instead, is on
+  ``_atc``. That leaves the phage as the only environment perturbation any record
+  carries, so the conf enables ``phage perturbation`` and not
+  ``environment perturbation``, which would emit nothing. Since issue #756 the two lanes
+  partition the environment's perturbations, so a conf may enable both and the
+  placement of aTc is not an adapter decision in either direction.
 - PHENOTYPE: ``EnvironmentResponsePhenotype`` with ``measurement_type=log2_ratio``. The
   reference carries 0.0, which is what no change in guide abundance is.
 
@@ -721,12 +721,33 @@ def _atc(
     """The anhydrotetracycline that induces dCas9, as a component of the medium.
 
     It is in the medium, not on ``Environment.perturbations``, because the paper puts it
-    there: "diluted 100-fold in LB containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2"
-    lists aTc beside the two components this medium already carries. It is also constant
-    across the dataset rather than the varied condition, so the environment axis would
-    hold a factor nothing in the dataset contrasts. The dose is stored rather than noted
-    because it is what switches the knockdown on, and because it is three orders of
-    magnitude above the 1 nM Cui 2018 used on the same cassette.
+    there. The Methods write aTc twice in recipe form, as an item of a medium's
+    composition beside components this medium already carries: "diluted 100-fold in LB
+    containing 1 microM aTc, 0.2% Maltose and 5 mM CaCl2" (High-throughput screens, the
+    very culture the sgRNA distributions are sampled from, ``PHAGE_SCREEN_MEDIUM``) and
+    "Strains were grown overnight and diluted 100-fold in LB medium containing 0.2%
+    maltose, 1 microM aTc, 5 mM CaCl2 and kanamycin" (Infection dynamics, paper.md line
+    210, sha256 46ea72979c7f11855477b557824fb62baa7a4937ae4787d930e706cd2b93db3f).
+
+    The paper ALSO writes it once as an event, in the sentence immediately before the
+    first of those: "dCas9 expression was induced by addition of 1 microM aTc (Acros
+    Organics) to trigger the silencing of the target genes" (``PHAGE_SCREEN_INDUCTION``,
+    kept beside the recipe quote so both readings are on the record). That sentence is
+    the initiating addition in the pre-infection outgrowth; every culture downstream of
+    it, including the one that is sampled, is described as a medium containing aTc. The
+    recipe reading is therefore the one that covers the stored records, and it is the
+    reading this loader follows.
+
+    Not a reason, a consequence: aTc is 1 microM in every record and in the reference, so
+    on the environment axis it would be a perturbation nothing in the dataset contrasts.
+    The adapter does not enter into it. Until issue #756 the served
+    ``_environment_perturbation_node`` emitted phages too, so a conf could enable either
+    the phage lane or the environment lane and not both; the two lanes now partition the
+    leaves, and this placement would be unchanged either way.
+
+    The dose is stored rather than noted because it is what switches the knockdown on,
+    and because it is three orders of magnitude above the 1 nM Cui 2018 used on the same
+    cassette.
     """
     return MediaComponent(
         compound=resolved_compound("anhydrotetracycline"),

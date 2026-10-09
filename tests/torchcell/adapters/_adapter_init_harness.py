@@ -18,10 +18,11 @@ checks here are:
   are the bacterial class, and the memory-reduction factor written on chunked
   methods) plus whether the genotype is a segregant, which is
   DERIVED from the paired dataset's ``experiment_class`` genotype type hint
-  (``SegregantGenotype``) rather than written per case. ``phage`` is the second,
-  mutually exclusive, environment-side node class: it adds the ``phage perturbation``
-  node pair and rides the same two ``environment perturbation to environment`` edges,
-  whose graph class declares both node classes as sources. The method order is the
+  (``SegregantGenotype``) rather than written per case. ``phage`` is the second
+  environment-side node class, independent of ``env_perturbation`` since issue #756: it
+  adds the ``phage perturbation`` node pair and rides the same two
+  ``environment perturbation to environment`` edges, whose graph class declares both node
+  classes as sources. The method order is the
   ``CellAdapter`` registration-table order restricted to the enabled set, written out
   by hand below;
 * the conf order is the order the adapter will run the methods in:
@@ -180,11 +181,10 @@ class Shape(NamedTuple):
     perturbation: bool = True
     crispr: bool = False
     env_perturbation: bool = False
-    # A bacteriophage challenge is served as `phage perturbation`, its OWN node class,
-    # and NEVER beside `environment perturbation`: the served
-    # `_environment_perturbation_node` does not filter phages out, so a conf enabling
-    # both would write every phage twice under two labels on one content id
-    # (cell_adapter.py, above `_phage_perturbation_node_from`).
+    # A bacteriophage challenge is served as `phage perturbation`, its OWN node class.
+    # Since issue #756 the served `_environment_perturbation_node` filters phages out, so
+    # the two lanes partition the environment's perturbations and a conf may enable both;
+    # this flag and `env_perturbation` are independent, each pinning one lane.
     phage: bool = False
     mrf: float | None = 1.0
     # A bacterial genotype's leaves are served as `bacterial perturbation`, never as the

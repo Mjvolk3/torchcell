@@ -15,6 +15,14 @@ manifest field, the exact drift records, the scan's directory rule (only
 (commit, clean, dirty) and outside any repo, and the CLI: the exact report lines and
 exit codes 0 (fresh), 1 (stale), 0 with only unmanifested stores (Finding), the
 ``$DATA_ROOT`` default, and the ``KeyError`` when neither is given.
+
+2026.10.09 (#734). A second synthetic surface, ``VOCAB_SCHEMA``, shaped like the live
+chain the issue was filed on: a module-level ``Literal`` alias annotated on a field, and a
+pattern map reached through a validator rather than named in the class body. The closure
+of a loader importing that class holds both, so narrowing the ``Literal``, widening it, or
+changing one namespace's regex stales the store, with the drift reported on the BINDING
+while the class fingerprint stays equal. A vocabulary the closure does not reach leaves it
+fresh.
 """
 
 from __future__ import annotations
@@ -418,3 +426,133 @@ def test_git_info_outside_a_repo_is_absent(
     plain = tmp_path / "plain"
     plain.mkdir()
     assert bm._git_info(plain) == (None, None)
+
+
+# --- A module-level vocabulary is part of the contract a built store recorded (#734) ---
+# Shaped like the live chain the issue was filed on:
+# ``TransposonInsertionPerturbation -> _validate_bacterial_locus_tag ->
+# BACTERIAL_LOCUS_TAG_PATTERN -> BACTERIAL_LOCUS_TAG_PATTERNS``, where the pattern map is
+# reached through a validator rather than named in the class body.
+
+VOCAB_SCHEMA = r"""
+from typing import Literal
+
+from pydantic import BaseModel, field_validator
+
+
+class ModelStrict(BaseModel):
+    class Config:
+        extra = "forbid"
+
+
+GeneNamespace = Literal["mg1655_locus_tag", "rel606_locus_tag"]
+
+LOCUS_TAG_PATTERNS = {
+    "mg1655_locus_tag": r"^b\d{4}$",
+    "rel606_locus_tag": r"^ECB_\d{5}$",
+}
+
+
+def validate_locus_tag(namespace: str, locus_tag: str) -> str:
+    assert re.match(LOCUS_TAG_PATTERNS[namespace], locus_tag)
+    return locus_tag
+
+
+class Perturbation(ModelStrict):
+    # The leaf a loader writes: its namespace comes from the Literal above.
+    namespace: GeneNamespace
+    locus_tag: str
+
+    @field_validator("locus_tag")
+    @classmethod
+    def _check(cls, value: str, info: object) -> str:
+        return validate_locus_tag("mg1655_locus_tag", value)
+"""
+
+
+def _vocab_manifest(tmp_path: Path, surface: sd.SchemaSurface) -> bm.BuildManifest:
+    path = tmp_path / "vocab_loader.py"
+    path.write_text(
+        "from torchcell.datamodels.schema import Perturbation\n"
+        "class MyDataset:\n    pass\n"
+    )
+    return bm.compute_manifest(
+        dataset_name="vocab_slug",
+        loader_module="pkg.vocab_loader",
+        loader_class="MyDataset",
+        loader_path=path,
+        surface=surface,
+        built_at="2026-10-09T00:00:00+00:00",
+        hostname="testhost",
+        torchcell_commit=None,
+        torchcell_dirty=None,
+    )
+
+
+def test_a_built_store_records_the_vocabularies_its_fields_are_annotated_with(
+    tmp_path: Path,
+) -> None:
+    """The closure holds the Literal alias, the validator and the pattern map it reads."""
+    manifest = _vocab_manifest(tmp_path, _surface(VOCAB_SCHEMA))
+    assert set(manifest.closure) == {
+        "Perturbation",
+        "ModelStrict",
+        "GeneNamespace",
+        "validate_locus_tag",
+        "LOCUS_TAG_PATTERNS",
+    }
+
+
+@pytest.mark.parametrize(
+    ("old", "new"),
+    [
+        ('"mg1655_locus_tag", "rel606_locus_tag"', '"mg1655_locus_tag"'),
+        (
+            '"mg1655_locus_tag", "rel606_locus_tag"',
+            '"mg1655_locus_tag", "rel606_locus_tag", "w3110_locus_tag"',
+        ),
+    ],
+    ids=["narrowed", "widened"],
+)
+def test_a_changed_literal_vocabulary_stales_the_store_that_carries_the_field(
+    tmp_path: Path, old: str, new: str
+) -> None:
+    """Issue #734: this edit moved NO fingerprint before the vocabularies were nodes.
+
+    Both directions are reported. A narrowing makes stored records unrepresentable and a
+    widening does not, but the gate's job is to say the contract changed; which direction
+    is breaking is ``schema_impact``'s verdict, not this one's.
+
+    The drift is on the BINDING, not on ``Perturbation``: a class fingerprint is its own
+    declaration, so the class reads unchanged and the vocabulary is named as the symbol
+    that moved. That split is what keeps the historical compatibility pairings readable
+    while still staling the store.
+    """
+    manifest = _vocab_manifest(tmp_path, _surface(VOCAB_SCHEMA))
+    changed = _surface(VOCAB_SCHEMA.replace(old, new))
+    result = bm.check_manifest(manifest, changed, str(tmp_path))
+    assert result.is_stale is True
+    assert [drift.symbol for drift in result.drift] == ["GeneNamespace"]
+    assert result.drift[0].stored_fingerprint == manifest.closure["GeneNamespace"]
+    assert result.drift[0].current_fingerprint == changed.fingerprints["GeneNamespace"]
+    assert changed.fingerprints["Perturbation"] == manifest.closure["Perturbation"]
+
+
+def test_a_changed_locus_tag_pattern_stales_the_store(tmp_path: Path) -> None:
+    """A pattern a stored namespace already uses changes what its records may say."""
+    manifest = _vocab_manifest(tmp_path, _surface(VOCAB_SCHEMA))
+    changed = _surface(VOCAB_SCHEMA.replace(r"^b\d{4}$", r"^b\d{4}[a-z]?$"))
+    result = bm.check_manifest(manifest, changed, str(tmp_path))
+    assert result.is_stale is True
+    assert [drift.symbol for drift in result.drift] == ["LOCUS_TAG_PATTERNS"]
+
+
+def test_a_vocabulary_outside_the_closure_leaves_the_store_fresh(
+    tmp_path: Path,
+) -> None:
+    """Only the vocabularies the loader's closure REACHES gate it."""
+    manifest = _vocab_manifest(tmp_path, _surface(VOCAB_SCHEMA))
+    unrelated = _surface(VOCAB_SCHEMA + '\nPLASMID_MARKERS = ["kanR", "ampR"]\n')
+    result = bm.check_manifest(manifest, unrelated, str(tmp_path))
+    assert result.is_stale is False
+    assert result.drift == []

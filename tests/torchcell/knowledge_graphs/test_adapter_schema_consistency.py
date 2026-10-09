@@ -7,10 +7,17 @@ dataset's phenotypes missing and no error. This test closes that gap for every m
 dataset, and also checks that every conf method name exists in ``CellAdapter``'s
 method table and that every experiment type in the schema's registry that a mapped
 dataset produces has a phenotype node class.
+
+Also here, because both are properties of the conf enable-lists read as a whole:
+``MULTI_CLASS_MODULE_CONFS``, the literal class-to-conf table of the eight adapter modules
+that serve more than one dataset class (issue #743), and the dangling-edge rule that
+replaced the environment-perturbation exclusivity rule once the two node lanes became a
+partition (issue #756).
 """
 
 import inspect
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -147,30 +154,35 @@ def test_no_conf_enables_both_perturbation_classes() -> None:
     assert both == []
 
 
-def test_no_conf_enables_both_environment_perturbation_classes() -> None:
-    """A conf enables ``phage perturbation (chunked)`` INSTEAD of
-    ``environment perturbation (chunked)``, for the same reason as the gene axis.
+def test_an_environment_perturbation_edge_has_a_node_lane_to_address() -> None:
+    """Issue #756: the two environment-perturbation node lanes PARTITION the leaves.
 
-    The served ``environment perturbation`` method emits EVERY perturbation of an
-    environment, a phage included, under the ``environment perturbation`` label, and the
-    phage method emits the same leaf under the same content id (both ids are the
-    composition projection) with the ``phage perturbation`` label. Enabling both writes
-    one id under two classes and the import keeps whichever row it reads first.
-
-    The consequence for the first phage dataset, stated rather than discovered later: its
-    other environment perturbations (the kanamycin of a Bar-seq assay, a physical factor)
-    would go unwritten under the phage-only conf. Resolving that needs either a filter in
-    the served method -- adapter drift on the served datasets, so a full rebuild -- or a
-    separate id space for the phage node. No conf is in that position yet, since no phage
-    dataset class exists.
+    ``_environment_perturbation_node`` now skips a ``PhagePerturbation`` and
+    ``_phage_perturbation_node`` emits only one, so a conf MAY enable both classes and no
+    content id is written under two labels (that split is driven on a record in
+    ``tests/torchcell/adapters/test_environment_node_identity.py``). What is left to
+    check here is the edge: ``environment perturbation member of`` is emitted for EVERY
+    perturbation, so a conf enabling it must enable at least one node lane, or that edge
+    addresses a node the graph does not contain.
     """
-    both = sorted(
+    edge_methods = {
+        "environment perturbation to environment (chunked)",
+        "environment perturbation to environment reference",
+    }
+    node_methods = {
+        "environment perturbation (chunked)",
+        "environment perturbation reference",
+        "phage perturbation (chunked)",
+        "phage perturbation reference",
+    }
+    dangling = sorted(
         dataset_class.__name__
         for dataset_class in dataset_adapter_map
-        if {"environment perturbation (chunked)", "phage perturbation (chunked)"}
-        <= set(dataset_conf_methods(dataset_class, REPO_ROOT))
+        if (enabled := set(dataset_conf_methods(dataset_class, REPO_ROOT)))
+        & edge_methods
+        and not enabled & node_methods
     )
-    assert both == []
+    assert dangling == []
 
 
 class _ConfOpened(Exception):
@@ -213,3 +225,111 @@ def test_every_mapped_dataset_fingerprints_the_conf_its_adapter_loads(
         opened[dataset_class.__name__] = Path(str(caught.value)).name
     assert len(opened) == len(every_map)
     assert resolved == opened
+
+
+#: The eight adapter modules that serve more than one dataset class, and the conf each
+#: class binds (issue #743). Pinned as a literal table rather than derived, because the
+#: defect was a resolution that silently handed every class the module's FIRST conf: a
+#: derived expectation would have agreed with it. Measured 2026-10-09 by
+#: ``dataset_adapter_files`` over ``build_adapter_map(include_private=True)``; the first
+#: conf of each module (the one the old regex returned) is the alphabetically first value
+#: here only for Hillenmeyer and Lopez, so this table is also the record of which classes
+#: were mis-attributed.
+MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
+    "costanzo2016_adapter.py": {
+        "DmfCostanzo2016Dataset": "dmf_costanzo2016_adapter.yaml",
+        "DmiCostanzo2016Dataset": "dmi_costanzo2016_adapter.yaml",
+        "SmfCostanzo2016Dataset": "smf_costanzo2016_adapter.yaml",
+    },
+    "hillenmeyer2008_adapter.py": {
+        "HetHillenmeyer2008Dataset": "het_hillenmeyer2008_adapter.yaml",
+        "HomHillenmeyer2008Dataset": "hom_hillenmeyer2008_adapter.yaml",
+    },
+    "kuzmin2018_adapter.py": {
+        "DmfKuzmin2018Dataset": "dmf_kuzmin2018_adapter.yaml",
+        "DmiKuzmin2018Dataset": "dmi_kuzmin2018_adapter.yaml",
+        "SmfKuzmin2018Dataset": "smf_kuzmin2018_adapter.yaml",
+        "TmfKuzmin2018Dataset": "tmf_kuzmin2018_adapter.yaml",
+        "TmiKuzmin2018Dataset": "tmi_kuzmin2018_adapter.yaml",
+    },
+    "kuzmin2020_adapter.py": {
+        "DmfKuzmin2020Dataset": "dmf_kuzmin2020_adapter.yaml",
+        "DmiKuzmin2020Dataset": "dmi_kuzmin2020_adapter.yaml",
+        "SmfKuzmin2020Dataset": "smf_kuzmin2020_adapter.yaml",
+        "TmfKuzmin2020Dataset": "tmf_kuzmin2020_adapter.yaml",
+        "TmiKuzmin2020Dataset": "tmi_kuzmin2020_adapter.yaml",
+    },
+    "lopez2024_adapter.py": {
+        "IsobutanolScreenLopez2024Dataset": (
+            "isobutanol_screen_lopez2024_adapter.yaml"
+        ),
+        "IsobutanolValidatedLopez2024Dataset": (
+            "isobutanol_validated_lopez2024_adapter.yaml"
+        ),
+    },
+    "sameith2015_adapter.py": {
+        "DmMicroarraySameith2015Dataset": "dm_microarray_sameith2015_adapter.yaml",
+        "SmMicroarraySameith2015Dataset": "sm_microarray_sameith2015_adapter.yaml",
+    },
+    "synth_leth_db_adapter.py": {
+        "SynthLethalityYeastSynthLethDbDataset": (
+            "synth_lethality_yeast_synth_leth_db_adapter.yaml"
+        ),
+        "SynthRescueYeastSynthLethDbDataset": (
+            "synth_rescue_yeast_synth_leth_db_adapter.yaml"
+        ),
+    },
+    "zelezniak2018_adapter.py": {
+        "MetaboliteZelezniak2018Dataset": "metabolite_zelezniak2018_adapter.yaml",
+        "ProteomeZelezniak2018Dataset": "proteome_zelezniak2018_adapter.yaml",
+    },
+}
+
+
+def test_the_multi_class_modules_are_exactly_these_eight() -> None:
+    """A ninth multi-class module, or a class added to one of the eight, lands here.
+
+    Both directions: every class the table names resolves to the files the table states,
+    AND the classes that SHARE an adapter module are exactly the ones it names. So a new
+    dataset class sharing an existing adapter module cannot be added without stating the
+    conf it binds.
+    """
+    resolved = {
+        dataset_class.__name__: dataset_adapter_files(dataset_class, REPO_ROOT)
+        for dataset_class in build_adapter_map(include_private=True)
+    }
+    expected = {
+        dataset_name: [
+            f"torchcell/adapters/{module_name}",
+            f"torchcell/adapters/conf/{conf_name}",
+        ]
+        for module_name, confs in MULTI_CLASS_MODULE_CONFS.items()
+        for dataset_name, conf_name in confs.items()
+    }
+    assert {name: resolved[name] for name in expected} == expected
+    per_module = Counter(files[0] for files in resolved.values())
+    assert sorted(
+        name for name, files in resolved.items() if per_module[files[0]] > 1
+    ) == sorted(expected)
+
+
+@pytest.mark.parametrize(
+    ("module_name", "dataset_name", "conf_name"),
+    [
+        (module_name, dataset_name, conf_name)
+        for module_name, confs in sorted(MULTI_CLASS_MODULE_CONFS.items())
+        for dataset_name, conf_name in sorted(confs.items())
+    ],
+)
+def test_a_multi_class_module_binds_each_class_to_its_own_conf(
+    module_name: str, dataset_name: str, conf_name: str
+) -> None:
+    (dataset_class,) = [
+        cls
+        for cls in build_adapter_map(include_private=True)
+        if cls.__name__ == dataset_name
+    ]
+    assert dataset_adapter_files(dataset_class, REPO_ROOT) == [
+        f"torchcell/adapters/{module_name}",
+        f"torchcell/adapters/conf/{conf_name}",
+    ]

@@ -2,7 +2,7 @@
 # [[torchcell.datasets.ecoli.campos2018]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/ecoli/campos2018
 # Test file: tests/torchcell/datasets/ecoli/test_campos2018.py
-r"""Campos 2018: the imaged Keio collection, and the one of its 26 features we can store.
+r"""Campos 2018: the imaged Keio collection, served as a fitness and a morphology row.
 
 Campos et al. 2018 (Mol Syst Biol 14:e7573, doi:10.15252/msb.20177573; PMC6018989)
 imaged the Keio single-gene deletion collection in one medium and quantified a
@@ -37,8 +37,18 @@ is the 26 plus the mean and CV of nucleoid area (Appendix Table S1 lists those u
 morphological, giving 21 there and 28 symbols in all) plus %non-div and %1N, the raw
 proportions the two relative timings are computed from.
 
-RECORD = one (deletion strain) ``BacterialFitnessExperiment``. One record per strain, not
-26, because 25 of the 26 features have no phenotype class (below).
+RECORDS = TWO datasets over the same 3,664 strains, split by READOUT, not 26 datasets
+and not one record carrying everything:
+
+- :class:`GrowthRateCampos2018Dataset` -- one ``BacterialFitnessExperiment`` per strain,
+  the Gompertz maximal growth rate as a parent-relative ratio.
+- :class:`MorphologyCampos2018Dataset` -- one ``BacterialMorphologyExperiment`` per
+  strain, the 26 morphology symbols of Appendix Table S1 as a
+  ``BacterialMorphologyPhenotype`` against the ``campos2018`` assay vocabulary
+  (issue #774). Measured on the release: 93,570 determined values over 3,664 records.
+
+Both read one release and share ``read_normalized_table`` and ``resolve_rows``, so a
+strain is writable for both or for neither and the drop ledger is identical.
 
 - GENOTYPE: one ``BacterialDeletionPerturbation`` against BW25113
   (``ecoli_k12_bw25113_locus_tag``), the Keio background -- "240 replicates of the
@@ -56,31 +66,77 @@ RECORD = one (deletion strain) ``BacterialFitnessExperiment``. One record per st
 - PHENOTYPE: ``FitnessPhenotype``, the DERIVED ratio of the strain's corrected maximal
   growth rate to the parent's, with the reference at 1.0.
 
-WHAT IS SERVED, AND WHY ONLY ONE OF 26. Of the 26 features exactly one has a faithful
-home in the schema, and ``schema.py`` is not changed here:
+WHAT IS SERVED, AND WHAT THE ONE REMAINING GAP IS. 27 of the release's 28 named
+features have a faithful home; issue #774 added the class that took 25 of them:
 
 1. ``alpha_max`` (max growth rate, min^-1) IS a growth rate, and ``FitnessPhenotype``
    is documented as ``ko_growth_rate/wt_growth_rate``. It is served.
-2. The 19 morphological and 5 cell cycle features have NO phenotype class. The only
-   multi-feature morphology class is ``CalMorphPhenotype``, whose shape fits well (a
-   dict of named means plus a dict of named CVs, which is exactly Campos's mean/CV
-   split) but whose two ``field_validator``s reject any key outside ``CALMORPH_LABELS``
-   (281 Ohya 2005 CalMorph base parameters) and ``CALMORPH_STATISTICS`` (220 CalMorph
-   CV parameters). CalMorph is a yeast image-analysis program; Campos measured with
-   MicrobeTracker and Oufti, and ``<L>``, ``CV_L``, ``rho_CD`` and the rest are not
-   CalMorph parameters. Storing them under those keys would assert a measurement that
-   was not made, and ``EnvironmentResponsePhenotype`` cannot hold them either: it
-   carries ONE score per (strain, environment) and has no field naming WHICH feature a
-   number is, so 24 features in one medium collide on the L1 key. There is also no
-   ``BacterialCalMorphExperiment``. Serving them needs either E. coli symbols added to a
-   yeast program's vocabulary or a new host-neutral multi-feature morphology phenotype,
-   both edits to ``schema.py``. That is the finding, recorded rather than forced.
+2. The 26 morphology symbols are served as a ``BacterialMorphologyPhenotype``.
+   ``CalMorphPhenotype`` had the right SHAPE (a dict of named means plus a dict of named
+   CVs, which is exactly Campos's split) and the wrong VOCABULARY: its two
+   ``field_validator``s reject any key outside ``CALMORPH_LABELS`` (281 Ohya 2005
+   CalMorph base parameters) and ``CALMORPH_STATISTICS`` (220 CalMorph CV parameters),
+   and that label set is disjoint from every Campos symbol. CalMorph is a yeast
+   image-analysis program; Campos measured with MicrobeTracker and Oufti. So the shape
+   was kept and the label set became a property of the ASSAY: ``assay`` names a
+   ``MorphologyAssay`` in ``torchcell.datamodels.bacterial_morphology_features`` and
+   that assay's features are the only permitted keys. Each feature declares what
+   statistic its number is, which is what splits the two dicts.
 3. ``ODmax`` (saturating optical density) is a carrying capacity, not a rate: it is not a
    ``FitnessPhenotype`` ratio, and ``MeasurementType`` has no member for it
    (``growth_rate`` is "absolute or normalized growth rate / doubling time",
-   ``colony_size`` is an absolute colony size). A second ``FitnessPhenotype`` record per
-   strain would also collide on the L1 key, since the environment is the same. It is not
-   served, and no ``MeasurementType`` member is added.
+   ``colony_size`` is an absolute colony size). It is a plate-reader population
+   measurement rather than morphology, so it is not a ``BacterialMorphologyPhenotype``
+   feature either. A second ``FitnessPhenotype`` record per strain would also collide on
+   the L1 key, since the environment is the same. It is not served, and no
+   ``MeasurementType`` member is added.
+
+THE MORPHOLOGY VOCABULARY IS APPENDIX TABLE S1, which the main text names as the
+authority: "The name and abbreviation for all the features can be found in Appendix
+Table S1." Table S1's 28 symbols are 21 morphological (the main text's headline 19 plus
+the mean and variability of nucleoid area) + 2 growth + 5 cell cycle, so the 26 the
+assay holds are the 28 minus the two growth symbols. Dataset EV2 releases 30 numeric
+feature columns, and the two beyond Table S1 are NOT dropped for want of a class:
+measured over the 4,189 rows that determined both, ``Rel.timing div`` is
+``-log2(1 - %non-div / 2)`` to a maximum absolute error of 1.3e-15 and
+``Rel.timing nuc`` is the same of ``%1N`` to 1.2e-15, which is the steady-state cell-age
+inversion Table S1's caption describes. Storing both sides would write one measurement
+twice (:data:`RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY`). ``%2N`` is NOT the complement of
+``%1N`` and IS served: measured, ``|%1N + %2N - 1|`` reaches 0.129, so cells with more
+than two nucleoids exist. The two island columns are the paper's own clustering labels
+over the screen rather than measurements of a strain
+(:data:`RELEASED_CLUSTER_COLUMNS`).
+
+MORPHOLOGY COVERAGE IS PARTIAL BY DESIGN, and the split is measured. Dataset EV2's legend
+states "NaN (Not a Number) values are attributed to non-determined fields". Over the
+4,227 imaged strains, 7 columns are NaN on exactly the same 278 rows and the other 19 are
+never NaN, and no wild-type row is among the 278, so
+:data:`MORPHOLOGY_REQUIRED_FEATURES` is those 19 and :data:`MORPHOLOGY_DAPI_FEATURES` the
+7. The set is read off the data rather than reasoned out from the derivations, because
+``Rel.timing div`` is inferred from a phase-contrast proportion yet is absent on those
+same rows. Demanding full coverage would drop 19 real features to save 7 absent ones.
+
+MORPHOLOGY ``n_samples`` IS THE SEGMENTED CELL. Each mean and each CV is computed over
+the strain's retained cells from ONE well, so ``biological_replicate`` would report 1 for
+a mean over hundreds, and ``SampleUnit.cell`` is the unit. The count is Dataset EV1's
+``nb Cells`` column, which makes Dataset EV1 a consumed raw file with its own retrieval
+record rather than a referenced supplement. The two sheets join on the Keio
+``(plate, well)``: measured, both carry the same 4,467 positions with the same gene label
+in the same order. The counts corroborate the paper -- ``nb Cells`` sums to 1,301,055
+with mean 291.26 and SD 116.71, against "retaining about 1,300,000 identified cells (
+$2 9 1 \pm 1 1 6$ cells/strain)". The morphology REFERENCE is a different statistic and
+says so: the per-feature median over the 240 parental replicate wells, with
+``n_samples=240`` and ``sample_unit=biological_replicate``, the convention the fitness
+reference already uses.
+
+A MORPHOLOGY FEATURE'S UNIT COMES FROM THE RELEASE AND NOWHERE ELSE. Appendix Table S1
+has no unit column and ``paper.md`` states no feature unit, so the 8 units come from
+Dataset EV2's "Legend normalized data" sheet ("Mean cell length (µm)"), which the
+"Normalized data" header repeats as ``<L> (µm)``. The loader BUILDS each column name as
+``symbol (unit)`` from the vocabulary (:data:`MORPHOLOGY_COLUMNS`), so a header that
+moved stops the build. The other 18 features state no unit, which is the honest record:
+a CV, a correlation, a shape factor, a relative timing and a population fraction are
+dimensionless.
 
 THE FITNESS IS DERIVED, AND THE DERIVATION IS VERIFIED. The loader reads the
 ``alpha_max (min-1)`` column of Dataset EV2's "Normalized data" sheet, the authors'
@@ -172,12 +228,15 @@ genuine absences:
   every strain was sampled at an OD600 of 0.2 +/- 0.1. The field carries a
   ``not_reported_by_primary`` gap.
 
-DATA SOURCE: Dataset EV2 (``MSB-14-e7573-s004.xlsx``) from the PMC Article Datasets
-bucket (``pmc_cloud``, key ``PMC6018989.1/MSB-14-e7573-s004.xlsx``), deposited in
+DATA SOURCE: Dataset EV2 (``MSB-14-e7573-s004.xlsx``) and Dataset EV1
+(``MSB-14-e7573-s003.xlsx``) from the PMC Article Datasets bucket (``pmc_cloud``, keys
+``PMC6018989.1/MSB-14-e7573-s004.xlsx`` and ``...-s003.xlsx``), both deposited in
 ``$DATA_ROOT/torchcell-raw/camposGenomewidePhenotypicAnalysis2018/`` with a
-``manifest.json``. Dataset EV1 (the pre-normalization raw table) and the Appendix (whose
-Table S1 names every feature) are already mirrored under the literature key and are NOT
-duplicated into the raw mirror; ``si_expected`` names both with their sha256.
+``manifest.json`` recording each one's retrieval and sha256. Both are build inputs: the
+fitness dataset consumes Dataset EV2 and the morphology dataset consumes both. The
+Appendix (whose Table S1 names every feature) is read only to source the vocabulary, not
+at build time, so it stays in the literature mirror and ``si_expected`` names it with its
+sha256.
 """
 
 from __future__ import annotations
@@ -322,6 +381,13 @@ CELL_COUNT_COLUMN = "nb Cells"
 LABEL_COLUMN = "Gene deletion"
 PLATE_COLUMN = "Plate nb"
 WELL_COLUMN = "Well nb"
+#: Read the Keio position as text in every sheet. Excel stores a plate number as a
+#: number, so whether pandas hands back ``1`` or ``1.0`` depends on what else is in the
+#: column: Dataset EV2's footer puts a string in it and Dataset EV1 has no footer at
+#: all, and a float would key one sheet "1.0" against the other's "1". The position is
+#: an identifier, not a quantity, so it is read as text on both sides and the two
+#: readers agree by construction.
+POSITION_DTYPES: dict[str, type[str]] = {PLATE_COLUMN: str, WELL_COLUMN: str}
 ALPHA_COLUMN = "alpha_max (min-1)"
 
 #: Rows of the "Normalized data" sheet, footer rows included.
@@ -941,7 +1007,7 @@ def dataset_ev1_retrieval(
 def retrieve_raw_files(dest_dir: str | Path) -> dict[str, Path]:
     """Run both recorded retrievals and write the verified bytes into ``dest_dir``.
 
-    The recorded ``RetrievalRecord``\\ s are what run, so this IS the re-runnable
+    The two recorded retrieval records are what run, so this IS the re-runnable
     retrieval; a byte mismatch raises before anything is written.
     """
     dest = Path(dest_dir)
@@ -1104,7 +1170,7 @@ def read_normalized_table(path: str | Path) -> NormalizedTable:
     Rows with no gene label are the sheet's footer summary (``Mean``, ``Stdev``, ``CV``);
     rows labelled ``WT<digits>`` are the parental replicates.
     """
-    frame = pd.read_excel(path, sheet_name=NORMALIZED_SHEET)
+    frame = pd.read_excel(path, sheet_name=NORMALIZED_SHEET, dtype=POSITION_DTYPES)
     missing = [
         column
         for column in (LABEL_COLUMN, PLATE_COLUMN, WELL_COLUMN, ALPHA_COLUMN)
@@ -1156,8 +1222,7 @@ def morphology_column(feature: MorphologyFeature) -> str:
 
 
 MORPHOLOGY_COLUMNS: dict[str, str] = {
-    feature.symbol: morphology_column(feature)
-    for feature in MORPHOLOGY_ASSAY.features
+    feature.symbol: morphology_column(feature) for feature in MORPHOLOGY_ASSAY.features
 }
 
 
@@ -1193,7 +1258,7 @@ def read_morphology_rows(
     several distinct strains identically; the position is what the fitness reader's row
     identity already uses, so the two datasets drop exactly the same rows.
     """
-    frame = pd.read_excel(data_path, sheet_name=NORMALIZED_SHEET)
+    frame = pd.read_excel(data_path, sheet_name=NORMALIZED_SHEET, dtype=POSITION_DTYPES)
     missing = [
         column
         for column in (PLATE_COLUMN, WELL_COLUMN, *MORPHOLOGY_COLUMNS.values())
@@ -1203,7 +1268,9 @@ def read_morphology_rows(
         raise ValueError(
             f"{data_path}: {NORMALIZED_SHEET} is missing morphology columns {missing}"
         )
-    counts_frame = pd.read_excel(cell_counts_path, sheet_name=RAW_SHEET)
+    counts_frame = pd.read_excel(
+        cell_counts_path, sheet_name=RAW_SHEET, dtype=POSITION_DTYPES
+    )
     for column in (PLATE_COLUMN, WELL_COLUMN, CELL_COUNT_COLUMN):
         if column not in counts_frame.columns:
             raise ValueError(
@@ -1262,7 +1329,7 @@ def released_alpha_max_scores(path: str | Path) -> dict[tuple[str, str], float]:
     The cross-check the module docstring states: the score is an exact affine function
     of the derived fitness ratio.
     """
-    frame = pd.read_excel(path, sheet_name=SCORES_SHEET)
+    frame = pd.read_excel(path, sheet_name=SCORES_SHEET, dtype=POSITION_DTYPES)
     plates = [str(value).strip() for value in frame[PLATE_COLUMN].tolist()]
     wells = [str(value).strip() for value in frame[WELL_COLUMN].tolist()]
     scores = frame[SERVED_FEATURE].astype(float).tolist()
@@ -1815,16 +1882,20 @@ class MorphologyCampos2018Dataset(ExperimentDataset):
         data_root = _data_root()
         manifest = load_manifest(data_root)
         mirror = raw_mirror_dir(data_root)
-        os.makedirs(self.raw_dir, exist_ok=True)
-        for relpath, filename, sha256 in (
+        wanted = (
             (DATA_REL, DATA_FILENAME, DATA_SHA256),
             (CELL_COUNTS_REL, RAW_CELL_COUNTS_FILENAME, DATASET_EV1_SHA256),
-        ):
+        )
+        # Both pins and both files are checked before anything is written, so a mirror
+        # holding one of the two does not leave a half-linked raw directory behind.
+        for relpath, _, sha256 in wanted:
             check_manifest_pin(relpath, manifest_sha256(manifest, relpath), sha256)
             src = mirror / relpath
             if not src.exists():
                 raise RuntimeError(f"required raw artifact missing from mirror: {src}")
-            link_verified(src, osp.join(self.raw_dir, filename), sha256)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for relpath, filename, sha256 in wanted:
+            link_verified(mirror / relpath, osp.join(self.raw_dir, filename), sha256)
         log.info(
             "Campos 2018 Dataset EV2 + EV1 linked into %s (sha256 verified)",
             self.raw_dir,

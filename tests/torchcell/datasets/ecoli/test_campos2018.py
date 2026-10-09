@@ -39,6 +39,9 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     serve_tier,
     write_assembly,
 )
+from torchcell.datamodels.bacterial_morphology_features import (
+    CAMPOS2018_MORPHOLOGY_ASSAY as MORPHOLOGY_ASSAY,
+)
 from torchcell.datamodels.media import M9, MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     ASSEMBLY_SET_ACCESSIONS,
@@ -96,20 +99,60 @@ def test_the_nineteen_morphological_features_are_the_mean_and_cv_pairs_plus_cv_d
     assert "<DR>" not in c.MORPHOLOGICAL_FEATURES
 
 
-def test_exactly_one_of_the_twenty_six_features_is_served() -> None:
+def test_the_two_datasets_together_leave_exactly_one_feature_unserved() -> None:
+    """Issue #774 closed 25 of the 26 gaps; only the saturating density is left."""
     assert c.SERVED_FEATURE == "alpha_max"
     assert c.SERVED_FEATURE in c.GROWTH_FEATURES
-    assert len(c.UNSERVED_FEATURES) == 25
-    assert set(c.UNSERVED_FEATURES) | {c.SERVED_FEATURE} == set(c.PAPER_FEATURES)
-    assert c.SERVED_FEATURE not in c.UNSERVED_FEATURES
+    assert set(c.UNSERVED_FEATURES) == {"ODmax"}
+    served = {c.SERVED_FEATURE, *c.MORPHOLOGY_FEATURES}
+    assert set(c.PAPER_FEATURES) - served == {"ODmax"}
+    # the morphology dataset also serves the two nucleoid-area symbols the main text's
+    # headline count of 19 leaves out, so it serves 2 more than PAPER_FEATURES names
+    assert set(c.MORPHOLOGY_FEATURES) - set(c.PAPER_FEATURES) == {"<NA>", "CV_NA"}
 
 
-def test_every_unserved_feature_states_its_exact_schema_mismatch() -> None:
-    for feature in (*c.MORPHOLOGICAL_FEATURES, *c.CELL_CYCLE_FEATURES):
-        reason = c.UNSERVED_FEATURES[feature]
-        assert "CalMorphPhenotype" in reason
-        assert "EnvironmentResponsePhenotype" in reason
-    assert "MeasurementType has no member" in c.UNSERVED_FEATURES["ODmax"]
+def test_the_one_unserved_feature_states_its_exact_schema_mismatch() -> None:
+    reason = c.UNSERVED_FEATURES["ODmax"]
+    assert "MeasurementType has no member" in reason
+    assert "not morphology" in reason
+
+
+def test_the_morphology_vocabulary_is_table_s1s_twenty_six_symbols() -> None:
+    assert len(c.MORPHOLOGY_FEATURES) == 26
+    assert len(set(c.MORPHOLOGY_FEATURES)) == 26
+    assert set(c.MORPHOLOGY_FEATURES) == set(MORPHOLOGY_ASSAY.by_symbol)
+    assert set(c.GROWTH_FEATURES).isdisjoint(c.MORPHOLOGY_FEATURES)
+    assert len(c.MORPHOLOGY_REQUIRED_FEATURES) == 19
+    assert len(c.MORPHOLOGY_DAPI_FEATURES) == 7
+    assert c.MORPHOLOGY_REQUIRED_FEATURES.isdisjoint(c.MORPHOLOGY_DAPI_FEATURES)
+    assert c.MORPHOLOGY_REQUIRED_FEATURES | c.MORPHOLOGY_DAPI_FEATURES == set(
+        c.MORPHOLOGY_FEATURES
+    )
+
+
+def test_the_two_released_columns_outside_the_vocabulary_are_recorded_as_redundant() -> (
+    None
+):
+    """Not dropped for want of a class: each is an exact inverse of a stored feature."""
+    assert set(c.RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY) == {"%non-div", "%1N"}
+    assert set(c.RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY).isdisjoint(
+        c.UNSERVED_FEATURES
+    )
+    assert "Rel.timing div" in c.RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY["%non-div"]
+    assert "Rel.timing nuc" in c.RELEASED_COLUMNS_OUTSIDE_THE_VOCABULARY["%1N"]
+    assert c.RELEASED_CLUSTER_COLUMNS == ("MorphoIsland", "CellCyleIsland")
+
+
+def test_the_column_header_of_a_feature_is_its_symbol_plus_its_released_unit() -> None:
+    """Built from the vocabulary, so a header that moved stops the build."""
+    assert c.MORPHOLOGY_COLUMNS["<L>"] == "<L> (\u00b5m)"
+    assert c.MORPHOLOGY_COLUMNS["<SA/V>"] == "<SA/V> (\u00b5m-1)"
+    assert c.MORPHOLOGY_COLUMNS["CV_L"] == "CV_L"
+    assert c.MORPHOLOGY_COLUMNS["%2N"] == "%2N"
+    unitless = [f for f in MORPHOLOGY_ASSAY.features if f.unit is None]
+    assert len(unitless) == 18
+    for feature in unitless:
+        assert c.MORPHOLOGY_COLUMNS[feature.symbol] == feature.symbol
 
 
 def test_the_calmorph_vocabulary_rejects_every_campos_feature_name() -> None:
@@ -266,6 +309,62 @@ _SYNTHETIC_KEPT = 4
 _SYNTHETIC_DENOMINATOR = 0.0100
 
 
+#: The row of the synthetic release that has no DAPI channel, so its 7 nucleoid-derived
+#: features are NaN, which is the shape the real release has on 278 of its strains.
+_SYNTHETIC_NO_DAPI_LABEL = "yaaX"
+#: A value per declared statistic, inside the bound that statistic implies, so the
+#: synthetic release exercises the per-feature L2 bound rather than one pooled range.
+_SYNTHETIC_BY_STATISTIC: dict[str, float] = {
+    "mean": 2.5,
+    "coefficient_of_variation": 0.25,
+    "pearson_correlation": 0.6,
+    "regression_intercept": 0.4,
+    "fraction_of_cells": 0.2,
+    "inferred_relative_timing": 0.8,
+}
+
+
+def _morphology_columns(rows: Any) -> dict[str, list[float | None]]:
+    """The 26 morphology columns of a synthetic "Normalized data" sheet."""
+    columns: dict[str, list[float | None]] = {}
+    for feature in MORPHOLOGY_ASSAY.features:
+        base = _SYNTHETIC_BY_STATISTIC[feature.statistic.value]
+        values: list[float | None] = []
+        for i, row in enumerate(rows):
+            if row[0] is None:  # a footer row carries no feature value
+                values.append(None)
+            elif (
+                row[0] == _SYNTHETIC_NO_DAPI_LABEL
+                and feature.symbol in c.MORPHOLOGY_DAPI_FEATURES
+            ):
+                values.append(None)
+            else:
+                values.append(round(base + i / 1000, 4))
+        columns[c.MORPHOLOGY_COLUMNS[feature.symbol]] = values
+    return columns
+
+
+def _cell_counts(path: Path, rows: Any = _SYNTHETIC_ROWS) -> Path:
+    """Write a synthetic Dataset EV1: the Keio position and its segmented-cell count.
+
+    Dataset EV1 carries no footer summary, so the labelled rows of Dataset EV2 are its
+    whole content, which is the row alignment the join checks.
+    """
+    labelled = [row for row in rows if row[0] is not None]
+    frame = pd.DataFrame(
+        {
+            c.LABEL_COLUMN: [row[0] for row in labelled],
+            c.CELL_COUNT_COLUMN: [200 + i for i, _ in enumerate(labelled)],
+            c.PLATE_COLUMN: [row[1] for row in labelled],
+            c.WELL_COLUMN: [row[2] for row in labelled],
+        }
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with pd.ExcelWriter(path) as writer:
+        frame.to_excel(writer, sheet_name=c.RAW_SHEET, index=False)
+    return path
+
+
 def _release(path: Path, rows: Any = _SYNTHETIC_ROWS) -> Path:
     """Write a synthetic Dataset EV2 with a normalized sheet and a scores sheet."""
     frame = pd.DataFrame(
@@ -274,6 +373,7 @@ def _release(path: Path, rows: Any = _SYNTHETIC_ROWS) -> Path:
             c.PLATE_COLUMN: [row[1] for row in rows],
             c.WELL_COLUMN: [row[2] for row in rows],
             c.ALPHA_COLUMN: [row[3] for row in rows],
+            **_morphology_columns(rows),
         }
     )
     scores = frame.rename(columns={c.ALPHA_COLUMN: c.SERVED_FEATURE})
@@ -538,13 +638,19 @@ def test_the_annotation_marker_matches_only_the_two_legend_symbols() -> None:
 # --------------------------------------------------------------------------- #
 @pytest.fixture
 def deposited(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, Path]:
-    """A tmp ``DATA_ROOT`` whose raw mirror holds the synthetic Dataset EV2."""
+    """A tmp ``DATA_ROOT`` whose raw mirror holds both synthetic released tables."""
     source = _release(tmp_path / "source" / "ev2.xlsx")
+    counts = _cell_counts(tmp_path / "source" / "ev1.xlsx")
     monkeypatch.setattr(
         c, "DATA_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
     )
+    monkeypatch.setattr(
+        c, "DATASET_EV1_SHA256", hashlib.sha256(counts.read_bytes()).hexdigest()
+    )
     data_root = tmp_path / "data_root"
-    c.deposit_raw_mirror(data_path=source, data_root=str(data_root))
+    c.deposit_raw_mirror(
+        data_path=source, cell_counts_path=counts, data_root=str(data_root)
+    )
     return source, data_root
 
 
@@ -552,20 +658,41 @@ def test_the_deposit_is_idempotent_and_refuses_a_changed_mirror_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, deposited: tuple[Path, Path]
 ) -> None:
     source, data_root = deposited
-    assert c.deposit_raw_mirror(data_path=source, data_root=str(data_root)) == (
-        c.raw_mirror_dir(str(data_root))
-    )
+    counts = tmp_path / "source" / "ev1.xlsx"
+    assert c.deposit_raw_mirror(
+        data_path=source, cell_counts_path=counts, data_root=str(data_root)
+    ) == (c.raw_mirror_dir(str(data_root)))
     mirrored = c.raw_mirror_dir(str(data_root)) / c.DATA_REL
     mirrored.write_bytes(b"not the released bytes")
     with pytest.raises(RuntimeError, match="different sha256; refusing"):
-        c.deposit_raw_mirror(data_path=source, data_root=str(data_root))
+        c.deposit_raw_mirror(
+            data_path=source, cell_counts_path=counts, data_root=str(data_root)
+        )
 
 
 def test_the_deposit_refuses_bytes_that_do_not_match_the_pin(tmp_path: Path) -> None:
     other = tmp_path / "other.xlsx"
     other.write_bytes(b"not the released bytes")
     with pytest.raises(RuntimeError, match="sha256 mismatch"):
-        c.deposit_raw_mirror(data_path=other, data_root=str(tmp_path / "root"))
+        c.deposit_raw_mirror(
+            data_path=other, cell_counts_path=other, data_root=str(tmp_path / "root")
+        )
+
+
+def test_the_deposit_refuses_cell_counts_that_do_not_match_the_pin(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Dataset EV2 matching its pin does not excuse Dataset EV1 missing its own."""
+    source = _release(tmp_path / "source" / "ev2.xlsx")
+    monkeypatch.setattr(
+        c, "DATA_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
+    )
+    other = tmp_path / "other.xlsx"
+    other.write_bytes(b"not the released bytes")
+    with pytest.raises(RuntimeError, match="sha256 mismatch"):
+        c.deposit_raw_mirror(
+            data_path=source, cell_counts_path=other, data_root=str(tmp_path / "root")
+        )
 
 
 def test_the_manifest_records_the_rerunnable_pmc_retrieval(
@@ -573,15 +700,21 @@ def test_the_manifest_records_the_rerunnable_pmc_retrieval(
 ) -> None:
     _, data_root = deposited
     manifest = c.load_manifest(str(data_root))
-    (record,) = manifest.files
-    assert record.path == c.DATA_REL
-    assert record.retrieval is not None
-    assert record.retrieval.method == "pmc_cloud"
-    assert (
-        record.retrieval.retriever == "torchcell.literature.retrieve.pmc_cloud_object"
-    )
-    assert record.retrieval.params == {"key": c.PMC_CLOUD_KEY}
+    # both released tables are build inputs, so both carry their own retrieval record
+    assert [record.path for record in manifest.files] == [c.DATA_REL, c.CELL_COUNTS_REL]
+    for record, key in (
+        (manifest.files[0], c.PMC_CLOUD_KEY),
+        (manifest.files[1], c.CELL_COUNTS_PMC_CLOUD_KEY),
+    ):
+        assert record.retrieval is not None
+        assert record.retrieval.method == "pmc_cloud"
+        assert (
+            record.retrieval.retriever
+            == "torchcell.literature.retrieve.pmc_cloud_object"
+        )
+        assert record.retrieval.params == {"key": key}
     assert c.manifest_sha256(manifest, c.DATA_REL) == c.DATA_SHA256
+    assert c.manifest_sha256(manifest, c.CELL_COUNTS_REL) == c.DATASET_EV1_SHA256
     with pytest.raises(KeyError, match="not in the raw manifest"):
         c.manifest_sha256(manifest, "data/nope.xlsx")
 
@@ -591,7 +724,9 @@ def test_si_expected_names_the_artifacts_that_are_deliberately_not_duplicated(
 ) -> None:
     _, data_root = deposited
     expected = " ".join(c.load_manifest(str(data_root)).si_expected)
-    assert c.DATASET_EV1_SHA256 in expected
+    # Dataset EV1 is no longer among them: the morphology loader consumes it, so it is
+    # mirrored with its own record rather than named as deliberately absent
+    assert c.RAW_CELL_COUNTS_FILENAME in expected
     assert c.APPENDIX_SHA256 in expected
     assert "NOT duplicated here" in expected
     assert "NOT mirrored" in expected
@@ -713,7 +848,7 @@ def test_the_build_writes_the_three_ledgers_with_the_arithmetic_closed(
     features = json.loads((root / "preprocess" / "served_features.json").read_text())
     assert features["served"] == ["alpha_max"]
     assert len(features["paper_features"]) == 26
-    assert len(features["unserved"]) == 25
+    assert list(features["unserved"]) == ["ODmax"]
     assert features["wild_type_replicates"] == _SYNTHETIC_WILD_TYPE
     assert features["wild_type_median_alpha_max"] == pytest.approx(
         _SYNTHETIC_DENOMINATOR
@@ -788,14 +923,70 @@ def test_every_paper_sourced_value_is_backed_by_its_verbatim_quote() -> None:
     from torchcell.verification.sourced import SourcedValue
 
     root = osp.join(os.environ["DATA_ROOT"], "torchcell-library")
-    declared = {id(v) for v in (*c.SOURCED_VALUES, *c.LEGEND_SOURCED_VALUES)}
+    declared = {
+        id(v)
+        for v in (
+            *c.SOURCED_VALUES,
+            *c.LEGEND_SOURCED_VALUES,
+            *c.APPENDIX_SOURCED_VALUES,
+        )
+    }
     module_values = [v for v in vars(c).values() if isinstance(v, SourcedValue)]
-    # every module-level SourcedValue is in one of the two audited tuples
+    # every module-level SourcedValue is in one of the three audited tuples
     assert {id(v) for v in module_values} == declared
-    assert len(c.SOURCED_VALUES) == 14
+    assert len(c.SOURCED_VALUES) == 20
     for value in c.SOURCED_VALUES:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.value!r}: {result.message}"
+
+
+@pytest.mark.data
+@pytest.mark.parametrize(
+    "sourced",
+    c.APPENDIX_SOURCED_VALUES,
+    ids=[v.quote[:40] for v in c.APPENDIX_SOURCED_VALUES],
+)
+def test_every_appendix_sourced_value_quotes_the_pinned_docx_text_runs(
+    sourced: Any,
+) -> None:
+    """``audit_sourced_value`` reads text, so a .docx needs its own reader.
+
+    The quote is checked against the text runs of ``word/document.xml`` extracted the
+    way the provenance ``method`` field describes: a subscript run written ``_{...}``, a
+    Symbol-font glyph named, and an OMML equation contributing no run.
+    """
+    import os
+    import xml.etree.ElementTree as ElementTree
+    import zipfile
+
+    docx = c.library_dir(os.environ["DATA_ROOT"]) / c.APPENDIX_REL
+    assert c._sha256(docx) == sourced.provenance.sha256 == c.APPENDIX_SHA256
+    namespace = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+    with zipfile.ZipFile(docx) as archive:
+        document = ElementTree.fromstring(archive.read("word/document.xml"))
+    paragraphs = []
+    for paragraph in document.iter(f"{namespace}p"):
+        parts = []
+        for run in paragraph.iter(f"{namespace}r"):
+            properties = run.find(f"{namespace}rPr")
+            subscript = False
+            if properties is not None:
+                alignment = properties.find(f"{namespace}vertAlign")
+                subscript = (
+                    alignment is not None
+                    and alignment.get(f"{namespace}val") == "subscript"
+                )
+            text = "".join(node.text or "" for node in run.iter(f"{namespace}t"))
+            for symbol in run.iter(f"{namespace}sym"):
+                text += (
+                    f"[SYM char={symbol.get(f'{namespace}char')} "
+                    f"font={symbol.get(f'{namespace}font')}]"
+                )
+            if text:
+                parts.append(f"_{{{text}}}" if subscript else text)
+        if "".join(parts).strip():
+            paragraphs.append("".join(parts))
+    assert sourced.quote in "\n".join(paragraphs)
 
 
 @pytest.mark.data
@@ -812,14 +1003,19 @@ def test_every_legend_sourced_value_quotes_a_cell_of_the_pinned_dataset_ev2(
     data_root = os.environ["DATA_ROOT"]
     path = c.raw_mirror_dir(data_root) / c.DATA_REL
     assert c._sha256(path) == sourced.provenance.sha256 == c.DATA_SHA256
-    legend = pd.read_excel(path, sheet_name="Legend scores", header=None)
-    cells = {
+    # the sheet the value's own page names, not always "Legend scores": the feature
+    # units and the non-determined-field statement are on "Legend normalized data"
+    sheet = sourced.provenance.page.split("sheet '")[1].rstrip("'")
+    legend = pd.read_excel(path, sheet_name=sheet, header=None)
+    cells = [
         str(value).strip()
         for row in legend.itertuples(index=False)
         for value in row
         if str(value) != "nan"
-    }
-    assert sourced.quote in cells
+    ]
+    # a substring of a cell, which is what SourcedValue.quote is defined to be: the
+    # legend's header cell packs three sentences into one cell
+    assert any(sourced.quote in cell for cell in cells)
 
 
 @pytest.mark.data
@@ -911,3 +1107,328 @@ def test_the_real_derived_fitness_is_an_exact_affine_map_of_the_released_score()
     assert float(fitness.min()) > 0.0
     assert float(fitness.min()) == pytest.approx(0.121789, abs=1e-6)
     assert float(fitness.max()) == pytest.approx(1.351417, abs=1e-6)
+
+
+# --------------------------------------------------------------------------- #
+# Morphology: the reader, the phenotypes, the build, the gate
+# --------------------------------------------------------------------------- #
+def _no_dapi_position() -> tuple[str, str]:
+    """The Keio position of the synthetic row that has no DAPI channel."""
+    (row,) = [r for r in _SYNTHETIC_ROWS if r[0] == _SYNTHETIC_NO_DAPI_LABEL]
+    assert row[1] is not None and row[2] is not None
+    return row[1], row[2]
+
+
+def _morphology_rows(tmp_path: Path) -> dict[tuple[str, str], c.MorphologyRow]:
+    return c.read_morphology_rows(
+        _release(tmp_path / "ev2.xlsx"), _cell_counts(tmp_path / "ev1.xlsx")
+    )
+
+
+def test_the_morphology_reader_joins_the_two_sheets_on_the_keio_position(
+    tmp_path: Path,
+) -> None:
+    rows = _morphology_rows(tmp_path)
+    positions = [
+        (str(row[1]), str(row[2])) for row in _SYNTHETIC_ROWS if row[0] is not None
+    ]
+    assert len(rows) == len(positions)
+    assert set(rows) == set(positions)
+    # the cell count rides across from Dataset EV1, in that sheet's own row order
+    assert [rows[position].n_cells for position in positions] == [
+        200 + i for i, _ in enumerate(positions)
+    ]
+
+
+def test_the_morphology_reader_files_each_value_under_its_declared_statistic(
+    tmp_path: Path,
+) -> None:
+    row = _morphology_rows(tmp_path)[("1", "A004")]
+    assert set(row.values) == set(MORPHOLOGY_ASSAY.value_symbols)
+    assert set(row.coefficients_of_variation) == set(
+        MORPHOLOGY_ASSAY.coefficient_of_variation_symbols
+    )
+    assert len(row.values) == 15
+    assert len(row.coefficients_of_variation) == 11
+    assert row.values.keys().isdisjoint(row.coefficients_of_variation)
+
+
+def test_a_non_determined_field_is_absent_rather_than_imputed(tmp_path: Path) -> None:
+    """The release writes a non-determined field as NaN, which is not a measurement."""
+    rows = _morphology_rows(tmp_path)
+    position = _no_dapi_position()
+    stripped = rows[position]
+    stored = set(stripped.values) | set(stripped.coefficients_of_variation)
+    assert stored == set(c.MORPHOLOGY_REQUIRED_FEATURES)
+    assert stored.isdisjoint(c.MORPHOLOGY_DAPI_FEATURES)
+    assert len(stored) == 19
+
+
+def test_the_morphology_reader_refuses_a_missing_feature_column(tmp_path: Path) -> None:
+    path = _release(tmp_path / "ev2.xlsx")
+    frame = pd.read_excel(path, sheet_name=c.NORMALIZED_SHEET)
+    frame = frame.drop(columns=[c.MORPHOLOGY_COLUMNS["<L>"]])
+    with pd.ExcelWriter(path) as writer:
+        frame.to_excel(writer, sheet_name=c.NORMALIZED_SHEET, index=False)
+    with pytest.raises(ValueError, match="missing morphology columns"):
+        c.read_morphology_rows(path, _cell_counts(tmp_path / "ev1.xlsx"))
+
+
+def test_the_morphology_reader_refuses_a_cell_count_sheet_missing_its_column(
+    tmp_path: Path,
+) -> None:
+    counts = _cell_counts(tmp_path / "ev1.xlsx")
+    frame = pd.read_excel(counts, sheet_name=c.RAW_SHEET).drop(
+        columns=[c.CELL_COUNT_COLUMN]
+    )
+    with pd.ExcelWriter(counts) as writer:
+        frame.to_excel(writer, sheet_name=c.RAW_SHEET, index=False)
+    with pytest.raises(ValueError, match=f"missing column '{c.CELL_COUNT_COLUMN}'"):
+        c.read_morphology_rows(_release(tmp_path / "ev2.xlsx"), counts)
+
+
+def test_the_morphology_reader_refuses_a_position_with_no_cell_count(
+    tmp_path: Path,
+) -> None:
+    """A row the join cannot serve stops the build; no record gets a guessed n_samples."""
+    counts = _cell_counts(tmp_path / "ev1.xlsx")
+    frame = pd.read_excel(counts, sheet_name=c.RAW_SHEET)
+    frame.loc[frame[c.WELL_COLUMN] == "A004", c.WELL_COLUMN] = "Z999"
+    with pd.ExcelWriter(counts) as writer:
+        frame.to_excel(writer, sheet_name=c.RAW_SHEET, index=False)
+    with pytest.raises(ValueError, match=r"no cell count for position"):
+        c.read_morphology_rows(_release(tmp_path / "ev2.xlsx"), counts)
+
+
+def test_the_morphology_reader_refuses_a_repeated_keio_position(tmp_path: Path) -> None:
+    counts = _cell_counts(tmp_path / "ev1.xlsx")
+    frame = pd.read_excel(counts, sheet_name=c.RAW_SHEET)
+    frame.loc[frame.index[1], [c.PLATE_COLUMN, c.WELL_COLUMN]] = frame.loc[
+        frame.index[0], [c.PLATE_COLUMN, c.WELL_COLUMN]
+    ].to_numpy()
+    with pd.ExcelWriter(counts) as writer:
+        frame.to_excel(writer, sheet_name=c.RAW_SHEET, index=False)
+    with pytest.raises(ValueError, match="repeats a .plate, well. position"):
+        c.read_morphology_rows(_release(tmp_path / "ev2.xlsx"), counts)
+
+
+def test_a_morphology_phenotype_names_the_assay_and_counts_cells(
+    tmp_path: Path,
+) -> None:
+    row = _morphology_rows(tmp_path)[("1", "A004")]
+    phenotype = c.morphology_phenotype(row)
+    assert phenotype.assay == "campos2018"
+    assert phenotype.assay_vocabulary is MORPHOLOGY_ASSAY
+    assert phenotype.morphology == row.values
+    assert phenotype.morphology_coefficient_of_variation == (
+        row.coefficients_of_variation
+    )
+    assert phenotype.n_samples == row.n_cells
+    assert phenotype.sample_unit == SampleUnit.cell
+    assert phenotype.provenance_gaps == []
+
+
+def test_the_morphology_reference_is_the_median_over_the_parental_wells(
+    tmp_path: Path,
+) -> None:
+    rows = _morphology_rows(tmp_path)
+    parental = [rows[("1", well)] for well in ("A001", "A002", "A003")]
+    reference = c.morphology_reference_phenotype(parental)
+    assert reference.n_samples == 3
+    assert reference.sample_unit == SampleUnit.biological_replicate
+    # the three synthetic wells are rows 0, 1 and 2, so the median is row 1's value
+    assert reference.morphology["<L>"] == pytest.approx(parental[1].values["<L>"])
+    assert set(reference.morphology) | set(
+        reference.morphology_coefficient_of_variation or {}
+    ) == set(c.MORPHOLOGY_FEATURES)
+
+
+def test_an_even_number_of_parental_wells_gives_the_midpoint(tmp_path: Path) -> None:
+    rows = _morphology_rows(tmp_path)
+    parental = [rows[("1", well)] for well in ("A001", "A002")]
+    reference = c.morphology_reference_phenotype(parental)
+    assert reference.n_samples == 2
+    assert reference.morphology["<L>"] == pytest.approx(
+        (parental[0].values["<L>"] + parental[1].values["<L>"]) / 2
+    )
+
+
+def test_a_morphology_reference_needs_at_least_one_parental_well() -> None:
+    with pytest.raises(ValueError, match="no morphology reference"):
+        c.morphology_reference_phenotype([])
+
+
+def test_a_reference_feature_no_parental_well_determined_is_absent(
+    tmp_path: Path,
+) -> None:
+    """The median is per feature over the wells that determined it, never imputed."""
+    rows = _morphology_rows(tmp_path)
+    position = _no_dapi_position()
+    reference = c.morphology_reference_phenotype([rows[position]])
+    stored = set(reference.morphology) | set(
+        reference.morphology_coefficient_of_variation or {}
+    )
+    assert stored == set(c.MORPHOLOGY_REQUIRED_FEATURES)
+
+
+def test_the_morphology_loader_builds_the_synthetic_release_end_to_end(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    root = tmp_path / "morphology"
+    dataset = c.MorphologyCampos2018Dataset(root=str(root))
+    assert len(dataset) == _SYNTHETIC_KEPT
+    assert sorted(dataset.gene_set) == [
+        "BW25113_0002",
+        "BW25113_0004",
+        "BW25113_0008",
+        "BW25113_4412",
+    ]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    assert len(references) == 1
+    experiment = dataset[0]["experiment"]
+    phenotype = experiment["phenotype"]
+    assert experiment["experiment_type"] == "bacterial_morphology"
+    assert phenotype["assay"] == "campos2018"
+    assert phenotype["label_name"] == "morphology"
+    assert phenotype["label_statistic_name"] == "morphology_coefficient_of_variation"
+    assert phenotype["sample_unit"] == "cell"
+    assert phenotype["n_samples"] >= 200
+    stored = set(phenotype["morphology"]) | set(
+        phenotype["morphology_coefficient_of_variation"]
+    )
+    assert stored <= set(c.MORPHOLOGY_FEATURES)
+    assert set(c.MORPHOLOGY_REQUIRED_FEATURES) <= stored
+    (perturbation,) = experiment["genotype"]["perturbations"]
+    assert perturbation["gene_namespace"] == c.BW25113_NAMESPACE
+    assert perturbation["collection"] == c.KEIO_COLLECTION
+
+
+def test_the_morphology_build_writes_the_per_feature_coverage_ledger(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    root = tmp_path / "morphology"
+    c.MorphologyCampos2018Dataset(root=str(root))
+    features = json.loads((root / "preprocess" / "served_features.json").read_text())
+    assert features["assay"] == "campos2018"
+    assert features["served"] == list(c.MORPHOLOGY_FEATURES)
+    assert list(features["unserved"]) == ["ODmax"]
+    assert set(features["released_columns_not_in_the_vocabulary"]) == {
+        "%non-div",
+        "%1N",
+    }
+    by_feature = features["determined_values_by_feature"]
+    assert set(by_feature) == set(c.MORPHOLOGY_FEATURES)
+    # 4 kept rows, 1 of them without the DAPI channel
+    for symbol in c.MORPHOLOGY_REQUIRED_FEATURES:
+        assert by_feature[symbol] == _SYNTHETIC_KEPT
+    for symbol in c.MORPHOLOGY_DAPI_FEATURES:
+        assert by_feature[symbol] == _SYNTHETIC_KEPT - 1
+    assert features["determined_values"] == sum(by_feature.values())
+    assert features["determined_values"] == 19 * 4 + 7 * 3
+    assert set(features["feature_units"]["<L>"]) == set("µm")
+    assert features["feature_units"]["CV_L"] is None
+    assert set(features["features_by_statistic"]) == {
+        f.statistic.value for f in MORPHOLOGY_ASSAY.features
+    }
+
+
+def test_the_morphology_build_refuses_a_drop_ledger_that_does_not_add_up(
+    tmp_path: Path, mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    real = c.resolve_rows
+
+    def _lying(table: Any, genome: Any, *, label: str) -> Any:
+        resolution = real(table, genome, label=label)
+        resolution.dropped_rows[c.DROP_FOOTER] += 1
+        return resolution
+
+    monkeypatch.setattr(c, "resolve_rows", _lying)
+    with pytest.raises(RuntimeError, match="drop accounting mismatch"):
+        c.MorphologyCampos2018Dataset(root=str(tmp_path / "morphology"))
+
+
+def test_the_morphology_download_refuses_a_missing_mirror_file(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    (c.raw_mirror_dir(str(mirrored)) / c.CELL_COUNTS_REL).unlink()
+    dataset = c.MorphologyCampos2018Dataset.__new__(c.MorphologyCampos2018Dataset)
+    with pytest.raises(RuntimeError, match="required raw artifact missing"):
+        dataset.download()
+
+
+def test_the_morphology_verifier_passes_on_the_synthetic_build(
+    tmp_path: Path, mirrored: Path, bw25113: EcoliK12BW25113Genome
+) -> None:
+    root = tmp_path / "morphology"
+    c.MorphologyCampos2018Dataset(root=str(root))
+    report = c.verify_morphology_build(
+        str(root), genome=bw25113, expected_count=_SYNTHETIC_KEPT
+    )
+    assert report.passed, report.summary()
+    rows = {result.name: result for result in report.results}
+    assert rows["count"].details["observed"] == _SYNTHETIC_KEPT
+    assert rows["assay_coverage"].details["assay"] == "campos2018"
+    assert rows["assay_coverage"].details["coverage_strata"] == {"19": 1, "26": 3}
+    assert rows["value_fidelity"].details["n_values"] == 19 * 4 + 7 * 3
+    assert rows["value_fidelity"].details["n_features"] == 26
+    # 11 CVs on the three full rows and 10 on the row without the DAPI channel, whose
+    # missing CV_NA is one of the seven nucleoid-derived features
+    assert rows["cv_nonnegative"].details["n_values"] == 11 * 3 + 10
+    assert rows["reference_populated"].passed
+    assert (root / "preprocess" / "verification_report.json").exists()
+
+
+def test_the_two_campos_datasets_keep_exactly_the_same_rows(
+    tmp_path: Path, mirrored: Path
+) -> None:
+    """One release, one set of row rules: a strain is writable for both or for neither."""
+    fitness = c.GrowthRateCampos2018Dataset(root=str(tmp_path / "fitness"))
+    morphology = c.MorphologyCampos2018Dataset(root=str(tmp_path / "morphology"))
+    assert set(fitness.gene_set) == set(morphology.gene_set)
+    assert len(fitness) == len(morphology)
+
+
+@pytest.mark.data
+def test_the_real_release_leaves_the_same_seven_features_non_determined() -> None:
+    """The DAPI split is measured, not assumed from what a feature is derived from."""
+    import os
+
+    data_root = os.environ["DATA_ROOT"]
+    mirror = c.raw_mirror_dir(data_root)
+    rows = c.read_morphology_rows(mirror / c.DATA_REL, mirror / c.CELL_COUNTS_REL)
+    assert len(rows) == 4467
+    stored = [set(r.values) | set(r.coefficients_of_variation) for r in rows.values()]
+    assert all(set(c.MORPHOLOGY_REQUIRED_FEATURES) <= s for s in stored)
+    short = [s for s in stored if len(s) != 26]
+    assert len(short) == c.STRAINS_WITHOUT_A_NUCLEOID_CHANNEL == 278
+    assert {frozenset(s) for s in short} == {frozenset(c.MORPHOLOGY_REQUIRED_FEATURES)}
+    counts = [r.n_cells for r in rows.values()]
+    assert sum(counts) == 1301055
+    assert min(counts) == 43
+
+
+@pytest.mark.data
+def test_the_two_released_proportions_are_exact_inverses_of_the_stored_timings() -> (
+    None
+):
+    """The measurement that justifies leaving %non-div and %1N out of the vocabulary."""
+    import math
+    import os
+
+    data_root = os.environ["DATA_ROOT"]
+    frame = pd.read_excel(
+        c.raw_mirror_dir(data_root) / c.DATA_REL, sheet_name=c.NORMALIZED_SHEET
+    )
+    frame = frame[frame[c.LABEL_COLUMN].notna()]
+    for proportion, timing in (
+        ("%non-div", "Rel.timing div"),
+        ("%1N", "Rel.timing nuc"),
+    ):
+        pairs = frame[[proportion, timing]].dropna()
+        assert len(pairs) == 4189
+        worst = max(
+            abs(t - (-math.log2(1.0 - f / 2.0)))
+            for f, t in zip(pairs[proportion], pairs[timing], strict=True)
+        )
+        assert worst < 2e-15

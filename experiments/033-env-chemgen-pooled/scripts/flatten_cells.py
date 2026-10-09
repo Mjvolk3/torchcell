@@ -76,9 +76,11 @@ HOST_GENES: frozenset[str] = frozenset({"YGL013C", "YBL005W", "YDR011W"})
 
 #: Units that convert to molar without a molecular weight, as a factor to mol/L.
 MOLAR_FACTOR: dict[str, float] = {"M": 1.0, "mM": 1e-3, "uM": 1e-6, "nM": 1e-9}
-#: Units that are a dose and do NOT convert to molar without a molecular weight or density.
+#: Units that are a dose and do NOT convert to molar without a molecular weight or density;
+#: "percent" is a percent the source states no v/v or w/v basis for (ConcentrationUnit.percent,
+#: Vanacloig 2022 Table S1 after PR #807).
 NOT_MOLAR_UNITS: frozenset[str] = frozenset(
-    {"ug/mL", "mg/mL", "percent_v/v", "percent_w/v", "g/L"}
+    {"ug/mL", "mg/mL", "percent_v/v", "percent_w/v", "percent", "g/L"}
 )
 
 

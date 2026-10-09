@@ -273,7 +273,7 @@ def plot_ex23_conditions(cond: pd.DataFrame) -> list[str]:
             facecolor=NO_GROWTH,
             edgecolor="black",
             linewidth=0.4,
-            label="no growth in 48 h",
+            label="no growth in 85 h",
         )
     )
     ax.set_xticks(x)
@@ -326,7 +326,7 @@ def plot_ex23_pairs(cond: pd.DataFrame) -> list[str]:
     ax.set_yticks(range(6))
     ax.set_xticklabels([f"{k}\n{EX23_G_PER_L[k]:g} g/L" for k in INHIBITORS])
     ax.set_yticklabels([f"{k} {EX23_G_PER_L[k]:g} g/L" for k in INHIBITORS])
-    ax.set_title("ex23 singles (diagonal) and pairs; no growth in 48 h drawn at 0")
+    ax.set_title("ex23 singles (diagonal) and pairs; no growth in 85 h drawn at 0")
     cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.03)
     cbar.set_label("fitness (wild-type GT / GT)")
     cbar.outline.set_linewidth(0.5)
@@ -451,13 +451,13 @@ def plot_ex21(titration: pd.DataFrame) -> list[str]:
         ax.set_axisbelow(True)
         box(ax)
     axes[0, 0].scatter(
-        [], [], marker="x", s=10, color="black", label="no growth in 48 h"
+        [], [], marker="x", s=10, color="black", label="no growth in 72 h"
     )
     axes[0, 0].legend(frameon=False, loc="lower left")
     for ax in axes[:, 0]:
         ax.set_ylabel("fitness (wild-type GT / GT)")
     fig.suptitle(
-        "ex21 single-inhibitor titrations, highest concentration left; x = no growth in 48 h",
+        "ex21 single-inhibitor titrations, highest concentration left; x = no growth in 72 h",
         fontsize=6,
     )
     fig.subplots_adjust(

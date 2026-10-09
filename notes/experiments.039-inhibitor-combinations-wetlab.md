@@ -28,7 +28,7 @@ One dispensed concentration per inhibitor (FF 1.5, AA 2, HMF 2.522, FA 1, LVA 6,
 see [[2026.10.08 - Dose corrections|dendron://torchcell/experiments.039-inhibitor-combinations-wetlab#20261008---dose-corrections]]), three
 biological replicates, 200 wells (8 uninhibited controls, 3 blanks). `results/ex23_conditions.csv`.
 
-| number of inhibitors | combinations | grew within 48 h | mean fitness of those that grew |
+| number of inhibitors | combinations | grew within 85 h | mean fitness of those that grew |
 |---|---|---|---|
 | 1 | 6 | 6 | 0.788 |
 | 2 | 15 | 14 | 0.465 |
@@ -37,11 +37,11 @@ biological replicates, 200 wells (8 uninhibited controls, 3 blanks). `results/ex
 | 5 | 6 | 0 | |
 | 6 | 1 | 0 | |
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-08-00-44-14.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_combinations_fitness_2026-10-09-05-08-37.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-08-00-44-14.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_pair_matrix_2026-10-09-05-08-37.svg)
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-08-00-44-15.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex23_single_inhibitor_curves_2026-10-09-05-08-38.svg)
 
 Read off the data: HMF is the strongest single inhibitor at its concentration (fitness
 0.44), the pair that fails to grow is FA + LA, and every combination of four or more fails.
@@ -58,7 +58,7 @@ titration step. The control wells of this run grew slower (mean generation time
 2.62 h) than most low-concentration wells, so fitness exceeds 1 at the low end.
 `results/ex21_titration.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-08-00-44-15.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex21_titrations_2026-10-09-05-08-38.svg)
 
 ### The isoboles: ex26 furfural, ex27 formic acid and ex28 5-HMF, each against acetic acid
 
@@ -73,7 +73,7 @@ the run.
 Only ex26 was processed by the Bioscreen software (`MV_ex26_..._Traits.txt`, 48 of 200
 wells grew). `results/ex26_isobole.csv`.
 
-![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-08-00-44-15.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/ex26_isobole_furfural_acetic_acid_2026-10-09-05-08-38.svg)
 
 For ex27 and ex28 the generation time is derived here from the raw curves
 (`generation_time` in the script: baseline-subtracted OD, growth if the rise is at least
@@ -83,7 +83,7 @@ ranks the 45 wells both call grown with a Spearman of 0.80 (`results/ex26_trait_
 so the two unprocessed isoboles are read on a checked footing. Wells grown: ex26 45, ex27
 76, ex28 53 of 200 (`results/isoboles_from_raw.csv`).
 
-![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-08-00-44-15.svg)
+![](assets/images/039-inhibitor-combinations-wetlab/isoboles_from_raw_2026-10-09-05-08-38.svg)
 
 Formic acid x acetic acid is the cleanest trade-off (a diagonal front from FA 1.6 g/L
 alone to AA 2.8 g/L alone). 5-HMF x acetic acid has a ragged front with growth islands at
@@ -123,3 +123,7 @@ The derivation and its sourced values are in
 [[torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen]]
 (`torchcell/datasets/private_torchcell/bioscreen.py`, `volk2021_sources.py`, on branch
 `feat/private-torchcell-bioscreen-volk2021`).
+
+## 2026.10.09 - Run lengths in the figure labels
+
+No run was 48 h: the Bioscreen logs give 71.97 h for ex21, 84.97 h for ex23 and about 96 h for the isoboles (the 48 h was the lag the software assigns to a well that never grew). The ex21 and ex23 labels now say 72 h and 85 h; the figures were regenerated and relinked.

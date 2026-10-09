@@ -277,6 +277,8 @@ from torchcell.datamodels.schema import (
     BacterialAssemblySet,
     BacterialCrisprInterferencePerturbation,
     BacterialGeneNamespace,
+    BacterialProteinAbundanceExperiment,
+    BacterialProteinAbundanceExperimentReference,
     BacterialProteinFoldChangeExperiment,
     BacterialProteinFoldChangeExperimentReference,
     BacterialReferenceStrain,
@@ -3849,6 +3851,22 @@ class CrispriPanelProteomeYunus2026Dataset(_Yunus2026BenchlingDataset):
     #: accessions (0.8182) reach exactly one locus of this assembly through
     #: ``109.P_putida_KT2440.goa``; the floor sits just below that.
     MIN_ACCESSION_RESOLVED_FRACTION: ClassVar[float] = PANEL_MIN_RESOLVED_FRACTION
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset.
+
+        The base class produces a fold change, which the three CRISPRi ratio families
+        of this module store. This family's number is an ABSOLUTE per-strain Top3
+        signal (``PANEL_PROTEOME_MEASUREMENT_TYPE``), so it overrides back to the
+        abundance pair rather than inheriting a ratio's classes.
+        """
+        return BacterialProteinAbundanceExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialProteinAbundanceExperimentReference
 
     def __init__(
         self,

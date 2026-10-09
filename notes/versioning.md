@@ -274,3 +274,7 @@ Landed on 2026-10-08, all through the merge queue: non-journal source types on `
 ## 2026.10.08 - 1.7.1: the pair for KG 4.0 moves to the tip
 
 `v1.7.0` (bump `76d41025b`) could not be the build commit: at that commit `IsopentenolTiterFoo2014Dataset` declared a bacterial genome parameter with no `REFERENCE_STRAIN` and `ProteomeBanerjee2025Dataset` was mapped but not registered, so two mapped stores could not be built (array 3410 tasks 57 and 84), and the bacterial expansion kept landing closure changes after the tag (the promoter-activity phenotype family moved `ExperimentType`; Butland 2008, Ishii 2007, Mohiuddin 2022 and Fang 2025 arrived). Both loaders are fixed at the tip. This `DB(kg)` patch cuts `1.7.1` there as the package KG 4.0 pairs with; the live rebuild runs from a worktree checked out AT the tag (`TORCHCELL_SRC`), never from the primary checkout, which other sessions pull forward.
+
+## 2026.10.09 - 1.7.2: five mapped loaders made buildable
+
+Array 3520 (the 17 stores stale under `v1.7.1`) refused five mapped datasets: the three Ishii 2007 loaders and Banerjee 2025 were registered by decorator but never imported by their package, and Foo 2014 held its reference strain in a module constant the genome injector does not read. Fixed on the same branch, with a test that every class in both adapter maps resolves by name and every bacterial loader declares `REFERENCE_STRAIN` on the class. This `DB(kg)` patch cuts `1.7.2` as the package KG 4.0 pairs with; the build runs from a worktree at that tag.

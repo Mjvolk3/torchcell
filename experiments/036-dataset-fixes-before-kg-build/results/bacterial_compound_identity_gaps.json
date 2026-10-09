@@ -1,0 +1,405 @@
+{
+  "table_sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
+  "datasets_requested": 1,
+  "datasets_scanned": 1,
+  "datasets_not_scanned": [],
+  "datasets_whose_store_cannot_be_read": {},
+  "compound_objects_scanned": 1530,
+  "distinct_resolved_labels": 28,
+  "gap_labels": 18,
+  "gap_labels_name_only": 17,
+  "gap_labels_by_proposed_triage": {
+    "single_substance_candidate": 18
+  },
+  "gap_labels_that_would_rename_a_served_node": [],
+  "gaps": [
+    {
+      "label": "D-alanine",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Fucose",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Fumarate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Galacturonate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Gluconate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Glucosamine",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Glucuronate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Malate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Mannitol",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "N-acetyl Glucosamine",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Oxaloacetate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Pyruvate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Ribose",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Saccharate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Succinate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "Thymidine",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "agar",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": false,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {
+        "pubchem_cid": 71571511,
+        "chebi_id": "CHEBI:2509"
+      },
+      "resolution_status": "RESOLVED_MIXTURE",
+      "resolved_name": "agar",
+      "inchikey": null,
+      "chebi_id": "CHEBI:2509",
+      "pubchem_cid": 71571511,
+      "unresolved_reason": "agar is a polysaccharide mixture extracted from red algae; PubChem's Agar record (CID 71571511) carries the InChIKey of the agarobiose repeat unit, which is not the substance weighed into a plate, so the CID is kept as the identifier and the InChIKey is left null",
+      "curated": true,
+      "identified": true,
+      "renames_a_served_node": false
+    },
+    {
+      "label": "\u03b1-ketoglutarate",
+      "stores": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "name_only": true,
+      "proposed_triage": "single_substance_candidate",
+      "other_identifiers": {},
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false,
+      "renames_a_served_node": false
+    }
+  ],
+  "pinene_spellings": {
+    "pinene": {
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false
+    },
+    "alpha-pinene": {
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false
+    },
+    "alpha-Pinene": {
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false
+    },
+    "(-)-alpha-pinene": {
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false
+    },
+    "(+)-alpha-pinene": {
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "resolved_name": null,
+      "inchikey": null,
+      "chebi_id": null,
+      "pubchem_cid": null,
+      "unresolved_reason": null,
+      "curated": false,
+      "identified": false
+    }
+  },
+  "per_dataset_compound_objects": {
+    "CarbonSourceTong2020Dataset": 1530
+  },
+  "per_dataset_scan_path": {
+    "CarbonSourceTong2020Dataset": {
+      "interned_entries": 90,
+      "records_read": false
+    }
+  }
+}

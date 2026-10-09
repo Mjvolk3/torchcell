@@ -104,6 +104,11 @@ LANE_OF_LABEL: dict[str, str] = {
     "Genotype": "genotype",
     "Perturbation": "genotype",
     "BacterialPerturbation": "genotype",
+    # A called bacterial variant (issue #731): a SIBLING of BacterialPerturbation
+    # under `genotype`, so it takes the same lane. Not in ANCESTOR_LABELS, for the
+    # reason PhagePerturbation is not: that tuple measures the labels the SERVED
+    # store carries, and no variant dataset is served yet.
+    "BacterialSequenceVariantPerturbation": "genotype",
     "SegregantGenotype": "genotype",
     "CrisprConstruct": "genotype",
     "Environment": "environment",
@@ -136,6 +141,7 @@ CAPTION_OF_LABEL: dict[str, str] = {
     "Genotype": "{perturbed_gene_name}",
     "Perturbation": "{perturbed_gene_name}",
     "BacterialPerturbation": "{perturbed_gene_name}",
+    "BacterialSequenceVariantPerturbation": "{perturbed_gene_name}",
     "SegregantGenotype": "{segregant_id}",
     "CrisprConstruct": "{effector}",
     "Environment": "{media}",

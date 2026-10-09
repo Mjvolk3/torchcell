@@ -36,7 +36,11 @@ import pytest
 import yaml
 
 import torchcell
-from torchcell.adapters.cell_adapter import BACTERIAL_PERTURBATION_LEAVES, CellAdapter
+from torchcell.adapters.cell_adapter import (
+    BACTERIAL_PERTURBATION_LEAVES,
+    BACTERIAL_VARIANT_PERTURBATION_LEAVES,
+    CellAdapter,
+)
 from torchcell.datamodels import schema as s
 from torchcell.knowledge_graphs.kg_manifest import (
     CELL_ADAPTER_RELPATH,
@@ -111,6 +115,77 @@ def _bacterial_leaves() -> list[Any]:
             is_heterologous=True,
             localization="plasmid",
             pathway_name="isoprenol via mevalonate",
+        ),
+    ]
+
+
+#: One call of each shape the #731 leaves carry, as rows of the Lim 2025 released
+#: ``Fig 2B_Mutation List`` sheet, so the fixture exercises real coordinates. The
+#: namespace is KT2440's, since that is the host those rows were called against.
+KT2440: s.BacterialGeneNamespace = "pputida_kt2440_locus_tag"
+
+
+def _call(**kw: Any) -> s.BacterialVariantCall:
+    fields: dict[str, Any] = dict(
+        variant_type=s.BacterialVariantType.snv,
+        type_statement="SNP",
+        reference_sequence="AE015451",
+        position_start=3866001,
+        position_end=3866001,
+        sequence_change="G\u2192A",
+        annotation="P293S (CCA\u2192TCA)",
+        call_mode=s.VariantCallMode.clone,
+        frequency_statement="1",
+        frequency=1.0,
+        frequency_basis=s.VariantFrequencyBasis.fraction,
+        caller="breseq 0.33.1",
+    )
+    fields.update(kw)
+    return s.BacterialVariantCall(**fields)
+
+
+def _variant_leaves() -> list[Any]:
+    """One perturbation of each called-variant leaf class, all against KT2440 tags."""
+    intergenic = _call(
+        variant_type=s.BacterialVariantType.insertion,
+        type_statement="INS",
+        position_start=4586057,
+        position_end=4586057,
+        sequence_change="+C",
+        annotation="intergenic (+140/+75)",
+    )
+    span = _call(
+        variant_type=s.BacterialVariantType.deletion,
+        type_statement="DEL",
+        position_start=4588139,
+        position_end=4588139,
+        sequence_change="\u03945,553 bp",
+        annotation=None,
+    )
+    return [
+        s.BacterialSequenceVariantPerturbation(
+            systematic_gene_name="PP_3415",
+            perturbed_gene_name="PP_3415",
+            gene_namespace=KT2440,
+            call=_call(),
+        ),
+        s.BacterialIntergenicVariantPerturbation(
+            systematic_gene_name=s.BacterialIntergenicVariantPerturbation.site_id(
+                intergenic
+            ),
+            perturbed_gene_name="PP_4061, PP_4063",
+            gene_namespace=KT2440,
+            call=intergenic,
+            flanking_systematic_gene_names=("PP_4061", "PP_4063"),
+            flanking_gene_statement="PP_4061, PP_4063",
+        ),
+        s.BacterialSpanDeletionPerturbation(
+            systematic_gene_name="PP_4062",
+            perturbed_gene_name="PP_4062",
+            gene_namespace=KT2440,
+            call=span,
+            span_designation=s.BacterialSpanDeletionPerturbation.designation(span),
+            span_systematic_gene_names=("PP_4062", "PP_4063"),
         ),
     ]
 
@@ -193,6 +268,18 @@ def _product_titer_record(phenotype: s.ProductTiterPhenotype) -> dict[str, Any]:
             genotype=s.Genotype(perturbations=_bacterial_leaves()),
             # The product-titer family declares CultureEnvironment: a titer is read with
             # its vessel, and an Environment in that slot is refused.
+            environment=s.CultureEnvironment(media=_lb()),
+            phenotype=phenotype,
+        )
+    }
+
+
+def _variant_record(phenotype: s.ProductTiterPhenotype) -> dict[str, Any]:
+    """A record whose genotype is the three called-variant leaves and nothing else."""
+    return {
+        "experiment": s.ProductTiterExperiment(
+            dataset_name="BacterialVariantToy",
+            genotype=s.Genotype(perturbations=_variant_leaves()),
             environment=s.CultureEnvironment(media=_lb()),
             phenotype=phenotype,
         )
@@ -400,13 +487,113 @@ def test_bacterial_perturbation_nodes_carry_the_namespace_one_per_leaf() -> None
 def test_the_bacterial_leaf_tuple_is_exactly_the_leaves_carrying_gene_namespace() -> (
     None
 ):
-    """Every perturbation class in the genotype union that declares gene_namespace."""
+    """The two bacterial tuples PARTITION the genotype union's namespaced classes.
+
+    A called-variant leaf carries ``gene_namespace`` too, so the set it belongs to is
+    the union of the two tuples, and the tuples must be disjoint: a leaf served under
+    both labels would be written twice (``BacterialSpanDeletionPerturbation`` is a
+    subclass of ``BacterialDeletionPerturbation``, which is why the adapter excludes it
+    by tuple rather than by isinstance alone).
+    """
     (union,) = typing.get_args(s.Genotype.model_fields["perturbations"].annotation)
     namespaced = {
         cls for cls in typing.get_args(union) if "gene_namespace" in cls.model_fields
     }
-    assert set(BACTERIAL_PERTURBATION_LEAVES) == namespaced
+    plain = set(BACTERIAL_PERTURBATION_LEAVES)
+    variant = set(BACTERIAL_VARIANT_PERTURBATION_LEAVES)
+    assert plain | variant == namespaced
+    assert plain & variant == set()
     assert len(BACTERIAL_PERTURBATION_LEAVES) == 5
+    assert len(BACTERIAL_VARIANT_PERTURBATION_LEAVES) == 3
+
+
+# ------------------------------------------- bacterial sequence variant perturbation
+def test_variant_nodes_carry_the_call_and_the_other_leaves_emit_none() -> None:
+    """The #731 class: one node per called variant, with the call projected off .call."""
+    record = _variant_record(_titer())
+    leaves = record["experiment"].genotype.perturbations
+    nodes = _run("bacterial sequence variant perturbation (chunked)", record)
+    assert [n.get_label() for n in nodes] == [
+        "bacterial sequence variant perturbation"
+    ] * 3
+    assert [n.get_id() for n in nodes] == [_sha(p) for p in leaves]
+    # Genotype sorts by systematic_gene_name, so the site id sorts before the PP_ tags
+    # and PP_3415 before PP_4062.
+    assert [n.get_preferred_id() for n in nodes] == [
+        "bacterial_intergenic_variant",
+        "bacterial_sequence_variant",
+        "bacterial_span_deletion",
+    ]
+    assert nodes[0].get_properties() == {
+        "systematic_gene_name": "AE015451:4586057",
+        "perturbed_gene_name": "PP_4061, PP_4063",
+        "perturbation_type": "bacterial_intergenic_variant",
+        "description": (
+            "Called sequence variant between bacterial loci, keyed on its genomic site"
+        ),
+        "gene_namespace": KT2440,
+        "reference_sequence": "AE015451",
+        "position_start": 4586057,
+        "position_end": 4586057,
+        "variant_type": "insertion",
+        "variant_frequency": 1.0,
+        "call_mode": "clone",
+        "id": _sha(leaves[0]),
+        "preferred_id": "bacterial_intergenic_variant",
+    }
+    assert nodes[1].get_properties()["systematic_gene_name"] == "PP_3415"
+    assert nodes[1].get_properties()["variant_type"] == "snv"
+    assert nodes[2].get_properties()["systematic_gene_name"] == "PP_4062"
+    assert nodes[2].get_properties()["variant_type"] == "deletion"
+    assert "serialized_data" not in nodes[0].get_properties()
+    # the span deletion is NOT also written as a `bacterial perturbation`
+    assert _run("bacterial perturbation (chunked)", record) == []
+    assert (
+        _run("bacterial sequence variant perturbation (chunked)", _yeast_record()) == []
+    )
+
+
+def test_variant_node_properties_are_exactly_the_declared_class_properties() -> None:
+    """The emitted property set equals the schema config's, with no silent extra."""
+    declared = set(SCHEMA["bacterial sequence variant perturbation"]["properties"])
+    node = _run(
+        "bacterial sequence variant perturbation (chunked)", _variant_record(_titer())
+    )[0]
+    assert set(node.get_properties()) - NODE_BOOKKEEPING == declared
+    assert SCHEMA["bacterial sequence variant perturbation"]["is_a"] == "genotype"
+
+
+def test_a_variant_record_edges_address_the_variant_nodes() -> None:
+    """``perturbation to genotype`` computes the same ids, so no edge method is added."""
+    record = _variant_record(_titer())
+    node_ids = [
+        n.get_id()
+        for n in _run("bacterial sequence variant perturbation (chunked)", record)
+    ]
+    genotype_id = _run("genotype (chunked)", record)[0].get_id()
+    edges = _run("perturbation to genotype (chunked)", record)
+    assert [e.get_label() for e in edges] == ["perturbation member of"] * 3
+    assert [e.get_source_id() for e in edges] == node_ids
+    assert {e.get_target_id() for e in edges} == {genotype_id}
+
+
+def test_a_frequency_the_release_wrote_as_a_range_is_a_null_column() -> None:
+    """A range has no single number, so the node's frequency is null and the cell stays.
+
+    de Siqueira 2025 writes ``61 -> 63`` in ``Variant Frequency`` for a multi-base call;
+    the verbatim cell travels in the Experiment blob and the queryable column is null,
+    which is what distinguishes it from a frequency of zero.
+    """
+    ranged = _call(frequency_statement="61 -> 63", frequency=None, frequency_basis=None)
+    leaf = s.BacterialSequenceVariantPerturbation(
+        systematic_gene_name="PP_3415",
+        perturbed_gene_name="PP_3415",
+        gene_namespace=KT2440,
+        call=ranged,
+    )
+    node = CellAdapter._bacterial_variant_perturbation_node_from(leaf)
+    assert node.get_properties()["variant_frequency"] is None
+    assert leaf.call.frequency_statement == "61 -> 63"
 
 
 def test_the_served_edge_methods_already_connect_the_bacterial_nodes() -> None:
@@ -737,6 +924,10 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
 ):
     table = _table()
     assert table["bacterial perturbation (chunked)"] == "_bacterial_perturbation_node"
+    assert (
+        table["bacterial sequence variant perturbation (chunked)"]
+        == "_bacterial_variant_perturbation_node"
+    )
     for name, fn in {
         "product titer phenotype (chunked)": "_product_titer_phenotype_node",
         "protein turnover phenotype (chunked)": "_protein_turnover_phenotype_node",
@@ -757,6 +948,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["source"] == [
         "perturbation",
         "bacterial perturbation",
+        "bacterial sequence variant perturbation",
     ]
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"

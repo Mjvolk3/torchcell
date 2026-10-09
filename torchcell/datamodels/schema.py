@@ -2635,6 +2635,490 @@ class HeterologousPathwayPerturbation(GeneAdditionPerturbation, ModelStrict):
         return self
 
 
+# --------------------------------------------------------------------------- #
+# Bacterial CALLED-VARIANT leaves (issue #731).
+#
+# An evolved clone's genotype is its parent's genomic content plus the variants a
+# caller found in its resequencing, and before these classes no leaf could hold one
+# of those calls. Measured on the two P. putida evolved-WGS releases rather than
+# designed from the model: de Siqueira 2025 Data Set S2 releases 173 Geneious calls
+# over 5 sequenced clones (58 in a GenBank locus, 10 with a RefSeq tag only, 105 with
+# no locus at all) and Lim 2025's ``Fig 2B_Mutation List`` releases 159 breseq rows
+# over 49 clone columns (123 single-locus, 17 intergenic, 19 spanning runs of up to 53
+# loci). Four blockages those loaders counted, and what closes each:
+#
+#   1. ``SequenceVariantPerturbation`` admits only S288C ORF names and promises a
+#      dereferenceable allele sequence these papers never deposited -> a bacterial
+#      leaf with the locus-tag validator and the call itself on the record.
+#   2. ``BacterialBackgroundAllele.functional`` is a required bool no release states
+#      for a called variant -> no ``functional`` field here at all (the perturbation
+#      axis has none, by design: the edit is not its consequence).
+#   3. ``BacterialStrainBackground`` permits one allele entry per locus, which refuses
+#      a clone carrying two calls in one gene (Lim's ``PP_3415`` P293S + V46I in
+#      A12_F53_I1) -> ``Genotype.perturbations`` has no such rule, so two calls in one
+#      locus are two perturbations.
+#   4. An intergenic call names no locus -> its own leaf, keyed on the SITE.
+#
+# The call itself is COMPOSED (``BacterialVariantCall``) rather than repeated on each
+# leaf, so what a call is is defined once and the three leaves differ only in WHERE
+# the call sits: in a locus, between two loci, or spanning a run of them.
+# --------------------------------------------------------------------------- #
+class BacterialVariantType(StrEnum):
+    """The kind of sequence change a called bacterial variant is.
+
+    The four shapes the two releases carry, read from their own type columns rather
+    than chosen: Lim's ``Mutation Type`` is ``SNP`` / ``DEL`` / ``INS`` / ``SUB``
+    (measured: 100 / 47 / 11 / 1 of its 159 rows) and de Siqueira's ``Polymorphism
+    Type`` is ``SNP (transition)`` 68, ``SNP (transversion)`` 47, ``Insertion`` 23,
+    ``Substitution`` 21, ``Insertion (tandem repeat)`` 5, ``Deletion`` 5, ``Deletion
+    (tandem repeat)`` 4. Both vocabularies collapse onto these four, and the released
+    string is kept verbatim beside the enum in ``type_statement`` so the transition /
+    transversion / tandem-repeat distinction is not lost.
+
+    - ``snv``: one base replaced by one base.
+    - ``insertion``: bases gained.
+    - ``deletion``: bases lost (an IN-GENE deletion; a deletion that removes whole
+      loci is ``BacterialSpanDeletionPerturbation``, on the presence/absence axis).
+    - ``substitution``: a multi-base replacement (Lim's ``2 bp->CG``).
+    """
+
+    snv = "snv"
+    insertion = "insertion"
+    deletion = "deletion"
+    substitution = "substitution"
+
+
+BACTERIAL_VARIANT_TYPE_SO: dict[BacterialVariantType, tuple[str, str]] = {
+    BacterialVariantType.snv: ("SO:0001483", "SNV"),
+    BacterialVariantType.insertion: ("SO:0000667", "insertion"),
+    BacterialVariantType.deletion: ("SO:0000159", "deletion"),
+    BacterialVariantType.substitution: ("SO:1000032", "delins"),
+}
+"""Sequence Ontology mechanism of each variant kind.
+
+Every pair is one the schema ALREADY pins (``SO_ALLOWED`` in
+``test_ontology_all_trees.py``), so these leaves introduce no new SO term: a
+multi-base replacement is the same ``delins`` a promoter replacement is, and the other
+three are the deletion / insertion / SNV terms the yeast leaves use. The leaves keep
+the generic ``SO:0001060 sequence_variant`` as their class-default ``mechanism_so_id``
+-- true of every call whatever its kind -- and expose the specific pair as a property,
+so the mechanism field cannot desync from ``variant_type``.
+"""
+
+
+class VariantCallMode(StrEnum):
+    """Whether a frequency is a clone's within-isolate fraction or a population's.
+
+    The distinction is load-bearing and the releases differ on it. de Siqueira and Lim
+    sequenced ISOLATED clones, so a frequency below 1 means that clone is not pure at
+    that site (Lim: 431 calls at 1 and 12 at 0.9; de Siqueira: 0.96, 1, ...). Choe 2019
+    released POPULATION allele frequencies per timepoint, where a frequency is the
+    share of the evolving population carrying the allele and no clone genotype follows
+    from it without a threshold the authors never set. A consumer that cannot tell the
+    two apart would read a 0.5 as half a genome in one case and half a population in
+    the other.
+    """
+
+    clone = "clone"
+    population = "population"
+
+
+class VariantFrequencyBasis(StrEnum):
+    """The scale a released variant frequency is written on, never assumed.
+
+    Lim's matrix is a FRACTION (``1``, ``0.9``) and de Siqueira's Geneious ``Variant
+    Frequency`` column is also a fraction (``0.96``, ``1``), while other releases write
+    percents. The scale is a property of the release, so it is stated rather than
+    inferred from whether a value exceeds 1.
+    """
+
+    fraction = "fraction"
+    percent = "percent"
+
+
+class BacterialVariantCall(ProvenanceGapMixin):
+    """One called variant, exactly as a resequencing release states it.
+
+    Composed onto the three variant leaves below, so the call is defined once. Every
+    field is either the released cell verbatim or a typed reading of it; nothing here
+    is inferred.
+
+    ``reference_sequence`` is the replicon the coordinates are on, verbatim as the
+    release writes it (Lim's ``AE015451``, de Siqueira's ``NC_002947 (2)``). It is
+    required because a position is meaningless without it, and because it is what
+    exposes a call made against a genome that is NOT the record's own host: Niu 2019
+    aligned a BW25113 derivative to MG1655, so its calls mix evolution-acquired
+    mutations with strain-background differences, and the only way a consumer can see
+    that is the replicon named here disagreeing with the record's
+    ``AssemblyReferenceGenome``.
+
+    ``position_start`` / ``position_end`` are 1-based and end-inclusive; they are equal
+    for a point change and differ for a multi-base one (measured: 53 of de Siqueira's
+    173 calls have ``Maximum > Minimum``).
+
+    ``frequency_statement`` is the released cell verbatim and is set or carries a typed
+    ``ProvenanceGap`` -- never a silent ``None``. It is kept beside the numeric
+    ``frequency`` because a release can write a RANGE there (de Siqueira's multi-base
+    calls write ``61 -> 63``) which no float holds; the numeric field is then ``None``
+    while the statement keeps what the source said. ``frequency_basis`` is required
+    whenever ``frequency`` is set, so a fraction is never read as a percent.
+
+    The frequency being part of the call, and the call part of the perturbation, means
+    the same genomic change called at two frequencies in two clones is two perturbation
+    identities. That is deliberate: an isolate that is 90% mutant at a site is not
+    genotypically the same as one that is 100% mutant. A convergence query joins on
+    ``systematic_gene_name`` and ``position_start``, not on the node id.
+    """
+
+    variant_type: BacterialVariantType
+    type_statement: str = Field(
+        description="the release's own type cell, verbatim (e.g. 'SNP (transition)', "
+        "'DEL'), kept beside the enum so the finer distinction is not lost"
+    )
+    reference_sequence: str = Field(
+        description="the replicon the coordinates are on, verbatim as released "
+        "(e.g. 'AE015451', 'NC_002947 (2)')"
+    )
+    position_start: int = Field(description="1-based start of the change")
+    position_end: int = Field(
+        description="1-based, end-INCLUSIVE end of the change; equals position_start "
+        "for a point change"
+    )
+    sequence_change: str = Field(
+        description="the released change cell, verbatim (e.g. 'G->A', 'A -> G', '+C', "
+        "'2 bp->CG', the delta-bp form of a deletion)"
+    )
+    reference_allele: str | None = Field(
+        default=None,
+        description="the reference base(s), when the release gives them in their own "
+        "column rather than fused into sequence_change",
+    )
+    alternate_allele: str | None = Field(
+        default=None, description="the alternate base(s), on the same condition"
+    )
+    annotation: str | None = Field(
+        default=None,
+        description="the release's effect / detail cell, verbatim (e.g. "
+        "'L784Q (CTG->CAG)', 'coding (539/1299 nt)', 'intergenic (+140/-75)')",
+    )
+    amino_acid_change: str | None = Field(
+        default=None,
+        description="the protein-level change, verbatim, when released in its own "
+        "column (e.g. 'Y -> H')",
+    )
+    codon_change: str | None = Field(
+        default=None, description="the codon-level change, verbatim (e.g. 'GGT -> GGC')"
+    )
+    codon_number: int | None = Field(
+        default=None, description="the 1-based codon of the CDS the change sits in"
+    )
+    call_mode: VariantCallMode = Field(
+        description="whether the frequency is a clone's within-isolate fraction or a "
+        "population allele frequency"
+    )
+    frequency_statement: str | None = Field(
+        default=None,
+        description="the released frequency cell, verbatim; None only with a typed gap "
+        "(Niu 2019 leaves one of its 374 rows blank)",
+    )
+    frequency: float | None = Field(
+        default=None,
+        description="the frequency as a number, when the release gives ONE value; None "
+        "when it gives a range or nothing",
+    )
+    frequency_basis: VariantFrequencyBasis | None = Field(
+        default=None,
+        description="the scale `frequency` is on; required whenever frequency is set",
+    )
+    caller: str | None = Field(
+        default=None,
+        description="the variant caller and version, verbatim (e.g. 'breseq 0.33.1', "
+        "'Geneious Prime'), when the release names it",
+    )
+
+    @model_validator(mode="after")
+    def _check_call(self) -> "BacterialVariantCall":
+        """Ordered 1-based coordinates, a sourced-or-gapped frequency, a stated basis."""
+        if self.position_start < 1:
+            raise ValueError(f"position_start is 1-based, got {self.position_start}")
+        if self.position_end < self.position_start:
+            raise ValueError(
+                f"a call needs position_start <= position_end, got "
+                f"{self.position_start}..{self.position_end}"
+            )
+        if not self.reference_sequence.strip():
+            raise ValueError("BacterialVariantCall needs a reference_sequence")
+        if not self.type_statement.strip():
+            raise ValueError("BacterialVariantCall needs a type_statement")
+        if not self.sequence_change.strip():
+            raise ValueError("BacterialVariantCall needs a sequence_change")
+        _require_value_or_gap(self, ("frequency_statement",))
+        if self.frequency is None:
+            if self.frequency_basis is not None:
+                raise ValueError(
+                    "frequency_basis names the scale of a frequency, but frequency is "
+                    "None (a range or an absent cell has no scale to state)"
+                )
+            return self
+        if self.frequency_basis is None:
+            raise ValueError(
+                f"frequency {self.frequency} needs a frequency_basis; a bare number "
+                "cannot be read as a fraction or a percent"
+            )
+        ceiling = (
+            1.0 if self.frequency_basis is VariantFrequencyBasis.fraction else 100.0
+        )
+        if not 0.0 < self.frequency <= ceiling:
+            raise ValueError(
+                f"frequency {self.frequency} is outside (0, {ceiling}] for basis "
+                f"{self.frequency_basis.value}"
+            )
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this call's variant kind."""
+        return BACTERIAL_VARIANT_TYPE_SO[self.variant_type]
+
+    @property
+    def span_length(self) -> int:
+        """Bases the call covers on the replicon (1 for a point change)."""
+        return self.position_end - self.position_start + 1
+
+
+def _variant_site_id(reference_sequence: str, position_start: int) -> str:
+    """The identifier of a genomic SITE that is not a gene: ``<replicon>:<position>``.
+
+    An intergenic call names no locus, so its gene-keyed identity cannot be a locus
+    tag, and keying it to a flanking gene would assert the variant is IN that gene --
+    exactly the inference the two loaders refused to make. The site id is DERIVED from
+    the call (the replicon the release names plus the 1-based position), so it is
+    stable, unique per site, and cannot be mistaken for one of the three namespaces'
+    locus tags. ``GeneAdditionPerturbation`` already establishes the shape: a
+    perturbation whose identifier is legitimately not a host locus tag.
+    """
+    return f"{reference_sequence}:{position_start}"
+
+
+VARIANT_SITE_ID_PATTERN = r"^[^\s].*:\d+$"
+"""The shape of a site id, so a locus tag can never be stored in one's place."""
+
+
+class BacterialVariantPerturbation(SequencePerturbation, ModelStrict):
+    """AXIS-3 base of the called-variant leaves: a sequence change the caller FOUND.
+
+    Abstract. ``provenance`` defaults to ``"natural"`` because the motivating case is a
+    variant that arose in an evolution experiment; a DESIGNED allele that the leaf also
+    serves (Choe 2019 built ``MS56 cspC::cspC(G37A)``) sets ``provenance="engineered"``
+    per record, which is what making provenance a free field on the root is for.
+
+    ``mechanism_so_id`` stays the generic ``SO:0001060 sequence_variant``: it is true of
+    every call whatever its kind, and the kind-specific pair is read off
+    ``call.mechanism_so``, so the two cannot disagree.
+    """
+
+    gene_namespace: BacterialGeneNamespace = Field(
+        description="the HOST genome this call is written against"
+    )
+    identifier_mapping: DerivedIdentifierMapping | None = Field(
+        default=None,
+        description="how systematic_gene_name was derived from the identifier the "
+        "release named (a gene symbol, a RefSeq locus tag); None when the release "
+        "named the stored tag itself",
+    )
+    call: BacterialVariantCall = Field(
+        description="the called variant, exactly as the release states it"
+    )
+    provenance: str = "natural"
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A bacterial locus tag, not a yeast systematic name.
+
+        The intergenic leaf overrides this: a call between loci is keyed on its site.
+        """
+        return _validate_bacterial_locus_tag(v)
+
+    @model_validator(mode="after")
+    def _check_namespace(self) -> "BacterialVariantPerturbation":
+        """The locus tag's own namespace is the one the record declares.
+
+        A site id matches no namespace pattern, so this is a no-op on the intergenic
+        leaf, exactly as it is for a heterologous gene symbol on the addition leaf.
+        """
+        _check_gene_namespace(self)
+        return self
+
+    @property
+    def mechanism_so(self) -> tuple[str, str]:
+        """(SO id, SO name) of this perturbation's call."""
+        return self.call.mechanism_so
+
+
+class BacterialSequenceVariantPerturbation(
+    HashableProvenanceGapMixin, BacterialVariantPerturbation, ModelStrict
+):
+    """A called variant that sits INSIDE a named bacterial locus.
+
+    The 58 de Siqueira calls carrying a GenBank locus tag, the 123 single-locus Lim
+    rows, and every designed single-allele strain of the same shape. A partial deletion
+    of a locus is one of these with ``call.variant_type == deletion`` and the released
+    coding range in ``call.annotation`` (Lim's ``PP_2675`` reads ``coding
+    (4-459/462 nt)``), NOT a presence/absence absence: a truncation leaves the locus in
+    place, and asserting it is absent would state a consequence the release did not.
+    """
+
+    description: str = (
+        "Called sequence variant inside a bacterial locus, with its replicon, position, "
+        "change and call frequency"
+    )
+    perturbation_type: Literal["bacterial_sequence_variant"] = (
+        "bacterial_sequence_variant"
+    )
+
+
+class BacterialIntergenicVariantPerturbation(
+    HashableProvenanceGapMixin, BacterialVariantPerturbation, ModelStrict
+):
+    """A called variant that sits BETWEEN loci, keyed on the site rather than a gene.
+
+    The 105 de Siqueira calls with no locus tag and the 17 intergenic Lim rows. Its
+    ``systematic_gene_name`` is the derived site id ``<replicon>:<position_start>``
+    (checked here to equal the call's own replicon and position, so it cannot drift from
+    the call it names), and ``perturbed_gene_name`` is the release's flanking-gene cell
+    verbatim (Lim writes ``PP_4061, PP_4063``; de Siqueira writes nothing, and the site
+    id stands in).
+
+    ``flanking_systematic_gene_names`` carries the flanking loci as resolved tags WHEN
+    the release names them, in the released left-to-right order, so "which gene is this
+    variant upstream of" stays answerable without claiming the variant is in either.
+    It is empty for a release that names no neighbour.
+    """
+
+    description: str = (
+        "Called sequence variant between bacterial loci, keyed on its genomic site"
+    )
+    perturbation_type: Literal["bacterial_intergenic_variant"] = (
+        "bacterial_intergenic_variant"
+    )
+    flanking_systematic_gene_names: tuple[str, ...] = Field(
+        default=(),
+        description="the flanking loci as resolved tags, in released order; empty when "
+        "the release names no neighbour",
+    )
+    flanking_gene_statement: str | None = Field(
+        default=None,
+        description="the release's flanking-gene cell, verbatim, when it has one",
+    )
+
+    @field_validator("systematic_gene_name", mode="after")
+    @classmethod
+    def validate_sys_gene_name(cls, v: str) -> str:
+        """A site id, never a locus tag (a tag would claim the variant is in a gene)."""
+        if _namespace_of_locus_tag(v) is not None:
+            raise ValueError(
+                f"{v!r} is a bacterial locus tag; an intergenic call is keyed on its "
+                "site, and a call inside a locus is a "
+                "BacterialSequenceVariantPerturbation"
+            )
+        if not re.match(VARIANT_SITE_ID_PATTERN, v):
+            raise ValueError(
+                f"invalid variant site id {v!r}; expected '<replicon>:<position>'"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def _check_site(self) -> "BacterialIntergenicVariantPerturbation":
+        """The site id is the one its own call determines, and the flanks are tags."""
+        expected = _variant_site_id(
+            self.call.reference_sequence, self.call.position_start
+        )
+        if self.systematic_gene_name != expected:
+            raise ValueError(
+                f"site id {self.systematic_gene_name!r} does not name this call's site "
+                f"({expected!r})"
+            )
+        for tag in self.flanking_systematic_gene_names:
+            if _namespace_of_locus_tag(tag) != self.gene_namespace:
+                raise ValueError(
+                    f"flanking locus {tag!r} is not a {self.gene_namespace} tag"
+                )
+        return self
+
+    @classmethod
+    def site_id(cls, call: BacterialVariantCall) -> str:
+        """The site id a call determines, so a loader never spells one by hand."""
+        return _variant_site_id(call.reference_sequence, call.position_start)
+
+
+class BacterialSpanDeletionPerturbation(
+    HashableProvenanceGapMixin, BacterialDeletionPerturbation, ModelStrict
+):
+    """One locus removed ENTIRELY by a called deletion that spans a run of loci.
+
+    The 19 Lim rows whose deletion covers whole loci, up to 53 of them
+    (``PP_3024``-``PP_5558``, 40,784 bp), and the single-locus rows of the same shape
+    (a deletion the caller reports with no coding offset, which is how breseq says the
+    locus lies wholly inside the deleted interval). It stays on the presence/absence
+    axis -- these loci ARE absent -- so ``issubclass(_, DeletionPerturbation)`` still
+    catches it, and it is ONE perturbation PER COVERED LOCUS rather than one per event:
+    a gene-keyed consumer must see all 53 genes as absent, not only an endpoint.
+
+    The event is recoverable as a set from ``span_designation``, which every locus of
+    one deletion carries identically (the grouping ``pathway_name`` does for a
+    pathway's genes), and ``span_systematic_gene_names`` lists the loci it covers in
+    released order.
+    """
+
+    description: str = (
+        "Bacterial locus removed entirely by a called deletion spanning a run of loci"
+    )
+    perturbation_type: Literal["bacterial_span_deletion"] = "bacterial_span_deletion"  # type: ignore[assignment]
+    deletion_type: str = "bacterial_span"
+    call: BacterialVariantCall = Field(
+        description="the called deletion, exactly as the release states it"
+    )
+    provenance: str = "natural"
+    span_designation: str = Field(
+        description="the designation of the deletion EVENT, identical on every locus it "
+        "covers (e.g. 'AE015451:4588139 delta5,553 bp'), so the event is one query"
+    )
+    span_systematic_gene_names: tuple[str, ...] = Field(
+        description="every locus the event removes, in released order; this record's "
+        "own systematic_gene_name is one of them"
+    )
+    deleted_span: GenomicSpan | None = Field(
+        default=None,
+        description="the removed interval on the pinned assembly, when the release "
+        "gives both endpoints; None when it gives only a start and a length",
+    )
+
+    @model_validator(mode="after")
+    def _check_span(self) -> "BacterialSpanDeletionPerturbation":
+        """The event names at least this locus, and the call is a deletion."""
+        if self.call.variant_type is not BacterialVariantType.deletion:
+            raise ValueError(
+                f"a span deletion's call is a deletion, not "
+                f"{self.call.variant_type.value}"
+            )
+        if not self.span_designation.strip():
+            raise ValueError(
+                "BacterialSpanDeletionPerturbation needs a span_designation"
+            )
+        if self.systematic_gene_name not in self.span_systematic_gene_names:
+            raise ValueError(
+                f"{self.systematic_gene_name} is not among the loci its own event "
+                f"removes ({self.span_systematic_gene_names})"
+            )
+        return self
+
+    @classmethod
+    def designation(cls, call: BacterialVariantCall) -> str:
+        """The event designation a call determines, so a loader never spells one."""
+        return f"{call.reference_sequence}:{call.position_start} {call.sequence_change}"
+
+
 SgaPerturbationType = (
     SgaKanMxDeletionPerturbation
     | SgaNatMxDeletionPerturbation
@@ -2667,6 +3151,9 @@ GenePerturbationType = (
     | BacterialCrisprInterferencePerturbation
     | PromoterReplacementPerturbation
     | HeterologousPathwayPerturbation
+    | BacterialSequenceVariantPerturbation
+    | BacterialIntergenicVariantPerturbation
+    | BacterialSpanDeletionPerturbation
 )
 
 

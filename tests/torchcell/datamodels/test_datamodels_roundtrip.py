@@ -52,6 +52,48 @@ FIELD_VALUES: dict[str, Any] = {
     "sha256": "a" * 64,
 }
 
+# One call of each shape the #731 leaves carry, as released rows of the Lim 2025
+# ``Fig 2B_Mutation List`` sheet. Shared by the four EXAMPLES entries below so the site
+# id and the span designation agree with the call they name.
+_VARIANT_CALL_EXAMPLE: dict[str, Any] = {
+    "variant_type": "snv",
+    "type_statement": "SNP",
+    "reference_sequence": "AE015451",
+    "position_start": 3866001,
+    "position_end": 3866001,
+    "sequence_change": "G\u2192A",
+    "annotation": "P293S (CCA\u2192TCA)",
+    "call_mode": "clone",
+    "frequency_statement": "1",
+    "frequency": 1.0,
+    "frequency_basis": "fraction",
+}
+_INTERGENIC_CALL_EXAMPLE: dict[str, Any] = {
+    "variant_type": "insertion",
+    "type_statement": "INS",
+    "reference_sequence": "AE015451",
+    "position_start": 4586057,
+    "position_end": 4586057,
+    "sequence_change": "+C",
+    "annotation": "intergenic (+140/+75)",
+    "call_mode": "clone",
+    "frequency_statement": "1",
+    "frequency": 1.0,
+    "frequency_basis": "fraction",
+}
+_SPAN_CALL_EXAMPLE: dict[str, Any] = {
+    "variant_type": "deletion",
+    "type_statement": "DEL",
+    "reference_sequence": "AE015451",
+    "position_start": 4588139,
+    "position_end": 4593691,
+    "sequence_change": "\u03945,553 bp",
+    "call_mode": "clone",
+    "frequency_statement": "1",
+    "frequency": 1.0,
+    "frequency_basis": "fraction",
+}
+
 # class qualname -> keyword arguments; committed when a validator wants a specific shape.
 EXAMPLES: dict[str, dict[str, Any]] = {
     "torchcell.datamodels.schema.BackgroundAllele": {
@@ -170,6 +212,50 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "systematic_gene_name": "b0002",
         "perturbed_gene_name": "thrA",
         "gene_namespace": "ecoli_k12_mg1655_bnumber",
+    },
+    # The called-variant family (#731): the generic builder cannot invent a call whose
+    # site id agrees with its own coordinates, nor a frequency with a stated basis, so
+    # each one is committed. Values are rows of the Lim 2025 released matrix.
+    "torchcell.datamodels.schema.BacterialVariantCall": {
+        "variant_type": "snv",
+        "type_statement": "SNP",
+        "reference_sequence": "AE015451",
+        "position_start": 3866001,
+        "position_end": 3866001,
+        "sequence_change": "G\u2192A",
+        "annotation": "P293S (CCA\u2192TCA)",
+        "call_mode": "clone",
+        "frequency_statement": "1",
+        "frequency": 1.0,
+        "frequency_basis": "fraction",
+    },
+    "torchcell.datamodels.schema.BacterialVariantPerturbation": {
+        "systematic_gene_name": "PP_3415",
+        "perturbed_gene_name": "PP_3415",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "call": _VARIANT_CALL_EXAMPLE,
+    },
+    "torchcell.datamodels.schema.BacterialSequenceVariantPerturbation": {
+        "systematic_gene_name": "PP_3415",
+        "perturbed_gene_name": "PP_3415",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "call": _VARIANT_CALL_EXAMPLE,
+    },
+    "torchcell.datamodels.schema.BacterialIntergenicVariantPerturbation": {
+        "systematic_gene_name": "AE015451:4586057",
+        "perturbed_gene_name": "PP_4061, PP_4063",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "call": _INTERGENIC_CALL_EXAMPLE,
+        "flanking_systematic_gene_names": ["PP_4061", "PP_4063"],
+        "flanking_gene_statement": "PP_4061, PP_4063",
+    },
+    "torchcell.datamodels.schema.BacterialSpanDeletionPerturbation": {
+        "systematic_gene_name": "PP_4061",
+        "perturbed_gene_name": "PP_4061",
+        "gene_namespace": "pputida_kt2440_locus_tag",
+        "call": _SPAN_CALL_EXAMPLE,
+        "span_designation": "AE015451:4588139 \u03945,553 bp",
+        "span_systematic_gene_names": ["PP_4061", "PP_4063"],
     },
     "torchcell.datamodels.schema.TransposonInsertionPerturbation": {
         "systematic_gene_name": "b0002",

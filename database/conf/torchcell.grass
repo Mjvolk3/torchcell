@@ -130,6 +130,15 @@ node.BacterialPerturbation {
   caption: "{perturbed_gene_name}";
 }
 
+node.BacterialSequenceVariantPerturbation {
+  color: #FFE6CC;
+  border-color: #D79B00;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{perturbed_gene_name}";
+}
+
 node.CalmorphPhenotype {
   color: #E1D5E7;
   border-color: #9673A6;

@@ -363,6 +363,7 @@ NODE_METHODS = [
     "segregant genotype (chunked)",
     "perturbation (chunked)",
     "bacterial perturbation (chunked)",
+    "bacterial sequence variant perturbation (chunked)",
     "crispr construct (chunked)",
     "environment (chunked)",
     "environment reference",

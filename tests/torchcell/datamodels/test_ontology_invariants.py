@@ -30,6 +30,12 @@ from torchcell.datamodels.schema import (
     ArtifactRef,
     BacterialCrisprInterferencePerturbation,
     BacterialDeletionPerturbation,
+    BacterialIntergenicVariantPerturbation,
+    BacterialSequenceVariantPerturbation,
+    BacterialSpanDeletionPerturbation,
+    BacterialVariantCall,
+    BacterialVariantPerturbation,
+    BacterialVariantType,
     BarcodedKanMxDeletionPerturbation,
     ConditionalAllelePerturbation,
     CopyNumberVariantPerturbation,
@@ -65,6 +71,8 @@ from torchcell.datamodels.schema import (
     SuppressorAllelePerturbation,
     TransposonInsertionPerturbation,
     TsAllelePerturbation,
+    VariantCallMode,
+    VariantFrequencyBasis,
 )
 
 SO_ID_RE = re.compile(r"^SO:\d{7}$")
@@ -118,6 +126,10 @@ ABSTRACT: frozenset[type[GenePerturbation]] = frozenset(
         TsAllelePerturbation,
         AllelePerturbation,
         SuppressorAllelePerturbation,
+        # The called-variant base (#731) defines what a call is and which host it
+        # is written against; its three leaves below say WHERE the call sits, and
+        # only they are ever stored.
+        BacterialVariantPerturbation,
     }
 )
 
@@ -163,6 +175,46 @@ _URI = dict(
         member="YAL001C.fasta#AAB",
         sha256="a" * 64,
     )
+)
+
+_SNV_CALL = BacterialVariantCall(
+    variant_type=BacterialVariantType.snv,
+    type_statement="SNP",
+    reference_sequence="AE015451",
+    position_start=3866001,
+    position_end=3866001,
+    sequence_change="G\u2192A",
+    annotation="P293S (CCA\u2192TCA)",
+    call_mode=VariantCallMode.clone,
+    frequency_statement="1",
+    frequency=1.0,
+    frequency_basis=VariantFrequencyBasis.fraction,
+    caller="breseq 0.33.1",
+)
+_INTERGENIC_CALL = BacterialVariantCall(
+    variant_type=BacterialVariantType.insertion,
+    type_statement="INS",
+    reference_sequence="AE015451",
+    position_start=4586057,
+    position_end=4586057,
+    sequence_change="+C",
+    annotation="intergenic (+140/+75)",
+    call_mode=VariantCallMode.clone,
+    frequency_statement="1",
+    frequency=1.0,
+    frequency_basis=VariantFrequencyBasis.fraction,
+)
+_SPAN_CALL = BacterialVariantCall(
+    variant_type=BacterialVariantType.deletion,
+    type_statement="DEL",
+    reference_sequence="AE015451",
+    position_start=4588139,
+    position_end=4593691,
+    sequence_change="\u03945,553 bp",
+    call_mode=VariantCallMode.clone,
+    frequency_statement="1",
+    frequency=1.0,
+    frequency_basis=VariantFrequencyBasis.fraction,
 )
 
 FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
@@ -264,6 +316,31 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "promoter_name": "Ptac",
         "is_inducible": True,
     },
+    # The called-variant leaves (#731). Every value is a row of the Lim 2025 released
+    # matrix (the PP_3415 P293S SNP, the PP_4061/PP_4063 intergenic insertion, the
+    # 5,553 bp deletion at 4,588,139), so the instances carry real coordinates.
+    BacterialSequenceVariantPerturbation: dict(
+        systematic_gene_name="PP_3415",
+        perturbed_gene_name="PP_3415",
+        gene_namespace="pputida_kt2440_locus_tag",
+        call=_SNV_CALL,
+    ),
+    BacterialIntergenicVariantPerturbation: dict(
+        systematic_gene_name="AE015451:4586057",
+        perturbed_gene_name="PP_4061, PP_4063",
+        gene_namespace="pputida_kt2440_locus_tag",
+        call=_INTERGENIC_CALL,
+        flanking_systematic_gene_names=("PP_4061", "PP_4063"),
+        flanking_gene_statement="PP_4061, PP_4063",
+    ),
+    BacterialSpanDeletionPerturbation: dict(
+        systematic_gene_name="PP_4061",
+        perturbed_gene_name="PP_4061",
+        gene_namespace="pputida_kt2440_locus_tag",
+        call=_SPAN_CALL,
+        span_designation="AE015451:4588139 \u03945,553 bp",
+        span_systematic_gene_names=("PP_4061", "PP_4063"),
+    ),
     HeterologousPathwayPerturbation: dict(
         systematic_gene_name="Efa:mvaE",
         perturbed_gene_name="mvaE",

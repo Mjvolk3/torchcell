@@ -2552,6 +2552,7 @@ BACTERIAL_METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
 }
 
+
 def host_perturbed_gene_set(records: Sequence[Mapping[str, Any]]) -> set[str]:
     """Every perturbed identifier a dataset's records assert is a locus of their host.
 

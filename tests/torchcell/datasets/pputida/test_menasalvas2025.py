@@ -21,17 +21,13 @@ production folds of 31.895 and 18.555 against Supplementary Note 2's 34 and 20.
 
 from __future__ import annotations
 
-import copy
 import hashlib
 import json
-import math
-import os
 import os.path as osp
-import statistics
 import zipfile
 from collections import Counter
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import openpyxl
 import pytest
@@ -41,13 +37,10 @@ from torchcell.datamodels.media import M9_NREL_MOPS_MENASALVAS2025
 from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
-    BacterialSequenceVariantPerturbation,
-    BacterialSiteVariantPerturbation,
     BacterialVariantType,
     SmallMoleculePerturbation,
 )
 from torchcell.datasets.bacteria_common import reconcile_locus_tags
-from torchcell.literature.manifest import ROLE_RAW_DATA, ROLE_SI_DATA, RetrievalMethod
 
 # --------------------------------------------------------------------------- #
 # Synthetic Supplementary Information markdown
@@ -643,9 +636,7 @@ def _metabolite_average(name: str, strain: str, phase: str) -> float | None:
         return None
     if (name, (strain, phase)) == (ZERO_METABOLITE, ZERO_KEY):
         return 0.0
-    base = 1.0 + float(
-        (ABSOLUTE_METABOLITES + RELATIVE_METABOLITES).index(name)
-    )
+    base = 1.0 + float((ABSOLUTE_METABOLITES + RELATIVE_METABOLITES).index(name))
     return base * _STRAIN_FACTOR[strain] * _PHASE_FACTOR[phase]
 
 
@@ -1072,9 +1063,7 @@ def write_inner_zip(
     path: Path, data_1: Path, data_2: Path, *, members: tuple[str, ...] | None = None
 ) -> None:
     """The released inner zip: the two workbooks under their member names, plus junk."""
-    held = (
-        (mv.SI_DATA_1_MEMBER, mv.SI_DATA_2_MEMBER) if members is None else members
-    )
+    held = (mv.SI_DATA_1_MEMBER, mv.SI_DATA_2_MEMBER) if members is None else members
     with zipfile.ZipFile(path, "w") as archive:
         if mv.SI_DATA_1_MEMBER in held:
             archive.writestr(mv.SI_DATA_1_MEMBER, data_1.read_bytes())
@@ -1176,14 +1165,8 @@ def synthetic_mirror(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
         mv,
         "EXTRACTED_MEMBERS",
         {
-            mv.SI_DATA_1_MEMBER: (
-                mv.SI_DATA_1_BASENAME,
-                digests[mv.SI_DATA_1_MEMBER],
-            ),
-            mv.SI_DATA_2_MEMBER: (
-                mv.SI_DATA_2_BASENAME,
-                digests[mv.SI_DATA_2_MEMBER],
-            ),
+            mv.SI_DATA_1_MEMBER: (mv.SI_DATA_1_BASENAME, digests[mv.SI_DATA_1_MEMBER]),
+            mv.SI_DATA_2_MEMBER: (mv.SI_DATA_2_BASENAME, digests[mv.SI_DATA_2_MEMBER]),
         },
     )
     root = mv.deposit_raw_mirror(

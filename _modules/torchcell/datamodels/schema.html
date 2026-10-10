@@ -7896,6 +7896,124 @@
         <span class="k">return</span> <span class="bp">self</span>
 
 
+<span class="c1"># --- begin #857: the protein synthesis-rate family ---------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SynthesisRateUnit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The unit a per-protein synthesis rate is released in, amount over time basis.</span>
+
+<span class="sd">    The time basis is part of the unit and is typed rather than spelled into a string,</span>
+<span class="sd">    because the two bases do not compare without a growth rate: a rate per GENERATION</span>
+<span class="sd">    (Li 2014's ribosome-profiling release, "where ki has the unit of molecules per</span>
+<span class="sd">    generation") becomes a rate per hour only through the doubling time of the culture</span>
+<span class="sd">    it was measured in, which is why ``molecules_per_generation`` requires</span>
+<span class="sd">    ``ProteinSynthesisRatePhenotype.generation_time_minutes``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">molecules_per_generation</span> <span class="o">=</span> <span class="s2">"molecules_per_generation"</span>
+    <span class="n">molecules_per_hour</span> <span class="o">=</span> <span class="s2">"molecules_per_hour"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinSynthesisRatePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-protein synthesis rate: how many molecules of each protein a cell makes.</span>
+
+<span class="sd">    A sibling of ``ProteinTurnoverPhenotype``, not a relaxation of it. A turnover</span>
+<span class="sd">    record's primary label is the DEGRADATION rate and its ``synthesis_rate`` is a</span>
+<span class="sd">    companion admitted only on keys that carry a degradation rate; a ribosome-profiling</span>
+<span class="sd">    release (Li 2014) measures synthesis alone and states no degradation, half-life or</span>
+<span class="sd">    turnover for any protein. Making ``degradation_rate`` optional would let one class</span>
+<span class="sd">    carry two different primary labels and switch ``label_name`` per record, so a</span>
+<span class="sd">    consumer reading the turnover lane could no longer trust what the label is.</span>
+
+<span class="sd">    Not a ``ProteinAbundancePhenotype`` either: a synthesis rate equals a standing copy</span>
+<span class="sd">    number only for a stable protein in steady state, which is an assumption about the</span>
+<span class="sd">    protein, not a measurement of it.</span>
+
+<span class="sd">    Keyed by the protein's locus tag in the record's namespace, ragged like every</span>
+<span class="sd">    dict-valued family: a protein the assay did not quantify (or quantified below its</span>
+<span class="sd">    own read-count gate) is not a key, never a zero. ``rate_unit`` types the amount and</span>
+<span class="sd">    the time basis; ``measurement_type`` names the assay. ``censoring`` follows</span>
+<span class="sd">    ``ProteinTurnoverPhenotype``: None when the source states no censoring at all.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"synthesis_rate"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"synthesis_rate_se"</span>
+
+    <span class="n">synthesis_rate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; synthesis rate in rate_unit"</span>
+    <span class="p">)</span>
+    <span class="n">synthesis_rate_se</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; standard error of the rate; None when the "</span>
+        <span class="s2">"source releases no per-protein uncertainty"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_replicates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; number of independent samples behind the "</span>
+        <span class="s2">"rate; None when the source releases no per-protein replicate count"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">rate_unit</span><span class="p">:</span> <span class="n">SynthesisRateUnit</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"amount and time basis of every value in synthesis_rate"</span>
+    <span class="p">)</span>
+    <span class="n">generation_time_minutes</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the culture's doubling time in minutes, as the source states it; "</span>
+        <span class="s2">"required when rate_unit is per generation, since it is the time basis"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the assay that produced the numbers, e.g. "</span>
+        <span class="s2">"'ribosome_profiling_footprint_density'"</span>
+    <span class="p">)</span>
+    <span class="n">censoring</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Censoring</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"protein locus tag -&gt; whether the stored value is an estimate or a "</span>
+        <span class="s2">"bound; None means the source reports no censoring"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_synthesis_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"ProteinSynthesisRatePhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Non-empty finite non-negative rates; companions keyed on stored proteins."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"synthesis_rate cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">rate</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">rate</span><span class="p">)</span> <span class="ow">or</span> <span class="n">rate</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"synthesis_rate for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be finite and non-negative"</span>
+                <span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">se</span> <span class="ow">in</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate_se</span> <span class="ow">or</span> <span class="p">{})</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"synthesis_rate_se key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in synthesis_rate"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">se</span><span class="p">)</span> <span class="ow">and</span> <span class="n">se</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"synthesis_rate_se for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be non-negative"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_replicates keys must match synthesis_rate keys"</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_replicates</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_replicates for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be &gt;= 1"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">censoring</span> <span class="ow">or</span> <span class="p">{}:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">synthesis_rate</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"censoring key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not in synthesis_rate"</span><span class="p">)</span>
+        <span class="n">minutes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generation_time_minutes</span>
+        <span class="k">if</span> <span class="n">minutes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span> <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">minutes</span><span class="p">)</span> <span class="ow">or</span> <span class="n">minutes</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"generation_time_minutes must be finite and positive, got </span><span class="si">{</span><span class="n">minutes</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rate_unit</span> <span class="ow">is</span> <span class="n">SynthesisRateUnit</span><span class="o">.</span><span class="n">molecules_per_generation</span>
+            <span class="ow">and</span> <span class="n">minutes</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a rate per generation states its generation time: set "</span>
+                <span class="s2">"generation_time_minutes"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --- end #857 ------------------------------------------------------------------- #</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">FluxPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Per-reaction net metabolic flux, with the confidence interval of the fit.</span>
 
@@ -8226,6 +8344,26 @@
     <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_turnover"</span>
     <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
     <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinTurnoverPhenotype</span>
+
+
+<span class="c1"># --- begin #857: the protein synthesis-rate family ---------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinSynthesisRateExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference context for a protein synthesis-rate experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_synthesis_rate"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">ProteinSynthesisRatePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">ProteinSynthesisRateExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Experiment measuring per-protein synthesis rates."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"protein_synthesis_rate"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">ProteinSynthesisRatePhenotype</span>
+
+
+<span class="c1"># --- end #857 ------------------------------------------------------------------- #</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">FluxExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
@@ -8714,6 +8852,7 @@
     <span class="o">|</span> <span class="n">EnvironmentResponsePhenotype</span>
     <span class="o">|</span> <span class="n">ProductTiterPhenotype</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverPhenotype</span>
+    <span class="o">|</span> <span class="n">ProteinSynthesisRatePhenotype</span>  <span class="c1"># issue #857</span>
     <span class="o">|</span> <span class="n">FluxPhenotype</span>
     <span class="o">|</span> <span class="n">PromoterActivityPhenotype</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyPhenotype</span>  <span class="c1"># issue #774</span>
@@ -8742,6 +8881,7 @@
     <span class="o">|</span> <span class="n">SegregantGrowthExperiment</span>
     <span class="o">|</span> <span class="n">ProductTiterExperiment</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverExperiment</span>
+    <span class="o">|</span> <span class="n">ProteinSynthesisRateExperiment</span>  <span class="c1"># issue #857</span>
     <span class="o">|</span> <span class="n">FluxExperiment</span>
     <span class="o">|</span> <span class="n">PromoterActivityExperiment</span>
     <span class="o">|</span> <span class="n">BacterialFitnessExperiment</span>
@@ -8781,6 +8921,7 @@
     <span class="o">|</span> <span class="n">SegregantGrowthExperimentReference</span>
     <span class="o">|</span> <span class="n">ProductTiterExperimentReference</span>
     <span class="o">|</span> <span class="n">ProteinTurnoverExperimentReference</span>
+    <span class="o">|</span> <span class="n">ProteinSynthesisRateExperimentReference</span>  <span class="c1"># issue #857</span>
     <span class="o">|</span> <span class="n">FluxExperimentReference</span>
     <span class="o">|</span> <span class="n">PromoterActivityExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialFitnessExperimentReference</span>
@@ -8820,6 +8961,7 @@
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperiment</span><span class="p">,</span>
     <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperiment</span><span class="p">,</span>
     <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperiment</span><span class="p">,</span>
+    <span class="s2">"protein_synthesis_rate"</span><span class="p">:</span> <span class="n">ProteinSynthesisRateExperiment</span><span class="p">,</span>  <span class="c1"># issue #857</span>
     <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperiment</span><span class="p">,</span>
     <span class="s2">"promoter_activity"</span><span class="p">:</span> <span class="n">PromoterActivityExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperiment</span><span class="p">,</span>
@@ -8858,6 +9000,7 @@
     <span class="s2">"segregant_growth"</span><span class="p">:</span> <span class="n">SegregantGrowthExperimentReference</span><span class="p">,</span>
     <span class="s2">"product_titer"</span><span class="p">:</span> <span class="n">ProductTiterExperimentReference</span><span class="p">,</span>
     <span class="s2">"protein_turnover"</span><span class="p">:</span> <span class="n">ProteinTurnoverExperimentReference</span><span class="p">,</span>
+    <span class="s2">"protein_synthesis_rate"</span><span class="p">:</span> <span class="n">ProteinSynthesisRateExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #857</span>
     <span class="s2">"flux"</span><span class="p">:</span> <span class="n">FluxExperimentReference</span><span class="p">,</span>
     <span class="s2">"promoter_activity"</span><span class="p">:</span> <span class="n">PromoterActivityExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_fitness"</span><span class="p">:</span> <span class="n">BacterialFitnessExperimentReference</span><span class="p">,</span>

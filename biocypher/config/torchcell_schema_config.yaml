@@ -425,6 +425,10 @@ protein fold change phenotype:
 # in 55 of 55 rows) has no half-width, so storing it needs both limits plus the level,
 # and a release that is one row per replicate curve needs the replicate id to stay
 # L1-unique. Added with a FULL rebuild, never an increment.
+# It also projects the released test of the response (#863): the unadjusted and the
+# adjusted p-value plus the correction's name, scalar because a record holds one
+# response (Wang 2024 Table S2's TRANSIT p-value and Adj. p-value). Added with a FULL
+# rebuild, never an increment.
 environment response phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -443,6 +447,9 @@ environment response phenotype:
         environment_response_upper: float
         confidence_level: float
         replicate_id: str
+        environment_response_p_value: float
+        environment_response_p_value_adjusted: float
+        p_value_adjustment_method: str
 
 # How much of a named product a strain made (ProductTiterPhenotype). Every field but
 # provenance_gaps is projected: enums as their value, and the product, a typed

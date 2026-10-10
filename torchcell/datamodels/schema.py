@@ -6489,6 +6489,38 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     # ----------------------------------------------------------------------- #
     # end ADDITIVE (#776)
     # ----------------------------------------------------------------------- #
+    # ----------------------------------------------------------------------- #
+    # ADDITIVE (#863): a per-record test of the response, the shape of the
+    # protein-fold-change family's p-value pair but scalar (one response per
+    # record). A p-value is a TEST of the number, not a dispersion of it, so it
+    # never feeds environment_response_uncertainty or the derived SE. Nothing
+    # above this block changes.
+    # ----------------------------------------------------------------------- #
+    environment_response_p_value: float | None = Field(
+        default=None,
+        description="the UNADJUSTED p-value the source released for this response's "
+        "test, as a probability in [0, 1], verbatim (a released 0 is stored as 0; it "
+        "is the source's rounding of a small value, not a placeholder). The test "
+        "itself is named in `units` or the dataset's provenance (Wang 2024: TRANSIT "
+        "resampling, a permutation test of the log2FC). None when the source releases "
+        "no test.",
+    )
+    environment_response_p_value_adjusted: float | None = Field(
+        default=None,
+        description="the multiple-testing-adjusted p-value the source released for the "
+        "same test, as a probability in [0, 1], verbatim; p_value_adjustment_method "
+        "names the correction",
+    )
+    p_value_adjustment_method: str | None = Field(
+        default=None,
+        description="the multiple-testing correction behind "
+        "environment_response_p_value_adjusted, e.g. 'benjamini_hochberg' (the same "
+        "vocabulary as ProteinFoldChangePhenotype.p_value_adjustment_method). Required "
+        "whenever an adjusted p-value is stored and forbidden otherwise",
+    )
+    # ----------------------------------------------------------------------- #
+    # end ADDITIVE (#863)
+    # ----------------------------------------------------------------------- #
 
     @field_validator("environment_response")
     def validate_response(cls, v: float | None) -> float | None:
@@ -6579,6 +6611,33 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
             )
         # ------------------------------------------------------------------- #
         # end ADDITIVE (#776)
+        # ------------------------------------------------------------------- #
+        # ------------------------------------------------------------------- #
+        # ADDITIVE (#863): p-values are finite probabilities, and an adjusted
+        # p-value names its correction (the protein-fold-change invariant).
+        # ------------------------------------------------------------------- #
+        for name in (
+            "environment_response_p_value",
+            "environment_response_p_value_adjusted",
+        ):
+            p_value = getattr(self, name)
+            if p_value is not None and (
+                not math.isfinite(p_value) or not 0.0 <= p_value <= 1.0
+            ):
+                raise ValueError(f"{name} is {p_value}, not a probability in [0, 1]")
+        adjusted = self.environment_response_p_value_adjusted is not None
+        if adjusted and self.p_value_adjustment_method is None:
+            raise ValueError(
+                "an adjusted p-value names its correction: set "
+                "p_value_adjustment_method"
+            )
+        if not adjusted and self.p_value_adjustment_method is not None:
+            raise ValueError(
+                "p_value_adjustment_method describes a stored adjusted p-value; set "
+                "environment_response_p_value_adjusted or leave the method None"
+            )
+        # ------------------------------------------------------------------- #
+        # end ADDITIVE (#863)
         # ------------------------------------------------------------------- #
         return self
 

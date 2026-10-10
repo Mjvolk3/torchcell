@@ -719,6 +719,30 @@ case "$ARM" in
                                 trainer.checkpoint.monitor=val/proteome/pearson_per_feature
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(small-prot mask-off "split${ARM##*_s}" proteome stage-small round-small) ;;
+  # THE MORPHOLOGY ROUND v24 (conf/cgt_morph_v24.yaml): the 116 moving CalMorph features read
+  # off the PERTURBED CLS. M_cls is the config default (genotype only, every calmorph
+  # genotype); CM_expr reveals the strain's expression through the v20 conditioning step on
+  # the genotypes carrying both labels, CM_exprperm hands each strain another strain's;
+  # M_pool adds the mean gene pool to the CLS. Split seeds 0 to 11.
+  M_cls_s[0-9]|M_cls_s1[01])
+                     OVERRIDES=(data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls genotype-only "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  M_pool_s[0-9]|M_pool_s1[01])
+                     OVERRIDES=(multitask.heads.global.use_gene_pool=true data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-pool genotype-only "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  CM_expr_s[0-9]|CM_expr_s1[01])
+                     OVERRIDES=("multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                "cell_dataset.require_modalities=[expression_log2_ratio,calmorph]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls reveal-expression "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  CM_exprperm_s[0-9]|CM_exprperm_s1[01])
+                     OVERRIDES=("multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                multitask.condition_permute=true
+                                "cell_dataset.require_modalities=[expression_log2_ratio,calmorph]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls reveal-expression-permuted "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

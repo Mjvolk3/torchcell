@@ -1,0 +1,67 @@
+# experiments/019-simb-multimodal/conf/cgt_morph_v24.yaml
+# [[experiments.019-simb-multimodal.conf.cgt_morph_v24]]
+# https://github.com/Mjvolk3/torchcell/tree/main/experiments/019-simb-multimodal/conf/cgt_morph_v24
+#
+# THE MORPHOLOGY ROUND (2026-10-10), project torchcell_019_morph_v24. Two questions, in the
+# order the author set them: can the model predict single-deletion morphology from the
+# genotype, and does a measured gene-level modality (expression now, the proteome once a
+# store joins Messner 2023 with Ohya 2005) help when it is revealed as input.
+#
+# THE TARGET is the 116 MOVING CalMorph features (replicate reliability at least 0.5,
+# conf/calmorph_moving_features.yaml from calmorph_moving_features_conf.py), Yeo-Johnson
+# normalized per feature as every morphology config since Part A. The 162 quiet features are
+# dropped from the target and the head, so the score is the mean Pearson per feature over
+# the 116 across held-out strains, `val/morphology/pearson_per_feature`.
+#
+# THE READOUT is the CLS token, PERTURBED: `model.perturb_cls: true` sends the CLS through
+# the perturbation operator as one more query over the deleted-gene keys, so the whole-cell
+# state is strain-specific (without it h_CLS is identical for every strain, the structural
+# fact of the expression retrospective), and the global head reads that state alone,
+# `use_gene_pool: false`. The gene tokens come out unchanged.
+#
+# THE STORE is fig3_core (Kemmeren 2014, Sameith 2015, Ohya 2005, the fitness panels):
+# 4,695 genotypes carry calmorph, 1,554 carry expression. Arms (gh_expr_008_arm.sh):
+#   M_cls_s<k>      genotype only, CLS readout, every calmorph genotype (the inductive claim)
+#   CM_expr_s<k>    expression revealed in full as input (the v20 conditioning step), calmorph
+#                   predicted, on the genotypes carrying both
+#   CM_exprperm_s<k> the same with each strain handed another strain's expression (control)
+#   M_pool_s<k>     M_cls with the mean gene pool concatenated to the CLS (does the pool add)
+# Trunk, budget and recipe are v22's fast ones: ProtT5 only, width 90, six layers, batch 128,
+# lr 3e-4, 1,200 epochs, no mask schedule.
+defaults:
+  - cgt_expr_v21_small
+  - calmorph_moving_features
+  - _self_
+
+wandb:
+  project: torchcell_019_morph_v24
+  tags: [morph-round, v24]
+
+cell_dataset:
+  query_file: fig3_core.cql
+  dataset_tag: fig3_core
+  require_modalities: [calmorph]
+
+model:
+  perturb_cls: true
+
+multitask:
+  active_heads: [global]
+  mask_schedule: null
+  # Declared so the CM_* arms can set them; null is the genotype-only default.
+  condition_head: null
+  condition_permute: false
+  head_phenotypes:
+    global: [calmorph]
+  normalize_vector_targets: [global]
+  vector_norm_method: yeo_johnson
+  standardize_per_feature_target: []
+  heads:
+    global:
+      use_gene_pool: false
+
+trainer:
+  max_epochs: 1200
+  checkpoint:
+    monitor: val/morphology/pearson_per_feature
+    metric_monitor: val/morphology/pearson_per_feature

@@ -545,6 +545,26 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_expr_v21_small
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true wandb.project=torchcell_019_scaling" ;;
+  # THE MORPHOLOGY ROUND v24 (2026-10-10, conf/cgt_morph_v24.yaml): can the model predict
+  # single-deletion morphology (the 116 moving CalMorph features, read off the perturbed
+  # CLS), and does revealed expression help. Arm-major order so the M_cls tasks write the
+  # split caches for seeds 4 to 11 before a conditioned task of the same seed starts (the
+  # IGB fig3_core mirror carries seeds 0 to 3 only). One run per card.
+  #   sbatch -J 019-morph1w1-cls -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=1-12:00:00 --array=0-35%8 --export=ALL,W5_STAGE=morph_v24,... igb_expr_wave5.slurm
+  #   sbatch -J 019-morph1w1-pool -p gpu --gres=gpu:1 --cpus-per-task=8 --mem=80g \
+  #       --time=1-12:00:00 --array=0-2%3 --export=ALL,W5_STAGE=morph_v24_pool,... igb_expr_wave5.slurm
+  morph_v24) JOBS=("M_cls_s0:0" "CM_expr_s0:0" "CM_exprperm_s0:0")  # seed 0 first: every arm fails fast
+          for arm in M_cls CM_expr CM_exprperm; do for s in 1 2 3 4 5 6 7 8 9 10 11; do
+            JOBS+=("${arm}_s${s}:0")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
+  morph_v24_pool) JOBS=("M_pool_s0:0" "M_pool_s1:0" "M_pool_s2:0")
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
   scale_n) JOBS=(); SWEEP_OV=()
           for wl in 45:6e-4 90:3e-4 180:1.5e-4 360:7.5e-5; do for s in 0 1 2; do
             JOBS+=("S_mask_s${s}:0")

@@ -350,3 +350,38 @@ def test_fused_attention_on_unregularized_layers_matches_manual_everywhere() -> 
     assert torch.allclose(
         fused["head_outputs"]["per_gene"], manual["head_outputs"]["per_gene"], atol=1e-5
     )
+
+
+def test_perturb_cls_makes_the_global_readout_strain_specific() -> None:
+    """With ``perturb_cls`` the CLS differs by strain and the gene rows do not change.
+
+    The global head without a gene pool reads the CLS alone, so without the perturbed
+    CLS it returns one row for every strain; with it the rows differ. The gene rows are
+    the same either way, because cross-attention output per query depends on that query
+    and the keys only.
+    """
+    heads = {"global": {"output_dim": 7, "use_gene_pool": False}}
+    plain = _make_model(heads, seed=3)
+    perturbed = CellGraphTransformer(
+        gene_num=GENE_NUM,
+        hidden_channels=HIDDEN,
+        num_transformer_layers=NUM_LAYERS,
+        num_attention_heads=NUM_HEADS,
+        cell_graph=_make_cell_graph(),
+        heads_config=heads,
+        perturb_cls=True,
+    )
+    perturbed.load_state_dict(plain.state_dict())
+    plain.eval()
+    perturbed.eval()
+    cg, batch = _make_cell_graph(), _make_batch()
+    with torch.no_grad():
+        _, reps0 = plain(cg, batch)
+        _, reps1 = perturbed(cg, batch)
+    assert reps0["h_CLS_pert"] is None
+    assert reps1["h_CLS_pert"].shape == (BATCH_SIZE, HIDDEN)
+    assert torch.allclose(reps0["H_genes_pert"], reps1["H_genes_pert"], atol=1e-6)
+    g0, g1 = reps0["head_outputs"]["global"], reps1["head_outputs"]["global"]
+    assert torch.allclose(g0[0], g0[1]) and torch.allclose(g0[1], g0[2])
+    assert not torch.allclose(g1[0], g1[1])
+    assert reps1["h_CLS_pert"].std(dim=0).mean() > 0

@@ -2936,6 +2936,9 @@ def run_training(cfg: DictConfig) -> dict[str, float]:
         attention_mask_config=_as_dict(cfg.model.get("attention_mask", None)),
         cross_gene_config=_as_dict(cfg.model.get("cross_gene", None)),
         observed_label_config=_as_dict(cfg.model.get("observed_labels", None)),
+        # `model.perturb_cls: true` sends the CLS through the perturbation operator so
+        # the global head reads a strain-specific cell state (the morphology round).
+        perturb_cls=bool(cfg.model.get("perturb_cls", False)),
     ).to(device)
     print("Parameter counts:", model.num_parameters)
 

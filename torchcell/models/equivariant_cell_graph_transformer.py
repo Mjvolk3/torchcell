@@ -1510,7 +1510,8 @@ class GlobalHead(nn.Module):
         """Forward pass of the global head.
 
         Args:
-            h_CLS: [d] whole-cell CLS representation.
+            h_CLS: [d] the shared wild-type CLS, or [batch, d] the perturbed CLS
+                (``CellGraphTransformer.perturb_cls``).
             H_genes_pert: [batch, N, d] equivariant perturbed gene embeddings.
 
         Returns:
@@ -1518,7 +1519,9 @@ class GlobalHead(nn.Module):
             [batch_size, output_dim, param_dim] when param_dim > 1 (distributional).
         """
         batch_size = H_genes_pert.shape[0]
-        h = h_CLS.unsqueeze(0).expand(batch_size, -1)  # [batch, d]
+        h = (
+            h_CLS if h_CLS.dim() == 2 else h_CLS.unsqueeze(0).expand(batch_size, -1)
+        )  # [batch, d]
         if self.use_gene_pool:
             pooled = H_genes_pert.mean(dim=1)  # [batch, d]
             h = torch.cat([h, pooled], dim=-1)  # [batch, 2d]
@@ -2192,8 +2195,20 @@ class CellGraphTransformer(nn.Module):
         cross_gene_config: (
             dict[str, Any] | None
         ) = None,  # GEARS-style pooled cross-gene mixing
+        perturb_cls: bool = False,  # Run the CLS token through the perturbation operator
     ):
         """Build embeddings, transformer encoder, and perturbation heads.
+
+        Args:
+            perturb_cls: Send the CLS token through ``EquivariantPerturbationTransform``
+                as one more query beside the N gene tokens, over the same deleted-gene
+                keys. Without it the encoder runs once on the wild-type graph and h_CLS
+                is sliced off BEFORE the operator, so it is identical across strains and
+                a global readout of it cannot be strain-specific. With it the model also
+                returns ``h_CLS_pert`` [batch, d] and the ``global`` head reads that
+                instead of h_CLS. One extra query row; the operator's parameters and the
+                gene tokens' outputs are unchanged, and the gene rows never attend to the
+                CLS. Ported from the 025 line (commit 9e2f59551), 2026-10-10.
 
         Args:
             gene_num: Number of genes (sequence length excluding CLS token).
@@ -2407,6 +2422,7 @@ class CellGraphTransformer(nn.Module):
             dropout=pert_head_config.get("dropout", dropout),
             pooling=self.pert_pooling,
         )
+        self.perturb_cls = bool(perturb_cls)
 
         # === Hard graph masking: burn the graphs into attention STRUCTURALLY ===
         # An alternative to the KL, not a companion to it. The KL is a soft penalty whose
@@ -3126,11 +3142,27 @@ class CellGraphTransformer(nn.Module):
         H_genes = H_squeezed[1:]  # [N, d]
 
         # 5. Apply EQUIVARIANT perturbation transformation (Type I Virtual Instrument)
-        H_genes_pert, pert_context = self.perturbation_transform(
-            H_genes,
-            batch["gene"].perturbation_indices,
-            batch["gene"].perturbation_indices_batch,
-        )  # [batch, N, d] each - EQUIVARIANT!
+        h_CLS_pert: torch.Tensor | None = None
+        if self.perturb_cls:
+            # The CLS rides along as query row 0 over the same deleted-gene keys; the
+            # key indices shift by one because the keys are gathered from the query
+            # matrix. The gene rows come out identical to the perturb_cls=False path:
+            # cross-attention output per query depends only on that query and the
+            # keys, never on the other queries.
+            H_all_pert, all_context = self.perturbation_transform(
+                torch.cat([h_CLS.unsqueeze(0), H_genes], dim=0),  # [N+1, d]
+                batch["gene"].perturbation_indices + 1,
+                batch["gene"].perturbation_indices_batch,
+            )  # [batch, N+1, d] each
+            h_CLS_pert = H_all_pert[:, 0]  # [batch, d] -- strain-specific
+            H_genes_pert = H_all_pert[:, 1:]  # [batch, N, d]
+            pert_context = all_context[:, 1:]
+        else:
+            H_genes_pert, pert_context = self.perturbation_transform(
+                H_genes,
+                batch["gene"].perturbation_indices,
+                batch["gene"].perturbation_indices_batch,
+            )  # [batch, N, d] each - EQUIVARIANT!
 
         # 5b. Pair-(p, i) routing. Without this the ONLY strain-dependent quantity is a
         #     single d-vector added uniformly to every gene, so nothing downstream can
@@ -3186,7 +3218,10 @@ class CellGraphTransformer(nn.Module):
         #    empty and nothing here runs.
         head_outputs: dict[str, torch.Tensor] = {}
         if self.global_head is not None:
-            head_outputs["global"] = self.global_head(h_CLS, H_genes_pert)
+            # The perturbed CLS when the operator produced one, else the shared one.
+            head_outputs["global"] = self.global_head(
+                h_CLS_pert if h_CLS_pert is not None else h_CLS, H_genes_pert
+            )
         if self.per_gene_head is not None:
             if self.per_gene_concat_context:
                 # [h_pert ; h_i ; c] -- h_i is the strain-INVARIANT encoder output, c the
@@ -3257,6 +3292,7 @@ class CellGraphTransformer(nn.Module):
 
         return predictions, {
             "h_CLS": h_CLS,
+            "h_CLS_pert": h_CLS_pert,  # [batch, d] when perturb_cls, else None
             "H_genes": H_genes,
             "H_genes_pert": H_genes_pert,  # Equivariant perturbed gene embeddings
             "z_p": H_genes_pert,  # Backward compatibility alias

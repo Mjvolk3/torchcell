@@ -86,3 +86,76 @@ says so.
 dependent; bAID in aerobic YPD against Vanacloig's haploid deletions in anaerobic SYNH3 at
 IC30 and HET's heterozygous diploids in YPD; ex21's uninhibited wells grew slower than its
 low-dose wells, so ex21 is normalized by curve fit, not control division.
+
+## 2026.10.10 - Preliminary results, claims 1 to 4 (CPU round)
+
+All numbers from the committed scripts in `experiments/040-inhibitor-synergy-wetlab/scripts/`
+and their notes; growth calls as defined above (served = raw-curve, primary; software =
+Bioscreen traits, sensitivity).
+
+**Claim 1 holds: the combinations grow less than independence predicts and more than Loewe
+additivity predicts** (`mixture_rules.py`). Growth or no growth over all 63 ex23
+combinations: Loewe from the ex21 Hill fits reaches accuracy 0.825 and AUROC 0.958 (served)
+and 0.825 / 0.952 (software); Bliss from the observed ex23 singles 0.556 / 0.872 and
+0.397 / 0.846; Bliss from the ex21 fits 0.333 / 0.777; highest single agent 0.333 / 0.663.
+Fitness over the combinations that grew (21 served, 25 software): Bliss from the ex23
+singles Spearman 0.573 / 0.865 with observed minus predicted -0.142 / -0.097; Loewe 0.713 /
+0.646 with +0.128 / +0.185. Pairs (observed minus Bliss, replicate bootstrap): 12 of 15
+synergistic, 2 additive (5-HMF + acetic acid, 5-HMF + formic acid), 1 antagonistic (5-HMF +
+furfural, +0.058 [+0.018, +0.103]) under the served call; 13 / 2 / 0 under the software
+call; formic + lactic acid grew in no well under either. Isoboles (mean excess over Bliss,
+81 interior cells): furfural x acetic acid -0.082 [-0.142, -0.017], formic x acetic acid
+-0.446 [-0.536, -0.367] (31 cells where Bliss predicts growth and none grew), 5-HMF x
+acetic acid -0.017 [-0.043, +0.007] (single run, flagged); in no grid did a cell grow less
+than Loewe predicts. Single agents (`single_agent_curves.py`, ex21 IC30 in mM): furfural
+9.8, acetic acid 56.7, 5-HMF 17.9, formic acid 43.8, levulinic acid 75.6, lactic acid 486;
+the acids and most isobole axes hit the Hill-slope bound (growth falls to none between
+adjacent doses). Vanacloig IC30 against ex21 IC30: furfural 8.0 vs 9.8 mM, 5-HMF 3.3 vs
+17.9 mM (anaerobic SYNH3 at 48 h against aerobic YPD at 72 h). Hypothesis (untested): the
+steep single-agent curves are what drive Bliss and Loewe this far apart.
+
+**Claim 2 fails as pre-registered** (`similarity_vs_deviation.py`). With measured profiles
+in the matrix no similarity measure associates with the pair deviation (15 pairs, every
+permutation p above 0.26, signs flip across measures). The all-predicted matrix shows the
+opposite sign (raw Spearman -0.686, p 0.006 under the software call; -0.493, p 0.066
+served): the small acids have near-identical predicted profiles (fingerprint similarity
+through the ridge fit, 0.91 to 0.99) and are the synergistic pairs, a chemistry-class
+regularity the fingerprint encodes, not evidence that the chemogenomic profile carries the
+interaction.
+
+**Claim 3 holds on public data: deletion profiles compose as the MEAN of the singles**
+(`het_mixture_composition.py`, Hillenmeyer HET, 26 two-compound environments, 22 with an
+exact or within-twofold single match). The mean is the best fixed rule in 24 of 26 (median
+R^2 0.365; sum, which equals Bliss on the log2 scale, 0.091; max 0.050); the free linear fit
+gives a 0.529, b 0.593, a + b 1.06. The singles explain the pair far above a control-set
+matched null (median Spearman 0.579 vs 0.114; 24 of 26 at p <= 0.05). Emergent (0.355
+median) and masked (0.649) gene rates are inside the hit-calling noise: the only two
+near-replicate singles disagree on 54 and 64 percent of their hits. On the methotrexate x
+5-fluorouracil 3 x 3 grid the mean wins at all nine dose pairs but the weights move with
+dose (a 0.13 to 0.76). Carrying the mean rule to the inhibitor profiles (haploid
+deletions, anaerobic SYNH3) is a labeled hypothesis.
+
+**Claim 4, post-analysis: the ridge-predicted profiles carry only the generic stress
+component** (`inhibitor_profiles.py`, `inhibitor_nominations.py`). Leave-one-compound-out
+ridge on the 32 corrected compounds: median centered Spearman 0.387 (IQR 0.241 to 0.482),
+furfural 0.341, 5-HMF 0.425 (agreement with a noise profile; its reliability is -0.05).
+Predicted acetic acid against the Hoepfner sodium acetate profile: -0.084 (n = 3453), and the
+Vanacloig build-001 acetate against Hoepfner's: 0.034, so the two measured acetate profiles
+do not agree with each other either. GO enrichment of the top-100 sensitive genes (FDR
+0.05): the measured furfural profile carries no significant term (best, ribosome, FDR
+0.057); the predicted profiles' terms are those of the gene mean over the 32 compounds (19
+of 20 for furfural, 40 of 43 levulinic acid, 48 of 49 acetic acid), and on centered
+profiles measured and predicted share no term for any compound. Core nominations (sensitive
+in at least four of six singles): 68 genes in the best-available matrix, 105 all-predicted,
+led by Golgi transport and chromatin genes (YPT6, RIC1, VPS63, COG5, SNF6). These are
+hypotheses for a screen that has not been run.
+
+**What this means for the model step.** The wet-lab data are a clean validation target
+(synergy relative to independence, Loewe the better growth predictor, model-free), and the
+chemogenomic representation we have adds no measurable signal to it yet: compound-cold ridge
+profiles are generic, and similarity does not anticipate deviation once the measured
+profiles are in. 038 round 2 (slurm 3700 / 3701) will give the CGT environment encoder's
+compound-cold profiles for the same tests; on the 035 record it ties ridge, so the
+expectation (hypothesis) is the same null. A dose- and mixture-aware model therefore has a
+bar to clear (Loewe AUROC 0.958 on growth; Bliss Spearman 0.57 on fitness) and little
+public-data signal to clear it with; the honest preliminary claim is the model-free one.

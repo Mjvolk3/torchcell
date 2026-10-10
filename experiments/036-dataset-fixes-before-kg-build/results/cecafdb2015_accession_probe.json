@@ -1,0 +1,36 @@
+{
+  "accession_url": "http://www.cecafdb.org",
+  "probed_at": "2026-10-10T06:30:46.911398+00:00",
+  "probes": [
+    {
+      "url": "http://www.cecafdb.org/",
+      "method": "GET",
+      "status": 200,
+      "bytes": 16776,
+      "last_modified": null,
+      "title": "CeCaFDB - A curated database for flux distribution in\r\n\tcentral carbon metabolism systems."
+    },
+    {
+      "url": "https://www.cecafdb.org/",
+      "method": "GET",
+      "status": null,
+      "reason": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1020)>"
+    },
+    {
+      "url": "http://www.cecafdb.org/download_action",
+      "method": "GET",
+      "status": 200,
+      "bytes": 112611,
+      "last_modified": null,
+      "title": "CeCaFDB - A curated database for flux distribution in central carbon metabolism systems."
+    },
+    {
+      "url": "http://www.cecafdb.org/download_files/9bf6f02a5cb0a2ef191e49c3066892df.xls",
+      "method": "HEAD",
+      "status": 200,
+      "bytes": 0,
+      "last_modified": "Sun, 12 Apr 2015 06:54:22 GMT",
+      "title": null
+    }
+  ]
+}

@@ -31,6 +31,8 @@ from torchcell.datamodels.schema import (
     Genotype,
     KanMxDeletionPerturbation,
     Media,
+    MrnaNumberFractionExperiment,
+    MrnaNumberFractionPhenotype,
     PseudobulkExpressionExperiment,
     PseudobulkExpressionExperimentReference,
     PseudobulkExpressionPhenotype,
@@ -525,3 +527,69 @@ def test_replicate_groups_separates_conditions_and_reports_the_sizes() -> None:
     assert groups.passed is True
     assert groups.details["n_groups"] == 2
     assert groups.details["group_size_histogram"] == {"1": 1, "3": 1}
+
+
+# --------------------------------------------------------------------------- #
+# Issue #854: the count-less number-fraction family
+# --------------------------------------------------------------------------- #
+FRACTION_NAMES = [
+    "structural",
+    "count",
+    "replicate_groups",
+    "number_fraction_value_fidelity",
+    "fraction_sum_at_most_one",
+    "measurement_type_consistent",
+    "reference_finite",
+]
+
+
+def _fraction_record(
+    fractions: dict[str, float], reference: dict[str, float] | None = None
+) -> dict[str, Any]:
+    """One library; the reference dict is dumped unvalidated so a bad sum can reach L3."""
+    experiment = MrnaNumberFractionExperiment(
+        dataset_name="test",
+        genotype=Genotype(perturbations=[]),
+        environment=_environment(),
+        phenotype=MrnaNumberFractionPhenotype(
+            mrna_number_fraction=fractions,
+            n_libraries=1,
+            measurement_type="rnaseq_mrna_number_fraction",
+        ),
+    )
+    phenotype_reference = experiment.phenotype.model_dump()
+    if reference is not None:
+        phenotype_reference["mrna_number_fraction"] = reference
+    return {
+        "experiment": experiment.model_dump(),
+        "reference": {"phenotype_reference": phenotype_reference},
+    }
+
+
+def test_number_fraction_dataset_skips_counts_and_checks_the_sum() -> None:
+    records = [
+        _fraction_record({"b0001": 0.5, "b0002": 0.25}),
+        _fraction_record({"b0001": 0.4, "b0002": 0.0}),
+    ]
+    report = _verify_replicate_aware(records)
+    assert [r.name for r in report.results] == FRACTION_NAMES
+    assert report.passed
+    assert _result(report, "fraction_sum_at_most_one").message == (
+        "4 stored profiles sum to 0.400000 .. 0.750000"
+    )
+    assert rnaseq_gene_set(records) == {"b0001", "b0002"}
+
+
+def test_fraction_sum_fails_a_reference_above_one() -> None:
+    records = [_fraction_record({"b0001": 0.5}, reference={"b0001": 0.7, "b0002": 0.4})]
+    result = _result(_verify_replicate_aware(records), "fraction_sum_at_most_one")
+    assert (result.passed, result.details) == (False, {"n_profiles": 2, "n_over": 1})
+
+
+def test_number_fraction_fidelity_refuses_a_value_above_one() -> None:
+    record = _fraction_record({"b0001": 0.5})
+    record["experiment"]["phenotype"]["mrna_number_fraction"]["b0001"] = 1.5
+    result = _result(
+        _verify_replicate_aware([record]), "number_fraction_value_fidelity"
+    )
+    assert result.passed is False

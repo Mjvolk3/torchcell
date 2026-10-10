@@ -6,6 +6,9 @@ from .auesukaree2009_adapter import (
 from .babu2014_adapter import (
     GeneInteractionBabu2014Adapter as GeneInteractionBabu2014Adapter,
 )
+from .balakrishnan2022_adapter import (
+    MrnaFractionBalakrishnan2022Adapter as MrnaFractionBalakrishnan2022Adapter,
+)
 from .banerjee2025_proteome_adapter import (
     ProteomeBanerjee2025Adapter as ProteomeBanerjee2025Adapter,
 )
@@ -414,6 +417,7 @@ baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]
 
 ecoli_adapters = [
     "GeneInteractionBabu2014Adapter",
+    "MrnaFractionBalakrishnan2022Adapter",
     "GeneInteractionButland2008Adapter",
     "RnaseqCaglar2017Adapter",
     "ProteomeCaglar2017Adapter",

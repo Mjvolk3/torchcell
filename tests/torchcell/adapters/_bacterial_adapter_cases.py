@@ -108,6 +108,7 @@ from torchcell.adapters import (
     MetabolomeSchastnaya2021Adapter,
     MismatchCrispriFitnessHawkins2020Adapter,
     MorphologyCampos2018Adapter,
+    MrnaFractionBalakrishnan2022Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
@@ -143,6 +144,9 @@ from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.datasets.ecoli.balakrishnan2022 import (
+    MrnaFractionBalakrishnan2022Dataset,
+)
 from torchcell.datasets.ecoli.brunk2016 import (
     BiofuelTiterBrunk2016Dataset,
     ExometaboliteBrunk2016Dataset,
@@ -323,6 +327,8 @@ INTERACTION = "gene interaction phenotype"
 FLUX = "flux phenotype"
 PROMOTER_ACTIVITY = "promoter activity phenotype"
 METABOLITE = "metabolite phenotype"
+# #854: the count-less transcriptome.
+MRNA_FRACTION = "mrna number fraction phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -351,6 +357,13 @@ BACTERIAL: list[Bacterial] = [
         GeneInteractionBabu2014Dataset,
         INTERACTION,
         env_perturbation=False,
+    ),
+    _case(
+        MrnaFractionBalakrishnan2022Adapter,
+        "balakrishnan2022",
+        "mrna_fraction_balakrishnan2022",
+        MrnaFractionBalakrishnan2022Dataset,
+        MRNA_FRACTION,
     ),
     _case(
         GeneInteractionButland2008Adapter,

@@ -972,6 +972,33 @@ RNASEQ_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    # Issue #854: the count-less transcriptome. One record per released sample column
+    # (replicates of a condition share a genotype and an environment), and L4 is every
+    # key a gene of the MG1655 gene set, since the loader refuses the 148 b-numbers
+    # that are not.
+    "mrna_fraction_balakrishnan2022": {
+        "root": "data/torchcell/mrna_fraction_balakrishnan2022",
+        # 29 released columns - 1 duplicate 'a4_1' column.
+        "expected_count": 28,
+        "replicate_aware": True,
+        "min_containment": 1.0,
+        "provenance": Provenance(
+            source_uri=(
+                "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE205nnn/GSE205717/suppl/"
+                "GSE205717_Processed_data_Table_S3.xlsx"
+            ),
+            citation_key="balakrishnanPrinciplesGeneRegulation2022",
+            sha256="9d7df03bbbcdf1f92e93027014e746da5bcf42bf4d6b4be9061dd1803f71cc20",
+            method=(
+                "Table S3 sheet '2 - RNAseq-ss (fractions)': one "
+                "MrnaNumberFractionExperiment per released sample column of NCM3722 or "
+                "an NCM3722 derivative, the column's mRNA number fractions verbatim over "
+                "the 4,176 b-numbers in the MG1655 gene set; the reference is the "
+                "medium's wild-type library pair mean"
+            ),
+            page="Science 378:eabk2066; GEO GSE205717 Table S3",
+        ),
+    },
     "putida_precise321_lim2022": {
         "root": "data/torchcell/putida_precise321_lim2022",
         # 321 compendium samples - 141 dropped (engineered, evolved, plasmid-bearing,

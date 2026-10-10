@@ -23,6 +23,10 @@ sourcing layer.
   ``butland2008`` below serves in full. Its 3,420 hypomorph-involving pairs are dropped:
   a
   3'-UTR cassette hypomorph has no bacterial gene-perturbation leaf.
+- ``balakrishnan2022`` -- ``MrnaFractionBalakrishnan2022Dataset``: the steady-state
+  transcriptome of NCM3722 and three derivatives as count-less mRNA number fractions,
+  one record per released Table S3 column; the first consumer of
+  ``MrnaNumberFractionPhenotype`` (#854).
 - ``butland2008`` -- ``GeneInteractionButland2008Dataset``: the UNFILTERED eSGA
   matrix those 39 screens actually released, one record per (query strain, recipient
   isolate) cell of Supplementary Table 4. It is NOT subsumed by Babu 2014, which carries
@@ -204,6 +208,9 @@ sourcing layer.
 """
 
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
+from .balakrishnan2022 import (
+    MrnaFractionBalakrishnan2022Dataset as MrnaFractionBalakrishnan2022Dataset,
+)
 from .brunk2016 import BiofuelTiterBrunk2016Dataset as BiofuelTiterBrunk2016Dataset
 from .brunk2016 import ExometaboliteBrunk2016Dataset as ExometaboliteBrunk2016Dataset
 from .brunk2016 import MetabolomeBrunk2016Dataset as MetabolomeBrunk2016Dataset

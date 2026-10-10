@@ -2965,7 +2965,20 @@ CANDIDATES: list[Candidate] = [
         "publicly available at fit.genomics.lbl.gov with no per-experiment "
         "accession, and that site returns a Cloudflare challenge, so "
         "unconfirmed. Strains and plasmids at public-registry.jbei.org folder "
-        "391.",
+        "391. MEASURED SUBSUMPTION 2026-10-10 and it is TOTAL, so this row is a "
+        "provenance record and NOT a loader (experiments/036-dataset-fixes-before-"
+        "kg-build/scripts/thompsonMassivelyParallelFitness2019_release_inventory.py). "
+        "The paper's only per-gene file is Table S1, 39 genes x 4 carbon sources "
+        "(156 cells, PMC6509195 via the PMC bucket, deposited in the raw mirror). "
+        "Matched by values alone against all 332 compendium samples, each column "
+        "identifies exactly one sample: D-lysine set7IT062, L-lysine set7IT055, "
+        "5-aminovalerate set7IT044, glucose set6IT057, worst cell 0.046 against a "
+        "closest runner-up of 0.58. The served RbTnseqBorchert2024Dataset holds "
+        "all four as 18,928 records (4,732 loci each), so every Table S1 cell is "
+        "served. The compendium labels the glucose sample a 48-well Tecan "
+        "microplate where the Methods state 50-ml tubes. Fitness Browser answered "
+        "HTTP 403 on 2026-10-10. Provenance record: $DATA_ROOT/torchcell-raw/"
+        "thompsonMassivelyParallelFitness2019/subsumption_record.json.",
         accession="https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
         accession_confirmed=False,
         status="candidate",

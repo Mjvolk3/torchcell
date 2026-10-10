@@ -73,11 +73,13 @@ are on file. \status{todo}\,\fstat{idea}
 \textbf{d}, The ladder, ten best arms of \hydladderNArms{}: nested ridge on fingerprint
 counts reads \hydladderRidge{}, the next arm \hydladderSecond{}, the tenth
 \hydladderTenth{}. \status{todo}\,\fstat{file}
-\textbf{e}, The transformer against ridge, second round part run: the bilinear control
-has \hydbilinearFolds{} folds at a pooled median of \hydbilinearMedian{} and the
-environment encoder \hydenvencFolds{} at \hydenvencMedian{}, each over
-\hydenvencCompounds{} held-out compounds. \status{todo}\,\fstat{partial} Partial: the
-round is still producing and there is no ensemble.
+\textbf{e}, Which model predicts an unseen compound's profile. The second round is
+complete: over \hydbilinearEvaluations{} compound-evaluations, \hydenvencCompounds{}
+compounds on each of three fold seeds, the three-seed ensemble of the bilinear control
+reads \hydbilinearMedian{} and of the environment encoder \hydenvencMedian{}, both below
+nested ridge at \hydladderRidge{}. Paired on compound and fold, the encoder minus its
+control is \hydpairedMedian{} with \hydpairedUp{} of \hydpairedEvaluations{} up.
+\status{todo}\,\fstat{file}
 \textbf{f}, The learning curve in fitted compounds, \hydcurveEight{} at eight to
 \hydcurvePool{} on the pool, about \hydcurvePerDoubling{} per doubling.
 \status{todo}\,\fstat{partial} Partial: the encoder arm is not rerun.

@@ -1154,23 +1154,38 @@ def draw_cgt_vs_ridge(ax: Any, R: Reads) -> None:
             num(f"{key}Folds", 0)
             continue
         cen = frame[frame.target == "centered"]
-        for fold, grp in cen.groupby("fold"):
-            data.append(
-                (
-                    f"{arm}, fold {int(fold)}",
-                    float(grp.spearman.median()),
-                    None,
-                    "cgt",
-                    False,
-                )
+        # One bar per MEMBER, over every compound-evaluation of the round, so the panel
+        # compares like with like against the ridge bar above it (which is also a median
+        # over all of them). Drawing one bar per fold, as this did while the round was
+        # part run, shows fold-to-fold spread and invites reading the best fold as the
+        # arm's score.
+        for member in ("seed0", "ensemble"):
+            g = cen[cen.member == member]
+            if not len(g):
+                continue
+            label = f"{arm}, " + (
+                "single seed" if member == "seed0" else "3-seed ensemble"
             )
-        num(f"{key}Folds", int(cen.fold.nunique()))
-        num(f"{key}Median", float(cen.spearman.median()))
+            data.append((label, float(g.spearman.median()), None, "cgt", False))
+        ens = cen[cen.member == "ensemble"]
+        num(f"{key}Configs", int(cen.name.nunique()))
+        num(f"{key}Evaluations", int(len(ens)))
+        num(f"{key}Median", float(ens.spearman.median()))
         num(f"{key}Compounds", int(cen.compound.nunique()))
-    data.append(("the two stacked (planned)", float("nan"), None, "cgt", False))
+    # The paired read, which is the panel's actual claim: the encoder against its own
+    # control on the same compound and fold.
+    key_cols = ["compound", "fold", "fold_seed"]
+    if len(R.bil) and len(R.envenc):
+        a = R.bil[(R.bil.target == "centered") & (R.bil.member == "ensemble")]
+        b = R.envenc[(R.envenc.target == "centered") & (R.envenc.member == "ensemble")]
+        paired = a.merge(b, on=key_cols, suffixes=("_bil", "_enc"))
+        delta = paired.spearman_enc - paired.spearman_bil
+        num("pairedEvaluations", int(len(paired)))
+        num("pairedMedian", float(delta.median()))
+        num("pairedUp", int((delta > 0).sum()))
     bars(ax, data, "median centered Spearman, compound-cold", 0.40, step=0.1)
     ax.tick_params(axis="y", labelsize=4.4)
-    title(ax, "the transformer against ridge, round 2 part run")
+    title(ax, "which model predicts an unseen compound's profile")
 
 
 def draw_curve(ax: Any, R: Reads, both_targets: bool = False) -> None:
@@ -1691,11 +1706,16 @@ def fig_main(R: Reads) -> dict[str, str]:
         fig,
         axes,
         [
+            # a concept, b data, c evaluation, d ladder, e the two heads (round 2 is
+            # complete since 2026-10-10, so e is on file; the stack is not run and the
+            # panel does not draw it), f curve (encoder arm not rerun), g dose, h the
+            # composition rule, i profiles (the transformer's are not scored yet),
+            # j to l the wet lab (the rules are on file, the model is running).
             "todo",
             "ready",
             "todo",
             "ready",
-            "partial",
+            "ready",
             "partial",
             "ready",
             "ready",

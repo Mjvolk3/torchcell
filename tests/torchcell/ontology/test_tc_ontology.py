@@ -143,13 +143,13 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 37 nodes (33 under six Biolink
+    """The committed ``torchcell_schema_config.yaml``: 38 nodes (34 under six Biolink
     parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
     the product titer, protein turnover and flux phenotypes join phenotypic feature,
-    and #770's protein fold change phenotype and #854's mrna number fraction phenotype
-    join it too.
+    and #770's protein fold change phenotype, #854's mrna number fraction phenotype
+    and #857's protein synthesis rate phenotype join it too.
     ``phage perturbation`` adds the SIXTH parent, ``biotic exposure``: Biolink defines
     ``environmental exposure`` as abiotic, and the two are siblings under
     ``exposure event``, so a phage node carries neither the other's label.
@@ -177,8 +177,8 @@ def test_real_schema_compact_table(
         "gene interaction phenotype, metabolite phenotype, microarray expression "
         "phenotype, mrna number fraction phenotype, product titer phenotype, "
         "promoter activity phenotype, protein "
-        "abundance phenotype, protein fold change phenotype, protein turnover "
-        "phenotype, pseudobulk expression phenotype, rnaseq expression "
+        "abundance phenotype, protein fold change phenotype, protein synthesis rate "
+        "phenotype, protein turnover phenotype, pseudobulk expression phenotype, rnaseq expression "
         "phenotype, synthetic lethality phenotype, synthetic rescue phenotype, visual "
         "score phenotype",
         f"{'✓ auto-mapped':25} → dataset, genome, genotype, publication",
@@ -191,7 +191,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    33/37 explicit + 4 auto-mapped = 37/37 total" in lines
+    assert "Nodes:    34/38 explicit + 4 auto-mapped = 38/38 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -202,11 +202,12 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 37 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 38 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
     variant perturbation``, ``bacterial morphology phenotype``, for #770
-    ``protein fold change phenotype`` and, for #854, ``mrna number fraction
+    ``protein fold change phenotype``, for #854 ``mrna number fraction phenotype``
+    and, for #857, ``protein synthesis rate
     phenotype``) and 13 edges, the small test schema 3 nodes and
     2 edges (its stray string entry is neither).
     """
@@ -215,7 +216,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 37, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 38, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

@@ -164,6 +164,14 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "is_synthetic": False,
     },
     "torchcell.datamodels.schema.CalMorphPhenotype": {"calmorph": {"A101_A": 0.5}},
+    # #857: the generic builder picks the first SynthesisRateUnit member, a rate per
+    # generation, which must state the generation time the builder leaves out.
+    "torchcell.datamodels.schema.ProteinSynthesisRatePhenotype": {
+        "synthesis_rate": {"b0001": 12.0},
+        "rate_unit": "molecules_per_generation",
+        "generation_time_minutes": 21.5,
+        "measurement_type": "ribosome_profiling_footprint_density",
+    },
     "torchcell.datamodels.schema.PresenceAbsencePerturbation": {
         "systematic_gene_name": "YAL001C",
         "perturbed_gene_name": "TFC3",

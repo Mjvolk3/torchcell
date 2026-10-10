@@ -485,12 +485,13 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # and one more source on `phenotype member of`, which has two targets.
     # 36 and 56 since `protein fold change phenotype` joined (issue #770): the same
     # shape again, one node and one more source on that two-target edge.
-    # 37 and 58 since `mrna number fraction phenotype` joined (issue #854): the same
-    # shape again, one node and one more source on that two-target edge.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (37, 13, 58)
-    # 162 = 158 + 4: one node is a declaration, an ``is_a`` line and one data line per
+    # 38 and 60 since `mrna number fraction phenotype` (issue #854) and `protein synthesis
+    # rate phenotype` (issue #857) joined: the same shape twice more, one node and two more data lines
+    # source on that two-target edge each.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (38, 13, 60)
+    # 166 = 158 + 4 + 4: one node is a declaration, an ``is_a`` line and one data line per
     # ``phenotype member of`` target, of which there are two.
-    assert len(lines) == 162
+    assert len(lines) == 166
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

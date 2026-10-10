@@ -225,6 +225,17 @@ def _turnover(**kw: Any) -> s.ProteinTurnoverPhenotype:
     return s.ProteinTurnoverPhenotype(**fields)
 
 
+def _synthesis(**kw: Any) -> s.ProteinSynthesisRatePhenotype:
+    fields: dict[str, Any] = dict(
+        synthesis_rate={"b0002": 120.0, "b0003": 0.0},
+        rate_unit=s.SynthesisRateUnit.molecules_per_generation,
+        generation_time_minutes=21.5,
+        measurement_type="ribosome_profiling_footprint_density",
+    )
+    fields.update(kw)
+    return s.ProteinSynthesisRatePhenotype(**fields)
+
+
 def _flux(**kw: Any) -> s.FluxPhenotype:
     fields: dict[str, Any] = dict(
         net_flux={"PGI": -1.2, "TPI": 0.4},
@@ -701,6 +712,46 @@ def _phenotype_record(phenotype: Any) -> dict[str, Any]:
     return {"experiment": SimpleNamespace(phenotype=phenotype)}
 
 
+def test_protein_synthesis_rate_phenotype_node_projects_dicts_as_json() -> None:
+    """#857: each dict is one JSON string; the unit is its value, the time a float."""
+    phenotype = _synthesis(
+        synthesis_rate_se={"b0002": 4.0},
+        n_replicates={"b0002": 2, "b0003": 1},
+        censoring={"b0003": s.Censoring.left},
+    )
+    [node] = _run(
+        "protein synthesis rate phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "protein synthesis rate phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "graph_level": "node",
+        "label_name": "synthesis_rate",
+        "label_statistic_name": "synthesis_rate_se",
+        "synthesis_rate": '{"b0002": 120.0, "b0003": 0.0}',
+        "synthesis_rate_se": '{"b0002": 4.0}',
+        "n_replicates": '{"b0002": 2, "b0003": 1}',
+        "rate_unit": "molecules_per_generation",
+        "generation_time_minutes": 21.5,
+        "measurement_type": "ribosome_profiling_footprint_density",
+        "censoring": '{"b0003": "left"}',
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+    }
+    bare = _run(
+        "protein synthesis rate phenotype (chunked)", _phenotype_record(_synthesis())
+    )[0].get_properties()
+    assert (bare["synthesis_rate_se"], bare["n_replicates"], bare["censoring"]) == (
+        None,
+        None,
+        None,
+    )
+
+
 def test_protein_turnover_phenotype_node_projects_dicts_as_json() -> None:
     """Every dict is one JSON string, including #753's bounds and censoring map."""
     phenotype = _turnover(
@@ -964,6 +1015,11 @@ def test_bacterial_morphology_optional_fields_project_as_none() -> None:
             [_turnover(), _turnover(), _turnover(measurement_type="other_per_hour")],
         ),
         (
+            "protein synthesis rate phenotype reference",
+            "protein synthesis rate phenotype",
+            [_synthesis(), _synthesis(), _synthesis(generation_time_minutes=56.3)],
+        ),
+        (
             "flux phenotype reference",
             "flux phenotype",
             [_flux(), _flux(), _flux(net_flux={"PGI": 1.0})],
@@ -1022,6 +1078,10 @@ NEW_CLASSES = {
         "protein turnover phenotype (chunked)",
         s.ProteinTurnoverPhenotype,
     ),
+    "protein synthesis rate phenotype": (
+        "protein synthesis rate phenotype (chunked)",
+        s.ProteinSynthesisRatePhenotype,
+    ),
     "flux phenotype": ("flux phenotype (chunked)", s.FluxPhenotype),
     "promoter activity phenotype": (
         "promoter activity phenotype (chunked)",
@@ -1073,6 +1133,10 @@ def test_emitted_properties_equal_the_declared_properties_at_run_time() -> None:
         "flux phenotype": _run("flux phenotype (chunked)", _phenotype_record(_flux()))[
             0
         ],
+        "protein synthesis rate phenotype": _run(
+            "protein synthesis rate phenotype (chunked)",
+            _phenotype_record(_synthesis()),
+        )[0],
     }
     for label, node in emitted.items():
         assert node.get_label() == label
@@ -1101,6 +1165,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
             "_get_protein_turnover_phenotype_reference_nodes"
         ),
         "flux phenotype reference": "_get_flux_phenotype_reference_nodes",
+        "protein synthesis rate phenotype (chunked)": (
+            "_protein_synthesis_rate_phenotype_node"
+        ),
+        "protein synthesis rate phenotype reference": (
+            "_get_protein_synthesis_rate_phenotype_reference_nodes"
+        ),
         "promoter activity phenotype (chunked)": ("_promoter_activity_phenotype_node"),
         "promoter activity phenotype reference": (
             "_get_promoter_activity_phenotype_reference_nodes"
@@ -1130,6 +1200,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert sources[-6:] == [
         "product titer phenotype",
         "protein turnover phenotype",
+        "protein synthesis rate phenotype",
         "flux phenotype",
         "promoter activity phenotype",
         "bacterial morphology phenotype",

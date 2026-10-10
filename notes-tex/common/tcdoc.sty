@@ -231,21 +231,19 @@
 \newcommand{\src}[1]{\iftcdraft{\footnotesize\color{tcgray}\textsc{src:}~\texttt{#1}}\par\fi}
 
 %% ---------------------------------------------------------------------------
-%% Figures. \tcfig places the PDF at TRUE SIZE (no scaling) and sets the caption
-%% to the figure's own width, so a panel authored at 88 mm stays 88 mm and its
-%% caption does not run the full text block. This is the WYSIWYG contract that
-%% makes the draw.io + savefig_true_size_svg pipeline meaningful.
+%% Figures. \tcfig places the PDF at TRUE SIZE (no scaling), centered, so a panel
+%% authored at 88 mm stays 88 mm. This is the WYSIWYG contract that makes the
+%% draw.io + savefig_true_size_svg pipeline meaningful. The caption is not tied
+%% to the figure's width: it runs the full text block (see below).
 %% \tcfigfit scales to a fraction of \textwidth -- convenient, NOT WYSIWYG; use
 %% it only until the source is redrawn to its real print box.
 %% ---------------------------------------------------------------------------
-\newsavebox{\tcfigbox}
+%% The caption runs the full text width, margin to margin, whatever the figure's
+%% width (author's call, 2026-10-09): a narrow figure should not force a narrow caption.
 \newcommand{\tcfig}[3]{%
   \begin{figure}[htbp]\centering
-  \sbox{\tcfigbox}{\includegraphics{#1}}%
-  \begin{minipage}{\wd\tcfigbox}%
-    \usebox{\tcfigbox}\par\vspace{2pt}
-    \caption[]{#2}\label{#3}%
-  \end{minipage}
+  \includegraphics{#1}\par\vspace{2pt}
+  \caption[]{#2}\label{#3}%
   \end{figure}}
 \newcommand{\tcfigfit}[4][0.98]{%
   \begin{figure}[htbp]\centering

@@ -516,6 +516,7 @@ BACTERIAL_DATASETS = {
     "IsoprenolTiterYunus2026Dataset",
     "IsoprenolToleranceLim2025Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
+    "LactamGrowthRateThompson2019Dataset",
     "MetaboliteGrowthPhaseMenasalvas2025Dataset",
     "MetaboliteIntensityRapp2026Dataset",
     "MetaboliteProductionPhaseMenasalvas2025Dataset",
@@ -553,6 +554,7 @@ BACTERIAL_DATASETS = {
     "RnaseqPublicK12Lamoureux2023Dataset",
     "TargetedMetabolomeRapp2026Dataset",
     "TranscriptionFactorKnockoutChoe2019Dataset",
+    "ValerolactamTiterThompson2019Dataset",
 }
 """The E. coli and P. putida datasets mapped in plan step 9 and after, none calibrated
 yet."""
@@ -580,6 +582,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Wang 2024 rifampicin Tn-seq).
     # + 1 (row 53, Royet 2025's metal Tn-seq).
     assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1
+    # + 2 (Thompson 2019 valerolactam: its titer and its growth-rate families).
+    assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 2
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",

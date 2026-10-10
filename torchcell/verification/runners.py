@@ -2458,6 +2458,15 @@ def _verify_kang_titer(dataset_root: str, data_root: str) -> VerificationReport:
     return kang2026.verify_build(dataset_root, data_root)
 
 
+def _verify_thompson_valerolactam_titer(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Thompson 2019: the 24 h titers and the L4 join to the Results prose."""
+    from torchcell.datasets.pputida import thompson2019_valerolactam
+
+    return thompson2019_valerolactam.verify_titer_build(dataset_root, data_root)
+
+
 def _verify_lim_proteome(dataset_root: str, data_root: str) -> VerificationReport:
     """Lim 2025 proteome: the shared protein gate, its containment and quote audits.
 
@@ -2525,6 +2534,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
     "isoprenol_titer_yunus2026": {
         "root": "data/torchcell/isoprenol_titer_yunus2026",
         "verify": _verify_yunus_titer,
+    },
+    "valerolactam_titer_thompson2019": {
+        "root": "data/torchcell/valerolactam_titer_thompson2019",
+        "verify": _verify_thompson_valerolactam_titer,
     },
 }
 

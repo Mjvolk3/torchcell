@@ -46,21 +46,18 @@ from dotenv import load_dotenv
 load_dotenv()
 
 import torchcell.datasets.pputida.thompson2019_valerolactam as vl  # noqa: E402
+from torchcell.verification.report import sha256_file  # noqa: E402
 
 RESULTS = osp.join(
     os.environ["EXPERIMENT_ROOT"], "036-dataset-fixes-before-kg-build", "results"
 )
 OUT = osp.join(RESULTS, "thompson2019_valerolactam_release_inventory.json")
-SAMPLES_CSV = osp.join(
-    RESULTS, "thompson2019_valerolactam_compendium_samples.csv"
-)
+SAMPLES_CSV = osp.join(RESULTS, "thompson2019_valerolactam_compendium_samples.csv")
 
 #: The compendium release the served Borchert 2024 store is built from.
 COMPENDIUM_KEY = "borchertMachineLearningAnalysis2024"
 COMPENDIUM_RELEASE = "data/fModule_Metadata.xlsx"
-COMPENDIUM_SHA256 = (
-    "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1"
-)
+COMPENDIUM_SHA256 = "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1"
 COMPENDIUM_ROOT_REL = "data/torchcell/rbtnseq_borchert2024"
 #: The compendium's own name for valerolactam, and for the 5AVA samples Fig. S2 borrows.
 COMPENDIUM_VALEROLACTAM = "2-Piperidinone"
@@ -85,7 +82,7 @@ def mirror_inventory() -> list[dict[str, Any]]:
     for raw in vl.RAW_FILES:
         path = root / raw.relpath
         recorded = vl.manifest_sha256(manifest, raw.relpath)
-        observed = vl.sha256_file(path)
+        observed = sha256_file(path)
         if not (recorded == raw.sha256 == observed):
             raise RuntimeError(
                 f"{raw.relpath}: manifest {recorded}, module pin {raw.sha256}, bytes "
@@ -136,10 +133,8 @@ def _symbols() -> dict[str, str]:
 
 def compendium_samples() -> tuple[pd.DataFrame, dict[str, Any]]:
     """The compendium's carbon-source samples at this paper's two compounds."""
-    path = osp.join(
-        data_root(), "torchcell-raw", COMPENDIUM_KEY, COMPENDIUM_RELEASE
-    )
-    observed = vl.sha256_file(path)
+    path = osp.join(data_root(), "torchcell-raw", COMPENDIUM_KEY, COMPENDIUM_RELEASE)
+    observed = sha256_file(path)
     if observed != COMPENDIUM_SHA256:
         raise RuntimeError(f"{path} hashes {observed}, not {COMPENDIUM_SHA256}")
     metadata = pd.read_excel(path, sheet_name="metadata")
@@ -173,9 +168,9 @@ def compendium_samples() -> tuple[pd.DataFrame, dict[str, Any]]:
         "valerolactam_doses_mm": sorted(
             {
                 float(value)
-                for value in frame[
-                    frame["condition_1"] == COMPENDIUM_VALEROLACTAM
-                ]["concentration_1"]
+                for value in frame[frame["condition_1"] == COMPENDIUM_VALEROLACTAM][
+                    "concentration_1"
+                ]
             }
         ),
     }

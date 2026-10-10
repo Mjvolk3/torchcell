@@ -95,6 +95,7 @@ from torchcell.adapters import (
     IsoprenolTiterYunus2026Adapter,
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
+    LactamGrowthRateThompson2019Adapter,
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
     MetaboliteProductionPhaseMenasalvas2025Adapter,
@@ -131,6 +132,7 @@ from torchcell.adapters import (
     RnaseqPublicK12Lamoureux2023Adapter,
     TargetedMetabolomeRapp2026Adapter,
     TranscriptionFactorKnockoutChoe2019Adapter,
+    ValerolactamTiterThompson2019Adapter,
 )
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
@@ -234,6 +236,10 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     ProteomeMenasalvas2025Dataset,
 )
 from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
+from torchcell.datasets.pputida.thompson2019_valerolactam import (
+    LactamGrowthRateThompson2019Dataset,
+    ValerolactamTiterThompson2019Dataset,
+)
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
@@ -898,6 +904,20 @@ BACTERIAL: list[Bacterial] = [
         CrispriGuideFfaEnrichmentFang2025Dataset,
         RESPONSE,
         crispr=True,
+    ),
+    _case(
+        ValerolactamTiterThompson2019Adapter,
+        "thompson2019_valerolactam_titer",
+        "valerolactam_titer_thompson2019",
+        ValerolactamTiterThompson2019Dataset,
+        TITER,
+    ),
+    _case(
+        LactamGrowthRateThompson2019Adapter,
+        "thompson2019_valerolactam_growth",
+        "lactam_growth_rate_thompson2019",
+        LactamGrowthRateThompson2019Dataset,
+        RESPONSE,
     ),
 ]
 IDS = [b.case.adapter_cls.__name__ for b in BACTERIAL]

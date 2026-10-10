@@ -73,6 +73,7 @@ from torchcell.adapters import (
     IsoprenolTiterYunus2026Adapter,
     IsoprenolToleranceLim2025Adapter,
     IsoprenylAcetateTiterKang2026Adapter,
+    LactamGrowthRateThompson2019Adapter,
     Lian2019Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
@@ -132,6 +133,7 @@ from torchcell.adapters import (
     TmiKuzmin2018Adapter,
     TmiKuzmin2020Adapter,
     TranscriptionFactorKnockoutChoe2019Adapter,
+    ValerolactamTiterThompson2019Adapter,
 )
 from torchcell.adapters.carruthers2025_proteome_fold_change_adapter import (
     ProteomeFoldChangeCarruthers2025Adapter,
@@ -243,6 +245,10 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     ProteomeMenasalvas2025Dataset,
 )
 from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
+from torchcell.datasets.pputida.thompson2019_valerolactam import (
+    LactamGrowthRateThompson2019Dataset,
+    ValerolactamTiterThompson2019Dataset,
+)
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
@@ -447,6 +453,8 @@ dataset_adapter_map: dict[type, type] = {
     ),
     IsoprenolTiterDeSiqueira2025Dataset: IsoprenolTiterDeSiqueira2025Adapter,
     IsoprenylAcetateTiterKang2026Dataset: IsoprenylAcetateTiterKang2026Adapter,
+    ValerolactamTiterThompson2019Dataset: ValerolactamTiterThompson2019Adapter,
+    LactamGrowthRateThompson2019Dataset: LactamGrowthRateThompson2019Adapter,
     PutidaPrecise321Lim2022Dataset: PutidaPrecise321Lim2022Adapter,
     IsoprenolToleranceLim2025Dataset: IsoprenolToleranceLim2025Adapter,
     ProteomeLim2025Dataset: ProteomeLim2025Adapter,

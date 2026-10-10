@@ -106,7 +106,6 @@ from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import LB
 from torchcell.datamodels.schema import (
     AssayType,
-    AssemblyReferenceGenome,
     BacterialDeletionPerturbation,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
@@ -275,6 +274,19 @@ RETRIEVED_FILES: tuple[RawFile, ...] = tuple(
 )
 
 
+def raw_file(relpath: str) -> RawFile:
+    """The ``RawFile`` of one mirror path, read from :data:`RAW_FILES` at call time.
+
+    A dataset names the files it reads by PATH rather than holding the record objects,
+    so a run whose pins are pointed at other bytes (a synthetic mirror in a test) reads
+    one set of pins everywhere instead of two.
+    """
+    for raw in RAW_FILES:
+        if raw.relpath == relpath:
+            return raw
+    raise KeyError(f"{relpath} is not a file of this key's raw mirror")
+
+
 # --------------------------------------------------------------------------- #
 # Verbatim quotes (PMC full text, or the SI text layer)
 # --------------------------------------------------------------------------- #
@@ -385,7 +397,9 @@ _Q_RBTNSEQ_TWO = (
     "P.\xa0putida KT2440 show oplBA mutants having no significant fitness defects "
     "(Fig.\xa0S2B)."
 )
-_Q_RBTNSEQ_RELEASE = "All fitness data is publically available at http://fit.genomics.lbl.gov."
+_Q_RBTNSEQ_RELEASE = (
+    "All fitness data is publically available at http://fit.genomics.lbl.gov."
+)
 _Q_REGISTRY = (
     "All strains and plasmids created in this work are available through the public "
     "instance of the JBEI registry. (public-registry.jbei.org/folders/456)."
@@ -434,7 +448,9 @@ SI_QUOTES: tuple[str, ...] = (
 )
 
 
-def _paper(value: Any, quote: str, *, page: str, note: str | None = None) -> SourcedValue:
+def _paper(
+    value: Any, quote: str, *, page: str, note: str | None = None
+) -> SourcedValue:
     """Bind a value to a verbatim quote of the pinned PMC full text."""
     return SourcedValue(
         value=value,
@@ -468,7 +484,9 @@ def _si(value: Any, quote: str, *, page: str, note: str | None = None) -> Source
     )
 
 
-_RESULTS_PRODUCTION = "Results 2.3, 'Host engineering for increased valerolactam production'"
+_RESULTS_PRODUCTION = (
+    "Results 2.3, 'Host engineering for increased valerolactam production'"
+)
 _METHODS_MEDIA = "Methods 4.1, 'Media, chemicals, and culture conditions'"
 _METHODS_GROWTH = "Methods 4.3, 'Plate based growth assays'"
 _METHODS_PRODUCTION = "Methods 4.4, 'Production assays and lactam quantification'"
@@ -730,15 +748,16 @@ MOPS_MODIFIED_THOMPSON2019 = Media(
         _mops_component(
             "dipotassium hydrogen phosphate", MediaComponentRole.bulk_salt, 1.32, _MM
         ),
-        _mops_component("iron(II) chloride", MediaComponentRole.trace_element, 8.0, _UM),
         _mops_component(
-            "3-(N-morpholino)propanesulfonic acid",
-            MediaComponentRole.buffer,
-            40.0,
-            _MM,
+            "iron(II) chloride", MediaComponentRole.trace_element, 8.0, _UM
+        ),
+        _mops_component(
+            "3-(N-morpholino)propanesulfonic acid", MediaComponentRole.buffer, 40.0, _MM
         ),
         _mops_component("tricine", MediaComponentRole.buffer, 4.0, _MM),
-        _mops_component("iron(II) sulfate", MediaComponentRole.trace_element, 0.01, _MM),
+        _mops_component(
+            "iron(II) sulfate", MediaComponentRole.trace_element, 0.01, _MM
+        ),
         _mops_component(
             "ammonium chloride", MediaComponentRole.nitrogen_source, 9.52, _MM
         ),
@@ -1339,7 +1358,11 @@ def verify_quotes(data_root: str | None = None) -> dict[str, int]:
     """
     root = raw_mirror_dir(data_root)
     checked: dict[str, int] = {}
-    for raw, quotes in ((PAPER_TEXT, PAPER_QUOTES), (SI_TEXT, SI_QUOTES)):
+    for relpath, quotes in (
+        (PAPER_TEXT.relpath, PAPER_QUOTES),
+        (SI_TEXT.relpath, SI_QUOTES),
+    ):
+        raw = raw_file(relpath)
         path = root / raw.relpath
         digest = sha256_file(path)
         if digest != raw.sha256:
@@ -1430,8 +1453,13 @@ class _Thompson2019Dataset(ExperimentDataset):
     #: below 1.0 means the annotation moved and the build stops rather than dropping a
     #: gene the paper deleted.
     MIN_RESOLVED_FRACTION: ClassVar[float] = 1.0
-    #: Which mirror files this family's build reads.
-    RAW_PINS: ClassVar[tuple[RawFile, ...]] = (PAPER_TEXT,)
+    #: The mirror paths this family's build reads; resolved to pins at call time.
+    RAW_PATHS: ClassVar[tuple[str, ...]] = (PAPER_TEXT.relpath,)
+
+    @classmethod
+    def raw_pins(cls) -> tuple[RawFile, ...]:
+        """This family's pinned mirror records, read from the module at call time."""
+        return tuple(raw_file(relpath) for relpath in cls.RAW_PATHS)
 
     def __init__(
         self,
@@ -1449,11 +1477,11 @@ class _Thompson2019Dataset(ExperimentDataset):
     @property
     def raw_file_names(self) -> list[str]:
         """The deposited mirror files this family reads."""
-        return [osp.basename(raw.relpath) for raw in self.RAW_PINS]
+        return [osp.basename(relpath) for relpath in self.RAW_PATHS]
 
     def download(self) -> None:
         """Link the pinned mirror files into ``raw/`` after verifying each one."""
-        _link_mirror_files(self.raw_dir, self.RAW_PINS)
+        _link_mirror_files(self.raw_dir, self.raw_pins())
 
     def _genome(self) -> PPutidaKT2440Genome:
         """The injected KT2440 genome, or one opened from the genomes tier."""
@@ -1465,7 +1493,7 @@ class _Thompson2019Dataset(ExperimentDataset):
         """Verify every consumed file and quote, then resolve every gene symbol."""
         verify_raw_files(
             self.raw_dir,
-            {osp.basename(raw.relpath): raw.sha256 for raw in self.RAW_PINS},
+            {osp.basename(raw.relpath): raw.sha256 for raw in self.raw_pins()},
         )
         verify_quotes()
         resolution = resolve_symbols(self._genome())
@@ -1628,7 +1656,7 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
 class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
     """Thompson 2019 Table S1: maximal growth rates on three carbon sources."""
 
-    RAW_PINS: ClassVar[tuple[RawFile, ...]] = (PAPER_TEXT, SI_TEXT)
+    RAW_PATHS: ClassVar[tuple[str, ...]] = (PAPER_TEXT.relpath, SI_TEXT.relpath)
 
     def __init__(
         self,
@@ -1658,11 +1686,15 @@ class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
     def process(self) -> None:
         """Write one record per released Table S1 rate; nothing is dropped."""
         resolution = self._prepare()
-        rows = read_table_s1(osp.join(self.raw_dir, osp.basename(SI_TEXT.relpath)))
+        rows = read_table_s1(
+            osp.join(self.raw_dir, osp.basename(raw_file(SI_TEXT.relpath).relpath))
+        )
         reference_genome = assembly_reference(REFERENCE_STRAIN)
         pub = publication()
         baseline = {
-            row.strain: row for row in rows if row.carbon_source == GROWTH_REFERENCE_CARBON
+            row.strain: row
+            for row in rows
+            if row.carbon_source == GROWTH_REFERENCE_CARBON
         }
         if set(baseline) != set(TABLE_S1_STRAINS.values()):
             raise RuntimeError(
@@ -1732,9 +1764,10 @@ class LactamGrowthRateThompson2019Dataset(_Thompson2019Dataset):
                     "identically ('All strains showed identical growth on glucose as a "
                     "sole carbon source'), so three records are their own reference and "
                     "carry an identical value by construction",
-                    "the two zero rates (ΔdavT and ΔoplBA on valerolactam) are released "
-                    "zeros, not gaps: 'both the oplBA and davT mutants showed no "
-                    "measurable growth after 40 h'",
+                    "the three zero rates are released zeros, not gaps: ΔdavT on "
+                    "5-aminovalerate ('the davT mutant predictably was unable to "
+                    "grow'), and both mutants on valerolactam ('both the oplBA and "
+                    "davT mutants showed no measurable growth after 40 h')",
                 ],
             ),
             self.preprocess_dir,
@@ -1768,17 +1801,13 @@ def _strain_of_record(record: dict[str, Any], *, with_plasmid: bool) -> str:
         for pert in perturbations
         if pert["perturbation_type"] == "heterologous_pathway"
     }
-    expected_plasmid = (
-        {*PLASMID_NATIVE_SYMBOLS, "ORF26"} if with_plasmid else set()
-    )
+    expected_plasmid = {*PLASMID_NATIVE_SYMBOLS, "ORF26"} if with_plasmid else set()
     if plasmid != expected_plasmid:
         raise AssertionError(
             f"a record carries plasmid genes {sorted(plasmid)}, expected "
             f"{sorted(expected_plasmid)}"
         )
-    matches = [
-        name for name, spec in STRAINS.items() if set(spec.deletions) == deleted
-    ]
+    matches = [name for name, spec in STRAINS.items() if set(spec.deletions) == deleted]
     if len(matches) != 1:
         raise AssertionError(
             f"a record's deletions {sorted(deleted)} match {matches}; the genotype no "
@@ -1878,9 +1907,10 @@ def verify_titer_build(
 
 def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
     """L4: every stored titer against the quote that states it, re-read from the mirror."""
-    path = raw_mirror_dir(data_root) / PAPER_TEXT.relpath
+    pinned = raw_file(PAPER_TEXT.relpath)
+    path = raw_mirror_dir(data_root) / pinned.relpath
     digest = sha256_file(path)
-    if digest != PAPER_TEXT.sha256:
+    if digest != pinned.sha256:
         raise AssertionError(f"{path} hashes {digest}, not the pinned sha256")
     text = path.read_text(encoding="utf-8")
     stated = {
@@ -1894,6 +1924,8 @@ def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
         strain = _strain_of_record(record, with_plasmid=True)
         hours = experiment["environment"]["duration_hours"]
         cell = stated[(strain, hours)]
+        if cell.titer_mg_per_l is None:
+            raise AssertionError(f"{strain} at {hours} h is stored but states no titer")
         if cell.quote not in text:
             raise AssertionError(
                 f"the quote for {strain} at {hours} h is not verbatim in "
@@ -1905,7 +1937,11 @@ def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
                 f"{number!r} is not in the quote the {strain} record cites"
             )
         shared.append(
-            (f"{strain}@{hours:g}h", experiment["phenotype"]["titer"], cell.titer_mg_per_l)
+            (
+                f"{strain}@{hours:g}h",
+                experiment["phenotype"]["titer"],
+                cell.titer_mg_per_l,
+            )
         )
     if len(shared) != len(stated):
         raise AssertionError(f"{len(shared)} records for {len(stated)} stated titers")
@@ -1958,7 +1994,7 @@ def verify_growth_build(
 
 def _growth_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
     """L4: every stored rate against Table S1, re-read from the pinned SI text layer."""
-    path = raw_mirror_dir(data_root) / SI_TEXT.relpath
+    path = raw_mirror_dir(data_root) / raw_file(SI_TEXT.relpath).relpath
     released = {
         (row.strain, TABLE_S1_CARBON[row.carbon_source]): row.rate_per_hour
         for row in read_table_s1(path)
@@ -1980,7 +2016,11 @@ def _growth_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
         if key not in released:
             raise AssertionError(f"{key} is not a row Table S1 releases")
         shared.append(
-            (f"{strain}|{agents[0]}", experiment["phenotype"]["environment_response"], released[key])
+            (
+                f"{strain}|{agents[0]}",
+                experiment["phenotype"]["environment_response"],
+                released[key],
+            )
         )
     if len(shared) != len(released):
         raise AssertionError(f"{len(shared)} records for {len(released)} released rows")

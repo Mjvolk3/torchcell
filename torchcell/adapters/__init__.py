@@ -270,6 +270,12 @@ from .synth_leth_db_adapter import (
 from .synth_leth_db_adapter import (
     SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
 )
+from .thompson2019_valerolactam_growth_adapter import (
+    LactamGrowthRateThompson2019Adapter as LactamGrowthRateThompson2019Adapter,
+)
+from .thompson2019_valerolactam_titer_adapter import (
+    ValerolactamTiterThompson2019Adapter as ValerolactamTiterThompson2019Adapter,
+)
 from .tong2020_adapter import CarbonSourceTong2020Adapter as CarbonSourceTong2020Adapter
 from .vanacloig2022_adapter import (
     EnvChemgenVanacloig2022Adapter as EnvChemgenVanacloig2022Adapter,
@@ -456,6 +462,8 @@ pputida_adapters = [
     "ProteomeLim2025Adapter",
     "ProteomeFoldChangeLim2025Adapter",
     "IsoprenolSelectionMenasalvas2025Adapter",
+    "ValerolactamTiterThompson2019Adapter",
+    "LactamGrowthRateThompson2019Adapter",
     "MetaboliteGrowthPhaseMenasalvas2025Adapter",
     "MetaboliteProductionPhaseMenasalvas2025Adapter",
     "ProteomeMenasalvas2025Adapter",

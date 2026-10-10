@@ -28,6 +28,8 @@ What this package holds:
   its profile was first published in.
 - ``menasalvas2025`` -- ``IsoprenolSelectionMenasalvas2025Dataset``: the
   biosensor-coupled CRISPRi selection, one record per enriched knockdown target.
+- ``royet2025`` -- ``EnvMetalTnseqRoyet2025Dataset``: the non-barcoded mariner Tn-seq
+  screen in cobalt, copper, zinc and cadmium, one gene-level log2FC per (gene, metal).
 """
 
 from .banerjee2025 import ProteomeBanerjee2025Dataset as ProteomeBanerjee2025Dataset
@@ -65,6 +67,7 @@ from .lim2025 import ProteomeLim2025Dataset as ProteomeLim2025Dataset
 from .menasalvas2025 import (
     IsoprenolSelectionMenasalvas2025Dataset as IsoprenolSelectionMenasalvas2025Dataset,
 )
+from .royet2025 import EnvMetalTnseqRoyet2025Dataset as EnvMetalTnseqRoyet2025Dataset
 from .yunus2026 import CrispriArrayYunus2026Dataset as CrispriArrayYunus2026Dataset
 from .yunus2026 import (
     CrispriDifferentialProteomeYunus2026Dataset as CrispriDifferentialProteomeYunus2026Dataset,

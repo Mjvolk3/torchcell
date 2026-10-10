@@ -7519,6 +7519,39 @@
     <span class="n">mg_per_l_per_h</span> <span class="o">=</span> <span class="s2">"mg/L/h"</span>
 
 
+<span class="c1"># --- begin #753: per-key censoring on a turnover measurement ------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Censoring</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.</span>
+
+<span class="sd">    A pulse-labeling turnover assay cannot resolve a protein that barely turns over</span>
+<span class="sd">    within the labeling window, so the fit is capped and the released number is the cap:</span>
+<span class="sd">    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over</span>
+<span class="sd">    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set</span>
+<span class="sd">    to ceiling for this dilution rate". Averaging a censored value with uncensored ones</span>
+<span class="sd">    biases the mean toward the cap, so a consumer must be able to tell them apart.</span>
+
+<span class="sd">    ``uncensored`` is a member rather than being spelled by absence: a source whose</span>
+<span class="sd">    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state</span>
+<span class="sd">    it for every key, and a key MISSING from the map then means the source does not say</span>
+<span class="sd">    for that key. The two are different facts and the schema keeps them different.</span>
+
+<span class="sd">    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the</span>
+<span class="sd">    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true</span>
+<span class="sd">    half-life lies above the stored one and the cell is ``right`` censored; because</span>
+<span class="sd">    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the</span>
+<span class="sd">    RATE from above. A consumer reading ``right`` beside a rate alone would read it</span>
+<span class="sd">    backwards, so a loader that stores censoring names the censored quantity in its</span>
+<span class="sd">    ``measurement_type`` and in its note.</span>
+<span class="sd">    """</span>
+
+    <span class="n">uncensored</span> <span class="o">=</span> <span class="s2">"uncensored"</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="s2">"right"</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="s2">"left"</span>
+
+
+<span class="c1"># --- end #753 ------------------------------------------------------------------- #</span>
+
+
 <span class="k">class</span><span class="w"> </span><span class="nc">ProductTiterPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""How much of a named product a strain made: titer, with yield and productivity.</span>
 
@@ -7540,6 +7573,13 @@
 <span class="sd">    source, the oxygen regime, the vessel and the duration are all ``Environment``</span>
 <span class="sd">    (and ``CultureEnvironment``) slots already, and putting them on the phenotype would</span>
 <span class="sd">    make "what was measured" carry part of "what it was grown in".</span>
+
+<span class="sd">    A titer the assay could not detect is a BOUND, not a zero (#867): Thompson 2019</span>
+<span class="sd">    states the wild type's 48 h valerolactam as "no valerolactam could be detected",</span>
+<span class="sd">    which is a value below the assay's floor. ``titer_censoring`` carries it on the</span>
+<span class="sd">    ``ProteinTurnoverPhenotype`` precedent (#753): ``left`` means the true titer lies</span>
+<span class="sd">    BELOW the stored ``titer``, which then holds the floor in the culture, and such a</span>
+<span class="sd">    titer carries no uncertainty and no standard error because a bound has neither.</span>
 <span class="sd">    """</span>
 
     <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
@@ -7591,6 +7631,17 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"how the product was quantified, verbatim (e.g. 'GC-MS', "</span>
         <span class="s2">"'HPLC-RID'); None when the source does not state it"</span><span class="p">,</span>
     <span class="p">)</span>
+    <span class="c1"># --- begin #867: a below-detection titer is a bound, not a zero ------------- #</span>
+    <span class="n">titer_censoring</span><span class="p">:</span> <span class="n">Censoring</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"whether the stored titer is an ESTIMATE or a BOUND, and on which "</span>
+        <span class="s2">"side. 'left' means the true titer lies below the stored value, which is the "</span>
+        <span class="s2">"assay's floor expressed in the culture (a 'not detected' cell); 'right' means "</span>
+        <span class="s2">"it lies above (a saturated assay's ceiling); 'uncensored' means the source "</span>
+        <span class="s2">"states a quantified value. None means the source says nothing about censoring "</span>
+        <span class="s2">"for this titer."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># --- end #867 ---------------------------------------------------------------- #</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"titer"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -7653,40 +7704,20 @@
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">value_name</span><span class="si">}</span><span class="s2"> must be non-negative, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="c1"># --- begin #867: a below-detection titer is a bound, not a zero --------- #</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_censoring</span> <span class="ow">in</span> <span class="p">(</span><span class="n">Censoring</span><span class="o">.</span><span class="n">left</span><span class="p">,</span> <span class="n">Censoring</span><span class="o">.</span><span class="n">right</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_uncertainty</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">titer_censoring</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">-censored titer is a bound, so it "</span>
+                    <span class="s2">"carries no titer_uncertainty and no titer_se"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer_censoring</span> <span class="o">==</span> <span class="n">Censoring</span><span class="o">.</span><span class="n">left</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">titer</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"a left-censored titer stores the detection floor it lies below; a "</span>
+                <span class="s2">"floor of 0.0 states an exact zero, which is a measurement, not a bound"</span>
+            <span class="p">)</span>
+        <span class="c1"># --- end #867 ------------------------------------------------------------ #</span>
         <span class="k">return</span> <span class="bp">self</span>
-
-
-<span class="c1"># --- begin #753: per-key censoring on a turnover measurement ------------------- #</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">Censoring</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.</span>
-
-<span class="sd">    A pulse-labeling turnover assay cannot resolve a protein that barely turns over</span>
-<span class="sd">    within the labeling window, so the fit is capped and the released number is the cap:</span>
-<span class="sd">    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over</span>
-<span class="sd">    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set</span>
-<span class="sd">    to ceiling for this dilution rate". Averaging a censored value with uncensored ones</span>
-<span class="sd">    biases the mean toward the cap, so a consumer must be able to tell them apart.</span>
-
-<span class="sd">    ``uncensored`` is a member rather than being spelled by absence: a source whose</span>
-<span class="sd">    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state</span>
-<span class="sd">    it for every key, and a key MISSING from the map then means the source does not say</span>
-<span class="sd">    for that key. The two are different facts and the schema keeps them different.</span>
-
-<span class="sd">    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the</span>
-<span class="sd">    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true</span>
-<span class="sd">    half-life lies above the stored one and the cell is ``right`` censored; because</span>
-<span class="sd">    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the</span>
-<span class="sd">    RATE from above. A consumer reading ``right`` beside a rate alone would read it</span>
-<span class="sd">    backwards, so a loader that stores censoring names the censored quantity in its</span>
-<span class="sd">    ``measurement_type`` and in its note.</span>
-<span class="sd">    """</span>
-
-    <span class="n">uncensored</span> <span class="o">=</span> <span class="s2">"uncensored"</span>
-    <span class="n">right</span> <span class="o">=</span> <span class="s2">"right"</span>
-    <span class="n">left</span> <span class="o">=</span> <span class="s2">"left"</span>
-
-
-<span class="c1"># --- end #753 ------------------------------------------------------------------- #</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ProteinTurnoverPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>

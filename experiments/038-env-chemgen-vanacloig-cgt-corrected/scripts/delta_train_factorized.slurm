@@ -97,7 +97,11 @@ for required in \
   "$EXP/$SWEEP"; do
   [[ -f "$required" ]] || { echo "ERROR: required file missing: $required" >&2; exit 1; }
 done
-for required_dir in "$DATA_ROOT/data/string" "$DATA_ROOT/data/tflink"; do
+# The genome registry (torchcell/sequence/genome/registry.py) resolves the assembly set
+# from the genomes tier; a missing set killed smoke 22786508 after 22 min of import.
+for required_dir in "$DATA_ROOT/data/string" "$DATA_ROOT/data/tflink" \
+  "$DATA_ROOT/torchcell-genomes/sgd_S288C_R64-4-1_20230830" \
+  "$DATA_ROOT/torchcell-genomes/go_release_2026-08-05"; do
   [[ -d "$required_dir" ]] || { echo "ERROR: required tree missing: $required_dir" >&2; exit 1; }
 done
 "$DELTA_PY" -c "import torchcell, sys; p = torchcell.__file__; assert p.startswith('$PROJECT_ROOT'), p; print('torchcell from', p)" || exit 1

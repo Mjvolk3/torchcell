@@ -177,6 +177,14 @@
 <span class="sd">    uniqueness); a COMBINATORIAL collection (e.g. Xue FFA: a POX1-FAA1-FAA4 baseline plus a</span>
 <span class="sd">    set of TF deletions) has one record per unique deletion SET -- an individual ORF legitimately</span>
 <span class="sd">    recurs across many strains, so uniqueness must key on the whole set, not the single ORF.</span>
+
+<span class="sd">    The key also carries each perturbation's ``variant`` and ``construct_name`` where the</span>
+<span class="sd">    leaf has them, because two strains can differ in neither gene nor perturbation type:</span>
+<span class="sd">    Brunk 2016's I1 and I2 both carry atoB, HMGS, HMGR, MK, PMK, PMD and nudB, and differ</span>
+<span class="sd">    only in whether the HMGS and HMGR copies are the original or the codon-optimized ones</span>
+<span class="sd">    (``variant``) on a different plasmid (``construct_name``). Adding fields can only</span>
+<span class="sd">    separate records that were colliding, so no dataset that passes this rule today can</span>
+<span class="sd">    start failing it.</span>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
         <span class="nb">sorted</span><span class="p">(</span>
@@ -184,6 +192,8 @@
                 <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"systematic_gene_name"</span><span class="p">),</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">),</span>
                 <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbed_gene_name"</span><span class="p">),</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"variant"</span><span class="p">),</span>
+                <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"construct_name"</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">][</span><span class="s2">"perturbations"</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">p</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"perturbation_type"</span><span class="p">)</span> <span class="o">!=</span> <span class="s2">"gene_addition"</span>

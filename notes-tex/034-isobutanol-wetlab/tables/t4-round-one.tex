@@ -1,0 +1,29 @@
+%% SOURCE: experiments/034-isobutanol-wetlab/scripts/strain_panel.py
+%% Growth conditions from the Methods of zhangBiosensorBranchedchainAmino2022:
+%% single colony -> 1 mL SC or SC-ura + 2% glucose overnight -> 10 uL into
+%% 1 mL of the same in a 24-well plate -> 20 h -> spin, resuspend in 1 mL
+%% of the same + 15% sugar -> seal -> 48 h, 30 C, 200 rpm -> OD600, HPLC.
+\begin{table}[htbp]
+\centering
+\caption{\textbf{Round one, and how each tube is grown.} Medium is uracil dropout exactly when a CEN \gene{URA3} plasmid has to be held, and the fermentation carbon source is not a free choice for C0049. Every strain marked yes runs on the paper's ordinary 24-well protocol: single colony, shaker, plate reader, HPLC, with no sorting and no special illumination. Leucine must be present in all cases, because \gene{leu2}$\Delta$ makes these strains leucine auxotrophs; standard SC supplies it.}
+\label{tab:roundone}
+\footnotesize
+\begin{tabular}{@{}lllll >{\raggedright\arraybackslash}p{50mm}@{}}
+\toprule
+ID & Strain & Medium & Fermentation & Pick and use & Round one \\
+\midrule
+C0044 & YZy313 & SC-ura & 15\% glucose & yes & yes -- \gene{ILV6} wild type, low arm of the 1.6-fold pair \\
+C0045 & YZy314 & SC-ura & 15\% glucose & yes & yes -- ILV6V110E, high arm of the 1.6-fold pair \\
+C0049 & YZy452 & SC & 15\% galactose & yes & yes -- ladder floor, dehydratase off on glucose \\
+C0050 & YZy454 & SC-ura & 15\% glucose & yes & yes -- wild-type allele anchor \\
+C0051 & YZy469 & SC-ura & 15\% glucose & yes & yes -- Ll\_ilvDI433V, 3.1-fold over C0050 \\
+\midrule
+C0043 & Yzy311 & SC-ura & 15\% glucose & yes & -- \\
+C0046 & YZy148 & SC & 15\% glucose & yes & -- \\
+C0047 & YZy148+LEU4WT & SC-ura & 15\% glucose & yes & -- \\
+C0048 & YZy148+LEU4deltaS547 & SC-ura & 15\% glucose & yes & -- \\
+C0052 & YZy91 & SC & 15\% glucose & yes & -- \\
+C0053 & YZy502 & SC & 2\% glucose, dark & \textbf{no} & -- \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -210,6 +210,17 @@ BORCHERT2023_KEY = "borchertRBTnSeqIdentifiesGenetic2023"
 THOMPSON2020_KEY = "thompsonFattyAcidAlcohol2020"
 SCHMIDT2022_KEY = "schmidtNitrogenMetabolismPseudomonas2022"
 WETMORE2015_KEY = "wetmoreRapidQuantificationMutant2015"
+# --- Rand 2017 (row "Rand 2017 Putida_ML5 library"): raw-mirror source study -------- #
+#: Rand 2017 is NOT in the Zotero-backed literature mirror; its PMC author-manuscript
+#: objects are deposited in ``$DATA_ROOT/torchcell-raw/<key>/`` by
+#: ``experiments/036-dataset-fixes-before-kg-build/scripts/rand2017_release_inventory.py``,
+#: so its quotes resolve against the RAW root, not ``torchcell-library``.
+RAND2017_KEY = "randMetabolicPathwayCatabolizing2017"
+RAND2017_PAPER_TEXT = "paper/PMC5705400.1.txt"
+RAND2017_PAPER_TEXT_SHA256 = (
+    "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26"
+)
+# --- end Rand 2017 ---------------------------------------------------------------- #
 
 _PAPER = Provenance(
     source_uri="paper.md", citation_key=CITATION_KEY, sha256=PAPER_MD_SHA256
@@ -238,6 +249,13 @@ _PRICE2018 = Provenance(
     source_uri="paper.md",
     citation_key="priceMutantPhenotypesThousands2018",
     sha256="f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+)
+_RAND2017 = Provenance(
+    source_uri=RAND2017_PAPER_TEXT,
+    citation_key=RAND2017_KEY,
+    sha256=RAND2017_PAPER_TEXT_SHA256,
+    method="raw mirror $DATA_ROOT/torchcell-raw/<key>/: PMC Article Datasets plain "
+    "text of the NIH author manuscript (PMC5705400.1)",
 )
 _RELEASE = Provenance(
     source_uri=DATA_RELPATH,
@@ -444,6 +462,18 @@ Q_BORCHERT23_SRA = (
     "Sequencing data (fastq files) were deposited at the NCBI Sequence Read Archive "
     "(SRA) with accession number SRP385031."
 )
+Q_RAND_CONDITIONS = (
+    "The carbon sources tested were 40mM 4HV (pH adjusted to 7 with NaOH), 40mM LA (pH "
+    "adjusted to 7 with NaOH), 20mM potassium acetate, and 40mM glucose, each with two "
+    "replicates."
+)
+Q_RAND_DAYS = (
+    "The 4HV and acetate experiments were performed one day and the LA experiments were "
+    "performed on a different day, each day with its own 40 mM Glucose control."
+)
+Q_RAND_LIBRARY = (
+    "We named the final, sequenced mapped transposon mutant library Putida_ML5."
+)
 Q_BORCHERT23_LIBRARY = (
     "Experiments employed a KT2440 library (ML-5) harboring randomly-barcoded mariner "
     "(Tc1) transposon insertions, as described previously (Rand et al., 2017)."
@@ -596,12 +626,30 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "borchert23_sra": _sv(_BORCHERT2023, "SRP385031", Q_BORCHERT23_SRA),
     "conditions_179": _sv(_PAPER, 179, Q_ABSTRACT_CONDITIONS),
     "sources_cited": _sv(_PAPER, "refs 20-23, 37, 38", Q_SOURCES_CITED),
+    "rand_conditions": _sv(
+        _RAND2017,
+        {"4HV": "40 mM", "LA": "40 mM", "potassium acetate": "20 mM", "replicates": 2},
+        Q_RAND_CONDITIONS,
+    ),
+    "rand_days": _sv(
+        _RAND2017,
+        "4HV and acetate on one day (set1), LA on another (set5), each with a glucose "
+        "control",
+        Q_RAND_DAYS,
+        note="which compendium set is which day was measured by content: Supplementary "
+        "Table 1's LA/Gluc and 4HV/Gluc contrasts are reproduced by set5 LA minus set5 "
+        "glucose (r 0.9995 over 59 genes) and set1 4HV minus set1 40 mM glucose (r "
+        "0.9998); rand2017_release_inventory.py",
+    ),
+    "rand_library": _sv(_RAND2017, "Putida_ML5", Q_RAND_LIBRARY),
 }
 
 # --------------------------------------------------------------------------- #
 # Source studies (checklist item 7): which paper first reported each sample
 # --------------------------------------------------------------------------- #
-SourceStudyKey = Literal["thompson2020", "schmidt2022", "borchert2023", "borchert2024"]
+SourceStudyKey = Literal[
+    "thompson2020", "schmidt2022", "borchert2023", "borchert2024", "rand2017"
+]
 
 
 class SourceStudy(BaseModel):
@@ -652,6 +700,13 @@ SOURCE_STUDIES: dict[SourceStudyKey, SourceStudy] = {
         citation_key=CITATION_KEY,
         fifty_rank=8,
     ),
+    "rand2017": SourceStudy(
+        key="rand2017",
+        citation="Rand JM et al. 2017, Nat Microbiol 2:1624-1634",
+        doi="10.1038/s41564-017-0028-z",
+        citation_key=RAND2017_KEY,
+        fifty_rank=56,
+    ),
 }
 
 AttributionBasis = Literal["source_study_quote", "compendium_release"]
@@ -692,9 +747,10 @@ THOMPSON2020_SET12_CONDITIONS: frozenset[str] = frozenset(
 #: Each names a paper Borchert 2024 cites or the expansion document lists; none of them
 #: is mirrored, so none becomes a record's publication.
 HYPOTHESES: dict[str, str] = {
-    "set1": "unattributed (person 'Kelly', Putida_ML5, 2020)",
-    "set5": "Rand 2017 (doi 10.1038/s41564-017-0028-z, ref 88): levulinic acid on the "
-    "Putida_ML5 library",
+    "set1": "unattributed (the 20 mM glucose and 5 mM acetate samples run beside Rand "
+    "2017's 4HV day)",
+    "set5": "unattributed (20 mM levulinic acid, vanillin and p-coumaric acid run beside "
+    "Rand 2017's LA day)",
     "set6": "Thompson 2019 valerolactam (doi 10.1016/j.mec.2019.e00098) for the "
     "2-piperidinone sample",
     "set7": "Thompson 2019 lysine (doi 10.1128/mBio.02577-18, ref 20) and Thompson 2019 "
@@ -978,6 +1034,32 @@ def manifest_sha256(manifest: Manifest, relpath: str = DATA_RELPATH) -> str:
 # --------------------------------------------------------------------------- #
 # Attribution
 # --------------------------------------------------------------------------- #
+#: Rand 2017's ten samples, keyed by (set, condition_1, concentration_1): two days of
+#: duplicates, each with its own glucose control (Q_RAND_DAYS). The set1 glucose, set1
+#: 4HV, set5 glucose and set5 LA pairs are pinned by CONTENT (Supplementary Table 1);
+#: acetate by the Methods naming 20 mM acetate on the 4HV day.
+RAND2017_CONDITIONS: dict[tuple[str, str, float], str | None] = {
+    ("set1", "D-Glucose", 40.0): None,
+    ("set1", "4-Hydroxyvalerate", 40.0): None,
+    ("set1", "Potassium acetate", 20.0): "attributed by the Methods quote only: the SI "
+    "prints no acetate value, so this pair is not content-verified",
+    ("set5", "D-Glucose", 20.0): "the release states 20 mM glucose where Rand 2017's "
+    "Methods state a 40 mM glucose control; content picks this pair as the LA-day "
+    "control, and the record keeps the release's 20 mM",
+    ("set5", "Levulinic Acid", 40.0): None,
+}
+
+
+def rand2017_key(sample: SampleMetadata) -> tuple[str, str, float] | None:
+    """The ``RAND2017_CONDITIONS`` key of a Rand 2017 sample, or ``None``."""
+    if sample.condition_2 is not None or sample.condition_1 is None:
+        return None
+    if sample.concentration_1 is None:
+        return None
+    key = (sample.set_name, sample.condition_1, sample.concentration_1)
+    return key if key in RAND2017_CONDITIONS else None
+
+
 def attribute_sample(sample: SampleMetadata) -> SampleAttribution:
     """The paper that first reported ``sample``, on quoted evidence only.
 
@@ -1042,6 +1124,15 @@ def attribute_sample(sample: SampleMetadata) -> SampleAttribution:
             evidence=("borchert23_conditions", "borchert23_protocatechuate_day"),
             note="the 30 mM protocatechuate enrichment and its separate-day glucose "
             "control",
+        )
+    rand = rand2017_key(sample)
+    if rand is not None:
+        return SampleAttribution(
+            **common,
+            study="rand2017",
+            basis="source_study_quote",
+            evidence=("rand_conditions", "rand_days", "rand_library"),
+            note=RAND2017_CONDITIONS[rand],
         )
     return SampleAttribution(
         **common,

@@ -239,7 +239,7 @@ def test_attribution_follows_the_quoted_source_studies(release: bt.Release) -> N
         "set100IT001": "borchert2023",
         "set101IT001": "borchert2024",
         "set12IT001": "borchert2024",
-        "set5IT001": "borchert2024",
+        "set5IT001": "rand2017",
         "set8IT001": "borchert2024",
     }
     compendium_only = bt.attribute_sample(_sample(release, "set101IT001"))
@@ -248,6 +248,58 @@ def test_attribution_follows_the_quoted_source_studies(release: bt.Release) -> N
     for attribution in map(bt.attribute_sample, release.samples):
         for key in attribution.evidence:
             assert key in bt.SOURCED_VALUES
+
+
+def test_rand2017_owns_its_two_days_and_nothing_beside_them() -> None:
+    """Rand 2017's ten samples are attributed to it; the same sets' other samples not."""
+
+    def sample(set_name: str, c1: str, dose: float) -> bt.SampleMetadata:
+        return bt.SampleMetadata(
+            exp_name=f"{set_name}IT099",
+            set_name=set_name,
+            exp_desc="x",
+            exp_group="carbon source",
+            mutant_library="Putida_ML5",
+            person="test",
+            media="RCH2_defined_noCarbon",
+            temperature=30.0,
+            aerobic="Aerobic",
+            total_rep=2,
+            rep=1,
+            condition_1=c1,
+            units_1="mM",
+            concentration_1=dose,
+            condition_2=None,
+            units_2=None,
+            concentration_2=None,
+        )
+
+    expected = {
+        ("set1", "D-Glucose", 40.0): "rand2017",
+        ("set1", "D-Glucose", 20.0): "borchert2024",
+        ("set1", "4-Hydroxyvalerate", 40.0): "rand2017",
+        ("set1", "Potassium acetate", 20.0): "rand2017",
+        ("set1", "Potassium acetate", 5.0): "borchert2024",
+        ("set5", "D-Glucose", 20.0): "rand2017",
+        ("set5", "Levulinic Acid", 40.0): "rand2017",
+        ("set5", "Levulinic Acid", 20.0): "borchert2024",
+        ("set5", "Vanillin", 5.0): "borchert2024",
+        ("set6", "D-Glucose", 10.0): "borchert2024",
+    }
+    got = {key: bt.attribute_sample(sample(*key)).study for key in expected}
+    assert got == expected
+    acetate = bt.attribute_sample(sample("set1", "Potassium acetate", 20.0))
+    assert acetate.basis == "source_study_quote"
+    assert acetate.evidence == ("rand_conditions", "rand_days", "rand_library")
+    assert acetate.note is not None and "not content-verified" in acetate.note
+    assert bt.attribute_sample(sample("set1", "4-Hydroxyvalerate", 40.0)).note is None
+    glucose = bt.attribute_sample(sample("set5", "D-Glucose", 20.0))
+    assert glucose.note is not None and "40 mM glucose control" in glucose.note
+    no_dose = sample("set1", "D-Glucose", 40.0).model_copy(
+        update={"concentration_1": None}
+    )
+    assert bt.rand2017_key(no_dose) is None
+    assert bt.SOURCE_STUDIES["rand2017"].publication.doi == "10.1038/s41564-017-0028-z"
 
 
 def test_set12_thompson_conditions_and_the_set101_protocatechuate_pair() -> None:
@@ -641,7 +693,8 @@ def test_process_builds_one_record_per_gene_and_kept_sample(
         "thompson2020": 1,
         "schmidt2022": 2,
         "borchert2023": 1,
-        "borchert2024": 4,
+        "borchert2024": 3,
+        "rand2017": 1,
     }
     uncertainty = json.loads((preprocess / "uncertainty.json").read_text())
     assert sum(uncertainty["record_counts"].values()) == len(dataset)
@@ -694,6 +747,7 @@ def test_every_quote_is_verbatim_in_its_pinned_mirror() -> None:
     from torchcell.verification.sourced import audit_sourced_value
 
     library = osp.join(_data_root(), "torchcell-library")
+    raw = osp.join(_data_root(), "torchcell-raw")
     quoted = list(bt.SOURCED_VALUES.values())
     # Components inherited from MOPS_MINIMAL quote Price 2018's xlsx as row renderings
     # and are audited by the media library's own tests; this module's additions are not.
@@ -706,7 +760,9 @@ def test_every_quote_is_verbatim_in_its_pinned_mirror() -> None:
     failures = [
         (sv.provenance.citation_key, sv.quote[:60])
         for sv in quoted
-        if not audit_sourced_value(sv, library).passed
+        if not audit_sourced_value(
+            sv, raw if sv.provenance.citation_key == bt.RAND2017_KEY else library
+        ).passed
     ]
     assert failures == []
 
@@ -727,8 +783,14 @@ def test_real_release_shape_and_superset_coverage() -> None:
         coverage["schmidt2022"].n_conditions,
     ) == (123, 71)
     assert coverage["borchert2023"].n_samples == 42
-    assert coverage["borchert2024"].n_samples == 121
+    assert coverage["borchert2024"].n_samples == 111
     assert coverage["borchert2024"].n_kept_samples == 79
+    # Rand 2017's two days are in the release and all on the unserved RCH2 medium.
+    assert (coverage["rand2017"].n_samples, coverage["rand2017"].n_kept_samples) == (
+        10,
+        0,
+    )
+    assert coverage["rand2017"].sets == ["set1", "set5"]
     drops = [bt.drop_reason(s) for s in release.samples]
     assert drops.count(bt.DROP_MEDIUM_NOT_IN_LIBRARY) == 20
     assert drops.count(bt.DROP_REACTOR_PROCESS) == 22

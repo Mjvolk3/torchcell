@@ -1,0 +1,316 @@
+{
+  "citation_key": "randMetabolicPathwayCatabolizing2017",
+  "doi": "10.1038/s41564-017-0028-z",
+  "title": "A metabolic pathway for catabolizing levulinic acid in bacteria",
+  "row_name": "Rand 2017 Putida_ML5 library",
+  "decision": "subsumed_no_loader",
+  "mirror_files": [
+    {
+      "path": "paper/PMC5705400.1.txt",
+      "role": "paper_text",
+      "bytes": 79674,
+      "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26"
+    },
+    {
+      "path": "paper/PMC5705400.1.xml",
+      "role": "paper_text",
+      "bytes": 164132,
+      "sha256": "e43714862c6e7dc95474e38ba27ee5f1ce5fac6fa052dc48241e88ccca54a42c"
+    },
+    {
+      "path": "paper/PMC5705400.1.pdf",
+      "role": "paper_pdf",
+      "bytes": 1688033,
+      "sha256": "458007790ed6675c510490190ba39e69d2ddc239df8771c76adb6780b840be4a"
+    },
+    {
+      "path": "si/NIHMS900347-supplement-1.pdf",
+      "role": "si_pdf",
+      "bytes": 1754068,
+      "sha256": "1e41d7e8e8e2a9a48273210fd6092be265528b549988b88fc0c7d52de2ce3dcd"
+    },
+    {
+      "path": "si/NIHMS900347-supplement-2.pdf",
+      "role": "si_pdf",
+      "bytes": 69230,
+      "sha256": "a3d954bc944bd3dd135c58b51a4c35e4a7ee94f786de792533a7a790d5430e46"
+    },
+    {
+      "path": "si/NIHMS900347-supplement-1.txt",
+      "role": "si_text",
+      "bytes": 43325,
+      "sha256": "1d763d4bd612e7e680dacbf3a0429f7acc01c1409af0ffbb3332fc362da4d6f4"
+    }
+  ],
+  "compendium_putida_ml5_samples": {
+    "set1": 10,
+    "set5": 10,
+    "set6": 5
+  },
+  "si_table_1": {
+    "genes": 60,
+    "la_values": 59,
+    "hv_values": 59,
+    "na_cells": 2,
+    "genes_in_compendium": 59,
+    "genes_absent_from_compendium": [
+      "PP_2792"
+    ]
+  },
+  "matches": [
+    {
+      "si_column": "LA",
+      "treatment": [
+        "set5IT081",
+        "set5IT082"
+      ],
+      "control": [
+        "set5IT075",
+        "set5IT076"
+      ],
+      "n_genes": 59,
+      "pearson_r": 0.99952,
+      "median_abs_diff": 0.0405,
+      "max_abs_diff": 0.2635,
+      "within_half_unit": 38,
+      "runner_up_treatment": "set5IT083",
+      "runner_up_median_abs_diff": 0.264,
+      "runner_up_control": "set100IT009",
+      "runner_up_control_median_abs_diff": 0.135
+    },
+    {
+      "si_column": "HV",
+      "treatment": [
+        "set1IT082",
+        "set1IT083"
+      ],
+      "control": [
+        "set1IT078",
+        "set1IT079"
+      ],
+      "n_genes": 59,
+      "pearson_r": 0.99984,
+      "median_abs_diff": 0.025,
+      "max_abs_diff": 0.195,
+      "within_half_unit": 44,
+      "runner_up_treatment": "set15IT057",
+      "runner_up_median_abs_diff": 1.9585,
+      "runner_up_control": "set1IT080",
+      "runner_up_control_median_abs_diff": 0.149
+    }
+  ],
+  "rand_samples": {
+    "set1IT078": [
+      "glucose 40 mM, 4HV/acetate day",
+      "content"
+    ],
+    "set1IT079": [
+      "glucose 40 mM, 4HV/acetate day",
+      "content"
+    ],
+    "set1IT082": [
+      "4HV 40 mM",
+      "content"
+    ],
+    "set1IT083": [
+      "4HV 40 mM",
+      "content"
+    ],
+    "set1IT084": [
+      "potassium acetate 20 mM",
+      "methods_quote"
+    ],
+    "set1IT085": [
+      "potassium acetate 20 mM",
+      "methods_quote"
+    ],
+    "set5IT075": [
+      "glucose, LA day",
+      "content"
+    ],
+    "set5IT076": [
+      "glucose, LA day",
+      "content"
+    ],
+    "set5IT081": [
+      "LA 40 mM",
+      "content"
+    ],
+    "set5IT082": [
+      "LA 40 mM",
+      "content"
+    ]
+  },
+  "fitness_browser": {
+    "url": "http://fit.genomics.lbl.gov/cgi-bin/exps.cgi?orgId=Putida&expGroup=carbon%20source",
+    "status_code": 403,
+    "cloudflare_challenge": true,
+    "probed_at": "2026-10-10T06:28:48.162346+00:00"
+  },
+  "served": {
+    "store": "data/torchcell/rbtnseq_borchert2024",
+    "kept_samples": 290,
+    "kept_records": 1372280,
+    "rand_samples_in_release": 10,
+    "rand_samples_dropped": 10,
+    "drop_rule": "medium_not_in_media_library",
+    "drop_rule_samples": 20,
+    "drop_rule_records": 94640,
+    "rand_records_served": 0,
+    "rand_records_if_medium_lands": 47320
+  },
+  "genotype_verdict": "PROVENANCE RECORD, not stored genotypes. TransposonInsertionPerturbation has barcode and insertion_position slots, so a per-strain release would be stored, but this paper releases none: the Methods name the library and its vector and say only that 'thousands' of colonies were pooled, the SI prints no strain table, and the only data pointer (Data Availability) is the Fitness Browser, which answers the probe below. Every fitness release of the library (this paper's included) is gene-level, so the records stay one gene-level insertion genotype per locus with barcode and insertion_position None, which is what RbTnseqBorchert2024Dataset already stores.",
+  "other_content": "Net-new content outside the Putida_ML5 row, measured and NOT loaded here: main-text Table 1 maps 10 Tn5 (pBAM1) insertion isolates of a SEPARATE library to a position on the KT2440 chromosome, each selected for no growth on LA plates; Table 2 scores 6 clean deletions (lvaR, lvaA-E) with empty vector or complementation as -, + or ++ growth on LA and 4HV; Supplementary Tables 3 and 4 are E. coli LS5218 (not in the genomes tier). Filed as a separate dataset issue.",
+  "sourced_values": {
+    "library_name": {
+      "value": "Putida_ML5",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "We named the final, sequenced mapped transposon mutant library Putida_ML5.",
+      "note": null
+    },
+    "library_size": {
+      "value": "thousands of colonies (no count)",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "We combined thousands of kanamycin-resistant P. putida colonies into a single tube",
+      "note": null
+    },
+    "vector": {
+      "value": "pKMW3 mariner, random 20mer barcodes",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "pKMW3 is a mariner class transposon vector library containing a kanamycin resistance marker and millions of random 20mer DNA barcodes.",
+      "note": null
+    },
+    "conditions": {
+      "value": [
+        "4HV 40 mM",
+        "LA 40 mM",
+        "potassium acetate 20 mM",
+        "glucose 40 mM",
+        2
+      ],
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "The carbon sources tested were 40mM 4HV (pH adjusted to 7 with NaOH), 40mM LA (pH adjusted to 7 with NaOH), 20mM potassium acetate, and 40mM glucose, each with two replicates.",
+      "note": null
+    },
+    "days": {
+      "value": "two days, each with its own glucose control",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "The 4HV and acetate experiments were performed one day and the LA experiments were performed on a different day, each day with its own 40 mM Glucose control.",
+      "note": null
+    },
+    "la_vessel": {
+      "value": "24-well microplate, Multitron, 700 rpm",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "For LA, the samples were grown in a 24-well microplate in a Multitron shaker set to 30°C and 700 rpm.",
+      "note": null
+    },
+    "si_mean_of_two": {
+      "value": 2,
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "The fitness values reported in Supplementary Table 1 are the average of 2 replicates.",
+      "note": null
+    },
+    "si_contrast": {
+      "value": "Fitness(LA) - Fitness(Glucose)",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Methods",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "Fitness scores for LA and 4HV relative to glucose were calculated using the following equation:",
+      "note": null
+    },
+    "data_availability": {
+      "value": "http://fit.genomics.lbl.gov/cgi-bin/exps.cgi?orgId=Putida&expGroup=carbon%20source",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Data Availability",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "All data from the P. putida transposon sequencing experiments is available through the fitness browser at http://fit.genomics.lbl.gov/cgi-bin/exps.cgi?orgId=Putida&expGroup=carbon%20source.",
+      "note": null
+    },
+    "assay_authors": {
+      "value": "K.M.W., R.L.C, J.R., A.M.D.",
+      "provenance": {
+        "source_uri": "paper/PMC5705400.1.txt",
+        "citation_key": "randMetabolicPathwayCatabolizing2017",
+        "sha256": "9f49ab51f4c179b7652cff75a581f1d00319656dc82daf50c42db26807d55c26",
+        "method": "PMC Article Datasets plain text of the NIH author manuscript",
+        "page": "Author Contribution",
+        "retrieved": "2026-10-10"
+      },
+      "quote": "K.M.W., R.L.C, J.R. and A.M.D. performed the fitness assays with the Putida_ML5 library.",
+      "note": null
+    }
+  },
+  "quote_audit": {
+    "library_name": "value backed by verbatim quote in PMC5705400.1.txt",
+    "library_size": "value backed by verbatim quote in PMC5705400.1.txt",
+    "vector": "value backed by verbatim quote in PMC5705400.1.txt",
+    "conditions": "value backed by verbatim quote in PMC5705400.1.txt",
+    "days": "value backed by verbatim quote in PMC5705400.1.txt",
+    "la_vessel": "value backed by verbatim quote in PMC5705400.1.txt",
+    "si_mean_of_two": "value backed by verbatim quote in PMC5705400.1.txt",
+    "si_contrast": "value backed by verbatim quote in PMC5705400.1.txt",
+    "data_availability": "value backed by verbatim quote in PMC5705400.1.txt",
+    "assay_authors": "value backed by verbatim quote in PMC5705400.1.txt"
+  },
+  "measured_at": "2026-10-10T06:28:54.327202+00:00",
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/rand2017_release_inventory.py"
+}

@@ -1,0 +1,396 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/thompsonMassivelyParallelFitness2019_release_inventory.py",
+  "manifest": "/scratch/projects/torchcell-scratch/torchcell-raw/thompsonMassivelyParallelFitness2019/manifest.json",
+  "quote_audit": {
+    "library": "value backed by verbatim quote in PMC6509195.1.txt",
+    "time_zero": "value backed by verbatim quote in PMC6509195.1.txt",
+    "conditions": "value backed by verbatim quote in PMC6509195.1.txt",
+    "fitness": "value backed by verbatim quote in PMC6509195.1.txt",
+    "release": "value backed by verbatim quote in PMC6509195.1.txt",
+    "table_s1_selection": "value backed by verbatim quote in PMC6509195.1.txt",
+    "table_s1_caption": "value backed by verbatim quote in PMC6509195.1.txt",
+    "table_s2_caption": "value backed by verbatim quote in PMC6509195.1.txt"
+  },
+  "record": {
+    "citation_key": "thompsonMassivelyParallelFitness2019",
+    "doi": "10.1128/mBio.02577-18",
+    "title": "Massively Parallel Fitness Profiling Reveals Multiple Novel Enzymes in Pseudomonas putida Lysine Metabolism",
+    "row_name": "Thompson 2019 lysine",
+    "decision": "subsumed_no_loader",
+    "served_coverage": {
+      "served_dataset": "RbTnseqBorchert2024Dataset",
+      "served_store": "$DATA_ROOT/data/torchcell/rbtnseq_borchert2024",
+      "served_records": 1372280,
+      "records_from_this_paper": 156,
+      "released_instances": 156,
+      "released_instances_basis": "the cells of Table S1, the paper's only per-gene file (39 genes x 4 carbon sources). This is an independent release count: each cell is found in the served store under the sample its values identify. The four matched samples are genome-wide, so the store holds far more of this paper's experiment than Table S1 does; that count is in versus_superset.served",
+      "attribution_field": "EnvironmentResponsePhenotype.screen_id",
+      "attribution_value": "the compendium sample name the Table S1 column matched",
+      "served_fraction": 1.0
+    },
+    "release_files": [
+      {
+        "relpath": "paper/PMC6509195.1.txt",
+        "mirror": "torchcell-raw",
+        "citation_key": "thompsonMassivelyParallelFitness2019",
+        "role": "raw_data",
+        "bytes": 73809,
+        "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6509195.1/PMC6509195.1.txt",
+        "retrieval_method": "pmc_cloud",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object(key='PMC6509195.1/PMC6509195.1.txt')",
+        "retrieved_at": "2026-10-10",
+        "purpose": "the article text every quote below is read from: Methods 'RB-TnSeq' states the library, conditions, vessel and fitness definition; Results states the 39-gene selection behind Table S1"
+      },
+      {
+        "relpath": "si/mBio.02577-18-st001.csv",
+        "mirror": "torchcell-raw",
+        "citation_key": "thompsonMassivelyParallelFitness2019",
+        "role": "raw_data",
+        "bytes": 4059,
+        "sha256": "b4718373fdcd6637de7a25eee4a17aedd47c1ad1a07262b1502e2cb0c4d2a0e5",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6509195.1/mBio.02577-18-st001.csv",
+        "retrieval_method": "pmc_cloud",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object(key='PMC6509195.1/mBio.02577-18-st001.csv')",
+        "retrieved_at": "2026-10-10",
+        "purpose": "Table S1, the paper's only per-gene fitness release: 39 genes x 4 carbon sources, compared cell by cell with the compendium and the served store"
+      },
+      {
+        "relpath": "si/mBio.02577-18-st002.csv",
+        "mirror": "torchcell-raw",
+        "citation_key": "thompsonMassivelyParallelFitness2019",
+        "role": "raw_data",
+        "bytes": 50030,
+        "sha256": "907aed18cfbcc5cd8114636b373107a321263d7a0f10026a8f5fba0f3da6c8af",
+        "source_url": "https://pmc-oa-opendata.s3.amazonaws.com/PMC6509195.1/mBio.02577-18-st002.csv",
+        "retrieval_method": "pmc_cloud",
+        "retrieval_command": "torchcell.literature.retrieve.pmc_cloud_object(key='PMC6509195.1/mBio.02577-18-st002.csv')",
+        "retrieved_at": "2026-10-10",
+        "purpose": "Table S2, pairwise statistics of wild-type targeted proteomics across carbon sources; read to measure that it carries test statistics, not abundances"
+      },
+      {
+        "relpath": "data/fModule_Metadata.xlsx",
+        "mirror": "torchcell-raw",
+        "citation_key": "borchertMachineLearningAnalysis2024",
+        "role": "raw_data",
+        "bytes": 23261645,
+        "sha256": "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1",
+        "source_url": "https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx",
+        "retrieval_method": "direct_url",
+        "retrieval_command": "torchcell.literature.retrieve.direct_url(url='https://raw.githubusercontent.com/beckham-lab/fModule/30eaef39a4609335f0f10c2d25a8eb69d426b0ce/fModule_Metadata.xlsx')",
+        "retrieved_at": "2026-10-07",
+        "purpose": "the compendium release the served RbTnseqBorchert2024Dataset is built from: sheet metadata names every sample's condition, sheet fitness_measurements is the gene by sample fitness matrix"
+      }
+    ],
+    "release_probes": [
+      {
+        "url": "https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
+        "status_code": 403,
+        "probed_at": "2026-10-10T06:28:09.099270+00:00",
+        "note": "the paper's genome-wide release; a non-200 is the measured form of the schedule row's Cloudflare-blocked claim"
+      }
+    ],
+    "sourced_values": {
+      "library": {
+        "value": "JBEI-1, a regrown working stock of the Rand 2017 library (Putida_ML5)",
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Materials and Methods, 'RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "P. putida RB-TnSeq library JBEI-1 was created by diluting a 1-ml aliquot of the previously described P. putida RB-TnSeq library (16) in 500\u2009ml of LB media supplemented with kanamycin",
+        "note": null
+      },
+      "time_zero": {
+        "value": 3,
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Materials and Methods, 'RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "three 1-ml aliquots were removed, pelleted, decanted, and then stored at \u221280\u00b0C for use as a time zero control",
+        "note": null
+      },
+      "conditions": {
+        "value": {
+          "carbon_sources": [
+            "glucose",
+            "5AVA",
+            "d-lysine",
+            "l-lysine"
+          ],
+          "concentration_mM": 10,
+          "medium": "MOPS minimal medium",
+          "vessel": "50-ml culture tubes",
+          "hours": 48,
+          "temperature_C": 30
+        },
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Materials and Methods, 'RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "diluted 1:50 into 10\u2009ml MOPS minimal medium supplemented with 10\u2009mM glucose or 5AVA or d-lysine or l-lysine. Cells were grown in 50-ml culture tubes for 48\u2009h at 30\u00b0C with shaking at 200\u2009rpm.",
+        "note": null
+      },
+      "fitness": {
+        "value": "log2 ratio of barcode reads, experimental sample over time zero",
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Materials and Methods, 'RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "The fitness of a strain is defined here as the normalized log2 ratio of barcode reads in the experimental sample to barcode reads in the time zero sample.",
+        "note": null
+      },
+      "release": {
+        "value": "http://fit.genomics.lbl.gov",
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Materials and Methods, 'RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "All fitness data in this work is publicly available at http://fit.genomics.lbl.gov.",
+        "note": null
+      },
+      "table_s1_selection": {
+        "value": 39,
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Results, 'Identification of lysine catabolism genes via RB-TnSeq'",
+          "retrieved": null
+        },
+        "quote": "Fitness profiling revealed 39 genes with significant fitness values below \u22122 for 5AVA, d-lysine, or l-lysine and no lower than \u22120.5 for glucose (Fig.\u00a01A; see also Table\u00a0S1 in the supplemental material).",
+        "note": null
+      },
+      "table_s1_caption": {
+        "value": "Table S1",
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Results, supplemental material legend",
+          "retrieved": null
+        },
+        "quote": "TABLE\u00a0S1 Quantitative results of RB-TnSeq screen.",
+        "note": null
+      },
+      "table_s2_caption": {
+        "value": "Table S2",
+        "provenance": {
+          "source_uri": "paper/PMC6509195.1.txt",
+          "citation_key": "thompsonMassivelyParallelFitness2019",
+          "sha256": "aedb5fb086aade7b80f848427a90af5478646b9d362b015b6a74a4410fb8dd4c",
+          "method": "PMC open-access plain text of the article (PMC Article Datasets)",
+          "page": "Results, targeted proteomics",
+          "retrieved": null
+        },
+        "quote": "All pairwise statistical comparisons of different carbon sources for each protein can be found in Table\u00a0S2.",
+        "note": null
+      }
+    },
+    "conclusion": "SUBSUMED. Each of Table S1's 4 columns is identified, by its 39 values alone, with exactly one of the compendium's 332 samples: D-Lysine = set7IT062, L-Lysine = set7IT055, 5-AVA = set7IT044, Glucose = set6IT057. The largest difference over all 156 cells is 0.046038, while the closest runner-up sample of any column differs by 0.58204. The served RbTnseqBorchert2024Dataset holds all four samples as 18928 records, so a loader for this row would store the same experiment a second time. No loader.",
+    "loadable_slice": "Nothing new. Table S1's cells are a 39-gene subset of four samples the store serves genome-wide; the store's values are the compendium's (three decimals) and differ from Table S1 by no more than max_abs_difference, which exceeds the 0.0005 rounding bound, so the compendium values were not copied from Table S1 unchanged. Table S2 is pairwise statistics of wild-type proteomics (Prot, Carbon1, Carbon2, Stat, pval), with no per-sample abundance and no perturbation, so it is not a record of any existing class. The deletion-strain growth curves (Figs S3, S5-S7) are released only as TIF images.",
+    "measured_at": "2026-10-10T06:28:09.099963+00:00",
+    "script": "experiments/036-dataset-fixes-before-kg-build/scripts/thompsonMassivelyParallelFitness2019_release_inventory.py",
+    "versus_superset": {
+      "compendium_citation_key": "borchertMachineLearningAnalysis2024",
+      "compendium_samples_total": 332,
+      "compendium_loci": 4732,
+      "table_s1": {
+        "rows": 39,
+        "columns": [
+          "gene",
+          "gene.1",
+          "desc",
+          "D-Lysine",
+          "L-Lysine",
+          "5-AVA",
+          "Glucose"
+        ],
+        "distinct_loci": 39,
+        "both_locus_columns_equal": true,
+        "cells": 156,
+        "genes_meeting_stated_selection": 39
+      },
+      "table_s2": {
+        "rows": 540,
+        "columns": [
+          "Prot",
+          "Carbon1",
+          "Carbon2",
+          "Stat",
+          "pval",
+          "Sig",
+          "Bon_Corr"
+        ],
+        "proteins": 15,
+        "carbon_sources": 6
+      },
+      "matches": [
+        {
+          "table_s1_column": "D-Lysine",
+          "compendium_sample": "set7IT062",
+          "compendium_desc": "D-Lysine 10 mM (C)",
+          "compendium_set": "set7",
+          "compendium_vessel": "tube",
+          "compendium_media": "MOPS minimal media_noCarbon",
+          "compendium_concentration_mM": 10.0,
+          "compendium_total_rep": 1,
+          "genes_compared": 39,
+          "max_abs_difference": 0.046038,
+          "median_abs_difference": 0.003257,
+          "cells_within_rounding": 2,
+          "pearson_r": 0.999993,
+          "runner_up_sample": "set7IT056",
+          "runner_up_max_abs_difference": 2.137557,
+          "same_condition_samples": [
+            "set7IT056",
+            "set7IT062"
+          ]
+        },
+        {
+          "table_s1_column": "L-Lysine",
+          "compendium_sample": "set7IT055",
+          "compendium_desc": "L-Lysine 10 mM (C)",
+          "compendium_set": "set7",
+          "compendium_vessel": "tube",
+          "compendium_media": "MOPS minimal media_noCarbon",
+          "compendium_concentration_mM": 10.0,
+          "compendium_total_rep": 1,
+          "genes_compared": 39,
+          "max_abs_difference": 0.019361,
+          "median_abs_difference": 0.000948,
+          "cells_within_rounding": 12,
+          "pearson_r": 0.999997,
+          "runner_up_sample": "set12IT023",
+          "runner_up_max_abs_difference": 3.215948,
+          "same_condition_samples": [
+            "set7IT055"
+          ]
+        },
+        {
+          "table_s1_column": "5-AVA",
+          "compendium_sample": "set7IT044",
+          "compendium_desc": "5-Aminovaleric 10 mM (C)",
+          "compendium_set": "set7",
+          "compendium_vessel": "tube",
+          "compendium_media": "MOPS minimal media_noCarbon",
+          "compendium_concentration_mM": 10.0,
+          "compendium_total_rep": 1,
+          "genes_compared": 39,
+          "max_abs_difference": 0.020741,
+          "median_abs_difference": 0.002355,
+          "cells_within_rounding": 1,
+          "pearson_r": 0.999989,
+          "runner_up_sample": "set7IT057",
+          "runner_up_max_abs_difference": 1.428689,
+          "same_condition_samples": [
+            "set7IT044",
+            "set7IT057"
+          ]
+        },
+        {
+          "table_s1_column": "Glucose",
+          "compendium_sample": "set6IT057",
+          "compendium_desc": "D-Glucose (C)",
+          "compendium_set": "set6",
+          "compendium_vessel": "48 well microplate; Tecan Infinite F200",
+          "compendium_media": "MOPS minimal media_noCarbon",
+          "compendium_concentration_mM": 10.0,
+          "compendium_total_rep": 1,
+          "genes_compared": 39,
+          "max_abs_difference": 0.00816,
+          "median_abs_difference": 0.000685,
+          "cells_within_rounding": 13,
+          "pearson_r": 0.999945,
+          "runner_up_sample": "set8IT058",
+          "runner_up_max_abs_difference": 0.58204,
+          "same_condition_samples": [
+            "set100IT008",
+            "set100IT009",
+            "set100IT010",
+            "set101IT007",
+            "set101IT008",
+            "set101IT009",
+            "set1IT078",
+            "set1IT079",
+            "set1IT080",
+            "set1IT081",
+            "set5IT075",
+            "set5IT076",
+            "set6IT057"
+          ]
+        }
+      ],
+      "served": [
+        {
+          "sample": "set7IT062",
+          "served_records": 4732,
+          "table_s1_genes_served": 39,
+          "max_abs_served_minus_compendium": 0.0,
+          "max_abs_served_minus_table_s1": 0.046038
+        },
+        {
+          "sample": "set7IT055",
+          "served_records": 4732,
+          "table_s1_genes_served": 39,
+          "max_abs_served_minus_compendium": 0.0,
+          "max_abs_served_minus_table_s1": 0.019361
+        },
+        {
+          "sample": "set7IT044",
+          "served_records": 4732,
+          "table_s1_genes_served": 39,
+          "max_abs_served_minus_compendium": 0.0,
+          "max_abs_served_minus_table_s1": 0.020741
+        },
+        {
+          "sample": "set6IT057",
+          "served_records": 4732,
+          "table_s1_genes_served": 39,
+          "max_abs_served_minus_compendium": 0.0,
+          "max_abs_served_minus_table_s1": 0.00816
+        }
+      ],
+      "served_store_records": 1372280,
+      "table_s1_cells_served": 156,
+      "unmatched_same_condition_samples": [
+        "set100IT008",
+        "set100IT009",
+        "set100IT010",
+        "set101IT007",
+        "set101IT008",
+        "set101IT009",
+        "set1IT078",
+        "set1IT079",
+        "set1IT080",
+        "set1IT081",
+        "set5IT075",
+        "set5IT076",
+        "set7IT056",
+        "set7IT057"
+      ]
+    }
+  },
+  "written": "/scratch/projects/torchcell-scratch/torchcell-raw/thompsonMassivelyParallelFitness2019/subsumption_record.json"
+}

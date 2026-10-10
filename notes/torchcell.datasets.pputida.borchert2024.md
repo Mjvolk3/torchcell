@@ -296,3 +296,7 @@ The 271 loci Borchert 2023 recovers are the ones this release's own filter elimi
 data sets, the gene was eliminated from analysis"). They are disjoint from this store's
 4,732 by construction, and the sibling build asserts it against this dataset's LMDB on
 every run. Full measurement: [[torchcell.datasets.pputida.borchert2023]].
+
+## 2026.10.10 - Thompson 2019 lysine samples identified by value
+
+Measured, not inferred from names: Thompson 2019 lysine's Table S1 (39 genes x 4 carbon sources) matches compendium samples set7IT062 (D-lysine), set7IT055 (L-lysine), set7IT044 (5-aminovalerate) and set6IT057 (glucose), max abs difference 0.046 against a nearest wrong sample at 0.58. The served store holds all four (18,928 records), so that row needs no loader. This turns the `HYPOTHESES["set7"]` entry into a measurement for three samples and adds set6IT057, which the dictionary does not attribute. Re-attributing them as a `SourceStudy` is an owner decision (store rebuild). The compendium labels set6IT057 a 48-well Tecan microplate; the paper's Methods say 50-ml culture tubes. Details: [[experiments.036-dataset-fixes-before-kg-build.scripts.thompsonMassivelyParallelFitness2019_release_inventory]].

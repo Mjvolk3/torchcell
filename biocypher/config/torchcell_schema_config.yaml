@@ -504,6 +504,27 @@ protein turnover phenotype:
         censoring: str
         # --- end #753 ---
 
+# --- begin #857: the protein synthesis-rate family ---
+# Per-protein synthesis rates with no degradation (ProteinSynthesisRatePhenotype): every
+# dict keyed by locus tag is a JSON string, as for protein turnover; rate_unit is the
+# typed amount and time basis, and generation_time_minutes is the basis of a rate per
+# generation. Every field but provenance_gaps is projected, named by its field.
+protein synthesis rate phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        synthesis_rate: str
+        synthesis_rate_se: str
+        n_replicates: str
+        rate_unit: str
+        generation_time_minutes: float
+        measurement_type: str
+        censoring: str
+# --- end #857 ---
+
 # A fitted net-flux map (FluxPhenotype): signed per-reaction fluxes and their
 # confidence bounds as JSON strings; confidence_level and n_samples are scalars of the
 # whole fit. label_statistic_name is null by design (an interval is not one number).
@@ -645,6 +666,7 @@ phenotype member of:
             environment response phenotype,
             product titer phenotype,
             protein turnover phenotype,
+            protein synthesis rate phenotype,
             flux phenotype,
             promoter activity phenotype,
             bacterial morphology phenotype,

@@ -303,6 +303,12 @@ class CellAdapter:
                 "protein turnover phenotype (chunked)",
                 self._protein_turnover_phenotype_node,
             ),
+            # --- begin #857: the protein synthesis-rate family ---
+            (
+                "protein synthesis rate phenotype (chunked)",
+                self._protein_synthesis_rate_phenotype_node,
+            ),
+            # --- end #857 ---
             ("flux phenotype (chunked)", self._flux_phenotype_node),
             (
                 "promoter activity phenotype (chunked)",
@@ -382,6 +388,12 @@ class CellAdapter:
                 "protein turnover phenotype reference",
                 self._get_protein_turnover_phenotype_reference_nodes,
             ),
+            # --- begin #857: the protein synthesis-rate family ---
+            (
+                "protein synthesis rate phenotype reference",
+                self._get_protein_synthesis_rate_phenotype_reference_nodes,
+            ),
+            # --- end #857 ---
             ("flux phenotype reference", self._get_flux_phenotype_reference_nodes),
             (
                 "promoter activity phenotype reference",
@@ -2516,6 +2528,72 @@ class CellAdapter:
                 )
             )
         return nodes
+
+    # --- begin #857: the protein synthesis-rate family ---
+    @staticmethod
+    def _protein_synthesis_rate_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``ProteinSynthesisRatePhenotype`` (either side)."""
+        se = phenotype.synthesis_rate_se
+        n_replicates = phenotype.n_replicates
+        censoring = phenotype.censoring
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "synthesis_rate": json.dumps(phenotype.synthesis_rate),
+            "synthesis_rate_se": json.dumps(se) if se is not None else None,
+            "n_replicates": (
+                json.dumps(n_replicates) if n_replicates is not None else None
+            ),
+            "rate_unit": phenotype.rate_unit.value,
+            "generation_time_minutes": phenotype.generation_time_minutes,
+            "measurement_type": phenotype.measurement_type,
+            "censoring": (
+                json.dumps({key: str(value) for key, value in censoring.items()})
+                if censoring is not None
+                else None
+            ),
+        }
+
+    @data_chunker
+    def _protein_synthesis_rate_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="protein synthesis rate phenotype",
+            properties=self._protein_synthesis_rate_properties(phenotype),
+        )
+
+    def _get_protein_synthesis_rate_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="protein synthesis rate phenotype",
+                    node_label="protein synthesis rate phenotype",
+                    properties=self._protein_synthesis_rate_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #857 ---
 
     @staticmethod
     def _flux_properties(phenotype: Any) -> dict[str, Any]:

@@ -7233,6 +7233,124 @@ class ProteinTurnoverPhenotype(Phenotype, ModelStrict):
         return self
 
 
+# --- begin #857: the protein synthesis-rate family ---------------------------- #
+class SynthesisRateUnit(StrEnum):
+    """The unit a per-protein synthesis rate is released in, amount over time basis.
+
+    The time basis is part of the unit and is typed rather than spelled into a string,
+    because the two bases do not compare without a growth rate: a rate per GENERATION
+    (Li 2014's ribosome-profiling release, "where ki has the unit of molecules per
+    generation") becomes a rate per hour only through the doubling time of the culture
+    it was measured in, which is why ``molecules_per_generation`` requires
+    ``ProteinSynthesisRatePhenotype.generation_time_minutes``.
+    """
+
+    molecules_per_generation = "molecules_per_generation"
+    molecules_per_hour = "molecules_per_hour"
+
+
+class ProteinSynthesisRatePhenotype(Phenotype, ModelStrict):
+    """Per-protein synthesis rate: how many molecules of each protein a cell makes.
+
+    A sibling of ``ProteinTurnoverPhenotype``, not a relaxation of it. A turnover
+    record's primary label is the DEGRADATION rate and its ``synthesis_rate`` is a
+    companion admitted only on keys that carry a degradation rate; a ribosome-profiling
+    release (Li 2014) measures synthesis alone and states no degradation, half-life or
+    turnover for any protein. Making ``degradation_rate`` optional would let one class
+    carry two different primary labels and switch ``label_name`` per record, so a
+    consumer reading the turnover lane could no longer trust what the label is.
+
+    Not a ``ProteinAbundancePhenotype`` either: a synthesis rate equals a standing copy
+    number only for a stable protein in steady state, which is an assumption about the
+    protein, not a measurement of it.
+
+    Keyed by the protein's locus tag in the record's namespace, ragged like every
+    dict-valued family: a protein the assay did not quantify (or quantified below its
+    own read-count gate) is not a key, never a zero. ``rate_unit`` types the amount and
+    the time basis; ``measurement_type`` names the assay. ``censoring`` follows
+    ``ProteinTurnoverPhenotype``: None when the source states no censoring at all.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "synthesis_rate"
+    label_statistic_name: str | None = "synthesis_rate_se"
+
+    synthesis_rate: dict[str, float] = Field(
+        description="protein locus tag -> synthesis rate in rate_unit"
+    )
+    synthesis_rate_se: dict[str, float] | None = Field(
+        default=None,
+        description="protein locus tag -> standard error of the rate; None when the "
+        "source releases no per-protein uncertainty",
+    )
+    n_replicates: dict[str, int] | None = Field(
+        default=None,
+        description="protein locus tag -> number of independent samples behind the "
+        "rate; None when the source releases no per-protein replicate count",
+    )
+    rate_unit: SynthesisRateUnit = Field(
+        description="amount and time basis of every value in synthesis_rate"
+    )
+    generation_time_minutes: float | None = Field(
+        default=None,
+        description="the culture's doubling time in minutes, as the source states it; "
+        "required when rate_unit is per generation, since it is the time basis",
+    )
+    measurement_type: str = Field(
+        description="the assay that produced the numbers, e.g. "
+        "'ribosome_profiling_footprint_density'"
+    )
+    censoring: dict[str, Censoring] | None = Field(
+        default=None,
+        description="protein locus tag -> whether the stored value is an estimate or a "
+        "bound; None means the source reports no censoring",
+    )
+
+    @model_validator(mode="after")
+    def validate_synthesis_rate(self) -> "ProteinSynthesisRatePhenotype":
+        """Non-empty finite non-negative rates; companions keyed on stored proteins."""
+        if not self.synthesis_rate:
+            raise ValueError("synthesis_rate cannot be empty")
+        for key, rate in self.synthesis_rate.items():
+            if math.isnan(rate) or math.isinf(rate) or rate < 0:
+                raise ValueError(
+                    f"synthesis_rate for {key} must be finite and non-negative"
+                )
+        for key, se in (self.synthesis_rate_se or {}).items():
+            if key not in self.synthesis_rate:
+                raise ValueError(f"synthesis_rate_se key {key} not in synthesis_rate")
+            if not math.isnan(se) and se < 0:
+                raise ValueError(f"synthesis_rate_se for {key} must be non-negative")
+        if self.n_replicates is not None:
+            if set(self.n_replicates) != set(self.synthesis_rate):
+                raise ValueError("n_replicates keys must match synthesis_rate keys")
+            for key, n in self.n_replicates.items():
+                if n < 1:
+                    raise ValueError(f"n_replicates for {key} must be >= 1")
+        for key in self.censoring or {}:
+            if key not in self.synthesis_rate:
+                raise ValueError(f"censoring key {key} not in synthesis_rate")
+        minutes = self.generation_time_minutes
+        if minutes is not None and (
+            math.isnan(minutes) or math.isinf(minutes) or minutes <= 0
+        ):
+            raise ValueError(
+                f"generation_time_minutes must be finite and positive, got {minutes}"
+            )
+        if (
+            self.rate_unit is SynthesisRateUnit.molecules_per_generation
+            and minutes is None
+        ):
+            raise ValueError(
+                "a rate per generation states its generation time: set "
+                "generation_time_minutes"
+            )
+        return self
+
+
+# --- end #857 ------------------------------------------------------------------- #
+
+
 class FluxPhenotype(Phenotype, ModelStrict):
     """Per-reaction net metabolic flux, with the confidence interval of the fit.
 
@@ -7563,6 +7681,26 @@ class ProteinTurnoverExperiment(Experiment, ModelStrict):
     experiment_type: str = "protein_turnover"
     genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
     phenotype: ProteinTurnoverPhenotype
+
+
+# --- begin #857: the protein synthesis-rate family ---------------------------- #
+class ProteinSynthesisRateExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a protein synthesis-rate experiment."""
+
+    experiment_reference_type: str = "protein_synthesis_rate"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: ProteinSynthesisRatePhenotype
+
+
+class ProteinSynthesisRateExperiment(Experiment, ModelStrict):
+    """Experiment measuring per-protein synthesis rates."""
+
+    experiment_type: str = "protein_synthesis_rate"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinSynthesisRatePhenotype
+
+
+# --- end #857 ------------------------------------------------------------------- #
 
 
 class FluxExperimentReference(ExperimentReference, ModelStrict):
@@ -8051,6 +8189,7 @@ PhenotypeType = (
     | EnvironmentResponsePhenotype
     | ProductTiterPhenotype
     | ProteinTurnoverPhenotype
+    | ProteinSynthesisRatePhenotype  # issue #857
     | FluxPhenotype
     | PromoterActivityPhenotype
     | BacterialMorphologyPhenotype  # issue #774
@@ -8079,6 +8218,7 @@ ExperimentType = (
     | SegregantGrowthExperiment
     | ProductTiterExperiment
     | ProteinTurnoverExperiment
+    | ProteinSynthesisRateExperiment  # issue #857
     | FluxExperiment
     | PromoterActivityExperiment
     | BacterialFitnessExperiment
@@ -8118,6 +8258,7 @@ ExperimentReferenceType = (
     | SegregantGrowthExperimentReference
     | ProductTiterExperimentReference
     | ProteinTurnoverExperimentReference
+    | ProteinSynthesisRateExperimentReference  # issue #857
     | FluxExperimentReference
     | PromoterActivityExperimentReference
     | BacterialFitnessExperimentReference
@@ -8157,6 +8298,7 @@ EXPERIMENT_TYPE_MAP = {
     "segregant_growth": SegregantGrowthExperiment,
     "product_titer": ProductTiterExperiment,
     "protein_turnover": ProteinTurnoverExperiment,
+    "protein_synthesis_rate": ProteinSynthesisRateExperiment,  # issue #857
     "flux": FluxExperiment,
     "promoter_activity": PromoterActivityExperiment,
     "bacterial_fitness": BacterialFitnessExperiment,
@@ -8195,6 +8337,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "segregant_growth": SegregantGrowthExperimentReference,
     "product_titer": ProductTiterExperimentReference,
     "protein_turnover": ProteinTurnoverExperimentReference,
+    "protein_synthesis_rate": ProteinSynthesisRateExperimentReference,  # issue #857
     "flux": FluxExperimentReference,
     "promoter_activity": PromoterActivityExperimentReference,
     "bacterial_fitness": BacterialFitnessExperimentReference,

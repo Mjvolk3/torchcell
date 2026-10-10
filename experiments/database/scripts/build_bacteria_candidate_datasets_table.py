@@ -3254,7 +3254,14 @@ CANDIDATES: list[Candidate] = [
         "behind a Cloudflare managed JavaScript challenge today, so those "
         "figures were read from Internet Archive snapshots (2025-03-10 and "
         "2025-04-24) and must NOT be recorded as live 2026 values. Hence "
-        "accession_confirmed false.",
+        "accession_confirmed false. MEASURED SUBSUMPTION (rand2017_release_inventory.py, "
+        "PMC5705400 deposited in the raw mirror): Supplementary Table 1's LA/Gluc and "
+        "4HV/Gluc columns are reproduced by the compendium's set5 LA minus set5 glucose "
+        "(r 0.9995) and set1 4HV minus set1 glucose (r 0.9998) over 59 genes, so the "
+        "paper's ten samples are compendium sets 1 and 5. All ten sit on "
+        "RCH2_defined_noCarbon, which the Borchert 2024 loader drops, so 0 of their "
+        "47,320 records are served (issue 860); no per-strain table is released, so "
+        "the library itself is a provenance record, subsumption_record.json.",
         accession="https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida",
         accession_confirmed=False,
         status="candidate",

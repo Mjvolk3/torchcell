@@ -308,3 +308,32 @@ Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/royetHighThro
 2025's LB-vs-metal Tn-seq is in the compendium; Royet is none of its four source studies.
 Royet 2025 is loaded on its own as `EnvMetalTnseqRoyet2025Dataset`
 ([[torchcell.datasets.pputida.royet2025]]).
+
+## 2026.10.10 - Rand 2017 is a source study: sets 1 and 5 are its two days, by content
+
+The `set5` hypothesis ("Rand 2017 ... levulinic acid") and the `set1` hypothesis ("unattributed
+(person 'Kelly', Putida_ML5, 2020)") are replaced by a measurement. Rand 2017 (doi
+10.1038/s41564-017-0028-z) is not in the literature mirror, so its PMC author manuscript was
+deposited in `$DATA_ROOT/torchcell-raw/randMetabolicPathwayCatabolizing2017/` and its
+Supplementary Table 1 (LA/Gluc and 4HV/Gluc, 59 genes each) compared against every sample of
+this release. set5 LA 40 mM minus set5 glucose reproduces LA/Gluc (r 0.99952, median abs diff
+0.041; runner-up treatment 0.264) and set1 4HV 40 mM minus set1 40 mM glucose reproduces
+4HV/Gluc (r 0.99984, median 0.025; runner-up 1.959). Full table and nulls:
+[[experiments.036-dataset-fixes-before-kg-build.scripts.rand2017_release_inventory]].
+
+`attribute_sample` now returns a `rand2017` source study (basis `source_study_quote`, evidence
+`rand_conditions`, `rand_days`, `rand_library`, quotes audited against `torchcell-raw` rather
+than `torchcell-library`) for exactly ten samples, keyed by (set, condition, dose) in
+`RAND2017_CONDITIONS`: set1 glucose 40 mM, 4HV 40 mM, potassium acetate 20 mM; set5 glucose
+and LA 40 mM. Two carry notes: the acetate pair is attributed by the Methods quote only (the SI
+prints no acetate value), and the set5 glucose pair is 20 mM in this release where Rand 2017's
+Methods state a 40 mM control (the record keeps 20 mM). The remaining set1 and set5 samples (20
+mM glucose, 5 mM acetate, 20 mM LA, vanillin, p-coumaric acid) stay compendium-attributed with
+rewritten hypotheses.
+
+Coverage after the change (real release): `borchert2024` 111 samples (was 121), 79 kept
+(unchanged); `rand2017` 10 samples, 0 kept. **No served record changes**: all ten are on
+`RCH2_defined_noCarbon`, which `medium_not_in_media_library` still drops (20 samples, 94,640
+records). The medium's recipe is Price 2018 Table S18; what blocks it is compound-identity
+rows for its salts (issue #860). When it lands, the 47,320 Rand records carry Rand 2017's
+publication.

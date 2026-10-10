@@ -76,7 +76,12 @@
       "runner_up_treatment": "set5IT083",
       "runner_up_median_abs_diff": 0.264,
       "runner_up_control": "set100IT009",
-      "runner_up_control_median_abs_diff": 0.135
+      "runner_up_control_median_abs_diff": 0.135,
+      "other_day_control": [
+        "set1IT078",
+        "set1IT079"
+      ],
+      "other_day_control_median_abs_diff": 0.159
     },
     {
       "si_column": "HV",
@@ -96,7 +101,12 @@
       "runner_up_treatment": "set15IT057",
       "runner_up_median_abs_diff": 1.9585,
       "runner_up_control": "set1IT080",
-      "runner_up_control_median_abs_diff": 0.149
+      "runner_up_control_median_abs_diff": 0.149,
+      "other_day_control": [
+        "set5IT075",
+        "set5IT076"
+      ],
+      "other_day_control_median_abs_diff": 0.1645
     }
   ],
   "rand_samples": {
@@ -160,7 +170,7 @@
     "rand_records_if_medium_lands": 47320
   },
   "genotype_verdict": "PROVENANCE RECORD, not stored genotypes. TransposonInsertionPerturbation has barcode and insertion_position slots, so a per-strain release would be stored, but this paper releases none: the Methods name the library and its vector and say only that 'thousands' of colonies were pooled, the SI prints no strain table, and the only data pointer (Data Availability) is the Fitness Browser, which answers the probe below. Every fitness release of the library (this paper's included) is gene-level, so the records stay one gene-level insertion genotype per locus with barcode and insertion_position None, which is what RbTnseqBorchert2024Dataset already stores.",
-  "other_content": "Net-new content outside the Putida_ML5 row, measured and NOT loaded here: main-text Table 1 maps 10 Tn5 (pBAM1) insertion isolates of a SEPARATE library to a position on the KT2440 chromosome, each selected for no growth on LA plates; Table 2 scores 6 clean deletions (lvaR, lvaA-E) with empty vector or complementation as -, + or ++ growth on LA and 4HV; Supplementary Tables 3 and 4 are E. coli LS5218 (not in the genomes tier). Filed as a separate dataset issue.",
+  "other_content": "Net-new content outside the Putida_ML5 row, measured and NOT loaded here: main-text Table 1 maps 10 Tn5 (pBAM1) insertion isolates of a SEPARATE library to a position on the KT2440 chromosome, each selected for no growth on LA plates; Table 2 scores 6 clean deletions (lvaR, lvaA-E) with empty vector or complementation as -, + or ++ growth on LA and 4HV; Supplementary Tables 3 and 4 are E. coli LS5218 (not in the genomes tier). Filed as issue #861; the RCH2 medium that keeps Rand 2017's assays out of the served store is issue #860.",
   "sourced_values": {
     "library_name": {
       "value": "Putida_ML5",
@@ -311,6 +321,6 @@
     "data_availability": "value backed by verbatim quote in PMC5705400.1.txt",
     "assay_authors": "value backed by verbatim quote in PMC5705400.1.txt"
   },
-  "measured_at": "2026-10-10T06:28:54.327202+00:00",
+  "measured_at": "2026-10-10T06:36:58.996485+00:00",
   "script": "experiments/036-dataset-fixes-before-kg-build/scripts/rand2017_release_inventory.py"
 }

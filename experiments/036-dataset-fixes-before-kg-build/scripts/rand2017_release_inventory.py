@@ -295,6 +295,10 @@ class ContrastMatch(BaseModel):
     runner_up_median_abs_diff: float
     runner_up_control: str
     runner_up_control_median_abs_diff: float
+    #: The other day's 40 mM glucose pair as the control: the Methods say each day had
+    #: "its own 40 mM Glucose control", and only set1 carries a 40 mM glucose pair.
+    other_day_control: tuple[str, ...]
+    other_day_control_median_abs_diff: float
 
 
 class FitnessBrowserProbe(BaseModel):
@@ -522,6 +526,7 @@ def match(
     column: str,
     treatment: tuple[str, ...],
     control: tuple[str, ...],
+    other_day: tuple[str, ...],
 ) -> ContrastMatch:
     """Score one treatment-minus-control against an SI column, with both nulls.
 
@@ -561,6 +566,15 @@ def match(
         runner_up_median_abs_diff=round(nulls[runner], 4),
         runner_up_control=crunner,
         runner_up_control_median_abs_diff=round(cnulls[crunner], 4),
+        other_day_control=other_day,
+        other_day_control_median_abs_diff=round(
+            float(
+                (treat - fit.loc[loci, list(other_day)].mean(axis=1) - si)
+                .abs()
+                .median()
+            ),
+            4,
+        ),
     )
 
 
@@ -629,7 +643,8 @@ OTHER_CONTENT: Final = (
     "on the KT2440 chromosome, each selected for no growth on LA plates; Table 2 scores "
     "6 clean deletions (lvaR, lvaA-E) with empty vector or complementation as -, + or ++ "
     "growth on LA and 4HV; Supplementary Tables 3 and 4 are E. coli LS5218 (not in the "
-    "genomes tier). Filed as a separate dataset issue."
+    "genomes tier). Filed as issue #861; the RCH2 medium that keeps Rand 2017's "
+    "assays out of the served store is issue #860."
 )
 
 
@@ -660,6 +675,7 @@ def measure(probe: FitnessBrowserProbe) -> Inventory:
             "LA",
             ("set5IT081", "set5IT082"),
             ("set5IT075", "set5IT076"),
+            ("set1IT078", "set1IT079"),
         ),
         match(
             fit,
@@ -668,6 +684,7 @@ def measure(probe: FitnessBrowserProbe) -> Inventory:
             "HV",
             ("set1IT082", "set1IT083"),
             ("set1IT078", "set1IT079"),
+            ("set5IT075", "set5IT076"),
         ),
     ]
     return Inventory(

@@ -50,3 +50,32 @@ multiple of 3 and any non-ACGT character (the word-level vocabulary would map th
 
 Status 2026.10.07: code and tests landed; no checkpoint on disk yet (Globus login is a by-hand
 step), so no real embedding has been computed.
+
+## 2026.10.10 - First real loads: 25M and 250M checkpoints
+
+Both checkpoints were transferred from the Globus collection (`/models/25M/`, `/models/250M/`,
+the 2023-05-03 re-release, not `legacy/`) and pinned in `$DATA_ROOT/models/genslm/manifest.json`
+(sha256 `a21652c0...` and `b21a49e9...`, Globus task ids recorded).
+
+**What the released checkpoints look like.** Lightning + DeepSpeed checkpoints (`state_dict`
+beside `ds_config`, `hyper_parameters`, `global_step`, ...), parameters in float32. Every
+parameter name matches `GPTNeoXForCausalLM` built from the vendored config: 100 of 100 (25M),
+148 of 148 (250M). The only extra keys are per-layer `attention.masked_bias` (`-inf`) and
+`attention.rotary_emb.inv_freq`, buffers that transformers 4.21 registered and 4.57 no longer
+does; the stored rotary table is fp16-rounded (max relative difference 4e-4 from the recomputed
+one), so recomputing is the correct choice. The key policy was therefore turned around from the
+first draft: derived buffers may be absent or extra, and a missing or unexpected parameter still
+refuses. This is what the upstream `strict=False` load silently covered.
+
+**Sanity on real genes** (scratch probe, next-codon loss with `labels=input_ids`, KT2440 CDS):
+
+| gene | codons | 25M perplexity | 250M perplexity |
+|---|---|---|---|
+| PP_0001 | 291 | 31.0 | 10.6 |
+| PP_0002 | 264 | 18.6 | 7.1 |
+| PP_1000 | 337 | 17.5 | 3.9 |
+| PP_1000, codons shuffled | 337 | 49.1 | 53.4 |
+
+Chance is 64. The shuffled-codon control keeps composition and destroys order, so the gap
+is the model reading sequence, not codon usage. Embeddings are finite, mean norm 23 (25M) and
+40 (250M) over the two probe sequences.

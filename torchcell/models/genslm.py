@@ -49,8 +49,11 @@ WEIGHTS_MANIFEST = "manifest.json"
 #: The Globus endpoint the README names as the only release channel.
 GLOBUS_ENDPOINT_ID = "25918ad0-2a4e-4f37-bcfc-8183b19c3150"
 
-#: Buffers a checkpoint may legitimately omit: rotary tables and the causal mask are
-#: recomputed from the config. A missing *parameter* is never accepted.
+#: Buffers derived from the config, not learned: rotary tables and the causal-mask
+#: constants. The released checkpoints (transformers 4.21) carry them as extra keys
+#: that current transformers no longer registers, and a checkpoint from a current
+#: transformers would omit them; both are accepted. A missing or unexpected
+#: *parameter* is never accepted.
 _DERIVED_BUFFER_SUFFIXES = (
     "rotary_emb.inv_freq",
     "attention.bias",
@@ -247,7 +250,7 @@ class GenSLM(NucleotideModel):
 
     def load_state_dict_strict(self, model: GPTNeoXForCausalLM, path: str) -> None:
         """Load a Lightning checkpoint's ``state_dict``; only derived buffers may be
-        absent, and nothing unexpected may be present.
+        absent from it or extra in it.
         """
         checkpoint = torch.load(path, map_location="cpu", weights_only=False)
         state_dict: dict[str, torch.Tensor] = checkpoint["state_dict"]
@@ -255,11 +258,16 @@ class GenSLM(NucleotideModel):
         missing = [
             k for k in result.missing_keys if not k.endswith(_DERIVED_BUFFER_SUFFIXES)
         ]
-        if missing or result.unexpected_keys:
+        unexpected = [
+            k
+            for k in result.unexpected_keys
+            if not k.endswith(_DERIVED_BUFFER_SUFFIXES)
+        ]
+        if missing or unexpected:
             raise ValueError(
                 f"{path} does not match {self.spec.model_id}: missing "
                 f"{missing[:5]} ({len(missing)} total), unexpected "
-                f"{list(result.unexpected_keys)[:5]} ({len(result.unexpected_keys)} total)"
+                f"{unexpected[:5]} ({len(unexpected)} total)"
             )
 
     def load_model(self, model_name: str) -> None:

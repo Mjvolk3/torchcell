@@ -29,3 +29,21 @@ does not match it.
 
 Status 2026.10.07: CLI 3.43.0 and Connect Personal 3.3.1 are unpacked under `$DATA_ROOT/envs/`;
 no login has been done, nothing transferred.
+
+## 2026.10.10 - First transfers done
+
+The user logged in once (`globus login --no-local-server`, Illinois identity). The target
+turned out to be a Globus Connect Server v5 guest collection, so `globus endpoint show`
+refuses it and `globus gcs collection show` wants a consent the identity does not have; `ls`
+works. Root holds `data/` and `models/{25M,250M,2.5B,25B,legacy/}` (checkpoint sizes 101 MB,
+1.01 GB, 10.1 GB, 103 GB; `legacy/` is the pre-2023-05-03 namespace-bug release the README
+warns about).
+
+A private Globus Connect Personal endpoint was registered from the CLI
+(`globus gcp create mapped "gilahyper-torchcell" --private`, id
+`8e26aca5-c472-11f1-a924-0affd5e180af`), set up with its key, and started with
+`-restrict-paths rw/scratch/projects/torchcell-scratch/models/genslm`. It is a user process,
+not a service: after a reboot run `globusconnectpersonal -start ...` again from
+`$DATA_ROOT/envs/globusconnectpersonal/globusconnectpersonal-3.3.1/`. `transfer` for 25M and
+250M completed with checksum verification and wrote the manifest; the 2.5B is one more
+`transfer --model genslm_2.5B_patric --path /models/2.5B/` away.

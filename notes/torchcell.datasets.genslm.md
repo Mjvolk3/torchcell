@@ -34,3 +34,18 @@ Status 2026.10.07: tests [[tests.torchcell.datasets.test_genslm]] pass with a fa
 no store has been built because the checkpoints are not yet fetched (see
 [[scripts.genslm_fetch_weights]]). Not yet registered in `NodeEmbeddingBuilder`, whose root
 paths are yeast-specific.
+
+## 2026.10.10 - First stores: KT2440 with the 25M and 250M models
+
+Built on GilaHyper (one GPU, direct run) at `$DATA_ROOT/data/pputida/kt2440/genslm_embedding/`:
+
+| model | genes stored | left out (no CDS) | width | wall time | store |
+|---|---|---|---|---|---|
+| `genslm_25M_patric` | 5,564 | 165 | 512 | 61 s (batch 32) | 17 MB |
+| `genslm_250M_patric` | 5,564 | 165 | 1840 | 318 s (batch 16) | 47 MB |
+
+Every embedding is finite; mean vector norm 23.3 (25M) and 38.5 (250M). The 165 left-out ids
+are the rRNA, tRNA and other RNA loci (`PP_16SA`, `PP_23SA`, `PP_5SA`, `PP_mr01`, ...), written to
+`processed/<model>.no_cds.json`. `dataset["PP_0001"]` returns the 873 nt CDS and a `[1, width]`
+vector. The checkpoint sanity checks (next-codon perplexity far below chance and below a
+shuffled-codon control) are in [[torchcell.models.genslm]].

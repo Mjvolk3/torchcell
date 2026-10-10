@@ -437,3 +437,7 @@ not printed here" is corrected to 107 (167 minus 60) and now points at the secti
 Published to Zotero as `database-expansion-100_2026-10-10-01-35-33_e3284515.pdf`, version
 15 in `torchcell/notes-tex/database/database-expansion-100` (collection `IQW48WQF`, parent
 item `CPBBMPAV`). 63 pages; `make check` clean.
+
+## 2026.10.10 - Aggregation status, the no-per-record-data rule, and a verdict column
+
+`build_candidate_datasets_table.py` gains the bacteria table's vocabulary so the candidate gate's G1 reads one vocabulary from both tables (decision 13 of [[plan.dataset-admission-pipeline.2026.10.10]]): `Status` adds `aggregation` (marked `A` in the tables, SynthLethDB is the served yeast precedent) and `Excluded.rule` adds `no-per-record-data`. No row uses either yet. The script also writes `tables/verdicts.tex` and a `verdicts` map in the JSON from `database/candidates/`, never touching a row literal or `sort_key`; the JSON dump minus `verdicts` is identical to `origin/main`'s output.

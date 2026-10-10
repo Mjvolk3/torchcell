@@ -33,6 +33,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from torchcell.candidates.store import verdicts_by_row
+
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
@@ -104,8 +106,11 @@ Basis = Literal["reported", "product", "estimate"]
 # scanning the built list is not enough, since a dataset can have a loader, or a
 # failed retrieval attempt behind it, without appearing there. "built" is kept in
 # the list rather than deleted so the previous pass's ranking can be reproduced
-# exactly and the row's departure shows up as a recorded move.
-Status = Literal["candidate", "blocked", "loader-in-flight", "built"]
+# exactly and the row's departure shows up as a recorded move. "aggregation" is the
+# bacteria table's word for a corpus that re-serves other papers (SynthLethDB is the
+# served yeast precedent); it is here so the candidate gate's G1 reads one vocabulary
+# from both tables ([[plan.dataset-admission-pipeline.2026.10.10]], decision 13).
+Status = Literal["candidate", "blocked", "loader-in-flight", "built", "aggregation"]
 
 # How well a row's numbers and citation were checked. "sourced" means the figures
 # trace to a source read this session or to the sourced triage note; "recall" means
@@ -238,7 +243,15 @@ class Excluded(BaseModel):
 
     name: str
     reason: str
-    rule: Literal["no-sequence", "off-species", "already-built", "not-a-dataset"]
+    rule: Literal[
+        "no-sequence",
+        "off-species",
+        "already-built",
+        "not-a-dataset",
+        # A real experiment whose release is a figure or a summary, not per-strain
+        # values: the bacteria table's rule, shared so both tables say it the same way.
+        "no-per-record-data",
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -5143,6 +5156,7 @@ def status_tex(status: str) -> str:
         "candidate": "",
         "blocked": r"\,\textsuperscript{\textbf{B}}",
         "loader-in-flight": r"\,\textsuperscript{\textbf{L}}",
+        "aggregation": r"\,\textsuperscript{\textbf{A}}",
     }[status]
 
 
@@ -5555,6 +5569,53 @@ Dataset or group & Rule & Reason \\
         )
         lines.append(r"\addlinespace[5pt]")
     return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+
+
+def render_verdicts(rows: list[Candidate]) -> str:
+    """The candidate-gate verdict of every ranked row, read from ``database/candidates/``.
+
+    The verdict store is authoritative (plan decision 7 of
+    [[plan.dataset-admission-pipeline.2026.10.10]]): this column renders it and no row
+    literal carries a verdict, so ``sort_key`` never sees one and a verdict can never
+    re-rank a row another branch owns.
+    """
+    verdicts = verdicts_by_row("yeast")
+    head = r"""\begingroup
+\footnotesize
+\begin{longtable}{@{}r L{88mm} L{40mm} L{24mm}@{}}
+\caption[]{Candidate-gate verdict per ranked row, rendered from the verdict store
+(\texttt{database/candidates/}). \emph{no verdict} means the row has not been gated.}
+\label{tab:verdicts}\\
+\toprule
+Rank & Dataset & Verdict & Decided \\
+\midrule
+\endfirsthead
+\toprule
+Rank & Dataset & Verdict & Decided \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    lines = []
+    for rank, c in enumerate(rows, start=1):
+        v = verdicts.get(c.name)
+        outcome = v.outcome if v is not None else "no verdict"
+        decided = v.decided_at[:10] if v is not None else ""
+        lines.append(
+            " & ".join([str(rank), tex_escape(c.name), tex_escape(outcome), decided])
+            + r" \\"
+        )
+    return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+
+
+def verdict_column(rows: list[Candidate]) -> dict[str, str]:
+    """Row name -> verdict outcome, for the JSON dump (``no verdict`` when ungated)."""
+    verdicts = verdicts_by_row("yeast")
+    return {
+        c.name: verdicts[c.name].outcome if c.name in verdicts else "no verdict"
+        for c in rows
+    }
 
 
 def render_synergies(rows: list[Candidate]) -> str:
@@ -6015,6 +6076,7 @@ def main() -> None:
     write(TEX_DIR / "counts.tex", render_counts(rows))
     write(TEX_DIR / "swaps.tex", render_moves(ms))
     write(TEX_DIR / "pins.tex", render_swaps(swaps))
+    write(TEX_DIR / "verdicts.tex", render_verdicts(rows))
 
     JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
     JSON_OUT.write_text(
@@ -6031,6 +6093,7 @@ def main() -> None:
                 "moves": [m.model_dump() for m in ms],
                 "candidates": [c.model_dump() for c in rows],
                 "excluded": [e.model_dump() for e in EXCLUDED],
+                "verdicts": verdict_column(rows),
             },
             indent=2,
         )

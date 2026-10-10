@@ -67,6 +67,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from torchcell.candidates.store import verdicts_by_row
+
 SCRIPT = Path(__file__).resolve()
 REPO = SCRIPT.parents[3]
 RESULTS = SCRIPT.parent.parent / "results"
@@ -6353,6 +6355,53 @@ Dataset or group & Rule & Reason \\
     return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
 
 
+def render_verdicts(rows: list[Candidate]) -> str:
+    """The candidate-gate verdict of every ranked row, read from ``database/candidates/``.
+
+    The verdict store is authoritative (plan decision 7 of
+    [[plan.dataset-admission-pipeline.2026.10.10]]): this column renders it and no row
+    literal carries a verdict, so ``sort_key`` never sees one and a verdict can never
+    re-rank a row another branch owns.
+    """
+    verdicts = verdicts_by_row("bacteria")
+    head = r"""\begingroup
+\footnotesize
+\begin{longtable}{@{}r L{88mm} L{40mm} L{24mm}@{}}
+\caption[]{Candidate-gate verdict per ranked row, rendered from the verdict store
+(\texttt{database/candidates/}). \emph{no verdict} means the row has not been gated.}
+\label{tab:bverdicts}\\
+\toprule
+Rank & Dataset & Verdict & Decided \\
+\midrule
+\endfirsthead
+\toprule
+Rank & Dataset & Verdict & Decided \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+"""
+    lines = []
+    for rank, c in enumerate(rows, start=1):
+        v = verdicts.get(c.name)
+        outcome = v.outcome if v is not None else "no verdict"
+        decided = v.decided_at[:10] if v is not None else ""
+        lines.append(
+            " & ".join([str(rank), tex_escape(c.name), tex_escape(outcome), decided])
+            + r" \\"
+        )
+    return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
+
+
+def verdict_column(rows: list[Candidate]) -> dict[str, str]:
+    """Row name -> verdict outcome, for the JSON dump (``no verdict`` when ungated)."""
+    verdicts = verdicts_by_row("bacteria")
+    return {
+        c.name: verdicts[c.name].outcome if c.name in verdicts else "no verdict"
+        for c in rows
+    }
+
+
 def render_counts(rows: list[Candidate]) -> str:
     """Class by tranche and host by tranche, off the same ordering."""
     head = r"""\begin{table}[H]\centering
@@ -6563,6 +6612,7 @@ def main() -> None:
     write(TEX_DIR / "summary.tex", render_summary(rows))
     write(TEX_DIR / "excluded.tex", render_excluded())
     write(TEX_DIR / "pins.tex", render_pins(rows, quota_moves))
+    write(TEX_DIR / "verdicts.tex", render_verdicts(rows))
 
     JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
     JSON_OUT.write_text(
@@ -6580,6 +6630,7 @@ def main() -> None:
                 "schema_needs": [s.model_dump() for s in SCHEMA_NEEDS],
                 "candidates": [c.model_dump() for c in rows],
                 "excluded": [e.model_dump() for e in EXCLUDED],
+                "verdicts": verdict_column(rows),
             },
             indent=2,
         )

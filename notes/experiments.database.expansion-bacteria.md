@@ -714,3 +714,7 @@ and the block is measured rather than assumed. Full record:
 
 No schema change, so `scripts/schema_impact_check.py --base origin/main` reports no
 contract changes and no served dataset is staled.
+
+## 2026.10.10 - A verdict column rendered from the candidate store
+
+`build_bacteria_candidate_datasets_table.py` now writes `tables/verdicts.tex` (rank, row, candidate-gate verdict, decision date) and a `verdicts` map in the JSON dump, both read from `database/candidates/` through `torchcell.candidates.store.verdicts_by_row`. No row literal changed and `sort_key` never reads a verdict (decision 7 of [[plan.dataset-admission-pipeline.2026.10.10]]). Measured: the JSON dump minus the new `verdicts` key is identical to the one `origin/main`'s script writes, and the printed summary lines are identical; every row reads `no verdict` until the re-audit writes the first verdicts. Gate design: [[torchcell.candidates.gates]].

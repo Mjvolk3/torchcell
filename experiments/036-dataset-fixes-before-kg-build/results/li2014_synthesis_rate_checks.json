@@ -1,0 +1,3360 @@
+{
+  "overlap": {
+    "ProteinTurnoverGupta2024Dataset": {
+      "max_shared_keys": 2657,
+      "pairs": [
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 0,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2395,
+          "spearman": -0.0961
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 0,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2484,
+          "spearman": -0.1164
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 0,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1972,
+          "spearman": -0.0547
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 1,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2386,
+          "spearman": -0.1052
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 1,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2530,
+          "spearman": -0.1053
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 1,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1939,
+          "spearman": -0.0204
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 2,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2222,
+          "spearman": -0.0168
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 2,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2343,
+          "spearman": 0.0203
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 2,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1879,
+          "spearman": 0.0344
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 3,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2464,
+          "spearman": -0.0312
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 3,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2657,
+          "spearman": -0.006
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 3,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1974,
+          "spearman": 0.0189
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 4,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2309,
+          "spearman": -0.0632
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 4,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2452,
+          "spearman": -0.0262
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 4,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1921,
+          "spearman": 0.0277
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 5,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2381,
+          "spearman": -0.1264
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 5,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2528,
+          "spearman": -0.1123
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 5,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1923,
+          "spearman": -0.0313
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 6,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2391,
+          "spearman": -0.0787
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 6,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2542,
+          "spearman": -0.0574
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 6,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1929,
+          "spearman": 0.0301
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 7,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2284,
+          "spearman": 0.0113
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 7,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2399,
+          "spearman": 0.0368
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 7,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1909,
+          "spearman": 0.0952
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 8,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2376,
+          "spearman": -0.064
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 8,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2516,
+          "spearman": -0.0575
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 8,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1962,
+          "spearman": 0.0012
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 9,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2272,
+          "spearman": -0.0001
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 9,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2397,
+          "spearman": 0.0492
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 9,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1907,
+          "spearman": 0.0591
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 10,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2254,
+          "spearman": -0.0027
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 10,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2389,
+          "spearman": 0.0405
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 10,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1889,
+          "spearman": 0.0493
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 11,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2289,
+          "spearman": -0.0451
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 11,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2420,
+          "spearman": 0.0029
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 11,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1908,
+          "spearman": 0.0366
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 12,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2204,
+          "spearman": -0.0753
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 12,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2331,
+          "spearman": -0.0519
+        },
+        {
+          "compared_label": "degradation_rate",
+          "compared_record": 12,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1880,
+          "spearman": -0.0283
+        }
+      ],
+      "records": 13,
+      "spearman_max": 0.0952,
+      "spearman_min": -0.1264,
+      "total_identical_values": 0
+    },
+    "ProteomeBrunk2016Dataset": {
+      "max_shared_keys": 58,
+      "pairs": [
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7183
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6425
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7137
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5936
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6328
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6481
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6037
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6352
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6512
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.579
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6393
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6261
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.562
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6383
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.611
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5592
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6332
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6072
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5482
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6396
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5936
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5469
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6365
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5953
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5454
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.634
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5964
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5431
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6325
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5948
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7018
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6567
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7012
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.585
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6309
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6364
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5729
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6312
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6256
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5592
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6318
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6167
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5489
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6273
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6018
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5496
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6296
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6072
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5505
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6348
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6048
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5554
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6302
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6146
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5383
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6252
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5987
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5375
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6245
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5877
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6281
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5824
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6941
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5534
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6419
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6171
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5247
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6348
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5939
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5713
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6277
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.625
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5316
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6404
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5935
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.522
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6367
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5897
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5144
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.629
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5792
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5137
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6363
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5814
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 28,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5094
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 28,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6307
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 28,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5743
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 29,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5126
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 29,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6378
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 29,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5781
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 30,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6199
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 30,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5964
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 30,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.683
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 31,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6005
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 31,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5725
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 31,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6796
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 32,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5786
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 32,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5729
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 32,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6692
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 33,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.56
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 33,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5701
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 33,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6558
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 34,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.568
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 34,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6278
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 34,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6182
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 35,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5592
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 35,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6135
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 35,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.651
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 36,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5328
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 36,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6109
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 36,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6303
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 37,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5357
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 37,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6145
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 37,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6291
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 38,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5131
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 38,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6023
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 38,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.606
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 39,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.485
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 39,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6063
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 39,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5823
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 40,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6669
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 40,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6246
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 40,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7082
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 41,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5531
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 41,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6271
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 41,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6227
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 42,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5312
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 42,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6445
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 42,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5947
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 43,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5209
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 43,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6277
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 43,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5962
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 44,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5117
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 44,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6273
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 44,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5859
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 45,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5752
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 45,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6317
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 45,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6292
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 46,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5131
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 46,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6285
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 46,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5823
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 47,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5108
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 47,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6237
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 47,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5735
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 48,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5036
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 48,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6229
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 48,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5742
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 49,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4956
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 49,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6232
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 49,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5646
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 50,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5653
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 50,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5112
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 50,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.623
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 51,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4974
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 51,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5804
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 51,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5488
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 52,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4951
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 52,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.589
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 52,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5463
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 53,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4901
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 53,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5899
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 53,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5376
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 54,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4908
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 54,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.582
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 54,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5364
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 55,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4953
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 55,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5846
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 55,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5411
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 56,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5682
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 56,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6315
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 56,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6159
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 57,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4949
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 57,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5885
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 57,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5406
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 58,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4905
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 58,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5971
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 58,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5354
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 59,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4836
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 59,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5911
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 59,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5264
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 60,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6346
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 60,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5827
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 60,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6572
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 61,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5055
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 61,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5987
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 61,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5614
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 62,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4778
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 62,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5905
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 62,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5266
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 63,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4647
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 63,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5867
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 63,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5183
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 64,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4564
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 64,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5812
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 64,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5086
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 65,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4537
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 65,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5783
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 65,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5017
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 66,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4472
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 66,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5817
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 66,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.4982
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 67,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5644
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 67,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6289
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 67,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6167
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 68,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.4474
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 68,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5758
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 68,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.496
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 69,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.452
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 69,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.5768
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 69,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.5022
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 70,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.8265
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 70,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.802
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 70,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.8547
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 71,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7064
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 71,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.8165
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 71,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7314
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 72,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7026
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 72,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.811
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 72,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7244
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 73,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6997
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 73,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.8136
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 73,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7205
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 74,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.705
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 74,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.8137
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 74,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7261
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 75,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.705
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 75,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.812
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 75,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7213
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 76,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7011
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 76,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.8154
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 76,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7187
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 77,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.7077
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 77,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.815
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 77,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7246
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 78,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5729
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 78,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6305
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 78,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6227
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 79,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6974
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 79,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.8079
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 79,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.7199
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 80,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.6944
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 80,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 58,
+          "spearman": 0.6536
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 80,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 52,
+          "spearman": 0.6885
+        }
+      ],
+      "records": 81,
+      "spearman_max": 0.8547,
+      "spearman_min": 0.4472,
+      "total_identical_values": 0
+    },
+    "ProteomeIshii2007Dataset": {
+      "max_shared_keys": 57,
+      "pairs": [
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3768
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.593
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3942
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3261
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.544
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3435
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.3534
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.5872
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.3644
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4005
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.6331
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4149
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3528
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.5655
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.375
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4053
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.6109
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4325
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3226
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.5897
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3424
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3539
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.6048
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3693
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3792
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.6024
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.403
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4515
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.6618
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4732
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.35
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5464
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3545
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.362
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.5648
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3642
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.335
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.5566
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3616
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3264
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5058
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.329
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4255
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5957
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 14,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4304
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3379
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5507
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 15,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3468
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3455
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.5237
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 16,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.3505
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4014
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.6295
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 17,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.4343
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4068
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.6636
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 18,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4281
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.526
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.7528
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 19,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 56,
+          "spearman": 0.5606
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5267
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.7761
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 20,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5708
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3877
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.6551
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 21,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.4025
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3434
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.5781
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 22,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.3664
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3257
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.5552
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 23,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3404
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3403
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.6178
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 24,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 54,
+          "spearman": 0.3621
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.417
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.667
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 25,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 55,
+          "spearman": 0.435
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 53,
+          "spearman": 0.3591
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 53,
+          "spearman": 0.6955
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 26,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 53,
+          "spearman": 0.3932
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.3048
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.549
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 27,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 57,
+          "spearman": 0.316
+        }
+      ],
+      "records": 28,
+      "spearman_max": 0.7761,
+      "spearman_min": 0.3048,
+      "total_identical_values": 0
+    },
+    "ProteomeSchmidt2016Dataset": {
+      "max_shared_keys": 2279,
+      "pairs": [
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.7324
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.7812
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 0,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7501
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6321
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8173
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 1,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.6944
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1909,
+          "spearman": 0.6238
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1997,
+          "spearman": 0.8251
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 2,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1719,
+          "spearman": 0.6802
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6136
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8033
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 3,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.6745
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6569
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8202
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 4,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7064
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1909,
+          "spearman": 0.6676
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1997,
+          "spearman": 0.8472
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 5,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1719,
+          "spearman": 0.7118
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6469
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8198
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 6,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7022
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6481
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8262
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 7,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7036
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6591
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8325
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 8,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7094
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.663
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8224
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 9,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7096
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6554
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.827
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 10,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7049
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6813
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8334
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 11,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7214
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2167,
+          "spearman": 0.6592
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 2279,
+          "spearman": 0.8367
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 12,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1881,
+          "spearman": 0.7155
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1909,
+          "spearman": 0.6639
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS minimal, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1997,
+          "spearman": 0.8386
+        },
+        {
+          "compared_label": "protein_abundance",
+          "compared_record": 13,
+          "li_medium": "MOPS complete without methionine, 0.2% glucose (Li 2014)",
+          "n_identical_values": 0,
+          "n_shared_keys": 1719,
+          "spearman": 0.7132
+        }
+      ],
+      "records": 14,
+      "spearman_max": 0.8472,
+      "spearman_min": 0.6136,
+      "total_identical_values": 0
+    },
+    "bw25113_to_mg1655_mapped_tags": 4402
+  },
+  "round_trip": {
+    "FluxIshii2007Dataset": {
+      "re_serialized_differently": 0,
+      "records": 28
+    },
+    "IsoprenolTiterDeSiqueira2025Dataset": {
+      "not_valid_under_this_branch": "1 validation error for ProductTiterExperiment",
+      "re_serialized_differently": 0,
+      "records": 0
+    },
+    "MetabolomeIshii2007Dataset": {
+      "re_serialized_differently": 0,
+      "records": 28
+    },
+    "MetabolomeSchastnaya2021Dataset": {
+      "re_serialized_differently": 0,
+      "records": 29
+    },
+    "ProteinFoldChangeCaglar2017Dataset": {
+      "re_serialized_differently": 0,
+      "records": 8
+    },
+    "ProteinTurnoverGupta2024Dataset": {
+      "re_serialized_differently": 0,
+      "records": 13
+    },
+    "ProteomeCaglar2017Dataset": {
+      "re_serialized_differently": 0,
+      "records": 105
+    },
+    "ProteomeDeSiqueira2025Dataset": {
+      "re_serialized_differently": 0,
+      "records": 17
+    },
+    "ProteomeIshii2007Dataset": {
+      "re_serialized_differently": 0,
+      "records": 28
+    },
+    "ProteomeLog10PercentDeSiqueira2025Dataset": {
+      "re_serialized_differently": 0,
+      "records": 17
+    },
+    "ProteomePercentDeSiqueira2025Dataset": {
+      "re_serialized_differently": 0,
+      "records": 17
+    },
+    "PutidaPrecise321Lim2022Dataset": {
+      "re_serialized_differently": 0,
+      "records": 180
+    },
+    "RnaseqCaglar2017Dataset": {
+      "re_serialized_differently": 0,
+      "records": 152
+    }
+  }
+}

@@ -949,3 +949,11 @@ sibling is additive: `schema_impact_check --base origin/main` reports 0 breaking
 the usual stale-via-`ExperimentType` set. The ontology moves to 37 nodes and 58 mermaid
 data lines; the RNA-seq verifier gains a `number_fraction` branch (L2 values in [0, 1],
 L3 `fraction_sum_at_most_one`).
+
+## 2026.10.10 - A protein synthesis-rate leaf for releases with no degradation rate (#857)
+
+`ProteinSynthesisRatePhenotype` with its `ProteinSynthesisRateExperiment` / `...Reference` pair (pinning `AssemblyReferenceGenome`), the `SynthesisRateUnit` enum, and the `protein synthesis rate phenotype` graph class under `phenotypic feature`. First consumer: Li 2014 ribosome-profiling synthesis rates, [[torchcell.datasets.ecoli.li2014]].
+
+- Why a sibling and not an optional `ProteinTurnoverPhenotype.degradation_rate`: the turnover class's primary label is the degradation rate, and an optional one would make `label_name` switch per record, so the lane would mean two things.
+- `rate_unit` types the time basis. A rate per generation requires `generation_time_minutes`, since only the doubling time converts it to a rate per hour.
+- Schema impact vs `origin/main`: 0 breaking; nine datasets stale only through the grown unions, and their stored records re-serialize identically (0 of 622 records differ, measured in [[experiments.036-dataset-fixes-before-kg-build.scripts.li2014_synthesis_rate_checks]]).

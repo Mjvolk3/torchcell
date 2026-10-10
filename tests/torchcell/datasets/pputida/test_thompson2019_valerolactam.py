@@ -20,8 +20,9 @@ artifacts, resolve every gene symbol against the deposited KT2440 annotation, an
 L0 to L4 over both built stores. They are skipped unless the mirror, the KT2440 tier
 cache and the stores are present.
 
-Derived expectations for the pinned bytes: 4 titer records (the 24 h column; the four
-48 h cells are refused for want of a reference) and 9 growth records (Table S1 in full,
+Derived expectations for the pinned bytes: 8 titer records (four strains at 24 and
+48 h; the 48 h wild type is a left-censored floor of 0.1548953125 mg/L, #867) and 9
+growth records (Table S1 in full,
 three strains x three carbon sources, three of them released zeros). Six gene symbols
 reach a locus: five through the annotation and ``davT`` through the GOA file, at
 ``PP_0214``.
@@ -44,6 +45,7 @@ import torchcell.datasets.pputida.thompson2019_valerolactam as vl
 from torchcell.datamodels.media import MEDIA_LIBRARY
 from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperiment,
+    Censoring,
     ConcentrationUnit,
     MeasurementType,
     PhysicalFactor,
@@ -227,27 +229,63 @@ def test_a_rate_before_any_strain_label_stops_the_reader(tmp_path: Path) -> None
 
 
 # --------------------------------------------------------------------------- #
-# The released titers, and the four that are refused
+# The released titers, all eight stored, one of them a bound
 # --------------------------------------------------------------------------- #
-def test_the_stated_titers_are_eight_cells_of_which_four_are_stored() -> None:
-    """Four strains x two sampling times; the 24 h column is the stored family."""
+def test_the_stated_titers_are_eight_cells_and_all_eight_are_stored() -> None:
+    """Four strains x two sampling times; the 48 h wild type is the one bound."""
     assert len(vl.TITER_CELLS) == 8
-    assert vl.EXPECTED_TITER_RECORDS == 4
-    stored = [c for c in vl.TITER_CELLS if c.hours in vl.TITER_HOURS_STORED]
-    assert [(c.strain, c.titer_mg_per_l) for c in stored] == [
-        ("KT2440", 0.43),
-        ("ΔoplBA", 4.47),
-        ("ΔoplBAΔdavT", 19.29),
-        ("ΔoplBAΔdavTΔalr", 63.66),
-    ]
-    refused = [c for c in vl.TITER_CELLS if c.hours not in vl.TITER_HOURS_STORED]
-    assert [(c.strain, c.titer_mg_per_l) for c in refused] == [
-        ("KT2440", None),
-        ("ΔoplBA", 9.27),
-        ("ΔoplBAΔdavT", 85.19),
-        ("ΔoplBAΔdavTΔalr", 91.97),
+    assert vl.EXPECTED_TITER_RECORDS == 8
+    assert vl.TITER_HOURS_STORED == (24.0, 48.0)
+    assert [
+        (c.strain, c.hours, c.stored_titer_mg_per_l, c.censoring)
+        for c in vl.TITER_CELLS
+    ] == [
+        ("KT2440", 24.0, 0.43, Censoring.uncensored),
+        ("KT2440", 48.0, 0.1548953125, Censoring.left),
+        ("ΔoplBA", 24.0, 4.47, Censoring.uncensored),
+        ("ΔoplBA", 48.0, 9.27, Censoring.uncensored),
+        ("ΔoplBAΔdavT", 24.0, 19.29, Censoring.uncensored),
+        ("ΔoplBAΔdavT", 48.0, 85.19, Censoring.uncensored),
+        ("ΔoplBAΔdavTΔalr", 24.0, 63.66, Censoring.uncensored),
+        ("ΔoplBAΔdavTΔalr", 48.0, 91.97, Censoring.uncensored),
     ]
     assert vl.WT_48H_NOT_DETECTED.value == "not detected"
+
+
+def test_the_floor_is_the_calibration_floor_times_the_quench_times_the_molar_mass() -> (
+    None
+):
+    """0.78125 uM in the vial x 2 (equal-volume methanol) x 99.133 g/mol / 1000."""
+    assert vl.CALIBRATION_FLOOR_UM.value == 0.78125
+    assert "0.78125\u202fμM to 100\u202fμM" in vl.CALIBRATION_FLOOR_UM.quote
+    assert vl.QUENCH_DILUTION.value == 2.0
+    assert "an equal volume of ice cold methanol" in vl.QUENCH_DILUTION.quote
+    assert vl.TITER_FLOOR_MG_PER_L == 0.78125 * 2.0 * 99.133 / 1000.0
+    assert round(vl.TITER_FLOOR_MG_PER_L, 10) == 0.1548953125
+    # C5H9NO by the IUPAC standard atomic weights, which is what rdkit's MolWt sums
+    assert round(5 * 12.011 + 9 * 1.008 + 14.007 + 15.999, 3) == 99.133
+    # every stated number lies above the floor, as a quantified value must
+    assert all(
+        cell.titer_mg_per_l > vl.TITER_FLOOR_MG_PER_L
+        for cell in vl.TITER_CELLS
+        if cell.titer_mg_per_l is not None
+    )
+
+
+def test_a_cell_whose_number_and_censoring_disagree_is_refused() -> None:
+    """A bound states no number, and a stated cell states one."""
+    with pytest.raises(ValueError, match="states a number"):
+        vl.TiterCell(
+            strain="KT2440",
+            hours=48.0,
+            titer_mg_per_l=0.1,
+            quote="q",
+            censoring=Censoring.left,
+        ).stored_titer_mg_per_l
+    with pytest.raises(ValueError, match="states no titer"):
+        vl.TiterCell(
+            strain="KT2440", hours=48.0, titer_mg_per_l=None, quote="q"
+        ).stored_titer_mg_per_l
 
 
 def test_every_stated_titer_is_in_the_quote_its_cell_cites() -> None:
@@ -280,6 +318,15 @@ def test_the_titer_phenotype_gaps_every_statistic_the_paper_withholds() -> None:
     }
     assert phenotype.product.name == "valerolactam"
     assert [gap.field for gap in phenotype.product.provenance_gaps] == ["inchikey"]
+    assert phenotype.titer_censoring is Censoring.uncensored
+
+
+def test_the_undetected_titer_is_a_left_censored_floor_with_no_error() -> None:
+    """The 48 h wild type: the floor it lies below, flagged, and no spread."""
+    phenotype = vl.titer_phenotype(vl.TITER_FLOOR_MG_PER_L, Censoring.left)
+    assert phenotype.titer == vl.TITER_FLOOR_MG_PER_L
+    assert phenotype.titer_censoring is Censoring.left
+    assert (phenotype.titer_se, phenotype.titer_uncertainty) == (None, None)
 
 
 def test_the_growth_phenotype_is_an_absolute_rate_with_no_replicate_count() -> None:
@@ -750,10 +797,10 @@ def built_stores(
     return titer_root, growth_root
 
 
-def test_the_titer_store_holds_the_24_hour_column_and_ledgers_the_refusals(
+def test_the_titer_store_holds_both_sampling_times_and_drops_nothing(
     built_stores: tuple[str, str],
 ) -> None:
-    """Four records, four refused cells, and the arithmetic written out."""
+    """Eight records, one of them left-censored, and the arithmetic written out."""
     from torchcell.verification.runners import load_records
 
     titer_root, _ = built_stores
@@ -761,16 +808,36 @@ def test_the_titer_store_holds_the_24_hour_column_and_ledgers_the_refusals(
     assert len(records) == vl.EXPECTED_TITER_RECORDS
     for record in records:
         ProductTiterExperiment.model_validate(record["experiment"])
-        assert record["experiment"]["environment"]["duration_hours"] == 24.0
+    assert (
+        sorted(
+            record["experiment"]["environment"]["duration_hours"] for record in records
+        )
+        == [24.0] * 4 + [48.0] * 4
+    )
+    censored = [
+        record["experiment"]["phenotype"]
+        for record in records
+        if record["experiment"]["phenotype"]["titer_censoring"] == "left"
+    ]
+    assert [(p["titer"], p["titer_se"]) for p in censored] == [(0.1548953125, None)]
     ledger = pd.read_csv(osp.join(titer_root, "preprocess", "titer_rows.csv"))
-    assert sorted(ledger["titer_mg_per_l"]) == [0.43, 4.47, 19.29, 63.66]
-    refused = pd.read_csv(osp.join(titer_root, "preprocess", "refused_titers.csv"))
-    assert list(refused["hours"]) == [48.0] * 4
+    assert sorted(ledger["stored_titer_mg_per_l"]) == [
+        0.1548953125,
+        0.43,
+        4.47,
+        9.27,
+        19.29,
+        63.66,
+        85.19,
+        91.97,
+    ]
+    assert list(ledger["titer_censoring"]).count("left") == 1
+    assert not Path(titer_root, "preprocess", "refused_titers.csv").exists()
     accounting = json.loads(
         Path(titer_root, "preprocess", "build_accounting.json").read_text()
     )
-    assert (accounting["kept_records"], accounting["dropped_records"]) == (4, 4)
-    assert accounting["rules"][0]["rule"] == "no_released_reference_titer_at_this_time"
+    assert (accounting["kept_records"], accounting["dropped_records"]) == (8, 0)
+    assert accounting["rules"] == []
     assert accounting["symbol_locus_tags"]["davT"] == "PP_0214"
     assert accounting["goa_resolved"][0]["locus_tag"] == "PP_0214"
 
@@ -778,14 +845,17 @@ def test_the_titer_store_holds_the_24_hour_column_and_ledgers_the_refusals(
 def test_every_titer_record_is_measured_against_the_wild_type_at_the_same_time(
     built_stores: tuple[str, str],
 ) -> None:
-    """The reference is the 0.43 mg/L wild-type culture at 24 h, for all four records."""
+    """24 h records against 0.43 mg/L; 48 h records against the left-censored floor."""
     from torchcell.verification.runners import load_records
 
     titer_root, _ = built_stores
+    expected = {24.0: (0.43, "uncensored"), 48.0: (0.1548953125, "left")}
     for record in load_records(titer_root):
         reference = record["reference"]
-        assert reference["phenotype_reference"]["titer"] == 0.43
-        assert reference["environment_reference"]["duration_hours"] == 24.0
+        hours = record["experiment"]["environment"]["duration_hours"]
+        phenotype = reference["phenotype_reference"]
+        assert (phenotype["titer"], phenotype["titer_censoring"]) == expected[hours]
+        assert reference["environment_reference"]["duration_hours"] == hours
         assert reference["genome_reference"]["strain"] == "KT2440"
         assert reference["genome_reference"]["assembly_accession"] == "GCA_000007565.2"
 
@@ -853,6 +923,28 @@ def test_the_titer_l4_refuses_a_store_whose_value_left_its_quote(
     monkeypatch.setattr(vl, "TITER_CELLS", moved)
     with pytest.raises(AssertionError, match="is not in the quote"):
         vl.verify_titer_build(titer_root, os.environ["DATA_ROOT"])
+
+
+def test_the_titer_l4_refuses_a_store_whose_censoring_left_the_paper(
+    built_stores: tuple[str, str], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A bound the paper does not state, or a floor whose sources moved, is caught."""
+    titer_root, _ = built_stores
+    data_root = os.environ["DATA_ROOT"]
+    stated = vl.TITER_CELLS
+    flipped = tuple(
+        cell.model_copy(update={"censoring": Censoring.right})
+        if cell.strain == "KT2440" and cell.hours == 48.0
+        else cell
+        for cell in stated
+    )
+    monkeypatch.setattr(vl, "TITER_CELLS", flipped)
+    with pytest.raises(AssertionError, match="is stored as left, the paper states"):
+        vl.verify_titer_build(titer_root, data_root)
+    monkeypatch.setattr(vl, "TITER_CELLS", stated)
+    monkeypatch.setattr(vl, "_Q_QUENCH", "a quench the paper never wrote")
+    with pytest.raises(AssertionError, match="is not verbatim in the paper"):
+        vl.verify_titer_build(titer_root, data_root)
 
 
 def test_the_growth_l4_refuses_a_record_table_s1_does_not_release(

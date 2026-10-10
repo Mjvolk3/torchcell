@@ -24,24 +24,25 @@ served before writing anything:
   thompsonOmicsdrivenIdentificationElimination2019_release_inventory.py``.
 - **Valerolactam titer: one dataset class here,
   :class:`ValerolactamTiterThompson2019Dataset`.** The Results state eight titers, four
-  strains at 24 and 48 h, in prose (Fig. 3B has no source-data file).
+  strains at 24 and 48 h, in prose (Fig. 3B has no source-data file), and all eight
+  are stored.
 - **Maximal growth rate: one dataset class here,
   :class:`LactamGrowthRateThompson2019Dataset`.** Supplementary Table S1 releases nine
   rates, three strains on three carbon sources.
 
-FOUR TITERS ARE STORED AND FOUR ARE REFUSED, AND THE REFUSAL IS A SCHEMA FINDING. The 24 h
-family stores all four strains, and its reference is the wild-type producer's own 24 h
-titer (0.43 mg/L). The 48 h family has no reference number: the paper states "no
-valerolactam could be detected after 48 h" for the wild type, which is a value below
-the assay's detection floor, not a zero and not a missing measurement.
-``ProductTiterExperimentReference`` requires a ``phenotype_reference`` whose ``titer`` is
-a required non-negative float, and ``ProductTiterPhenotype`` has no censoring field, so
-the 48 h wild type cannot be written as anything true and the three 48 h engineered
-titers (9.27, 85.19, 91.97 mg/L) have no denominator. Writing 0.0 would state a
-measurement nobody made; borrowing the 24 h reference would compare two different
-sampling times. The Kang 2026 and Yunus 2026 loaders refuse a titer family without a
-released reference for the same reason. The four refusals are counted in
-``preprocess/build_accounting.json`` and the schema gap is filed as an issue.
+ALL EIGHT TITERS ARE STORED, AND ONE IS A BOUND (#867). Each sampling time has its own
+reference, the wild-type producer at that time. At 24 h it is a number (0.43 mg/L). At
+48 h the paper states "no valerolactam could be detected after 48 h", which is a value
+below the assay's floor, not a zero and not a missing measurement. It is stored as a
+LEFT-CENSORED titer (``ProductTiterPhenotype.titer_censoring = left``) whose value is
+that floor expressed in the culture: the lowest calibration standard (0.78125 uM, which
+the curve quantified, so anything undetected lies below it in the vial) times the
+twofold methanol quench the Methods state, times valerolactam's molar mass
+(:data:`TITER_FLOOR_MG_PER_L`, 0.1549 mg/L). The three engineered 48 h titers (9.27,
+85.19, 91.97 mg/L) are measured against that bound, and every stated number is
+``uncensored``. Before #867 the schema had no censoring slot on a titer and the 48 h
+family was refused; writing 0.0 would have stated a measurement nobody made, and
+borrowing the 24 h reference would have compared two sampling times.
 
 THE davT LOCUS IS NOT IN THE PAPER OR THE ANNOTATION, AND THE GENOMES TIER CLOSES IT.
 The paper names no locus tag anywhere. ``oplB``, ``oplA``, ``alr``, ``davB`` and ``davA``
@@ -111,6 +112,7 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneNamespace,
     BacterialReferenceStrain,
+    Censoring,
     Compound,
     Concentration,
     ConcentrationUnit,
@@ -348,6 +350,10 @@ _Q_CALIBRATION = (
     "Lactams were quantified by comparison with 8-point calibration curves of authentic "
     "chemical standards from 0.78125 μM to 100 μM."
 )
+_Q_QUENCH = (
+    "with 200\u202fμL of culture being quenched with an equal volume of ice cold "
+    "methanol and then stored at −20\u202f°C until analysis"
+)
 _Q_ABSTRACT_UNDETECTABLE = (
     "Deletion of oplBA, as well as pathways that compete for precursors L-lysine or "
     "5-aminovalerate, increased the titer of valerolactam from undetectable after "
@@ -428,6 +434,7 @@ PAPER_QUOTES: tuple[str, ...] = (
     _Q_PLASMID,
     _Q_QUANTIFICATION,
     _Q_CALIBRATION,
+    _Q_QUENCH,
     _Q_ABSTRACT_UNDETECTABLE,
     _Q_STRAIN_TABLE,
     _Q_DAVT_ROLE,
@@ -522,6 +529,25 @@ WT_48H_NOT_DETECTED = _paper(
     note="a value below the 8-point calibration floor ('" + _Q_CALIBRATION + "'), "
     "which the abstract restates as 'undetectable'; not a zero",
 )
+#: The lowest calibration standard, in uM in the injected sample. The curve quantified
+#: it, so a sample in which nothing was detected holds less than this in the vial.
+CALIBRATION_FLOOR_UM = _paper(
+    0.78125,
+    _Q_CALIBRATION,
+    page=_METHODS_PRODUCTION,
+    note="the lower end of the 8-point curve; the paper states no separate limit of "
+    "detection, so the lowest standard the curve quantified is the floor a "
+    "'not detected' sample lies below",
+)
+#: The culture is diluted twofold before analysis: equal volumes of culture and methanol.
+QUENCH_DILUTION = _paper(
+    2.0,
+    _Q_QUENCH,
+    page=_METHODS_PRODUCTION,
+    note="'an equal volume of ice cold methanol' doubles the volume, so a vial "
+    "concentration is half the culture's; the Methods state no other dilution step",
+)
+
 RBTNSEQ_SUBSUMED = _paper(
     {"valerolactam_rbtnseq_experiments": 2, "release": "http://fit.genomics.lbl.gov"},
     _Q_RBTNSEQ_TWO,
@@ -539,6 +565,20 @@ RBTNSEQ_SUBSUMED = _paper(
 #: what would join this product to the compendium's two valerolactam samples.
 VALEROLACTAM_INCHIKEY = "XUWHAWMETYGRKB-UHFFFAOYSA-N"
 PRODUCT_NAME = "valerolactam"
+#: Average molar mass of valerolactam (C5H9NO), g/mol, DERIVED: rdkit 2026.03.6
+#: ``Descriptors.MolWt`` over ``O=C1CCCCN1``, which is also the IUPAC standard atomic
+#: weights summed by hand (5 x 12.011 + 9 x 1.008 + 14.007 + 15.999). The paper states
+#: none; it converts the uM calibration floor into the mg/L the titers are stated in.
+VALEROLACTAM_MOLAR_MASS_G_PER_MOL = 99.133
+#: The 48 h wild type's left-censoring bound, in mg/L of CULTURE: the calibration floor
+#: (uM in the vial) times the quench dilution, times the molar mass (ug/L per uM),
+#: over 1000 (ug/L to mg/L). 0.78125 x 2 x 99.133 / 1000 = 0.1548953125 mg/L.
+TITER_FLOOR_MG_PER_L = (
+    float(CALIBRATION_FLOOR_UM.value)
+    * float(QUENCH_DILUTION.value)
+    * VALEROLACTAM_MOLAR_MASS_G_PER_MOL
+    / 1000.0
+)
 
 
 # --------------------------------------------------------------------------- #
@@ -602,17 +642,35 @@ class TiterCell(BaseModel):
 
     strain: str
     hours: float
+    #: The stated number in mg/L; None for the one cell the paper states as undetected.
     titer_mg_per_l: float | None
     quote: str
+    censoring: Censoring = Censoring.uncensored
+
+    @property
+    def stored_titer_mg_per_l(self) -> float:
+        """The number a record stores: the stated titer, or the floor of a bound."""
+        if self.censoring == Censoring.left:
+            if self.titer_mg_per_l is not None:
+                raise ValueError(f"{self.strain}@{self.hours:g}h states a number")
+            return TITER_FLOOR_MG_PER_L
+        if self.titer_mg_per_l is None:
+            raise ValueError(f"{self.strain}@{self.hours:g}h states no titer")
+        return self.titer_mg_per_l
 
 
-#: The eight titers the Results state. The 24 h family is stored; the 48 h family is
-#: refused, because its reference (the wild type at 48 h) is below the detection floor
-#: and ``ProductTiterPhenotype.titer`` is a required non-negative float with no
-#: censoring field (:data:`TITER_48H_REFUSED`).
+#: The eight titers the Results state, all stored. The wild type at 48 h is the one
+#: bound: "no valerolactam could be detected", so it is left-censored at
+#: :data:`TITER_FLOOR_MG_PER_L` (:data:`TITER_48H_CENSORED`).
 TITER_CELLS: tuple[TiterCell, ...] = (
     TiterCell(strain="KT2440", hours=24.0, titer_mg_per_l=0.43, quote=_Q_WT_OPLBA),
-    TiterCell(strain="KT2440", hours=48.0, titer_mg_per_l=None, quote=_Q_WT_OPLBA),
+    TiterCell(
+        strain="KT2440",
+        hours=48.0,
+        titer_mg_per_l=None,
+        quote=_Q_WT_OPLBA,
+        censoring=Censoring.left,
+    ),
     TiterCell(strain="ΔoplBA", hours=24.0, titer_mg_per_l=4.47, quote=_Q_WT_OPLBA),
     TiterCell(strain="ΔoplBA", hours=48.0, titer_mg_per_l=9.27, quote=_Q_WT_OPLBA),
     TiterCell(
@@ -630,20 +688,20 @@ TITER_CELLS: tuple[TiterCell, ...] = (
 )
 #: The strain every titer record's reference is, and the sampling time it is read at.
 TITER_REFERENCE_STRAIN = "KT2440"
-#: Sampling times, in hours, whose records are written.
-TITER_HOURS_STORED: tuple[float, ...] = (24.0,)
-TITER_48H_REFUSED = (
-    "the four 48 h titers are NOT records. ProductTiterExperimentReference requires a "
-    "phenotype_reference and ProductTiterPhenotype.titer is a required non-negative "
-    f"float, and the 48 h reference measurement is '{WT_48H_NOT_DETECTED.value}': the "
-    f"Results state '{_Q_WT_OPLBA}' and the abstract restates it as 'undetectable'. "
-    "That is a value below the 8-point calibration floor, which no field of "
-    "ProductTiterPhenotype can carry (it has no Censoring slot, unlike "
-    "ProteinTurnoverPhenotype). Storing 0.0 would state a measurement nobody made and "
-    "reusing the 24 h reference would compare two sampling times, so the wild type's "
-    "48 h cell and the three engineered 48 h titers that would be measured against it "
-    "are all refused. The sibling Kang 2026 and Yunus 2026 loaders refuse a titer "
-    "family for the same missing-denominator reason"
+#: Sampling times, in hours, whose records are written: both the paper states.
+TITER_HOURS_STORED: tuple[float, ...] = (24.0, 48.0)
+TITER_48H_CENSORED = (
+    f"the wild type's 48 h titer is stored as a LEFT-CENSORED bound. The Results state "
+    f"'{_Q_WT_OPLBA}' and the abstract restates it as 'undetectable', so the measurement "
+    f"is '{WT_48H_NOT_DETECTED.value}': a value below the assay's floor, not a zero. "
+    f"The floor in the vial is the lowest calibration standard, "
+    f"{CALIBRATION_FLOOR_UM.value} uM ('{_Q_CALIBRATION}'); the culture was diluted "
+    f"{QUENCH_DILUTION.value:g}-fold before analysis ('{_Q_QUENCH}'); valerolactam is "
+    f"{VALEROLACTAM_MOLAR_MASS_G_PER_MOL} g/mol (derived from C5H9NO). The stored "
+    f"titer is therefore {TITER_FLOOR_MG_PER_L} mg/L with titer_censoring 'left', the "
+    "48 h reference of the three engineered 48 h titers. Storing 0.0 would state a "
+    "measurement nobody made, and reusing the 24 h reference would compare two "
+    "sampling times"
 )
 
 
@@ -1102,8 +1160,10 @@ def valerolactam() -> Compound:
     return resolved_compound(PRODUCT_NAME)
 
 
-def titer_phenotype(titer_mg_per_l: float) -> ProductTiterPhenotype:
-    """One stated titer in ``ug/mL``, with the typed absences the paper forces.
+def titer_phenotype(
+    titer_mg_per_l: float, censoring: Censoring = Censoring.uncensored
+) -> ProductTiterPhenotype:
+    """One stated titer, or one floor, in ``ug/mL``, with the typed absences the paper forces.
 
     The released numbers are mg/L and 1 mg/L is exactly 1 ug/mL, so no arithmetic is
     applied to a source value. The replicate DESIGN is sourced (n = 3, 95% confidence
@@ -1111,7 +1171,8 @@ def titer_phenotype(titer_mg_per_l: float) -> ProductTiterPhenotype:
     the prose gives only the means. ``ProductTiterPhenotype`` forbids an unlabelled
     uncertainty, so both the number and its type are typed gaps rather than a
     half-filled pair, and ``UncertaintyType.ci95`` takes a half-width this paper never
-    prints.
+    prints. ``censoring`` is ``left`` only for the 48 h wild type, whose stored number is
+    the floor it lies below (:data:`TITER_48H_CENSORED`).
     """
     design_note = (
         "the spread is released only as error bars: Fig. 3B has no source-data file "
@@ -1122,6 +1183,7 @@ def titer_phenotype(titer_mg_per_l: float) -> ProductTiterPhenotype:
         product=valerolactam(),
         titer=titer_mg_per_l,
         titer_unit=ConcentrationUnit.ug_per_ml,
+        titer_censoring=censoring,
         n_samples=int(TITER_REPLICATES.value),
         sample_unit=SampleUnit.biological_replicate,
         quantification_method=str(QUANTIFICATION.value),
@@ -1436,7 +1498,7 @@ def _write_accounting(accounting: BuildAccounting, preprocess_dir: str) -> None:
 # --------------------------------------------------------------------------- #
 # The datasets
 # --------------------------------------------------------------------------- #
-#: Four of the eight stated titers: the 24 h column, every strain.
+#: All eight stated titers: both sampling times, every strain.
 EXPECTED_TITER_RECORDS = sum(
     1 for cell in TITER_CELLS if cell.hours in TITER_HOURS_STORED
 )
@@ -1516,7 +1578,7 @@ class _Thompson2019Dataset(ExperimentDataset):
 
 @register_dataset
 class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
-    """Thompson 2019 valerolactam titers: the 24 h column of the four-strain ladder."""
+    """Thompson 2019 valerolactam titers: the four-strain ladder at 24 and 48 h."""
 
     def __init__(
         self,
@@ -1544,22 +1606,27 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
 
     @post_process
     def process(self) -> None:
-        """Write one titer record per strain at 24 h; refuse the 48 h family."""
+        """Write one titer record per (strain, sampling time), each against its time's WT."""
         resolution = self._prepare()
         reference_genome = assembly_reference(REFERENCE_STRAIN)
         stored = [cell for cell in TITER_CELLS if cell.hours in TITER_HOURS_STORED]
-        refused = [cell for cell in TITER_CELLS if cell.hours not in TITER_HOURS_STORED]
-        baseline = next(
-            cell
+        if len(stored) != len(TITER_CELLS):
+            raise RuntimeError(
+                f"{len(TITER_CELLS) - len(stored)} stated titers fall outside "
+                f"TITER_HOURS_STORED {TITER_HOURS_STORED}"
+            )
+        references = {
+            cell.hours: ProductTiterExperimentReference(
+                dataset_name=self.name,
+                genome_reference=reference_genome,
+                environment_reference=production_environment(cell.hours),
+                phenotype_reference=titer_phenotype(
+                    cell.stored_titer_mg_per_l, cell.censoring
+                ),
+            )
             for cell in stored
-            if cell.strain == TITER_REFERENCE_STRAIN and cell.titer_mg_per_l is not None
-        )
-        reference = ProductTiterExperimentReference(
-            dataset_name=self.name,
-            genome_reference=reference_genome,
-            environment_reference=production_environment(baseline.hours),
-            phenotype_reference=titer_phenotype(float(baseline.titer_mg_per_l or 0.0)),
-        )
+            if cell.strain == TITER_REFERENCE_STRAIN
+        }
         pub = publication()
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -1569,20 +1636,17 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
         rows: list[dict[str, Any]] = []
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for cell in tqdm(stored, desc="thompson2019-valerolactam-titer"):
-                if cell.titer_mg_per_l is None:
-                    raise RuntimeError(
-                        f"{cell.strain} at {cell.hours} h has no stated titer but is in "
-                        "the stored set"
-                    )
                 experiment = ProductTiterExperiment(
                     dataset_name=self.name,
                     genotype=strain_genotype(cell.strain, resolution.locus_tags),
                     environment=production_environment(cell.hours),
-                    phenotype=titer_phenotype(cell.titer_mg_per_l),
+                    phenotype=titer_phenotype(
+                        cell.stored_titer_mg_per_l, cell.censoring
+                    ),
                 )
                 txn.put(
                     f"{idx}".encode(),
-                    self._intern_record(experiment, reference, pub, itxn),
+                    self._intern_record(experiment, references[cell.hours], pub, itxn),
                 )
                 idx += 1
                 rows.append(
@@ -1590,6 +1654,8 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
                         "strain": cell.strain,
                         "hours": cell.hours,
                         "titer_mg_per_l": cell.titer_mg_per_l,
+                        "stored_titer_mg_per_l": cell.stored_titer_mg_per_l,
+                        "titer_censoring": cell.censoring.value,
                         "deletions": " ".join(STRAINS[cell.strain].deletions),
                         "jbei_part_id": STRAINS[cell.strain].jbei_part_id,
                         "quote": cell.quote,
@@ -1601,34 +1667,14 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
         pd.DataFrame(rows).to_csv(
             osp.join(self.preprocess_dir, "titer_rows.csv"), index=False
         )
-        pd.DataFrame(
-            [
-                {
-                    "strain": cell.strain,
-                    "hours": cell.hours,
-                    "titer_mg_per_l": cell.titer_mg_per_l,
-                    "reason": TITER_48H_REFUSED,
-                }
-                for cell in refused
-            ]
-        ).to_csv(osp.join(self.preprocess_dir, "refused_titers.csv"), index=False)
         _write_accounting(
             BuildAccounting(
                 dataset=self.name,
                 source_rows=len(TITER_CELLS),
                 candidate_records=len(TITER_CELLS),
                 kept_records=idx,
-                dropped_records=len(refused),
-                rules=[
-                    DropRule(
-                        rule="no_released_reference_titer_at_this_time",
-                        description=TITER_48H_REFUSED,
-                        n_records=len(refused),
-                        items=tuple(
-                            f"{cell.strain}@{cell.hours:g}h" for cell in refused
-                        ),
-                    )
-                ],
+                dropped_records=0,
+                rules=[],
                 symbol_locus_tags=resolution.locus_tags,
                 goa_resolved=list(resolution.goa),
                 notes=[
@@ -1636,18 +1682,19 @@ class ValerolactamTiterThompson2019Dataset(_Thompson2019Dataset):
                     "Methods grow only plasmid-bearing strains for the titer assay "
                     f"('{_Q_PRODUCER}')",
                     f"the reference of every record is {TITER_REFERENCE_STRAIN} at "
-                    f"{baseline.hours:g} h, {baseline.titer_mg_per_l} mg/L, which is "
-                    "the paper's own fold-change denominator ('a 10-fold increase of "
-                    "production at 24 h')",
+                    "the record's own sampling time: 0.43 mg/L at 24 h, the paper's "
+                    "own fold-change denominator ('a 10-fold increase of production "
+                    "at 24 h'), and a left-censored bound at 48 h",
+                    "censored: " + TITER_48H_CENSORED,
                     "RB-TnSeq is subsumed, not loaded: " + str(RBTNSEQ_SUBSUMED.note),
                 ],
             ),
             self.preprocess_dir,
         )
         log.info(
-            "Thompson2019 valerolactam titer: %d records, %d refused; davT -> %s",
+            "Thompson2019 valerolactam titer: %d records, %d left-censored; davT -> %s",
             idx,
-            len(refused),
+            sum(1 for cell in stored if cell.censoring == Censoring.left),
             resolution.locus_tags["davT"],
         )
 
@@ -1838,7 +1885,8 @@ def verify_titer_build(
             citation_key=CITATION_KEY,
             sha256=PAPER_TEXT.sha256,
             method="valerolactam titer in mg/L by HPLC-QTOF MS, stored verbatim as "
-            "ug/mL: the 24 h column of the four-strain ladder the Results state",
+            "ug/mL: the four-strain ladder at 24 and 48 h the Results state, the 48 h "
+            "wild type as a left-censored floor",
             page=_RESULTS_PRODUCTION,
             retrieved=RETRIEVED_AT,
         ),
@@ -1852,7 +1900,8 @@ def verify_titer_build(
             all(
                 p["titer_unit"] == ConcentrationUnit.ug_per_ml.value for p in phenotypes
             ),
-            detail="1 mg/L == 1 ug/mL exactly, so the stated number is stored verbatim",
+            detail="1 mg/L == 1 ug/mL exactly, so a stated number is stored verbatim; "
+            "the 48 h wild type's floor is derived (TITER_48H_CENSORED)",
         )
     )
     report.add(
@@ -1893,8 +1942,37 @@ def verify_titer_build(
                 == record["experiment"]["environment"]["duration_hours"]
                 for record in records
             ),
-            detail="no record is measured against a different sampling time, which is "
-            "also why the 48 h family is refused",
+            detail="no record is measured against a different sampling time",
+        )
+    )
+    report.add(
+        l3_convention(
+            "only_the_undetected_cell_is_a_bound_and_it_carries_no_error",
+            [
+                (exp["environment"]["duration_hours"], p["titer_censoring"])
+                for exp, p in zip(experiments, phenotypes)
+                if p["titer_censoring"] != Censoring.uncensored.value
+            ]
+            == [(48.0, Censoring.left.value)]
+            and all(
+                p["titer_se"] is None
+                for p in phenotypes
+                if p["titer_censoring"] == Censoring.left.value
+            ),
+            detail="the 48 h wild type is the one left-censored record; every stated "
+            "number is uncensored",
+        )
+    )
+    report.add(
+        l3_convention(
+            "every_stated_titer_lies_above_the_floor",
+            all(
+                p["titer"] > TITER_FLOOR_MG_PER_L
+                for p in phenotypes
+                if p["titer_censoring"] == Censoring.uncensored.value
+            ),
+            detail=f"a quantified value below the {TITER_FLOOR_MG_PER_L} mg/L culture "
+            "floor would contradict the calibration the bound is derived from",
         )
     )
     report.add(_titer_l4(records, data_root))
@@ -1906,7 +1984,12 @@ def verify_titer_build(
 
 
 def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
-    """L4: every stored titer against the quote that states it, re-read from the mirror."""
+    """L4: every stored titer against the quote that states it, re-read from the mirror.
+
+    The censored cell is joined to its floor instead: its quote must state the
+    non-detection, and the calibration and quench quotes the floor is derived from must
+    be verbatim in the same bytes.
+    """
     pinned = raw_file(PAPER_TEXT.relpath)
     path = raw_mirror_dir(data_root) / pinned.relpath
     digest = sha256_file(path)
@@ -1924,13 +2007,33 @@ def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
         strain = _strain_of_record(record, with_plasmid=True)
         hours = experiment["environment"]["duration_hours"]
         cell = stated[(strain, hours)]
-        if cell.titer_mg_per_l is None:
-            raise AssertionError(f"{strain} at {hours} h is stored but states no titer")
         if cell.quote not in text:
             raise AssertionError(
                 f"the quote for {strain} at {hours} h is not verbatim in "
                 f"{PAPER_TEXT.relpath}"
             )
+        if experiment["phenotype"]["titer_censoring"] != cell.censoring.value:
+            raise AssertionError(
+                f"{strain} at {hours} h is stored as "
+                f"{experiment['phenotype']['titer_censoring']}, the paper states "
+                f"{cell.censoring.value}"
+            )
+        if cell.censoring == Censoring.left:
+            for quote in (_Q_CALIBRATION, _Q_QUENCH):
+                if quote not in text:
+                    raise AssertionError(f"{quote!r} is not verbatim in the paper")
+            if f"could be detected after {hours:g}\u202fh" not in cell.quote:
+                raise AssertionError(
+                    f"the {strain} quote does not state a non-detection at {hours:g} h"
+                )
+            shared.append(
+                (
+                    f"{strain}@{hours:g}h",
+                    experiment["phenotype"]["titer"],
+                    cell.stored_titer_mg_per_l,
+                )
+            )
+            continue
         number = f"{cell.titer_mg_per_l} mg/L"
         if number not in cell.quote:
             raise AssertionError(
@@ -1940,7 +2043,7 @@ def _titer_l4(records: list[dict[str, Any]], data_root: str | None) -> Any:
             (
                 f"{strain}@{hours:g}h",
                 experiment["phenotype"]["titer"],
-                cell.titer_mg_per_l,
+                cell.stored_titer_mg_per_l,
             )
         )
     if len(shared) != len(stated):

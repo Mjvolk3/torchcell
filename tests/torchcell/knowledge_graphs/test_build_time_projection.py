@@ -496,6 +496,7 @@ BACTERIAL_DATASETS = {
     "EnvChemgenShiver2016Dataset",
     "EnvChemgenWang2015Dataset",
     "EnvChemgenWang2024Dataset",
+    "EnvMetalTnseqRoyet2025Dataset",
     "FluxIshii2007Dataset",
     "GeneEssentialityGoodall2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
@@ -577,6 +578,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # 110 + 1 (Teteneva W3110) + 6 (#844's six P. putida classes) + 2 (#834's two)
     # + 3 (#826's three bacterial loaders) + 1 (#770's Lim 2025 fold-change loader)
     # + 1 (Wang 2024 rifampicin Tn-seq).
+    # + 1 (row 53, Royet 2025's metal Tn-seq).
     assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

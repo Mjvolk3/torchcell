@@ -75,6 +75,7 @@ from torchcell.adapters import (
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
     EnvChemgenWang2024Adapter,
+    EnvMetalTnseqRoyet2025Adapter,
     FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
@@ -232,6 +233,7 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     MetaboliteProductionPhaseMenasalvas2025Dataset,
     ProteomeMenasalvas2025Dataset,
 )
+from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
@@ -841,6 +843,13 @@ BACTERIAL: list[Bacterial] = [
         MetaboliteProductionPhaseMenasalvas2025Dataset,
         METABOLITE,
         variant=True,
+    ),
+    _case(
+        EnvMetalTnseqRoyet2025Adapter,
+        "royet2025",
+        "pputida_env_metal_tnseq_royet2025",
+        EnvMetalTnseqRoyet2025Dataset,
+        RESPONSE,
     ),
     _case(
         CrispriArrayYunus2026Adapter,

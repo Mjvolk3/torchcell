@@ -47,6 +47,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     EnvChemgenWang2024Adapter,
     EnvChemgenWildenhain2015Adapter,
+    EnvMetalTnseqRoyet2025Adapter,
     FattyAcidXue2025Adapter,
     FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -241,6 +242,7 @@ from torchcell.datasets.pputida.menasalvas2025 import (
     MetaboliteProductionPhaseMenasalvas2025Dataset,
     ProteomeMenasalvas2025Dataset,
 )
+from torchcell.datasets.pputida.royet2025 import EnvMetalTnseqRoyet2025Dataset
 from torchcell.datasets.pputida.yunus2026 import (
     CrispriArrayYunus2026Dataset,
     CrispriDifferentialProteomeYunus2026Dataset,
@@ -457,6 +459,7 @@ dataset_adapter_map: dict[type, type] = {
     MetaboliteProductionPhaseMenasalvas2025Dataset: (
         MetaboliteProductionPhaseMenasalvas2025Adapter
     ),
+    EnvMetalTnseqRoyet2025Dataset: EnvMetalTnseqRoyet2025Adapter,
     CrispriArrayYunus2026Dataset: CrispriArrayYunus2026Adapter,
     CrispriDifferentialProteomeYunus2026Dataset: (
         CrispriDifferentialProteomeYunus2026Adapter

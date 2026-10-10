@@ -231,6 +231,9 @@ from .rapp2026_targeted_adapter import (
 from .rousset2018_adapter import (
     CrispriScreenRousset2018Adapter as CrispriScreenRousset2018Adapter,
 )
+from .royet2025_adapter import (
+    EnvMetalTnseqRoyet2025Adapter as EnvMetalTnseqRoyet2025Adapter,
+)
 from .sameith2015_adapter import (
     DmMicroarraySameith2015Adapter as DmMicroarraySameith2015Adapter,
 )
@@ -456,6 +459,7 @@ pputida_adapters = [
     "MetaboliteGrowthPhaseMenasalvas2025Adapter",
     "MetaboliteProductionPhaseMenasalvas2025Adapter",
     "ProteomeMenasalvas2025Adapter",
+    "EnvMetalTnseqRoyet2025Adapter",
     "CrispriArrayYunus2026Adapter",
     "CrispriDifferentialProteomeYunus2026Adapter",
     "CrispriKnockdownYunus2026Adapter",

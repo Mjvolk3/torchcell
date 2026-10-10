@@ -33,6 +33,8 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # + 3 (#826: Schmidt Table S23, Wang's no-isoprenol column, Lamoureux's growth
     # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 1 (Wang 2024 rifampicin
     # Tn-seq), re-derived from the merged conf and map.
+    # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 1 (row 53, Royet 2025's
+    # metal Tn-seq), re-derived from the merged conf and map.
     assert len(expected) == len(BACTERIAL) == 59 + 1 + 6 + 2 + 3 + 1 + 1
     assert registered_bacterial_classes() == set(expected)
     mapped = {

@@ -122,6 +122,7 @@ datasets:
   - ProteomeMenasalvas2025Dataset
   - MetaboliteGrowthPhaseMenasalvas2025Dataset
   - MetaboliteProductionPhaseMenasalvas2025Dataset
+  - EnvMetalTnseqRoyet2025Dataset
   - CrispriArrayYunus2026Dataset
   - CrispriKnockdownYunus2026Dataset
   - CrispriDifferentialProteomeYunus2026Dataset

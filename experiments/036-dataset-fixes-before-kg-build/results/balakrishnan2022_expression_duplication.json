@@ -1,0 +1,40 @@
+{
+  "balakrishnan_records": 28,
+  "balakrishnan_genes": 4176,
+  "balakrishnan_replicate_log10_pearson": {
+    "c5~c0_1": 0.9898712192979359,
+    "r0~r0_1": 0.9888155528704422,
+    "a2~a2_1": 0.9904364652818678,
+    "c3~c3_1": 0.9928135477477522
+  },
+  "exact_rtol": 1e-06,
+  "stores": {
+    "rnaseq_caglar2017": {
+      "records": 152,
+      "shared_genes": 0,
+      "verdict": "no shared locus: the store is keyed in another strain's namespace, so no record can re-serve a Balakrishnan profile"
+    },
+    "rnaseq_lamoureux2023": {
+      "records": 241,
+      "shared_genes": 4118,
+      "pairs": 6748,
+      "exact_profile_matches": 0,
+      "max_log10_pearson": 0.9184640707147708,
+      "max_pair": {
+        "balakrishnan_sample": "a1",
+        "served_record_index": 212
+      }
+    },
+    "rnaseq_public_k12_lamoureux2023": {
+      "records": 240,
+      "shared_genes": 4176,
+      "pairs": 6720,
+      "exact_profile_matches": 0,
+      "max_log10_pearson": 0.9011301676873159,
+      "max_pair": {
+        "balakrishnan_sample": "a1",
+        "served_record_index": 75
+      }
+    }
+  }
+}

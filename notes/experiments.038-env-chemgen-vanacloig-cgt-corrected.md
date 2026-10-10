@@ -74,3 +74,36 @@ compounds of build 001 (035 round 2, "published" view). The ladder's own per-fol
 split between ridge and kNN on the FCFP4 linear kernel (and once each the all-encoder
 combo and ChemBERTa-2 MTR), so, as on build 001, no encoder or kernel separates from the
 raw count fingerprint.
+
+### Round 2: the two heads on the corrected store, and both sit below ridge
+
+Slurm 3700 (bilinear control, `conf/factorized/r9_control.yaml`, 4 h 10 min) and 3701
+(environment encoder, `r10_envenc.yaml`, 5 h 17 min) on GilaHyper, 2026-10-10, each 15
+configs at PARALLEL=2: five compound-cold folds on each of fold seeds 0, 1 and 2, three
+seeds per fold, 50 epochs keeping the last, fitted on the non-test pool. The protocol is
+035 rounds 9 and 10 unchanged, so the two records compare directly. Centered Spearman per
+held-out compound across strains, 96 compound-evaluations (32 published compounds x 3 fold
+seeds).
+
+| head | seed 0 | seed 1 | seed 2 | three-seed ensemble (median) | mean |
+|---|---|---|---|---|---|
+| bilinear control | 0.311 | 0.305 | 0.301 | **0.312** | 0.295 |
+| environment encoder | 0.258 | 0.275 | 0.288 | 0.297 | 0.276 |
+
+**Both are below the bar.** Nested ridge on FCFP4 counts reads 0.359 on the same 96
+evaluations (round 1, slurm 3374). Paired on compound and fold, the environment encoder
+minus the bilinear control is median -0.036, mean -0.018 with a standard error of 0.013,
+and 37 of 96 evaluations up: the encoder does not beat the control here, and on this store
+neither head reaches ridge.
+
+That is a change of sign against the build-001 record, where the encoder was +0.017 over
+the control and the ridge-plus-encoder stack was +0.032 over ridge with a compound-level
+interval through zero (035 rounds 10, 11 and 14). Two readings are open and are what the
+Delta rounds test. **Hypothesis (untested):** 50 epochs is not saturation for the
+environment encoder, whose validation loss was still falling at epoch 50 in 035 round 15;
+round 16 trains it to 150. **Second hypothesis (untested):** the corrected store's 32
+compounds carry less signal per compound than build 001's 41, so the learning curve in
+fitted compounds matters more than the head; round 17 measures it for the encoder beside
+the ridge curve already on file. Until those read, the honest statement for the figure is
+that on the corrected store the cell graph transformer does not beat nested ridge on
+fingerprint counts, and the ensemble of either head is within 0.06 of it.

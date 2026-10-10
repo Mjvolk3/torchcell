@@ -1,0 +1,34 @@
+%% SOURCE: experiments/041-scaling-laws/scripts/scaling_law_forms.py (write_constants_table)
+%% Published constants typed from the papers named in the Fit records of that script;
+%% a and b are derived from alpha and beta there. Never hand-edit this file.
+\begin{table}[htbp]
+\centering\footnotesize
+\caption{Published constants of the two forms, and the allocation exponents they imply. Kaplan's $N_c$ and $D_c$ set the height of a pure power law and have no meaning on their own; Hoffmann's and Besiroglu's rows are two fits of the same Chinchilla training runs, and the difference between them is the point of panel h. Every value is from outside our holdings.}
+\label{tab:constants}
+\begin{tabular}{llrl}
+\toprule
+fit & symbol & value & units \\
+\midrule
+Kaplan 2020 & $N_c$ & $8.8\times 10^{13}$ & parameters \\
+ & $\alpha_N$ & $0.076$ & -- \\
+ & $D_c$ & $5.4\times 10^{13}$ & tokens \\
+ & $\alpha_D$ & $0.095$ & -- \\
+\addlinespace
+Hoffmann 2022 & $E$ & $1.69$ & loss \\
+ & $A$ & $406.4$ & loss $\cdot$ parameters$^{\alpha}$ \\
+ & $B$ & $410.7$ & loss $\cdot$ tokens$^{\beta}$ \\
+ & $\alpha$ & $0.34$ & -- \\
+ & $\beta$ & $0.28$ & -- \\
+ & $a = \beta / (\alpha + \beta)$ & $0.452$ & derived \\
+ & $b = \alpha / (\alpha + \beta)$ & $0.548$ & derived \\
+\addlinespace
+Besiroglu 2024 & $E$ & $1.8172$ & loss \\
+ & $A$ & $482.01$ & loss $\cdot$ parameters$^{\alpha}$ \\
+ & $B$ & $2085.43$ & loss $\cdot$ tokens$^{\beta}$ \\
+ & $\alpha$ & $0.3478$ & -- \\
+ & $\beta$ & $0.3658$ & -- \\
+ & $a = \beta / (\alpha + \beta)$ & $0.513$ & derived \\
+ & $b = \alpha / (\alpha + \beta)$ & $0.487$ & derived \\
+\bottomrule
+\end{tabular}
+\end{table}

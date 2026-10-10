@@ -1,0 +1,68 @@
+%% notes-tex/modeling/scaling-laws/scaling-laws.tex
+%% [[scaling-laws]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/modeling/scaling-laws/scaling-laws.tex
+%%
+%% Build:  make         -> scaling-laws.pdf
+%%         make check   -> formatting / provenance / citation gate
+%%         make plots   -> re-convert the panel from ASSET_IMAGES_DIR/041-scaling-laws
+%%
+%% Figure 1 and Table 1 are written by
+%% experiments/041-scaling-laws/scripts/scaling_law_forms.py. Nothing in this document
+%% is measured on a torchcell model; Section 5 is a plan and says so.
+
+\documentclass[10pt,a4paper]{article}
+\usepackage[draft]{tcdoc}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\emergencystretch=3.5em
+
+\title{\vspace{-1.5em}Scaling Laws for a Genotype-to-Phenotype Model\\
+  {\large The two published forms, what counts as $N$, $D$ and $C$ when the
+   examples are strains rather than tokens, and the smallest ablation that gives a
+   curve worth extrapolating}}
+\author{Michael Volk}
+\date{\today}
+
+\begin{document}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+A scaling law is a fitted statement that held-out loss falls as a power of model
+size $N$, training data $D$ or training compute $C$, and its value is that a curve
+fit on runs one can afford predicts runs one cannot. Two forms carry the
+literature. Kaplan et al.\ fit each axis alone, $L = (N_c/N)^{\alpha_N}$ and
+$L = (D_c/D)^{\alpha_D}$, straight lines on log-log axes. Hoffmann et al.\ fit the
+joint form $L(N, D) = E + A N^{-\alpha} + B D^{-\beta}$ with an irreducible floor
+$E$, and minimizing it under the transformer budget $C \approx 6ND$ gives the
+compute-optimal allocation $N^* \propto C^{a}$, $D^* \propto C^{b}$ with
+$a + b = 1$. One figure draws both forms at their published constants, the plateaus
+each axis runs into when the other is fixed, the IsoFLOP curves whose minima trace
+the frontier, and a synthetic fitting exercise that holds out the largest runs. For
+genotype-to-phenotype data the questions that decide whether the curve means
+anything are what to count: $D$ is the number of training examples the optimizer
+consumes in the unit the loss averages over, not the dimension of an example;
+repeated epochs count for less than fresh data; the evaluation set is fixed and
+split by the unit that leaks, a gene or a perturbation, not by record; and $E$ has
+a physical reading, the replicate-noise floor, which the released replicate
+standard deviations estimate independently of any fit. No torchcell run has been
+fit to either form; the last section is the plan for doing so on the trigenic
+build, where data, not parameters, is the axis that binds.
+\end{abstract}
+
+\vspace{0.5em}
+\tccontents
+\clearpage
+
+\input{sections/1-forms}
+\input{sections/2-figure}
+\input{sections/3-counting}
+\input{sections/4-ablation}
+\input{sections/5-torchcell}
+\input{sections/6-expression}
+\input{sections/7-sources}
+
+\end{document}

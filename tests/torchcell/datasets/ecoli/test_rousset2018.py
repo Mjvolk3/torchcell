@@ -57,6 +57,7 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperimentReference,
     ComponentDefinition,
     ConcentrationUnit,
+    EnvironmentResponsePhenotype,
     MeasurementType,
     MediaComponentRole,
     PhagePerturbation,
@@ -74,6 +75,7 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
 )
 from torchcell.sequence.genome.ecoli.k12 import MG1655_ASSEMBLY, EcoliK12MG1655Genome
+from torchcell.verification.report import Level
 from torchcell.verification.sourced import (
     ProvenanceGapReason,
     SourcedValue,
@@ -835,6 +837,55 @@ def test_the_screen_census_pins_the_per_screen_split() -> None:
     assert "is not" in failed.message
 
 
+def _test_record(**experiment_fields: Any) -> dict[str, Any]:
+    blank = dict.fromkeys(r.RELEASED_TEST_FIELDS)
+    return {
+        "experiment": {"phenotype": {**blank, **experiment_fields}},
+        "reference": {"phenotype_reference": dict(blank)},
+    }
+
+
+def test_released_test_absent_passes_when_no_record_carries_a_p_value() -> None:
+    result = r.released_test_absent([_test_record(), _test_record()])
+    assert result.passed
+    assert result.level == Level.L2
+    assert result.details == {"n_records": 2, "carrying": {}}
+    assert result.message == (
+        "SUPPLEMENTARY: 0 of 2 records carry a p-value; S4 and S6 Tables release "
+        "none and no S1 row is stored"
+    )
+
+
+def test_released_test_absent_counts_every_record_that_carries_one() -> None:
+    carrying = _test_record(
+        environment_response_p_value_adjusted=0.01,
+        p_value_adjustment_method="benjamini_hochberg",
+    )
+    result = r.released_test_absent([_test_record(), carrying, carrying])
+    assert not result.passed
+    assert result.details["carrying"] == {
+        "experiment.environment_response_p_value_adjusted": 2,
+        "experiment.p_value_adjustment_method": 2,
+    }
+
+
+def test_the_released_test_fields_exist_on_the_phenotype_and_are_unset() -> None:
+    fields = EnvironmentResponsePhenotype.model_fields
+    assert set(r.RELEASED_TEST_FIELDS) <= set(fields)
+    condition = r.CONDITIONS[0]
+    for built in (r.phenotype(-1.5, condition), r.reference_phenotype(condition)):
+        assert {name: getattr(built, name) for name in r.RELEASED_TEST_FIELDS} == (
+            dict.fromkeys(r.RELEASED_TEST_FIELDS)
+        )
+
+
+def test_only_the_growth_table_releases_a_test_column() -> None:
+    assert [table for table, header in r.TABLE_HEADERS.items() if "padj" in header] == [
+        r.GROWTH_TABLE
+    ]
+    assert all(condition.table != r.GROWTH_TABLE for condition in r.CONDITIONS)
+
+
 # --------------------------------------------------------------------------- #
 # End to end on a synthetic release
 # --------------------------------------------------------------------------- #
@@ -1082,6 +1133,7 @@ def test_verify_build_passes_on_the_synthetic_release(
     assert verdicts["reference_zero"] is True
     assert verdicts["environment_perturbed"] is True
     assert verdicts["screen_census"] is True
+    assert verdicts["released_test_absent"] is True
     assert verdicts["current_genome_genes"] is True
     assert report.passed
     assert (root / "preprocess" / "verification_report.json").is_file()
@@ -1208,6 +1260,14 @@ def test_the_growth_screen_is_cui_2018s_screen_to_released_precision() -> None:
     assert round(float(diff.median()), 4) == 0.0
     assert round(float(diff.max()), 4) == 0.0066
     assert round(float(np.corrcoef(joined["log2FC"], joined["fit75"])[0, 1]), 4) == 1.0
+    # Not a reprint (issue #878): both tables print about 15 significant digits, and
+    # only 426 shared values are bit-identical, so S1 is Rousset's own DESeq2 run.
+    assert int((diff == 0).sum()) == 426
+    assert int((diff > 1e-9).sum()) == 53868
+    # S1's padj is numeric on every row and has no unadjusted p-value beside it.
+    assert int(growth["padj"].notna().sum()) == len(growth) == 59246
+    assert 0.0 <= float(growth["padj"].min()) <= float(growth["padj"].max()) < 1.0
+    assert not {"pvalue", "p_value", "pval"} & set(growth.columns)
     other = (joined["log2FC"] - joined["fit18"]).abs()
     assert round(float(other.median()), 4) == 0.4151
     assert round(float(np.corrcoef(joined["log2FC"], joined["fit18"])[0, 1]), 4) == (

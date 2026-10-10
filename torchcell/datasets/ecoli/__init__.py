@@ -177,6 +177,11 @@ sourcing layer.
   only through a web server whose API answered 502 the day the row was settled, so there
   is no artifact to hash. The module holds the inventory, the quotes and the five
   required titer fields the release cannot fill.
+- ``li2024`` -- the D2Cell 2026 record: a secondary source NOT admitted. Its database
+  workbook is a Qwen1.5-110B transcription of abstracts and full texts (10,525 E. coli
+  rows over 2,030 source DOIs, no source sentence per value, 383 distinct titer units),
+  and its training split is a binary label construction with rule-designated
+  negatives. The per-row DOIs are kept as a lead list of primary papers.
 - ``typas2008`` -- the eSGA companion record: NOT loaded, because the release prints no
   interaction score. Its 42 released pairs are the TERMS neg (sick), neg (lethal) and
   pos, its one numeric table is a marker co-transduction check, and its 12 by 12 cross is

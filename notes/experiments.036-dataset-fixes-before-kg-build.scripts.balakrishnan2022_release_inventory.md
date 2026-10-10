@@ -62,7 +62,7 @@ URL answers the proof-of-work page; Europe PMC says "not open access"; `science.
   says the proteomic files "have been published previously(10)" (ref 10 = Mori 2021,
   PXD014948). Hypothesis (untested): Table S4 re-serves Mori EV9, in which case it is
   subsumed and only the transcriptome and rate arms are new. Mori's C/A/R series are
-  themselves not on main (dropped by `DROP_NO_MEDIA_ENTRY`); the served Mori store holds
+  themselves not on main (dropped by `DROP_NO_MEDIA_ENTRY`); the Mori loader keeps (`EXPECTED_RECORDS = 7`)
   only the 7 MG1655 calibration samples. Overlap with Schmidt 2016 is not measured; it is a
   proteome, so it could only bear on Table S4.
 - Cross-layer r (log10 Pearson, keys positive in both), mRNA fraction vs Mori protein mass

@@ -1,0 +1,218 @@
+{
+  "citation_key": "liQuantifyingAbsoluteProtein2014",
+  "table": "bacteria",
+  "row_name": "Li 2014",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Translation / turnover', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "7 file(s) in raw, 8536 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "ProteinSynthesisRatePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "liQuantifyingAbsoluteProtein2014",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "data/1-s2.0-S0092867414002323-mmc1.xlsx",
+        "role": "raw_data",
+        "bytes": 141947,
+        "sha256_manifest": "f493023e9b4bf7a154fd12b4c1fd617047af46153fffde7f1215932d35d5a661",
+        "sha256_disk": "f493023e9b4bf7a154fd12b4c1fd617047af46153fffde7f1215932d35d5a661",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS1",
+            "rows": 4096
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc2.xlsx",
+        "role": "si_data",
+        "bytes": 12026,
+        "sha256_manifest": "ffd05c218c3f7b9d60f96b454e10f072b369a0a3538ba91115694b455beef17f",
+        "sha256_disk": "ffd05c218c3f7b9d60f96b454e10f072b369a0a3538ba91115694b455beef17f",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS2",
+            "rows": 63
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc3.xlsx",
+        "role": "si_data",
+        "bytes": 12573,
+        "sha256_manifest": "28a68899b6eac61657f5b2eb386d6aee3a7f7ae374f2bbfe9e279e946190cd22",
+        "sha256_disk": "28a68899b6eac61657f5b2eb386d6aee3a7f7ae374f2bbfe9e279e946190cd22",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS3",
+            "rows": 178
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc4.xlsx",
+        "role": "si_data",
+        "bytes": 111211,
+        "sha256_manifest": "877ba750e657a8d81b3e2d54a7dd05788866f2b37951afe7e676a665176b8f21",
+        "sha256_disk": "877ba750e657a8d81b3e2d54a7dd05788866f2b37951afe7e676a665176b8f21",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS4",
+            "rows": 4096
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc5.xlsx",
+        "role": "si_data",
+        "bytes": 11809,
+        "sha256_manifest": "47b501c945ff53cb24b5887fedca823780a5e18341fb49496063447937c04f28",
+        "sha256_disk": "47b501c945ff53cb24b5887fedca823780a5e18341fb49496063447937c04f28",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS5",
+            "rows": 103
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc6.pdf",
+        "role": "si_pdf",
+        "bytes": 2780857,
+        "sha256_manifest": "a96e712d91dea29c6f1072fe2319d6e38ce3103ac7728477cf3b962aa1784828",
+        "sha256_disk": "a96e712d91dea29c6f1072fe2319d6e38ce3103ac7728477cf3b962aa1784828",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 178651,
+        "sha256_manifest": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db",
+        "sha256_disk": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.cell.2014.02.033",
+    "pmid": null,
+    "accessions": [
+      "GSE53767"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.cell.2014.02.033",
+        "where": "torchcell/datasets/ecoli/li2014.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "GSE53767",
+        "where": "torchcell/datasets/ecoli/li2014.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "ProteinSynthesisRatePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-10",
+  "torchcell_commit": "66ae4a1ee0c7fabc043ce31cdb249230e629d74c"
+}

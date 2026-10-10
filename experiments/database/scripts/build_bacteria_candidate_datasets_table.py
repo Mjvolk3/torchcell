@@ -3820,8 +3820,9 @@ CANDIDATES: list[Candidate] = [
         "minimal medium, at 90 million fragments per sample. Method is "
         "ribosome profiling calibrated to total protein per doubling; the "
         "quantitative mass spectrometry comparison is to published external "
-        "datasets, not generated here. Strain designation is unconfirmed "
-        "(main-text methods do not name it).",
+        "datasets, not generated here. Strain is E. coli K-12 MG1655 (Extended "
+        "Experimental Procedures: 'E. coli K-12 strain MG1655 was used for this "
+        "study.'; measured in PR #859, loaded in #857).",
         accession="GSE53767 (GEO); browsable table at http://ecoliwiki.net/tools/proteome/",
         accession_confirmed=True,
         status="candidate",

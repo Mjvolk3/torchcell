@@ -71,6 +71,19 @@ repos:
         files: ^torchcell/.*\.py$
         require_serial: true
 
+      # Candidate-verdict tripwire (scripts/check_candidate_verdicts.py): a class newly
+      # decorated with @register_dataset under torchcell/datasets/ ships
+      # database/candidates/<CITATION_KEY>.json in the same index. Index vs origin/main's
+      # merge base, like paired-tests. Whether the verdict PASSES is the enforcement
+      # test's job (tests/torchcell/datasets/test_candidate_verdicts.py).
+      - id: candidate-verdicts
+        name: candidate verdicts (new datasets carry a gate verdict)
+        entry: bash scripts/run-in-env.sh python scripts/check_candidate_verdicts.py
+        language: system
+        pass_filenames: false
+        files: ^torchcell/datasets/.*\.py$
+        require_serial: true
+
       # Schema-dependency gate: when a schema-surface file changes, report which dataset
       # loaders the change forces to rebuild (closure + contract-fingerprint scoped) and
       # block on a breaking change unless TORCHCELL_SCHEMA_ACK=1. Fires only on the surface

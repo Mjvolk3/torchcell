@@ -46,6 +46,7 @@ tcdb = "torchcell.database.tcdb:main"
 tc-lit-server = "torchcell.literature.server:main"
 tc-lit-backfill = "torchcell.literature.backfill:main"
 tc-data-server = "torchcell.datasets.server:main"
+candidate-gate = "torchcell.candidates.cli:main"
 
 [tool.pyright]
 include = ["torchcell", "experiments"]

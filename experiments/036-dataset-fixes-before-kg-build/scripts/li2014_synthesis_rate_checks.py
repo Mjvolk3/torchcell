@@ -23,7 +23,7 @@ Run from the repo root::
 import json
 import os
 import os.path as osp
-from typing import Any
+from typing import Any, cast
 
 from dotenv import load_dotenv
 from pydantic import BaseModel
@@ -181,12 +181,17 @@ def round_trips(data_root: str) -> dict[str, Any]:
         for record in stream_records(path):
             experiment, reference = record["experiment"], record["reference"]
             try:
-                e = EXPERIMENT_TYPE_MAP[experiment["experiment_type"]].model_validate(
-                    experiment
+                experiment_cls = cast(
+                    type[BaseModel], EXPERIMENT_TYPE_MAP[experiment["experiment_type"]]
                 )
-                r = EXPERIMENT_REFERENCE_TYPE_MAP[
-                    reference["experiment_reference_type"]
-                ].model_validate(reference)
+                reference_cls = cast(
+                    type[BaseModel],
+                    EXPERIMENT_REFERENCE_TYPE_MAP[
+                        reference["experiment_reference_type"]
+                    ],
+                )
+                e = experiment_cls.model_validate(experiment)
+                r = reference_cls.model_validate(reference)
             except ValueError as error:
                 # A store written by ANOTHER branch's schema (shared dev tree) is
                 # reported, not compared: it is not evidence about this change.

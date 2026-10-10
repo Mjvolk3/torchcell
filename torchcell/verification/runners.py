@@ -2444,6 +2444,36 @@ def _verify_desiqueira_proteome_log10_percent(
     )
 
 
+def _verify_brunk_metabolome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Brunk 2016 (uM) metabolome: the shared metabolite gate plus its own L1/L3/L4."""
+    from torchcell.datasets.ecoli import brunk2016
+
+    return brunk2016.verify_build(dataset_root, data_root, family="metabolome")
+
+
+def _verify_brunk_exometabolite(
+    dataset_root: str, data_root: str
+) -> VerificationReport:
+    """Brunk 2016 g/L exometabolome: the same gate on the HPLC block."""
+    from torchcell.datasets.ecoli import brunk2016
+
+    return brunk2016.verify_build(dataset_root, data_root, family="exometabolite")
+
+
+def _verify_brunk_proteome(dataset_root: str, data_root: str) -> VerificationReport:
+    """Brunk 2016 SRM proteome: the shared protein gate plus the Table S1 OCR repair."""
+    from torchcell.datasets.ecoli import brunk2016
+
+    return brunk2016.verify_build(dataset_root, data_root, family="proteome")
+
+
+def _verify_brunk_titer(dataset_root: str, data_root: str) -> VerificationReport:
+    """Brunk 2016 fuel titers: the released g/L values re-read from the workbook."""
+    from torchcell.datasets.ecoli import brunk2016
+
+    return brunk2016.verify_build(dataset_root, data_root, family="titer")
+
+
 def _verify_foo_titer(dataset_root: str, data_root: str) -> VerificationReport:
     """Foo 2014: the Table 1 titers and the two L4 joins that re-derive them."""
     from torchcell.datasets.ecoli import foo2014
@@ -2515,6 +2545,10 @@ def _verify_ishii_proteome(dataset_root: str, data_root: str) -> VerificationRep
 
 #: Every landed ``ProductTiterExperiment`` dataset, with the entry point that verifies it.
 PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
+    "biofuel_titer_brunk2016": {
+        "root": "data/torchcell/biofuel_titer_brunk2016",
+        "verify": _verify_brunk_titer,
+    },
     "isopentenol_titer_foo2014": {
         "root": "data/torchcell/isopentenol_titer_foo2014",
         "verify": _verify_foo_titer,
@@ -2545,6 +2579,10 @@ PRODUCT_TITER_DATASETS: dict[str, dict[str, Any]] = {
 #: with the three P. putida proteomes: it is the same experiment class on a different
 #: host, and the containment rule reads its REL606 pin off its own records.
 BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
+    "proteome_brunk2016": {
+        "root": "data/torchcell/proteome_brunk2016",
+        "verify": _verify_brunk_proteome,
+    },
     "proteome_banerjee2025": {
         "root": "data/torchcell/proteome_banerjee2025",
         "verify": _verify_banerjee_proteome,
@@ -2601,6 +2639,14 @@ BACTERIAL_PROTEIN_ABUNDANCE_DATASETS: dict[str, dict[str, Any]] = {
 #: (``<replicon>:<position>``) as a locus of the host assembly and would fail L4 for
 #: the wrong reason. :func:`host_perturbed_gene_set` is the set that excludes both.
 BACTERIAL_METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
+    "metabolome_brunk2016": {
+        "root": "data/torchcell/metabolome_brunk2016",
+        "verify": _verify_brunk_metabolome,
+    },
+    "exometabolite_brunk2016": {
+        "root": "data/torchcell/exometabolite_brunk2016",
+        "verify": _verify_brunk_exometabolite,
+    },
     "metabolite_growth_menasalvas2025": {
         "root": "data/torchcell/metabolite_growth_menasalvas2025",
         "verify": _verify_menasalvas_metabolite_growth,

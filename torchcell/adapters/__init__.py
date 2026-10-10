@@ -19,6 +19,18 @@ from .borchert2023_adapter import (
 from .borchert2024_adapter import (
     RbTnseqBorchert2024Adapter as RbTnseqBorchert2024Adapter,
 )
+from .brunk2016_exometabolite_adapter import (
+    ExometaboliteBrunk2016Adapter as ExometaboliteBrunk2016Adapter,
+)
+from .brunk2016_metabolome_adapter import (
+    MetabolomeBrunk2016Adapter as MetabolomeBrunk2016Adapter,
+)
+from .brunk2016_proteome_adapter import (
+    ProteomeBrunk2016Adapter as ProteomeBrunk2016Adapter,
+)
+from .brunk2016_titer_adapter import (
+    BiofuelTiterBrunk2016Adapter as BiofuelTiterBrunk2016Adapter,
+)
 from .butland2008_adapter import (
     GeneInteractionButland2008Adapter as GeneInteractionButland2008Adapter,
 )
@@ -412,6 +424,10 @@ ecoli_adapters = [
     "GrowthRateCampos2018Adapter",
     "MorphologyCampos2018Adapter",
     "GrowthRateChoe2019Adapter",
+    "MetabolomeBrunk2016Adapter",
+    "ExometaboliteBrunk2016Adapter",
+    "ProteomeBrunk2016Adapter",
+    "BiofuelTiterBrunk2016Adapter",
     "IsopentenolTiterFoo2014Adapter",
     "TranscriptionFactorKnockoutChoe2019Adapter",
     "MetabolomeFuhrer2017Adapter",

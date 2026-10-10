@@ -132,3 +132,7 @@ datasets:
   - CrispriGuideFfaEnrichmentFang2025Dataset
   - ValerolactamTiterThompson2019Dataset
   - LactamGrowthRateThompson2019Dataset
+  - MetabolomeBrunk2016Dataset
+  - ExometaboliteBrunk2016Dataset
+  - ProteomeBrunk2016Dataset
+  - BiofuelTiterBrunk2016Dataset

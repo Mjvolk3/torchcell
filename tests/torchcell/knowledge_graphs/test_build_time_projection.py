@@ -479,7 +479,9 @@ def test_dataset_sizes_cover_the_same_datasets_as_the_adapter_map() -> None:
 
 
 BACTERIAL_DATASETS = {
+    "BiofuelTiterBrunk2016Dataset",
     "CampaignProteomeCarruthers2025Dataset",
+    "ExometaboliteBrunk2016Dataset",
     "CarbonSourceTong2020Dataset",
     "CrispriArrayYunus2026Dataset",
     "CrispriChemgenChoe2025Dataset",
@@ -498,6 +500,8 @@ BACTERIAL_DATASETS = {
     "EnvChemgenWang2024Dataset",
     "EnvMetalTnseqRoyet2025Dataset",
     "FluxIshii2007Dataset",
+    "MetabolomeBrunk2016Dataset",
+    "ProteomeBrunk2016Dataset",
     "GeneEssentialityGoodall2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
     "GeneInteractionBabu2014Dataset",
@@ -580,11 +584,10 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     assert {a: inverse[a] for a in ADAPTER_TO_DATASET} == ADAPTER_TO_DATASET
     # 110 + 1 (Teteneva W3110) + 6 (#844's six P. putida classes) + 2 (#834's two)
     # + 3 (#826's three bacterial loaders) + 1 (#770's Lim 2025 fold-change loader)
-    # + 1 (Wang 2024 rifampicin Tn-seq).
-    # + 1 (row 53, Royet 2025's metal Tn-seq).
-    assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1
-    # + 2 (Thompson 2019 valerolactam: its titer and its growth-rate families).
-    # + 1 (Hawkins 2020 mismatch-CRISPRi).
+    # + 1 (Wang 2024 rifampicin Tn-seq) + 1 (row 53, Royet 2025's metal Tn-seq)
+    # + 2 (Thompson 2019 valerolactam: its titer and its growth-rate families)
+    # + 1 (Hawkins 2020 mismatch-CRISPRi) + 4 (Brunk 2016's four released scales).
+    assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",

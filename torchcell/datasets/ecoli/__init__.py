@@ -38,6 +38,11 @@ sourcing layer.
   curve. A separate module so the served RNA-seq and proteome stores' schema closure
   does not move; the dataset is what the environment-response phenotype's interval
   carrier, replicate id and absolute-reference branch were added for (#776).
+- ``brunk2016`` -- ``MetabolomeBrunk2016Dataset``, ``ExometaboliteBrunk2016Dataset``, ``ProteomeBrunk2016Dataset`` and
+  ``BiofuelTiterBrunk2016Dataset``: the four released scales of one batch
+  fermentation of nine mevalonate-pathway DH1 strains sampled 0 to 72 h. The
+  sampling hour is on the environment, so each strain contributes one record per
+  sample rather than one record in total.
 - ``campos2018`` -- ``GrowthRateCampos2018Dataset`` and
   ``MorphologyCampos2018Dataset``: the imaged Keio collection, split by readout. Its
   released phenotype is 28 named features of ONE medium (Appendix Table S1's 21
@@ -199,6 +204,10 @@ sourcing layer.
 """
 
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
+from .brunk2016 import BiofuelTiterBrunk2016Dataset as BiofuelTiterBrunk2016Dataset
+from .brunk2016 import ExometaboliteBrunk2016Dataset as ExometaboliteBrunk2016Dataset
+from .brunk2016 import MetabolomeBrunk2016Dataset as MetabolomeBrunk2016Dataset
+from .brunk2016 import ProteomeBrunk2016Dataset as ProteomeBrunk2016Dataset
 from .butland2008 import (
     GeneInteractionButland2008Dataset as GeneInteractionButland2008Dataset,
 )

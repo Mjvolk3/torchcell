@@ -1,0 +1,332 @@
+{
+  "citation_key": "brunkCharacterizingStrainVariation2016",
+  "doi": "10.1016/j.cels.2016.04.004",
+  "duplication_against_landed_proteomes": {
+    "brunk_wild_type_loci": 44,
+    "brunk_wild_type_symbols": 44,
+    "key_namespaces": {
+      "proteome_brunk2016": "MG1655 b-number",
+      "siblings": "BW25113 locus tag"
+    },
+    "proteome_ishii2007": {
+      "measurement_type": "lc_ms_ms_absolute_mg_protein_per_g_dry_cell_weight",
+      "pearson_r_over_shared_symbols": 0.7729,
+      "shared_locus_tags": 0,
+      "shared_symbols": 32,
+      "their_loci": 57
+    },
+    "proteome_schmidt2016": {
+      "measurement_type": "absolute_protein_copies_per_cell_label_free_sid_anchored",
+      "pearson_r_over_shared_symbols": 0.6153,
+      "shared_locus_tags": 0,
+      "shared_symbols": 44,
+      "their_loci": 2329
+    }
+  },
+  "metabolite_arms": {
+    "columns_by_unit": {
+      "fuel": 3,
+      "grams_per_litre": 6,
+      "micromolar": 51,
+      "no_unit_in_the_header": 26
+    },
+    "fuel_cells": {
+      "Bisabolene g/L": 18,
+      "Isopentenol g/L": 27,
+      "Limonene g/L": 27
+    },
+    "hours": [
+      0.0,
+      2.0,
+      4.0,
+      6.0,
+      8.0,
+      10.0,
+      12.0,
+      16.0,
+      18.0,
+      20.0,
+      24.0,
+      36.0,
+      48.0,
+      72.0
+    ],
+    "no_unit_columns": [
+      "DXP",
+      "MEP",
+      "HDMAPP",
+      "ME-cPP",
+      "CDP-ME",
+      "Glycine",
+      "Alanine",
+      "Serine",
+      "Proline",
+      "Valine",
+      "Threonine",
+      "Cysteine",
+      "Leucine",
+      "Isoleucine",
+      "Asparagine",
+      "Aspartate",
+      "Glutamine",
+      "Lysine",
+      "Glutamate",
+      "Methionine",
+      "Histidine",
+      "Phenylalanine",
+      "Arginine",
+      "Tyrosine",
+      "Tryptophan",
+      "Cystine"
+    ],
+    "per_block": {
+      "grams_per_litre": {
+        "columns": [
+          "Glucose g/L",
+          "Pyruvate g/L",
+          "Succinate g/L",
+          "Lactate g/L",
+          "Formate g/L",
+          "Acetate g/L"
+        ],
+        "filled_cells": 756,
+        "samples_with_at_least_one_value": 126
+      },
+      "micromolar": {
+        "columns": [
+          "Acetoacetyl-coA (uM)",
+          "HMG-CoA (uM)",
+          "Intracellular Mevalonate (uM)",
+          "Mev-P (uM)",
+          "IPP/DMAPP (uM)",
+          "IP (uM)",
+          "GPP (uM)",
+          "FPP (uM)",
+          "AMP (uM)",
+          "ADP (uM)",
+          "ATP (uM)",
+          "NAD (uM)",
+          "NADP (uM)",
+          "Acetyl-CoA (uM)",
+          "Fru-1,6-BiP (uM)",
+          "3-P Glycerate (uM)",
+          "PEP (uM)",
+          "Pyruvate (uM)",
+          "lactate (uM)",
+          "fumarate (uM)",
+          "succinate (uM)",
+          "oxaloacetate (uM)",
+          "malate (uM)",
+          "oxoglutarate (uM)",
+          "cis-aconitate (uM)",
+          "citrate (uM)",
+          "isocitrate (uM)",
+          "Glyoxylate (uM)",
+          "Glycolate (uM)",
+          "IPP/DMAPP extracellular (uM)",
+          "IP extracellular (uM)",
+          "MEcPP extracellular (uM)",
+          "MEVALONATE extracellular (uM)",
+          "DXP extracellular (uM)",
+          "MEV-P extracellular (uM)",
+          "HDMAPP extracellular (uM)",
+          "GPP extracellular (uM)",
+          "FPP extracellular (uM)",
+          "GGPP extracellular (uM)",
+          "CDP-ME extracellular (uM)",
+          "CoA extracellular (uM)",
+          "Acetyl-CoA extracellular (uM)",
+          "Acetoacetyl-CoA extracellular (uM)",
+          "HMG-CoA extracellular (uM)",
+          "AMP extracellular (uM)",
+          "ADP extracellular (uM)",
+          "ATP extracellular (uM)",
+          "NAD extracellular (uM)",
+          "NADH extracellular (uM)",
+          "NADP extracellular (uM)",
+          "NADPH extracellular (uM)"
+        ],
+        "filled_cells": 3822,
+        "samples_with_at_least_one_value": 119
+      }
+    },
+    "samples": 126,
+    "served_records": {
+      "exometabolite": 126,
+      "metabolome": 117,
+      "titer": 72
+    },
+    "strains": [
+      "B1",
+      "B2",
+      "DH1",
+      "I1",
+      "I2",
+      "I3",
+      "L1",
+      "L2",
+      "L3"
+    ]
+  },
+  "pmcid": "PMC4882250",
+  "proteome_arm": {
+    "host_proteins": 68,
+    "host_proteins_by_route": {
+      "refused": [
+        "ACKA",
+        "ADHE",
+        "AtoB",
+        "DHSB",
+        "DHSC",
+        "DHSD",
+        "EUTD",
+        "FDHF",
+        "FRDA",
+        "FRDB",
+        "FRDC",
+        "FRDD",
+        "GLPX2",
+        "HYCB",
+        "HYCC",
+        "HYCD",
+        "HYCE",
+        "HYCF",
+        "HYCG",
+        "LACI",
+        "NudB",
+        "ODO2",
+        "PFLB",
+        "PTA"
+      ],
+      "single_gene_gpr_in_the_identifier_sheet": [
+        "ACSA",
+        "CAPP",
+        "G6PD",
+        "Idi",
+        "IspA",
+        "MAO1",
+        "MAO2",
+        "MQO",
+        "PCKA",
+        "PPSA",
+        "YBHA"
+      ],
+      "uniprot_gene_name_in_the_triplicate_sheet": [
+        "6PGD",
+        "ACON1",
+        "ACON2",
+        "ALF",
+        "CISY",
+        "DHSA",
+        "DLDH",
+        "ENO",
+        "F16PA",
+        "FUMA",
+        "FUMC",
+        "G3P1",
+        "G6PI",
+        "GLPX",
+        "GPMA",
+        "GPMI",
+        "IDH",
+        "K6PF1",
+        "K6PF2",
+        "KPYK1",
+        "KPYK2",
+        "MDH",
+        "ODO1",
+        "PGK",
+        "RPIA",
+        "RPIB",
+        "SUCC",
+        "SUCD",
+        "TALA",
+        "TALB",
+        "TKT1",
+        "TKT2",
+        "TPIS"
+      ]
+    },
+    "hour_labels": [
+      "0",
+      "12",
+      "18",
+      "24",
+      "36",
+      "4",
+      "48",
+      "72",
+      "72C",
+      "8"
+    ],
+    "non_host_proteins": [
+      "AMPR",
+      "BSA",
+      "Bisabolene",
+      "Cam",
+      "GPPS",
+      "HMGR",
+      "HMGS",
+      "Limonene Synthase",
+      "MK",
+      "PMD",
+      "PMK"
+    ],
+    "proteins": 79,
+    "samples": 89,
+    "served_records": 81
+  },
+  "quotes_checked": 18,
+  "table_s1": {
+    "composition": {
+      "B1": [
+        "JBx_000323",
+        "JPUB_002466"
+      ],
+      "B2": [
+        "JPUB_002460",
+        "JPUB_002466"
+      ],
+      "DH1": [],
+      "I1": [
+        "JPUB_006200",
+        "JPUB_004938"
+      ],
+      "I2": [
+        "JPUB_006210",
+        "JPUB_004938"
+      ],
+      "I3": [
+        "JPUB_004937",
+        "JPUB_004938"
+      ],
+      "L1": [
+        "JPUB_004921",
+        "JPUB_002464"
+      ],
+      "L2": [
+        "JPUB_002471"
+      ],
+      "L3": [
+        "JPUB_002470",
+        "JPUB_002473"
+      ]
+    },
+    "plasmids": {
+      "JBx_000323": "pBbA5c-MevTo-MK-PMK-PMD-idi-ispA",
+      "JPUB_002460": "pBbA5c-MevTco-trc-MK-PMK-PMD-idi-ispA",
+      "JPUB_002464": "pTrc99A-GPPS-LS",
+      "JPUB_002466": "pTrc99A-BIS",
+      "JPUB_002470": "pBbA5c-atoB-HMGSsa-HMGRsa-trc-MK- PMK-PMD-idi-trc-GPPS-LS",
+      "JPUB_002471": "pBbE1a-GPPS-LS-atoB-HMGSsa-HMGRsa-trc- MK-PMK-PMD-idi",
+      "JPUB_002473": "pTrc99A-LS",
+      "JPUB_004921": "pBbA5c-MevTo-MK-PMK-PMD-idi",
+      "JPUB_004937": "pBbA5c-MevTsa-MK-PMK",
+      "JPUB_004938": "pTrc99A-nudB-PMD",
+      "JPUB_006200": "pBbA5c-MevTo-MK-PMK",
+      "JPUB_006210": "pBbA5c-MevTco-PMK-MK"
+    },
+    "repaired_from": "DH1",
+    "repaired_to": "B2"
+  }
+}

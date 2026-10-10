@@ -57,6 +57,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
     install_recorder,
 )
 from torchcell.adapters import (
+    BiofuelTiterBrunk2016Adapter,
     CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
     CrispriArrayYunus2026Adapter,
@@ -76,6 +77,7 @@ from torchcell.adapters import (
     EnvChemgenWang2015Adapter,
     EnvChemgenWang2024Adapter,
     EnvMetalTnseqRoyet2025Adapter,
+    ExometaboliteBrunk2016Adapter,
     FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
@@ -99,6 +101,7 @@ from torchcell.adapters import (
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
     MetaboliteProductionPhaseMenasalvas2025Adapter,
+    MetabolomeBrunk2016Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
@@ -110,6 +113,7 @@ from torchcell.adapters import (
     ProteinFoldChangeCaglar2017Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
+    ProteomeBrunk2016Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
@@ -139,6 +143,12 @@ from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.datasets.ecoli.brunk2016 import (
+    BiofuelTiterBrunk2016Dataset,
+    ExometaboliteBrunk2016Dataset,
+    MetabolomeBrunk2016Dataset,
+    ProteomeBrunk2016Dataset,
+)
 from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteinFoldChangeCaglar2017Dataset,
@@ -930,6 +940,34 @@ BACTERIAL: list[Bacterial] = [
         "lactam_growth_rate_thompson2019",
         LactamGrowthRateThompson2019Dataset,
         RESPONSE,
+    ),
+    _case(
+        MetabolomeBrunk2016Adapter,
+        "brunk2016_metabolome",
+        "metabolome_brunk2016",
+        MetabolomeBrunk2016Dataset,
+        "metabolite phenotype",
+    ),
+    _case(
+        ExometaboliteBrunk2016Adapter,
+        "brunk2016_exometabolite",
+        "exometabolite_brunk2016",
+        ExometaboliteBrunk2016Dataset,
+        "metabolite phenotype",
+    ),
+    _case(
+        ProteomeBrunk2016Adapter,
+        "brunk2016_proteome",
+        "proteome_brunk2016",
+        ProteomeBrunk2016Dataset,
+        "protein abundance phenotype",
+    ),
+    _case(
+        BiofuelTiterBrunk2016Adapter,
+        "brunk2016_titer",
+        "biofuel_titer_brunk2016",
+        BiofuelTiterBrunk2016Dataset,
+        "product titer phenotype",
     ),
 ]
 IDS = [b.case.adapter_cls.__name__ for b in BACTERIAL]

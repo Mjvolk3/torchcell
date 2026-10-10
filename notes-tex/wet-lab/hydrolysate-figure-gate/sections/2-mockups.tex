@@ -1,0 +1,266 @@
+%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/2-mockups.tex
+%% SOURCE: the sheets are written by experiments/040-inhibitor-synergy-wetlab/scripts/
+%% figure_gate_panels.py from the result files named in the source table under each
+%% figure; every number in a caption is a macro of tables/gate_numbers.tex written by the
+%% same script. Result files are under
+%% experiments/040-inhibitor-synergy-wetlab/results/ unless a path is given; 033/, 035/
+%% and 038/ abbreviate the sibling experiment folders, which live on unlanded branches
+%% and are read by absolute path (the paths are in results/figure_gate_manifest.json).
+
+\clearpage
+\section{The mockups\secstatus{todo}}
+\label{sec:mockups}
+
+Each caption gives, per panel, what is plotted, the statistic and the status; the table
+under each figure gives the files behind it. The statistic on the public side is always
+the per-compound centered Spearman under compound-cold folds, median over compounds,
+with \hydnFitCompounds{} compounds fitted per fold; on the wet-lab side it is the growth
+AUROC over the \hydnCombinations{} combinations and the fitness Spearman over the
+\hydnGrewServed{} that grew under the served call. \colorkey{}
+
+\clearpage
+\tcfigfit[0.98]{\figConcept}{\textbf{The task, the data and the evaluation.} Three
+blocks, each a layout rather than a drawn result; a dashed box is proposed and not run.
+\textbf{The task} \status{todo}\,\fstat{idea}: a compound and its molar dose enter the
+cell graph transformer as one token placed in front of the gene tokens, which attend to
+it; a public-screen strain is read at its deleted genes, giving a deletion profile, and
+the bAID host, which carries no deletion, is read at the mean over genes, giving growth
+and fitness. A mixture becomes a set of compound tokens, one per inhibitor, each
+modulated by its own log-molar dose, and that is the part nothing has yet run.
+\textbf{The data} \status{todo}\,\fstat{file}: the pooled chemogenomic table over
+\hydnScreens{} screens, \hydnPoolCells{} cells and \hydnPoolCompounds{} compounds across
+\hydnPoolGenes{} genes, of which \hydnPoolCellsWithMolar{} cells carry a molar dose,
+beside the private Bioscreen runs, \hydnWells{} wells over \hydnInhibitors{} inhibitors
+on one strain. \textbf{The evaluation} \status{todo}\,\fstat{idea}: compound-cold folds
+and the per-compound centered Spearman on the public side, growth and fitness against
+Bliss and Loewe on the wet-lab side, and the industrial reading, which is to rank the
+worst combination scenarios of a hydrolysate.}{fig:concept}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{22mm}p{154mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:concept}}} \\
+\midrule
+the task & Nothing drawn from a file. The encoder it describes is the environment-encoder
+head of \file{038/}; the host head is the proposed adaptation of
+\file{experiments/040-inhibitor-synergy-wetlab/scripts/train_mixture.py}. Status: idea. \\
+the data & \file{033/pool_totals.csv}, \file{033/store_axes.csv} (the screens, the
+cells, the compounds, the genes, the molar-dose coverage); \file{wetlab_wells.csv} and
+\file{wetlab_provenance.json} (the wells, the runs, the raw-mirror shas). Status: on
+file. \\
+the evaluation & \file{038/ladder/ladder_r2_scores.csv} (the fold size);
+\file{mixture_scores.csv} (the two bars). The boxes themselves are a layout, so the
+block is marked idea even though its counts are on file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.80]{\figMain}{\textbf{The sheet proposed for the main text, the
+four-by-three of the experiment note.}
+\textbf{a}, The task as one strip; a draw.io composition replaces it.
+\status{todo}\,\fstat{idea}
+\textbf{b}, What is trained on: compounds per source on a logarithmic axis, each bar
+annotated with the cells or wells behind it. The Bioscreen runs carry
+\hydnInhibitors{} compounds against \hydnPoolCompounds{} in the pooled table, and the
+screen supplying the deletion profiles carries \hydnVanacloigCompounds{}.
+\status{todo}\,\fstat{file}
+\textbf{c}, How a model is scored, and the two bars it must beat; a layout whose numbers
+are on file. \status{todo}\,\fstat{idea}
+\textbf{d}, The ladder, ten best arms of \hydladderNArms{}: nested ridge on fingerprint
+counts reads \hydladderRidge{}, the next arm \hydladderSecond{}, the tenth
+\hydladderTenth{}. \status{todo}\,\fstat{file}
+\textbf{e}, The transformer against ridge, second round part run: the bilinear control
+has \hydbilinearFolds{} folds at a pooled median of \hydbilinearMedian{} and the
+environment encoder \hydenvencFolds{} at \hydenvencMedian{}, each over
+\hydenvencCompounds{} held-out compounds. \status{todo}\,\fstat{partial} Partial: the
+round is still producing and there is no ensemble.
+\textbf{f}, The learning curve in fitted compounds, \hydcurveEight{} at eight to
+\hydcurvePool{} on the pool, about \hydcurvePerDoubling{} per doubling.
+\status{todo}\,\fstat{partial} Partial: the encoder arm is not rerun.
+\textbf{g}, Dose, the host's potency against the screen's: furfural
+\hydicThirtyFf{} millimolar against \hydvanacloigFf{}, ratio \hydratioFf{}; 5-HMF
+\hydicThirtyHmf{} against \hydvanacloigHmf{}, ratio \hydratioHmf{}; the other four are in
+no screen. \status{todo}\,\fstat{file}
+\textbf{h}, How a pair's profile composes from its singles over \hydhetPairs{} public
+pairs: the mean is best in \hydhetMeanWins{}, median R-squared \hydhetrTwomean{} against
+\hydhetrTwosum{} for the sum and \hydhetrTwomax{} for the highest single.
+\status{todo}\,\fstat{file}
+\textbf{i}, The predicted profile against the measured one. Furfural: the screen repeats
+itself at \hydprofFfReliability{}, ridge reads \hydprofFfRidge{}; 5-HMF:
+\hydprofHmfReliability{}, which is noise, against \hydprofHmfRidge{}. The two profiles
+share \hydgoSharedTermsStore{} significant terms. \status{todo}\,\fstat{partial} Partial:
+the transformer's profiles are running.
+\textbf{j}, The six titrations with their Hill fits, dose in units of each compound's own
+half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}.
+\status{todo}\,\fstat{partial} Partial: no predicted curves.
+\textbf{k}, The combinations that grew, observed against the two rules, by number of
+inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
+Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}.
+\status{todo}\,\fstat{partial} Partial: no model arm.
+\textbf{l}, The \hydnIsoboles{} isobole grids as observed minus Bliss, the Loewe front
+drawn and the cells that grew marked. Mean excess: \hydisoboleExTwoSixExcess{},
+\hydisoboleExTwoSevenExcess{} and \hydisoboleExTwoEightExcess{}, the last a single run
+with growth islands and flagged. \status{todo}\,\fstat{partial} Partial: no model
+front.}{fig:main}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:main}}} \\
+\midrule
+a & Nothing from a file; a layout of the proposed model. Status: idea. \\
+b & \file{033/store_axes.csv}, \file{033/pool_totals.csv}, \file{wetlab_wells.csv}.
+Status: on file. \\
+c & \file{038/ladder/ladder_r2_scores.csv}, \file{mixture_scores.csv}; the boxes are a
+layout. Status: idea. \\
+d & \file{038/ladder/ladder_r2_summary.csv}, centered target, full compound count.
+Status: on file. \\
+e & \file{038/ladder/ladder_r2_summary.csv}; \file{038/factorized/r9_control/*_scores.csv};
+\file{038/factorized/r10_envenc/*_scores.csv}. Two folds per arm were on disk when the
+sheet was drawn; the round was still running. Status: partial. \\
+f & \file{035/learning_curve/ridge_curve.csv}, centered target. The encoder arm of the
+curve has no file. Status: partial. \\
+g & \file{single_agent_fits.csv} (the host, with bootstrap intervals from
+\file{single_agent_bootstrap.csv}); \file{vanacloig_ic30.csv} (the screen). Status: on
+file. \\
+h & \file{het_rule_fit.csv}, \file{het_summary.json}. Status: on file. \\
+i & \file{profile_predicted_vs_measured.csv} (\texttt{loco\_32}, centered);
+\file{go_overlap_measured_vs_predicted.csv}. The transformer column has no file.
+Status: partial. \\
+j & \file{wetlab_wells.csv}, \file{single_agent_fits.csv},
+\file{single_agent_bootstrap.csv}. No model curve exists. Status: partial. \\
+k & \file{mixture_combinations.csv}, \file{mixture_scores.csv}, served call. No model
+arm exists. Status: partial. \\
+l & \file{isobole_cells.csv}, \file{isobole_summary.csv}. No model front exists.
+Status: partial. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiOne}{\textbf{Supplement one: the public benchmark in full.}
+\textbf{a}, Every ladder arm, median centered Spearman per encoder and kernel,
+\hydladderCells{} fitted cells over \hydladderEncoders{} encoders. Fingerprint counts
+lead every kernel they are defined for. \status{todo}\,\fstat{file}
+\textbf{b}, Each of the \hydperCompoundN{} compounds, its ridge score against its own
+reliability ceiling: median \hydperCompoundMedian{}, \hydperCompoundAbove{} above the
+ceiling and \hydperCompoundNegative{} below zero. \status{todo}\,\fstat{file}
+\textbf{c}, The learning curve on both targets, the uncentered one dashed. The centered
+curve is the one the main sheet carries. \status{todo}\,\fstat{file}
+\textbf{d}, What each rule gets wrong, by combination size: how many combinations the
+rule called alive, how many of those were right, and what it missed or invented. Loewe
+misses all \hydloeweMissedThree{} growing triples and \hydloeweMissedTwo{} of
+\hydloeweGrewTwo{} growing pairs; Bliss calls \hydblissFalseThree{} of
+\hydblissDeadThree{} dead triples alive. \status{todo}\,\fstat{file}}{fig:sione}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sione}}} \\
+\midrule
+a & \file{038/ladder/ladder_r2_summary.csv}. Status: on file. \\
+b & \file{038/ladder/ladder_r2_scores.csv}, kernel ridge on fingerprint counts,
+centered, averaged over fold seeds. Status: on file. \\
+c & \file{035/learning_curve/ridge_curve.csv}. Status: on file. \\
+d & \file{mixture_scores.csv}, served call, one row per combination size. Status: on
+file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiTwo}{\textbf{Supplement two: the single agents and the growth
+call.}
+\textbf{a}, Every single-agent fit, \hydnFitsAll{} of them over the titration run and the
+three isobole axes, under both no-growth conventions: the darker bar keeps no-growth
+wells at zero fitness, the lighter one drops them from the fit. Intervals are the
+bootstrap. \status{todo}\,\fstat{file}
+\textbf{b}, Every claim-one score under both growth calls, hatched for the software call.
+The two calls disagree on \hydnDisputedWells{} wells of the combination run across
+\hydnDisputedCombinations{} combinations, with optical-density rises from
+\hydodRiseMin{} to \hydodRiseMax{}. \status{todo}\,\fstat{file}
+\textbf{c}, Each pair against Bliss with its replicate-bootstrap interval, under both
+calls. Under the served call \hydnPairsSynergy{} of \hydnPairs{} pairs are synergistic,
+\hydnPairsAdditive{} additive and \hydnPairsAntagonism{} antagonistic.
+\status{todo}\,\fstat{file}
+\textbf{d}, Where the Loewe rule had to extrapolate past the measured dose range:
+\hydloeweBeyondTotal{} of the combinations, and \hydisoboleFrontsBeyondGrid{} of the
+isobole fronts fell outside their grid. \status{todo}\,\fstat{file}}{fig:sitwo}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sitwo}}} \\
+\midrule
+a & \file{single_agent_fits.csv}, \file{single_agent_bootstrap.csv}. Status: on
+file. \\
+b & \file{mixture_scores.csv} (both calls), \file{wetlab_growth_call_check.csv}.
+Status: on file. \\
+c & \file{pair_deviation.csv}. Status: on file. \\
+d & \file{mixture_combinations.csv} (the extrapolation flags),
+\file{isobole_summary.csv}. Status: on file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiThree}{\textbf{Supplement three: how profiles compose, and what the
+predicted ones carry.}
+\textbf{a}, Emergent and masked gene rates of each public pair against how alike its two
+singles are, with the control-matched null beside them. The median emergent fraction is
+\hydhetEmergentMedian{} against a null of \hydhetNullEmergent{}, and the masked fraction
+\hydhetMaskedMedian{}; the only two near-replicate singles in the screen disagree on
+\hydhetReplicateDisagreeMin{} to \hydhetReplicateDisagreeMax{} of their own hits, which
+is the noise floor these rates sit inside. \status{todo}\,\fstat{file}
+\textbf{b}, The one dose grid the public screen holds, methotrexate against
+fluorouracil: the weight the free linear fit puts on the first single moves from
+\hydmtxLinAMin{} to \hydmtxLinAMax{} across \hydmtxCells{} dose pairs, while the mean
+wins at \hydmtxMeanWins{} of them. \status{todo}\,\fstat{file}
+\textbf{c}, \textbf{d}, Profile similarity among the six inhibitors, measured where a
+measurement exists and then with every profile predicted. Measured, the strongest pair
+reads \hydsimBestAvailableMax{}; predicted, \hydsimAllPredictedMax{}, because the small
+acids have near-identical predicted profiles. One scale carries both panels.
+\status{todo}\,\fstat{file}
+\textbf{e}, Similarity against the pair's departure from Bliss, both versions:
+\hydsvdBestSpearman{} at a permutation p of \hydsvdBestP{} with measurements in, and
+\hydsvdPredSpearman{} at \hydsvdPredP{} with everything predicted.
+\status{todo}\,\fstat{file}
+\textbf{f}, The GO read: significant terms in the top hundred sensitive genes of the
+measured profile, of the ridge-predicted profile, and of the gene mean over the fitted
+compounds. The control carries \hydgoControlTerms{} terms and the predicted profiles
+share \hydgoSharedControlMax{} of them, which is what the predicted enrichment is.
+\status{todo}\,\fstat{file}}{fig:sithree}
+
+%% The float is flushed before its source table is set: a deferred float
+%% otherwise lands on the page AFTER the table that describes it.
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sithree}}} \\
+\midrule
+a & \file{het_emergent_masked.csv}, \file{het_near_replicates.csv},
+\file{het_summary.json}. Status: on file. \\
+b & \file{het_rule_fit.csv}, the methotrexate and fluorouracil family. Status: on
+file. \\
+c, d & \file{profile_similarity.csv}, centered target, both versions. Status: on file. \\
+e & \file{similarity_vs_deviation_pairs.csv}, \file{similarity_vs_deviation.csv}.
+Status: on file. \\
+f & \file{go_overlap_measured_vs_predicted.csv}, \file{nominations_summary.csv}.
+Status: on file. \\
+\bottomrule
+\end{tabular}}

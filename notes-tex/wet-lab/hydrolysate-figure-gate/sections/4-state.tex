@@ -1,0 +1,51 @@
+%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/4-state.tex
+%% SOURCE: hand-authored state record. Measured values are macros of
+%% tables/gate_numbers.tex. Job identifiers and dates are from
+%% notes/experiments.040-inhibitor-synergy-wetlab.md (sections of 2026.10.10) and from
+%% the directory listings of experiments/038-env-chemgen-vanacloig-cgt-corrected/results/
+%% factorized/ at the time the sheets were drawn. Everything under "expect" is a
+%% hypothesis and is labeled as one.
+
+\clearpage
+\section{State on the day the sheets were drawn\secstatus{todo}}
+\label{sec:state}
+
+\pfstep{What had finished} The processor round of this experiment: the four
+pre-registered claims scored, which is every panel marked on file above. The ladder of
+the corrected-store campaign, giving main \textbf{d} and SI-1 \textbf{a}. The learning
+curve of the earlier campaign, giving main \textbf{f} in its ridge arm. The pooled table
+and its axes, giving main \textbf{b}.
+
+\pfstep{What was running} The second factorized round of the corrected-store campaign,
+submitted in the small hours of the day the sheets were drawn on two GilaHyper cards: one
+job for the bilinear control, one for the environment encoder. Each had written two folds
+when the panel script read the directory, the control at a pooled median of
+\hydbilinearMedian{} and the encoder at \hydenvencMedian{} over
+\hydenvencCompounds{} held-out compounds. Those are two folds of a round, not a result,
+and main \textbf{e} is marked partial for that reason. The sheet re-reads the directory
+every time it is drawn, so the panel fills in as the round writes.
+
+\pfstep{What had not started} The first mixture round, which is every panel of the bottom
+row in its model arm. The trainer and its configuration groups are owned by the
+implementation thread and are not part of this document.
+
+\pfstep{What to expect, labeled} Hypothesis (untested): the environment encoder ties
+nested ridge on the corrected store, as it did on the earlier store, so main \textbf{e}
+closes with the two within a hundredth of each other and the figure's public-benchmark
+row says that architecture is not where the gain is. Hypothesis (untested): the encoder's
+compound-cold profiles for the two inhibitors in store read no better than ridge, so main
+\textbf{i} keeps its shape and the predicted profiles stay generic. Hypothesis
+(untested): a dose-aware host head fitted on the titration run beats the highest single
+agent on growth, which reads \hydhsaAuroc{}, and does not beat Loewe, which reads
+\hydloeweAuroc{}, because Loewe already uses the fitted single-agent curves and the model
+has no information about this host that those curves do not carry. If that last one holds
+the honest figure is the model-free one, and the bottom row says so in the caption rather
+than in a footnote.
+
+\pfstep{What would change the figure's claim} A model arm that beats
+\hydloeweAuroc{} on growth, or \hydblissSpearman{} on fitness over the combinations that
+grew, moves the bottom row from a validation of arithmetic to a result about transfer. A
+model arm that does neither still earns the row, because the comparison is the point: the
+rules are computed from six titrations on the same strain, and a model trained on
+\hydnPoolCompounds{} public compounds that cannot beat them is the measurement the
+section needs to report.

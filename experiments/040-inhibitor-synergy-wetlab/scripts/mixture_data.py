@@ -70,6 +70,7 @@ import lmdb
 import numpy as np
 import pandas as pd
 import torch
+from dotenv import load_dotenv
 from numpy.typing import NDArray
 from pydantic import BaseModel, ConfigDict
 from rdkit import Chem
@@ -77,6 +78,14 @@ from rdkit.Chem import Descriptors, rdFingerprintGenerator
 from scipy.stats import pearsonr, spearmanr
 
 from torchcell.datamodels.compound_identity import _TABLE_PATH
+
+# The path constants below are read at import time, and this module is imported before
+# the trainer's own ``load_dotenv()`` runs, so the environment has to be loaded here or
+# ``DATA_ROOT`` is empty and every default path comes out relative. That is what killed
+# GilaHyper jobs 3711 and 3712 at step zero: "no interned store at
+# data/torchcell/env_chemgen_vanacloig2022/processed/interned". The Delta launcher
+# exports DATA_ROOT itself and so was unaffected, which is how the fault reached a card.
+load_dotenv()
 
 VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 HOEPFNER = "EnvChemgenHoepfner2014Dataset"

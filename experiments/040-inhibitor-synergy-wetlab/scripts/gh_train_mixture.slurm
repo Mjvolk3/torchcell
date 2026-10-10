@@ -55,7 +55,11 @@ for required_dir in \
   "${TC040_VANACLOIG_STORE:-/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022/processed}/interned"; do
   [[ -d "$required_dir" ]] || { echo "ERROR: required tree missing: $required_dir" >&2; exit 1; }
 done
-"$PYTHON" -c "import torchcell; p = torchcell.__file__; assert p.startswith('$PROJECT_ROOT'), p; print('torchcell from', p)"
+# Ask the PROGRAM which paths it will use and check those, rather than the shell defaults
+# above. The two are not the same thing: jobs 3711 and 3712 passed the shell checks and
+# then died at step zero because mixture_data resolved its store relative to an empty
+# DATA_ROOT, so the preflight had proved a path the program never read.
+"$PYTHON" -c "import os.path as osp, sys; sys.path.insert(0, '$EXP/scripts'); import torchcell, mixture_data as m; print('torchcell from', torchcell.__file__); [print(n, '->', p) for n, p in (('cell table', m.CELL_TABLE), ('embeddings', m.EMBEDDING_DIR), ('vanacloig store', m.VANACLOIG_STORE))]; bad = [p for p in (m.CELL_TABLE, m.EMBEDDING_DIR, m.VANACLOIG_STORE) if not osp.exists(p)]; sys.exit('ERROR: the program resolves missing paths: ' + ', '.join(bad)) if bad else None"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 if [ "$PARALLEL" -eq 1 ]; then

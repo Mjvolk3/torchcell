@@ -185,6 +185,23 @@ def test_checkpoint_missing_a_parameter_is_refused(tiny_model: GenSLM) -> None:
         GenSLM(TINY_ID, weights_dir=tiny_model.weights_dir)
 
 
+def test_extra_derived_buffers_are_tolerated(tiny_model: GenSLM) -> None:
+    """The released 25M checkpoint carries 16 such keys (8 layers x 2); verified
+    2026-10-10 against ``patric_25m_epoch01-val_loss_0.57_bias_removed.pt``.
+    """
+    checkpoint = torch.load(tiny_model.weights_path, weights_only=False)
+    checkpoint["state_dict"]["gpt_neox.layers.0.attention.masked_bias"] = torch.tensor(
+        -1e9
+    )
+    checkpoint["state_dict"]["gpt_neox.layers.0.attention.rotary_emb.inv_freq"] = (
+        torch.ones(2)
+    )
+    torch.save(checkpoint, tiny_model.weights_path)
+    _write_manifest(Path(tiny_model.weights_dir), TINY_WEIGHTS)
+    reloaded = GenSLM(TINY_ID, weights_dir=tiny_model.weights_dir)
+    assert reloaded.embed("ATGTAA", mean_embedding=True).shape == (1, 16)
+
+
 def test_checkpoint_with_unexpected_key_is_refused(tiny_model: GenSLM) -> None:
     checkpoint = torch.load(tiny_model.weights_path, weights_only=False)
     checkpoint["state_dict"]["extra.weight"] = torch.zeros(1)

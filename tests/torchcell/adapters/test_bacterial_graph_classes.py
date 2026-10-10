@@ -834,6 +834,40 @@ def test_promoter_activity_optional_fields_project_as_none() -> None:
     assert props["sample_unit"] == "biological_replicate"
 
 
+def _fraction(**kw: Any) -> s.MrnaNumberFractionPhenotype:
+    fields: dict[str, Any] = dict(
+        mrna_number_fraction={"b0002": 0.25, "b0001": 0.5},
+        n_libraries=2,
+        measurement_type="rnaseq_mrna_number_fraction",
+    )
+    fields.update(kw)
+    return s.MrnaNumberFractionPhenotype(**fields)
+
+
+def test_mrna_number_fraction_node_projects_the_dict_as_sorted_json() -> None:
+    """The per-gene dict is one JSON string; the two scalars stay typed."""
+    phenotype = _fraction()
+    [node] = _run(
+        "mrna number fraction phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "mrna number fraction phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+        "graph_level": "node",
+        "label_name": "mrna_number_fraction",
+        "label_statistic_name": None,
+        "mrna_number_fraction": '{"b0001": 0.5, "b0002": 0.25}',
+        "n_libraries": 2,
+        "measurement_type": "rnaseq_mrna_number_fraction",
+    }
+
+
 def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
     return {
         "experiment": s.BacterialMorphologyExperiment(
@@ -934,6 +968,11 @@ def test_bacterial_morphology_optional_fields_project_as_none() -> None:
                 _morphology(),
                 _morphology(morphology={"<L>": 3.02, "%2N": 0.19}),
             ],
+        ),
+        (
+            "mrna number fraction phenotype reference",
+            "mrna number fraction phenotype",
+            [_fraction(), _fraction(), _fraction(n_libraries=1)],
         ),
     ],
 )

@@ -91,6 +91,7 @@ from torchcell.adapters import (
     MismatchCrispriFitnessHawkins2020Adapter,
     Mormino2022Adapter,
     MorphologyCampos2018Adapter,
+    MrnaFractionBalakrishnan2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
@@ -152,6 +153,9 @@ from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
 )
 from torchcell.data.experiment_dataset import Visibility
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.datasets.ecoli.balakrishnan2022 import (
+    MrnaFractionBalakrishnan2022Dataset,
+)
 from torchcell.datasets.ecoli.brunk2016 import (
     BiofuelTiterBrunk2016Dataset,
     ExometaboliteBrunk2016Dataset,
@@ -406,6 +410,7 @@ dataset_adapter_map: dict[type, type] = {
     HomHillenmeyer2008Dataset: HomHillenmeyer2008Adapter,
     # Bacteria (plan.bacteria-ontology-genome step 9): E. coli, then P. putida.
     GeneInteractionBabu2014Dataset: GeneInteractionBabu2014Adapter,
+    MrnaFractionBalakrishnan2022Dataset: MrnaFractionBalakrishnan2022Adapter,
     GeneInteractionButland2008Dataset: GeneInteractionButland2008Adapter,
     RnaseqCaglar2017Dataset: RnaseqCaglar2017Adapter,
     ProteomeCaglar2017Dataset: ProteomeCaglar2017Adapter,

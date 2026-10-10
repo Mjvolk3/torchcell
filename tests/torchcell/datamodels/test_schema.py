@@ -2915,3 +2915,68 @@ def test_a_provenance_gap_can_name_keys_of_a_partially_populated_map() -> None:
             reason=ProvenanceGapReason.not_reported_by_primary,
             keys=[" "],
         )
+
+
+# --------------------------------------------------------------------------- #
+# Issue #854: MrnaNumberFractionPhenotype, the count-less transcriptome
+# --------------------------------------------------------------------------- #
+def _mrna_fraction(**kw: Any) -> s.MrnaNumberFractionPhenotype:
+    fields: dict[str, Any] = dict(
+        mrna_number_fraction={"b0002": 0.6, "b0001": 0.0},
+        n_libraries=1,
+        measurement_type="rnaseq_mrna_number_fraction",
+    )
+    fields.update(kw)
+    return s.MrnaNumberFractionPhenotype(**fields)
+
+
+def test_mrna_fraction_keeps_a_released_zero_and_sorts_its_keys() -> None:
+    phenotype = _mrna_fraction()
+    assert list(phenotype.mrna_number_fraction.items()) == [
+        ("b0001", 0.0),
+        ("b0002", 0.6),
+    ]
+    assert repr(phenotype) == "MrnaNumberFractionPhenotype(genes=2, n_libraries=1)"
+    assert phenotype.label_name == "mrna_number_fraction"
+
+
+@pytest.mark.parametrize(
+    "fractions,message",
+    [
+        ({}, "cannot be empty"),
+        ({"b0001": 1.2}, "finite value in \\[0, 1\\]"),
+        ({"b0001": -0.1}, "finite value in \\[0, 1\\]"),
+        ({"b0001": float("nan")}, "finite value in \\[0, 1\\]"),
+        ({"b0001": True}, "is not a number"),
+        ({"b0001": 0.7, "b0002": 0.4}, "sums to 1.1"),
+    ],
+)
+def test_mrna_fraction_refuses_what_a_fraction_cannot_be(
+    fractions: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        _mrna_fraction(mrna_number_fraction=fractions)
+
+
+def test_mrna_fraction_refuses_a_list_no_libraries_and_a_blank_type() -> None:
+    with pytest.raises(ValueError, match="per-gene dict"):
+        _mrna_fraction(mrna_number_fraction=[0.5])
+    with pytest.raises(ValueError, match="positive integer"):
+        _mrna_fraction(n_libraries=0)
+    with pytest.raises(ValueError, match="cannot be blank"):
+        _mrna_fraction(measurement_type="  ")
+
+
+def test_mrna_fraction_family_is_in_every_union_and_map() -> None:
+    assert s.MrnaNumberFractionPhenotype in typing.get_args(s.PhenotypeType)
+    assert s.MrnaNumberFractionExperiment in typing.get_args(s.ExperimentType)
+    assert s.MrnaNumberFractionExperimentReference in typing.get_args(
+        s.ExperimentReferenceType
+    )
+    assert (
+        s.EXPERIMENT_TYPE_MAP["mrna_number_fraction"] is s.MrnaNumberFractionExperiment
+    )
+    assert (
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["mrna_number_fraction"]
+        is s.MrnaNumberFractionExperimentReference
+    )

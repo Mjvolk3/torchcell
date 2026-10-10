@@ -48,10 +48,14 @@ def _expr_map(phenotype: dict[str, Any]) -> tuple[dict[str, Any], str]:
 
     ``RNASeqExpressionPhenotype`` (Caudal) stores absolute ``expression_tpm``;
     ``PseudobulkExpressionPhenotype`` (Nadal-Ribelles) stores per-gene log2 fold-change vs
-    WT in ``expression_log2_ratio``. One verifier serves both families.
+    WT in ``expression_log2_ratio``; ``MrnaNumberFractionPhenotype`` (Balakrishnan 2022,
+    issue #854) stores a count-less per-gene ``mrna_number_fraction``. One verifier
+    serves all three families.
     """
     if "expression_log2_ratio" in phenotype:
         return phenotype["expression_log2_ratio"], "log2_ratio"
+    if "mrna_number_fraction" in phenotype:
+        return phenotype["mrna_number_fraction"], "number_fraction"
     return phenotype["expression_tpm"], "tpm"
 
 
@@ -217,6 +221,37 @@ def _l3_reference_finite(records: Sequence[Record]) -> LevelResult:
     )
 
 
+def _l3_fraction_sum_at_most_one(records: Sequence[Record]) -> LevelResult:
+    """L3: a record's number fractions, and its reference's, sum to at most 1.
+
+    A record holds a subset of one transcriptome's genes, so its fractions cannot add to
+    more than the whole; a sum above 1 means two libraries were pooled or a value was
+    rescaled. The smallest sum is reported as the share of the transcriptome stored.
+    """
+    from torchcell.datamodels.schema import MRNA_NUMBER_FRACTION_SUM_ATOL
+
+    sums = [
+        sum(float(v) for v in phenotype["mrna_number_fraction"].values())
+        for rec in records
+        for phenotype in (
+            rec["experiment"]["phenotype"],
+            rec["reference"]["phenotype_reference"],
+        )
+    ]
+    over = [s for s in sums if s > 1.0 + MRNA_NUMBER_FRACTION_SUM_ATOL]
+    return LevelResult(
+        level=Level.L3,
+        name="fraction_sum_at_most_one",
+        passed=bool(sums) and not over,
+        message=(
+            f"{len(sums)} stored profiles sum to {min(sums):.6f} .. {max(sums):.6f}"
+            if sums
+            else "no stored profiles"
+        ),
+        details={"n_profiles": len(sums), "n_over": len(over)},
+    )
+
+
 def verify_rnaseq_dataset(
     records: Sequence[Record],
     *,
@@ -262,6 +297,12 @@ def verify_rnaseq_dataset(
         # Absolute TPM: finite and non-negative.
         fidelity = l2_value_fidelity(expr_values, allow_nan=False, minimum=0.0)
         fidelity_name = "tpm_value_fidelity"
+    elif kind == "number_fraction":
+        # A fraction of one transcriptome's mRNA molecules: finite and in [0, 1].
+        fidelity = l2_value_fidelity(
+            expr_values, allow_nan=False, minimum=0.0, maximum=1.0
+        )
+        fidelity_name = "number_fraction_value_fidelity"
     else:
         # Pseudobulk log2 fold-change vs WT: finite, negatives allowed (down-regulation).
         fidelity = l2_value_fidelity(expr_values, allow_nan=False)
@@ -298,6 +339,9 @@ def verify_rnaseq_dataset(
                 details={"n_values": count_n, "n_bad": count_bad},
             )
         )
+
+    if kind == "number_fraction":
+        report.add(_l3_fraction_sum_at_most_one(records))
 
     report.add(_l3_measurement_type_consistent(records))
     report.add(_l3_reference_finite(records))

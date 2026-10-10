@@ -1877,6 +1877,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "nadal_ribelles_perturbseq2025": 6188,
         "rnaseq_lamoureux2023": 241,
         "rnaseq_public_k12_lamoureux2023": 240,
+        "mrna_fraction_balakrishnan2022": 28,
         "putida_precise321_lim2022": 180,
     }
     # The three bacterial compendia release one row per LIBRARY, so their L1 is the
@@ -1888,6 +1889,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     } == {
         "rnaseq_lamoureux2023",
         "rnaseq_public_k12_lamoureux2023",
+        "mrna_fraction_balakrishnan2022",
         "putida_precise321_lim2022",
     }
     assert {
@@ -1897,6 +1899,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     } == {
         "rnaseq_lamoureux2023": 0.99,
         "rnaseq_public_k12_lamoureux2023": 0.99,
+        "mrna_fraction_balakrishnan2022": 1.0,
         "putida_precise321_lim2022": 1.0,
     }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
@@ -1961,7 +1964,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 42  # 3 + 1 + 14 + 2 + 5 + 13 + 3 + 1
+    assert len(roots) == 43  # 3 + 1 + 14 + 2 + 6 + 13 + 3 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

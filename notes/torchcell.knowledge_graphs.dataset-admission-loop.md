@@ -144,3 +144,11 @@ not to the Cooper branch. Consequence: Cooper (and Bloom) enter with the next fu
 increment once the store has been rebuilt on current `main`. The production manifest was not
 touched (sha256 `7cfae7e4b3ea5c5ff94486cb8788a946ba09a4b9de240531c5f1cc3295d781ea` before and
 after).
+
+## 2026.10.10 - Agent-tool orchestration replaces the pydantic-ai role loop
+
+The panel-c plan above (pydantic-ai roles under `torchcell/agents/`) is retired in favor of the orchestration the repo already runs: Claude Code's Agent tool, the way `uber-implement` and `wt-implement` fan out. Reasons, from [[plan.dataset-admission-pipeline.2026.10.10]] decision 2: pydantic-ai is absent from every requirements file and from the env, and would add an API-key-bearing dependency to a package whose CI pins Python 3.13.0 and CPU torch; the Workflow tool needs an opt-in the owner has not given and its agents receive no CLAUDE.md, which the gates depend on.
+
+What survives is the contract, now a pydantic model the orchestration validates: `torchcell.candidates.verdict.CandidateVerdict` ([[torchcell.candidates.verdict]]). The CLI prints `CandidateVerdict.model_json_schema()` into each agent prompt and validates the returned JSON with `model_validate_json` (`python -m torchcell.candidates validate`). The panel-c role names (retriever, proposer, critic, implementer, judge) survive as stage names of the `/add-dataset` skill; the critic and judge are the CLI validators, not extra agents. The candidate gate (G1 to G5) is the new FIRST stage; `kg_manifest admit` stays the last stage, unchanged.
+
+Landed in piece 1: the `torchcell/candidates/` package, the `candidate-gate` CLI, the verdict store `database/candidates/`, the registration enforcement test and the `candidate-verdicts` pre-commit tripwire. Not yet: the `/add-dataset` skill, the re-audit of both candidate lists, and the aggregation backfill (separate PRs). The figure and its caption in `paper/nature-biotech/sections/backmatter.tex` still describe the pydantic-ai loop; changing them waits for the author's go-ahead because that section carries a status chip.

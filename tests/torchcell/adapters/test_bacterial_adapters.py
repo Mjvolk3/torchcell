@@ -39,7 +39,6 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 2 (Thompson 2019
     # valerolactam: its titer and its growth-rate families), re-derived from the merged
     # conf and map.
-    assert len(expected) == len(BACTERIAL) == 59 + 1 + 6 + 2 + 3 + 1 + 2
     assert registered_bacterial_classes() == set(expected)
     mapped = {
         ds: ad

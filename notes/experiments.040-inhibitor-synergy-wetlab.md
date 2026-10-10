@@ -192,3 +192,43 @@ are on bgcg and the 025 jobs on bflt).** 038 rounds 11 (four 15-config halves), 
 (six jobs, configs on file) as soon as the Delta smoke passes; 040 mixture round 1 (about
 ten arms x three seeds, 12 h files at PARALLEL=2) as soon as `train_mixture.py` passes its
 CPU smoke.
+
+## 2026.10.10 - Round 1 launched: where each job runs and what it decides
+
+**Delta** (`bfjt-delta-gpu`, the account with no running campaign; `bgcg` carries the
+031/032 packs and `bflt` the 025 jobs), partition `gpuA40x4`, 12 h, never `-preempt`. Two
+rsynced trees: `/scratch/bbub/mjvolk3/torchcell-038` and `/scratch/bbub/mjvolk3/torchcell-040`.
+Three things had to be staged before anything ran, each found by a failing smoke: the
+033 cell table and the 031 embedding tables (the trainers read them at GilaHyper absolute
+paths, now overridable by `TC038_*` and `TC040_*`), the genome tier
+`$DATA_ROOT/torchcell-genomes/sgd_S288C_R64-4-1_20230830` plus the GO release, which the
+genome registry resolves and which did not exist on Delta, and the Vanacloig dev store for
+the IC30 doses. Smoke 22786687 trained and scored in 22 min, which is what licensed the
+round.
+
+| job | round | what it decides |
+|---|---|---|
+| 22787115, 22787117 | 038 round 11, environment encoder, seed groups 3-5 and 6-8 | the nine-seed ensemble of the head that ties ridge, on the corrected store |
+| 22787118, 22787120 | 038 round 11, bilinear control, same seed groups | the paired control for that ensemble |
+| 22787121 | 038 round 16 | whether 150 epochs lifts the encoder (its validation loss was still falling at 50) |
+| 22787122 | 038 round 17 | the learning curve in fitted compounds for the encoder, beside the ridge curve already on file |
+
+**GilaHyper** keeps the faster lane. 038 round 2 (slurm 3700 bilinear control, 3701
+environment encoder) has been running since 02:10 and finishes about 06:00; the first two
+040 mixture arms chain onto those two cards as they free. The ten round-1 mixture files
+are one arm each, five compound-cold folds of fold seed 0, three seeds per fold; fold
+seeds 1 and 2 are round 2, run only on the arms that survive. The arms are the best-guess
+joint arm (`sources: vanacloig`, `host_train: anchors+ex21`, `dose: film`, one environment
+layer, `lambda_host` 1) and nine variants that change one field each: dose off, host
+training on the anchors alone, the two-stage fine-tune with the head alone and with the
+environment encoder unfrozen, two environment layers, `lambda_host` 0.1, and Hoepfner and
+Hillenmeyer added as gene-level sources.
+
+**Measured while assembling the data, each a correction to the plan.** Of the 32 published
+Vanacloig compounds, 28 carry a dose that converts to molar; ethanol, gamma-valerolactone,
+isobutanol and methyl methanesulfonate are percent-basis and leave the dose-aware panel.
+Acetic acid already has a fingerprint row, so only formic and lactic acid were featurized
+from SMILES. Hoepfner serves two compound names against two structures each, so the
+compound table is keyed by InChIKey, not by name. Hillenmeyer's three media are pooled
+behind one source token and its heterozygotes are read by the deletion operator; both are
+stated simplifications.

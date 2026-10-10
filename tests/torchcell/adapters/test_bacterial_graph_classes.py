@@ -979,6 +979,10 @@ NEW_CLASSES = {
         "bacterial morphology phenotype (chunked)",
         s.BacterialMorphologyPhenotype,
     ),
+    "mrna number fraction phenotype": (
+        "mrna number fraction phenotype (chunked)",
+        s.MrnaNumberFractionPhenotype,
+    ),
 }
 
 
@@ -1055,6 +1059,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         "bacterial morphology phenotype reference": (
             "_get_bacterial_morphology_phenotype_reference_nodes"
         ),
+        "mrna number fraction phenotype (chunked)": (
+            "_mrna_number_fraction_phenotype_node"
+        ),
+        "mrna number fraction phenotype reference": (
+            "_get_mrna_number_fraction_phenotype_reference_nodes"
+        ),
     }.items():
         assert table[name] == fn
     assert SCHEMA["perturbation member of"]["source"] == [
@@ -1065,12 +1075,13 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
     sources = SCHEMA["phenotype member of"]["source"]
-    assert sources[-5:] == [
+    assert sources[-6:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "flux phenotype",
         "promoter activity phenotype",
         "bacterial morphology phenotype",
+        "mrna number fraction phenotype",
     ]
 
 

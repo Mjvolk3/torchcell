@@ -394,6 +394,7 @@ NODE_METHODS = [
     "flux phenotype (chunked)",
     "promoter activity phenotype (chunked)",
     "bacterial morphology phenotype (chunked)",
+    "mrna number fraction phenotype (chunked)",
     "fitness phenotype reference",
     "gene interaction phenotype reference",
     "gene essentiality phenotype reference",
@@ -413,6 +414,7 @@ NODE_METHODS = [
     "flux phenotype reference",
     "promoter activity phenotype reference",
     "bacterial morphology phenotype reference",
+    "mrna number fraction phenotype reference",
     "dataset",
     "publication (chunked)",
 ]

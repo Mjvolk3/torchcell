@@ -7865,6 +7865,141 @@ class BacterialMorphologyExperiment(Experiment, ModelStrict):
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# MRNA NUMBER FRACTION BLOCK START (issue #854)
+# A count-less transcriptome: each gene's share of the cell's mRNA molecules, released
+# as a fraction with no read counts behind it.
+# --------------------------------------------------------------------------- #
+#: How far above 1 a record's fractions may sum. A released column sums to 1 over every
+#: row of the release; a record keeps a subset of those rows, so its sum is at most 1,
+#: and the tolerance is the release's own rounding (Balakrishnan 2022 columns sum to 1
+#: within 2.3e-8, measured on the pinned workbook).
+MRNA_NUMBER_FRACTION_SUM_ATOL = 1e-6
+
+
+class MrnaNumberFractionPhenotype(Phenotype, ModelStrict):
+    """Per-gene mRNA NUMBER FRACTION: one gene's mRNA molecules over all mRNA molecules.
+
+    The quantity is ``psi_m,i = [mR_i] / [mR]`` with ``[mR] = sum_i [mR_i]``, as
+    Balakrishnan et al. 2022 (Science 378, eabk2066) define it, estimated from RNA-seq and
+    released WITHOUT the read counts it was estimated from. It is dimensionless, lies in
+    [0, 1], and a released column sums to 1 over the whole transcriptome.
+
+    Why a sibling of ``RNASeqExpressionPhenotype`` and not a relaxation of it: that class
+    requires ``expression_count`` with the same keys as ``expression_tpm``, and every
+    served record of it (Caudal 2024, Caglar 2017, Lamoureux 2023, Lim 2022) carries
+    counts. Making the counts optional would move the schema closure of all four
+    served transcriptomes for one release that has none, and storing ``psi x 1e6`` in a
+    field named ``expression_tpm`` would assert a TPM pipeline (length normalization of
+    read counts) that the release does not document. This class holds exactly what was
+    released and implies no counts, so it is additive: no served record changes.
+
+    Key semantics:
+
+    - A gene that is a KEY carries the released fraction verbatim. ``0.0`` is a released
+      value (no reads assigned to that gene in that library), not a missing one: the
+      column sums to 1 over its zero rows too.
+    - A gene that is NOT a key was not released under an identifier that names a locus
+      of the pinned assembly. Because a record holds a subset of the released rows, its
+      fractions sum to at most 1 (``MRNA_NUMBER_FRACTION_SUM_ATOL`` above it is refused).
+
+    ``n_libraries`` is how many sequenced libraries the stored value is taken over: 1 for
+    a released sample column, more for a reference that averages biological replicates.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "mrna_number_fraction"
+    label_statistic_name: str | None = None
+
+    mrna_number_fraction: dict[str, float] = Field(
+        description=(
+            "SortedDict of per-gene mRNA number fraction (dimensionless, in [0, 1]); a "
+            "gene the release does not identify on the pinned assembly is not a key"
+        ),
+        repr=False,
+    )
+    n_libraries: int = Field(
+        description="number of sequenced libraries the stored fractions are taken over"
+    )
+    measurement_type: str = Field(
+        description="what the number is and the pipeline that produced it, e.g. "
+        "'rnaseq_mrna_number_fraction'"
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dict."""
+        return (
+            f"MrnaNumberFractionPhenotype(genes={len(self.mrna_number_fraction)}, "
+            f"n_libraries={self.n_libraries})"
+        )
+
+    @field_validator("mrna_number_fraction", mode="before")
+    @classmethod
+    def convert_and_validate_fraction(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict; refuse empty, non-finite, or out-of-[0, 1] values."""
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"mrna_number_fraction must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not v:
+            raise ValueError("mrna_number_fraction cannot be empty")
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        total = 0.0
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"mrna_number_fraction for {key} is not a number")
+            if not math.isfinite(value) or value < 0.0 or value > 1.0:
+                raise ValueError(
+                    f"mrna_number_fraction for {key} must be a finite value in [0, 1], "
+                    f"got {value}"
+                )
+            total += float(value)
+        if total > 1.0 + MRNA_NUMBER_FRACTION_SUM_ATOL:
+            raise ValueError(
+                f"mrna_number_fraction sums to {total}, above 1: a subset of one "
+                "transcriptome's number fractions cannot exceed the whole"
+            )
+        return v
+
+    @field_validator("n_libraries", mode="after")
+    @classmethod
+    def validate_n_libraries(cls, v: int) -> int:
+        """At least one library stands behind every stored value."""
+        if v < 1:
+            raise ValueError(f"n_libraries must be a positive integer, got {v}")
+        return v
+
+    @field_validator("measurement_type", mode="after")
+    @classmethod
+    def validate_measurement_type(cls, v: str) -> str:
+        """The quantity is named, never blank."""
+        if not v.strip():
+            raise ValueError("measurement_type cannot be blank")
+        return v
+
+
+class MrnaNumberFractionExperimentReference(ExperimentReference, ModelStrict):
+    """Assembly-pinned reference for an mRNA number-fraction experiment."""
+
+    experiment_reference_type: str = "mrna_number_fraction"
+    genome_reference: AssemblyReferenceGenome
+    phenotype_reference: MrnaNumberFractionPhenotype
+
+
+class MrnaNumberFractionExperiment(Experiment, ModelStrict):
+    """A transcriptome released as per-gene mRNA number fractions, without counts."""
+
+    experiment_type: str = "mrna_number_fraction"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: MrnaNumberFractionPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# MRNA NUMBER FRACTION BLOCK END (issue #854)
+# --------------------------------------------------------------------------- #
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -7888,6 +8023,7 @@ PhenotypeType = (
     | FluxPhenotype
     | PromoterActivityPhenotype
     | BacterialMorphologyPhenotype  # issue #774
+    | MrnaNumberFractionPhenotype  # issue #854
 )
 
 ExperimentType = (
@@ -7926,6 +8062,7 @@ ExperimentType = (
     | BacterialRNASeqExpressionExperiment
     | BacterialVisualScoreExperiment
     | BacterialMorphologyExperiment  # issue #774
+    | MrnaNumberFractionExperiment  # issue #854
 )
 
 ExperimentReferenceType = (
@@ -7964,6 +8101,7 @@ ExperimentReferenceType = (
     | BacterialRNASeqExpressionExperimentReference
     | BacterialVisualScoreExperimentReference
     | BacterialMorphologyExperimentReference  # issue #774
+    | MrnaNumberFractionExperimentReference  # issue #854
 )
 
 
@@ -8002,6 +8140,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperiment,
     "bacterial_visual_score": BacterialVisualScoreExperiment,
     "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
+    "mrna_number_fraction": MrnaNumberFractionExperiment,  # issue #854
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -8039,6 +8178,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_rnaseq_expression": BacterialRNASeqExpressionExperimentReference,
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,
     "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
+    "mrna_number_fraction": MrnaNumberFractionExperimentReference,  # issue #854
 }
 
 

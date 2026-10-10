@@ -84,6 +84,9 @@ from .schema import (
     MeanDeletionPerturbation,
     MeasurementType,
     Media,
+    MrnaNumberFractionExperiment,
+    MrnaNumberFractionExperimentReference,
+    MrnaNumberFractionPhenotype,
     NatMxDeletionPerturbation,
     Phenotype,
     PhenotypeType,
@@ -251,6 +254,10 @@ __all__ = [
     "BacterialMorphologyPhenotype",
     "BacterialMorphologyExperiment",
     "BacterialMorphologyExperimentReference",
+    # issue #854: the count-less transcriptome family
+    "MrnaNumberFractionPhenotype",
+    "MrnaNumberFractionExperiment",
+    "MrnaNumberFractionExperimentReference",
     # conversion
     "ConversionEntry",
     "ConversionMap",

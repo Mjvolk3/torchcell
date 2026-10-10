@@ -69,7 +69,9 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
     conf = yaml.safe_load(KG_BACTERIA.read_text(encoding="utf-8"))
     names = conf["datasets"]
     assert (
-        len(names) == len(set(names)) == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1
+        len(names)
+        == len(set(names))
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

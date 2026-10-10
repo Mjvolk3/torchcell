@@ -4745,7 +4745,15 @@ CANDIDATES: list[Candidate] = [
         dim_basis="reported",
         seq_basis="KT2440+transposon",
         modality="mariner transposon insertion",
-        why="A complete released matrix, which is rarer than a large one: "
+        why="LOADED 2026-10-10 as EnvMetalTnseqRoyet2025Dataset: 21,583 of the 22,916 "
+        "released cells, measured by experiments/036-dataset-fixes-before-kg-build/"
+        "scripts/royetHighThroughputTnSeqScreens2025_release_inventory.py. The 1,333 "
+        "cells not stored are the genes with no insertion read in either arm, where "
+        "TRANSIT releases log2FC 0.00 and q 1 for an empty gene. The schema need is met "
+        "by the existing gene-level TransposonInsertionPerturbation, the Girgis 2009 "
+        "and Borchert 2024 form, and the row is independent of Borchert 2024 (no LB or "
+        "metal sample among its 332). "
+        "A complete released matrix, which is rarer than a large one: "
         "Supplementary Table S5 carries a log2 fold change and a "
         "Benjamini-Hochberg q for all 5,729 genes under each of cobalt, copper, "
         "zinc and cadmium, with no missing values, so the 22,916 records include "

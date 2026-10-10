@@ -300,3 +300,11 @@ every run. Full measurement: [[torchcell.datasets.pputida.borchert2023]].
 ## 2026.10.10 - Thompson 2019 lysine samples identified by value
 
 Measured, not inferred from names: Thompson 2019 lysine's Table S1 (39 genes x 4 carbon sources) matches compendium samples set7IT062 (D-lysine), set7IT055 (L-lysine), set7IT044 (5-aminovalerate) and set6IT057 (glucose), max abs difference 0.046 against a nearest wrong sample at 0.58. The served store holds all four (18,928 records), so that row needs no loader. This turns the `HYPOTHESES["set7"]` entry into a measurement for three samples and adds set6IT057, which the dictionary does not attribute. Re-attributing them as a `SourceStudy` is an owner decision (store rebuild). The compendium labels set6IT057 a 48-well Tecan microplate; the paper's Methods say 50-ml culture tubes. Details: [[experiments.036-dataset-fixes-before-kg-build.scripts.thompsonMassivelyParallelFitness2019_release_inventory]].
+
+## 2026.10.10 - Royet 2025 measured as independent of the compendium
+
+Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/royetHighThroughputTnSeqScreens2025_release_inventory.py`:
+0 of the 332 samples are on LB and 0 name a metal, so no (gene, condition) pair of Royet
+2025's LB-vs-metal Tn-seq is in the compendium; Royet is none of its four source studies.
+Royet 2025 is loaded on its own as `EnvMetalTnseqRoyet2025Dataset`
+([[torchcell.datasets.pputida.royet2025]]).

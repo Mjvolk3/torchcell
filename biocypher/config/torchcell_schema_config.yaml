@@ -477,6 +477,9 @@ product titer phenotype:
         productivity: float
         productivity_unit: str
         quantification_method: str
+        # --- begin #867: a below-detection titer is a bound, not a zero ---
+        titer_censoring: str
+        # --- end #867 ---
 
 # Per-protein turnover rates (ProteinTurnoverPhenotype): every dict keyed by locus tag
 # is a JSON string, as for protein abundance; measurement_type carries the time unit.

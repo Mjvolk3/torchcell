@@ -2303,6 +2303,7 @@ class CellAdapter:
         sample_unit = phenotype.sample_unit
         yield_unit = phenotype.product_yield_unit
         productivity_unit = phenotype.productivity_unit
+        titer_censoring = phenotype.titer_censoring
         return {
             "graph_level": phenotype.graph_level,
             "label_name": phenotype.label_name,
@@ -2326,6 +2327,11 @@ class CellAdapter:
                 str(productivity_unit.value) if productivity_unit is not None else None
             ),
             "quantification_method": phenotype.quantification_method,
+            # --- begin #867: a below-detection titer is a bound, not a zero ---
+            "titer_censoring": (
+                str(titer_censoring.value) if titer_censoring is not None else None
+            ),
+            # --- end #867 ---
         }
 
     @data_chunker

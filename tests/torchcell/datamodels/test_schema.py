@@ -1799,6 +1799,48 @@ def test_a_titer_is_a_finite_non_negative_amount() -> None:
     assert _titer(titer=0.0).titer == 0.0  # a strain that made none is a real datum
 
 
+# --- begin #867: a below-detection titer is a bound, not a zero ------------- #
+def test_a_below_detection_titer_is_a_left_censored_floor() -> None:
+    """The stored number is the floor; the side says the truth lies below it."""
+    bound = _titer(titer=0.155, titer_censoring=s.Censoring.left)
+    assert (bound.titer, bound.titer_censoring) == (0.155, s.Censoring.left)
+    assert bound.titer_se is None
+    assert _titer().titer_censoring is None  # unstated, distinct from 'uncensored'
+    stated = _titer(titer_censoring=s.Censoring.uncensored)
+    assert stated.titer_censoring is s.Censoring.uncensored
+
+
+def test_a_left_censored_titer_of_zero_is_refused() -> None:
+    """A floor of 0.0 states an exact zero, which is the measurement nobody made."""
+    with _refuses(
+        "a left-censored titer stores the detection floor it lies below; a floor of "
+        "0.0 states an exact zero, which is a measurement, not a bound"
+    ):
+        _titer(titer=0.0, titer_censoring=s.Censoring.left)
+
+
+@pytest.mark.parametrize("side", [s.Censoring.left, s.Censoring.right])
+def test_a_censored_titer_carries_no_error(side: s.Censoring) -> None:
+    """A bound has no spread: neither a reported uncertainty nor a derived SE."""
+    with _refuses(
+        f"a {side.value}-censored titer is a bound, so it carries no "
+        "titer_uncertainty and no titer_se"
+    ):
+        _titer(
+            titer_censoring=side,
+            titer_uncertainty=0.25,
+            titer_uncertainty_type=s.UncertaintyType.bootstrap_se,
+        )
+    with _refuses(
+        f"a {side.value}-censored titer is a bound, so it carries no "
+        "titer_uncertainty and no titer_se"
+    ):
+        _titer(titer_censoring=side, titer_se=0.1)
+
+
+# --- end #867 ------------------------------------------------------------------ #
+
+
 def test_the_product_is_a_typed_compound_so_a_titer_joins_the_compound_layer() -> None:
     """The product is the same entity a chemogenomic dataset dosing it would use."""
     phenotype = _titer()

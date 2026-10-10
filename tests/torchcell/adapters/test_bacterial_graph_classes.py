@@ -211,6 +211,7 @@ def _full_titer() -> s.ProductTiterPhenotype:
         productivity=0.05,
         productivity_unit=s.ProductivityUnit.g_per_l_per_h,
         quantification_method="GC-MS",
+        titer_censoring=s.Censoring.uncensored,
     )
 
 
@@ -653,6 +654,7 @@ def test_product_titer_phenotype_node_projects_every_field() -> None:
         "productivity": 0.05,
         "productivity_unit": "g/L/h",
         "quantification_method": "GC-MS",
+        "titer_censoring": "uncensored",
         "id": pid,
         "preferred_id": f"phenotype_{pid}",
     }
@@ -679,8 +681,19 @@ def test_product_titer_optional_fields_project_as_none() -> None:
         "productivity",
         "productivity_unit",
         "quantification_method",
+        "titer_censoring",
     ):
         assert props[key] is None, key
+
+
+def test_a_below_detection_titer_projects_as_a_left_censored_bound() -> None:
+    """#867: the floor is the stored titer and the side travels as its value."""
+    phenotype = _titer(titer=0.155, titer_censoring=s.Censoring.left)
+    props = _run("product titer phenotype (chunked)", _product_titer_record(phenotype))[
+        0
+    ].get_properties()
+    assert (props["titer"], props["titer_censoring"]) == (0.155, "left")
+    assert (props["titer_se"], props["titer_uncertainty"]) == (None, None)
 
 
 def _phenotype_record(phenotype: Any) -> dict[str, Any]:

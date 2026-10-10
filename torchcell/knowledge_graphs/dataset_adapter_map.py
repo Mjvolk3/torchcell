@@ -97,6 +97,7 @@ from torchcell.adapters import (
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
+    ProteinSynthesisRateLi2014Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeBrunk2016Adapter,
@@ -200,6 +201,7 @@ from torchcell.datasets.ecoli.lamoureux2023_growth import GrowthRateLamoureux202
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
+from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
@@ -437,6 +439,7 @@ dataset_adapter_map: dict[type, type] = {
     MismatchCrispriFitnessHawkins2020Dataset: (
         MismatchCrispriFitnessHawkins2020Adapter
     ),
+    ProteinSynthesisRateLi2014Dataset: ProteinSynthesisRateLi2014Adapter,
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     GrowthRateLamoureux2023Dataset: GrowthRateLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,

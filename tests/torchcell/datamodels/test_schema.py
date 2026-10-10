@@ -1512,6 +1512,7 @@ def test_the_assembly_pin_survives_only_where_the_field_is_re_annotated() -> Non
     [
         "product_titer",
         "protein_turnover",
+        "protein_synthesis_rate",
         "flux",
         "bacterial_fitness",
         "bacterial_environment_response",
@@ -1872,6 +1873,82 @@ def test_protein_turnover_keys_its_replicates_on_the_same_proteins() -> None:
         s.ProteinTurnoverPhenotype(**{**fields, "half_life": {"b9999": 6.0}})
 
 
+# --- begin #857: the protein synthesis-rate family ---
+def _synthesis_fields() -> dict[str, Any]:
+    return dict(
+        synthesis_rate={"b0002": 120.0, "b0003": 0.0},
+        rate_unit=s.SynthesisRateUnit.molecules_per_generation,
+        generation_time_minutes=21.5,
+        measurement_type="ribosome_profiling_footprint_density",
+    )
+
+
+def test_a_synthesis_rate_needs_no_degradation_rate() -> None:
+    """The label is the synthesis rate; nothing about degradation is required."""
+    phenotype = s.ProteinSynthesisRatePhenotype(**_synthesis_fields())
+    assert phenotype.label_name == "synthesis_rate"
+    assert phenotype.label_statistic_name == "synthesis_rate_se"
+    assert phenotype.graph_level == "node"
+    assert phenotype.synthesis_rate == {"b0002": 120.0, "b0003": 0.0}
+    assert phenotype.n_replicates is None
+    assert phenotype.synthesis_rate_se is None
+    assert phenotype.censoring is None
+    assert "degradation_rate" not in s.ProteinSynthesisRatePhenotype.model_fields
+
+
+def test_a_synthesis_rate_record_refuses_what_it_cannot_mean() -> None:
+    fields = _synthesis_fields()
+    with _refuses("synthesis_rate cannot be empty"):
+        s.ProteinSynthesisRatePhenotype(**{**fields, "synthesis_rate": {}})
+    with _refuses("synthesis_rate for b0002 must be finite and non-negative"):
+        s.ProteinSynthesisRatePhenotype(**{**fields, "synthesis_rate": {"b0002": -1.0}})
+    with _refuses("synthesis_rate for b0002 must be finite and non-negative"):
+        s.ProteinSynthesisRatePhenotype(
+            **{**fields, "synthesis_rate": {"b0002": math.nan}}
+        )
+    with _refuses("synthesis_rate_se key b9999 not in synthesis_rate"):
+        s.ProteinSynthesisRatePhenotype(
+            **{**fields, "synthesis_rate_se": {"b9999": 1.0}}
+        )
+    with _refuses("synthesis_rate_se for b0002 must be non-negative"):
+        s.ProteinSynthesisRatePhenotype(
+            **{**fields, "synthesis_rate_se": {"b0002": -1.0}}
+        )
+    with _refuses("n_replicates keys must match synthesis_rate keys"):
+        s.ProteinSynthesisRatePhenotype(**{**fields, "n_replicates": {"b0002": 2}})
+    with _refuses("n_replicates for b0003 must be >= 1"):
+        s.ProteinSynthesisRatePhenotype(
+            **{**fields, "n_replicates": {"b0002": 2, "b0003": 0}}
+        )
+    with _refuses("censoring key b9999 not in synthesis_rate"):
+        s.ProteinSynthesisRatePhenotype(
+            **{**fields, "censoring": {"b9999": s.Censoring.right}}
+        )
+    with _refuses("generation_time_minutes must be finite and positive, got 0.0"):
+        s.ProteinSynthesisRatePhenotype(**{**fields, "generation_time_minutes": 0.0})
+    with _refuses("a rate per generation states its generation time"):
+        s.ProteinSynthesisRatePhenotype(**{**fields, "generation_time_minutes": None})
+
+
+def test_a_rate_per_hour_needs_no_generation_time_and_keeps_its_companions() -> None:
+    phenotype = s.ProteinSynthesisRatePhenotype(
+        **{
+            **_synthesis_fields(),
+            "rate_unit": s.SynthesisRateUnit.molecules_per_hour,
+            "generation_time_minutes": None,
+            "synthesis_rate_se": {"b0002": math.nan},
+            "n_replicates": {"b0002": 2, "b0003": 1},
+            "censoring": {"b0003": s.Censoring.left},
+        }
+    )
+    assert phenotype.rate_unit is s.SynthesisRateUnit.molecules_per_hour
+    assert phenotype.n_replicates == {"b0002": 2, "b0003": 1}
+    assert phenotype.censoring == {"b0003": s.Censoring.left}
+
+
+# --- end #857 ---
+
+
 def test_a_flux_record_states_an_interval_rather_than_one_statistic() -> None:
     """A fitted flux's uncertainty is two-sided, so there is no single label statistic."""
     fields: dict[str, Any] = dict(
@@ -2025,6 +2102,7 @@ def test_a_new_phenotype_family_is_discriminated_by_its_own_fields() -> None:
     [
         "product_titer",
         "protein_turnover",
+        "protein_synthesis_rate",
         "flux",
         "bacterial_fitness",
         "bacterial_environment_response",

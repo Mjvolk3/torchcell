@@ -81,6 +81,9 @@ sourcing layer.
   record per released sgRNA with a measured relative fitness over 317 BW25113 essential
   genes. The guide's mismatch design rides on the perturbation's description; the
   released PREDICTED sgRNA activity is a model output and is not stored.
+- ``li2014`` -- ``ProteinSynthesisRateLi2014Dataset``: absolute protein synthesis rates
+  from ribosome profiling, MG1655 in three MOPS media, the first consumer of
+  ``ProteinSynthesisRatePhenotype`` (Table S1's plain cells; ``[n]`` cells refused).
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
 - ``lamoureux2023_growth`` -- ``GrowthRateLamoureux2023Dataset``: the SAME release's
@@ -258,6 +261,9 @@ from .lamoureux2023_growth import (
 )
 from .lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset as RnaseqPublicK12Lamoureux2023Dataset,
+)
+from .li2014 import (
+    ProteinSynthesisRateLi2014Dataset as ProteinSynthesisRateLi2014Dataset,
 )
 from .mohiuddin2022 import (
     PromoterReporterMohiuddin2022Dataset as PromoterReporterMohiuddin2022Dataset,

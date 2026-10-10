@@ -1,0 +1,56 @@
+# torchcell/adapters/conf/protein_synthesis_rate_li2014_adapter.yaml
+# [[torchcell.adapters.conf.protein_synthesis_rate_li2014_adapter.yaml]]
+# https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/conf/protein_synthesis_rate_li2014_adapter.yaml
+# Test file: tests/torchcell/adapters/test_li2014_adapter.py
+#
+# Li 2014 protein synthesis rates: 3 MOPS media, ProteinSynthesisRateExperiment. Every
+# genotype is the wild type (0 perturbations in 3 of 3 records), so neither
+# `bacterial perturbation` nor `perturbation to genotype` is enabled. No environment
+# carries a perturbation (the three media differ by their supplement component), so the
+# environment-perturbation pair is not enabled either.
+
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "protein synthesis rate phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "protein synthesis rate phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

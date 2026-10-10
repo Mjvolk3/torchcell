@@ -80,6 +80,7 @@ datasets:
   - RnaseqLamoureux2023Dataset
   - GrowthRateLamoureux2023Dataset
   - RnaseqPublicK12Lamoureux2023Dataset
+  - ProteinSynthesisRateLi2014Dataset
   - ProteomeMori2021Dataset
   - PhageRbTnseqMutalik2020Dataset
   - CrisprPineneToleranceNiu2019Dataset

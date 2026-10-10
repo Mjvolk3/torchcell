@@ -112,6 +112,7 @@ from torchcell.adapters import (
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
+    ProteinSynthesisRateLi2014Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
     ProteomeBrunk2016Adapter,
@@ -191,6 +192,7 @@ from torchcell.datasets.ecoli.lamoureux2023_growth import GrowthRateLamoureux202
 from torchcell.datasets.ecoli.lamoureux2023_public_k12 import (
     RnaseqPublicK12Lamoureux2023Dataset,
 )
+from torchcell.datasets.ecoli.li2014 import ProteinSynthesisRateLi2014Dataset
 from torchcell.datasets.ecoli.mohiuddin2022 import PromoterReporterMohiuddin2022Dataset
 from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
@@ -323,6 +325,7 @@ FOLD_CHANGE = "protein fold change phenotype"
 TITER = "product titer phenotype"
 RESPONSE = "environment response phenotype"
 TURNOVER = "protein turnover phenotype"
+SYNTHESIS_RATE = "protein synthesis rate phenotype"
 INTERACTION = "gene interaction phenotype"
 FLUX = "flux phenotype"
 PROMOTER_ACTIVITY = "promoter activity phenotype"
@@ -542,6 +545,17 @@ BACTERIAL: list[Bacterial] = [
         "rnaseq_public_k12_lamoureux2023",
         RnaseqPublicK12Lamoureux2023Dataset,
         RNASEQ,
+    ),
+    # Li 2014: three wild-type MG1655 records, one per MOPS medium; the media differ
+    # by a supplement component, so no environment perturbation is carried.
+    _case(
+        ProteinSynthesisRateLi2014Adapter,
+        "li2014",
+        "protein_synthesis_rate_li2014",
+        ProteinSynthesisRateLi2014Dataset,
+        SYNTHESIS_RATE,
+        perturbation=False,
+        env_perturbation=False,
     ),
     _case(
         ProteomeMori2021Adapter,

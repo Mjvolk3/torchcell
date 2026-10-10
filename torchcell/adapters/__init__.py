@@ -170,6 +170,9 @@ from .lamoureux2023_growth_adapter import (
 from .lamoureux2023_public_k12_adapter import (
     RnaseqPublicK12Lamoureux2023Adapter as RnaseqPublicK12Lamoureux2023Adapter,
 )
+from .li2014_adapter import (
+    ProteinSynthesisRateLi2014Adapter as ProteinSynthesisRateLi2014Adapter,
+)
 from .lian2019_adapter import Lian2019Adapter as Lian2019Adapter
 from .lim2022_adapter import (
     PutidaPrecise321Lim2022Adapter as PutidaPrecise321Lim2022Adapter,
@@ -439,6 +442,7 @@ ecoli_adapters = [
     "GeneEssentialityGoodall2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",
+    "ProteinSynthesisRateLi2014Adapter",
     "MetabolomeIshii2007Adapter",
     "ProteomeIshii2007Adapter",
     "FluxIshii2007Adapter",

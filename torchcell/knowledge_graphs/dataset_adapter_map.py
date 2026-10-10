@@ -13,6 +13,7 @@ from torchcell.adapters import (
     AminoAcidCooper2010Adapter,
     AminoAcidMulleder2016Adapter,
     BetaxanthinCachera2023Adapter,
+    BiofuelTiterBrunk2016Adapter,
     Bloom2019Adapter,
     CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
@@ -48,6 +49,7 @@ from torchcell.adapters import (
     EnvChemgenWang2024Adapter,
     EnvChemgenWildenhain2015Adapter,
     EnvMetalTnseqRoyet2025Adapter,
+    ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
     FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
@@ -80,6 +82,7 @@ from torchcell.adapters import (
     MetaboliteIntensityRapp2026Adapter,
     MetaboliteProductionPhaseMenasalvas2025Adapter,
     MetaboliteZelezniak2018Adapter,
+    MetabolomeBrunk2016Adapter,
     MetabolomeFuhrer2017Adapter,
     MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
@@ -95,6 +98,7 @@ from torchcell.adapters import (
     ProteinFoldChangeCaglar2017Adapter,
     ProteinTurnoverGupta2024Adapter,
     ProteomeBanerjee2025Adapter,
+    ProteomeBrunk2016Adapter,
     ProteomeCaglar2017Adapter,
     ProteomeCarruthers2025Adapter,
     ProteomeDeSiqueira2025Adapter,
@@ -148,6 +152,12 @@ from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
 )
 from torchcell.data.experiment_dataset import Visibility
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
+from torchcell.datasets.ecoli.brunk2016 import (
+    BiofuelTiterBrunk2016Dataset,
+    ExometaboliteBrunk2016Dataset,
+    MetabolomeBrunk2016Dataset,
+    ProteomeBrunk2016Dataset,
+)
 from torchcell.datasets.ecoli.butland2008 import GeneInteractionButland2008Dataset
 from torchcell.datasets.ecoli.caglar2017 import (
     ProteinFoldChangeCaglar2017Dataset,
@@ -406,6 +416,10 @@ dataset_adapter_map: dict[type, type] = {
     GrowthRateCampos2018Dataset: GrowthRateCampos2018Adapter,
     MorphologyCampos2018Dataset: MorphologyCampos2018Adapter,
     GrowthRateChoe2019Dataset: GrowthRateChoe2019Adapter,
+    MetabolomeBrunk2016Dataset: MetabolomeBrunk2016Adapter,
+    ExometaboliteBrunk2016Dataset: ExometaboliteBrunk2016Adapter,
+    ProteomeBrunk2016Dataset: ProteomeBrunk2016Adapter,
+    BiofuelTiterBrunk2016Dataset: BiofuelTiterBrunk2016Adapter,
     IsopentenolTiterFoo2014Dataset: IsopentenolTiterFoo2014Adapter,
     TranscriptionFactorKnockoutChoe2019Dataset: TranscriptionFactorKnockoutChoe2019Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,

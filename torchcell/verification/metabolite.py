@@ -63,6 +63,14 @@ def _genotype_signature(
     uniqueness); a COMBINATORIAL collection (e.g. Xue FFA: a POX1-FAA1-FAA4 baseline plus a
     set of TF deletions) has one record per unique deletion SET -- an individual ORF legitimately
     recurs across many strains, so uniqueness must key on the whole set, not the single ORF.
+
+    The key also carries each perturbation's ``variant`` and ``construct_name`` where the
+    leaf has them, because two strains can differ in neither gene nor perturbation type:
+    Brunk 2016's I1 and I2 both carry atoB, HMGS, HMGR, MK, PMK, PMD and nudB, and differ
+    only in whether the HMGS and HMGR copies are the original or the codon-optimized ones
+    (``variant``) on a different plasmid (``construct_name``). Adding fields can only
+    separate records that were colliding, so no dataset that passes this rule today can
+    start failing it.
     """
     return tuple(
         sorted(
@@ -70,6 +78,8 @@ def _genotype_signature(
                 p.get("systematic_gene_name"),
                 p.get("perturbation_type"),
                 p.get("perturbed_gene_name"),
+                p.get("variant"),
+                p.get("construct_name"),
             )
             for p in experiment["genotype"]["perturbations"]
             if p.get("perturbation_type") != "gene_addition"

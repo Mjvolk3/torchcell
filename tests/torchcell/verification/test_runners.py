@@ -2680,6 +2680,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
     assert {
         name: spec["root"] for name, spec in runners.PRODUCT_TITER_DATASETS.items()
     } == {
+        "biofuel_titer_brunk2016": "data/torchcell/biofuel_titer_brunk2016",
         "isopentenol_titer_foo2014": "data/torchcell/isopentenol_titer_foo2014",
         "isoprenol_titer_carruthers2025": (
             "data/torchcell/isoprenol_titer_carruthers2025"
@@ -2699,6 +2700,7 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         name: spec["root"]
         for name, spec in runners.BACTERIAL_PROTEIN_ABUNDANCE_DATASETS.items()
     } == {
+        "proteome_brunk2016": "data/torchcell/proteome_brunk2016",
         "proteome_banerjee2025": "data/torchcell/proteome_banerjee2025",
         "campaign_proteome_carruthers2025": (
             "data/torchcell/campaign_proteome_carruthers2025"
@@ -2723,6 +2725,8 @@ def test_the_bioproduction_registries_name_every_landed_store() -> None:
         name: spec["root"]
         for name, spec in runners.BACTERIAL_METABOLITE_DATASETS.items()
     } == {
+        "metabolome_brunk2016": "data/torchcell/metabolome_brunk2016",
+        "exometabolite_brunk2016": "data/torchcell/exometabolite_brunk2016",
         "metabolite_growth_menasalvas2025": (
             "data/torchcell/metabolite_growth_menasalvas2025"
         ),

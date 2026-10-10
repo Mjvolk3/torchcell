@@ -2297,6 +2297,59 @@ def test_environment_response_replicate_id_is_stored_verbatim() -> None:
     assert _response().replicate_id is None
 
 
+# #863: the released test of an environment response.
+
+
+def test_environment_response_p_value_pair_is_stored_and_names_its_correction() -> None:
+    """Wang 2024 Table S2 releases a permutation-test p-value and its FDR value per cell,
+    0 among them; both are stored verbatim and never touch the uncertainty or the SE.
+    """
+    stored = _response(
+        environment_response_p_value=0.0,
+        environment_response_p_value_adjusted=0.00042,
+        p_value_adjustment_method="benjamini_hochberg",
+    )
+    assert (
+        stored.environment_response_p_value,
+        stored.environment_response_p_value_adjusted,
+        stored.p_value_adjustment_method,
+    ) == (0.0, 0.00042, "benjamini_hochberg")
+    assert stored.environment_response_se is None
+    assert stored.environment_response_uncertainty is None
+    assert _response(environment_response_p_value=1.0).p_value_adjustment_method is None
+    unset = _response()
+    assert (
+        unset.environment_response_p_value,
+        unset.environment_response_p_value_adjusted,
+        unset.p_value_adjustment_method,
+    ) == (None, None, None)
+
+
+def test_environment_response_p_values_are_probabilities_with_a_named_correction() -> (
+    None
+):
+    with _refuses("environment_response_p_value is 1.5, not a probability in [0, 1]"):
+        _response(environment_response_p_value=1.5)
+    with _refuses("environment_response_p_value is -0.1, not a probability in [0, 1]"):
+        _response(environment_response_p_value=-0.1)
+    with _refuses("environment_response_p_value is nan, not a probability in [0, 1]"):
+        _response(environment_response_p_value=float("nan"))
+    with _refuses(
+        "environment_response_p_value_adjusted is inf, not a probability in [0, 1]"
+    ):
+        _response(
+            environment_response_p_value_adjusted=float("inf"),
+            p_value_adjustment_method="benjamini_hochberg",
+        )
+    with _refuses("an adjusted p-value names its correction: set p_value_adjustment"):
+        _response(environment_response_p_value_adjusted=0.05)
+    with _refuses("p_value_adjustment_method describes a stored adjusted p-value"):
+        _response(
+            environment_response_p_value=0.01,
+            p_value_adjustment_method="benjamini_hochberg",
+        )
+
+
 def _interaction(**overrides: Any) -> Any:
     kwargs: dict[str, Any] = {"gene_interaction": -1.5}
     kwargs.update(overrides)

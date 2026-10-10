@@ -425,3 +425,19 @@ expected full-rebuild signal and is re-validated after the KG 4.0 build.
 Related: [[torchcell.datasets.ecoli.caglar2017_doubling_time]],
 [[torchcell.verification.environment_response]], [[torchcell.datasets.ecoli.babu2014]],
 [[torchcell.datasets.ecoli.butland2008]].
+
+## 2026.10.10 - A p-value pair on the environment-response phenotype (#863)
+
+`EnvironmentResponsePhenotype` gains three optional fields in their own `ADDITIVE (#863)` block, the scalar shape of the protein-fold-change family's pair (`protein_fold_change_p_value`, `protein_fold_change_p_value_adjusted`, `p_value_adjustment_method`):
+
+- `environment_response_p_value`: the unadjusted p-value the source released for the response's test, a probability in [0, 1], verbatim. A released 0 is stored as 0.
+- `environment_response_p_value_adjusted`: the multiple-testing-adjusted p-value of the same test, in [0, 1].
+- `p_value_adjustment_method`: the correction, same vocabulary as the protein family (`benjamini_hochberg`). Required when the adjusted value is set and forbidden otherwise.
+
+The validator refuses a non-finite or out-of-range p-value and an adjusted value without its method (or a method without an adjusted value). A p-value is a test of the response, not a dispersion of it, so neither field feeds `environment_response_uncertainty` or the derived SE; `label_statistic_name` stays `environment_response_se`.
+
+Graph side: `environment response phenotype` in `biocypher/config/torchcell_schema_config.yaml` declares the three properties (float, float, str) and `CellAdapter._environment_response_properties` projects them, so experiment and reference nodes keep the declared/emitted bijection.
+
+First consumer: Wang 2024 Table S2 ([[torchcell.datasets.ecoli.wang2024]]), 24,763 records each carrying both released values.
+
+Schema impact (`scripts/schema_impact_check.py --base origin/main`): one changed symbol, `EnvironmentResponsePhenotype` (three added optional fields plus the `_check` validator), 36 impacted dataset groups, 0 breaking. Every dataset whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.

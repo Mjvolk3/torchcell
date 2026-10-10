@@ -1093,6 +1093,10 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "environment_response_upper": None,
             "confidence_level": None,
             "replicate_id": None,
+            # #863: the released test of the response and its correction
+            "environment_response_p_value": None,
+            "environment_response_p_value_adjusted": None,
+            "p_value_adjustment_method": None,
         },
     ),
     (
@@ -1122,6 +1126,10 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "environment_response_upper": None,
             "confidence_level": None,
             "replicate_id": None,
+            # #863: the released test of the response and its correction
+            "environment_response_p_value": None,
+            "environment_response_p_value_adjusted": None,
+            "p_value_adjustment_method": None,
         },
     ),
 ]
@@ -1216,6 +1224,10 @@ def test_only_the_environment_response_reference_collector_deduplicates(
                 "environment_response_upper": None,
                 "confidence_level": None,
                 "replicate_id": None,
+                # #863: the released test of the response and its correction
+                "environment_response_p_value": None,
+                "environment_response_p_value_adjusted": None,
+                "p_value_adjustment_method": None,
             },
             preferred_id="environment response phenotype",
         )

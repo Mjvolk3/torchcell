@@ -1668,6 +1668,12 @@ class CellAdapter:
             "environment_response_upper": phenotype.environment_response_upper,
             "confidence_level": phenotype.confidence_level,
             "replicate_id": phenotype.replicate_id,
+            # #863: the released test of the response and its correction.
+            "environment_response_p_value": phenotype.environment_response_p_value,
+            "environment_response_p_value_adjusted": (
+                phenotype.environment_response_p_value_adjusted
+            ),
+            "p_value_adjustment_method": phenotype.p_value_adjustment_method,
         }
 
     @data_chunker

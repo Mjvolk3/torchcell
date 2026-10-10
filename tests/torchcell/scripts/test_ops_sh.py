@@ -24,5 +24,8 @@ def test_unknown_action_exits_two_with_the_usage_line(tmp_path: Path) -> None:
         env={"PATH": "/usr/bin:/bin", "HOME": str(tmp_path)},
     )
     assert result.returncode == 2
-    assert result.stderr.strip() == f"usage: {SCRIPT} {{status|releases|health|sync}}"
+    assert (
+        result.stderr.strip()
+        == f"usage: {SCRIPT} {{status|releases|health|sync|candidates}}"
+    )
     assert result.stdout == ""

@@ -9,6 +9,9 @@
 #                       then health probes -- the default action
 #   make ops-health     health probes only
 #   bash scripts/ops.sh releases      the release table only
+#   bash scripts/ops.sh candidates    re-read every quoted slice of the candidate
+#                       verdicts against the mirrors (#758; data-gated, never a cron;
+#                       extra args go to `python -m torchcell.candidates audit`)
 #
 # The release table is one row per served database per host, in the shape the
 # iBioFoundry `make ops` uses for its deployments:
@@ -310,8 +313,9 @@ case "$ACTION" in
     releases) print_releases ;;
     health)   print_health ;;
     sync)     check_sync ;;
+    candidates) shift; PYTHONPATH="$REPO_ROOT" exec bash "$REPO_ROOT/scripts/run-in-env.sh" python -m torchcell.candidates audit "$@" ;;
     *)
-        echo "usage: $0 {status|releases|health|sync}" >&2
+        echo "usage: $0 {status|releases|health|sync|candidates}" >&2
         exit 2
         ;;
 esac

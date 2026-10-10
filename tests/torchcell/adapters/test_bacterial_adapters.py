@@ -35,7 +35,7 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # Tn-seq), re-derived from the merged conf and map.
     # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 1 (row 53, Royet 2025's
     # metal Tn-seq), re-derived from the merged conf and map.
-    assert len(expected) == len(BACTERIAL) == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1
+    assert len(expected) == len(BACTERIAL) == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2
     # rate) + 1 (#770's four Lim 2025 proteome contrasts) + 2 (Thompson 2019
     # valerolactam: its titer and its growth-rate families), re-derived from the merged
     # conf and map.

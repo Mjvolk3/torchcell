@@ -126,3 +126,72 @@ so no dataset that passes that rule today can start failing it.
 
 Schema impact: `scripts/schema_impact_check.py --base origin/main` reports no schema
 contract changes, so this is additive and no served dataset is touched.
+
+## 2026.10.10 - Keying the multi-GPR SRM proteins by their released peptides (#872)
+
+The 24 host proteins refused above carry a JBEI id and a multi-gene GPR only, but the
+proteomics sheet (`data/mmc3.xlsx`, sha256 `c8161e23...41ae`, sheet `Raw proteomics
+data`, column `Peptide`) releases the measured peptide of every row. A third route now
+searches those peptides against the MG1655 protein FASTA the genomes tier deposits
+(`GCA_000005845.2_ASM584v2_protein.faa.gz`, sha256 `900cb656...5263`, 4,290 proteins
+keyed to b-numbers by `read_protein_fasta`, resolved through `registry.resolve`).
+
+The rule (`resolve_by_peptides`): a protein is keyed to locus `L` only when EVERY one of
+its released peptides occurs in `L` and in no other MG1655 protein. Leucine and
+isoleucine are read as one residue and no cleavage rule is assumed, because an SRM
+transition cannot separate isobaric sequences; both choices can only add matches, so the
+uniqueness call is conservative. A peptide that occurs in two proteins refuses the whole
+protein, because the released `ProteinArea` is the mean of the protein's corrected
+peptide areas (PFLB, DH1 at 24 h: peptides 659,242 and 699,128, `ProteinArea` 679,185),
+so one shared peptide makes the area not one gene's.
+
+### Result, measured from the rebuilt dev store
+
+| | before (PR #873) | after |
+|---|---|---|
+| records | 81 | 81 |
+| distinct protein keys | 44 | 65 |
+| stored peak-area values | 3,564 | 5,265 |
+
+Routes over the 68 host proteins: 33 UniProt `GN=`, 11 single-gene GPR (20 proteins
+have one, 9 of them already keyed by UniProt), 21 by peptide, 3 refused.
+
+Keyed by peptide (21): ACKA b2296, ADHE b1241, AtoB b2224, DHSC b0721, DHSD b0722, EUTD
+b2458, FDHF b4079, FRDA b4154, FRDB b4153, FRDC b4152, FRDD b4151, GLPX2 b2930, HYCB
+b2724, HYCC b2723, HYCD b2722, HYCE b2721, HYCF b2720, LACI b0345, NudB b1865, ODO2
+b0727, PTA b2297.
+
+Refused, each with `REFUSAL_SHARED_PEPTIDE` (3):
+
+| protein | peptide matches (I = L) |
+|---|---|
+| DHSB | `FLIDSR`: b0724 and b3876 (as `FLLDSR`, a non-tryptic position); `LDGLSDAFSVFR`: b0724 |
+| HYCG | `HADILLFTGAVTR`: b2719 (hycG) and b2489 (hyfI), identical |
+| PFLB | `VDDLAVDLVER`: b0903; `YPQLTIR`: b0903 (pflB) and b2579 (tdcE), identical |
+
+DHSB is the one owner call: it is refused only because of the I = L equivalence at a
+position trypsin would not cut in b3876. Requiring a tryptic context would key it to
+b0724; that is not done, because it assumes complete enzyme specificity.
+
+### Sequence cross-check of the name routes
+
+`check_peptides_agree` now asserts, at build time, that every keyed protein's locus
+carries every one of its released peptides: 65 of 65 do. Two proteins keyed by UniProt
+pass that check but have peptides that also occur in a paralog, so their released area
+may carry the paralog's signal: FUMA (both peptides in fumA b1612 and fumB b4122) and
+TKT1 (`ALSMDAVQK` in tktA b2935 and tktB b2465). They keep the released UniProt key; this
+is recorded, not acted on.
+
+### Verification (rebuilt with `--retire-existing`, `verify_build(..., family="proteome")`)
+
+| dataset | L0 | L1 | L2 | L3 | L4 |
+|---|---|---|---|---|---|
+| `proteome_brunk2016` | 81 records validated | 81 = 81; 81 strain-hour samples | 5,265 values finite | single measurement_type; hour in window; reference is the same-hour wild type over a subset of its keys | 81 sample totals agree within 1e-6 against the workbook; the OCR repair holds (9 of 9 proteins higher in B2, smallest ratio 7.4x) |
+
+L4 now reads WHICH proteins are keyed from the build's own `preprocess/protein_keys.csv`
+(the peptide route needs the assembly) and re-reads every area from the pinned workbook.
+`build_dataset_lmdb --list-stale --include-private` no longer names any Brunk 2016 store.
+
+Schema impact: `scripts/schema_impact_check.py --base origin/main` reports "No schema
+contract changes vs origin/main". The record classes are unchanged; the store's key set
+grows, so the served graph takes it in the KG 4.0 full rebuild.

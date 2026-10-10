@@ -98,13 +98,20 @@ WHAT IS MEASURED AND NOT STORED, WITH THE COUNTS.
    nM to uM for the LC-MS run as a whole but no column note anywhere in the mirror
    gives these columns a unit, so storing them beside the 51 ``(uM)`` columns would
    assume one. They stay in ``preprocess/unitless_columns.csv``.
-2. 24 of the 68 host SRM proteins, whose released key is a JBEI internal id. Two
+2. 3 of the 68 host SRM proteins, whose released key is a JBEI internal id. Two
    released mappings key such an id to ONE gene: the UniProt accession plus ``GN=`` in
    the triplicate sheet (33 of them) and a single-gene GPR in the identifier sheet (20),
    44 distinct between them. The other 24 have only a multi-gene GPR
    (``FRD2`` is ``b4151 and b4152 and b4153 and b4154``), which does not say which
-   subunit the measured peptide belongs to, so they carry no locus and are refused. The
-   refusal and the two routes are in ``preprocess/protein_keys.csv``.
+   subunit the measured peptide belongs to. A third route reads the released
+   ``Peptide`` column instead: a protein whose every peptide occurs in exactly one
+   MG1655 protein, the same one for all its peptides, is keyed to that locus. Leucine
+   and isoleucine are one residue for this search, because an SRM transition cannot
+   tell them apart by mass. That keys 21 of the 24. The other 3 (DHSB, HYCG, PFLB) each
+   have a peptide that also occurs in a second MG1655 protein, and the released
+   ``ProteinArea`` is the mean of the protein's peptide areas, so the area is not one
+   gene's; they carry no locus and are refused. Every route, every peptide's matches and
+   every refusal are in ``preprocess/protein_keys.csv``.
 3. The 13 non-host proteins of the same sheet (the heterologous pathway enzymes and the
    AmpR/Cam/BSA normalization standards). They are not loci of the host assembly, so
    they cannot be protein keys; the pathway ones are on the GENOTYPE of every record.
@@ -318,8 +325,9 @@ EXPECTED_METABOLOME_RECORDS = 117
 EXPECTED_EXOMETABOLITE_RECORDS = 126
 EXPECTED_PROTEOME_RECORDS = 81
 EXPECTED_TITER_RECORDS = 72
-#: The host SRM proteins whose locus the mirror states, measured 2026-10-10.
-EXPECTED_PROTEIN_KEYS = 44
+#: The host SRM proteins keyed to one locus: 44 by the released UniProt and GPR routes
+#: plus 21 by their released peptides (issue #872), measured 2026-10-10.
+EXPECTED_PROTEIN_KEYS = 65
 #: Every host SRM protein, resolvable or not.
 EXPECTED_HOST_PROTEINS = 68
 #: The ``(uM)`` columns of the metabolomics sheet.
@@ -1291,6 +1299,9 @@ class ProteinKey(BaseModel):
     gene_name: str | None
     route: str | None
     reason: str | None = None
+    #: ``PEPTIDE:locus|locus;...`` over the protein's released peptides, written by
+    #: :func:`resolve_by_peptides`; ``None`` until the peptides have been searched.
+    peptide_matches: str | None = None
 
 
 #: The two mapping routes, named in the ledger so a key's origin is recoverable.
@@ -1303,6 +1314,21 @@ REFUSAL_MULTI_GENE_GPR = (
 REFUSAL_NO_MAPPING = (
     "no UniProt accession and no GPR anywhere in the mirror names a gene for this "
     "protein (the identifier sheet writes 'not in model/not found', or carries no row)"
+)
+#: The third route (issue #872): every released peptide of the protein occurs in one
+#: MG1655 protein, the same one for all of them.
+ROUTE_PEPTIDE = "every_released_peptide_occurs_in_only_this_mg1655_protein"
+REFUSAL_SHARED_PEPTIDE = (
+    "a released peptide of this protein also occurs in another MG1655 protein (leucine "
+    "and isoleucine read as one residue), and the released ProteinArea is the mean of "
+    "the protein's peptide areas, so the area is not one gene's"
+)
+REFUSAL_UNMATCHED_PEPTIDE = (
+    "a released peptide of this protein occurs in no MG1655 protein"
+)
+REFUSAL_PEPTIDES_DISAGREE = (
+    "the released peptides of this protein each occur in one MG1655 protein, but not "
+    "in the same one"
 )
 _UNIPROT_NAME_RE = re.compile(r"^sp\|[^|]+\|([A-Za-z0-9]+)_ECOLI$")
 _GENE_NAME_RE = re.compile(r"GN=(\S+)")
@@ -1402,6 +1428,124 @@ def read_protein_areas(path: str | Path) -> pd.DataFrame:
             f"{len(bad)} sample-protein pairs carry more than one ProteinArea"
         )
     return grouped["ProteinArea"].first().reset_index()
+
+
+def read_host_peptides(path: str | Path) -> dict[str, tuple[str, ...]]:
+    """Every host protein of the proteomics sheet with its distinct released peptides."""
+    raw = pd.read_excel(path, sheet_name=SHEET_PROTEOMICS)
+    host = raw[raw["Organism"].astype(object) == HOST_SPECIES]
+    if host["Peptide"].isna().any():
+        raise RuntimeError("a host protein row of the proteomics sheet has no peptide")
+    return {
+        str(protein): tuple(sorted(set(block.astype(str))))
+        for protein, block in host.groupby("Protein")["Peptide"]
+    }
+
+
+def _isobaric(sequence: str) -> str:
+    """Leucine and isoleucine as one residue: an SRM transition cannot separate them."""
+    return sequence.replace("I", "L")
+
+
+def match_peptides(
+    peptides: Iterable[str], proteome: Mapping[str, str]
+) -> dict[str, tuple[str, ...]]:
+    """Each peptide to the sorted loci whose protein sequence contains it.
+
+    The search is a substring search with leucine and isoleucine equated, and assumes
+    no cleavage rule, so a peptide is called shared whenever any other protein could
+    produce an ion of the same sequence mass. That can only add matches, never remove
+    one, which keeps the uniqueness call conservative.
+    """
+    searchable = {tag: _isobaric(sequence) for tag, sequence in proteome.items()}
+    return {
+        peptide: tuple(
+            sorted(tag for tag, seq in searchable.items() if _isobaric(peptide) in seq)
+        )
+        for peptide in peptides
+    }
+
+
+def _format_matches(matches: Mapping[str, tuple[str, ...]]) -> str:
+    """``PEPTIDE:locus|locus;...`` in peptide order, for the ledger."""
+    return ";".join(f"{pep}:{'|'.join(loci)}" for pep, loci in sorted(matches.items()))
+
+
+def resolve_by_peptides(
+    keys: Sequence[ProteinKey],
+    peptides: Mapping[str, tuple[str, ...]],
+    proteome: Mapping[str, str],
+) -> list[ProteinKey]:
+    """Key each refused host protein through its released peptides, or refuse it again.
+
+    A host protein the released routes left unkeyed is keyed to locus ``L`` only when
+    EVERY one of its peptides occurs in ``L`` and in no other MG1655 protein. A peptide
+    that occurs in two proteins, or in none, refuses the protein with that reason; the
+    released ``ProteinArea`` is the mean over all of a protein's peptides, so one shared
+    peptide is enough to make the area not one gene's. Keys the released routes already
+    carry are returned with their peptide matches attached and are otherwise unchanged;
+    :func:`check_peptides_agree` cross-checks them once their loci are resolved.
+    """
+    resolved: list[ProteinKey] = []
+    for key in keys:
+        if key.organism != HOST_SPECIES:
+            resolved.append(key)
+            continue
+        if key.protein not in peptides:
+            raise RuntimeError(f"host protein {key.protein} has no released peptide")
+        matches = match_peptides(peptides[key.protein], proteome)
+        evidence = _format_matches(matches)
+        if key.gene_name is not None:
+            resolved.append(key.model_copy(update={"peptide_matches": evidence}))
+            continue
+        hit_counts = {len(loci) for loci in matches.values()}
+        loci = {locus for found in matches.values() for locus in found}
+        if 0 in hit_counts:
+            reason: str | None = REFUSAL_UNMATCHED_PEPTIDE
+        elif hit_counts != {1}:
+            reason = REFUSAL_SHARED_PEPTIDE
+        elif len(loci) != 1:
+            reason = REFUSAL_PEPTIDES_DISAGREE
+        else:
+            reason = None
+        resolved.append(
+            key.model_copy(
+                update={
+                    "gene_name": None if reason else next(iter(loci)),
+                    "route": None if reason else ROUTE_PEPTIDE,
+                    "reason": reason,
+                    "peptide_matches": evidence,
+                }
+            )
+        )
+    return resolved
+
+
+def check_peptides_agree(
+    keys: Sequence[ProteinKey],
+    locus_of: Mapping[str, str],
+    peptides: Mapping[str, tuple[str, ...]],
+    proteome: Mapping[str, str],
+) -> int:
+    """Every keyed protein's locus carries every one of its released peptides.
+
+    The peptide route keys a protein only on this; the UniProt and GPR routes are
+    keyed from a name, so this is the sequence-level check that the name and the
+    measured peptides point at the same protein. Returns the proteins checked.
+    """
+    checked = 0
+    for key in keys:
+        if key.protein not in locus_of:
+            continue
+        locus = locus_of[key.protein]
+        for peptide, loci in match_peptides(peptides[key.protein], proteome).items():
+            if locus not in loci:
+                raise RuntimeError(
+                    f"{key.protein} is keyed to {locus} by {key.route}, but its "
+                    f"released peptide {peptide} is not in that protein ({loci})"
+                )
+        checked += 1
+    return checked
 
 
 # --------------------------------------------------------------------------- #
@@ -2074,7 +2218,7 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
     """Brunk 2016 SRM peak areas: nine strains at nine hours, host proteins only."""
 
     REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = REFERENCE_STRAIN
-    #: Host proteins whose locus the mirror states: 44 of 68, measured 2026-10-10. The
+    #: Host proteins keyed to one locus: 65 of 68, measured 2026-10-10 (issue #872). The
     #: floor is that fraction exactly, so a mapping that silently shrinks stops a build.
     MIN_RESOLVED_FRACTION: ClassVar[float] = (
         EXPECTED_PROTEIN_KEYS / EXPECTED_HOST_PROTEINS
@@ -2136,7 +2280,11 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
         genome = self._genome()
         context = build_context(self.raw_dir, genome, label=self.name)
         organisms_checked = check_pathway_organisms(workbook)
-        keys = read_protein_keys(workbook)
+        peptides = read_host_peptides(workbook)
+        proteome = {
+            tag: str(record.seq) for tag, record in genome.fasta_protein.items()
+        }
+        keys = resolve_by_peptides(read_protein_keys(workbook), peptides, proteome)
         host = [key for key in keys if key.organism == HOST_SPECIES]
         if len(host) != EXPECTED_HOST_PROTEINS:
             raise RuntimeError(
@@ -2154,6 +2302,9 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 f"{report.outside_namespace}"
             )
         locus_of = {key.protein: tag for key, tag in zip(mapped, stored, strict=True)}
+        peptides_checked = check_peptides_agree(mapped, locus_of, peptides, proteome)
+        if len(set(locus_of.values())) != len(locus_of):
+            raise RuntimeError(f"{self.name}: two proteins are keyed to one locus")
         if len(set(locus_of.values())) != EXPECTED_PROTEIN_KEYS:
             raise RuntimeError(
                 f"{len(set(locus_of.values()))} distinct protein keys, not the "
@@ -2276,7 +2427,10 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                     DropRule(
                         rule="protein_key_is_not_resolvable_to_one_host_locus",
                         scope="protein",
-                        description=REFUSAL_MULTI_GENE_GPR,
+                        description="no released mapping names one gene for these "
+                        "and a released peptide of each also occurs in another MG1655 "
+                        "protein (or in none); each protein's own reason and peptide "
+                        "matches are in protein_keys.csv",
                         n_items=len(refused),
                         items=[key.protein for key in refused],
                     ),
@@ -2298,7 +2452,11 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                     f"{sum(1 for k in mapped if k.route == ROUTE_UNIPROT)} through the "
                     "UniProt gene name of the triplicate sheet and "
                     f"{sum(1 for k in mapped if k.route == ROUTE_SINGLE_GENE_GPR)} "
-                    "through a single-gene GPR",
+                    "through a single-gene GPR and "
+                    f"{sum(1 for k in mapped if k.route == ROUTE_PEPTIDE)} through "
+                    "released peptides that occur in that one MG1655 protein only",
+                    f"{peptides_checked} keyed proteins carry every released peptide "
+                    "in the protein sequence of their locus",
                     f"{organisms_checked} pathway-gene organisms were re-read from the "
                     "workbook's own Organism column before a genotype was built",
                     str(UNCERTAINTY_NOT_RELEASED.note),
@@ -2751,7 +2909,7 @@ def proteome_report(
             PROTEOMICS_REL,
             PROTEOMICS_SHA256,
             f"{QUANTIFICATION_PROTEIN.value}; the released ProteinArea of each host "
-            f"protein the mirror keys to one locus ({EXPECTED_PROTEIN_KEYS} of "
+            f"protein the release keys to one locus by name or by peptide ({EXPECTED_PROTEIN_KEYS} of "
             f"{EXPECTED_HOST_PROTEINS}), one number per strain-hour sample, "
             f"measurement_type {MEASUREMENT_TYPE_PROTEIN!r}; reference = the "
             f"{WILD_TYPE} sample of the same hour",
@@ -2778,10 +2936,16 @@ def _l4_protein_values_against_the_workbook(
     """L4: every stored peak area re-read from the pinned proteomics workbook."""
     workbook = Path(dataset_root) / "raw" / PROTEOMICS_FILE
     areas = read_protein_areas(workbook)
+    # Which proteins carry a key is the build's decision (the peptide route needs the
+    # assembly), so the keyed set is read from the build's own ledger; every area is
+    # re-read from the pinned workbook.
+    ledger = pd.read_csv(Path(dataset_root) / "preprocess" / "protein_keys.csv")
     keys = {
-        key.protein: key.gene_name
-        for key in read_protein_keys(workbook)
-        if key.gene_name is not None and key.organism == HOST_SPECIES
+        str(protein)
+        for protein, organism, gene in zip(
+            ledger["protein"], ledger["organism"], ledger["gene_name"], strict=True
+        )
+        if organism == HOST_SPECIES and not pd.isna(gene)
     }
     released: dict[tuple[str, float], dict[str, float]] = {}
     for _, row in areas.iterrows():

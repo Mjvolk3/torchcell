@@ -2,7 +2,7 @@
 # [[torchcell.adapters.brunk2016_proteome_adapter]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/adapters/brunk2016_proteome_adapter.py
 # Test file: tests/torchcell/adapters/test_brunk2016_proteome_adapter.py
-"""BioCypher adapter exposing the SRM peak areas of 44 host loci, 81 records, BacterialProteinAbundanceExperiment as knowledge-graph nodes and edges.
+"""BioCypher adapter exposing the SRM peak areas of 65 host loci, 81 records, BacterialProteinAbundanceExperiment as knowledge-graph nodes and edges.
 
 One record per released strain-hour sample of the Brunk 2016 time course. Every
 engineered strain's pathway genes are served as `bacterial perturbation` nodes; the

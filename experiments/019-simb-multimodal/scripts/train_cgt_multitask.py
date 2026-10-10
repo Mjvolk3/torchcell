@@ -93,6 +93,14 @@ import lightning as L
 import numpy as np
 import torch
 import torch.distributed as dist
+
+# Worker-to-main tensor sharing by file name, not by file descriptor. Under the default
+# `file_descriptor` strategy every shared tensor holds an fd in the main process, and a
+# materialized store of 3,757 rows read through three workers exhausted the limit in the
+# first epoch of the morphology round (IGB job 2427768, 2026-10-10: "Too many open files.
+# Communication with the workers is no longer possible"); 1,103 rows had fit. Set before
+# any DataLoader exists, as the error message asks.
+torch.multiprocessing.set_sharing_strategy("file_system")
 import wandb
 from dotenv import load_dotenv
 from lightning.pytorch.callbacks import Callback, EarlyStopping, ModelCheckpoint, Timer

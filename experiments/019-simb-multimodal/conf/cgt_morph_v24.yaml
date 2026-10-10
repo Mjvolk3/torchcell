@@ -64,4 +64,7 @@ trainer:
   max_epochs: 1200
   checkpoint:
     monitor: val/morphology/pearson_per_feature
-    metric_monitor: val/morphology/pearson_per_feature
+    # The best-by-metric checkpoint must differ from the best checkpoint in monitor or
+    # mode, or Lightning refuses the pair (job 2427768). The mean over scored heads is
+    # morphology's own number under another key.
+    metric_monitor: val/mean/pearson_per_feature

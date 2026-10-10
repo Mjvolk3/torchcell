@@ -27,6 +27,7 @@ Run from the repo root:
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import os.path as osp
@@ -79,15 +80,21 @@ def _lmdb_entries(path: str) -> int:
 
 
 def main() -> None:
+    # `--tag fig3_morph_proteome` builds the same union plus the Ohya 2005 morphology
+    # panel (queries/fig3_morph_proteome.cql, generate_fig3_cql.py), the store the
+    # proteome-revealed morphology arms of v24 need. Same converter, same pipeline.
+    parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    parser.add_argument("--tag", default=DATASET_TAG, choices=[DATASET_TAG, "fig3_morph_proteome"])
+    tag = parser.parse_args().tag
     data_root = os.environ["DATA_ROOT"]
     uri = os.environ.get("TC_NEO4J_URI", "bolt://localhost:7687")
     dataset_root = osp.join(
-        data_root, "data/torchcell/experiments/019-simb-multimodal", DATASET_TAG
+        data_root, "data/torchcell/experiments/019-simb-multimodal", tag
     )
     # The query next to this script, not under EXPERIMENT_ROOT: the build runs from the
     # worktree before the query file has landed on main.
     here = osp.dirname(osp.abspath(__file__))
-    query_path = osp.abspath(osp.join(here, "..", "queries", f"{DATASET_TAG}.cql"))
+    query_path = osp.abspath(osp.join(here, "..", "queries", f"{tag}.cql"))
     with open(query_path) as f:
         query = f.read()
 
@@ -159,7 +166,7 @@ def main() -> None:
     )
     census = {
         "generated_by": "experiments/019-simb-multimodal/scripts/build_fig3_proteome.py",
-        "dataset_tag": DATASET_TAG,
+        "dataset_tag": tag,
         "dataset_root": dataset_root,
         "query_file": query_path,
         "neo4j_uri": uri,
@@ -186,7 +193,7 @@ def main() -> None:
     }
     out = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
-        "fig3_proteome_build_census.json",
+        f"{tag}_build_census.json",
     )
     with open(out, "w") as f:
         json.dump(census, f, indent=1)

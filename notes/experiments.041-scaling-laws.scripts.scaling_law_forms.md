@@ -29,43 +29,47 @@ python experiments/041-scaling-laws/scripts/scaling_law_forms.py
 - **h** `N*` and `D*` against `C` under two fits of the same runs (`a = 0.45` vs `0.51`).
 - **i** Fit on fifteen small synthetic runs, hold out the two largest, extrapolate with bootstrap bands: the pure power law (`alpha = 0.15`) misses the held-out runs, the floored fit (`alpha = 0.35`, `E = 1.71` against a generating 0.34, 1.69) lands on them. Numbers in `experiments/041-scaling-laws/results/scaling_law_forms_summary.json`.
 
-### GIFs
+### GIFs, one per panel
 
-Each is one sweep of one quantity with everything else pinned. The title of every frame carries the equation, the constants and their source, and the swept value with what it implies, so a frame reads on its own. Legends name every line, dotted ones included, and hold still from frame to frame.
+Nine GIFs, one for each panel of the figure above and named by its letter. Each is one sweep of one quantity with everything else pinned. Every frame's title carries four lines: the equation and what is held fixed, the constants and their source, the swept value with what it implies, and in italics the one-sentence takeaway of the sweep. Legends name every line, dotted ones included, and hold still from frame to frame. Every axis is log scale and says so.
 
-The frames are typeset by real LaTeX (Computer Modern, `amsmath`) rather than matplotlib's mathtext, at 200 dpi on a 150 mm canvas. matplotlib's Agg backend cannot rasterize `usetex` text without `dvipng`, which GilaHyper lacks, so each frame is written through the PDF backend (which reads the DVI itself) and rasterized with `pdftoppm`. The system TeX Live also omits `type1cm.sty`, which matplotlib's `usetex` preamble loads; it is installed in the user tree at `~/texmf/tex/latex/type1cm/type1cm.sty` (built from the CTAN `type1cm.ins` on 2026.10.09). The static 3x3 figure stays in Arial mathtext per the repo figure standard.
+The frames are typeset by real LaTeX (Latin Modern, `amsmath`) rather than matplotlib's mathtext, at 200 dpi on a 170 mm canvas, and quantized to the GIF palette without dithering so glyph edges stay smooth. matplotlib's Agg backend cannot rasterize `usetex` text without `dvipng`, which GilaHyper lacks, so each frame is written through the PDF backend (which reads the DVI itself) and rasterized with `pdftoppm`. The system TeX Live also omits `type1cm.sty`, which matplotlib's `usetex` preamble loads; it is installed in the user tree at `~/texmf/tex/latex/type1cm/type1cm.sty` (built from the CTAN `type1cm.ins` on 2026.10.09). The static 3x3 figure stays in Arial mathtext per the repo figure standard.
 
-**Data sweep.** `L` vs `N` while `D` rises from 10^7.5 to 10^12.5: the plateau `E + B D^-beta` drops toward `E`, and the N-curve runs into it later and later.
+**a, exponent sweep.** Takeaway: fits that agree on the runs you have can disagree on the run you want; the exponent is the forecast. Kaplan's pure power law with `alpha_N` moving by plus or minus 0.02 about the published 0.076. Every curve is pinned through the same loss at `N = 10^7.5`, the center of the fitted range, which is why the sweep pivots there: the five runs the fit sees stay within a few percent of every curve, which 2% replicate noise cannot rule out, while the forecast at `N = 10^12` moves by about a quarter each way.
 
-![](./assets/images/041-scaling-laws/scaling_gif_data_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_a_exponent_sweep.gif)
 
-**Parameter sweep.** `L` vs `D` while `N` rises: the mirror image, plateau `E + A N^-alpha`.
+**b, data-exponent sweep.** Takeaway: the data axis forecasts the same way; a shift in `alpha_D` no run can rule out moves the far forecast by a quarter. The twin of a on `D`, pinned at `D = 10^8.5` with `alpha_D` moving by plus or minus 0.02 about the published 0.095 and the forecast read at `D = 10^13`.
 
-![](./assets/images/041-scaling-laws/scaling_gif_params_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_b_data_exponent_sweep.gif)
 
-**Compute sweep.** The IsoFLOP U while `C` rises from 10^18 to 10^23; the minimum traces the frontier, about 0.45 decades of `N*` per decade of `C`.
+**c, floor sweep.** Takeaway: a bend on log-log axes is the floor showing itself, so fit `L - E`, not `L`. `E` rises from 0 to 2.5 under a fixed `A N^-alpha`: the curve bends where `A N^-alpha = E`, and `L - E` is the same straight line in every frame.
 
-![](./assets/images/041-scaling-laws/scaling_gif_compute_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_c_floor_sweep.gif)
 
-**Exponent sweep.** Kaplan's pure power law with `alpha_N` moving by plus or minus 0.02 about the published 0.076. Every curve is pinned through the same loss at `N = 10^7.5`, the center of the fitted range, which is why the sweep pivots there: the five runs the fit sees stay within a few percent of every curve, which 2% replicate noise cannot rule out, while the forecast at `N = 10^12` moves by about a quarter each way. This is why an interval on the exponent is the result, not the point.
+**d, surface sweep.** Takeaway: a budget is a diagonal on the surface, and the best split is where it touches the lowest contour. The joint surface `L(N, D)` with one budget line `6ND = C` sliding across it; the optima lie on the frontier.
 
-![](./assets/images/041-scaling-laws/scaling_gif_exponent_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_d_surface_sweep.gif)
 
-**Floor sweep.** `E` rises from 0 to 2.5 under a fixed `A N^-alpha`: on log-log axes the curve bends where `A N^-alpha = E`, and `L - E` is the same straight line in every frame. This is the diagnostic behind panel c.
+**e, data sweep.** Takeaway: parameters stop paying at a plateau the data sets, and only more data lowers it. `L` vs `N` while `D` rises from 10^7.5 to 10^12.5: the plateau `E + B D^-beta` drops toward `E`, and the N-curve runs into it later and later.
 
-![](./assets/images/041-scaling-laws/scaling_gif_floor_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_e_data_sweep.gif)
 
-**Surface sweep.** The joint surface `L(N, D)` with one budget line `6ND = C` sliding across it. The optimum is where the line touches its lowest contour, and the optima lie on the frontier.
+**f, parameter sweep.** Takeaway: data stops paying at a plateau the model size sets, and only a bigger model lowers it. `L` vs `D` while `N` rises: the mirror image of e, plateau `E + A N^-alpha`.
 
-![](./assets/images/041-scaling-laws/scaling_gif_surface_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_f_params_sweep.gif)
 
-**Bootstrap.** One resample per frame: the fifteen fitted runs are redrawn with replacement (ring size = times drawn), the floored form is refit, and the refits pile up into the band panel i shows at once. The 90% interval on `alpha` in the title settles as the resamples accumulate.
+**g, compute sweep.** Takeaway: every budget has one best model size, and the best sizes line up on the frontier. The IsoFLOP U while `C` rises from 10^18 to 10^23; the minimum moves about 0.45 decades of `N*` per decade of `C`.
 
-![](./assets/images/041-scaling-laws/scaling_gif_bootstrap.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_g_compute_sweep.gif)
 
-**Allocation sweep.** `beta` moves from 0.2 to 0.4 with `alpha` fixed at 0.34: `a = beta / (alpha + beta)` and `b = alpha / (alpha + beta)` move with it, and the `N*` and `D*` lines tilt against the Hoffmann allocation (dashed). A steeper data term tilts a budget toward parameters.
+**h, allocation sweep.** Takeaway: how a budget splits between size and data is set by the ratio of the two exponents and nothing else. `beta` moves from 0.2 to 0.4 with `alpha` fixed at 0.34: `a = beta / (alpha + beta)` and `b = alpha / (alpha + beta)` move with it, and the `N*` and `D*` lines tilt against the Hoffmann allocation (dashed).
 
-![](./assets/images/041-scaling-laws/scaling_gif_allocation_sweep.gif)
+![](./assets/images/041-scaling-laws/scaling_gif_h_allocation_sweep.gif)
+
+**i, bootstrap.** Takeaway: resample the runs and refit, and the spread of the refits is the error bar on the exponent. One resample per frame: the fifteen fitted runs are redrawn with replacement (ring size = times drawn), the floored form is refit, and the refits pile up into the band panel i shows at once. The 90% interval on `alpha` in the title settles as the resamples accumulate.
+
+![](./assets/images/041-scaling-laws/scaling_gif_i_bootstrap.gif)
 
 ### Counting D: instances, not dimensions
 

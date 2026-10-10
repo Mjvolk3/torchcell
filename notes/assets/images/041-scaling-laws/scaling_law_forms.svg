@@ -113,7 +113,7 @@ L 0 2
      </g>
     </g>
     <g id="text_5">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.021688" y="136.472615" transform="rotate(-0 92.021688 136.472615)">parameters N</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.021688" y="136.54574" transform="rotate(-0 92.021688 136.54574)">parameters N (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_2">
@@ -225,7 +225,7 @@ L -2 0
      </g>
     </g>
     <g id="text_8">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="9.794587" y="68.215893" transform="rotate(-90 9.794587 68.215893)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="9.724274" y="68.215893" transform="rotate(-90 9.724274 68.215893)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_16">
@@ -492,7 +492,7 @@ z
      </g>
     </g>
     <g id="text_18">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="136.472615" transform="rotate(-0 263.848819 136.472615)">training examples D</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="136.54574" transform="rotate(-0 263.848819 136.54574)">training examples D (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_4">
@@ -608,7 +608,7 @@ z
      </g>
     </g>
     <g id="text_21">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="181.621718" y="68.215893" transform="rotate(-90 181.621718 68.215893)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="181.551405" y="68.215893" transform="rotate(-90 181.551405 68.215893)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_39">
@@ -1297,7 +1297,7 @@ L 0 2
      </g>
     </g>
     <g id="text_34">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="136.472615" transform="rotate(-0 435.67595 136.472615)">parameters N</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="136.54574" transform="rotate(-0 435.67595 136.54574)">parameters N (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_6">
@@ -1477,7 +1477,7 @@ L 0 2
      </g>
     </g>
     <g id="text_37">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="350.988849" y="68.215893" transform="rotate(-90 350.988849 68.215893)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="350.918536" y="68.215893" transform="rotate(-90 350.918536 68.215893)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_126">
@@ -14117,7 +14117,7 @@ z
      </g>
     </g>
     <g id="text_73">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="279.792155" transform="rotate(-0 263.848819 279.792155)">parameters N</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="279.86528" transform="rotate(-0 263.848819 279.86528)">parameters N (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_10">
@@ -14199,7 +14199,7 @@ z
      </g>
     </g>
     <g id="text_81">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="187.705155" y="211.535433" transform="rotate(-90 187.705155 211.535433)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="187.634843" y="211.535433" transform="rotate(-90 187.634843 211.535433)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_217">
@@ -15041,7 +15041,7 @@ z
      </g>
     </g>
     <g id="text_96">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="279.792155" transform="rotate(-0 435.67595 279.792155)">training examples D</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="279.86528" transform="rotate(-0 435.67595 279.86528)">training examples D (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_12">
@@ -15123,7 +15123,7 @@ z
      </g>
     </g>
     <g id="text_104">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.532286" y="211.535433" transform="rotate(-90 359.532286 211.535433)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.461974" y="211.535433" transform="rotate(-90 359.461974 211.535433)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_299">
@@ -15871,7 +15871,7 @@ z
      </g>
     </g>
     <g id="text_117">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.021688" y="423.18482" transform="rotate(-0 92.021688 423.18482)">parameters N  (D = C / 6N)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="92.021688" y="423.18482" transform="rotate(-0 92.021688 423.18482)">parameters N (log scale), D = C / 6N</text>
     </g>
    </g>
    <g id="matplotlib.axis_14">
@@ -15936,7 +15936,7 @@ z
      </g>
     </g>
     <g id="text_124">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="15.878024" y="354.854973" transform="rotate(-90 15.878024 354.854973)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="15.807712" y="354.854973" transform="rotate(-90 15.807712 354.854973)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_369">
@@ -16460,7 +16460,7 @@ z
      </g>
     </g>
     <g id="text_136">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="423.18857" transform="rotate(-0 263.848819 423.18857)">compute C (FLOPs)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="263.848819" y="423.18857" transform="rotate(-0 263.848819 423.18857)">compute C (FLOPs, log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_16">
@@ -16571,7 +16571,7 @@ z
      </g>
     </g>
     <g id="text_143">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="179.281718" y="354.854973" transform="rotate(-90 179.281718 354.854973)">optimal size N*, optimal data D*</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="179.211405" y="354.854973" transform="rotate(-90 179.211405 354.854973)">optimal size N*, optimal data D* (log scale)</text>
     </g>
    </g>
    <g id="line2d_393">
@@ -18436,7 +18436,7 @@ z
      </g>
     </g>
     <g id="text_155">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="423.111695" transform="rotate(-0 435.67595 423.111695)">parameters N</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="435.67595" y="423.18482" transform="rotate(-0 435.67595 423.18482)">parameters N (log scale)</text>
     </g>
    </g>
    <g id="matplotlib.axis_18">
@@ -18501,7 +18501,7 @@ z
      </g>
     </g>
     <g id="text_162">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.532286" y="354.854973" transform="rotate(-90 359.532286 354.854973)">loss L</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: middle" x="359.461974" y="354.854973" transform="rotate(-90 359.461974 354.854973)">loss L (log scale)</text>
     </g>
    </g>
    <g id="line2d_452">

@@ -24,23 +24,25 @@ Figure 1 (3 x 3, full width)
     h  the compute-optimal allocation N*(C) and D*(C) under two fits
     i  fit on small runs, hold out the largest, extrapolate, bootstrap
 
-GIFs (one sweep each, for reading the forms rather than for print; the title of
-every frame carries the equation, the constants and the swept value)
-    scaling_gif_data_sweep.gif        L vs N while D grows: the plateau drops toward E
-    scaling_gif_params_sweep.gif      L vs D while N grows
-    scaling_gif_compute_sweep.gif     the IsoFLOP curve while C grows; the minimum
-                                      traces the frontier
-    scaling_gif_exponent_sweep.gif    Kaplan's power law pinned at the center of the
-                                      fitted range while alpha_N moves by +-0.02
-    scaling_gif_floor_sweep.gif       E rises under a fixed A N^-alpha: the bend
-    scaling_gif_surface_sweep.gif     the joint surface with one budget line sliding
-                                      across it
-    scaling_gif_bootstrap.gif         one bootstrap resample and refit per frame
-    scaling_gif_allocation_sweep.gif  beta moves, a and b move with it
+GIFs (one per panel of Figure 1, one sweep each, for reading the forms rather than
+for print; every frame's title carries the equation, the constants and their source,
+the swept value, and a one-sentence takeaway; typeset by real LaTeX)
+    scaling_gif_a_exponent_sweep.gif       Kaplan L(N) pinned at the center of the
+                                           fitted range while alpha_N moves by +-0.02
+    scaling_gif_b_data_exponent_sweep.gif  the same on the data axis, alpha_D
+    scaling_gif_c_floor_sweep.gif          E rises under a fixed A N^-alpha: the bend
+    scaling_gif_d_surface_sweep.gif        the joint surface with one budget line
+                                           sliding across it
+    scaling_gif_e_data_sweep.gif           L vs N while D grows: the plateau drops
+    scaling_gif_f_params_sweep.gif         L vs D while N grows
+    scaling_gif_g_compute_sweep.gif        the IsoFLOP curve while C grows; the
+                                           minimum traces the frontier
+    scaling_gif_h_allocation_sweep.gif     beta moves, a and b move with it
+    scaling_gif_i_bootstrap.gif            one bootstrap resample and refit per frame
 
 Writes
     $ASSET_IMAGES_DIR/041-scaling-laws/scaling_law_forms.{svg,png}
-    $ASSET_IMAGES_DIR/041-scaling-laws/scaling_gif_*.gif  (eight)
+    $ASSET_IMAGES_DIR/041-scaling-laws/scaling_gif_<panel>_*.gif  (nine)
     experiments/041-scaling-laws/results/scaling_law_forms_summary.json
     notes-tex/modeling/scaling-laws/tables/t1-constants.tex
 
@@ -69,6 +71,7 @@ from matplotlib.colors import LinearSegmentedColormap  # noqa: E402
 from matplotlib.figure import Figure  # noqa: E402
 from matplotlib.ticker import NullFormatter  # noqa: E402
 from numpy.typing import NDArray  # noqa: E402
+from PIL import Image  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
 from scipy.optimize import minimize  # noqa: E402
 
@@ -351,8 +354,8 @@ def panel_a(ax: Axes) -> None:
             lw=0.8,
             label=rf"$\alpha_N$ = {al:.3g}{tag}",
         )
-    ax.set_xlabel("parameters N")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("parameters N (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title(r"Kaplan: $L = (N_c / N)^{\alpha_N}$, data not limiting")
     legend(ax, loc="upper right")
 
@@ -368,8 +371,8 @@ def panel_b(ax: Axes) -> None:
             lw=0.8,
             label=rf"$\alpha_D$ = {al:.3g}{tag}",
         )
-    ax.set_xlabel("training examples D")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("training examples D (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title(r"Kaplan: $L = (D_c / D)^{\alpha_D}$, model not limiting")
     ax.set_ylim(top=40)
     legend(ax, loc="upper right")
@@ -390,8 +393,8 @@ def panel_c(ax: Axes) -> None:
     )
     ax.axhline(f.E, color=GRAY, lw=0.6, ls=":")
     ax.text(8e11, f.E * 0.8, f"E = {f.E}", fontsize=5, color=GRAY, va="top", ha="right")
-    ax.set_xlabel("parameters N")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("parameters N (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title("the floor: curvature on log-log means E is near")
     legend(ax, loc="lower left")
 
@@ -481,8 +484,8 @@ def panel_e(ax: Axes) -> None:
         N, f.E + f.A * N ** (-f.alpha), color=STEEL, lw=0.8, label=r"D $\to \infty$"
     )
     ax.axhline(f.E, color=GRAY, lw=0.6, ls=":")
-    ax.set_xlabel("parameters N")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("parameters N (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title(r"L vs N at fixed D: plateau at $E + B D^{-\beta}$")
     ax.set_ylim(1.0, 8.0)
     plain_log_y(ax, [1, 2, 3, 4, 5, 6, 7])
@@ -499,8 +502,8 @@ def panel_f(ax: Axes) -> None:
         D, f.E + f.B * D ** (-f.beta), color=STEEL, lw=0.8, label=r"N $\to \infty$"
     )
     ax.axhline(f.E, color=GRAY, lw=0.6, ls=":")
-    ax.set_xlabel("training examples D")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("training examples D (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title(r"L vs D at fixed N: plateau at $E + A N^{-\alpha}$")
     ax.set_ylim(1.0, 8.0)
     plain_log_y(ax, [1, 2, 3, 4, 5, 6, 7])
@@ -535,8 +538,8 @@ def panel_g(ax: Axes) -> dict[str, float]:
         ls="--",
         label="minima trace the frontier",
     )
-    ax.set_xlabel("parameters N  (D = C / 6N)")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("parameters N (log scale), D = C / 6N")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title("IsoFLOP curves: a U per budget, its minimum is N*")
     ax.set_ylim(2.0, 7.0)
     plain_log_y(ax, [2, 3, 4, 5, 6, 7])
@@ -566,8 +569,8 @@ def panel_h(ax: Axes) -> None:
             ls=ls,
             label=rf"$D^*$, slope $b$ = {f.b:.2f}, {tag}",
         )
-    ax.set_xlabel("compute C (FLOPs)")
-    ax.set_ylabel("optimal size N*, optimal data D*")
+    ax.set_xlabel("compute C (FLOPs, log scale)")
+    ax.set_ylabel("optimal size N*, optimal data D* (log scale)")
     ax.set_title("allocation: how N* and D* grow with C (a + b = 1)")
     ax.set_ylim(1e7, 1e18)
     legend(ax, loc="upper right")
@@ -642,8 +645,8 @@ def panel_i(ax: Axes, rng: np.random.Generator) -> list[FitResult]:
         label="fitted runs (3 seeds)",
     )
     ax.plot(Nh, Lh, "o", ms=2.5, mfc="white", mec=BRICK, mew=0.6, label="held-out runs")
-    ax.set_xlabel("parameters N")
-    ax.set_ylabel("loss L")
+    ax.set_xlabel("parameters N (log scale)")
+    ax.set_ylabel("loss L (log scale)")
     ax.set_title("fit small, hold out large, extrapolate (synthetic)")
     ax.set_ylim(1.5, 7)
     plain_log_y(ax, [2, 3, 4, 5, 6, 7])
@@ -724,7 +727,26 @@ def frames_to_gif(frames: list[FArray], path: str, duration_ms: int = 120) -> No
         raise ValueError(f"frames of {path} differ in shape: {shapes}")
     # Hold the last frame so the loop reads as a sweep, then a pause, then a restart.
     frames = frames + [frames[-1]] * 8
-    iio.imwrite(path, frames, duration=duration_ms, loop=0)
+    # Quantize to the GIF palette WITHOUT dithering. The default Floyd-Steinberg dither
+    # scatters the antialiased edges of small text into speckle, which reads as
+    # distortion; an adaptive 256-color palette with no dither keeps the glyph edges
+    # smooth, since a plot is a few flat colors plus antialiasing ramps.
+    images = [
+        Image.fromarray(f).quantize(
+            colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE
+        )
+        for f in frames
+    ]
+    images[0].save(
+        path,
+        save_all=True,
+        append_images=images[1:],
+        duration=duration_ms,
+        loop=0,
+        # Lossless: trims each frame's palette to the colors it uses, which with the
+        # palette above cuts the file to about 40%.
+        optimize=True,
+    )
     print(f"wrote {path} ({len(frames)} frames)")
 
 
@@ -736,14 +758,16 @@ GIF_DPI = 200
 # user texmf tree (~/texmf/tex/latex/type1cm/) because the system TeX Live omits it.
 GIF_RC: dict[str, object] = {
     "text.usetex": True,
-    "text.latex.preamble": r"\usepackage{amsmath}\usepackage{amssymb}",
+    # Latin Modern rather than the bluesky Computer Modern Type 1 fonts: same design,
+    # heavier and better hinted at small sizes, so rasterized text stays even.
+    "text.latex.preamble": r"\usepackage{lmodern}\usepackage{amsmath}\usepackage{amssymb}",
     "font.family": "serif",
-    "font.size": 7.0,
-    "axes.labelsize": 7.0,
-    "axes.titlesize": 7.0,
-    "xtick.labelsize": 6.5,
-    "ytick.labelsize": 6.5,
-    "legend.fontsize": 6.0,
+    "font.size": 8.0,
+    "axes.labelsize": 8.0,
+    "axes.titlesize": 8.0,
+    "xtick.labelsize": 7.5,
+    "ytick.labelsize": 7.5,
+    "legend.fontsize": 7.0,
     "mathtext.fontset": "cm",
 }
 
@@ -771,14 +795,16 @@ def rasterize(fig: Figure) -> FArray:
     return frame
 
 
-def gif_figure(*lines: str) -> tuple[Figure, Axes]:
-    """A GIF frame: a wide canvas with a three-line title. Line 1 is the equation and
+def gif_figure(*lines: str, takeaway: str) -> tuple[Figure, Axes]:
+    """A GIF frame: a wide canvas with a four-line title. Line 1 is the equation and
     what is held fixed, line 2 the constants and their source, line 3 the swept value
-    and what it implies, in fixed-width numbers so the text does not jump.
+    and what it implies, in fixed-width numbers so the text does not jump, and the
+    last line, in italics, is the one-sentence takeaway of the whole sweep.
     """
-    fig, ax = plt.subplots(figsize=(mm_to_in(150), mm_to_in(95)), dpi=GIF_DPI)
-    fig.subplots_adjust(left=0.08, right=0.97, bottom=0.11, top=0.83)
-    ax.set_title("\n".join(lines), fontsize=7, linespacing=1.6)
+    fig, ax = plt.subplots(figsize=(mm_to_in(170), mm_to_in(105)), dpi=GIF_DPI)
+    fig.subplots_adjust(left=0.075, right=0.975, bottom=0.10, top=0.80)
+    title = "\n".join([*lines, r"\textit{" + takeaway + "}"])
+    ax.set_title(title, fontsize=8, linespacing=1.6)
     box(ax)
     return fig, ax
 
@@ -786,7 +812,7 @@ def gif_figure(*lines: str) -> tuple[Figure, Axes]:
 def loss_axis(ax: Axes, lo: float, hi: float, ticks: list[float]) -> None:
     ax.set_ylim(lo, hi)
     plain_log_y(ax, ticks)
-    ax.set_ylabel(r"loss $L$")
+    ax.set_ylabel(r"loss $L$ (log scale)")
 
 
 def gif_data_sweep(path: str) -> None:
@@ -801,6 +827,7 @@ def gif_data_sweep(path: str) -> None:
             HOFF,
             rf"$D = 10^{{{logD:4.1f}}}$ examples:  plateau $E + B D^{{-\beta}}$ = {plateau:4.2f};"
             r"  curve minus plateau is what more parameters can still buy",
+            takeaway="Parameters stop paying at a plateau the data sets; only more data lowers it.",
         )
         ax.loglog(N, f.loss(N, D), color=AMBER, lw=1.2, label=r"$L(N, D)$ at this $D$")
         ax.loglog(
@@ -816,7 +843,7 @@ def gif_data_sweep(path: str) -> None:
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e6, 1e12)
         loss_axis(ax, 1.5, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel(r"parameters $N$")
+        ax.set_xlabel(r"parameters $N$ (log scale)")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -835,6 +862,7 @@ def gif_params_sweep(path: str) -> None:
             HOFF,
             rf"$N = 10^{{{logN:4.1f}}}$ parameters:  plateau $E + A N^{{-\alpha}}$ = {plateau:4.2f};"
             r"  curve minus plateau is what more data can still buy",
+            takeaway="Data stops paying at a plateau the model size sets; only a bigger model lowers it.",
         )
         ax.loglog(D, f.loss(N, D), color=BRICK, lw=1.2, label=r"$L(N, D)$ at this $N$")
         ax.loglog(
@@ -850,7 +878,7 @@ def gif_params_sweep(path: str) -> None:
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e7, 1e13)
         loss_axis(ax, 1.5, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel(r"training examples $D$")
+        ax.set_xlabel(r"training examples $D$ (log scale)")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -878,6 +906,7 @@ def gif_compute_sweep(path: str) -> None:
             rf"$C = 10^{{{logC:4.1f}}}$ FLOPs:  $N^* = 10^{{{np.log10(n_star):4.1f}}}$, "
             rf"$D^* = 10^{{{np.log10(d_star):4.1f}}}$, $L^*$ = {l_star:4.2f};"
             rf"  minimum at $N^* = G\,(C/6)^{{\beta/(\alpha+\beta)}}$, exponent {f.a:.2f}",
+            takeaway="Every budget has one best model size, and the best sizes line up on the frontier.",
         )
         ax.loglog(
             N, f.isoflop(N, C), color=LILAC, lw=1.2, label=r"$L$ along the budget line"
@@ -902,7 +931,7 @@ def gif_compute_sweep(path: str) -> None:
         )
         ax.set_xlim(N[0], N[-1])
         loss_axis(ax, 1.8, 8, [2, 3, 4, 5, 6, 7, 8])
-        ax.set_xlabel(r"parameters $N$  ($D = C / 6N$)")
+        ax.set_xlabel(r"parameters $N$ (log scale), $D = C / 6N$")
         legend(ax, loc="upper left")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -933,6 +962,7 @@ def gif_exponent_sweep(path: str) -> None:
             r" so the sweep pivots there",
             rf"$\alpha_N$ = {alpha:5.3f}:  forecast $L(10^{{12}})$ = {L12:4.2f} (published {L12_pub:4.2f});"
             rf"  the fitted runs move by at most {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_N)) - 1):3.0f}\%",
+            takeaway="Fits that agree on the runs you have can disagree on the run you want: the exponent is the forecast.",
         )
         ax.axvspan(grid[0], 1.6e9, color="#F2F2F2", lw=0, label="fitted range (shaded)")
         ax.loglog(
@@ -966,7 +996,73 @@ def gif_exponent_sweep(path: str) -> None:
         )
         ax.set_xlim(1e6, 1e12)
         loss_axis(ax, 0.7, 7, [1, 2, 3, 4, 5, 6, 7])
-        ax.set_xlabel(r"parameters $N$")
+        ax.set_xlabel(r"parameters $N$ (log scale)")
+        legend(ax, loc="upper right")
+        frames.append(rasterize(fig))
+        plt.close(fig)
+    frames_to_gif(frames, path)
+
+
+def gif_data_exponent_sweep(path: str) -> None:
+    """The data-axis twin of the exponent sweep, for panel b: Kaplan's L(D) pinned at
+    the center of a fitted range of 10^7 to 10^10 examples while alpha_D moves by
+    +-0.02, and the forecast at 10^13 read off.
+    """
+    anchor = 10**8.5
+    L_anchor = float(KAPLAN.loss_D(np.array([anchor]))[0])
+    grid = np.logspace(7, 13, 200)
+    D_fit = np.logspace(7, 10, 5)
+    L_fit = KAPLAN.loss_D(D_fit)
+    L13_pub = float(KAPLAN.loss_D(np.array([1e13]))[0])
+    lo, hi = KAPLAN.alpha_D - 0.02, KAPLAN.alpha_D + 0.02
+    frames = []
+    for alpha in np.concatenate([np.linspace(lo, hi, 24), np.linspace(hi, lo, 24)]):
+        curve = L_anchor * (grid / anchor) ** (-alpha)
+        L13 = float(L_anchor * (1e13 / anchor) ** (-alpha))
+        fig, ax = gif_figure(
+            r"Kaplan: $L = (D_c / D)^{\alpha_D}$, straight on log-log axes with slope $-\alpha_D$;"
+            r"  published $\alpha_D$ = 0.095, $D_c = 5.4 \times 10^{13}$",
+            r"every curve is pinned through the same loss at $D = 10^{8.5}$ (center of the fitted range),"
+            r" so the sweep pivots there",
+            rf"$\alpha_D$ = {alpha:5.3f}:  forecast $L(10^{{13}})$ = {L13:4.2f} (published {L13_pub:4.2f});"
+            rf"  the fitted runs move by at most {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_D)) - 1):3.0f}\%",
+            takeaway="The data axis forecasts the same way: a data-exponent shift no run can rule out moves the far forecast by a quarter.",
+        )
+        ax.axvspan(
+            grid[0], 1.6e10, color="#F2F2F2", lw=0, label="fitted range (shaded)"
+        )
+        ax.loglog(
+            grid,
+            KAPLAN.loss_D(grid),
+            color=CHARCOAL,
+            lw=0.6,
+            ls="--",
+            label=r"published $\alpha_D$ = 0.095",
+        )
+        ax.loglog(grid, curve, color=BRICK, lw=1.2, label=r"$\alpha_D$ in the sweep")
+        ax.plot(
+            D_fit,
+            L_fit,
+            "o",
+            ms=3,
+            color=AMBER,
+            mec="black",
+            mew=0.3,
+            label="runs the fit sees",
+        )
+        ax.plot(
+            1e13,
+            L13,
+            "o",
+            ms=4,
+            mfc="white",
+            mec=BRICK,
+            mew=0.6,
+            label=r"forecast at $10^{13}$",
+        )
+        ax.set_xlim(1e7, 1e13)
+        loss_axis(ax, 0.7, 7, [1, 2, 3, 4, 5, 6, 7])
+        ax.set_xlabel(r"training examples $D$ (log scale)")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -988,6 +1084,7 @@ def gif_floor_sweep(path: str) -> None:
             r"$L = E + A\,N^{-\alpha}$ on log-log axes, data not limiting",
             r"$A$ = 406.4, $\alpha$ = 0.34 from Hoffmann 2022;  $L - E$ is the same straight line in every frame",
             rf"floor $E$ = {E:4.2f}:  the curve bends where $A N^{{-\alpha}} = E$, at $N$ = {where}",
+            takeaway="A bend on log-log axes is the floor showing itself: fit $L - E$, not $L$.",
         )
         ax.loglog(
             N, term + E, color=AMBER, lw=1.2, label=r"$L = E + A N^{-\alpha}$ (bends)"
@@ -1007,7 +1104,7 @@ def gif_floor_sweep(path: str) -> None:
         ax.set_xlim(1e6, 1e12)
         ax.set_ylim(0.02, 10)
         ax.set_ylabel(r"loss $L$")
-        ax.set_xlabel(r"parameters $N$")
+        ax.set_xlabel(r"parameters $N$ (log scale)")
         legend(ax, loc="lower left")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -1036,6 +1133,7 @@ def gif_surface_sweep(path: str) -> None:
             rf"budget $C = 10^{{{logC:4.1f}}}$ FLOPs, the line $6ND = C$:  lowest contour at "
             rf"$N^* = 10^{{{np.log10(n_star):4.1f}}}$, $D^* = 10^{{{np.log10(d_star):4.1f}}}$, "
             rf"$L^*$ = {float(f.loss(n_star, d_star)):4.2f}",
+            takeaway="A budget is a diagonal on the surface; the best split is where it touches the lowest contour.",
         )
         cf = ax.contourf(logN, logD, L, levels=levels, cmap=cmap, extend="max")
         ax.contour(logN, logD, L, levels=levels, colors="white", linewidths=0.3)
@@ -1104,6 +1202,7 @@ def gif_bootstrap(path: str) -> None:
             r"bootstrap over runs: redraw the 15 fitted runs with replacement, refit $L = E + A\,N^{-\alpha}$",
             rf"synthetic runs from $\alpha$ = 0.34, $E$ = 1.69 with 2\% noise;  full-sample fit $\alpha$ = {al0:5.3f}",
             rf"resample {i + 1:2d}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90\% interval on $\alpha$ so far {interval}",
+            takeaway="Resample the runs and refit: the spread of the refits is the error bar on the exponent.",
         )
         ax.axvspan(
             grid[0],
@@ -1145,7 +1244,7 @@ def gif_bootstrap(path: str) -> None:
         previous.append(E + A * grid ** (-al))
         ax.set_xlim(grid[0], grid[-1])
         loss_axis(ax, 1.5, 7, [2, 3, 4, 5, 6, 7])
-        ax.set_xlabel(r"parameters $N$")
+        ax.set_xlabel(r"parameters $N$ (log scale)")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
@@ -1166,6 +1265,7 @@ def gif_allocation_sweep(path: str) -> None:
             r"$a = \beta / (\alpha + \beta)$, $b = \alpha / (\alpha + \beta)$, $a + b = 1$",
             rf"$\alpha$ = 0.34 fixed;  Hoffmann's $\beta$ = 0.28 gives $a$ = {f.a:4.2f}, $b$ = {f.b:4.2f} (dashed)",
             rf"$\beta$ = {beta:4.2f}:  $a$ = {g.a:4.2f}, $b$ = {g.b:4.2f};  a steeper data term tilts the budget toward parameters",
+            takeaway="How a budget splits between size and data is set by the ratio of the two exponents, nothing else.",
         )
         ax.loglog(
             C,
@@ -1187,23 +1287,25 @@ def gif_allocation_sweep(path: str) -> None:
         ax.loglog(C, g.D_opt(C), color=BRICK, lw=1.2, label=r"$D^*$ in the sweep")
         ax.set_xlim(C[0], C[-1])
         ax.set_ylim(1e6, 1e17)
-        ax.set_xlabel(r"compute $C$ (FLOPs)")
-        ax.set_ylabel(r"optimal size $N^*$, optimal data $D^*$")
+        ax.set_xlabel(r"compute $C$ (FLOPs, log scale)")
+        ax.set_ylabel(r"optimal size $N^*$, optimal data $D^*$ (log scale)")
         legend(ax, loc="upper left")
         frames.append(rasterize(fig))
         plt.close(fig)
     frames_to_gif(frames, path)
 
 
+# One GIF per panel of Figure 1, in panel order.
 GIFS = {
-    "scaling_gif_data_sweep.gif": gif_data_sweep,
-    "scaling_gif_params_sweep.gif": gif_params_sweep,
-    "scaling_gif_compute_sweep.gif": gif_compute_sweep,
-    "scaling_gif_exponent_sweep.gif": gif_exponent_sweep,
-    "scaling_gif_floor_sweep.gif": gif_floor_sweep,
-    "scaling_gif_surface_sweep.gif": gif_surface_sweep,
-    "scaling_gif_bootstrap.gif": gif_bootstrap,
-    "scaling_gif_allocation_sweep.gif": gif_allocation_sweep,
+    "scaling_gif_a_exponent_sweep.gif": gif_exponent_sweep,
+    "scaling_gif_b_data_exponent_sweep.gif": gif_data_exponent_sweep,
+    "scaling_gif_c_floor_sweep.gif": gif_floor_sweep,
+    "scaling_gif_d_surface_sweep.gif": gif_surface_sweep,
+    "scaling_gif_e_data_sweep.gif": gif_data_sweep,
+    "scaling_gif_f_params_sweep.gif": gif_params_sweep,
+    "scaling_gif_g_compute_sweep.gif": gif_compute_sweep,
+    "scaling_gif_h_allocation_sweep.gif": gif_allocation_sweep,
+    "scaling_gif_i_bootstrap.gif": gif_bootstrap,
 }
 
 

@@ -8528,6 +8528,141 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># MRNA NUMBER FRACTION BLOCK START (issue #854)</span>
+<span class="c1"># A count-less transcriptome: each gene's share of the cell's mRNA molecules, released</span>
+<span class="c1"># as a fraction with no read counts behind it.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: How far above 1 a record's fractions may sum. A released column sums to 1 over every</span>
+<span class="c1">#: row of the release; a record keeps a subset of those rows, so its sum is at most 1,</span>
+<span class="c1">#: and the tolerance is the release's own rounding (Balakrishnan 2022 columns sum to 1</span>
+<span class="c1">#: within 2.3e-8, measured on the pinned workbook).</span>
+<span class="n">MRNA_NUMBER_FRACTION_SUM_ATOL</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MrnaNumberFractionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Per-gene mRNA NUMBER FRACTION: one gene's mRNA molecules over all mRNA molecules.</span>
+
+<span class="sd">    The quantity is ``psi_m,i = [mR_i] / [mR]`` with ``[mR] = sum_i [mR_i]``, as</span>
+<span class="sd">    Balakrishnan et al. 2022 (Science 378, eabk2066) define it, estimated from RNA-seq and</span>
+<span class="sd">    released WITHOUT the read counts it was estimated from. It is dimensionless, lies in</span>
+<span class="sd">    [0, 1], and a released column sums to 1 over the whole transcriptome.</span>
+
+<span class="sd">    Why a sibling of ``RNASeqExpressionPhenotype`` and not a relaxation of it: that class</span>
+<span class="sd">    requires ``expression_count`` with the same keys as ``expression_tpm``, and every</span>
+<span class="sd">    served record of it (Caudal 2024, Caglar 2017, Lamoureux 2023, Lim 2022) carries</span>
+<span class="sd">    counts. Making the counts optional would move the schema closure of all four</span>
+<span class="sd">    served transcriptomes for one release that has none, and storing ``psi x 1e6`` in a</span>
+<span class="sd">    field named ``expression_tpm`` would assert a TPM pipeline (length normalization of</span>
+<span class="sd">    read counts) that the release does not document. This class holds exactly what was</span>
+<span class="sd">    released and implies no counts, so it is additive: no served record changes.</span>
+
+<span class="sd">    Key semantics:</span>
+
+<span class="sd">    - A gene that is a KEY carries the released fraction verbatim. ``0.0`` is a released</span>
+<span class="sd">      value (no reads assigned to that gene in that library), not a missing one: the</span>
+<span class="sd">      column sums to 1 over its zero rows too.</span>
+<span class="sd">    - A gene that is NOT a key was not released under an identifier that names a locus</span>
+<span class="sd">      of the pinned assembly. Because a record holds a subset of the released rows, its</span>
+<span class="sd">      fractions sum to at most 1 (``MRNA_NUMBER_FRACTION_SUM_ATOL`` above it is refused).</span>
+
+<span class="sd">    ``n_libraries`` is how many sequenced libraries the stored value is taken over: 1 for</span>
+<span class="sd">    a released sample column, more for a reference that averages biological replicates.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mrna_number_fraction"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">mrna_number_fraction</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"SortedDict of per-gene mRNA number fraction (dimensionless, in [0, 1]); a "</span>
+            <span class="s2">"gene the release does not identify on the pinned assembly is not a key"</span>
+        <span class="p">),</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_libraries</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"number of sequenced libraries the stored fractions are taken over"</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the number is and the pipeline that produced it, e.g. "</span>
+        <span class="s2">"'rnaseq_mrna_number_fraction'"</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-gene dict."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"MrnaNumberFractionPhenotype(genes=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mrna_number_fraction</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"n_libraries=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_libraries</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"mrna_number_fraction"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_and_validate_fraction</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce to a SortedDict; refuse empty, non-finite, or out-of-[0, 1] values."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mrna_number_fraction must be a per-gene dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"mrna_number_fraction cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"mrna_number_fraction for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is not a number"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"mrna_number_fraction for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be a finite value in [0, 1], "</span>
+                    <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">MRNA_NUMBER_FRACTION_SUM_ATOL</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"mrna_number_fraction sums to </span><span class="si">{</span><span class="n">total</span><span class="si">}</span><span class="s2">, above 1: a subset of one "</span>
+                <span class="s2">"transcriptome's number fractions cannot exceed the whole"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"n_libraries"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_n_libraries</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""At least one library stands behind every stored value."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_libraries must be a positive integer, got </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"measurement_type"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_measurement_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The quantity is named, never blank."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"measurement_type cannot be blank"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MrnaNumberFractionExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Assembly-pinned reference for an mRNA number-fraction experiment."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mrna_number_fraction"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">AssemblyReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">MrnaNumberFractionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MrnaNumberFractionExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A transcriptome released as per-gene mRNA number fractions, without counts."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"mrna_number_fraction"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">MrnaNumberFractionPhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># MRNA NUMBER FRACTION BLOCK END (issue #854)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -8551,6 +8686,7 @@
     <span class="o">|</span> <span class="n">FluxPhenotype</span>
     <span class="o">|</span> <span class="n">PromoterActivityPhenotype</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyPhenotype</span>  <span class="c1"># issue #774</span>
+    <span class="o">|</span> <span class="n">MrnaNumberFractionPhenotype</span>  <span class="c1"># issue #854</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -8589,6 +8725,7 @@
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperiment</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyExperiment</span>  <span class="c1"># issue #774</span>
+    <span class="o">|</span> <span class="n">MrnaNumberFractionExperiment</span>  <span class="c1"># issue #854</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -8627,6 +8764,7 @@
     <span class="o">|</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialVisualScoreExperimentReference</span>
     <span class="o">|</span> <span class="n">BacterialMorphologyExperimentReference</span>  <span class="c1"># issue #774</span>
+    <span class="o">|</span> <span class="n">MrnaNumberFractionExperimentReference</span>  <span class="c1"># issue #854</span>
 <span class="p">)</span>
 
 
@@ -8665,6 +8803,7 @@
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperiment</span><span class="p">,</span>
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperiment</span><span class="p">,</span>  <span class="c1"># issue #774</span>
+    <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperiment</span><span class="p">,</span>  <span class="c1"># issue #854</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -8702,6 +8841,7 @@
     <span class="s2">"bacterial_rnaseq_expression"</span><span class="p">:</span> <span class="n">BacterialRNASeqExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_visual_score"</span><span class="p">:</span> <span class="n">BacterialVisualScoreExperimentReference</span><span class="p">,</span>
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #774</span>
+    <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #854</span>
 <span class="p">}</span>
 
 

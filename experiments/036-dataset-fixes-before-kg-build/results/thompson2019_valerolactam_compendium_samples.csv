@@ -1,0 +1,5 @@
+expName,condition_1,concentration_1,units_1,media,vessel,mutantLibrary,person,dateStarted
+set6IT064,2-Piperidinone,10.0,mM,MOPS minimal media_noCarbon,48 well microplate; Tecan Infinite F200,Putida_ML5,Mitch,8/17/12
+set7IT044,5-Aminovaleric acid,10.0,mM,MOPS minimal media_noCarbon,tube,Putida_ML5_JBEI,Mitchell Thompson,4/25/18
+set7IT045,2-Piperidinone,10.0,mM,MOPS minimal media_noCarbon,tube,Putida_ML5_JBEI,Mitchell Thompson,4/25/18
+set7IT057,5-Aminovaleric acid,10.0,mM,MOPS minimal media_noCarbon,tube,Putida_ML5_JBEI,Mitchell Thompson,4/26/18

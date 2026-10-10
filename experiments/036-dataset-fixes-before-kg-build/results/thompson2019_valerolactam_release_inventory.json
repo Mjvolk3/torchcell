@@ -1,0 +1,133 @@
+{
+  "script": "experiments/036-dataset-fixes-before-kg-build/scripts/thompson2019_valerolactam_release_inventory.py",
+  "row": "59 Thompson 2019 valerolactam",
+  "citation_key": "thompsonOmicsdrivenIdentificationElimination2019",
+  "doi": "10.1016/j.mec.2019.e00098",
+  "measured_at": "2026-10-10T06:39:36.984795+00:00",
+  "mirror": [
+    {
+      "relpath": "paper/PMC6838509.1.txt",
+      "role": "paper_text",
+      "bytes": 46473,
+      "sha256": "f0244882bdfc6c4789079dbe76a14c47be04acb3a7ab6083f5a80f8f23c2da84",
+      "description": "The article's full text as PMC renders it, the anchor of every paper quote in this module. The publisher's own text, not OCR, so a quote matches character for character including the narrow no-break spaces before units"
+    },
+    {
+      "relpath": "paper/PMC6838509.1.xml",
+      "role": "paper_text",
+      "bytes": 97776,
+      "sha256": "0a1f88d7987bfe5b0f71eb14ced2987aa22f5c20413a45c02ed6d4e257cb7ed4",
+      "description": "The article's JATS XML as PMC serves it; the structured form of the same text, mirrored because it carries Table 1 as a table"
+    },
+    {
+      "relpath": "paper/PMC6838509.1.pdf",
+      "role": "paper_pdf",
+      "bytes": 1194524,
+      "sha256": "ed6c14563b2b48d10f269b1b1abc624b4cbfbd634c49cbf2e19b4a1b53238b2f",
+      "description": "The article PDF as PMC serves it. Mirrored because the paper is in neither Zotero library, so the literature mirror holds no paper.pdf for this key"
+    },
+    {
+      "relpath": "si/mmc1.pdf",
+      "role": "si_pdf",
+      "bytes": 2303927,
+      "sha256": "73032e933ca57b6a0d20badd8dea04b89ba27d6039c2748b1d6f034085a4483f",
+      "description": "Appendix A, 'Lactam Production in Putida revision SI_V2': Figures S1 to S5 and Table S1, the specific growth rates. The paper's only supplementary file"
+    },
+    {
+      "relpath": "si/mmc1.txt",
+      "role": "si_text",
+      "bytes": 3760,
+      "sha256": "197a98d3c122da930a6b4ae3b000767950e626d48f194487d07eefe7008067b1",
+      "description": "The text layer of si/mmc1.pdf, rendered by pypdf (every page's extract_text joined by a newline). Table S1 is read from it and the SI quotes are cut from it; the PDF stays the canonical artifact"
+    }
+  ],
+  "released_values": {
+    "titers_stated": 8,
+    "titers_stored": 4,
+    "titers_refused": 4,
+    "titers_refused_reason": "the four 48 h titers are NOT records. ProductTiterExperimentReference requires a phenotype_reference and ProductTiterPhenotype.titer is a required non-negative float, and the 48 h reference measurement is 'not detected': the Results state 'Wild type P.\u00a0putida produced 0.43\u202fmg/L valerolactam after 24\u202fh, but no valerolactam could be detected after 48\u202fh, presumably due to host consumption (Fig.\u00a03B). Simple deletion of the oplBA locus resulted in a 10-fold increase of production at 24\u202fh to 4.47\u202fmg/L and a 48-h titer of 9.27\u202fmg/L (Fig.\u00a03B).' and the abstract restates it as 'undetectable'. That is a value below the 8-point calibration floor, which no field of ProductTiterPhenotype can carry (it has no Censoring slot, unlike ProteinTurnoverPhenotype). Storing 0.0 would state a measurement nobody made and reusing the 24 h reference would compare two sampling times, so the wild type's 48 h cell and the three engineered 48 h titers that would be measured against it are all refused. The sibling Kang 2026 and Yunus 2026 loaders refuse a titer family for the same missing-denominator reason",
+    "titer_strains": [
+      "KT2440",
+      "\u0394oplBA",
+      "\u0394oplBA\u0394davT",
+      "\u0394oplBA\u0394davT\u0394alr"
+    ],
+    "titer_sampling_hours": [
+      24.0,
+      48.0
+    ],
+    "growth_rows": 9,
+    "growth_strains": [
+      "KT2440",
+      "\u0394davT",
+      "\u0394oplBA"
+    ],
+    "growth_carbon_sources": [
+      "5AVA",
+      "Glucose",
+      "Valerolactam"
+    ],
+    "growth_zero_rates": 3,
+    "quotes_verified": {
+      "paper/PMC6838509.1.txt": 25,
+      "si/mmc1.txt": 3
+    },
+    "symbol_locus_tags": {
+      "alr": "PP_3722",
+      "davA": "PP_0382",
+      "davB": "PP_0383",
+      "davT": "PP_0214",
+      "oplA": "PP_3515",
+      "oplB": "PP_3514"
+    }
+  },
+  "rbtnseq_subsumption": {
+    "methods_condition": "10 mM valerolactam, sole carbon source, 48-well plate, Tecan Infinite F200",
+    "results_experiments": 2,
+    "compendium": {
+      "release_file": "$DATA_ROOT/torchcell-raw/borchertMachineLearningAnalysis2024/data/fModule_Metadata.xlsx",
+      "sha256": "4d649385ac06684482396a125f135df22a2a5060da73485b2cd14468f8cc8be1",
+      "samples_total": 332,
+      "samples_in_group": 206,
+      "valerolactam_samples": [
+        "set6IT064",
+        "set7IT045"
+      ],
+      "aminovalerate_samples": [
+        "set7IT044",
+        "set7IT057"
+      ],
+      "valerolactam_doses_mm": [
+        10.0
+      ]
+    },
+    "served": {
+      "served_dataset": "RbTnseqBorchert2024Dataset",
+      "served_store": "$DATA_ROOT/data/torchcell/rbtnseq_borchert2024",
+      "served_records_total": 1372280,
+      "records_per_sample": {
+        "set6IT064": 4732,
+        "set7IT045": 4732
+      },
+      "loci_per_sample": {
+        "set6IT064": 4732,
+        "set7IT045": 4732
+      },
+      "samples_absent": []
+    },
+    "verdict": "SUBSUMED at the sample level: both valerolactam carbon-source samples the Results count are compendium samples the served RbTnseqBorchert2024Dataset already carries in full ({'set6IT064': 4732, 'set7IT045': 4732}), so an RB-TnSeq loader for this row would store every one of those values a second time. The paper's own release is the Fitness Browser alone (https://fit.genomics.lbl.gov/cgi-bin/org.cgi?orgId=Putida), with no per-experiment accession, so there are no other bytes to load.",
+    "aminovalerate_not_this_paper": "the 5-aminovalerate samples that appear beside them in Fig. S2 are the lysine paper's, by the SI's own attribution ('All non-valerolactam fitness experiments are from Thompson et. al 2019'), so they belong to schedule row 55 and are listed here only to keep the two rows' samples apart",
+    "what_the_compendium_drops": "the compendium eliminated loci lacking a value in some sample, and this paper released no per-gene file to recover them from: its only supplementary file is a figure-and-one-table PDF. That is the same state the Thompson 2020 and Schmidt 2022 rows measured."
+  },
+  "loader": {
+    "module": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+    "datasets": [
+      "ValerolactamTiterThompson2019Dataset",
+      "LactamGrowthRateThompson2019Dataset"
+    ],
+    "expected_records": {
+      "ValerolactamTiterThompson2019Dataset": 4,
+      "LactamGrowthRateThompson2019Dataset": 9
+    }
+  }
+}

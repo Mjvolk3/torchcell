@@ -930,3 +930,22 @@ none.
 
 First consumer: `[[torchcell.datasets.ecoli.hawkins2020]]` (24,149 records, the ratio row
 PASSes with `rule: ratio_reference`).
+
+## 2026.10.10 - The mRNA number-fraction family: a count-less transcriptome (#854)
+
+`MrnaNumberFractionPhenotype` joins the expression families beside
+`RNASeqExpressionPhenotype`, with `MrnaNumberFractionExperiment` and an
+`AssemblyReferenceGenome`-pinned reference, served as the `mrna number fraction
+phenotype` node class under `phenotypic feature`. Fields: `mrna_number_fraction` (per
+gene, in [0, 1], a key subset whose sum may not exceed 1 +
+`MRNA_NUMBER_FRACTION_SUM_ATOL`), `n_libraries`, and a required `measurement_type`.
+First consumer: [[torchcell.datasets.ecoli.balakrishnan2022]].
+
+Why not an optional `expression_count` on the RNA-seq leaf: that would change the schema
+closure of four served transcriptomes (Caudal 2024, Caglar 2017, Lamoureux 2023, Lim
+2022) for one release without counts, and a `psi x 1e6` written into `expression_tpm`
+would claim a length-normalized count pipeline the release does not document. The
+sibling is additive: `schema_impact_check --base origin/main` reports 0 breaking, with
+the usual stale-via-`ExperimentType` set. The ontology moves to 37 nodes and 58 mermaid
+data lines; the RNA-seq verifier gains a `number_fraction` branch (L2 values in [0, 1],
+L3 `fraction_sum_at_most_one`).

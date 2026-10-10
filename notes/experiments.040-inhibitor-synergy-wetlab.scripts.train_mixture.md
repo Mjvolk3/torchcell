@@ -237,3 +237,83 @@ evaluation column is populated and that no switch crashes. Outputs under
 - Hillenmeyer's media are pooled (YPD, YP, SD) behind one source token, and its
   heterozygotes are modeled as deletions by the encoder's deletion operator. Both are
   stated simplifications, not measured choices.
+
+## 2026.10.10 - Both growth calls on the wet-lab metrics, and the worst-scenario ranking
+
+Supersedes the evaluation schema of the section above (its Table 2 scored the wet-lab
+metrics under the served call only). The training path and the model are unchanged.
+
+**A prediction is call-independent**, since the model is handed a medium and never a
+growth call, so the same prediction vector is scored once per call against that call's own
+grown set, tau and fitness scale, and every row of
+`results/mixture/<sweep>/<name>_scores.csv` now carries the `call` it belongs to.
+`mixture_data.MixtureData` gained `host_by_call` (the same conditions keyed by record key,
+one view per call) and `runs_by_call`; a scorer looks a record up in the view and indexes
+the prediction by its position in the training-call list. The config's `call` field is now
+documented as the call the HOST HEAD TRAINS on and no longer decides what is reported; the
+scores table records it as `training_call`.
+
+**Finding that constrains the change: the software call covers ex23 and nothing else.**
+Read off `results/wetlab_wells.csv` by `mixture_data.runs_per_call`, which asserts a call
+is present for all of a run's wells or none of them:
+
+| run | wells | served `grew` | software `grew_software` |
+|---|---|---|---|
+| ex21 | 180 | 180 | 0 |
+| ex23 | 197 | 197 | 197 |
+| ex26 | 200 | 200 | 0 |
+| ex27 | 200 | 200 | 0 |
+| ex28 | 200 | 200 | 0 |
+
+Table 4. Growth-call coverage per run. The Bioscreen software generation times were
+produced for the ex23 plate set alone, so `fitness_software` and `grew_software` are empty
+for every ex21 and isobole well, and `results/isobole_summary.csv` holds one set of rows,
+computed on the served call. The isobole metrics are therefore emitted for the served call
+only, and the ex21 and Vanacloig rows carry `call` = `both` rather than being duplicated.
+This is not a choice between calls: scoring the grids under the software call would mean
+reading an empty growth flag through `astype(bool)`, which is True, and silently calling
+all 243 interior cells grown. `runs_per_call` is what stops that, and
+`load_host_records` now drops the runs a call does not cover instead of reading them.
+
+**New metric.** Beside the AUROC, `worst_scenario_spearman` is the Spearman of predicted
+fitness against observed fitness over ALL 63 combinations with a combination that did not
+grow scored at zero, which is `observed_zero_mean` of
+`results/mixture_combinations.csv`. It reads the model as a ranking of which combination
+scenarios are worst, for prioritizing detoxification targets, rather than as a growth
+classifier plus a separate fitness regression on the survivors. Its reference is Loewe
+from the ex21 Hill fits against the same observed values, computed here from that
+committed artifact because `mixture_scores.csv` reports its Spearman over the grown subset
+only: **0.772 served, 0.800 software** (Bliss from the ex23 singles reaches 0.643 and
+0.684, so Loewe is the bar on this statistic as it is on growth).
+
+**The per-call records reproduce the model-free artifact exactly.** Over the 63 ex23
+combinations of each call, `observed_zero_mean`, `observed_grown_mean` and `grew` match
+`results/mixture_combinations.csv` with zero mismatches: 21 grew served, 25 software. The
+four combinations whose call differs are 5-HMF + lactic acid, 5-HMF + levulinic acid,
+furfural + acetic acid + 5-HMF and furfural + 5-HMF + formic acid, three replicates each,
+which are the 12 disputed wells, all of them 5-HMF combinations. So the model and the
+reference rules are scored on the same numbers under both calls, and an arm whose apparent
+success hinges on the call will show it as a gap between its two ex23 rows.
+
+### The smoke, re-run
+
+Same command as above, exit 0, 8 s per config on CPU. The ex23 and isobole block of
+`smoke_tokens_film_anchors` (two steps, so the values are noise; what matters is that every
+new row is populated and carries its call and its call's reference):
+
+```
+  task          subset                    metric                        call         value      n  reference
+  ex23          combinations              growth_auroc                  served       0.454     63  loewe_ex21 0.958
+  ex23          combinations              growth_auroc                  software     0.397     63  loewe_ex21 0.952
+  ex23          combinations              worst_scenario_spearman       served      -0.049     63  loewe_ex21 (all 63, no growth 0) 0.772
+  ex23          combinations              worst_scenario_spearman       software    -0.147     63  loewe_ex21 (all 63, no growth 0) 0.800
+  ex23          combinations_that_grew    fitness_spearman              served       0.328     21  bliss_ex23 0.573
+  ex23          combinations_that_grew    fitness_spearman              software     0.332     25  bliss_ex23 0.865
+  isobole_ex26  interior_cells            mean_observed_minus_predicted served      -0.626     81  bliss_ex21 -0.082
+  isobole_ex27  interior_cells            mean_observed_minus_predicted served      -0.451     81  bliss_ex21 -0.446
+  isobole_ex28  interior_cells            mean_observed_minus_predicted served      -0.619     81  bliss_ex21 -0.017
+```
+
+The ex21 and Vanacloig rows are unchanged and read `call` = `both`. The printed summary and
+the W&B summary keys now group by call as well, so a key is
+`ex23/combinations/growth_auroc/served`.

@@ -56,12 +56,22 @@ the model-free reference beside every row that has one:
     approximate; every per-compound score is written out beside it.
 (b) ex21: Spearman of predicted against observed fitness over all 180 wells and per
     compound, labeled as a train fit when ex21 was trained on.
-(c) ex23: growth / no-growth AUROC over the 63 combinations with the predicted fitness as
-    the score, and fitness Spearman over the combinations that grew. References: Loewe
-    from the ex21 Hill fits, AUROC 0.958, and Bliss from the observed ex23 singles,
-    Spearman 0.573 (served call, ``results/mixture_scores.csv``).
-(d) isoboles: the mean of observed minus predicted over the 81 interior cells of each
-    grid, beside the same quantity for Bliss (``results/isobole_summary.csv``).
+(c) ex23, ONCE PER GROWTH CALL: growth / no-growth AUROC over the 63 combinations with
+    the predicted fitness as the score; a ``worst_scenario_spearman`` over all 63 with a
+    combination that did not grow scored at fitness zero, which is the ranking the
+    detoxification-target question asks for; and fitness Spearman over the combinations
+    that grew. Each call brings its own grown set, tau and fitness scale, and its own
+    references: Loewe from the ex21 Hill fits (AUROC 0.958 served, 0.952 software) and
+    Bliss from the observed ex23 singles (Spearman 0.573 served, 0.865 software) from
+    ``results/mixture_scores.csv``, and for the worst-scenario ranking Loewe against
+    ``observed_zero_mean`` (0.772 served, 0.800 software) computed from
+    ``results/mixture_combinations.csv``.
+(d) isoboles, SERVED CALL ONLY: the mean of observed minus predicted over the 81 interior
+    cells of each grid, beside the same quantity for Bliss
+    (``results/isobole_summary.csv``). The Bioscreen software generation times exist only
+    for the ex23 plate set, so all 600 isobole wells and all 180 ex21 wells carry an
+    empty software call; those rows therefore cannot be scored under it, and the ex21 and
+    Vanacloig rows carry ``call`` = ``both``.
 
 Run with a sweep file (a YAML list of ``MixtureConfig`` dicts):
 
@@ -135,6 +145,15 @@ PREDICTIONS = osp.join(
 #: for ex23, ``results/isobole_summary.csv`` for the grids), served growth call.
 REFERENCE_SCORES = osp.join(RESULTS, "mixture_scores.csv")
 REFERENCE_ISOBOLES = osp.join(RESULTS, "isobole_summary.csv")
+#: One row per (combination, call), with ``observed_zero_mean`` (no growth read as 0) and
+#: each rule's prediction: the worst-scenario reference over all 63 is computed from it.
+REFERENCE_COMBINATIONS = osp.join(RESULTS, "mixture_combinations.csv")
+#: ``isobole_summary.csv`` holds one set of rows, on the served call, because the software
+#: generation times exist only for the ex23 plate set.
+ISOBOLE_REFERENCE_CALL = "served"
+#: The row value of ``call`` for a score no growth call enters: the gene-level task and
+#: the ex21 titrations, whose fitness column is served-only and has no software twin.
+CALL_INDEPENDENT = "both"
 #: Nested ridge on FCFP4 counts, compound-cold median centered Spearman over the
 #: corrected store's 32 published compounds (038 round 1, slurm 3374).
 RIDGE_VANACLOIG_MEDIAN = 0.359
@@ -152,6 +171,9 @@ class MixtureConfig(BaseModel):
     #: auxiliary conditions sampled per source per step, 0 = every condition
     cond_batch: int = 24
     require_molar_dose: bool = True
+    #: the growth call the HOST HEAD TRAINS on. Only the served call covers ex21, so
+    #: "software" leaves an ex21-training arm with no record and stops the run; the
+    #: EVALUATION is emitted for every call the wells carry regardless of this field.
     call: Literal["served", "software"] = "served"
     embeddings: list[str] = ["fcfp4_count"]
     pca_dim: int | None = None
@@ -1007,27 +1029,57 @@ def finetune_host(
 
 # ---- evaluation ------------------------------------------------------------ #
 class References(BaseModel):
-    """The model-free bars on file, under the run's growth call."""
+    """The model-free bars on file for ONE growth call.
 
+    ``isobole_mean_excess`` is empty for a call the isobole grids do not carry:
+    ``results/isobole_summary.csv`` holds one set of rows, computed on the served call,
+    because the Bioscreen software generation times exist only for the ex23 plate set.
+    """
+
+    call: str
     loewe_growth_auroc: float
     bliss_fitness_spearman: float
+    #: Spearman over ALL 63 combinations with no growth scored 0 (the worst-scenario
+    #: ranking), computed here from results/mixture_combinations.csv rather than read
+    #: from mixture_scores.csv, which reports its Spearman over the grown subset only
+    loewe_worst_scenario_spearman: float
+    bliss_worst_scenario_spearman: float
     isobole_mean_excess: dict[str, float]
 
 
 def references(call: str) -> References:
+    """The bars for ``call``, every one read from a committed model-free artifact."""
     scores = pd.read_csv(REFERENCE_SCORES)
-    served = scores[(scores["call"] == call) & (scores["subset"] == "all")]
-    assert len(served), f"{REFERENCE_SCORES} has no {call} / all rows"
+    rows = scores[(scores["call"] == call) & (scores["subset"] == "all")]
+    assert len(rows), f"{REFERENCE_SCORES} has no {call} / all rows"
+    combinations = pd.read_csv(REFERENCE_COMBINATIONS)
+    combinations = combinations[
+        (combinations["call"] == call) & (combinations["n_compounds"] >= 1)
+    ]
+    assert len(combinations) == 63, (
+        f"{REFERENCE_COMBINATIONS} has {len(combinations)} {call} combinations, not 63"
+    )
+    worst = {
+        rule: float(
+            spearmanr(combinations[rule], combinations["observed_zero_mean"])[0]
+        )
+        for rule in ("loewe_ex21", "bliss_ex23")
+    }
     isoboles = pd.read_csv(REFERENCE_ISOBOLES)
     return References(
+        call=call,
         loewe_growth_auroc=float(
-            served.loc[served["rule"] == "loewe_ex21", "auroc"].iloc[0]
+            rows.loc[rows["rule"] == "loewe_ex21", "auroc"].iloc[0]
         ),
         bliss_fitness_spearman=float(
-            served.loc[served["rule"] == "bliss_ex23", "spearman"].iloc[0]
+            rows.loc[rows["rule"] == "bliss_ex23", "spearman"].iloc[0]
         ),
-        isobole_mean_excess=dict(
-            zip(isoboles["run"], isoboles["mean_excess_over_bliss"], strict=True)
+        loewe_worst_scenario_spearman=worst["loewe_ex21"],
+        bliss_worst_scenario_spearman=worst["bliss_ex23"],
+        isobole_mean_excess=(
+            dict(zip(isoboles["run"], isoboles["mean_excess_over_bliss"], strict=True))
+            if call == ISOBOLE_REFERENCE_CALL
+            else {}
         ),
     )
 
@@ -1056,29 +1108,47 @@ def gene_scores(
                 "reference_value": (
                     RIDGE_VANACLOIG_MEDIAN if target == "centered" else float("nan")
                 ),
+                "call": CALL_INDEPENDENT,
             }
         )
     return per_compound, pd.DataFrame(rows)
 
 
 def host_scores(
-    cfg: MixtureConfig, ctx: Context, predicted: NDArray[np.float64], bars: References
+    cfg: MixtureConfig,
+    ctx: Context,
+    predicted: NDArray[np.float64],
+    bars: dict[str, References],
 ) -> pd.DataFrame:
-    """Long-form wet-lab scores: ex21 curves, ex23 combinations, the isobole grids."""
+    """Long-form wet-lab scores: ex21 curves, ex23 combinations, the isobole grids.
+
+    A PREDICTION IS CALL-INDEPENDENT (the model is handed a medium, not a growth call),
+    so ``predicted`` is scored once per call against that call's own grown set, tau and
+    fitness scale, and every row carries the ``call`` it belongs to.
+
+    The ex21 rows carry ``CALL_INDEPENDENT``: ``fitness_software`` is empty for all 180
+    ex21 wells, so there is one titration readout, not two. The isobole rows are emitted
+    only for the calls the grids carry, which is the served call alone, for the same
+    reason (all 600 isobole wells have an empty software column). Scoring them under the
+    software call would mean reading an empty growth flag as grown.
+    """
     host = ctx.data.host
     trained_ex21 = cfg.host_train in ("anchors+ex21", "finetune_ex21")
+    position = {record.key: i for i, record in enumerate(host)}
     rows = []
 
     ex21 = [(i, r) for i, r in enumerate(host) if r.run == "ex21"]
     wells_pred = np.concatenate([[predicted[i]] * r.n_wells for i, r in ex21])
     wells_obs = np.concatenate([r.well_fitness for _, r in ex21])
+    suffix = "_train_fit" if trained_ex21 else ""
     rows.append(
         {
             "task": "ex21",
             "subset": "all_wells",
-            "metric": "fitness_spearman" + ("_train_fit" if trained_ex21 else ""),
+            "metric": f"fitness_spearman{suffix}",
             "value": fast_spearman(wells_pred, wells_obs),
             "n": int(len(wells_obs)),
+            "call": CALL_INDEPENDENT,
             "reference_rule": "",
             "reference_value": float("nan"),
         }
@@ -1091,68 +1161,100 @@ def host_scores(
             {
                 "task": "ex21",
                 "subset": compound,
-                "metric": "fitness_spearman" + ("_train_fit" if trained_ex21 else ""),
+                "metric": f"fitness_spearman{suffix}",
                 "value": fast_spearman(pred, obs),
                 "n": int(len(obs)),
+                "call": CALL_INDEPENDENT,
                 "reference_rule": "",
                 "reference_value": float("nan"),
             }
         )
 
-    ex23 = [(i, r) for i, r in enumerate(host) if r.run == "ex23" and r.compounds]
-    grew = np.array([r.grew for _, r in ex23])
-    pred = np.array([predicted[i] for i, _ in ex23])
-    rows.append(
-        {
-            "task": "ex23",
-            "subset": "combinations",
-            "metric": "growth_auroc",
-            "value": float(roc_auc_score(grew, pred))
-            if grew.any() and not grew.all()
-            else float("nan"),
-            "n": int(len(ex23)),
-            "reference_rule": "loewe_ex21",
-            "reference_value": bars.loewe_growth_auroc,
-        }
-    )
-    grown = [(i, r) for i, r in ex23 if r.grew]
-    rows.append(
-        {
-            "task": "ex23",
-            "subset": "combinations_that_grew",
-            "metric": "fitness_spearman",
-            "value": (
-                float(
-                    spearmanr(
-                        [predicted[i] for i, _ in grown],
-                        [r.fitness_grown for _, r in grown],
-                    )[0]
-                )
-                if len(grown) >= 3
-                else float("nan")
-            ),
-            "n": int(len(grown)),
-            "reference_rule": "bliss_ex23",
-            "reference_value": bars.bliss_fitness_spearman,
-        }
-    )
-
-    for run in sorted(ISOBOLE_RUNS):
-        interior = [
-            (i, r) for i, r in enumerate(host) if r.run == run and len(r.compounds) == 2
-        ]
-        excess = np.array([r.fitness - predicted[i] for i, r in interior])
-        rows.append(
-            {
-                "task": f"isobole_{run}",
-                "subset": "interior_cells",
-                "metric": "mean_observed_minus_predicted",
-                "value": float(excess.mean()),
-                "n": int(len(interior)),
-                "reference_rule": "bliss_ex21",
-                "reference_value": bars.isobole_mean_excess[run],
-            }
-        )
+    for call, bar in sorted(bars.items()):
+        view = ctx.data.host_by_call[call]
+        if "ex23" in ctx.data.runs_by_call[call]:
+            ex23 = [
+                (position[key], record)
+                for key, record in view.items()
+                if record.run == "ex23" and record.compounds
+            ]
+            assert len(ex23) == 63, f"{call}: {len(ex23)} ex23 combinations, not 63"
+            grew = np.array([r.grew for _, r in ex23])
+            pred = np.array([predicted[i] for i, _ in ex23])
+            rows.append(
+                {
+                    "task": "ex23",
+                    "subset": "combinations",
+                    "metric": "growth_auroc",
+                    "value": float(roc_auc_score(grew, pred))
+                    if grew.any() and not grew.all()
+                    else float("nan"),
+                    "n": int(len(ex23)),
+                    "call": call,
+                    "reference_rule": "loewe_ex21",
+                    "reference_value": bar.loewe_growth_auroc,
+                }
+            )
+            # the ranking the detoxification-target question asks for: every combination
+            # scored, a scenario that did not grow at its observed fitness of zero
+            rows.append(
+                {
+                    "task": "ex23",
+                    "subset": "combinations",
+                    "metric": "worst_scenario_spearman",
+                    "value": fast_spearman(
+                        pred, np.array([r.fitness for _, r in ex23])
+                    ),
+                    "n": int(len(ex23)),
+                    "call": call,
+                    "reference_rule": "loewe_ex21 (all 63, no growth 0)",
+                    "reference_value": bar.loewe_worst_scenario_spearman,
+                }
+            )
+            grown = [(i, r) for i, r in ex23 if r.grew]
+            rows.append(
+                {
+                    "task": "ex23",
+                    "subset": "combinations_that_grew",
+                    "metric": "fitness_spearman",
+                    "value": (
+                        float(
+                            spearmanr(
+                                [predicted[i] for i, _ in grown],
+                                [r.fitness_grown for _, r in grown],
+                            )[0]
+                        )
+                        if len(grown) >= 3
+                        else float("nan")
+                    ),
+                    "n": int(len(grown)),
+                    "call": call,
+                    "reference_rule": "bliss_ex23",
+                    "reference_value": bar.bliss_fitness_spearman,
+                }
+            )
+        for run in sorted(ISOBOLE_RUNS):
+            if run not in ctx.data.runs_by_call[call]:
+                continue
+            interior = [
+                (position[key], record)
+                for key, record in view.items()
+                if record.run == run and len(record.compounds) == 2
+            ]
+            assert len(interior) == 81, f"{call} {run}: {len(interior)} interior cells"
+            excess = np.array([r.fitness - predicted[i] for i, r in interior])
+            rows.append(
+                {
+                    "task": f"isobole_{run}",
+                    "subset": "interior_cells",
+                    "metric": "mean_observed_minus_predicted",
+                    "value": float(excess.mean()),
+                    "n": int(len(interior)),
+                    "call": call,
+                    "reference_rule": "bliss_ex21",
+                    "reference_value": bar.isobole_mean_excess[run],
+                }
+            )
     return pd.DataFrame(rows)
 
 
@@ -1160,7 +1262,8 @@ def print_table(name: str, scores: pd.DataFrame) -> None:
     """The run's summary beside the model-free bar, so the log says whether it clears it."""
     print(f"\n{name}", flush=True)
     header = (
-        f"  {'task':<14}{'subset':<26}{'metric':<36}{'value':>9}{'n':>7}  reference"
+        f"  {'task':<14}{'subset':<26}{'metric':<30}{'call':<9}"
+        f"{'value':>9}{'n':>7}  reference"
     )
     print(header, flush=True)
     for _, row in scores.iterrows():
@@ -1170,15 +1273,17 @@ def print_table(name: str, scores: pd.DataFrame) -> None:
             else f"{row['reference_rule']} {row['reference_value']:.3f}"
         )
         print(
-            f"  {row['task']:<14}{str(row['subset'])[:25]:<26}{row['metric']:<36}"
-            f"{row['value']:>9.3f}{int(row['n']):>7}  {bar}",
+            f"  {row['task']:<14}{str(row['subset'])[:25]:<26}{row['metric']:<30}"
+            f"{row['call']:<9}{row['value']:>9.3f}{int(row['n']):>7}  {bar}",
             flush=True,
         )
 
 
 def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
     ctx = build_context(cfg, device)
-    bars = references(cfg.call)
+    # one set of bars per growth call the wells carry, so a wet-lab score is read against
+    # the references of its own call
+    bars = {call: references(call) for call in ctx.data.runs_by_call}
     out_dir = osp.join(RESULTS, "mixture", sweep)
     os.makedirs(out_dir, exist_ok=True)
     pred_dir = osp.join(PREDICTIONS, sweep)
@@ -1249,7 +1354,7 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
         )
 
     scores = pd.concat(frames, ignore_index=True).assign(
-        name=cfg.name, fold_seed=cfg.fold_seed, call=cfg.call
+        name=cfg.name, fold_seed=cfg.fold_seed, training_call=cfg.call
     )
     scores["beats_reference"] = np.where(
         scores["reference_rule"] == "",
@@ -1273,7 +1378,7 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
     )
     ensemble = scores[scores["member"] == "ensemble"]
     summary = (
-        ensemble.groupby(["task", "subset", "metric"], as_index=False)
+        ensemble.groupby(["task", "subset", "metric", "call"], as_index=False)
         .agg(
             value=("value", "mean"),
             # n is the size of ONE evaluation (the same wells are scored on every fold),
@@ -1283,12 +1388,12 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
             reference_rule=("reference_rule", "first"),
             reference_value=("reference_value", "first"),
         )
-        .sort_values(["task", "subset"], ignore_index=True)
+        .sort_values(["task", "subset", "metric", "call"], ignore_index=True)
     )
     print_table(f"{cfg.name} (ensemble, mean over folds)", summary)
     run_wandb.summary.update(
         {
-            f"{row['task']}/{row['subset']}/{row['metric']}": row["value"]
+            f"{row['task']}/{row['subset']}/{row['metric']}/{row['call']}": row["value"]
             for _, row in summary.iterrows()
         }
     )

@@ -1,0 +1,8 @@
+source,n_cells,n_cells_dropped,n_genes,n_compounds,n_conditions,n_conditions_with_molar_dose,sign,orientation,name
+vanacloig,97772,20890,3587,28,28,28,1.0,"log2((TMM-normalized CPM of the inhibitor replicate + 1) / (mean TMM-normalized CPM of the SAME CG batch's inhibitor-free control columns + 1)); negative = sick deletion, kept as served",smoke_tokens_film_anchors
+host_anchor,0,0,0,28,29,29,1.0,"host fitness, 1 = uninhibited growth; no growth = 0",smoke_tokens_film_anchors
+host_ex21,180,0,0,6,55,55,1.0,"host fitness, 1 = uninhibited growth; no growth = 0",smoke_tokens_film_anchors
+host_ex23,197,0,0,6,64,64,1.0,"host fitness, 1 = uninhibited growth; no growth = 0",smoke_tokens_film_anchors
+host_isobole,600,0,0,4,300,300,1.0,"host fitness, 1 = uninhibited growth; no growth = 0",smoke_tokens_film_anchors
+call_served,977,0,0,0,448,0,1.0,"runs this call covers: ex21, ex23, ex26, ex27, ex28",smoke_tokens_film_anchors
+call_software,197,0,0,0,93,0,1.0,runs this call covers: ex23,smoke_tokens_film_anchors

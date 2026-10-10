@@ -126,6 +126,15 @@ CONTROL_FITNESS = 1.0
 #: Wells whose growth call is False have no fitness; the model-free scoring of
 #: ``mixture_rules.py`` reads them as zero (``w["y"] = w["y_grown"].fillna(0.0)``).
 NO_GROWTH_FITNESS = 0.0
+#: The two growth calls of the wet-lab table and the columns each reads
+#: (``wetlab_table.py``; ``mixture_rules.CALLS``). The served call reads the raw curves
+#: (a rise of at least 0.3 OD) and is primary; the software call reads the Bioscreen
+#: traits and is the sensitivity. They disagree on 12 of the 197 ex23 wells, all of them
+#: 5-HMF combinations.
+CALL_COLUMNS: dict[str, tuple[str, str]] = {
+    "served": ("fitness", "grew"),
+    "software": ("fitness_software", "grew_software"),
+}
 #: The isobole runs and the inhibitor titrated against acetic acid in each
 #: (``mixture_rules.ISOBOLES``).
 ISOBOLE_RUNS = {
@@ -679,26 +688,54 @@ def _well_doses(
     return [(c, float(row[f"dose_mM_{abbreviation[c]}"])) for c in members]
 
 
+def runs_per_call(wells: pd.DataFrame) -> dict[str, list[str]]:
+    """Which runs each growth call covers, read off the table rather than assumed.
+
+    A call covers a run when every well of that run carries a call, and covers none of it
+    when no well does. A run that carried a call for only some of its wells would make
+    the per-call scores incomparable across cells, so it stops the run.
+    """
+    out: dict[str, list[str]] = {}
+    for call, (_, grew_column) in CALL_COLUMNS.items():
+        covered = []
+        for run, group in wells.groupby("run"):
+            present = int(group[grew_column].notna().sum())
+            assert present in (0, len(group)), (
+                f"{run} carries the {call} call for {present} of {len(group)} wells"
+            )
+            if present:
+                covered.append(str(run))
+        assert covered, f"no run carries the {call} call"
+        out[call] = sorted(covered)
+    return out
+
+
 def load_host_records(
     wells_csv: str,
     compounds: CompoundTable,
     inchikey_of: dict[str, str],
     call: Literal["served", "software"],
 ) -> list[HostRecord]:
-    """Every private well, aggregated to one record per medium.
+    """The private wells OF THE RUNS THIS CALL COVERS, one record per medium.
 
     A record's replicates are the wells of one run with the same compound set and doses:
     ``grew`` is true when any replicate grew (the model-free scoring's rule),
-    ``fitness`` is the mean over replicates with no growth read as zero, and
-    ``fitness_grown`` the mean over the replicates that grew.
+    ``fitness`` is the mean over replicates with no growth read as zero (which is
+    ``observed_zero_mean`` of ``results/mixture_combinations.csv``), and
+    ``fitness_grown`` the mean over the replicates that grew (``observed_grown_mean``).
+
+    THE SOFTWARE CALL COVERS ONLY ex23. The Bioscreen software generation times were
+    produced for that plate set alone: ``fitness_software`` and ``grew_software`` are
+    empty for all 180 ex21 wells and all 600 isobole wells. A run the call does not cover
+    is left out rather than read, because ``astype(bool)`` on an empty cell is True and
+    would silently call every isobole well grown. :func:`runs_per_call` is the check.
     """
-    fitness_column, grew_column = (
-        ("fitness", "grew")
-        if call == "served"
-        else ("fitness_software", "grew_software")
-    )
+    fitness_column, grew_column = CALL_COLUMNS[call]
     wells = pd.read_csv(wells_csv)
     abbreviation = ABBREVIATION
+    covered = runs_per_call(wells)[call]
+    wells = wells[wells["run"].isin(covered)].reset_index(drop=True)
+    assert wells[grew_column].notna().all(), f"{call}: an uncovered run survived"
     wells["grew_call"] = wells[grew_column].astype(bool)
     wells["y_grown"] = wells[fitness_column].where(wells["grew_call"])
     wells["y"] = wells["y_grown"].fillna(NO_GROWTH_FITNESS)
@@ -731,13 +768,15 @@ def load_host_records(
                 n_wells=int(len(group)),
             )
         )
-    for run in split_of:
+    for run in covered:
         assert any(r.run == run for r in records), (
             f"{run} has no records in {wells_csv}"
         )
+        assert run in split_of, f"{run} is a run this loader does not know"
     interior = {
         run: sum(1 for r in records if r.run == run and len(r.compounds) == 2)
         for run in ISOBOLE_RUNS
+        if run in covered
     }
     assert all(n == 81 for n in interior.values()), f"isobole interiors are {interior}"
     return sorted(records, key=lambda r: r.key)
@@ -877,7 +916,17 @@ class MixtureData(BaseModel):
 
     compounds: CompoundTable
     sources: list[GeneSource]
+    #: the host conditions the model trains on and is predicted for, under the TRAINING
+    #: call; the prediction for a medium does not depend on which call read its growth,
+    #: so this list indexes the prediction vector for every call
     host: list[HostRecord]
+    #: per growth call, the same conditions keyed by ``HostRecord.key``, each with THAT
+    #: call's grown set, fitness scale and growth flag. The software call holds only the
+    #: ex23 keys, which is the only run it covers; a scorer looks a record up here and
+    #: indexes the prediction by its position in ``host``.
+    host_by_call: dict[str, dict[str, HostRecord]]
+    #: per growth call, the runs it covers (``runs_per_call``)
+    runs_by_call: dict[str, list[str]]
     #: the Vanacloig compounds dropped from the scored panel, with the reason
     dropped_compounds: dict[str, str]
     inchikey_of_inhibitor: dict[str, str]
@@ -948,9 +997,19 @@ def assemble(
     if dropped:
         sources[0] = vanacloig.keep_conditions(panel)
         vanacloig = sources[0]
-    host = load_host_records(wells_csv, compounds, inchikey_of, call) + anchor_records(
-        sources, compounds
-    )
+    anchors = anchor_records(sources, compounds)
+    host = load_host_records(wells_csv, compounds, inchikey_of, call) + anchors
+    # the per-call views of the same conditions; the anchors are public IC30 doses and
+    # carry no growth call, so they are in every view unchanged
+    host_by_call = {
+        other: {
+            r.key: r
+            for r in load_host_records(wells_csv, compounds, inchikey_of, other)
+        }
+        | {r.key: r for r in anchors}
+        for other in CALL_COLUMNS
+    }
+    runs_by_call = runs_per_call(pd.read_csv(wells_csv))
     counts = pd.DataFrame(
         [
             {
@@ -986,11 +1045,29 @@ def assemble(
             }
             for split in ("anchor", "ex21", "ex23", "isobole")
         ]
+        + [
+            {
+                "source": f"call_{other}",
+                "n_cells": sum(
+                    r.n_wells for r in host_by_call[other].values() if r.n_wells
+                ),
+                "n_cells_dropped": 0,
+                "n_genes": 0,
+                "n_compounds": 0,
+                "n_conditions": len(host_by_call[other]),
+                "n_conditions_with_molar_dose": 0,
+                "sign": 1.0,
+                "orientation": f"runs this call covers: {', '.join(runs_by_call[other])}",
+            }
+            for other in CALL_COLUMNS
+        ]
     )
     return MixtureData(
         compounds=compounds,
         sources=sources,
         host=host,
+        host_by_call=host_by_call,
+        runs_by_call=runs_by_call,
         dropped_compounds=dropped,
         inchikey_of_inhibitor=inchikey_of,
         counts=counts,

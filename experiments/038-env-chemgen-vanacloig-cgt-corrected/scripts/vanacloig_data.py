@@ -27,6 +27,8 @@ its reliability index, is carried beside its score.
 
 from __future__ import annotations
 
+import os
+
 import numpy as np
 import pandas as pd
 from numpy.typing import NDArray
@@ -38,9 +40,12 @@ VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 #: strain background moves from the genotype to the reference, so a strain carries ONE
 #: perturbation), #501 (TMM in place of CPM; the nine unreported tokens dropped; DMSO and
 #: MBO served as conditions) and #504 to #506.
-CELL_TABLE = (
+#: On GilaHyper the table sits under its DATA_ROOT; on Delta the launcher points
+#: TC038_CELL_TABLE at the rsynced copy.
+CELL_TABLE = os.getenv(
+    "TC038_CELL_TABLE",
     "/scratch/projects/torchcell-scratch/experiments/033-env-chemgen-pooled/"
-    "cell_table_002/cell_table.parquet"
+    "cell_table_002/cell_table.parquet",
 )
 #: The three efflux-regulator deletions of the sensitized host (PDR1, PDR3, SNQ2). They
 #: are on the reference's StrainReferenceGenome, not in the genotype, but the cell lacks

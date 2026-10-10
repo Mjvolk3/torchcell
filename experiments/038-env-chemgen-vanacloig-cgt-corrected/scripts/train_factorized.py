@@ -78,10 +78,13 @@ DATA_ROOT = os.environ["DATA_ROOT"]
 EXPERIMENT_ROOT = os.environ["EXPERIMENT_ROOT"]
 WANDB_MODE = os.getenv("WANDB_MODE")
 EXPERIMENT = osp.join(EXPERIMENT_ROOT, "038-env-chemgen-vanacloig-cgt-corrected")
-EMBEDDING_DIR = (
+# The 031 embedding tables live in that experiment's worktree on GilaHyper; on another
+# machine (Delta) the launcher points TC038_EMBEDDING_DIR at its rsynced copy.
+EMBEDDING_DIR = os.getenv(
+    "TC038_EMBEDDING_DIR",
     "/home/michaelvolk/Documents/projects/torchcell.worktrees/exp/"
     "031-env-chemgen-vanacloig-hillenmeyer/experiments/"
-    "031-env-chemgen-inhibitor-tolerance/results/embeddings"
+    "031-env-chemgen-inhibitor-tolerance/results/embeddings",
 )
 COUNT_FINGERPRINTS = ("fcfp4_count", "ecfp4_count")
 PREDICTIONS = osp.join(

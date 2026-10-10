@@ -857,7 +857,9 @@ def test_built_lmdb_record_count() -> None:
     env = lmdb.open(lmdb_dir, readonly=True, lock=False)
     with env.begin() as txn:
         assert txn.stat()["entries"] == 290 * bt.N_GENES
-        first = pickle.loads(txn.get(b"0"))
+        raw = txn.get(b"0")
+        assert raw is not None
+        first = pickle.loads(raw)
     env.close()
     assert first["experiment"]["experiment_type"] == "bacterial_environment_response"
     assert not math.isnan(first["experiment"]["phenotype"]["environment_response"])

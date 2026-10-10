@@ -1,0 +1,88 @@
+%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/3-remaining.tex
+%% SOURCE: hand-authored status table. Each status repeats the word the panel script
+%% draws; each "what remains" entry is a gap in the result files named under the figures
+%% of sections/2-mockups.tex, or a round recorded as running or planned in
+%% notes/experiments.040-inhibitor-synergy-wetlab.md (sections of 2026.10.10). Arm names
+%% are the configuration groups of experiments/040-inhibitor-synergy-wetlab/conf/mixture/.
+
+\clearpage
+\section{What each panel still needs\secstatus{todo}}
+\label{sec:remaining}
+
+\begin{table}[htbp]
+  \centering
+  \footnotesize
+  \caption[]{What each panel still needs before it is real. The status column repeats the
+  panel's mark in words: on file (filled circle), every drawn value is in a committed
+  result file; partial (half circle), a run is unfinished or a planned arm has no file;
+  idea only (open circle), a layout or nothing run. No panel is approved; approval is the
+  section status and is the author's.}
+  \label{tab:remaining}
+  \begin{tabular}{@{}p{22mm}p{7mm}p{141mm}@{}}
+    \toprule
+    panel & & what remains \\
+    \midrule
+    concept; main, a & \fstat{idea} &
+      Redraw as one draw.io composition at print size. The counts in it are on file; the
+      boxes and arrows are a layout, and the mixture path they describe (a set of
+      compound tokens, each modulated by its own log-molar dose) is the proposed model
+      and has not run. \\
+    main, c & \fstat{idea} &
+      Same: a layout whose numbers are on file. It merges into the concept sheet if the
+      figure is cut from four rows to three. \\
+    main, e; SI-1, a & \fstat{partial} &
+      The second factorized round is producing. Two folds of the bilinear control and two
+      of the environment encoder were on disk when the sheet was drawn; the round's
+      remaining folds, the nine-seed ensembles and the stack with nested ridge are not
+      written yet. Round eleven on Delta adds the width and depth axis. \\
+    main, f & \fstat{partial} &
+      The encoder arm of the learning curve has to be rerun on the corrected store; only
+      the ridge arm has a file. The planned round also adds the other pooled sources to
+      the gene-level task, which is the second line this panel would carry. \\
+    main, i & \fstat{partial} &
+      The transformer's compound-cold profiles for furfural and 5-HMF come out of the
+      same running round. Until then the panel shows ridge against the measured profile
+      and the screen's own repeat, and the transformer row is a label with no bar. \\
+    main, j & \fstat{partial} &
+      The model's predicted single-agent curves do not exist. They need the host head
+      fitted on the titration run, in both variants the plan names: trained on the public
+      dose anchors alone, and calibrated on the titration run. \\
+    main, k, l & \fstat{partial} &
+      The model's predictions over the combinations and over the isobole grids do not
+      exist. The rules are on file and are the bars. If the model does not beat them, the
+      panels ship with the rules and the model side by side and the text says so. \\
+    main, b, d, g, h & \fstat{file} &
+      Nothing. Every drawn value is in a committed result file. These four are what the
+      figure can claim today. \\
+    SI-1, b, c, d & \fstat{file} & Nothing. \\
+    SI-2, all & \fstat{file} & Nothing. \\
+    SI-3, all & \fstat{file} &
+      Nothing, with one caveat the caption carries: the similarity matrices mix a
+      measured profile for two inhibitors with predicted profiles for four, and the
+      all-predicted version exists so that mixture is visible rather than hidden. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\pfstep{The running and planned rounds, and what each one fills} The second factorized
+round of the corrected-store campaign is on the two GilaHyper cards named for it, one job
+for the bilinear control and one for the environment encoder; it fills main \textbf{e},
+main \textbf{i} and the first column of SI-1 \textbf{a}. Round eleven of the same
+campaign goes to Delta under the account the plan names, never a preemptible partition,
+and widens the ladder rather than deepening it. The first mixture round of this
+experiment is the one that fills the bottom row: about ten arms by three seeds, crossing
+the pooled sources against the host-training recipe (the public dose anchors alone, the
+anchors plus the titration run, and a fine-tune on the titration run) against the dose
+treatment. It starts once the mixture trainer passes its processor smoke test, and its
+launchers are the pair of scripts the experiment folder already carries.
+
+\pfstep{The cut from four rows to three} The experiment note proposes merging rows two
+and three. The merge that costs least is to move main \textbf{c} into the concept sheet,
+where the same boxes already appear, and to put main \textbf{f} and main \textbf{g} side
+by side as one panel on two axes, since both are about what more data buys: more
+compounds on one axis, a second medium on the other. That leaves nine panels: the task,
+the data, the ladder, the transformer against ridge, the merged data-and-dose panel, the
+composition rule, the predicted profile, the single agents, and the combinations with the
+isoboles as its inset. The alternative, dropping the single-agent panel, is worse: it is
+what every rule in the bottom row is computed from, and a reader who cannot see the Hill
+slopes cannot judge why Bliss and Loewe disagree as far as they do.

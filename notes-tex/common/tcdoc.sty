@@ -116,6 +116,19 @@
 \DeclareRobustCommand{\tcstfinal}{{\normalfont\footnotesize\textcolor{stgrn}{\ding{51}}}}
 \DeclareRobustCommand{\tcsttent}{{\normalfont\footnotesize\textcolor{styel}{\ding{110}}}}
 \DeclareRobustCommand{\tcsttodo}{{\normalfont\footnotesize\textcolor{stred}{\ding{55}}}}
+%% Figure and table status. PORTED VERBATIM from the same file on branch
+%% feat/kinetics-equilibrator-datasets (notes-tex/common/tcdoc.sty), where the
+%% metabolism Figure 6 gate introduced it; carried here so the hydrolysate gate
+%% marks its panels with the same glyphs. A SEPARATE symbol set, drawn beside each
+%% panel letter next to the panel's section status, so a panel reads like a section and
+%% the two questions ("is it reviewed?" and "is it on file?") never share a glyph. Filled
+%% circle = on file (every drawn value is in a committed result file); half circle =
+%% partial (a run unfinished or unscored, or scoring rules mixed); open circle = idea only
+%% (a draw.io sketch, or nothing run). None of the three means approved.
+\DeclareRobustCommand{\tcfsfile}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{108}}}}
+\DeclareRobustCommand{\tcfspartial}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{119}}}}
+\DeclareRobustCommand{\tcfsidea}{{\normalfont\footnotesize\textcolor{tcgray}{\ding{109}}}}
+\newcommand{\fstat}[1]{\csname tcfs#1\endcsname}
 \DeclareRobustCommand{\status}[1]{\csname tcst#1\endcsname}
 \iftcdraft
   \DeclareRobustCommand{\secstatus}[1]{\,\status{#1}}
@@ -176,6 +189,11 @@
      \status{final}~ready \quad
      \status{tent}~author-reviewed, keep stable \quad
      \status{todo}~not done, agents may edit freely\par
+     %% Ported with \fstat, same source file and same reason.
+     \textit{Figure and table status:}~
+     \fstat{file}~on file, every value in a committed result file \quad
+     \fstat{partial}~partial, a run unfinished or unscored \quad
+     \fstat{idea}~idea only, a sketch or nothing run\par
    \fi
    \iftcflagseen
      \textit{Provenance:}~

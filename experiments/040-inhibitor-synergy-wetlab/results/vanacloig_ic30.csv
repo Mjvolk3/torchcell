@@ -1,0 +1,4 @@
+inhibitor,compound,in_store,record_index,vanacloig_ic30_mM,vanacloig_ic30_g_per_l,basis,bioscreen_ex21_ic30_mM,bioscreen_ex21_ic30_mM_lo,bioscreen_ex21_ic30_mM_hi,ratio_bioscreen_over_vanacloig,comparison
+FF,furfural,True,77000.0,8.0,0.76864,IC30,9.815870976609359,9.114534625571974,12.242864872804956,1.2269838720761699,"cross-medium potency: Vanacloig anaerobic SYNH3 48 h (haploid deletion pool IC30) vs Bioscreen aerobic YPD 72 h (bAID, ex21 Hill fit)"
+HMF,5-(hydroxymethyl)furfural,True,18000.0,3.3,0.41616299999999995,IC30,17.886429921243618,17.20532415710085,18.40817496444356,5.4201302791647334,"cross-medium potency: Vanacloig anaerobic SYNH3 48 h (haploid deletion pool IC30) vs Bioscreen aerobic YPD 72 h (bAID, ex21 Hill fit)"
+LVA,levulinic acid,False,,,,,75.58376840835612,70.37440475502385,100.00972500221381,,"cross-medium potency: Vanacloig anaerobic SYNH3 48 h (haploid deletion pool IC30) vs Bioscreen aerobic YPD 72 h (bAID, ex21 Hill fit)"

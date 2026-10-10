@@ -1,0 +1,207 @@
+%% notes-tex/wet-lab/040-inhibitor-synergy-wetlab/sections/3-methods.tex
+
+\section{Methods\secstatus{todo}}
+\label{sec:methods}
+
+\subsection{Single-agent curves\secstatus{todo}}
+\label{sec:hill}
+
+Index the six inhibitors by $i$ and write $d_i$ for the dose of inhibitor $i$ in a well,
+in g\,L$^{-1}$. The fitness of a well holding inhibitor $i$ alone is modeled by a Hill
+curve with three parameters, a top $\theta_i$, a half-maximal dose $c_i$ and a slope
+$h_i$,
+%
+\begin{equation}
+  f_i(d) \;=\; \frac{\theta_i}{1 + (d / c_i)^{h_i}} ,
+  \qquad
+  \varphi_i(d) \;=\; \frac{f_i(d)}{\theta_i} \;=\; \frac{1}{1 + (d / c_i)^{h_i}} ,
+  \label{eq:hill}
+\end{equation}
+%
+where $\varphi_i(d) \in (0, 1)$ is the \term{fractional fitness}, the fitness relative to
+the curve's own top. Fitting the top rather than dividing by the controls is what the
+ex21 control anomaly of Section~\ref{sec:data} forces. Inverting
+Equation~\ref{eq:hill} gives the dose of inhibitor $i$ alone that leaves fractional
+fitness $y$,
+%
+\begin{equation}
+  D_i(y) \;=\; c_i \left( \frac{1 - y}{y} \right)^{1 / h_i} ,
+  \qquad 0 < y < 1 ,
+  \label{eq:inverse}
+\end{equation}
+%
+so $c_i = D_i(1/2)$ is the IC50 and $D_i(0.7)$ is the IC30. Parameters are fit by least squares on the dosed wells of one run, with $h_i$ bounded
+above at 20. The primary variant puts a well that did not grow at fitness 0 and the
+\texttt{excluded} variant drops it; intervals are the 2.5 and 97.5 percentiles of 1000
+resamples of the replicate wells within each dose. Two properties of the fits matter
+downstream. A slope at its bound, $h_i = 20$, marks a cliff, fitness falling from near
+the top to none between two adjacent tested doses, so $c_i$ is located only within that
+dose interval and the bootstrap understates it, since resampling cannot move a cliff that
+sits between doses. A fitted $c_i$ at or above the highest dose tested is an
+extrapolation of the curve rather than a reading of it.
+
+\subsection{The three reference rules\secstatus{todo}}
+\label{sec:rules}
+
+Let $S$ be the set of inhibitors present in a combination, each at its own dose $d_i$,
+and let $E$ denote a predicted fractional fitness for that combination. Every rule below
+takes the single-agent curves of Section~\ref{sec:hill} and no fitted parameter of its
+own.
+
+\notesec{Bliss independence} Bliss 1939 treats the agents as independent events acting
+on survival, so the surviving fraction multiplies,
+%
+\begin{equation}
+  E^{\text{Bliss}}_{S} \;=\; \prod_{i \in S} \varphi_i(d_i) ,
+  \label{eq:bliss}
+\end{equation}
+%
+which for a pair $A$ and $B$ is the familiar $f_{AB} = f_A f_B$. Two variants differ only
+in where $\varphi_i(d_i)$ comes from: \texttt{bliss\_ex21} reads it off the ex21 Hill fit
+at the combination's dose, and \texttt{bliss\_ex23} uses the observed ex23 single-agent
+wells at that dose, the mean of three wells with a well that did not grow counted as 0.
+The second is the stronger reference, since it carries the run's own singles rather than
+another run's curve.
+
+\notesec{Loewe additivity} Loewe additivity asks what dose of each agent alone would
+produce the combination's effect, and calls the agents additive when those doses sum to
+one full dose. With $D_i$ from Equation~\ref{eq:inverse}, the prediction is the effect
+$E$ solving
+%
+\begin{equation}
+  \sum_{i \in S} \frac{d_i}{D_i(E)} \;=\; 1 .
+  \label{eq:loewe}
+\end{equation}
+%
+The left side is monotone in $E$, because $D_i(E)$ grows without bound as $E \to 0$ and
+vanishes as $E \to 1$, so the root is unique and is found numerically on
+$\operatorname{logit} E$ by bisection. Evaluated at an observed fractional fitness $y$
+instead, the same sum is the \term{combination index}
+%
+\begin{equation}
+  \mathrm{CI}(y) \;=\; \sum_{i \in S} \frac{d_i}{D_i(y)} ,
+  \label{eq:ci}
+\end{equation}
+%
+below 1 for synergy and above 1 for antagonism relative to Loewe. A component whose
+$D_i(E)$ lies above the highest dose ex21 tested is flagged: that single never reaches
+$E$ within its measured range, so its term is a Hill extrapolation.
+
+\notesec{Highest single agent} $E^{\text{HSA}}_{S} = \min_{i \in S} \varphi_i(d_i)$, the
+sickest single agent, in the ex21-fit and observed-ex23 variants.
+
+\subsection{Scoring the combinations\secstatus{todo}}
+\label{sec:scoring}
+
+\notesec{The growth threshold} A rule predicts fitness, and a well is recorded as grown
+or not, so the two are joined by a threshold $\tau$ taken from the data: the lowest
+fitness of any grown inhibited ex23 well under that call, which is the slowest growth the
+call registers within 85 h. A rule predicts growth when its prediction is at least
+$\tau$. The thresholds are 0.248 for the served call and 0.171 for the software call.
+Classification is scored as accuracy and as AUROC with the rule's prediction as the
+score, so AUROC reads the ordering and is free of $\tau$.
+
+\notesec{Fitness of the grown combinations} Observed fitness is the mean of the grown
+wells, the definition experiment 039 used. Rules are scored by Spearman correlation, by
+RMSE and by the mean of observed minus predicted, whose sign says which way a rule errs,
+over all 63 combinations and over the 57 holding two or more inhibitors; the rows by
+number of inhibitors are in \file{results/mixture\_scores.csv}.
+
+\notesec{Pair deviations} For each of the 15 pairs, the deviation is observed fitness
+minus $E^{\text{Bliss}}$ from the ex23 singles, with a 95 percent interval from 2000
+resamples of the replicate wells of the pair and of both singles (and of the Hill fit
+draws for the ex21 variant). A pair is called synergistic when that interval lies below
+zero, antagonistic when it lies above, and additive otherwise.
+
+\notesec{Isoboles} Each grid holds two inhibitors over nine doses each, two plate wells
+per cell. The Bliss surface is built empirically from the grid's own axes, so the excess
+over Bliss is a within-run quantity, averaged over the 81 interior cells with a 95
+percent interval from 2000 resamples of the two wells per cell. The Loewe additive front
+is the locus of Equation~\ref{eq:loewe} at $E = \tau$ computed from the grid-axis Hill
+fits, and the cells that contradict it are counted in both directions.
+
+\subsection{How deletion profiles compose, measured on public data\secstatus{todo}}
+\label{sec:het}
+
+Claim 3 cannot be asked of the inhibitors, because no screen of a deletion pool under any
+inhibitor combination exists. Hillenmeyer 2008's heterozygous diploid screen (HET) is the
+one public source with two compounds in one well: of its 452 environments in the 033
+pooled table, 26 carry two compounds, over 5,825 genes. The response of gene $g$ in
+environment $e$ is
+$y_{ge} = \log_2(\text{mean control intensity} / \text{treatment intensity})$, so a
+positive value is a fitness defect; where the 033 flatten keeps several measurements for
+a cell, their mean is used. Each two-compound environment is matched to the
+single-compound environment of each partner at the same $\log_{10}$ molar dose, else the
+nearest dose with the same generation count. A match is reasonable when the dose is
+within one twofold step and the generations agree: 46 matches are exact, 2 within
+twofold, and 4 are beyond, every one of those four a tacrolimus pair whose dosed singles
+sit 402 to 804-fold away. Those four are flagged and reported separately.
+
+Writing $y_1$ and $y_2$ for the two matched single profiles and $y_{12}$ for the pair's,
+four fixed rules and one fitted one are scored on the genes measured in all three
+environments: the sum $y_1 + y_2$, the mean $(y_1 + y_2)/2$, the elementwise maximum, the
+Bliss product on the fitness scale, and a free linear fit $y_{12} = a y_1 + b y_2 + c$.
+On this scale the Bliss product is the sum,
+%
+\begin{equation}
+  -\log_2\!\left( 2^{-y_1} \, 2^{-y_2} \right) \;=\; y_1 + y_2 ,
+  \label{eq:blisslog}
+\end{equation}
+%
+and the script confirms it: the largest absolute difference between the two is 0 on all
+26 pairs, so the Bliss column carries no separate information and is plotted as the sum.
+Fixed rules are scored by $R^2 = 1 - \mathrm{SS}_{\text{res}} / \mathrm{SS}_{\text{tot}}$
+as they stand, with no refit, so a rule of the wrong magnitude scores negative; Spearman
+is scale-free, which is why the sum and the mean share one Spearman value.
+
+A \term{hit} is a gene with robust $|z| > 2$ within its environment, where
+$z = (y - \mathrm{median}) / (1.4826\,\mathrm{MAD})$ over that environment's genes; 10.2
+percent of all gene-by-environment cells are hits. An \term{emergent} gene is a hit in
+the pair and in neither single, a \term{masked} gene a hit in a single and not in the
+pair; the emergent fraction divides by the pair's hits, the masked fraction by the union
+of the singles' hits. Two nulls of 200 draws each replace the matched singles by random
+ones: any two YPD singles without either partner compound, and the stricter null
+restricted to singles sharing a control set with the pair, which all 26 pairs do. The
+noise floor is the only near-replicate pair of single environments in the release, two
+5-fluorouracil doses within 1 percent of each other.
+
+\subsection{Compound-cold profiles, similarity, and GO enrichment\secstatus{todo}}
+\label{sec:profiles}
+
+\notesec{The predictor} Experiment 038's nested ridge on FCFP4 counts, the model that
+sets the bar on the corrected store. The fingerprint is the 031 recipe: RDKit Morgan
+with radius 2 over 2048 bits, feature atom invariants, counts rather than bits, float32,
+from the curated identity table's SMILES. Re-featurizing 35 compounds reproduced every
+031 stored row exactly
+(\file{results/profile\_fingerprint\_check.csv}), which is what makes a prediction for a
+compound outside the 32 comparable to one inside. Formic acid (\texttt{OC=O}) and lactic
+acid (\texttt{CC(O)C(=O)O}, no stereocenter stated on the stock sheet) are identity gaps
+in the private loader and are assigned here.
+
+The regularization strength, rank and clip are chosen by leave-one-compound-out inside
+the fitted pool on the centered target. Furfural and 5-HMF are predicted with themselves
+held out entirely (31 fitted); the other four are predicted from a fit on all 32. A
+prediction is scored by Spearman correlation against the measured profile, raw and after
+centering each gene by its mean over the 32 compounds, which removes the component every
+compound shares.
+
+\notesec{Similarity} Two measures per compound pair, each raw and centered: the Spearman
+correlation over the genes both profiles carry, and the Jaccard overlap of the 100 most
+sensitive genes. Claim 2 tests each against the pair deviation of
+Section~\ref{sec:scoring} over the 15 pairs with a 10,000-draw permutation $p$ and a
+leave-one-pair-out range, under both growth calls and both profile matrices: the
+\term{best-available} matrix, which uses a measured profile wherever its replicate
+reliability reaches 0.5, and the \term{all-predicted} matrix, in which every column is a
+prediction. The 0.5 reliability threshold is a choice, not a sourced value.
+
+\notesec{GO enrichment} Gene-to-term annotations come from the S288C GFF
+\texttt{Ontology\_term} fields of the torchcell genome, propagated to \texttt{is\_a}
+ancestors through the GO release of 2024-01-17 whose sha256 is recorded in
+\file{results/go\_summary.json}. The background is the 3,587 build-002 Vanacloig genes,
+all annotated, and the 2,292 terms with 5 to 500 background genes are tested one-sided
+hypergeometric with Benjamini-Hochberg control per set at FDR 0.05. Study sets are the
+100 most sensitive genes of each measured and predicted profile, the core nomination set,
+and each combination's composed top 100. The control set is the 100 most sensitive genes
+of the build-002 gene mean over the 32 compounds, which is what a model with no
+compound-specific signal outputs, so a term the prediction shares with the control is
+evidence of the generic stress component rather than of the compound.

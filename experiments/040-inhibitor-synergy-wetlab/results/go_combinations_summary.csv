@@ -1,0 +1,123 @@
+version,rule,combination,n_genes,n_sig,top_terms
+best_available,,core,68,46,
+best_available,sum,5-(hydroxymethyl)furfural + formic acid,100,18,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,sum,5-(hydroxymethyl)furfural + lactic acid,100,10,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,sum,5-(hydroxymethyl)furfural + levulinic acid,100,21,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,sum,acetic acid + 5-(hydroxymethyl)furfural,100,35,SWI/SNF superfamily-type complex; ATPase complex; Swr1 complex
+best_available,sum,acetic acid + formic acid,100,42,vesicle-mediated transport; vesicle tethering complex; cellular macromolecule localization
+best_available,sum,acetic acid + lactic acid,100,49,vesicle-mediated transport; vesicle tethering complex; Golgi vesicle transport
+best_available,sum,acetic acid + levulinic acid,100,42,vesicle-mediated transport; Golgi vesicle transport; vesicle tethering complex
+best_available,sum,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+best_available,sum,formic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,sum,furfural + 5-(hydroxymethyl)furfural,100,0,
+best_available,sum,furfural + acetic acid,100,1,intra-Golgi vesicle-mediated transport
+best_available,sum,furfural + formic acid,100,0,
+best_available,sum,furfural + lactic acid,100,0,
+best_available,sum,furfural + levulinic acid,100,0,
+best_available,sum,levulinic acid + lactic acid,100,54,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+best_available,mean,5-(hydroxymethyl)furfural + formic acid,100,18,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,mean,5-(hydroxymethyl)furfural + lactic acid,100,10,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,mean,5-(hydroxymethyl)furfural + levulinic acid,100,21,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,mean,acetic acid + 5-(hydroxymethyl)furfural,100,35,SWI/SNF superfamily-type complex; ATPase complex; Swr1 complex
+best_available,mean,acetic acid + formic acid,100,42,vesicle-mediated transport; vesicle tethering complex; cellular macromolecule localization
+best_available,mean,acetic acid + lactic acid,100,49,vesicle-mediated transport; vesicle tethering complex; Golgi vesicle transport
+best_available,mean,acetic acid + levulinic acid,100,42,vesicle-mediated transport; Golgi vesicle transport; vesicle tethering complex
+best_available,mean,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+best_available,mean,formic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,mean,furfural + 5-(hydroxymethyl)furfural,100,0,
+best_available,mean,furfural + acetic acid,100,1,intra-Golgi vesicle-mediated transport
+best_available,mean,furfural + formic acid,100,0,
+best_available,mean,furfural + lactic acid,100,0,
+best_available,mean,furfural + levulinic acid,100,0,
+best_available,mean,levulinic acid + lactic acid,100,54,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+best_available,max,5-(hydroxymethyl)furfural + formic acid,100,11,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,max,5-(hydroxymethyl)furfural + lactic acid,100,12,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,max,5-(hydroxymethyl)furfural + levulinic acid,100,35,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+best_available,max,acetic acid + 5-(hydroxymethyl)furfural,100,0,
+best_available,max,acetic acid + formic acid,100,18,protein-DNA complex organization; chromatin organization; chromatin remodeling
+best_available,max,acetic acid + lactic acid,100,21,protein-DNA complex organization; chromatin organization; chromatin remodeling
+best_available,max,acetic acid + levulinic acid,100,14,cellular response to environmental stimulus; cellular response to abiotic stimulus; Golgi vesicle transport
+best_available,max,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+best_available,max,formic acid + levulinic acid,100,40,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,max,furfural + 5-(hydroxymethyl)furfural,100,0,
+best_available,max,furfural + acetic acid,100,0,
+best_available,max,furfural + formic acid,100,0,
+best_available,max,furfural + lactic acid,100,0,
+best_available,max,furfural + levulinic acid,100,0,
+best_available,max,levulinic acid + lactic acid,100,54,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,min,5-(hydroxymethyl)furfural + formic acid,100,35,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+best_available,min,5-(hydroxymethyl)furfural + lactic acid,100,25,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,min,5-(hydroxymethyl)furfural + levulinic acid,100,44,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+best_available,min,acetic acid + 5-(hydroxymethyl)furfural,100,42,intra-Golgi vesicle-mediated transport; cytoplasm to vacuole targeting by the Cvt pathway; SWI/SNF superfamily-type complex
+best_available,min,acetic acid + formic acid,100,49,vesicle tethering complex; nuclear protein-containing complex; Swr1 complex
+best_available,min,acetic acid + lactic acid,100,74,nuclear protein-containing complex; Swr1 complex; intra-Golgi vesicle-mediated transport
+best_available,min,acetic acid + levulinic acid,100,36,intra-Golgi vesicle-mediated transport; vesicle tethering complex; nuclear protein-containing complex
+best_available,min,formic acid + lactic acid,100,42,Golgi vesicle transport; Swr1 complex; vesicle-mediated transport
+best_available,min,formic acid + levulinic acid,100,52,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+best_available,min,furfural + 5-(hydroxymethyl)furfural,100,5,Swr1 complex; SWI/SNF superfamily-type complex; protein-DNA complex organization
+best_available,min,furfural + acetic acid,100,2,intra-Golgi vesicle-mediated transport; molecular carrier activity
+best_available,min,furfural + formic acid,100,5,Swr1 complex; Golgi vesicle transport; INO80-type complex
+best_available,min,furfural + lactic acid,100,2,Swr1 complex; Golgi vesicle transport
+best_available,min,furfural + levulinic acid,100,0,
+best_available,min,levulinic acid + lactic acid,100,49,Golgi vesicle transport; Swr1 complex; protein targeting to vacuole
+all_predicted,,core,105,40,
+all_predicted,sum,5-(hydroxymethyl)furfural + formic acid,100,18,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,sum,5-(hydroxymethyl)furfural + lactic acid,100,10,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,sum,5-(hydroxymethyl)furfural + levulinic acid,100,21,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,sum,acetic acid + 5-(hydroxymethyl)furfural,100,8,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,sum,acetic acid + formic acid,100,43,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,sum,acetic acid + lactic acid,100,43,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,sum,acetic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,sum,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,sum,formic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,sum,furfural + 5-(hydroxymethyl)furfural,100,9,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,sum,furfural + acetic acid,100,34,Golgi vesicle transport; Swr1 complex; intracellular transport
+all_predicted,sum,furfural + formic acid,100,25,Swr1 complex; Golgi vesicle transport; intracellular transport
+all_predicted,sum,furfural + lactic acid,100,40,Golgi vesicle transport; intracellular transport; establishment of localization in cell
+all_predicted,sum,furfural + levulinic acid,100,39,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,sum,levulinic acid + lactic acid,100,54,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,mean,5-(hydroxymethyl)furfural + formic acid,100,18,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,mean,5-(hydroxymethyl)furfural + lactic acid,100,10,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,mean,5-(hydroxymethyl)furfural + levulinic acid,100,21,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,mean,acetic acid + 5-(hydroxymethyl)furfural,100,8,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,mean,acetic acid + formic acid,100,43,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,mean,acetic acid + lactic acid,100,43,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,mean,acetic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,mean,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,mean,formic acid + levulinic acid,100,45,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,mean,furfural + 5-(hydroxymethyl)furfural,100,9,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,mean,furfural + acetic acid,100,34,Golgi vesicle transport; Swr1 complex; intracellular transport
+all_predicted,mean,furfural + formic acid,100,25,Swr1 complex; Golgi vesicle transport; intracellular transport
+all_predicted,mean,furfural + lactic acid,100,40,Golgi vesicle transport; intracellular transport; establishment of localization in cell
+all_predicted,mean,furfural + levulinic acid,100,39,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,mean,levulinic acid + lactic acid,100,54,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,max,5-(hydroxymethyl)furfural + formic acid,100,11,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,5-(hydroxymethyl)furfural + lactic acid,100,12,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,5-(hydroxymethyl)furfural + levulinic acid,100,35,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,acetic acid + 5-(hydroxymethyl)furfural,100,11,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,acetic acid + formic acid,100,43,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,max,acetic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,max,acetic acid + levulinic acid,100,50,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,max,formic acid + lactic acid,100,42,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,max,formic acid + levulinic acid,100,40,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,max,furfural + 5-(hydroxymethyl)furfural,100,14,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,furfural + acetic acid,100,23,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,furfural + formic acid,100,30,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,furfural + lactic acid,100,20,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,max,furfural + levulinic acid,100,35,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,max,levulinic acid + lactic acid,100,54,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,min,5-(hydroxymethyl)furfural + formic acid,100,35,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,min,5-(hydroxymethyl)furfural + lactic acid,100,25,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,min,5-(hydroxymethyl)furfural + levulinic acid,100,44,Swr1 complex; Golgi vesicle transport; SWI/SNF superfamily-type complex
+all_predicted,min,acetic acid + 5-(hydroxymethyl)furfural,100,49,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,min,acetic acid + formic acid,100,45,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,min,acetic acid + lactic acid,100,45,Golgi vesicle transport; vesicle-mediated transport; Swr1 complex
+all_predicted,min,acetic acid + levulinic acid,100,53,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,min,formic acid + lactic acid,100,42,Golgi vesicle transport; Swr1 complex; vesicle-mediated transport
+all_predicted,min,formic acid + levulinic acid,100,52,Golgi vesicle transport; Swr1 complex; SWI/SNF superfamily-type complex
+all_predicted,min,furfural + 5-(hydroxymethyl)furfural,100,8,Swr1 complex; SWI/SNF superfamily-type complex; ATPase complex
+all_predicted,min,furfural + acetic acid,100,37,Golgi vesicle transport; Swr1 complex; intracellular transport
+all_predicted,min,furfural + formic acid,100,37,Golgi vesicle transport; Swr1 complex; intracellular transport
+all_predicted,min,furfural + lactic acid,100,37,Golgi vesicle transport; intracellular transport; establishment of localization in cell
+all_predicted,min,furfural + levulinic acid,100,39,Golgi vesicle transport; Swr1 complex; protein targeting to vacuole
+all_predicted,min,levulinic acid + lactic acid,100,49,Golgi vesicle transport; Swr1 complex; protein targeting to vacuole

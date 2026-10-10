@@ -1,0 +1,135 @@
+%% notes-tex/wet-lab/040-inhibitor-synergy-wetlab/sections/5-model.tex
+
+\section{What this means for the model, and for the figure\secstatus{todo}}
+\label{sec:model}
+
+\subsection{The bars are model-free and they are already on file\secstatus{todo}}
+\label{sec:bars}
+
+The wet-lab data are a clean validation target, and the reference rules set the level a
+trained model has to reach before it has said anything (Table~\ref{tab:bars}). Growth
+over the 63 combinations is separated by Loewe additivity at AUROC 0.958, with one false
+positive, and the ordering of the 21 grown combinations is recovered by Bliss from the
+observed singles at Spearman 0.573. Both come from the single-agent curves alone, so a
+model that reaches them has matched something that needs no training data beyond the six
+titrations in the same run.
+
+%% SOURCE: experiments/040-inhibitor-synergy-wetlab/scripts/notes_tex_tables.py ->
+%% tables/t16-bars.tex, from results/mixture_scores.csv (mixture_rules.py).
+\begin{table}[htbp]
+\centering
+\footnotesize
+\caption[]{The bars a dose- and mixture-aware model has to clear on these data, served
+call, taken from the best reference rule for each test. The two growth rows and the two
+fitness rows differ only in whether the six single-agent combinations are included, and
+the fitness rows are the harder test: 15 grown combinations of two or more inhibitors is
+a small sample and Bliss already orders them at 0.261.}
+\label{tab:bars}
+\input{tables/t16-bars}
+\end{table}
+
+What the chemogenomic representation adds to that is, so far, nothing measurable.
+Compound-cold ridge profiles reach the published bar on the gene-level task
+(Section~\ref{sec:claim4}) and still carry only the generic stress component; profile
+similarity does not anticipate which pairs deviate once a measured profile is in the
+matrix (Section~\ref{sec:claim2}); and the one composition rule that is measurable is
+measurable on public data for compounds that are not these
+(Section~\ref{sec:claim3}). The honest preliminary claim is the model-free one, which is
+also why the run order put these four claims before any training.
+
+\subsection{The panel this fills, and what each cell needs\secstatus{todo}}
+\label{sec:figure}
+
+The case study occupies one figure of the manuscript, planned as four rows of three
+panels and expected to compress to three rows by merging the two middle ones
+(Table~\ref{tab:figureplan}). Seven of the twelve cells are produced by a committed
+script today; two depend on a running job, and three need code that is not written.
+
+%% SOURCE: hand-authored from the figure plan of
+%% notes/experiments.040-inhibitor-synergy-wetlab.md (section "Figure plan for the
+%% hydrolysate panel"). No result file backs a plan, so there is no generating script;
+%% the status column is what makes each cell checkable.
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption[]{The planned panel, one row per cell. Status carries the figure-gate glyphs of the status key:
+on file (\fstat{file}) when a committed script already produces the panel, partly or
+running (\fstat{partial}) when part of it is on file or a submitted job will produce it,
+and to launch or to build (\fstat{idea}) when the round is not submitted or the code does
+not exist. None of the three means approved. The bottom row
+is the claim the figure exists to make: whether a model trained on public screens can
+predict this host under these environment perturbations.}
+\label{tab:figureplan}
+\begin{tabular}{llp{72mm}p{40mm}l}
+\toprule
+Row & Panel & Content & Source & Status \\
+\midrule
+1 concept & a & The task: a compound enters the cell graph transformer as a token the
+  genes attend to; the strain is read at its deleted genes, the host at the mean over an
+  empty genotype & draw.io schematic of the 038 environment encoder and the 040 host head
+  & \fstat{idea} to build \\
+1 & b & What is trained on: the pooled chemogenomic table beside the private Bioscreen
+  data, 977 wells, six inhibitors, 63 combinations, three isoboles, one strain &
+  033 \file{store\_against\_plan.py}; 040 \file{wetlab\_table.py} & \fstat{file} on file \\
+1 & c & Evaluation: compound-cold folds and the per-compound centered Spearman against
+  each compound's reliability ceiling; the wet-lab test, growth over 63 and fitness over
+  the grown, against Bliss and Loewe & 038 protocol; 040 \file{mixture\_rules.py} &
+  \fstat{file} on file \\
+\midrule
+2 benchmarks & d & The ladder on the corrected store: nested ridge on FCFP4 counts
+  against kernels, nearest neighbors and twelve embeddings & 038 round 1 & \fstat{file} on file \\
+2 & e & The transformer against ridge: bilinear control, environment-encoder head,
+  nine-seed ensembles, the stack, per compound & 038 round 2 & \fstat{partial} running \\
+2 & f & Learning curve in fitted compounds, and the effect of adding further screens to
+  the gene-level task & 038 round 17; 040 round 1 source arms & \fstat{idea} to launch \\
+\midrule
+3 environment & g & Dose: public IC30 against ex21 IC30 per shared compound, and the
+  dose-aware encoder's predicted single-agent curves against ex21 &
+  040 \file{single\_agent\_curves.py}; 040 round 1 dose arms & \fstat{partial} partly \\
+3 & h & Mixture rule on public data: a pair profile is the mean of its singles, and the
+  emergent gene rate sits inside the noise &
+  040 \file{het\_mixture\_composition.py} & \fstat{file} on file \\
+3 & i & Predicted against measured profile for furfural and 5-HMF, for ridge and for the
+  transformer encoder, with GO overlap against the gene-mean control &
+  040 \file{inhibitor\_profiles.py} & \fstat{partial} partly \\
+\midrule
+4 wet lab & j & The ex21 single-agent curves with the model's predicted curves, trained
+  on the public anchors only and calibrated on ex21, both shown & 040 round 1 &
+  \fstat{idea} to launch \\
+4 & k & The 63 combinations: observed against Bliss, Loewe and the model, by number of
+  inhibitors, with growth AUROC and fitness Spearman in the panel &
+  040 \file{mixture\_rules.py} for the rules; the model to launch & \fstat{partial} partly \\
+4 & l & The isoboles: observed grid, Loewe front, the model's predicted front, and the
+  excess over Bliss & 040 \file{mixture\_rules.py} for the rules; the model to launch &
+  \fstat{partial} partly \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+If the model does not clear the bars of Table~\ref{tab:bars}, panels j to l show the
+rules and the model side by side and the text says so, which is why the bottom row is
+drawn from the reference rules first.
+
+\subsection{Round 1, which has not run\secstatus{todo}}
+\label{sec:round1}
+
+The adaptation keeps experiment 035 round 11's recipe, the best on record: a compound
+token in front of the 6,607 gene tokens, one further layer, a one-layer encoder, prior
+weight zero, 50 epochs keeping the last, fit on the non-test pool and stacked with nested
+ridge. Three things change, each an ablation: a set of compound tokens, one per inhibitor
+in the medium, in place of the single token; a log-molar dose scalar modulating each
+token, with the public IC30 doses and dose zero as the anchors; and a host-growth head
+read from the mean of the cell-in-medium state and the compound tokens after they read
+the genome, the empty-genotype path, fit on the ex21 curves and scored on the 63
+combinations and the isoboles against the references of Section~\ref{sec:claim1}. The
+gene-level head stays on the public task so the compound representation is shared.
+
+Hypothesis (untested), and it is the only statement this section can make: the trainer is
+being written, no run exists, and nothing above comes from a model. On the record from
+experiment 035 the transformer encoder ties nested ridge on the gene-level task, and the
+compound-cold profiles of Section~\ref{sec:claim4} are generic, so the expectation is
+that the encoder's profiles behave the same way on claim 2 and that the host head has to
+earn its place from the dose anchors and the ex21 curves rather than from the profile
+representation. Neither half of that has been measured. The next number this document
+can carry is a growth AUROC and a fitness Spearman from a finished run, set beside the
+0.958 and the 0.573 of Table~\ref{tab:bars}.

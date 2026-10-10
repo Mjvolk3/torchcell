@@ -1,0 +1,152 @@
+{
+  "n_pairs": 26,
+  "n_flagged": 4,
+  "flagged_pairs": [
+    "LiCl150+FK5060.1",
+    "FK5060.05+NaCl600",
+    "FK5060.1+NaCl600",
+    "NaCl700+FK5060.1"
+  ],
+  "match_kinds": {
+    "exact": 46,
+    "nearest_beyond_2fold": 4,
+    "nearest_within_2fold": 2
+  },
+  "pairs_sharing_control_set_with_both_singles": 26,
+  "z_hit": 2.0,
+  "n_null_draws": 200,
+  "all": {
+    "n": 26,
+    "best_rule_r2_counts": {
+      "mean": 24,
+      "sum": 1,
+      "max": 1
+    },
+    "best_rule_spearman_counts": {
+      "linear": 14,
+      "sum": 11,
+      "max": 1
+    },
+    "median": {
+      "r2_sum": 0.09123545748871131,
+      "r2_mean": 0.3645047779446345,
+      "r2_max": 0.04992190396308638,
+      "r2_linear": 0.45820730091068157,
+      "spearman_sum": 0.578837758485784,
+      "spearman_max": 0.4105021694138925,
+      "spearman_linear": 0.6335999477013501,
+      "lin_a": 0.5286246493051505,
+      "lin_b": 0.5934844699124155,
+      "lin_c": 0.01426196334629981,
+      "single_similarity_spearman": 0.2535493018802979
+    },
+    "emergent_total": 6234,
+    "pair_hits_total": 16172,
+    "emergent_fraction_pooled": 0.3854810784071234,
+    "masked_total": 18341,
+    "single_union_hits_total": 28279,
+    "masked_fraction_pooled": 0.648573146150854,
+    "median_emergent_fraction": 0.3552597402597403,
+    "median_null_emergent_fraction": 0.6207226954758482,
+    "n_pairs_null_p_le_0.05": 24,
+    "median_ctlnull_emergent_fraction": 0.6127550193229042,
+    "n_pairs_ctlnull_p_le_0.05": 24,
+    "median_null_spearman_sum": 0.06594561189054327,
+    "median_ctlnull_spearman_sum": 0.1135792658554545,
+    "n_pairs_ctlnull_spearman_sum_p_le_0.05": 24,
+    "spearman_similarity_vs_emergent_fraction": {
+      "rho": -0.6572063696667957,
+      "p": 0.0002646484889134372,
+      "n": 26
+    },
+    "spearman_similarity_vs_masked_fraction": {
+      "rho": -0.7857753576973446,
+      "p": 1.9703029635518715e-06,
+      "n": 26
+    }
+  },
+  "unflagged": {
+    "n": 22,
+    "best_rule_r2_counts": {
+      "mean": 20,
+      "sum": 1,
+      "max": 1
+    },
+    "best_rule_spearman_counts": {
+      "sum": 11,
+      "linear": 10,
+      "max": 1
+    },
+    "median": {
+      "r2_sum": 0.11928339704041668,
+      "r2_mean": 0.4174993289131171,
+      "r2_max": 0.10649542608132018,
+      "r2_linear": 0.46889693098156454,
+      "spearman_sum": 0.5866350200808523,
+      "spearman_max": 0.482156574978468,
+      "spearman_linear": 0.5945085637431744,
+      "lin_a": 0.5286246493051505,
+      "lin_b": 0.5934844699124155,
+      "lin_c": 0.018387108141046327,
+      "single_similarity_spearman": 0.27195615001885143
+    },
+    "emergent_total": 5446,
+    "pair_hits_total": 14156,
+    "emergent_fraction_pooled": 0.3847131958180277,
+    "masked_total": 14461,
+    "single_union_hits_total": 23171,
+    "masked_fraction_pooled": 0.6240990893789651,
+    "median_emergent_fraction": 0.34740498034076017,
+    "median_null_emergent_fraction": 0.617299970616917,
+    "n_pairs_null_p_le_0.05": 20,
+    "median_ctlnull_emergent_fraction": 0.6102726135316403,
+    "n_pairs_ctlnull_p_le_0.05": 20,
+    "median_null_spearman_sum": 0.07453958744678746,
+    "median_ctlnull_spearman_sum": 0.11642061477751575,
+    "n_pairs_ctlnull_spearman_sum_p_le_0.05": 20,
+    "spearman_similarity_vs_emergent_fraction": {
+      "rho": -0.7447769621682666,
+      "p": 7.012307345222718e-05,
+      "n": 22
+    },
+    "spearman_similarity_vs_masked_fraction": {
+      "rho": -0.7560700169395823,
+      "p": 4.695848188887977e-05,
+      "n": 22
+    }
+  },
+  "mtx_5fu_grid": {
+    "n": 9,
+    "best_rule_r2_counts": {
+      "mean": 9
+    },
+    "lin_a_range": [
+      0.1282693925683802,
+      0.7574256020760831
+    ],
+    "lin_b_range": [
+      0.2391941399767907,
+      0.7653850997952917
+    ],
+    "lin_c_range": [
+      -0.026737140306747786,
+      0.07215879642472656
+    ],
+    "r2_linear_range": [
+      0.24745884791289186,
+      0.558622473029696
+    ],
+    "r2_sum_range": [
+      -0.7238299553815686,
+      0.3051965078405149
+    ],
+    "r2_mean_range": [
+      0.22301628836593235,
+      0.5256701451613341
+    ],
+    "r2_max_range": [
+      -0.18973543476473265,
+      0.41617528006501625
+    ]
+  }
+}

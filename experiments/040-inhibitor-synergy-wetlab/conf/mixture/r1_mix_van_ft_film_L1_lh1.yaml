@@ -1,0 +1,29 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r1_mix_van_ft_film_L1_lh1.yaml
+#
+# ROUND 1, ARM mix_van_ft_film_L1_lh1.
+# Two-stage: stage 1 is the anchors arm, stage 2 then trains five epochs on the ex21
+# titrations alone with ONLY the host readout unfrozen. The question is whether fitting
+# the curves at the end beats fitting them jointly, with the shared representation held
+# fixed.
+#
+# ONE ARM PER FILE, five configs (the five compound-cold folds of fold seed 0), three
+# seeds each, 50 epochs keeping the last, fitted on the non-test pool: the converged 038
+# round 10 recipe (one-layer encoder, graph prior weight 0, env_layers as named below).
+# Round 1 scores fold seed 0 only; the replication on fold seeds 1 and 2 (the 123
+# evaluations 038 round 10 reports) is round 2, run on the arms that survive.
+#
+# WALL CLOCK, an estimate and not a measurement: 038's 15-config round of this recipe
+# took 5 h 50 min at PARALLEL=2 on a GilaHyper RTX 6000 Ada (slurm 3080), so about
+# 47 min of single-GPU time per config of three seeds. A step here runs one cell graph
+# transformer forward per gene source plus one medium pass per condition group, so the
+# per-step cost scales with the conditions a step touches: about 1.5 times 038's
+# with one gene source. At PARALLEL=2 three configs land on one worker, so this file is
+# estimated at 5 h on an A40 (taking an A40 as 1.4 times slower than the Ada).
+#
+#   sbatch --job-name=040-r1-van_ft_film --export=ALL,SWEEP=conf/mixture/r1_mix_van_ft_film_L1_lh1.yaml,PARALLEL=2 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- {name: mix_van_ft_film_L1_lh1_f0, folds: [0], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 0, sources: [vanacloig], host_train: finetune_ex21, dose: film, env_layers: 1, lambda_host: 1.0, finetune_scope: host_head, finetune_epochs: 5, finetune_lr: 0.0001}
+- {name: mix_van_ft_film_L1_lh1_f1, folds: [1], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 0, sources: [vanacloig], host_train: finetune_ex21, dose: film, env_layers: 1, lambda_host: 1.0, finetune_scope: host_head, finetune_epochs: 5, finetune_lr: 0.0001}
+- {name: mix_van_ft_film_L1_lh1_f2, folds: [2], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 0, sources: [vanacloig], host_train: finetune_ex21, dose: film, env_layers: 1, lambda_host: 1.0, finetune_scope: host_head, finetune_epochs: 5, finetune_lr: 0.0001}
+- {name: mix_van_ft_film_L1_lh1_f3, folds: [3], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 0, sources: [vanacloig], host_train: finetune_ex21, dose: film, env_layers: 1, lambda_host: 1.0, finetune_scope: host_head, finetune_epochs: 5, finetune_lr: 0.0001}
+- {name: mix_van_ft_film_L1_lh1_f4, folds: [4], cgt_layers: 1, cgt_lambda: 0.0, epochs: 50, eval_epochs: 1, select: last, fit_on: pool, gene_batch: 128, env_chunk: 16, host_batch: 16, cond_batch: 24, seeds: [0, 1, 2], fold_seed: 0, sources: [vanacloig], host_train: finetune_ex21, dose: film, env_layers: 1, lambda_host: 1.0, finetune_scope: host_head, finetune_epochs: 5, finetune_lr: 0.0001}

@@ -1,0 +1,84 @@
+%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/1-decision.tex
+%% SOURCE: every number is a macro of tables/gate_numbers.tex, written by
+%% experiments/040-inhibitor-synergy-wetlab/scripts/figure_gate_panels.py from the result
+%% files of experiments/040, and by absolute path from the unlanded worktrees of
+%% experiments/033, 035 and 038. The earlier documents named here are notes-tex
+%% directories.
+
+\section{The decision\secstatus{todo}}
+\label{sec:decision}
+
+Manuscript section R5 covers drug exposure: a compound and its dose as a perturbation the
+model reads alongside the genotype. The case study is a hydrolysate. Sorghum hydrolysate
+carries six inhibitors that a fermentation host meets together, and the private Bioscreen
+runs of 2021 measured all \hydnInhibitors{} of them on one strain, bAID in aerobic YPD:
+\hydnExTwoOneWells{} titration wells, \hydnExTwoThreeWells{} wells over
+\hydnCombinations{} combinations, and \hydnIsoboleWells{} wells over \hydnIsoboles{}
+isobole grids, \hydnWells{} wells in all. The models that would predict them were trained
+on the pooled chemogenomic table: \hydnScreens{} public screens, \hydnPoolCells{} cells,
+\hydnPoolCompounds{} compounds over \hydnPoolGenes{} genes. Nothing here is approved. The
+sheets are mockups of what the result files support, and the symbol after each panel
+letter says only whether the values behind it are on file. \colorkey{}
+
+\pfstep{What the figure would claim} A model trained on public chemogenomic screens can
+predict how an industrial host behaves under a mixture of inhibitors it has never seen,
+and it can do so well enough to rank the combinations a process should avoid. The figure
+is built to make that claim testable rather than to assert it: the bottom row puts the
+model beside the two model-free references on the same wells, so a reader sees what the
+model adds over arithmetic on the single-agent curves, including when the answer is
+nothing.
+
+\pfstep{The four claims, and where each one stands} First, that growth under a
+combination departs from independence. On file: over the \hydnCombinations{} combinations
+the Loewe rule reaches a growth AUROC of \hydloeweAuroc{} and an accuracy of
+\hydloeweAccuracy{}, Bliss from the observed singles \hydblissAuroc{} and
+\hydblissAccuracy{}, and the highest single agent \hydhsaAuroc{}; over the
+\hydnGrewServed{} combinations that grew, Bliss ranks fitness at Spearman
+\hydblissSpearman{} with a mean signed error of \hydblissSignedError{} and Loewe at
+\hydloeweSpearman{} with \hydloeweSignedError{}. Of \hydnPairs{} pairs,
+\hydnPairsSynergy{} are synergistic relative to Bliss, \hydnPairsAdditive{} additive and
+\hydnPairsAntagonism{} antagonistic. Second, that chemogenomic profile similarity
+anticipates which pairs deviate. This FAILS as pre-registered: with measured profiles in
+the matrix the association is \hydsvdBestSpearman{} at a permutation p of
+\hydsvdBestP{} over \hydsvdBestPairs{} pairs, and the all-predicted matrix carries the
+opposite sign, \hydsvdPredRawSpearman{} at p \hydsvdPredRawP{} on raw profiles, which the
+fingerprint explains rather than the biology. Third, that deletion profiles compose under
+a mixture by a rule measurable on public data. On file: over \hydhetPairs{} Hillenmeyer
+HET pairs the mean of the singles is the best fixed rule in \hydhetMeanWins{} of them,
+median R-squared \hydhetrTwomean{} against \hydhetrTwosum{} for the sum and
+\hydhetrTwomax{} for the highest single, and the free linear fit puts weight
+\hydhetLinA{} on one single and \hydhetLinB{} on the other. Fourth, post-analysis only:
+composed profiles nominate the genes a screen under each combination would recover,
+\hydnomCoreBest{} core genes from the best-available matrix and \hydnomCorePredicted{}
+from the all-predicted one. No screen exists to test them.
+
+\pfstep{The bars a model has to clear} Growth: AUROC \hydloeweAuroc{}, the Loewe rule
+from the ex21 Hill fits. Fitness over the combinations that grew: Spearman
+\hydblissSpearman{}, Bliss from the observed ex23 singles. Both are model-free, both come
+from the same wells the model would be scored on, and both are already in a committed
+result file. On the public side the bar is the nested ridge on fingerprint counts at a
+median centered Spearman of \hydladderRidge{} over \hydladderCompounds{} compound-cold
+folds, which the next best arm of the ladder trails by a hundredth
+(\hydladderSecond{}).
+
+\pfstep{Where the full record is} The sheets draw the figure; the measurements behind
+them are written up elsewhere, and the source table under each figure points to the file.
+\file{notes-tex/wet-lab/040-inhibitor-synergy-wetlab} is the case-study document: the
+2021 runs, the growth calls, the four claims scored, and the confounds each caption
+carries. \file{notes-tex/metabolism/031-betaxanthin-module} and
+\file{notes-tex/metabolism/032-amino-acid-module} hold the campaign whose panel
+conventions this document copies. The chemogenomic side is in three experiment records
+rather than documents: \file{experiments/033-env-chemgen-pooled} is the pooled table and
+its axes, \file{experiments/035-env-chemgen-vanacloig-cgt} the first compound-cold
+campaign and the learning curve, and
+\file{experiments/038-env-chemgen-vanacloig-cgt-corrected} the ladder and the factorized
+rounds on the corrected store. The 035 and 038 branches are not landed, so the panel
+script reads their result files by absolute path and records every path it read in
+\file{experiments/040-inhibitor-synergy-wetlab/results/figure_gate_manifest.json}.
+
+\pfstep{What a decision here settles} Whether the figure is the four-by-three of
+\cref{fig:main} or the three-by-three the experiment note proposes, which of the twelve
+panels earns main-text space against supplementary space, and whether the bottom row
+ships with the model beside the rules or with the rules alone. Nothing in this document
+is a publication-ready panel; the panels are drawn at Nature print width so that the
+argument, not the artwork, is what gets judged.

@@ -126,6 +126,57 @@ $$\mu(U_R) \subseteq \{C : C \preccurlyeq R\}.$$
 *✓ every member of `PhenotypeType` subclasses `Phenotype`.*
 *✗ a `Genome` class accidentally listed in `PhenotypeType`.*
 
+#### S4b · Field-level substitutability (added 2026.10.07)
+
+**Intent.** S4 as stated is nominal: `issubclass` holds for any subclass, including one
+that redeclares a parent field with an incompatible type. The behavioral half is that
+every field a child redeclares holds a *subtype* of the parent's, so a reader written
+against the parent reads something it understands. The models are frozen, so covariant
+narrowing is sound and is the only permitted change.
+$$\forall C \preccurlyeq P,\ \forall f \in \operatorname{fields}(P) \cap \operatorname{own\_fields}(C):\ \operatorname{type}_C(f) \preccurlyeq \operatorname{type}_P(f).$$
+**Allows** `Experiment.phenotype: Phenotype` -> `FitnessExperiment.phenotype:
+FitnessPhenotype`; `str | None` -> `str`; `str` -> `Literal[...]`; a `Literal` to a subset
+of its values; `list[A]` -> `list[B]` for `B` a subtype of `A`.
+**Forbids** widening, a `Literal` replaced by a different `Literal`, a sibling type.
+
+*✓ every concrete experiment narrows `phenotype` to its own phenotype class.*
+*✗ (was current, fixed 2026.10.07) every concrete experiment class (24 on `main`) widened
+`genotype` to `Genotype | list[Genotype]`; nothing in the library, a loader, an adapter
+or a test ever produced a list, so the override was removed and the field is inherited.*
+*✗ (was current, fixed 2026.10.07) the abstract `DeletionPerturbation` pinned
+`perturbation_type: Literal["deletion"]` while its ten leaves pinned their own tags, so
+each leaf's tag was an incompatible override hidden behind `type: ignore[assignment]`;
+the base now annotates `str` (default unchanged) and the leaves narrow it.*
+*✗ (current, grandfathered) `SegregantGrowthExperiment.genotype: SegregantGenotype`, a
+sibling of `Genotype`, not a subclass. Fix: a shared abstract `GenotypeBase` root with
+`Experiment.genotype: GenotypeBase`; the graph schema already says `segregant genotype
+is_a genotype`.*
+*✗ (current, grandfathered) `BarcodedKanMxDeletionPerturbation`,
+`SgaKanMxDeletionPerturbation`, `SgaNatMxDeletionPerturbation`,
+`BacterialCrisprInterferencePerturbation` and `HeterologousPathwayPerturbation` pin a tag
+different from their parent's, and the parent is itself a union leaf. A leaf cannot
+parent another leaf without breaking the tag field. Fix: an abstract base per family
+with the current leaves as siblings, the shape `DeletionPerturbation` now has.*
+*✗ (current, grandfathered) `PromoterReplacementPerturbation.crispr` widens the abstract
+axis base's `crispr: CrisprConstruct` to `CrisprConstruct | None`. Fix: the construct
+belongs to the CRISPR leaves, not to the axis base.*
+
+**Enforcement.** `tests/torchcell/datamodels/test_liskov_fields.py` walks every model in
+`schema.py` and checks each redeclared field with a subtype relation over the forms the
+schema uses (classes, `Literal`, unions, `Optional`, `list[...]`). `KNOWN_VIOLATIONS`
+is the grandfather list and may only shrink: an entry that stops being a violation fails
+the test until it is deleted, and any violation outside the list fails the test. With
+the suppressions gone, strict mypy enforces the same thing at type-check time for every
+override but the seven grandfathered ones, which carry a comment naming the list.
+
+**Cost of each fix.** `torchcell.provenance.schema_deps` fingerprints a class from its own
+fields and bases, so removing an override or re-parenting a leaf changes the fingerprint
+of classes inside served dataset closures (`Experiment` subclasses are in every served
+closure; `DeletionPerturbation` in 46 of 51 at release 2026.09.21). The admission check
+then blocks and the change lands with a full knowledge-graph rebuild, although the
+records serialize unchanged. The two fixes above therefore wait for the next full
+rebuild, and so do the grandfathered ones.
+
 ### S5 · Discriminator uniqueness + ownership
 
 **Intent.** Each leaf owns a unique tag, so the tag alone selects the class to rebuild.

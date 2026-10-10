@@ -515,3 +515,78 @@ matches its pinned sha256 (three Rousset tables and Cui's MOESM8).
 Set sizes: 59,246 Rousset S1 spacers with a value, 78,137 Cui spacers numeric in both
 columns, 54,326 shared, 4,920 Rousset-only, 23,811 Cui-only. Identical to the numbers
 #760 was opened on, which is the check that the issue's measurement reproduces.
+
+## 2026.10.10 - S1 Table's padj: no stored record can carry it (#878)
+
+#863 (PR #880) gave `EnvironmentResponsePhenotype` a released-test carrier
+(`environment_response_p_value`, `environment_response_p_value_adjusted`,
+`p_value_adjustment_method`). #878 asked to store S1 Table's DESeq2 `padj` on every kept
+growth-table record. Measured on the pinned bytes, there is no such record.
+
+### What the release carries
+
+| table | test column | stored records |
+|---|---|---|
+| S1 (`pgen.1007749.s011.csv`, growth) | `padj` on all 59,246 rows, 0 to 0.999997, no NA; no unadjusted p-value | 0 (all 59,246 rows dropped by rules 1 to 4; the growth screen is Cui 2018's) |
+| S4 (`.s014.csv`, three phages) | none | 51,327 |
+| S6 (`.s016.csv`, transduction) | none | 17,109 |
+
+So every stored record leaves the three p-value fields unset, and the new SUPPLEMENTARY
+L2 row `released_test_absent` checks exactly that on the built store.
+
+### Why padj does not move onto Cui 2018's LC-E75 records
+
+The #760 join reported the 0.0066 maximum difference to Cui's `fit75` as rounding. It is
+not: both tables print about 15 significant digits, and of the 54,326 shared spacers only
+**426** are bit-identical while **53,868** differ by more than 1e-9 (pinned in
+`test_the_growth_screen_is_cui_2018s_screen_to_released_precision`). S1 is Rousset's own
+DESeq2 run over the same reads. Its `padj` tests Rousset's fold change, and any
+multiple-testing family it was adjusted over is Rousset's 59,246-guide table rather than
+Cui's 78,137. Attaching it to Cui's records would pair a test with a number it was not
+computed for. The de-duplication decision of #760 is unchanged: same screen, same reads.
+
+### The correction is not sourced on the mirror
+
+- Rousset paper (`roussetGenomewideCRISPRdCas9Screens2018/paper.md`, sha256
+  `46ea72979c7f11855477b557824fb62baa7a4937ae4787d930e706cd2b93db3f`), Methods: "Statistical analysis was performed from count data using the DESeq2 package [32] in R." No correction is named; the only multiple-testing sentences concern the S7 Table ANOVA ("after correction for multiple testing (ANOVA, $\mathrm { F D R } < 0 . 0 5$ )").
+- S1 Table caption: "computed fold change (log2FC, padj and gamma)". No method.
+- The three SI documents (`si/si18.docx`, `si19.docx`, `si20.docx`) contain none of DESeq2, adjust, Benjamini, FDR, padj.
+- Reference [32] is "Love MI, Huber W, Anders S. Moderated estimation of fold change and dispersion for RNA-seq data with DESeq2. Genome Biol. 2014; 15." It is not in the mirror, and no DESeq2 version is stated.
+- No unadjusted p-value is released, so the correction cannot be back-solved.
+
+Hypothesis (unverified on the mirror): the `padj` is DESeq2's default `results()`
+Benjamini-Hochberg adjustment. Not recorded as a sourced value because no record uses it.
+
+### Verification, L0 to L4 (rebuilt dev store)
+
+`build_dataset_lmdb --dataset CrispriScreenRousset2018Dataset --retire-existing --verify`,
+2026-10-10: 68,436 records before and after, gene_set 3,671, 4 references, PASS.
+`--list-stale --include-private` no longer names it.
+
+| level | check | result |
+|---|---|---|
+| L0 | structural | 68,436 records validated |
+| L1 | count | observed 68,436, expected 68,436 |
+| L1 | pair_uniqueness | 68,436 unique records, one each |
+| L1 | provenance_gaps | 205,308 documented gaps over 68,436/68,436 records, 0 deferred |
+| L1 | canonical_gene_names | 3,671 systematic names; 35 unplaced common names, all pseudogene loci resolving to themselves |
+| L1 | screen_census (SUPPLEMENTARY) | 4 screens, 17,109 each |
+| L2 | value_fidelity | 68,436 values checked |
+| L2 | se_nonnegative | 0 values checked |
+| L2 | interval_orientation | 0 stored intervals |
+| L2 | uncertainty_sanity | 0 labeled uncertainties; 68,436 records report n_samples >= 2 with no uncertainty |
+| L2 | released_test_absent (SUPPLEMENTARY, new) | 0 of 68,436 records carry a p-value |
+| L3 | measurement_type_consistent | single `log2_ratio` |
+| L3 | reference_zero | reference response == 0 for all 68,436 |
+| L3 | environment_perturbed | all 68,436 carry an environmental edit |
+| L3 | compound_identity | 0 environment-edit compound references |
+| L3 | media_compound_identity | 273,744 medium-component references carry a structure identifier, 0 gaps |
+| L3 | media_membership | 68,436 on a medium deriving from a MEDIA_LIBRARY key, 1 distinct medium |
+| L4 | gene_containment | 1.000 of 3,671 measured genes in the pinned assembly |
+| L4 | current_genome_genes | every one of the 3,671 names is a current gene |
+
+### Schema impact
+
+`scripts/schema_impact_check.py`: no schema contract changes against the #880 tip (this
+branch touches no schema). The record content changed only in the uncertainty gap's
+note text, which is why the dev store was rebuilt.

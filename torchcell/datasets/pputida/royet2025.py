@@ -34,8 +34,22 @@ would be a false type; the readout is spelled out in ``units``, the Girgis 2009
 precedent. ``n_samples = 2`` biological replicates per arm (Table S3 releases pools
 ``#1`` and ``#2`` for LB and for every metal; the build re-reads them). The release
 carries a permutation p and a Benjamini-Hochberg q and no dispersion, so the uncertainty
-and the standard error are typed gaps; the p and q are written to
-``preprocess/not_stored.json`` with the other unstored columns.
+and the standard error are typed gaps.
+
+THE TEST OF THE RESPONSE (issue #877, on the #863 carrier). Every stored record carries
+its cell's released ``p-value`` and ``q-value`` verbatim, as
+``environment_response_p_value`` and ``environment_response_p_value_adjusted``, with
+``p_value_adjustment_method="benjamini_hochberg"``. The method is sourced twice. Table 1's
+footnote f in the publisher PDF states it (``TABLE1_FOOTNOTE_F``; the MinerU OCR dropped
+that footnote, so ``paper.md`` carries only "FDR adjusted $p$ -value"), and it is
+BACK-SOLVED (:func:`adjustment_back_solve`): within each sheet, Benjamini-Hochberg over the
+5,729 released p-values plus ONE unreleased test (a family of 5,730) reproduces the released
+q-value to at most 5.0e-6 on all four sheets, while the 5,729 released p-values alone miss
+by up to 1.75e-4 (measured on the mirror; p is printed at 1e-4 resolution, q to 5
+decimals). The 5,730th test is in no released table (Tables S4 and S5 list the same 5,729
+genes). A build that misses by more than ``ADJUSTMENT_TOLERANCE`` refuses. The family is the whole sheet, the dropped empty genes
+included, so a kept record's q is the released number, never one recomputed over the kept
+subset. A test is not a dispersion, so neither value feeds the uncertainty or the SE.
 
 REFERENCE. The unperturbed parent in the same metal: ``log2FC = 0``, a gene whose
 insertion mutants are no more or less abundant after the metal than after LB. Measured
@@ -50,6 +64,8 @@ TA site at all, where no insertion can exist. Storing them would assert "no meta
 effect" for genes the screen could not see. Per metal: Co 335, Cu 328, Zn 331, Cd 339.
 Every other cell is stored, including the 717 measured exact zeros, and every one of the
 thirty-four q <= 0.05 hits the Results count (9, 14, 3, 8) is among the stored records.
+Every dropped cell releases p 1 and q 1; the pairs are kept in
+``preprocess/not_stored.json`` under ``dropped_cells_test``.
 
 HOST. The library was built in the laboratory's own KT2440 isolate, which the authors
 resequenced (CP036494) at 100 % average nucleotide identity to AE015451.2 and call
@@ -84,14 +100,15 @@ import os
 import os.path as osp
 import shutil
 from collections import Counter
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, ClassVar, Final, Literal
 
+import numpy as np
 import openpyxl
 import pandas as pd
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
 from torchcell.data import (
@@ -139,7 +156,12 @@ from torchcell.literature.manifest import (
 )
 from torchcell.literature.provenance import run_retriever
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
-from torchcell.verification.report import Provenance, VerificationReport
+from torchcell.verification.report import (
+    Level,
+    LevelResult,
+    Provenance,
+    VerificationReport,
+)
 from torchcell.verification.sourced import (
     ProvenanceGap,
     ProvenanceGapReason,
@@ -292,6 +314,21 @@ _Q_HITS = (
     "we identified 9 genes involved in cobalt tolerance, 14 in copper tolerance, 3 in "
     "zinc tolerance, and 8 in cadmium tolerance."
 )
+_Q_FDR = (
+    "After applying Tn-seq to our datasets and selecting only genes with an FDR adjusted "
+    "$p$ -value $( q$ -value) $\\leq 0 . 0 5$ ,"
+)
+#: sha256 of the mirrored publisher PDF (``paper.pdf``) whose Table 1 footnote f names
+#: the correction behind the q-value.
+PAPER_PDF_SHA256 = "d6d54b16607a7617034f4db71814f01eac04885a7fc67ed702d6a36064498f09"
+#: Table 1, footnote f, page 8 of ``paper.pdf`` at ``PAPER_PDF_SHA256``, as
+#: ``pdftotext -layout`` (poppler 21.01.0) reads it; the two ``\u00ad`` are the PDF's soft
+#: hyphens. The MinerU OCR (``paper.md``) dropped Table 1's footnotes, so this quote is
+#: not one ``audit_sourced_value`` can re-read; the back-solve is the machine check.
+TABLE1_FOOTNOTE_F = (
+    "f p-\u00adValues adjusted for multiple comparisons using the Benjamini-\u00adHochberg "
+    "procedure (see Transit manual)."
+)
 _Q_NORMALIZATION = (
     "Read counts per insertion were normalised using the LOESS method as described in "
     "Zomer et al. (Zomer et al. 2012)."
@@ -341,7 +378,26 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
         note="the q <= 0.05 count of each metal's sheet, re-derived at build time",
     ),
     "normalization": _paper("LOESS", _Q_NORMALIZATION),
+    "p_value_test": _paper(
+        "permutation test",
+        _Q_RESAMPLING,
+        note="what Table S5's p-value column is: TRANSIT's RESAMPLING test of the "
+        "log2FC, stored as environment_response_p_value",
+    ),
+    "p_value_adjustment": _paper(
+        "FDR",
+        _Q_FDR,
+        note="paper.md names the correction only as FDR. Table 1 footnote f of paper.pdf "
+        f'(sha256 {PAPER_PDF_SHA256}, page 8) states it: "{TABLE1_FOOTNOTE_F}". '
+        "The OCR dropped that footnote. "
+        "adjustment_back_solve confirms it: Benjamini-Hochberg over each sheet's 5,729 "
+        "released p-values plus one unreleased test reproduces the q-value column",
+    ),
 }
+
+#: The correction behind the q-value: Benjamini-Hochberg, as Table 1 footnote f of the
+#: PDF states (``TABLE1_FOOTNOTE_F``) and :func:`adjustment_back_solve` reproduces.
+P_VALUE_ADJUSTMENT_METHOD: Final[str] = "benjamini_hochberg"
 
 PUBLICATION = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
 
@@ -743,7 +799,9 @@ PHENOTYPE_GAPS: tuple[ProvenanceGap, ...] = (
         reason=ProvenanceGapReason.not_reported_by_primary,
         looked_in=_PAPER_LOOKED_IN,
         note="Table S5 releases a permutation p-value and a Benjamini-Hochberg q per "
-        "gene, which test the log2FC, and no dispersion of it",
+        "gene, which test the log2FC, and no dispersion of it; the pair is stored on "
+        "environment_response_p_value and environment_response_p_value_adjusted "
+        "instead (#877)",
     ),
     ProvenanceGap(
         field="environment_response_se",
@@ -771,15 +829,18 @@ PERTURBATION_FIELD_GAPS: tuple[ProvenanceGap, ...] = tuple(
 )
 
 
-def phenotype(value: float) -> EnvironmentResponsePhenotype:
-    """One released log2FC of one gene in one metal."""
+def phenotype(row: S5Row) -> EnvironmentResponsePhenotype:
+    """One released log2FC of one gene in one metal, with its released test."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.other,
-        environment_response=value,
+        environment_response=row.log2fc,
         n_samples=N_REPLICATES,
         sample_unit=SampleUnit.biological_replicate,
         units=UNITS,
+        environment_response_p_value=row.p_value,
+        environment_response_p_value_adjusted=row.q_value,
+        p_value_adjustment_method=P_VALUE_ADJUSTMENT_METHOD,
         provenance_gaps=list(PHENOTYPE_GAPS),
     )
 
@@ -810,6 +871,108 @@ def build_reference(
         genome_reference=genome,
         environment_reference=env.model_copy(),
         phenotype_reference=reference_phenotype(),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# The released test: which correction produced the q-value (#877)
+# --------------------------------------------------------------------------- #
+#: A released q-value further than this from the Benjamini-Hochberg value of its sheet
+#: refuses the build. p is released at 1e-4 resolution and q to 5 decimals, so a
+#: faithful BH lands within half a unit of the fifth decimal; measured on the mirror
+#: over all four sheets: 5.0e-6 at worst.
+ADJUSTMENT_TOLERANCE: Final[float] = 1e-5
+#: Tests in each sheet's BH family that no table releases, back-solved: with 0 the
+#: released q-values are missed by up to 1.75e-4, with 1 they are reproduced to 5.0e-6.
+UNRELEASED_TESTS: Final[int] = 1
+
+#: A float64 vector, the type :func:`benjamini_hochberg` reads and returns.
+FloatArray = np.ndarray[Any, np.dtype[np.float64]]
+
+
+def benjamini_hochberg(p_values: FloatArray, n_tests: int) -> FloatArray:
+    """Benjamini-Hochberg adjusted p-values of ``p_values`` within a family of ``n_tests``.
+
+    ``n_tests`` may exceed ``p_values.size``: the extra tests are unreleased ones ranked
+    above every released p-value (step-up, capped at 1).
+    """
+    n = p_values.size
+    if n_tests < n:
+        raise ValueError(f"a family of {n_tests} tests cannot hold {n} p-values")
+    order = np.argsort(p_values, kind="stable")
+    scaled = p_values[order] * n_tests / np.arange(1, n + 1, dtype=np.float64)
+    monotone = np.minimum.accumulate(scaled[::-1])[::-1]
+    out = np.empty(n, dtype=np.float64)
+    out[order] = np.minimum(monotone, 1.0)
+    return out
+
+
+class AdjustmentBackSolve(BaseModel):
+    """The evidence that each sheet's q-value is the Benjamini-Hochberg value of its own
+    p-value column, within a family one test larger than the release.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    method: str
+    sheets: int
+    released_rows_per_sheet: int = Field(
+        description="every released gene of a sheet, the rows this loader drops included"
+    )
+    family_size: int = Field(
+        description="the BH family the q-values reproduce under: the released rows "
+        "plus UNRELEASED_TESTS"
+    )
+    max_abs_deviation: float
+    worst_sheet: str
+    per_sheet_max_abs_deviation: dict[str, float]
+    released_family_max_abs_deviation: dict[str, float] = Field(
+        description="per sheet, the same comparison with the family limited to the "
+        "released rows; recorded because it does NOT reproduce the release"
+    )
+    tolerance: float
+
+
+def _max_deviation(rows: Sequence[S5Row], n_tests: int) -> float:
+    """Largest |BH(p) - released q| of one sheet within a family of ``n_tests``."""
+    p = np.array([r.p_value for r in rows], dtype=np.float64)
+    q = np.array([r.q_value for r in rows], dtype=np.float64)
+    return float(np.abs(benjamini_hochberg(p, n_tests) - q).max())
+
+
+def adjustment_back_solve(sheets: Mapping[str, Sequence[S5Row]]) -> AdjustmentBackSolve:
+    """Back-solve the multiple-testing correction from the released columns.
+
+    Within each sheet, Benjamini-Hochberg over every released p-value, in a family of the
+    released rows plus ``UNRELEASED_TESTS``, must reproduce the released q-value. A sheet
+    that misses by more than ``ADJUSTMENT_TOLERANCE`` refuses the build.
+    """
+    sizes = {len(sheets[spec.code]) for spec in METALS}
+    (rows,) = sizes
+    family = rows + UNRELEASED_TESTS
+    per_sheet = {
+        spec.sheet: _max_deviation(sheets[spec.code], family) for spec in METALS
+    }
+    worst_sheet = max(per_sheet, key=lambda sheet: per_sheet[sheet])
+    worst = per_sheet[worst_sheet]
+    if worst > ADJUSTMENT_TOLERANCE:
+        raise SheetFormatError(
+            f"{worst_sheet}: q-value differs from the Benjamini-Hochberg value of its "
+            f"sheet's p-values (family {family}) by {worst} (tolerance "
+            f"{ADJUSTMENT_TOLERANCE}); the released correction is not reproduced"
+        )
+    return AdjustmentBackSolve(
+        method=P_VALUE_ADJUSTMENT_METHOD,
+        sheets=len(METALS),
+        released_rows_per_sheet=rows,
+        family_size=family,
+        max_abs_deviation=worst,
+        worst_sheet=worst_sheet,
+        per_sheet_max_abs_deviation=per_sheet,
+        released_family_max_abs_deviation={
+            spec.sheet: _max_deviation(sheets[spec.code], rows) for spec in METALS
+        },
+        tolerance=ADJUSTMENT_TOLERANCE,
     )
 
 
@@ -883,12 +1046,12 @@ def build_drop_log(dataset_name: str, sheets: Mapping[str, Sequence[S5Row]]) -> 
 
 def stored_cells(
     sheets: Mapping[str, Sequence[S5Row]], symbols: Mapping[str, str]
-) -> Iterator[tuple[str, str, MetalSpec, float]]:
-    """``(locus tag, symbol, metal, log2FC)`` for every kept cell, metal-major."""
+) -> Iterator[tuple[str, str, MetalSpec, S5Row]]:
+    """``(locus tag, symbol, metal, released row)`` for every kept cell, metal-major."""
     for spec in METALS:
         for row in sheets[spec.code]:
             if not row.is_empty:
-                yield row.orf, symbols[row.orf], spec, row.log2fc
+                yield row.orf, symbols[row.orf], spec, row
 
 
 # --------------------------------------------------------------------------- #
@@ -983,9 +1146,14 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
                 f"the module declares {EXPECTED_RECORDS} and {EXPECTED_DROPPED}"
             )
 
+        adjustment = adjustment_back_solve(sheets)
+
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
         self._write_ledgers(drop_log, reconciliation, pools, sheets)
+        (Path(self.preprocess_dir) / "adjustment_back_solve.json").write_text(
+            adjustment.model_dump_json(indent=2)
+        )
 
         environments = {spec.code: environment(spec) for spec in METALS}
         genome_reference = reference_genome()
@@ -1000,7 +1168,7 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
         )
         index = 0
         with env_out.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for locus_tag, symbol, spec, value in tqdm(
+            for locus_tag, symbol, spec, row in tqdm(
                 stored_cells(sheets, symbols),
                 total=drop_log.kept_records,
                 desc="royet2025",
@@ -1009,7 +1177,7 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
                     dataset_name=self.name,
                     genotype=insertion_genotype(locus_tag, symbol),
                     environment=environments[spec.code],
-                    phenotype=phenotype(value),
+                    phenotype=phenotype(row),
                 )
                 txn.put(
                     f"{index}".encode(),
@@ -1051,20 +1219,25 @@ class EnvMetalTnseqRoyet2025Dataset(ExperimentDataset):
         (out / "not_stored.json").write_text(
             json.dumps(
                 {
-                    "why_not_stored": "EnvironmentResponsePhenotype carries no test "
-                    "statistic and no per-arm read count; the values are kept here "
-                    "verbatim (as parsed) rather than coerced onto a field",
-                    "columns": ["Mean A", "Mean B", "Delta sum", "p-value", "q-value"],
+                    "why_not_stored": "EnvironmentResponsePhenotype carries no per-arm "
+                    "read count; the values are kept here verbatim (as parsed) rather "
+                    "than coerced onto a field. The p-value and q-value of every kept "
+                    "cell are on its record (#877); those of the dropped cells are "
+                    "under dropped_cells_test",
+                    "columns": ["Mean A", "Mean B", "Delta sum"],
                     "values": {
                         spec.code: {
-                            row.orf: [
-                                row.mean_a,
-                                row.mean_b,
-                                row.delta_sum,
-                                row.p_value,
-                                row.q_value,
-                            ]
+                            row.orf: [row.mean_a, row.mean_b, row.delta_sum]
                             for row in sheets[spec.code]
+                        }
+                        for spec in METALS
+                    },
+                    "dropped_cells_test_columns": ["p-value", "q-value"],
+                    "dropped_cells_test": {
+                        spec.code: {
+                            row.orf: [row.p_value, row.q_value]
+                            for row in sheets[spec.code]
+                            if row.is_empty
                         }
                         for spec in METALS
                     },
@@ -1097,6 +1270,68 @@ def _series(values: Sequence[str]) -> pd.Series:
 # --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
+def _l2_released_test(
+    records: Iterable[Mapping[str, Any]], sheets: Mapping[str, Sequence[S5Row]]
+) -> LevelResult:
+    """L2: every record carries its cell's released p-value and q-value verbatim (#877).
+
+    A record's sheet is found by its metal's compound name and its row by the locus tag;
+    both stored p-values must equal the released cells exactly, with the correction named.
+    """
+    sheet_of = {metal(spec).compound.name: spec.code for spec in METALS}
+    released = {
+        code: {row.orf: (row.p_value, row.q_value) for row in rows}
+        for code, rows in sheets.items()
+    }
+    n_records = 0
+    missing: list[str] = []
+    mismatched: list[str] = []
+    for record in records:
+        n_records += 1
+        experiment = record["experiment"]
+        ph = experiment["phenotype"]
+        tag = experiment["genotype"]["perturbations"][0]["systematic_gene_name"]
+        compound = experiment["environment"]["perturbations"][0]["compound"]["name"]
+        code = sheet_of[compound]
+        key = f"{code}/{tag}"
+        stored = (
+            ph["environment_response_p_value"],
+            ph["environment_response_p_value_adjusted"],
+            ph["p_value_adjustment_method"],
+        )
+        if None in stored:
+            missing.append(key)
+        elif stored != (*released[code][tag], P_VALUE_ADJUSTMENT_METHOD):
+            mismatched.append(key)
+    return LevelResult(
+        level=Level.L2,
+        name="released_test_fidelity",
+        passed=n_records > 0 and not missing and not mismatched,
+        message=f"{n_records - len(missing) - len(mismatched)} of {n_records} records "
+        "carry their cell's released p-value and q-value verbatim, corrected by "
+        f"{P_VALUE_ADJUSTMENT_METHOD}",
+        details={
+            "n_records": n_records,
+            "n_missing": len(missing),
+            "n_mismatched": len(mismatched),
+            "examples": (missing + mismatched)[:10],
+        },
+    )
+
+
+def _l3_adjustment_back_solve(evidence: AdjustmentBackSolve) -> LevelResult:
+    """L3: each sheet's q-value is its own Benjamini-Hochberg value."""
+    return LevelResult(
+        level=Level.L3,
+        name="p_value_adjustment_back_solve",
+        passed=evidence.max_abs_deviation <= evidence.tolerance,
+        message=f"{evidence.method} over a family of {evidence.family_size} reproduces "
+        f"the q-value of {evidence.sheets} sheets x {evidence.released_rows_per_sheet} "
+        f"released rows to {evidence.max_abs_deviation:.3g}",
+        details=evidence.model_dump(),
+    )
+
+
 def verify_build(
     dataset_root: str,
     *,
@@ -1108,8 +1343,11 @@ def verify_build(
 
     Every record is checked against the KT2440 genome its reference pins (the resolver
     of the canonical-name rule, and every GenBank locus of the assembly as the L4
-    universe), and every ``SourcedValue`` is audited against the pinned ``paper.md``
-    when the literature mirror is mounted. The report is written to
+    universe). A second stream checks every record's released p-value pair against the
+    tree's own linked Table S5 (L2 ``released_test_fidelity``), and the correction is
+    back-solved from that workbook (L3 ``p_value_adjustment_back_solve``). Every
+    ``SourcedValue`` is audited against the pinned ``paper.md`` when the literature
+    mirror is mounted. The report is written to
     ``preprocess/verification_report.json``.
     """
     from torchcell.verification.environment_response import (
@@ -1139,6 +1377,9 @@ def verify_build(
         sgd_genes=set(genome.genbank.loci),
         resolve_gene_name=genome.resolve_gene_name,
     )
+    sheets = read_release(osp.join(dataset_root, "raw", TABLE_S5))
+    report.add(_l2_released_test(stream_records(dataset_root), sheets))
+    report.add(_l3_adjustment_back_solve(adjustment_back_solve(sheets)))
     library_root = Path(base) / "torchcell-library"
     if library_available(library_root):
         for value in SOURCED_VALUES.values():

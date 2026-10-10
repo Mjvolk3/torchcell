@@ -14,13 +14,16 @@ carry the real pins).
 
 The four synthetic genes, identical in every metal sheet:
 
-    #Orf     Sites  State  Mean A  Mean B  log2FC   q        fate
-    PP_0001  8      NE     10.0    2.5     -2.00    0.00000  kept, the one hit
-    PP_0002  20     NE     5.0     5.0     -0.00    1.00000  kept, a measured zero
-    PP_0005  12     ES     0.0     0.0     0.00     1.00000  dropped, no reads
-    PP_0007  0      N/A    0.0     0.0     0.00     1.00000  dropped, no TA site
+    #Orf     Sites  State  Mean A  Mean B  log2FC   p        q        fate
+    PP_0001  8      NE     10.0    2.5     -2.00    0.00000  0.00000  kept, the one hit
+    PP_0002  20     NE     5.0     5.0     -0.00    0.10000  0.25000  kept, a measured zero
+    PP_0005  12     ES     0.0     0.0     0.00     1.00000  1.00000  dropped, no reads
+    PP_0007  0      N/A    0.0     0.0     0.00     1.00000  1.00000  dropped, no TA site
 
-so the build stores 2 genes x 4 metals = 8 records and drops 8.
+so the build stores 2 genes x 4 metals = 8 records and drops 8. PP_0002's q is the
+Benjamini-Hochberg value of its p in a family of 4 released + 1 unreleased tests
+(0.1 x 5 / 2), so the back-solve reproduces it only with the unreleased test counted
+(a family of 4 gives 0.2).
 
 Data-gated tests (``--data``) read the real raw mirror, the literature mirror and the
 built dev-tree LMDB under ``$DATA_ROOT`` (they never build it).
@@ -36,6 +39,7 @@ from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import openpyxl
 import pytest
 
@@ -74,27 +78,28 @@ REFERENCE = AssemblyReferenceGenome(
     assembly_set="pputida_KT2440_ASM756v2",
     assembly_accession="GCA_000007565.2",
 )
-#: ``(#Orf, Sites, State, Mean A, Mean B, log2FC, q)`` as the release writes them.
-SYNTHETIC_ROWS: tuple[tuple[str, int, str, str, str, str, str], ...] = (
-    ("PP_0001", 8, "NE", "10.0", "2.5", "-2.00", "0.00000"),
-    ("PP_0002", 20, "NE", "5.0", "5.0", "-0.00", "1.00000"),
-    ("PP_0005", 12, "ES", "0.0", "0.0", "0.00", "1.00000"),
-    ("PP_0007", 0, "N/A", "0.0", "0.0", "0.00", "1.00000"),
+#: ``(#Orf, Sites, State, Mean A, Mean B, log2FC, p, q)`` as the release writes them.
+Row = tuple[str, int, str, str, str, str, str, str]
+SYNTHETIC_ROWS: tuple[Row, ...] = (
+    ("PP_0001", 8, "NE", "10.0", "2.5", "-2.00", "0.00000", "0.00000"),
+    ("PP_0002", 20, "NE", "5.0", "5.0", "-0.00", "0.10000", "0.25000"),
+    ("PP_0005", 12, "ES", "0.0", "0.0", "0.00", "1.00000", "1.00000"),
+    ("PP_0007", 0, "N/A", "0.0", "0.0", "0.00", "1.00000", "1.00000"),
 )
 KEPT = ("PP_0001", "PP_0002")
 SYNTHETIC_RECORDS = len(KEPT) * len(m.METALS)
 
 
 def _s5_row(
-    orf: str, sites: int, state: str, a: str, b: str, fc: str, q: str
+    orf: str, sites: int, state: str, a: str, b: str, fc: str, p: str, q: str
 ) -> list[Any]:
     return [orf, "name", "desc", sites, 0, 0, sites, 0, "1.0", a, state, a, b, "0.0",
-            fc, q, q]  # fmt: skip
+            fc, p, q]  # fmt: skip
 
 
 def _write_s5(
     path: Path,
-    rows: tuple[tuple[str, int, str, str, str, str, str], ...] = SYNTHETIC_ROWS,
+    rows: tuple[Row, ...] = SYNTHETIC_ROWS,
     *,
     header: tuple[str, ...] = m.S5_HEADER,
     order: dict[str, list[int]] | None = None,
@@ -207,6 +212,7 @@ def test_read_metal_sheet_parses_the_text_cells(tmp_path: Path, oracles: None) -
         0.0,
     )
     assert first.sites == 8 and first.state == "NE" and first.p_value == 0.0
+    assert (rows[1].p_value, rows[1].q_value) == (0.1, 0.25)
     # '-0.00' is stored as +0.0, not as a signed zero
     assert rows[1].log2fc == 0.0 and math.copysign(1.0, rows[1].log2fc) == 1.0
     assert [r.is_empty for r in rows] == [False, False, True, True]
@@ -237,7 +243,10 @@ def test_read_metal_sheet_refuses_a_missing_gene(tmp_path: Path, oracles: None) 
 def test_read_metal_sheet_refuses_a_row_with_no_orf(
     tmp_path: Path, oracles: None
 ) -> None:
-    rows = (*SYNTHETIC_ROWS[:3], (None, 0, "NE", "1.0", "1.0", "0.00", "1.00000"))
+    rows = (
+        *SYNTHETIC_ROWS[:3],
+        (None, 0, "NE", "1.0", "1.0", "0.00", "1.00000", "1.00000"),
+    )
     path = _write_s5(tmp_path / "s5.xlsx", rows)  # type: ignore[arg-type]
     with pytest.raises(m.SheetFormatError, match="no #Orf"):
         m.read_metal_sheet(path, m.METALS[0])
@@ -296,11 +305,68 @@ def test_build_drop_log_accounts_for_every_cell(tmp_path: Path, oracles: None) -
 def test_stored_cells_skips_the_empty_genes(tmp_path: Path, oracles: None) -> None:
     sheets = m.read_release(_write_s5(tmp_path / "s5.xlsx"))
     cells = list(m.stored_cells(sheets, {"PP_0001": "parB", "PP_0002": "PP_0002"}))
-    assert [(tag, spec.code, value) for tag, _, spec, value in cells] == [
-        (tag, code, value)
+    assert [
+        (tag, spec.code, row.log2fc, row.p_value, row.q_value)
+        for tag, _, spec, row in cells
+    ] == [
+        (tag, code, *values)
         for code in ("Co", "Cu", "Zn", "Cd")
-        for tag, value in (("PP_0001", -2.0), ("PP_0002", 0.0))
+        for tag, values in (
+            ("PP_0001", (-2.0, 0.0, 0.0)),
+            ("PP_0002", (0.0, 0.1, 0.25)),
+        )
     ]
+
+
+# --------------------------------------------------------------------------- #
+# The released test: the q-value back-solve (#877)
+# --------------------------------------------------------------------------- #
+def test_benjamini_hochberg_steps_up_within_a_larger_family() -> None:
+    p = np.array([0.04, 0.01, 0.03, 0.5])
+    # ranks 1..4 = 0.01, 0.03, 0.04, 0.5; raw p * 4 / rank = 0.04, 0.06, 0.0533, 0.5,
+    # and the step-up takes the running minimum from the top, so 0.06 -> 0.0533
+    assert m.benjamini_hochberg(p, 4).tolist() == pytest.approx(
+        [0.16 / 3, 0.04, 0.16 / 3, 0.5]
+    )
+    # one unreleased test ranked last: p * 5 / rank = 0.05, 0.075, 0.0667, 0.625
+    assert m.benjamini_hochberg(p, 5).tolist() == pytest.approx(
+        [0.2 / 3, 0.05, 0.2 / 3, 0.625]
+    )
+    assert np.array_equal(m.benjamini_hochberg(np.array([0.9, 0.8]), 3), [1.0, 1.0])
+    with pytest.raises(ValueError, match="cannot hold 4"):
+        m.benjamini_hochberg(p, 3)
+
+
+def test_adjustment_back_solve_reproduces_the_q_values_with_the_unreleased_test(
+    tmp_path: Path, oracles: None
+) -> None:
+    sheets = m.read_release(_write_s5(tmp_path / "s5.xlsx"))
+    evidence = m.adjustment_back_solve(sheets)
+    assert evidence.method == m.P_VALUE_ADJUSTMENT_METHOD == "benjamini_hochberg"
+    assert (evidence.sheets, evidence.released_rows_per_sheet) == (4, 4)
+    assert evidence.family_size == 5
+    assert evidence.max_abs_deviation == pytest.approx(0.0, abs=1e-15)
+    assert evidence.worst_sheet == "LB-Co"
+    assert list(evidence.per_sheet_max_abs_deviation) == [
+        "LB-Co",
+        "LB-Cu",
+        "LB-Zn",
+        "LB-Cd",
+    ]
+    # the family of the released rows alone misses PP_0002 by 0.25 - 0.2
+    assert evidence.released_family_max_abs_deviation == pytest.approx(
+        {"LB-Co": 0.05, "LB-Cu": 0.05, "LB-Zn": 0.05, "LB-Cd": 0.05}
+    )
+    assert evidence.tolerance == m.ADJUSTMENT_TOLERANCE
+
+
+def test_adjustment_back_solve_refuses_a_q_value_it_cannot_reproduce(
+    tmp_path: Path, oracles: None
+) -> None:
+    rows = (SYNTHETIC_ROWS[0], (*SYNTHETIC_ROWS[1][:7], "0.20000"), *SYNTHETIC_ROWS[2:])
+    sheets = m.read_release(_write_s5(tmp_path / "s5.xlsx", rows))
+    with pytest.raises(m.SheetFormatError, match="LB-Co: q-value differs"):
+        m.adjustment_back_solve(sheets)
 
 
 # --------------------------------------------------------------------------- #
@@ -357,8 +423,24 @@ def test_the_three_absent_perturbation_fields_are_typed_gaps() -> None:
 
 
 def test_the_phenotype_is_a_signed_log2_ratio_over_two_replicates() -> None:
-    phenotype = m.phenotype(-8.22)
+    row = m.S5Row(
+        orf="PP_1663",
+        sites=10,
+        state="NE",
+        mean_a=364.6,
+        mean_b=1.2,
+        delta_sum=-3634.0,
+        log2fc=-8.22,
+        p_value=0.0,
+        q_value=0.0,
+    )
+    phenotype = m.phenotype(row)
     assert phenotype.environment_response == -8.22
+    assert (
+        phenotype.environment_response_p_value,
+        phenotype.environment_response_p_value_adjusted,
+        phenotype.p_value_adjustment_method,
+    ) == (0.0, 0.0, "benjamini_hochberg")
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.other
     assert (phenotype.n_samples, phenotype.sample_unit) == (
@@ -372,6 +454,7 @@ def test_the_phenotype_is_a_signed_log2_ratio_over_two_replicates() -> None:
     ]
     reference = m.reference_phenotype()
     assert reference.environment_response == 0.0
+    assert reference.environment_response_p_value is None
     assert reference.units == m.UNITS_REFERENCE
 
 
@@ -553,6 +636,18 @@ def test_the_built_records_carry_the_released_values(
     assert first["phenotype"]["measurement_type"] == "log2_ratio"
     values = [r["experiment"]["phenotype"]["environment_response"] for r in records]
     assert values == [-2.0, 0.0] * 4
+    tests = [
+        (
+            r["experiment"]["phenotype"]["environment_response_p_value"],
+            r["experiment"]["phenotype"]["environment_response_p_value_adjusted"],
+            r["experiment"]["phenotype"]["p_value_adjustment_method"],
+        )
+        for r in records
+    ]
+    assert (
+        tests
+        == [(0.0, 0.0, "benjamini_hochberg"), (0.1, 0.25, "benjamini_hochberg")] * 4
+    )
     references = {
         r["reference"]["phenotype_reference"]["environment_response"] for r in records
     }
@@ -586,14 +681,18 @@ def test_the_build_writes_every_ledger(built: m.EnvMetalTnseqRoyet2025Dataset) -
         "insertion_strand",
     ]
     unstored = json.loads((out / "not_stored.json").read_text())
-    assert unstored["columns"] == [
-        "Mean A",
-        "Mean B",
-        "Delta sum",
-        "p-value",
-        "q-value",
-    ]
-    assert unstored["values"]["Co"]["PP_0001"] == [10.0, 2.5, 0.0, 0.0, 0.0]
+    assert unstored["columns"] == ["Mean A", "Mean B", "Delta sum"]
+    assert unstored["values"]["Co"]["PP_0001"] == [10.0, 2.5, 0.0]
+    assert unstored["dropped_cells_test_columns"] == ["p-value", "q-value"]
+    assert unstored["dropped_cells_test"] == {
+        code: {"PP_0005": [1.0, 1.0], "PP_0007": [1.0, 1.0]}
+        for code in ("Co", "Cu", "Zn", "Cd")
+    }
+    back_solve = json.loads((out / "adjustment_back_solve.json").read_text())
+    assert (back_solve["method"], back_solve["family_size"]) == (
+        "benjamini_hochberg",
+        5,
+    )
     sourced = json.loads((out / "sourced_values.json").read_text())
     assert sorted(sourced) == sorted(m.SOURCED_VALUES)
 
@@ -633,6 +732,36 @@ def test_the_built_store_passes_l0_to_l4(
     )
     assert report.passed, report.summary()
     assert Path(built.root, "preprocess", "verification_report.json").exists()
+    by_name = {result.name: result for result in report.results}
+    assert by_name["released_test_fidelity"].details == {
+        "n_records": SYNTHETIC_RECORDS,
+        "n_missing": 0,
+        "n_mismatched": 0,
+        "examples": [],
+    }
+    assert by_name["p_value_adjustment_back_solve"].details["family_size"] == 5
+
+
+def test_l2_released_test_names_a_missing_and_a_changed_value(
+    built: m.EnvMetalTnseqRoyet2025Dataset, tmp_path: Path
+) -> None:
+    records = [built[i] for i in range(len(built))]
+    records[0]["experiment"]["phenotype"]["environment_response_p_value"] = None
+    records[3]["experiment"]["phenotype"]["environment_response_p_value_adjusted"] = 0.3
+    sheets = m.read_release(Path(built.raw_dir) / m.TABLE_S5)
+    result = m._l2_released_test(records, sheets)
+    assert not result.passed
+    assert result.details == {
+        "n_records": SYNTHETIC_RECORDS,
+        "n_missing": 1,
+        "n_mismatched": 1,
+        "examples": ["Co/PP_0001", "Cu/PP_0002"],
+    }
+    assert not m._l2_released_test([], sheets).passed
+    failing = m.adjustment_back_solve(sheets).model_copy(
+        update={"max_abs_deviation": 1.0}
+    )
+    assert not m._l3_adjustment_back_solve(failing).passed
 
 
 def test_the_dataset_is_registered_and_declares_its_classes() -> None:
@@ -738,3 +867,21 @@ def test_the_real_release_matches_the_declared_oracles() -> None:
     assert (cadmium["PP_1663"].log2fc, cadmium["PP_1663"].mean_b) == (-8.22, 1.2)
     pools = m.read_replicate_pools(m.raw_mirror_dir() / "data" / m.TABLE_S3)
     assert set(pools.values()) == {2}
+    # the q-values are BH over 5,730 tests: the 5,729 released alone miss by 1.75e-4
+    evidence = m.adjustment_back_solve(sheets)
+    assert evidence.family_size == 5730
+    assert evidence.max_abs_deviation <= 5.0e-6 + 1e-12
+    assert max(evidence.released_family_max_abs_deviation.values()) > 1.7e-4
+    assert (copper["PP_0586"].p_value, copper["PP_0586"].q_value) == (0.0, 0.0)
+
+
+@pytest.mark.data
+def test_the_built_store_carries_every_released_test() -> None:
+    root = Path(os.environ["DATA_ROOT"]) / m.DATASET_ROOT_REL
+    report = json.loads((root / "preprocess" / "verification_report.json").read_text())
+    by_name = {r["name"]: r for r in report["results"]}
+    assert by_name["released_test_fidelity"]["passed"]
+    assert by_name["released_test_fidelity"]["details"]["n_records"] == 21583
+    assert by_name["p_value_adjustment_back_solve"]["passed"]
+    unstored = json.loads((root / "preprocess" / "not_stored.json").read_text())
+    assert sum(len(v) for v in unstored["dropped_cells_test"].values()) == 1333

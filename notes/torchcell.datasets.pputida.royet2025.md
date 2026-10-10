@@ -131,3 +131,79 @@ measurement. Nothing is subsumed and nothing is partitioned.
 | L4 | current_genome_genes | ok, 5,491 of 5,491 |
 
 Report: `$DATA_ROOT/data/torchcell/pputida_env_metal_tnseq_royet2025/preprocess/verification_report.json`.
+
+## 2026.10.10 - Table S5's p-value and q-value stored on every record (#877)
+
+Issue #877; carrier added by PR #880 (#863): `environment_response_p_value`,
+`environment_response_p_value_adjusted`, `p_value_adjustment_method` on
+`EnvironmentResponsePhenotype`. Every one of the 21,583 kept records now carries its cell's
+released `p-value` and `q-value` verbatim, with `p_value_adjustment_method="benjamini_hochberg"`.
+The reference phenotype carries none (a log2FC of 0 by construction is not a test).
+
+### The correction, sourced twice
+
+- **Publisher PDF.** Table 1, footnote f, page 8 of `paper.pdf` (sha256 `d6d54b16...64498f09`),
+  as `pdftotext -layout` (poppler 21.01.0) reads it: "f p-­Values adjusted for multiple
+  comparisons using the Benjamini-­Hochberg procedure (see Transit manual)." The MinerU OCR
+  (`paper.md`) dropped Table 1's footnotes, so the auditable `paper.md` quote is the
+  Results' "FDR adjusted $p$ -value $( q$ -value)" (`SOURCED_VALUES["p_value_adjustment"]`,
+  whose note records the footnote), and the footnote is kept as `TABLE1_FOOTNOTE_F`.
+- **Back-solve** (`adjustment_back_solve`, written to `preprocess/adjustment_back_solve.json`).
+  Within each metal sheet, BH over the released p-values is compared with the released
+  q-values. p is printed at 1e-4 resolution and q to 5 decimals, so a faithful BH lands
+  within 5e-6; the build refuses above `ADJUSTMENT_TOLERANCE = 1e-5`.
+
+| family | LB-Co | LB-Cu | LB-Zn | LB-Cd |
+|---|---|---|---|---|
+| 5,729 (the released rows) | 1.67e-4 | 1.73e-4 | 7.5e-5 | 1.75e-4 |
+| 5,730 (released + 1 unreleased test) | 5.0e-6 | 5.0e-6 | 0 | 3.3e-6 |
+
+(max |BH - released q| per sheet, from the build's `preprocess/adjustment_back_solve.json`:
+`released_family_max_abs_deviation` and `per_sheet_max_abs_deviation`.) So the released
+q-values are BH over a family of 5,730 tests, one more than any table releases: Table S5's
+four sheets and its summary sheet, and both Table S4 sheets, list the same 5,729 genes.
+Hypothesis (untested): TRANSIT's annotation carried one gene that was removed from the
+released workbook. The loader encodes this as `UNRELEASED_TESTS = 1`; the family is the whole sheet,
+the 1,333 dropped empty genes included, so no q is recomputed over the kept subset.
+
+### not_stored.json
+
+`columns` is now `Mean A`, `Mean B`, `Delta sum` for all 22,916 cells. The 1,333 dropped
+cells' p and q (all released as 1 and 1) move to `dropped_cells_test`, so nothing released is
+lost. The `environment_response_uncertainty` gap note now points at the new fields.
+
+### Schema impact
+
+`scripts/schema_impact_check.py --base fix/env-response-p-value-863`: "No schema contract
+changes". Against `origin/main` the only change is #880's (`EnvironmentResponsePhenotype`, 36
+impacted dataset groups, 0 breaking), which already lists Royet 2025 and rebuilds with KG 4.0.
+
+### L0 to L4 (dev store rebuilt 2026-10-10)
+
+`python -m torchcell.database.build_dataset_lmdb --dataset EnvMetalTnseqRoyet2025Dataset --retire-existing --verify`;
+LMDB entries 21,583; `--list-stale --include-private` does not name the dataset.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | ok, 21,583 records validated |
+| L1 | count | ok, 21,583 observed, 21,583 expected |
+| L1 | pair_uniqueness | ok, 21,583 unique (study, strain, condition) |
+| L1 | provenance_gaps | ok, 43,166 documented gaps over 21,583 records, 0 deferred |
+| L1 | canonical_gene_names | ok, 5,491 systematic names, each current |
+| L2 | value_fidelity | ok, 21,583 values |
+| L2 | se_nonnegative | ok, 0 values (none released) |
+| L2 | interval_orientation | ok, 0 intervals |
+| L2 | uncertainty_sanity | ok, 21,583 records n_samples >= 2 with no uncertainty |
+| L2 | released_test_fidelity (new) | ok, 21,583 of 21,583 carry the released p-value and q-value verbatim |
+| L3 | measurement_type_consistent | ok, `log2_ratio` |
+| L3 | reference_zero | ok, all 21,583 |
+| L3 | environment_perturbed | ok, all 21,583 carry a metal |
+| L3 | compound_identity | ok, 21,583 references carry a structure identifier |
+| L3 | media_compound_identity | ok |
+| L3 | media_membership | ok, 1 shared medium |
+| L3 | p_value_adjustment_back_solve (new) | ok, BH over a family of 5,730 reproduces 4 sheets x 5,729 rows to 5.0e-6 |
+| L3 | provenance_audit | ok, 15 of 15 sourced values verbatim in `paper.md` |
+| L4 | gene_containment | ok, 1.000 of 5,491 genes in the KT2440 assembly |
+| L4 | current_genome_genes | ok, 5,491 of 5,491 |
+
+Report: `$DATA_ROOT/data/torchcell/pputida_env_metal_tnseq_royet2025/preprocess/verification_report.json`.

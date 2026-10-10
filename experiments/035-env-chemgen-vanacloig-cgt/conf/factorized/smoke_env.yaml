@@ -1,0 +1,4 @@
+# Stage 2 smoke: the environment operator head on a one-layer encoder, two steps, so the
+# shapes, the gather of the deleted rows and the full-matrix prediction run end to end
+# (CPU-sized: 8 strains per step).
+- {name: smoke_env, gene_encoder: cgt, head: operator, pca_dim: null, gene_batch: 8, steps: 2, eval_every: 1, seeds: [0], folds: [0], cgt_layers: 1, cgt_lambda: 0.0}

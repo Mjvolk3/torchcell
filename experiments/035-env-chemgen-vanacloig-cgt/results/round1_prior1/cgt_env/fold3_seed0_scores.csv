@@ -1,0 +1,25 @@
+compound,target,n_genes,spearman,pearson,ceiling,split,arm,fold,seed,epoch,selected_on,n_train_compounds
+2-methylimidazole,raw,3489,0.08414301739995683,0.12368992261353612,0.15199773365650238,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+2-methylimidazole,centered,3488,0.1534610653161162,0.2684107386325616,0.5097924556411673,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetovanillone,raw,3510,0.052589370361472716,0.24432616984929564,0.9141428331679445,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetovanillone,centered,3509,0.0276178529140082,0.11839367330153608,0.9080931848486445,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+crystal violet,raw,3388,-0.01801623282445289,0.05214737060312634,0.9246970150673822,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+crystal violet,centered,3387,-0.048637534672790125,0.05121983627096099,0.9220632195745553,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+sinapic acid,raw,3495,0.17558932438493713,0.3774279661102571,0.5642822086005129,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+sinapic acid,centered,3493,0.0677408091234366,0.2041584536642269,0.34158585996523033,val,cgt_env,3,0,7,val/centered_spearman_mean,29
+4-hydroxybenzaldehyde,raw,3493,0.14253179559590293,0.32061702405828096,0.8136005615775869,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+4-hydroxybenzaldehyde,centered,3492,0.03746362492685371,0.15177748968276433,0.7553065252628489,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetamide,raw,3489,0.03846712509001061,0.12303356997425384,0.5260040030106069,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetamide,centered,3489,-0.09787306917351463,-0.18600640698691942,0.6391834048200126,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetosyringone,raw,3498,0.12638453079734266,0.2907180403441582,0.8953367924490198,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+acetosyringone,centered,3493,0.059719570005915684,0.18432270527704606,0.8792194799821068,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+benomyl,raw,3492,0.07030429124844188,0.05721942882124906,0.8675396020249485,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+benomyl,centered,3492,0.1435781733084415,0.21681926377781327,0.8748039444021153,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+cinnamic acid,raw,3505,0.11088492691695524,0.2627265166419804,0.8069010615379222,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+cinnamic acid,centered,3504,0.03036508445858346,0.10420811914470604,0.7835253348993528,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+gamma-valerolactone,raw,3474,0.16700996387508307,0.31107504942531095,0.8971840735794596,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+gamma-valerolactone,centered,3473,0.06685827526857843,0.2331246731920449,0.8844096459870345,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+myclobutanil,raw,3496,0.028324468448499063,0.06189353906873541,0.746076298727284,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+myclobutanil,centered,3496,0.05051012415093864,0.09627425704833138,0.7479122549958063,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+syringic acid,raw,3501,0.17667244220499037,0.3020890605601159,0.8765976686189016,test,cgt_env,3,0,7,val/centered_spearman_mean,29
+syringic acid,centered,3500,0.09408578056827399,0.1578574573918464,0.8507260647956835,test,cgt_env,3,0,7,val/centered_spearman_mean,29

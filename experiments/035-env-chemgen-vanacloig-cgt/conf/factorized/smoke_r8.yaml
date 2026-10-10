@@ -1,0 +1,5 @@
+# Round 8 smoke: two epochs of the 8-layer CGT at 64 and 128 strains per step, to measure
+# the GPU footprint and the seconds per epoch before packing processes per card.
+- {name: smoke_r8_b64, gene_encoder: cgt, pca_dim: null, gene_batch: 64, epochs: 2, seeds: [0], folds: [0]}
+- {name: smoke_r8_b128, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 2, seeds: [0], folds: [0]}
+- {name: smoke_r8_L1H3_b128, gene_encoder: cgt, pca_dim: null, gene_batch: 128, epochs: 2, seeds: [0], folds: [0], cgt_layers: 1, cgt_heads: 3}

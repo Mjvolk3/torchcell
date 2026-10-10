@@ -1,0 +1,5 @@
+# Round 5: the best table model on every fold seed with ten seeds, so its stack with ridge
+# is read over 123 compound-evaluations.
+- {name: tbraw10_fs0, pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 0}
+- {name: tbraw10_fs1, pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 1}
+- {name: tbraw10_fs2, pca_dim: null, seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], fold_seed: 2}

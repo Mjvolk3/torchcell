@@ -1,0 +1,4 @@
+- {name: smoke_readout, mix: readout, steps: 40, eval_every: 20, seeds: [0], folds: [0]}
+- {name: smoke_hit, mix: hit, gcn_layers: 1, steps: 40, eval_every: 20, seeds: [0], folds: [0]}
+- {name: smoke_hit_prop, mix: hit_prop, gcn_layers: 1, gcn_kind: relational, steps: 40, eval_every: 20, seeds: [0], folds: [0]}
+- {name: smoke_gene_attend, mix: gene_attend, steps: 40, eval_every: 20, seeds: [0], folds: [0]}

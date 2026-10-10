@@ -1,0 +1,6 @@
+# Round 4: graph smoothness on the shared gene table, with and without Wildenhain.
+- {name: gs_none_1, aux_sources: [], pca_dim: null, graph_smooth: 1.0}
+- {name: gs_none_10, aux_sources: [], pca_dim: null, graph_smooth: 10.0}
+- {name: gs_wild_1, aux_sources: [wildenhain], pca_dim: null, graph_smooth: 1.0}
+- {name: gs_wild_10, aux_sources: [wildenhain], pca_dim: null, graph_smooth: 10.0}
+- {name: gs_all_1, aux_sources: [wildenhain, hillenmeyer_het, hoepfner_hip, hoepfner_hop], pca_dim: null, graph_smooth: 1.0}

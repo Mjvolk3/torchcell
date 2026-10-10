@@ -1,0 +1,247 @@
+compound,target,n_genes,spearman,pearson,ceiling,member,selected_step,fold,fold_seed,name
+"2,2'-bipyridine",raw,3489,-0.024477845929888935,-0.279657916016708,0.9331732906177713,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,2'-bipyridine",centered,3489,0.33002930008336256,0.597276127875455,0.9536503665291391,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",raw,3491,0.02858439365130049,-0.13779346130230372,0.7305743732158305,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",centered,3491,0.5356454693161173,0.6624782147758221,0.8612685815254334,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",raw,3504,0.2278182435710402,0.30921859340292324,0.8729821697732166,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",centered,3504,0.36966538208044075,0.30582562450560097,0.8732567034681548,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,raw,3486,0.20625965974476043,0.26491726700069057,0.9100766609130951,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,centered,3486,0.4286286625174185,0.2806832613970003,0.9075088632924206,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,raw,3493,0.1503193359885636,0.17600096081351138,0.877833605571729,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,centered,3493,0.38475440387578175,0.3810380875616724,0.8893403223606451,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,raw,3480,0.3104195826618326,0.37392788987347114,0.886756227316329,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,centered,3480,0.3288695183541761,0.3148781335392663,0.8797261537140619,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,raw,3487,0.2082346568989055,0.24166929213265417,0.38592988486577784,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,centered,3487,0.28429246847220246,0.48599461162045504,0.62423890352989,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,raw,3510,0.23604512288860485,0.23366771339433268,0.6082211129787902,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,centered,3510,0.11693217877578896,0.21925639788045878,0.6217179585073968,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,raw,3490,0.059323842482607685,0.04485005787878721,0.0,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,centered,3490,0.3356590622147589,0.5960234233428462,0.4561049401794552,ensemble,-1,0,0,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4583350174052068,0.5389748036693419,0.898719369187085,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.49073062471396056,0.6376773896481286,0.9132019348286584,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,raw,3501,-0.12140056861339887,-0.22081658032663473,0.12769961661112678,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,centered,3501,0.14434805006935508,0.2147254877895654,0.6113571150364794,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.29149136360804395,0.22604224280403326,0.0,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.3687968783430286,0.38275152849622784,0.45493740241417274,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,raw,3497,0.4594717136102758,0.4325699538985592,0.672719508661378,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,centered,3497,0.08612947495974804,-0.009509117555585297,0.5530421168156869,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,raw,3387,0.5712168707521655,0.7226610052053439,0.9246970150673822,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,centered,3387,0.6562098152581687,0.7569431607768188,0.9218257378922377,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,raw,3500,0.5420200034742081,0.7054636730466549,0.9222047795661907,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,centered,3500,0.5279102587448607,0.6667782283248734,0.9036014305354326,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,raw,3489,0.2884499901778784,0.19726986302129954,0.9375622227212969,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,centered,3489,0.15362101392028868,0.10952856833807915,0.9361871296703799,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,raw,3514,0.2613998384478122,0.40536069223063553,0.8382422102191949,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,centered,3514,-0.0754547249974324,0.10358734387197997,0.8053444540840908,ensemble,-1,1,0,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5667071310467029,0.6554425176168291,0.811477012409954,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5392383818822909,0.7016990530652574,0.8336253666167436,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.32023012398644785,0.5401599702178075,0.9128873232893497,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.11623749526699903,0.23517126940242394,0.8825490828239687,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,raw,3507,0.467340504100672,0.5197494702266858,0.5007832696964534,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,centered,3507,0.3888492295994374,0.4441736389991901,0.5773539375980108,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,raw,3490,0.37674149707692506,0.33969621005271006,0.685375384120187,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,centered,3490,0.302246648429256,0.2674499637939965,0.7374718689615183,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,raw,3490,0.3861861169100255,0.6472493019323037,0.8930954305048072,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,centered,3490,0.3087053080871221,0.5264913659671829,0.8660552782796856,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,raw,3510,0.2169551579303033,0.3412230910668916,0.27549278107492503,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,centered,3510,0.04957390441882085,0.06410430418257987,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,raw,3490,0.13764836175407405,0.12725485433691427,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,centered,3490,0.18767402794629284,0.23085718781374856,0.0,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,raw,3486,0.4736719060491099,0.48776501213693246,0.8722616635995127,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,centered,3486,0.33933372040586113,0.24044038141498408,0.8284074918108438,ensemble,-1,2,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,raw,3492,0.5533763018915442,0.623521224081912,0.8136005615775869,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,centered,3492,0.37241871007706123,0.4382860548493273,0.7486310389734667,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,raw,3489,0.2107581036756671,0.21516757476420303,0.5260040030106069,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,centered,3489,0.0982154029945018,0.06962352463667448,0.669534696041139,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,raw,3493,0.2739036783156985,0.5749520873957153,0.8953367924490198,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,centered,3493,0.12178105889675872,0.38729895278696125,0.8657663958795743,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,raw,3492,0.37206058824667043,0.28112010342976584,0.8675396020249485,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,centered,3492,0.3576317411856794,0.28705663977665213,0.8853017425875782,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,raw,3504,0.15846295090447185,0.2454181910054575,0.8069010615379222,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,centered,3504,-0.03295570807514014,-0.0048469323231548865,0.791306367778296,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,raw,3473,0.51636165661682,0.4863287689108366,0.8971840735794596,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,centered,3473,0.5526004406096341,0.513231700517913,0.8921636147026369,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,raw,3496,0.26169701466352063,0.2920989600250082,0.746076298727284,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,centered,3496,0.3552221667119197,0.4394785739879859,0.7816400701736069,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,raw,3500,0.5398775894943806,0.5408131675644896,0.8765976686189016,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,centered,3500,0.5017293571557493,0.43836980498193523,0.8599322607107426,ensemble,-1,3,0,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,raw,3488,0.21925767332907456,0.30100228225294723,0.15199773365650238,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,centered,3488,0.33054836770062496,0.5342765171487937,0.5746959188181814,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,raw,3506,0.410070980971419,0.5168063260905424,0.8379928898821091,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,centered,3506,0.4894529612391293,0.48424157805078233,0.8090940914763887,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,raw,3509,0.28945807529322864,0.4789265533385167,0.9141428331679445,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,centered,3509,0.49348987370348313,0.4729466969623349,0.9082113767287752,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,raw,3496,0.11796713306226922,0.28936033977656433,0.8670875046979807,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,centered,3496,0.03274711765268613,0.06362771907032419,0.8527287439731305,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,raw,3481,-0.17527007471178285,-0.028851598531627727,0.9178330549514648,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,centered,3481,-0.17935398325491317,0.11928589104161484,0.9244906432852036,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,raw,3506,0.6676099207083481,0.738003638336914,0.8449681878437812,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,centered,3506,0.6944240705028725,0.7623917234410571,0.8366325723887487,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,raw,3493,0.4319941611214507,0.6234334876820691,0.5642822086005129,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,centered,3493,0.23985462280103717,0.4153836818788347,0.3238018158316301,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,raw,3505,0.5285761793114326,0.6289114991690055,0.8097403963300162,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,centered,3505,0.3747345182754173,0.4903618981282255,0.7304551685344388,ensemble,-1,4,0,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5843594328526988,0.6630895231981311,0.811477012409954,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.6284433524220046,0.7027219180301273,0.8292558297828654,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6506255261983483,0.7414922965762315,0.9128873232893497,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.5106060093460563,0.6302009211479013,0.8808271018966328,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,raw,3507,0.7267729514163465,0.7954239559711145,0.8379928898821091,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,centered,3507,0.6737043260837243,0.7381963982658598,0.7943510975172879,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,raw,3507,0.3381110199863633,0.38241019949824606,0.5007832696964534,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,centered,3507,0.11909999992772084,0.13649243268207176,0.49775174760269264,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,raw,3387,0.520765841022962,0.699245563921815,0.9246970150673822,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,centered,3387,0.6488583485411176,0.7665464853850334,0.9223391675707808,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,raw,3499,0.4692845573301283,0.662351226093125,0.9222047795661907,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,centered,3499,0.44770139961576877,0.6370904589446842,0.9080060977912938,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,raw,3493,0.2447827908850391,0.26000694732922247,0.877833605571729,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,centered,3493,0.23953685450667223,0.24894873389563316,0.8763986094014646,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,raw,3496,0.033355886700945296,-0.02554515990057637,0.746076298727284,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,centered,3496,-0.1455483719815042,-0.26981776641757677,0.7753715138115954,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,raw,3486,0.5488511262549942,0.5789219278481753,0.8722616635995127,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,centered,3486,0.28933120281672775,0.2909823865218661,0.8241144912313376,ensemble,-1,0,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",raw,3491,0.05032914068542302,0.02724305552429032,0.7305743732158305,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",centered,3491,0.41739796988890493,0.5125370485438442,0.8327319817928159,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,raw,3496,0.16632736933924794,0.2746685274464531,0.8670875046979807,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,centered,3496,0.048580909271561494,0.09438465775340338,0.8486867844617119,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,raw,3492,0.3554917663744041,0.2831723765017839,0.8675396020249485,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,centered,3492,0.21923114145920553,0.15553412672982708,0.8858892884910788,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,raw,3490,0.41815858305051656,0.37719685283028287,0.685375384120187,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,centered,3490,0.3645829613801811,0.43074345860634605,0.7302189227161497,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,raw,3504,0.13459299780995906,0.22514487071404313,0.8069010615379222,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,centered,3504,-0.05581673299238572,-0.004888340431663078,0.783892263289116,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,raw,3490,0.598796861868916,0.7285094630958164,0.8930954305048072,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,centered,3490,0.5042371976937585,0.6246745478064709,0.8585858925749198,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,raw,3481,-0.20881372109872126,-0.0421659021935575,0.9178330549514648,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,centered,3481,-0.27585854923735265,-0.05994128289631563,0.9257318774492264,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,raw,3507,0.6768199036595064,0.7595015969707786,0.8449681878437812,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,centered,3507,0.6602725560310971,0.7497457639604684,0.8336523661619658,ensemble,-1,1,1,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.4075524754694479,0.5189833516714426,0.898719369187085,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.34388105646096806,0.6348305691684967,0.9168123496399989,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.19665790692955917,0.1590184507010101,0.0,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.46599967166174305,0.5571740236578399,0.5292874155662355,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,raw,3473,0.1799057067347244,0.22594727558201505,0.8971840735794596,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,centered,3473,-0.05380198402807837,0.049388368615833685,0.8890452902831322,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,raw,3487,0.23748168163269598,0.23721295949129198,0.38592988486577784,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,centered,3487,0.2837429389630147,0.4722708592220242,0.5910325375246532,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,raw,3489,0.12402249256148642,0.13272838813530435,0.9375622227212969,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,centered,3489,0.10737962488904411,0.212928156334626,0.9381039702727801,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,raw,3493,0.5438520702366128,0.6799364090024622,0.5642822086005129,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,centered,3493,0.3789134310129387,0.4221779767897213,0.07933482194825014,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,raw,3510,0.15422117194403484,0.17755687325455705,0.6082211129787902,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,centered,3510,0.06521232215400743,0.21312812763298586,0.6416764594276576,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,raw,3490,0.03390639497794476,-0.012956746643253435,0.0,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,centered,3490,0.2698308451721006,0.5388173310894911,0.4154944587607023,ensemble,-1,2,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,2'-bipyridine",raw,3489,0.094469053807027,-0.12105104390648648,0.9331732906177713,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,2'-bipyridine",centered,3489,0.38718246461148415,0.5518031379365762,0.9491678055239965,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",raw,3504,0.16647085132157283,0.24343806352726755,0.8729821697732166,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",centered,3504,0.42736588416786986,0.3013159751574451,0.873539479693467,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,raw,3509,0.6356766179551896,0.6699058589592687,0.9141428331679445,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,centered,3509,0.5917900369221667,0.5703506544040883,0.8942413274157337,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,raw,3487,0.23636923057585474,0.2844315227620261,0.9100766609130951,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,centered,3487,0.4152341903099949,0.2671713600533606,0.9068810672420646,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,raw,3480,0.3855676408691235,0.41242251898796123,0.886756227316329,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,centered,3480,0.18845148730840958,0.2222878119732076,0.8740236766683434,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,raw,3490,0.11116287488331897,0.09031203032740485,0.0,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,centered,3490,0.5042544674448448,0.6354591251809586,0.0,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,raw,3514,0.14066707022650926,0.3296266721894509,0.8382422102191949,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,centered,3514,-0.10155513457704039,0.013094425752604142,0.815206887225573,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,raw,3505,0.5003448990073052,0.5992049761155693,0.8097403963300162,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,centered,3505,0.3186356680378715,0.3620664159310846,0.7298831011607608,ensemble,-1,3,1,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,raw,3488,0.24656242634870568,0.34301880388678135,0.15199773365650238,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,centered,3488,0.3936314904644453,0.5785398278129705,0.6165798690293909,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,raw,3492,0.5798916933531013,0.659843555445319,0.8136005615775869,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,centered,3492,0.434044878320318,0.49790636715787706,0.746178085575299,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,raw,3501,-0.12249863635273661,-0.18193218525917634,0.12769961661112678,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,centered,3501,0.17351654745807774,0.27341004255251916,0.6141195281836963,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,raw,3489,0.1981198841938269,0.217135094783723,0.5260040030106069,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,centered,3489,0.08345749923211554,0.06749934045015572,0.6866303993435534,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,raw,3492,0.6125916170733722,0.7554859979248273,0.8953367924490198,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,centered,3492,0.5830016415123053,0.680236608993137,0.8698090092048968,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,raw,3496,0.12310298552037001,0.11437287986989492,0.672719508661378,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,centered,3496,-0.08352859428379415,-0.1812911915200754,0.6373670032191323,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,raw,3510,0.3215836753871337,0.4399496326354885,0.27549278107492503,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,centered,3510,0.19270760494214947,0.17674261305952887,0.0,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,raw,3500,0.422989189608447,0.4504952412069927,0.8765976686189016,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,centered,3500,0.34034053231934375,0.311938652093481,0.8584531456857164,ensemble,-1,4,1,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",raw,3491,0.036269439980686775,-0.04058128230458997,0.7305743732158305,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,4-dimethylimidazole",centered,3491,0.16526641664471514,0.309092841751858,0.8229137348628133,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,raw,3488,0.21368810081983064,0.19194265450674897,0.15199773365650238,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+2-methylimidazole,centered,3488,0.14374916710786137,0.22341671566925697,0.6024605878402992,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",raw,3485,0.6101558058160739,0.7047432756783424,0.9128873232893497,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2-propenamide, 3-(4-hydroxyphenyl)-, (2e)-",centered,3485,0.5552650055711577,0.5839725514811714,0.883457280259025,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,raw,3507,0.6977935380489154,0.7639296750746273,0.8379928898821091,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4'-hydroxyacetophenone,centered,3507,0.6405197701298407,0.7173438528340894,0.7935960254022186,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,raw,3499,0.3812306437879149,0.556759404307909,0.9222047795661907,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulic acid,centered,3499,0.38885325600432347,0.5033270376620638,0.9096820756778564,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,raw,3493,0.2064381229765149,0.21473089480524074,0.877833605571729,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+furfural,centered,3493,0.22106053389358937,0.20264959997111626,0.8788688565797801,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,raw,3487,0.2889533007631004,0.2658137066875727,0.38592988486577784,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+levulinic acid,centered,3487,0.3369694243633885,0.4435895581886862,0.5248811647424081,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,raw,3510,0.20790935759699417,0.36383161700060124,0.27549278107492503,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+p-coumaric acid,centered,3510,-0.0421117171855782,-0.04099560605606509,0.0,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,raw,3493,0.3609908642985909,0.5520154084081023,0.5642822086005129,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sinapic acid,centered,3493,0.2501327269088853,0.3640868151826233,0.3846465212693307,ensemble,-1,0,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,raw,3507,0.33687566415968706,0.3685790142198678,0.5007832696964534,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzoic acid,centered,3507,0.33763396696434506,0.35534486734180853,0.6603549121483774,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,raw,3501,-0.0032228924115132365,-0.09712715972720252,0.12769961661112678,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-methylimidazole,centered,3501,0.3921760018355809,0.43427294675483874,0.6602537705690545,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,raw,3489,0.26338835143319483,0.22759095941041033,0.5260040030106069,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetamide,centered,3489,0.3376108406070357,0.41667904472583783,0.6945331352340456,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,raw,3509,0.4621151584624239,0.5711650450138177,0.9141428331679445,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetovanillone,centered,3509,0.42650195582213046,0.49135678439014346,0.9007497050254465,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,raw,3473,0.2802637153687111,0.28358189978767434,0.8971840735794596,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+gamma-valerolactone,centered,3473,0.16340034882447788,0.07277406160180035,0.8904865526111276,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,raw,3510,0.10755355563094948,0.1408164267760093,0.6082211129787902,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium acetate,centered,3510,0.12290942567163561,0.21411506866980634,0.6540251876535728,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,raw,3514,0.24770968644297361,0.39907561969572686,0.8382422102191949,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+syringaldehyde,centered,3514,0.024755417011338265,0.10798121145510985,0.8164755033930678,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,raw,3500,0.31583992978285147,0.402825575994179,0.8765976686189016,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+syringic acid,centered,3500,0.25895418613037086,0.250660209444816,0.8669117581200528,ensemble,-1,1,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,2'-bipyridine",raw,3489,0.30569727313290973,0.15206922927898253,0.9331732906177713,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,2'-bipyridine",centered,3489,0.2901099651317514,0.232964637900219,0.942534078087761,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,raw,3496,0.2299367502621416,0.34493966734738607,0.8670875046979807,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+azelaic acid,centered,3496,0.09394420398368979,0.12345855953997535,0.847310814069945,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,raw,3492,0.33432889698779067,0.28427827819304297,0.8675396020249485,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+benomyl,centered,3492,0.270070437660645,0.19170160233691516,0.8794179243054676,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,raw,3387,0.1277348597622484,0.29743153377377757,0.9246970150673822,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+crystal violet,centered,3387,0.19020657068889477,0.3111645195918016,0.9220312622117617,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,raw,3490,0.44072604934442505,0.6546183706340664,0.8930954305048072,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ferulamide,centered,3490,0.33028046548186873,0.5513939571656675,0.8688733613509745,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,raw,3489,0.327934628883797,0.18638264695771015,0.9375622227212969,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+methyl methanesulfonate,centered,3489,0.22005152273479286,0.1117414581316098,0.9366128421896852,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,raw,3486,0.4900279507879135,0.5191440865347415,0.8722616635995127,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillic acid,centered,3486,0.28878059604198386,0.23407852997050793,0.8223602732176184,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,raw,3505,0.6090180340830624,0.7183504321573285,0.8097403963300162,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+vanillin,centered,3505,0.4512407611111326,0.5805615656059051,0.7267599792119376,ensemble,-1,2,2,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,raw,3484,0.5731629773739371,0.6693318291759545,0.811477012409954,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+1-butyl-3-methylimidazolium chloride,centered,3484,0.5716765888958213,0.7296330632866908,0.8400804963478274,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",raw,3504,0.34103909047945863,0.31232705553515994,0.8729821697732166,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+"2,6-dimethylpyrazine",centered,3504,0.33628432581124407,0.25844806443056767,0.8681927632775254,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,raw,3505,0.2904242166174585,0.24242102609751573,0.0,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+5-(hydroxymethyl)furfural,centered,3505,0.35054655907047033,0.3435831196504882,0.4748857338004678,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,raw,3493,0.532956782470833,0.7326953680758287,0.8953367924490198,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+acetosyringone,centered,3493,0.44126441527646665,0.5839124565007234,0.8633078995110798,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,raw,3490,0.39475241847671494,0.35406176294574837,0.685375384120187,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+benzoic acid,centered,3490,0.36514292549361804,0.4182514866059528,0.7465144765242345,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,raw,3496,0.3218133826992321,0.33428550686261355,0.672719508661378,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+caffeic acid,centered,3496,0.07981996008251648,0.042444605640343476,0.6348437831240964,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,raw,3504,0.17435492410108208,0.299567519569247,0.8069010615379222,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+cinnamic acid,centered,3504,-0.0029029936842396753,0.08684555998792941,0.7857923264270728,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,raw,3480,0.23039302349817792,0.39763019444350184,0.886756227316329,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+isobutanol,centered,3480,0.20273420502438466,0.32781520383227203,0.8738205260546376,ensemble,-1,3,2,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,raw,3491,0.5010192790190109,0.6194972546409231,0.898719369187085,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+1-ethyl-3-methylimidazolium chloride,centered,3491,0.5390589297780289,0.7128388616842006,0.9207372710131602,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,raw,3493,0.5427250685799638,0.6473308477893684,0.8136005615775869,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+4-hydroxybenzaldehyde,centered,3493,0.3155483819957895,0.4452921345889405,0.7330278514305723,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,raw,3487,0.3401035296972168,0.44339858314606134,0.9100766609130951,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+ethanol,centered,3487,0.18768506182971,0.3259526999676129,0.8992724015184042,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,raw,3481,-0.13264854654918223,0.05845378828986725,0.9178330549514648,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+methylglyoxal,centered,3481,0.013985368172527494,0.2526403790062702,0.9293286685803472,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,raw,3496,0.043346826157271735,-0.020788928746265218,0.746076298727284,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+myclobutanil,centered,3496,-0.03509649814481944,-0.13423417119056455,0.806521750219523,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,raw,3507,0.6244338267654658,0.7127779632652876,0.8449681878437812,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+nonylacridine orange,centered,3507,0.6362553772576302,0.7429734403515827,0.8353957290395438,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,raw,3490,0.13594001141818884,0.1436695968364936,0.0,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium butyrate,centered,3490,0.33179060833032015,0.3981615560337592,0.42785463831799814,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,raw,3490,0.14199102353619908,0.10493023054739502,0.0,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*
+sodium glyoxylate,centered,3490,0.28093123824221855,0.3116948642888608,0.10426711163393412,ensemble,-1,4,2,ridge+r3b_multisource_seeds_ms_all_fs*

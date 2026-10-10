@@ -1,0 +1,274 @@
+{
+  "file": "$DATA_ROOT/torchcell-raw/wangGenomeWideScreenRevealsCellular2024/data/spectrum.02895-23-s0002.xlsx",
+  "sha256": "143c77c80093adbead1293f79100a5c9a0bf6cbe8d6e7208d0e29710773f9f98",
+  "sheets": [
+    "0.25xMIC-1hour",
+    "0.25xMIC-3hours",
+    "4xMIC-1hour",
+    "4xMIC-3hours",
+    "20xMIC-1hour",
+    "20xMIC-3hours"
+  ],
+  "shape": {
+    "0.25xMIC-1hour": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    },
+    "0.25xMIC-3hours": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    },
+    "4xMIC-1hour": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    },
+    "4xMIC-3hours": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    },
+    "20xMIC-1hour": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    },
+    "20xMIC-3hours": {
+      "data_rows": 4419,
+      "columns": 11,
+      "distinct_orf": 4419,
+      "input_columns_equal_first_sheet": true,
+      "non_numeric_value_cells": 0
+    }
+  },
+  "total_cells": 26514,
+  "reads": {
+    "0.25xMIC-1hour": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 356,
+      "no_reads_in_either": 287,
+      "no_input_reads_but_post_treatment_reads": 16,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    },
+    "0.25xMIC-3hours": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 399,
+      "no_reads_in_either": 294,
+      "no_input_reads_but_post_treatment_reads": 9,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    },
+    "4xMIC-1hour": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 388,
+      "no_reads_in_either": 285,
+      "no_input_reads_but_post_treatment_reads": 18,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    },
+    "4xMIC-3hours": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 368,
+      "no_reads_in_either": 277,
+      "no_input_reads_but_post_treatment_reads": 26,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    },
+    "20xMIC-1hour": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 391,
+      "no_reads_in_either": 286,
+      "no_input_reads_but_post_treatment_reads": 17,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    },
+    "20xMIC-3hours": {
+      "no_input_reads": 303,
+      "no_post_treatment_reads": 385,
+      "no_reads_in_either": 292,
+      "no_input_reads_but_post_treatment_reads": 11,
+      "log2fc_of_no_reads_rows": [
+        0
+      ]
+    }
+  },
+  "no_input_reads_same_genes_every_sheet": true,
+  "statistic_vs_log2_mean_plus_one": {
+    "0.25xMIC-1hour": {
+      "within_0.011": 4217,
+      "within_0.1": 4419,
+      "max_abs_error": 0.0921,
+      "n": 4419
+    },
+    "0.25xMIC-3hours": {
+      "within_0.011": 4211,
+      "within_0.1": 4419,
+      "max_abs_error": 0.0975,
+      "n": 4419
+    },
+    "4xMIC-1hour": {
+      "within_0.011": 4209,
+      "within_0.1": 4419,
+      "max_abs_error": 0.0804,
+      "n": 4419
+    },
+    "4xMIC-3hours": {
+      "within_0.011": 4211,
+      "within_0.1": 4418,
+      "max_abs_error": 0.1075,
+      "n": 4419
+    },
+    "20xMIC-1hour": {
+      "within_0.011": 4179,
+      "within_0.1": 4419,
+      "max_abs_error": 0.0945,
+      "n": 4419
+    },
+    "20xMIC-3hours": {
+      "within_0.011": 4201,
+      "within_0.1": 4419,
+      "max_abs_error": 0.09,
+      "n": 4419
+    }
+  },
+  "hits_per_sheet_paper_cut": {
+    "0.25xMIC-1hour": 132,
+    "0.25xMIC-3hours": 73,
+    "4xMIC-1hour": 178,
+    "4xMIC-3hours": 161,
+    "20xMIC-1hour": 206,
+    "20xMIC-3hours": 158
+  },
+  "hits_union_paper_cut": 363,
+  "identifiers": {
+    "distinct": 4419,
+    "locus_tags_of_pinned_annotation": 4414,
+    "not_a_locus_tag": {
+      "b3036": "retired: not found in GCA_000005845.2_ASM584v2; retained as given",
+      "b3681": "non_gene_feature: gene synonym of pseudogene b4556 (not a gene feature)",
+      "b4223": "retired: not found in GCA_000005845.2_ASM584v2; retained as given",
+      "b4590": "retired: not found in GCA_000005845.2_ASM584v2; retained as given",
+      "b4700": "retired: not found in GCA_000005845.2_ASM584v2; retained as given"
+    },
+    "layer_histogram": {
+      "locus tag": 4414,
+      "old locus tag": 0,
+      "RefSeq locus tag": 0,
+      "gene symbol": 0,
+      "gene synonym": 1,
+      "not found": 4
+    }
+  },
+  "stored_records": 24763,
+  "dropped_records": 1751,
+  "duplication": {
+    "Choe 2025 (CRISPRi, MG1655)": {
+      "store": "crispri_chemgen_choe2025",
+      "rifampicin_screens": {
+        "None [3.2 ug/mL]": 4156
+      },
+      "pairs": [
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "0.25xMIC-1hour",
+          "shared_genes": 3774,
+          "spearman_r": 0.0269
+        },
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "0.25xMIC-3hours",
+          "shared_genes": 3772,
+          "spearman_r": -0.0085
+        },
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "4xMIC-1hour",
+          "shared_genes": 3780,
+          "spearman_r": -0.0275
+        },
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "4xMIC-3hours",
+          "shared_genes": 3788,
+          "spearman_r": -0.0278
+        },
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "20xMIC-1hour",
+          "shared_genes": 3779,
+          "spearman_r": -0.0108
+        },
+        {
+          "other_screen": "None [3.2 ug/mL]",
+          "wang_sheet": "20xMIC-3hours",
+          "shared_genes": 3773,
+          "spearman_r": -0.0106
+        }
+      ],
+      "max_abs_spearman_r": 0.0278
+    },
+    "Shiver 2016 (Keio, BW25113)": {
+      "store": "ecoli_env_chemgen_shiver2016",
+      "rifampicin_screens": {
+        "rifampicin [4 ug/mL] {1} [4.0 ug/mL]": 3833
+      },
+      "pairs": [
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "0.25xMIC-1hour",
+          "shared_genes": 3419,
+          "spearman_r": 0.1214
+        },
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "0.25xMIC-3hours",
+          "shared_genes": 3419,
+          "spearman_r": -0.0006
+        },
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "4xMIC-1hour",
+          "shared_genes": 3425,
+          "spearman_r": 0.0524
+        },
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "4xMIC-3hours",
+          "shared_genes": 3431,
+          "spearman_r": 0.041
+        },
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "20xMIC-1hour",
+          "shared_genes": 3424,
+          "spearman_r": 0.0409
+        },
+        {
+          "other_screen": "rifampicin [4 ug/mL] {1} [4.0 ug/mL]",
+          "wang_sheet": "20xMIC-3hours",
+          "shared_genes": 3419,
+          "spearman_r": 0.016
+        }
+      ],
+      "max_abs_spearman_r": 0.1214
+    }
+  }
+}

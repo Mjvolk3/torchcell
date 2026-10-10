@@ -101,6 +101,7 @@ datasets:
   - GrowthWang2015Dataset
   - CrispriGuideFitnessWang2018Dataset
   - PromoterReporterMohiuddin2022Dataset
+  - EnvChemgenWang2024Dataset
   - RbTnseqBorchert2023Dataset
   - ProteomeBanerjee2025Dataset
   - RbTnseqBorchert2024Dataset

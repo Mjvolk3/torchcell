@@ -152,6 +152,11 @@ sourcing layer.
   transcription rather than as a fitness cost, and the untreated arm is stored as data
   because it is the divisor the released fold changes use. Its environment carries the
   drug only from hour five, when the dose went in.
+- ``wang2024`` -- ``EnvChemgenWang2024Dataset``: the rifampicin dose-by-time Tn-seq
+  screen, one ``EnvironmentResponsePhenotype`` log2 fold change per (MG1655 gene,
+  condition) over three doses (2, 32 and 160 mg/L, 0.25x, 4x and 20x MIC) at 1 and 3 h.
+  24,763 of the 26,514 released cells; the drops are genes with no reads in either pool
+  and five b-numbers the pinned annotation does not carry.
 - ``mori2021`` -- ``ProteomeMori2021Dataset``: the DIA/SWATH absolute proteome, one
   record per loaded MG1655 (EQ353) calibration sample in protein mass fractions. Seven of
   its 66 released samples are loaded; the other 59 are dropped on their medium and
@@ -282,3 +287,4 @@ from .wang2015_growth import GrowthWang2015Dataset as GrowthWang2015Dataset
 from .wang2018 import (
     CrispriGuideFitnessWang2018Dataset as CrispriGuideFitnessWang2018Dataset,
 )
+from .wang2024 import EnvChemgenWang2024Dataset as EnvChemgenWang2024Dataset

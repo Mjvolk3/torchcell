@@ -142,6 +142,26 @@ done
 mkdir -p "$IGB_DATA_ROOT/$EXP_REL/slurm/output"
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
+# ---- Optional: read the pool from the node's RAM disk instead of GPFS ----
+# STAGE_SHM=1 copies the pool store $POOL_STORE_REL (make_pool_store_030.py, mirrored by
+# sync_igb_030_build.sh with REL=...) onto /dev/shm and points the trainer's dataset root
+# at the copy (an absolute root_rel is used as given). The store keeps the full build's
+# record keys, split cache and normalization fingerprint, so nothing else changes; what
+# changes is that no loader worker touches the 955 GB data.mdb through GPFS's mmap lock
+# (job 2427397: 27 of 28 workers in gpfsNode_t::mmapLock, epochs at 2x to 3x the quiet
+# pace). The copy is charged to this job's memory: add the store size to --mem. The
+# EXIT trap in stage_pool_store_shm.sh removes the copy when the job ends.
+STAGE_SHM="${STAGE_SHM:-0}"
+POOL_STORE_REL="${POOL_STORE_REL:-${BUILD_REL}-s3q}"
+if [[ "$STAGE_SHM" == "1" ]]; then
+  # shellcheck disable=SC1091
+  source "$PROJECT_ROOT/$EXP_REL/scripts/stage_pool_store_shm.sh"
+  SHM_ROOT="/dev/shm/$USER/$(basename "$POOL_STORE_REL")"
+  stage_pool_store "$IGB_DATA_ROOT/$POOL_STORE_REL" "$SHM_ROOT" || exit 1
+  OVERRIDES+=("dataset.root_rel=$SHM_ROOT")
+  echo "dataset root: $SHM_ROOT (pool store on RAM disk)"
+fi
+
 cd "$PROJECT_ROOT/experiments" || exit 1
 
 MASTER_ADDR=$(hostname); export MASTER_ADDR

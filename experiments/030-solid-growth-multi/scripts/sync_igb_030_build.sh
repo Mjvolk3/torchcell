@@ -38,6 +38,9 @@
 #
 #   bash experiments/030-solid-growth-multi/scripts/sync_igb_030_build.sh
 #   DRY_RUN=1 bash experiments/030-solid-growth-multi/scripts/sync_igb_030_build.sh   # size it, send nothing
+#   # a POOL STORE (make_pool_store_030.py) has the same layout and crosses the same way:
+#   REL=data/torchcell/experiments/030-solid-growth-multi/001-multi-build-s3q \
+#       bash experiments/030-solid-growth-multi/scripts/sync_igb_030_build.sh
 #
 # At the end it prints local vs remote file counts, du -s of processed/ and the byte size
 # of data.mdb (remote side via one ssh call), and exits 1 when the counts or the data.mdb
@@ -46,7 +49,7 @@
 set -euo pipefail
 
 GH_DATA_ROOT="${DATA_ROOT:-/scratch/projects/torchcell-scratch}"
-REL="data/torchcell/experiments/030-solid-growth-multi/001-multi-build"
+REL="${REL:-data/torchcell/experiments/030-solid-growth-multi/001-multi-build}"
 SRC="$GH_DATA_ROOT/$REL"
 
 IGB_USER="${IGB_USER:-mjvolk3}"

@@ -74,6 +74,7 @@ from torchcell.adapters import (
     EnvChemgenGirgis2009Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenWang2015Adapter,
+    EnvChemgenWang2024Adapter,
     FluxIshii2007Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
@@ -202,6 +203,7 @@ from torchcell.datasets.ecoli.tong2020 import CarbonSourceTong2020Dataset
 from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
+from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -677,6 +679,13 @@ BACTERIAL: list[Bacterial] = [
         "promoter_reporter_mohiuddin2022",
         PromoterReporterMohiuddin2022Dataset,
         PROMOTER_ACTIVITY,
+    ),
+    _case(
+        EnvChemgenWang2024Adapter,
+        "wang2024",
+        "ecoli_env_chemgen_wang2024",
+        EnvChemgenWang2024Dataset,
+        RESPONSE,
     ),
     _case(
         RbTnseqBorchert2023Adapter,

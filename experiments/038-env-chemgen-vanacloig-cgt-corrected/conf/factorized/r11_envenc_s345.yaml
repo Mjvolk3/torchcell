@@ -1,0 +1,9 @@
+# Round 11, GPU: six more seeds for the two heads that matter after rounds 9 and 10, so
+# each becomes a nine-seed ensemble on the same folds (plain mean of three 3-seed
+# ensembles in stack_predictions.py). Round 10 at 66 compound-evaluations had the
+# environment encoder +0.017 in centered Spearman over the bilinear control (CI -0.027,
+# +0.063); seed noise is what keeps that interval wide. Same protocol as rounds 9 and 10:
+# one-layer encoder, prior weight 0, fixed 50 epochs keeping the last, fit on the non-test
+# pool, five folds on each of fold seeds 0, 1, 2. Seeds 3 to 5 and 6 to 8. PARALLEL=2.
+# Card A: the environment encoder.
+# Delta split: the s345 seed group only, so one sweep fits a 12 h A40 job.

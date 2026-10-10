@@ -1,0 +1,2 @@
+# Round 11 (see r11_envenc.yaml). Card B: the bilinear control.
+# Delta split: the s345 seed group only, so one sweep fits a 12 h A40 job.

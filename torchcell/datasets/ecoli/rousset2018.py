@@ -67,8 +67,11 @@ doi:10.1038/s41467-018-04209-5), mirrored as ``cuiCRISPRiScreenColi2018`` and se
 20-nt spacer (Rousset's ``target``, Cui's ``guide``):
 
 - Rousset S1 ``log2FC`` against Cui ``fit75``: 54,326 spacers in common, median absolute
-  difference 0.0000, maximum 0.0066, Pearson r 1.0000. The same measurements to released
-  precision; the 0.0066 is rounding, not re-analysis.
+  difference 0.0000, maximum 0.0066, Pearson r 1.0000. The same screen's measurements.
+  The 0.0066 is NOT print rounding (issue #878): both tables print about 15 significant
+  digits, and only 426 of the 54,326 shared values are bit-identical while 53,868 differ
+  by more than 1e-9. Rousset's S1 Table is therefore its own DESeq2 run over the same
+  reads, a re-analysis whose fold changes agree with Cui's to 0.0066.
 - Against Cui ``fit18``, the other dose regime: r 0.8018, median absolute difference
   0.4151. A different screen, and Cui's alone.
 - Cui's table carries 78,137 distinct guides, 23,811 of which Rousset's S1 Table does not
@@ -95,6 +98,20 @@ pinned bytes they are the library's low-abundance tail rather than a screen:
   effects of genes on a given phenotype should ideally not be inferred from the effect of
   a single guide". Adding it to the shared set flips 10 genes' essentiality calls under
   the paper's own ``median log2FC < -2`` rule, moving one gene median by 2.922.
+
+THE GROWTH TABLE'S ``padj`` IS NOT STORED, AND NO STORED SCREEN RELEASES A TEST (issue
+#878). S1 Table is the only consumed table with a test column: ``padj``, the DESeq2
+adjusted p-value of each guide's log2FC, numeric on all 59,246 rows (0 to 0.999997,
+measured). No unadjusted p-value is released beside it. ``EnvironmentResponsePhenotype``
+has carried an adjusted p-value and its correction since #863, but every S1 row is dropped
+by rules 1 to 4 below, so no stored record could carry one; S4 and S6 Tables release
+log2FC only, so every stored record leaves the three p-value fields unset, which the L2
+row ``released_test_absent`` checks. ``padj`` is not moved onto Cui 2018's LC-E75 records
+either: it tests Rousset's own fold change, a different DESeq2 run (above), whose
+Benjamini-Hochberg family, if that is the correction, is Rousset's 59,246-guide library
+rather than Cui's 78,137. Its correction is also unsourced on the mirror: the paper names
+none (it cites "the DESeq2 package [32]", Love et al. 2014, which is not mirrored), the
+three SI documents name none, and with no released p-value it cannot be back-solved.
 
 Hypothesis (untested, and not testable from either release because neither publishes read
 counts): the 4,920 fall below Cui's 20-read floor because Cui's table reports both dose
@@ -474,11 +491,13 @@ GROWTH_SCREEN_DEFERRAL = _paper(
     "3 independent transformations into strain LC-E75.",
     page=_SCREENS,
     note="reference [26] is Cui 2018 (mirrored), so the growth screen's released "
-    "log2FC values ARE Cui's fit75 column rather than a re-analysis of it. Measured on "
-    "the two pinned tables, joined on the 20-nt spacer: 54,326 spacers in common, "
-    "median absolute difference 0.0000, maximum 0.0066, Pearson r 1.0000 against "
-    "fit75, against r 0.8018 and a median absolute difference of 0.4151 for Cui's "
-    "other screen (fit18). This dataset therefore stores no growth-screen record",
+    "log2FC values measure Cui's fit75 screen. Measured on the two pinned tables, "
+    "joined on the 20-nt spacer: 54,326 spacers in common, median absolute difference "
+    "0.0000, maximum 0.0066, Pearson r 1.0000 against fit75, against r 0.8018 and a "
+    "median absolute difference of 0.4151 for Cui's other screen (fit18). Only 426 "
+    "of the 54,326 are bit-identical at the roughly 15 printed digits, so S1 is a "
+    "re-analysis of the same reads, not a reprint. This dataset therefore stores no "
+    "growth-screen record",
 )
 PHAGE_SCREEN_TRIPLICATE = _paper(
     3,
@@ -932,9 +951,9 @@ def _uncertainty_gap() -> ProvenanceGap:
         reason=ProvenanceGapReason.not_reported_by_primary,
         note="each table releases one log2FC per guide and screen; DESeq2's lfcSE is "
         "not a released column. S1 Table also releases padj (the adjusted p-value of "
-        "the DESeq2 test, for which the schema has no slot) and gamma (named in the S1 "
-        "Table caption and defined in neither mirrored paper); neither is an "
-        "uncertainty, so neither is stored",
+        "the DESeq2 test) and gamma (named in the S1 Table caption and defined in "
+        "neither mirrored paper); neither is an uncertainty, and no S1 row is stored "
+        "(the growth screen is Cui 2018's), so neither is on any record",
     )
 
 
@@ -1777,6 +1796,50 @@ def screen_census(records: Iterable[Mapping[str, Any]]) -> LevelResult:
     )
 
 
+#: The released-test fields of ``EnvironmentResponsePhenotype`` (#863). No stored screen
+#: releases a test statistic, so none of them is set on any record (issue #878).
+RELEASED_TEST_FIELDS: tuple[str, ...] = (
+    "environment_response_p_value",
+    "environment_response_p_value_adjusted",
+    "p_value_adjustment_method",
+)
+
+
+def released_test_absent(records: Iterable[Mapping[str, Any]]) -> LevelResult:
+    """SUPPLEMENTARY L2: no stored record carries a p-value, adjusted or not.
+
+    The only consumed table with a test column is S1 Table (``padj``), and no S1 row is
+    stored: the growth screen is Cui 2018's. S4 and S6 Tables release log2FC only. A
+    record carrying any of ``RELEASED_TEST_FIELDS`` therefore holds a value this release
+    never paired with it, so the row fails on the first such record's count.
+    """
+    carrying: Counter[str] = Counter()
+    n_records = 0
+    for record in records:
+        n_records += 1
+        for side, key in (
+            ("experiment", "phenotype"),
+            ("reference", "phenotype_reference"),
+        ):
+            phenotype = record[side][key]
+            for name in RELEASED_TEST_FIELDS:
+                if phenotype[name] is not None:
+                    carrying[f"{side}.{name}"] += 1
+    passed = not carrying
+    return LevelResult(
+        level=Level.L2,
+        name="released_test_absent",
+        passed=passed,
+        message=(
+            f"SUPPLEMENTARY: 0 of {n_records} records carry a p-value; S4 and S6 "
+            "Tables release none and no S1 row is stored"
+            if passed
+            else f"SUPPLEMENTARY: p-value fields set on stored records {dict(carrying)}"
+        ),
+        details={"n_records": n_records, "carrying": dict(carrying)},
+    )
+
+
 def verify_build(
     dataset_root: str,
     *,
@@ -1786,15 +1849,17 @@ def verify_build(
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
-    The LMDB is STREAMED, twice: once for the verifier and once for the census row. The
-    68,436 records are never materialized, which is the choice Price 2018 and Borchert
-    2024 make for the two other large bacterial stores (an eager ``load_records`` of this
-    store takes tens of minutes; two streaming passes take a fraction of that).
+    The LMDB is STREAMED three times: once for the verifier and once for each
+    SUPPLEMENTARY row. The 68,436 records are never materialized, which is the choice
+    Price 2018 and Borchert 2024 make for the two other large bacterial stores (an eager
+    ``load_records`` of this store takes tens of minutes; three streaming passes take a
+    fraction of that).
 
     Every record is checked against the MG1655 genome its references pin: the resolver of
     the canonical-name rule, and as the L4 universe every GenBank locus of the assembly
     (4,651, pseudogenes and RNA tags included; the same set as the verification runners'
-    ``_ecoli_k12_gene_set``). One SUPPLEMENTARY row, the per-screen census, is appended.
+    ``_ecoli_k12_gene_set``). Two SUPPLEMENTARY rows are appended: the per-screen census
+    and ``released_test_absent``, each over its own streaming pass.
     The report is written to ``preprocess/verification_report.json``.
     """
     from torchcell.verification.environment_response import (
@@ -1833,6 +1898,7 @@ def verify_build(
         sgd_genes=set(genome.genbank.loci),
     )
     report.add(screen_census(stream_records(dataset_root)))
+    report.add(released_test_absent(stream_records(dataset_root)))
     preprocess = osp.join(dataset_root, "preprocess")
     os.makedirs(preprocess, exist_ok=True)
     with open(osp.join(preprocess, "verification_report.json"), "w") as handle:

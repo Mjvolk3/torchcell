@@ -34,7 +34,7 @@ def test_unrecorded_row_has_no_finding() -> None:
 
 
 def test_aggregation_records() -> None:
-    """Counts come off the module pins: 33 CeCaFDB workbooks, 21 Lim projects, 4 studies."""
+    """Counts come off the module pins: 33 CeCaFDB workbooks, 21 Lim projects, 5 studies."""
     records = {
         f.row_name: f.aggregation
         for f in findings.FINDINGS
@@ -54,7 +54,7 @@ def test_aggregation_records() -> None:
         == 33
     )
     assert (lim.n_source_studies, lim.value_origin) == (21, "re_measured")
-    assert (borchert.n_source_studies, borchert.n_sources_mirrored) == (4, 4)
+    assert (borchert.n_source_studies, borchert.n_sources_mirrored) == (5, 5)
 
 
 def test_evidence_is_the_modules_own_sourced_values() -> None:

@@ -52,8 +52,8 @@ def test_load_store_and_rows(tmp_path: Path) -> None:
 
 
 def test_grandfathered_is_sorted_and_counted() -> None:
-    """125 classes, sorted, unique, as derived from the registry on 2026-10-10."""
-    assert len(store.GRANDFATHERED) == 125
+    """134 classes, sorted, unique, as derived from the registry at main ecbd943ac."""
+    assert len(store.GRANDFATHERED) == 134
     assert list(store.GRANDFATHERED) == sorted(set(store.GRANDFATHERED))
     assert store.GRANDFATHERED[0] == "AminoAcidCooper2010Dataset"
     assert "SynthLethalityYeastSynthLethDbDataset" in store.GRANDFATHERED

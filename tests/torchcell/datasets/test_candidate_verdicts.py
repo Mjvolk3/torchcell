@@ -36,6 +36,6 @@ def test_every_class_outside_grandfathered_has_a_passing_verdict() -> None:
 
 
 def test_the_registry_walk_found_every_grandfathered_class() -> None:
-    """The walk imports all 125 classes registered on 2026-10-10 (a drop is a regression)."""
-    assert len(GRANDFATHERED) == 125
+    """The walk imports all 134 classes registered at main ecbd943ac (a drop is a regression)."""
+    assert len(GRANDFATHERED) == 134
     assert len(REGISTERED) >= len(GRANDFATHERED)

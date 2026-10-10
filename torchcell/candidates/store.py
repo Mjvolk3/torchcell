@@ -9,8 +9,8 @@ column from it and never carry a verdict in a row literal, and the enforcement t
 it. It sits beside ``database/releases/`` because a verdict is a release-adjacent record,
 and outside the supported-queries hook pattern, which anchors on ``database/releases/``.
 
-``GRANDFATHERED`` is every dataset class registered when the gate landed (2026-10-10, 125
-classes, derived from ``dataset_registry`` after importing every module under
+``GRANDFATHERED`` is every dataset class registered when the gate landed (2026-10-10 at main
+ecbd943ac, 134 classes, derived from ``dataset_registry`` after importing every module under
 ``torchcell/datasets``). It is sorted and frozen and can only shrink: a class leaves it
 when its verdict is written (the aggregation backfill starts with SynthLethDB). A class
 registered after that date is not in it and must carry ``CITATION_KEY`` and a passing
@@ -34,6 +34,7 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "AminoAcidCooper2010Dataset",
     "AminoAcidMulleder2016Dataset",
     "BetaxanthinCachera2023Dataset",
+    "BiofuelTiterBrunk2016Dataset",
     "Bloom2019Dataset",
     "CampaignProteomeCarruthers2025Dataset",
     "CarbonSourceTong2020Dataset",
@@ -69,7 +70,10 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "EnvChemgenShiver2016Dataset",
     "EnvChemgenVanacloig2022Dataset",
     "EnvChemgenWang2015Dataset",
+    "EnvChemgenWang2024Dataset",
     "EnvChemgenWildenhain2015Dataset",
+    "EnvMetalTnseqRoyet2025Dataset",
+    "ExometaboliteBrunk2016Dataset",
     "FattyAcidSmith2006Dataset",
     "FattyAcidXue2025Dataset",
     "FluxIshii2007Dataset",
@@ -97,16 +101,19 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "IsoprenolTiterYunus2026Dataset",
     "IsoprenolToleranceLim2025Dataset",
     "IsoprenylAcetateTiterKang2026Dataset",
+    "LactamGrowthRateThompson2019Dataset",
     "MetaboliteDaSilveira2014Dataset",
     "MetaboliteGrowthPhaseMenasalvas2025Dataset",
     "MetaboliteIntensityRapp2026Dataset",
     "MetaboliteProductionPhaseMenasalvas2025Dataset",
     "MetaboliteZelezniak2018Dataset",
+    "MetabolomeBrunk2016Dataset",
     "MetabolomeFuhrer2017Dataset",
     "MetabolomeIshii2007Dataset",
     "MetabolomeRapp2026Dataset",
     "MetabolomeSchastnaya2021Dataset",
     "MicroarrayKemmeren2014Dataset",
+    "MismatchCrispriFitnessHawkins2020Dataset",
     "MorphologyCampos2018Dataset",
     "NadalRibellesPerturbSeq2025Dataset",
     "OrganicAcidYoshida2012Dataset",
@@ -115,6 +122,7 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "ProteinFoldChangeCaglar2017Dataset",
     "ProteinTurnoverGupta2024Dataset",
     "ProteomeBanerjee2025Dataset",
+    "ProteomeBrunk2016Dataset",
     "ProteomeCaglar2017Dataset",
     "ProteomeCarruthers2025Dataset",
     "ProteomeDeSiqueira2025Dataset",
@@ -155,6 +163,7 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "TmiKuzmin2018Dataset",
     "TmiKuzmin2020Dataset",
     "TranscriptionFactorKnockoutChoe2019Dataset",
+    "ValerolactamTiterThompson2019Dataset",
     "YeastPhenomeDataset",
 )
 

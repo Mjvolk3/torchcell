@@ -91,3 +91,45 @@ Different library, modality and dose; no row re-serves another.
 | L4 | current_genome_genes | every name a current gene |
 
 Schema impact: `scripts/schema_impact_check.py --base origin/main` reports no schema contract changes. Adapter `torchcell/adapters/wang2024_adapter.py` with conf `ecoli_env_chemgen_wang2024_adapter.yaml`, appended to `kg_bacteria.yaml` after Mohiuddin 2022.
+
+## 2026.10.10 - Table S2's p-value and Adj. p-value stored on every record (#863)
+
+The schema finding above is closed by an additive p-value pair on `EnvironmentResponsePhenotype` ([[torchcell.datamodels.schema]], 2026.10.10 section). Every stored record now carries its cell's released `p-value` as `environment_response_p_value` and `Adj. p-value` as `environment_response_p_value_adjusted`, verbatim, with `p_value_adjustment_method="benjamini_hochberg"`. The uncertainty and SE gaps stay; their note now points at the new fields instead of saying there is no carrier.
+
+### The test and the correction, sourced
+
+Two new `SourcedValue`s (20 in all, every one audited PASS at L3):
+
+- `p_value_test`: "The significance of this difference was calculated using a permutation test." (Results).
+- `p_value_adjustment`: "Read counts, P-value (adjusted by using the method of FDR), and log2FC between the input and post-treatment were calculated using default parameters." (Materials and Methods, Sequencing analysis).
+
+The paper names the correction only as "the method of FDR", so the procedure is back-solved (`adjustment_back_solve`, the Caglar 2017 rule): within each sheet, the Benjamini-Hochberg adjustment of all 4,419 released p-values reproduces the released `Adj. p-value` to at most 5.0e-6 (measured on the mirror, every sheet). The release prints p-values to 4 decimals and adjusted values to 5, so this is within half a unit of the fifth decimal. A build that misses by more than `ADJUSTMENT_TOLERANCE = 1e-5` refuses. The testing family is the whole sheet, dropped rows included (BH over only the rows with reads misses by up to 0.066, measured), so a stored adjusted value is always the released number, never one recomputed over the kept subset. The evidence is written to `preprocess/adjustment_back_solve.json`.
+
+Measured on the release: p = 0 in 94 / 73 / 135 / 109 / 142 / 111 cells per sheet (stored as 0); every no-read cell (the 1,721 dropped) prints p = 1 and adjusted p = 1. Hypothesis, untested: a released 0 is a permutation p below the 4-decimal print precision.
+
+### Build and verification (2026.10.10)
+
+`PYTHONPATH=<wt> python -m torchcell.database.build_dataset_lmdb --dataset EnvChemgenWang2024Dataset --retire-existing --verify`: 24,763 records, gene_set 4,169, 6 references, 14 s; the previous tree retired as `processed.superseded.20261010-041600`. `--list-stale --include-private` does not name it.
+
+| level | check | result |
+|---|---|---|
+| L0 | structural | 24,763 records validated |
+| L1 | count | 24,763 = expected |
+| L1 | pair_uniqueness | 24,763 unique (study, strain, condition) |
+| L1 | provenance_gaps | 74,289 documented gaps; deferred field `inchikey` |
+| L1 | canonical_gene_names | 4,169 systematic names, each current |
+| L2 | value_fidelity | 24,763 values |
+| L2 | uncertainty_sanity | no labeled uncertainty; n_samples 2 on every record |
+| L2 | released_test_fidelity (new) | 24,763 of 24,763 records carry their cell's released p-value and Adj. p-value exactly, method `benjamini_hochberg` |
+| L3 | measurement_type_consistent | `log2_ratio` only |
+| L3 | reference_zero | 24,763 of 24,763 |
+| L3 | environment_perturbed | 24,763 of 24,763 |
+| L3 | media_membership | LB Miller, shared library medium |
+| L3 | p_value_adjustment_back_solve (new) | BH reproduces Adj. p-value over 6 sheets x 4,419 rows to 5.0e-6 |
+| L3 | provenance_audit | 20 of 20 sourced values backed by their verbatim quote |
+| L4 | gene_containment | 1.000 of 4,169 genes in MG1655 |
+| L4 | current_genome_genes | every name a current gene |
+
+### Schema impact
+
+`scripts/schema_impact_check.py --base origin/main`: `EnvironmentResponsePhenotype` modified (three added optional fields, `_check` changed), 36 impacted dataset groups, 0 breaking. Under this branch every environment-response dev store other than Wang 2024 reads stale (40 newly stale against origin/main's code, measured with `--list-stale --include-private` under both trees); this wave precedes the KG 4.0 full rebuild, which remakes them.

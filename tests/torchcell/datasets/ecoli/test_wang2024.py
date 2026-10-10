@@ -20,7 +20,9 @@ The five synthetic genes, identical input columns on every sheet:
 
 Four of the five names are locus tags (0.8 < 0.98), so the build fixture lowers
 ``MIN_RESOLVED_FRACTION`` and a separate test shows the default stops the build.
-3 kept genes x 6 sheets = 18 records.
+3 kept genes x 6 sheets = 18 records. Each gene carries one p-value on every sheet and
+the Benjamini-Hochberg value of the five as its adjusted p-value, printed to 5 decimals
+as the release prints it, so the synthetic workbook passes the back-solve.
 
 Data-gated tests (``--data``) read the real raw mirror and the built dev-tree LMDB under
 ``$DATA_ROOT`` (they never build it).
@@ -83,6 +85,21 @@ GENES: tuple[tuple[str, str, int, float, float, float, float], ...] = (
     ("b0099", "ghostG", 40, 50.0, 4000.0, 25.0, 2000.0),
 )
 KEPT = ("b0001", "b0004", "b0005")
+#: Per-gene p-value and its BH value over the five genes (5 decimals, as released).
+P_VALUES: dict[str, float] = {
+    "b0001": 0.01,
+    "b0002": 1.0,
+    "b0004": 0.04,
+    "b0005": 0.2,
+    "b0099": 0.5,
+}
+ADJUSTED: dict[str, float] = {
+    "b0001": 0.05,
+    "b0002": 1.0,
+    "b0004": 0.1,
+    "b0005": 0.33333,
+    "b0099": 0.625,
+}
 SYNTHETIC_RECORDS = len(KEPT) * len(m.CONDITIONS)
 
 
@@ -105,8 +122,8 @@ def _row(gene: tuple[Any, ...], sheet_index: int) -> list[Any]:
         sum_ctrl,
         sum_exp,
         round(mean_exp - mean_ctrl, 1),
-        0.5,
-        1.0,
+        P_VALUES[orf],
+        ADJUSTED[orf],
     ]
 
 
@@ -141,6 +158,18 @@ def _write_table(
 
 def _frames(path: Path) -> dict[str, pd.DataFrame]:
     return m.read_table_s2(path)
+
+
+def _cell(spec: m.ConditionSpec, log2fc: float = 1.5) -> m.StoredCell:
+    """A kept cell of b0001 (thrL) on ``spec`` with the synthetic p-value pair."""
+    return m.StoredCell(
+        locus_tag="b0001",
+        symbol="thrL",
+        spec=spec,
+        log2fc=log2fc,
+        p_value=P_VALUES["b0001"],
+        p_value_adjusted=ADJUSTED["b0001"],
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -280,7 +309,7 @@ def test_the_six_conditions_have_distinct_signatures() -> None:
         json.dumps(
             _condition_signature(
                 m.build_experiment(
-                    "ds", "b0001", "thrL", 0.0, spec, m.environment(spec)
+                    "ds", _cell(spec, 0.0), m.environment(spec)
                 ).model_dump(mode="json")
             ),
             sort_keys=True,
@@ -320,7 +349,7 @@ def test_the_three_absent_perturbation_fields_are_typed_gaps() -> None:
 
 
 def test_the_phenotype_is_a_log2_ratio_over_two_replicates() -> None:
-    phenotype = m.phenotype(-2.22, m.CONDITIONS[1])
+    phenotype = m.phenotype(_cell(m.CONDITIONS[1], -2.22))
     assert phenotype.measurement_type is MeasurementType.log2_ratio
     assert phenotype.assay_type is AssayType.other
     assert phenotype.environment_response == -2.22
@@ -337,6 +366,18 @@ def test_the_phenotype_is_a_log2_ratio_over_two_replicates() -> None:
     assert phenotype.environment_response_se is None
 
 
+def test_the_phenotype_carries_the_released_test_verbatim() -> None:
+    """#863: the permutation-test p-value and its BH value, never as an uncertainty."""
+    phenotype = m.phenotype(_cell(m.CONDITIONS[0]))
+    assert (
+        phenotype.environment_response_p_value,
+        phenotype.environment_response_p_value_adjusted,
+        phenotype.p_value_adjustment_method,
+    ) == (0.01, 0.05, "benjamini_hochberg")
+    assert phenotype.environment_response_uncertainty is None
+    assert m.reference_phenotype(m.CONDITIONS[0]).environment_response_p_value is None
+
+
 def test_the_reference_phenotype_scores_zero_in_the_same_condition() -> None:
     reference = m.reference_phenotype(m.CONDITIONS[4])
     assert reference.environment_response == 0.0
@@ -347,7 +388,7 @@ def test_the_reference_phenotype_scores_zero_in_the_same_condition() -> None:
 def test_build_experiment_and_reference_validate_as_a_pair() -> None:
     spec = m.CONDITIONS[0]
     env = m.environment(spec)
-    experiment = m.build_experiment("ds", "b0001", "thrL", 1.5, spec, env)
+    experiment = m.build_experiment("ds", _cell(spec), env)
     reference = m.build_reference("ds", REFERENCE, spec, env)
     assert isinstance(experiment, BacterialEnvironmentResponseExperiment)
     assert isinstance(reference, BacterialEnvironmentResponseExperimentReference)
@@ -508,9 +549,84 @@ def test_stored_cells_skip_dropped_genes_and_no_read_cells(table: Path) -> None:
     kept = {"b0001": "thrL", "b0002": "thrA", "b0004": "yaaP", "b0005": "proB"}
     cells = list(m.stored_cells(frames, kept))
     assert len(cells) == SYNTHETIC_RECORDS
-    assert cells[0] == ("b0001", "thrL", m.CONDITIONS[0], -1.5)
-    assert {c[0] for c in cells} == set(KEPT)
-    assert [c[2].sheet for c in cells[:3]] == [SHEETS[0]] * 3
+    assert cells[0] == _cell(m.CONDITIONS[0], -1.5)
+    assert {c.locus_tag for c in cells} == set(KEPT)
+    assert [c.spec.sheet for c in cells[:3]] == [SHEETS[0]] * 3
+    assert {(c.locus_tag, c.p_value, c.p_value_adjusted) for c in cells} == {
+        (tag, P_VALUES[tag], ADJUSTED[tag]) for tag in KEPT
+    }
+
+
+# --------------------------------------------------------------------------- #
+# The released test and its back-solved correction (#863)
+# --------------------------------------------------------------------------- #
+def test_benjamini_hochberg_is_the_step_up_adjustment_capped_at_one() -> None:
+    import numpy as np
+
+    adjusted = m.benjamini_hochberg(np.array([0.04, 0.40, 0.01, 0.02]))
+    assert list(adjusted) == pytest.approx([0.0533333333, 0.40, 0.04, 0.04])
+    assert list(m.benjamini_hochberg(np.array([0.9, 0.95]))) == pytest.approx(
+        [0.95, 0.95]
+    )
+    assert list(m.benjamini_hochberg(np.array([1.0, 1.0]))) == [1.0, 1.0]
+
+
+def test_adjustment_back_solve_measures_the_synthetic_release(table: Path) -> None:
+    evidence = m.adjustment_back_solve(_frames(table))
+    assert (evidence.method, evidence.sheets, evidence.rows_per_sheet) == (
+        "benjamini_hochberg",
+        6,
+        5,
+    )
+    assert evidence.max_abs_deviation == pytest.approx(1 / 3 - 0.33333)
+    assert evidence.worst_sheet == SHEETS[0]
+    assert evidence.tolerance == m.ADJUSTMENT_TOLERANCE == 1e-5
+
+
+def test_adjustment_back_solve_refuses_a_correction_that_is_not_bh(table: Path) -> None:
+    frames = _frames(table)
+    frames[SHEETS[3]].loc[0, "Adj. p-value"] = 0.01
+    with pytest.raises(m.SheetFormatError, match="4xMIC-3hours: Adj. p-value differs"):
+        m.adjustment_back_solve(frames)
+
+
+def _record(sheet: str, tag: str, p: Any, q: Any, method: Any) -> dict[str, Any]:
+    return {
+        "experiment": {
+            "genotype": {"perturbations": [{"systematic_gene_name": tag}]},
+            "phenotype": {
+                "screen_id": sheet,
+                "environment_response_p_value": p,
+                "environment_response_p_value_adjusted": q,
+                "p_value_adjustment_method": method,
+            },
+        }
+    }
+
+
+def test_released_test_fidelity_counts_missing_and_changed_values(table: Path) -> None:
+    frames = _frames(table)
+    bh = "benjamini_hochberg"
+    good = _record(SHEETS[0], "b0001", 0.01, 0.05, bh)
+    result = m._l2_released_test([good], frames)
+    assert result.passed and result.details["n_records"] == 1
+    result = m._l2_released_test(
+        [
+            good,
+            _record(SHEETS[1], "b0004", None, 0.1, bh),
+            _record(SHEETS[2], "b0005", 0.2, 0.33, bh),
+            _record(SHEETS[2], "b0005", 0.2, 0.33333, "bonferroni"),
+        ],
+        frames,
+    )
+    assert not result.passed
+    assert (result.details["n_missing"], result.details["n_mismatched"]) == (1, 2)
+    assert result.details["examples"] == [
+        "0.25xMIC-3hours/b0004",
+        "4xMIC-1hour/b0005",
+        "4xMIC-1hour/b0005",
+    ]
+    assert not m._l2_released_test([], frames).passed
 
 
 # --------------------------------------------------------------------------- #
@@ -539,6 +655,15 @@ def test_the_built_records_carry_the_released_values(
     assert {
         r["reference"]["phenotype_reference"]["environment_response"] for r in records
     } == {0.0}
+    assert {
+        (
+            r["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"],
+            r["experiment"]["phenotype"]["environment_response_p_value"],
+            r["experiment"]["phenotype"]["environment_response_p_value_adjusted"],
+            r["experiment"]["phenotype"]["p_value_adjustment_method"],
+        )
+        for r in records
+    } == {(tag, P_VALUES[tag], ADJUSTED[tag], "benjamini_hochberg") for tag in KEPT}
 
 
 def test_the_build_writes_every_ledger(built: m.EnvChemgenWang2024Dataset) -> None:
@@ -547,6 +672,11 @@ def test_the_build_writes_every_ledger(built: m.EnvChemgenWang2024Dataset) -> No
     assert log["kept_records"] == SYNTHETIC_RECORDS
     identifiers = json.loads((out / "identifier_reconciliation.json").read_text())
     assert list(identifiers["not_a_locus_tag"]) == ["b0099"]
+    adjustment = json.loads((out / "adjustment_back_solve.json").read_text())
+    assert (adjustment["method"], adjustment["rows_per_sheet"]) == (
+        "benjamini_hochberg",
+        5,
+    )
     gaps = json.loads((out / "perturbation_field_gaps.json").read_text())
     assert [gap["field"] for gap in gaps] == [
         "barcode",
@@ -603,6 +733,9 @@ def test_verify_build_runs_the_gate_on_the_built_store(
     )
     rows = {result.name: result for result in report.results}
     assert rows["pair_uniqueness"].passed
+    assert rows["released_test_fidelity"].passed
+    assert rows["released_test_fidelity"].details["n_records"] == SYNTHETIC_RECORDS
+    assert rows["p_value_adjustment_back_solve"].passed
     assert len(audited) == len(m.SOURCED_VALUES)
     assert {mirror for _, mirror in audited} == {tmp_path / "torchcell-raw"}
     assert osp.exists(osp.join(built.root, "preprocess", "verification_report.json"))
@@ -893,3 +1026,23 @@ def test_the_built_store_holds_the_measured_counts() -> None:
         m.RULE_IDENTIFIER: 30,
     }
     assert [c["no_reads"] for c in log["conditions"]] == [287, 294, 285, 277, 286, 292]
+
+
+@pytest.mark.data
+def test_the_real_release_is_benjamini_hochberg_per_sheet() -> None:
+    evidence = m.adjustment_back_solve(
+        m.read_table_s2(_mirror() / "data" / m.DATA_FILE)
+    )
+    assert (evidence.sheets, evidence.rows_per_sheet) == (6, 4419)
+    assert evidence.max_abs_deviation <= 5.0e-6 + 1e-12
+
+
+@pytest.mark.data
+def test_every_built_record_carries_the_released_test() -> None:
+    from torchcell.verification.runners import stream_records
+
+    root = _built_root()
+    frames = m.read_table_s2(osp.join(root, "raw", m.DATA_FILE))
+    result = m._l2_released_test(stream_records(root), frames)
+    assert result.passed, result.message
+    assert result.details["n_records"] == m.EXPECTED_RECORDS

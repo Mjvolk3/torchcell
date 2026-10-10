@@ -6856,6 +6856,39 @@ class ProductivityUnit(StrEnum):
     mg_per_l_per_h = "mg/L/h"
 
 
+# --- begin #753: per-key censoring on a turnover measurement ------------------- #
+class Censoring(StrEnum):
+    """Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.
+
+    A pulse-labeling turnover assay cannot resolve a protein that barely turns over
+    within the labeling window, so the fit is capped and the released number is the cap:
+    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over
+    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set
+    to ceiling for this dilution rate". Averaging a censored value with uncensored ones
+    biases the mean toward the cap, so a consumer must be able to tell them apart.
+
+    ``uncensored`` is a member rather than being spelled by absence: a source whose
+    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state
+    it for every key, and a key MISSING from the map then means the source does not say
+    for that key. The two are different facts and the schema keeps them different.
+
+    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the
+    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true
+    half-life lies above the stored one and the cell is ``right`` censored; because
+    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the
+    RATE from above. A consumer reading ``right`` beside a rate alone would read it
+    backwards, so a loader that stores censoring names the censored quantity in its
+    ``measurement_type`` and in its note.
+    """
+
+    uncensored = "uncensored"
+    right = "right"
+    left = "left"
+
+
+# --- end #753 ------------------------------------------------------------------- #
+
+
 class ProductTiterPhenotype(Phenotype, ModelStrict):
     """How much of a named product a strain made: titer, with yield and productivity.
 
@@ -6877,6 +6910,13 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
     source, the oxygen regime, the vessel and the duration are all ``Environment``
     (and ``CultureEnvironment``) slots already, and putting them on the phenotype would
     make "what was measured" carry part of "what it was grown in".
+
+    A titer the assay could not detect is a BOUND, not a zero (#867): Thompson 2019
+    states the wild type's 48 h valerolactam as "no valerolactam could be detected",
+    which is a value below the assay's floor. ``titer_censoring`` carries it on the
+    ``ProteinTurnoverPhenotype`` precedent (#753): ``left`` means the true titer lies
+    BELOW the stored ``titer``, which then holds the floor in the culture, and such a
+    titer carries no uncertainty and no standard error because a bound has neither.
     """
 
     graph_level: str = "global"
@@ -6928,6 +6968,17 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
         description="how the product was quantified, verbatim (e.g. 'GC-MS', "
         "'HPLC-RID'); None when the source does not state it",
     )
+    # --- begin #867: a below-detection titer is a bound, not a zero ------------- #
+    titer_censoring: Censoring | None = Field(
+        default=None,
+        description="whether the stored titer is an ESTIMATE or a BOUND, and on which "
+        "side. 'left' means the true titer lies below the stored value, which is the "
+        "assay's floor expressed in the culture (a 'not detected' cell); 'right' means "
+        "it lies above (a saturated assay's ceiling); 'uncensored' means the source "
+        "states a quantified value. None means the source says nothing about censoring "
+        "for this titer.",
+    )
+    # --- end #867 ---------------------------------------------------------------- #
 
     @field_validator("titer", mode="after")
     @classmethod
@@ -6990,40 +7041,20 @@ class ProductTiterPhenotype(Phenotype, ModelStrict):
                 )
             if value is not None and value < 0:
                 raise ValueError(f"{value_name} must be non-negative, got {value}")
+        # --- begin #867: a below-detection titer is a bound, not a zero --------- #
+        if self.titer_censoring in (Censoring.left, Censoring.right):
+            if self.titer_uncertainty is not None or self.titer_se is not None:
+                raise ValueError(
+                    f"a {self.titer_censoring.value}-censored titer is a bound, so it "
+                    "carries no titer_uncertainty and no titer_se"
+                )
+        if self.titer_censoring == Censoring.left and self.titer == 0.0:
+            raise ValueError(
+                "a left-censored titer stores the detection floor it lies below; a "
+                "floor of 0.0 states an exact zero, which is a measurement, not a bound"
+            )
+        # --- end #867 ------------------------------------------------------------ #
         return self
-
-
-# --- begin #753: per-key censoring on a turnover measurement ------------------- #
-class Censoring(StrEnum):
-    """Whether a per-key measurement is an ESTIMATE or a BOUND, and on which side.
-
-    A pulse-labeling turnover assay cannot resolve a protein that barely turns over
-    within the labeling window, so the fit is capped and the released number is the cap:
-    a right-censored value, not an estimate. Gupta 2024 releases 2,082 such cells over
-    its 13 conditions, each marked ``*`` with the gloss "Protein total half-life was set
-    to ceiling for this dilution rate". Averaging a censored value with uncensored ones
-    biases the mean toward the cap, so a consumer must be able to tell them apart.
-
-    ``uncensored`` is a member rather than being spelled by absence: a source whose
-    censoring oracle is complete (Gupta's is, 0 disagreements in 61,811 cells) can state
-    it for every key, and a key MISSING from the map then means the source does not say
-    for that key. The two are different facts and the schema keeps them different.
-
-    THE SIDE IS STATED ON THE QUANTITY THE SOURCE CENSORED, which is not always the
-    record's primary label. Gupta 2024 caps the released total HALF-LIFE, so the true
-    half-life lies above the stored one and the cell is ``right`` censored; because
-    ``degradation_rate = ln 2 / half_life`` is DECREASING, that same cell bounds the
-    RATE from above. A consumer reading ``right`` beside a rate alone would read it
-    backwards, so a loader that stores censoring names the censored quantity in its
-    ``measurement_type`` and in its note.
-    """
-
-    uncensored = "uncensored"
-    right = "right"
-    left = "left"
-
-
-# --- end #753 ------------------------------------------------------------------- #
 
 
 class ProteinTurnoverPhenotype(Phenotype, ModelStrict):

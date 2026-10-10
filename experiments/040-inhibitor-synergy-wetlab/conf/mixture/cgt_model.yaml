@@ -1,0 +1,61 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/cgt_model.yaml
+#
+# The cell graph transformer and the gene graphs `train_mixture.py` builds, copied
+# verbatim from experiment 038's conf/default.yaml (worktree
+# exp/038-env-chemgen-vanacloig-cgt-corrected, commit 9427c0d4e) with the OmegaConf
+# interpolations written out, since this file is read with plain yaml.safe_load. The
+# model half of that file is experiments/025-solid-growth/conf/cgt_s0_r_kl_000.yaml,
+# which is the 010 configuration.
+#
+# NOT a sweep file: train_mixture.py reads it by name (MODEL_YAML), and the sweep files
+# in this folder are the YAML lists of MixtureConfig dicts. The depth, width and prior
+# weight a run actually uses come from its MixtureConfig (cgt_layers, cgt_dim,
+# cgt_heads, cgt_lambda); build_encoder overrides this file's values with them, and
+# moves the prior onto layer 0 when the encoder has one layer.
+
+cell_dataset:
+  graphs: [
+      physical,
+      regulatory,
+      tflink,
+      string12_0_neighborhood,
+      string12_0_fusion,
+      string12_0_cooccurence,
+      string12_0_coexpression,
+      string12_0_experimental,
+      string12_0_database,
+    ]
+
+model:
+  gene_num: 6607
+  hidden_channels: 180
+  num_transformer_layers: 8
+  num_attention_heads: 9
+  dropout: 0.1
+  identity_skip: false
+
+  learnable_embedding:
+    enabled: true
+    size: 180
+    preprocessor:
+      num_layers: 2
+      dropout: 0.1
+
+  graph_regularization:
+    graph_reg_lambda: 1.0
+    graph_reg_layer: 1 # python indexed
+    row_sampling_rate: 1.0
+    regularized_heads:
+      physical: { layer: 1, head: 0, lambda: 1.0 }
+      regulatory: { layer: 1, head: 1, lambda: 1.0 }
+      tflink: { layer: 1, head: 2, lambda: 1.0 }
+      string12_0_neighborhood: { layer: 1, head: 3, lambda: 1.0 }
+      string12_0_fusion: { layer: 1, head: 4, lambda: 1.0 }
+      string12_0_cooccurence: { layer: 1, head: 5, lambda: 1.0 }
+      string12_0_coexpression: { layer: 1, head: 6, lambda: 1.0 }
+      string12_0_experimental: { layer: 1, head: 7, lambda: 1.0 }
+      string12_0_database: { layer: 1, head: 8, lambda: 1.0 }
+
+  perturbation_head:
+    num_heads: 9
+    dropout: 0.1

@@ -1,0 +1,272 @@
+{
+  "citation_key": "liQuantifyingAbsoluteProtein2014",
+  "doi": "10.1016/j.cell.2014.02.033",
+  "geo_samples": [
+    {
+      "characteristics_ch1": [
+        "strain: MG1655",
+        "media: fully supplemented MOPS glucose media"
+      ],
+      "description": [
+        "ribosome protected mRNA",
+        "fp_rdm_pooled_f.wig",
+        "fp_rdm_pooled_r.wig"
+      ],
+      "gsm": "GSM1300279",
+      "title": [
+        "ribosome profiling in rich defined media"
+      ]
+    },
+    {
+      "characteristics_ch1": [
+        "strain: MG1655",
+        "media: minimal MOPS glucose media"
+      ],
+      "description": [
+        "ribosome protected mRNA",
+        "fp_min_pooled_f.wig",
+        "fp_min_pooled_r.wig"
+      ],
+      "gsm": "GSM1300280",
+      "title": [
+        "ribosome profiling in minimal media 1"
+      ]
+    },
+    {
+      "characteristics_ch1": [
+        "strain: MG1655",
+        "media: minimal MOPS glucose media"
+      ],
+      "description": [
+        "ribosome protected mRNA",
+        "fp_min_pooled_f.wig",
+        "fp_min_pooled_r.wig"
+      ],
+      "gsm": "GSM1300281",
+      "title": [
+        "ribosome profiling in minimal media 2"
+      ]
+    },
+    {
+      "characteristics_ch1": [
+        "strain: MG1655",
+        "media: fully supplemented MOPS glucose media"
+      ],
+      "description": [
+        "mRNA",
+        "mrna-rdm-pooled_f.wig",
+        "mrna-rdm-pooled_r.wig"
+      ],
+      "gsm": "GSM1300282",
+      "title": [
+        "mRNA-seq in rich defined media"
+      ]
+    }
+  ],
+  "gupta2024_overlap": {
+    "gupta_batch_keys": 2553,
+    "gupta_records": 13,
+    "gupta_union_keys": 3260,
+    "li_resolved_keys": 4059,
+    "per_condition": {
+      "MOPS complete": {
+        "n_shared_plain": 2395,
+        "pearson_log10_synthesis_vs_degradation_rate": -0.042,
+        "spearman_synthesis_vs_degradation_rate": -0.0961
+      },
+      "MOPS complete without methionine": {
+        "n_shared_plain": 1972,
+        "pearson_log10_synthesis_vs_degradation_rate": -0.0101,
+        "spearman_synthesis_vs_degradation_rate": -0.0547
+      },
+      "MOPS minimal": {
+        "n_shared_plain": 2484,
+        "pearson_log10_synthesis_vs_degradation_rate": -0.0364,
+        "spearman_synthesis_vs_degradation_rate": -0.1164
+      }
+    },
+    "shared_union_keys": 3202
+  },
+  "identifier_resolution_mg1655": {
+    "distinct_b_numbers": 4059,
+    "merged_pair_rows_not_offered": 8,
+    "names_offered": 4087,
+    "report": "label='li2014' assembly_set='ecoli_K12_MG1655_ASM584v2' gene_namespace='ecoli_k12_mg1655_bnumber' unique_names=4087 status_histogram={<GeneNameStatus.CURRENT: 'current'>: 0, <GeneNameStatus.RENAMED: 'renamed'>: 4057, <GeneNameStatus.NON_GENE_FEATURE: 'non_gene_feature'>: 6, <GeneNameStatus.RETIRED: 'retired'>: 19, <GeneNameStatus.AMBIGUOUS: 'ambiguous'>: 5} layer_histogram={'locus tag': 0, 'old locus tag': 0, 'RefSeq locus tag': 0, 'gene symbol': 3751, 'gene synonym': 317, 'not found': 19} remapped=4059 kept_on_collision=('ecpD', 'mscM', 'yagW', 'yjeP') retired_kept=('adrB', 'arrD', 'arrQ', 'dnaXgamma', 'dnaXtau', 'insA', 'insB', 'insC', 'insE', 'insF', 'insH', 'insI', 'insL', 'rdoA', 'rhmA', 'rhmR', 'rhmT', 'ybfK', 'yliL') ambiguous_kept={'ade': ('b0523', 'b1131', 'b2312', 'b2476', 'b2500', 'b3665'), 'gtrA': ('b1210', 'b2350'), 'rffT': ('b3793', 'b4481'), 'spr': ('b2175', 'b4043'), 'ygaD': ('b2676', 'b2700')} case_insensitive=() outside_namespace=('ade', 'adrB', 'arrD', 'arrQ', 'dnaXgamma', 'dnaXtau', 'ecpD', 'gtrA', 'insA', 'insB', 'insC', 'insE', 'insF', 'insH', 'insI', 'insL', 'mscM', 'rdoA', 'rffT', 'rhmA', 'rhmR', 'rhmT', 'spr', 'yagW', 'ybfK', 'ygaD', 'yjeP', 'yliL')",
+    "resolved_fraction": 0.9931,
+    "resolved_to_b_number": 4059,
+    "unresolved": [
+      "ade",
+      "adrB",
+      "arrD",
+      "arrQ",
+      "dnaXgamma",
+      "dnaXtau",
+      "ecpD",
+      "gtrA",
+      "insA",
+      "insB",
+      "insC",
+      "insE",
+      "insF",
+      "insH",
+      "insI",
+      "insL",
+      "mscM",
+      "rdoA",
+      "rffT",
+      "rhmA",
+      "rhmR",
+      "rhmT",
+      "spr",
+      "yagW",
+      "ybfK",
+      "ygaD",
+      "yjeP",
+      "yliL"
+    ]
+  },
+  "loadable_keys_if_schema_held_a_synthesis_rate": {
+    "MOPS complete": {
+      "drop_bracketed_below_128_footprints": 1054,
+      "drop_merged_pair_one_value_two_loci": 2,
+      "drop_name_not_resolved_to_one_b_number": 14,
+      "loadable_keys": 3025
+    },
+    "MOPS complete without methionine": {
+      "drop_bracketed_below_128_footprints": 1854,
+      "drop_merged_pair_one_value_two_loci": 1,
+      "drop_name_not_resolved_to_one_b_number": 14,
+      "loadable_keys": 2226
+    },
+    "MOPS minimal": {
+      "drop_bracketed_below_128_footprints": 733,
+      "drop_merged_pair_one_value_two_loci": 3,
+      "drop_name_not_resolved_to_one_b_number": 13,
+      "loadable_keys": 3346
+    }
+  },
+  "mirror": "/scratch/projects/torchcell-scratch/torchcell-raw/liQuantifyingAbsoluteProtein2014",
+  "mirror_sha256": {
+    "data/1-s2.0-S0092867414002323-mmc1.xlsx": "f493023e9b4bf7a154fd12b4c1fd617047af46153fffde7f1215932d35d5a661",
+    "paper/PMC4006352.1.txt": "b3cc01fb5111bef6ae40d758d5e89e69cd198c77bcf33419da7578d27c605a72",
+    "paper/PMC4006352.1.xml": "03ac4643bbf8bb28b269645144f8903f26d57d08dce9cf0da69c8be9c28c09a9",
+    "si/1-s2.0-S0092867414002323-mmc2.xlsx": "ffd05c218c3f7b9d60f96b454e10f072b369a0a3538ba91115694b455beef17f",
+    "si/1-s2.0-S0092867414002323-mmc3.xlsx": "28a68899b6eac61657f5b2eb386d6aee3a7f7ae374f2bbfe9e279e946190cd22",
+    "si/1-s2.0-S0092867414002323-mmc4.xlsx": "877ba750e657a8d81b3e2d54a7dd05788866f2b37951afe7e676a665176b8f21",
+    "si/1-s2.0-S0092867414002323-mmc5.xlsx": "47b501c945ff53cb24b5887fedca823780a5e18341fb49496063447937c04f28",
+    "si/1-s2.0-S0092867414002323-mmc6.pdf": "a96e712d91dea29c6f1072fe2319d6e38ce3103ac7728477cf3b962aa1784828",
+    "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+  },
+  "quotes": {
+    "doubling_times": {
+      "file": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+      "quote": "The doubling time at 37\u0001 C is 21.5 \u00b1 0.4 min in fully supplemented MOPS media, 26.5 \u00b1 1.1 min in the methionine",
+      "sha256": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+    },
+    "evaluated_3041": {
+      "file": "paper/PMC4006352.1.txt",
+      "quote": "For growth in a rich defined medium (Neidhardt et al., 1974), we evaluated 3,041 genes which account for >96% of total proteins synthesized.",
+      "sha256": "b3cc01fb5111bef6ae40d758d5e89e69cd198c77bcf33419da7578d27c605a72"
+    },
+    "geo": {
+      "file": "paper/PMC4006352.1.txt",
+      "quote": "Data are available at Gene Expression Omnibus with accession number GSE53767.",
+      "sha256": "b3cc01fb5111bef6ae40d758d5e89e69cd198c77bcf33419da7578d27c605a72"
+    },
+    "media": {
+      "file": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+      "quote": "All cultures were based on MOPS media with 0.2% glucose (Teknova), with either",
+      "sha256": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+    },
+    "stable_equals_copy_number": {
+      "file": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+      "quote": "proteins, ki is also the copy number. The results are listed in Table S1.",
+      "sha256": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+    },
+    "strain": {
+      "file": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+      "quote": "E. coli K-12 strain MG1655 was used for this study.",
+      "sha256": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+    },
+    "threshold_and_error": {
+      "file": "paper/PMC4006352.1.txt",
+      "quote": "All of these genes have >128 ribosome footprint fragments sequenced, with an error of less than 1.3-fold across biological replicates.",
+      "sha256": "b3cc01fb5111bef6ae40d758d5e89e69cd198c77bcf33419da7578d27c605a72"
+    },
+    "unit": {
+      "file": "si/1-s2.0-S0092867414002323-mmc6.pdftotext.txt",
+      "quote": "where ki has the unit of molecules per generation.",
+      "sha256": "053b55b6327afc1e3f6ac90bf7af231e081620f9992ad3aee54f97d4df59e3db"
+    },
+    "upper_bound_for_degraded": {
+      "file": "paper/PMC4006352.1.txt",
+      "quote": "Our measures based on synthesis rates thus provide an upper bound for the protein levels for the small subset of proteins that are rapidly degraded.",
+      "sha256": "b3cc01fb5111bef6ae40d758d5e89e69cd198c77bcf33419da7578d27c605a72"
+    }
+  },
+  "schema_fit_protein_turnover": {
+    "empty_degradation_rate": "Value error, degradation_rate cannot be empty"
+  },
+  "table_s1": {
+    "columns": [
+      "Gene",
+      "MOPS complete",
+      "MOPS minimal",
+      "MOPS complete without methionine"
+    ],
+    "conditions": {
+      "MOPS complete": {
+        "bracketed_max": 86,
+        "bracketed_min": 0,
+        "cells": {
+          "bracketed_integer": 1054,
+          "plain_integer": 3041
+        },
+        "plain_max": 1191641,
+        "plain_min": 2,
+        "plain_sum": 18045477,
+        "plain_values_below_bracket_max": 683
+      },
+      "MOPS complete without methionine": {
+        "bracketed_max": 1161,
+        "bracketed_min": 0,
+        "cells": {
+          "bracketed_integer": 1854,
+          "plain_integer": 2241
+        },
+        "plain_max": 669430,
+        "plain_min": 0,
+        "plain_sum": 10421116,
+        "plain_values_below_bracket_max": 1517
+      },
+      "MOPS minimal": {
+        "bracketed_max": 36,
+        "bracketed_min": 0,
+        "cells": {
+          "bracketed_integer": 733,
+          "plain_integer": 3362
+        },
+        "plain_max": 619492,
+        "plain_min": 0,
+        "plain_sum": 5625834,
+        "plain_values_below_bracket_max": 770
+      }
+    },
+    "gene_rows": 4095,
+    "merged_pair_rows": [
+      "gadA+gadB",
+      "ldrA+ldrC",
+      "pinR+pinQ",
+      "rzoD+rzoR",
+      "tfaR+tfaQ",
+      "tufA+tufB",
+      "ybfD+yhhI",
+      "ynaE+ydfK"
+    ],
+    "split_rows": [
+      "dnaXgamma",
+      "dnaXtau"
+    ],
+    "unique_gene_names": 4095
+  }
+}

@@ -557,6 +557,122 @@ class _AbsoluteReferenceAccumulator:
         )
 
 
+def _reference_ratio_result(
+    *,
+    n_values: int,
+    n_bad_reference: int,
+    n_non_ratio_type: int,
+    n_type_mismatch: int,
+    worst: float,
+    types: set[str],
+) -> LevelResult:
+    """L3 ``reference_zero``, the RATIO branch: the reference is 1.0, not 0.
+
+    A readout that divides a strain's growth by a control's measured in the same run is
+    1.0 at that control, not 0: Hawkins 2020 states it outright ("Strains with a relative
+    fitness of 1 grow as well as the wild-type does"), and a stored 0 would assert a
+    wild type that did not divide. So the rule becomes the zero rule shifted by one: the
+    reference is present, finite, exactly 1.0, and on the same measurement scale as the
+    experiment record it references. The relief is gated the way the absolute one is --
+    every record's ``measurement_type`` must be a member of ``RATIO_MEASUREMENT_TYPES``,
+    so asking for it on a log2-ratio or z-score dataset FAILS instead of quietly skipping
+    the check -- and the message names the branch that ran.
+    """
+    passed = (
+        n_bad_reference == 0
+        and n_non_ratio_type == 0
+        and n_type_mismatch == 0
+        and worst == 0.0
+    )
+    return LevelResult(
+        level=Level.L3,
+        name="reference_zero",
+        passed=passed,
+        message=(
+            f"ratio rule: reference response == 1 for all {n_values} records "
+            f"({sorted(types)})"
+            if passed
+            else f"ratio rule: {n_bad_reference} references absent or non-finite; "
+            f"max|v - 1|={worst:.3g}; {n_non_ratio_type} records carry a "
+            f"measurement_type that is not a ratio against a same-run control, which is "
+            f"0 at that control rather than 1 and may not take this relief; "
+            f"{n_type_mismatch} references on a different scale than their experiment "
+            f"({sorted(types)})"
+        ),
+        details={
+            "rule": "ratio_reference",
+            "n_values": n_values,
+            "n_bad_reference": n_bad_reference,
+            "n_non_ratio_measurement_type": n_non_ratio_type,
+            "n_reference_type_mismatch": n_type_mismatch,
+            "worst_abs_deviation_from_one": worst,
+            "measurement_types": sorted(types),
+        },
+    )
+
+
+class _RatioReferenceAccumulator:
+    """Single-pass accumulator for the ratio-reference rule (eager + streaming)."""
+
+    def __init__(self, ratio_types: set[str], unit: float) -> None:
+        self._ratio = ratio_types
+        self._unit = unit
+        self.n_values = 0
+        self.n_bad_reference = 0
+        self.n_non_ratio_type = 0
+        self.n_type_mismatch = 0
+        self.worst = 0.0
+        self.types: set[str] = set()
+
+    def add(self, record: Record) -> None:
+        """Score one record's reference against the unit control of its own scale."""
+        phenotype = record["experiment"]["phenotype"]
+        kind = str(phenotype["measurement_type"])
+        self.types.add(kind)
+        self.n_values += 1
+        if kind not in self._ratio:
+            self.n_non_ratio_type += 1
+        reference = record["reference"]["phenotype_reference"]
+        value = reference["environment_response"]
+        if value is None or not math.isfinite(float(value)):
+            self.n_bad_reference += 1
+        else:
+            self.worst = max(self.worst, abs(float(value) - self._unit))
+        if str(reference["measurement_type"]) != kind:
+            self.n_type_mismatch += 1
+
+    def result(self) -> LevelResult:
+        """The L3 row this accumulator's counts imply."""
+        return _reference_ratio_result(
+            n_values=self.n_values,
+            n_bad_reference=self.n_bad_reference,
+            n_non_ratio_type=self.n_non_ratio_type,
+            n_type_mismatch=self.n_type_mismatch,
+            worst=self.worst,
+            types=self.types,
+        )
+
+
+def _ratio_reference_accumulator() -> _RatioReferenceAccumulator:
+    """The ratio accumulator over the schema's declared ratio types and unit value."""
+    from torchcell.datamodels.schema import (
+        RATIO_MEASUREMENT_TYPES,
+        RATIO_REFERENCE_VALUE,
+    )
+
+    return _RatioReferenceAccumulator(
+        {str(member.value) for member in RATIO_MEASUREMENT_TYPES}, RATIO_REFERENCE_VALUE
+    )
+
+
+def _l3_reference_ratio(records: Sequence[Record]) -> LevelResult:
+    """L3: the reference of a RATIO readout is the unit control of its own scale."""
+    accumulator = _ratio_reference_accumulator()
+    for rec in records:
+        accumulator.add(rec)
+    return accumulator.result()
+
+
 def _interval_orientation_result(
     *,
     n_intervals: int,
@@ -760,6 +876,7 @@ def verify_environment_response_dataset(
     gene_universe_label: str = "reference",
     min_containment: float = 0.90,
     reference_centered: bool = True,
+    reference_unit_scaled: bool = False,
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
 ) -> VerificationReport:
@@ -782,6 +899,13 @@ def verify_environment_response_dataset(
       reference condition's own measured value; the absolute branch then REFUSES any
       record whose ``measurement_type`` is not in ``ABSOLUTE_MEASUREMENT_TYPES``, so it
       cannot be used to skip the zero check on a log2-ratio dataset.
+    - ``reference_unit_scaled`` (default False) is the third baseline: a readout that
+      divides a strain's growth by a control measured in the SAME run is 1.0 at that
+      control, not 0 (Hawkins 2020's relative fitness, the Bioscreen panels' rate).
+      Setting it runs the ratio branch, which requires every reference to be exactly 1.0
+      and every record's ``measurement_type`` to be in ``RATIO_MEASUREMENT_TYPES``, so it
+      cannot skip the zero check on a difference-scaled readout either. It is mutually
+      exclusive with ``reference_centered=False``.
     - ``expected_unperturbed`` (default 0) is how many records carry no environmental
       edit. Nonzero only for an absolute readout, whose base condition is a measured
       condition; observed must EQUAL declared.
@@ -847,9 +971,13 @@ def verify_environment_response_dataset(
 
     report.add(_l3_measurement_type_consistent(records))
     report.add(
-        _l3_reference_zero(records)
-        if reference_centered
-        else _l3_reference_absolute(records)
+        _l3_reference_ratio(records)
+        if reference_unit_scaled
+        else (
+            _l3_reference_zero(records)
+            if reference_centered
+            else _l3_reference_absolute(records)
+        )
     )
     report.add(_l3_environment_perturbed(records, expected_unperturbed))
     for result in shared.results():
@@ -879,6 +1007,7 @@ def verify_environment_response_dataset_streaming(
     min_containment: float = 0.90,
     resolve_gene_name: GeneNameResolver | None = None,
     reference_centered: bool = True,
+    reference_unit_scaled: bool = False,
     expected_unperturbed: int = 0,
     expected_non_bracketing: int = 0,
 ) -> VerificationReport:
@@ -927,6 +1056,7 @@ def verify_environment_response_dataset_streaming(
     absolute_reference = _AbsoluteReferenceAccumulator(
         {str(member.value) for member in ABSOLUTE_MEASUREMENT_TYPES}
     )
+    ratio_reference = _ratio_reference_accumulator()
     shared = SharedRecordRules(
         background_genes=background_genes,
         resolve_gene_name=resolve_gene_name,
@@ -968,6 +1098,7 @@ def verify_environment_response_dataset_streaming(
 
         intervals.add(i, rec)
         absolute_reference.add(rec)
+        ratio_reference.add(rec)
 
         reference = rec["reference"]["phenotype_reference"]
         ref_val = reference["environment_response"]
@@ -1025,15 +1156,19 @@ def verify_environment_response_dataset_streaming(
     report.add(intervals.result(expected_non_bracketing))
     report.add(_measurement_type_result(measurement_types))
     report.add(
-        _reference_baseline_result(
-            n_numeric=n_ref,
-            worst=ref_worst,
-            reference_categories=reference_categories,
-            n_reference_missing_category=n_reference_missing_category,
-            experiment_categories=experiment_categories,
+        ratio_reference.result()
+        if reference_unit_scaled
+        else (
+            _reference_baseline_result(
+                n_numeric=n_ref,
+                worst=ref_worst,
+                reference_categories=reference_categories,
+                n_reference_missing_category=n_reference_missing_category,
+                experiment_categories=experiment_categories,
+            )
+            if reference_centered
+            else absolute_reference.result()
         )
-        if reference_centered
-        else absolute_reference.result()
     )
     baseline_temp = temp_counts.most_common(1)[0][0] if temp_counts else None
     baseline_media = media_counts.most_common(1)[0][0] if media_counts else None

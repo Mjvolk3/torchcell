@@ -506,6 +506,7 @@ BACTERIAL_DATASETS = {
     "GrowthRateCampos2018Dataset",
     "GrowthRateLamoureux2023Dataset",
     "GrowthWang2015Dataset",
+    "MismatchCrispriFitnessHawkins2020Dataset",
     "GrowthRateChoe2019Dataset",
     "GrowthRateS23Schmidt2016Dataset",
     "GrowthRateSchmidt2016Dataset",
@@ -583,6 +584,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (row 53, Royet 2025's metal Tn-seq).
     assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2
     # + 2 (Thompson 2019 valerolactam: its titer and its growth-rate families).
+    # + 1 (Hawkins 2020 mismatch-CRISPRi).
+    assert len(dataset_adapter_map) == 110 + 1 + 6 + 2 + 3 + 1 + 1
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
         "AminoAcidCooper2010Dataset",

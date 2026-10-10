@@ -891,3 +891,42 @@ pre-commit hook takes `TORCHCELL_QUERY_DRIFT_ACK=1` for a deliberate revision; t
 branch does not already carry. So this branch lands with `query-drift` red by
 construction. Deprecating the four queries to make it green would be false: they are
 supported, and they return the same records.
+
+## 2026.10.10 - A third reference baseline: a ratio readout whose control is 1.0
+
+Hawkins 2020's mismatch-CRISPRi relative fitness (strain doublings divided by the same
+run's wild-type doublings) is 1.0 at its control, not 0, and the paper states it:
+"Strains with a relative fitness of 1 grow as well as the wild-type does; lower values
+imply slower growth." The environment-response verifier had two reference branches and
+neither fit. The numeric `reference_zero` branch requires the reference to be identically
+0, which is what a DIFFERENCE-scaled relative readout (`log2_ratio`, `z_score`,
+`differential_fitness`, `control_regression_residual`) is at its control. The
+`reference_centered=False` absolute branch refuses any record whose `measurement_type` is
+not in `ABSOLUTE_MEASUREMENT_TYPES`, deliberately, and `relative_growth_rate` is not and
+should not be a member: it has a control in its own units.
+
+Added, additively, with the same gating shape as the #776 absolute relief:
+
+- `RATIO_MEASUREMENT_TYPES = frozenset({MeasurementType.relative_growth_rate})` and
+  `RATIO_REFERENCE_VALUE = 1.0` in `torchcell/datamodels/schema.py`, beside
+  `ABSOLUTE_MEASUREMENT_TYPES`. The two sets are disjoint and no difference-scaled type
+  is in either.
+- `reference_unit_scaled: bool = False` on both
+  `verify_environment_response_dataset` and
+  `verify_environment_response_dataset_streaming`. When set, the `reference_zero` row
+  becomes the ratio rule: every reference is present, finite and exactly 1.0, every
+  reference is on the same measurement scale as its experiment, and every record's
+  `measurement_type` is a member of `RATIO_MEASUREMENT_TYPES`. Asking for the relief on a
+  log2-ratio dataset FAILS (measured in
+  `test_ratio_branch_refuses_a_difference_scaled_measurement_type`) rather than replacing
+  a zero check with a one check.
+
+The two existing branches are untouched, so every served dataset's report keeps its rows
+verbatim. The precedent this generalizes is the private Bioscreen loader, which had to
+build its own report with a hand-written `l3_reference_one` rule because the shared
+verifier could not express the baseline; a ratio dataset can now take the shared verifier
+whole. Schema impact: both new symbols are new module-level bindings, impacted datasets
+none.
+
+First consumer: `[[torchcell.datasets.ecoli.hawkins2020]]` (24,149 records, the ratio row
+PASSes with `rule: ratio_reference`).

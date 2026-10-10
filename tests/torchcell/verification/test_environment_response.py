@@ -36,6 +36,9 @@ from typing import Any
 
 from torchcell.datamodels.media import YP_GALACTOSE
 from torchcell.datamodels.schema import (
+    ABSOLUTE_MEASUREMENT_TYPES,
+    RATIO_MEASUREMENT_TYPES,
+    RATIO_REFERENCE_VALUE,
     Compound,
     Concentration,
     DoseBasis,
@@ -50,8 +53,10 @@ from torchcell.datamodels.schema import (
     Media,
     ReferenceGenome,
     ResponseCategory,
+    SampleUnit,
     SmallMoleculePerturbation,
     Temperature,
+    UncertaintyType,
 )
 from torchcell.verification.environment_response import (
     _condition_signature,
@@ -971,3 +976,135 @@ def test_interval_orientation_counts_a_non_bracketing_interval() -> None:
         False,
         "1 of 2 stored intervals do not bracket their value; 0 declared",
     )
+
+
+# --------------------------------------------------------------------------- #
+# The RATIO baseline: a readout whose control is 1.0, not 0 (Hawkins 2020)
+# --------------------------------------------------------------------------- #
+def _ratio(value: float, sd: float | None = None) -> EnvironmentResponsePhenotype:
+    """A relative growth rate: strain doublings / the same run's control doublings."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.relative_growth_rate,
+        environment_response=value,
+        environment_response_uncertainty=sd,
+        environment_response_uncertainty_type=(
+            None if sd is None else UncertaintyType.sample_sd
+        ),
+        n_samples=None if sd is None else 4,
+        sample_unit=None if sd is None else SampleUnit.biological_replicate,
+        units="strain doublings / wild-type doublings",
+    )
+
+
+def _ratio_release(reference: float = 1.0) -> list[dict[str, Any]]:
+    """Three strains on a ratio scale whose reference is the unit control."""
+    return [
+        _record(gene, _ratio(value, 0.04), _ratio(reference))
+        for gene, value in zip(GENES, (0.42, 0.91, -0.11), strict=True)
+    ]
+
+
+def test_ratio_reference_branch_requires_one_and_names_itself() -> None:
+    """``reference_unit_scaled=True``: the control of a ratio readout is 1.0, so the
+    reference states 1.0 and the row says which rule ran. The negative member is kept:
+    a depleted clone's doubling ratio is below 0 and nothing clamps it.
+    """
+    records = _ratio_release()
+    eager = verify_environment_response_dataset(
+        records,
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_unit_scaled=True,
+    )
+    streaming = verify_environment_response_dataset_streaming(
+        iter(records),
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_unit_scaled=True,
+    )
+    for report in (eager, streaming):
+        assert _row(report, "reference_zero") == (
+            "L3",
+            "reference_zero",
+            True,
+            "ratio rule: reference response == 1 for all 3 records "
+            "(['relative_growth_rate'])",
+        )
+        assert _details(report, "reference_zero") == {
+            "rule": "ratio_reference",
+            "n_values": 3,
+            "n_bad_reference": 0,
+            "n_non_ratio_measurement_type": 0,
+            "n_reference_type_mismatch": 0,
+            "worst_abs_deviation_from_one": 0.0,
+            "measurement_types": ["relative_growth_rate"],
+        }
+
+
+def test_ratio_branch_fails_a_zero_centered_reference() -> None:
+    """A stored 0 on this scale asserts a control that did not divide, so it fails."""
+    for report in (
+        verify_environment_response_dataset(
+            _ratio_release(reference=0.0),
+            dataset_name="release",
+            provenance=PROV,
+            expected_count=3,
+            sgd_genes=set(GENES),
+            reference_unit_scaled=True,
+        ),
+        verify_environment_response_dataset_streaming(
+            iter(_ratio_release(reference=0.0)),
+            dataset_name="release",
+            provenance=PROV,
+            expected_count=3,
+            sgd_genes=set(GENES),
+            reference_unit_scaled=True,
+        ),
+    ):
+        assert not _row(report, "reference_zero")[2]
+        assert _details(report, "reference_zero")["worst_abs_deviation_from_one"] == 1.0
+
+
+def test_ratio_branch_refuses_a_difference_scaled_measurement_type() -> None:
+    """The relief is gated the way the absolute one is: a log2-ratio dataset asking for
+    it FAILS rather than having its zero check replaced by a one check.
+    """
+    eager = verify_environment_response_dataset(
+        _release(),
+        dataset_name="release",
+        provenance=PROV,
+        expected_count=3,
+        sgd_genes=set(GENES),
+        reference_unit_scaled=True,
+    )
+    assert _details(eager, "reference_zero") == {
+        "rule": "ratio_reference",
+        "n_values": 3,
+        "n_bad_reference": 0,
+        "n_non_ratio_measurement_type": 3,
+        "n_reference_type_mismatch": 0,
+        "worst_abs_deviation_from_one": 1.0,
+        "measurement_types": ["log2_ratio"],
+    }
+    assert not _row(eager, "reference_zero")[2]
+
+
+def test_the_ratio_set_holds_only_the_same_run_control_ratio() -> None:
+    """``RATIO_MEASUREMENT_TYPES`` and ``ABSOLUTE_MEASUREMENT_TYPES`` are disjoint, and
+    no difference-scaled type is in either: that is what keeps each relief narrow.
+    """
+    assert RATIO_MEASUREMENT_TYPES == frozenset({MeasurementType.relative_growth_rate})
+    assert RATIO_REFERENCE_VALUE == 1.0
+    assert not RATIO_MEASUREMENT_TYPES & ABSOLUTE_MEASUREMENT_TYPES
+    for member in (
+        MeasurementType.log2_ratio,
+        MeasurementType.z_score,
+        MeasurementType.differential_fitness,
+        MeasurementType.control_regression_residual,
+    ):
+        assert member not in RATIO_MEASUREMENT_TYPES
+        assert member not in ABSOLUTE_MEASUREMENT_TYPES

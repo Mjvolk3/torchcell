@@ -68,6 +68,10 @@ sourcing layer.
   essentiality calls.
 - ``gupta2024`` -- ``ProteinTurnoverGupta2024Dataset``: per-protein total turnover in 13
   NCM3722 growth conditions, the first consumer of ``ProteinTurnoverPhenotype``.
+- ``hawkins2020`` -- ``MismatchCrispriFitnessHawkins2020Dataset``: mismatch-CRISPRi, one
+  record per released sgRNA with a measured relative fitness over 317 BW25113 essential
+  genes. The guide's mismatch design rides on the perturbation's description; the
+  released PREDICTED sgRNA activity is a model output and is not stored.
 - ``lamoureux2023`` -- ``RnaseqLamoureux2023Dataset``: PRECISE-1K, one record per MG1655
   RNA-seq library of the samples whose genotype and environment the release states.
 - ``lamoureux2023_growth`` -- ``GrowthRateLamoureux2023Dataset``: the SAME release's
@@ -225,6 +229,9 @@ from .goodall2018 import (
 )
 from .gupta2024 import (
     ProteinTurnoverGupta2024Dataset as ProteinTurnoverGupta2024Dataset,
+)
+from .hawkins2020 import (
+    MismatchCrispriFitnessHawkins2020Dataset as MismatchCrispriFitnessHawkins2020Dataset,
 )
 from .ishii2007 import FluxIshii2007Dataset as FluxIshii2007Dataset
 from .ishii2007 import MetabolomeIshii2007Dataset as MetabolomeIshii2007Dataset

@@ -6327,6 +6327,32 @@ ABSOLUTE_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# RATIO environment-response readouts. ADDITIVE, and the same shape as the
+# ABSOLUTE set above: a name for the measurement types whose control is 1.0
+# rather than 0, so the verifier's reference rule can be relaxed for exactly
+# those and refuse to be relaxed for anything else.
+# --------------------------------------------------------------------------- #
+#: Measurement types whose number is a RATIO against a control measured in the same run,
+#: so an unaffected strain scores 1.0 and the record's reference states 1.0 rather than a
+#: centered 0. Only ``relative_growth_rate`` qualifies: a difference-scaled relative
+#: readout (``log2_ratio``, ``z_score``, ``differential_fitness``,
+#: ``control_regression_residual``) is 0 at its control, and an absolute quantity has no
+#: control in its units at all (``ABSOLUTE_MEASUREMENT_TYPES``). The verifier's
+#: ``reference_unit_scaled=True`` branch requires every record's type to be a member
+#: here, which is what keeps the relief from being a blanket relaxation. Hawkins 2020's
+#: mismatch-CRISPRi relative fitness (strain doublings / wild-type doublings) and the
+#: Bioscreen panels' wild-type-relative growth rate are the readouts that need it.
+RATIO_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
+    {MeasurementType.relative_growth_rate}
+)
+#: What a ratio readout's control is by construction.
+RATIO_REFERENCE_VALUE: float = 1.0
+# --------------------------------------------------------------------------- #
+# end RATIO environment-response readouts
+# --------------------------------------------------------------------------- #
+
+
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     """A strain's fitness/growth RESPONSE to an environmental perturbation.
 

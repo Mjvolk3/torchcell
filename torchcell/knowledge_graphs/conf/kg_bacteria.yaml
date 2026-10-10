@@ -75,6 +75,7 @@ datasets:
   - MetabolomeIshii2007Dataset
   - ProteomeIshii2007Dataset
   - FluxIshii2007Dataset
+  - MismatchCrispriFitnessHawkins2020Dataset
   - RnaseqLamoureux2023Dataset
   - GrowthRateLamoureux2023Dataset
   - RnaseqPublicK12Lamoureux2023Dataset

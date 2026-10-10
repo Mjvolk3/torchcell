@@ -1,0 +1,233 @@
+{
+  "workbook": {
+    "path": "torchcell-library/hawkinsMismatchCRISPRiRevealsCovarying2020/si/si4.xlsx",
+    "sha256": "a9aa39f576e0d240e353e104e0cf94af7a2c5d9e8a375ef8d56cf07694d7412a"
+  },
+  "shape": {
+    "sheets": {
+      "preface": [
+        28,
+        2
+      ],
+      "relative fitness (bsu data)": [
+        33585,
+        10
+      ],
+      "relative fitness (eco data)": [
+        36290,
+        12
+      ],
+      "relative fitness (bsu controls)": [
+        1000,
+        4
+      ],
+      "relative fitness (eco controls)": [
+        1000,
+        4
+      ],
+      "10-15 relfit (eco)": [
+        36290,
+        10
+      ],
+      "10-15 relfit (eco controls)": [
+        1000,
+        4
+      ],
+      "relative fitness (individual)": [
+        27,
+        8
+      ],
+      "v1 trimethoprim fitness scores": [
+        13871,
+        7
+      ]
+    },
+    "eco_columns": [
+      "variant",
+      "original",
+      "locus_tag",
+      "pam",
+      "offset",
+      "gene",
+      "relative fitness (mean)",
+      "relative fitness (stddev)",
+      "family_retained",
+      "relative fitness (predicted)",
+      "Log2FC from Wang et al., 2018",
+      "relative fitness from Rousset et al., 2018"
+    ],
+    "eco_rows": 36290,
+    "distinct_variants": 36290,
+    "distinct_parent_spacers": 3110,
+    "distinct_locus_tags": 318,
+    "mismatch_count": {
+      "1": 33180,
+      "0": 3110
+    },
+    "single_mismatch_position_index_0_based_from_5prime": {
+      "0": 875,
+      "1": 1163,
+      "2": 1081,
+      "3": 975,
+      "4": 1043,
+      "5": 1015,
+      "6": 877,
+      "7": 960,
+      "8": 995,
+      "9": 1200,
+      "10": 1434,
+      "11": 1427,
+      "12": 1592,
+      "13": 2228,
+      "14": 2518,
+      "15": 2153,
+      "16": 1736,
+      "17": 1995,
+      "18": 3106,
+      "19": 4807
+    },
+    "rows_per_series": {
+      "10": 2956,
+      "61": 82,
+      "19": 51,
+      "28": 10,
+      "46": 8,
+      "37": 3
+    },
+    "series_per_gene": {
+      "1": 2,
+      "2": 4,
+      "3": 3,
+      "4": 2,
+      "5": 4,
+      "6": 2,
+      "7": 2,
+      "8": 4,
+      "9": 5,
+      "10": 288,
+      "25": 1,
+      "55": 1
+    },
+    "pam": {
+      "CGG": 13996,
+      "TGG": 9144,
+      "AGG": 7722,
+      "GGG": 5428
+    }
+  },
+  "measured_vs_predicted": {
+    "predicted_on_parent_spacers": {
+      "count": 3110.0,
+      "mean": 1.0,
+      "std": 0.0,
+      "min": 1.0,
+      "25%": 1.0,
+      "50%": 1.0,
+      "75%": 1.0,
+      "max": 1.0
+    },
+    "predicted_on_single_mismatch": {
+      "count": 33180.0,
+      "mean": 0.6160148710882498,
+      "std": 0.25540925098812567,
+      "min": -0.151016610855477,
+      "25%": 0.427449764217926,
+      "50%": 0.6272314312892,
+      "75%": 0.8113080019611467,
+      "max": 1.4003939918668
+    },
+    "family_retained": {
+      "true": 26743,
+      "false": 9547
+    },
+    "mean_present": 24186,
+    "mean_absent_read_floor": 12104,
+    "sd_present": 22313,
+    "mean_present_sd_absent": 1873,
+    "sd_present_mean_absent": 0,
+    "mean_present_by_family_retained": {
+      "true": 19321,
+      "false": 4865
+    },
+    "mean_negative": 778,
+    "mean_min": -0.220579641099046,
+    "mean_max": 1.39441928476009,
+    "parent_spacers_with_mean": 2384,
+    "single_mismatch_with_mean": 21802
+  },
+  "window_10_15": {
+    "rows_aligned": true,
+    "late_mean_present": 21369,
+    "sd_present_in_both": 22313,
+    "sd_equal_to_10_doubling_sd": 22313,
+    "control_sd_equal": 866,
+    "control_sd_present_in_both": 866,
+    "control_mean_sd_10_doubling": 0.08253831355383932,
+    "control_mean_sd_10_to_15": 0.1934808648609952,
+    "control_mean_present_10_doubling": 897,
+    "control_mean_present_10_to_15": 977,
+    "means_in_both": 18780,
+    "pearson_10_vs_10_to_15": 0.5983907638842503,
+    "authors_bw25113_tags": 318
+  },
+  "identifiers": {
+    "released_b_numbers": 318,
+    "mg1655_resolved_fraction": 0.9968553459119497,
+    "mg1655_retired": [
+      "b4700"
+    ],
+    "mg1655_remapped": 0,
+    "eck_crossed": 317,
+    "no_eck_partner": [
+      "b4700"
+    ],
+    "authors_bw25113_tag_disagreements": {},
+    "numerics_disagree": []
+  },
+  "duplication": {
+    "CrispriGuideFitnessWang2018Dataset": {
+      "auxotrophy": {
+        "shared_spacers": 193,
+        "pearson": 0.15124260258520764
+      },
+      "essentiality": {
+        "shared_spacers": 955,
+        "pearson": 0.6624335410046612
+      },
+      "furfural_tolerance": {
+        "shared_spacers": 252,
+        "pearson": 0.18139617995764315
+      },
+      "isobutanol_tolerance": {
+        "shared_spacers": 252,
+        "pearson": 0.14904396625879188
+      },
+      "trp_biosynthesis": {
+        "shared_spacers": 193,
+        "pearson": 0.18758759905799105
+      }
+    },
+    "CrispriKnockdownCui2018Dataset": {
+      "LC-E18": {
+        "shared_spacers": 364,
+        "pearson": 0.6395621352164496
+      },
+      "LC-E75": {
+        "shared_spacers": 364,
+        "pearson": 0.6685588407718291
+      }
+    },
+    "workbook column 'Log2FC from Wang et al., 2018'": {
+      "rows": 1232,
+      "rows_with_hawkins_mean": 957,
+      "pearson": 0.6629586668156429,
+      "single_mismatch_rows": 0
+    },
+    "workbook column 'relative fitness from Rousset et al., 2018'": {
+      "rows": 379,
+      "rows_with_hawkins_mean": 290,
+      "pearson": 0.663313827025409,
+      "single_mismatch_rows": 0
+    }
+  }
+}

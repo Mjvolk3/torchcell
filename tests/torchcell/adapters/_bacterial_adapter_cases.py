@@ -103,6 +103,7 @@ from torchcell.adapters import (
     MetabolomeIshii2007Adapter,
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
+    MismatchCrispriFitnessHawkins2020Adapter,
     MorphologyCampos2018Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
@@ -163,6 +164,9 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.hawkins2020 import (
+    MismatchCrispriFitnessHawkins2020Dataset,
+)
 from torchcell.datasets.ecoli.ishii2007 import (
     FluxIshii2007Dataset,
     MetabolomeIshii2007Dataset,
@@ -486,6 +490,14 @@ BACTERIAL: list[Bacterial] = [
         FluxIshii2007Dataset,
         FLUX,
         env_perturbation=False,
+    ),
+    _case(
+        MismatchCrispriFitnessHawkins2020Adapter,
+        "hawkins2020",
+        "mismatch_crispri_fitness_hawkins2020",
+        MismatchCrispriFitnessHawkins2020Dataset,
+        RESPONSE,
+        crispr=True,
     ),
     _case(
         RnaseqLamoureux2023Adapter,

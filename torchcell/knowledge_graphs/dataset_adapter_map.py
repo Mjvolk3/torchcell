@@ -85,6 +85,7 @@ from torchcell.adapters import (
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
     MicroarrayKemmeren2014Adapter,
+    MismatchCrispriFitnessHawkins2020Adapter,
     Mormino2022Adapter,
     MorphologyCampos2018Adapter,
     NadalRibellesPerturbSeq2025Adapter,
@@ -172,6 +173,9 @@ from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
+from torchcell.datasets.ecoli.hawkins2020 import (
+    MismatchCrispriFitnessHawkins2020Dataset,
+)
 from torchcell.datasets.ecoli.ishii2007 import (
     FluxIshii2007Dataset,
     MetabolomeIshii2007Dataset,
@@ -411,6 +415,9 @@ dataset_adapter_map: dict[type, type] = {
     MetabolomeIshii2007Dataset: MetabolomeIshii2007Adapter,
     ProteomeIshii2007Dataset: ProteomeIshii2007Adapter,
     FluxIshii2007Dataset: FluxIshii2007Adapter,
+    MismatchCrispriFitnessHawkins2020Dataset: (
+        MismatchCrispriFitnessHawkins2020Adapter
+    ),
     RnaseqLamoureux2023Dataset: RnaseqLamoureux2023Adapter,
     GrowthRateLamoureux2023Dataset: GrowthRateLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,

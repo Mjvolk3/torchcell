@@ -110,3 +110,16 @@ to a fraction over the shared genes:
 Within-condition replicate r of this release is 0.989 to 0.993 (c5~c0_1, r0~r0_1,
 a2~a2_1, c3~c3_1). Verdict: independent; no served record re-serves a Balakrishnan
 library.
+
+## 2026.10.10 - Candidate gate verdict
+
+`candidate-gate gate --row "Balakrishnan" --table bacteria --phenotype-class
+MrnaNumberFractionPhenotype --issue 854 --proposed-class
+MrnaFractionBalakrishnan2022Dataset --write` wrote
+`database/candidates/balakrishnanPrinciplesGeneRegulation2022.json`, outcome
+admissible: G1 pass (primary), G2 pass, G3 pass (2 raw files, 8,735 worksheet rows,
+intact), G4 pass (no key held by another module), G5 pass. G2 passes through the gate's
+K-12 lineage token rule (MG1655 and BW25113 resolve and read), not through an NCM3722
+assembly: none is in the genomes tier, and the records pin MG1655 with an NCM3722
+background and a genotype gap. G4 compared no dev store; the value comparison is the
+separate duplication measurement above (0 exact matches, independent).

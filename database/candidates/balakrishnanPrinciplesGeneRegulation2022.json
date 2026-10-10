@@ -1,0 +1,152 @@
+{
+  "citation_key": "balakrishnanPrinciplesGeneRegulation2022",
+  "table": "bacteria",
+  "row_name": "Balakrishnan 2022",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Multi-omics campaign', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "2 file(s) in raw, 8735 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "MrnaNumberFractionPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "balakrishnanPrinciplesGeneRegulation2022",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "data/GSE205717_Processed_data_Table_S3.xlsx",
+        "role": "raw_data",
+        "bytes": 2270095,
+        "sha256_manifest": "9d7df03bbbcdf1f92e93027014e746da5bcf42bf4d6b4be9061dd1803f71cc20",
+        "sha256_disk": "9d7df03bbbcdf1f92e93027014e746da5bcf42bf4d6b4be9061dd1803f71cc20",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "1 - RNAseq-ss (description)",
+            "rows": 30
+          },
+          {
+            "sheet": "2 - RNAseq-ss (fractions)",
+            "rows": 4344
+          },
+          {
+            "sheet": "3 - RNAseq-deg (description)",
+            "rows": 17
+          },
+          {
+            "sheet": "4 - RNAseq-deg (fractions)",
+            "rows": 4344
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/PMC9804519.1.txt",
+        "role": "raw_data",
+        "bytes": 80849,
+        "sha256_manifest": "8f7c13f6c2c491abf95bace26bcdbf7927cef3ae4c276e43c4a291c108f824e9",
+        "sha256_disk": "8f7c13f6c2c491abf95bace26bcdbf7927cef3ae4c276e43c4a291c108f824e9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1126/science.abk2066",
+    "pmid": null,
+    "accessions": [
+      "GSE205717",
+      "PXD014948"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1126/science.abk2066",
+        "where": "torchcell/datasets/ecoli/balakrishnan2022.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "GSE205717",
+        "where": "torchcell/datasets/ecoli/balakrishnan2022.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "MrnaNumberFractionPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": "MrnaFractionBalakrishnan2022Dataset"
+  },
+  "decided_at": "2026-10-10",
+  "torchcell_commit": "81c1d0ebd753682aa81c34458f8e02fe4673f9a8"
+}

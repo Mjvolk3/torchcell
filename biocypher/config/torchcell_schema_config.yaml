@@ -564,6 +564,21 @@ bacterial morphology phenotype:
         morphology_coefficient_of_variation: str
         n_samples: int
         sample_unit: str
+# A count-less transcriptome (MrnaNumberFractionPhenotype, issue #854): each gene's share
+# of the cell's mRNA molecules, released without the read counts behind it. The per-gene
+# dict serializes to a JSON string, the multi-valued phenotype convention. A property is
+# named by its field so the phenotype <-> node class bijection
+# (torchcell/datamodels/ontology_checks.py) matches it without an alias table.
+mrna number fraction phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        mrna_number_fraction: str
+        n_libraries: int
+        measurement_type: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -630,6 +645,7 @@ phenotype member of:
             flux phenotype,
             promoter activity phenotype,
             bacterial morphology phenotype,
+            mrna number fraction phenotype,
         ]
     target: [experiment, experiment reference]
 

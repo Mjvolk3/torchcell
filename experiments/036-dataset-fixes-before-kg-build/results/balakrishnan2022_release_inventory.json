@@ -1,0 +1,483 @@
+{
+  "doi": "10.1126/science.abk2066",
+  "pmcid": "PMC9804519",
+  "nihms": "NIHMS1856867",
+  "supplement_files_named_by_the_manuscript": [
+    "NIHMS1856867-supplement-Supplementary_Information.pdf",
+    "NIHMS1856867-supplement-Table_S3.xlsx",
+    "NIHMS1856867-supplement-Table_S4.xlsx",
+    "NIHMS1856867-supplement-Table_S5.xlsx",
+    "NIHMS1856867-supplement-Table_S6.xlsx",
+    "NIHMS1856867-supplement-Table_S7.xlsx"
+  ],
+  "access": {
+    "pmc_cloud_bucket_listing": {
+      "url": "https://pmc-oa-opendata.s3.amazonaws.com/?list-type=2&prefix=PMC9804519.",
+      "status": 200,
+      "content_type": "application/xml",
+      "bytes": 1187,
+      "kind": "xml",
+      "bucket_keys": [
+        "PMC9804519.1/PMC9804519.1.json",
+        "PMC9804519.1/PMC9804519.1.txt",
+        "PMC9804519.1/PMC9804519.1.xml"
+      ],
+      "geo_files": []
+    },
+    "pmc_bin_table_s6": {
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/instance/9804519/bin/NIHMS1856867-supplement-Table_S6.xlsx",
+      "status": 200,
+      "content_type": "text/html; charset=utf-8",
+      "bytes": 1817,
+      "kind": "proof_of_work_page",
+      "bucket_keys": [],
+      "geo_files": []
+    },
+    "europepmc_supplementary_files": {
+      "url": "https://www.ebi.ac.uk/europepmc/webservices/rest/PMC9804519/supplementaryFiles",
+      "status": 200,
+      "content_type": "application/xml",
+      "bytes": 296,
+      "kind": "not_open_access_error",
+      "bucket_keys": [],
+      "geo_files": []
+    },
+    "europepmc_bin_table_s6": {
+      "url": "https://europepmc.org/articles/PMC9804519/bin/NIHMS1856867-supplement-Table_S6.xlsx",
+      "status": 403,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 5672,
+      "kind": "html",
+      "bucket_keys": [],
+      "geo_files": []
+    },
+    "science_org_supplement_page": {
+      "url": "https://www.science.org/doi/suppl/10.1126/science.abk2066",
+      "status": 403,
+      "content_type": "text/html; charset=UTF-8",
+      "bytes": 5569,
+      "kind": "html",
+      "bucket_keys": [],
+      "geo_files": []
+    },
+    "geo_series_suppl_directory": {
+      "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE205nnn/GSE205717/suppl/",
+      "status": 200,
+      "content_type": "text/html;charset=UTF-8",
+      "bytes": 627,
+      "kind": "html",
+      "bucket_keys": [],
+      "geo_files": [
+        "GSE205717_Processed_data_Table_S3.xlsx"
+      ]
+    }
+  },
+  "table_s3": {
+    "url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE205nnn/GSE205717/suppl/GSE205717_Processed_data_Table_S3.xlsx",
+    "sha256": "9d7df03bbbcdf1f92e93027014e746da5bcf42bf4d6b4be9061dd1803f71cc20",
+    "bytes": 2270095,
+    "sheets": {
+      "1 - RNAseq-ss (description)": 30,
+      "2 - RNAseq-ss (fractions)": 4343,
+      "3 - RNAseq-deg (description)": 17,
+      "4 - RNAseq-deg (fractions)": 4343
+    },
+    "steady_state": {
+      "described_samples": 29,
+      "groups": {
+        "C-limitation": 10,
+        "A-limitation": 8,
+        "R-limitation": 11
+      },
+      "strains": {
+        "NCM3722": 13,
+        "NQ1243": 4,
+        "NQ1390": 4,
+        "NQ393": 8
+      },
+      "media": {
+        "M9": 18,
+        "MOPS": 11
+      },
+      "nitrogen_source_cells": {
+        "11.34 mM (NH4)2SO4": 15,
+        "11.34 mM (NH4)2SO5": 1,
+        "11.34 mM (NH4)2SO6": 1,
+        "11.34 mM (NH4)2SO7": 1,
+        "10 mM NH4Cl": 11
+      },
+      "supplements": {
+        "None": 6,
+        "300 \u00b5M 3MBA": 2,
+        "400 \u00b5M 3MBA": 2,
+        "40 \u00b5M 3MBA": 2,
+        "60 \u00b5M IPTG": 2,
+        "40 \u00b5M IPTG": 2,
+        "28 \u00b5M IPTG": 1,
+        "20 \u00b5M IPTG": 2,
+        "30 \u00b5M IPTG": 1,
+        "2 \u00b5M chloramphenicol": 2,
+        "4 \u00b5M chloramphenicol": 2,
+        "6 \u00b5M chloramphenicol": 2,
+        "8 \u00b5M chloramphenicol": 2,
+        "9 \u00b5M chloramphenicol": 1
+      },
+      "growth_rate_min": 0.24,
+      "growth_rate_max": 0.95,
+      "described_but_no_column": [
+        "a3_1"
+      ],
+      "column_but_not_described": [],
+      "fractions": {
+        "gene_rows": 4342,
+        "sample_columns": 29,
+        "distinct_sample_headers": 28,
+        "duplicated_headers": {
+          "a4_1": 2
+        },
+        "duplicate_identity": {
+          "a4_1": {
+            "column_indices_1_based": [
+              16,
+              17
+            ],
+            "rows_identical_across_the_copies": 4342,
+            "rows": 4342
+          }
+        },
+        "non_numeric_cells": 0,
+        "column_sum_min": 0.99999998131705,
+        "column_sum_max": 1.00000002309137,
+        "zero_cells_per_column_min": 83,
+        "zero_cells_per_column_max": 117,
+        "distinct_gene_names": 4342,
+        "blank_loci": 0,
+        "loci_not_a_b_number": {
+          "0": 18
+        },
+        "b_number_loci": 4324,
+        "distinct_loci": 4325,
+        "headers": [
+          "c4",
+          "c4_1",
+          "c3_1",
+          "c3",
+          "c2",
+          "c2_1",
+          "c1",
+          "c1_1",
+          "c5",
+          "c0_1",
+          "a4",
+          "a3",
+          "a4_1",
+          "a4_1",
+          "a2",
+          "a2_1",
+          "a1",
+          "a1_1",
+          "r4_1",
+          "r3_1",
+          "r5",
+          "r4",
+          "r2_1",
+          "r3",
+          "r2",
+          "r1_1",
+          "r1",
+          "r0",
+          "r0_1"
+        ]
+      }
+    },
+    "decay_time_course": {
+      "described_samples": 16,
+      "series": {
+        "Reference": 8,
+        "C-limitation": 8
+      },
+      "time_points_min": [
+        "0 (pre-shift)",
+        1,
+        2,
+        3,
+        5,
+        7,
+        9,
+        11,
+        "0 (pre-shift)",
+        1,
+        2,
+        3,
+        5,
+        7,
+        9,
+        11
+      ],
+      "fractions": {
+        "gene_rows": 4342,
+        "sample_columns": 16,
+        "distinct_sample_headers": 16,
+        "duplicated_headers": {},
+        "duplicate_identity": {},
+        "non_numeric_cells": 0,
+        "column_sum_min": 0.9999999634886599,
+        "column_sum_max": 1.00000004903784,
+        "zero_cells_per_column_min": 97,
+        "zero_cells_per_column_max": 404,
+        "distinct_gene_names": 4342,
+        "blank_loci": 0,
+        "loci_not_a_b_number": {
+          "0": 18
+        },
+        "b_number_loci": 4324,
+        "distinct_loci": 4325,
+        "headers": [
+          "A0",
+          "A1",
+          "A2",
+          "A3",
+          "A5",
+          "A7",
+          "A9",
+          "A11",
+          "B0",
+          "B1",
+          "B2",
+          "B3",
+          "B5",
+          "B7",
+          "B9",
+          "B11"
+        ]
+      }
+    },
+    "mg1655_resolution": {
+      "distinct_loci": 4325,
+      "resolved": 4176,
+      "fraction": 0.9655,
+      "unresolved": [
+        "0",
+        "b0218",
+        "b0229",
+        "b0230",
+        "b0235",
+        "b0236",
+        "b0240",
+        "b0255",
+        "b0257",
+        "b0263",
+        "b0297",
+        "b0300",
+        "b0359",
+        "b0362",
+        "b0371",
+        "b0374",
+        "b0392",
+        "b0499",
+        "b0500",
+        "b0539",
+        "b0542",
+        "b0553",
+        "b0562",
+        "b0625",
+        "b0626",
+        "b0690",
+        "b0691",
+        "b0703",
+        "b0705",
+        "b1016",
+        "b1028",
+        "b1152",
+        "b1157",
+        "b1169",
+        "b1170",
+        "b1173",
+        "b1239",
+        "b1240",
+        "b1318",
+        "b1362",
+        "b1369",
+        "b1371",
+        "b1401",
+        "b1405",
+        "b1416",
+        "b1417",
+        "b1456",
+        "b1458",
+        "b1459",
+        "b1470",
+        "b1506",
+        "b1509",
+        "b1510",
+        "b1577",
+        "b1578",
+        "b1579",
+        "b1720",
+        "b1721",
+        "b1933",
+        "b1934",
+        "b1935",
+        "b1936",
+        "b1964",
+        "b1965",
+        "b1966",
+        "b1979",
+        "b1980",
+        "b1995",
+        "b1998",
+        "b1999",
+        "b2031",
+        "b2083",
+        "b2087",
+        "b2090",
+        "b2092",
+        "b2116",
+        "b2117",
+        "b2138",
+        "b2139",
+        "b2190",
+        "b2227",
+        "b2228",
+        "b2238",
+        "b2337",
+        "b2338",
+        "b2355",
+        "b2639",
+        "b2640",
+        "b2641",
+        "b2648",
+        "b2680",
+        "b2681",
+        "b2850",
+        "b2854",
+        "b2855",
+        "b2856",
+        "b2857",
+        "b2858",
+        "b2859",
+        "b2862",
+        "b2915",
+        "b2999",
+        "b3000",
+        "b3036",
+        "b3046",
+        "b3134",
+        "b3135",
+        "b3217",
+        "b3268",
+        "b3423",
+        "b3443",
+        "b3489",
+        "b3490",
+        "b3504",
+        "b3534",
+        "b3595",
+        "b3681",
+        "b3767",
+        "b3768",
+        "b3776",
+        "b3777",
+        "b4038",
+        "b4103",
+        "b4104",
+        "b4205",
+        "b4223",
+        "b4271",
+        "b4274",
+        "b4275",
+        "b4276",
+        "b4281",
+        "b4282",
+        "b4283",
+        "b4285",
+        "b4286",
+        "b4308",
+        "b4338",
+        "b4339",
+        "b4462",
+        "b4486",
+        "b4503",
+        "b4505",
+        "b4508",
+        "b4519",
+        "b4521",
+        "b4524",
+        "b4530",
+        "b4531",
+        "b4590"
+      ]
+    }
+  },
+  "mori2021_sister_series": {
+    "mori_ev3_ncm3722_lineage_rows": 29,
+    "mori_strains": [
+      "NCM3722",
+      "NQ1243",
+      "NQ1390",
+      "NQ393"
+    ],
+    "balakrishnan_strains": [
+      "NCM3722",
+      "NQ1243",
+      "NQ1390",
+      "NQ393"
+    ],
+    "same_strain_set": true,
+    "mori_media": [
+      "M9",
+      "MOPS (Record's)"
+    ],
+    "mori_nitrogen_sources": [
+      "10 mM NH4Cl",
+      "11.34 mM (NH4)2SO4"
+    ],
+    "gene_rows_mori_ev9": 4342,
+    "gene_rows_table_s3": 4342,
+    "same_gene_name_list_in_the_same_order": true,
+    "same_gene_name_set": true,
+    "same_strain_medium_supplement_and_growth_rate": [
+      "c5",
+      "c2"
+    ],
+    "mori_drop_rule_for_these_rows": "medium_has_no_media_library_entry",
+    "mori_needed_media_additions": "MOPS_RECORDS_MORI2021, M9_MORI2021, NC_MINUS_MORI2021, NC_MINUS_ANAEROBIC_MORI2021 and MOPS_LOW_OSMOLARITY_MORI2021"
+  },
+  "cross_layer_r_mrna_vs_mori_protein": {
+    "M9_reference": {
+      "balakrishnan_column": "c5",
+      "mori_column": "C2",
+      "balakrishnan_growth_rate": 0.91,
+      "mori_growth_rate": 0.91,
+      "shared_positive_keys": 1917,
+      "pearson_log10": 0.7802,
+      "spearman": 0.7726
+    },
+    "MOPS_reference": {
+      "balakrishnan_column": "r0",
+      "mori_column": "A2",
+      "balakrishnan_growth_rate": 0.89,
+      "mori_growth_rate": 0.98,
+      "shared_positive_keys": 1938,
+      "pearson_log10": 0.7254,
+      "spearman": 0.7215
+    }
+  },
+  "within_layer_replicate_r": {
+    "balakrishnan_mrna_M9": {
+      "shared_positive_keys": 4218,
+      "pearson_log10": 0.9896,
+      "spearman": 0.9915
+    },
+    "balakrishnan_mrna_MOPS": {
+      "shared_positive_keys": 4219,
+      "pearson_log10": 0.9888,
+      "spearman": 0.9905
+    },
+    "mori_protein_MOPS": {
+      "shared_positive_keys": 1885,
+      "pearson_log10": 0.9922,
+      "spearman": 0.9919
+    }
+  }
+}

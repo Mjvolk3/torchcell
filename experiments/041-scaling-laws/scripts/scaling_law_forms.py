@@ -831,36 +831,55 @@ def rasterize(fig: Figure) -> FArray:
     return frame
 
 
+# Corner anchors for the in-axes box, in axes fractions, with the text alignment that
+# pins the box's outer corner so a change in number width never moves it.
+BOX_CORNERS: dict[str, tuple[float, float, str, str]] = {
+    "lower left": (0.02, 0.03, "left", "bottom"),
+    "lower right": (0.98, 0.03, "right", "bottom"),
+    "upper left": (0.02, 0.97, "left", "top"),
+    "upper right": (0.98, 0.97, "right", "top"),
+}
+
+
 def gif_figure(
-    line1: str, line2: str, readout: str, *, takeaway: str
+    line1: str, line2: str, readout: str, *, takeaway: str, equation: str, box_loc: str
 ) -> tuple[Figure, Axes]:
     """A GIF frame on a Nature "wide" panel canvas (118.9 mm).
 
-    The centered title is STATIC across frames: the equation and what is held fixed,
+    The centered title is STATIC across frames: what is drawn and what is held fixed,
     the constants and their source, and the one-sentence takeaway in italics. The
-    swept value and what it implies is the `readout`, drawn as a separate line anchored
-    at the LEFT edge of the axes just above them. A centered line re-centers whenever a
-    number changes width, so the whole line slides from frame to frame; a left-anchored
-    line with fixed-width numbers holds still.
+    equation and the swept value (`readout`, with fixed-width numbers) sit INSIDE the
+    axes in a framed box at `box_loc`, a corner that stays clear in every frame of
+    that sweep, opposite the legend. The box is pinned by its outer corner, so a
+    number changing width never moves it.
     """
     fig, ax = plt.subplots(
         figsize=(mm_to_in(PANEL_WIDTHS_MM["wide"]), mm_to_in(80)), dpi=GIF_DPI
     )
     left, right = 0.085, 0.975
-    fig.subplots_adjust(left=left, right=right, bottom=0.115, top=0.80)
+    fig.subplots_adjust(left=left, right=right, bottom=0.115, top=0.82)
     title = "\n".join([line1, line2, r"\textit{" + takeaway + "}"])
     # Centered on the CANVAS, not the axes, so the title has the full width to use.
     ax.set_title(
-        title, fontsize=7, linespacing=1.55, pad=14, x=(0.5 - left) / (right - left)
+        title, fontsize=7, linespacing=1.55, pad=6, x=(0.5 - left) / (right - left)
     )
+    x, y, ha, va = BOX_CORNERS[box_loc]
     ax.text(
-        0.0,
-        1.015,
-        readout,
+        x,
+        y,
+        equation + "\n" + readout,
         transform=ax.transAxes,
-        ha="left",
-        va="bottom",
+        ha=ha,
+        va=va,
         fontsize=6.5,
+        linespacing=1.5,
+        zorder=20,
+        bbox={
+            "facecolor": "white",
+            "edgecolor": "black",
+            "linewidth": 0.5,
+            "boxstyle": "square,pad=0.45",
+        },
     )
     box(ax)
     return fig, ax
@@ -884,6 +903,8 @@ def gif_data_sweep(path: str) -> None:
             HOFF,
             rf"$D = 10^{{{logD:4.1f}}}$ examples:  plateau $E + B D^{{-\beta}}$ = {plateau:4.2f}",
             takeaway="Parameters stop paying at a plateau the data sets; only more data lowers it.",
+            equation=JOINT,
+            box_loc="lower left",
         )
         ax.loglog(N, f.loss(N, D), color=AMBER, lw=1.2, label=r"$L(N, D)$ at this $D$")
         ax.loglog(
@@ -898,7 +919,7 @@ def gif_data_sweep(path: str) -> None:
         )
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e6, 1e12)
-        loss_axis(ax, 1.5, 8)
+        loss_axis(ax, 1.3, 8)
         ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
@@ -918,6 +939,8 @@ def gif_params_sweep(path: str) -> None:
             HOFF,
             rf"$N = 10^{{{logN:4.1f}}}$ parameters:  plateau $E + A N^{{-\alpha}}$ = {plateau:4.2f}",
             takeaway="Data stops paying at a plateau the model size sets; only a bigger model lowers it.",
+            equation=JOINT,
+            box_loc="lower left",
         )
         ax.loglog(D, f.loss(N, D), color=BRICK, lw=1.2, label=r"$L(N, D)$ at this $N$")
         ax.loglog(
@@ -932,7 +955,7 @@ def gif_params_sweep(path: str) -> None:
         )
         ax.axhline(f.E, color=GRAY, lw=0.6, ls=":", label=r"floor $E$ = 1.69")
         ax.set_xlim(1e7, 1e13)
-        loss_axis(ax, 1.5, 8)
+        loss_axis(ax, 1.3, 8)
         ax.set_xlabel(r"training examples $D$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
@@ -959,6 +982,8 @@ def gif_compute_sweep(path: str) -> None:
             rf"$C = 10^{{{logC:4.1f}}}$ FLOPs:  $N^* = 10^{{{np.log10(n_star):4.1f}}}$, "
             rf"$D^* = 10^{{{np.log10(d_star):4.1f}}}$, $L^*$ = {l_star:4.2f}",
             takeaway="Every budget has one best model size, and the best sizes line up on the frontier.",
+            equation=r"$L(N, C/6N)$ along $6ND = C$",
+            box_loc="lower left",
         )
         ax.loglog(
             N, f.isoflop(N, C), color=LILAC, lw=1.2, label=r"$L$ along the budget line"
@@ -982,7 +1007,7 @@ def gif_compute_sweep(path: str) -> None:
             label=r"minimum, $N^*(C)$",
         )
         ax.set_xlim(N[0], N[-1])
-        loss_axis(ax, 1.8, 8)
+        loss_axis(ax, 1.5, 8)
         ax.set_xlabel(r"parameters $N$  ($D = C / 6N$)")
         legend(ax, loc="upper left")
         frames.append(rasterize(fig))
@@ -1014,6 +1039,8 @@ def gif_exponent_sweep(path: str) -> None:
             rf"$\alpha_N$ = {alpha:5.3f}:  $L(10^{{12}})$ = {L12:4.2f} (published {L12_pub:4.2f});"
             rf"  fitted runs move $\le$ {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_N)) - 1):3.0f}\%",
             takeaway="Fits that agree on the runs you have can disagree on the run you want; the exponent is the forecast.",
+            equation=r"$L = (N_c / N)^{\alpha_N}$",
+            box_loc="lower left",
         )
         ax.axvspan(grid[0], 1.6e9, color="#F2F2F2", lw=0, label="fitted range (shaded)")
         ax.loglog(
@@ -1077,6 +1104,8 @@ def gif_data_exponent_sweep(path: str) -> None:
             rf"$\alpha_D$ = {alpha:5.3f}:  $L(10^{{13}})$ = {L13:4.2f} (published {L13_pub:4.2f});"
             rf"  fitted runs move $\le$ {100 * (10 ** (1.5 * abs(alpha - KAPLAN.alpha_D)) - 1):3.0f}\%",
             takeaway="The data axis forecasts the same way: a shift in the exponent no run can rule out moves the far forecast.",
+            equation=r"$L = (D_c / D)^{\alpha_D}$",
+            box_loc="lower left",
         )
         ax.axvspan(
             grid[0], 1.6e10, color="#F2F2F2", lw=0, label="fitted range (shaded)"
@@ -1135,6 +1164,8 @@ def gif_floor_sweep(path: str) -> None:
             r"$A$ = 406.4, $\alpha$ = 0.34 (Chinchilla);  $L - E$ is the same straight line in every frame",
             rf"floor $E$ = {E:4.2f}:  the curve bends where $A N^{{-\alpha}} = E$, at $N$ = {where}",
             takeaway="A bend on log-log axes is the floor showing itself: fit $L - E$, not $L$.",
+            equation=r"$L = E + A\,N^{-\alpha}$",
+            box_loc="upper right",
         )
         ax.loglog(
             N, term + E, color=AMBER, lw=1.2, label=r"$L = E + A N^{-\alpha}$ (bends)"
@@ -1182,10 +1213,11 @@ def gif_surface_sweep(path: str) -> None:
             + JOINT
             + r" as a surface over $\log_{10} N$ and $\log_{10} D$",
             HOFF,
-            rf"$C = 10^{{{logC:4.1f}}}$ FLOPs:  lowest contour on the line at "
-            rf"$N^* = 10^{{{np.log10(n_star):4.1f}}}$, $D^* = 10^{{{np.log10(d_star):4.1f}}}$, "
-            rf"$L^*$ = {float(f.loss(n_star, d_star)):4.2f}",
+            rf"$C = 10^{{{logC:4.1f}}}$:  $N^* = 10^{{{np.log10(n_star):4.1f}}}$, "
+            rf"$D^* = 10^{{{np.log10(d_star):4.1f}}}$, $L^*$ = {float(f.loss(n_star, d_star)):4.2f}",
             takeaway="A budget is a diagonal on the surface; the best split is where it touches the lowest contour.",
+            equation=JOINT,
+            box_loc="upper left",
         )
         cf = ax.contourf(logN, logD, L, levels=levels, cmap=cmap, extend="max")
         ax.contour(logN, logD, L, levels=levels, colors="white", linewidths=0.3)
@@ -1255,6 +1287,8 @@ def gif_bootstrap(path: str) -> None:
             rf"synthetic runs from $\alpha$ = 0.34, $E$ = 1.69 with 2\% noise;  full-sample fit $\alpha$ = {al0:5.3f}",
             rf"resample {i + 1:2d}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90\% interval on $\alpha$ so far {interval}",
             takeaway="Resample the runs and refit: the spread of the refits is the error bar on the exponent.",
+            equation=r"$L = E + A\,N^{-\alpha}$, refit on each resample",
+            box_loc="lower left",
         )
         ax.axvspan(
             grid[0],
@@ -1318,6 +1352,8 @@ def gif_allocation_sweep(path: str) -> None:
             rf"$\alpha$ = 0.34 fixed;  Hoffmann's $\beta$ = 0.28 gives $a$ = {f.a:4.2f}, $b$ = {f.b:4.2f} (dashed)",
             rf"$\beta$ = {beta:4.2f}:  $a$ = {g.a:4.2f}, $b$ = {g.b:4.2f}",
             takeaway="How a budget splits between size and data is set by the ratio of the two exponents alone.",
+            equation=r"$N^* = G\,(C/6)^{a}$,  $a = \beta / (\alpha + \beta)$",
+            box_loc="lower right",
         )
         ax.loglog(
             C,

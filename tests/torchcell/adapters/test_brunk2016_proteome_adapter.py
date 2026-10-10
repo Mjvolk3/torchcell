@@ -4,7 +4,7 @@
 """``torchcell/adapters/brunk2016_proteome_adapter.py``: the conf it loads, the gate's
 view of it, and (``--data``) the graph it emits from its dev-tree LMDB.
 
-Brunk 2016: the SRM peak areas of 44 host loci, 81 records, BacterialProteinAbundanceExperiment. Every engineered strain's pathway genes are served as
+Brunk 2016: the SRM peak areas of 65 host loci, 81 records, BacterialProteinAbundanceExperiment. Every engineered strain's pathway genes are served as
 `bacterial perturbation`; the shared CultureEnvironment carries IPTG on every record
 and a dodecane overlay on the terpene ones, so the environment-perturbation pair is on.
 """

@@ -180,6 +180,7 @@ PROTEIN_ROWS: tuple[tuple[str, str, str], ...] = (
     ("MDH", "Escherichia coli", "b3236"),
     ("FRDA", "Escherichia coli", "(b4151 and b4152 and b4153 and b4154)"),
     ("AtoB", "Escherichia coli", "b2224"),
+    ("HYCG", "Escherichia coli", "(b2719 and b2720 and b2721)"),
     ("HMGS", "Saccharomyces cerevisiae", "not in model/not found"),
     ("HMGS", "Staphylococcus aureus", "not in model/not found"),
     ("AmpR", "", "not in model/not found"),
@@ -192,6 +193,17 @@ UNIPROT_ROWS: tuple[tuple[str, str], ...] = (
     ),
 )
 PROTEIN_HOURS: tuple[float, ...] = (0.0, 4.0)
+#: The released peptides per protein. FRDA's occurs in frdA only, so the peptide route
+#: keys it; HYCG's occurs in hycG and, read with I = L, in hyfI, so it stays refused.
+PEPTIDES: dict[str, tuple[str, ...]] = {
+    "ENO": ("AGQEK",),
+    "MDH": ("LFGVR", "TTLDR"),
+    "FRDA": ("LGSNSLAELVK",),
+    "AtoB": ("LGDGQVYDVK",),
+    "HYCG": ("HADILLFTGAVTR",),
+    "HMGS": ("YEAVK",),
+    "AmpR": ("SPEAK",),
+}
 
 
 def write_proteomics_workbook(
@@ -241,7 +253,7 @@ def write_proteomics_workbook(
                             if protein in ("AtoB", "HMGS")
                             else "Glycolysis I"
                         ),
-                        "Peptide": f"{protein}PEPTIDE",
+                        "Peptide": PEPTIDES[protein][0],
                         # The wild type expresses no pathway protein, which is what
                         # the OCR repair's L4 reads; the host proteins are measured
                         # in every strain.
@@ -257,6 +269,12 @@ def write_proteomics_workbook(
                         ),
                     }
                 )
+    # A protein's area repeats on each of its peptide rows, as in the release.
+    rows += [
+        {**row, "Peptide": peptide}
+        for row in list(rows)
+        for peptide in PEPTIDES[row["Protein"]][1:]
+    ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with pd.ExcelWriter(path) as writer:
         pd.DataFrame(rows).to_excel(
@@ -441,6 +459,125 @@ def test_the_two_released_routes_key_a_protein_and_the_third_shape_is_refused(
         "Staphylococcus aureus",
     }
     assert keys["AmpR"].reason == brunk.REFUSAL_NO_MAPPING
+
+
+#: A three-protein assembly for the peptide route: FRDA's subunits and an isobaric
+#: decoy whose only difference from frdB is one isoleucine read as leucine.
+PROTEOME: dict[str, str] = {
+    "b4154": "MKLGSNSLAELVKE",
+    "b4153": "MRDFLIATLKPRVEALANFPIERA",
+    "b4152": "MKAANIIVKTWFELAPKQ",
+    "b3876": "MGFLLDSRK",
+}
+
+
+def _refused(protein: str, organism: str | None = brunk.HOST_SPECIES) -> Any:
+    """A key the released routes left without a gene."""
+    return brunk.ProteinKey(
+        protein=protein,
+        organism=organism,
+        gene_name=None,
+        route=None,
+        reason=brunk.REFUSAL_MULTI_GENE_GPR,
+    )
+
+
+def test_a_protein_whose_every_peptide_is_in_one_protein_is_keyed_by_peptide() -> None:
+    """Two peptides, both only in frdB, key FRDB to b4153 and record the evidence."""
+    (key,) = brunk.resolve_by_peptides(
+        [_refused("FRDB")], {"FRDB": ("DFLIATLKPR", "VEALANFPIER")}, PROTEOME
+    )
+    assert (key.gene_name, key.route, key.reason) == (
+        "b4153",
+        brunk.ROUTE_PEPTIDE,
+        None,
+    )
+    assert key.peptide_matches == "DFLIATLKPR:b4153;VEALANFPIER:b4153"
+
+
+@pytest.mark.parametrize(
+    ("peptides", "reason", "evidence"),
+    [
+        # FLIDSR occurs in b4151 as written and in b3876 as FLLDSR, the same mass.
+        (("LGSNSLAELVK", "FLIDSR"), brunk.REFUSAL_SHARED_PEPTIDE, "FLIDSR:b3876"),
+        (("LGSNSLAELVK", "NOWHERE"), brunk.REFUSAL_UNMATCHED_PEPTIDE, "NOWHERE:"),
+        (("LGSNSLAELVK", "AANIIVK"), brunk.REFUSAL_PEPTIDES_DISAGREE, "AANIIVK:b4152"),
+    ],
+)
+def test_a_peptide_that_does_not_name_one_protein_keeps_the_protein_refused(
+    peptides: tuple[str, ...], reason: str, evidence: str
+) -> None:
+    """Shared (with I = L), unmatched and split peptides each refuse, by name."""
+    proteome = {**PROTEOME, "b4151": "MKSFLIDSRV"}
+    (key,) = brunk.resolve_by_peptides([_refused("FRDA")], {"FRDA": peptides}, proteome)
+    assert (key.gene_name, key.route, key.reason) == (None, None, reason)
+    assert evidence in str(key.peptide_matches)
+
+
+def test_the_isobaric_search_reads_leucine_and_isoleucine_as_one_residue() -> None:
+    """``FLIDSR`` matches both ``FLIDSR`` and ``FLLDSR``; an exact search would not."""
+    matches = brunk.match_peptides(
+        ["FLIDSR", "LGSNSLAELVK"], {**PROTEOME, "b4151": "MKSFLIDSRV"}
+    )
+    assert matches == {"FLIDSR": ("b3876", "b4151"), "LGSNSLAELVK": ("b4154",)}
+
+
+def test_a_released_key_is_kept_and_a_non_host_key_is_not_searched() -> None:
+    """The name routes win; a pathway enzyme is passed through untouched."""
+    named = brunk.ProteinKey(
+        protein="FRDA",
+        organism=brunk.HOST_SPECIES,
+        gene_name="frdA",
+        route=brunk.ROUTE_UNIPROT,
+    )
+    foreign = _refused("HMGS", "Saccharomyces cerevisiae")
+    out = brunk.resolve_by_peptides(
+        [named, foreign], {"FRDA": ("LGSNSLAELVK",)}, PROTEOME
+    )
+    assert out[0].gene_name == "frdA"
+    assert out[0].route == brunk.ROUTE_UNIPROT
+    assert out[0].peptide_matches == "LGSNSLAELVK:b4154"
+    assert out[1] == foreign
+
+
+def test_a_host_protein_with_no_released_peptide_stops_the_search() -> None:
+    with pytest.raises(RuntimeError, match="FRDA has no released peptide"):
+        brunk.resolve_by_peptides([_refused("FRDA")], {}, PROTEOME)
+
+
+def test_a_named_key_whose_peptide_is_not_in_its_locus_stops_the_build() -> None:
+    """The sequence-level cross-check of the UniProt and GPR routes."""
+    key = brunk.ProteinKey(
+        protein="FRDA",
+        organism=brunk.HOST_SPECIES,
+        gene_name="b4153",
+        route=brunk.ROUTE_SINGLE_GENE_GPR,
+    )
+    peptides = {"FRDA": ("LGSNSLAELVK",)}
+    with pytest.raises(RuntimeError, match="LGSNSLAELVK is not in that protein"):
+        brunk.check_peptides_agree([key], {"FRDA": "b4153"}, peptides, PROTEOME)
+    assert brunk.check_peptides_agree([key], {"FRDA": "b4154"}, peptides, PROTEOME) == 1
+    assert brunk.check_peptides_agree([key], {}, peptides, PROTEOME) == 0
+
+
+def test_the_host_peptides_are_read_per_protein_and_a_blank_one_is_refused(
+    tmp_path: Path,
+) -> None:
+    workbook = write_proteomics_workbook(tmp_path / "mmc3.xlsx")
+    peptides = brunk.read_host_peptides(workbook)
+    assert peptides == {
+        protein: PEPTIDES[protein]
+        for protein, organism, _ in PROTEIN_ROWS
+        if organism == brunk.HOST_SPECIES
+    }
+    frame = pd.read_excel(workbook, sheet_name=brunk.SHEET_PROTEOMICS)
+    frame.loc[frame["Protein"] == "ENO", "Peptide"] = None
+    with pd.ExcelWriter(
+        workbook, mode="a", engine="openpyxl", if_sheet_exists="replace"
+    ) as writer:
+        frame.to_excel(writer, sheet_name=brunk.SHEET_PROTEOMICS, index=False)
+    with pytest.raises(RuntimeError, match="has no peptide"):
+        brunk.read_host_peptides(workbook)
 
 
 def test_a_protein_area_that_disagrees_across_its_peptides_is_refused(
@@ -862,15 +999,19 @@ def test_a_quote_the_mirror_no_longer_carries_stops_the_audit(
 # --------------------------------------------------------------------------- #
 # Hermetic end to end: all four arms over the synthetic release
 # --------------------------------------------------------------------------- #
-#: The loci the synthetic assembly needs: the four native pathway genes and the two
-#: proteins the fixture keys to a locus.
-LOCUS_SPECS: tuple[tuple[str, str], ...] = (
-    ("b0421", "ispA"),
-    ("b1865", "nudB"),
-    ("b2224", "atoB"),
-    ("b2779", "eno"),
-    ("b2889", "idi"),
-    ("b3236", "mdh"),
+#: The loci the synthetic assembly needs, with the protein each one encodes: the four
+#: native pathway genes, the proteins the fixture keys by name, frdA for the peptide
+#: route, and the hycG / hyfI pair that shares HYCG's peptide up to I = L.
+LOCUS_SPECS: tuple[tuple[str, str, str], ...] = (
+    ("b0421", "ispA", "MKV"),
+    ("b1865", "nudB", "MKV"),
+    ("b2224", "atoB", "MKLGDGQVYDVKA"),
+    ("b2489", "hyfI", "MSPRHADLLLFTGAVTRAM"),
+    ("b2719", "hycG", "MSPRHADILLFTGAVTRAM"),
+    ("b2779", "eno", "MKAGQEKV"),
+    ("b2889", "idi", "MKV"),
+    ("b3236", "mdh", "MKLFGVRTTLDRA"),
+    ("b4154", "frdA", "MKLGSNSLAELVKE"),
 )
 ASSEMBLY_REPORT = """# Assembly name:  ASM584v2
 # Organism name:  Escherichia coli str. K-12 substr. MG1655 (E. coli)
@@ -889,7 +1030,7 @@ def _synthetic_loci() -> list[SyntheticLocus]:
     """One locus per :data:`LOCUS_SPECS` entry, laid end to end."""
     loci: list[SyntheticLocus] = []
     cursor = 1
-    for index, (tag, symbol) in enumerate(LOCUS_SPECS):
+    for index, (tag, symbol, protein) in enumerate(LOCUS_SPECS):
         start, end = cursor, cursor + 11
         cursor = end + 3
         loci.append(
@@ -901,7 +1042,7 @@ def _synthetic_loci() -> list[SyntheticLocus]:
                 synonyms=(),
                 product=f"synthetic product {tag}",
                 protein_id=f"AAC{index:05d}.1",
-                protein="MKV",
+                protein=protein,
             )
         )
     return loci
@@ -946,9 +1087,9 @@ def built_stores(
         ("EXPECTED_METABOLOME_RECORDS", len(brunk.STRAINS) * len(HOURS)),
         ("EXPECTED_EXOMETABOLITE_RECORDS", len(brunk.STRAINS) * len(HOURS)),
         ("EXPECTED_PROTEOME_RECORDS", len(brunk.STRAINS) * len(PROTEIN_HOURS)),
-        ("EXPECTED_HOST_PROTEINS", 4),
+        ("EXPECTED_HOST_PROTEINS", 5),
         ("EXPECTED_TITER_RECORDS", 8 * len(HOURS)),
-        ("EXPECTED_PROTEIN_KEYS", 3),
+        ("EXPECTED_PROTEIN_KEYS", 4),
     ):
         monkeypatch.setattr(brunk, attribute, value)
     monkeypatch.setattr(
@@ -961,6 +1102,8 @@ def built_stores(
             "titer": 8 * len(HOURS),
         },
     )
+    # The proteome floor is a ClassVar bound at import, so it follows the fixture's 4/5.
+    monkeypatch.setattr(brunk.ProteomeBrunk2016Dataset, "MIN_RESOLVED_FRACTION", 4 / 5)
     # The two metabolite arms read their count off a ClassVar bound at import.
     monkeypatch.setattr(
         brunk.MetabolomeBrunk2016Dataset,
@@ -1001,7 +1144,7 @@ def test_every_arm_builds_one_record_per_released_sample(
 def test_the_proteome_build_drops_the_unexplained_hour_and_the_unkeyed_protein(
     built_stores: dict[str, str],
 ) -> None:
-    """The ``72C`` samples get no hour and ``FRDA`` gets no locus, each with a count."""
+    """The ``72C`` samples get no hour and ``HYCG`` gets no locus, each with a count."""
     accounting = json.loads(
         Path(
             built_stores["proteome"], "preprocess", "build_accounting.json"
@@ -1009,7 +1152,7 @@ def test_the_proteome_build_drops_the_unexplained_hour_and_the_unkeyed_protein(
     )
     rules = {rule["rule"]: rule for rule in accounting["rules"]}
     assert rules["sample_hour_label_is_not_a_stated_time"]["n_items"] == 8
-    assert rules["protein_key_is_not_resolvable_to_one_host_locus"]["items"] == ["FRDA"]
+    assert rules["protein_key_is_not_resolvable_to_one_host_locus"]["items"] == ["HYCG"]
     assert rules["protein_is_not_a_host_protein"]["items"] == ["AmpR", "HMGS", "HMGS"]
     keys = pd.read_csv(Path(built_stores["proteome"], "preprocess", "protein_keys.csv"))
     assert set(keys["protein"]) == {p for p, _, _ in PROTEIN_ROWS}
@@ -1128,14 +1271,39 @@ def test_the_released_table_s1_reads_as_the_nine_strains_and_twelve_plasmids() -
 
 @requires_mirror
 def test_the_released_protein_keys_split_as_the_module_counts_them() -> None:
-    """68 host proteins, 44 keyed to a locus by the two released routes."""
+    """68 host proteins, 44 keyed to a locus by the two released name routes."""
     keys = brunk.read_protein_keys(brunk.raw_mirror_dir() / brunk.PROTEOMICS_REL)
     host = [key for key in keys if key.organism == brunk.HOST_SPECIES]
     assert len(host) == brunk.EXPECTED_HOST_PROTEINS
     mapped = [key for key in host if key.gene_name is not None]
-    assert len(mapped) == brunk.EXPECTED_PROTEIN_KEYS
+    assert len(mapped) == 44
     routes = {key.route for key in mapped}
     assert routes == {brunk.ROUTE_UNIPROT, brunk.ROUTE_SINGLE_GENE_GPR}
+
+
+@requires_mirror
+def test_the_released_peptides_key_21_of_the_24_unnamed_host_proteins() -> None:
+    """Issue #872: 44 named + 21 by peptide = 65; DHSB, HYCG and PFLB stay refused."""
+    from torchcell.datasets.bacteria_common import bacterial_genome
+
+    workbook = brunk.raw_mirror_dir() / brunk.PROTEOMICS_REL
+    genome = bacterial_genome("ecoli", brunk.REFERENCE_STRAIN)
+    proteome = {tag: str(record.seq) for tag, record in genome.fasta_protein.items()}
+    keys = brunk.resolve_by_peptides(
+        brunk.read_protein_keys(workbook), brunk.read_host_peptides(workbook), proteome
+    )
+    host = [key for key in keys if key.organism == brunk.HOST_SPECIES]
+    by_peptide = {
+        k.protein: k.gene_name for k in host if k.route == brunk.ROUTE_PEPTIDE
+    }
+    assert len(by_peptide) == 21
+    assert by_peptide["FRDA"] == "b4154"
+    assert by_peptide["FRDD"] == "b4151"
+    refused = {k.protein: k.reason for k in host if k.gene_name is None}
+    assert refused == dict.fromkeys(
+        ("DHSB", "HYCG", "PFLB"), brunk.REFUSAL_SHARED_PEPTIDE
+    )
+    assert len(host) - len(refused) == brunk.EXPECTED_PROTEIN_KEYS
 
 
 @requires_stores

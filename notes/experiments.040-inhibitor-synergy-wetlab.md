@@ -232,3 +232,46 @@ from SMILES. Hoepfner serves two compound names against two structures each, so 
 compound table is keyed by InChIKey, not by name. Hillenmeyer's three media are pooled
 behind one source token and its heterozygotes are read by the deletion operator; both are
 stated simplifications.
+
+## 2026.10.10 - Round 1, the first two arms: the model does not predict the wet lab
+
+GilaHyper slurm 3720 (joint arm, `host_train: anchors+ex21`) and 3721 (anchors only, the
+zero-shot host), each 2 h 04 at PARALLEL=2: five compound-cold folds of fold seed 0, three
+seeds per fold, the recipe of 038 round 10 with a compound token per inhibitor, a log-molar
+dose FiLM and the host head. ex23 and the isoboles were never trained on. Values are the
+median over the five folds of the three-seed ensemble; the reference is the model-free rule
+on the same wells.
+
+| readout (served call) | joint | anchors only | reference |
+|---|---|---|---|
+| ex23 growth over 63 combinations, AUROC | 0.475 | 0.295 | Loewe **0.958** |
+| ex23 worst-scenario Spearman, all 63, no growth as 0 | -0.009 | -0.319 | Loewe **0.772** |
+| ex23 fitness over the 21 that grew, Spearman | 0.377 | -0.346 | Bliss **0.573** |
+| isobole ex26 / ex27 / ex28, mean observed minus predicted | -0.75 / -0.71 / -0.75 | -0.60 / -0.42 / -0.59 | Bliss -0.08 / -0.45 / -0.02 |
+| Vanacloig compound-cold, centered Spearman | 0.261 | 0.266 | ridge **0.359** |
+| ex21 over 180 wells, Spearman | 0.945 (train fit) | **0.171** (held out) | |
+
+**The claim fails, and it fails cleanly.** Growth over the 63 combinations is at chance for
+the joint arm (0.475, fold range 0.442 to 0.502) and below chance for the anchors arm
+(0.295); the worst-scenario ranking is zero and negative. Neither arm approaches Loewe on
+either growth readout, and both isobole surfaces sit further from the observed grids than
+Bliss does. On the gene-level task both arms read 0.26 against ridge at 0.359, in line with
+038 round 2, so the wet-lab failure is not a model that was working elsewhere.
+
+**Two things in the table are worth keeping.** The anchors-only arm, which never sees a
+Bioscreen well, reads a Spearman of 0.171 over the 180 ex21 titration wells: weak, but it
+is a genuine zero-shot transfer from IC30 anchors in a different medium and strain to a
+dose response measured here. And the joint arm's fitness Spearman of 0.377 over the 21
+grown combinations is non-trivial for a model that saw no combination, though it is below
+Bliss at 0.573 and that arm did train on the single-agent curves.
+
+**Hypothesis (untested), and the queued rounds test it.** The anchors arm is not
+uninformative but anti-correlated (-0.346 fitness, -0.319 worst-scenario, both well below
+zero with fold ranges that mostly exclude it), which is a systematic inversion rather than
+noise. The reading to check is that a host head fitted on single-compound anchors alone
+extrapolates the wrong way as compounds are added, so predicted fitness rises with the
+number of inhibitors. The dose-off arms separate the FiLM from the token set, the two
+fine-tune arms separate calibration from joint training, and a per-combination residual
+against the inhibitor count settles the inversion directly; the first two are queued on
+Delta (22788113 to 22788118) and the third is an analysis on the predictions already
+written.

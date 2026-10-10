@@ -206,6 +206,32 @@ def centered_val_score(
     )
 
 
+class StrainBatch(dict):
+    """The batch the encoder reads: ``batch["gene"]`` and ``batch.num_graphs``.
+
+    Since commit 468253ee2 the encoder sizes the perturbation transform by
+    ``batch.num_graphs`` (a wildtype genotype has no row in the assignment vector, so
+    ``max + 1`` dropped a trailing one); a plain dict no longer suffices.
+    """
+
+    def __init__(self, gene: SimpleNamespace, num_graphs: int) -> None:
+        """``gene`` holds the perturbation indices and their genotype assignment."""
+        super().__init__(gene=gene)
+        self.num_graphs = num_graphs
+
+
+def strain_batch(strain: torch.Tensor) -> StrainBatch:
+    """``strain`` [B, order] of gene indices -> the encoder's batch for B genotypes."""
+    size, order = strain.shape
+    gene = SimpleNamespace(
+        perturbation_indices=strain.reshape(-1),
+        perturbation_indices_batch=torch.arange(
+            size, device=strain.device
+        ).repeat_interleave(order),
+    )
+    return StrainBatch(gene, size)
+
+
 # ---- model ----------------------------------------------------------------- #
 class Factorized(nn.Module):
     """Per-gene bias, compound offset, and a gene-by-compound interaction."""
@@ -248,16 +274,8 @@ class Factorized(nn.Module):
         if self.encoder is None:
             return self.table(gene_idx), torch.zeros((), device=gene_idx.device)
         assert strain is not None
-        size, order = strain.shape
-        batch = {
-            "gene": SimpleNamespace(
-                perturbation_indices=strain.reshape(-1),
-                perturbation_indices_batch=torch.arange(
-                    size, device=strain.device
-                ).repeat_interleave(order),
-            )
-        }
-        _, out = self.encoder(cell_graph, batch)
+        size = strain.shape[0]
+        _, out = self.encoder(cell_graph, strain_batch(strain))
         rows = torch.arange(size, device=strain.device).unsqueeze(1)
         parts = [out["H_genes_pert"][rows, strain].sum(dim=1)]
         if self.cfg.identity_skip:
@@ -334,16 +352,7 @@ class EnvironmentOperator(nn.Module):
     ) -> tuple[torch.Tensor, torch.Tensor]:
         """[B, N, d] strain states after the deletion operator, and the graph penalty."""
         assert strain is not None
-        size, order = strain.shape
-        batch = {
-            "gene": SimpleNamespace(
-                perturbation_indices=strain.reshape(-1),
-                perturbation_indices_batch=torch.arange(
-                    size, device=strain.device
-                ).repeat_interleave(order),
-            )
-        }
-        _, out = self.encoder(cell_graph, batch)
+        _, out = self.encoder(cell_graph, strain_batch(strain))
         return out["H_genes_pert"], out["graph_reg_loss"]
 
     def forward(
@@ -476,16 +485,8 @@ class EnvironmentEncoder(nn.Module):
     ) -> tuple[tuple[torch.Tensor, torch.Tensor], torch.Tensor]:
         """(wildtype tokens [N, d], strain rows [B, d]) and the graph penalty."""
         assert strain is not None
-        size, order = strain.shape
-        batch = {
-            "gene": SimpleNamespace(
-                perturbation_indices=strain.reshape(-1),
-                perturbation_indices_batch=torch.arange(
-                    size, device=strain.device
-                ).repeat_interleave(order),
-            )
-        }
-        _, out = self.encoder(cell_graph, batch)
+        size = strain.shape[0]
+        _, out = self.encoder(cell_graph, strain_batch(strain))
         rows = torch.arange(size, device=strain.device).unsqueeze(1)
         h_del = out["H_genes_pert"][rows, strain].sum(dim=1)  # [B, d]
         return (out["H_genes"], h_del), out["graph_reg_loss"]

@@ -1,0 +1,23 @@
+%% notes-tex/database/database-expansion-100/sections/full.tex
+%% [[experiments.database.expansion-100]]
+%% https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/database/database-expansion-100/sections/full.tex
+%% SOURCE: experiments/database/scripts/build_candidate_datasets_table.py
+
+\clearpage
+\section{The full ranking to 200\secstatus{todo}}\label{sec:full}
+
+Table~\ref{tab:candidates} is the whole ranking the sixty were cut from, every row the
+generating script holds, in rank order with its class, both axes, instance and measurement
+counts, phenotype, sequence basis and a clickable link. The first 149 rows are the
+recommended set: 51 supported datasets plus 149 reaches 200. The rows past 149 are the
+reserve, ranked by the same rule. Table~\ref{tab:sources-all} gives every row's citation,
+link, the reason for its position and where the per-record values live, in the same
+order; for the first sixty rows that reason is also the \emph{Why} column of
+Table~\ref{tab:final}. The ranking is produced by
+\texttt{experiments/database/scripts/build\_candidate\_datasets\_table.py} and is also
+written to \texttt{experiments/database/results/candidates/candidate\_datasets.json}.
+
+\input{tables/candidates}
+
+\clearpage
+\input{tables/sources_all}

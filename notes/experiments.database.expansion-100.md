@@ -418,3 +418,22 @@ the 51st supported dataset"), not a removal-plus-addition pair, since the remova
 on the new name; `summary.tex` counts 109 named joins, 56 to a built dataset. The Cooper vs
 Mulleder transfer test the 2026.08.25 list named is now runnable; the join rule is in the loader
 note.
+
+## 2026.10.10 - The full ranking to 200 printed again, with sources for every row
+
+The v10 restructure dropped the 167-row candidates table from the document, so the
+question "which datasets come after the sixty" had no printed answer: the rows past 60
+lived only in the script and `candidate_datasets.json`. A new closing section, "The full
+ranking to 200" (`sections/full.tex`), inputs `tables/candidates.tex` (all 167 rows: class,
+genotype and environment axes, instances, measurements, phenotype, sequence basis,
+clickable link; rows 1-149 are the recommended set, 51 built + 149 = 200) and a new
+`tables/sources_all.tex` (citation, link, the reason for the position and the data location
+for every row, in the same order). `render_sources` takes `label`, `of` and `why_ref`
+arguments so the sixty-row sources table and the full one come from one renderer. The
+candidates caption no longer points at the Perturb-seq table, which is not input anymore,
+and points at the full sources table instead of the sixty-row one. The intro's "108 rows ...
+not printed here" is corrected to 107 (167 minus 60) and now points at the section.
+
+Published to Zotero as `database-expansion-100_2026-10-10-01-35-33_e3284515.pdf`, version
+15 in `torchcell/notes-tex/database/database-expansion-100` (collection `IQW48WQF`, parent
+item `CPBBMPAV`). 63 pages; `make check` clean.

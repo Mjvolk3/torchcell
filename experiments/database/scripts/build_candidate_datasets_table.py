@@ -5316,9 +5316,10 @@ which is what a vector-valued panel actually contributes and what rows are ranke
 \emph{Sequence basis} is how the total genomic content of one strain would be
 reconstructed; a row with no such route is excluded rather than ranked
 (Table~\ref{tab:excluded}). Tier is defined in Sec.~\ref{sec:rule}.
-\emph{Link} resolves to the source and is clickable; the full citation and the data
-location are in Table~\ref{tab:sources}. A $\bullet$ marks a row bearing on the
-Perturb-seq proposal (Table~\ref{tab:perturbseq}). A superscript \textbf{B} marks a row already
+\emph{Link} resolves to the source and is clickable; the full citation, the reason for
+the position and the data location are in Table~\ref{tab:sources-all}. A $\bullet$ marks a
+row bearing on the Perturb-seq proposal (the first band of
+Sec.~\ref{sec:rule}). A superscript \textbf{B} marks a row already
 attempted and blocked on data access, and \textbf{L} one that already has a loader in
 flight; neither is an untouched candidate. Rows
 1--"""
@@ -5457,7 +5458,15 @@ cell, sampled widely.}
     return head + "\n".join(lines) + "\n\\end{longtable}\n\\endgroup\n"
 
 
-def render_sources(rows: list[Candidate]) -> str:
+def render_sources(
+    rows: list[Candidate],
+    *,
+    label: str = "tab:sources",
+    of: str = "tab:final",
+    why_ref: str = r"what the row buys is the \emph{Why} column of Table~\ref{tab:final}",
+) -> str:
+    # `label` names this table and `of` the ranking it accompanies: the sixty-row
+    # sources table follows Table final, the full one follows Table candidates.
     hdr = (
         r"\textbf{\#} & \textbf{Dataset, citation and link} & "
         r"\textbf{Why it is ordered here} & \textbf{Data} \\"
@@ -5469,20 +5478,27 @@ def render_sources(rows: list[Candidate]) -> str:
 \setlength{\tabcolsep}{4pt}
 \renewcommand{\arraystretch}{1.15}
 \begin{longtable}{@{}r@{\hspace{4pt}} L{86mm} L{92mm} L{62mm}@{}}
-\caption[]{Sources for Table~\ref{tab:final}, in the same order. \emph{Why it is
+\caption[]{Sources for Table~\ref{"""
+        + of
+        + r"""}, in the same order. \emph{Why it is
 ordered here} is the band reason for a perturb-seq or molecular-layers row, and the tier
-and measurement rule for a scale row; what the row buys is the \emph{Why} column of
-Table~\ref{tab:final}. \emph{Data} is where the per-record values live; entries marked
+and measurement rule for a scale row; """
+        + why_ref
+        + r""". \emph{Data} is where the per-record values live; entries marked
 unconfirmed were not fetched live and must be checked before a loader is written. Every
 link is clickable.}
-\label{tab:sources}\\
+\label{"""
+        + label
+        + r"""}\\
 \toprule
 """
         + hdr
         + r"""
 \midrule
 \endfirsthead
-\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{tab:sources}, continued}}\\
+\multicolumn{4}{@{}l}{\footnotesize\emph{Table~\ref{"""
+        + label
+        + r"""}, continued}}\\
 \toprule
 """
         + hdr
@@ -5979,6 +5995,20 @@ def main() -> None:
     write(TEX_DIR / "final.tex", render_final(rows))
     write(TEX_DIR / "summary.tex", render_summary(rows))
     write(TEX_DIR / "sources.tex", render_sources(rows[:FINAL]))
+    write(
+        TEX_DIR / "sources_all.tex",
+        render_sources(
+            rows,
+            label="tab:sources-all",
+            of="tab:candidates",
+            why_ref=(
+                r"for the first "
+                + str(FINAL)
+                + r" rows what the row buys is the \emph{Why} column of "
+                r"Table~\ref{tab:final}"
+            ),
+        ),
+    )
     write(TEX_DIR / "perturbseq.tex", render_perturbseq(rows))
     write(TEX_DIR / "synergies.tex", render_synergies(rows[:FINAL]))
     write(TEX_DIR / "excluded.tex", render_excluded())

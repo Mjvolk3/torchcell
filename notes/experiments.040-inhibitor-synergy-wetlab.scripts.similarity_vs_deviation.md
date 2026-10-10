@@ -40,4 +40,4 @@ depends on the growth call (served p 0.07 to 0.43). The three isoboles cannot se
 two readings: furfural x acetic acid (similarity 0.04 best-available, 0.51 all-predicted)
 is mildly synergistic (-0.08), formic x acetic acid (-0.08, 0.99) strongly so (-0.45).
 
-![](assets/images/040-inhibitor-synergy-wetlab/similarity_vs_deviation_2026-10-10-02-36-14.svg)
+![](assets/images/040-inhibitor-synergy-wetlab/similarity_vs_deviation_2026-10-10-02-38-27.svg)

@@ -233,7 +233,7 @@ def figure(tables: dict[str, pd.DataFrame], results: pd.DataFrame) -> list[str]:
         ].iloc[0]
         ax.set_title(
             f"{version}: Spearman {r['spearman']:.2f}, permutation p {r['permutation_p']:.2f}, "
-            f"leave-one-out {r['loo_min']:.2f} to {r['loo_max']:.2f} (n = 15 pairs)"
+            f"leave-one-out {r['loo_min']:.2f} to {r['loo_max']:.2f}"
         )
         ax.set_xlabel("profile similarity (centered Spearman across genes)")
         ax.set_ylabel("observed minus Bliss (served call; no growth = 0)")

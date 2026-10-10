@@ -24,6 +24,9 @@ stage_pool_store() {
   mkdir -p "$dst"
   # shellcheck disable=SC2064
   trap "echo 'removing staged pool store $dst'; rm -rf '$dst'" EXIT
+  # Slurm ends a timed-out or cancelled job with SIGTERM; bash runs no EXIT trap when a
+  # signal kills it, so TERM is turned into an exit (which runs the trap above).
+  trap 'exit 143' TERM INT
   local t0; t0=$(date +%s)
   rsync -a "$src/" "$dst/"
   echo "staged in $(( $(date +%s) - t0 )) s: $(du -sh "$dst" | cut -f1)"

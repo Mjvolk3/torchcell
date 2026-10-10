@@ -6954,6 +6954,32 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># RATIO environment-response readouts. ADDITIVE, and the same shape as the</span>
+<span class="c1"># ABSOLUTE set above: a name for the measurement types whose control is 1.0</span>
+<span class="c1"># rather than 0, so the verifier's reference rule can be relaxed for exactly</span>
+<span class="c1"># those and refuse to be relaxed for anything else.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: Measurement types whose number is a RATIO against a control measured in the same run,</span>
+<span class="c1">#: so an unaffected strain scores 1.0 and the record's reference states 1.0 rather than a</span>
+<span class="c1">#: centered 0. Only ``relative_growth_rate`` qualifies: a difference-scaled relative</span>
+<span class="c1">#: readout (``log2_ratio``, ``z_score``, ``differential_fitness``,</span>
+<span class="c1">#: ``control_regression_residual``) is 0 at its control, and an absolute quantity has no</span>
+<span class="c1">#: control in its units at all (``ABSOLUTE_MEASUREMENT_TYPES``). The verifier's</span>
+<span class="c1">#: ``reference_unit_scaled=True`` branch requires every record's type to be a member</span>
+<span class="c1">#: here, which is what keeps the relief from being a blanket relaxation. Hawkins 2020's</span>
+<span class="c1">#: mismatch-CRISPRi relative fitness (strain doublings / wild-type doublings) and the</span>
+<span class="c1">#: Bioscreen panels' wild-type-relative growth rate are the readouts that need it.</span>
+<span class="n">RATIO_MEASUREMENT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">MeasurementType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">relative_growth_rate</span><span class="p">}</span>
+<span class="p">)</span>
+<span class="c1">#: What a ratio readout's control is by construction.</span>
+<span class="n">RATIO_REFERENCE_VALUE</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end RATIO environment-response readouts</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <div class="viewcode-block" id="EnvironmentResponsePhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">EnvironmentResponsePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>

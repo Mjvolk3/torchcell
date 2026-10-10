@@ -104,7 +104,12 @@ for required_dir in "$DATA_ROOT/data/string" "$DATA_ROOT/data/tflink" \
   "$DATA_ROOT/torchcell-genomes/go_release_2026-08-05"; do
   [[ -d "$required_dir" ]] || { echo "ERROR: required tree missing: $required_dir" >&2; exit 1; }
 done
-"$DELTA_PY" -c "import torchcell, sys; p = torchcell.__file__; assert p.startswith('$PROJECT_ROOT'), p; print('torchcell from', p)" || exit 1
+# The top-level package is not enough. This env carries an EDITABLE install of the stale
+# checkout /projects/bbub/mjvolk3/torchcell, and its finder answers for any torchcell.X
+# that PathFinder cannot resolve under PYTHONPATH. An rsync whose bare --exclude 'data'
+# dropped torchcell/data therefore imported torchcell.data from that stale tree in
+# silence (smoke 22787137 on the 040 twin). Check the submodules by file path.
+"$DELTA_PY" -c "import sys, torchcell, torchcell.data, torchcell.graph, torchcell.models, torchcell.sequence; mods = [torchcell, torchcell.data, torchcell.graph, torchcell.models, torchcell.sequence]; bad = [m.__name__ for m in mods if not (m.__file__ or '').startswith('$PROJECT_ROOT')]; print('\n'.join(m.__name__ + ' from ' + str(m.__file__) for m in mods)); sys.exit('ERROR: resolved outside the tree: ' + ', '.join(bad)) if bad else None" || exit 1
 nvidia-smi --query-gpu=index,name,memory.total --format=csv,noheader
 
 if [ "$PARALLEL" -eq 1 ]; then

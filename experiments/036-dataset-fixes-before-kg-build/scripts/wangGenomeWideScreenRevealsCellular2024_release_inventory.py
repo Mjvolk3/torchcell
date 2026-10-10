@@ -218,7 +218,7 @@ def main() -> None:
     for label, store in COMPARE_STORES.items():
         screens = rifampicin_by_screen(store)
         by_symbol = "Shiver" in label
-        rows_out = []
+        rows_out: list[dict[str, Any]] = []
         for screen, other in sorted(screens.items()):
             for name, wang in wang_by_sheet.items():
                 keyed = (
@@ -238,7 +238,7 @@ def main() -> None:
             "store": store,
             "rifampicin_screens": {s: len(g) for s, g in screens.items()},
             "pairs": rows_out,
-            "max_abs_spearman_r": max(abs(r["spearman_r"]) for r in rows_out),
+            "max_abs_spearman_r": max(abs(float(r["spearman_r"])) for r in rows_out),
         }
 
     result = {

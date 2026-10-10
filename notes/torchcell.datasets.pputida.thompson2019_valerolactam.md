@@ -71,3 +71,59 @@ Both reports are `PASS` and are written to each store's `preprocess/verification
 ### Schema impact
 
 `python scripts/schema_impact_check.py --base origin/main` reports no schema-contract changes versus `origin/main`: no new class, no changed field, no impacted served dataset. Both datasets are additive admissions (new dataset classes, new adapter modules, new confs), which is the incremental-admission case rather than the full-rebuild case.
+
+## 2026.10.10 - #867: the 48 h family stored, the wild type as a left-censored floor
+
+Closes the refusal above. `ProductTiterPhenotype` now carries `titer_censoring` (a `Censoring | None`, the `ProteinTurnoverPhenotype` precedent of #753), so the 48 h wild type is stored as a bound and becomes the 48 h reference of the three engineered 48 h titers.
+
+### What the paper says, verbatim (`paper/PMC6838509.1.txt`, sha256 `f0244882...2da84`)
+
+- Results 2.3: "Wild type P. putida produced 0.43 mg/L valerolactam after 24 h, but no valerolactam could be detected after 48 h, presumably due to host consumption (Fig. 3B)."
+- Abstract: "increased the titer of valerolactam from undetectable after 48 h of production to ~90 mg/L."
+- Methods 4.4, the calibration: "Lactams were quantified by comparison with 8-point calibration curves of authentic chemical standards from 0.78125 μM to 100 μM."
+- Methods 4.4, the sample handling: "with 200 μL of culture being quenched with an equal volume of ice cold methanol and then stored at −20 °C until analysis"
+
+(The mirror text has narrow no-break spaces before every unit; the loader's quote constants carry them and `verify_quotes` re-reads all 26 paper quotes against the pinned bytes.)
+
+### What is stored, and how the floor is derived
+
+The paper states no limit of detection. The lowest calibration standard (0.78125 uM in the vial) was quantified by the curve, so a sample in which nothing was detected holds less than that in the vial. The Methods state one dilution, the equal-volume methanol quench (twofold). Valerolactam's molar mass, 99.133 g/mol, is derived (C5H9NO; rdkit 2026.03.6 `Descriptors.MolWt` over `O=C1CCCCN1`, which equals the IUPAC standard atomic weights summed by hand). The bound in the culture is therefore
+
+`TITER_FLOOR_MG_PER_L = 0.78125 uM x 2 x 99.133 g/mol / 1000 = 0.1548953125 mg/L`
+
+stored as `titer = 0.1548953125` (ug/mL, which is mg/L) with `titer_censoring = left`, no `titer_uncertainty` and no `titer_se`. The bound is conservative in one direction and conditional in another: the true limit of detection may be lower than the lowest standard (so the true titer is below a tighter number than the one stored, and the stored bound is still true), and the bound assumes the stated quench is the only dilution between culture and injection, which is what the Methods describe. Every stated number is stored with `titer_censoring = uncensored`, and every one lies above the floor (the smallest, 0.43 mg/L, is 2.8 times it).
+
+Each record's reference is the wild type at its own sampling time: 0.43 mg/L (uncensored) at 24 h, the floor (left) at 48 h. The L3 rule `the_reference_is_the_wild_type_at_the_same_sampling_time` holds for all eight. A consumer computing a fold change against the 48 h reference gets a LOWER bound on the ratio (the denominator is an upper bound), so it must read `titer_censoring` on the reference before treating that ratio as an estimate. Not measured: no consumer of `ProductTiterPhenotype` labels in `torchcell/` reads the field yet (a grep for titer label consumers outside datasets, the schema, the adapter and the verifiers finds none).
+
+### Counts, from the built dev store
+
+`$DATA_ROOT/data/torchcell/valerolactam_titer_thompson2019`, rebuilt with `python -m torchcell.database.build_dataset_lmdb --dataset ValerolactamTiterThompson2019Dataset --retire-existing --verify`:
+
+| | records in the LMDB | candidates | dropped | rule |
+|---|---|---|---|---|
+| before (origin/main 5382a5400) | 4 (24 h) | 8 | 4 | `no_released_reference_titer_at_this_time` |
+| after (this branch) | 8 (24 and 48 h) | 8 | 0 | none |
+
+`refused_titers.csv` is no longer written; `titer_rows.csv` gains `stored_titer_mg_per_l` and `titer_censoring`.
+
+### Verification, L0 to L4 (`runners.verify_bacterial_dataset('valerolactam_titer_thompson2019')`, PASS)
+
+| level | check | result |
+|---|---|---|
+| L0 | structural | 8 records validated |
+| L1 | count | observed 8, expected 8 |
+| L2 | value_fidelity | 8 values, minimum 0.0 |
+| L3 | titer_unit_is_the_sources_mg_per_l_as_ug_per_ml | stated numbers verbatim; the floor is derived |
+| L3 | every_uncertainty_is_a_typed_gap_not_a_guess | pass |
+| L3 | every_record_carries_the_production_plasmid | pass |
+| L3 | the_reference_is_the_wild_type_at_the_same_sampling_time | 8 of 8 |
+| L3 | only_the_undetected_cell_is_a_bound_and_it_carries_no_error | exactly one left-censored record, 48 h wild type, no SE |
+| L3 | every_stated_titer_lies_above_the_floor | 7 of 7 uncensored above 0.1548953125 |
+| L4 | stored_titer_vs_results_prose | 8 entities within 1e-9; the censored cell joins to its floor, and the calibration and quench quotes are re-read from the pinned bytes |
+| L4 | perturbed_gene_containment_assembly | 1.000 of 4 measured genes are loci of pputida_KT2440_ASM756v2 |
+
+### Schema impact
+
+`PYTHONPATH=<wt> python scripts/schema_impact_check.py --base origin/main`: one changed symbol, `ProductTiterPhenotype` (modified: added optional field `titer_censoring`; validator `_check_titer` changed). 6 dataset modules impacted, **0 breaking**, all stale -> rebuild: Foo 2014, Carruthers 2025 (4 classes), de Siqueira 2025 (4), Kang 2026, Thompson 2019 (2), Yunus 2026 (the two mapped classes `--list-stale` named). All 14 stale dev stores were rebuilt with `--retire-existing --verify`; 13 verifications PASS and `LactamGrowthRateThompson2019Dataset` has no CLI verifier (its module's `verify_growth_build` passes in the `--data` test). Afterwards `--list-stale --include-private` names none of them. The phenotype node id is a sha256 of the phenotype's `model_dump`, so every served titer node's id moves: this belongs to the KG 4.0 full rebuild, not to an incremental admission.
+
+The second gap the issue records, `iron(II) chloride` and `valerolactam` without a `compound_identity_table.json` row, is untouched here: adding a row is a curation act.

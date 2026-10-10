@@ -1197,7 +1197,7 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
     assert SCHEMA["perturbation member of"]["input_label"] == "perturbation member of"
     assert SCHEMA["perturbation member of"]["target"] == "genotype"
     sources = SCHEMA["phenotype member of"]["source"]
-    assert sources[-6:] == [
+    assert sources[-7:] == [
         "product titer phenotype",
         "protein turnover phenotype",
         "protein synthesis rate phenotype",

@@ -7118,6 +7118,38 @@
     <span class="c1"># ----------------------------------------------------------------------- #</span>
     <span class="c1"># end ADDITIVE (#776)</span>
     <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># ADDITIVE (#863): a per-record test of the response, the shape of the</span>
+    <span class="c1"># protein-fold-change family's p-value pair but scalar (one response per</span>
+    <span class="c1"># record). A p-value is a TEST of the number, not a dispersion of it, so it</span>
+    <span class="c1"># never feeds environment_response_uncertainty or the derived SE. Nothing</span>
+    <span class="c1"># above this block changes.</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="n">environment_response_p_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the UNADJUSTED p-value the source released for this response's "</span>
+        <span class="s2">"test, as a probability in [0, 1], verbatim (a released 0 is stored as 0; it "</span>
+        <span class="s2">"is the source's rounding of a small value, not a placeholder). The test "</span>
+        <span class="s2">"itself is named in `units` or the dataset's provenance (Wang 2024: TRANSIT "</span>
+        <span class="s2">"resampling, a permutation test of the log2FC). None when the source releases "</span>
+        <span class="s2">"no test."</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">environment_response_p_value_adjusted</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the multiple-testing-adjusted p-value the source released for the "</span>
+        <span class="s2">"same test, as a probability in [0, 1], verbatim; p_value_adjustment_method "</span>
+        <span class="s2">"names the correction"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_value_adjustment_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the multiple-testing correction behind "</span>
+        <span class="s2">"environment_response_p_value_adjusted, e.g. 'benjamini_hochberg' (the same "</span>
+        <span class="s2">"vocabulary as ProteinFoldChangePhenotype.p_value_adjustment_method). Required "</span>
+        <span class="s2">"whenever an adjusted p-value is stored and forbidden otherwise"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
+    <span class="c1"># end ADDITIVE (#863)</span>
+    <span class="c1"># ----------------------------------------------------------------------- #</span>
 
 <div class="viewcode-block" id="EnvironmentResponsePhenotype.validate_response">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.EnvironmentResponsePhenotype.html#torchcell.datamodels.schema.EnvironmentResponsePhenotype.validate_response">[docs]</a>
@@ -7214,6 +7246,33 @@
             <span class="p">)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="c1"># end ADDITIVE (#776)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># ADDITIVE (#863): p-values are finite probabilities, and an adjusted</span>
+        <span class="c1"># p-value names its correction (the protein-fold-change invariant).</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"environment_response_p_value"</span><span class="p">,</span>
+            <span class="s2">"environment_response_p_value_adjusted"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">p_value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">p_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">p_value</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">p_value</span> <span class="o">&lt;=</span> <span class="mf">1.0</span>
+            <span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">p_value</span><span class="si">}</span><span class="s2">, not a probability in [0, 1]"</span><span class="p">)</span>
+        <span class="n">adjusted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">environment_response_p_value_adjusted</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">adjusted</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_adjustment_method</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an adjusted p-value names its correction: set "</span>
+                <span class="s2">"p_value_adjustment_method"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">adjusted</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">p_value_adjustment_method</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"p_value_adjustment_method describes a stored adjusted p-value; set "</span>
+                <span class="s2">"environment_response_p_value_adjusted or leave the method None"</span>
+            <span class="p">)</span>
+        <span class="c1"># ------------------------------------------------------------------- #</span>
+        <span class="c1"># end ADDITIVE (#863)</span>
         <span class="c1"># ------------------------------------------------------------------- #</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 

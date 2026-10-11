@@ -820,8 +820,11 @@ def test_the_seventeen_conditions_have_distinct_signatures() -> None:
     assert len(signatures) == 17
 
 
-def test_nine_antibiotics_are_name_only_and_carry_an_inchikey_gap() -> None:
-    """The curated compound table is not edited here, so the absence is typed."""
+def test_eight_antibiotics_are_name_only_and_carry_an_inchikey_gap() -> None:
+    """The curated compound table is not edited here, so the absence is typed.
+
+    Doxycycline hyclate resolves since the Parsons 2006 rows (CID 54705095).
+    """
     gapped = {
         spec.compound_label
         for spec in m.DRUGS
@@ -831,13 +834,18 @@ def test_nine_antibiotics_are_name_only_and_carry_an_inchikey_gap() -> None:
         "amikacin",
         "ampicillin",
         "cefoxitin",
-        "doxycycline hyclate",
         "fusidic acid",
         "gentamycin",
         "nitrofurantoin",
         "piperacillin",
         "streptomycin",
     }
+    doxycycline = m.antibiotic(m.DRUGS_BY_CODE["dox"]).compound
+    assert (doxycycline.name, doxycycline.pubchem_cid, doxycycline.inchikey) == (
+        "doxycycline hyclate",
+        54705095,
+        "DWBSXBGBGHKWOT-WBYAVNBMSA-N",
+    )
     compound = m.antibiotic(m.DRUGS_BY_CODE["amk"]).compound
     assert [gap.field for gap in compound.provenance_gaps] == ["inchikey"]
 

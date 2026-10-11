@@ -322,3 +322,7 @@ every Table 1 dose row. Result: **PASS, every row green.** Highlights:
   curation decision, not part of this change.
 - `transposon` is unsourced because this paper defers the library to Girgis et al. 2007,
   which is not in the mirror. Mirroring that paper would close the gap.
+
+## 2026.10.11 - Doxycycline hyclate now resolves
+
+The Parsons 2006 loader added a compound-table row for doxycycline hyclate (`compound_identity_inputs/parsons2006.txt`: CID 54705095, the compound PubChem titles "Doxycycline hyclate", InChIKey `DWBSXBGBGHKWOT-WBYAVNBMSA-N`), and this loader passes the same label, so its doxycycline condition now carries that identity instead of an `inchikey` gap; eight antibiotics stay name-only. The node name is unchanged, but the stored compound gains identifiers, so the Girgis 2009 dev store must be rebuilt before the KG 4.0 build; nothing in the schema fingerprint marks it stale ([[torchcell.datasets.scerevisiae.parsons2006]]).

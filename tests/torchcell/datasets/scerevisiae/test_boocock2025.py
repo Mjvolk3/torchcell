@@ -431,3 +431,114 @@ def test_every_module_quote_is_verbatim_in_the_mirrored_paper() -> None:
         for media in (m.PILOT_MEDIUM, YNB_SHEATH_FLUID_BOOCOCK2025)
         for c in media.components
     )
+
+
+# --------------------------------------------------------------------------- #
+# Raw mirror
+# --------------------------------------------------------------------------- #
+def _deposit_inputs(tmp_path: Path) -> dict[str, Path]:
+    members = tmp_path / "members"
+    for member in [
+        "data/out/combined/P/segData.RDS",
+        "data/out/combined/D/segData.RDS",
+        "data/out/combined/Ap/segMatch.RDS",
+    ]:
+        (members / member).parent.mkdir(parents=True, exist_ok=True)
+        (members / member).write_bytes(member.encode())
+    code = tmp_path / "code"
+    code.mkdir()
+    for name in m.CODE_FILES:
+        (code / name).write_text(f"# {name}\n")
+    gdata = tmp_path / m.GDATA_NAME
+    gdata.write_bytes(b"gdata")
+    si1 = tmp_path / m.SI1_NAME
+    si1.write_bytes(b"si1")
+    return {"members": members, "code": code, "gdata": gdata, "si1": si1}
+
+
+def test_deposit_raw_mirror_records_every_file_with_its_retrieval(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _patch_release(monkeypatch)
+    inputs = _deposit_inputs(tmp_path)
+    data_root = tmp_path / "data_root"
+
+    def deposit() -> Path:
+        return m.deposit_raw_mirror(
+            zenodo_members_dir=inputs["members"],
+            gdata_path=inputs["gdata"],
+            si1_path=inputs["si1"],
+            code_dir=inputs["code"],
+            zenodo_container_sha256="c" * 64,
+            retrieved_at="2026-10-11",
+            data_root=str(data_root),
+        )
+
+    root = deposit()
+    assert root == data_root / "torchcell-raw" / m.CITATION_KEY
+    manifest = m.load_manifest(str(data_root))
+    by_path = {f.path: f for f in manifest.files}
+    assert sorted(by_path) == sorted(
+        [
+            "data/zenodo/data/out/combined/P/segData.RDS",
+            "data/zenodo/data/out/combined/D/segData.RDS",
+            "data/zenodo/data/out/combined/Ap/segMatch.RDS",
+            "data/dropbox/gdata_42k.RData",
+            "si/si1.xlsx",
+            *[f"code/{name}" for name in m.CODE_FILES],
+        ]
+    )
+    member = by_path["data/zenodo/data/out/combined/D/segData.RDS"]
+    assert member.retrieval is not None
+    assert member.retrieval.retriever == "torchcell.literature.retrieve.tar_member"
+    assert member.retrieval.params == {
+        "url": m.ZENODO_URL,
+        "member": "data/out/combined/D/segData.RDS",
+        "container_sha256": "c" * 64,
+    }
+    assert (
+        member.sha256 == hashlib.sha256(b"data/out/combined/D/segData.RDS").hexdigest()
+    )
+    gdata = by_path["data/dropbox/gdata_42k.RData"].retrieval
+    assert gdata is not None and gdata.params == {"url": m.GDATA_URL}
+    si1 = by_path["si/si1.xlsx"].retrieval
+    assert si1 is not None and si1.params == {"key": m.SI1_KEY}
+    code = by_path["code/runHMM_custom.R"].retrieval
+    assert code is not None and code.params["commit"] == m.CODE_COMMIT
+    assert manifest.doi == m.PAPER_DOI
+    assert (
+        m.manifest_sha256(manifest, "si/si1.xlsx") == hashlib.sha256(b"si1").hexdigest()
+    )
+    with pytest.raises(KeyError, match="not in the raw-mirror manifest"):
+        m.manifest_sha256(manifest, "data/absent.tsv")
+    deposit()  # idempotent by sha256
+    inputs["gdata"].write_bytes(b"changed")
+    with pytest.raises(RuntimeError, match="exists with a different sha256; refusing"):
+        deposit()
+
+
+def test_download_symlinks_every_raw_file_from_the_verified_mirror(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _patch_release(monkeypatch)
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    source = tmp_path / "source_raw"
+    _write_raw(source, _SI1_ROWS)
+    _write_mirror_manifest(data_root, source)
+    mirror = data_root / "torchcell-raw" / m.CITATION_KEY
+    for name, rel in m.raw_relpaths().items():
+        (mirror / rel).parent.mkdir(parents=True, exist_ok=True)
+        (mirror / rel).write_bytes((source / name).read_bytes())
+    probe = m.Boocock2025Dataset.__new__(m.Boocock2025Dataset)
+    probe.root = str(tmp_path / "store")
+    probe.download()
+    raw = Path(probe.raw_dir)
+    assert sorted(p.name for p in raw.iterdir()) == sorted(m.raw_relpaths())
+    assert (raw / m.GDATA_NAME).resolve() == (
+        mirror / "data/dropbox/gdata_42k.RData"
+    ).resolve()
+    (mirror / "si/si1.xlsx").unlink()
+    (raw / m.SI1_NAME).unlink()
+    with pytest.raises(RuntimeError, match="required raw artifact missing from mirror"):
+        probe.download()

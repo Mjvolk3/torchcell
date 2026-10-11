@@ -3117,3 +3117,77 @@ def test_mrna_fraction_family_is_in_every_union_and_map() -> None:
         s.EXPERIMENT_REFERENCE_TYPE_MAP["mrna_number_fraction"]
         is s.MrnaNumberFractionExperimentReference
     )
+
+
+# --------------------------------------------------------------------------- #
+# Boocock 2025: SingleCellExpressionPhenotype, UMI counts of a segregant's cells
+# --------------------------------------------------------------------------- #
+def _single_cell(**kw: Any) -> s.SingleCellExpressionPhenotype:
+    fields: dict[str, Any] = dict(
+        umi_count={"YAL002W": 3, "YAL001C": 1},
+        total_umis=6,
+        n_features=10,
+        feature_universe_sha256="a" * 64,
+        n_cells=2,
+        cell_cycle_stage_counts={"G1": 1, "S": 1},
+        library_cell_counts={"L1": 2},
+    )
+    fields.update(kw)
+    return s.SingleCellExpressionPhenotype(**fields)
+
+
+def test_single_cell_counts_sort_and_the_total_may_exceed_the_stored_universe() -> None:
+    phenotype = _single_cell()
+    assert list(phenotype.umi_count.items()) == [("YAL001C", 1), ("YAL002W", 3)]
+    assert repr(phenotype) == (
+        "SingleCellExpressionPhenotype(genes=2, total_umis=6, n_cells=2)"
+    )
+    assert (phenotype.label_name, phenotype.measurement_type) == (
+        "umi_count",
+        "scrnaseq_umi_count",
+    )
+    assert _single_cell(total_umis=4).total_umis == 4
+
+
+@pytest.mark.parametrize(
+    "overrides,message",
+    [
+        ({"umi_count": [1]}, "per-gene dict, got list"),
+        ({"umi_count": {}}, "umi_count cannot be empty"),
+        ({"umi_count": {"YAL001C": 0}}, "zeros are omitted, not stored"),
+        ({"umi_count": {"YAL001C": True}}, "must be a positive integer"),
+        ({"total_umis": 3}, "total_umis 3 is smaller than the sum of umi_count 4"),
+        ({"n_features": 1}, "n_features 1 is smaller than the 2 keyed features"),
+        ({"feature_universe_sha256": "A" * 64}, "64 lowercase hex digits"),
+        ({"n_cells": 0}, "n_cells must be a positive integer, got 0"),
+        (
+            {"cell_cycle_stage_counts": {"G1": 1}},
+            "cell_cycle_stage_counts sums to 1, not n_cells 2",
+        ),
+        (
+            {"library_cell_counts": {"L1": 3, "L2": -1}},
+            "library_cell_counts holds a non-positive count",
+        ),
+        ({"measurement_type": " "}, "measurement_type cannot be blank"),
+    ],
+)
+def test_single_cell_refuses_what_a_count_record_cannot_be(
+    overrides: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        _single_cell(**overrides)
+
+
+def test_segregant_expression_family_is_in_every_union_and_map() -> None:
+    assert s.SingleCellExpressionPhenotype in typing.get_args(s.PhenotypeType)
+    assert s.SegregantExpressionExperiment in typing.get_args(s.ExperimentType)
+    assert s.SegregantExpressionExperimentReference in typing.get_args(
+        s.ExperimentReferenceType
+    )
+    assert (
+        s.EXPERIMENT_TYPE_MAP["segregant_expression"] is s.SegregantExpressionExperiment
+    )
+    assert (
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["segregant_expression"]
+        is s.SegregantExpressionExperimentReference
+    )

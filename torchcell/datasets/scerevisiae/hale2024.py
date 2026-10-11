@@ -1290,15 +1290,14 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Build one record per (lineage, assay) with gene-targeting guides."""
-        data_root = _data_root()
-        manifest = load_manifest(data_root)
+        # The module constants are the pins (download() checked the mirror manifest
+        # records the same digests), so a file edited in raw/ after linking is refused
+        # before any byte of it is read.
         verify_raw_files(
             self.raw_dir,
-            {
-                name: manifest_sha256(manifest, raw_relpath(name))
-                for name in self.raw_file_names
-            },
+            {name: RELEASED_FILES[name].sha256 for name in self.raw_file_names},
         )
+        data_root = _data_root()
         resolve, canonical = self._resolvers()
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -1309,7 +1308,7 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
             sorted(set(segregant_table["genotype"])),
             matrix,
             build_parents(data_root),
-            manifest_sha256(manifest, raw_relpath(SD12)),
+            RELEASED_FILES[SD12].sha256,
         )
         seg_to_genotype = dict(
             zip(segregant_table["geno_bc"], segregant_table["genotype"], strict=True)

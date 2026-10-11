@@ -85,6 +85,7 @@ RESULTS: Final = REPO / "experiments/036-dataset-fixes-before-kg-build/results"
 AUDIT_JSON: Final = RESULTS / "aggregation_decomposition_audit.json"
 PROBES_JSON: Final = RESULTS / "aggregation_decomposition_probes.json"
 TABLES_MD: Final = RESULTS / "aggregation_decomposition_tables.md"
+YEAST_JSON: Final = RESULTS / "aggregation_decomposition_yeast_sources.json"
 SCRIPT: Final = (
     "experiments/036-dataset-fixes-before-kg-build/scripts/"
     "aggregation_decomposition_audit.py"
@@ -1694,10 +1695,102 @@ def markdown_tables(result: AuditResult) -> str:
     return "\n\n".join(blocks) + "\n"
 
 
+# --------------------------------------------------------------------------- #
+# Preparing for the yeast compendia: attribution only, nothing is loaded
+# --------------------------------------------------------------------------- #
+YEASTRACT_KEY: Final = "teixeiraYEASTRACTPortalExploitation2023"
+YEASTRACT_ZIP: Final = "data/YeastractPlus_2022_all_regs.zip"
+YEASTRACT_MEMBER: Final = "YeastractPlus_2022_Scerevisiae_regs_flatfile.tsv.gz"
+#: The flat file has no header; the columns as the maintainers' release lays them out
+#: (regulator ORF and name, target ORF and name, PubMed id, sign, evidence, method,
+#: environment group, condition, medium), read off the rows.
+YEASTRACT_COLUMNS: Final = (
+    "regulator_orf",
+    "regulator",
+    "target_orf",
+    "target",
+    "pmid",
+    "sign",
+    "evidence",
+    "method",
+    "environment_group",
+    "environment",
+    "medium",
+)
+SPELL_DIR_REL: Final = "data/sgd/spell"
+SPELL_ARCHIVE: Final = "all_spell_datasets.tar.gz"
+
+
+class YeastSources(_Frozen):
+    """How the two yeast compendia attribute their records, read off what is on disk."""
+
+    measured_at: str
+    yeastract_file: str
+    yeastract_sha256: str
+    yeastract_rows: int
+    yeastract_pmids: int
+    yeastract_top_pmids: dict[str, int]
+    yeastract_evidence: dict[str, int]
+    yeastract_methods: int
+    yeastract_top_methods: dict[str, int]
+    yeastract_regulators: int
+    yeastract_targets: int
+    yeastract_media_cells: int
+    spell_dir: str
+    spell_files_on_disk: int
+    spell_archive_present: bool
+
+
+def yeast_sources(root: Path) -> YeastSources:
+    """YEASTRACT+'s per-row PubMed attribution, and whether the SPELL archive is on disk."""
+    import gzip
+    import zipfile
+
+    path = root / RAW_DIR / YEASTRACT_KEY / YEASTRACT_ZIP
+    manifest = Manifest.model_validate_json(
+        (root / RAW_DIR / YEASTRACT_KEY / MANIFEST_FILENAME).read_text()
+    )
+    pinned = next(f.sha256 for f in manifest.files if f.path == YEASTRACT_ZIP)
+    digest = sha256_file(path)
+    if digest != pinned:
+        raise SystemExit(f"{path}: sha256 {digest}, manifest {pinned}")
+    with zipfile.ZipFile(path) as archive:
+        text = gzip.decompress(archive.read(YEASTRACT_MEMBER)).decode("utf-8")
+    rows = [
+        dict(zip(YEASTRACT_COLUMNS, line.split("\t"), strict=True))
+        for line in text.splitlines()
+    ]
+    pmids = Counter(r["pmid"] for r in rows)
+    methods = Counter(r["method"] for r in rows)
+    spell = root / SPELL_DIR_REL
+    return YeastSources(
+        measured_at=now(),
+        yeastract_file=f"{RAW_DIR}/{YEASTRACT_KEY}/{YEASTRACT_ZIP}:{YEASTRACT_MEMBER}",
+        yeastract_sha256=digest,
+        yeastract_rows=len(rows),
+        yeastract_pmids=len(pmids),
+        yeastract_top_pmids=dict(pmids.most_common(5)),
+        yeastract_evidence=dict(Counter(r["evidence"] for r in rows)),
+        yeastract_methods=len(methods),
+        yeastract_top_methods=dict(methods.most_common(6)),
+        yeastract_regulators=len({r["regulator_orf"] for r in rows}),
+        yeastract_targets=len({r["target_orf"] for r in rows}),
+        yeastract_media_cells=sum(1 for r in rows if r["medium"] not in ("", "N/A")),
+        spell_dir=f"$DATA_ROOT/{SPELL_DIR_REL}",
+        spell_files_on_disk=sum(1 for _ in spell.rglob("*") if _.is_file()),
+        spell_archive_present=(spell / SPELL_ARCHIVE).is_file(),
+    )
+
+
 def main(argv: list[str] | None = None) -> None:
     """Probe (optionally), audit, and write both results files."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--feba-db", type=Path)
+    parser.add_argument(
+        "--yeast-only",
+        action="store_true",
+        help="measure how YEASTRACT+ attributes its rows and whether SPELL is on disk",
+    )
     parser.add_argument(
         "--tables-only",
         action="store_true",
@@ -1715,13 +1808,18 @@ def main(argv: list[str] | None = None) -> None:
         help="skip the 10 GB sha256 re-hash (size is still checked)",
     )
     args = parser.parse_args(argv)
+    if args.yeast_only:
+        record = yeast_sources(data_root())
+        YEAST_JSON.write_text(record.model_dump_json(indent=2) + "\n")
+        print(f"wrote {YEAST_JSON}")
+        return
     if args.tables_only:
         result = AuditResult.model_validate_json(AUDIT_JSON.read_text())
         TABLES_MD.write_text(markdown_tables(result))
         print(f"wrote {TABLES_MD}")
         return
     if args.feba_db is None:
-        parser.error("--feba-db is required unless --tables-only")
+        parser.error("--feba-db is required unless --tables-only or --yeast-only")
     root = data_root()
     if args.network:
         plan = static_plan() + lim_plan(root) + lamoureux_plan(root)

@@ -830,9 +830,12 @@ def environment_compound_collisions(
     composition. Identity is the InChIKey when both sides carry one, else the
     normalized name.
     """
+    medium_components = (
+        [] if environment.media is None else environment.media.components
+    )
     components = {
         _compound_key(component.compound): component.compound.name
-        for component in environment.media.components
+        for component in medium_components
         if component.definition is s.ComponentDefinition.defined
     }
     out: list[EnvironmentCompoundCollision] = []

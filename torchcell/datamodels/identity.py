@@ -415,12 +415,16 @@ def environment_identity(environment: Environment) -> dict[str, Any]:
 
     ``provenance_gaps`` is dropped, but what a gap MEANS is kept: the gapped field is
     ``None``, and a ``None`` temperature projects as ``None``, so a record that never
-    carried a temperature does not merge with one measured at 30 C. A
+    carried a temperature does not merge with one measured at 30 C. A gapped medium
+    (#901/#902/#903) projects as ``None`` the same way, so an environment whose source
+    states no medium never merges with one on a stated medium. A
     ``CultureEnvironment``'s protocol fields (``ENVIRONMENT_OPTIONAL_IDENTITY_FIELDS``)
     are added only when set.
     """
     identity: dict[str, Any] = {
-        "media": media_identity(environment.media),
+        "media": (
+            None if environment.media is None else media_identity(environment.media)
+        ),
         "temperature": (
             None
             if environment.temperature is None

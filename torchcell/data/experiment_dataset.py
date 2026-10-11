@@ -728,7 +728,11 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             rec["experiment"],
             "environment",
             experiment.environment,
-            experiment.environment.media.name,
+            (
+                "media gapped"
+                if experiment.environment.media is None
+                else experiment.environment.media.name
+            ),
             itxn,
         )
         self._maybe_intern(rec, "reference", reference, reference.dataset_name, itxn)

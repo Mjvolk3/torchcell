@@ -2152,7 +2152,8 @@ def test_every_new_family_is_in_both_maps_and_both_unions(kind: str) -> None:
     else:
         assert annotation is Environment
     assert annotation is not None and issubclass(annotation, Environment)
-    assert annotation.model_fields["media"].annotation is s.Media
+    # #901/#902/#903: the shared Media, nullable only beside a typed medium gap
+    assert annotation.model_fields["media"].annotation == s.Media | None
 
 
 # --------------------------------------------------------------------------- #

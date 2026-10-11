@@ -312,6 +312,59 @@ def test_a_gapped_temperature_is_not_the_same_environment_as_a_measured_one() ->
     )
 
 
+# --- #901/#902/#903: a typed gap on the medium --------------------------------- #
+_MEDIUM_GAP = ProvenanceGap(
+    field="media", reason=ProvenanceGapReason.not_carried_by_curation
+)
+
+
+def test_a_gapped_medium_projects_as_none_and_is_its_own_environment() -> None:
+    """A medium the source never states is ``None`` in the projection, so the
+    environment never merges with one on a stated medium; two gapped environments
+    differing only in temperature stay two environments.
+    """
+    gapped = s.Environment(media=None, provenance_gaps=[_MEDIUM_GAP])
+    stated = s.Environment(media=_plate("YPD", "mota2024", "20 g/L", 2.0))
+    assert environment_identity(gapped)["media"] is None
+    assert identity_sha256(environment_identity(gapped)) != identity_sha256(
+        environment_identity(stated)
+    )
+    hot = s.Environment(
+        media=None, temperature=s.Temperature(value=37.0), provenance_gaps=[_MEDIUM_GAP]
+    )
+    assert identity_sha256(environment_identity(hot)) != identity_sha256(
+        environment_identity(gapped)
+    )
+
+
+def test_a_medium_is_stated_or_gapped_never_silently_none() -> None:
+    """``Environment.media`` None needs a ``ProvenanceGap(field='media')``; a gap on
+    another field does not cover it, and a gapped medium cannot also carry a value.
+    """
+    with pytest.raises(ValueError, match=r"Environment\.media is unset"):
+        s.Environment(media=None)
+    with pytest.raises(ValueError, match=r"Environment\.media is unset"):
+        s.Environment(
+            media=None,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field="temperature",
+                    reason=ProvenanceGapReason.not_carried_by_curation,
+                )
+            ],
+        )
+    with pytest.raises(ValueError, match="media"):
+        s.Environment(
+            media=_plate("YPD", "mota2024", "20 g/L", 2.0),
+            provenance_gaps=[_MEDIUM_GAP],
+        )
+    with pytest.raises(ValueError, match="media"):
+        s.Environment()  # type: ignore[call-arg]  # media is required, even when None
+    gapped = s.Environment(media=None, provenance_gaps=[_MEDIUM_GAP])
+    assert gapped.gapped_fields() == {"media"}
+    assert s.Environment.model_validate(gapped.model_dump()) == gapped
+
+
 def test_provenance_gaps_are_not_themselves_part_of_environment_identity() -> None:
     media = _plate("YPD", "mota2024", "20 g/L", 2.0)
     silent = s.Environment(media=media, temperature=None)

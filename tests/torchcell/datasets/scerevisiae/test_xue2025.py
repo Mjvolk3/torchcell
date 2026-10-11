@@ -47,6 +47,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.datasets.gene_alias_resolution import (
+    GeneNameRefusalReason,
+    GeneNameRefused,
+)
 from torchcell.datasets.scerevisiae import xue2025 as m
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -68,10 +72,20 @@ _ORF = {
 
 
 class _StubGenome:
-    """``gene_set`` (current ORFs) and ``alias_to_systematic`` (common name -> [ORF])."""
+    """``gene_set`` (current ORFs), ``alias_to_systematic`` (common name -> [ORF]) and the
+    ``feature_index`` standard-name map. ``TFC7`` is shaped as in R64 (#886): the
+    standard name of YOR110W and an alias of YNL039W (BDP1), which the alias table
+    lists FIRST, so a first-candidate resolver would store YNL039W.
+    """
 
-    gene_set = set(_ORF.values())
-    alias_to_systematic: dict[str, list[str]] = {k: [v] for k, v in _ORF.items()}
+    gene_set = {*_ORF.values(), "YNL039W"}
+    alias_to_systematic: dict[str, list[str]] = {
+        **{k: [v] for k, v in _ORF.items()},
+        "TFC7": ["YNL039W", "YOR110W"],
+    }
+    feature_index: dict[str, Any] = {
+        "standard_to_ids": {k: [v] for k, v in _ORF.items()}
+    }
 
 
 def _genome() -> SCerevisiaeGenome:
@@ -346,29 +360,57 @@ def test_summary_csv_gene_set_and_build_manifest(
 def test_resolve_systematic_prefers_gene_set_then_alias_then_raises(
     built: m.FattyAcidXue2025Dataset,
 ) -> None:
-    """A name already in ``gene_set`` returns itself; a common name is upper-cased and
-    followed through ``alias_to_systematic`` (``pox1`` -> YGL205W); an unknown name raises
-    with the name in the message.
-
-    Finding: the ``gene_set`` membership test is case-sensitive (only the alias lookup
-    upper-cases), so a lowercase systematic name such as ``ygl205w`` falls through to the
-    alias map and raises even though YGL205W is a current ORF. The real sheet only carries
-    common names, so no record is affected; pinned as the code behaves.
+    """A name already in ``gene_set`` returns itself, in any case (#886 retired the
+    case-sensitive membership test); a common name with one candidate follows the alias
+    table (``pox1`` -> YGL205W); ``TFC7`` resolves through its pin to YOR110W, not to the
+    alias table's first candidate; an unknown name raises a typed refusal.
     """
     assert built.experiment_class is MetaboliteExperiment
     assert built.reference_class is MetaboliteExperimentReference
     assert built._resolve_systematic(" YGL205W ") == "YGL205W"
+    assert built._resolve_systematic("ygl205w") == "YGL205W"
     assert built._resolve_systematic("pox1") == "YGL205W"
-    with pytest.raises(
-        RuntimeError,
-        match="could not resolve gene name 'NOPE' to an R64 systematic ORF",
-    ):
+    assert built._resolve_systematic("TFC7") == "YOR110W"
+    with pytest.raises(GeneNameRefused) as info:
         built._resolve_systematic("NOPE")
-    with pytest.raises(
-        RuntimeError,
-        match="could not resolve gene name 'ygl205w' to an R64 systematic ORF",
-    ):
-        built._resolve_systematic("ygl205w")
+    assert info.value.refusal.reason is GeneNameRefusalReason.NOT_IN_GENOME
+    assert str(info.value) == (
+        "gene name 'NOPE' refused (not_in_genome): no live gene, alias or standard "
+        "name matches; candidates []"
+    )
+
+
+def test_tfc7_pin_is_the_r64_standard_name_and_is_rechecked(tmp_path: Path) -> None:
+    """#886: the one pin is TFC7 -> YOR110W under the SGD standard-name rule, quoting
+    the start of YOR110W's gene row in the R64-4-1 GFF. When the injected genome names a
+    different standard-name owner, the build refuses before writing anything.
+    """
+    assert {
+        alias: (pin.systematic_name, pin.rule.value, pin.quote, pin.provenance.sha256)
+        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
+    } == {
+        "TFC7": (
+            "YOR110W",
+            "sgd_standard_name",
+            "ID=YOR110W;Name=YOR110W;gene=TFC7;",
+            "64f61e3153083a8ef6d853721c9e83e4469cdc120883ec281e51a0df4ba390fa",
+        )
+    }
+
+    class _Contradicting(_StubGenome):
+        feature_index: dict[str, Any] = {
+            "standard_to_ids": {**_StubGenome.feature_index["standard_to_ids"]}
+            | {"TFC7": ["YNL039W"]}
+        }
+
+    root = _root(tmp_path, "contradicted")
+    with pytest.raises(GeneNameRefused) as info:
+        m.FattyAcidXue2025Dataset(
+            root=str(root), genome=cast(SCerevisiaeGenome, _Contradicting())
+        )
+    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
+    assert info.value.refusal.candidates == ["YNL039W", "YOR110W"]
+    assert not (root / "processed" / "lmdb").exists()
 
 
 def test_decode_genotype_labels_and_its_two_error_paths(

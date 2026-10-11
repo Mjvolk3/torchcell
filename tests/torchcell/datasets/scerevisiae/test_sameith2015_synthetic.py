@@ -8,7 +8,8 @@ opened), the supplementary workbook ``12915_2015_222_MOESM1_ESM.xlsx`` (openpyxl
 ``Single mutants - info`` and ``Double mutants - info``) and ``GSE42536.pkl``, a pickled
 REAL ``GEOparse.GEOTypes.GSE`` built in memory, so ``process()`` loads the pickle and the
 ``GEOparse.get_GEO`` network branch is never reached. The genome is a stub carrying the
-``gene_attribute_table`` / ``alias_to_systematic`` pair ``_convert_to_systematic`` reads.
+``gene_set`` / ``alias_to_systematic`` / ``feature_index`` lookups the refusing resolver
+reads (#886).
 
 Platform probes: 1 YAL001C, 2 YBR001C, 3 YCR001W. The mutant channel is Cy5 unless
 ``source_name_ch1`` names the refpool, then Cy3; log2 ratio = log2(mutant / refpool),
@@ -18,7 +19,7 @@ Single-mutant GSE (title: Cy5 / Cy3, source):
 
     S1 "yal001c-del-a"            2 4 8 / 1 4 2             -> log2 1 0 2
     S2 "yal001c-del-b"            2 2 2 / 8 2 2, refpool    -> mutant 8 2 2, log2 2 0 0
-    S3 "nth2-del" (NTH2 -> YBR001C via the gene table)
+    S3 "nth2-del" (NTH2 -> YBR001C, its one candidate ORF)
                                   4 1 1 / 2 2 1             -> log2 1 -1 0
     S4 "wt-a"                     wildtype
     S5 "swt1-del-a"               wildtype by substring (Finding)
@@ -70,6 +71,10 @@ from torchcell.datamodels.schema import (
     SgaNatMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.datasets.gene_alias_resolution import (
+    GeneNameRefusalReason,
+    GeneNameRefused,
+)
 from torchcell.datasets.scerevisiae import sameith2015 as m
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
@@ -84,16 +89,27 @@ _GAP = " " * 11
 
 
 class _StubGenome:
-    """The two attributes ``_convert_to_systematic`` reads."""
+    """The three lookups the refusing resolver reads (#886). ``SUT2`` is shaped as in
+    R64: the standard name of YPR009W and an alias of YMR080C, listed first. ``ALIAS9``
+    is an alias of two genes with no pin.
+    """
 
-    gene_attribute_table = pd.DataFrame(
-        {
-            "ID": ["YBR001C", "YOR166C", "YGL999W"],
-            "gene": ["NTH2", "SWT1", None],
-            "Alias": [None, None, "OLDNAME"],
+    gene_set = {"YBR001C", "YOR166C", "YGL999W", "YHR999W", "YHR998W", "YMR080C"}
+    gene_set |= {"YPR009W"}
+    alias_to_systematic: dict[str, list[str]] = {
+        "NTH2": ["YBR001C"],
+        "SWT1": ["YOR166C"],
+        "OLDNAME": ["YGL999W"],
+        "ALIAS9": ["YHR999W", "YHR998W"],
+        "SUT2": ["YMR080C", "YPR009W"],
+    }
+    feature_index: dict[str, Any] = {
+        "standard_to_ids": {
+            "NTH2": ["YBR001C"],
+            "SWT1": ["YOR166C"],
+            "SUT2": ["YPR009W"],
         }
-    )
-    alias_to_systematic: dict[str, list[str]] = {"ALIAS9": ["YHR999W", "YHR998W"]}
+    }
 
 
 def _genome() -> SCerevisiaeGenome:
@@ -465,13 +481,60 @@ def test_single_side_files_and_wildtype_reference(
     }
 
 
-def test_convert_to_systematic_tries_table_gene_alias_then_alias_map(
+def test_convert_to_systematic_refuses_an_unpinned_ambiguous_token(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
+    """#886: a systematic-shaped token passes through, a token with one candidate
+    resolves, a token with none is not a gene name (None), ``SUT2`` resolves through its
+    pin to YPR009W (not the alias table's first candidate YMR080C), and ``ALIAS9``, an
+    alias of two genes with no pin, raises a typed refusal instead of taking the first.
+    """
     convert = single._convert_to_systematic
     assert [
-        convert(name) for name in ("", "yal001c", "nth2", "oldname", "alias9", "none9")
-    ] == [None, "YAL001C", "YBR001C", "YGL999W", "YHR999W", None]
+        convert(name) for name in ("", "yal001c", "nth2", "oldname", "none9", "sut2")
+    ] == [None, "YAL001C", "YBR001C", "YGL999W", None, "YPR009W"]
+    with pytest.raises(GeneNameRefused) as info:
+        convert("alias9")
+    assert info.value.refusal.reason is GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED
+    assert info.value.refusal.candidates == ["YHR998W", "YHR999W"]
+    assert ("SUT2", "YPR009W") in single.title_resolutions
+
+
+def test_title_check_refuses_a_pin_the_genome_contradicts(
+    single: m.SmMicroarraySameith2015Dataset,
+) -> None:
+    """The build-time check re-reads each ambiguous token's pin against the genome:
+    once the stub's standard-name owner of SUT2 is YMR080C, the recorded YPR009W
+    resolution is refused, and an ambiguous token with no pin is refused outright.
+    """
+    single.title_resolutions = {("SUT2", "YPR009W")}
+    single._check_title_resolutions()
+    single.title_resolutions = {("ALIAS9", "YHR999W")}
+    with pytest.raises(GeneNameRefused) as unpinned:
+        single._check_title_resolutions()
+    assert (
+        unpinned.value.refusal.reason is GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED
+    )
+
+    class _Contradicting(_StubGenome):
+        feature_index: dict[str, Any] = {"standard_to_ids": {"SUT2": ["YMR080C"]}}
+
+    single.genome = cast(SCerevisiaeGenome, _Contradicting())
+    single.title_resolutions = {("SUT2", "YPR009W")}
+    with pytest.raises(GeneNameRefused) as info:
+        single._check_title_resolutions()
+    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
+
+
+def test_the_two_pins_quote_the_r64_gff_standard_names() -> None:
+    """SUT2 and GAT1 are the ambiguous tokens of GSE42536's titles (2026-10-10)."""
+    assert {
+        alias: (pin.systematic_name, pin.rule.value, pin.quote)
+        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
+    } == {
+        "SUT2": ("YPR009W", "sgd_standard_name", "ID=YPR009W;Name=YPR009W;gene=SUT2;"),
+        "GAT1": ("YFL021W", "sgd_standard_name", "ID=YFL021W;Name=YFL021W;gene=GAT1;"),
+    }
 
 
 _DOUBLE_EXPECTED = [
@@ -1107,15 +1170,16 @@ def test_probe_mapping_branches(fixture: str, request: pytest.FixtureRequest) ->
 def test_double_convert_to_systematic_and_name_validation(
     double: m.DmMicroarraySameith2015Dataset, single: m.SmMicroarraySameith2015Dataset
 ) -> None:
-    """The double-mutant ``_convert_to_systematic`` (lines 1550-1583) tries, in order,
-    the systematic pattern, the gene-table ``gene`` column, its ``Alias`` column and the
-    first ``alias_to_systematic`` candidate. ``_is_valid_systematic_name`` rejects the
-    empty string and accepts a ``-A`` suffix, in both classes.
+    """The double-mutant ``_convert_to_systematic`` resolves as the single one does
+    (#886): an ambiguous token without a pin raises. ``_is_valid_systematic_name``
+    rejects the empty string and accepts a ``-A`` suffix, in both classes.
     """
     convert = double._convert_to_systematic
     assert [
-        convert(name) for name in ("", "yal001c", "nth2", "oldname", "alias9", "none9")
-    ] == [None, "YAL001C", "YBR001C", "YGL999W", "YHR999W", None]
+        convert(name) for name in ("", "yal001c", "nth2", "oldname", "none9", "sut2")
+    ] == [None, "YAL001C", "YBR001C", "YGL999W", None, "YPR009W"]
+    with pytest.raises(GeneNameRefused):
+        convert("alias9")
     for dataset in (single, double):
         assert [
             dataset._is_valid_systematic_name(name)

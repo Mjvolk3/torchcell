@@ -1367,7 +1367,7 @@ class CellAdapter:
     ) -> BioCypherNode:
         environment = data["experiment"].environment
         environment_id = self._environment_node_id(environment)
-        media = json.dumps(environment.media.model_dump())
+        media = self._media_property(environment.media)
         temperature = environment.temperature
         return BioCypherNode(
             node_id=environment_id,
@@ -1517,7 +1517,7 @@ class CellAdapter:
             environment_id = self._environment_node_id(environment)
             if environment_id not in seen_node_ids:
                 seen_node_ids.add(environment_id)
-                media = json.dumps(environment.media.model_dump())
+                media = self._media_property(environment.media)
                 temperature = environment.temperature
                 node = BioCypherNode(
                     node_id=environment_id,
@@ -1534,47 +1534,50 @@ class CellAdapter:
                 nodes.append(node)
         return nodes
 
-    @data_chunker
-    def _media_node(self, data: dict[str, Any], method_name: str) -> BioCypherNode:
-        media_id = self._media_node_id(data["experiment"].environment.media)
-        name = data["experiment"].environment.media.name
-        state = data["experiment"].environment.media.state
+    # --- begin #901/#902/#903: a gapped medium emits no media node or edge -------- #
+    @staticmethod
+    def _media_property(media: Any) -> str | None:
+        """The environment node's ``media`` property: the medium's JSON, None if gapped."""
+        return None if media is None else json.dumps(media.model_dump())
+
+    @staticmethod
+    def _media_node_from(media: Any) -> BioCypherNode:
+        """The media node of a stated ``Media``, content-addressed by its composition."""
         return BioCypherNode(
-            node_id=media_id,
+            node_id=CellAdapter._media_node_id(media),
             preferred_id="media",
             node_label="media",
             properties={
-                "name": name,
-                "state": state,
-                "serialized_data": json.dumps(
-                    data["experiment"].environment.media.model_dump()
-                ),
+                "name": media.name,
+                "state": media.state,
+                "serialized_data": json.dumps(media.model_dump()),
             },
         )
 
+    @data_chunker
+    def _media_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> list[BioCypherNode]:
+        """Emit the media node, or nothing when the record gaps its medium."""
+        media = data["experiment"].environment.media
+        if media is None:
+            return []
+        return [self._media_node_from(media)]
+
     def _get_media_reference_nodes(self) -> list[BioCypherNode]:
-        seen_node_ids = set()
+        seen_node_ids: set[str] = set()
         nodes = []
         for data in tqdm(self.dataset.experiment_reference_index):
-            media_id = self._media_node_id(data.reference.environment_reference.media)
-            if media_id not in seen_node_ids:
-                seen_node_ids.add(media_id)
-                name = data.reference.environment_reference.media.name
-                state = data.reference.environment_reference.media.state
-                node = BioCypherNode(
-                    node_id=media_id,
-                    preferred_id="media",
-                    node_label="media",
-                    properties={
-                        "name": name,
-                        "state": state,
-                        "serialized_data": json.dumps(
-                            data.reference.environment_reference.media.model_dump()
-                        ),
-                    },
-                )
+            media = data.reference.environment_reference.media
+            if media is None:
+                continue
+            node = self._media_node_from(media)
+            if node.get_id() not in seen_node_ids:
+                seen_node_ids.add(node.get_id())
                 nodes.append(node)
         return nodes
+
+    # --- end #901/#902/#903 ------------------------------------------------------ #
 
     @staticmethod
     def _temperature_node_from(temperature: Any) -> BioCypherNode:
@@ -3491,15 +3494,18 @@ class CellAdapter:
     @data_chunker
     def _media_to_environment_edge(
         self, data: dict[str, Any], method_name: str
-    ) -> BioCypherEdge:
-        environment_id = self._environment_node_id(data["experiment"].environment)
-        media_id = self._media_node_id(data["experiment"].environment.media)
-        edge = BioCypherEdge(
-            source_id=media_id,
-            target_id=environment_id,
-            relationship_label="media member of",
-        )
-        return edge
+    ) -> list[BioCypherEdge]:
+        """Link the medium to its environment, or nothing when the medium is gapped."""
+        environment = data["experiment"].environment
+        if environment.media is None:
+            return []
+        return [
+            BioCypherEdge(
+                source_id=self._media_node_id(environment.media),
+                target_id=self._environment_node_id(environment),
+                relationship_label="media member of",
+            )
+        ]
 
     @data_chunker
     def _temperature_to_environment_edge(

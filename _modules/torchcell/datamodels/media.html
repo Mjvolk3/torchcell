@@ -1882,6 +1882,118 @@
 <span class="sd">joined on composition here, and that is the honest state until Mulleder 2012 is mirrored.</span>
 <span class="sd">"""</span>
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Boocock 2025 (eLife, doi 10.7554/eLife.95566) de novo segregant cultures. The</span>
+<span class="c1"># random-spore MATa segregants were FACS-sorted into the instrument's sheath fluid</span>
+<span class="c1"># (phosphate-buffered saline) and 2x YNB with 2% glucose was added on top, so the</span>
+<span class="c1"># culture is a mixture whose final strength depends on a sheath-fluid volume the paper</span>
+<span class="c1"># does not state. Every amount is therefore an IDENTITY without a number, with the</span>
+<span class="c1"># stated stock values in the provenance. The pilot pool of previously genotyped</span>
+<span class="c1"># segregants grew in the paper's own restatement of ``SM`` (6.7 g/L YNB w/o amino</span>
+<span class="c1"># acids, 2% glucose), which the loader carries as ``restated(SM, ...)``. Quotes are</span>
+<span class="c1"># verbatim substrings of the mirrored MinerU ``paper.md`` (LaTeX markup kept).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_BOOCOCK2025</span> <span class="o">=</span> <span class="s2">"boocockSinglecellEQTLMapping2025"</span>
+<span class="n">_BOOCOCK2025_SHA</span> <span class="o">=</span> <span class="s2">"a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4"</span>
+
+<span class="n">_BOOCOCK_SORT_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"YNB with $2 </span><span class="se">\\</span><span class="s2">%$ glucose was added to the sorted cells in sheath fluid (PBS, "</span>
+    <span class="s2">"Bio-Rad #12012932) and they were transferred to a shaking incubator and grown at "</span>
+    <span class="s2">"$3 0 ^ { </span><span class="se">\\</span><span class="s2">circ } </span><span class="se">\\</span><span class="s2">mathsf { C }$ ."</span>
+<span class="p">)</span>
+<span class="n">_BOOCOCK_HARVEST_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"For our experiments with the BY and RM cross (YLK3051), the cells were harvested "</span>
+    <span class="s2">"in $2 </span><span class="se">\\</span><span class="s2">times </span><span class="se">\\</span><span class="s2">mathsf { Y N B }$ medium containing sheath fluid."</span>
+<span class="p">)</span>
+<span class="n">_BOOCOCK_PBS_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"We grew the yeast segregants for scRNA-seq in a medium containing sheath fluid, a "</span>
+    <span class="s2">"phosphate-buffered saline (PBS) solution with a pH of 7.4"</span>
+<span class="p">)</span>
+<span class="n">_BOOCOCK_PILOT_YNB_QUOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"This pool of strains was then transferred to minimal YNB medium $</span><span class="se">\\</span><span class="s2">left( 6 . 7 ~ "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathsf { g } / </span><span class="se">\\</span><span class="s2">right|$ Difco Yeast Nitrogen Base w/o Amino Acids, $2 </span><span class="se">\\</span><span class="s2">%$ "</span>
+    <span class="s2">"glucose)"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_boocock_sv</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue anchored to the mirrored Boocock 2025 ``paper.md``."""</span>
+    <span class="k">return</span> <span class="n">_sv</span><span class="p">(</span>
+        <span class="n">value</span><span class="p">,</span> <span class="n">quote</span><span class="p">,</span> <span class="n">ck</span><span class="o">=</span><span class="n">_BOOCOCK2025</span><span class="p">,</span> <span class="n">sha</span><span class="o">=</span><span class="n">_BOOCOCK2025_SHA</span><span class="p">,</span> <span class="n">uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span>
+    <span class="p">)</span>
+
+
+<span class="n">YNB_SHEATH_FLUID_BOOCOCK2025</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="p">(</span>
+        <span class="s2">"2x YNB + 2</span><span class="si">% g</span><span class="s2">lucose added to FACS sheath fluid (PBS, pH 7.4), liquid "</span>
+        <span class="s2">"(Boocock 2025 de novo segregant cultures)"</span>
+    <span class="p">),</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YNB_SHEATH_FLUID_BOOCOCK2025"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"yeast nitrogen base (w/o amino acids)"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_boocock_sv</span><span class="p">(</span>
+                    <span class="s2">"added as a 2x stock; final strength not stated"</span><span class="p">,</span>
+                    <span class="n">_BOOCOCK_SORT_QUOTE</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"the sentence opens '1 ml 2x' in the PDF; the OCR renders "</span>
+                    <span class="s2">"that prefix as LaTeX, so the quote starts at 'YNB'"</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">_boocock_sv</span><span class="p">(</span>
+                    <span class="s2">"Difco Yeast Nitrogen Base w/o Amino Acids"</span><span class="p">,</span>
+                    <span class="n">_BOOCOCK_PILOT_YNB_QUOTE</span><span class="p">,</span>
+                    <span class="n">note</span><span class="o">=</span><span class="s2">"the product the same Methods name for the pilot pool's YNB; "</span>
+                    <span class="s2">"the de novo sentence says only '2x YNB'"</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the 2x stock was added to cells already in sheath fluid of unstated "</span>
+            <span class="s2">"volume, so no final concentration is recorded"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_defined</span><span class="p">(</span>
+            <span class="s2">"D-glucose"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_boocock_sv</span><span class="p">(</span>
+                    <span class="s2">"2</span><span class="si">% i</span><span class="s2">n the added 2x YNB; final concentration not stated"</span><span class="p">,</span>
+                    <span class="n">_BOOCOCK_SORT_QUOTE</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"2</span><span class="si">% i</span><span class="s2">s the added medium's glucose, diluted by the sheath fluid to an "</span>
+            <span class="s2">"unstated final concentration"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"phosphate-buffered saline (FACS sheath fluid, Bio-Rad #12012932)"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_boocock_sv</span><span class="p">(</span><span class="s2">"PBS sheath fluid, pH 7.4"</span><span class="p">,</span> <span class="n">_BOOCOCK_PBS_QUOTE</span><span class="p">),</span>
+                <span class="n">_boocock_sv</span><span class="p">(</span><span class="s2">"Bio-Rad #12012932"</span><span class="p">,</span> <span class="n">_BOOCOCK_SORT_QUOTE</span><span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the vendor's formulation; the paper states PBS at pH 7.4 and the "</span>
+            <span class="s2">"catalog number, not the salts"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_boocock_sv</span><span class="p">(</span>
+            <span class="s2">"2x YNB with sheath fluid, harvest medium of cross A"</span><span class="p">,</span>
+            <span class="n">_BOOCOCK_HARVEST_QUOTE</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_boocock_sv</span><span class="p">(</span>
+            <span class="s2">"a medium containing sheath fluid, PBS pH 7.4"</span><span class="p">,</span>
+            <span class="n">_BOOCOCK_PBS_QUOTE</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the Results sentence that contrasts this medium with the unbuffered "</span>
+            <span class="s2">"minimal medium of the bulk eQTL study"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""The de novo segregant culture of Boocock 2025: 2x YNB + 2% glucose on sorted cells in</span>
+<span class="sd">PBS sheath fluid. Stated for cross A; crosses B and C carry it as a documented</span>
+<span class="sd">representative (see ``[[torchcell.datasets.scerevisiae.boocock2025]]``)."""</span>
+
 <span class="c1"># =========================================================================== #</span>
 <span class="c1"># BACTERIAL MEDIA ([[plan.bacteria-ontology-genome]] section 3d, Step 5).</span>
 <span class="c1">#</span>
@@ -4379,6 +4491,7 @@
     <span class="s2">"SM"</span><span class="p">:</span> <span class="n">SM</span><span class="p">,</span>
     <span class="s2">"SM_AGAR"</span><span class="p">:</span> <span class="n">SM_AGAR</span><span class="p">,</span>
     <span class="s2">"SM_DEFERRED"</span><span class="p">:</span> <span class="n">SM_DEFERRED</span><span class="p">,</span>
+    <span class="s2">"YNB_SHEATH_FLUID_BOOCOCK2025"</span><span class="p">:</span> <span class="n">YNB_SHEATH_FLUID_BOOCOCK2025</span><span class="p">,</span>
     <span class="c1"># bacterial media ([[plan.bacteria-ontology-genome]] Step 5; uses in BACTERIAL_MEDIA_USES)</span>
     <span class="s2">"LB"</span><span class="p">:</span> <span class="n">LB</span><span class="p">,</span>
     <span class="s2">"LB_AGAR"</span><span class="p">:</span> <span class="n">LB_AGAR</span><span class="p">,</span>

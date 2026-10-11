@@ -29,6 +29,9 @@ from .dechiara2022 import LifeCycleDeChiara2022Dataset as LifeCycleDeChiara2022D
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
+from .jackson2020 import (
+    TfDeletionPseudobulkJackson2020Dataset as TfDeletionPseudobulkJackson2020Dataset,
+)
 from .kemmeren2014 import MicroarrayKemmeren2014Dataset as MicroarrayKemmeren2014Dataset
 from .kuzmin2018 import DmfKuzmin2018Dataset as DmfKuzmin2018Dataset
 from .kuzmin2018 import SmfKuzmin2018Dataset as SmfKuzmin2018Dataset
@@ -151,6 +154,8 @@ bloom_datasets = ["Bloom2019Dataset"]
 peter2018_datasets = ["IsolateGrowthPeter2018Dataset"]
 boocock_datasets = ["Boocock2025Dataset"]
 
+jackson2020_datasets = ["TfDeletionPseudobulkJackson2020Dataset"]
+
 smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
 
 baryshnikova_datasets = ["SmfBaryshnikova2010Dataset"]
@@ -194,6 +199,7 @@ __all__ = (
     + bloom_datasets
     + peter2018_datasets
     + boocock_datasets
+    + jackson2020_datasets
     + smith2016_datasets
     + baryshnikova_datasets
     + dechiara_datasets

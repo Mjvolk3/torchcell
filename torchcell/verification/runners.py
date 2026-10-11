@@ -91,6 +91,9 @@ from torchcell.verification.natural_isolate_response import (
     verify_natural_isolate_response_streaming,
 )
 from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
+from torchcell.verification.pseudobulk_umi_count import (
+    verify_pseudobulk_umi_count_streaming,
+)
 from torchcell.verification.released import (
     COSTANZO2016_P_VALUE,
     COSTANZO2016_SCORE,
@@ -2710,6 +2713,89 @@ def run_segregant_expression(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# --- begin jackson2020: pseudobulk single-cell UMI counts (yeast wave 2, row 6) ---
+# A record is the summed UMI counts of one barcoded strain in one culture, so the
+# verifier re-sums the released matrix and compares every stored number.
+# --------------------------------------------------------------------------- #
+#: Jackson 2020: the share of the 6,827 gene features whose id is an SGD systematic
+#: name. Measured on the 2026-10-11 build: 6,822 of 6,827; the five that are not are
+#: YIL080W (absent from R64-4-1) and YAR062W, YFL057C, YIL168W, YIR044C (each merged
+#: into a neighbour that a second released column already maps to, kept distinct).
+MIN_JACKSON_FEATURE_CONTAINMENT = 0.999
+
+PSEUDOBULK_UMI_COUNT_DATASETS: dict[str, dict[str, Any]] = {
+    "tf_deletion_pseudobulk_jackson2020": {
+        "root": "data/torchcell/tf_deletion_pseudobulk_jackson2020",
+        # 72 strains x 11 conditions = 792, less the 8 (strain, condition) pairs that
+        # hold no cell in the released matrix
+        "expected_count": 784,
+        "min_feature_containment": MIN_JACKSON_FEATURE_CONTAINMENT,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/jacksonGeneRegulatoryNetwork2020/data/"
+                "elife-51254-code2.tsv.gz (raw mirror; eLife Source code 2, PMC Article "
+                "Datasets bucket PMC7004572.1, bytes equal to the library mirror's)"
+            ),
+            citation_key="jacksonGeneRegulatoryNetwork2020",
+            sha256="4bb210b7a1e2e9724e475ab516de646fbc36f2638ac6ade3bf15bf66ffb8c011",
+            method=(
+                "raw single-cell UMI counts (10x Chromium 3' v2) of 72 barcoded "
+                "prototrophic FY4/FY5 diploid deletion strains (11 TFs + HO, six "
+                "constructions each) pooled in 11 shake-flask conditions, summed per "
+                "(strain, condition) as the paper's pseudobulk; strains from "
+                "Supplementary file 1 Table 2 (barcodes checked against Source code 4), "
+                "media from Table 4, release labels from figure_common_settings.R "
+                "(Source code 1)"
+            ),
+            page=(
+                "eLife 9:e51254 (doi:10.7554/eLife.51254); Materials and methods "
+                "'Pseudobulk differential gene expression'; Table 1; Supplementary "
+                "file 1; GEO GSE125162"
+            ),
+        ),
+    }
+}
+
+
+def verify_pseudobulk_umi_count_dataset(
+    name: str, data_root: str, abs_root: str | None = None
+) -> VerificationReport:
+    """One PSEUDOBULK_UMI_COUNT_DATASETS entry's report (written by the caller).
+
+    ``abs_root`` defaults to the registry root under ``data_root``; the loader's
+    ``verify_build`` passes the store it just built.
+    """
+    spec = PSEUDOBULK_UMI_COUNT_DATASETS[name]
+    root = abs_root or osp.join(data_root, spec["root"])
+    return verify_pseudobulk_umi_count_streaming(
+        stream_records(root),
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        raw_dir=osp.join(root, "raw"),
+        library_root=osp.join(data_root, "torchcell-library"),
+        genome=_genome(data_root),
+        sgd_genes=_sgd_gene_set(data_root),
+        min_feature_containment=spec["min_feature_containment"],
+    )
+
+
+def run_pseudobulk_umi_count(data_root: str) -> bool:
+    """Verify pseudobulk UMI-count datasets (L0-L4). True if all pass."""
+    all_passed = True
+    for name, spec in PSEUDOBULK_UMI_COUNT_DATASETS.items():
+        report = verify_pseudobulk_umi_count_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --- end jackson2020 ---
+
+
+# --------------------------------------------------------------------------- #
 # #889: gene interaction, gene essentiality and SynLethDB pair families
 #
 # These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no
@@ -4106,6 +4192,7 @@ def run_all(data_root: str) -> bool:
     segregant_ok = run_segregant_growth(data_root)
     natural_isolate_ok = run_natural_isolate_response(data_root)
     segregant_expression_ok = run_segregant_expression(data_root)
+    pseudobulk_umi_ok = run_pseudobulk_umi_count(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
@@ -4128,6 +4215,7 @@ def run_all(data_root: str) -> bool:
         and segregant_ok
         and natural_isolate_ok
         and segregant_expression_ok
+        and pseudobulk_umi_ok
         and titer_ok
         and bacterial_protein_ok
         and bacterial_metabolite_ok

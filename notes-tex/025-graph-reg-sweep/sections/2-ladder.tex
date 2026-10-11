@@ -5,34 +5,32 @@
 
 \tcfig{figures/graph_reg_sweep.pdf}{The sweep at three seeds per arm, read
 from W\&B by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py} and
-drawn by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. One palette
-color per arm, kept in every panel: gray no penalty, sand $\lambda = 10^{-5}$, slate
-$10^{-4}$, amber $10^{-3}$, terracotta $10^{-2}$, wheat $10^{-1}$, steel blue 1, dark
-blue 10, taupe 100, brick
-the hard mask, and three purples the prior toward degree-matched random graphs: lilac at
-$10^{-3}$, dusty mauve at $10^{-1}$, dark purple at 1. Every
+drawn by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. Each arm
+keeps one color in every panel; the ladder axis names the arms, and the random-graph
+arms are dashed in \textbf{e} and \textbf{g}--\textbf{i}. Every
 point is one seed, filled in its arm's color with a black edge; a short black bar is the
 arm mean; a cross marks a quantity the model does not compute. The ladder axis is
 $\log_{10} \lambda$ from $-5$ to 2, with \emph{none} the unpenalized arm, \emph{mask} the hard mask and
 \emph{r$-$3}, \emph{r$-$1} and \emph{r0} the degree-matched random-graph arms at
-$\lambda = 10^{-3}$, $10^{-1}$ and 1 (three, five and five seeds). (a) Held-out Pearson on the
+$\lambda = 10^{-3}$, $10^{-1}$ and 1 (three, five and five seeds). \textbf{a},~Held-out Pearson on the
 37{,}673 validation triples at three readings per seed: epoch 29 (circle, left), max
 over epochs (triangle, middle, every run) and at the epoch of minimum validation point
 loss (square, right). Stars are the paired $t$ of each reading against no penalty on the
-same seeds, placed above that reading's column, one row per reading (** $p < 0.01$, ***
-$p < 0.001$); the minimum-loss reading has none, its closest being $\lambda = 10^{-1}$
-at $p = 0.08$. (b) Held-out point loss at epoch 29 (circle) and its minimum over epochs
-(square), the value at the epoch the square in (a) is read at. (c) Edge recall at degree at epoch 29, mean over
+same seeds, placed above that reading's column, one row per reading (* $p < 0.05$,
+** $p < 0.01$, *** $p < 0.001$); the minimum-loss reading has none, its closest being
+$\lambda = 10^{-1}$
+at $p = 0.08$. \textbf{b},~Held-out point loss at epoch 29 (circle) and its minimum over epochs
+(square), the value at the epoch the square in \textbf{a} is read at. \textbf{c},~Edge recall at degree at epoch 29, mean over
 the nine heads, each arm against its own target: the random arm is scored against the
-rewired graphs it was trained toward, the mask is 1 by construction. (d) Divergence of
+rewired graphs it was trained toward, the mask is 1 by construction. \textbf{d},~Divergence of
 layer-1 attention from the target graphs at epoch 29, validation pass, log scale; not
-computed at $\lambda = 0$ or under the mask. (e) Gradient norm of the penalty over that
+computed at $\lambda = 0$ or under the mask. \textbf{e},~Gradient norm of the penalty over that
 of the point loss on the probe batch at epochs 0, 1, 2, 5, 10 and 20, mean over seeds,
-log scale; the two arms without a penalty are at 0. (f) The control as a paired difference: biological minus degree-matched random graphs,
+log scale; the two arms without a penalty are at 0. \textbf{f},~The control as a paired difference: biological minus degree-matched random graphs,
 seed by seed on the three seeds both arms share, at each $\lambda$ the random arm runs
-at, under the three readings of (a) (same markers, arm mean as a bar); stars are the
-paired $t$ of that difference. Panel (a) gives the levels and (f) the pairing across
-arms, which (a) does not show. (g) Validation Pearson, (h) training Pearson and (i) validation point loss
+at, under the three readings of \textbf{a} (same markers, arm mean as a bar); stars are the
+paired $t$ of that difference. \textbf{a} gives the levels and \textbf{f} the pairing across
+arms, which \textbf{a} does not show. \textbf{g},~Validation Pearson, \textbf{h},~training Pearson and \textbf{i},~validation point loss
 by epoch, mean over complete seeds with a $\pm$ sd band. Panel titles state the finding
 each panel shows and are checked against the tables in Section~\ref{sec:reading}.}{fig:sweep}
 

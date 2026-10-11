@@ -1,0 +1,938 @@
+{
+  "essential_vs_smf_costanzo2016": {
+    "after_conditional_only": [
+      "YBL078C",
+      "YBR128C",
+      "YBR217W",
+      "YCR068W",
+      "YDL149W",
+      "YFR021W",
+      "YGL180W",
+      "YHR171W",
+      "YKL212W",
+      "YLL042C",
+      "YLR423C",
+      "YMR159C",
+      "YNR007C",
+      "YPL120W",
+      "YPL149W",
+      "YPR185W"
+    ],
+    "after_unconditional": [
+      "YHR072W-A",
+      "YHR099W",
+      "YJL012C",
+      "YLR293C",
+      "YNL138W-A",
+      "YOR167C",
+      "YOR182C"
+    ],
+    "by_gene": {
+      "YBL078C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG8",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YBL078C_dma147"
+      },
+      "YBR128C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG14",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YBR128C_dma297"
+      },
+      "YBR217W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG12",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YBR217W_dma368"
+      },
+      "YCR068W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG15",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YCR068W_dma583"
+      },
+      "YDL149W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG9",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YDL149W_dma726"
+      },
+      "YFR021W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG18",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YFR021W_dma1550"
+      },
+      "YGL180W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG1",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YGL180W_dma1725"
+      },
+      "YHR072W-A": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "NOP10",
+        "pubmed_ids": [
+          "16510898"
+        ],
+        "viable_strain": "YHR072W-A_sn4180"
+      },
+      "YHR099W": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "TRA1",
+        "pubmed_ids": [
+          "9756893"
+        ],
+        "viable_strain": "YHR099W_sn2005"
+      },
+      "YHR171W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG7",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YHR171W_dma2215"
+      },
+      "YJL012C": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "VTC4",
+        "pubmed_ids": [
+          "10407272"
+        ],
+        "viable_strain": "YJL012C_dma2460"
+      },
+      "YKL212W": {
+        "annotation_kinds": [
+          "conditional",
+          "other allele"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "SAC1",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YKL212W_dma2911"
+      },
+      "YLL042C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG10",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YLL042C_dma3053"
+      },
+      "YLR293C": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "GSP1",
+        "pubmed_ids": [
+          "12140549"
+        ],
+        "viable_strain": "YLR293C_sn2067"
+      },
+      "YLR423C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG17",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YLR423C_dma3473"
+      },
+      "YMR159C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG16",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YMR159C_dma3767"
+      },
+      "YNL031C": {
+        "annotation_kinds": [
+          "other allele"
+        ],
+        "conditions": [],
+        "locus": "HHT2",
+        "pubmed_ids": [
+          "25711831"
+        ],
+        "viable_strain": "YNL031C_dma3953"
+      },
+      "YNL138W-A": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "YSF3",
+        "pubmed_ids": [
+          "16314500",
+          "16510898"
+        ],
+        "viable_strain": "YNL138W-A_sn4590"
+      },
+      "YNR007C": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG3",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YNR007C_dma4210"
+      },
+      "YOR167C": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "RPS28A",
+        "pubmed_ids": [
+          "22377630"
+        ],
+        "viable_strain": "YOR167C_dma4583"
+      },
+      "YOR182C": {
+        "annotation_kinds": [
+          "unconditional deletion"
+        ],
+        "conditions": [],
+        "locus": "RPS30B",
+        "pubmed_ids": [
+          "22377630"
+        ],
+        "viable_strain": "YOR182C_dma4575"
+      },
+      "YPL120W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "VPS30",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YPL120W_dma4850"
+      },
+      "YPL149W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG5",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YPL149W_dma4878"
+      },
+      "YPR185W": {
+        "annotation_kinds": [
+          "conditional"
+        ],
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "locus": "ATG13",
+        "pubmed_ids": [
+          "32693712"
+        ],
+        "viable_strain": "YPR185W_dma5155"
+      }
+    },
+    "n_contradicted_after": 23,
+    "n_contradicted_after_unconditional_only": 7,
+    "n_contradicted_before": 24,
+    "n_viable_full_deletions_smf_costanzo2016": 4581
+  },
+  "sgd_dump": {
+    "conditions_all": {
+      "(none)": 1299,
+      "media: 2% glucose": 1,
+      "media: YPD with 2% glucose": 1,
+      "media: nitrogen starvation": 27,
+      "temperature: elevated temperature, 37 \u00b0C": 1
+    },
+    "conditions_kept": {
+      "(none)": 1266,
+      "media: 2% glucose": 1,
+      "media: YPD with 2% glucose": 1,
+      "media: nitrogen starvation": 18,
+      "temperature: elevated temperature, 37 \u00b0C": 1
+    },
+    "duplicate_keys_after_allele_rule": 0,
+    "experiment_types": {
+      "classical genetics": 208,
+      "systematic mutation set": 1121
+    },
+    "genes_dir": "/scratch/projects/torchcell-scratch/data/sgd/genome/genes",
+    "n_annotations": 1329,
+    "n_distinct_annotation_ids": 1329,
+    "n_other_allele": 42,
+    "n_whole_gene_deletion": 1287,
+    "n_with_note": 56,
+    "old_collapse_duplicate_keys": 9,
+    "old_collapse_duplicates": {
+      "YAL041W PMID 14988726": [
+        "cdc24p-\u2206CH",
+        "cdc24p-\u2206DH"
+      ],
+      "YDR303C PMID 11336698": [
+        "rsc3-C14G",
+        "rsc3-(1-360)"
+      ],
+      "YFL045C PMID 30530630": [
+        "sec53-R148H",
+        "sec53-\u0394"
+      ],
+      "YKL173W PMID 32333448": [
+        "snu114-A470R",
+        "snu114-T147I",
+        "snu114-G217E"
+      ],
+      "YKL212W PMID 32693712": [
+        "sac1-\u0394",
+        "sac1-(494-623)",
+        "sac1\u0394114-503",
+        "sac1\u0394183-503",
+        "sac1\u039485-120",
+        "sac1-(1-504)",
+        "sac1\u0394494-503",
+        "sac1-C392S",
+        "sac1-8",
+        "sac1-10"
+      ],
+      "YLR229C PMID 10637312": [
+        "cdc42-111",
+        "cdc42-113",
+        "cdc42-132",
+        "cdc42-133",
+        "cdc42-134",
+        "cdc42-125"
+      ],
+      "YNL031C PMID 25711831": [
+        "hht2-L61P",
+        "hht2-L61R",
+        "hht2-L61D"
+      ],
+      "YNR017W PMID 25765297": [
+        "tim23-G102L",
+        "tim23-G149L",
+        "tim23-G153L"
+      ],
+      "YPL093W PMID 31909713": [
+        "nog1-\u0394",
+        "Nog1-(1-426)"
+      ]
+    },
+    "old_collapse_extra_records": 24,
+    "other_alleles": [
+      {
+        "allele": "cdc24p-\u2206CH",
+        "conditions": [],
+        "gene": "YAL041W",
+        "locus": "CDC24",
+        "pubmed_id": "14988726"
+      },
+      {
+        "allele": "cdc24p-\u2206DH",
+        "conditions": [],
+        "gene": "YAL041W",
+        "locus": "CDC24",
+        "pubmed_id": "14988726"
+      },
+      {
+        "allele": "rpo21-(rpb1-pN15-A)",
+        "conditions": [],
+        "gene": "YDL140C",
+        "locus": "RPO21",
+        "pubmed_id": "3304659"
+      },
+      {
+        "allele": "rsc3-C14G",
+        "conditions": [],
+        "gene": "YDR303C",
+        "locus": "RSC3",
+        "pubmed_id": "11336698"
+      },
+      {
+        "allele": "rsc3-(1-360)",
+        "conditions": [],
+        "gene": "YDR303C",
+        "locus": "RSC3",
+        "pubmed_id": "11336698"
+      },
+      {
+        "allele": "gcd11-K250A",
+        "conditions": [],
+        "gene": "YER025W",
+        "locus": "GCD11",
+        "pubmed_id": "8947054"
+      },
+      {
+        "allele": "sec53-R148H",
+        "conditions": [],
+        "gene": "YFL045C",
+        "locus": "SEC53",
+        "pubmed_id": "30530630"
+      },
+      {
+        "allele": "rsc3-C15G",
+        "conditions": [],
+        "gene": "YHR056C",
+        "locus": "RSC30",
+        "pubmed_id": "11336698"
+      },
+      {
+        "allele": "dna2\u0394550N",
+        "conditions": [],
+        "gene": "YHR164C",
+        "locus": "DNA2",
+        "pubmed_id": "11452032"
+      },
+      {
+        "allele": "ths1-Q719stop",
+        "conditions": [],
+        "gene": "YIL078W",
+        "locus": "THS1",
+        "pubmed_id": "25416776"
+      },
+      {
+        "allele": "npa3-(gpn1-E112K)",
+        "conditions": [],
+        "gene": "YJR072C",
+        "locus": "NPA3",
+        "pubmed_id": "23324351"
+      },
+      {
+        "allele": "snu114-A470R",
+        "conditions": [],
+        "gene": "YKL173W",
+        "locus": "SNU114",
+        "pubmed_id": "32333448"
+      },
+      {
+        "allele": "snu114-T147I",
+        "conditions": [],
+        "gene": "YKL173W",
+        "locus": "SNU114",
+        "pubmed_id": "32333448"
+      },
+      {
+        "allele": "snu114-G217E",
+        "conditions": [],
+        "gene": "YKL173W",
+        "locus": "SNU114",
+        "pubmed_id": "32333448"
+      },
+      {
+        "allele": "sac1-(494-623)",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1\u0394114-503",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1\u0394183-503",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1\u039485-120",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1-(1-504)",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1\u0394494-503",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1-C392S",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1-8",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "sac1-10",
+        "conditions": [
+          "media: nitrogen starvation"
+        ],
+        "gene": "YKL212W",
+        "locus": "SAC1",
+        "pubmed_id": "32693712"
+      },
+      {
+        "allele": "Rlp24-(1-146)",
+        "conditions": [],
+        "gene": "YLR009W",
+        "locus": "RLP24",
+        "pubmed_id": "31909713"
+      },
+      {
+        "allele": "cdc42-111",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "cdc42-113",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "cdc42-132",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "cdc42-133",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "cdc42-134",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "cdc42-125",
+        "conditions": [],
+        "gene": "YLR229C",
+        "locus": "CDC42",
+        "pubmed_id": "10637312"
+      },
+      {
+        "allele": "gpn3-E110K",
+        "conditions": [],
+        "gene": "YLR243W",
+        "locus": "GPN3",
+        "pubmed_id": "23324351"
+      },
+      {
+        "allele": "nbp1-nls1",
+        "conditions": [],
+        "gene": "YLR457C",
+        "locus": "NBP1",
+        "pubmed_id": "21785410"
+      },
+      {
+        "allele": "hht2-L61P",
+        "conditions": [],
+        "gene": "YNL031C",
+        "locus": "HHT2",
+        "pubmed_id": "25711831"
+      },
+      {
+        "allele": "hht2-L61R",
+        "conditions": [],
+        "gene": "YNL031C",
+        "locus": "HHT2",
+        "pubmed_id": "25711831"
+      },
+      {
+        "allele": "hht2-L61D",
+        "conditions": [],
+        "gene": "YNL031C",
+        "locus": "HHT2",
+        "pubmed_id": "25711831"
+      },
+      {
+        "allele": "pik1-(\u039416-833)",
+        "conditions": [],
+        "gene": "YNL267W",
+        "locus": "PIK1",
+        "pubmed_id": "17720810"
+      },
+      {
+        "allele": "tim23-G102L",
+        "conditions": [],
+        "gene": "YNR017W",
+        "locus": "TIM23",
+        "pubmed_id": "25765297"
+      },
+      {
+        "allele": "tim23-G149L",
+        "conditions": [],
+        "gene": "YNR017W",
+        "locus": "TIM23",
+        "pubmed_id": "25765297"
+      },
+      {
+        "allele": "tim23-G153L",
+        "conditions": [],
+        "gene": "YNR017W",
+        "locus": "TIM23",
+        "pubmed_id": "25765297"
+      },
+      {
+        "allele": "gpn2-E112K",
+        "conditions": [],
+        "gene": "YOR262W",
+        "locus": "GPN2",
+        "pubmed_id": "23324351"
+      },
+      {
+        "allele": "ala1-F102del",
+        "conditions": [],
+        "gene": "YOR335C",
+        "locus": "ALA1",
+        "pubmed_id": "31705293"
+      },
+      {
+        "allele": "Nog1-(1-426)",
+        "conditions": [],
+        "gene": "YPL093W",
+        "locus": "NOG1",
+        "pubmed_id": "31909713"
+      }
+    ],
+    "sgd_genes_digest": "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409",
+    "whole_gene_deletion_variant_spellings": [
+      "yil102c-A-\u2206"
+    ]
+  },
+  "stores": {
+    "gene_essentiality_sgd": {
+      "after": {
+        "duplicate_extra_records": 0,
+        "duplicate_gene_environment_publication_keys": 0,
+        "environment_perturbations": {
+          "environment_physical:2% glucose": 1,
+          "environment_physical:nitrogen starvation": 18
+        },
+        "media": {
+          "gap:not_carried_by_curation": 1287
+        },
+        "n_records": 1287,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/processed",
+        "scores": {},
+        "temperature": {
+          "37.0 C": 1,
+          "gap:not_carried_by_curation": 1286
+        }
+      },
+      "before": {
+        "duplicate_extra_records": 24,
+        "duplicate_gene_environment_publication_keys": 9,
+        "environment_perturbations": {},
+        "media": {
+          "named:YEPD": 1329
+        },
+        "n_records": 1329,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/processed.superseded.20261011-014930",
+        "scores": {},
+        "temperature": {
+          "30.0 C": 1329
+        }
+      }
+    },
+    "syn_leth_db_yeast": {
+      "after": {
+        "duplicate_extra_records": 0,
+        "duplicate_gene_environment_publication_keys": 0,
+        "environment_perturbations": {},
+        "media": {
+          "gap:not_carried_by_curation": 13996
+        },
+        "n_records": 13996,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/processed",
+        "scores": {
+          "stated": 13996
+        },
+        "temperature": {
+          "gap:not_carried_by_curation": 13996
+        }
+      },
+      "before": {
+        "duplicate_extra_records": 0,
+        "duplicate_gene_environment_publication_keys": 0,
+        "environment_perturbations": {},
+        "media": {
+          "named:growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper)": 13996
+        },
+        "n_records": 13996,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/processed.superseded.20261011-014903",
+        "scores": {
+          "stated": 13996
+        },
+        "temperature": {
+          "gap:not_carried_by_curation": 13996
+        }
+      }
+    },
+    "syn_rescue_db_yeast": {
+      "after": {
+        "duplicate_extra_records": 0,
+        "duplicate_gene_environment_publication_keys": 0,
+        "environment_perturbations": {},
+        "media": {
+          "gap:not_carried_by_curation": 6942
+        },
+        "n_records": 6942,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/processed",
+        "scores": {
+          "gapped": 74,
+          "none": 6868
+        },
+        "temperature": {
+          "gap:not_carried_by_curation": 6942
+        }
+      },
+      "before": {
+        "duplicate_extra_records": 0,
+        "duplicate_gene_environment_publication_keys": 0,
+        "environment_perturbations": {},
+        "media": {
+          "named:growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper)": 6942
+        },
+        "n_records": 6942,
+        "processed": "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/processed.superseded.20261011-014915",
+        "scores": {
+          "none": 6868,
+          "stated": 74
+        },
+        "temperature": {
+          "gap:not_carried_by_curation": 6942
+        }
+      }
+    }
+  },
+  "synlethdb_release": {
+    "SL": {
+      "distinct_pubmed_ids_by_source": {
+        "High Throughput": 62,
+        "High Throughput|Low Throughput": 21,
+        "Low Throughput": 1660,
+        "Text Mining": 40
+      },
+      "n_cell_line_stated": 0,
+      "n_distinct_pubmed_ids": 1741,
+      "n_multi_pubmed_rows": 1,
+      "n_rows": 14000,
+      "n_scored": 14000,
+      "n_scored_pubmed_ids": 1741,
+      "n_source_pubmed_ids": 1741,
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/raw/Yeast_SL.csv",
+      "rows_by_source": {
+        "High Throughput": 7721,
+        "High Throughput|Low Throughput": 1248,
+        "Low Throughput": 4944,
+        "Text Mining": 87
+      },
+      "score_by_source": {
+        "High Throughput": [
+          0.5
+        ],
+        "High Throughput|Low Throughput": [
+          0.9
+        ],
+        "Low Throughput": [
+          0.8
+        ],
+        "Text Mining": [
+          0.25,
+          0.5,
+          0.75,
+          1.0
+        ]
+      },
+      "score_max": 1.0,
+      "score_min": 0.25,
+      "scored_by_source": {
+        "High Throughput": 7721,
+        "High Throughput|Low Throughput": 1248,
+        "Low Throughput": 4944,
+        "Text Mining": 87
+      },
+      "scored_top_pubmed_ids": {
+        "11743205": 272,
+        "14764870": 1627,
+        "15766533": 270,
+        "16155567": 265,
+        "16487579": 784,
+        "16941010": 262,
+        "18194531": 251,
+        "18676811": 694,
+        "21777812": 208,
+        "23390603": 1905
+      },
+      "sha256": "091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca"
+    },
+    "SR": {
+      "distinct_pubmed_ids_by_source": {
+        "BioGRID": 1918
+      },
+      "n_cell_line_stated": 0,
+      "n_distinct_pubmed_ids": 1918,
+      "n_multi_pubmed_rows": 0,
+      "n_rows": 6948,
+      "n_scored": 74,
+      "n_scored_pubmed_ids": 1,
+      "n_source_pubmed_ids": 1918,
+      "path": "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/raw/Yeast_SR.csv",
+      "rows_by_source": {
+        "BioGRID": 6948
+      },
+      "score_by_source": {
+        "BioGRID": [
+          -1.0,
+          -0.96,
+          -0.93,
+          -0.89,
+          -0.83
+        ]
+      },
+      "score_max": -0.2,
+      "score_min": -1.0,
+      "scored_by_source": {
+        "BioGRID": 74
+      },
+      "scored_top_pubmed_ids": {
+        "24470217": 74
+      },
+      "sha256": "d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4"
+    },
+    "n_source_pubmed_ids_sl_or_sr": 3308
+  }
+}

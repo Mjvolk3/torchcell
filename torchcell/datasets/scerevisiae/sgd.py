@@ -18,8 +18,8 @@ One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and ph
   is the whole-gene deletion SGD writes ``<gene>-Δ``: the genotype is a deletion of the
   gene. The other 42 annotations name a point, truncation or internal-deletion allele
   (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``); the schema has no leaf that carries a
-  named allele verbatim, and storing them as a whole-gene deletion is what made 24
-  records exact duplicates of a sibling. They are ledgered in
+  named allele verbatim (#984), and storing them as a whole-gene deletion is what made
+  24 records exact duplicates of a sibling. They are ledgered in
   ``preprocess/dropped_records.json`` (:class:`SgdDropLog`), never stored.
 - **Condition.** An annotation's condition properties are carried, never dropped: the
   pinned dump holds four (class, text) pairs, each mapped by :data:`SGD_CONDITIONS` and

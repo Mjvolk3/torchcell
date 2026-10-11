@@ -584,10 +584,14 @@ CANDIDATES: list[Candidate] = [
         "metrics. Aggregated to gene level the usable record count is 3471 by "
         "89, about 308919. Across all five bacteria the paper reports 387 "
         "successful genome-wide assays. No SRA accession is stated in the "
-        "text; the LBL supplemental URL was taken from the paper and was not "
-        "fetched.",
+        "text. The LBL supplemental release was fetched and deposited "
+        "(2026-10-10, torchcell-raw, sha256-pinned): Data Set S1 lists 101 E. "
+        "coli condition samples, 92 successful by the paper's rules, and the "
+        "release's gene-fitness table carries 3,646 genes with per-value t and "
+        "standard-error tables; loaded as RbTnseqWetmore2015Dataset under the "
+        "2026-10-10 own-release policy.",
         accession="http://genomics.lbl.gov/supplemental/rbarseq/ ; code at https://bitbucket.org/berkeleylab/feba",
-        accession_confirmed=False,
+        accession_confirmed=True,
         status="candidate",
         confidence="sourced",
         analog=Analog(

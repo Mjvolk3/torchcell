@@ -190,8 +190,13 @@ sourcing layer.
   screen, one record per (gene, experiment) over 68 phage challenges and 10 no-phage
   controls, each challenge's environment carrying a ``PhagePerturbation`` at the MOI
   the S13 Table states.
-- ``wetmore2015`` -- a subsumption record: its *E. coli* experiments are carried by the
-  Price 2018 compendium above, which is the loader that serves them.
+- ``wetmore2015`` -- ``RbTnseqWetmore2015Dataset``: the RB-TnSeq method paper's own
+  release (statistics version 1.0.0), one record per (gene, successful sample) with the
+  paper's per-gene SE and its released moderated t; the sucrose and D-mannitol samples
+  the authors withdrew in 2021 are stored and flagged. Loaded under the owner policy of
+  2026-10-10 although the Price 2018 compendium above re-analyzes the same samples; the
+  compendium is its L4 cross-check, and the module still holds the record of which
+  compendium samples this paper first reported.
 - ``teteneva2024`` -- the lake-water RB-TnSeq record: the host gate is closed and the
   loader is blocked. W3110 now has its own assembly set in the genomes tier
   (``ecoli_K12_W3110_ASM1024v1``, ten members deposited 2026-10-09), but its GenBank
@@ -327,3 +332,4 @@ from .wang2018 import (
     CrispriGuideFitnessWang2018Dataset as CrispriGuideFitnessWang2018Dataset,
 )
 from .wang2024 import EnvChemgenWang2024Dataset as EnvChemgenWang2024Dataset
+from .wetmore2015 import RbTnseqWetmore2015Dataset as RbTnseqWetmore2015Dataset

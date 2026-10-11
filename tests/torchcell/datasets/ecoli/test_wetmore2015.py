@@ -301,9 +301,11 @@ def test_a_sample_with_two_fitness_columns_is_refused() -> None:
         w.compare_fitness_tables(table, table)
 
 
-def test_the_decision_registers_no_dataset() -> None:
-    """Subsumed rows are provenance records, not loaders (checklist item 7)."""
-    assert not any(cls.__module__ == w.__name__ for cls in dataset_registry.values())
+def test_the_module_registers_exactly_its_own_release_dataset() -> None:
+    """The 2026-10-10 policy: this paper's own release is loaded, by one class."""
+    assert [
+        name for name, cls in dataset_registry.items() if cls.__module__ == w.__name__
+    ] == ["RbTnseqWetmore2015Dataset"]
 
 
 def test_sourced_vocabulary_for_the_rb_tnseq_rows() -> None:
@@ -340,6 +342,7 @@ def _synthetic_release(
             url=f"https://example.org/{rel}",
             sha256=hashlib.sha256(payload).hexdigest(),
             purpose="test",
+            retrieved_at="2026-10-07",
         )
     monkeypatch.setattr(w, "RAW_FILES", raw_files)
     monkeypatch.setattr(w, "datetime", _FrozenDatetime)
@@ -431,11 +434,61 @@ def test_a_manifest_recording_other_retrievals_is_refused(
     data_root = str(tmp_path / "dr")
     root = w.deposit_raw_mirror(source_dir=source, data_root=data_root)
     original = (root / "manifest.json").read_text()
+    monkeypatch.setitem(
+        w.RAW_FILES,
+        "data/a/one.tab",
+        w.RAW_FILES["data/a/one.tab"].model_copy(update={"retrieved_at": "2027-01-01"}),
+    )
     with pytest.raises(RuntimeError, match="records other files or retrievals"):
-        w.deposit_raw_mirror(
-            source_dir=source, retrieved_at="2027-01-01", data_root=data_root
-        )
+        w.deposit_raw_mirror(source_dir=source, data_root=data_root)
     assert (root / "manifest.json").read_text() == original
+
+
+def test_a_deposit_extends_a_manifest_whose_records_it_repeats(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The loader's files joined the 2026-10-07 record this way: old entries verbatim,
+    the new one appended with its own retrieval date, the first created_at kept.
+    """
+    source, _ = _synthetic_release(tmp_path, monkeypatch)
+    data_root = str(tmp_path / "dr")
+    first = dict(w.RAW_FILES)
+    monkeypatch.setattr(w, "RAW_FILES", {"data/a/one.tab": first["data/a/one.tab"]})
+    root = w.deposit_raw_mirror(source_dir=source, data_root=data_root)
+    before = json.loads((root / "manifest.json").read_text())
+    assert [f["path"] for f in before["files"]] == ["data/a/one.tab"]
+    monkeypatch.setattr(
+        w,
+        "RAW_FILES",
+        first
+        | {
+            "data/b/two.html": first["data/b/two.html"].model_copy(
+                update={"retrieved_at": "2026-10-10"}
+            )
+        },
+    )
+
+    w.deposit_raw_mirror(source_dir=source, data_root=data_root)
+
+    after = json.loads((root / "manifest.json").read_text())
+    assert after["created_at"] == before["created_at"]
+    assert after["files"][0] == before["files"][0]
+    assert [f["path"] for f in after["files"]] == ["data/a/one.tab", "data/b/two.html"]
+    assert after["files"][1]["retrieval"]["retrieved_at"] == "2026-10-10"
+    assert (root / "data/b/two.html").read_bytes() == b"second file"
+
+
+def test_an_extension_refuses_a_manifest_without_a_creation_stamp(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    source, _ = _synthetic_release(tmp_path, monkeypatch)
+    data_root = str(tmp_path / "dr")
+    root = w.deposit_raw_mirror(source_dir=source, data_root=data_root)
+    manifest = json.loads((root / "manifest.json").read_text())
+    manifest["created_at"] = None
+    (root / "manifest.json").write_text(json.dumps(manifest))
+    with pytest.raises(RuntimeError, match="records no created_at"):
+        w.deposit_raw_mirror(source_dir=source, data_root=data_root)
 
 
 def test_raw_path_refuses_a_manifest_off_the_module_pin(
@@ -471,6 +524,11 @@ def test_every_sourced_value_is_a_verbatim_quote_of_its_pinned_file(name: str) -
     value = getattr(w, name)
     from_raw = value.provenance.source_uri.startswith("data/")
     root = osp.join(DATA_ROOT, w.RAW_ROOT_REL if from_raw else w.LIBRARY_DIR_REL)
+    path = value.source_path(root)
+    if path.suffix == ".xlsx":
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == value.provenance.sha256
+        assert value.quote in w.xlsx_text(str(path)), name
+        return
     assert audit_sourced_value(value, root).passed
 
 
@@ -484,6 +542,7 @@ def test_the_sourced_values_cover_both_papers_and_the_release() -> None:
     assert {v.provenance.source_uri for v in values} == {
         w.PAPER_MD,
         w.TABLE_S1_MD,
+        w.DATA_SET_S1,
         w.RELEASE_PAGE,
         w.SUPERSET_PAGE,
         w.SUPERSET_TOP_PAGE,

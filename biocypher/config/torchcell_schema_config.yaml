@@ -639,6 +639,29 @@ life cycle phenotype:
         sample_unit: str
         cells_per_sample: int
         cells_per_sample_is_minimum: bool
+# --- begin jackson2020 ---
+# Pseudobulk single-cell UMI counts of one barcoded strain in one culture
+# (PseudobulkUmiCountPhenotype, Jackson 2020): the per-gene and per-marker count dicts and
+# the per-cell barcode and total lists serialize to JSON strings, the multi-valued
+# phenotype convention; the totals, the cell count and the feature-universe pin stay
+# typed. A property is named by its field (the phenotype <-> node class bijection).
+pseudobulk umi count phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        umi_count: str
+        marker_umi_count: str
+        total_umis: int
+        n_features: int
+        feature_universe_sha256: str
+        n_cells: int
+        cell_barcodes: str
+        cell_total_umis: str
+        measurement_type: str
+# --- end jackson2020 ---
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -709,6 +732,7 @@ phenotype member of:
             mrna number fraction phenotype,
             single cell expression phenotype,
             life cycle phenotype,
+            pseudobulk umi count phenotype,
         ]
     target: [experiment, experiment reference]
 

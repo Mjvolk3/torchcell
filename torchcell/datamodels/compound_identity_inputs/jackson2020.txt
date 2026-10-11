@@ -1,0 +1,9 @@
+# compound_identity_inputs/jackson2020.txt
+# Source: yeast expansion wave 2, row 6 (Jackson 2020, jacksonGeneRegulatoryNetwork2020) --
+# the two trace-metal salts of Supplementary file 1, Supplemental Table 4 ("Minimal Trace
+# Metals (1x)") that had no identity row. The other eighteen single substances of that
+# table's minimal media resolve through rows that already exist (boric acid, the Mn, Zn,
+# Fe and Cu salts, the nine vitamins, the four bulk salts). The labels are canonical:
+# media.py spells them this way, and each is a hydrate or salt weighed as written.
+sodium molybdate dihydrate | canonical
+potassium iodide | canonical

@@ -72142,6 +72142,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:8346",
+      "inchikey": "NLKNQRATVPKPDG-UHFFFAOYSA-M",
+      "name": "potassium iodide",
+      "pubchem_cid": 4875,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "[K+].[I-]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/potassium%20iodide/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "RWPGFSMJFRPDDP-UHFFFAOYSA-L",
       "name": "potassium metabisulfite",
@@ -77161,6 +77174,19 @@
       "synonyms": [
         "SodiumGlyoxylate"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:75213",
+      "inchikey": "FDEIWTXVNPKYDL-UHFFFAOYSA-N",
+      "name": "sodium molybdate dihydrate",
+      "pubchem_cid": 16211258,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "O.O.[O-][Mo](=O)(=O)[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/sodium%20molybdate%20dihydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {

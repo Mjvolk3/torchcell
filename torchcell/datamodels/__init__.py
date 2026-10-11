@@ -115,6 +115,9 @@ from .schema import (
     ProteinTurnoverExperiment,
     ProteinTurnoverExperimentReference,
     ProteinTurnoverPhenotype,
+    PseudobulkUmiCountExperiment,
+    PseudobulkUmiCountExperimentReference,
+    PseudobulkUmiCountPhenotype,
     Publication,
     ReferenceGenome,
     ReporterReadout,
@@ -290,6 +293,10 @@ __all__ = [
     "LifeCycleMeasurementType",
     "LifeCyclePhenotype",
     "LifeCycleTimeUnit",
+    # jackson2020: the pseudobulk UMI-count family
+    "PseudobulkUmiCountPhenotype",
+    "PseudobulkUmiCountExperiment",
+    "PseudobulkUmiCountExperimentReference",
     # conversion
     "ConversionEntry",
     "ConversionMap",

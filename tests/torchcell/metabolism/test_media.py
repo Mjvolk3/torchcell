@@ -123,6 +123,8 @@ SPECIES = [
     "L-valine",
     "adenine",
     "uracil",
+    # jackson2020: NLIM-UREA's nitrogen source; yeast-GEM 9.0.2 has "urea exchange"
+    "urea",
 ]
 
 
@@ -246,6 +248,15 @@ def test_every_library_medium_states_a_carbon_source(key: str) -> None:
 #: work, not a library property. The carbon-source test above still covers every key.
 _YEAST_MEDIA_KEYS = sorted(set(MEDIA_LIBRARY) - set(BACTERIAL_MEDIA_USES))
 
+#: Defined single species a yeast GEM has no exchange for, so no name rule can reach
+#: one. Each was checked against the exchange reactions of yeast-GEM 9.0.2 on
+#: 2026-10-11: Jackson 2020's minimal media weigh boric acid, and the model carries no
+#: boron species. A salt whose OTHER ion has an exchange (sodium molybdate, potassium
+#: iodide) resolves through that ion and is not listed.
+_NO_YEAST_GEM_SPECIES: dict[str, str] = {
+    "boric acid": "yeast-GEM 9.0.2 carries no boron species"
+}
+
 
 @pytest.mark.parametrize("key", _YEAST_MEDIA_KEYS)
 def test_every_library_medium_resolves_or_says_why_not(
@@ -266,6 +277,7 @@ def test_every_library_medium_resolves_or_says_why_not(
         name
         for name in bounds.unresolved_names
         if by_name[name].definition is ComponentDefinition.defined
+        and name not in _NO_YEAST_GEM_SPECIES
     ]
     assert undocumented == [], f"{key}: {undocumented}"
     if key not in CARBON_FREE_MEDIA:

@@ -51,6 +51,8 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "SegregantGenotype",
         "SegregantParent",
         "HaplotypeBlock",
+        # A designed perturbation on a segregant background (Hale 2024).
+        "PerturbedSegregantGenotype",
         # Strain background (issue #507): the parent strain's genome content, its
         # alleles against the reference, and how a deletion strain was constructed.
         "StrainBackground",

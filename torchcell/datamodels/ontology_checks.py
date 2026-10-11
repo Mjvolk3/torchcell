@@ -375,7 +375,7 @@ def lane_membership() -> dict[str, frozenset[type[BaseModel]]]:
     """
     lanes: dict[str, frozenset[type[BaseModel]]] = {}
     roots: dict[str, tuple[type[BaseModel], ...]] = {
-        "genotype": (s.Genotype, s.SegregantGenotype),
+        "genotype": (s.Genotype, s.SegregantGenotype, s.PerturbedSegregantGenotype),
         "environment": (s.Environment,),
         "phenotype": (s.Phenotype,),
     }

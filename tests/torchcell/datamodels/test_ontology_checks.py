@@ -20,9 +20,10 @@ expected verdicts:
   diamond ``BothPhenotype(LeftPhenotype, RightPhenotype)`` (``both``) and
   ``LoopPhenotype`` (``back: ExperimentReference | None``, ``evidence:
   list[SourcedValue]``).
-- ``Orphan`` (``value: SourcedValue | None``) and ``SegregantGenotype`` are composed by
-  nothing an experiment reaches, so ``orphan_models`` is ``["Orphan",
-  "SegregantGenotype"]``.
+- ``Orphan`` (``value: SourcedValue | None``), ``SegregantGenotype`` and the
+  ``PerturbedSegregantGenotype`` that composes it are composed by nothing an experiment
+  reaches, so ``orphan_models`` is ``["Orphan", "PerturbedSegregantGenotype",
+  "SegregantGenotype"]``; both genotype siblings still root the genotype lane.
 - ``LoopPhenotype -> ExperimentReference`` is the one back edge, so the phenotype lane
   also absorbs ``ExperimentReference``, ``Environment`` and ``Temperature``.
 - ``Aliased`` has ``first = second = "x"`` and ``third = "y"``: one collision
@@ -72,6 +73,10 @@ class Genotype(BaseModel):
 
 class SegregantGenotype(BaseModel):
     parent: str
+
+
+class PerturbedSegregantGenotype(BaseModel):
+    background: SegregantGenotype
 
 
 class Temperature(BaseModel):
@@ -156,6 +161,7 @@ def test_schema_models_and_enums_are_those_defined_in_the_module(
         "LeftPhenotype",
         "LoopPhenotype",
         "Orphan",
+        "PerturbedSegregantGenotype",
         "Phenotype",
         "RightPhenotype",
         "SegregantGenotype",
@@ -166,7 +172,7 @@ def test_schema_models_and_enums_are_those_defined_in_the_module(
 
 def test_experiment_closure_and_orphans(fake_schema: types.ModuleType) -> None:
     """Composition, bases (``ExperimentBase``) and subclasses (the phenotype leaves) are
-    reached; ``Orphan`` and ``SegregantGenotype`` are not.
+    reached; ``Orphan`` and the two segregant genotypes are not.
     """
     assert _names(oc.experiment_closure()) == [
         "BothPhenotype",
@@ -181,7 +187,11 @@ def test_experiment_closure_and_orphans(fake_schema: types.ModuleType) -> None:
         "RightPhenotype",
         "Temperature",
     ]
-    assert oc.orphan_models() == ["Orphan", "SegregantGenotype"]
+    assert oc.orphan_models() == [
+        "Orphan",
+        "PerturbedSegregantGenotype",
+        "SegregantGenotype",
+    ]
     assert _names(oc.composition_targets(fake_schema.Experiment)) == [
         "Environment",
         "Genotype",
@@ -198,7 +208,7 @@ def test_a_back_edge_is_reported_and_pulls_the_environment_into_the_phenotype_la
     """
     lanes = {k: _names(v) for k, v in oc.lane_membership().items()}
     assert lanes == {
-        "genotype": ["Genotype", "SegregantGenotype"],
+        "genotype": ["Genotype", "PerturbedSegregantGenotype", "SegregantGenotype"],
         "environment": ["Environment", "Temperature"],
         "phenotype": [
             "BothPhenotype",

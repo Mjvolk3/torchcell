@@ -40,6 +40,7 @@ from torchcell.datamodels.compound_identity import (
     _TABLE_SHA256,
     CompoundResolutionStatus,
     _load_table,
+    inchikey_from_inchi,
     inchikey_from_smiles,
     normalize_compound_name,
     resolve_compound_identity,
@@ -181,6 +182,65 @@ def test_smiles_route_fills_an_uncurated_label() -> None:
     assert compound.provenance_gaps == []
     # without the opt-in the same call stays an honest gap
     assert resolved_compound("not-in-the-table-xyz", smiles="CCO").inchikey is None
+
+
+#: Ethanol's standard InChI and its key (the hash of exactly this string).
+_ETHANOL_INCHI = "InChI=1S/C2H6O/c1-2-3/h3H,2H2,1H3"
+_ETHANOL_KEY = "LFQSCWFLJHTTHZ-UHFFFAOYSA-N"
+
+
+def test_inchikey_from_inchi_hashes_a_readable_inchi_and_refuses_garbage() -> None:
+    assert inchikey_from_inchi(_ETHANOL_INCHI) == _ETHANOL_KEY
+    # RDKit's InchiToInchiKey hashes ANY string ('InChI=1S/garbage' gets a key), so the
+    # string must read back into a molecule first; this one does not.
+    assert inchikey_from_inchi("InChI=1S/garbage") is None
+
+
+def test_inchi_route_fills_an_uncurated_label_with_the_released_hash() -> None:
+    compound = resolved_compound(
+        "not-in-the-table-xyz", inchi=_ETHANOL_INCHI, derive_from_inchi=True
+    )
+    assert compound.inchikey == _ETHANOL_KEY
+    assert compound.inchi == _ETHANOL_INCHI
+    assert compound.provenance_gaps == []
+    # without the opt-in the same call stays an honest, recoverable gap
+    plain = resolved_compound("not-in-the-table-xyz", inchi=_ETHANOL_INCHI)
+    assert plain.inchikey is None
+    assert [(g.field, g.reason.value) for g in plain.provenance_gaps] == [
+        ("inchikey", "deferred_pending_source_review")
+    ]
+
+
+def test_curated_row_wins_over_the_inchi_route() -> None:
+    curated = resolve_compound_identity(name="furfural")
+    compound = resolved_compound(
+        "furfural", inchi=_ETHANOL_INCHI, derive_from_inchi=True
+    )
+    assert compound.inchikey == curated.inchikey == "HYBBIBNJHNGZAN-UHFFFAOYSA-N"
+    # the caller's released InChI still passes through verbatim
+    assert compound.inchi == _ETHANOL_INCHI
+
+
+def test_unreadable_inchi_keeps_the_string_and_defers() -> None:
+    compound = resolved_compound(
+        "zzz-no-row", inchi="InChI=1S/garbage", derive_from_inchi=True
+    )
+    assert compound.inchikey is None
+    assert compound.inchi == "InChI=1S/garbage"
+    assert [(g.field, g.reason.value) for g in compound.provenance_gaps] == [
+        ("inchikey", "deferred_pending_source_review")
+    ]
+
+
+def test_the_two_derived_routes_are_exclusive() -> None:
+    with pytest.raises(ValueError, match="exclusive"):
+        resolved_compound(
+            "zzz-no-row",
+            smiles="CCO",
+            inchi=_ETHANOL_INCHI,
+            derive_from_smiles=True,
+            derive_from_inchi=True,
+        )
 
 
 # --------------------------------------------------------------------------- #

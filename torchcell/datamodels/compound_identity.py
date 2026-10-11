@@ -52,6 +52,15 @@ uses it ONLY when the table has no row for the label, because the two routes dis
 concanamycin A's curated PubChem key and its SMILES-derived key differ in the stereo
 block. A curated row therefore always wins, and the derivation route is reported as
 ``RESOLVED_FROM_SMILES``.
+
+A third route hashes a RELEASED standard InChI (:func:`inchikey_from_inchi`), for a
+dataset that publishes the InChI itself (Piotrowski 2017 Supplementary Data Set 4 prints an
+OpenBabel InChI beside each SMILES). The InChIKey is by definition the hash of the standard
+InChI, so hashing the released string reproduces the source's own identity, where parsing
+its SMILES and writing a new InChI adds a perception step: over Piotrowski's 11,919 rows
+carrying both, the two keys differ in 194 (176 in the protonation block only). The curated
+row outranks this route too, and the two derived routes are exclusive per call, never a
+fallback chain.
 """
 
 from __future__ import annotations
@@ -103,6 +112,8 @@ class CompoundResolutionStatus(StrEnum):
     - ``RESOLVED``: the table maps the name/CID to a structure (an InChIKey).
     - ``RESOLVED_FROM_SMILES``: no table row, but the caller's released SMILES
       parsed and yielded an InChIKey (the Hoepfner route).
+    - ``RESOLVED_FROM_INCHI``: no table row, but the caller's released standard InChI
+      parsed and its InChIKey is the hash of that string (the Piotrowski route).
     - ``RESOLVED_MIXTURE``: identified as a substance by ChEBI and/or a PubChem CID,
       but no single-molecule InChIKey exists. Tunicamycin is at least ten homologues
       (ChEBI:29699); agar's PubChem InChIKey belongs to the agarobiose repeat unit,
@@ -119,6 +130,7 @@ class CompoundResolutionStatus(StrEnum):
 
     RESOLVED = "RESOLVED"
     RESOLVED_FROM_SMILES = "RESOLVED_FROM_SMILES"
+    RESOLVED_FROM_INCHI = "RESOLVED_FROM_INCHI"
     RESOLVED_MIXTURE = "RESOLVED_MIXTURE"
     UNRESOLVED_PUBLIC = "UNRESOLVED_PUBLIC"
     UNDEFINED_MIXTURE = "UNDEFINED_MIXTURE"
@@ -315,6 +327,25 @@ def inchikey_from_smiles(smiles: str) -> str | None:
     return key or None
 
 
+def inchikey_from_inchi(inchi: str) -> str | None:
+    """The InChIKey of a released standard InChI, or ``None`` if RDKit cannot read it.
+
+    The key is hashed from the RELEASED string (``InchiToInchiKey``), not from an InChI
+    regenerated off the parsed molecule, so it is the source's own identity. The InChI
+    library hashes any string it is handed, so the string is first read back into a
+    molecule (``MolFromInchi``) and refused when that fails; ``None`` is a measurement,
+    not a swallowed error. RDKit is imported lazily, as in :func:`inchikey_from_smiles`.
+    """
+    from rdkit import Chem
+    from rdkit.Chem import inchi as rdkit_inchi
+
+    molecule = Chem.MolFromInchi(inchi, sanitize=False, treatWarningAsError=False)  # type: ignore[no-untyped-call]  # RDKit untyped
+    if molecule is None:
+        return None
+    key: str | None = rdkit_inchi.InchiToInchiKey(inchi)  # type: ignore[no-untyped-call]  # RDKit untyped
+    return key or None
+
+
 def resolve_compound_identity_from_smiles(
     name: str, smiles: str
 ) -> CompoundIdentityResolution:
@@ -347,6 +378,7 @@ def resolved_compound(
     roles: list[str] | None = None,
     known_proprietary: bool = False,
     derive_from_smiles: bool = False,
+    derive_from_inchi: bool = False,
 ) -> Compound:
     """Build a ``Compound`` fill-or-gap through the resolver (the loader entrypoint).
 
@@ -359,7 +391,11 @@ def resolved_compound(
     Structure fields merge ADDITIVELY: a caller-supplied field (hoepfner's ``smiles``,
     wildenhain's ``pubchem_cid``) always wins; the resolver only fills what is still
     ``None``. With ``derive_from_smiles=True`` an unmatched label whose SMILES parses
-    gets an RDKit-derived InChIKey, but a curated row always outranks that route.
+    gets an RDKit-derived InChIKey, but a curated row always outranks that route. With
+    ``derive_from_inchi=True`` an unmatched label whose released ``inchi`` reads back
+    gets the hash of that string instead (:func:`inchikey_from_inchi`); the two derived
+    routes are exclusive, so asking for both raises rather than chaining one behind the
+    other.
 
     When no InChIKey can be filled, a typed ``ProvenanceGap`` is attached on
     ``inchikey``: ``not_reported_by_primary`` when the absence is terminal (a vendor
@@ -367,9 +403,27 @@ def resolved_compound(
     ``deferred_pending_source_review`` (the growable worklist). The gap is asserted ONLY
     on the ``None`` field, honoring the ``ProvenanceGapMixin`` invariant.
     """
+    if derive_from_smiles and derive_from_inchi:
+        raise ValueError(
+            "derive_from_smiles and derive_from_inchi are exclusive routes; pick one"
+        )
     resolution = resolve_compound_identity(
         name=name, pubchem_cid=pubchem_cid, known_proprietary=known_proprietary
     )
+    if (
+        derive_from_inchi
+        and inchi is not None
+        and resolution.inchikey is None
+        and not resolution.curated
+    ):
+        from_inchi = inchikey_from_inchi(inchi)
+        if from_inchi is not None:
+            resolution = resolution.model_copy(
+                update={
+                    "status": CompoundResolutionStatus.RESOLVED_FROM_INCHI,
+                    "inchikey": from_inchi,
+                }
+            )
     if (
         derive_from_smiles
         and smiles is not None

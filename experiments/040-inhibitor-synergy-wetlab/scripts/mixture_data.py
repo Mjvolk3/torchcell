@@ -675,24 +675,35 @@ def make_folds(n_compounds: int, n_folds: int, n_val: int, seed: int) -> list[Fo
     return folds
 
 
-def make_gene_folds(n_genes: int, n_folds: int, seed: int) -> list[Fold]:
-    """Gene-cold folds: every Vanacloig gene is tested exactly once, no validation genes.
+def make_gene_folds(
+    n_genes: int, n_folds: int, seed: int, val_frac: float = 0.1
+) -> list[Fold]:
+    """Gene-cold folds: every Vanacloig gene is tested exactly once.
 
     The indices are rows of the Vanacloig matrix. Every compound is fitted; what is held
     out is the strain, so the model has never seen any response of that deletion and has
     to predict its whole profile from the gene's place in the cell graph. The seed is
     offset from the compound folds' so the two partitions are not the same draw.
+
+    A tenth of the fold's non-test genes are validation genes, so a run that selects on
+    a held-out signal (``select: val``) has one under this split too; the first gene-cold
+    arm of round 3 (job 3897) died at "no step was selected" because the folds carried
+    none. Under ``fit_on: pool`` they are fitted with the rest, as the validation
+    compounds are under the compound split.
     """
     rng = np.random.default_rng([seed, 101])
     groups = np.array_split(rng.permutation(n_genes), n_folds)
     folds = []
     for k, test in enumerate(groups):
-        rest = np.concatenate([g for j, g in enumerate(groups) if j != k])
+        rest = rng.permutation(
+            np.concatenate([g for j, g in enumerate(groups) if j != k])
+        )
+        n_val = int(round(val_frac * len(rest)))
         folds.append(
             Fold(
                 fold=k,
-                train=sorted(int(i) for i in rest),
-                val=[],
+                train=sorted(int(i) for i in rest[n_val:]),
+                val=sorted(int(i) for i in rest[:n_val]),
                 test=sorted(int(i) for i in test),
             )
         )

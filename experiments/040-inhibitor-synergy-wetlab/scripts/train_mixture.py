@@ -297,9 +297,13 @@ def cfg_n_compounds(cfg: MixtureConfig) -> int:
 
 
 def fitted_genes(cfg: MixtureConfig, fold: Fold, n_genes: int) -> list[int]:
-    """The Vanacloig genes the model is fitted on: all of them unless the split is gene."""
+    """The Vanacloig genes the model is fitted on: all of them unless the split is gene.
+
+    Under the gene split the fold's validation genes are fitted only under
+    ``fit_on: pool``, as the validation compounds are under the compound split.
+    """
     if cfg.split == "gene":
-        return fold.train
+        return fold.train if cfg.fit_on == "train" else sorted(fold.train + fold.val)
     return list(range(n_genes))
 
 
@@ -1210,7 +1214,10 @@ def train_seed(
             host_pred = predict_host(model, ctx, ctx.data.host, std, device)
             aux_pred = predict_aux(model, ctx, cfg, std, device)
             if cfg.split == "gene":
-                val = float("nan")
+                # the validation genes score the same way the test genes do; under
+                # fit_on: pool they are fitted and the score is in-sample, as the
+                # compound split's is
+                val = gene_split_score(vanacloig.y, matrix, fold.val)
                 test = gene_split_score(vanacloig.y, matrix, fold.test)
                 van_heldout = heldout_loss(
                     vanacloig, matrix, std, conditions[vanacloig.spec.name], fold.test

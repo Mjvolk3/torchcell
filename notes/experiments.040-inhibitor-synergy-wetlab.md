@@ -814,3 +814,99 @@ ensemble and three-source blocks are Delta's.
 https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/1ccu2v9b
 
 https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2lacgu27
+
+## 2026.10.11 - Round 3, first readings from the GilaHyper prescreens, and what they changed on Delta
+
+Thirteen arms have scores on GilaHyper by 15:30 (one seed, folds 0 to 2 of fold seed 0):
+the five wave-1 prescreens that ran and the seven wave-2 single-source prescreens. Read by
+`scripts/r3_readout.py` ([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_readout]])
+into `results/r3_readout_arms.csv` and `results/r3_readout_selection.csv`. The gene-cold
+prescreen (3897) died and is rerun below. Median over the three folds, served call:
+
+| arm | Vanacloig held-out | growth AUROC | worst-scenario | grown fitness | FF x AA grid | per-source held-out |
+|---|---|---|---|---|---|---|
+| `van_e150` | 0.277 | 0.566 | 0.146 | 0.195 | -0.481 | |
+| `vanhop_e150` | 0.285 | 0.539 | 0.105 | 0.325 | -0.395 | Hoepfner compound 0.035 |
+| `vanhophet_e150` | 0.317 | 0.513 | 0.078 | 0.243 | -0.454 | Hoepfner 0.061, Hillenmeyer 0.028 |
+| `vanhophet_e150_attr` | 0.193 | 0.529 | 0.112 | 0.265 | -0.399 | Hoepfner 0.041, Hillenmeyer 0.022 |
+| `vanhop_e150_film_dose` | 0.281 | 0.493 | 0.056 | 0.200 | -0.695 | Hoepfner **dose** 0.182 |
+| `van_e150_anchors` | 0.292 | 0.443 | -0.129 | -0.096 | -0.594 | |
+| `van_e150_ft` | 0.247 | 0.530 | 0.090 | 0.259 | -0.591 | |
+| `van_e150_ftenv` | 0.330 | 0.545 | 0.088 | 0.331 | -0.583 | |
+| `van_e150_lh0p1` | 0.327 | 0.514 | 0.064 | 0.281 | -0.469 | |
+| `van_e150_film` | 0.237 | 0.444 | -0.047 | 0.301 | -0.661 | |
+| `van_e150_n10` | 0.093 | 0.500 | -0.004 | 0.238 | -0.442 | |
+| `van_e150_n5` | -0.044 | 0.558 | 0.132 | 0.198 | -0.489 | |
+| bar | ridge 0.359 | Loewe 0.958 | Loewe 0.772 | Bliss 0.573 | Bliss -0.082 | |
+
+**The noise floor first.** `van_e150`, `anchors`, `ft`, `ftenv` and `lh0p1` are the same
+gene-level model under five host-loss settings, and their single-seed gene-level scores
+run 0.247 to 0.330. Per fold the same arm moves 0.20 to 0.39. So at one seed and three
+folds a difference under about 0.08 on the gene-level score is not a reading, which is
+what the seed ensemble now running is for.
+
+**Data combining, screen reading only.** 0.277, 0.285, 0.317 for one, two and three
+sources, inside the floor above; per fold the three-source arm is above the single-source
+arm on folds 0 and 1 (0.333 and 0.317 against 0.203 and 0.277) and below on fold 2 (0.178
+against 0.281). Not evidence either way yet. The per-source held-out compound scores are
+the real news: Hoepfner 0.035 to 0.061 and Hillenmeyer 0.022 to 0.028 at `cond_batch` 24,
+against ridge's 0.189 and 0.126 on the same hold-out kind
+([[experiments.040-inhibitor-synergy-wetlab.scripts.source_axes]]). The transformer barely
+predicts a cold compound on the public screens it is being asked to learn from, so what it
+can transfer from them is in question before the Vanacloig score is.
+
+**Dose, measured on the public screens and on the wet lab, and they disagree.** A held-out
+DOSE of a seen Hoepfner compound is predicted at 0.182 to 0.191 on every fold by the FiLM
+arm, five times its held-out-compound score, so the scale on the compound token does learn
+the dose structure `source_axes` measured. On the wet lab the same channel costs what it
+cost in round 1: growth AUROC 0.566 to 0.444 (single source) and 0.539 to 0.493 (two
+sources), the furfural-grid residual -0.481 to -0.661. The round-1 dose finding therefore
+replicates under the held-out protocol, and it is not that the channel cannot learn dose;
+it is that a dose scale fitted on the public screens' log-molar axis makes the host head
+worse on the Bioscreen doses. Hypothesis (untested): the public doses sit at one IC30 per
+compound while the wet-lab doses span a titration, so the scale is fitted far from where
+it is read.
+
+**Selection, and the two Delta adjustments it forced.** Over all 36 round-3 runs the
+selected epoch is 10 to 135 (median 35), and every source's held-out loss bottoms by epoch
+100 (Vanacloig 5 to 135, Hoepfner 20 to 45 except the dose arm, Hillenmeyer 25 to 40). The
+auxiliary losses that were "still falling at epoch 50" in the round-1 history were training
+losses; their held-out losses turn at 35 to 45. Nothing wants 300 epochs, so the three
+`vanhophet_e300` jobs (22806802 to 22806804) were cancelled. The selector itself is weak:
+the test score at the selected step trails the best over the history by 0.05 to 0.16 on
+most runs (`r3_readout_selection.csv`), four validation compounds being a noisy signal.
+Both the selected and the last-step scores are in every history file, so an arm can be
+read either way without a rerun.
+
+**The learning curve is a selection artifact at this size.** `n10` reads 0.093 selected
+but 0.219 to 0.275 best-over-history and 0.19 to 0.26 at the last step, which is where
+038 round 17's pool-and-last curve sat (0.230 at 16 compounds); `n5` selects at epoch 10
+to 35 and lands at -0.117 to 0.256 on the test compounds. With five or ten fitted
+compounds the validation score peaks early and badly. The Delta curve arms stay queued,
+since their histories carry the last-step reading, and the curve will be reported at the
+last step with the selected step beside it.
+
+**The gene-cold arm crashed, and the fix is in.** Job 3897 died at "no step was
+selected": `make_gene_folds` carried no validation genes, so `select: val` never saw a
+finite score. The folds now hold out a tenth of the non-test genes as validation (test
+genes unchanged, checked), the validation score under the split is the same raw Spearman
+over held-out genes the test uses, and under `fit_on: pool` those genes are fitted as the
+validation compounds are under the compound split. GPU smoke 3930 ran both a one- and a
+two-source gene-split config through. The three Delta gene jobs (22806815 to 22806817)
+were cancelled and resubmitted after a re-rsync as 22812728 to 22812730; the two
+single-machine prescreens run here as 3931 and 3932.
+
+**The next 48 hours on two cards.** The user's rule stands at two cards for this work
+(the other two are the metabolic session's). Queued in order, about 33 hours per card:
+the gene-cold prescreens (3931, 3932), the seed ensemble of the three source-set arms on
+the screened folds (3933 to 3938), and the six wave-1 arms most likely to move the Delta
+plan: the per-source head (3939), the auxiliary weight 0.3 (3940), the two-source FiLM
+compound hold-out (3941), the three-source FiLM dose hold-out (3942) and `cond_batch` 96
+(3943, 3944), which is the arm that tests whether the near-zero per-source scores are a
+sampling-depth problem. Delta holds 55 jobs for this experiment after the adjustments.
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/1ccu2v9b
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2lacgu27
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2myelt8n

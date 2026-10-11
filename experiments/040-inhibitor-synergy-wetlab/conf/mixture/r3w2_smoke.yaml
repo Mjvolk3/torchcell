@@ -31,3 +31,38 @@
   seeds: [0]
   folds: [0]
   checkpoint: false
+# The gene-cold split under the held-out protocol, added after job 3897 died at
+# "no step was selected": gene folds now carry validation genes, and select: val reads
+# them. One single-source and one two-source config, four steps each.
+- name: r3w2smoke_gene_split_van_train_val
+  sources: [vanacloig]
+  split: gene
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false
+- name: r3w2smoke_gene_split_vanhop_train_val
+  sources: [vanacloig, hoepfner_hop]
+  split: gene
+  aux_holdout: compound
+  host_train: anchors+ex21
+  dose: "off"
+  fit_on: train
+  select: val
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  checkpoint: false

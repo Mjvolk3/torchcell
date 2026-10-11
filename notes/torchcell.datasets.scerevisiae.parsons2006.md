@@ -59,10 +59,36 @@ Tags: a strain with one non-functional tag (Table S5) is, per the Methods, "aver
 
 - Medium: liquid YPD (`restated(YPD_LIQUID, ...)`, the SI's culture sentence); SC for sulfometuron methyl and brefeldin A and SC minus L-lysine for thialysine ("Sulfometuron methyl and brefeldin A were screened in synthetic complete media $( 0 . 6 7 \%$ yeast nitrogen base without amino acids, $0 . 2 \%$ amino acid add back) and thialysine was screened in synthetic complete media lacking lysine."). The SC sentence names no carbon source, so the shared SC's 20 g/L glucose is the library's, not Parsons'.
 - 30 C, aerobic (shaken), inoculum OD600 0.025, pre-culture `frozen_stock`, duration 38 h ("At 14 hours (T1) ODs were recorded and cultures where the growth of the drug-treated culture was inhibited by $20 \mathrm { - } 3 0 \%$ compared to the solvent control were diluted back to $\mathrm { O D } _ { 6 0 0 } = 0 . 0 2 5$ and incubated for a further 24 hours (T2) with fresh compound."). Vessel, working volume ("5 or 10 mls") and shaking speed are gaps. The 20 to 30% inhibition acceptance rule has no `DoseBasis` member; it is documented, and the dose is Table S1's released value.
-- Compound: one `SmallMoleculePerturbation` per condition. Identity is the PubChem compound the Table S1 CAS number resolves to, through `compound_identity_inputs/parsons2006.txt`: 33 new table rows, 11 labels joined to existing rows as synonyms (the diff against the previous table: 56 keys added, 0 renames, 0 keys removed, 0 identifier changes). So the weighed salt is the compound (harmine hydrochloride, not harmine; the thialysine hydrochloride of CAS 4099-35-8, not the SGA media's thialysine row). Cisplatin joins the existing `azane;dichloroplatinum` row, whose InChIKey equals the CAS compound's. Alamethicin (CID, "A mixture of alamethicin analogs") and oligomycin (ChEBI:84314, no PubChem compound for CAS 1404-19-9) are mixtures. Basiliskamide is basiliskamide A from the Methods.
+- Compound: one `SmallMoleculePerturbation` per condition. Identity is the PubChem compound the Table S1 CAS number resolves to, through `compound_identity_inputs/parsons2006.txt`: 33 new table rows, 11 labels joined to existing rows as synonyms (the diff against the previous table: 56 keys added, 0 renames, 0 keys removed, 0 identifier changes). So the weighed salt is the compound (harmine hydrochloride, not harmine; the thialysine hydrochloride of CAS 4099-35-8, not the SGA media's thialysine row). Cisplatin joins the existing `azane;dichloroplatinum` row, whose InChIKey equals the CAS compound's. Alamethicin (CID, "A mixture of alamethicin analogs") and oligomycin (ChEBI:84314, no PubChem compound for CAS 1404-19-9) are mixtures. Basiliskamide is basiliskamide A from the Methods. One served loader passes a label that now resolves: Girgis 2009's "doxycycline hyclate" gains CID 54705095 (CI caught it; its test, docstring and note are updated), so the Girgis 2009 dev store needs a rebuild before KG 4.0, which no schema fingerprint flags. A grep of the 56 added keys over the loaders, `media.py` and the input lists finds no other.
 - Dose: Table S1 "Inhibitory Concentration" ("Inhibitory concentration refers to the screening concentration."), exact decimal conversion; 5.5 pM rapamycin and 71 pM tunicamycin are stated as 0.0055 and 0.071 nM (no pM unit); MMS's cell is the number 4e-05 under the format `0.000%`, stored as 0.004 basis-free `percent`. Coniine and 2-hydrazinoethanol are released as "5% (v/v)" and stored so.
 - Vehicle: the Methods solvent of each compound at the 1% of the solvent control (DMSO by default; water for 18; ethanol for artemisinin, brefeldin A and phenanthroline; methanol for wortmannin; 0.9% sodium chloride solution for cisplatin). Water and the saline are plain vehicles (`compound=None`): the compound table has no water row.
 - Reference: the solvent-control pool in each medium, log2 ratio 0.
+
+### Verification, L0 to L4
+
+`ENVIRONMENT_RESPONSE_DATASETS["env_chemgen_parsons2006"]` (streamed), run alone through `torchcell.verification.runners.run_environment_response` on the store built at `1a4a9381a` (report `preprocess/verification_report.json`; about 95 minutes, almost all of it L0 schema validation at about 16 ms a record). All rows pass:
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 291673 records validated |
+| L1 | `count` | pass | observed 291673, expected 291673 |
+| L1 | `pair_uniqueness` | pass | 291673 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 291673 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 291673 records |
+| L3 | `environment_perturbed` | pass | all 291673 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='YPD (yeast extract / peptone / dextrose), liquid') |
+| L1 | `provenance_gaps` | pass | 2345593 documented provenance gaps over 291673/291673 records; 4 deferred field(s): ['barcode', 'deleted_span', 'downtag_barcode', 'relation']; 10784828 undeclared None values over 26 carrier fields (top: Compound.inchi x1736747, Compound.chebi_id x1225924, Compound.smiles x570990, Compound.pubchem_cid x567183, Compound.inchikey x558994) |
+| L1 | `canonical_gene_names` | pass | 4096 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 291673 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 508624 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 665086 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 291673 on a medium deriving from one (3 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 4096 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 4096 measured systematic names is a gene of the current genome |
+
+The `uncertainty_sanity` line is expected: every record states `n_samples = 2` (the two chips) and the release carries no dispersion, which the records gap explicitly.
 
 ### Raw mirror (`$DATA_ROOT/torchcell-raw/parsonsExploringModeofActionBioactive2006/`, `manifest.json`)
 

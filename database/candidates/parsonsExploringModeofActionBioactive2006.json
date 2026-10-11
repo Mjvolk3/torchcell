@@ -22,7 +22,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "10 file(s) in library, 0 worksheet row(s) counted; all intact",
+      "reason": "27 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
       "evidence": [
         {
           "value": "Table S7 (si8.xls) is the original per-strain matrix; S8 is the derived clustered matrix",
@@ -103,7 +103,8 @@
   "g3": {
     "citation_key": "parsonsExploringModeofActionBioactive2006",
     "trees_read": [
-      "library"
+      "library",
+      "raw"
     ],
     "files": [
       {
@@ -235,6 +236,227 @@
         "zip_ok": null,
         "leading_archive_sha256": null,
         "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/534a0037a9e61904af4a302095311c5f4bcf5a79e4d2fd8f1129998824654f3f.jpg",
+        "role": "ocr_image",
+        "bytes": 192067,
+        "sha256_manifest": "b16ac4764bf0daf896a6555053e7488842d868709a20681c5303be81c44938e6",
+        "sha256_disk": "b16ac4764bf0daf896a6555053e7488842d868709a20681c5303be81c44938e6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/550918c0120b6828a5fa7b8b2e8f289fd0980a5fc03a6b7cd0299aa8faa100d9.jpg",
+        "role": "ocr_image",
+        "bytes": 10284,
+        "sha256_manifest": "da1b1a2a286c41c6f57b71e8f7426ea890586746ffdbb7e1a2f1d19569de57ad",
+        "sha256_disk": "da1b1a2a286c41c6f57b71e8f7426ea890586746ffdbb7e1a2f1d19569de57ad",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/5763f15dc9cd2fec7889e745e385310e0653a5797fb5d6f2cb573bbca72f599e.jpg",
+        "role": "ocr_image",
+        "bytes": 34639,
+        "sha256_manifest": "381d2948cbb9ddebe394d8c0db46e45efae2b0cfefcd0fb97ba4c087841ba03f",
+        "sha256_disk": "381d2948cbb9ddebe394d8c0db46e45efae2b0cfefcd0fb97ba4c087841ba03f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/5adcd48b7a9bccaa734b1bd3455f72a321a8f47227e02c21a2b6e004f3c3a5f6.jpg",
+        "role": "ocr_image",
+        "bytes": 114334,
+        "sha256_manifest": "bb2703a1bd1c9f4fece762b32c442f4b48753f1e7d80c306fd59dc33e0053fe6",
+        "sha256_disk": "bb2703a1bd1c9f4fece762b32c442f4b48753f1e7d80c306fd59dc33e0053fe6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/7753c03ab84c3b1cb228a90850b2cf5a3899dfd64ffb6547a7d055641f189c27.jpg",
+        "role": "ocr_image",
+        "bytes": 4589,
+        "sha256_manifest": "529c2989791825b429785751ff0c4daa98453ec5f1bf1553fab5a081f25c4637",
+        "sha256_disk": "529c2989791825b429785751ff0c4daa98453ec5f1bf1553fab5a081f25c4637",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/79acc5c4b9671f7944e758e859e9e637e8700c8d54c063959ab3a60b32b950fc.jpg",
+        "role": "ocr_image",
+        "bytes": 82883,
+        "sha256_manifest": "1fc130e3d9e0daa3bce866a2506ad6aa579807100604ae906ca549432b02e7c9",
+        "sha256_disk": "1fc130e3d9e0daa3bce866a2506ad6aa579807100604ae906ca549432b02e7c9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b24ecd1d4ea792b2f4ee8fa831365c18b5685b0deb7eef3bba3d4ece1dd44c8c.jpg",
+        "role": "ocr_image",
+        "bytes": 175619,
+        "sha256_manifest": "117069d9fd80ccbcc3f7c54c31f60516f9d8b79178c52250d295b58d7d9aec32",
+        "sha256_disk": "117069d9fd80ccbcc3f7c54c31f60516f9d8b79178c52250d295b58d7d9aec32",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c34211dddac2392b4f07d0ded4a3454ccd6e78de0964e665991556cac800bbc4.jpg",
+        "role": "ocr_image",
+        "bytes": 50342,
+        "sha256_manifest": "3149a79710c3590f45a172b72a1ba85dadc5a0e709c5392a5b38025cf5334e30",
+        "sha256_disk": "3149a79710c3590f45a172b72a1ba85dadc5a0e709c5392a5b38025cf5334e30",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c6b19b0759dc42de748e22a92362f4813d966374b7e766b6b6dc1afed2452db9.jpg",
+        "role": "ocr_image",
+        "bytes": 74329,
+        "sha256_manifest": "8dc35e78c5fc248d20a21e8b941683c13be2c697b10d91c2c44dd719915aeb62",
+        "sha256_disk": "8dc35e78c5fc248d20a21e8b941683c13be2c697b10d91c2c44dd719915aeb62",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 28262,
+        "sha256_manifest": "36fa1487de02e743eea74d6841d6de46a7fa4b411757eaf6598ee526900f854a",
+        "sha256_disk": "36fa1487de02e743eea74d6841d6de46a7fa4b411757eaf6598ee526900f854a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 41604,
+        "sha256_manifest": "b619924b2aad174959b292a663c11847f3d8bbfac707fa54d2d3cde2e2cb8e8b",
+        "sha256_disk": "b619924b2aad174959b292a663c11847f3d8bbfac707fa54d2d3cde2e2cb8e8b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 1007132,
+        "sha256_manifest": "78f6ca0dbb42be3d063fe8d5c8d51ccac2d4d660a5ff210db067617a443826dd",
+        "sha256_disk": "78f6ca0dbb42be3d063fe8d5c8d51ccac2d4d660a5ff210db067617a443826dd",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1025,
+        "sha256_manifest": "cdb10884fe56da176d09f6b729de31531da4130ed54e5b615be8eeb5ef51a502",
+        "sha256_disk": "cdb10884fe56da176d09f6b729de31531da4130ed54e5b615be8eeb5ef51a502",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mmc2.xls",
+        "role": "raw_data",
+        "bytes": 45056,
+        "sha256_manifest": "959f14d2dab418a9b1dd1125e302b2e28c1de372d8d7ee249d369d30fb518353",
+        "sha256_disk": "959f14d2dab418a9b1dd1125e302b2e28c1de372d8d7ee249d369d30fb518353",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mmc3.xls",
+        "role": "raw_data",
+        "bytes": 27648,
+        "sha256_manifest": "766140a410419b19456235db2e4909e56b24e3523bcc0f6f7aa698ae13eb6870",
+        "sha256_disk": "766140a410419b19456235db2e4909e56b24e3523bcc0f6f7aa698ae13eb6870",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mmc5.xls",
+        "role": "raw_data",
+        "bytes": 5171712,
+        "sha256_manifest": "0446eae63b5b08af7a1a94fa3b8d42d70f1c75b55a60e0aa6e03fea189753a01",
+        "sha256_disk": "0446eae63b5b08af7a1a94fa3b8d42d70f1c75b55a60e0aa6e03fea189753a01",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/mmc8.xls",
+        "role": "raw_data",
+        "bytes": 6239232,
+        "sha256_manifest": "564e94c963424687edc24ed23b6e3c6882b70c246a2524057cf1dc5f393c848f",
+        "sha256_disk": "564e94c963424687edc24ed23b6e3c6882b70c246a2524057cf1dc5f393c848f",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
       }
     ],
     "walls": []
@@ -243,7 +465,14 @@
     "doi": "10.1016/j.cell.2006.06.040",
     "pmid": null,
     "accessions": [],
-    "hits": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.cell.2006.06.040",
+        "where": "torchcell/datasets/scerevisiae/parsons2006.py",
+        "relation": "own"
+      }
+    ],
     "pmid_checked": false
   },
   "g4_value": null,
@@ -254,5 +483,5 @@
     "proposed_class": null
   },
   "decided_at": "2026-10-11",
-  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+  "torchcell_commit": "93f98669578041b4d96742690f9a6c86dc15ca8c"
 }

@@ -105,7 +105,20 @@ ISOBOLES = {"ex26": ("FF", 0.3333), "ex27": ("FA", 0.2), "ex28": ("HMF", 0.504)}
 AA_STEP = 0.4
 N_BOOT = 2000
 SEED = 0
-RED, DARK_RED, BLUE = PLOT_PALETTE[1], PLOT_PALETTE[7], PLOT_PALETTE[4]
+ORANGE, RED, DARK_RED, BLUE = (
+    PLOT_PALETTE[0],
+    PLOT_PALETTE[1],
+    PLOT_PALETTE[7],
+    PLOT_PALETTE[4],
+)
+SHORT = {
+    "FF": "furfural",
+    "AA": "acetic acid",
+    "HMF": "5-HMF",
+    "FA": "formic acid",
+    "LVA": "levulinic acid",
+    "LA": "lactic acid",
+}
 FITNESS_CMAP = LinearSegmentedColormap.from_list(
     "fitness", [(0.0, DARK_RED), (0.55, RED), (1.0, "#FFFFFF")]
 )
@@ -734,7 +747,6 @@ def plot_isoboles(
     fig, axes = plt.subplots(
         2, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(120))
     )
-    by_run = {s["run"]: s for s in summary}
     for c, run in enumerate(ISOBOLES):
         s = surfaces[run]
         inhibitor, step = ISOBOLES[run]
@@ -771,7 +783,7 @@ def plot_isoboles(
             ax.plot(
                 [0, float(s["da"]) / AA_STEP],
                 [float(s["dx"]) / step, 0],
-                color=BLUE if r == 0 else "black",
+                color=BLUE,
                 linewidth=1.0,
                 linestyle="--",
             )
@@ -783,7 +795,7 @@ def plot_isoboles(
                     np.arange(grew.shape[0]),
                     s["bliss"],
                     levels=[float(s["tau"])],
-                    colors=[PLOT_PALETTE[0]],
+                    colors=[ORANGE],
                     linewidths=1.0,
                     linestyles=":",
                 )
@@ -791,29 +803,34 @@ def plot_isoboles(
             ax.set_ylim(-0.5, 9.5)
             ax.set_xticks(range(10))
             ax.set_yticks(range(10))
-            ax.set_xticklabels([f"{v:g}" for v in s["a"]], rotation=60, fontsize=5)
-            ax.set_yticklabels([f"{v:g}" for v in s["x"]], fontsize=5)
+            ax.set_xticklabels([f"{v:.1f}" for v in s["a"]], rotation=90)
+            ax.set_yticklabels([f"{v:.2f}" for v in s["x"]])
             ax.set_xlabel("acetic acid (g/L)")
-            ax.set_ylabel(f"{NAMES[inhibitor]} (g/L)")
-            sm = by_run[run]
-            if r == 0:
-                flag = " (flagged)" if run == "ex28" else ""
-                ax.set_title(f"{run}{flag}: observed fitness")
-            else:
-                ax.set_title(
-                    f"excess over Bliss, mean {sm['mean_excess_over_bliss']:.2f} "
-                    f"[{sm['mean_excess_lo']:.2f}, {sm['mean_excess_hi']:.2f}]"
-                )
+            ax.set_ylabel(f"{SHORT[inhibitor]} (g/L)")
+            flag = ", flagged" if run == "ex28" else ""
+            pair = f"{SHORT[inhibitor]} x acetic acid ({run}{flag})"
+            ax.set_title(pair if r == 0 else "observed minus Bliss")
             box(ax)
             if c == 2:
-                cax = fig.add_axes([0.93, 0.56 if r == 0 else 0.1, 0.01, 0.33])
+                cax = fig.add_axes([0.92, 0.6 if r == 0 else 0.2, 0.01, 0.3])
                 cbar = fig.colorbar(im, cax=cax)
                 cbar.set_label(
-                    "fitness (no growth = 0)" if r == 0 else "observed - Bliss"
+                    "fitness (no growth = 0)" if r == 0 else "observed minus Bliss"
                 )
                 cbar.outline.set_linewidth(0.5)
+    handles = [
+        plt.Line2D([], [], color="black", linewidth=0.9),
+        plt.Line2D([], [], color=BLUE, linewidth=1.0, linestyle="--"),
+        plt.Line2D([], [], color=ORANGE, linewidth=1.0, linestyle=":"),
+    ]
+    labels = [
+        "observed alive region (cells that grew)",
+        "Loewe additive front at tau",
+        "Bliss independence front at tau",
+    ]
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False)
     fig.subplots_adjust(
-        left=0.07, right=0.9, top=0.95, bottom=0.1, hspace=0.45, wspace=0.45
+        left=0.07, right=0.9, top=0.95, bottom=0.14, hspace=0.5, wspace=0.45
     )
     return save(fig, "mixture_rules_isoboles")
 

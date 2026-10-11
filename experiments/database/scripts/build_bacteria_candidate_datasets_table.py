@@ -4087,13 +4087,17 @@ CANDIDATES: list[Candidate] = [
         seq_basis="reference-only",
         modality="environment-only",
         why="The deepest E. coli phosphoproteome found, but with almost no "
-        "breadth: one wild-type MG1655 strain on glycerol, exponential versus "
-        "stationary phase. The 2,129 total phosphosites and 246 "
-        "phosphohistidine sites on 173 proteins come from a secondary search "
-        "snippet, not from a fetched primary text; the abstract confirms only "
-        "that about 10 percent of sites are phosphohistidine, so "
-        "dimensionality needs primary confirmation before ranking.",
-        accession="PXD008369 (ProteomeXchange, title 'Widespread protein histidine phosphorylation in bacteria')",
+        "breadth: one wild-type strain, E. coli W3110 (the first author's "
+        "dissertation, Chapter V, which reprints the paper's Methods: 'E. coli "
+        "strain W3110 was grown in M9 minimal medium'), on 0.5% glucose or 0.5% "
+        "glycerol, exponential versus stationary phase, each enriched in "
+        "technical triplicate. Supplementary Table 2 releases 2,129 phosphosites "
+        "(246 phosphohistidine sites on 173 proteins) with MaxQuant intensities "
+        "in 12 samples, measured off the deposited bytes in "
+        "potel2018_release_inventory.py. No phenotype class holds a site-level "
+        "phosphorylation intensity (#921), W3110 has no readable genome route "
+        "(#910), and the published Methods are walled (#922).",
+        accession="PXD008369 (ProteomeXchange, title 'Widespread protein histidine phosphorylation in bacteria'); hosted by jPOST as JPST000369",
         accession_confirmed=True,
         status="candidate",
         confidence="recall",

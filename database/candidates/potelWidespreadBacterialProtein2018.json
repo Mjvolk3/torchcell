@@ -1,0 +1,68 @@
+{
+  "citation_key": "potelWidespreadBacterialProtein2018",
+  "table": "bacteria",
+  "row_name": "Potel 2018 phosphoproteome",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Proteome', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set: W3110 -> ecoli_K12_W3110_ASM1024v1 resolves but no genome class reads it",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": "ingest"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_not_ingestible",
+    "hosts": [
+      {
+        "name": "W3110",
+        "assembly_set": "ecoli_K12_W3110_ASM1024v1",
+        "resolvable": true,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-10",
+  "torchcell_commit": "878d586074283075bc33c88ed075598dc931edad"
+}

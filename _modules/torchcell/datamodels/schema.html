@@ -7536,6 +7536,12 @@
 <span class="sd">    ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle</span>
 <span class="sd">    stage label and by sequencing library, verbatim labels.</span>
 
+<span class="sd">    --- begin nguessan2025 ---</span>
+<span class="sd">    A source that assigns no cell-cycle stage (N'Guessan 2025) stores</span>
+<span class="sd">    ``cell_cycle_stage_counts=None`` with a ``ProvenanceGap`` on it; a missing partition</span>
+<span class="sd">    without the gap is refused, so a None is never a silent absence.</span>
+<span class="sd">    --- end nguessan2025 ---</span>
+
 <span class="sd">    Provenance: Boocock et al. 2025, eLife. See</span>
 <span class="sd">    ``[[torchcell.datasets.scerevisiae.boocock2025]]``.</span>
 <span class="sd">    """</span>
@@ -7564,9 +7570,13 @@
         <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the sorted feature ids of that universe, newline-joined"</span>
     <span class="p">)</span>
     <span class="n">n_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"number of cells the counts are summed over"</span><span class="p">)</span>
-    <span class="n">cell_cycle_stage_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"cells per source cell-cycle stage label; sums to n_cells"</span>
+    <span class="c1"># --- begin nguessan2025: a source without stage labels gaps the partition --- #</span>
+    <span class="n">cell_cycle_stage_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cells per source cell-cycle stage label; sums to n_cells. None "</span>
+        <span class="s2">"only with a ProvenanceGap, for a source that labels no stage (required, so a "</span>
+        <span class="s2">"loader states the partition or its absence, never inherits a default)"</span>
     <span class="p">)</span>
+    <span class="c1"># --- end nguessan2025 ---</span>
     <span class="n">library_cell_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">description</span><span class="o">=</span><span class="s2">"cells per sequencing library (the source's batch); sums to n_cells"</span>
     <span class="p">)</span>
@@ -7619,8 +7629,13 @@
             <span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[0-9a-f]</span><span class="si">{64}</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_universe_sha256</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"feature_universe_sha256 must be 64 lowercase hex digits"</span><span class="p">)</span>
+        <span class="c1"># --- begin nguessan2025: an absent stage partition must be a typed gap --- #</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="s2">"cell_cycle_stage_counts"</span><span class="p">,))</span>
         <span class="k">for</span> <span class="n">field_name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"cell_cycle_stage_counts"</span><span class="p">,</span> <span class="s2">"library_cell_counts"</span><span class="p">):</span>
-            <span class="n">counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+            <span class="n">counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">counts</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># --- end nguessan2025 ---</span>
             <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">()):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field_name</span><span class="si">}</span><span class="s2"> holds a non-positive count"</span><span class="p">)</span>
             <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">counts</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="p">:</span>

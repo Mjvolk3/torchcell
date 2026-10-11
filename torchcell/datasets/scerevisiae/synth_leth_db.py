@@ -26,7 +26,7 @@ import os
 import os.path as osp
 import pickle
 from collections import Counter
-from collections.abc import Callable, Hashable, Mapping
+from collections.abc import Callable, Mapping
 from typing import Any
 
 import lmdb
@@ -316,14 +316,14 @@ def _read_synlethdb_csv(path: str) -> pd.DataFrame:
     cell would turn the whole column float and every PMID into ``"111.0"``. The Entrez
     ids are read as integers; a blank or non-integer id raises from pandas.
     """
-    # Annotated so the mixed values (a type and two dtype names) type-check against
-    # pandas-stubs' read_csv overloads instead of joining to ``object``.
-    dtypes: dict[Hashable, type[str] | str] = {
-        "r.pubmed_id": str,
-        "n1.identifier": "int64",
-        "n2.identifier": "int64",
-    }
-    df = pd.read_csv(path, dtype=dtypes)
+    df = pd.read_csv(
+        path,
+        dtype={
+            "r.pubmed_id": "str",
+            "n1.identifier": "int64",
+            "n2.identifier": "int64",
+        },
+    )
     blank = df["r.pubmed_id"].fillna("").str.strip().eq("")
     if blank.any():
         raise BlankPubmedIdError(

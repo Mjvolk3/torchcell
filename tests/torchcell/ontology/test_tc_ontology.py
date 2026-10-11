@@ -143,15 +143,15 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 41 nodes (37 under six Biolink
+    """The committed ``torchcell_schema_config.yaml``: 42 nodes (38 under six Biolink
     parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
     the product titer, protein turnover and flux phenotypes join phenotypic feature,
     and #770's protein fold change phenotype, #854's mrna number fraction phenotype,
     #857's protein synthesis rate phenotype, Boocock 2025's single cell expression
-    phenotype, De Chiara 2022's life cycle phenotype and Jackson 2020's pseudobulk umi
-    count phenotype join it too.
+    phenotype, De Chiara 2022's life cycle phenotype, Jackson 2020's pseudobulk umi
+    count phenotype and Puddu 2019's genome architecture phenotype join it too.
     ``phage perturbation`` adds the SIXTH parent, ``biotic exposure``: Biolink defines
     ``environmental exposure`` as abiotic, and the two are siblings under
     ``exposure event``, so a phage node carries neither the other's label.
@@ -176,8 +176,8 @@ def test_real_schema_compact_table(
         f"{'phenotypic feature':25} → bacterial morphology phenotype, calmorph "
         "phenotype, environment response "
         "phenotype, fitness phenotype, flux phenotype, gene essentiality phenotype, "
-        "gene interaction phenotype, life cycle phenotype, metabolite phenotype, "
-        "microarray expression "
+        "gene interaction phenotype, genome architecture phenotype, life cycle "
+        "phenotype, metabolite phenotype, microarray expression "
         "phenotype, mrna number fraction phenotype, product titer phenotype, "
         "promoter activity phenotype, protein "
         "abundance phenotype, protein fold change phenotype, protein synthesis rate "
@@ -195,7 +195,7 @@ def test_real_schema_compact_table(
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    37/41 explicit + 4 auto-mapped = 41/41 total" in lines
+    assert "Nodes:    38/42 explicit + 4 auto-mapped = 42/42 total" in lines
     assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
@@ -206,14 +206,15 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 41 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 42 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
     variant perturbation``, ``bacterial morphology phenotype``, for #770
     ``protein fold change phenotype``, for #854 ``mrna number fraction phenotype``
     for #857 ``protein synthesis rate phenotype``, for Boocock 2025 ``single cell
-    expression phenotype``, for De Chiara 2022 ``life cycle phenotype`` and, for Jackson
-    2020, ``pseudobulk umi count phenotype``) and 13 edges, the small test schema 3 nodes and
+    expression phenotype``, for De Chiara 2022 ``life cycle phenotype``, for Jackson
+    2020 ``pseudobulk umi count phenotype`` and, for Puddu 2019, ``genome architecture
+    phenotype``) and 13 edges, the small test schema 3 nodes and
     2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
@@ -221,7 +222,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 41, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 42, 13), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines

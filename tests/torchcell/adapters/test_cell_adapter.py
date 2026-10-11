@@ -399,6 +399,7 @@ NODE_METHODS = [
     "single cell expression phenotype (chunked)",
     "life cycle phenotype (chunked)",
     "pseudobulk umi count phenotype (chunked)",
+    "genome architecture phenotype (chunked)",
     "fitness phenotype reference",
     "gene interaction phenotype reference",
     "gene essentiality phenotype reference",
@@ -423,6 +424,7 @@ NODE_METHODS = [
     "single cell expression phenotype reference",
     "life cycle phenotype reference",
     "pseudobulk umi count phenotype reference",
+    "genome architecture phenotype reference",
     "dataset",
     "publication (chunked)",
 ]
@@ -449,7 +451,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """69 node methods and 16 edge methods, in the order ``__init__`` registers them;
+    """71 node methods and 16 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

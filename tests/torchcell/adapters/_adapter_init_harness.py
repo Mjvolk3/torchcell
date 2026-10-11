@@ -96,6 +96,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.SingleCellExpressionPhenotype: "single cell expression phenotype",
     s.LifeCyclePhenotype: "life cycle phenotype",
     s.PseudobulkUmiCountPhenotype: "pseudobulk umi count phenotype",
+    s.GenomeArchitecturePhenotype: "genome architecture phenotype",
 }
 
 PHENOTYPE_CHUNKED = "<phenotype> (chunked)"

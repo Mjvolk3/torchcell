@@ -598,10 +598,30 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Boocock 2025 single-cell segregant panels)
     # + 2 (Muenzner 2024: the natural-isolate proteome and its turnover subset)
     # + 3 (De Chiara 2022's life-cycle, doubling-time and cell-yield stores)
-    # + 1 (Jackson 2020 pseudobulk single-cell UMI counts).
+    # + 1 (Jackson 2020 pseudobulk single-cell UMI counts)
+    # + 1 (Puddu 2019 realized genome architecture of the knockout collection).
     assert (
         len(dataset_adapter_map)
-        == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 3 + 1
+        == 110
+        + 1
+        + 6
+        + 2
+        + 3
+        + 1
+        + 1
+        + 1
+        + 2
+        + 1
+        + 4
+        + 1
+        + 1
+        + 2
+        + 1
+        + 1
+        + 2
+        + 3
+        + 1
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -620,6 +640,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "EnvChemgenVanacloig2022Dataset",
         "EnvChemgenWildenhain2015Dataset",
         "FattyAcidSmith2006Dataset",
+        "GenomeArchitecturePuddu2019Dataset",
         "HetHillenmeyer2008Dataset",
         "HomHillenmeyer2008Dataset",
         "IsolateGrowthPeter2018Dataset",

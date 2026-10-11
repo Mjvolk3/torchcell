@@ -335,6 +335,10 @@ class CellAdapter:
                 self._pseudobulk_umi_count_phenotype_node,
             ),
             (
+                "genome architecture phenotype (chunked)",
+                self._genome_architecture_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -433,6 +437,10 @@ class CellAdapter:
             (
                 "pseudobulk umi count phenotype reference",
                 self._get_pseudobulk_umi_count_phenotype_reference_nodes,
+            ),
+            (
+                "genome architecture phenotype reference",
+                self._get_genome_architecture_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -3049,6 +3057,71 @@ class CellAdapter:
         return nodes
 
     # --- end jackson2020 ---------------------------------------------------------- #
+
+    @staticmethod
+    def _genome_architecture_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``GenomeArchitecturePhenotype`` (experiment or reference).
+
+        The two dict-valued fields serialize to JSON strings, the multi-valued phenotype
+        convention, and ``assay`` rides beside them because a key inside those strings
+        is only interpretable against the assay that declares its unit basis. The sample
+        id and its archive accession stay typed: they are what makes one stored profile
+        traceable to the reads it was measured from.
+        """
+        dispersion = phenotype.genome_architecture_sd
+        uncertainty = phenotype.uncertainty_type
+        sample_unit = phenotype.sample_unit
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "assay": phenotype.assay,
+            "genome_architecture": json.dumps(phenotype.genome_architecture),
+            "genome_architecture_sd": (json.dumps(dispersion) if dispersion else None),
+            "uncertainty_type": (
+                uncertainty.value if uncertainty is not None else None
+            ),
+            "n_samples": phenotype.n_samples,
+            "sample_unit": sample_unit.value if sample_unit is not None else None,
+            "sample_id": phenotype.sample_id,
+            "sample_accession": phenotype.sample_accession,
+        }
+
+    @data_chunker
+    def _genome_architecture_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="genome architecture phenotype",
+            properties=self._genome_architecture_properties(phenotype),
+        )
+
+    def _get_genome_architecture_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="genome architecture phenotype",
+                    node_label="genome architecture phenotype",
+                    properties=self._genome_architecture_properties(phenotype),
+                )
+            )
+        return nodes
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [

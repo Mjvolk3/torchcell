@@ -2248,7 +2248,7 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
     # experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py
     # (results/no_verifier_store_release_counts.json). Every store streams: the eager
     # path validates against the 33-way ExperimentType union at 85 records/s, which is
-    # 67 hours for dmf_costanzo2016; the streaming twin validates each record as the
+    # 68 hours for dmf_costanzo2016; the streaming twin validates each record as the
     # FitnessExperiment it declares.
     "smf_costanzo2016": {
         "root": "data/torchcell/smf_costanzo2016",

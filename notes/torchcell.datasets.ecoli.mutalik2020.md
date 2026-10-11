@@ -809,3 +809,21 @@ misdescribes a control arm; it now names both kinds of declared unedited conditi
 three hermetic tests on a release-shaped axis (`_release_shaped_axis`, 78 kept experiments,
 10 controls) pin 29,392 and the two refusals; two `TestDevStore` data tests read 29,392 from
 the dev tree's raw files and from its `verification_report.json`.
+
+### The dev store, after array 3733 task 32 rebuilt it
+
+Array 3733 task 32 rebuilt the dev store from `main` and its `--verify` failed this one row
+(0 declared), so `build_dataset_lmdb` retired the store's build manifest to
+`preprocess/build_manifest.json.unverified.20261010-215133`. Read-only afterwards, from
+this branch:
+
+- content hash (job 3787): 286,344 records, sha256
+  `8d1c1925c096d6e23538a842ee3c71bd6b87f4d338441b9284eaacc88ac6b954`, identical to both
+  scratch builds above;
+- `verify_build` (job 3786, 2,648 s): **PASS, 22 of 22 rows**, L3 `environment_perturbed`
+  29,392 of 286,344 unedited, 29,392 declared. Its `verification_report.json` is the one in
+  the dev tree now.
+
+`build_dataset_lmdb` has no verify-only path that restores a retired manifest, so the store
+still reads `no_manifest` and the two `TestDevStore` tests skip until it is rebuilt (or
+re-verified with `--verify`) after this lands.

@@ -133,6 +133,8 @@ from .schema import (
     VariantCallMode,
     VariantFrequencyBasis,
     VariantSiteKind,
+    YeastProteinTurnoverExperiment,
+    YeastProteinTurnoverExperimentReference,
 )
 
 # from .gene_essentiality_to_fitness_conversion import GeneEssentialityToFitnessConverter
@@ -229,6 +231,8 @@ __all__ = [
     "ProteinTurnoverPhenotype",
     "ProteinTurnoverExperiment",
     "ProteinTurnoverExperimentReference",
+    "YeastProteinTurnoverExperiment",
+    "YeastProteinTurnoverExperimentReference",
     "SynthesisRateUnit",
     "ProteinSynthesisRatePhenotype",
     "ProteinSynthesisRateExperiment",

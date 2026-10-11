@@ -3214,3 +3214,91 @@ def test_segregant_expression_family_is_in_every_union_and_map() -> None:
         s.EXPERIMENT_REFERENCE_TYPE_MAP["segregant_expression"]
         is s.SegregantExpressionExperimentReference
     )
+
+
+# --- begin muenzner2024: the yeast protein-turnover pair -------------------------- #
+def _yeast_turnover_experiment() -> s.YeastProteinTurnoverExperiment:
+    return s.YeastProteinTurnoverExperiment(
+        dataset_name="Toy",
+        genotype=Genotype(
+            perturbations=[
+                s.NaturalGeneAbsencePerturbation(
+                    systematic_gene_name="YAL001C",
+                    perturbed_gene_name="TFC3",
+                    strain_id="AAA",
+                    pangenome_orf_id="1-YAL001C",
+                )
+            ]
+        ),
+        environment=Environment(
+            media=s.Media(name="SM", state="liquid", is_synthetic=True)
+        ),
+        phenotype=s.ProteinTurnoverPhenotype(
+            degradation_rate={"YAL001C": 0.25},
+            half_life={"YAL001C": math.log(2) / 0.25},
+            n_replicates={"YAL001C": 1},
+            measurement_type="dynamic_silac_lys8_kdp_per_hour_no_dilution_correction",
+        ),
+    )
+
+
+def test_yeast_turnover_pair_is_in_both_maps_and_both_unions() -> None:
+    """The yeast pair resolves by its own tag and measures the bacterial family's class."""
+    experiment_cls = _experiment_cls("yeast_protein_turnover")
+    reference_cls = _reference_cls("yeast_protein_turnover")
+    assert experiment_cls is s.YeastProteinTurnoverExperiment
+    assert reference_cls is s.YeastProteinTurnoverExperimentReference
+    assert experiment_cls in typing.get_args(ExperimentType)
+    assert reference_cls in typing.get_args(s.ExperimentReferenceType)
+    assert (
+        experiment_cls.model_fields["phenotype"].annotation
+        is reference_cls.model_fields["phenotype_reference"].annotation
+        is s.ProteinTurnoverPhenotype
+    )
+    assert experiment_cls.model_fields["experiment_type"].default == (
+        "yeast_protein_turnover"
+    )
+    assert reference_cls.model_fields["experiment_reference_type"].default == (
+        "yeast_protein_turnover"
+    )
+
+
+def test_yeast_turnover_reference_takes_the_plain_s288c_genome() -> None:
+    """The bacterial pair refuses an S288C genome; the yeast pair stores it as given."""
+    phenotype = _yeast_turnover_experiment().phenotype
+    s288c = s.ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+    environment = Environment(
+        media=s.Media(name="SM", state="liquid", is_synthetic=True)
+    )
+    with pytest.raises(ValidationError, match="instance of AssemblyReferenceGenome"):
+        s.ProteinTurnoverExperimentReference(
+            dataset_name="Toy",
+            genome_reference=s288c,  # type: ignore[arg-type]  # the refusal under test
+            environment_reference=environment,
+            phenotype_reference=phenotype,
+        )
+    reference = s.YeastProteinTurnoverExperimentReference(
+        dataset_name="Toy",
+        genome_reference=s288c,
+        environment_reference=environment,
+        phenotype_reference=phenotype,
+    )
+    assert reference.model_dump()["genome_reference"] == {
+        "species": "Saccharomyces cerevisiae",
+        "strain": "S288C",
+        "ploidy": "haploid",
+    }
+
+
+def test_yeast_turnover_experiment_reconstructs_through_its_tag() -> None:
+    """Same field set as ``ProteinTurnoverExperiment``, so the tag picks the class."""
+    experiment = _yeast_turnover_experiment()
+    dumped = experiment.model_dump()
+    rebuilt = _experiment_cls(dumped["experiment_type"]).model_validate(dumped)
+    assert type(rebuilt) is s.YeastProteinTurnoverExperiment
+    assert rebuilt == experiment
+    assert rebuilt.phenotype.half_life is not None
+    assert rebuilt.phenotype.half_life["YAL001C"] == pytest.approx(math.log(2) / 0.25)
+
+
+# --- end muenzner2024 --------------------------------------------------------------- #

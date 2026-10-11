@@ -7859,6 +7859,36 @@ class ProteinTurnoverExperiment(Experiment, ModelStrict):
     phenotype: ProteinTurnoverPhenotype
 
 
+# --- begin muenzner2024: the yeast protein-turnover pair ------------------------ #
+class YeastProteinTurnoverExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a protein-turnover experiment on S. cerevisiae.
+
+    The turnover family above was introduced for bacteria (#753, Gupta 2024), so its
+    reference narrows ``genome_reference`` to the bacterial ``AssemblyReferenceGenome``,
+    whose ``assembly_set`` is a closed bacterial vocabulary; a yeast record cannot
+    construct it. This pair is the yeast counterpart with the same phenotype class and the
+    plain ``ReferenceGenome`` every yeast family uses (S288C R64, as the Caudal 2024
+    natural isolates are written against). It is a new pair rather than a widened field
+    so the served bacterial pair keeps its contract (``test_schema`` pins it as assembly
+    pinned) and no built store's closure moves. First user: Muenzner 2024 dynamic SILAC
+    on 55 natural isolates.
+    """
+
+    experiment_reference_type: str = "yeast_protein_turnover"
+    phenotype_reference: ProteinTurnoverPhenotype
+
+
+class YeastProteinTurnoverExperiment(Experiment, ModelStrict):
+    """Experiment measuring per-protein turnover rates in S. cerevisiae."""
+
+    experiment_type: str = "yeast_protein_turnover"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: ProteinTurnoverPhenotype
+
+
+# --- end muenzner2024 ------------------------------------------------------------- #
+
+
 # --- begin #857: the protein synthesis-rate family ---------------------------- #
 class ProteinSynthesisRateExperimentReference(ExperimentReference, ModelStrict):
     """Reference context for a protein synthesis-rate experiment."""
@@ -8395,6 +8425,7 @@ ExperimentType = (
     | SegregantGrowthExperiment
     | ProductTiterExperiment
     | ProteinTurnoverExperiment
+    | YeastProteinTurnoverExperiment  # muenzner2024
     | ProteinSynthesisRateExperiment  # issue #857
     | FluxExperiment
     | PromoterActivityExperiment
@@ -8436,6 +8467,7 @@ ExperimentReferenceType = (
     | SegregantGrowthExperimentReference
     | ProductTiterExperimentReference
     | ProteinTurnoverExperimentReference
+    | YeastProteinTurnoverExperimentReference  # muenzner2024
     | ProteinSynthesisRateExperimentReference  # issue #857
     | FluxExperimentReference
     | PromoterActivityExperimentReference
@@ -8477,6 +8509,7 @@ EXPERIMENT_TYPE_MAP = {
     "segregant_growth": SegregantGrowthExperiment,
     "product_titer": ProductTiterExperiment,
     "protein_turnover": ProteinTurnoverExperiment,
+    "yeast_protein_turnover": YeastProteinTurnoverExperiment,  # muenzner2024
     "protein_synthesis_rate": ProteinSynthesisRateExperiment,  # issue #857
     "flux": FluxExperiment,
     "promoter_activity": PromoterActivityExperiment,
@@ -8517,6 +8550,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "segregant_growth": SegregantGrowthExperimentReference,
     "product_titer": ProductTiterExperimentReference,
     "protein_turnover": ProteinTurnoverExperimentReference,
+    "yeast_protein_turnover": YeastProteinTurnoverExperimentReference,  # muenzner2024
     "protein_synthesis_rate": ProteinSynthesisRateExperimentReference,  # issue #857
     "flux": FluxExperimentReference,
     "promoter_activity": PromoterActivityExperimentReference,

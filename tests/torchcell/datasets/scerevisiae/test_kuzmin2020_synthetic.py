@@ -6,7 +6,8 @@
 Tables S1, S3 and S5 are written with pandas/openpyxl under ``<tmp_path>/<root>/raw/``
 with a title row first (the loaders read with ``skiprows=1``), so PyG never calls
 ``download()``; ``process()`` runs once and ``@post_process`` writes the gene set, the
-reference index and the build manifest. No genome and no ``$DATA_ROOT`` are involved.
+reference index and the build manifest. The genome is ``SgaGenomeStub`` (every fixture
+gene live) and no ``$DATA_ROOT`` is involved.
 
 S1 and S3 share the eleven S1/S3 columns; each holds one digenic and one trigenic row:
 
@@ -44,6 +45,7 @@ from typing import Any
 import pandas as pd
 import pytest
 
+from tests.torchcell.datasets._sga_genome_stub import SgaGenomeStub
 from torchcell.data.data import ExperimentReferenceIndex
 from torchcell.datamodels.media import SGA_TM_SELECTION
 from torchcell.datamodels.schema import (
@@ -165,6 +167,12 @@ TM72_TRIGENIC = Genotype(perturbations=[NTG1_SPLIT, NTG2_SPLIT_TM72, SLA1])
 TM99_TRIGENIC = Genotype(perturbations=[NTG1_SPLIT, NTH2_SPLIT_TM99, CDC10_TS])
 
 
+# Every fixture gene is live; the SGA rename/refusal tables hold on the stub (#897).
+SGA_GENOME = SgaGenomeStub(
+    live=["YAL015C", "YBL007C", "YBR001C", "YCR002C", "YDL227C", "YOL043C"]
+)
+
+
 def write_xlsx(path: Path, columns: list[str], rows: list[list[Any]]) -> None:
     """Write ``rows`` as a sheet whose header sits on the SECOND row (title row above)."""
     pd.DataFrame(rows, columns=columns).to_excel(path, index=False, startrow=1)
@@ -177,7 +185,7 @@ def build(tmp_path: Path, cls: type[Any], s5_rows: list[list[Any]] = S5_ROWS) ->
     write_xlsx(root / "raw" / S1_NAME, S13_COLUMNS, S1_ROWS)
     write_xlsx(root / "raw" / S3_NAME, S13_COLUMNS, S3_ROWS)
     write_xlsx(root / "raw" / S5_NAME, S5_COLUMNS, s5_rows)
-    return cls(root=str(root))
+    return cls(root=str(root), genome=SGA_GENOME)
 
 
 def sample_sd(sd: float) -> dict[str, Any]:

@@ -65,6 +65,7 @@ from .ohnuki2018 import ScmdOhnuki2018Dataset as ScmdOhnuki2018Dataset
 from .ohnuki2022 import ScmdOhnuki2022Dataset as ScmdOhnuki2022Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
 from .ozaydin2013 import CarotenoidOzaydin2013Dataset as CarotenoidOzaydin2013Dataset
+from .parsons2006 import EnvChemgenParsons2006Dataset as EnvChemgenParsons2006Dataset
 from .peter2018 import IsolateGrowthPeter2018Dataset as IsolateGrowthPeter2018Dataset
 from .puddu2019 import (
     GenomeArchitecturePuddu2019Dataset as GenomeArchitecturePuddu2019Dataset,
@@ -139,6 +140,8 @@ costanzo2021_datasets = ["EnvChemgenCostanzo2021Dataset"]
 
 hillenmeyer_datasets = ["HetHillenmeyer2008Dataset", "HomHillenmeyer2008Dataset"]
 
+parsons_datasets = ["EnvChemgenParsons2006Dataset"]
+
 dasilveira_datasets = ["MetaboliteDaSilveira2014Dataset"]
 
 yoshida_datasets = ["OrganicAcidYoshida2012Dataset"]
@@ -203,6 +206,7 @@ __all__ = (
     + auesukaree_datasets
     + costanzo2021_datasets
     + hillenmeyer_datasets
+    + parsons_datasets
     + dasilveira_datasets
     + yoshida_datasets
     + oduibhir_datasets

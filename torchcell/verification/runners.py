@@ -2225,6 +2225,56 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_parsons2006": {
+        "root": "data/torchcell/env_chemgen_parsons2006",
+        # Table S7's 4,111 strains x 82 conditions = 337,102 cells minus the 7,848
+        # released blanks, the 1,144 ratios of the 14 ORFs R64 no longer calls genes,
+        # and the 36,437 ratios of the 9 conditions whose compound has no structure
+        # identifier (7 crude extracts, agelasine E, stichloroside). Rules + counts:
+        # preprocess/dropped_records.json.
+        "expected_count": 291673,
+        "background_genes": frozenset(),
+        "stream": True,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/parsonsExploringModeofActionBioactive2006/"
+                "data/mmc8.xls (Table S7) + mmc5.xls (Table S4) + mmc2.xls (Table S1) "
+                "+ mmc3.xls (Table S2) (raw mirror with manifest.json; Elsevier "
+                "supplementary objects of PII S0092867406009068)"
+            ),
+            citation_key="parsonsExploringModeofActionBioactive2006",
+            sha256="564e94c963424687edc24ed23b6e3c6882b70c246a2524057cf1dc5f393c848f",
+            method=(
+                "released Table S7 log2(control / treated) barcode-array ratio per "
+                "(Research Genetics MATa haploid deletion x condition), stored AS "
+                "RELEASED (positive = depleted under treatment, i.e. sensitive; the "
+                "Hillenmeyer HET orientation, opposite to Vanacloig), the up/down-tag "
+                "mean of two fluor-reversed chips (n_samples 2, technical_replicate); "
+                "environment_response_p_value = 10^-x of the same Table S4 cell (a "
+                "modified t test against the strain's other conditions, capped at "
+                "-log10 p 300). Environment: liquid YPD (SC for sulfometuron methyl and "
+                "brefeldin A, SC - L-lysine for thialysine), 30 C shaken, OD600 0.025 "
+                "from the frozen pool, 14 h + 24 h with fresh compound; one "
+                "SmallMoleculePerturbation per condition, identity from the Table S1 "
+                "CAS number, dose from Table S1 (pM restated as nM exactly; MMS a "
+                "basis-free percent), Methods vehicle at the 1% of the solvent control. "
+                "Genotype: BarcodedKanMxDeletionPerturbation (kanMX4, barcodes gapped), "
+                "YDL038C and YGR272C under their current genes with a ConstructedOrf. "
+                "Reference per medium: the solvent-control pool, log2 ratio 0, on a "
+                "BY4741 StrainReferenceGenome (alleles quoted from the SI strain table; "
+                "that the pool is BY4741 gapped pending Giaever 2002). Dropped: released "
+                "blanks, non-gene ORFs, compounds with no structure identifier. Table "
+                "S4's 121 extra strains are Table S2's multidrug-sensitive set, released "
+                "without ratios"
+            ),
+            page=(
+                "Cell 2006 126:611 (doi:10.1016/j.cell.2006.06.040); Supplemental "
+                "Experimental Procedures si/si1.md "
+                "sha256=36fa1487de02e743eea74d6841d6de46a7fa4b411757eaf6598ee526900f854a; "
+                "paper.md sha256=dfc222acef11c4d66807946cb36f8e99f73de5d3af2715967674bc029193c886"
+            ),
+        ),
+    },
     "crispri_chemgen_smith2016": {
         "root": "data/torchcell/crispri_chemgen_smith2016",
         # 7,053 of the 14,463 rows of Additional file 10. 7,410 drop on the compound

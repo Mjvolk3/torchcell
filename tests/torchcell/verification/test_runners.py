@@ -2116,6 +2116,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_costanzo2021": 61430,
         "env_chemgen_hillenmeyer2008_het": 2712677,
         "env_chemgen_hillenmeyer2008_hom": 1063034,
+        "env_chemgen_parsons2006": 291673,
         "crispri_chemgen_smith2016": 7053,
     }
     assert {
@@ -2128,6 +2129,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "crispr_magic_lian2019",
         "env_chemgen_hillenmeyer2008_het",
         "env_chemgen_hillenmeyer2008_hom",
+        "env_chemgen_parsons2006",
     }
     assert {
         name: set(spec["background_genes"])
@@ -2227,7 +2229,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 14  # METABOLITE_DATASETS
         + 4  # PROTEIN_DATASETS
         + 6  # RNASEQ_DATASETS
-        + 13  # ENVIRONMENT_RESPONSE_DATASETS
+        + 14  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS
         + 1  # SEGREGANT_GROWTH_DATASETS
         + 1  # SEGREGANT_EXPRESSION_DATASETS

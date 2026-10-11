@@ -6473,6 +6473,13 @@ class MeasurementType(StrEnum):
       which is an end-point size on an image scale (pixels): this is a cell count, and
       the source does not say whether it is the final population or the gain over the
       inoculum, so it is named for what the source calls it.
+    - ``relative_fitness``: SIGNED fitness of one barcode lineage relative to the mean
+      fitness of the pooled population it competed in, as a lineage-tracking estimator
+      reports it from read-count trajectories (Hale 2024: PyFitSeq Malthusian fitness on
+      a time axis in generations, then shifted per assay to a stated reference); 0 =
+      grows like the reference. Distinct from ``log2_ratio`` (an end-point abundance
+      ratio, not a fitted growth rate) and from ``relative_growth_rate`` (a ratio against
+      a wild-type well, not a difference against a pooled population).
     """
 
     log2_ratio = "log2_ratio"
@@ -6488,6 +6495,7 @@ class MeasurementType(StrEnum):
     # ADDITIVE (Peter 2018 phenome): a same-strain test-over-control growth ratio.
     condition_growth_ratio = "condition_growth_ratio"
     cell_yield = "cell_yield"  # De Chiara 2022 (additive)
+    relative_fitness = "relative_fitness"  # Hale 2024
 
 
 class ResponseCategory(StrEnum):
@@ -7236,6 +7244,124 @@ class SegregantExpressionExperiment(Experiment, ModelStrict):
 
 
 # --- end boocock2025 ---
+
+
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (Hale 2024): an ENGINEERED perturbation on a SEGREGANT background.
+#
+# Hale 2024 integrates a CRISPRi guide into each of 169 barcoded segregants of a
+# BY4716 x 322134S cross (and into the BY parent). The strain's genome is therefore
+# two different kinds of thing at once: an INFERRED haplotype mosaic (the segregant,
+# a ``SegregantGenotype`` with no perturbation list) and a DESIGNED gene-keyed edit
+# (the guide, a ``CrisprInterferencePerturbation``). Neither ``Genotype`` (gene-keyed
+# edits on the S288C reference) nor ``SegregantGenotype`` (a mosaic with nothing
+# engineered) can hold both, and folding the guide into either would lose one half:
+# a ``Genotype`` would read the strain as S288C plus a knockdown, a mosaic would drop
+# the knockdown. ``PerturbedSegregantGenotype`` composes the two, keeping each in the
+# class that already states it honestly: the background stays a mosaic with its call
+# method and matrix pin, the perturbations stay typed gene-keyed leaves.
+#
+# Another sibling of ``Genotype`` (never a subclass), for the reason
+# ``SegregantGenotype`` is one: gene-keyed consumers must not mistake the strain for
+# an S288C derivative. The new names appear only in their own bodies and the
+# module-level union and map assignments, so no served class body changes.
+# --------------------------------------------------------------------------- #
+class PerturbedSegregantGenotype(ModelStrict):
+    """Gene-keyed engineered perturbations carried on a segregant-cross background.
+
+    ``background`` is the strain's haplotype mosaic as the source released it.
+    ``background_role`` says which member of the cross the background is: a meiotic
+    ``segregant``, or one of the cross's parents (``parent_1`` / ``parent_2``) when the
+    panel includes a parental control transformed with the same perturbation library.
+    A parent's background is the degenerate mosaic of that parent at every called
+    marker; the validator enforces it, so a parent role can never mask a recombinant.
+    ``perturbations`` are the designed edits (Hale 2024: one CRISPRi guide each), sorted
+    exactly as ``Genotype`` sorts them so equal genotypes serialize equally.
+    """
+
+    background: SegregantGenotype = Field(
+        description="the haplotype mosaic of the strain the perturbation was put into"
+    )
+    background_role: Literal["segregant", "parent_1", "parent_2"] = Field(
+        description="whether the background is a meiotic segregant or one of the "
+        "cross's two parents carried as a control"
+    )
+    perturbations: list[GenePerturbationType] = Field(
+        description="the designed gene-keyed perturbations on that background"
+    )
+
+    @field_validator("perturbations", mode="after")
+    @classmethod
+    def _sort_perturbations(
+        cls, perturbations: list[GenePerturbationType]
+    ) -> list[GenePerturbationType]:
+        """At least one perturbation (no edit is a plain ``SegregantGenotype``), sorted."""
+        if not perturbations:
+            raise ValueError(
+                "PerturbedSegregantGenotype needs at least one perturbation; an "
+                "unperturbed segregant is a SegregantGenotype"
+            )
+        return sorted(
+            perturbations,
+            key=lambda p: (
+                p.systematic_gene_name,
+                p.perturbation_type,
+                p.perturbed_gene_name,
+            ),
+        )
+
+    @model_validator(mode="after")
+    def _parent_role_is_one_parent(self) -> "PerturbedSegregantGenotype":
+        """A parent role's background carries that parent at every block."""
+        if self.background_role == "segregant":
+            return self
+        parent = 1 if self.background_role == "parent_1" else 2
+        mixed = [b for b in self.background.blocks if b.parent != parent]
+        if mixed:
+            raise ValueError(
+                f"background_role {self.background_role!r} but {len(mixed)} block(s) "
+                f"carry the other parent (first: {mixed[0]})"
+            )
+        return self
+
+    @property
+    def systematic_gene_names(self) -> list[str]:
+        """Systematic names of the perturbed genes, ordered by systematic name."""
+        return [p.systematic_gene_name for p in self.perturbations]
+
+    @property
+    def perturbed_gene_names(self) -> list[str]:
+        """Perturbed gene names, ordered by systematic name."""
+        return [p.perturbed_gene_name for p in self.perturbations]
+
+    @property
+    def perturbation_types(self) -> list[str]:
+        """Perturbation types, ordered by systematic name."""
+        return [p.perturbation_type for p in self.perturbations]
+
+    def __len__(self) -> int:
+        """Return the number of perturbations."""
+        return len(self.perturbations)
+
+
+class SegregantPerturbationExperimentReference(ExperimentReference, ModelStrict):
+    """Reference (control) context for a perturbation-on-segregant experiment."""
+
+    experiment_reference_type: str = "segregant_perturbation"
+    phenotype_reference: EnvironmentResponsePhenotype
+
+
+class SegregantPerturbationExperiment(Experiment, ModelStrict):
+    """A perturbation on a segregant background, measured in one environment."""
+
+    experiment_type: str = "segregant_perturbation"
+    genotype: PerturbedSegregantGenotype  # type: ignore[assignment]  # sibling of Genotype, deliberately narrowed
+    phenotype: EnvironmentResponsePhenotype
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (Hale 2024)
+# --------------------------------------------------------------------------- #
 
 
 # --------------------------------------------------------------------------- #
@@ -9129,6 +9255,7 @@ ExperimentType = (
     | EnvironmentResponseExperiment
     | StrainEnvironmentResponseExperiment
     | SegregantGrowthExperiment
+    | SegregantPerturbationExperiment  # Hale 2024
     | ProductTiterExperiment
     | ProteinTurnoverExperiment
     | YeastProteinTurnoverExperiment  # muenzner2024
@@ -9175,6 +9302,7 @@ ExperimentReferenceType = (
     | EnvironmentResponseExperimentReference
     | StrainEnvironmentResponseExperimentReference
     | SegregantGrowthExperimentReference
+    | SegregantPerturbationExperimentReference  # Hale 2024
     | ProductTiterExperimentReference
     | ProteinTurnoverExperimentReference
     | YeastProteinTurnoverExperimentReference  # muenzner2024
@@ -9221,6 +9349,7 @@ EXPERIMENT_TYPE_MAP = {
     "environment_response": EnvironmentResponseExperiment,
     "strain_environment_response": StrainEnvironmentResponseExperiment,
     "segregant_growth": SegregantGrowthExperiment,
+    "segregant_perturbation": SegregantPerturbationExperiment,  # Hale 2024
     "product_titer": ProductTiterExperiment,
     "protein_turnover": ProteinTurnoverExperiment,
     "yeast_protein_turnover": YeastProteinTurnoverExperiment,  # muenzner2024
@@ -9266,6 +9395,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "environment_response": EnvironmentResponseExperimentReference,
     "strain_environment_response": StrainEnvironmentResponseExperimentReference,
     "segregant_growth": SegregantGrowthExperimentReference,
+    "segregant_perturbation": SegregantPerturbationExperimentReference,  # Hale 2024
     "product_titer": ProductTiterExperimentReference,
     "protein_turnover": ProteinTurnoverExperimentReference,
     "yeast_protein_turnover": YeastProteinTurnoverExperimentReference,  # muenzner2024

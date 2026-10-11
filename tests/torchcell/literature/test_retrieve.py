@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import io
 import re
+import tarfile
 import zipfile
 from typing import Any
 
@@ -72,6 +73,7 @@ def test_registry_maps_dotted_paths_to_the_functions() -> None:
         "torchcell.literature.retrieve.springer_esm": retrieve.springer_esm,
         "torchcell.literature.retrieve.direct_url": retrieve.direct_url,
         "torchcell.literature.retrieve.zip_member": retrieve.zip_member,
+        "torchcell.literature.retrieve.tar_member": retrieve.tar_member,
         "torchcell.literature.retrieve.pmc_oa_api": retrieve.pmc_oa_api,
         "torchcell.literature.retrieve.pmc_cloud_object": retrieve.pmc_cloud_object,
         "torchcell.literature.retrieve.plos_supplementary": retrieve.plos_supplementary,
@@ -205,6 +207,56 @@ def test_zip_member_without_a_container_sha_and_a_missing_member(server: Any) ->
         KeyError, match=re.escape("There is no item named 'b.csv' in the archive")
     ):
         retrieve.zip_member("https://h.org/s.zip", "b.csv", None)
+
+
+def _tar_gz(members: dict[str, bytes]) -> bytes:
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tf:
+        for name, data in members.items():
+            info = tarfile.TarInfo(name)
+            info.size = len(data)
+            tf.addfile(info, io.BytesIO(data))
+    return buf.getvalue()
+
+
+def test_tar_member_streams_the_container_and_returns_the_member(server: Any) -> None:
+    """The member is read out of the gzip tar stream and the WHOLE container is hashed,
+    including the members after it, before the bytes are returned; a Zenodo host gets
+    the plain agent and a streaming timeout.
+    """
+    container = _tar_gz(
+        {"data/out/a.RDS": b"first", "data/out/b.RDS": b"second", "z.txt": b"tail"}
+    )
+    url = "https://zenodo.org/api/records/1/files/d.tar.gz/content"
+    srv = server({url: httpx.Response(200, content=container)})
+    sha = hashlib.sha256(container).hexdigest()
+    assert retrieve.tar_member(url, "data/out/b.RDS", sha) == b"second"
+    assert srv.seen == [(url, _PLAIN_UA)]
+    assert srv.client_kwargs[0]["timeout"] == httpx.Timeout(600.0)
+
+
+def test_tar_member_refuses_a_changed_container(server: Any) -> None:
+    container = _tar_gz({"a.RDS": b"1"})
+    server({"https://h.org/d.tar.gz": httpx.Response(200, content=container)})
+    got = hashlib.sha256(container).hexdigest()
+    with pytest.raises(
+        retrieve.ContainerHashMismatchError,
+        match=re.escape(
+            f"tar container sha256 mismatch for https://h.org/d.tar.gz: got {got}, "
+            f"expected {'0' * 64}"
+        ),
+    ):
+        retrieve.tar_member("https://h.org/d.tar.gz", "a.RDS", "0" * 64)
+
+
+def test_tar_member_raises_on_a_member_the_container_lacks(server: Any) -> None:
+    container = _tar_gz({"a.RDS": b"1"})
+    server({"https://h.org/d.tar.gz": httpx.Response(200, content=container)})
+    sha = hashlib.sha256(container).hexdigest()
+    with pytest.raises(
+        KeyError, match=re.escape("b.RDS is not a member of the tar served at")
+    ):
+        retrieve.tar_member("https://h.org/d.tar.gz", "b.RDS", sha)
 
 
 OA = "https://www.ncbi.nlm.nih.gov/pmc/utils/oa/oa.fcgi?id="

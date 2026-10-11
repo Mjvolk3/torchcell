@@ -25,7 +25,10 @@ Article Datasets bucket on AWS (``pmc-oa-opendata``), read with
 
 from __future__ import annotations
 
-from collections.abc import Callable
+import hashlib
+import io
+from collections.abc import Callable, Iterator
+from typing import Any
 from urllib.parse import quote, urlsplit
 
 import httpx
@@ -132,6 +135,85 @@ def zip_member(url: str, member: str, container_sha256: str | None) -> bytes:
             )
     with zipfile.ZipFile(io.BytesIO(container)) as archive:
         return archive.read(member)
+
+
+class ContainerHashMismatchError(ValueError):
+    """A streamed archive's bytes no longer hash to the sha256 its record pins."""
+
+
+class _HashingStream(io.RawIOBase):
+    """Read-only file object over an iterator of byte chunks that hashes as it reads."""
+
+    def __init__(self, chunks: Iterator[bytes]) -> None:
+        self._chunks = chunks
+        self._buffer = b""
+        self.digest = hashlib.sha256()
+
+    def readable(self) -> bool:
+        return True
+
+    def readinto(self, buffer: Any) -> int:
+        while not self._buffer:
+            chunk = next(self._chunks, None)
+            if chunk is None:
+                return 0
+            self.digest.update(chunk)
+            self._buffer = chunk
+        n = min(len(buffer), len(self._buffer))
+        buffer[:n] = self._buffer[:n]
+        self._buffer = self._buffer[n:]
+        return n
+
+    def drain(self) -> None:
+        """Consume (and hash) every remaining chunk."""
+        if self._buffer:
+            self._buffer = b""
+        for chunk in self._chunks:
+            self.digest.update(chunk)
+
+
+def tar_member(url: str, member: str, container_sha256: str) -> bytes:
+    """Retrieve one member file out of a (possibly gzip-compressed) tar served at ``url``.
+
+    The container is STREAMED, never held in memory or on disk: it can be larger than
+    either (Boocock 2025's Zenodo deposit is one 111.9 GB ``.tar.gz``). Its bytes are
+    hashed as they pass, the member is read when the tar stream reaches it, and the rest
+    is drained so the whole container's sha256 is checked before the member is
+    returned; a container whose bytes changed raises :class:`ContainerHashMismatchError`
+    and a member that is not in it raises ``KeyError``.
+    """
+    import tarfile
+
+    found: bytes | None = None
+    with (
+        httpx.Client(
+            follow_redirects=True,
+            timeout=httpx.Timeout(600.0),
+            headers={"User-Agent": user_agent_for(url)},
+        ) as client,
+        client.stream("GET", url) as resp,
+    ):
+        resp.raise_for_status()
+        raw = _HashingStream(resp.iter_bytes(chunk_size=8 << 20))
+        with tarfile.open(
+            fileobj=io.BufferedReader(raw, buffer_size=8 << 20), mode="r|*"
+        ) as archive:
+            for info in archive:
+                if info.name == member and info.isfile():
+                    handle = archive.extractfile(info)
+                    if handle is None:
+                        raise KeyError(f"{member} is not a regular file in {url}")
+                    found = handle.read()
+        raw.drain()
+        got = raw.digest.hexdigest()
+    if got != container_sha256:
+        raise ContainerHashMismatchError(
+            f"tar container sha256 mismatch for {url}: got {got}, "
+            f"expected {container_sha256}"
+        )
+    if found is None:
+        raise KeyError(f"{member} is not a member of the tar served at {url}")
+    return found
 
 
 def pmc_oa_api(pmcid: str) -> bytes:
@@ -241,6 +323,7 @@ RETRIEVERS: dict[str, Callable[..., bytes]] = {
     "torchcell.literature.retrieve.springer_esm": springer_esm,
     "torchcell.literature.retrieve.direct_url": direct_url,
     "torchcell.literature.retrieve.zip_member": zip_member,
+    "torchcell.literature.retrieve.tar_member": tar_member,
     "torchcell.literature.retrieve.pmc_oa_api": pmc_oa_api,
     "torchcell.literature.retrieve.pmc_cloud_object": pmc_cloud_object,
     "torchcell.literature.retrieve.plos_supplementary": plos_supplementary,

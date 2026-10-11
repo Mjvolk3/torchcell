@@ -743,6 +743,34 @@ case "$ARM" in
                                 "multitask.standardize_per_feature_target=[per_gene]"
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(morph-cls reveal-expression-permuted "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  # THE PROTEOME-REVEALED MORPHOLOGY ARMS (2026-10-10), on the fig3_morph_proteome store
+  # (expression panels + Messner 2023 + Ohya 2005; 4,281 genotypes carry proteome and
+  # morphology). MP_cls is genotype only on exactly those strains, the paired control for
+  # CM_prot (the strain's proteome revealed through the v20 conditioning step) beside
+  # CM_protperm (another strain's proteome). The per-gene head is re-pointed at protein
+  # abundance as S_prot does; it is input, not scored.
+  MP_cls_s[0-9]|MP_cls_s1[01])
+                     OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                "cell_dataset.require_modalities=[protein_abundance,calmorph]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls genotype-only proteome-strains "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  CM_prot_s[0-9]|CM_prot_s1[01])
+                     OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                "multitask.head_phenotypes.per_gene=[protein_abundance]" multitask.head_phenotype_names.per_gene=proteome
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                "cell_dataset.require_modalities=[protein_abundance,calmorph]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls reveal-proteome "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  CM_protperm_s[0-9]|CM_protperm_s1[01])
+                     OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                multitask.condition_permute=true
+                                "multitask.head_phenotypes.per_gene=[protein_abundance]" multitask.head_phenotype_names.per_gene=proteome
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                "cell_dataset.require_modalities=[protein_abundance,calmorph]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-cls reveal-proteome-permuted "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   *) echo "unknown arm '$ARM'" >&2; exit 1 ;;
 esac
 

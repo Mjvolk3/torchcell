@@ -561,6 +561,18 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
+  # The proteome-revealed arms on the fig3_morph_proteome store (built 2026-10-10 from the
+  # v1.6.2 worktree, mirrored to IGB). Seed 0 of each arm first, then arm-major so MP_cls
+  # writes every split cache before a conditioned task of the same seed starts.
+  #   sbatch -J 019-morph1w3-prot -p cabbi --gres=gpu:1 --cpus-per-task=5 --mem=60g \
+  #       --time=1-12:00:00 --array=0-35%8 --export=ALL,W5_STAGE=morph_v24_prot,... igb_expr_wave5.slurm
+  morph_v24_prot) JOBS=("MP_cls_s0:0" "CM_prot_s0:0" "CM_protperm_s0:0")
+          for arm in MP_cls CM_prot CM_protperm; do for s in 1 2 3 4 5 6 7 8 9 10 11; do
+            JOBS+=("${arm}_s${s}:0")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
   morph_v24_pool) JOBS=("M_pool_s0:0" "M_pool_s1:0" "M_pool_s2:0")
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24

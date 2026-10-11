@@ -9,7 +9,7 @@ method table and that every experiment type in the schema's registry that a mapp
 dataset produces has a phenotype node class.
 
 Also here, because both are properties of the conf enable-lists read as a whole:
-``MULTI_CLASS_MODULE_CONFS``, the literal class-to-conf table of the eight adapter modules
+``MULTI_CLASS_MODULE_CONFS``, the literal class-to-conf table of the nine adapter modules
 that serve more than one dataset class (issue #743), and the dangling-edge rule that
 replaced the environment-perturbation exclusivity rule once the two node lanes became a
 partition (issue #756).
@@ -240,6 +240,12 @@ MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
         "DmfCostanzo2016Dataset": "dmf_costanzo2016_adapter.yaml",
         "DmiCostanzo2016Dataset": "dmi_costanzo2016_adapter.yaml",
         "SmfCostanzo2016Dataset": "smf_costanzo2016_adapter.yaml",
+    },
+    # De Chiara 2022 (added after the 2026-10-09 measurement): three stores, one module.
+    "dechiara2022_adapter.py": {
+        "CellYieldDeChiara2022Dataset": "cell_yield_dechiara2022_adapter.yaml",
+        "DoublingTimeDeChiara2022Dataset": "doubling_time_dechiara2022_adapter.yaml",
+        "LifeCycleDeChiara2022Dataset": "life_cycle_dechiara2022_adapter.yaml",
     },
     "hillenmeyer2008_adapter.py": {
         "HetHillenmeyer2008Dataset": "het_hillenmeyer2008_adapter.yaml",

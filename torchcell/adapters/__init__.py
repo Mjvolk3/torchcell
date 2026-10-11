@@ -100,6 +100,15 @@ from .cui2018_adapter import (
 from .dasilveira2014_adapter import (
     MetaboliteDaSilveira2014Adapter as MetaboliteDaSilveira2014Adapter,
 )
+from .dechiara2022_adapter import (
+    CellYieldDeChiara2022Adapter as CellYieldDeChiara2022Adapter,
+)
+from .dechiara2022_adapter import (
+    DoublingTimeDeChiara2022Adapter as DoublingTimeDeChiara2022Adapter,
+)
+from .dechiara2022_adapter import (
+    LifeCycleDeChiara2022Adapter as LifeCycleDeChiara2022Adapter,
+)
 from .desiqueira2025_proteome_adapter import (
     ProteomeDeSiqueira2025Adapter as ProteomeDeSiqueira2025Adapter,
 )
@@ -420,7 +429,12 @@ proteome_metabolome_adapters = [
 
 segregant_adapters = ["Bloom2019Adapter", "Boocock2025Adapter", "Nguessan2025Adapter"]
 
-natural_isolate_adapters = ["IsolateGrowthPeter2018Adapter"]
+natural_isolate_adapters = [
+    "IsolateGrowthPeter2018Adapter",
+    "LifeCycleDeChiara2022Adapter",
+    "DoublingTimeDeChiara2022Adapter",
+    "CellYieldDeChiara2022Adapter",
+]
 
 environment_adapters = [
     "EnvChemgenCostanzo2021Adapter",

@@ -20,6 +20,7 @@ from torchcell.adapters import (
     CarbonSourceTong2020Adapter,
     CarotenoidOzaydin2013Adapter,
     CaudalPanTranscriptome2024Adapter,
+    CellYieldDeChiara2022Adapter,
     CrispriArrayYunus2026Adapter,
     CrispriChemgenChoe2025Adapter,
     CrispriCrossRachwalski2024Adapter,
@@ -39,6 +40,7 @@ from torchcell.adapters import (
     DmiKuzmin2020Adapter,
     DmMicroarraySameith2015Adapter,
     DoublingTimeCaglar2017Adapter,
+    DoublingTimeDeChiara2022Adapter,
     EnvChemgenAuesukaree2009Adapter,
     EnvChemgenCostanzo2021Adapter,
     EnvChemgenGirgis2009Adapter,
@@ -81,6 +83,7 @@ from torchcell.adapters import (
     IsoprenylAcetateTiterKang2026Adapter,
     LactamGrowthRateThompson2019Adapter,
     Lian2019Adapter,
+    LifeCycleDeChiara2022Adapter,
     MetaboliteDaSilveira2014Adapter,
     MetaboliteGrowthPhaseMenasalvas2025Adapter,
     MetaboliteIntensityRapp2026Adapter,
@@ -305,6 +308,11 @@ from torchcell.datasets.scerevisiae.costanzo2021 import EnvChemgenCostanzo2021Da
 from torchcell.datasets.scerevisiae.dasilveira2014 import (
     MetaboliteDaSilveira2014Dataset,
 )
+from torchcell.datasets.scerevisiae.dechiara2022 import (
+    CellYieldDeChiara2022Dataset,
+    DoublingTimeDeChiara2022Dataset,
+    LifeCycleDeChiara2022Dataset,
+)
 from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HetHillenmeyer2008Dataset,
     HomHillenmeyer2008Dataset,
@@ -395,6 +403,10 @@ dataset_adapter_map: dict[type, type] = {
     SmMicroarraySameith2015Dataset: SmMicroarraySameith2015Adapter,
     DmMicroarraySameith2015Dataset: DmMicroarraySameith2015Adapter,
     CaudalPanTranscriptome2024Dataset: CaudalPanTranscriptome2024Adapter,
+    # De Chiara 2022: the 1,011-isolate panel's life cycle and growth
+    LifeCycleDeChiara2022Dataset: LifeCycleDeChiara2022Adapter,
+    DoublingTimeDeChiara2022Dataset: DoublingTimeDeChiara2022Adapter,
+    CellYieldDeChiara2022Dataset: CellYieldDeChiara2022Adapter,
     ScmdOhnuki2018Dataset: ScmdOhnuki2018Adapter,
     ScmdOhnuki2022Dataset: ScmdOhnuki2022Adapter,
     CarotenoidOzaydin2013Dataset: CarotenoidOzaydin2013Adapter,

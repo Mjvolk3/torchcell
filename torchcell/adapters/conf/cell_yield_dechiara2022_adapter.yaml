@@ -1,0 +1,58 @@
+# De Chiara 2022 colony cell yield (cells): one EnvironmentResponseExperiment per (isolate, growth
+# environment) over 43 carbon and nitrogen environments. COMPACT GENOTYPE, as for Caudal
+# 2024: each 1,011-panel isolate carries ~5,000 perturbations off S288C, so the
+# per-perturbation node and the perturbation-to-genotype edge are left out; the full set is
+# on the genotype node and the variant sequences live off-graph in Peter 2018's pinned
+# tarball. The varied carbon or nitrogen source is an EnvironmentPhysicalPerturbation on
+# every record except YPD's, so the environment-perturbation pair is enabled.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "environment response phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment response phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

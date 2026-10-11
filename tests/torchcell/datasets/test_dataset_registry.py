@@ -23,8 +23,12 @@ from torchcell.datasets.dataset_registry import dataset_registry, register_datas
 REGISTERED = dict(sorted(dataset_registry.items()))
 
 # Loaders with no raw files at all (built from the SGD genome, nothing downloaded).
-# Strict: a loader listed here that declares raw files fails the sweep.
-EMPTY_RAW = {"GeneEssentialitySgdDataset"}
+# Strict: a loader listed here that declares raw files fails the sweep, and a registered
+# loader with no raw files must be listed here. Empty since 2026-10-11, when
+# GeneEssentialitySgdDataset (its only member, built from the pinned SGD per-gene dump
+# rather than from raw/) stopped being registered: SGD states no growth medium and
+# Environment.media is required, so its source is a provenance record.
+EMPTY_RAW: set[str] = set()
 
 # Loaders whose raw_file_names is a bare str, against the base class's list[str] (each
 # carries a `type: ignore[override]`). PyG's raw_paths accepts a string, so the read path

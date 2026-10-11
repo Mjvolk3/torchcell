@@ -39,7 +39,7 @@ TABLES = osp.join(REPO, "notes-tex", "figure-3-gate", "tables")
 load_dotenv(osp.join(REPO, ".env"))
 DATA_ROOT = os.environ["DATA_ROOT"]
 STORES = {
-    "fig3_core": "Kemmeren 2014, Sameith 2015, Ohya 2005, Costanzo 2016 and Kuzmin 2018/2020 fitness",
+    "fig3_core": "Kemmeren 2014, Sameith 2015, Ohya 2005, the Costanzo 2016 and Kuzmin 2018/2020 fitness panels",
     "fig3_morph_proteome": "Kemmeren 2014, Sameith 2015, Messner 2023, Ohya 2005",
 }
 LABEL = {"calmorph": "morphology", "expression_log2_ratio": "expression", "protein_abundance": "proteome"}
@@ -136,9 +136,9 @@ def main() -> None:
         r" after deduplication and aggregation; a strain measured by two panels is one record carrying both labels."
         r" \src{experiments/019-simb-multimodal/scripts/morph_v24_dataset_table.py}}",
         r"  \label{tab:morph-strains}",
-        r"  \begin{tabular}{@{}llrrrrrrr@{}}",
+        r"  \begin{tabular}{@{}lp{32mm}rrrrrrr@{}}",
         r"    \toprule",
-        r"    store & sources & genotypes & morphology & expression & proteome & morph.\ and expr.\ & morph.\ and prot.\ & all three \\",
+        r"    store & sources & genotypes & morph. & expr. & prot. & morph.\ + expr. & morph.\ + prot. & all three \\",
         r"    \midrule",
     ]
     for t, s in stores.items():
@@ -147,7 +147,7 @@ def main() -> None:
     lines += [r"    \midrule", r"    \multicolumn{9}{@{}l}{\emph{Per arm, split seed 0, after the label filter (train / validation / test rows)}}\\"]
     for t, s in stores.items():
         for arm, c in s["arms"].items():
-            lines.append(f"    \\multicolumn{{2}}{{@{{}}l}}{{\\texttt{{{L(arm)}}} on \\texttt{{{L(t)}}}}} & \\multicolumn{{7}}{{l}}{{{', '.join(LABEL[r] for r in ARMS[arm][1])}: {c['train']:,} / {c['val']} / {c['test']}}} \\\\")
+            lines.append(f"    \\multicolumn{{9}}{{@{{}}l}}{{\\texttt{{{L(arm)}}} on \\texttt{{{L(t)}}}, {', '.join(LABEL[r] for r in ARMS[arm][1])}: {c['train']:,} / {c['val']} / {c['test']}}} \\\\")
     lines += [r"    \bottomrule", r"  \end{tabular}", r"\end{table}", "",
         r"\begin{table}[htbp]",
         r"  \centering",

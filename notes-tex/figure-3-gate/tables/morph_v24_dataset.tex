@@ -7,17 +7,17 @@
   \footnotesize
   \caption[The morphology round's strain sets]{The morphology round's strain sets. Genotype records per store and per label, the overlaps, the split seed 0 partition, and per arm the rows left after the training script's \texttt{require\_modalities} filter (the counts the runs print). A genotype is one deletion strain after deduplication and aggregation; a strain measured by two panels is one record carrying both labels. \src{experiments/019-simb-multimodal/scripts/morph_v24_dataset_table.py}}
   \label{tab:morph-strains}
-  \begin{tabular}{@{}llrrrrrrr@{}}
+  \begin{tabular}{@{}lp{32mm}rrrrrrr@{}}
     \toprule
-    store & sources & genotypes & morphology & expression & proteome & morph.\ and expr.\ & morph.\ and prot.\ & all three \\
+    store & sources & genotypes & morph. & expr. & prot. & morph.\ + expr. & morph.\ + prot. & all three \\
     \midrule
-    \texttt{fig3\_core} & Kemmeren 2014, Sameith 2015, Ohya 2005, Costanzo 2016 and Kuzmin 2018/2020 fitness & 5,125 & 4,695 & 1,554 & -- & 1,439 & -- & -- \\
+    \texttt{fig3\_core} & Kemmeren 2014, Sameith 2015, Ohya 2005, the Costanzo 2016 and Kuzmin 2018/2020 fitness panels & 5,125 & 4,695 & 1,554 & -- & 1,439 & -- & -- \\
     \texttt{fig3\_morph\_proteome} & Kemmeren 2014, Sameith 2015, Messner 2023, Ohya 2005 & 4,977 & 4,695 & 1,554 & 4476 & 1,439 & 4281 & 1321 \\
     \midrule
     \multicolumn{9}{@{}l}{\emph{Per arm, split seed 0, after the label filter (train / validation / test rows)}}\\
-    \multicolumn{2}{@{}l}{\texttt{M\_cls, M\_pool} on \texttt{fig3\_core}} & \multicolumn{7}{l}{morphology: 3,757 / 469 / 469} \\
-    \multicolumn{2}{@{}l}{\texttt{CM\_expr, CM\_exprperm, CMP\_expr, CMP\_exprperm} on \texttt{fig3\_core}} & \multicolumn{7}{l}{expression, morphology: 1,161 / 132 / 146} \\
-    \multicolumn{2}{@{}l}{\texttt{MP\_cls, CM\_prot, CM\_protperm} on \texttt{fig3\_morph\_proteome}} & \multicolumn{7}{l}{proteome, morphology: 3,464 / 416 / 401} \\
+    \multicolumn{9}{@{}l}{\texttt{M\_cls, M\_pool} on \texttt{fig3\_core}, morphology: 3,757 / 469 / 469} \\
+    \multicolumn{9}{@{}l}{\texttt{CM\_expr, CM\_exprperm, CMP\_expr, CMP\_exprperm} on \texttt{fig3\_core}, expression, morphology: 1,161 / 132 / 146} \\
+    \multicolumn{9}{@{}l}{\texttt{MP\_cls, CM\_prot, CM\_protperm} on \texttt{fig3\_morph\_proteome}, proteome, morphology: 3,464 / 416 / 401} \\
     \bottomrule
   \end{tabular}
 \end{table}

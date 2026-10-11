@@ -218,7 +218,7 @@ def main() -> None:
         f" {ctx['baseline_B3_neighbor_average_val_all278']['mean']:.3f} (neighbor average)."
         " \\src{experiments/019-simb-multimodal/scripts/morph_v24_readout.py}}",
         "  \\label{tab:morph-v24}",
-        "  \\begin{tabular}{@{}lp{52mm}rrlr@{}}",
+        "  \\begin{tabular}{@{}lp{40mm}rrlr@{}}",
         "    \\toprule",
         "    arm & change & finished & collapsed & window Pearson & paired difference \\\\",
         "    \\midrule",

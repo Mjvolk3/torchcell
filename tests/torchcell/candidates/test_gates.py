@@ -18,9 +18,11 @@ from pydantic import BaseModel, ConfigDict
 from tests.torchcell.candidates._builders import (
     COMMIT,
     aggregation,
+    compendium_paper,
     evidence,
     fitness_record,
     sha,
+    source,
     write_assembly_set,
     write_mirror,
     write_store,
@@ -814,3 +816,62 @@ def test_compose_verdict_marks_skipped_gates() -> None:
     )
     assert [g.reason for g in verdict.gates[1:]] == ["not evaluated on this call"] * 4
     assert verdict.outcome == "pending"
+
+
+# --------------------------------------------------------------------------- #
+# G1 decomposition (plan decision 16)
+# --------------------------------------------------------------------------- #
+def _decomposition_file(tmp_path: Path, *records: gates.DecompositionRecord) -> Path:
+    path = tmp_path / "audit.json"
+    path.write_text(
+        '{"script": "s", "audit": [], "decompositions": ['
+        + ", ".join(r.model_dump_json() for r in records)
+        + "]}"
+    )
+    return path
+
+
+def test_read_decompositions_keys_by_citation_key_and_refuses_repeats(
+    tmp_path: Path,
+) -> None:
+    """Only the ``decompositions`` key is read; a key decomposed twice is refused."""
+    record = gates.DecompositionRecord(
+        citation_key="compendiumKey2024", sources=(source(),)
+    )
+    path = _decomposition_file(tmp_path, record)
+    assert gates.read_decompositions(path) == {"compendiumKey2024": record}
+    twice = _decomposition_file(tmp_path, record, record)
+    with pytest.raises(ValueError, match="compendiumKey2024 is decomposed twice"):
+        gates.read_decompositions(twice)
+
+
+def test_decompose_recounts_from_the_sources(
+    index: tuple[gates.ModuleKeys, ...],
+) -> None:
+    """Studies, mirrored and net-new come from the decomposition; the rest is kept."""
+    own = source("doi:10.1000/fixture", doi="10.1000/fixture")
+    new = source("doi:10.1/new", doi="10.1/NEW", citation_key=None, mirrored=False)
+    bare = source("bioproject:PRJNA1", role="unattributed_release", doi=None)
+    paper = compendium_paper("doi:10.1000/compendium", doi="10.1000/compendium")
+    record = gates.decompose(aggregation(4), (own, new, bare, paper), index)
+    assert (
+        record.n_source_studies,
+        record.n_sources_mirrored,
+        record.net_new_vs_served,
+        record.attribution_field,
+        record.sources,
+    ) == (4, 3, 2, "Publication", (own, new, bare, paper))
+
+
+def test_with_decomposition_only_for_an_aggregation(
+    index: tuple[gates.ModuleKeys, ...],
+) -> None:
+    """An aggregation's G1 takes the decomposed record; a primary G1 is refused."""
+    decomposition = gates.DecompositionRecord(citation_key="k", sources=(source(),))
+    g1 = gates.evaluate_g1(bacteria_row(status="aggregation"), finding("aggregation"))
+    folded = gates.with_decomposition(g1, decomposition, index)
+    assert folded.result == g1.result
+    assert folded.aggregation is not None and folded.aggregation.sources == (source(),)
+    primary = gates.evaluate_g1(bacteria_row(), finding("primary"))
+    with pytest.raises(ValueError, match="k: G1 settled on 'primary'"):
+        gates.with_decomposition(primary, decomposition, index)

@@ -16,7 +16,7 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import Final
 
-from torchcell.candidates.verdict import CandidateVerdict
+from torchcell.candidates.verdict import CandidateVerdict, SourceDecomposition
 
 REPO: Final = Path(__file__).resolve().parents[2]
 LEDGER_NOTE: Final = REPO / "notes" / "torchcell.candidates.ledger.md"
@@ -64,10 +64,100 @@ def render_row(verdict: CandidateVerdict) -> str:
 
 
 def render_section(verdicts: Iterable[CandidateVerdict], date: str) -> str:
-    """The dated section: heading, legend, and the table sorted by table then row."""
+    """The dated section: heading, legend, the table, and any aggregation decomposition.
+
+    The decomposition tables (plan decision 16) follow only when a verdict carries one,
+    so a store without decompositions renders exactly as before.
+    """
     rows = sorted(verdicts, key=lambda v: (v.table, v.row_name, v.citation_key))
     body = "\n".join([HEADER, *(render_row(v) for v in rows)])
-    return f"{heading(date)}\n\n{LEGEND}\n\n{body}\n"
+    section = f"{heading(date)}\n\n{LEGEND}\n\n{body}\n"
+    decomposition = render_decomposition(rows)
+    return section if decomposition is None else f"{section}\n{decomposition}"
+
+
+DECOMPOSITION_LEGEND: Final = (
+    "Plan decision 16: each source study of a served aggregation, against its own "
+    "release. Loadable = an own release exists, it is not the compendium's, and no "
+    "dataset loads it yet; compendium-only = no artifact but the compendium holds "
+    "those samples. Counts are studies; samples are compendium samples (served)."
+)
+DECOMPOSITION_SUMMARY_HEADER: Final = (
+    "| citation key | studies | loadable, scriptable | loadable, walled | "
+    "compendium-only | loaded as own dataset | samples (served) |\n"
+    "|---|---|---|---|---|---|---|"
+)
+DECOMPOSITION_HEADER: Final = (
+    "| citation key | served class | source | role | samples (served) | own release | "
+    "access | mirrored | loaded | cross-check |\n"
+    "|---|---|---|---|---|---|---|---|---|---|"
+)
+
+
+def _yes(flag: bool) -> str:
+    return "yes" if flag else "no"
+
+
+def render_source_row(citation_key: str, source: SourceDecomposition) -> str:
+    """One decomposition row: who, how many, what their own release is, the L4 check."""
+    check = source.cross_check
+    if check is None:
+        checked = "·"
+    else:
+        verdict = {True: "pass", False: "FAIL", None: "pin"}[check.passes]
+        checked = f"{check.statistic} {check.value:.6g} ({verdict})"
+    loaded = source.own_dataset_class if source.loaded_as_own_dataset else "no"
+    return (
+        f"| {citation_key} | {source.dataset_class} | {_cell(source.source_label)} | "
+        f"{source.role} | {source.n_samples_in_compendium} "
+        f"({source.n_samples_served}) | {source.own_release_kind} | "
+        f"{source.own_release_access or '·'} | {_yes(source.mirrored)} | {loaded} | "
+        f"{checked} |"
+    )
+
+
+def render_summary_row(verdict: CandidateVerdict) -> str:
+    """One compendium's study counts (a study feeding two classes counts once)."""
+    aggregation = verdict.aggregation
+    assert aggregation is not None and aggregation.sources is not None
+    studies = [entries[0] for entries in aggregation.studies().values()]
+    loadable = [s for s in studies if s.loadable_from_own_release]
+    scriptable = sum(1 for s in loadable if s.own_release_access == "scriptable")
+    samples = sum(s.n_samples_in_compendium for s in aggregation.sources)
+    served = sum(s.n_samples_served for s in aggregation.sources)
+    return (
+        f"| {verdict.citation_key} | {len(studies)} | {scriptable} | "
+        f"{len(loadable) - scriptable} | {sum(1 for s in studies if s.compendium_only)} "
+        f"| {sum(1 for s in studies if s.loaded_as_own_dataset)} | {samples} "
+        f"({served}) |"
+    )
+
+
+def render_decomposition(verdicts: Iterable[CandidateVerdict]) -> str | None:
+    """The decomposition subsection, or None when no verdict carries one."""
+    decomposed = [
+        v
+        for v in verdicts
+        if v.aggregation is not None and v.aggregation.sources is not None
+    ]
+    if not decomposed:
+        return None
+    rows: list[str] = []
+    for verdict in decomposed:
+        assert verdict.aggregation is not None and verdict.aggregation.sources
+        ordered = sorted(
+            verdict.aggregation.sources,
+            key=lambda s: (s.dataset_class, -s.n_samples_in_compendium, s.source_label),
+        )
+        rows.extend(render_source_row(verdict.citation_key, s) for s in ordered)
+    summary = "\n".join(
+        [DECOMPOSITION_SUMMARY_HEADER, *(render_summary_row(v) for v in decomposed)]
+    )
+    table = "\n".join([DECOMPOSITION_HEADER, *rows])
+    return (
+        f"### Aggregation decomposition\n\n{DECOMPOSITION_LEGEND}\n\n{summary}\n\n"
+        f"{table}\n"
+    )
 
 
 def append_section(note: Path, section: str) -> None:

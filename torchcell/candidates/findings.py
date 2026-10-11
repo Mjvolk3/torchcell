@@ -19,6 +19,14 @@ Not every aggregation row has a finding yet: Borchert 2024, Lim 2022 and CeCaFDB
 re-measured and copied precedents, D2Cell and MCF2Chem the two transcriptions. The rest
 (Oyetunde 2019, and the yeast side's served SynthLethDB) are the backfill of piece 3 of
 [[plan.dataset-admission-pipeline.2026.10.10]].
+
+Price 2018 and PRECISE-1K (Lamoureux 2023) were added with plan decision 16 (owner,
+2026-10-10): a served compendium is a processing reference, not the source of record, and
+both are compendia whose samples other papers first reported. Their rows carry no
+aggregation marker in the candidate table, so without a finding G1 would call them
+primary. A finding's ``n_source_studies`` is what the module pins or the paper states (a
+project count for Lim 2022 and PRECISE-1K); the per-source decomposition the experiment-036
+audit measures replaces it in the stored verdict (``candidate-gate gate --decomposition``).
 """
 
 from __future__ import annotations
@@ -27,7 +35,15 @@ from typing import Final
 
 from torchcell.candidates.gates import SourceKindFinding
 from torchcell.candidates.verdict import AggregationRecord
-from torchcell.datasets.ecoli import cai2023, li2024, zhang2015
+from torchcell.datasets.ecoli import (
+    cai2023,
+    lamoureux2023,
+    lamoureux2023_public_k12,
+    li2024,
+    price2018,
+    wetmore2015,
+    zhang2015,
+)
 from torchcell.datasets.pputida import borchert2024, lim2022
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
@@ -50,6 +66,33 @@ BORCHERT2024_COMPENDIUM: Final = SourcedValue(
     value={"samples": 332, "conditions": 183},
     provenance=_BORCHERT_PROVENANCE,
     quote=borchert2024.Q_COMPENDIUM,
+)
+
+_LAMOUREUX_PROVENANCE: Final = Provenance(
+    source_uri="paper.md",
+    citation_key=lamoureux2023.CITATION_KEY,
+    sha256=lamoureux2023.PAPER_MD_SHA256,
+)
+
+PRECISE1K_PROJECTS: Final = SourcedValue(
+    value={"projects": 45},
+    provenance=_LAMOUREUX_PROVENANCE,
+    quote="The samples come from 45 distinct projects.",
+    note="a project count, not a study count: the release's DOI column names the "
+    "paper that first reported each sample (aggregation_decomposition_audit.py)",
+)
+
+PRECISE1K_ONE_LAB: Final = SourcedValue(
+    value={"generated": "2013-2021, one lab"},
+    provenance=_LAMOUREUX_PROVENANCE,
+    quote="These data were generated between 2013 and 2021 in our lab (Figure 1B).",
+)
+
+PRECISE1K_ACCESSIONS: Final = SourcedValue(
+    value={"raw_reads": "GEO, per sample in metadata_qc.csv"},
+    provenance=_LAMOUREUX_PROVENANCE,
+    quote="Raw RNA-seq data have been deposited at GEO and are publicly available as of "
+    "the date of publication. Accession numbers are listed in the metadata file",
 )
 
 #: Distinct source DOIs of the in-scope CeCaFDB workbooks, off the committed pins.
@@ -125,6 +168,50 @@ FINDINGS: Final[tuple[SourceKindFinding, ...]] = (
             n_sources_mirrored=len(borchert2024.SOURCE_STUDIES),
             net_new_vs_served=None,
             evidence=(BORCHERT2024_FB_SHARE,),
+        ),
+    ),
+    SourceKindFinding(
+        row_name="Price 2018",
+        citation_key=price2018.CITATION_KEY,
+        source_kind="aggregation",
+        reason="the E. coli Keio arm re-analyzes Wetmore 2015's samples (statistics "
+        "version 1.0.3 against 1.0.0) beside samples first described here; every "
+        "record names the paper that first reported its sample",
+        evidence=(wetmore2015.SUPERSET_INCLUDES_THIS_PAPER, price2018.NEW_EXPERIMENTS),
+        aggregation=AggregationRecord(
+            n_source_studies=len(price2018.SampleSource),
+            attribution_field="Publication per sample: Wetmore 2015 for "
+            "wetmore2015.subsumption_record().carried, else Price 2018 "
+            "(price2018.SampleSource)",
+            value_origin="re_measured",
+            n_sources_mirrored=None,
+            net_new_vs_served=None,
+            evidence=(wetmore2015.SUPERSET_INCLUDES_THIS_PAPER,),
+        ),
+    ),
+    SourceKindFinding(
+        row_name="PRECISE-1K",
+        citation_key=lamoureux2023.CITATION_KEY,
+        source_kind="aggregation",
+        reason="one lab's RNA-seq libraries from 45 projects, re-processed through one "
+        "pipeline, where the release's DOI column names an earlier paper for a "
+        "sample that one first reported; the Public K-12 arm re-processes other labs' "
+        "SRA runs",
+        evidence=(
+            PRECISE1K_PROJECTS,
+            PRECISE1K_ONE_LAB,
+            PRECISE1K_ACCESSIONS,
+            lamoureux2023_public_k12.CURATION,
+        ),
+        aggregation=AggregationRecord(
+            n_source_studies=PRECISE1K_PROJECTS.value["projects"],
+            attribution_field="metadata_qc.csv DOI (PRECISE-1K) and PMID, DOI, GEO, "
+            "BioProject (Public K-12) per sample; the served records name Lamoureux "
+            "2023 only",
+            value_origin="re_measured",
+            n_sources_mirrored=None,
+            net_new_vs_served=None,
+            evidence=(PRECISE1K_PROJECTS, PRECISE1K_ACCESSIONS),
         ),
     ),
 )

@@ -1,0 +1,105 @@
+{
+  "release": {
+    "n_samples": 269,
+    "n_elements": 6429,
+    "n_released_scores": 1707575,
+    "n_null_both": 3180,
+    "n_null_score_p_one": 18646,
+    "max_abs_p_minus_two_sided_normal": 4.99999882608293e-07,
+    "table1_rows": 292,
+    "table1_conditions": {
+      "mig-log phase": 263,
+      "mig-log phase, heat-shock": 22,
+      "mig-log phase, tetracycline treatment": 6,
+      "mig-log phase, tetracycline treatment, heat-shock": 1
+    },
+    "teto7_own_element_score": {
+      "YPL075W": -2.03558,
+      "YNL216W": -1.70329,
+      "YBR049C": -1.0939,
+      "YGL073W": -0.84231,
+      "YKL112W": 0.80251,
+      "YMR043W": 5.0347
+    }
+  },
+  "kemmeren2014": {
+    "n_shared_strains": 255,
+    "n_genes": 5566,
+    "matched_r_quantiles": {
+      "q05": -0.07508380202636723,
+      "q25": 0.01013545422409173,
+      "median": 0.09679231337252756,
+      "q75": 0.18205455655774533,
+      "q95": 0.3756318643317483
+    },
+    "mismatched_r_median": 0.030857153060934936,
+    "mismatched_r_p95": 0.16239956883482654,
+    "mismatched_r_p99": 0.2283902265492992,
+    "n_matched_above_mismatched_median": 172,
+    "n_matched_above_mismatched_p95": 79,
+    "n_matched_above_mismatched_p99": 45,
+    "n_matched_negative": 54,
+    "top_matched": [
+      [
+        "YIR033W",
+        0.6230476335444902
+      ],
+      [
+        "YDR310C",
+        0.48895428622744064
+      ],
+      [
+        "YLR403W",
+        0.4776564520907806
+      ],
+      [
+        "YOL004W",
+        0.4775374292674451
+      ],
+      [
+        "YPL254W",
+        0.4572116775338539
+      ],
+      [
+        "YCR084C",
+        0.4309338643719468
+      ],
+      [
+        "YLR418C",
+        0.4295313673446534
+      ],
+      [
+        "YNL199C",
+        0.4285282347604597
+      ],
+      [
+        "YOL068C",
+        0.42293558864639086
+      ],
+      [
+        "YJR060W",
+        0.4214052750187447
+      ],
+      [
+        "YLR039C",
+        0.4147872846499725
+      ],
+      [
+        "YER111C",
+        0.4043054327597586
+      ],
+      [
+        "YDL020C",
+        0.3994927051976559
+      ],
+      [
+        "YIL036W",
+        0.36540578967493154
+      ],
+      [
+        "YDR443C",
+        0.3644106725300411
+      ]
+    ]
+  }
+}

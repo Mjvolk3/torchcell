@@ -168,6 +168,50 @@ EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     },
 }
 
+
+# --------------------------------------------------------------------------- #
+# Error-model microarray SCORE datasets (#1022). A release that carries a per-gene
+# significance score and its p-value in place of a log ratio is its own family
+# (MicroarrayExpressionScorePhenotype), so it is not in EXPRESSION_DATASETS, whose
+# verifier reads expression_log2_ratio. Each loader owns its released-value re-read,
+# so the registry dispatches to the loader's verify_build, as the bioproduction
+# registries do.
+# --------------------------------------------------------------------------- #
+def _verify_hu_score(dataset_root: str, data_root: str) -> VerificationReport:
+    """Hu 2007 GSE4654: the released X scores re-read, plus the Kemmeren 2014 L4."""
+    from torchcell.datasets.scerevisiae import hu2007
+
+    return hu2007.verify_build(dataset_root, data_root)
+
+
+EXPRESSION_SCORE_DATASETS: dict[str, dict[str, Any]] = {
+    "microarray_score_hu2007": {
+        "root": "data/torchcell/microarray_score_hu2007",
+        "verify": _verify_hu_score,
+        "provenance": Provenance(
+            source_uri="https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE4654",
+            citation_key="huGeneticReconstructionFunctional2007",
+            method="GSE4654 family SOFT (GPL3588): error-model X score and p-value "
+            "per array element, one record per mid-log TF-deletion strain",
+            page="Nat Genet 39:683, Methods; Supplementary Table 1",
+        ),
+    }
+}
+
+
+def run_expression_score(data_root: str) -> bool:
+    """Verify every error-model score dataset (L0-L4); write reports. True if all pass."""
+    all_passed = True
+    for spec in EXPRESSION_SCORE_DATASETS.values():
+        abs_root = osp.join(data_root, spec["root"])
+        report = cast("VerificationReport", spec["verify"](abs_root, data_root))
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 # --------------------------------------------------------------------------- #
 # Morphology dataset (WS6). The Ohya LMDB lives under the KG-build tree
 # (`database/data/...`), which may be owned by the KG-build user and read-only; we READ
@@ -4354,6 +4398,7 @@ def run_natural_isolate(data_root: str) -> bool:
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
+    expression_score_ok = run_expression_score(data_root)
     morphology_ok = run_morphology(data_root)
     morphology_ohnuki_ok = run_morphology_ohnuki(data_root)
     ohnuki_ok = run_ohnuki_morphology(data_root)
@@ -4378,6 +4423,7 @@ def run_all(data_root: str) -> bool:
     natural_isolate_panel_ok = run_natural_isolate(data_root)
     return (
         expression_ok
+        and expression_score_ok
         and morphology_ok
         and morphology_ohnuki_ok
         and ohnuki_ok

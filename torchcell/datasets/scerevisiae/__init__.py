@@ -30,6 +30,7 @@ from .hale2024 import CrispriSegregantHale2024Dataset as CrispriSegregantHale202
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
+from .hu2007 import MicroarrayScoreHu2007Dataset as MicroarrayScoreHu2007Dataset
 from .jackson2020 import (
     TfDeletionPseudobulkJackson2020Dataset as TfDeletionPseudobulkJackson2020Dataset,
 )
@@ -151,6 +152,8 @@ nadal_ribelles_datasets = ["NadalRibellesPerturbSeq2025Dataset"]
 
 kemmeren_datasets = ["MicroarrayKemmeren2014Dataset"]
 
+hu2007_datasets = ["MicroarrayScoreHu2007Dataset"]
+
 yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
@@ -203,6 +206,7 @@ __all__ = (
     + xue_datasets
     + nadal_ribelles_datasets
     + kemmeren_datasets
+    + hu2007_datasets
     + yeastphenome_datasets
     + bloom_datasets
     + peter2018_datasets

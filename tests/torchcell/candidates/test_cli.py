@@ -19,15 +19,18 @@ import pytest
 from tests.torchcell.candidates._builders import (
     COMMIT,
     admissible_verdict,
+    aggregation,
+    compendium_paper,
     evidence,
     fitness_record,
     sha,
+    source,
     verdict,
     write_assembly_set,
     write_mirror,
     write_store,
 )
-from torchcell.candidates import cli, gates, store
+from torchcell.candidates import cli, findings, gates, store
 from torchcell.candidates.verdict import GateResult
 from torchcell.datasets.ecoli import li2024
 from torchcell.sequence.genome.registry import ECOLI_K12_MG1655
@@ -469,3 +472,99 @@ def test_module_entry_point_exits_with_mains_code(
         runpy.run_module("torchcell.candidates.__main__", run_name="__main__")
     assert exited.value.code == 0
     assert json.loads(capsys.readouterr().out)["title"] == "CandidateVerdict"
+
+
+# --------------------------------------------------------------------------- #
+# --decomposition (plan decision 16)
+# --------------------------------------------------------------------------- #
+@pytest.fixture
+def aggregation_finding(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The fixture row read as an aggregation of four studies."""
+    finding = gates.SourceKindFinding(
+        row_name="Fixture 2020",
+        citation_key="fixtureKey2020",
+        source_kind="aggregation",
+        reason="a compendium",
+        evidence=(evidence(),),
+        aggregation=aggregation(4),
+    )
+    monkeypatch.setattr(
+        findings, "finding_for", lambda row: finding if row == "Fixture 2020" else None
+    )
+
+
+def write_decomposition(env: dict[str, Path], key: str = "fixtureKey2020") -> Path:
+    """An audit results file decomposing ``key`` into one loadable study and itself."""
+    record = gates.DecompositionRecord(
+        citation_key=key,
+        sources=(
+            source(),
+            compendium_paper("doi:10.1000/fixture", doi="10.1000/fixture"),
+        ),
+    )
+    path = env["tmp"] / "audit.json"
+    path.write_text(json.dumps({"decompositions": [record.model_dump(mode="json")]}))
+    return path
+
+
+def test_gate_folds_the_decomposition_into_the_verdict(
+    env: dict[str, Path], capsys: pytest.CaptureFixture[str], aggregation_finding: None
+) -> None:
+    """Counts come from the sources; the summary line and the stored record show them."""
+    path = write_decomposition(env)
+    code = run(
+        env,
+        "gate",
+        "--row",
+        "Fixture 2020",
+        "--data-root",
+        str(env["root"]),
+        "--decomposition",
+        str(path),
+        "--write",
+    )
+    assert code == 0
+    out = capsys.readouterr().out
+    assert (
+        "  aggregation: 2 source studies named by 'Publication'; values re_measured; "
+        "mirrored 2; net-new vs served 1\n"
+        "  decomposition: 2 studies; loadable from own release 1 (1 scriptable, 0 "
+        "walled); compendium-only 1; loaded as own dataset 0\n"
+    ) in out
+    stored = store.read_verdict("fixtureKey2020", env["store"])
+    assert stored.aggregation is not None
+    assert stored.aggregation.sources is not None
+    assert [s.source_label for s in stored.aggregation.sources] == [
+        "doi:10.1/a",
+        "doi:10.1000/fixture",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("key", "row", "message"),
+    [
+        ("otherKey", "Fixture 2020", "holds no decomposition for fixtureKey2020"),
+        ("fixtureKey2020", "Fixture 2020", "G1 settled on 'primary'"),
+    ],
+)
+def test_gate_decomposition_refusals(
+    env: dict[str, Path],
+    capsys: pytest.CaptureFixture[str],
+    key: str,
+    row: str,
+    message: str,
+) -> None:
+    """A file without the key, or a primary row, exits 2 with the reason."""
+    path = write_decomposition(env, key)
+    code = run(
+        env,
+        "gate",
+        "--row",
+        row,
+        "--data-root",
+        str(env["root"]),
+        "--decomposition",
+        str(path),
+    )
+    assert code == 2
+    assert message in capsys.readouterr().err

@@ -18,7 +18,10 @@ The five gates, in order:
   ``transcription`` or ``prediction``. A primary source passes; an aggregation passes when
   it carries an :class:`AggregationRecord` (owner decision 2026-10-10: aggregations are
   marked and counted, not refused); a transcription or a prediction fails, because no
-  stored value could be checked against a byte of the measuring paper.
+  stored value could be checked against a byte of the measuring paper. Owner decision
+  16 (2026-10-10, revising 15) adds the decomposition: ``AggregationRecord.sources``
+  names each source study, whether it has its own per-record release, and the L4
+  cross-check of that release against the compendium's copy (:class:`SourceDecomposition`).
 - **G2 sequence route.** Every host resolves through the genomes tier and is readable
   (:class:`G2Record`).
 - **G3 deposit inventory.** What the mirrors hold, off the bytes (:class:`InventoryRecord`).
@@ -120,11 +123,151 @@ class GateResult(_Frozen):
         return self
 
 
+# --------------------------------------------------------------------------- #
+# Aggregation decomposition (owner decision 2026-10-10, plan decision 16)
+# --------------------------------------------------------------------------- #
+#: original_study     a paper the compendium attributes samples to, other than itself
+#: compendium_paper   the compendium's own paper: its samples were first described there
+#: unattributed_release  samples another artifact releases with no study named for them
+#:                    (a Fitness Browser experiment with an empty ``pubId``, a BioProject
+#:                    deposited with no publication)
+SourceRole = Literal["original_study", "compendium_paper", "unattributed_release"]
+#: per_record_values  the source's own release carries the per-record values
+#: subset_values      it carries values for a subset (some genes, some contrasts)
+#: raw_reads_only     only per-sample sequencing reads: values must be recomputed, with
+#:                    the compendium's processing as the reference
+#: none               the compendium is the only artifact holding these samples
+OwnReleaseKind = Literal["per_record_values", "subset_values", "raw_reads_only", "none"]
+ReleaseAccess = Literal["scriptable", "walled"]
+CrossCheckStatistic = Literal["max_abs_diff", "min_pearson_r", "min_r_squared"]
+
+
+class SourceCrossCheck(_Frozen):
+    """L4: a source's own values against the compendium's copy of the same samples."""
+
+    statistic: CrossCheckStatistic
+    value: float
+    tolerance: float | None = Field(
+        description="the bound the statistic must meet; None when no stated "
+        "reprocessing implies one (the value is then a measured pin, not a test)"
+    )
+    tolerance_basis: str = Field(
+        min_length=1,
+        description="where the tolerance comes from (the compendium's stated "
+        "rounding or replicate filter), or why there is none",
+    )
+    n_samples: int = Field(ge=1)
+    n_values: int = Field(ge=1)
+    against: str = Field(
+        min_length=1, description="the own-release artifact compared, with its sha256"
+    )
+
+    @property
+    def passes(self) -> bool | None:
+        """Whether the statistic meets the tolerance; None without a tolerance."""
+        if self.tolerance is None:
+            return None
+        if self.statistic == "max_abs_diff":
+            return self.value <= self.tolerance
+        return self.value >= self.tolerance
+
+
+class SourceDecomposition(_Frozen):
+    """One source study of an aggregation and what its OWN release holds.
+
+    A served compendium is a processing reference and a sanity check, not the source of
+    record (owner, 2026-10-10): each original study is loaded from its own per-record
+    release when it has one, cross-checked against the compendium's copy, and the
+    compendium stays served only for samples whose only artifact is the compendium.
+    One entry per (source, served dataset class); a study feeding two classes of one
+    compendium has two entries with the same ``source_label``.
+    """
+
+    source_label: str = Field(
+        min_length=1,
+        description="the compendium's attribution value for the study "
+        "(doi:/pmid:/bioproject:/a Fitness Browser pubId, or the compendium's name)",
+    )
+    role: SourceRole
+    citation_key: str | None = Field(
+        description="the literature- or raw-mirror key holding the study's paper or "
+        "release; None when neither mirror holds it"
+    )
+    doi: str | None
+    dataset_class: str = Field(
+        min_length=1, description="the served class whose records these samples are"
+    )
+    n_samples_in_compendium: int = Field(ge=1)
+    n_samples_served: int = Field(
+        ge=0, description="of those, the samples the served loader keeps"
+    )
+    own_release: bool
+    own_release_kind: OwnReleaseKind
+    own_release_url: str | None
+    own_release_access: ReleaseAccess | None
+    mirrored: bool
+    loaded_as_own_dataset: bool = Field(
+        description="a registered dataset class serves these samples' values from "
+        "the study's own release"
+    )
+    own_dataset_class: str | None
+    cross_check: SourceCrossCheck | None
+    note: str | None = None
+
+    @model_validator(mode="after")
+    def _consistent(self) -> SourceDecomposition:
+        name = self.source_label
+        if self.role == "compendium_paper" and self.own_release:
+            raise ValueError(
+                f"{name}: the compendium's own paper has no release apart from it"
+            )
+        if self.own_release != (self.own_release_kind != "none"):
+            raise ValueError(f"{name}: own_release disagrees with own_release_kind")
+        has_url = self.own_release_url is not None
+        has_access = self.own_release_access is not None
+        if (has_url, has_access) != (self.own_release, self.own_release):
+            raise ValueError(
+                f"{name}: own_release_url and own_release_access are required for, "
+                "and only for, an own release"
+            )
+        if self.mirrored != (self.citation_key is not None):
+            raise ValueError(f"{name}: mirrored requires, and only with, citation_key")
+        if self.loaded_as_own_dataset != (self.own_dataset_class is not None):
+            raise ValueError(
+                f"{name}: loaded_as_own_dataset requires, and only with, "
+                "own_dataset_class"
+            )
+        if self.n_samples_served > self.n_samples_in_compendium:
+            raise ValueError(
+                f"{name}: {self.n_samples_served} served of "
+                f"{self.n_samples_in_compendium} compendium samples"
+            )
+        if self.cross_check is not None and not self.own_release:
+            raise ValueError(f"{name}: a cross-check needs an own release")
+        return self
+
+    @property
+    def loadable_from_own_release(self) -> bool:
+        """An own release exists, it is not the compendium's, and nothing loads it yet."""
+        return (
+            self.own_release
+            and self.role != "compendium_paper"
+            and not self.loaded_as_own_dataset
+        )
+
+    @property
+    def compendium_only(self) -> bool:
+        """The compendium is the only artifact holding these samples."""
+        return not self.own_release
+
+
 class AggregationRecord(_Frozen):
     """What an aggregation passes G1 with: how many studies, named where, copied or not.
 
     ``n_sources_mirrored`` and ``net_new_vs_served`` are ``None`` when they have not been
-    measured; ``None`` is never a stand-in for zero.
+    measured; ``None`` is never a stand-in for zero. ``sources`` is the per-source
+    decomposition of plan decision 16, ``None`` until it is measured; when present,
+    ``n_source_studies`` and ``n_sources_mirrored`` are its counts.
     """
 
     n_source_studies: int = Field(ge=1)
@@ -147,6 +290,11 @@ class AggregationRecord(_Frozen):
         "module; None = not measured",
     )
     evidence: tuple[SourcedValue, ...] = Field(min_length=1)
+    sources: tuple[SourceDecomposition, ...] | None = Field(
+        default=None,
+        description="one entry per (source study, served class), measured against each "
+        "study's own release; None = not decomposed yet",
+    )
 
     @model_validator(mode="after")
     def _counts_bounded(self) -> AggregationRecord:
@@ -156,7 +304,46 @@ class AggregationRecord(_Frozen):
                 raise ValueError(
                     f"{name}={value} exceeds n_source_studies={self.n_source_studies}"
                 )
+        if self.sources is not None:
+            _check_sources(self, self.sources)
         return self
+
+    def studies(self) -> dict[str, tuple[SourceDecomposition, ...]]:
+        """The decomposition grouped by source label (empty when not decomposed)."""
+        grouped: dict[str, list[SourceDecomposition]] = {}
+        for source in self.sources or ():
+            grouped.setdefault(source.source_label, []).append(source)
+        return {label: tuple(entries) for label, entries in grouped.items()}
+
+
+def _check_sources(
+    record: AggregationRecord, sources: tuple[SourceDecomposition, ...]
+) -> None:
+    """The decomposition is the count: one label per study, consistent across classes."""
+    if not sources:
+        raise ValueError("an empty decomposition: pass None until it is measured")
+    seen: set[tuple[str, str]] = set()
+    for s in sources:
+        pair = (s.source_label, s.dataset_class)
+        if pair in seen:
+            raise ValueError(f"{pair} appears twice in the decomposition")
+        seen.add(pair)
+    studies = record.studies()
+    for label, entries in studies.items():
+        identity = {(e.role, e.citation_key, e.doi) for e in entries}
+        if len(identity) != 1:
+            raise ValueError(f"{label}: entries disagree on role, citation key or DOI")
+    if record.n_source_studies != len(studies):
+        raise ValueError(
+            f"n_source_studies={record.n_source_studies} but the decomposition names "
+            f"{len(studies)} studies"
+        )
+    mirrored = sum(1 for entries in studies.values() if entries[0].mirrored)
+    if record.n_sources_mirrored is not None and record.n_sources_mirrored != mirrored:
+        raise ValueError(
+            f"n_sources_mirrored={record.n_sources_mirrored} but {mirrored} "
+            "decomposed studies are mirrored"
+        )
 
 
 class G2Host(_Frozen):

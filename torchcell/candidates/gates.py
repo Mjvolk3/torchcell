@@ -16,7 +16,9 @@ What each gate reads:
 - **G1** a :class:`SourceKindFinding` when one is recorded for the row
   (:mod:`torchcell.candidates.findings`), else the row's ``status``, ``klass`` and
   ``accession_confirmed``: a row marked as an aggregation without a finding is a borderline
-  row and stays ``unmeasured``, as does a row whose accession was never confirmed.
+  row and stays ``unmeasured``, as does a row whose accession was never confirmed. An
+  aggregation's per-source decomposition (decision 16) is measured by the experiment-036
+  audit and folded in by :func:`with_decomposition`; nothing here measures it.
 - **G2** host strains named in the row's text against :data:`HOSTS`, then the genomes tier
   through :func:`torchcell.sequence.genome.registry.resolve`. Readable means the set is in
   the schema's ``BacterialAssemblySet`` vocabulary or is one of the two yeast sets a loader
@@ -34,6 +36,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import io
+import json
 import logging
 import os.path as osp
 import pickle
@@ -67,6 +70,7 @@ from torchcell.candidates.verdict import (
     InventoryFile,
     InventoryRecord,
     SheetCount,
+    SourceDecomposition,
     SourceKind,
     ZoteroItem,
 )
@@ -236,6 +240,78 @@ class G1Run(_Frozen):
     result: GateResult
     source_kind: SourceKind | None
     aggregation: AggregationRecord | None
+
+
+# --------------------------------------------------------------------------- #
+# G1 decomposition (plan decision 16): an aggregation's sources, measured elsewhere
+# --------------------------------------------------------------------------- #
+class DecompositionRecord(_Frozen):
+    """One compendium's decomposition as the audit script writes it for the CLI."""
+
+    citation_key: str = Field(min_length=1)
+    sources: tuple[SourceDecomposition, ...] = Field(min_length=1)
+
+
+def read_decompositions(path: Path) -> dict[str, DecompositionRecord]:
+    """The ``decompositions`` list of an audit results file, keyed by citation key.
+
+    The file is ``aggregation_decomposition_audit.json`` of experiment 036; only its
+    ``decompositions`` key is a contract, the rest is the audit's own detail.
+    """
+    data = json.loads(path.read_text(encoding="utf-8"))
+    records = [DecompositionRecord.model_validate(r) for r in data["decompositions"]]
+    out: dict[str, DecompositionRecord] = {}
+    for record in records:
+        if record.citation_key in out:
+            raise ValueError(f"{path}: {record.citation_key} is decomposed twice")
+        out[record.citation_key] = record
+    return out
+
+
+def decompose(
+    aggregation: AggregationRecord,
+    sources: tuple[SourceDecomposition, ...],
+    index: tuple[ModuleKeys, ...],
+) -> AggregationRecord:
+    """The aggregation record with its decomposition and the counts it implies.
+
+    ``n_source_studies`` and ``n_sources_mirrored`` become the decomposition's counts;
+    ``net_new_vs_served`` keeps its documented meaning (studies whose DOI is not the own
+    DOI of any dataset module), now counted over the decomposed studies, so a study with
+    no DOI counts as net new.
+    """
+    module_dois = {d.lower() for m in index for d in m.own_dois}
+    studies: dict[str, SourceDecomposition] = {}
+    for source in sources:
+        studies.setdefault(source.source_label, source)
+    data = aggregation.model_dump()
+    data.update(
+        n_source_studies=len(studies),
+        n_sources_mirrored=sum(1 for s in studies.values() if s.mirrored),
+        net_new_vs_served=sum(
+            1
+            for s in studies.values()
+            if s.doi is None or s.doi.lower() not in module_dois
+        ),
+        sources=[s.model_dump() for s in sources],
+    )
+    return AggregationRecord.model_validate(data)
+
+
+def with_decomposition(
+    g1: G1Run, record: DecompositionRecord, index: tuple[ModuleKeys, ...]
+) -> G1Run:
+    """G1 with its aggregation replaced by the decomposed one; only an aggregation has one."""
+    if g1.aggregation is None:
+        raise ValueError(
+            f"{record.citation_key}: G1 settled on {g1.source_kind!r}, not an "
+            "aggregation, so there is nothing to decompose"
+        )
+    return G1Run(
+        result=g1.result,
+        source_kind=g1.source_kind,
+        aggregation=decompose(g1.aggregation, record.sources, index),
+    )
 
 
 # --------------------------------------------------------------------------- #

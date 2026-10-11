@@ -12,7 +12,16 @@ from torchcell.candidates.verdict import (
     AggregationRecord,
     CandidateVerdict,
     GateResult,
+    SourceCrossCheck,
+    SourceDecomposition,
     verdict_json_schema,
 )
 
-__all__ = ["AggregationRecord", "CandidateVerdict", "GateResult", "verdict_json_schema"]
+__all__ = [
+    "AggregationRecord",
+    "CandidateVerdict",
+    "GateResult",
+    "SourceCrossCheck",
+    "SourceDecomposition",
+    "verdict_json_schema",
+]

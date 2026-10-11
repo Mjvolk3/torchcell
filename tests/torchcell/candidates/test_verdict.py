@@ -10,8 +10,11 @@ from pydantic import ValidationError
 
 from tests.torchcell.candidates._builders import (
     aggregation,
+    compendium_paper,
+    cross_check,
     evidence,
     gate,
+    source,
     unmeasured_tail,
     verdict,
 )
@@ -25,6 +28,7 @@ from torchcell.candidates.verdict import (
     G4ValueRecord,
     GateResult,
     InventoryFile,
+    SourceCrossCheck,
     derive_outcome,
     verdict_json_schema,
 )
@@ -312,3 +316,127 @@ def test_record_properties() -> None:
     assert InventoryFile(**base, sha256_disk="a", zip_ok=True).intact is True
     assert InventoryFile(**base, sha256_disk="a", zip_ok=False).intact is False
     assert InventoryFile(**base, sha256_disk="b", zip_ok=None).intact is False
+
+
+# --------------------------------------------------------------------------- #
+# Aggregation decomposition (plan decision 16)
+# --------------------------------------------------------------------------- #
+@pytest.mark.parametrize(
+    ("value", "tolerance", "statistic", "passes"),
+    [
+        (0.0004, 0.0005, "max_abs_diff", True),
+        (0.0006, 0.0005, "max_abs_diff", False),
+        (0.97, 0.95, "min_pearson_r", True),
+        (0.94, 0.95, "min_r_squared", False),
+        (0.98, None, "min_pearson_r", None),
+    ],
+)
+def test_cross_check_passes_by_statistic_direction(
+    value: float, tolerance: float | None, statistic: str, passes: bool | None
+) -> None:
+    """A difference passes at or below its bound, a correlation at or above; no bound, no verdict."""
+    check = SourceCrossCheck(
+        statistic=statistic,  # type: ignore[arg-type]
+        value=value,
+        tolerance=tolerance,
+        tolerance_basis="b",
+        n_samples=1,
+        n_values=1,
+        against="a",
+    )
+    assert check.passes is passes
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        (
+            {"role": "compendium_paper"},
+            "the compendium's own paper has no release apart from it",
+        ),
+        ({"own_release_kind": "none"}, "own_release disagrees with own_release_kind"),
+        (
+            {"own_release_url": None},
+            "own_release_url and own_release_access are required for",
+        ),
+        ({"citation_key": None}, "mirrored requires, and only with, citation_key"),
+        (
+            {"loaded_as_own_dataset": True},
+            "loaded_as_own_dataset requires, and only with, own_dataset_class",
+        ),
+        ({"n_samples_served": 5}, "5 served of 4 compendium samples"),
+    ],
+)
+def test_source_decomposition_rules(overrides: dict[str, Any], message: str) -> None:
+    """Every field pair that must agree is checked."""
+    with pytest.raises(ValidationError, match=message):
+        source(**overrides)
+
+
+def test_cross_check_needs_an_own_release() -> None:
+    """Nothing to compare against when the compendium is the only artifact."""
+    with pytest.raises(ValidationError, match="a cross-check needs an own release"):
+        compendium_paper(cross_check=cross_check())
+
+
+def test_loadable_and_compendium_only() -> None:
+    """Loadable: own release, not the compendium's, not loaded; only-artifact otherwise."""
+    loadable = source()
+    walled = source("doi:10.1/w", own_release_access="walled")
+    loaded = source(
+        "doi:10.1/l",
+        loaded_as_own_dataset=True,
+        own_dataset_class="LoadedDataset",
+        cross_check=cross_check(),
+    )
+    paper = compendium_paper()
+    assert [s.loadable_from_own_release for s in (loadable, walled, loaded, paper)] == [
+        True,
+        True,
+        False,
+        False,
+    ]
+    assert [s.compendium_only for s in (loadable, walled, loaded, paper)] == [
+        False,
+        False,
+        False,
+        True,
+    ]
+
+
+def _decomposed(n: int, mirrored: int | None, *sources: Any) -> AggregationRecord:
+    return AggregationRecord(
+        n_source_studies=n,
+        attribution_field="Publication",
+        value_origin="re_measured",
+        n_sources_mirrored=mirrored,
+        net_new_vs_served=None,
+        evidence=(evidence(),),
+        sources=sources,
+    )
+
+
+def test_decomposition_is_the_study_count() -> None:
+    """One study in two served classes counts once; the mirrored count must match."""
+    a1 = source()
+    a2 = source(dataset_class="OtherDataset")
+    b = source("doi:10.1/b", citation_key=None, mirrored=False)
+    record = _decomposed(2, 1, a1, a2, b)
+    assert record.studies() == {"doi:10.1/a": (a1, a2), "doi:10.1/b": (b,)}
+    assert aggregation().studies() == {}
+    with pytest.raises(ValidationError, match="the decomposition names 2 studies"):
+        _decomposed(3, None, a1, b)
+    with pytest.raises(ValidationError, match="but 1 decomposed studies are mirrored"):
+        _decomposed(2, 2, a1, b)
+
+
+def test_decomposition_refuses_repeats_conflicts_and_empty() -> None:
+    """A (label, class) pair once; one label, one identity; an empty tuple is not None."""
+    with pytest.raises(ValidationError, match="appears twice in the decomposition"):
+        _decomposed(1, None, source(), source())
+    with pytest.raises(ValidationError, match="entries disagree on role"):
+        _decomposed(
+            1, None, source(), source(dataset_class="OtherDataset", doi="10.1/other")
+        )
+    with pytest.raises(ValidationError, match="an empty decomposition"):
+        _decomposed(1, None)

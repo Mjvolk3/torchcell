@@ -10,6 +10,7 @@ Run from the repo root (or a worktree with ``PYTHONPATH`` set to it)::
     python -m torchcell.candidates validate verdict.json       # agent output -> typed
     python -m torchcell.candidates gate --row "D2Cell 2026"    # G1, G2, G3, G4-key
     python -m torchcell.candidates gate --citation-key K --phenotype-class C --write
+    python -m torchcell.candidates gate --row R --decomposition audit.json --write
     python -m torchcell.candidates inventory --citation-key K  # G3 off the mirrors
     python -m torchcell.candidates overlap --citation-key K --released r.csv \
         --store $DATA_ROOT/data/torchcell/<slug> --sample-path ... --key-path ... \
@@ -45,6 +46,7 @@ from pydantic import ValidationError
 
 from torchcell.candidates import gates, ledger, store
 from torchcell.candidates.verdict import (
+    AggregationRecord,
     CandidateTable,
     CandidateVerdict,
     G4ValueRecord,
@@ -154,9 +156,24 @@ def render_verdict(verdict: CandidateVerdict) -> str:
             f"{a.attribution_field!r}; values {a.value_origin}; mirrored "
             f"{_count(a.n_sources_mirrored)}; net-new vs served {_count(a.net_new_vs_served)}"
         )
+        if a.sources is not None:
+            lines.append(f"  decomposition: {decomposition_summary(a)}")
     lines.append(f"  zotero item: {verdict.zotero_item}")
     lines.append(f"  outcome: {verdict.outcome}")
     return "\n".join(lines)
+
+
+def decomposition_summary(aggregation: AggregationRecord) -> str:
+    """Counts over the decomposed studies: own release, compendium-only, loaded."""
+    studies = [entries[0] for entries in aggregation.studies().values()]
+    loadable = [s for s in studies if s.loadable_from_own_release]
+    scriptable = sum(1 for s in loadable if s.own_release_access == "scriptable")
+    return (
+        f"{len(studies)} studies; loadable from own release {len(loadable)} "
+        f"({scriptable} scriptable, {len(loadable) - scriptable} walled); "
+        f"compendium-only {sum(1 for s in studies if s.compendium_only)}; "
+        f"loaded as own dataset {sum(1 for s in studies if s.loaded_as_own_dataset)}"
+    )
 
 
 def _count(value: int | None) -> str:
@@ -217,6 +234,17 @@ def cmd_gate(args: argparse.Namespace) -> int:
             f"{row.name}: finding is filed under {finding.citation_key}, not {key}"
         )
     g1 = gates.evaluate_g1(row, finding)
+    if args.decomposition is not None:
+        records = gates.read_decompositions(Path(args.decomposition))
+        if key not in records:
+            raise UsageError(
+                f"{args.decomposition} holds no decomposition for {key} "
+                f"(it has {sorted(records)})"
+            )
+        try:
+            g1 = gates.with_decomposition(g1, records[key], index)
+        except ValueError as error:
+            raise UsageError(str(error)) from error
     steps: dict[GateName, Callable[[], gates.GateRun]] = {
         "G2": lambda: gates.evaluate_g2(
             row, root, source_kind=g1.source_kind, verify=not args.no_verify
@@ -444,6 +472,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--proposed-class")
     p.add_argument(
         "--no-verify", action="store_true", help="skip genome sha256 re-hash"
+    )
+    p.add_argument(
+        "--decomposition",
+        help="aggregation_decomposition_audit.json: fold the measured per-source "
+        "decomposition into the aggregation record (plan decision 16)",
     )
     p.add_argument("--json", action="store_true")
     p.add_argument("--write", action="store_true")

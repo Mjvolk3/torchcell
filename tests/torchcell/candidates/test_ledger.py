@@ -7,8 +7,19 @@ from pathlib import Path
 
 import pytest
 
-from tests.torchcell.candidates._builders import COMMIT, admissible_verdict, verdict
+from tests.torchcell.candidates._builders import (
+    COMMIT,
+    admissible_verdict,
+    compendium_paper,
+    cross_check,
+    evidence,
+    gate,
+    source,
+    unmeasured_tail,
+    verdict,
+)
 from torchcell.candidates import ledger
+from torchcell.candidates.verdict import AggregationRecord, CandidateVerdict
 
 
 def test_heading() -> None:
@@ -65,3 +76,64 @@ def test_append_section_refuses_a_second_section_the_same_day(tmp_path: Path) ->
     note.write_text("x\n\n## S\n")
     with pytest.raises(ValueError, match="already has '## S'"):
         ledger.append_section(note, "## S\nbody\n")
+
+
+def _decomposed_verdict() -> CandidateVerdict:
+    """An aggregation pending at G2 with three decomposed studies."""
+    sources = (
+        source(cross_check=cross_check()),
+        source(
+            "doi:10.1/w", own_release_access="walled", citation_key=None, mirrored=False
+        ),
+        compendium_paper(n_samples_in_compendium=2, n_samples_served=0),
+    )
+    record = AggregationRecord(
+        n_source_studies=3,
+        attribution_field="Publication",
+        value_origin="re_measured",
+        n_sources_mirrored=2,
+        net_new_vs_served=None,
+        evidence=(evidence(),),
+        sources=sources,
+    )
+    return verdict(
+        citation_key="c",
+        row_name="Compendium",
+        gates=(gate("G1"), *unmeasured_tail(("G2", "G3", "G4", "G5"))),
+        source_kind="aggregation",
+        aggregation=record,
+    )
+
+
+def test_render_section_appends_the_decomposition_exactly() -> None:
+    """A decomposed aggregation adds the summary and per-source tables after the ledger."""
+    section = ledger.render_section([_decomposed_verdict()], "2026-10-10")
+    head, decomposition = section.split("\n\n### Aggregation decomposition\n\n")
+    assert head.endswith(f"| **pending** |  | 2026-10-10 | `{COMMIT[:9]}` |")
+    assert decomposition == (
+        f"{ledger.DECOMPOSITION_LEGEND}\n\n"
+        f"{ledger.DECOMPOSITION_SUMMARY_HEADER}\n"
+        "| c | 3 | 1 | 1 | 1 | 0 | 10 (6) |\n\n"
+        f"{ledger.DECOMPOSITION_HEADER}\n"
+        "| c | FixtureDataset | doi:10.1/a | original_study | 4 (3) | per_record_values | "
+        "scriptable | yes | no | max_abs_diff 0.0004 (pass) |\n"
+        "| c | FixtureDataset | doi:10.1/w | original_study | 4 (3) | per_record_values | "
+        "walled | no | no | · |\n"
+        "| c | FixtureDataset | doi:10.1/c | compendium_paper | 2 (0) | none | · | yes | "
+        "no | · |\n"
+    )
+
+
+def test_render_source_row_names_a_loaded_class_and_an_unbounded_pin() -> None:
+    """A loaded study shows its class; a check with no tolerance reads as a pin."""
+    row = ledger.render_source_row(
+        "c",
+        source(
+            loaded_as_own_dataset=True,
+            own_dataset_class="OwnDataset",
+            cross_check=cross_check(0.98, None),
+        ),
+    )
+    assert row.endswith("| yes | OwnDataset | max_abs_diff 0.98 (pin) |")
+    failing = ledger.render_source_row("c", source(cross_check=cross_check(0.01)))
+    assert failing.endswith("| max_abs_diff 0.01 (FAIL) |")

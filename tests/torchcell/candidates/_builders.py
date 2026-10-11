@@ -28,6 +28,8 @@ from torchcell.candidates.verdict import (
     G5Record,
     GateResult,
     InventoryRecord,
+    SourceCrossCheck,
+    SourceDecomposition,
 )
 from torchcell.literature.manifest import (
     ArtifactRecord,
@@ -72,6 +74,61 @@ def aggregation(n: int = 3) -> AggregationRecord:
         net_new_vs_served=None,
         evidence=(evidence(),),
     )
+
+
+def cross_check(
+    value: float = 0.0004, tolerance: float | None = 0.0005
+) -> SourceCrossCheck:
+    """A max-abs-diff check of one sample against a browser snapshot."""
+    return SourceCrossCheck(
+        statistic="max_abs_diff",
+        value=value,
+        tolerance=tolerance,
+        tolerance_basis="three-decimal rounding",
+        n_samples=1,
+        n_values=10,
+        against="feba.db (sha256 x)",
+    )
+
+
+def source(label: str = "doi:10.1/a", **overrides: Any) -> SourceDecomposition:
+    """An original study with a scriptable per-record release, mirrored, not loaded."""
+    fields: dict[str, Any] = {
+        "source_label": label,
+        "role": "original_study",
+        "citation_key": "aPaper2020",
+        "doi": "10.1/a",
+        "dataset_class": "FixtureDataset",
+        "n_samples_in_compendium": 4,
+        "n_samples_served": 3,
+        "own_release": True,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://example.org/a",
+        "own_release_access": "scriptable",
+        "mirrored": True,
+        "loaded_as_own_dataset": False,
+        "own_dataset_class": None,
+        "cross_check": None,
+    }
+    fields.update(overrides)
+    return SourceDecomposition(**fields)
+
+
+def compendium_paper(
+    label: str = "doi:10.1/c", **overrides: Any
+) -> SourceDecomposition:
+    """The compendium's own paper: no separate release."""
+    fields: dict[str, Any] = {
+        "role": "compendium_paper",
+        "citation_key": "cPaper2024",
+        "doi": "10.1/c",
+        "own_release": False,
+        "own_release_kind": "none",
+        "own_release_url": None,
+        "own_release_access": None,
+    }
+    fields.update(overrides)
+    return source(label, **fields)
 
 
 def gate(name: str, outcome: str = "pass", **extra: Any) -> GateResult:

@@ -1,0 +1,2406 @@
+{
+  "tag": "before",
+  "table_sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
+  "curated_labels": 178,
+  "stores_holding_a_curated_label": 43,
+  "stale_stores": [
+    "CarbonSourceTong2020Dataset",
+    "CrispriArrayYunus2026Dataset",
+    "CrispriChemgenChoe2025Dataset",
+    "CrispriDifferentialProteomeYunus2026Dataset",
+    "CrispriGuideFitnessWang2018Dataset",
+    "CrispriKnockdownYunus2026Dataset",
+    "CrispriPanelProteomeYunus2026Dataset",
+    "DoublingTimeCaglar2017Dataset",
+    "EnvChemgenGirgis2009Dataset",
+    "EnvChemgenHoepfner2014Dataset",
+    "EnvChemgenShiver2016Dataset",
+    "EnvChemgenWang2024Dataset",
+    "GeneEssentialityGoodall2018Dataset",
+    "GeneEssentialityPrice2018EcoliDataset",
+    "GeneInteractionBabu2014Dataset",
+    "GeneInteractionButland2008Dataset",
+    "GrowthRateLamoureux2023Dataset",
+    "GrowthRateS23Schmidt2016Dataset",
+    "InhibitorBioscreenVolk2021Dataset",
+    "IsopentenolTiterFoo2014Dataset",
+    "IsoprenolSelectionMenasalvas2025Dataset",
+    "IsoprenolTiterDeSiqueira2025Dataset",
+    "IsoprenolTiterYunus2026Dataset",
+    "LactamGrowthRateThompson2019Dataset",
+    "MetabolomeSchastnaya2021Dataset",
+    "MrnaFractionBalakrishnan2022Dataset",
+    "PhageRbTnseqMutalik2020Dataset",
+    "ProteinFoldChangeCaglar2017Dataset",
+    "ProteomeBanerjee2025Dataset",
+    "ProteomeCaglar2017Dataset",
+    "ProteomeSchmidt2016Dataset",
+    "ProteomeSrmSet1Schmidt2016Dataset",
+    "ProteomeSrmSet2Schmidt2016Dataset",
+    "RbTnseqBorchert2023Dataset",
+    "RbTnseqBorchert2024Dataset",
+    "RbTnseqPrice2018EcoliDataset",
+    "RnaseqCaglar2017Dataset",
+    "RnaseqLamoureux2023Dataset",
+    "RnaseqPublicK12Lamoureux2023Dataset",
+    "ValerolactamTiterThompson2019Dataset"
+  ],
+  "unreadable_stores": {},
+  "mapped_datasets_without_a_store": [],
+  "stores": {
+    "EnvChemgenHoepfner2014Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hoepfner2014",
+      "stale": true,
+      "labels": {
+        "D-Sorbitol": {
+          "references": 4,
+          "with_inchikey": 4,
+          "table_name_now": "sorbitol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FBPFZTCFMRRESA-JGWLITMVSA-N",
+          "store_differs_from_table": true
+        },
+        "Potassium Chloride": {
+          "references": 4,
+          "with_inchikey": 4,
+          "table_name_now": "potassium chloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WCUXLLCKKVVCTQ-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GeneInteractionBabu2014Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014",
+      "stale": true,
+      "labels": {
+        "chloramphenicol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        },
+        "kanamycin": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "MrnaFractionBalakrishnan2022Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/mrna_fraction_balakrishnan2022",
+      "stale": true,
+      "labels": {
+        "chloramphenicol": {
+          "references": 5,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GeneInteractionButland2008Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_butland2008",
+      "stale": true,
+      "labels": {
+        "chloramphenicol": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        },
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "RnaseqCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_caglar2017",
+      "stale": true,
+      "labels": {
+        "gluconate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteomeCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_caglar2017",
+      "stale": true,
+      "labels": {
+        "gluconate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "DoublingTimeCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/doubling_time_caglar2017",
+      "stale": true,
+      "labels": {
+        "gluconate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteinFoldChangeCaglar2017Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/protein_fold_change_caglar2017",
+      "stale": true,
+      "labels": {
+        "gluconate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriChemgenChoe2025Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_chemgen_choe2025",
+      "stale": true,
+      "labels": {
+        "CCCP": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "CCCP",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UGTJLJZQQFGTJD-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "chloramphenicol": {
+          "references": 13,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        },
+        "phleomycin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "phleomycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QRBLKGHRWFGINE-UGWAGOLRSA-N",
+          "store_differs_from_table": true
+        },
+        "polymyxin B": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "polymyxin B",
+          "table_status_now": "UNRESOLVED_PUBLIC",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "puromycin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "puromycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RXWNCPJZOCPEPQ-NVWDDTSBSA-N",
+          "store_differs_from_table": true
+        },
+        "pyocyanin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "pyocyanin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "YNCMLFHHXWETLD-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "rifampicin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "rifampicin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JQXXHWHPUNPDRT-WLSIYKJHSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GrowthRateCampos2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_growth_rate_campos2018",
+      "stale": false,
+      "labels": {
+        "casamino acids": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        }
+      }
+    },
+    "MorphologyCampos2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_morphology_campos2018",
+      "stale": false,
+      "labels": {
+        "casamino acids": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        }
+      }
+    },
+    "IsopentenolTiterFoo2014Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isopentenol_titer_foo2014",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "EnvChemgenGirgis2009Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_girgis2009",
+      "stale": true,
+      "labels": {
+        "amikacin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "amikacin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LKCWBDHBTVXHDL-RMDFUYIESA-N",
+          "store_differs_from_table": true
+        },
+        "casamino acids": {
+          "references": 34,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "cefoxitin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "cefoxitin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WZOZEZRFJCJXNZ-ZBFHGGJFSA-N",
+          "store_differs_from_table": true
+        },
+        "doxycycline hyclate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "doxycycline hyclate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHHHTIKWXBRCLT-VDBOFHIQSA-N",
+          "store_differs_from_table": true
+        },
+        "fusidic acid": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "fusidic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "IECPWNUMDGFDKC-MZJAQBGESA-N",
+          "store_differs_from_table": true
+        },
+        "gentamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "gentamycin",
+          "table_status_now": "RESOLVED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "nitrofurantoin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "nitrofurantoin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NXFQHRVNIOXGAQ-YCRREMRBSA-N",
+          "store_differs_from_table": true
+        },
+        "piperacillin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "piperacillin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "IVBHGBMCVLDMKU-GXNBUGAJSA-N",
+          "store_differs_from_table": true
+        },
+        "streptomycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "streptomycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UCSJYZPVAKXKNQ-HZYVHMACSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GeneEssentialityGoodall2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_goodall2018",
+      "stale": true,
+      "labels": {
+        "chloramphenicol": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "RnaseqLamoureux2023Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_lamoureux2023",
+      "stale": true,
+      "labels": {
+        "D-ribose": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "D-ribose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SRBFZHDQGSBBOR-SOOFDHNKSA-N",
+          "store_differs_from_table": true
+        },
+        "DPD": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "DPD",
+          "table_status_now": "UNRESOLVED_PUBLIC",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Kanamycin": {
+          "references": 12,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        },
+        "N-acetylglucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "N-acetylglucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MBLBDJOUHNCFQT-LXGUWJNJSA-N",
+          "store_differs_from_table": true
+        },
+        "Na-citrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "sodium citrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HRXKRNGNAMMEHJ-UHFFFAOYSA-K",
+          "store_differs_from_table": true
+        },
+        "PQ": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "PQ",
+          "table_status_now": "UNRESOLVED_PUBLIC",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "arginine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-arginine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ODKSFYDXXFIFQN-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "ceftriaxone": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "ceftriaxone",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VAAUVRVFOQPIGI-SPQHTLEESA-N",
+          "store_differs_from_table": true
+        },
+        "cytidine": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "cytidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHDGCWIWMRVCDJ-XVFCMESISA-N",
+          "store_differs_from_table": true
+        },
+        "glucarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DSLZVSRJTYRBFB-LLEIAEIESA-L",
+          "store_differs_from_table": true
+        },
+        "gluconate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        },
+        "glutamate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-glutamic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WHUUTDBJXJRKMK-VKHMYHEASA-N",
+          "store_differs_from_table": true
+        },
+        "iron(II) chloride": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "iron(II) chloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NMCUIPGRVMDVDB-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "lactic acid": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "lactic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JVTAAEKCZFNVCJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "leucine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-leucine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ROHFNLRQFUQHCH-YFKPBYRVSA-N",
+          "store_differs_from_table": true
+        },
+        "meropenem": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "meropenem",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DMJNNHOOLUXYBV-PQTSNVLCSA-N",
+          "store_differs_from_table": true
+        },
+        "methionine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-methionine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FFEARJCKVFRZRR-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "phenylalanine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-phenylalanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "COLNVLDHVKWLRT-QMMMGPOBSA-N",
+          "store_differs_from_table": true
+        },
+        "potassium nitrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "potassium nitrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FGIUAXJPYTZDNR-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "pyruvate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LCTONWCANYUPML-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "threonine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-threonine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AYFVYJQAPQTCCC-GBXIJSLDSA-N",
+          "store_differs_from_table": true
+        },
+        "trimethoprim-sulfamethoxazole": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "trimethoprim-sulfamethoxazole",
+          "table_status_now": "RESOLVED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "tyrosine": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "L-tyrosine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "OUYCCCASQSFEME-QMMMGPOBSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GrowthRateLamoureux2023Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_lamoureux2023",
+      "stale": true,
+      "labels": {
+        "D-ribose": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "D-ribose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SRBFZHDQGSBBOR-SOOFDHNKSA-N",
+          "store_differs_from_table": true
+        },
+        "Kanamycin": {
+          "references": 7,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        },
+        "N-acetylglucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "N-acetylglucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MBLBDJOUHNCFQT-LXGUWJNJSA-N",
+          "store_differs_from_table": true
+        },
+        "arginine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-arginine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ODKSFYDXXFIFQN-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "cytidine": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "cytidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHDGCWIWMRVCDJ-XVFCMESISA-N",
+          "store_differs_from_table": true
+        },
+        "glucarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DSLZVSRJTYRBFB-LLEIAEIESA-L",
+          "store_differs_from_table": true
+        },
+        "gluconate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        },
+        "iron(II) chloride": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "iron(II) chloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NMCUIPGRVMDVDB-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "leucine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-leucine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ROHFNLRQFUQHCH-YFKPBYRVSA-N",
+          "store_differs_from_table": true
+        },
+        "methionine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-methionine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FFEARJCKVFRZRR-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "phenylalanine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "L-phenylalanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "COLNVLDHVKWLRT-QMMMGPOBSA-N",
+          "store_differs_from_table": true
+        },
+        "potassium nitrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "potassium nitrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FGIUAXJPYTZDNR-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "pyruvate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LCTONWCANYUPML-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "tyrosine": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "L-tyrosine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "OUYCCCASQSFEME-QMMMGPOBSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "RnaseqPublicK12Lamoureux2023Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_public_k12_lamoureux2023",
+      "stale": true,
+      "labels": {
+        "2,2'-Dipyridyl": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "2,2'-bipyridine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ROFVEXUMMXZLPA-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Benzalkonium Chloride": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Benzalkonium Chloride",
+          "table_status_now": "RESOLVED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Carolacton": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Carolacton",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WCKOGWVWLFJJJX-ZCXGUVEESA-N",
+          "store_differs_from_table": true
+        },
+        "Chlorhexidine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Chlorhexidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "GHXZTYHSJHQHIJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Chlorophene": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Chlorophene",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NCKMMSIFQUPKCK-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "ET2DA": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "ET2DA",
+          "table_status_now": "UNRESOLVED_PUBLIC",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Glutaraldehyde": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Glutaraldehyde",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SXRSQZLOMIGNAQ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Isopropanol": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "isopropanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KFZMGEQAYNKOFK-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Peracetic Acid": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Peracetic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KFSLWBXXFJQRDL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Povidone-Iodine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Povidone-Iodine",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Sodium Hypochlorite": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium Hypochlorite",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SUKJFIGYRHOWBL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "alpha-methylglucoside": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "alpha-methylglucoside",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HOVAGTYPODGVJG-ZFYZTMLRSA-N",
+          "store_differs_from_table": true
+        },
+        "casamino acids": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "cytidine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "cytidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHDGCWIWMRVCDJ-XVFCMESISA-N",
+          "store_differs_from_table": true
+        },
+        "doxycycline": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "4-(dimethylamino)-1,5,10,11,12a-pentahydroxy-6-methyl-3,12-dioxo-3,4,4a,5,5a,6,12,12a-octahydrotetracene-2-carboximidic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SGKRLCUYIXIAHR-AKNGSSGZSA-N",
+          "store_differs_from_table": true
+        },
+        "rifampicin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "rifampicin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JQXXHWHPUNPDRT-WLSIYKJHSA-N",
+          "store_differs_from_table": true
+        },
+        "thiamin": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "thiamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JZRWCGZRTZMZEH-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "PhageRbTnseqMutalik2020Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/phage_rbtnseq_mutalik2020",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 22,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrisprPineneToleranceNiu2019Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispr_pinene_tolerance_niu2019",
+      "stale": false,
+      "labels": {
+        "pinene": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "pinene",
+          "table_status_now": "UNRESOLVED_PUBLIC",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        }
+      }
+    },
+    "RbTnseqPrice2018EcoliDataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_price2018_ecoli",
+      "stale": true,
+      "labels": {
+        "1-ethyl-3-methylimidazolium acetate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "1-ethyl-3-methylimidazolium acetate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XIYUIMLQTKODPS-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "2-Furfuraldehyde": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "furfural",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HYBBIBNJHNGZAN-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "5-Hydroxymethylfurfural": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "5-(hydroxymethyl)furfural",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NOEGNKMFWQHSLB-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Aluminum chloride hydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Aluminum chloride hydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "CAYKLJBSARHIDI-UHFFFAOYSA-K",
+          "store_differs_from_table": true
+        },
+        "Bacitracin": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Bacitracin",
+          "table_status_now": "RESOLVED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Benzalkonium Chloride": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Benzalkonium Chloride",
+          "table_status_now": "RESOLVED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Carbenicillin disodium salt": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Carbenicillin disodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RTYJTGSCYUUYAL-YCAHSCEMSA-L",
+          "store_differs_from_table": true
+        },
+        "Cephalothin sodium salt": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Cephalothin sodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VUFGUVLLDPOSBC-XRZFDKQNSA-M",
+          "store_differs_from_table": true
+        },
+        "Chloramphenicol": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "chloramphenicol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WIIZWVCIJKGZOK-RKDXNWHRSA-N",
+          "store_differs_from_table": true
+        },
+        "Cholin acetate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Cholin acetate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QLKGUVGAXDXFFW-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Cobalt chloride hexahydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "cobalt(II) chloride hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "GFHNAMRJFCEERV-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Cytidine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "cytidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHDGCWIWMRVCDJ-XVFCMESISA-N",
+          "store_differs_from_table": true
+        },
+        "D-Alanine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-alanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QNAYBMKLOCPYGJ-UWTATZPHSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Cycloserine": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "cycloserine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DYDCUQKUCUHJBH-UWTATZPHSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Fructose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "fructose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LKDRXBCSQODPBY-VRPWFDPXSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Galactose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "galactose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WQZGKKKJIJFFOK-SVZMEOIVSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Galacturonic Acid monohydrate": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "D-Galacturonic Acid monohydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JKCNUXXWWMOQSF-RMTXHFLUSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Gluconic Acid sodium salt": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Gluconic Acid sodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UPMFZISCCZSDND-JJKGCWMISA-M",
+          "store_differs_from_table": true
+        },
+        "D-Glucosamine Hydrochloride": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Glucosamine Hydrochloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "CBOJBBMQJBVCMW-BTVCFUMJSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Glucose-6-Phosphate sodium salt": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Glucose-6-Phosphate sodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "OBHLNVXMRZXIII-BTVCFUMJSA-M",
+          "store_differs_from_table": true
+        },
+        "D-Glucuronic Acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Glucuronic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMOLEFTQBMNLQ-AQKNRBDQSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Maltose monohydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Maltose monohydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HBDJFVFTHLOSDW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Mannose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "mannose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WQZGKKKJIJFFOK-QTVWNMPRSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Ribose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-ribose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SRBFZHDQGSBBOR-SOOFDHNKSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Sorbitol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "sorbitol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FBPFZTCFMRRESA-JGWLITMVSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Trehalose dihydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Trehalose dihydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DPVHGFAJLZWDOC-PVXXTIHASA-N",
+          "store_differs_from_table": true
+        },
+        "D-Xylose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "xylose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SRBFZHDQGSBBOR-IOVATXLUSA-N",
+          "store_differs_from_table": true
+        },
+        "Doxycycline hyclate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "doxycycline hyclate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UHHHTIKWXBRCLT-VDBOFHIQSA-N",
+          "store_differs_from_table": true
+        },
+        "Fusidic acid sodium salt": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Fusidic acid sodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HJHVQCXHVMGZNC-JCJNLNMISA-M",
+          "store_differs_from_table": true
+        },
+        "Gly-DL-Asp": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Gly-DL-Asp",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SCCPDJAQCXWPTF-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Gly-Glu": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Gly-Glu",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "IEFJWDNGDZAYNZ-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "Glycolic Acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "glycolic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMRFAOFKBGASW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "L-Fucose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-Fucose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SHZGCJCMOBCMKK-DHVFOXMCSA-N",
+          "store_differs_from_table": true
+        },
+        "L-Malic acid disodium salt monohydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-Malic acid disodium salt monohydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JHLALIGYBAKQQI-SQGDDOFFSA-L",
+          "store_differs_from_table": true
+        },
+        "MreB Perturbing Compound A22": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "MreB Perturbing Compound A22",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VBJNMXMOMSWRDV-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "N-Acetyl-D-Glucosamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "N-acetylglucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MBLBDJOUHNCFQT-LXGUWJNJSA-N",
+          "store_differs_from_table": true
+        },
+        "Nalidixic acid sodium salt": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Nalidixic acid sodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ROKRAUFZFDQWLE-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Nickel (II) chloride hexahydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Nickel (II) chloride hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LAIZPRYFQUWUBN-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Phosphomycin disodium salt": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Phosphomycin disodium salt",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QZIQJIKUVJMTDG-JSTPYPERSA-L",
+          "store_differs_from_table": true
+        },
+        "Potassium acetate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Potassium acetate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SCVFZCLFOSHCOH-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Putrescine Dihydrochloride": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Putrescine Dihydrochloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XXWCODXIQWIHQN-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Sodium Chlorite": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium Chlorite",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UKLNMMHNWFDKNT-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium D,L-Lactate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium D,L-Lactate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NGSFWBMYFKHRBD-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium D-Lactate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium D-Lactate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NGSFWBMYFKHRBD-HSHFZTNMSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium nitrite": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium nitrite",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LPXPTNMVRIOKMN-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium pyruvate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "sodium pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DAEPDZWVDSPTHF-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium succinate dibasic hexahydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Spectinomycin dihydrochloride pentahydrate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Spectinomycin dihydrochloride pentahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DCHJOVNPPSBWHK-UXXUFHFZSA-N",
+          "store_differs_from_table": true
+        },
+        "Tetracycline hydrochloride": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Tetracycline hydrochloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "YCIHPQHVWDULOY-FMZCEJRJSA-N",
+          "store_differs_from_table": true
+        },
+        "Thallium(I) acetate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "Thallium(I) acetate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HQOJMTATBXYHNR-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "a-Ketoglutaric acid disodium salt hydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "a-Ketoglutaric acid disodium salt hydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSEUEULIJORPOC-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "casamino acids": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "copper (II) chloride dihydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "copper(II) chloride dihydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MPTQRFCYZCXJFQ-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "water": {
+          "references": 89,
+          "with_inchikey": 0,
+          "table_name_now": "water",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XLYOFNOQVPJJNP-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GeneEssentialityPrice2018EcoliDataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_price2018_ecoli",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "MetabolomeSchastnaya2021Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_schastnaya2021",
+      "stale": true,
+      "labels": {
+        "D-fructose": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "fructose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LKDRXBCSQODPBY-VRPWFDPXSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "EnvChemgenShiver2016Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_shiver2016",
+      "stale": true,
+      "labels": {
+        "casamino acids": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "isopropanol": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "isopropanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KFZMGEQAYNKOFK-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "pyocyanin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "pyocyanin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "YNCMLFHHXWETLD-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "rifampicin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "rifampicin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JQXXHWHPUNPDRT-WLSIYKJHSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteomeSchmidt2016Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_schmidt2016",
+      "stale": true,
+      "labels": {
+        "disodium fumarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium fumarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSJMDZAOKORVFC-SEPHDYHBSA-L",
+          "store_differs_from_table": true
+        },
+        "disodium succinate hexahydrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "glucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSWZFWKMSRAUBD-IVMDWMLBSA-N",
+          "store_differs_from_table": true
+        },
+        "sodium pyruvate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "sodium pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DAEPDZWVDSPTHF-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteomeSrmSet1Schmidt2016Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set1_schmidt2016",
+      "stale": true,
+      "labels": {
+        "disodium fumarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium fumarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSJMDZAOKORVFC-SEPHDYHBSA-L",
+          "store_differs_from_table": true
+        },
+        "disodium succinate hexahydrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "glucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSWZFWKMSRAUBD-IVMDWMLBSA-N",
+          "store_differs_from_table": true
+        },
+        "sodium pyruvate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "sodium pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DAEPDZWVDSPTHF-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteomeSrmSet2Schmidt2016Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set2_schmidt2016",
+      "stale": true,
+      "labels": {
+        "disodium fumarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium fumarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSJMDZAOKORVFC-SEPHDYHBSA-L",
+          "store_differs_from_table": true
+        },
+        "disodium succinate hexahydrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "glucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSWZFWKMSRAUBD-IVMDWMLBSA-N",
+          "store_differs_from_table": true
+        },
+        "sodium pyruvate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "sodium pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DAEPDZWVDSPTHF-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "GrowthRateS23Schmidt2016Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_s23_schmidt2016",
+      "stale": true,
+      "labels": {
+        "disodium fumarate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium fumarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSJMDZAOKORVFC-SEPHDYHBSA-L",
+          "store_differs_from_table": true
+        },
+        "disodium succinate hexahydrate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "glucosamine": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "glucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSWZFWKMSRAUBD-IVMDWMLBSA-N",
+          "store_differs_from_table": true
+        },
+        "sodium pyruvate": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "sodium pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DAEPDZWVDSPTHF-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CarbonSourceTong2020Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_carbon_source_tong2020",
+      "stale": true,
+      "labels": {
+        "D-alanine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-alanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QNAYBMKLOCPYGJ-UWTATZPHSA-N",
+          "store_differs_from_table": true
+        },
+        "Fucose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-Fucose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SHZGCJCMOBCMKK-DHVFOXMCSA-N",
+          "store_differs_from_table": true
+        },
+        "Fumarate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Fumarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VZCYOOQTPOCHFL-OWOJBTEDSA-L",
+          "store_differs_from_table": true
+        },
+        "Galacturonate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Galacturonate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMOLEFTQBMNLQ-BKBMJHBISA-N",
+          "store_differs_from_table": true
+        },
+        "Gluconate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "gluconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RGHNJXZEOKUKBD-SQOUGZDYSA-M",
+          "store_differs_from_table": true
+        },
+        "Glucosamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "glucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSWZFWKMSRAUBD-IVMDWMLBSA-N",
+          "store_differs_from_table": true
+        },
+        "Glucuronate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Glucuronic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMOLEFTQBMNLQ-AQKNRBDQSA-N",
+          "store_differs_from_table": true
+        },
+        "Malate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Malate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "BJEPYKJPYRNKOW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Mannitol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Mannitol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FBPFZTCFMRRESA-KVTDHHQDSA-N",
+          "store_differs_from_table": true
+        },
+        "N-acetyl Glucosamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "N-acetylglucosamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MBLBDJOUHNCFQT-LXGUWJNJSA-N",
+          "store_differs_from_table": true
+        },
+        "Oxaloacetate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Oxaloacetate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KHPXUQMNIQBQEV-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Pyruvate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "pyruvate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LCTONWCANYUPML-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Ribose": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-ribose",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SRBFZHDQGSBBOR-SOOFDHNKSA-N",
+          "store_differs_from_table": true
+        },
+        "Saccharate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Saccharate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DSLZVSRJTYRBFB-LLEIAEIESA-N",
+          "store_differs_from_table": true
+        },
+        "Succinate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Succinate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KDYFGRWQOYBRFD-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Thymidine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Thymidine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "IQFYYKKMVGJFEH-XLPZGREQSA-N",
+          "store_differs_from_table": true
+        },
+        "\u03b1-ketoglutarate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "\u03b1-ketoglutarate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KPGXRSRHYNQIFN-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriGuideFitnessWang2018Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_guide_fitness_wang2018",
+      "stale": true,
+      "labels": {
+        "casamino acids": {
+          "references": 1,
+          "with_inchikey": 0,
+          "table_name_now": "casamino acids",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "kanamycin": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "EnvChemgenWang2024Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_wang2024",
+      "stale": true,
+      "labels": {
+        "rifampicin": {
+          "references": 12,
+          "with_inchikey": 0,
+          "table_name_now": "rifampicin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JQXXHWHPUNPDRT-WLSIYKJHSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ProteomeBanerjee2025Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/proteome_banerjee2025",
+      "stale": true,
+      "labels": {
+        "D-alanine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-alanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QNAYBMKLOCPYGJ-UWTATZPHSA-N",
+          "store_differs_from_table": true
+        },
+        "L-malate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-malate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "BJEPYKJPYRNKOW-REOHCLBHSA-L",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "RbTnseqBorchert2023Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2023",
+      "stale": true,
+      "labels": {
+        "Glycolic acid": {
+          "references": 5,
+          "with_inchikey": 0,
+          "table_name_now": "glycolic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMRFAOFKBGASW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Lactic acid": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "lactic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JVTAAEKCZFNVCJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Protocatechuic Acid": {
+          "references": 5,
+          "with_inchikey": 0,
+          "table_name_now": "Protocatechuic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "YQUVCSBJEUQKSH-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Sodium sulfate": {
+          "references": 5,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium sulfate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "PMZURENOXWZQFD-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "RbTnseqBorchert2024Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2024",
+      "stale": true,
+      "labels": {
+        "1,2-Propanediol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1,2-Propanediol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DNIAPMSPPWPWGF-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "1,3-Butandiol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1,3-Butandiol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "PUPZLCDOIYMWBV-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "1,4-Butanediol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1,4-Butanediol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WERYXYBDKMZEQL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "1,5-Pentanediol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1,5-Pentanediol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ALQSHHUCVQOPAS-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "1,6-Hexanediamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1,6-Hexanediamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NAQMVNRVTILPCV-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "1-Pentanol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "1-Pentanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AMQJEAYHLZJPGS-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "2-Piperidinone": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "2-Piperidinone",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XUWHAWMETYGRKB-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "2-methyl-1-butanol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "2-methyl-1-butanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QPRQEDXDYOZYLA-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "3-aminobutyric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "3-aminobutyric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "OQEBBZSWEGYTPG-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "3-methyl-1-butanol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "3-methyl-1-butanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "PHTQWCKDNZKARW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "3-methyl-2-oxobutanoate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "3-methyl-2-oxobutanoate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QHKABHOOEWYVLI-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "3-methyl-3-butenol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "isoprenol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "CPJRRXSHAYUTGL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "4-Aminobutyric acid": {
+          "references": 5,
+          "with_inchikey": 0,
+          "table_name_now": "gamma-aminobutyric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "BTCSSZJGUNDROE-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "4-Guanidinobutyric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "4-Guanidinobutyric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "TUHVEAJXIMEOSA-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "4-acetoxybenzoic acid": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "4-acetoxybenzoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "GDBUZIKSJGRBJP-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "4-acetoxyvanillic acid": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "4-acetoxyvanillic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WTPDKEAYVAXNRO-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Adenine hydrochloride hydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Adenine hydrochloride hydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MYRDTAUFFBYTHA-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Beta-alanine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Beta-alanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "UCMIRNVEIXFBKS-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Butanol": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Butanol",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LRHPLDYGYMQRHN-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Butyl stearate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Butyl stearate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ULBTUVJTXULMLP-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Butyrolactam": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Butyrolactam",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HNJBEVLQSNELDL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Cadaverine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Cadaverine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VHRGRCVQAFMJIZ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Caprolactam": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Caprolactam",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JBKVHLHDHHXQEQ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Carnitine Hydrochloride": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Carnitine Hydrochloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JXXCENBLGFBQJM-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Choline chloride": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Choline chloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SGMZJAMFUVOLNK-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Cytosine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Cytosine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "OPTASPLRGRRNAP-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Alanine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-alanine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QNAYBMKLOCPYGJ-UWTATZPHSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Galacturonic Acid monohydrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "D-Galacturonic Acid monohydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JKCNUXXWWMOQSF-RMTXHFLUSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Glucuronic Acid": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "D-Glucuronic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMOLEFTQBMNLQ-AQKNRBDQSA-N",
+          "store_differs_from_table": true
+        },
+        "D-Lysine": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "D-Lysine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "KDXKERNSBIXSRK-RXMQYKEDSA-N",
+          "store_differs_from_table": true
+        },
+        "DL-2-Aminobutyric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "DL-2-Aminobutyric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QWCKQJZIFLGMSD-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "DL-3-Aminoisobutyric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "DL-3-Aminoisobutyric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "QCHPKSFMDHPSNR-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Decanoic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Decanoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "GHVNFZFCNZKVNT-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Ethanolamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Ethanolamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HZAXFHJVJLSVMW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Glycolic acid": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "glycolic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AEMRFAOFKBGASW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Heptanoic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Heptanoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MNWFXJYAOYHMED-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Hexanoic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Hexanoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FUZZWVXGSFPDMH-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Hydantoin": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Hydantoin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WJRBRSLFGCUECM-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "L-Aspartate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-aspartic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "CKLJMWTZIZZHCS-REOHCLBHSA-N",
+          "store_differs_from_table": true
+        },
+        "L-Glutamic acid monopotassium salt monohydrate": {
+          "references": 8,
+          "with_inchikey": 0,
+          "table_name_now": "L-Glutamic acid monopotassium salt monohydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XIBUKSQTWSKJMQ-QTNFYWBSSA-M",
+          "store_differs_from_table": true
+        },
+        "L-Ornithine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-Ornithine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "AHLPHDHHMVZTML-BYPYZUCNSA-N",
+          "store_differs_from_table": true
+        },
+        "L-Pipecolic Acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-Pipecolic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "HXEACLLIILLPRG-YFKPBYRVSA-N",
+          "store_differs_from_table": true
+        },
+        "L-pyroglutamic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "L-pyroglutamic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ODHCTXKNWHHXJC-VKHMYHEASA-N",
+          "store_differs_from_table": true
+        },
+        "Lactic acid": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "lactic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JVTAAEKCZFNVCJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Lauric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Lauric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "POULHZVOKOAJMA-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Nicotinic Acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "niacin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "PVNIIMVLHYAWGP-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Nonanoic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Nonanoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "FBUKVWPVBMHYJY-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Phenylacetic acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Phenylacetic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "WLJVXDMOQOGPHL-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Propandiamine": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Propandiamine",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XFNJVJPLKCPIBV-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Protocatechuic Acid": {
+          "references": 7,
+          "with_inchikey": 0,
+          "table_name_now": "Protocatechuic Acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "YQUVCSBJEUQKSH-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Putrescine Dihydrochloride": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Putrescine Dihydrochloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "XXWCODXIQWIHQN-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Sodium nitrate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium nitrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "VWDWKYIASSYTQR-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "Sodium nitrite": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium nitrite",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "LPXPTNMVRIOKMN-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium propionate": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium propionate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JXKPEJDQGNYQSM-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "Sodium succinate dibasic hexahydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "disodium succinate hexahydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "ZBTUYCUNQBRXOR-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Sodium sulfate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "Sodium sulfate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "PMZURENOXWZQFD-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "Tween 20": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Tween 20",
+          "table_status_now": "UNDEFINED_MIXTURE",
+          "table_inchikey_now": null,
+          "store_differs_from_table": false
+        },
+        "Valeric acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "Valeric acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NQPDZGIKBAWPEJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "a-Ketoglutaric acid disodium salt hydrate": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "a-Ketoglutaric acid disodium salt hydrate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "MSEUEULIJORPOC-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        },
+        "beta-hydroxyisobutanoate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "beta-hydroxyisobutanoate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "DBXBTMSZEOQQDU-UHFFFAOYSA-M",
+          "store_differs_from_table": true
+        },
+        "beta-ketoadipate": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "beta-ketoadipate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "RTGHRDFWYQHVFW-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        },
+        "cis,cis-muconate": {
+          "references": 8,
+          "with_inchikey": 0,
+          "table_name_now": "cis,cis-muconate",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "TXXHDPDFNKHHGW-CCAGOZQPSA-L",
+          "store_differs_from_table": true
+        },
+        "e-Amino-N-Caproic Acid": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "6-aminohexanoic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SLXKOJJOQWFEFD-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "IsoprenolTiterDeSiqueira2025Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_desiqueira2025",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "ValerolactamTiterThompson2019Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/valerolactam_titer_thompson2019",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 4,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "LactamGrowthRateThompson2019Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/lactam_growth_rate_thompson2019",
+      "stale": true,
+      "labels": {
+        "iron(II) chloride": {
+          "references": 6,
+          "with_inchikey": 0,
+          "table_name_now": "iron(II) chloride",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "NMCUIPGRVMDVDB-UHFFFAOYSA-L",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "IsoprenolSelectionMenasalvas2025Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_selection_menasalvas2025",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 3,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriArrayYunus2026Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_array_yunus2026",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 12,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriDifferentialProteomeYunus2026Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_differential_proteome_yunus2026",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriKnockdownYunus2026Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_knockdown_yunus2026",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 101,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "IsoprenolTiterYunus2026Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_yunus2026",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "CrispriPanelProteomeYunus2026Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/crispri_panel_proteome_yunus2026",
+      "stale": true,
+      "labels": {
+        "kanamycin": {
+          "references": 2,
+          "with_inchikey": 0,
+          "table_name_now": "kanamycin",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "SBUJHOSQTJFQJX-NOAMYHISSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    },
+    "InhibitorBioscreenVolk2021Dataset": {
+      "root": "/scratch/projects/torchcell-scratch/data/torchcell/inhibitor_bioscreen_volk2021",
+      "stale": true,
+      "labels": {
+        "lactic acid": {
+          "references": 41,
+          "with_inchikey": 0,
+          "table_name_now": "lactic acid",
+          "table_status_now": "RESOLVED",
+          "table_inchikey_now": "JVTAAEKCZFNVCJ-UHFFFAOYSA-N",
+          "store_differs_from_table": true
+        }
+      }
+    }
+  }
+}

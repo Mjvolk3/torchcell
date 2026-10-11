@@ -25,7 +25,9 @@ CAS, the stores the label appears in (from the committed gap inventory), and the
 records carry after the merge. A label whose name changes is listed, because that is a
 node rename in every record carrying it (#726, the IPTG finding); none of these labels
 resolved before, so the rename is only from the release spelling to the row's canonical
-spelling.
+spelling. That list covers the spellings the committed gap inventory saw in the bacterial
+stores; the measurement over EVERY mapped store, yeast included, is
+``compound_curator_726_860_store_reach.py``.
 
 Writes ``experiments/036-dataset-fixes-before-kg-build/results/compound_curator_726_860.csv``
 (one row per input label) and ``.../compound_curator_726_860.json`` (summary, counts,

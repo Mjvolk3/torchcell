@@ -1,0 +1,51 @@
+INFO -- This is BioCypher v0.5.43.
+INFO -- Logging into `biocypher-log/biocypher-20261011-003620.log`.
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+  STALE EnvChemgenHoepfner2014Dataset: 2 curated labels
+  STALE GeneInteractionBabu2014Dataset: 2 curated labels
+  STALE MrnaFractionBalakrishnan2022Dataset: 1 curated labels
+  STALE GeneInteractionButland2008Dataset: 2 curated labels
+  STALE RnaseqCaglar2017Dataset: 1 curated labels
+  STALE ProteomeCaglar2017Dataset: 1 curated labels
+  STALE DoublingTimeCaglar2017Dataset: 1 curated labels
+  STALE ProteinFoldChangeCaglar2017Dataset: 1 curated labels
+  STALE CrispriChemgenChoe2025Dataset: 7 curated labels
+  fresh GrowthRateCampos2018Dataset: 1 curated labels
+  fresh MorphologyCampos2018Dataset: 1 curated labels
+  STALE IsopentenolTiterFoo2014Dataset: 1 curated labels
+  STALE EnvChemgenGirgis2009Dataset: 9 curated labels
+  STALE GeneEssentialityGoodall2018Dataset: 1 curated labels
+  STALE RnaseqLamoureux2023Dataset: 23 curated labels
+  STALE GrowthRateLamoureux2023Dataset: 14 curated labels
+  STALE RnaseqPublicK12Lamoureux2023Dataset: 17 curated labels
+  STALE PhageRbTnseqMutalik2020Dataset: 1 curated labels
+  fresh CrisprPineneToleranceNiu2019Dataset: 1 curated labels
+  STALE RbTnseqPrice2018EcoliDataset: 54 curated labels
+  STALE GeneEssentialityPrice2018EcoliDataset: 1 curated labels
+  STALE MetabolomeSchastnaya2021Dataset: 1 curated labels
+  STALE EnvChemgenShiver2016Dataset: 4 curated labels
+  STALE ProteomeSchmidt2016Dataset: 4 curated labels
+  STALE ProteomeSrmSet1Schmidt2016Dataset: 4 curated labels
+  STALE ProteomeSrmSet2Schmidt2016Dataset: 4 curated labels
+  STALE GrowthRateS23Schmidt2016Dataset: 4 curated labels
+  STALE CarbonSourceTong2020Dataset: 17 curated labels
+  STALE CrispriGuideFitnessWang2018Dataset: 2 curated labels
+  STALE EnvChemgenWang2024Dataset: 1 curated labels
+  STALE ProteomeBanerjee2025Dataset: 2 curated labels
+  STALE RbTnseqBorchert2023Dataset: 4 curated labels
+  STALE RbTnseqBorchert2024Dataset: 63 curated labels
+  STALE IsoprenolTiterDeSiqueira2025Dataset: 1 curated labels
+  STALE ValerolactamTiterThompson2019Dataset: 1 curated labels
+  STALE LactamGrowthRateThompson2019Dataset: 1 curated labels
+  STALE IsoprenolSelectionMenasalvas2025Dataset: 1 curated labels
+  STALE CrispriArrayYunus2026Dataset: 1 curated labels
+  STALE CrispriDifferentialProteomeYunus2026Dataset: 1 curated labels
+  STALE CrispriKnockdownYunus2026Dataset: 1 curated labels
+  STALE IsoprenolTiterYunus2026Dataset: 1 curated labels
+  STALE CrispriPanelProteomeYunus2026Dataset: 1 curated labels
+  STALE InhibitorBioscreenVolk2021Dataset: 1 curated labels
+stale stores (40): ['CarbonSourceTong2020Dataset', 'CrispriArrayYunus2026Dataset', 'CrispriChemgenChoe2025Dataset', 'CrispriDifferentialProteomeYunus2026Dataset', 'CrispriGuideFitnessWang2018Dataset', 'CrispriKnockdownYunus2026Dataset', 'CrispriPanelProteomeYunus2026Dataset', 'DoublingTimeCaglar2017Dataset', 'EnvChemgenGirgis2009Dataset', 'EnvChemgenHoepfner2014Dataset', 'EnvChemgenShiver2016Dataset', 'EnvChemgenWang2024Dataset', 'GeneEssentialityGoodall2018Dataset', 'GeneEssentialityPrice2018EcoliDataset', 'GeneInteractionBabu2014Dataset', 'GeneInteractionButland2008Dataset', 'GrowthRateLamoureux2023Dataset', 'GrowthRateS23Schmidt2016Dataset', 'InhibitorBioscreenVolk2021Dataset', 'IsopentenolTiterFoo2014Dataset', 'IsoprenolSelectionMenasalvas2025Dataset', 'IsoprenolTiterDeSiqueira2025Dataset', 'IsoprenolTiterYunus2026Dataset', 'LactamGrowthRateThompson2019Dataset', 'MetabolomeSchastnaya2021Dataset', 'MrnaFractionBalakrishnan2022Dataset', 'PhageRbTnseqMutalik2020Dataset', 'ProteinFoldChangeCaglar2017Dataset', 'ProteomeBanerjee2025Dataset', 'ProteomeCaglar2017Dataset', 'ProteomeSchmidt2016Dataset', 'ProteomeSrmSet1Schmidt2016Dataset', 'ProteomeSrmSet2Schmidt2016Dataset', 'RbTnseqBorchert2023Dataset', 'RbTnseqBorchert2024Dataset', 'RbTnseqPrice2018EcoliDataset', 'RnaseqCaglar2017Dataset', 'RnaseqLamoureux2023Dataset', 'RnaseqPublicK12Lamoureux2023Dataset', 'ValerolactamTiterThompson2019Dataset']
+unreadable: []
+wrote experiments/036-dataset-fixes-before-kg-build/results/compound_curator_726_860_store_reach_before.json
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

@@ -537,3 +537,35 @@ Branch `fix/sameith-reference-replicates`, not yet served.
 ## 2026.10.06 - Demo main moved to torchcell/scratch/sameith2015_demo.py
 
 The `main` of `torchcell/datasets/scerevisiae/sameith2015.py` built or loaded both Sameith2015 datasets (double mutants and the BY4742 single mutants) and printed a summary. It moved verbatim, with its `if __name__ == "__main__":` block, to `torchcell/scratch/sameith2015_demo.py`; run it from the repo root with `PYTHONPATH=$PWD python torchcell/scratch/sameith2015_demo.py` (it needs `DATA_ROOT` in `.env` with the SGD genome and GO data). The module's `from dotenv import load_dotenv`, used only by `main`, was dropped. Executing the module directly now exits with a pointer to the demo. Reason: demo code is not library code (test campaign Phase 23).
+
+## 2026.10.10 - Refusing resolution of title tokens (issue #886)
+
+Both classes' `_convert_to_systematic` tried the gene table's `gene` column, then its single-valued `Alias` column, then the first `alias_to_systematic` candidate. They now call the module-level `convert_title_token`, which returns a systematic-shaped token upper-cased, returns None for a token with no candidate ORF (a title word, not a gene: `MATA` and `REP` in GSE42536), and sends everything else through `resolve_gene_name_strict` ([[torchcell.datasets.gene_alias_resolution]]), so an ambiguous token without a pin raises `GeneNameRefused`. Every (token, ORF) resolution is recorded, and `_check_title_resolutions` runs `check_ambiguous_aliases` over them after the title loop, before any record is written.
+
+Measured over every title of GSE42536 on 2026.10.10 (84 distinct tokens): two are ambiguous in R64-4-1, `SUT2` (YMR080C, YPR009W) in 4 arrays and `GAT1` (YFL021W, YKR067W) in 6, all double-deletion titles. `AMBIGUOUS_ALIAS_PINS` pins them to their R64 standard-name owners (rule `sgd_standard_name`, quotes `ID=YPR009W;Name=YPR009W;gene=SUT2;` and `ID=YFL021W;Name=YFL021W;gene=GAT1;`). The paper's own list agrees: Additional file 1, sheet `List of 215 GSTFs`, rows `Ypr009W | Sut2` and `Yfl021W | Gat1`. The SI is not sha256-pinned by this loader (it is on the `UNPINNED_LOADERS` debt list of `test_raw_pins.py`), so the pins cite the hash-pinned GFF rather than the SI.
+
+The old code reached the same ORFs through the standard-name column, so 0 of the 84 tokens resolve differently. Builds of both classes from this branch into scratch roots, from the same raw files, match the dev stores record for record (82 of 82 single, 72 of 72 double, 0 fields changed); neither dev store was rebuilt, and `--list-stale --include-private` names neither.
+
+L0-L4 on the dev stores (`run_expression`; reports under `data/torchcell/{sm,dm}_microarray_sameith2015/preprocess/verification_report.json`):
+
+| Store | Level | Rule | Result | Message |
+|---|---|---|---|---|
+| sm | L0 | `structural` | PASS | 82 records validated |
+| sm | L1 | `count` | PASS | observed 82, expected 82 |
+| sm | L1 | `gene_completeness` | PASS | all 82 records measure the full 6169-gene universe |
+| sm | L2 | `value_fidelity` | PASS | 505858 values checked |
+| sm | L2 | `se_nonnegative` | PASS | 505858 values checked |
+| sm | L2 | `n_replicates_ge_1` | PASS | 505858 values checked |
+| sm | L3 | `reference_log2_zero` | PASS | reference log2(sample/ref) == 0 for all 505858 values |
+| sm | L3 | `deletion_downregulates` | PASS | median deleted-gene log2=-2.217; frac_neg=0.975 over 81 deleted genes (1 absent from the platform map) |
+| sm | L4 | `gene_universe_vs_dm_microarray_sameith2015` | PASS | 6169 overlapping entities agree within 0.0 |
+| dm | L0 | `structural` | PASS | 72 records validated |
+| dm | L1 | `count` | PASS | observed 72, expected 72 |
+| dm | L1 | `gene_completeness` | PASS | all 72 records measure the full 6169-gene universe |
+| dm | L2 | `value_fidelity` | PASS | 444168 values checked |
+| dm | L2 | `se_nonnegative` | PASS | 444168 values checked |
+| dm | L2 | `n_replicates_ge_1` | PASS | 444168 values checked |
+| dm | L3 | `reference_log2_zero` | PASS | reference log2(sample/ref) == 0 for all 444168 values |
+| dm | L3 | `deletion_downregulates` | PASS | median deleted-gene log2=-1.985; frac_neg=0.979 over 143 deleted genes (1 absent from the platform map) |
+
+The double-mutant runner declares no L4 rule; the single-mutant store's L4 compares the two Sameith universes. The `deletion_downregulates` messages are shortened (the report adds "(<0 => correct orientation)").

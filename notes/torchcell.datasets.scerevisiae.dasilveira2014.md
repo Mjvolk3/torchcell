@@ -61,3 +61,24 @@ Held as open gaps rather than values:
 - MES resolves to no InChIKey in the compound table, so the resolver attaches its `deferred_pending_source_review` gap.
 
 Measured by `experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py` (output `experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv`): scratch build 127 records (same as the dev store); all 254 environments carry `DA_SILVEIRA_YPD` (7 components, 5 open gaps), against the stub on all 254 in the dev store.
+
+## 2026.10.10 - Refusing gene-name resolution (issue #886)
+
+`_resolve_systematic` took the first `alias_to_systematic` candidate for an ORF cell that was not a live gene. It now goes through `resolve_gene_name_strict` ([[torchcell.datasets.gene_alias_resolution]]): a live ORF stays itself, a name with one candidate ORF resolves to it, an ambiguous name without a pin raises `GeneNameRefused`, and a cell R64 does not know at all is still counted unresolved and dropped, as before.
+
+Two of the stored Standard Names are ambiguous in R64-4-1: `YPK1` (YJL093C, YKL126W, YNL307C) and `SLT2` (YAL014C, YHR030C). Their ORFs came from the `Systematic Name` column, not from the alias table, so first-match never touched them; the sweep (PR #890) saw them because it read `perturbed_gene_name`. `AMBIGUOUS_ALIAS_PINS` now records them under the rule `paper_gene_list`, quoting the table's own rows (`YKL126W | YPK1`, `YHR030C | SLT2`), and `process()` runs `check_ambiguous_aliases` over every stored (Standard Name, ORF) pair against the name -> ORF pairing read from the Quant sheet before the store opens. Both are also the R64 standard-name owners.
+
+Measured on 2026.10.10: all 127 mutant `Systematic Name` cells are live R64 ORFs, so the strict resolver returns the same ORF for each (0 of 127 changed). A build of this branch into a scratch root from the same raw files matches the dev store record for record (127 of 127, 0 fields changed), so the dev store was not rebuilt; `--list-stale --include-private` does not name it.
+
+L0-L4 on the dev store (`run_metabolite`, narrowed to this store; report `data/torchcell/metabolite_dasilveira2014/preprocess/verification_report.json`):
+
+| Level | Rule | Result | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 127 records validated |
+| L1 | `count` | PASS | observed 127, expected 127 |
+| L1 | `genotype_uniqueness` | PASS | 127 unique strains (deletion sets), one record each |
+| L2 | `value_fidelity` | PASS | 17638 values checked |
+| L2 | `se_nonnegative` | PASS | 0 values checked |
+| L3 | `reference_finite` | PASS | reference level finite + key-subset for all 17638 values |
+| L3 | `measurement_type_consistent` | PASS | single measurement_type: 'lipidomics_ms_relative_abundance_au' |
+| L4 | `gene_containment_scmd_ohya2005` | PASS | 0.992 of scmd_ohya2005's 127 deletion genes are in Ohya (>= 0.9) |

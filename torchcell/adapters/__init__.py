@@ -227,6 +227,7 @@ from .mutalik2020_adapter import (
 from .nadal_ribelles2025_adapter import (
     NadalRibellesPerturbSeq2025Adapter as NadalRibellesPerturbSeq2025Adapter,
 )
+from .nguessan2025_adapter import Nguessan2025Adapter as Nguessan2025Adapter
 from .niu2019_adapter import (
     CrisprPineneToleranceNiu2019Adapter as CrisprPineneToleranceNiu2019Adapter,
 )
@@ -409,7 +410,7 @@ proteome_metabolome_adapters = [
     "AminoAcidCooper2010Adapter",
 ]
 
-segregant_adapters = ["Bloom2019Adapter", "Boocock2025Adapter"]
+segregant_adapters = ["Bloom2019Adapter", "Boocock2025Adapter", "Nguessan2025Adapter"]
 
 natural_isolate_adapters = ["IsolateGrowthPeter2018Adapter"]
 

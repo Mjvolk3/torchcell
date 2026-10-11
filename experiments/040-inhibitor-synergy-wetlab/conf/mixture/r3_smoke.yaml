@@ -1,0 +1,73 @@
+# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3_smoke.yaml
+#
+# GPU smoke of every code path round 3 adds to train_mixture.py, at the smallest size
+# that still writes a complete scores table: the Wildenhain source, the auxiliary
+# hold-out by compound and by dose with its per-source score and held-out loss, the
+# attribute-token source encoding, the per-source head, the gene-cold split, and the
+# checkpoint. The numbers are noise by construction (four steps); what the smoke checks
+# is that no arm crashes and every new column is populated.
+#
+#   sbatch --job-name=040-r3-smoke --mem=24G --export=ALL,SWEEP=conf/mixture/r3_smoke.yaml,PARALLEL=1 \
+#     experiments/040-inhibitor-synergy-wetlab/scripts/gh_train_mixture.slurm
+- name: r3smoke_four_sources_attributes_head
+  sources: [vanacloig, hoepfner_hop, hillenmeyer_het, wildenhain]
+  aux_holdout: compound
+  source_encoding: attributes
+  source_head: true
+  host_train: anchors+ex21
+  dose: "off"
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  select: last
+  fit_on: pool
+- name: r3smoke_vanhop_film_dose_holdout
+  sources: [vanacloig, hoepfner_hop]
+  aux_holdout: dose
+  host_train: anchors+ex21
+  dose: film
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  select: last
+  fit_on: pool
+- name: r3smoke_gene_split_van
+  sources: [vanacloig]
+  split: gene
+  host_train: anchors+ex21
+  dose: "off"
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  select: last
+  fit_on: pool
+- name: r3smoke_gene_split_vanhop
+  sources: [vanacloig, hoepfner_hop]
+  split: gene
+  aux_holdout: compound
+  host_train: anchors+ex21
+  dose: "off"
+  env_chunk: 8
+  gene_batch: 32
+  host_batch: 8
+  cond_batch: 8
+  steps: 4
+  eval_every: 2
+  seeds: [0]
+  folds: [0]
+  select: last
+  fit_on: pool

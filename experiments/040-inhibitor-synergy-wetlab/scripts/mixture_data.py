@@ -90,6 +90,7 @@ load_dotenv()
 VANACLOIG = "EnvChemgenVanacloig2022Dataset"
 HOEPFNER = "EnvChemgenHoepfner2014Dataset"
 HILLENMEYER = "HetHillenmeyer2008Dataset"
+WILDENHAIN = "EnvChemgenWildenhain2015Dataset"
 
 #: Build 002 of the 033 pooled store, as experiment 038 reads it. On Delta the launcher
 #: points TC040_CELL_TABLE at the rsynced copy.
@@ -168,7 +169,20 @@ ABBREVIATION = {
 #: Molar-convertible served units and the factor to molar.
 MOLAR_FACTOR = {"M": 1.0, "mM": 1e-3, "uM": 1e-6, "nM": 1e-9}
 
-GeneSourceName = Literal["vanacloig", "hoepfner_hop", "hillenmeyer_het"]
+GeneSourceName = Literal["vanacloig", "hoepfner_hop", "hillenmeyer_het", "wildenhain"]
+#: The typed attributes a source carries, for the attribute-token encoding of the source
+#: (``train_mixture.MixtureConfig.source_encoding``). Values are shared across sources, so
+#: two sources that agree on an attribute share that token: Hoepfner HOP and Vanacloig
+#: share ``deletion`` and ``barcode`` but not the medium, the ploidy or the label. The
+#: values are the cell table's own (033 ``store_axes.csv``), collapsed to one per source:
+#: Hillenmeyer's three media are pooled behind YPD, which carries 99 percent of its cells.
+SOURCE_ATTRIBUTES: tuple[str, ...] = (
+    "ploidy",
+    "perturbation",
+    "medium",
+    "label",
+    "assay",
+)
 
 
 # ---- fingerprints ---------------------------------------------------------- #
@@ -386,6 +400,8 @@ class SourceSpec(BaseModel):
     #: averages the cell's served measurements, which for Hoepfner and Hillenmeyer are
     #: the same (compound, concentration, gene) read in different screens or scanners
     label_policy: Literal["single", "mean"]
+    #: one value per ``SOURCE_ATTRIBUTES`` entry
+    attributes: dict[str, str]
 
 
 SPECS: dict[str, SourceSpec] = {
@@ -402,6 +418,13 @@ SPECS: dict[str, SourceSpec] = {
         extra_genes=HOST_GENES,
         dose_from="dev_store",
         label_policy="single",
+        attributes={
+            "ploidy": "haploid",
+            "perturbation": "deletion",
+            "medium": "SYNH3_anaerobic",
+            "label": "log2_ratio",
+            "assay": "barcode",
+        },
     ),
     "hoepfner_hop": SourceSpec(
         name="hoepfner_hop",
@@ -415,6 +438,13 @@ SPECS: dict[str, SourceSpec] = {
         extra_genes=(),
         dose_from="table",
         label_policy="mean",
+        attributes={
+            "ploidy": "diploid",
+            "perturbation": "deletion",
+            "medium": "YPD",
+            "label": "sensitivity_score",
+            "assay": "barcode",
+        },
     ),
     "hillenmeyer_het": SourceSpec(
         name="hillenmeyer_het",
@@ -428,8 +458,41 @@ SPECS: dict[str, SourceSpec] = {
         extra_genes=(),
         dose_from="table",
         label_policy="mean",
+        attributes={
+            "ploidy": "diploid",
+            "perturbation": "heterozygous",
+            "medium": "YPD",
+            "label": "log2_ratio",
+            "assay": "barcode",
+        },
+    ),
+    "wildenhain": SourceSpec(
+        name="wildenhain",
+        dataset=WILDENHAIN,
+        # the 22,407 conditional-allele cells are left out: the deletion operator is the
+        # only genotype operator the encoder has
+        perturbation_type="barcoded_kanmx_deletion",
+        sign=1.0,
+        orientation=(
+            "released PubChem AID 1159580 z_score of growth inhibition, 0 = the strain's "
+            "own plate-median growth, scale = the screen's IQR (wildenhain2015.py); "
+            "'negative = growth inhibition', kept as served"
+        ),
+        extra_genes=(),
+        dose_from="table",
+        # 17 of 428,189 cells fold two measurements (033 label_policy.csv)
+        label_policy="mean",
+        attributes={
+            "ploidy": "haploid",
+            "perturbation": "deletion",
+            "medium": "SC",
+            "label": "z_score",
+            "assay": "liquid_od",
+        },
     ),
 }
+for _spec in SPECS.values():
+    assert tuple(_spec.attributes) == SOURCE_ATTRIBUTES, _spec.name
 
 
 class GeneSource(BaseModel):
@@ -597,6 +660,118 @@ def make_folds(n_compounds: int, n_folds: int, n_val: int, seed: int) -> list[Fo
     tested = sorted(i for f in folds for i in f.test)
     assert tested == list(range(n_compounds)), "a compound is tested twice or never"
     return folds
+
+
+def make_gene_folds(n_genes: int, n_folds: int, seed: int) -> list[Fold]:
+    """Gene-cold folds: every Vanacloig gene is tested exactly once, no validation genes.
+
+    The indices are rows of the Vanacloig matrix. Every compound is fitted; what is held
+    out is the strain, so the model has never seen any response of that deletion and has
+    to predict its whole profile from the gene's place in the cell graph. The seed is
+    offset from the compound folds' so the two partitions are not the same draw.
+    """
+    rng = np.random.default_rng([seed, 101])
+    groups = np.array_split(rng.permutation(n_genes), n_folds)
+    folds = []
+    for k, test in enumerate(groups):
+        rest = np.concatenate([g for j, g in enumerate(groups) if j != k])
+        folds.append(
+            Fold(
+                fold=k,
+                train=sorted(int(i) for i in rest),
+                val=[],
+                test=sorted(int(i) for i in test),
+            )
+        )
+    tested = sorted(i for f in folds for i in f.test)
+    assert tested == list(range(n_genes)), "a gene is tested twice or never"
+    return folds
+
+
+def holdout_conditions(
+    source: GeneSource,
+    conditions: list[int],
+    mode: Literal["none", "compound", "dose"],
+    frac: float,
+    seed: int,
+) -> tuple[list[int], list[int]]:
+    """(fitted, held out) conditions of an auxiliary source.
+
+    ``compound`` holds out a fraction of the source's COMPOUNDS with every dose they were
+    served at, so the held-out score is compound-cold like the Vanacloig one. ``dose``
+    holds out ONE served dose of every compound served at two or more, chosen at random,
+    so the held-out score asks whether the model interpolates along a compound's own dose
+    series (Hoepfner has 83 such compounds, Hillenmeyer HET 66). The draw is seeded by the
+    fold seed and the source, not by the Vanacloig fold, so every fold of a run holds out
+    the same auxiliary conditions and their scores are comparable across folds.
+    """
+    if mode == "none" or not conditions:
+        return list(conditions), []
+    rng = np.random.default_rng([seed, source.index, 7])
+    by_compound: dict[int, list[int]] = {}
+    for j in conditions:
+        by_compound.setdefault(int(source.compound_row[j]), []).append(j)
+    held: set[int] = set()
+    if mode == "compound":
+        rows = sorted(by_compound)
+        n = max(1, int(round(frac * len(rows))))
+        for row in rng.choice(rows, size=n, replace=False):
+            held.update(by_compound[int(row)])
+    else:
+        for row in sorted(by_compound):
+            doses = by_compound[row]
+            if len(doses) >= 2:
+                held.add(int(rng.choice(doses)))
+    assert held and len(held) < len(conditions), (
+        f"{source.spec.name}: hold-out {mode} left {len(held)} of {len(conditions)}"
+    )
+    return [j for j in conditions if j not in held], sorted(held)
+
+
+def score_genes(
+    source: GeneSource, prediction: NDArray[np.float64], test_genes: list[int]
+) -> pd.DataFrame:
+    """One row per compound and target for the gene-cold split.
+
+    ``raw``: Spearman over the held-out genes of the predicted against the measured
+    profile of the compound. ``gene_centered``: both sides minus their own per-gene mean
+    over every compound, which removes the held-out gene's general sickness and asks for
+    the compound-specific part of a profile the model has never seen a row of. The gene
+    mean on the measured side is computed from the held-out values themselves, so it is
+    a description of the target and never training information.
+    """
+    rows_idx = np.array(test_genes)
+    measured = source.y[rows_idx]
+    pred = prediction[rows_idx]
+    m_center = measured - np.nanmean(measured, axis=1, keepdims=True)
+    p_center = pred - np.nanmean(pred, axis=1, keepdims=True)
+    rows = []
+    for j in range(len(source.compounds)):
+        for target, obs, est in (
+            ("raw", measured[:, j], pred[:, j]),
+            ("gene_centered", m_center[:, j], p_center[:, j]),
+        ):
+            ok = np.isfinite(obs) & np.isfinite(est)
+            constant = ok.sum() < MIN_GENES or np.std(est[ok]) < CONSTANT_SD
+            rows.append(
+                {
+                    "compound": source.compounds[j],
+                    "target": target,
+                    "n_genes": int(ok.sum()),
+                    "spearman": (
+                        float("nan")
+                        if constant
+                        else float(spearmanr(est[ok], obs[ok])[0])
+                    ),
+                    "pearson": (
+                        float("nan")
+                        if constant
+                        else float(pearsonr(est[ok], obs[ok])[0])
+                    ),
+                    "ceiling": ceiling(obs, source.se[rows_idx, j]),
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 def subsample_pool(fold: Fold, fold_seed: int, n: int | None) -> list[int]:

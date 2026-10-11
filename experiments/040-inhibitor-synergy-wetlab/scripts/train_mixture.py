@@ -112,14 +112,18 @@ sys.path.insert(0, osp.dirname(__file__))
 from mixture_data import (  # noqa: E402
     CELL_TABLE,
     ISOBOLE_RUNS,
+    SOURCE_ATTRIBUTES,
     Fold,
     GeneSource,
     HostRecord,
     MixtureData,
     assemble,
     build_cell_graph,
+    holdout_conditions,
     make_folds,
+    make_gene_folds,
     score_compounds,
+    score_genes,
     strain_indices,
     subsample_pool,
     write_vanacloig_doses,
@@ -141,6 +145,15 @@ MODEL_YAML = osp.join(EXPERIMENT, "conf", "mixture", "cgt_model.yaml")
 PREDICTIONS = osp.join(
     DATA_ROOT, "experiments", "040-inhibitor-synergy-wetlab", "predictions"
 )
+#: One checkpoint per (config, fold, seed): the weights, the configuration, the
+#: standardization and the condition bookkeeping ``query_mixture.py`` needs to pose a new
+#: genotype, compound set and dose to a trained model.
+CHECKPOINTS = osp.join(
+    DATA_ROOT, "experiments", "040-inhibitor-synergy-wetlab", "checkpoints"
+)
+#: Fitted auxiliary conditions whose predicted mean centers a held-out auxiliary score
+#: (a full predicted matrix of Hoepfner's 550 conditions per seed is too costly).
+AUX_CENTER_CONDITIONS = 32
 #: The model-free bars every run's table is printed against (``results/mixture_scores.csv``
 #: for ex23, ``results/isobole_summary.csv`` for the grids), served growth call.
 REFERENCE_SCORES = osp.join(RESULTS, "mixture_scores.csv")
@@ -170,6 +183,24 @@ class MixtureConfig(BaseModel):
     aux_weight: float = 1.0
     #: auxiliary conditions sampled per source per step, 0 = every condition
     cond_batch: int = 24
+    #: what is held out of every auxiliary source for its own score and held-out loss:
+    #: ``compound`` a fraction of its compounds, ``dose`` one dose of every multi-dose
+    #: compound, ``none`` nothing (rounds 1 and 2)
+    aux_holdout: Literal["none", "compound", "dose"] = "none"
+    aux_holdout_frac: float = 0.1
+    #: ``compound``: the 038 compound-cold folds over the Vanacloig compounds. ``gene``:
+    #: gene-cold folds over the Vanacloig genes with every compound fitted; auxiliary
+    #: sources keep every gene, so with them a held-out gene is cold in Vanacloig only.
+    split: Literal["compound", "gene"] = "compound"
+    #: how the source enters the gene readout: one learned token per source, or the sum
+    #: of typed attribute tokens (ploidy, perturbation, medium, label, assay) shared
+    #: across sources that agree on an attribute
+    source_encoding: Literal["token", "attributes"] = "token"
+    #: a per-source scale and shift on the shared head's output (one decoder, one linear
+    #: head per label), beside the per-source gene bias every arm carries
+    source_head: bool = False
+    #: write a checkpoint per (fold, seed)
+    checkpoint: bool = True
     require_molar_dose: bool = True
     #: the growth call the HOST HEAD TRAINS on. Only the served call covers ex21, so
     #: "software" leaves an ex21-training arm with no record and stops the run; the
@@ -217,6 +248,9 @@ class MixtureConfig(BaseModel):
 
 def fitted_compounds(cfg: MixtureConfig, fold: Fold) -> list[int]:
     """The Vanacloig compounds the model is fitted on (038)."""
+    if cfg.split == "gene":
+        # every compound; the fold's indices are genes (fitted_genes)
+        return list(range(cfg_n_compounds(cfg)))
     if cfg.fit_on == "train":
         assert cfg.n_fit_compounds is None, "n_fit_compounds subsamples the pool"
         return fold.train
@@ -225,9 +259,37 @@ def fitted_compounds(cfg: MixtureConfig, fold: Fold) -> list[int]:
 
 def centering_compounds(cfg: MixtureConfig, fold: Fold) -> list[int]:
     """The compounds whose mean centers the held-out scores (038)."""
-    if cfg.fit_on == "pool":
+    if cfg.fit_on == "pool" or cfg.split == "gene":
         return fitted_compounds(cfg, fold)
     return sorted(fold.train + fold.val)
+
+
+#: Set once per run from the loaded Vanacloig source, read by ``fitted_compounds`` under
+#: the gene split, where the fold indexes genes and every compound is fitted.
+_N_COMPOUNDS: dict[str, int] = {}
+
+
+def cfg_n_compounds(cfg: MixtureConfig) -> int:
+    return _N_COMPOUNDS[cfg.name]
+
+
+def fitted_genes(cfg: MixtureConfig, fold: Fold, n_genes: int) -> list[int]:
+    """The Vanacloig genes the model is fitted on: all of them unless the split is gene."""
+    if cfg.split == "gene":
+        return fold.train
+    return list(range(n_genes))
+
+
+def gene_split_score(
+    y: NDArray[np.float64], pred: NDArray[np.float64], test_genes: list[int]
+) -> float:
+    """Mean over compounds of the raw Spearman over the held-out genes."""
+    rows = np.array(test_genes)
+    return float(
+        np.nanmean(
+            [fast_spearman(pred[rows, j], y[rows, j]) for j in range(y.shape[1])]
+        )
+    )
 
 
 def fast_spearman(pred: NDArray[np.float64], obs: NDArray[np.float64]) -> float:
@@ -408,8 +470,15 @@ class MixtureModel(nn.Module):
         n_sources: int,
         feature_dim: int,
         encoder,
+        source_attributes: list[list[int]] | None = None,
+        n_attribute_values: list[int] | None = None,
     ) -> None:
-        """``n_nodes`` is the cell graph's gene count; the gene bias is per source."""
+        """``n_nodes`` is the cell graph's gene count; the gene bias is per source.
+
+        ``source_attributes[s][a]`` is source ``s``'s value index of attribute ``a`` and
+        ``n_attribute_values[a]`` the vocabulary size of attribute ``a``; both are read
+        only under ``source_encoding: attributes``.
+        """
         super().__init__()
         self.cfg = cfg
         self.encoder = encoder
@@ -419,6 +488,24 @@ class MixtureModel(nn.Module):
         nn.init.zeros_(self.gene_bias.weight)
         self.source_token = nn.Embedding(n_sources, d)
         nn.init.normal_(self.source_token.weight, std=0.02)
+        if cfg.source_encoding == "attributes":
+            assert source_attributes is not None and n_attribute_values is not None
+            self.register_buffer(
+                "source_attributes",
+                torch.tensor(source_attributes, dtype=torch.long),
+                persistent=True,
+            )
+            self.attribute_tokens = nn.ModuleList(
+                nn.Embedding(n, d) for n in n_attribute_values
+            )
+            for emb in self.attribute_tokens:
+                nn.init.normal_(emb.weight, std=0.02)
+        # one decoder, one linear head per source: scale 1 and shift 0 at the start, so
+        # the arm starts as the shared head
+        self.source_scale = nn.Embedding(n_sources, 1)
+        self.source_shift = nn.Embedding(n_sources, 1)
+        nn.init.ones_(self.source_scale.weight)
+        nn.init.zeros_(self.source_shift.weight)
         self.compound = nn.Sequential(
             nn.Dropout(cfg.dropout),
             nn.Linear(feature_dim, cfg.hidden),
@@ -519,9 +606,7 @@ class MixtureModel(nn.Module):
     ) -> torch.Tensor:
         """[B, C] predictions on the standardized target for the source's conditions."""
         b, c, d = env.shape
-        source = self.source_token(
-            torch.full((1,), source_index, dtype=torch.long, device=env.device)
-        )
+        source = self.source_vector(source_index, env.device)
         state = torch.cat(
             [
                 env,
@@ -534,7 +619,21 @@ class MixtureModel(nn.Module):
         )
         gene = self.gene_bias(source_index * self.n_nodes + strain[:, 0])
         base = gene + self.offset(e.mean(1)).T
-        return base + self.gene_head(self.gene_norm(state.float())).squeeze(-1)
+        head = self.gene_head(self.gene_norm(state.float())).squeeze(-1)
+        if self.cfg.source_head:
+            index = torch.full((1,), source_index, dtype=torch.long, device=env.device)
+            head = head * self.source_scale(index) + self.source_shift(index)
+        return base + head
+
+    def source_vector(self, source_index: int, device: torch.device) -> torch.Tensor:
+        """[1, d] the source's token: learned per source, or the sum of its attributes."""
+        index = torch.full((1,), source_index, dtype=torch.long, device=device)
+        if self.cfg.source_encoding == "token":
+            return self.source_token(index)
+        values = self.source_attributes[source_index]
+        return torch.stack(
+            [emb(values[a : a + 1]) for a, emb in enumerate(self.attribute_tokens)]
+        ).sum(0)
 
     def host_fitness(self, pooled: torch.Tensor, token: torch.Tensor) -> torch.Tensor:
         """[C] host fitness in (0, 1) from the medium alone: the empty-genotype path."""
@@ -553,9 +652,16 @@ class Context(BaseModel):
     node_ids: list[str]
     #: per source name, [n_genes, order] cell-graph indices of the strain's deletions
     strain: dict[str, torch.Tensor]
-    #: auxiliary conditions kept after removing the Vanacloig compounds
+    #: auxiliary conditions FITTED, after removing the Vanacloig compounds and the hold-out
     aux_conditions: dict[str, list[int]]
+    #: auxiliary conditions held out for the source's own score (``aux_holdout``)
+    aux_heldout: dict[str, list[int]]
+    #: the fitted auxiliary conditions whose predicted mean centers that score
+    aux_center: dict[str, list[int]]
     n_aux_dropped: dict[str, int]
+    #: per source, its attribute value indices; and per attribute, its vocabulary
+    source_attributes: list[list[int]]
+    attribute_values: dict[str, list[str]]
 
 
 def build_context(cfg: MixtureConfig, device: torch.device) -> Context:
@@ -573,7 +679,7 @@ def build_context(cfg: MixtureConfig, device: torch.device) -> Context:
     node_ids = list(cell_graph["gene"].node_ids)
     strain = {s.spec.name: strain_indices(s, node_ids) for s in data.sources}
     vanacloig_rows = set(int(r) for r in data.sources[0].compound_row)
-    aux, dropped = {}, {}
+    aux, held, center, dropped = {}, {}, {}, {}
     for source in data.sources[1:]:
         keep = [
             j
@@ -581,16 +687,39 @@ def build_context(cfg: MixtureConfig, device: torch.device) -> Context:
             if int(source.compound_row[j]) not in vanacloig_rows
             and (cfg.dose == "off" or np.isfinite(source.log10_molar[j]))
         ]
-        aux[source.spec.name] = keep
-        dropped[source.spec.name] = len(source.compounds) - len(keep)
         assert keep, f"{source.spec.name} has no condition left after filtering"
+        fitted, heldout = holdout_conditions(
+            source, keep, cfg.aux_holdout, cfg.aux_holdout_frac, cfg.fold_seed
+        )
+        aux[source.spec.name] = fitted
+        held[source.spec.name] = heldout
+        center[source.spec.name] = sorted(
+            int(j)
+            for j in np.random.default_rng([cfg.fold_seed, source.index, 11]).choice(
+                fitted, size=min(AUX_CENTER_CONDITIONS, len(fitted)), replace=False
+            )
+        )
+        dropped[source.spec.name] = len(source.compounds) - len(keep)
+    values = {
+        a: sorted({s.spec.attributes[a] for s in data.sources})
+        for a in SOURCE_ATTRIBUTES
+    }
+    attributes = [
+        [values[a].index(s.spec.attributes[a]) for a in SOURCE_ATTRIBUTES]
+        for s in data.sources
+    ]
+    _N_COMPOUNDS[cfg.name] = len(data.sources[0].compounds)
     return Context(
         data=data,
         cell_graph=cell_graph.to(device),
         node_ids=node_ids,
         strain=strain,
         aux_conditions=aux,
+        aux_heldout=held,
+        aux_center=center,
         n_aux_dropped=dropped,
+        source_attributes=attributes,
+        attribute_values=values,
     )
 
 
@@ -605,7 +734,12 @@ def host_training_records(
     compound-cold.
     """
     vanacloig = ctx.data.sources[0]
-    held = {int(vanacloig.compound_row[j]) for j in fold.test}
+    # under the gene split the fold indexes genes and no compound is held out
+    held = (
+        set()
+        if cfg.split == "gene"
+        else {int(vanacloig.compound_row[j]) for j in fold.test}
+    )
     if (
         cfg.host_train == "anchors"
         or stage == "main"
@@ -643,8 +777,12 @@ def standardize(
     fold: Fold,
     host: list[HostRecord],
     device: torch.device,
+    genes_fit: list[int] | None = None,
 ) -> Standardization:
-    """Every scale is computed on the fitted conditions only (the 031 rule)."""
+    """Every scale is computed on the fitted conditions only (the 031 rule).
+
+    Under the gene split the Vanacloig scale is computed on the fitted GENES as well.
+    """
     fitted = {
         ctx.data.sources[0].spec.name: fitted_compounds(cfg, fold),
         **ctx.aux_conditions,
@@ -666,6 +804,8 @@ def standardize(
     y_mean, y_sd = {}, {}
     for source in ctx.data.sources:
         block = source.y[:, fitted[source.spec.name]]
+        if source.index == 0 and genes_fit is not None:
+            block = block[np.array(genes_fit)]
         y_mean[source.spec.name] = float(np.nanmean(block))
         y_sd[source.spec.name] = float(np.nanstd(block))
     return Standardization(
@@ -765,11 +905,116 @@ class SeedResult(BaseModel):
 
     vanacloig: NDArray[np.float64]  # [n_genes, n_conditions], served units
     host: NDArray[np.float64]  # [len(ctx.data.host)] predicted fitness
+    #: per auxiliary source, [n_genes, n_conditions] in served units, predicted on the
+    #: centering subset and the held-out conditions only, NaN elsewhere
+    aux: dict[str, NDArray[np.float64]]
     history: pd.DataFrame
 
 
+def predict_aux(
+    model: MixtureModel,
+    ctx: Context,
+    cfg: MixtureConfig,
+    std: Standardization,
+    device: torch.device,
+) -> dict[str, NDArray[np.float64]]:
+    """Each auxiliary source's held-out and centering conditions, served units."""
+    out = {}
+    for source in ctx.data.sources[1:]:
+        name = source.spec.name
+        columns = sorted(set(ctx.aux_center[name]) | set(ctx.aux_heldout[name]))
+        if not ctx.aux_heldout[name]:
+            continue
+        full = np.full((len(source.genes), len(source.compounds)), np.nan)
+        full[:, columns] = predict_gene_matrix(
+            model, ctx, cfg, source, columns, std, device, 256
+        )
+        out[name] = full
+    return out
+
+
+def heldout_loss(
+    source: GeneSource,
+    prediction: NDArray[np.float64],
+    std: Standardization,
+    columns: list[int],
+    rows: list[int] | None = None,
+) -> float:
+    """Masked MSE on the standardized target over the held-out columns (and rows)."""
+    y = source.y[:, columns]
+    p = prediction[:, columns]
+    if rows is not None:
+        y, p = y[np.array(rows)], p[np.array(rows)]
+    ok = np.isfinite(y) & np.isfinite(p)
+    if not ok.any():
+        return float("nan")
+    sd = std.y_sd[source.spec.name]
+    return float(np.mean(((p[ok] - y[ok]) / sd) ** 2))
+
+
+def save_checkpoint(
+    path: str,
+    model: MixtureModel,
+    cfg: MixtureConfig,
+    ctx: Context,
+    fold: Fold,
+    seed: int,
+    std: Standardization,
+    selected_step: int,
+) -> None:
+    """Everything ``query_mixture.py`` needs to pose a new medium to this model."""
+    os.makedirs(osp.dirname(path), exist_ok=True)
+    torch.save(
+        {
+            "state_dict": model.state_dict(),
+            "config": cfg.model_dump(),
+            "fold": fold.model_dump(),
+            "seed": seed,
+            "selected_step": selected_step,
+            "standardization": {
+                "x": std.x.detach().cpu(),
+                "dose_center": std.dose_center,
+                "dose_scale": std.dose_scale,
+                "y_mean": std.y_mean,
+                "y_sd": std.y_sd,
+            },
+            "compounds": {
+                "inchikeys": list(ctx.data.compounds.inchikeys),
+                "names": list(ctx.data.compounds.names),
+            },
+            "sources": [
+                {
+                    "name": s.spec.name,
+                    "index": s.index,
+                    "genes": s.genes,
+                    "compounds": s.compounds,
+                    "inchikeys": s.inchikeys,
+                    "compound_row": s.compound_row.tolist(),
+                    "log10_molar": s.log10_molar.tolist(),
+                    "extra_genes": list(s.spec.extra_genes),
+                    "attributes": s.spec.attributes,
+                }
+                for s in ctx.data.sources
+            ],
+            "node_ids": ctx.node_ids,
+            "source_attributes": ctx.source_attributes,
+            "attribute_values": ctx.attribute_values,
+            "aux_conditions": ctx.aux_conditions,
+            "aux_heldout": ctx.aux_heldout,
+            "aux_center": ctx.aux_center,
+            "model_yaml": MODEL_YAML,
+        },
+        path,
+    )
+
+
 def train_seed(
-    cfg: MixtureConfig, ctx: Context, fold: Fold, seed: int, device: torch.device
+    cfg: MixtureConfig,
+    ctx: Context,
+    fold: Fold,
+    seed: int,
+    device: torch.device,
+    sweep: str = "",
 ) -> SeedResult:
     """Fit one seed on this fold and return its selected predictions on both tasks."""
     torch.manual_seed(seed)
@@ -778,10 +1023,19 @@ def train_seed(
     vanacloig = sources[0]
     host = host_training_records(cfg, ctx, fold, "main")
     assert host, "the host task has no training record"
-    std = standardize(cfg, ctx, fold, host, device)
+    genes_fit = fitted_genes(cfg, fold, len(vanacloig.genes))
+    std = standardize(cfg, ctx, fold, host, device, genes_fit)
     conditions = {
         vanacloig.spec.name: fitted_compounds(cfg, fold),
         **ctx.aux_conditions,
+    }
+    # the genes each source's batches are drawn from: under the gene split the Vanacloig
+    # test genes are never fitted; the auxiliary sources keep every gene
+    gene_pool = {
+        s.spec.name: torch.tensor(
+            genes_fit if s.index == 0 else list(range(len(s.genes))), dtype=torch.long
+        )
+        for s in sources
     }
     target, mask = {}, {}
     for source in sources:
@@ -798,6 +1052,8 @@ def train_seed(
         n_sources=len(sources),
         feature_dim=std.x.shape[1],
         encoder=build_encoder(cfg, ctx.cell_graph),
+        source_attributes=ctx.source_attributes,
+        n_attribute_values=[len(ctx.attribute_values[a]) for a in SOURCE_ATTRIBUTES],
     ).to(device)
     groups = [
         {
@@ -809,7 +1065,7 @@ def train_seed(
         {"params": list(model.encoder.parameters()), "lr": cfg.cgt_lr},
     ]
     optimizer = torch.optim.AdamW(groups, weight_decay=cfg.weight_decay)
-    steps_per_epoch = -(-len(vanacloig.genes) // cfg.gene_batch)
+    steps_per_epoch = -(-len(genes_fit) // cfg.gene_batch)
     steps, eval_every = cfg.steps, cfg.eval_every
     if cfg.epochs is not None:
         steps = cfg.epochs * steps_per_epoch
@@ -819,7 +1075,8 @@ def train_seed(
     )
     generator = torch.Generator().manual_seed(seed)
     order = {
-        s.spec.name: torch.randperm(len(s.genes), generator=generator) for s in sources
+        name: pool[torch.randperm(len(pool), generator=generator)]
+        for name, pool in gene_pool.items()
     }
     cursor = dict.fromkeys(order, 0)
     rng = np.random.default_rng(seed)
@@ -840,8 +1097,9 @@ def train_seed(
         losses, penalties, h_wildtype = {}, [], None
         for source in sources:
             name = source.spec.name
-            if cursor[name] + cfg.gene_batch > len(source.genes):
-                order[name] = torch.randperm(len(source.genes), generator=generator)
+            if cursor[name] + cfg.gene_batch > len(order[name]):
+                pool_g = gene_pool[name]
+                order[name] = pool_g[torch.randperm(len(pool_g), generator=generator)]
                 cursor[name] = 0
             index = order[name][cursor[name] : cursor[name] + cfg.gene_batch]
             cursor[name] += cfg.gene_batch
@@ -916,14 +1174,33 @@ def train_seed(
                 256,
             )
             host_pred = predict_host(model, ctx, ctx.data.host, std, device)
-            val = centered_val_score(
-                vanacloig.y, matrix, conditions[vanacloig.spec.name], fold.val
-            )
-            test = centered_val_score(vanacloig.y, matrix, pool, fold.test)
+            aux_pred = predict_aux(model, ctx, cfg, std, device)
+            if cfg.split == "gene":
+                val = float("nan")
+                test = gene_split_score(vanacloig.y, matrix, fold.test)
+                van_heldout = heldout_loss(
+                    vanacloig, matrix, std, conditions[vanacloig.spec.name], fold.test
+                )
+            else:
+                val = centered_val_score(
+                    vanacloig.y, matrix, conditions[vanacloig.spec.name], fold.val
+                )
+                test = centered_val_score(vanacloig.y, matrix, pool, fold.test)
+                van_heldout = heldout_loss(vanacloig, matrix, std, fold.test)
             record = {
                 "step": step + 1,
                 "epoch": (step + 1) / steps_per_epoch,
                 "gene_loss": float(gene_loss.detach()),
+                "heldout_loss_vanacloig": van_heldout,
+                **{
+                    f"heldout_loss_{name}": heldout_loss(
+                        ctx.data.source(name),
+                        aux_pred[name],
+                        std,
+                        ctx.aux_heldout[name],
+                    )
+                    for name in aux_pred
+                },
                 "host_loss": float(host_loss.detach()),
                 "grad_norm": float(grad_norm),
                 "lr": float(scheduler.get_last_lr()[0]),
@@ -948,13 +1225,33 @@ def train_seed(
             if cfg.select == "last" or (np.isfinite(val) and val > best[0]):
                 best = (val, step + 1)
                 selected = SeedResult(
-                    vanacloig=matrix, host=host_pred, history=pd.DataFrame(history)
+                    vanacloig=matrix,
+                    host=host_pred,
+                    aux=aux_pred,
+                    history=pd.DataFrame(history),
                 )
 
     assert selected is not None, "no step was selected"
     if cfg.host_train == "finetune_ex21":
         selected = finetune_host(cfg, ctx, fold, model, std, selected, device)
     selected.history = pd.DataFrame(history).assign(seed=seed, selected_step=best[1])
+    if cfg.checkpoint:
+        # the weights saved are the FINAL ones; under select: val they differ from the
+        # selected predictions, and the selected step is recorded beside them
+        save_checkpoint(
+            osp.join(
+                CHECKPOINTS,
+                sweep,
+                f"{cfg.name}_fold{fold.fold}_fs{cfg.fold_seed}_seed{seed}.pt",
+            ),
+            model,
+            cfg,
+            ctx,
+            fold,
+            seed,
+            std,
+            best[1],
+        )
     return selected
 
 
@@ -1089,29 +1386,77 @@ def gene_scores(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """(the per-compound table, the long-form summary rows) for the gene-level task."""
     vanacloig = ctx.data.sources[0]
-    pool = centering_compounds(cfg, fold)
-    per_compound = score_compounds(vanacloig, matrix, pool, fold.test)
+    if cfg.split == "gene":
+        per_compound = score_genes(vanacloig, matrix, fold.test)
+        subset = "test_genes"
+    else:
+        pool = centering_compounds(cfg, fold)
+        per_compound = score_compounds(vanacloig, matrix, pool, fold.test)
+        subset = "test_compounds"
     rows = []
     for target, group in per_compound.groupby("target"):
         rows.append(
             {
                 "task": "vanacloig",
-                "subset": "test_compounds",
+                "subset": subset,
                 "metric": f"{target}_spearman_median",
                 "value": float(group["spearman"].median()),
                 "n": int(group["spearman"].notna().sum()),
                 "reference_rule": (
                     "nested ridge FCFP4 counts, 32 compounds"
-                    if target == "centered"
+                    if target == "centered" and cfg.split == "compound"
                     else ""
                 ),
                 "reference_value": (
-                    RIDGE_VANACLOIG_MEDIAN if target == "centered" else float("nan")
+                    RIDGE_VANACLOIG_MEDIAN
+                    if target == "centered" and cfg.split == "compound"
+                    else float("nan")
                 ),
                 "call": CALL_INDEPENDENT,
             }
         )
     return per_compound, pd.DataFrame(rows)
+
+
+def aux_scores(
+    cfg: MixtureConfig, ctx: Context, aux: dict[str, NDArray[np.float64]]
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """(per held-out condition table, summary rows) for every auxiliary source.
+
+    Scored exactly as the Vanacloig task is: centered Spearman per held-out condition,
+    the prediction centered by its own mean over the centering subset of fitted
+    conditions and the measurement by the measured mean over the same subset. The hold-out
+    is the same across folds (``holdout_conditions``), so the fold column is a repeat
+    measurement of one partition, not a cross-validation.
+    """
+    tables, rows = [], []
+    for name, matrix in aux.items():
+        source = ctx.data.source(name)
+        table = score_compounds(
+            source, matrix, ctx.aux_center[name], ctx.aux_heldout[name]
+        )
+        table["condition"] = [
+            f"{source.compounds[j]}|{source.log10_molar[j]:.3f}"
+            for j in ctx.aux_heldout[name]
+            for _ in range(2)
+        ]
+        tables.append(table.assign(source=name))
+        for target, group in table.groupby("target"):
+            rows.append(
+                {
+                    "task": name,
+                    "subset": f"heldout_{cfg.aux_holdout}",
+                    "metric": f"{target}_spearman_median",
+                    "value": float(group["spearman"].median()),
+                    "n": int(group["spearman"].notna().sum()),
+                    "reference_rule": "",
+                    "reference_value": float("nan"),
+                    "call": CALL_INDEPENDENT,
+                }
+            )
+    if not tables:
+        return pd.DataFrame(), pd.DataFrame(rows)
+    return pd.concat(tables, ignore_index=True), pd.DataFrame(rows)
 
 
 def host_scores(
@@ -1309,24 +1654,31 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
     run_wandb.define_metric("*", step_metric="step")
 
     vanacloig = ctx.data.sources[0]
-    folds = make_folds(len(vanacloig.compounds), cfg.n_folds, cfg.n_val, cfg.fold_seed)
-    frames, compounds, histories = [], [], []
+    if cfg.split == "gene":
+        folds = make_gene_folds(len(vanacloig.genes), cfg.n_folds, cfg.fold_seed)
+    else:
+        folds = make_folds(
+            len(vanacloig.compounds), cfg.n_folds, cfg.n_val, cfg.fold_seed
+        )
+    frames, compounds, histories, aux_tables = [], [], [], []
     for fold in folds:
         if cfg.folds is not None and fold.fold not in cfg.folds:
             continue
         results = []
         for seed in cfg.seeds:
-            result = train_seed(cfg, ctx, fold, seed, device)
+            result = train_seed(cfg, ctx, fold, seed, device, sweep)
             results.append(result)
             histories.append(result.history.assign(fold=fold.fold))
             table, summary = gene_scores(cfg, ctx, result.vanacloig, fold)
             compounds.append(
                 table.assign(fold=fold.fold, member=f"seed{seed}", name=cfg.name)
             )
+            aux_table, aux_summary = aux_scores(cfg, ctx, result.aux)
+            aux_tables.append(aux_table.assign(fold=fold.fold, member=f"seed{seed}"))
             frames.append(
-                pd.concat([summary, host_scores(cfg, ctx, result.host, bars)]).assign(
-                    fold=fold.fold, member=f"seed{seed}"
-                )
+                pd.concat(
+                    [summary, aux_summary, host_scores(cfg, ctx, result.host, bars)]
+                ).assign(fold=fold.fold, member=f"seed{seed}")
             )
             print(
                 f"{cfg.name} fold {fold.fold} seed {seed}: "
@@ -1347,8 +1699,14 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
         )
         table, summary = gene_scores(cfg, ctx, matrix, fold)
         compounds.append(table.assign(fold=fold.fold, member="ensemble", name=cfg.name))
+        aux_mean = {
+            name: np.mean([r.aux[name] for r in results], axis=0)
+            for name in results[0].aux
+        }
+        aux_table, aux_summary = aux_scores(cfg, ctx, aux_mean)
+        aux_tables.append(aux_table.assign(fold=fold.fold, member="ensemble"))
         frames.append(
-            pd.concat([summary, host_scores(cfg, ctx, host, bars)]).assign(
+            pd.concat([summary, aux_summary, host_scores(cfg, ctx, host, bars)]).assign(
                 fold=fold.fold, member="ensemble"
             )
         )
@@ -1376,6 +1734,11 @@ def run(cfg: MixtureConfig, sweep: str, device: torch.device) -> pd.DataFrame:
     pd.concat(histories).to_csv(
         osp.join(out_dir, f"{cfg.name}_history.csv"), index=False
     )
+    aux_all = pd.concat(aux_tables, ignore_index=True)
+    if len(aux_all):
+        aux_all.assign(name=cfg.name).to_csv(
+            osp.join(out_dir, f"{cfg.name}_aux_conditions.csv"), index=False
+        )
     ensemble = scores[scores["member"] == "ensemble"]
     summary = (
         ensemble.groupby(["task", "subset", "metric", "call"], as_index=False)

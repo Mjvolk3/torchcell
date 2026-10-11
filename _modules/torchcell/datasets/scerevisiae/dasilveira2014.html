@@ -184,6 +184,17 @@
 <span class="sd">deferred to a follow-up (as Mulleder deferred its amino-acid -&gt; ``s_NNNN`` ids); the</span>
 <span class="sd">lipid-name -&gt; ChEBI table is emitted to ``preprocess/lipid_chebi.csv`` for that follow-up.</span>
 
+<span class="sd">Gene names (#886): a mutant row's ORF is its ``Systematic Name`` cell, resolved through</span>
+<span class="sd">``gene_alias_resolution.resolve_gene_name_strict`` (a live ORF stays itself, a name with</span>
+<span class="sd">one candidate ORF resolves to it, an ambiguous name without a pin is refused and the</span>
+<span class="sd">build stops, and a name R64 does not know is counted unresolved and dropped). The</span>
+<span class="sd">stored ``perturbed_gene_name`` is the row's ``Standard Name``. Two of those names are</span>
+<span class="sd">ambiguous in R64 (``YPK1``: YJL093C, YKL126W, YNL307C; ``SLT2``: YAL014C, YHR030C); the</span>
+<span class="sd">table's own row pairs each with its ORF, so ``AMBIGUOUS_ALIAS_PINS`` records that pairing</span>
+<span class="sd">(rule ``paper_gene_list``) and the build-time check refuses any other. Before this fix the</span>
+<span class="sd">resolver took the first alias candidate, but every one of the 127 mutant rows carries a</span>
+<span class="sd">live R64 ORF, so that branch never ran and no stored record changes.</span>
+
 <span class="sd">Counting note: the paper prose reports 129 screened mutants; the released ``Quant`` matrix</span>
 <span class="sd">has 127 mutant rows (+ 3 WT controls). We keep all 127 released mutant rows and flag the</span>
 <span class="sd">129-vs-127 discrepancy.</span>
@@ -228,6 +239,14 @@
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.gene_alias_resolution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasResolutionRule</span><span class="p">,</span>
+    <span class="n">PinnedAliasResolution</span><span class="p">,</span>
+    <span class="n">candidate_orfs</span><span class="p">,</span>
+    <span class="n">check_ambiguous_aliases</span><span class="p">,</span>
+    <span class="n">pin_table</span><span class="p">,</span>
+    <span class="n">resolve_gene_name_strict</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="n">Provenance</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">SourcedValue</span>
@@ -256,6 +275,33 @@
 <span class="c1"># TableS10 -- per-lipid LipidX/ChEBI ids (copied for provenance; ChEBI mapping deferred).</span>
 <span class="n">CHEBI_FILENAME</span> <span class="o">=</span> <span class="s2">"TableS10_lipidX_chebi_ids.xlsx"</span>
 <span class="n">CHEBI_SHA256</span> <span class="o">=</span> <span class="s2">"29a7ed0a11af4700fa051b99717e4686e0399a59c7a7b9be130ae674ed5d58f9"</span>
+
+<span class="c1"># Ambiguous standard names in the Quant sheet, each pinned to the ORF its own row gives</span>
+<span class="c1"># (#886). Quote format: ``&lt;Systematic Name&gt; | &lt;Standard Name&gt;`` cells of that row.</span>
+<span class="n">_QUANT_ROWS</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="sa">f</span><span class="s2">"data/</span><span class="si">{</span><span class="n">DATA_FILENAME</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">_LIBRARY_CITATION_KEY</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="n">DATA_SHA256</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"sheet 'Quant', columns 'Systematic Name' | 'Standard Name'"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">AMBIGUOUS_ALIAS_PINS</span> <span class="o">=</span> <span class="n">pin_table</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">"YPK1"</span><span class="p">,</span>
+            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YKL126W"</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">PAPER_GENE_LIST</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">_QUANT_ROWS</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="s2">"YKL126W | YPK1"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">"SLT2"</span><span class="p">,</span>
+            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YHR030C"</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">PAPER_GENE_LIST</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">_QUANT_ROWS</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="s2">"YHR030C | SLT2"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Growth medium (issue #622). The Methods print their OWN "YPD" recipe, which is not</span>
@@ -445,16 +491,22 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_copy_pinned</span><span class="p">(</span><span class="n">CHEBI_FILENAME</span><span class="p">,</span> <span class="n">CHEBI_SHA256</span><span class="p">)</span></div>
 
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Validate/resolve a source systematic name against the R64 genome."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">paper_gene_list</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Resolve a source ORF cell to one live R64 ORF (#886).</span>
+
+<span class="sd">        None when R64 has no gene, alias or standard name for the cell (the row is</span>
+<span class="sd">        counted as unresolved and dropped, as before); an ambiguous name resolves only</span>
+<span class="sd">        through its pin and otherwise raises ``GeneNameRefused``.</span>
+<span class="sd">        """</span>
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">name</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">[])</span>
-        <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">n</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">candidate_orfs</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">resolve_gene_name_strict</span><span class="p">(</span>
+            <span class="n">genome</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span> <span class="n">paper_gene_list</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_lipid_chebi_map</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Lipid Name -&gt; ChEBI id from Table S10 (header on the 3rd row)."""</span>
@@ -484,7 +536,9 @@
 <span class="sd">        ``preprocess/`` or ``processed/``. Refusals (each 0 in the pinned Table S4,</span>
 <span class="sd">        2026.10.01: 147 lipids, 127 mutant rows): a lipid that no WT control row</span>
 <span class="sd">        measured (it would have no reference value), two mutant rows resolving to one</span>
-<span class="sd">        ORF, and a mutant row with every lipid blank.</span>
+<span class="sd">        ORF, and a mutant row with every lipid blank. Gene-name refusals (#886, 0 on</span>
+<span class="sd">        2026.10.10): an ORF cell that is an ambiguous name without a pin, and an</span>
+<span class="sd">        ambiguous Standard Name stored with an ORF other than its pin's.</span>
 <span class="sd">        """</span>
         <span class="n">verify_raw_files</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">raw_dir</span><span class="p">,</span> <span class="p">{</span><span class="n">DATA_FILENAME</span><span class="p">:</span> <span class="n">DATA_SHA256</span><span class="p">,</span> <span class="n">CHEBI_FILENAME</span><span class="p">:</span> <span class="n">CHEBI_SHA256</span><span class="p">}</span>
@@ -529,13 +583,19 @@
         <span class="p">)</span>
 
         <span class="n">mut_df</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="o">~</span><span class="n">df</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">_WT_ROW_IDS</span><span class="p">)]</span>
+        <span class="c1"># The table's own name -&gt; ORF pairing, the source of the paper_gene_list pins.</span>
+        <span class="n">paper_gene_list</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">_STD_COL</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">():</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">mut_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">pd</span><span class="o">.</span><span class="n">notna</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">_STD_COL</span><span class="p">])</span>
+        <span class="p">}</span>
         <span class="n">n_unresolved</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="n">unresolved</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">source_by_orf</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">mut_df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
             <span class="n">source_orf</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="n">_SYS_COL</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-            <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
+            <span class="n">orf</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_systematic</span><span class="p">(</span><span class="n">source_orf</span><span class="p">,</span> <span class="n">paper_gene_list</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">orf</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">n_unresolved</span> <span class="o">+=</span> <span class="mi">1</span>
                 <span class="n">unresolved</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source_orf</span><span class="p">)</span>
@@ -554,6 +614,12 @@
                     <span class="sa">f</span><span class="s2">"da Silveira: mutant row </span><span class="si">{</span><span class="n">source_orf</span><span class="si">!r}</span><span class="s2"> has every lipid blank"</span>
                 <span class="p">)</span>
             <span class="n">rows</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"orf"</span><span class="p">:</span> <span class="n">orf</span><span class="p">,</span> <span class="s2">"gene"</span><span class="p">:</span> <span class="n">gene_name</span><span class="p">,</span> <span class="s2">"level"</span><span class="p">:</span> <span class="n">level</span><span class="p">})</span>
+        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span>
+            <span class="p">((</span><span class="n">r</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s2">"orf"</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">),</span>
+            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
+            <span class="n">paper_gene_list</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"da Silveira: </span><span class="si">%d</span><span class="s2"> mutant records, </span><span class="si">%d</span><span class="s2"> WT control rows -&gt; measured reference "</span>
             <span class="s2">"(</span><span class="si">%d</span><span class="s2"> lipids), </span><span class="si">%d</span><span class="s2"> unresolved ORFs</span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
@@ -562,6 +628,11 @@
             <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wt_level</span><span class="p">),</span>
             <span class="n">n_unresolved</span><span class="p">,</span>
             <span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="n">unresolved</span><span class="si">}</span><span class="s2">)"</span> <span class="k">if</span> <span class="n">unresolved</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"da Silveira ambiguous-name check: </span><span class="si">%d</span><span class="s2"> (name, ORF) pairs, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">records</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">create_experiment</span><span class="p">(</span><span class="n">record_row</span><span class="p">)</span> <span class="k">for</span> <span class="n">record_row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
         <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

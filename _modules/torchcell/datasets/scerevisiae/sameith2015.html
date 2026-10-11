@@ -152,7 +152,16 @@
     <span class="n">SgaNatMxDeletionPerturbation</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="n">R64_GFF</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.gene_alias_resolution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasResolutionRule</span><span class="p">,</span>
+    <span class="n">PinnedAliasResolution</span><span class="p">,</span>
+    <span class="n">candidate_orfs</span><span class="p">,</span>
+    <span class="n">check_ambiguous_aliases</span><span class="p">,</span>
+    <span class="n">pin_table</span><span class="p">,</span>
+    <span class="n">resolve_gene_name_strict</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -212,6 +221,55 @@
 <span class="c1"># Checked 2026-10-02. The loaders stored 26687005 until then, the PubMed ID of an</span>
 <span class="c1"># unrelated eLife 2015 paper (#478).</span>
 <span class="n">SAMEITH2015_PUBMED_ID</span> <span class="o">=</span> <span class="s2">"26700642"</span>
+
+<span class="c1"># ============================================================================</span>
+<span class="c1"># Gene names in GEO sample titles (#886)</span>
+<span class="c1"># ============================================================================</span>
+<span class="c1"># A title token that is not systematic-shaped is resolved by</span>
+<span class="c1"># ``gene_alias_resolution.resolve_gene_name_strict``: a token with no candidate ORF is</span>
+<span class="c1"># not a gene name and is skipped, a token with one candidate resolves to it, and an</span>
+<span class="c1"># ambiguous token resolves only through its pin below, whose rule (the SGD standard name</span>
+<span class="c1"># in the R64 GFF) the build re-checks against the injected genome. Two tokens of</span>
+<span class="c1"># GSE42536 are ambiguous in R64 (measured 2026-10-10 over every title of the series):</span>
+<span class="c1"># SUT2 (YMR080C, YPR009W) in 4 arrays and GAT1 (YFL021W, YKR067W) in 6. The paper's own</span>
+<span class="c1"># list (Additional file 1, sheet "List of 215 GSTFs": "Ypr009W | Sut2", "Yfl021W |</span>
+<span class="c1"># Gat1") names the same ORFs. Before the fix both resolved through the gene table's</span>
+<span class="c1"># standard-name column to these ORFs, so no stored record changes. Each quote is the</span>
+<span class="c1"># verbatim start of the ORF's gene row in the R64-4-1 GFF.</span>
+<span class="n">AMBIGUOUS_ALIAS_PINS</span> <span class="o">=</span> <span class="n">pin_table</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">"SUT2"</span><span class="p">,</span>
+            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YPR009W"</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">SGD_STANDARD_NAME</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">R64_GFF</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="s2">"ID=YPR009W;Name=YPR009W;gene=SUT2;"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">"GAT1"</span><span class="p">,</span>
+            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YFL021W"</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">SGD_STANDARD_NAME</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">R64_GFF</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="s2">"ID=YFL021W;Name=YFL021W;gene=GAT1;"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">_SYSTEMATIC_PREFIX_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">convert_title_token</span><span class="p">(</span><span class="n">genome</span><span class="p">:</span> <span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Resolve one title token to a systematic name, or None when it names no gene.</span>
+
+<span class="sd">    A systematic-shaped token is returned upper-cased; a token with no candidate ORF is</span>
+<span class="sd">    not a gene name (None); anything else goes through the refusing resolver, so an</span>
+<span class="sd">    ambiguous token without a pin raises ``GeneNameRefused`` (#886).</span>
+<span class="sd">    """</span>
+    <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">_SYSTEMATIC_PREFIX_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">gene_upper</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gene_upper</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">candidate_orfs</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">resolve_gene_name_strict</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">,</span> <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="SmMicroarraySameith2015Dataset">
@@ -326,6 +384,9 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Parse GEO expression data into single-mutant experiments and write LMDB."""</span>
+        <span class="c1"># Title-token resolution (#886): every (token, systematic) resolution is</span>
+        <span class="c1"># recorded for the build-time check.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="c1"># Initialize resolution statistics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">=</span> <span class="mi">0</span>
@@ -398,6 +459,7 @@
 
             <span class="n">samples_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_info</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_title_resolutions</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">single_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique single mutant genes"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dropped_double_deletion_titles</span> <span class="o">=</span> <span class="n">multi_gene_titles</span>
@@ -635,6 +697,23 @@
 
         <span class="k">return</span> <span class="n">gene_names</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_title_resolutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build-time check (#886): no title token's ORF came from an unpinned ambiguity.</span>
+
+<span class="sd">        Runs over every (token, systematic) resolution of the series' titles, a superset</span>
+<span class="sd">        of the names the store holds, before any record is written.</span>
+<span class="sd">        """</span>
+        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">),</span>
+            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Sameith2015 ambiguous-name check: </span><span class="si">%d</span><span class="s2"> title resolutions, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_valid_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that a systematic name matches the expected format."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
@@ -643,39 +722,15 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Convert common gene name to systematic name."""</span>
+<span class="w">        </span><span class="sd">"""Resolve a title token to a systematic name, recording the resolution (#886)."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_name</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-        <span class="c1"># Check if already systematic</span>
-        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?"</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">gene_upper</span>
-
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-
-        <span class="c1"># Try genome's gene_attribute_table</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"gene_attribute_table"</span><span class="p">):</span>
-            <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-
-            <span class="c1"># Check gene column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-            <span class="c1"># Check Alias column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-        <span class="c1"># Try alias_to_systematic</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"alias_to_systematic"</span><span class="p">):</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_upper</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Return first match</span>
-
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">systematic</span> <span class="o">=</span> <span class="n">convert_title_token</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span> <span class="n">gene_name</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">systematic</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">systematic</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>
@@ -1167,6 +1222,9 @@
     <span class="nd">@post_process</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Parse GEO expression data into double-mutant experiments and write LMDB."""</span>
+        <span class="c1"># Title-token resolution (#886): every (token, systematic) resolution is</span>
+        <span class="c1"># recorded for the build-time check.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
         <span class="c1"># Initialize resolution statistics</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_excel</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">resolved_by_gene_table</span> <span class="o">=</span> <span class="mi">0</span>
@@ -1234,6 +1292,7 @@
 
             <span class="n">samples_data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sample_info</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_title_resolutions</span><span class="p">()</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">single_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique single mutant genes"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">double_mutant_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> double mutant samples"</span><span class="p">)</span>
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">wt_samples</span><span class="p">)</span><span class="si">}</span><span class="s2"> wildtype samples"</span><span class="p">)</span>
@@ -1679,6 +1738,23 @@
 
         <span class="k">return</span> <span class="n">gene_names</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># Return at most 2 genes for double mutants</span>
 
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_title_resolutions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Build-time check (#886): no title token's ORF came from an unpinned ambiguity.</span>
+
+<span class="sd">        Runs over every (token, systematic) resolution of the series' titles, a superset</span>
+<span class="sd">        of the names the store holds, before any record is written.</span>
+<span class="sd">        """</span>
+        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="p">),</span>
+            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Sameith2015 ambiguous-name check: </span><span class="si">%d</span><span class="s2"> title resolutions, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
+        <span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">_is_valid_systematic_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Validate that a systematic name matches the expected format."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">name</span><span class="p">:</span>
@@ -1687,39 +1763,15 @@
         <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?$"</span><span class="p">,</span> <span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_convert_to_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gene_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Convert common gene name to systematic name."""</span>
+<span class="w">        </span><span class="sd">"""Resolve a title token to a systematic name, recording the resolution (#886)."""</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">gene_name</span><span class="p">:</span>
             <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="n">gene_upper</span> <span class="o">=</span> <span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span>
-
-        <span class="c1"># Check if already systematic</span>
-        <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">"Y[A-P][LR]\d</span><span class="si">{3}</span><span class="s2">[WC](-[A-Z])?"</span><span class="p">,</span> <span class="n">gene_upper</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">gene_upper</span>
-
-        <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-
-        <span class="c1"># Try genome's gene_attribute_table</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"gene_attribute_table"</span><span class="p">):</span>
-            <span class="n">df</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_attribute_table</span>
-
-            <span class="c1"># Check gene column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"gene"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-            <span class="c1"># Check Alias column</span>
-            <span class="n">matches</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="n">df</span><span class="p">[</span><span class="s2">"Alias"</span><span class="p">]</span> <span class="o">==</span> <span class="n">gene_upper</span><span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">matches</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">matches</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">"ID"</span><span class="p">])</span>
-
-        <span class="c1"># Try alias_to_systematic</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="s2">"alias_to_systematic"</span><span class="p">):</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">gene_upper</span><span class="p">,</span> <span class="p">[])</span>
-            <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># Return first match</span>
-
-        <span class="k">return</span> <span class="kc">None</span>
+        <span class="n">systematic</span> <span class="o">=</span> <span class="n">convert_title_token</span><span class="p">(</span>
+            <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">),</span> <span class="n">gene_name</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">systematic</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">title_resolutions</span><span class="o">.</span><span class="n">add</span><span class="p">((</span><span class="n">gene_name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">systematic</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">systematic</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_extract_probe_to_gene_mapping</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gse</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">"""Extract probe ID to gene name mapping from GEO platform annotation."""</span>

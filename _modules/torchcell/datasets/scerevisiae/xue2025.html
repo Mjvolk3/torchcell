@@ -157,6 +157,15 @@
 <span class="sd">[POX1, FAA1, FAA4, RPD3, SPT3, YAP6]. We ASSERT ``len(TF letters) + 3 == N`` for every</span>
 <span class="sd">parsed row. All 13 genes (baseline + 10 TFs) resolve to current R64 systematic ORFs.</span>
 
+<span class="sd">AMBIGUOUS NAME (#886): ``TFC7`` is the standard name of ``YOR110W`` (TFIIIC subunit tau 55)</span>
+<span class="sd">and a secondary alias of ``YNL039W`` (BDP1). Names resolve through</span>
+<span class="sd">``gene_alias_resolution.resolve_gene_name_strict``: a name with one candidate ORF resolves</span>
+<span class="sd">to it, an ambiguous name only through a pin in ``AMBIGUOUS_ALIAS_PINS`` whose rule is</span>
+<span class="sd">re-checked against the injected genome, and anything else is refused. The release names</span>
+<span class="sd">only the common name, so the rule for ``TFC7`` is the SGD standard name in the R64 GFF.</span>
+<span class="sd">Before this fix the loader took the first alias-table candidate and stored ``YNL039W`` in</span>
+<span class="sd">46 of 176 records. Every other name of the 13 has exactly one candidate ORF.</span>
+
 <span class="sd">REPLICATE STRUCTURE: 3 GC replicate columns per FFA. Some strains released fewer than 3</span>
 <span class="sd">replicates (an entire replicate column is blank across all FFAs -- 10 strains have 2, one</span>
 <span class="sd">strain (``G-O-T 6d``) has 1). We therefore compute ``n_replicates`` PER FFA from the count</span>
@@ -222,7 +231,15 @@
     <span class="n">ReferenceGenome</span><span class="p">,</span>
     <span class="n">Temperature</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.strain_background</span><span class="w"> </span><span class="kn">import</span> <span class="n">R64_GFF</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.dataset_registry</span><span class="w"> </span><span class="kn">import</span> <span class="n">register_dataset</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.gene_alias_resolution</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">AliasResolutionRule</span><span class="p">,</span>
+    <span class="n">PinnedAliasResolution</span><span class="p">,</span>
+    <span class="n">check_ambiguous_aliases</span><span class="p">,</span>
+    <span class="n">pin_table</span><span class="p">,</span>
+    <span class="n">resolve_gene_name_strict</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.sequence.genome.scerevisiae.s288c</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGenome</span>
 
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">)</span>
@@ -254,6 +271,22 @@
     <span class="s2">"Y"</span><span class="p">:</span> <span class="s2">"YAP6"</span><span class="p">,</span>
     <span class="s2">"T"</span><span class="p">:</span> <span class="s2">"TFC7"</span><span class="p">,</span>
 <span class="p">}</span>
+
+<span class="c1"># Ambiguous gene names of the release, each with the ORF stored for it and its source (#886).</span>
+<span class="c1"># ``TFC7`` has two candidate ORFs (YNL039W lists it as an alias; YOR110W owns it as its</span>
+<span class="c1"># standard name). The release gives no ORF, so the SGD standard name decides: the quote is</span>
+<span class="c1"># the verbatim start of YOR110W's gene row in the R64-4-1 GFF.</span>
+<span class="n">AMBIGUOUS_ALIAS_PINS</span> <span class="o">=</span> <span class="n">pin_table</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="n">PinnedAliasResolution</span><span class="p">(</span>
+            <span class="n">alias</span><span class="o">=</span><span class="s2">"TFC7"</span><span class="p">,</span>
+            <span class="n">systematic_name</span><span class="o">=</span><span class="s2">"YOR110W"</span><span class="p">,</span>
+            <span class="n">rule</span><span class="o">=</span><span class="n">AliasResolutionRule</span><span class="o">.</span><span class="n">SGD_STANDARD_NAME</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="n">R64_GFF</span><span class="p">,</span>
+            <span class="n">quote</span><span class="o">=</span><span class="s2">"ID=YOR110W;Name=YOR110W;gene=TFC7;"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+<span class="p">)</span>
 
 <span class="c1"># 5 FFAs x 3 replicate columns (0-based positions in the titer sheet; col0 = genotype).</span>
 <span class="n">_FFA_COLUMNS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
@@ -350,17 +383,9 @@
         <span class="k">return</span> <span class="n">code_to_gene</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_systematic</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Resolve a common/systematic gene name to a current R64 systematic ORF (required)."""</span>
+<span class="w">        </span><span class="sd">"""Resolve a gene name to one R64 ORF; an ambiguous name needs its pin (#886)."""</span>
         <span class="n">genome</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">SCerevisiaeGenome</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">)</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">genome</span><span class="o">.</span><span class="n">gene_set</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">name</span>
-        <span class="n">candidates</span> <span class="o">=</span> <span class="n">genome</span><span class="o">.</span><span class="n">alias_to_systematic</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="p">[])</span>
-        <span class="k">if</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"could not resolve gene name </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2"> to an R64 systematic ORF"</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">resolve_gene_name_strict</span><span class="p">(</span><span class="n">genome</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_decode_genotype</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
@@ -485,25 +510,54 @@
         <span class="n">ref_dump</span> <span class="o">=</span> <span class="n">reference</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
         <span class="n">pub_dump</span> <span class="o">=</span> <span class="n">publication</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
 
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="c1"># Every record is built, and the ambiguous-name check run over every stored</span>
+        <span class="c1"># (name, ORF) pair, BEFORE anything is written (#886).</span>
+        <span class="n">experiments</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MetaboliteExperiment</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">genotypes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">summary</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">(),</span> <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"xue2025"</span><span class="p">):</span>
-                <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-                <span class="n">deleted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_genotype</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">)</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">deleted</span><span class="p">:</span>  <span class="c1"># true WT -&gt; reference only, not an experiment record</span>
-                    <span class="k">continue</span>
-                <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span>
-                <span class="n">phenotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phenotype_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
-                <span class="n">experiment</span> <span class="o">=</span> <span class="n">MetaboliteExperiment</span><span class="p">(</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+            <span class="n">label</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="n">deleted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decode_genotype</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">code_to_gene</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">deleted</span><span class="p">:</span>  <span class="c1"># true WT -&gt; reference only, not an experiment record</span>
+                <span class="k">continue</span>
+            <span class="n">genotype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype</span><span class="p">(</span><span class="n">deleted</span><span class="p">)</span>
+            <span class="n">genotypes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">genotype</span><span class="p">)</span>
+            <span class="n">experiments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">MetaboliteExperiment</span><span class="p">(</span>
                     <span class="n">dataset_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
                     <span class="n">genotype</span><span class="o">=</span><span class="n">genotype</span><span class="p">,</span>
                     <span class="n">environment</span><span class="o">=</span><span class="n">environment</span><span class="p">,</span>
-                    <span class="n">phenotype</span><span class="o">=</span><span class="n">phenotype</span><span class="p">,</span>
+                    <span class="n">phenotype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_phenotype_from_row</span><span class="p">(</span><span class="n">row</span><span class="p">),</span>
                 <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">summary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+                    <span class="s2">"n_deletions"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">deleted</span><span class="p">),</span>
+                    <span class="s2">"orfs"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+        <span class="n">audit</span> <span class="o">=</span> <span class="n">check_ambiguous_aliases</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">genome</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">perturbed_gene_name</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">systematic_gene_name</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">genotype</span> <span class="ow">in</span> <span class="n">genotypes</span>
+                <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbations</span>
+            <span class="p">),</span>
+            <span class="n">AMBIGUOUS_ALIAS_PINS</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">"Xue2025 ambiguous-name check: </span><span class="si">%d</span><span class="s2"> (name, ORF) pairs, pinned names </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">n_pairs</span><span class="p">,</span>
+            <span class="n">audit</span><span class="o">.</span><span class="n">ambiguous</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">preprocess_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="n">exist_ok</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processed_dir</span><span class="p">,</span> <span class="s2">"lmdb"</span><span class="p">),</span> <span class="n">map_size</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="mf">1e11</span><span class="p">))</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">experiment</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="s2">"xue2025"</span><span class="p">):</span>
                 <span class="n">txn</span><span class="o">.</span><span class="n">put</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">idx</span><span class="si">}</span><span class="s2">"</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span>
                     <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
@@ -513,13 +567,6 @@
                             <span class="s2">"publication"</span><span class="p">:</span> <span class="n">pub_dump</span><span class="p">,</span>
                         <span class="p">}</span>
                     <span class="p">),</span>
-                <span class="p">)</span>
-                <span class="n">summary</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="p">{</span>
-                        <span class="s2">"genotype"</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
-                        <span class="s2">"n_deletions"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">deleted</span><span class="p">),</span>
-                        <span class="s2">"orfs"</span><span class="p">:</span> <span class="s2">";"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">),</span>
-                    <span class="p">}</span>
                 <span class="p">)</span>
                 <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>

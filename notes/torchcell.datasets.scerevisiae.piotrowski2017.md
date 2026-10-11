@@ -94,3 +94,22 @@ Kept: 11,975 conditions (8,410 RIKEN, 3,565 NCI/NIH/GSK), 289 strains (gene set 
 - #1025 (`dataset`): Data Set 2's sensitized single-mutant fitness sheet, 3,032 genes, not loaded.
 - #726 (comment): the 10 conditions whose curated table key disagrees with the released InChI at the first block.
 - `database/candidates/piotrowskiFunctionalAnnotationChemical2017.json` re-gated on this branch: admissible, G1 to G5 pass, G3 now 54 files over library + raw. The audit's G3 replicate evidence is corrected (3 by design, 1 to 3 per released profile) and the replicate-collapsing, matrix-title and sign quotes are added. `candidate-gate audit`: ok 79, binary 3 (the docx quotes are sha256-only). `candidate-gate ledger` refused ("already has '## 2026.10.11 - Candidate gate ledger'; one ledger per day"), so the verdict reaches the ledger with the next day's run.
+
+### Verification (L0-L4)
+
+The final store was built by slurm job 3925 (`gilahyper_build_dataset_lmdbs_array.slurm`, `--retire-existing --verify`, 3,435,820 records, ledgers as above, twin labels recorded); its full streamed verification is still running at the time of writing (about 8 ms per record, so about 8 h) and writes `preprocess/verification_report.json`, retiring the build manifest if any rule fails. A SAMPLED run over the first 60,000 records of the first build (identical records except the pre-culture quote corrected since) passed every rule; it is partial, not the store's result:
+
+| level | rule | sampled result (60,000 records) |
+|---|---|---|
+| L0 | structural | 60,000 validated |
+| L1 | count | 60,000 of 60,000 |
+| L1 | pair_uniqueness | 60,000 unique (study, strain, condition) |
+| L1 | provenance_gaps | 360,414 typed gaps; deferred fields `relation`, `deleted_span` |
+| L1 | canonical_gene_names | 289 systematic names, one spelling each, each current |
+| L2 | value_fidelity / se_nonnegative / interval_orientation / uncertainty_sanity | pass (no SE or interval stored) |
+| L3 | measurement_type_consistent | `z_score` only |
+| L3 | reference_zero | reference 0 for all records |
+| L3 | environment_perturbed | every record carries an edit |
+| L3 | compound_identity / media_compound_identity | pass (no gapped compound among these records) |
+| L3 | media_membership | all on a medium deriving from `YP` |
+| L4 | gene_containment_sgd / current_genome_genes | 1.000 of 289; every name a current gene |

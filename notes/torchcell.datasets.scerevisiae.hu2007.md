@@ -77,7 +77,7 @@ No sequence data; nothing in the genomes tier.
 
 ### L0-L4 verification
 
-`python -m torchcell.database.build_dataset_lmdb --dataset MicroarrayScoreHu2007Dataset --retire-existing --verify` (the loader's `verify_build`; registry `EXPRESSION_SCORE_DATASETS`, family runner `run_expression_score`). Report: `$DATA_ROOT/data/torchcell/microarray_score_hu2007/preprocess/verification_report.json`.
+`python -m torchcell.database.build_dataset_lmdb --dataset MicroarrayScoreHu2007Dataset --retire-existing --verify` (the loader's `verify_build`; registry `EXPRESSION_SCORE_DATASETS`, family runner `run_expression_score`). Report: `$DATA_ROOT/data/torchcell/microarray_score_hu2007/preprocess/verification_report.json`. The dev store was rebuilt from the clean tree at `387bca933` (12 s; build manifest `torchcell_dirty: false`, absent from `--list-stale`), and its `--verify` pass reproduced the table below row for row.
 
 | level | rule | result |
 |---|---|---|

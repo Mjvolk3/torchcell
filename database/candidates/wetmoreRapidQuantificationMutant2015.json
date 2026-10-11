@@ -30,7 +30,7 @@
     {
       "gate": "G4",
       "outcome": "pass",
-      "reason": "no key held by another module (0 mention(s)); no PMID check. Values compared against the Price 2018 dev store data/torchcell/rbtnseq_price2018_ecoli (553,896 records, built from 52d376d6 on a tree git reports dirty, read through stream_records): 83 of the 92 samples Price 2018 Table S5 carries from this paper are in both stores. DUPLICATED BY CONTENT: the compendium re-analyzes the same reads ('Fitness data was analysed as previously described9 .', statistics version 1.0.3 against this release's 1.0.0); per-sample Pearson r on the shared genes min 0.9889, median 0.9971; the nearest served sample by max abs difference is the column's own name for 81 of 83 (set1IT083 and set1IT094 sit nearer their exact replicate by that outlier-driven statistic, margins 0.13 and 0.09). NOT A COPY: no released column is within the copy-test tolerance 1e-9 of any served sample (smallest best max abs difference 0.52). ADMITTED under the owner policy of 2026-10-10: a served compendium is a processing reference and a sanity check, not the source of record; an original study with its own per-record release is loaded from that release, attributed to itself and cross-checked against the compendium (L4 row compendium_cross_check_price2018: 83 samples, every r >= 0.87, Price 2018's median exact-replicate r).",
+      "reason": "no key held by another module (0 mention(s)); no PMID check. Values compared against the Price 2018 dev store data/torchcell/rbtnseq_price2018_ecoli (553,896 records, built from cb310e33 on a tree git reports dirty, read through stream_records): 83 of the 92 samples Price 2018 Table S5 carries from this paper are in both stores. The nine absent here are the 4 sucrose and D-mannitol samples the authors withdrew in 2021 (refused here and there, owner decision 2026-10-11), the 4 MOPS Rich Defined samples (refused on both sides) and set2IT045 (failed this paper's own cor12 rule). DUPLICATED BY CONTENT: the compendium re-analyzes the same reads ('Fitness data was analysed as previously described9 .', statistics version 1.0.3 against this release's 1.0.0); per-sample Pearson r on the shared genes min 0.9889, median 0.9971; the nearest served sample by max abs difference is the column's own name for 81 of 83 (set1IT083 and set1IT094 sit nearer their neighbour by that outlier-driven statistic, margins 0.129 and 0.092, while their own-name r is above 0.98). NOT A COPY: no released column is within the copy-test tolerance 1e-9 of any served sample (smallest best max abs difference 0.521). ADMITTED under the owner policy of 2026-10-10: a served compendium is a processing reference and a sanity check, not the source of record; an original study with its own per-record release is loaded from that release, attributed to itself and cross-checked against the compendium (L4 row compendium_cross_check_price2018: 83 samples, every r >= 0.87, Price 2018's median exact-replicate r).",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -38,7 +38,7 @@
     {
       "gate": "G5",
       "outcome": "gap",
-      "reason": "30 compound(s) unresolved: D-Alanine, D-Fructose, D-Galactose, D-Galacturonic Acid monohydrate, D-Gluconic Acid sodium salt, D-Glucosamine Hydrochloride, D-Glucose-6-Phosphate sodium salt, D-Glucuronic Acid, D-Maltose monohydrate, D-Mannitol, D-Mannose, D-Ribose, D-Sorbitol, D-Trehalose dihydrate, D-Xylose, Gly-DL-Asp, Gly-Glu, Glycolic Acid, L-Fucose, L-Malic acid disodium salt monohydrate, N-Acetyl-D-Glucosamine, Potassium acetate, Putrescine Dihydrochloride, Sodium D,L-Lactate, Sodium D-Lactate, Sodium Fumarate dibasic, Sodium pyruvate, Sodium succinate dibasic hexahydrate, a-Ketoglutaric acid disodium salt hydrate, casamino acids",
+      "reason": "29 compound(s) unresolved: D-Alanine, D-Fructose, D-Galactose, D-Galacturonic Acid monohydrate, D-Gluconic Acid sodium salt, D-Glucosamine Hydrochloride, D-Glucose-6-Phosphate sodium salt, D-Glucuronic Acid, D-Maltose monohydrate, D-Mannose, D-Ribose, D-Sorbitol, D-Trehalose dihydrate, D-Xylose, Gly-DL-Asp, Gly-Glu, Glycolic Acid, L-Fucose, L-Malic acid disodium salt monohydrate, N-Acetyl-D-Glucosamine, Potassium acetate, Putrescine Dihydrochloride, Sodium D,L-Lactate, Sodium D-Lactate, Sodium Fumarate dibasic, Sodium pyruvate, Sodium succinate dibasic hexahydrate, a-Ketoglutaric acid disodium salt hydrate, casamino acids",
       "evidence": [],
       "issue": 726,
       "blocked_kind": null
@@ -1024,9 +1024,9 @@
   },
   "g4_value": {
     "store": "data/torchcell/rbtnseq_price2018_ecoli",
-    "store_commit": "52d376d6da1bbf6a8b73a982c816b34d48e189d4",
+    "store_commit": "cb310e339cdbfc2bd7c26d69e7b705a50bd9463e",
     "records_read": 553896,
-    "tolerance": 1e-9,
+    "tolerance": 1e-09,
     "matches": [
       {
         "released_column": "set1IT003",
@@ -1707,7 +1707,6 @@
       "D-Glucose-6-Phosphate sodium salt",
       "D-Glucuronic Acid",
       "D-Maltose monohydrate",
-      "D-Mannitol",
       "D-Mannose",
       "D-Ribose",
       "D-Sorbitol",
@@ -1732,5 +1731,5 @@
     "proposed_class": null
   },
   "decided_at": "2026-10-11",
-  "torchcell_commit": "9f708b4e1670c8e3165de6f0dbddeae2e0ac765e"
+  "torchcell_commit": "83388017a1571b8c354ebacdead951934fe2c108"
 }

@@ -62,6 +62,7 @@ from torchcell.adapters import (
     GeneEssentialitySgdAdapter,
     GeneInteractionBabu2014Adapter,
     GeneInteractionButland2008Adapter,
+    GenomeArchitecturePuddu2019Adapter,
     GrowthAucRapp2026Adapter,
     GrowthRateCampos2018Adapter,
     GrowthRateChoe2019Adapter,
@@ -359,6 +360,7 @@ from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
 from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
 from torchcell.datasets.scerevisiae.ozaydin2013 import CarotenoidOzaydin2013Dataset
 from torchcell.datasets.scerevisiae.peter2018 import IsolateGrowthPeter2018Dataset
+from torchcell.datasets.scerevisiae.puddu2019 import GenomeArchitecturePuddu2019Dataset
 from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
@@ -432,6 +434,7 @@ dataset_adapter_map: dict[type, type] = {
     IsolateGrowthPeter2018Dataset: IsolateGrowthPeter2018Adapter,
     Boocock2025Dataset: Boocock2025Adapter,
     TfDeletionPseudobulkJackson2020Dataset: TfDeletionPseudobulkJackson2020Adapter,
+    GenomeArchitecturePuddu2019Dataset: GenomeArchitecturePuddu2019Adapter,
     SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
     EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
     EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,

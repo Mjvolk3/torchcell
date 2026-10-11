@@ -265,6 +265,9 @@ from .price2018_ecoli_adapter import (
 from .price2018_ecoli_essentiality_adapter import (
     GeneEssentialityPrice2018EcoliAdapter as GeneEssentialityPrice2018EcoliAdapter,
 )
+from .puddu2019_adapter import (
+    GenomeArchitecturePuddu2019Adapter as GenomeArchitecturePuddu2019Adapter,
+)
 from .rachwalski2024_adapter import (
     CrispriCrossRachwalski2024Adapter as CrispriCrossRachwalski2024Adapter,
 )
@@ -440,6 +443,8 @@ natural_isolate_adapters = [
     "CellYieldDeChiara2022Adapter",
 ]
 
+genome_architecture_adapters = ["GenomeArchitecturePuddu2019Adapter"]
+
 environment_adapters = [
     "EnvChemgenCostanzo2021Adapter",
     "EnvChemgenAuesukaree2009Adapter",
@@ -560,6 +565,7 @@ __all__ = (
     + proteome_metabolome_adapters
     + segregant_adapters
     + natural_isolate_adapters
+    + genome_architecture_adapters
     + environment_adapters
     + baryshnikova_adapters
     + ecoli_adapters

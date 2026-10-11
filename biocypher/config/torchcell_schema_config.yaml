@@ -662,6 +662,26 @@ pseudobulk umi count phenotype:
         cell_total_umis: str
         measurement_type: str
 # --- end jackson2020 ---
+
+# ADDITIVE (Puddu 2019 genome architecture): the realized genome content of one
+# sequenced sample. The two maps are JSON strings keyed by the assay's own symbols, so
+# `assay` must travel with them: a key's unit basis is declared by the assay, never by
+# the key's spelling.
+genome architecture phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        assay: str
+        genome_architecture: str
+        genome_architecture_sd: str
+        uncertainty_type: str
+        n_samples: int
+        sample_unit: str
+        sample_id: str
+        sample_accession: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -733,6 +753,7 @@ phenotype member of:
             single cell expression phenotype,
             life cycle phenotype,
             pseudobulk umi count phenotype,
+            genome architecture phenotype,
         ]
     target: [experiment, experiment reference]
 

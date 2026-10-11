@@ -1,0 +1,76 @@
+{
+  "assignment": {
+    "assigned_cells": 14263,
+    "assigned_median_umi": 5464.0,
+    "assigned_strains": 2951,
+    "cells_per_strain": {
+      "max": 53.0,
+      "mean": 4.8333,
+      "median": 3.0,
+      "min": 1.0,
+      "p90": 10.0
+    },
+    "cells_per_strain_histogram_1_to_10": {
+      "1": 649,
+      "10": 61,
+      "2": 527,
+      "3": 386,
+      "4": 282,
+      "5": 225,
+      "6": 178,
+      "7": 151,
+      "8": 115,
+      "9": 82
+    },
+    "mean_cells_per_strain": 4.8333,
+    "record_nonzero_genes": {
+      "max": 5111.0,
+      "mean": 2607.7248,
+      "median": 2592.0,
+      "min": 475.0,
+      "p90": 3951.0
+    },
+    "record_umi_count_json_bytes": {
+      "max": 75110.0,
+      "mean": 37026.7889,
+      "median": 36695.0,
+      "min": 6681.0,
+      "p90": 56367.0
+    },
+    "record_umi_count_json_bytes_total": 109266054,
+    "reference_nonzero_genes": 6222,
+    "reference_umis": 80394648,
+    "strains_with_more_than_ten_cells": 295,
+    "umi_third_quartile": 7037.0,
+    "unassigned_at_or_above_q3": 593,
+    "unassigned_cells": 3970,
+    "unassigned_median_umi": 2435.5
+  },
+  "citation_key": "nguessanRefiningResolutionYeast2025",
+  "code_commit": "1e0e2109014ab62cc6636fb2359186dc25d43f8d",
+  "dryad": {
+    "deposited": false,
+    "issue": 1014,
+    "missing": [
+      "README.txt",
+      "SNP_list.txt",
+      "geno_data_1.txt.gz",
+      "segregant_info.txt"
+    ]
+  },
+  "release": {
+    "barcodes": 18233,
+    "best_match_max": 4487,
+    "best_match_strains": 3225,
+    "gem_groups": {
+      "1": 18233
+    },
+    "genes": 6240,
+    "genes_outside_sgd_s288c": 1,
+    "genes_outside_sgd_s288c_names": [
+      "YFL057C"
+    ],
+    "median_genes_per_cell": 1311.0,
+    "median_umi_per_cell": 5158.0
+  }
+}

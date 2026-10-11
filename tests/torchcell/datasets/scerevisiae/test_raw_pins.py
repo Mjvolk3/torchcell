@@ -162,6 +162,7 @@ MANIFEST_PINNED = {
     "Boocock2025Dataset",
     "HetHillenmeyer2008Dataset",
     "HomHillenmeyer2008Dataset",
+    "Nguessan2025Dataset",
 }
 
 

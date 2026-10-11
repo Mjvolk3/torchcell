@@ -134,6 +134,7 @@ from torchcell.adapters import (
     RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Adapter,
     RbTnseqPrice2018EcoliAdapter,
+    RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
@@ -254,6 +255,7 @@ from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
+from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -506,6 +508,7 @@ dataset_adapter_map: dict[type, type] = {
     CrisprPineneToleranceNiu2019Dataset: CrisprPineneToleranceNiu2019Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     GeneEssentialityPrice2018EcoliDataset: GeneEssentialityPrice2018EcoliAdapter,
+    RbTnseqWetmore2015Dataset: RbTnseqWetmore2015Adapter,
     CrispriCrossRachwalski2024Dataset: CrispriCrossRachwalski2024Adapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
     GrowthAucRapp2026Dataset: GrowthAucRapp2026Adapter,

@@ -350,6 +350,7 @@ from .wang2018_adapter import (
     CrispriGuideFitnessWang2018Adapter as CrispriGuideFitnessWang2018Adapter,
 )
 from .wang2024_adapter import EnvChemgenWang2024Adapter as EnvChemgenWang2024Adapter
+from .wetmore2015_adapter import RbTnseqWetmore2015Adapter as RbTnseqWetmore2015Adapter
 from .wildenhain2015_adapter import (
     EnvChemgenWildenhain2015Adapter as EnvChemgenWildenhain2015Adapter,
 )
@@ -520,6 +521,7 @@ ecoli_adapters = [
     "PhageRbTnseqMutalik2020Adapter",
     "CrisprPineneToleranceNiu2019Adapter",
     "RbTnseqPrice2018EcoliAdapter",
+    "RbTnseqWetmore2015Adapter",
     "CrispriCrossRachwalski2024Adapter",
     "MetabolomeRapp2026Adapter",
     "GrowthAucRapp2026Adapter",

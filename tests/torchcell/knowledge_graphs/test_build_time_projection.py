@@ -558,6 +558,7 @@ BACTERIAL_DATASETS = {
     "RbTnseqBorchert2023Dataset",
     "RbTnseqBorchert2024Dataset",
     "RbTnseqPrice2018EcoliDataset",
+    "RbTnseqWetmore2015Dataset",
     "RnaseqCaglar2017Dataset",
     "RnaseqLamoureux2023Dataset",
     "RnaseqPublicK12Lamoureux2023Dataset",
@@ -604,7 +605,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#1022, Hu 2007 TF-deletion error-model scores)
     # + 1 (Hackett 2020 IDEA induction time courses)
     # + 1 (Messner 2021 drug-response proteomes)
-    # + 1 (Parsons 2006 chemical-genetic log2 ratios).
+    # + 1 (Parsons 2006 chemical-genetic log2 ratios)
+    # + 1 (Wetmore 2015's own RB-TnSeq release, owner policy 2026-10-10).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -625,6 +627,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 2
         + 3
+        + 1
         + 1
         + 1
         + 1

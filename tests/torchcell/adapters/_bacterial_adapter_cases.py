@@ -136,6 +136,7 @@ from torchcell.adapters import (
     RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Adapter,
     RbTnseqPrice2018EcoliAdapter,
+    RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
     RnaseqLamoureux2023Adapter,
     RnaseqPublicK12Lamoureux2023Adapter,
@@ -231,6 +232,7 @@ from torchcell.datasets.ecoli.wang2015 import EnvChemgenWang2015Dataset
 from torchcell.datasets.ecoli.wang2015_growth import GrowthWang2015Dataset
 from torchcell.datasets.ecoli.wang2018 import CrispriGuideFitnessWang2018Dataset
 from torchcell.datasets.ecoli.wang2024 import EnvChemgenWang2024Dataset
+from torchcell.datasets.ecoli.wetmore2015 import RbTnseqWetmore2015Dataset
 from torchcell.datasets.pputida.banerjee2025 import ProteomeBanerjee2025Dataset
 from torchcell.datasets.pputida.borchert2023 import RbTnseqBorchert2023Dataset
 from torchcell.datasets.pputida.borchert2024 import RbTnseqBorchert2024Dataset
@@ -764,6 +766,15 @@ BACTERIAL: list[Bacterial] = [
         "wang2024",
         "ecoli_env_chemgen_wang2024",
         EnvChemgenWang2024Dataset,
+        RESPONSE,
+    ),
+    # Wetmore 2015's own release (owner policy 2026-10-10): one Tn5 insertion per record,
+    # each sample's carbon or nitrogen source an environment perturbation.
+    _case(
+        RbTnseqWetmore2015Adapter,
+        "wetmore2015",
+        "rbtnseq_wetmore2015_ecoli",
+        RbTnseqWetmore2015Dataset,
         RESPONSE,
     ),
     _case(

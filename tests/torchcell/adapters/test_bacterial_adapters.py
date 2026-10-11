@@ -36,11 +36,12 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # its titer and its growth-rate families) + 1 (Hawkins 2020 mismatch-CRISPRi)
     # + 4 (Brunk 2016's four released scales) + 1 (#854: Balakrishnan 2022 mRNA number
     # fractions) + 1 (#857, Li 2014 synthesis rates) + 2 (Baba 2006 Keio construction
-    # outcomes, Gerdes 2003 genetic footprinting), re-derived from the merged conf and map.
+    # outcomes, Gerdes 2003 genetic footprinting) + 1 (Wetmore 2015's own RB-TnSeq
+    # release, owner policy 2026-10-10), re-derived from the merged conf and map.
     assert (
         len(expected)
         == len(BACTERIAL)
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -54,7 +55,9 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
 def test_each_adapter_has_its_own_module() -> None:
     """One class per module, so ``kg_manifest`` reads each dataset's own conf."""
     modules = [b.case.adapter_cls.__module__ for b in BACTERIAL]
-    assert len(set(modules)) == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2
+    assert (
+        len(set(modules)) == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1
+    )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
 
@@ -72,7 +75,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
     assert (
         len(names)
         == len(set(names))
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

@@ -16,16 +16,18 @@
 #   grid       all 5 sizes x all 4 subsets, seed 1; seeds 2 and 3 at 1/64 and 1/16 for the
 #              two end sizes; a learning-rate check (1e-4, 1e-3) at 45x2 on 1/4.
 #
-# EPOCH BUDGETS AND CHAINS. Measured pace: one A40 processes about 68 records/s at the
-# current size (4-GPU 025 runs: 377k records in 23 min), so the full S3Q epoch is about
-# 4.3 h and a 48 h job holds about 11 of them. Budgets are set so the small subsets run to
-# convergence inside one job and the large ones get a fixed epoch count across a chain of
-# jobs resuming the full training state (RESUME_FROM_JOB, --dependency=afterany):
-#   1/64: 240 epochs, 1 job     1/16: 120 epochs, 1 job
-#   1/4 :  60 epochs, 2 jobs    full:  30 epochs, 3 jobs
-# Smaller sizes finish sooner and the later links of a chain then exit at once. The
-# validation loss is logged every epoch, so the readout reads both the best-validation
-# checkpoint and the loss at any matched records-seen budget from the same runs.
+# EPOCH BUDGETS. Measured pace: one A40 processes about 68 records/s at the current size
+# (4-GPU 025 runs: 377k records in 23 min), so the full S3Q epoch is about 4.3 h and a
+# 48 h job holds about 11 of them. Every point fits ONE job, because Slurm accrues no
+# queue priority while a job waits on a dependency and the A40 queue runs days, so a
+# chain of links pays a fresh queue wait per link:
+#   1/64: 240 epochs   1/16: 120 epochs   1/4: 40 epochs   full: 10 epochs
+# (full and 1/4 are what 48 h holds at 180x8; smaller sizes finish sooner). The small
+# subsets converge inside their budget; the large ones are read at a matched records-seen
+# budget, which the readout interpolates from the per-epoch validation loss. The ONE
+# chained point is 180x8 on the full set, the headline: 3 links of 48 h resuming the full
+# training state (RESUME_FROM_JOB, --dependency=afterany) for 30 epochs. CHAIN_HEADLINE=0
+# makes it a single 10-epoch job like the rest.
 #
 # BATCH. 256 records per step on one GPU for every run (the IGB 180x8 full-data run uses
 # 2 x 512, so it is NOT a point of this grid; the grid runs its own 180x8 full-data chain).
@@ -91,8 +93,9 @@ sub() {   # sub <denominator|full>
   if [[ "$1" == "full" ]]; then echo "subset.indices=subset_S3Q_indices_030.json.gz"
   else echo "subset.indices=subset_S3Q_frac$1_indices_030.json.gz"; fi
 }
-declare -A EPOCHS=([64]=240 [16]=120 [4]=60 [full]=30)
-declare -A LINKS=([64]=1 [16]=1 [4]=2 [full]=3)
+declare -A EPOCHS=([64]=240 [16]=120 [4]=40 [full]=10)
+declare -A LINKS=([64]=1 [16]=1 [4]=1 [full]=1)
+CHAIN_HEADLINE="${CHAIN_HEADLINE:-1}"
 
 if [[ "$ONLY" == "calib" ]]; then
   submit "030-sclw1-calib" 3 "" $(size 180 8) $(sub full) +seed=1 trainer.max_epochs=1 trainer.limit_train_batches=400 >/dev/null
@@ -103,7 +106,9 @@ fi
 for d in 64 16 4 full; do
   for wd in "45 2" "63 3" "90 4" "126 6" "180 8"; do
     set -- $wd
-    chain "030-sclw1-N$1L$2-D$d-s1" "${LINKS[$d]}" "$HOURS" $(size "$1" "$2") $(sub "$d") +seed=1 "trainer.max_epochs=${EPOCHS[$d]}"
+    links="${LINKS[$d]}"; epochs="${EPOCHS[$d]}"
+    if [[ "$d" == "full" && "$1" == "180" && "$CHAIN_HEADLINE" == "1" ]]; then links=3; epochs=30; fi
+    chain "030-sclw1-N$1L$2-D$d-s1" "$links" "$HOURS" $(size "$1" "$2") $(sub "$d") +seed=1 "trainer.max_epochs=$epochs"
   done
 done
 # seeds 2 and 3 at the two smallest subsets, the two end sizes
@@ -117,6 +122,6 @@ for d in 64 16; do
 done
 # learning-rate check at the smallest size on 1/4
 for lr in 1e-4 1e-3; do
-  chain "030-sclw1-N45L2-D4-lr$lr-s1" 2 "$HOURS" $(size 45 2) $(sub 4) +seed=1 "trainer.max_epochs=${EPOCHS[4]}" "regression_task.optimizer.lr=$lr"
+  chain "030-sclw1-N45L2-D4-lr$lr-s1" 1 "$HOURS" $(size 45 2) $(sub 4) +seed=1 "trainer.max_epochs=${EPOCHS[4]}" "regression_task.optimizer.lr=$lr"
 done
 echo "grid submitted"

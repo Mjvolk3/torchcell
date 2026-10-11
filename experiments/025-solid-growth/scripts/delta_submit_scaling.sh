@@ -13,8 +13,10 @@
 # PACE, corrected 2026-10-11: one A40 processes about 68 records/s (4-GPU 025 runs: 377k
 # records in 23 min), so the full S3Q epoch is about 4.3 h and a 48 h job holds about 11;
 # the first version of this file assumed 64 min per epoch, 4x too fast. Budgets match the
-# 030 grid: 1/64 240 epochs (1 job), 1/16 120 (1 job), 1/4 60 (2 jobs), full 30 (3 jobs);
-# chains resume the full training state (RESUME_FROM_JOB in delta_cgt.slurm, afterany).
+# 030 grid: 1/64 240 epochs, 1/16 120, 1/4 40, full 10, every point in ONE job (a dependent
+# link accrues no queue priority, so chains pay a queue wait per link); the full point is
+# the one chain, 3 links of 48 h for 30 epochs, resuming the full training state
+# (RESUME_FROM_JOB in delta_cgt.slurm, afterany). CHAIN_HEADLINE=0 makes it one job.
 # Each job stages the 554 GB build to node-local NVMe (about 30 min), as every 025 Delta
 # job does; two staged jobs fit on one node's local disk, a third fails fast and is
 # resubmitted. Batch 256 on one GPU, as the 030 grid.
@@ -60,8 +62,10 @@ chain() {  # chain <name> <links> [overrides...]
   done
 }
 sub() { if [[ "$1" == "full" ]]; then echo "subset.indices=subset_S3Q_indices.json.gz"; else echo "subset.indices=subset_S3Q_frac$1_indices.json.gz"; fi; }
-declare -A EPOCHS=([64]=240 [16]=120 [4]=60 [full]=30)
-declare -A LINKS=([64]=1 [16]=1 [4]=2 [full]=3)
+declare -A EPOCHS=([64]=240 [16]=120 [4]=40 [full]=10)
+declare -A LINKS=([64]=1 [16]=1 [4]=1 [full]=1)
+CHAIN_HEADLINE="${CHAIN_HEADLINE:-1}"
+if [[ "$CHAIN_HEADLINE" == "1" ]]; then LINKS[full]=3; EPOCHS[full]=30; fi
 for d in 64 16 4 full; do
   chain "025-sclw1-N180L8-D$d-s1" "${LINKS[$d]}" $(sub "$d") +seed=1 "trainer.max_epochs=${EPOCHS[$d]}"
 done

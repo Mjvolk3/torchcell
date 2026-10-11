@@ -3178,6 +3178,29 @@ def test_single_cell_refuses_what_a_count_record_cannot_be(
         _single_cell(**overrides)
 
 
+# --- begin nguessan2025: a source without stage labels gaps the partition --- #
+def test_single_cell_stage_partition_may_be_a_typed_gap() -> None:
+    """N'Guessan 2025 labels no cell-cycle stage: None, but only beside its gap."""
+    phenotype = _single_cell(
+        cell_cycle_stage_counts=None, provenance_gaps=[_gap("cell_cycle_stage_counts")]
+    )
+    assert phenotype.cell_cycle_stage_counts is None
+    assert phenotype.gapped_fields() == {"cell_cycle_stage_counts"}
+    assert phenotype.library_cell_counts == {"L1": 2}
+
+
+def test_single_cell_refuses_an_absent_stage_partition_without_its_gap() -> None:
+    with pytest.raises(ValueError, match="carries no ProvenanceGap"):
+        _single_cell(cell_cycle_stage_counts=None)
+    with pytest.raises(ValueError, match="sums to 0, not n_cells 2"):
+        _single_cell(cell_cycle_stage_counts={})
+    with pytest.raises(ValueError, match="cannot both store a value"):
+        _single_cell(provenance_gaps=[_gap("cell_cycle_stage_counts")])
+
+
+# --- end nguessan2025 ---
+
+
 def test_segregant_expression_family_is_in_every_union_and_map() -> None:
     assert s.SingleCellExpressionPhenotype in typing.get_args(s.PhenotypeType)
     assert s.SegregantExpressionExperiment in typing.get_args(s.ExperimentType)

@@ -6873,6 +6873,12 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
     ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle
     stage label and by sequencing library, verbatim labels.
 
+    --- begin nguessan2025 ---
+    A source that assigns no cell-cycle stage (N'Guessan 2025) stores
+    ``cell_cycle_stage_counts=None`` with a ``ProvenanceGap`` on it; a missing partition
+    without the gap is refused, so a None is never a silent absence.
+    --- end nguessan2025 ---
+
     Provenance: Boocock et al. 2025, eLife. See
     ``[[torchcell.datasets.scerevisiae.boocock2025]]``.
     """
@@ -6901,9 +6907,13 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
         description="sha256 of the sorted feature ids of that universe, newline-joined"
     )
     n_cells: int = Field(description="number of cells the counts are summed over")
-    cell_cycle_stage_counts: dict[str, int] = Field(
-        description="cells per source cell-cycle stage label; sums to n_cells"
+    # --- begin nguessan2025: a source without stage labels gaps the partition --- #
+    cell_cycle_stage_counts: dict[str, int] | None = Field(
+        description="cells per source cell-cycle stage label; sums to n_cells. None "
+        "only with a ProvenanceGap, for a source that labels no stage (required, so a "
+        "loader states the partition or its absence, never inherits a default)"
     )
+    # --- end nguessan2025 ---
     library_cell_counts: dict[str, int] = Field(
         description="cells per sequencing library (the source's batch); sums to n_cells"
     )
@@ -6956,8 +6966,13 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
             )
         if not re.fullmatch(r"[0-9a-f]{64}", self.feature_universe_sha256):
             raise ValueError("feature_universe_sha256 must be 64 lowercase hex digits")
+        # --- begin nguessan2025: an absent stage partition must be a typed gap --- #
+        _require_value_or_gap(self, ("cell_cycle_stage_counts",))
         for field_name in ("cell_cycle_stage_counts", "library_cell_counts"):
-            counts: dict[str, int] = getattr(self, field_name)
+            counts: dict[str, int] | None = getattr(self, field_name)
+            if counts is None:
+                continue
+            # --- end nguessan2025 ---
             if any(n < 1 for n in counts.values()):
                 raise ValueError(f"{field_name} holds a non-positive count")
             if sum(counts.values()) != self.n_cells:

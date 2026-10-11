@@ -68,7 +68,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from matplotlib.colors import LinearSegmentedColormap, TwoSlopeNorm
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.ticker import MultipleLocator
 from pydantic import BaseModel
 from scipy.optimize import brentq
@@ -782,7 +782,7 @@ def plot_isoboles(
         for r, (key, cmap, norm) in enumerate(
             (
                 ("mean", FITNESS_CMAP, None),
-                ("excess", EXCESS_CMAP, TwoSlopeNorm(vmin=-1.0, vcenter=0.0, vmax=0.5)),
+                ("excess", EXCESS_CMAP, Normalize(vmin=-1.0, vmax=1.0)),
             )
         ):
             ax = axes[r, c]

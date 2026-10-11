@@ -18,13 +18,16 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 
 | citation key | table | row | G1 | G2 | G3 | G4 | G5 | outcome | issue | decided | commit |
 |---|---|---|---|---|---|---|---|---|---|---|---|
+| babaConstructionEscherichiaColi2006 | bacteria | Baba 2006 | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #924 | 2026-10-11 | `aab08e029` |
 | balakrishnanPrinciplesGeneRegulation2022 | bacteria | Balakrishnan 2022 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-10 | `81c1d0ebd` |
 | borchertMachineLearningAnalysis2024 | bacteria | Borchert 2024 fModules | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
+| gerdesExperimentalDeterminationSystem2003 | bacteria | Gerdes 2003 | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #924 | 2026-10-11 | `aab08e029` |
 | liQuantifyingAbsoluteProtein2014 | bacteria | Li 2014 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-10 | `66ae4a1ee` |
 | limMachinelearningPseudomonasPutida2022 | bacteria | Lim 2022 putidaPRECISE321 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | lamoureuxMultiscaleExpressionRegulation2023 | bacteria | PRECISE-1K | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | potelWidespreadBacterialProtein2018 | bacteria | Potel 2018 phosphoproteome | ✓ | ■ | · | · | · | **blocked:ingest** |  | 2026-10-10 | `878d58607` |
 | priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
+| peterGenomeEvolution10112018 | yeast | Peter 2018 (1,011 isolate genomes + phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `d88f3865c` |
 
 ### Aggregation decomposition
 

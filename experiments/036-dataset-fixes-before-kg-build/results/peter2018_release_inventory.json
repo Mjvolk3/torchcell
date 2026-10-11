@@ -1,0 +1,65 @@
+{
+  "release": {
+    "sha256": "7696369a6ad4ea98ed99708b2df59a2916ae34846f909648f241c1194c7347d9",
+    "md5": "479862335552a050e46de163d1ee5f72",
+    "md5_published": "479862335552a050e46de163d1ee5f72",
+    "n_isolates": 971,
+    "n_conditions": 35,
+    "n_values": 33985,
+    "n_zero": 197,
+    "minimum": 0.0,
+    "maximum": 1.903133028
+  },
+  "panel": {
+    "n_genome_panel": 1011,
+    "n_phenotyped_in_genome_panel": 971,
+    "n_caudal_store": 943,
+    "n_phenotyped_in_caudal_store": 913,
+    "n_phenotyped_not_in_caudal_store": 58,
+    "n_caudal_not_phenotyped": 30,
+    "caudal_sequence_variant_rows": 4759608,
+    "caudal_sequence_variants_identical": true,
+    "ho_deletion": {
+      "no": 849,
+      "yes": 122
+    },
+    "ho_deleted_presence_matrix": {
+      "absent": 47,
+      "present": 75
+    },
+    "ploidy": {
+      "2": 750,
+      "1": 131,
+      "3": 46,
+      "4": 38,
+      "5": 5,
+      "Xn": 1
+    },
+    "zygosity": {
+      "heterozygous": 501,
+      "homozygous": 470
+    },
+    "aneuploid": 211
+  },
+  "genotypes": {
+    "sequence_variants_total": 4901609,
+    "sequence_variants_mean": 5048.001,
+    "sequence_variants_min": 53,
+    "sequence_variants_max": 5840,
+    "accessory_present_total": 81373,
+    "reference_absent_total": 131255
+  },
+  "loss_of_function": {
+    "lof_rows": 6031,
+    "lof_calls": 231339,
+    "lof_genes_called": 4069,
+    "lof_on_sequence_variant": 204038,
+    "lof_on_gene_absent_from_tarball": 26510,
+    "lof_genes_absent_from_tarball": 284,
+    "lof_on_reference_allele": 791,
+    "frameshift_rows": 6575,
+    "frameshift_calls": 141453,
+    "frameshift_rows_without_code": 533,
+    "frameshift_calls_without_code": 8625
+  }
+}

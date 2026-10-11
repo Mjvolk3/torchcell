@@ -368,6 +368,12 @@ MODULE_ROUTES: dict[str, ModuleRoute] = {
         positional=(DATASET_ROOT,),
         keywords={"data_root": DATA_ROOT},
     ),
+    "ProteinSynthesisRateLi2014Dataset": ModuleRoute(
+        module="torchcell.datasets.ecoli.li2014",
+        entry="verify_build",
+        positional=(DATASET_ROOT,),
+        keywords={"data_root": DATA_ROOT},
+    ),
     "EnvChemgenWang2024Dataset": ModuleRoute(
         module="torchcell.datasets.ecoli.wang2024",
         entry="verify_build",

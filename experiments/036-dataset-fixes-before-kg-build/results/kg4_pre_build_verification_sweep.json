@@ -1122,22 +1122,15 @@
       "records": 9,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isopentenol_titer_foo2014]",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "n_rules": 11,
-      "failed_rules": [
-        {
-          "level": "L0",
-          "name": "structural",
-          "passed": false,
-          "message": "9/9 records failed schema validation"
-        }
-      ],
+      "failed_rules": [],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/isopentenol_titer_foo2014/preprocess/verification_report.json"
       ],
       "error": null,
       "seconds": 0.0,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:15:29"
     },
     "TranscriptionFactorKnockoutChoe2019Dataset": {
@@ -1292,6 +1285,23 @@
       "seconds": 186.1,
       "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
       "manifest_built_at": "2026-10-10T01:37:35"
+    },
+    "ProteinSynthesisRateLi2014Dataset": {
+      "dataset_class": "ProteinSynthesisRateLi2014Dataset",
+      "root": "data/torchcell/protein_synthesis_rate_li2014",
+      "records": 3,
+      "route": "module",
+      "route_detail": "li2014.verify_build",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/protein_synthesis_rate_li2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
+      "manifest_built_at": "2026-10-10T05:04:02"
     },
     "RnaseqLamoureux2023Dataset": {
       "dataset_class": "RnaseqLamoureux2023Dataset",
@@ -1834,22 +1844,15 @@
       "records": 502,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_carruthers2025]",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "n_rules": 17,
-      "failed_rules": [
-        {
-          "level": "L0",
-          "name": "structural",
-          "passed": false,
-          "message": "502/502 records failed schema validation"
-        }
-      ],
+      "failed_rules": [],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_carruthers2025/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 23.6,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "seconds": 24.9,
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:15:40"
     },
     "ProteomeCarruthers2025Dataset": {
@@ -1960,22 +1963,15 @@
       "records": 10,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_desiqueira2025]",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "n_rules": 11,
-      "failed_rules": [
-        {
-          "level": "L0",
-          "name": "structural",
-          "passed": false,
-          "message": "10/10 records failed schema validation"
-        }
-      ],
+      "failed_rules": [],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_desiqueira2025/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 3.3,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "seconds": 3.4,
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:18:39"
     },
     "IsoprenylAcetateTiterKang2026Dataset": {
@@ -1984,22 +1980,15 @@
       "records": 19,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenyl_acetate_titer_kang2026]",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "n_rules": 12,
-      "failed_rules": [
-        {
-          "level": "L0",
-          "name": "structural",
-          "passed": false,
-          "message": "19/19 records failed schema validation"
-        }
-      ],
+      "failed_rules": [],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/isoprenyl_acetate_titer_kang2026/preprocess/verification_report.json"
       ],
       "error": null,
       "seconds": 0.2,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:18:52"
     },
     "ValerolactamTiterThompson2019Dataset": {
@@ -2008,13 +1997,15 @@
       "records": 8,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:valerolactam_titer_thompson2019]",
-      "verdict": "ERROR",
-      "n_rules": 0,
+      "verdict": "PASS",
+      "n_rules": 11,
       "failed_rules": [],
-      "reports": [],
-      "error": "KeyError: ('KT2440', 48.0)",
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/valerolactam_titer_thompson2019/preprocess/verification_report.json"
+      ],
+      "error": null,
       "seconds": 0.0,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:15:03"
     },
     "LactamGrowthRateThompson2019Dataset": {
@@ -2244,22 +2235,15 @@
       "records": 125,
       "route": "registry",
       "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_yunus2026]",
-      "verdict": "FAIL",
+      "verdict": "PASS",
       "n_rules": 13,
-      "failed_rules": [
-        {
-          "level": "L0",
-          "name": "structural",
-          "passed": false,
-          "message": "125/125 records failed schema validation"
-        }
-      ],
+      "failed_rules": [],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_yunus2026/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 1.3,
-      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "seconds": 1.1,
+      "git_head": "e1c9243e3dfa68c9802181ae4883f3e6079199f2",
       "manifest_built_at": "2026-10-10T04:19:10"
     },
     "CrispriPanelProteomeYunus2026Dataset": {

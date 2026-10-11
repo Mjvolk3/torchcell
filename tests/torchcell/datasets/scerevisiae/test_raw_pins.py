@@ -178,6 +178,9 @@ def _pins_from_constants(
             m.GUIDE_FILENAME: m.GUIDE_SHA256,
         },
         "EnvChemgenVanacloig2022Dataset": lambda: {m.DATA_FILENAME: m.DATA_SHA256},
+        "EnvChemgenPiotrowski2017Dataset": lambda: {
+            release.filename: release.sha256 for release in m.RELEASE_FILES
+        },
         "EnvChemgenWildenhain2015Dataset": lambda: {
             m.DATA_FILENAME: m.DATA_SHA256,
             m.AID_FILENAME: m.AID_SHA256,

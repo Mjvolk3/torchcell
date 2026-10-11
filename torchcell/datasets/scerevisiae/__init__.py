@@ -67,6 +67,9 @@ from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
 from .ozaydin2013 import CarotenoidOzaydin2013Dataset as CarotenoidOzaydin2013Dataset
 from .parsons2006 import EnvChemgenParsons2006Dataset as EnvChemgenParsons2006Dataset
 from .peter2018 import IsolateGrowthPeter2018Dataset as IsolateGrowthPeter2018Dataset
+from .piotrowski2017 import (
+    EnvChemgenPiotrowski2017Dataset as EnvChemgenPiotrowski2017Dataset,
+)
 from .puddu2019 import (
     GenomeArchitecturePuddu2019Dataset as GenomeArchitecturePuddu2019Dataset,
 )
@@ -174,6 +177,8 @@ jackson2020_datasets = ["TfDeletionPseudobulkJackson2020Dataset"]
 
 puddu2019_datasets = ["GenomeArchitecturePuddu2019Dataset"]
 
+piotrowski2017_datasets = ["EnvChemgenPiotrowski2017Dataset"]
+
 smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
 
 baryshnikova_datasets = ["SmfBaryshnikova2010Dataset"]
@@ -224,6 +229,7 @@ __all__ = (
     + boocock_datasets
     + jackson2020_datasets
     + puddu2019_datasets
+    + piotrowski2017_datasets
     + smith2016_datasets
     + baryshnikova_datasets
     + dechiara_datasets

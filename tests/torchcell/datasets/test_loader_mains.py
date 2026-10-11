@@ -126,6 +126,12 @@ MAINS: list[tuple[str, list[tuple[str, str]], bool, str | None]] = [
         "preprocess/dropped_records.json",
     ),
     (
+        "piotrowski2017",
+        [("EnvChemgenPiotrowski2017Dataset", "env_chemgen_piotrowski2017")],
+        False,
+        None,
+    ),
+    (
         "zelezniak2018",
         [
             ("ProteomeZelezniak2018Dataset", "proteome_zelezniak2018"),
@@ -187,6 +193,7 @@ EXPECTED_STDOUT: dict[str, str] = {
     "costanzo2021": f"len = 2\n{REC0}\n7\n",
     "smith2016": f"len = 2\n{REC0}\n{RULES_JSON}\n",
     "vanacloig2022": f"len = 2\n{REC0}\n{RULES_JSON}\n",
+    "piotrowski2017": f"len = 2\n{REC0}\n",
     "zelezniak2018": f"proteome len = 2\n{REC0}\nmetabolite len = 2\n{REC0}\n",
     "auesukaree2009": f"len = 2\n{REC0}\n",
     "lian2019": f"len = 2\n{RULES_JSON}\n",

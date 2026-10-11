@@ -1726,6 +1726,53 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
         ),
     },
+    "env_chemgen_piotrowski2017": {
+        "root": "data/torchcell/env_chemgen_piotrowski2017",
+        # Supplementary Data Set 5: 291 diagnostic-pool strains x 11,984 conditions =
+        # 3,487,344 cells, 48,923 of them NA, so 3,438,421 released z-scores; minus the
+        # one column Data Set 4 marks In_final_dataset = False (Cond-008510) and the 8
+        # conditions whose dose cell is a range. Every strain is kept (290 current R64
+        # genes, YAL058C-A kept as YAL056C-A with a ConstructedOrf). Rules + counts:
+        # preprocess/dropped_records.json; per-condition fates: preprocess/conditions.json.
+        "expected_count": 3435820,
+        # ~3.4M records -> single-pass streaming gate, as for Hoepfner 2014.
+        "stream": True,
+        # The pdr1 pdr3 snq2 background rides on the reference's StrainReferenceGenome
+        # (the Vanacloig 2022 background object), so no background gene is excluded.
+        "background_genes": frozenset(),
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/piotrowskiFunctionalAnnotationChemical2017/si/"
+                "NIHMS884855-supplement-Suppl_Dataset_{5,4,2}.xlsx (raw mirror; PMC "
+                "Article Datasets bucket PMC6056180.1)"
+            ),
+            citation_key="piotrowskiFunctionalAnnotationChemical2017",
+            sha256="96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+            method=(
+                "Supplementary Data Set 5 chemical-genetic interaction z-scores (the "
+                "Supplementary Note: LOWESS-normalized log read count against the "
+                "screen's DMSO reference profile over the larger of the condition and "
+                "reference SDs; positive = resistant, negative = sensitive), one per "
+                "(diagnostic-pool barcoded kanMX deletion, condition), mean of the "
+                "technical replicates the correlation graph joined (n_samples = 1, the "
+                "conservative end of 1-3; no dispersion released). Liquid YP + 2% "
+                "galactose at 30 C for 48 h in 200 uL 96-well cultures from 250 "
+                "cells/strain; the compound at its Data Set 4 dose (basis fixed) in 1% "
+                "DMSO; reference = the screen's DMSO control, z = 0, one per screen "
+                "(RIKEN, NCI/NIH/GSK = screen_id); replicate_id = the condition id. "
+                "Compound = the curated table row, else the hash of the released "
+                "standard InChI, else a typed InChIKey gap. Background = the SGA MATa "
+                "progeny of Y13206 x the kanMX array (shared with Vanacloig 2022). "
+                "Dropped: 1 column outside the final dataset, 8 range-dose conditions"
+            ),
+            page=(
+                "Nat Chem Biol 2017 13:982-993 (doi:10.1038/nchembio.2436); "
+                "paper.md sha256=9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1; "
+                "Supplementary Note si/si1.docx "
+                "sha256=38cddea8f1a497107304599271bcfcabfba7f65a4f7b3b616f26923be119959a"
+            ),
+        ),
+    },
     "env_chemgen_mota2024": {
         "root": "data/torchcell/env_chemgen_mota2024",
         "expected_count": 1270,
@@ -2339,6 +2386,64 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
 }
 
 
+def verify_environment_response_entry(
+    name: str, data_root: str, *, hosts: dict[tuple[str, ...], _Host] | None = None
+) -> VerificationReport:
+    """Verify ONE ``ENVIRONMENT_RESPONSE_DATASETS`` entry (L0-L4) and return its report.
+
+    The body of :func:`run_environment_response`'s loop, so a single registered store can
+    be verified the way the family run verifies it (a loader's ``verify_build`` calls
+    this, which is what ``build_dataset_lmdb --verify`` resolves). ``hosts`` caches the
+    gene universes across a family run; a single call builds its own.
+    """
+    spec = ENVIRONMENT_RESPONSE_DATASETS[name]
+    hosts = {} if hosts is None else hosts
+    abs_root = osp.join(data_root, spec["root"])
+    background = spec.get("background_genes", frozenset())
+    if spec.get("stream"):
+        # Large dataset: single-pass, memory-bounded verification (never materialized).
+        # The count oracle is read BEFORE the store is opened, as it was when this
+        # branch passed the spec straight through: a streaming spec with no
+        # expected_count is a registry error and says so without touching the LMDB.
+        expected_count = spec["expected_count"]
+        reference = _first_genome_reference(abs_root)
+        host = _host_for_dataset(
+            name, (_reference_assembly_set(reference),), reference, data_root, hosts
+        )
+        report = verify_environment_response_dataset_streaming(
+            stream_records(abs_root),
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=expected_count,
+            sgd_genes=host.universe,
+            background_genes=background,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+            resolve_gene_name=host.resolve_gene_name,
+        )
+    else:
+        records = load_records(abs_root)
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
+        report = verify_environment_response_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec.get("expected_count", len(records)),
+            background_genes=background,
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+        )
+    return report
+
+
 def run_environment_response(data_root: str) -> bool:
     """Verify environment-response datasets (L0-L4) and write reports. True if all pass.
 
@@ -2358,48 +2463,7 @@ def run_environment_response(data_root: str) -> bool:
     all_passed = True
     for name, spec in ENVIRONMENT_RESPONSE_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
-        background = spec.get("background_genes", frozenset())
-        if spec.get("stream"):
-            # Large dataset: single-pass, memory-bounded verification (never materialized).
-            # The count oracle is read BEFORE the store is opened, as it was when this
-            # branch passed the spec straight through: a streaming spec with no
-            # expected_count is a registry error and says so without touching the LMDB.
-            expected_count = spec["expected_count"]
-            reference = _first_genome_reference(abs_root)
-            host = _host_for_dataset(
-                name, (_reference_assembly_set(reference),), reference, data_root, hosts
-            )
-            report = verify_environment_response_dataset_streaming(
-                stream_records(abs_root),
-                dataset_name=name,
-                provenance=spec["provenance"],
-                expected_count=expected_count,
-                sgd_genes=host.universe,
-                background_genes=background,
-                gene_universe_label=host.label,
-                min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
-                resolve_gene_name=host.resolve_gene_name,
-            )
-        else:
-            records = load_records(abs_root)
-            host = _host_for_dataset(
-                name,
-                _dataset_assembly_sets(records),
-                records[0]["reference"]["genome_reference"],
-                data_root,
-                hosts,
-            )
-            report = verify_environment_response_dataset(
-                records,
-                dataset_name=name,
-                provenance=spec["provenance"],
-                expected_count=spec.get("expected_count", len(records)),
-                background_genes=background,
-                resolve_gene_name=host.resolve_gene_name,
-                sgd_genes=host.universe,
-                gene_universe_label=host.label,
-                min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
-            )
+        report = verify_environment_response_entry(name, data_root, hosts=hosts)
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")

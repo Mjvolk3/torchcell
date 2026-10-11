@@ -2106,6 +2106,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 296777,
         "env_chemgen_vanacloig2022": 118662,
+        "env_chemgen_piotrowski2017": 3435820,
         "env_chemgen_mota2024": 1270,
         "env_chemgen_hoepfner2014": 3083827,
         "env_chemgen_wildenhain2015": 430820,
@@ -2124,6 +2125,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         for name, spec in runners.ENVIRONMENT_RESPONSE_DATASETS.items()
         if spec.get("stream")
     } == {
+        "env_chemgen_piotrowski2017",
         "env_chemgen_hoepfner2014",
         "env_chemgen_wildenhain2015",
         "crispr_magic_lian2019",
@@ -2243,7 +2245,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 14  # METABOLITE_DATASETS
         + 4  # PROTEIN_DATASETS
         + 6  # RNASEQ_DATASETS
-        + 14  # ENVIRONMENT_RESPONSE_DATASETS
+        + 15  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS
         + 1  # SEGREGANT_GROWTH_DATASETS
         + 1  # SEGREGANT_EXPRESSION_DATASETS

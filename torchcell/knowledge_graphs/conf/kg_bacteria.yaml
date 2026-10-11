@@ -55,6 +55,7 @@ subset:
 import_mode: full
 
 datasets:
+  - GeneEssentialityBaba2006Dataset
   - GeneInteractionBabu2014Dataset
   - MrnaFractionBalakrishnan2022Dataset
   - GeneInteractionButland2008Dataset
@@ -70,6 +71,7 @@ datasets:
   - CrispriKnockdownCui2018Dataset
   - IsopentenolTiterFoo2014Dataset
   - MetabolomeFuhrer2017Dataset
+  - GeneEssentialityGerdes2003Dataset
   - EnvChemgenGirgis2009Dataset
   - GeneEssentialityGoodall2018Dataset
   - ProteinTurnoverGupta2024Dataset

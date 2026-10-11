@@ -1,0 +1,330 @@
+{
+  "citation_key": "babaConstructionEscherichiaColi2006",
+  "table": "bacteria",
+  "row_name": "Baba 2006",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Modality / backbone', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "16 file(s) in library+raw, 0 worksheet row(s) counted; all intact; the three tables are BIFF .xls, which this counter does not open; counted off the deposited bytes by experiments/036-dataset-fixes-before-kg-build/scripts/baba2006_release_inventory.py: Table 2 4,288 rows, Table 3 4,378 (4,288 targeted + 90 N.A.), Table 6 303.",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named); values compared by content in experiments/036-dataset-fixes-before-kg-build/scripts/essentiality_call_agreement_baba2006_gerdes2003.py (the overlap CLI refuses the dirty dev stores): vs GeneEssentialityGoodall2018Dataset TL 3,847 of 3,961 shared BW25113 loci agree (kappa 0.80), LB 3,845 of 3,969 (0.79); 235 of the 319 GeneEssentialityPrice2018EcoliDataset loci it shares are essential here; vs Gerdes 2003 205 both essential of 3,551. No served store holds these calls: independent, not subsumed.",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "GeneEssentialityPhenotype exists, but its one boolean carries no evidence type: is_essential=True here is a construction outcome (fewer than two PCR-verified colonies; the paper's 'candidates'), not a growth measurement, and the PCR counts have no field (kept in preprocess/calls.csv). Records load as the release's booleans; the gap is #924.",
+      "evidence": [
+        {
+          "value": "is_essential=True is a candidate, from a failed construction",
+          "provenance": {
+            "source_uri": "paper/PMC1681482.1.txt",
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Based on finding mutants with the predicted structure, these 3985 genes are (probably) nonessential, while the 303 genes (including 37 genes of unknown function), for which no mutants were found, are candidates for essential genes",
+          "note": null
+        },
+        {
+          "value": "construction outcome, not a population measurement",
+          "provenance": {
+            "source_uri": "paper/PMC1681482.1.txt",
+            "citation_key": "babaConstructionEscherichiaColi2006",
+            "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd",
+            "method": "PMC Article Datasets plain text of the article (raw mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Because genetic footprinting measures cell populations, a mutation causing slow growth can lead to under-representation of the mutant and hence false classification of many genes as essential. In contrast, we sought deletion mutants as survivors without regard to growth rate.",
+          "note": null
+        }
+      ],
+      "issue": 924,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "babaConstructionEscherichiaColi2006",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/images/16bc176c62230e896fdc57dd335157d516e037441cdb5d80ca5f05cfc18c61d5.jpg",
+        "role": "si_data",
+        "bytes": 70239,
+        "sha256_manifest": "edc8b3f14cdf50365d204da77512ed0070bb6ccf459fd7bcfa8715e7f196522a",
+        "sha256_disk": "edc8b3f14cdf50365d204da77512ed0070bb6ccf459fd7bcfa8715e7f196522a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/21b9b4e325e7db94106ca811b8778c263cef5fcdea43fea8d2a41ff36133bb72.jpg",
+        "role": "si_data",
+        "bytes": 135997,
+        "sha256_manifest": "1cd6fe990acf295455a1e7430f120a5700be90abec71b28811a2113a9a820a12",
+        "sha256_disk": "1cd6fe990acf295455a1e7430f120a5700be90abec71b28811a2113a9a820a12",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/2591f2387a152639fedf136e85503dfc62edb3b7ef1f2661bd5a7e2ed5bfb688.jpg",
+        "role": "si_data",
+        "bytes": 79420,
+        "sha256_manifest": "67ad89e0c0460b807bb69c367660f1f640d93c53beb102f90858ae52b415727d",
+        "sha256_disk": "67ad89e0c0460b807bb69c367660f1f640d93c53beb102f90858ae52b415727d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/600cb58970cceeba5d5fc34ede01bcab6f9a89d849bf03baf177f728ad15038f.jpg",
+        "role": "si_data",
+        "bytes": 77605,
+        "sha256_manifest": "be031691309673ae88869601b193fbcecd724c353d1d3c7c4e6c34b6708b7d15",
+        "sha256_disk": "be031691309673ae88869601b193fbcecd724c353d1d3c7c4e6c34b6708b7d15",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/88ef27238b0e65e1dbbf2fa36f720337744194f6d543df226bc12dc9eef39620.jpg",
+        "role": "si_data",
+        "bytes": 34411,
+        "sha256_manifest": "6c3e30955c17a5322ed22b0de38a772ecfe5548ae9a356b2b9c28ed654ee0b30",
+        "sha256_disk": "6c3e30955c17a5322ed22b0de38a772ecfe5548ae9a356b2b9c28ed654ee0b30",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/bef1275d87803a535878b89e2aebf267876a1a26f8c1f71a8c182f9478c735ef.jpg",
+        "role": "si_data",
+        "bytes": 14995,
+        "sha256_manifest": "848c4d3ac362faef087b7fb4d7f958b4d336054fe8e36d2c4d475f3a4433b1f9",
+        "sha256_disk": "848c4d3ac362faef087b7fb4d7f958b4d336054fe8e36d2c4d475f3a4433b1f9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/c82b212c4fed146035e6593fb52deb11fb3b9e3a43cace28af18cda5eb9bef15.jpg",
+        "role": "si_data",
+        "bytes": 41119,
+        "sha256_manifest": "e5b22807dd4564dca7d21ef8eacc6b0ea0407012406c457faced339078b3519d",
+        "sha256_disk": "e5b22807dd4564dca7d21ef8eacc6b0ea0407012406c457faced339078b3519d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/fb755f35a60ab9b1ff80a94f93a224e07f5c882670f257d2140adf71e9c5258b.jpg",
+        "role": "si_data",
+        "bytes": 117904,
+        "sha256_manifest": "90518b2b393753351e37a77a59c5aed41b3330736af4400fedf85231f00433fa",
+        "sha256_disk": "90518b2b393753351e37a77a59c5aed41b3330736af4400fedf85231f00433fa",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/ff54cc04a85c567dd5cf73e3076cab71918b19254826de61c2d6608f1a079ac1.jpg",
+        "role": "si_data",
+        "bytes": 28783,
+        "sha256_manifest": "0cb4bc07a5c1b39b097995c937c72965246008f73a7b85200fdc5dabd67e4f61",
+        "sha256_disk": "0cb4bc07a5c1b39b097995c937c72965246008f73a7b85200fdc5dabd67e4f61",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 52477,
+        "sha256_manifest": "e871cf593ed0d115bb6cf99d57603742a0461d577e44c08d5d34a86396c90462",
+        "sha256_disk": "e871cf593ed0d115bb6cf99d57603742a0461d577e44c08d5d34a86396c90462",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 306244,
+        "sha256_manifest": "d00bc405b84dc366811a6e29cab73ef80bf038ccfad1d2ac89299a3f055c487e",
+        "sha256_disk": "d00bc405b84dc366811a6e29cab73ef80bf038ccfad1d2ac89299a3f055c487e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "si_data",
+        "bytes": 81408,
+        "sha256_manifest": "62d0128cca6a71ada1d5edad756057dbcc08e9cd33893e4e910b6a59c3163c6b",
+        "sha256_disk": "62d0128cca6a71ada1d5edad756057dbcc08e9cd33893e4e910b6a59c3163c6b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "si_data",
+        "bytes": 1965590,
+        "sha256_manifest": "94aa2320cf74fa55601db426434199648811307e0b320c9e117a3d9b8c48a31d",
+        "sha256_disk": "94aa2320cf74fa55601db426434199648811307e0b320c9e117a3d9b8c48a31d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/msb4100050-s4.xls",
+        "role": "raw_data",
+        "bytes": 1434624,
+        "sha256_manifest": "897599a5401367356aa2823ed939524561894a9120ef86bad923200b56770bac",
+        "sha256_disk": "897599a5401367356aa2823ed939524561894a9120ef86bad923200b56770bac",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/msb4100050-s5.xls",
+        "role": "raw_data",
+        "bytes": 1677312,
+        "sha256_manifest": "a1a9c30b6cd703ff835f2809b420afe38b1c139865c9af87566a410669a30d2e",
+        "sha256_disk": "a1a9c30b6cd703ff835f2809b420afe38b1c139865c9af87566a410669a30d2e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/msb4100050-s8.xls",
+        "role": "raw_data",
+        "bytes": 107008,
+        "sha256_manifest": "ded72d1f890d47b0544fa52edcb491b187a010fa6b938437fc04418e08e31638",
+        "sha256_disk": "ded72d1f890d47b0544fa52edcb491b187a010fa6b938437fc04418e08e31638",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/msb4100050",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/msb4100050",
+        "where": "torchcell/datasets/ecoli/baba2006.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "GeneEssentialityPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "aab08e0290961a827de5930ace2af752c44d2fdd"
+}

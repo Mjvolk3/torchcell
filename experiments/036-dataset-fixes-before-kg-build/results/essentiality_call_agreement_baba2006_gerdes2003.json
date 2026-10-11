@@ -1,0 +1,128 @@
+{
+  "baba2006_vs_gerdes2003": {
+    "a_essential_only": 47,
+    "a_loci": 4116,
+    "agreeing": 3115,
+    "b_essential_only": 389,
+    "b_loci": 3578,
+    "both_essential": 205,
+    "both_not_essential": 2910,
+    "cohen_kappa": 0.4275905160143009,
+    "shared_loci": 3551
+  },
+  "baba2006_vs_goodall2018_lb": {
+    "a_essential_only": 27,
+    "a_loci": 4116,
+    "agreeing": 3845,
+    "b_essential_only": 97,
+    "b_loci": 4105,
+    "both_essential": 253,
+    "both_not_essential": 3592,
+    "cohen_kappa": 0.7864341909419517,
+    "shared_loci": 3969
+  },
+  "baba2006_vs_goodall2018_tl": {
+    "a_essential_only": 26,
+    "a_loci": 4116,
+    "agreeing": 3847,
+    "b_essential_only": 88,
+    "b_loci": 4098,
+    "both_essential": 259,
+    "both_not_essential": 3588,
+    "cohen_kappa": 0.8041458004599316,
+    "shared_loci": 3961
+  },
+  "baba2006_vs_price2018_list": {
+    "a_calls_essential": 235,
+    "a_calls_not_essential": 84,
+    "a_essential_not_in_list": 62,
+    "a_loci": 4116,
+    "list_loci": 320,
+    "shared_loci": 319
+  },
+  "call_sets": {
+    "baba2006": {
+      "essential": 297,
+      "loci": 4116
+    },
+    "gerdes2003_mg1655": {
+      "essential": 611,
+      "loci": 3618
+    },
+    "gerdes2003_on_bw25113": {
+      "essential": 599,
+      "loci": 3578,
+      "mg1655_loci_without_a_one_to_one_eck_pair": 40
+    },
+    "goodall2018_lb": {
+      "essential": 356,
+      "loci": 4105
+    },
+    "goodall2018_tl": {
+      "essential": 358,
+      "loci": 4098
+    },
+    "price2018": {
+      "essential": 320,
+      "loci": 320
+    }
+  },
+  "gerdes2003_vs_goodall2018_lb": {
+    "a_essential_only": 310,
+    "a_loci": 3578,
+    "agreeing": 3105,
+    "b_essential_only": 53,
+    "b_loci": 4105,
+    "both_essential": 238,
+    "both_not_essential": 2867,
+    "cohen_kappa": 0.5140787334466611,
+    "shared_loci": 3468
+  },
+  "gerdes2003_vs_goodall2018_tl": {
+    "a_essential_only": 311,
+    "a_loci": 3578,
+    "agreeing": 3113,
+    "b_essential_only": 41,
+    "b_loci": 4098,
+    "both_essential": 243,
+    "both_not_essential": 2870,
+    "cohen_kappa": 0.5288988249508112,
+    "shared_loci": 3465
+  },
+  "gerdes2003_vs_price2018_list": {
+    "a_calls_essential": 218,
+    "a_calls_not_essential": 56,
+    "a_essential_not_in_list": 381,
+    "a_loci": 3578,
+    "list_loci": 320,
+    "shared_loci": 274
+  },
+  "records": {
+    "baba2006": 4116,
+    "gerdes2003": 3618,
+    "goodall2018": 8203,
+    "price2018": 320
+  },
+  "stores": {
+    "baba2006": {
+      "built_at": "2026-10-11T04:57:13.146752+00:00",
+      "torchcell_commit": "aab08e0290961a827de5930ace2af752c44d2fdd",
+      "torchcell_dirty": true
+    },
+    "gerdes2003": {
+      "built_at": "2026-10-11T04:57:29.215568+00:00",
+      "torchcell_commit": "aab08e0290961a827de5930ace2af752c44d2fdd",
+      "torchcell_dirty": true
+    },
+    "goodall2018": {
+      "built_at": "2026-10-09T19:00:22.590571+00:00",
+      "torchcell_commit": "529b6bf5863943d824e1972865873b18c309f88a",
+      "torchcell_dirty": true
+    },
+    "price2018": {
+      "built_at": "2026-10-11T02:23:14.814878+00:00",
+      "torchcell_commit": "52d376d6da1bbf6a8b73a982c816b34d48e189d4",
+      "torchcell_dirty": true
+    }
+  }
+}

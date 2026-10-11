@@ -79,6 +79,8 @@ from torchcell.adapters import (
     EnvMetalTnseqRoyet2025Adapter,
     ExometaboliteBrunk2016Adapter,
     FluxIshii2007Adapter,
+    GeneEssentialityBaba2006Adapter,
+    GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
     GeneInteractionBabu2014Adapter,
@@ -144,6 +146,7 @@ from torchcell.adapters import (
 from torchcell.adapters.cell_adapter import SINGLE_PASS_EDGES, SINGLE_PASS_NODES
 from torchcell.datamodels.schema import PhagePerturbation
 from torchcell.datasets.dataset_registry import dataset_registry
+from torchcell.datasets.ecoli.baba2006 import GeneEssentialityBaba2006Dataset
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset,
@@ -176,6 +179,7 @@ from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
+from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
@@ -341,7 +345,9 @@ MRNA_FRACTION = "mrna number fraction phenotype"
 # six Table S24 fitness records, and Mori 2021, whose engineered
 # NCM3722 derivatives are all in samples dropped on their medium; Fuhrer 2017, Goodall
 # 2018 and Price 2018's Table S1 essentiality calls (one library-selection
-# environment, measured 2026-10-08) carry no environment perturbation, and neither
+# environment, measured 2026-10-08) carry no environment perturbation, nor do the
+# Baba 2006 and Gerdes 2003 essentiality calls (one selection environment each,
+# measured 2026-10-10), and neither
 # do Campos 2018, whose
 # screen is one medium at one temperature, nor either Choe 2019 arm, whose two
 # panels are one M9 glucose medium with no added compound, nor Schastnaya 2021, whose carbon source is
@@ -353,6 +359,14 @@ MRNA_FRACTION = "mrna number fraction phenotype"
 # reads from hour five on (34,740 of 69,480 records), while the untreated arm and
 # the pre-dose reads of a treated well carry none.
 BACTERIAL: list[Bacterial] = [
+    _case(
+        GeneEssentialityBaba2006Adapter,
+        "baba2006",
+        "gene_essentiality_baba2006",
+        GeneEssentialityBaba2006Dataset,
+        "gene essentiality phenotype",
+        env_perturbation=False,
+    ),
     _case(
         GeneInteractionBabu2014Adapter,
         "babu2014",
@@ -469,6 +483,14 @@ BACTERIAL: list[Bacterial] = [
         "metabolome_fuhrer2017",
         MetabolomeFuhrer2017Dataset,
         "metabolite phenotype",
+        env_perturbation=False,
+    ),
+    _case(
+        GeneEssentialityGerdes2003Adapter,
+        "gerdes2003",
+        "gene_essentiality_gerdes2003",
+        GeneEssentialityGerdes2003Dataset,
+        "gene essentiality phenotype",
         env_perturbation=False,
     ),
     _case(

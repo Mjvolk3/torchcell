@@ -787,16 +787,15 @@ what was submitted.
 
 ### Where the machines stand at submission
 
-**Delta.** The pasted queue at 04:26 showed round 1's three-source arm (22788120) in its
-eighth hour on fold 4 and the eight 031 jobs pending, and predates the round-3 submission,
-so the 32 wave-1 jobs are not confirmed from here. Wave 2 goes to the same account; its
-learning-curve arms run the new code path, so the tree is re-rsynced first (anchored
-excludes, no delete flags), then
-
-```bash
-cd /scratch/bbub/mjvolk3/torchcell-040
-bash experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3w2_submit_delta.sh
-```
+**Delta.** Neither wave had been submitted when the second was written: the queue at
+04:49 held round 1's three-source arm (22788120, eighth hour, fold 4) and the eight 031
+jobs, and the tree still carried the pre-round-3 trainer (no IC30 anchor gate, no
+per-source hold-out). The tree was rsynced from the worktree at 04:55 (relative paths,
+anchored excludes, no delete flags; 103 files changed, the `torchcell` package
+unchanged), the new code verified in place, and both waves submitted on
+`bfjt-delta-gpu`: wave 1 is 22806796 to 22806827 (32 jobs) and wave 2 is 22806828 to
+22806853 (26 jobs), all pending on Priority at submission, 58 jobs asking 696 hours of
+the account's 14,431.
 
 **GilaHyper.** Four cards busy: the round-3 prescreens `vanhophet_e150` (3895) and
 `vanhop_e150_film_dose` (3896) at epochs 10 to 20 on the new protocol (W&B config

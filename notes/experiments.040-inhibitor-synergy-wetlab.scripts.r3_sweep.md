@@ -41,6 +41,9 @@ curve needed one trainer change, `n_fit_compounds` under `fit_on: train`, record
 trainer's note; the second wave's submission script says so in its header, because the
 Delta tree has to be re-rsynced before it runs.
 
+Both waves were submitted on `bfjt-delta-gpu` on 2026-10-11 at 04:56 after the tree
+rsync: wave 1 as Delta jobs 22806796 to 22806827, wave 2 as 22806828 to 22806853.
+
 What waits for a wave-1 reading is round 4: the ensemble on whichever source encoding,
 auxiliary weighting, capacity and gene-cold arms move, and the fold-seed replication of
 those.

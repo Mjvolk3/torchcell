@@ -190,3 +190,7 @@ Plan decision 16: each source study of a served aggregation, against its own rel
 | lamoureuxMultiscaleExpressionRegulation2023 | RnaseqPublicK12Lamoureux2023Dataset | pmid:31270363 | original_study | 2 (2) | per_record_values | scriptable | no | no | · |
 | priceMutantPhenotypesThousands2018 | RbTnseqPrice2018EcoliDataset | doi:10.1128/mbio.00306-15 | original_study | 92 (84) | per_record_values | scriptable | yes | no | min_pearson_r 0.988954 (pin) |
 | priceMutantPhenotypesThousands2018 | RbTnseqPrice2018EcoliDataset | doi:10.1038/s41586-018-0124-0 | compendium_paper | 70 (63) | none | · | yes | no | · |
+
+## 2026.10.11 - Decomposition tables
+
+When a verdict carries `AggregationRecord.sources`, the dated section gains `### Aggregation decomposition`: a summary row per compendium (studies, loadable scriptable and walled, compendium-only, loaded, samples and served) and one row per source entry (served class, label, role, samples, own release kind and access, mirrored, loaded class, cross-check with pass, FAIL or pin). A store with no decomposition renders exactly as before.

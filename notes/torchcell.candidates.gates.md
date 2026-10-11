@@ -40,3 +40,7 @@ A second crash on the same scan is a data defect, not this function's: `torchcel
 ## 2026.10.11 - The DOI lookup skips a failing manifest with a warning (#923)
 
 `citation_key_for_doi` now reads each mirror through `scan_mirror`. A manifest that fails validation is skipped and logged as `<tree>/<key>: manifest fails validation (<n> errors), not searched for <doi>`, so another key's broken record no longer stops a row's lookup. It is not papered over: `python -m torchcell.literature.manifest validate` and the `--data` mirror test still fail on it. `inventory` and `zotero_item` read ONE key's manifest and still raise on it, which is the honest outcome for the key being asked about. The Zhang 2020 manifest that triggered this was regenerated ([[scripts.lit_migrate_legacy_raw_manifest]]), so `--citation-key` is no longer needed for an unmirrored row.
+
+## 2026.10.11 - Folding a measured decomposition into G1
+
+`DecompositionRecord` (citation key + sources) is what the experiment-036 audit writes under its results file's `decompositions` key; `read_decompositions` validates only that key and refuses a key decomposed twice. `decompose` returns the aggregation record with the sources and the counts they imply: studies and mirrored from the decomposition, `net_new_vs_served` under its documented rule (a study whose DOI is no dataset module's own DOI, a DOI-less study included). `with_decomposition` applies it to a `G1Run` and refuses a G1 that did not settle on an aggregation. Nothing in this module measures a decomposition.

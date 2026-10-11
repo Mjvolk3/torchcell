@@ -499,18 +499,32 @@ blockers, in order of severity:
 2. **The representable mode is the unreliable one.** Split-half reliability of the gene
    score is 0.085 for CRISPRd round 1 against 0.339 for CRISPRi. Nothing can correlate with
    a score that does not correlate with itself.
-3. **The reliable mode disagrees.** CRISPRi against the Vanacloig furfural profile reads
-   +0.022 with an attenuation ceiling of 0.51, and round 3 reads -0.019 against a ceiling of
-   0.58. That is a measured null, not a noise floor. Tail overlap is at the hypergeometric
-   expectation for every mode, round and tail.
+3. **The reliable mode disagrees.** In round 1, CRISPRi against the Vanacloig furfural
+   profile reads +0.022 with an attenuation ceiling of 0.51. That is a measured null, not a
+   noise floor. Tail overlap is at the hypergeometric expectation for every mode and tail.
 
-Two further facts that close the other angles. Lian is **single-compound**: furfural only,
-so it adds no compound diversity to a compound-cold protocol. Its three doses (5, 10, 15 mM)
-are **not a dose series**: the background accumulates edits with the round (round 2 adds
-SIZ1i, round 3 adds NAT1a), so dose and genotype move together and no pair of rounds isolates
-dose. There is no genome-wide CRISPRi chemogenomic reference in the store to validate the
-reliable mode against; Smith 2016 is a 20-gene tiling screen, and the Choe 2025 and Niu 2019
-CRISPR datasets are E. coli.
+**Correction, 2026.10.11.** The first version of this section read the three rounds as three
+measurements at rising dose and used all three as evidence. They are an epistasis ladder:
+each round screens the strain built from the previous round's best hit (round 1 the bAID
+parent at 5 mM, round 2 the SIZ1i-integrated R1 at 10 mM, round 3 the SIZ1i plus NAT1a R2 at
+15 mM), and the paper demonstrates with constructed strains that the round-2 and round-3
+hits do essentially nothing in the reference strain and work only in the SIZ1i background.
+So rounds 2 and 3 measure conditional effects and **only round 1 is comparable** with
+single-perturbation chemogenomics; the numbers above are round 1. The conclusion is
+unchanged, the evidence for it is one round rather than three, and the declining reliability
+across rounds is a property of the design rather than of the data.
+
+Two further facts. Lian is **single-compound**: furfural only, so it adds no compound
+diversity to a compound-cold protocol. There is no genome-wide CRISPRi chemogenomic
+reference in the store to validate the reliable mode against; Smith 2016 is a 20-gene tiling
+screen, and the Choe 2025 and Niu 2019 CRISPR datasets are E. coli.
+
+**What the ladder is worth instead.** Rounds 2 and 3 are the thing the deletion collections
+do not hold: genuine two- and three-perturbation mixed-modality genotypes whose phenotype
+the paper shows is not the sum of its parts, with the accumulated edits already stored in
+the loader's `Genotype`. That is a multi-perturbation epistasis target for a model that can
+represent activation and interference, which is a different and larger ask than the deletion
+operator on file.
 
 **What Lian is still good for, and it is not nothing.** It is the only public screen on the
 bAID host, the same strain as the private Bioscreen runs. If the host head ever needs an

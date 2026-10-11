@@ -38,10 +38,19 @@ noise; and the rank of the paper's own validated hits (SAP30d round 1, SLX5i rou
 PDR1i round 3) inside their own mode, which checks the reprocessed table rather than the
 biology.
 
-THE ROUNDS ARE NOT A DOSE SERIES. Round 1 is the bAID host at 5 mM furfural, round 2 is
-bAID + SIZ1i at 10 mM, round 3 is bAID + SIZ1i + NAT1a at 15 mM. Dose and background move
-together, so no pair of rounds isolates dose. Every per-round number here is labeled by
-round and never read as a dose response.
+THE ROUNDS ARE AN EPISTASIS LADDER. Each round transforms the library into the strain
+built from the previous round's best hit and raises the dose: round 1 screens the bAID
+parent at 5 mM, round 2 the R1 parent (SIZ1i integrated) at 10 mM, round 3 the R2 parent
+(SIZ1i + NAT1a integrated) at 15 mM. Only round 1 measures what a perturbation does on its
+own in an unengineered parent, so only round 1 is comparable with single-perturbation
+chemogenomics. The paper settles this with constructed strains rather than by inference
+(Fig. 4): the round-2 and round-3 hits, alone or in combination, "marginally improved
+furfural tolerance in the reference strain" and show a phenotype only in the SIZ1i
+background. A round-2 or round-3 score is an effect CONDITIONAL on the integrated edits,
+and reading it as a second opinion on the same question is a category error. The tables
+carry ``comparable_to_single_perturbation_chemogenomics`` so the distinction cannot be
+lost, and the later rounds are reported for completeness only. They are also not a dose
+series, since dose and parent move together.
 
 Outputs: ``results/lian_library.csv``, ``results/lian_reliability.csv``,
 ``results/lian_vs_vanacloig.csv``, ``results/lian_hit_overlap.csv``,
@@ -99,10 +108,28 @@ MODES = {
 }
 #: Representable by the models of 031 to 040, which carry a deletion operator only.
 REPRESENTABLE = {"d"}
+#: THE ROUNDS ARE AN EPISTASIS LADDER, NOT A DOSE SERIES AND NOT REPLICATES. Each round
+#: transforms the library into the strain built from the previous round's best hit and
+#: raises the dose, so round 1 is the only one that measures a perturbation on its own in
+#: an unengineered parent. The paper demonstrates the difference with constructed strains
+#: (Fig. 4): the round-2 and round-3 hits, alone or together, "marginally improved furfural
+#: tolerance in the reference strain" and work only in the SIZ1i background. A round-2 or
+#: round-3 score is therefore an effect CONDITIONAL on the integrated edits, and comparing
+#: it with single-perturbation chemogenomics is a category error, not evidence.
 ROUNDS = {
-    "r1": "round 1, bAID, 5 mM furfural",
-    "r2": "round 2, bAID + SIZ1i, 10 mM furfural",
-    "r3": "round 3, bAID + SIZ1i + NAT1a, 15 mM furfural",
+    "r1": "round 1, bAID parent, 5 mM furfural",
+    "r2": "round 2, R1 parent (SIZ1i integrated), 10 mM furfural",
+    "r3": "round 3, R2 parent (SIZ1i + NAT1a integrated), 15 mM furfural",
+}
+#: Only round 1 measures a perturbation in an unengineered parent.
+COMPARABLE_ROUNDS = {"r1"}
+#: The edits each round's parent already carries, and their modality. NAT1a is an
+#: ACTIVATION, so the round-3 parent carries a gain-of-function the models cannot encode
+#: either, on top of the interference.
+PARENT_EDITS = {
+    "r1": "",
+    "r2": "SIZ1i (interference)",
+    "r3": "SIZ1i (interference) + NAT1a (activation)",
 }
 #: The paper's own validated hits, as (gene, mode, round); a check on the reprocessing.
 VALIDATED = [("SAP30", "d", "r1"), ("SLX5", "i", "r1"), ("PDR1", "i", "r3")]
@@ -196,6 +223,8 @@ def reliability(d: pd.DataFrame) -> pd.DataFrame:
                     "mode_label": MODES[mode],
                     "round": rnd,
                     "round_label": ROUNDS[rnd],
+                    "parent_edits": PARENT_EDITS[rnd],
+                    "measures_a_perturbation_alone": rnd in COMPARABLE_ROUNDS,
                     "n_genes_both_halves": n_genes,
                     "split_half_spearman": r,
                     "split_half_lo": float(np.percentile(halves, 2.5)),
@@ -243,6 +272,10 @@ def agreement(
                         "mode_label": MODES[mode],
                         "round": rnd,
                         "round_label": ROUNDS[rnd],
+                        "parent_edits": PARENT_EDITS[rnd],
+                        "comparable_to_single_perturbation_chemogenomics": (
+                            rnd in COMPARABLE_ROUNDS
+                        ),
                         "vanacloig_target": target,
                         "n_shared_genes": int(len(joined)),
                         "spearman": float(stat.statistic),
@@ -384,7 +417,7 @@ def figure(
 
     ax = axes[2]
     sub = agr[(agr["vanacloig_target"] == "centered")]
-    labels, values, ceilings, bar_colors = [], [], [], []
+    labels, values, ceilings, bar_colors, hatches = [], [], [], [], []
     for m in order:
         for rnd in ROUNDS:
             row = sub[(sub["mode"] == m) & (sub["round"] == rnd)].iloc[0]
@@ -392,8 +425,13 @@ def figure(
             values.append(row["spearman"])
             ceilings.append(row["attenuation_ceiling"])
             bar_colors.append(colors[m])
+            hatches.append("" if rnd in COMPARABLE_ROUNDS else "///")
     y = np.arange(len(labels))
-    ax.barh(y, values, color=bar_colors, edgecolor="black", linewidth=0.5, height=0.65)
+    bars = ax.barh(
+        y, values, color=bar_colors, edgecolor="black", linewidth=0.5, height=0.65
+    )
+    for bar, hatch in zip(bars, hatches, strict=True):
+        bar.set_hatch(hatch)
     ax.plot(ceilings, y, marker="D", markersize=2.5, linestyle="none", color=RED)
     ax.axvline(0.0, color="black", linewidth=0.5)
     ax.set_yticks(y)
@@ -401,17 +439,23 @@ def figure(
     ax.invert_yaxis()
     ax.set_xlabel("Spearman against the Vanacloig furfural profile")
     ax.set_xlim(-0.1, 0.75)
-    ax.set_title("no mode agrees, at any round")
+    ax.set_title("round 1 reads zero against its ceiling")
     mr.box(ax)
 
     handles = [
-        plt.Line2D([], [], marker="D", color=RED, linestyle="none", markersize=2.5)
+        plt.Line2D([], [], marker="D", color=RED, linestyle="none", markersize=2.5),
+        matplotlib.patches.Patch(
+            facecolor="white", edgecolor="black", linewidth=0.5, hatch="///"
+        ),
     ]
     fig.legend(
         handles,
-        ["attenuation ceiling, sqrt(reliability of each side)"],
+        [
+            "attenuation ceiling, sqrt(reliability of each side)",
+            "epistatic round: the parent carries the earlier rounds' hits",
+        ],
         loc="lower center",
-        ncol=1,
+        ncol=2,
         frameon=False,
     )
     fig.subplots_adjust(left=0.07, right=0.99, top=0.9, bottom=0.26, wspace=0.42)
@@ -519,6 +563,10 @@ def main() -> None:
         ),
         "deletion_round1_spearman_vs_vanacloig": float(
             deletion[deletion["round"] == "r1"]["spearman"].iloc[0]
+        ),
+        "only_comparable_round": (
+            "r1, the bAID parent; rounds 2 and 3 screen engineered parents and measure "
+            "effects conditional on the integrated edits"
         ),
         "best_agreement_any_mode_round": {
             "mode": str(best["mode"]),

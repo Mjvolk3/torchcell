@@ -179,6 +179,16 @@ authors or trust a live URL. Model these records with pydantic.
   as HTTP 500 on `/files` + manifest-backed artifacts (vs a clean 404 for a genuinely
   absent OCR file) -- that is the honest no-fallback behavior, and it flags a key that
   needs re-OCR/re-backfill.
+- **Searching the literature (`/zot-search`, GilaHyper only).** Semantic + BM25 search
+  over the WHOLE personal Zotero library (2,267 items: papers, SI, books, web snapshots,
+  highlights, notes) runs through the thesis repo's `zotlib` index at
+  `/bulk/zotero-library/_index/bge-large`; `scripts/zot_search.sh` wraps it without
+  making zotlib a torchcell dependency, and the skill holds the retrieve -> rerank ->
+  quote-from-source protocol plus the torchcell collection keys. That is a THIRD tree
+  beside the torchcell mirror and Zotero: find passages there, but a quote that goes into
+  a loader or a provenance record is re-located and re-hashed in
+  `$DATA_ROOT/torchcell-library/`, because the two pipelines OCR the same PDF
+  differently.
 - **NEVER put a paper into Zotero. The library is curated by hand, and an agent
   writes to it in exactly one way: publishing OUR OWN built PDF.** Do not download,
   fetch, or deposit a paper into Zotero; do not run

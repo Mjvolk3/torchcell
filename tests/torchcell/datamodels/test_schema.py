@@ -3398,3 +3398,149 @@ def test_expression_score_family_is_in_every_union_and_map() -> None:
         s.EXPERIMENT_REFERENCE_TYPE_MAP["microarray_expression_score"]
         is s.MicroarrayExpressionScoreExperimentReference
     )
+
+
+# Hackett 2020 (2026.10.11): the inducible promoter insertion leaf and the induction
+# time-course phenotype. Two genes, YAL001C and YAL002W; every layer the same keys.
+# --------------------------------------------------------------------------- #
+def _insertion(**overrides: Any) -> s.InduciblePromoterInsertionPerturbation:
+    fields: dict[str, Any] = {
+        "systematic_gene_name": "YER045C",
+        "perturbed_gene_name": "ACA1",
+        "promoter_name": "Z3EVpr",
+        "cassette": "KanMX-Z3EVpr-ACA1",
+        "marker": "KanMX",
+        "responsive_to": "ZEV",
+        "native_promoter_retained": True,
+        "strain_id": "SMY2049",
+    }
+    return s.InduciblePromoterInsertionPerturbation(**(fields | overrides))
+
+
+def test_inducible_insertion_is_an_increased_expression_insertion() -> None:
+    leaf = _insertion()
+    assert (
+        leaf.perturbation_type,
+        leaf.mechanism_so_id,
+        leaf.mechanism_so_name,
+        leaf.expression_direction,
+        leaf.state,
+        leaf.crispr,
+    ) == (
+        "inducible_promoter_insertion",
+        "SO:0000667",
+        "insertion",
+        "increased",
+        "present",
+        None,
+    )
+    parsed = TypeAdapter(Genotype).validate_python(
+        {"perturbations": [leaf.model_dump()]}
+    )
+    assert parsed.perturbations == [leaf]
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"marker": "  "}, "marker cannot be empty"),
+        ({"strain_id": ""}, "strain_id cannot be empty"),
+        ({"expression_direction": "decreased"}, "must be 'increased'"),
+        (
+            {"crispr": s.CrisprConstruct(effector="dCas9")},
+            "carries no CRISPR construct",
+        ),
+    ],
+)
+def test_inducible_insertion_refusals(overrides: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        _insertion(**overrides)
+
+
+_TWO = {"YAL001C": 0.5, "YAL002W": -0.25}
+
+
+def _timecourse(**overrides: Any) -> s.InductionTimecourseExpressionPhenotype:
+    fields: dict[str, Any] = {
+        "log2_cleaned": dict(_TWO),
+        "log2_noise_sd": {"YAL001C": 0.1, "YAL002W": 0.2},
+        "sample_channel_intensity": {"YAL001C": 300.0, "YAL002W": 50.0},
+        "reference_channel_intensity": {"YAL001C": 200.0, "YAL002W": 60.0},
+        "log2_ratio_unprocessed": dict(_TWO),
+        "log2_thresholded": {"YAL001C": 0.5, "YAL002W": 0.0},
+        "log2_selected": {"YAL001C": 0.5, "YAL002W": 0.0},
+        "log2_shrunken": {"YAL001C": 0.4, "YAL002W": 0.0},
+        "timecourse_id": "ACA1_SMY2049_02/29/2016_P_ZEV",
+        "strain_label": "SMY2049",
+        "experiment_date": "02/29/2016",
+        "release_table": "idea_tall_expression_data.zip",
+    }
+    return s.InductionTimecourseExpressionPhenotype(**(fields | overrides))
+
+
+def test_timecourse_phenotype_sorts_its_layers_and_names_its_label() -> None:
+    phen = _timecourse(log2_cleaned={"YAL002W": -0.25, "YAL001C": 0.5})
+    # the before-validator sorts; pydantic then stores the sorted mapping as a dict
+    assert list(phen.log2_cleaned) == ["YAL001C", "YAL002W"]
+    assert (phen.graph_level, phen.label_name, phen.label_statistic_name) == (
+        "node",
+        "log2_cleaned",
+        "log2_noise_sd",
+    )
+    assert repr(phen) == (
+        "InductionTimecourseExpressionPhenotype("
+        "timecourse_id='ACA1_SMY2049_02/29/2016_P_ZEV', genes=2)"
+    )
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"log2_selected": {"YAL001C": 0.5}}, "log2_selected must have the genes"),
+        (
+            {"reference_channel_intensity": {"YAL001C": -1.0, "YAL002W": 1.0}},
+            "reference_channel_intensity cannot be negative",
+        ),
+        ({"log2_noise_sd": {"YAL001C": -0.1, "YAL002W": 0.1}}, "log2_noise_sd cannot"),
+        ({"log2_cleaned": {"YAL001C": math.inf, "YAL002W": 0.0}}, "non-finite"),
+        ({"log2_shrunken": {}}, "cannot be empty"),
+        ({"log2_shrunken": None}, "log2_shrunken is unset"),
+        ({"experiment_date": None}, "experiment_date is unset"),
+        ({"timecourse_id": " "}, "timecourse_id cannot be empty"),
+    ],
+)
+def test_timecourse_phenotype_refusals(overrides: dict[str, Any], message: str) -> None:
+    with pytest.raises(ValueError, match=message):
+        _timecourse(**overrides)
+
+
+def test_timecourse_phenotype_accepts_a_gapped_layer() -> None:
+    phen = _timecourse(
+        log2_shrunken=None,
+        provenance_gaps=[
+            {"field": "log2_shrunken", "reason": "not_reported_by_primary"}
+        ],
+    )
+    assert phen.log2_shrunken is None
+    assert phen.gapped_fields() == {"log2_shrunken"}
+
+
+def test_timecourse_family_is_in_every_union_and_map() -> None:
+    assert s.InductionTimecourseExpressionPhenotype in typing.get_args(s.PhenotypeType)
+    assert s.InductionTimecourseExpressionExperiment in typing.get_args(
+        s.ExperimentType
+    )
+    assert s.InductionTimecourseExpressionExperimentReference in typing.get_args(
+        s.ExperimentReferenceType
+    )
+    assert s.InduciblePromoterInsertionPerturbation in typing.get_args(
+        s.GenePerturbationType
+    )
+    assert (
+        s.EXPERIMENT_TYPE_MAP["induction_timecourse_expression"]
+        is s.InductionTimecourseExpressionExperiment
+    )
+    assert (
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["induction_timecourse_expression"]
+        is s.InductionTimecourseExpressionExperimentReference
+    )

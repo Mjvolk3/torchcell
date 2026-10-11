@@ -26,6 +26,9 @@ from .dechiara2022 import (
     DoublingTimeDeChiara2022Dataset as DoublingTimeDeChiara2022Dataset,
 )
 from .dechiara2022 import LifeCycleDeChiara2022Dataset as LifeCycleDeChiara2022Dataset
+from .hackett2020 import (
+    InductionTimecourseHackett2020Dataset as InductionTimecourseHackett2020Dataset,
+)
 from .hale2024 import CrispriSegregantHale2024Dataset as CrispriSegregantHale2024Dataset
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
@@ -154,6 +157,8 @@ kemmeren_datasets = ["MicroarrayKemmeren2014Dataset"]
 
 hu2007_datasets = ["MicroarrayScoreHu2007Dataset"]
 
+hackett2020_datasets = ["InductionTimecourseHackett2020Dataset"]
+
 yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
@@ -207,6 +212,7 @@ __all__ = (
     + nadal_ribelles_datasets
     + kemmeren_datasets
     + hu2007_datasets
+    + hackett2020_datasets
     + yeastphenome_datasets
     + bloom_datasets
     + peter2018_datasets

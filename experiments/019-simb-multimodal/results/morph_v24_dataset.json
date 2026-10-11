@@ -1,0 +1,74 @@
+{
+ "generated_by": "experiments/019-simb-multimodal/scripts/morph_v24_dataset_table.py",
+ "stores": {
+  "fig3_core": {
+   "genotypes": 5125,
+   "by_label": {
+    "expression": 1554,
+    "fitness": 4606,
+    "morphology": 4695
+   },
+   "morphology_and_expression": 1439,
+   "morphology_and_proteome": null,
+   "all_three": null,
+   "split_seed_0": {
+    "train": 4074,
+    "val": 534,
+    "test": 517
+   },
+   "arms": {
+    "M_cls, M_pool": {
+     "train": 3757,
+     "val": 469,
+     "test": 469
+    },
+    "CM_expr, CM_exprperm, CMP_expr, CMP_exprperm": {
+     "train": 1161,
+     "val": 132,
+     "test": 146
+    }
+   }
+  },
+  "fig3_morph_proteome": {
+   "genotypes": 4977,
+   "by_label": {
+    "expression": 1554,
+    "morphology": 4695,
+    "proteome": 4476
+   },
+   "morphology_and_expression": 1439,
+   "morphology_and_proteome": 4281,
+   "all_three": 1321,
+   "split_seed_0": {
+    "train": 3952,
+    "val": 507,
+    "test": 518
+   },
+   "arms": {
+    "MP_cls, CM_prot, CM_protperm": {
+     "train": 3464,
+     "val": 416,
+     "test": 401
+    }
+   }
+  }
+ },
+ "target": {
+  "source_mutants": 4718,
+  "wt_replicates": 122,
+  "base_features": 281,
+  "model_features": 278,
+  "moving_features": 116,
+  "reliability_threshold": 0.5,
+  "ceiling_all_mean": 0.6107766497713332,
+  "ceiling_moving_mean": 0.8471829757256504,
+  "ceiling_moving_min": 0.7123946908282547,
+  "ridge_measured_proteome_moving": 0.27950700540446516,
+  "ridge_measured_expression_moving": 0.32360076452499553,
+  "sequence_baselines_all278": {
+   "B2_bilinear": 0.08610269498648782,
+   "B3_neighbor_average": 0.08757668044081923
+  },
+  "normalization": "Yeo-Johnson per feature, fit on the training rows"
+ }
+}

@@ -42,13 +42,6 @@ from .scerevisiae.kuzmin2020 import DmiKuzmin2020Dataset as DmiKuzmin2020Dataset
 from .scerevisiae.kuzmin2020 import SmfKuzmin2020Dataset as SmfKuzmin2020Dataset
 from .scerevisiae.kuzmin2020 import TmfKuzmin2020Dataset as TmfKuzmin2020Dataset
 from .scerevisiae.kuzmin2020 import TmiKuzmin2020Dataset as TmiKuzmin2020Dataset
-from .scerevisiae.sgd import GeneEssentialitySgdDataset as GeneEssentialitySgdDataset
-from .scerevisiae.synth_leth_db import (
-    SynthLethalityYeastSynthLethDbDataset as SynthLethalityYeastSynthLethDbDataset,
-)
-from .scerevisiae.synth_leth_db import (
-    SynthRescueYeastSynthLethDbDataset as SynthRescueYeastSynthLethDbDataset,
-)
 from .sgd_gene_graph import GraphEmbeddingDataset as GraphEmbeddingDataset
 
 embedding_datasets = [
@@ -85,19 +78,7 @@ kuzmin2020_datasets = [
     "DmiKuzmin2020Dataset",
     "TmiKuzmin2020Dataset",
 ]
-synth_leth_db_datasets = [
-    "SynthLethalityYeastSynthLethDbDataset",
-    "SynthRescueYeastSynthLethDbDataset",
-]
-sgd_datasets = ["GeneEssentialitySgdDataset"]
-
-organism_datasets = (
-    costanzo2016_datasets
-    + kuzmin2018_datasets
-    + kuzmin2020_datasets
-    + synth_leth_db_datasets
-    + sgd_datasets
-)
+organism_datasets = costanzo2016_datasets + kuzmin2018_datasets + kuzmin2020_datasets
 
 # + experiment_datasets
 __all__ = embedding_datasets + organism_datasets

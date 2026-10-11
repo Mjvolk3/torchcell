@@ -284,14 +284,6 @@ MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
         "DmMicroarraySameith2015Dataset": "dm_microarray_sameith2015_adapter.yaml",
         "SmMicroarraySameith2015Dataset": "sm_microarray_sameith2015_adapter.yaml",
     },
-    "synth_leth_db_adapter.py": {
-        "SynthLethalityYeastSynthLethDbDataset": (
-            "synth_lethality_yeast_synth_leth_db_adapter.yaml"
-        ),
-        "SynthRescueYeastSynthLethDbDataset": (
-            "synth_rescue_yeast_synth_leth_db_adapter.yaml"
-        ),
-    },
     "zelezniak2018_adapter.py": {
         "MetaboliteZelezniak2018Dataset": "metabolite_zelezniak2018_adapter.yaml",
         "ProteomeZelezniak2018Dataset": "proteome_zelezniak2018_adapter.yaml",

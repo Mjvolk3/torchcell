@@ -29,10 +29,7 @@ report PASS:
   library's own name-only components are the subject of
   ``test_shared_media_compounds_are_identified_or_gapped``).
 - L3 ``media_membership`` -- a medium must BE a shared ``MEDIA_LIBRARY`` object or derive
-  from one by ``base_medium``; a free-text medium joins nothing. An environment whose
-  source states no medium carries ``media`` None with a ``ProvenanceGap(field='media')``
-  (#901/#902/#903); that typed absence is counted as gapped and passes, while a missing
-  medium with no gap stays free text.
+  from one by ``base_medium``; a free-text medium joins nothing.
 - L4 ``gene_containment_sgd`` + ``current_genome_genes`` -- the aggregate containment
   floor stays, and a record keyed to a systematic name the current genome does not carry
   fails outright (a 0.993 containment hid seven records on retired ORFs).
@@ -417,18 +414,7 @@ class SharedRecordRules:
             environment, self._environment_compounds
         ):
             self._compound_records[(context, name, verdict)] += 1
-        media = environment.get("media")
-        # --- begin #901/#902/#903: a typed medium gap ------------------------- #
-        if media is None:
-            reasons = [
-                str(gap.get("reason"))
-                for gap in environment.get("provenance_gaps") or []
-                if gap.get("field") == "media"
-            ]
-            verdict = f"gapped:{reasons[0]}" if reasons else "free_text"
-            self._media_records[("None", verdict, "None")] += 1
-            return
-        # --- end #901/#902/#903 ---------------------------------------------- #
+        media = environment.get("media") or {}
         name, verdict = self._media_memo.get(media, self._media_verdict)
         self._media_records[(name, verdict, str(media.get("base_medium")))] += 1
 
@@ -757,14 +743,11 @@ class SharedRecordRules:
         """L3: every medium is a shared library object or derives from one."""
         free_text: Counter[str] = Counter()
         matched: dict[str, str] = {}
-        gapped: Counter[str] = Counter()
         n_library = 0
         n_derived = 0
         for (name, verdict, base), count in self._media_records.items():
             if verdict == "free_text":
                 free_text[f"{name} (base_medium={base})"] += count
-            elif verdict.startswith("gapped:"):
-                gapped[verdict.removeprefix("gapped:")] += count
             elif verdict.startswith("library:"):
                 n_library += count
                 matched[name] = verdict
@@ -772,14 +755,6 @@ class SharedRecordRules:
                 n_derived += count
                 matched[name] = verdict
         passed = not free_text
-        n_gapped = sum(gapped.values())
-        gapped_clause = (
-            f", {n_gapped} with a typed medium gap ("
-            + ", ".join(f"{reason} x{n}" for reason, n in sorted(gapped.items()))
-            + ")"
-            if n_gapped
-            else ""
-        )
         return LevelResult(
             level=Level.L3,
             name="media_membership",
@@ -787,7 +762,6 @@ class SharedRecordRules:
             message=(
                 f"{n_library} records on a shared MEDIA_LIBRARY medium, {n_derived} on a "
                 f"medium deriving from one ({len(matched)} distinct media)"
-                + gapped_clause
                 if passed
                 else f"{len(free_text)} free-text media over {sum(free_text.values())} "
                 "records join nothing: "
@@ -798,8 +772,6 @@ class SharedRecordRules:
             details={
                 "n_library_records": n_library,
                 "n_derived_records": n_derived,
-                "n_gapped_records": n_gapped,
-                "gapped_reasons": dict(sorted(gapped.items())),
                 "matched_media": dict(sorted(matched.items())),
                 "free_text_records": dict(free_text.most_common(50)),
             },

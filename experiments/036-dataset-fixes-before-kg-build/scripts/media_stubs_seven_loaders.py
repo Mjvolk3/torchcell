@@ -21,6 +21,12 @@ dev rebuild runs under slurm.
 
 Writes ``experiments/036-dataset-fixes-before-kg-build/results/media_stubs_seven_loaders.csv``.
 
+2026-10-11: the two SynLethDB loader classes left the repository. Environment.media is
+required (owner decision), SynLethDB states no growth medium, so the source is a
+provenance record (torchcell/datasets/scerevisiae/synth_leth_db.py) and builds no
+store. The SynLethDB arm of this script therefore cannot be re-run; its committed
+results stand as the record of what it measured while the loaders existed.
+
 Usage (from the repo root)::
 
     python experiments/036-dataset-fixes-before-kg-build/scripts/media_stubs_seven_loaders.py \
@@ -54,7 +60,6 @@ from torchcell.datasets.scerevisiae import (
     ohnuki2018,
     ohya2005,
     ozaydin2013,
-    synth_leth_db,
     yoshida2012,
 )
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
@@ -77,6 +82,20 @@ def _nadal_environments() -> list[Environment | Media]:
 #: in-process here?). "What it emits" is the whole Environment where the loader builds it
 #: from module-level objects (SynLethDB, Nadal-Ribelles), else the medium object its
 #: ``create_experiment`` passes (temperature there is unchanged by issue #622).
+#: Why the SynLethDB arm of this script can no longer run.
+SYNLETHDB_LOADERS_REMOVED = (
+    "the SynLethDB loader classes left the repository on 2026-10-11: "
+    "Environment.media is required and SynLethDB states no growth medium, so the "
+    "source is a provenance record (torchcell/datasets/scerevisiae/synth_leth_db.py) "
+    "that builds no store. The committed results of this script stand as the record "
+    "of what it measured while the loaders existed."
+)
+
+
+class SynLethDbLoaderRemoved(RuntimeError):
+    """This script's SynLethDB arm needs a loader that no longer exists."""
+
+
 Emitted = Environment | Media
 LOADERS: dict[str, tuple[list[str], list[Emitted], list[SourcedValue], bool]] = {
     "caudal2024": (
@@ -224,28 +243,13 @@ def build_small(scratch_root: str, data_root: str) -> dict[str, str]:
     dasilveira2014.MetaboliteDaSilveira2014Dataset(root=ds, genome=genome)
     out["metabolite_dasilveira2014"] = osp.join(ds, "processed")
 
-    for slug, csv_name, cls in (
-        (
-            "synth_lethality_yeast_synth_leth_db",
-            synth_leth_db.SL_CSV_NAME,
-            synth_leth_db.SynthLethalityYeastSynthLethDbDataset,
-        ),
-        (
-            "synth_rescue_yeast_synth_leth_db",
-            synth_leth_db.SR_CSV_NAME,
-            synth_leth_db.SynthRescueYeastSynthLethDbDataset,
-        ),
-    ):
-        root = osp.join(scratch_root, slug)
-        os.makedirs(osp.join(root, "raw"), exist_ok=True)
-        dest = osp.join(root, "raw", csv_name)
-        if not osp.exists(dest):
-            shutil.copy(
-                osp.join(data_root, "data/torchcell", slug, "raw", csv_name), dest
-            )
-        cls(root=root, genome=genome)
-        out[slug] = osp.join(root, "processed")
-    return out
+    # 2026-10-11: the two SynLethDB loader classes left the repository.
+    # Environment.media is required (owner decision), SynLethDB states no growth
+    # medium, so the source is a provenance record
+    # (torchcell/datasets/scerevisiae/synth_leth_db.py) and builds no store. The
+    # SynLethDB arm of this script therefore cannot be re-run; its committed results
+    # stand as the record of what it measured while the loaders existed.
+    raise SynLethDbLoaderRemoved(SYNLETHDB_LOADERS_REMOVED)
 
 
 def _media(emitted: Emitted) -> Media:

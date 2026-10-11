@@ -2,87 +2,101 @@
 # [[torchcell.datasets.scerevisiae.sgd]]
 # https://github.com/Mjvolk3/torchcell/tree/main/torchcell/datasets/scerevisiae/sgd
 # Test file: tests/torchcell/datasets/scerevisiae/test_sgd.py
+"""SGD phenotype annotations: a provenance record of a compendium that states no medium.
 
-"""SGD-derived gene essentiality dataset for S. cerevisiae.
+SGD's locus ``phenotype_details`` API (Cherry et al. 1998, citation key
+``cherrySGDSaccharomycesGenome1998``) holds 1,329 annotations reading ``mutant_type``
+"null", strain "S288C" and phenotype "inviable" across the 6,607 per-gene JSON files
+``torchcell.graph.sgd.main_get_all_genes`` wrote, pinned by :data:`SGD_GENES_DIGEST`.
+Those annotations were served as ``GeneEssentialitySgdDataset`` until 2026-10-11.
 
-The source is SGD's per-gene API dump, ``$DATA_ROOT/data/sgd/genome/genes/<ORF>.json``
-(the locus ``phenotype_details`` responses ``torchcell.graph.sgd.main_get_all_genes``
-wrote, 6,607 files), pinned by one sha256 over the sorted ``"<file name> <file
-sha256>"`` lines (:data:`SGD_GENES_DIGEST`). The build reads those files, not a graph
-built from them, and refuses bytes off the pin.
+DECISION: NOT LOADED. This module registers no dataset, in the MCF2Chem 2023
+(:mod:`torchcell.datasets.ecoli.cai2023`) and CeCaFDB 2015
+(:mod:`torchcell.datasets.ecoli.zhang2015`) pattern. ``Environment.media`` is required,
+because an inviable call is a growth measurement and a growth measurement happened in
+some medium; a source that does not name the medium cannot produce a record, and the
+schema is not weakened to admit one. Every clause below is a measurement on the pinned
+dump, not a preference.
 
-One record per SGD annotation with ``mutant_type`` "null", strain "S288C" and phenotype
-"inviable" (1,329 in the pinned dump), under two rules (#901):
+**1. No annotation states a medium the schema can carry.** Measured by
+:func:`condition_inventory` over all 1,329 annotations: 1,299 carry no condition
+property at all and 30 carry exactly one, and those 30 are the four pairs of
+:data:`SGD_CONDITION_PAIRS`. Twenty-seven read "nitrogen starvation" and one "2%
+glucose", which are nutrient edits to an unnamed base medium; one reads "elevated
+temperature, 37 °C", which is a temperature. Exactly one annotation names a medium at
+all (YIL051C / MMF1 / ``mmf1-Δ``, "YPD with 2% glucose"), and it names no physical
+state, while ``Media.state`` is required and validated against solid, liquid and gas.
+No annotation anywhere in the dump carries any of "solid", "liquid", "agar", "plate",
+"broth" or "culture". So the storable-record count is **0 of 1,329**, and 1 only if the
+physical state of that one medium were guessed. The medium of an SGD annotation lives
+in the annotation's own reference, which is a per-annotation primary paper: 208 of the
+1,329 annotations come from "classical genetics" and 1,121 from a "systematic mutation
+set" (:func:`experiment_type_inventory`), spanning hundreds of papers. Loading those
+papers is a different act from loading SGD, and it is the loadable path.
 
-- **Allele.** Every annotation names one allele. A record is stored only when that allele
-  is the whole-gene deletion SGD writes ``<gene>-Δ``: the genotype is a deletion of the
-  gene. The other 42 annotations name a point, truncation or internal-deletion allele
-  (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``); the schema has no leaf that carries a
-  named allele verbatim (#984), and storing them as a whole-gene deletion is what made
-  24 records exact duplicates of a sibling. They are ledgered in
-  ``preprocess/dropped_records.json`` (:class:`SgdDropLog`), never stored.
-- **Condition.** An annotation's condition properties are carried, never dropped: the
-  pinned dump holds four (class, text) pairs, each mapped by :data:`SGD_CONDITIONS` and
-  any other refused by name. "nitrogen starvation" and "2% glucose" are nutrient edits
-  (``EnvironmentPhysicalPerturbation``), "elevated temperature, 37 °C" is the
-  temperature, and "YPD with 2% glucose" names a medium without its physical state,
-  which ``Media`` cannot hold, so it is a typed gap that quotes it. The medium and the
-  temperature an annotation does not state are typed gaps (``not_carried_by_curation``):
-  the old loader guessed YEPD solid at 30 C for every record.
+**2. What the served store therefore was.** It gave every one of its 1,329 records a
+``Media(name="YEPD", state="solid", is_synthetic=False)`` and a ``Temperature(30)``
+that SGD never states, under a comment that said so ("for this dataset all meta data is
+guessed"). The 30 conditions SGD does state were dropped, so the 18 whole-gene-deletion
+annotations measured under nitrogen starvation were stored as if grown in rich medium,
+which inverts their meaning.
+
+**3. The allele layer was also wrong, independently of the medium.** Every annotation
+names exactly one allele (:func:`allele_inventory`). 1,287 name the whole-gene deletion
+SGD writes ``<gene>-Δ``; the other 42 name a point, truncation or internal-deletion
+allele (``cdc42-111``, ``sac1Δ114-503``, ``hht2-L61P``), which no schema leaf carries
+verbatim (#984). The served store stored all 42 as whole-gene deletions, which made 24
+of them exact duplicates of a sibling record across 9 (gene, PubMed id) keys
+(:func:`collapse_duplicates`), the largest being SAC1 with ten alleles under one paper.
+
+**4. The calls contradict a served fitness store, and the conditions are why.** 24 of
+the genes SGD calls inviable have a viable full-deletion single-mutant fitness in
+``SmfCostanzo2016Dataset`` (4,581 viable full deletions). Keeping only whole-gene
+deletion alleles removes one (YNL031C, three ``hht2`` point alleles), and of the
+remaining 23, 16 are conditional, 15 of them under nitrogen starvation and all 15
+autophagy genes (``ATG1``, ``ATG3``, ``ATG7``-``ATG18``), which are viable in rich
+medium and inviable without nitrogen. 7 disagreements are unconditional
+(:data:`UNCONDITIONAL_DISAGREEMENTS`) and remain unexplained. A store that discarded the
+condition could not tell the two groups apart.
+
+Script and committed results:
+``experiments/036-dataset-fixes-before-kg-build/scripts/sgd_synlethdb_findings.py``,
+``results/sgd_synlethdb_findings.json``.
+Finding: [[torchcell.datasets.scerevisiae.sgd]]. Issues #901, #984.
 """
+
+from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import os
 import os.path as osp
-import pickle
-import random
-import time
 from collections import Counter
-from collections.abc import Callable, Iterable, Mapping
-from typing import Any
+from collections.abc import Iterable, Mapping
+from typing import Any, Final
 
-import lmdb
-import pandas as pd
-from Bio import Entrez
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, Organism, file_sha256, post_process
-from torchcell.datamodels.compound_identity import resolved_compound
-from torchcell.datamodels.schema import (
-    Concentration,
-    ConcentrationUnit,
-    Environment,
-    EnvironmentPhysicalPerturbation,
-    GeneEssentialityExperiment,
-    GeneEssentialityExperimentReference,
-    GeneEssentialityPhenotype,
-    Genotype,
-    PhysicalFactor,
-    Publication,
-    ReferenceGenome,
-    SgaKanMxDeletionPerturbation,
-    Temperature,
-)
-from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.data import file_sha256
 from torchcell.graph.sgd import data_root
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
-logging.basicConfig(level=logging.INFO)
-log = logging.getLogger(__name__)
-
+# --------------------------------------------------------------------------- #
+# Provenance anchors
+# --------------------------------------------------------------------------- #
 #: Where the SGD per-gene API dump sits under ``$DATA_ROOT``.
-SGD_GENES_RELPATH = "data/sgd/genome/genes"
+SGD_GENES_RELPATH: Final = "data/sgd/genome/genes"
+
 #: sha256 over the sorted ``"<file name> <file sha256>"`` lines of the 6,607 gene JSONs
 #: the served build consumed (the #889 verifier's pin of the same dump). Any changed,
 #: added or removed file changes it.
-SGD_GENES_DIGEST = "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+SGD_GENES_DIGEST: Final = (
+    "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+)
 
-#: The pinned dump, as the place every gap of this dataset looked in.
-SGD_DUMP = Provenance(
+#: The pinned dump, as the place every measurement of this module was made.
+SGD_DUMP: Final = Provenance(
     source_uri=f"$DATA_ROOT/{SGD_GENES_RELPATH}/<systematic name>.json",
     citation_key="cherrySGDSaccharomycesGenome1998",
     sha256=SGD_GENES_DIGEST,
@@ -91,101 +105,84 @@ SGD_DUMP = Provenance(
     page="phenotype_details[].properties",
 )
 
-# --------------------------------------------------------------------------- #
-# Environment: the medium and temperature SGD does not state are typed gaps (#901)
-# --------------------------------------------------------------------------- #
-SGD_MEDIUM_GAP = ProvenanceGap(
-    field="media",
-    reason=ProvenanceGapReason.not_carried_by_curation,
-    looked_in=SGD_DUMP,
-    note="the SGD phenotype annotation carries no medium condition property; the "
-    "medium, if stated, is in the annotation's own reference (Publication.pubmed_id)",
-)
-SGD_TEMPERATURE_GAP = ProvenanceGap(
-    field="temperature",
-    reason=ProvenanceGapReason.not_carried_by_curation,
-    looked_in=SGD_DUMP,
-    note="the SGD phenotype annotation carries no temperature condition property",
-)
-#: "YPD with 2% glucose" names a medium without its physical state; ``Media.state`` is
-#: required, so the stated medium is a gap that quotes it rather than a guessed plate
-#: or broth.
-SGD_STATELESS_YPD_GAP = ProvenanceGap(
-    field="media",
-    reason=ProvenanceGapReason.not_carried_by_curation,
-    looked_in=SGD_DUMP,
-    note="SGD states the medium as 'YPD with 2% glucose' (condition property, class "
-    "media) without its physical state; Media requires a state, so the stated medium "
-    "cannot be carried and is not guessed",
-)
-
-SGD_ENVIRONMENT = Environment(
-    media=None, temperature=None, provenance_gaps=[SGD_MEDIUM_GAP, SGD_TEMPERATURE_GAP]
-)
-"""An annotation with no condition property: neither medium nor temperature is stated."""
-
-#: The verbatim (class_type, note) condition pairs of the pinned dump, and the
-#: environment each one is. Any other pair refuses the build (:class:`SgdConditionError`).
-SGD_CONDITIONS: dict[tuple[str, str], Environment] = {
-    ("media", "nitrogen starvation"): Environment(
-        media=None,
-        temperature=None,
-        perturbations=[
-            EnvironmentPhysicalPerturbation(
-                factor=PhysicalFactor.nitrogen_source, description="nitrogen starvation"
-            )
-        ],
-        provenance_gaps=[SGD_MEDIUM_GAP, SGD_TEMPERATURE_GAP],
-    ),
-    ("media", "2% glucose"): Environment(
-        media=None,
-        temperature=None,
-        perturbations=[
-            EnvironmentPhysicalPerturbation(
-                factor=PhysicalFactor.carbon_source,
-                description="2% glucose",
-                magnitude=Concentration(value=2.0, unit=ConcentrationUnit.percent),
-                agent=resolved_compound("glucose"),
-            )
-        ],
-        provenance_gaps=[SGD_MEDIUM_GAP, SGD_TEMPERATURE_GAP],
-    ),
-    ("media", "YPD with 2% glucose"): Environment(
-        media=None,
-        temperature=None,
-        provenance_gaps=[SGD_STATELESS_YPD_GAP, SGD_TEMPERATURE_GAP],
-    ),
-    ("temperature", "elevated temperature, 37 °C"): Environment(
-        media=None,
-        temperature=Temperature(value=37.0),
-        provenance_gaps=[SGD_MEDIUM_GAP],
-    ),
+#: The annotation triple this module reads: an inviable null mutant in the S288C
+#: reference background, which is what an essentiality call is.
+ANNOTATION_SELECTOR: Final[dict[str, str]] = {
+    "mutant_type": "null",
+    "strain": "S288C",
+    "phenotype": "inviable",
 }
 
-#: The one drop rule of this dataset.
-RULE_NOT_WHOLE_GENE_DELETION = "allele_not_whole_gene_deletion"
-_RULE_DESCRIPTION = (
-    "the annotation's allele is not the whole-gene deletion '<gene>-Δ' (a point, "
-    "truncation or internal-deletion allele); the schema has no leaf that carries a "
-    "named allele verbatim, and storing it as a deletion of the whole gene duplicated "
-    "the gene's other records, so it is ledgered, not stored"
+#: Every verbatim ``(class_type, note)`` condition pair the pinned dump carries on an
+#: annotation of :data:`ANNOTATION_SELECTOR`, and what each one is. None of them is a
+#: medium the schema can carry, which is clause 1 of the decision.
+SGD_CONDITION_PAIRS: Final[dict[tuple[str, str], str]] = {
+    ("media", "nitrogen starvation"): "a nutrient edit to an unnamed base medium",
+    ("media", "2% glucose"): "a carbon-source concentration, with no base medium",
+    (
+        "media",
+        "YPD with 2% glucose",
+    ): "the only annotation that names a medium; it names no physical state, which "
+    "Media requires",
+    ("temperature", "elevated temperature, 37 °C"): "a temperature, not a medium",
+}
+
+#: Words that would let a physical state be read off a condition rather than guessed.
+#: Measured absent from every condition property of the dump.
+PHYSICAL_STATE_WORDS: Final[tuple[str, ...]] = (
+    "solid",
+    "liquid",
+    "agar",
+    "plate",
+    "broth",
+    "culture",
 )
+
+#: The 7 genes SGD calls inviable with no condition at all that have a viable full
+#: deletion in ``SmfCostanzo2016Dataset``. Unexplained, and not explained by a
+#: condition; recorded so the disagreement is not lost with the store.
+UNCONDITIONAL_DISAGREEMENTS: Final[tuple[str, ...]] = (
+    "YHR072W-A",
+    "YHR099W",
+    "YJL012C",
+    "YLR293C",
+    "YNL138W-A",
+    "YOR167C",
+    "YOR182C",
+)
+
+#: The 16 genes whose disagreement IS explained by the annotation's condition, 15 of
+#: them autophagy genes measured under nitrogen starvation.
+CONDITIONAL_DISAGREEMENTS: Final[tuple[str, ...]] = (
+    "YBL078C",
+    "YBR128C",
+    "YBR217W",
+    "YCR068W",
+    "YDL149W",
+    "YFR021W",
+    "YGL180W",
+    "YHR171W",
+    "YKL212W",
+    "YLL042C",
+    "YLR423C",
+    "YMR159C",
+    "YNR007C",
+    "YPL120W",
+    "YPL149W",
+    "YPR185W",
+)
+
+#: Viable full deletions in the served ``SmfCostanzo2016Dataset`` store, the denominator
+#: of clause 4.
+VIABLE_FULL_DELETIONS_SMF_COSTANZO2016: Final = 4581
 
 
 class SgdDumpDigestError(ValueError):
     """The SGD per-gene dump under ``$DATA_ROOT`` is not the pinned bytes."""
 
 
-class SgdConditionError(ValueError):
-    """An annotation carries a condition property outside :data:`SGD_CONDITIONS`."""
-
-
 class SgdAlleleError(ValueError):
     """An annotation does not name exactly one allele."""
-
-
-class DuplicateSgdAnnotationError(ValueError):
-    """Two kept annotations are one (gene, condition, PubMed id) record."""
 
 
 class SgdAnnotation(BaseModel):
@@ -203,33 +200,47 @@ class SgdAnnotation(BaseModel):
     note: str | None
 
 
-class SgdDroppedAnnotation(BaseModel):
-    """One annotation the allele rule left out of the store, verbatim."""
+class ConditionInventory(BaseModel):
+    """What the dump states about the growth condition of every annotation."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    sgd_annotation_id: int
-    systematic_name: str
-    locus_display_name: str
-    allele: str
-    pubmed_id: str
-    conditions: list[str]
-    note: str | None
+    n_annotations: int
+    n_without_condition: int = Field(
+        description="annotations with no condition property"
+    )
+    pairs: dict[str, int] = Field(
+        description="count per verbatim '<class_type>: <note>' condition pair"
+    )
+    n_naming_a_medium: int = Field(
+        description="annotations whose condition names a medium by name"
+    )
+    n_stating_a_physical_state: int = Field(
+        description="annotations whose condition carries a PHYSICAL_STATE_WORDS term, "
+        "which Media.state would need"
+    )
+    n_storable: int = Field(
+        description="annotations that could be stored with a sourced Media: a named "
+        "medium AND its physical state"
+    )
 
 
-class SgdDropLog(BaseModel):
-    """The ledger of a build: what the dump holds, what was kept, and every drop."""
+class AlleleInventory(BaseModel):
+    """The allele layer: whole-gene deletions, every other allele, and the collapse."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    dataset: str
-    source_annotations: int
-    kept_records: int
-    dropped_records: int
-    sgd_genes_digest: str
-    rule: str
-    description: str
-    rows: list[SgdDroppedAnnotation]
+    n_annotations: int
+    n_whole_gene_deletion: int
+    n_other_allele: int
+    collapse_keys: dict[str, list[str]] = Field(
+        description="(gene, PubMed id) keys where storing every allele as a whole-gene "
+        "deletion made several annotations one record, and the alleles involved"
+    )
+    n_collapse_extra_records: int = Field(
+        description="records beyond one per collapse key, i.e. the duplicates the "
+        "served store held"
+    )
 
 
 def sgd_genes_digest(genes_dir: str) -> str:
@@ -246,12 +257,13 @@ def verify_sgd_dump(genes_dir: str) -> None:
     """Refuse a missing dump or bytes off :data:`SGD_GENES_DIGEST`.
 
     A fresh download (``torchcell.graph.sgd.main_get_all_genes``) is a new release with
-    its own digest: it needs a new pin and a new store, so it is never fetched here.
+    its own digest: the measurements here are stated of these bytes, so it is never
+    fetched.
     """
     if not osp.isdir(genes_dir):
         raise SgdDumpDigestError(
             f"{genes_dir} does not exist; the SGD per-gene dump pinned at "
-            f"{SGD_GENES_DIGEST} is the source of this dataset"
+            f"{SGD_GENES_DIGEST} is what this module's measurements are stated of"
         )
     observed = sgd_genes_digest(genes_dir)
     if observed != SGD_GENES_DIGEST:
@@ -271,7 +283,9 @@ def _allele(detail: Mapping[str, Any], where: str) -> str:
     return str(alleles[0])
 
 
-def inviable_null_annotations(genes_dir: str) -> list[SgdAnnotation]:
+def inviable_null_annotations(
+    genes_dir: str, *, progress: bool = True
+) -> list[SgdAnnotation]:
     """Every annotation reading ``null`` / ``S288C`` / ``inviable``, in file order.
 
     Files are read in sorted name order and annotations in the order SGD lists them;
@@ -279,14 +293,15 @@ def inviable_null_annotations(genes_dir: str) -> list[SgdAnnotation]:
     """
     out: list[SgdAnnotation] = []
     names = sorted(n for n in os.listdir(genes_dir) if n.endswith(".json"))
-    for name in tqdm(names):
+    for name in tqdm(names, disable=not progress):
         with open(osp.join(genes_dir, name), encoding="utf-8") as handle:
             payload = json.load(handle)
         for detail in payload.get("phenotype_details") or []:
             if not (
-                detail["mutant_type"] == "null"
-                and detail["strain"]["display_name"] == "S288C"
-                and detail["phenotype"]["display_name"] == "inviable"
+                detail["mutant_type"] == ANNOTATION_SELECTOR["mutant_type"]
+                and detail["strain"]["display_name"] == ANNOTATION_SELECTOR["strain"]
+                and detail["phenotype"]["display_name"]
+                == ANNOTATION_SELECTOR["phenotype"]
             ):
                 continue
             where = f"{name} annotation {detail['id']}"
@@ -321,292 +336,107 @@ def is_whole_gene_deletion(allele: str, locus_display_name: str) -> bool:
     return folded == f"{locus_display_name}-Δ".casefold()
 
 
-def condition_environment(annotation: SgdAnnotation) -> Environment:
-    """The environment an annotation's condition properties state (module docstring)."""
-    if not annotation.conditions:
-        return SGD_ENVIRONMENT
-    if len(annotation.conditions) != 1 or (
-        annotation.conditions[0] not in SGD_CONDITIONS
-    ):
-        raise SgdConditionError(
-            f"{annotation.systematic_name} annotation {annotation.sgd_annotation_id}: "
-            f"conditions {list(annotation.conditions)} are not in SGD_CONDITIONS"
-        )
-    return SGD_CONDITIONS[annotation.conditions[0]]
+def names_a_medium(conditions: Iterable[tuple[str, str]]) -> bool:
+    """True when a condition property names a growth medium, not an edit to one.
 
-
-def split_by_allele(
-    annotations: Iterable[SgdAnnotation],
-) -> tuple[list[SgdAnnotation], list[SgdAnnotation]]:
-    """``(kept, dropped)``: whole-gene deletion alleles first, every other allele second."""
-    kept: list[SgdAnnotation] = []
-    dropped: list[SgdAnnotation] = []
-    for annotation in annotations:
-        if is_whole_gene_deletion(annotation.allele, annotation.locus_display_name):
-            kept.append(annotation)
-        else:
-            dropped.append(annotation)
-    return kept, dropped
-
-
-def refuse_duplicate_annotations(kept: Iterable[SgdAnnotation]) -> None:
-    """Raise when two kept annotations share gene, condition and PubMed id."""
-    keys = Counter((a.systematic_name, a.conditions, a.pubmed_id) for a in kept)
-    repeated = sorted(str(key) for key, n in keys.items() if n > 1)
-    if repeated:
-        raise DuplicateSgdAnnotationError(
-            f"{len(repeated)} (gene, conditions, PubMed id) keys repeat: {repeated}"
-        )
-
-
-def drop_log(
-    dataset_name: str,
-    n_source: int,
-    kept: list[SgdAnnotation],
-    dropped: list[SgdAnnotation],
-) -> SgdDropLog:
-    """The ledger of one build."""
-    return SgdDropLog(
-        dataset=dataset_name,
-        source_annotations=n_source,
-        kept_records=len(kept),
-        dropped_records=len(dropped),
-        sgd_genes_digest=SGD_GENES_DIGEST,
-        rule=RULE_NOT_WHOLE_GENE_DELETION,
-        description=_RULE_DESCRIPTION,
-        rows=[
-            SgdDroppedAnnotation(
-                sgd_annotation_id=a.sgd_annotation_id,
-                systematic_name=a.systematic_name,
-                locus_display_name=a.locus_display_name,
-                allele=a.allele,
-                pubmed_id=a.pubmed_id,
-                conditions=[f"{kind}: {text}" for kind, text in a.conditions],
-                note=a.note,
-            )
-            for a in dropped
-        ],
+    The rule is the ``media`` class plus a medium NAME, which in this dump is the one
+    "YPD with 2% glucose" annotation. "nitrogen starvation" and "2% glucose" are the
+    ``media`` class too, so the class alone does not answer the question.
+    """
+    return any(
+        kind == "media"
+        and text.split()[0].upper() in {"YPD", "YPAD", "YEPD", "SC", "SD"}
+        for kind, text in conditions
     )
 
 
-def get_publication_info(pubmed_id: str) -> dict[str, str | None] | None:
-    """Fetch publication metadata (PubMed URL, DOI) for a PubMed ID via Entrez."""
-    Entrez.email = "mvjolk3@illinois.edu"  # type: ignore[assignment]  # Bio.Entrez.email stub typed as None
-    max_retries = 5
-    base_delay = 1  # seconds
-
-    for attempt in range(max_retries):
-        try:
-            handle = Entrez.efetch(  # type: ignore[no-untyped-call]  # Bio.Entrez has no stubs
-                db="pubmed", id=pubmed_id, rettype="xml", retmode="text"
-            )
-            records = Entrez.read(handle)  # type: ignore[no-untyped-call]  # Bio.Entrez has no stubs
-            handle.close()
-
-            article = records["PubmedArticle"][0]["MedlineCitation"]["Article"]
-
-            info: dict[str, str | None] = {
-                "pubmed_id": pubmed_id,
-                "pubmed_url": f"https://pubmed.ncbi.nlm.nih.gov/{pubmed_id}/",
-                "doi": None,
-                "doi_url": None,
-            }
-
-            # Try to get DOI from ELocationID
-            doi = next(
-                (
-                    eid
-                    for eid in article.get("ELocationID", [])
-                    if eid.attributes["EIdType"] == "doi"
-                ),
-                None,
-            )
-
-            # If DOI not found in ELocationID, try ArticleId
-            if not doi:
-                article_id_list = records["PubmedArticle"][0]["PubmedData"][
-                    "ArticleIdList"
-                ]
-                doi = next(
-                    (
-                        article_id
-                        for article_id in article_id_list
-                        if article_id.attributes["IdType"] == "doi"
-                    ),
-                    None,
-                )
-
-            if doi:
-                info["doi"] = str(doi)
-                info["doi_url"] = f"https://doi.org/{info['doi']}"
-
-            return info
-
-        except Exception as e:
-            if attempt < max_retries - 1:
-                delay = base_delay * (2**attempt) + random.uniform(0, 1)
-                print(
-                    f"Attempt {attempt + 1} failed. Retrying in {delay:.2f} seconds..."
-                )
-                time.sleep(delay)
-                continue
-            else:
-                print(f"Error fetching info for PubMed ID {pubmed_id}: {str(e)}")
-                return None
-
-    return None
+def states_a_physical_state(conditions: Iterable[tuple[str, str]]) -> bool:
+    """True when a condition property carries a word ``Media.state`` could be read from."""
+    return any(
+        word in text.casefold()
+        for _, text in conditions
+        for word in PHYSICAL_STATE_WORDS
+    )
 
 
-@register_dataset
-class GeneEssentialitySgdDataset(ExperimentDataset):
-    """Gene essentiality experiments built from SGD inviable null phenotypes."""
+def condition_inventory(annotations: Iterable[SgdAnnotation]) -> ConditionInventory:
+    """Clause 1, measured: what the dump states about each annotation's condition.
 
-    organism = Organism.scerevisiae
+    ``n_storable`` is the count a loader could honestly store: a named medium AND the
+    physical state ``Media`` requires. It is the number the decision rests on.
+    """
+    rows = list(annotations)
+    pairs = Counter(f"{kind}: {text}" for row in rows for kind, text in row.conditions)
+    return ConditionInventory(
+        n_annotations=len(rows),
+        n_without_condition=sum(1 for row in rows if not row.conditions),
+        pairs=dict(sorted(pairs.items())),
+        n_naming_a_medium=sum(1 for row in rows if names_a_medium(row.conditions)),
+        n_stating_a_physical_state=sum(
+            1 for row in rows if states_a_physical_state(row.conditions)
+        ),
+        n_storable=sum(
+            1
+            for row in rows
+            if names_a_medium(row.conditions)
+            and states_a_physical_state(row.conditions)
+        ),
+    )
 
-    def __init__(
-        self,
-        root: str = "data/torchcell/gene_essentiality_sgd",
-        io_workers: int = 0,
-        transform: Callable[..., Any] | None = None,
-        pre_transform: Callable[..., Any] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        """Initialize the experiment dataset (the source is the pinned SGD dump)."""
-        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
-    @property
-    def experiment_class(self) -> type[GeneEssentialityExperiment]:
-        """Return the experiment model class for this dataset."""
-        return GeneEssentialityExperiment
+def experiment_type_inventory(annotations: Iterable[SgdAnnotation]) -> dict[str, int]:
+    """Count per SGD ``experiment`` display name, the shape of the primary layer."""
+    return dict(sorted(Counter(row.experiment for row in annotations).items()))
 
-    @property
-    def reference_class(self) -> type[GeneEssentialityExperimentReference]:
-        """Return the experiment reference model class for this dataset."""
-        return GeneEssentialityExperimentReference
 
-    @property
-    def raw_file_names(self) -> list[str]:
-        """No files in ``raw/``: the source is the pinned dump under ``$DATA_ROOT``."""
-        return []
+def collapse_duplicates(
+    annotations: Iterable[SgdAnnotation],
+) -> tuple[dict[str, list[str]], int]:
+    """The duplicates that storing every allele as a whole-gene deletion produced.
 
-    def download(self) -> None:
-        """Do nothing; the pinned dump is verified in :meth:`process`, never fetched."""
-        pass
-
-    def preprocess_raw(
-        self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
-    ) -> pd.DataFrame:
-        """Return the DataFrame unchanged (no raw preprocessing needed)."""
-        return df
-
-    @post_process
-    def process(self) -> None:
-        """Verify the SGD dump, apply the allele rule, and write the LMDB and ledger."""
-        log.info("Processing SGD Gene Essentiality Data...")
-        genes_dir = osp.join(data_root(), SGD_GENES_RELPATH)
-        verify_sgd_dump(genes_dir)
-        annotations = inviable_null_annotations(genes_dir)
-        kept, dropped = split_by_allele(annotations)
-        refuse_duplicate_annotations(kept)
-        environments = [condition_environment(a) for a in kept]
-
-        os.makedirs(self.processed_dir, exist_ok=True)
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        ledger = drop_log(self.name, len(annotations), kept, dropped)
-        with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as f:
-            f.write(ledger.model_dump_json(indent=2))
-
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e12))
-        with env.begin(write=True) as txn:
-            for index, (annotation, environment) in enumerate(
-                zip(kept, environments, strict=True)
-            ):
-                experiment, reference, publication = self.create_experiment(
-                    self.name, annotation, environment
-                )
-                serialized_data = pickle.dumps(
-                    {
-                        "experiment": experiment.model_dump(),
-                        "reference": reference.model_dump(),
-                        "publication": publication.model_dump(),
-                    }
-                )
-                txn.put(f"{index}".encode(), serialized_data)
-        env.close()
-        log.info(
-            "%s: %d of %d annotations stored, %d ledgered (%s)",
-            self.name,
-            ledger.kept_records,
-            ledger.source_annotations,
-            ledger.dropped_records,
-            RULE_NOT_WHOLE_GENE_DELETION,
+    Returns the ``(gene, PubMed id)`` keys holding more than one annotation and the
+    alleles under each, plus the number of records beyond one per key, which is what the
+    served store carried twice.
+    """
+    by_key: dict[str, list[str]] = {}
+    for row in annotations:
+        by_key.setdefault(f"{row.systematic_name} PMID {row.pubmed_id}", []).append(
+            row.allele
         )
+    repeated = {key: alleles for key, alleles in by_key.items() if len(alleles) > 1}
+    extra = sum(len(alleles) - 1 for alleles in repeated.values())
+    return dict(sorted(repeated.items())), extra
 
-    @staticmethod
-    def create_experiment(  # type: ignore[override]  # dataset-specific signature
-        dataset_name: str, annotation: SgdAnnotation, environment: Environment
-    ) -> tuple[
-        GeneEssentialityExperiment, GeneEssentialityExperimentReference, Publication
-    ]:
-        """Build the experiment, reference, and publication for one kept annotation."""
-        genome_reference = ReferenceGenome(
-            species="Saccharomyces cerevisiae", strain="S288C"
-        )
 
-        genotype = Genotype(
-            perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=annotation.systematic_name,
-                    perturbed_gene_name=annotation.locus_display_name,
-                    strain_id="S288C",
-                )
-            ]
-        )
-
-        phenotype = GeneEssentialityPhenotype(is_essential=True)
-        phenotype_reference = GeneEssentialityPhenotype(is_essential=False)
-
-        pub_info = get_publication_info(annotation.pubmed_id)
-
-        if pub_info is None:
-            raise ValueError(
-                "Unable to retrieve publication information for PubMed ID: "
-                f"{annotation.pubmed_id}"
-            )
-
-        experiment = GeneEssentialityExperiment(
-            dataset_name=dataset_name,
-            genotype=genotype,
-            environment=environment,
-            phenotype=phenotype,
-        )
-
-        reference = GeneEssentialityExperimentReference(
-            dataset_name=dataset_name,
-            genome_reference=genome_reference,
-            environment_reference=environment,
-            phenotype_reference=phenotype_reference,
-        )
-
-        publication = Publication(
-            pubmed_id=pub_info["pubmed_id"],
-            pubmed_url=pub_info["pubmed_url"],
-            doi=pub_info["doi"],
-            doi_url=pub_info["doi_url"],
-        )
-
-        return experiment, reference, publication
+def allele_inventory(annotations: Iterable[SgdAnnotation]) -> AlleleInventory:
+    """Clause 3, measured: the allele layer and the records the collapse duplicated."""
+    rows = list(annotations)
+    whole = [
+        row
+        for row in rows
+        if is_whole_gene_deletion(row.allele, row.locus_display_name)
+    ]
+    keys, extra = collapse_duplicates(rows)
+    return AlleleInventory(
+        n_annotations=len(rows),
+        n_whole_gene_deletion=len(whole),
+        n_other_allele=len(rows) - len(whole),
+        collapse_keys=keys,
+        n_collapse_extra_records=extra,
+    )
 
 
 def main() -> None:
-    """Build and inspect the SGD gene essentiality dataset under ``$DATA_ROOT``."""
+    """Re-measure every clause of the decision from the pinned dump."""
     from dotenv import load_dotenv
 
     load_dotenv()
-    dataset = GeneEssentialitySgdDataset(
-        root=osp.join(data_root(), "data/torchcell/gene_essentiality_sgd")
-    )
-    print(dataset)
+    genes_dir = osp.join(data_root(), SGD_GENES_RELPATH)
+    verify_sgd_dump(genes_dir)
+    annotations = inviable_null_annotations(genes_dir)
+    print(condition_inventory(annotations).model_dump_json(indent=2))
+    print(allele_inventory(annotations).model_dump_json(indent=2))
+    print(experiment_type_inventory(annotations))
 
 
 if __name__ == "__main__":

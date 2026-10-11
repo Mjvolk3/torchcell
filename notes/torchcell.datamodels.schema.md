@@ -473,13 +473,21 @@ Additive, for De Chiara 2022 ([[torchcell.datasets.scerevisiae.dechiara2022]]):
 
 Schema impact vs origin/main: 96 datasets impacted, 0 breaking.
 
-## 2026.10.11 - A typed gap on the medium (#901, #902, #903)
+## 2026.10.11 - Environment.media stays required (owner decision, reversing the typed medium gap)
 
-`Environment.media` is `Media | None`, still required (no default), and a model validator (`_medium_or_gap`, through `_require_value_or_gap`) refuses `None` unless the environment carries `ProvenanceGap(field='media')`; the mixin already refuses a gap beside a stated medium. So a source that states no growth medium is a typed absence, not a stand-in `Media`: SynLethDB's aggregated pairs and SGD phenotype annotations with no medium condition ([[torchcell.datasets.scerevisiae.synth_leth_db]], [[torchcell.datasets.scerevisiae.sgd]]). This is the `Environment.media` optional choice of the two #622 left open (the other was `ProvenanceGapMixin` on `Media` with an optional state): it names the absence on the field that is absent, and a gapped medium creates no `Media` node that unrelated records would share.
+Earlier the same day this branch made `Environment.media` `Media | None`, required but satisfiable by a `ProvenanceGap(field='media')`, so a source that states no growth medium could still produce a record. The owner reversed it, verbatim: "i don't think env / media should be optional... if there are some cell growth under some condition i think we need it ... if we are blocked by the compendia... then we shouldn't use that compendia."
 
-Consumers: `environment_identity` projects a gapped medium as `None` (never merging with a stated one, as a gapped temperature does); `CellAdapter` emits no media node and no `media member of` edge for it and sets the environment node's `media` property to `None`; `environment_compound_collisions` reads no components; L3 `media_membership` counts it by gap reason and passes ([[torchcell.verification.common]]). Elsewhere, code that reads `environment.media.<field>` on a dataset with a stated medium is unchanged at runtime; strict mypy now asks such code to narrow the Optional when its file is next edited.
+The rule, in three parts:
 
-Schema impact (`PYTHONPATH=<wt> python scripts/schema_impact_check.py --base origin/main`): one changed symbol, `Environment` (field `media` type `Media -> Media | None`, the `_medium_or_gap` validator), classified BREAKING for all 94 loader groups (147 dataset classes, on base `621ae86c6`), because `Environment` is in every closure. Stored records that carry a medium still validate; every dev store needs a rebuild to read fresh before KG 4.0 (on this branch 132 of the 137 mapped stores read stale, the three rebuilt here read fresh, and `dmi_kuzmin2020` / `tmi_kuzmin2020` have no manifest). Tests: `test_a_medium_is_stated_or_gapped_never_silently_none`, `test_a_gapped_medium_projects_as_none_and_is_its_own_environment` in [[tests.torchcell.datamodels.test_identity]], the two shared-environment pins in `test_ontology_coherence.py` and `test_schema.py`.
+1. `Environment.media: Media` stays required and unchanged. A growth measurement happened in some medium, so the record names it. The schema is not weakened to accommodate a source that does not state it. `environment_identity`, `environment_compound_collisions`, `CellAdapter`, the `ExperimentDataset` intern hint and L3 `media_membership` are all back to their `origin/main` form.
+2. A record whose source does not state the medium is not stored, refused with a typed reason and a count, never a guess and never a placeholder.
+3. A source that cannot clear part 2 is itself the problem. It becomes a settled provenance record instead of a loader, the shape MCF2Chem 2023 ([[torchcell.datasets.ecoli.cai2023]]), CeCaFDB 2015 ([[torchcell.datasets.ecoli.zhang2015]]) and D2Cell 2026 ([[torchcell.datasets.ecoli.li2024]]) already use: a module that registers no dataset, states DECISION with every clause measured on pinned bytes, and keeps the sourced statistics.
+
+Three stores went that way, each measured at **0 storable records**: SGD essentiality ([[torchcell.datasets.scerevisiae.sgd]]) and both SynLethDB families ([[torchcell.datasets.scerevisiae.synth_leth_db]]).
+
+Schema impact (`PYTHONPATH=<wt> python scripts/schema_impact_check.py --base origin/main`): **no schema contract changes**. The breaking `Environment` change that put 132 of 137 mapped dev stores stale is gone; 11 of 165 built stores read stale now, and 8 of those 11 are pre-existing on main (the four Costanzo subset builds, `env_chemgen_auesukaree2009`, `env_chemgen_vanacloig2022` twice, `rbtnseq_wetmore2015_ecoli`), while the other 3 are the now-unserved SGD and SynLethDB dev builds.
+
+Still open, and an owner decision: #622 counted seven loaders emitting a stub or stand-in medium. Two of them were SynLethDB and are settled here. The other five state a medium in their own paper and are not implicated by this rule, but nothing in the schema yet refuses a `Media` whose only evidence is the loader author.
 
 ## 2026.10.12 - Schema changes now carry a record
 

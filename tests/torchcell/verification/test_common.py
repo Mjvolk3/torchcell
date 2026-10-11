@@ -708,48 +708,6 @@ def test_media_membership_fails_free_text_media_including_a_missing_medium() -> 
     )
 
 
-def test_media_membership_passes_a_typed_medium_gap_and_counts_it() -> None:
-    """``media`` None beside a ``ProvenanceGap(field='media')`` is a declared absence.
-
-    The gapped records pass and are counted by reason in the message and details; a
-    gap on another field does not cover the medium, so that record stays free text
-    and fails the rule exactly as a record with no medium at all does (#901-#903).
-    """
-    medium_gap = {"field": "media", "reason": "not_carried_by_curation"}
-    temperature_gap = {"field": "temperature", "reason": "not_carried_by_curation"}
-    ypd = MEDIA_LIBRARY["YPD"].model_dump()
-    passing = _run(
-        [
-            _record(environment={"media": ypd}),
-            _record(environment={"media": None, "provenance_gaps": [medium_gap]}),
-            _record(
-                environment={
-                    "media": None,
-                    "provenance_gaps": [temperature_gap, medium_gap],
-                }
-            ),
-        ]
-    )["media_membership"]
-    assert passing.passed is True
-    assert passing.message == (
-        "1 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one "
-        "(1 distinct media), 2 with a typed medium gap (not_carried_by_curation x2)"
-    )
-    assert passing.details["n_gapped_records"] == 2
-    assert passing.details["gapped_reasons"] == {"not_carried_by_curation": 2}
-    failing = _run(
-        [
-            _record(environment={"media": None, "provenance_gaps": [medium_gap]}),
-            _record(environment={"media": None, "provenance_gaps": [temperature_gap]}),
-        ]
-    )["media_membership"]
-    assert failing.passed is False
-    assert failing.message == (
-        "1 free-text media over 1 records join nothing: None (base_medium=None) x1"
-    )
-    assert failing.details["n_gapped_records"] == 1
-
-
 # --------------------------------------------------------------------------- #
 # L4 gene containment + result order
 # --------------------------------------------------------------------------- #

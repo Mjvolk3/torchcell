@@ -36,6 +36,11 @@ def test_every_class_outside_grandfathered_has_a_passing_verdict() -> None:
 
 
 def test_the_registry_walk_found_every_grandfathered_class() -> None:
-    """The walk imports all 134 classes registered at main ecbd943ac (a drop is a regression)."""
-    assert len(GRANDFATHERED) == 134
+    """The walk imports all 131 grandfathered classes (a drop is a regression).
+
+    131, not the 134 registered at main ecbd943ac: ``GeneEssentialitySgdDataset`` and
+    the two SynLethDB classes stopped being registered on 2026-10-11, when their
+    sources were settled as provenance records.
+    """
+    assert len(GRANDFATHERED) == 131
     assert len(REGISTERED) >= len(GRANDFATHERED)

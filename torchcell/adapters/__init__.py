@@ -325,18 +325,11 @@ from .schmidt2016_srm_set1_adapter import (
 from .schmidt2016_srm_set2_adapter import (
     ProteomeSrmSet2Schmidt2016Adapter as ProteomeSrmSet2Schmidt2016Adapter,
 )
-from .sgd_adapter import GeneEssentialitySgdAdapter as GeneEssentialitySgdAdapter
 from .shiver2016_adapter import (
     EnvChemgenShiver2016Adapter as EnvChemgenShiver2016Adapter,
 )
 from .smith2006_adapter import Smith2006Adapter as Smith2006Adapter
 from .smith2016_adapter import Smith2016Adapter as Smith2016Adapter
-from .synth_leth_db_adapter import (
-    SynthLethalityYeastSynthLethDbAdapter as SynthLethalityYeastSynthLethDbAdapter,
-)
-from .synth_leth_db_adapter import (
-    SynthRescueYeastSynthLethDbAdapter as SynthRescueYeastSynthLethDbAdapter,
-)
 from .thompson2019_valerolactam_growth_adapter import (
     LactamGrowthRateThompson2019Adapter as LactamGrowthRateThompson2019Adapter,
 )
@@ -408,13 +401,6 @@ kuzmin2020_adapters = [
     "TmfKuzmin2020Adapter",
     "DmiKuzmin2020Adapter",
     "TmiKuzmin2020Adapter",
-]
-
-gene_essentiality_adapters = ["GeneEssentialitySgdAdapter"]
-
-synth_leth_db_adapters = [
-    "SynthLethalityYeastSynthLethDbAdapter",
-    "SynthRescueYeastSynthLethDbAdapter",
 ]
 
 ohya2005_adapters = ["ScmdOhya2005Adapter"]
@@ -585,8 +571,6 @@ __all__ = (
     + costanzo2016_adapters
     + kuzmin2018_adapters
     + kuzmin2020_adapters
-    + gene_essentiality_adapters
-    + synth_leth_db_adapters
     + ohya2005_adapters
     + oduibhir2014_adapters
     + expression_adapters

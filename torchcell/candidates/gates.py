@@ -34,6 +34,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import io
+import logging
 import os.path as osp
 import pickle
 import re
@@ -71,7 +72,12 @@ from torchcell.candidates.verdict import (
 )
 from torchcell.datamodels import schema
 from torchcell.datamodels.compound_identity import resolve_compound_identity
-from torchcell.literature.manifest import MANIFEST_FILENAME, Manifest, RetrievalMethod
+from torchcell.literature.manifest import (
+    MANIFEST_FILENAME,
+    Manifest,
+    RetrievalMethod,
+    scan_mirror,
+)
 from torchcell.sequence.genome.registry import (
     ECOLI_B_REL606,
     ECOLI_K12_BW25113,
@@ -85,6 +91,8 @@ from torchcell.sequence.genome.registry import (
     resolve,
 )
 from torchcell.verification.sourced import SourcedValue
+
+log = logging.getLogger(__name__)
 
 REPO: Final = Path(__file__).resolve().parents[2]
 DATASETS_DIR: Final = REPO / "torchcell" / "datasets"
@@ -741,7 +749,11 @@ def module_index(datasets_dir: Path = DATASETS_DIR) -> tuple[ModuleKeys, ...]:
 def citation_key_for_doi(
     doi: str, index: tuple[ModuleKeys, ...], data_root: str | None
 ) -> str | None:
-    """The citation key a DOI is filed under: a module's own DOI, else a mirror manifest."""
+    """The citation key a DOI is filed under: a module's own DOI, else a mirror manifest.
+
+    A mirror manifest that fails validation is skipped with a warning naming its key
+    (it cannot be searched, and another key's record must not block this lookup).
+    """
     keys = {m.citation_key for m in index if doi in m.own_dois and m.citation_key}
     if len(keys) > 1:
         raise LookupError(
@@ -755,10 +767,20 @@ def citation_key_for_doi(
         base = Path(data_root) / top
         if not base.is_dir():
             continue
-        for manifest_path in sorted(base.glob(f"*/{MANIFEST_FILENAME}")):
-            if manifest_path.parent.name.startswith("_"):
-                continue  # _bib and _sync_reports are service stores, not paper keys
-            manifest = Manifest.model_validate_json(manifest_path.read_text())
+        scan = scan_mirror(base)
+        # Another key's broken record must not stop this row's lookup (#923); it is
+        # named here and stays a failure under ``python -m
+        # torchcell.literature.manifest validate`` and the --data mirror test.
+        for failure in scan.failures:
+            log.warning(
+                "%s/%s: manifest fails validation (%d errors), not searched for %s; "
+                "run `python -m torchcell.literature.manifest validate`",
+                top,
+                failure.citation_key,
+                failure.n_errors,
+                doi,
+            )
+        for manifest in scan.manifests.values():
             if manifest.doi is not None and manifest.doi.lower() == doi.lower():
                 return manifest.citation_key
     return None

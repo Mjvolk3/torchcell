@@ -482,6 +482,34 @@ def test_citation_key_for_doi(
     (bib_store / "manifest.json").write_text('{"version": 1, "bibs": []}')
     assert gates.citation_key_for_doi("10.1000/none", index, str(root)) is None
     assert gates.citation_key_for_doi("10.1000/none", index, None) is None
+
+
+def test_citation_key_for_doi_skips_a_failing_manifest_and_names_it(
+    index: tuple[gates.ModuleKeys, ...],
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """#923: a manifest that fails validation is skipped with a warning, not raised."""
+    root = tmp_path / "root"
+    bad = root / "torchcell-library" / "aaaBroken2020"
+    bad.mkdir(parents=True)
+    (bad / "manifest.json").write_text(
+        '{"citation_key": "aaaBroken2020", "doi": "10.1000/raw", "files": '
+        '[{"path": "a", "role": "raw_data", "bytes": 1, "sha256": "x", '
+        '"retrieval": {"method": "direct_url", "retrieved_at": "2026-09-14", '
+        '"pinned_commit": "f95f"}}]}'
+    )
+    write_mirror(
+        root, "torchcell-raw", "rawKey2019", {"data/a.csv": b"x"}, doi="10.1000/raw"
+    )
+    with caplog.at_level("WARNING", logger="torchcell.candidates.gates"):
+        found = gates.citation_key_for_doi("10.1000/raw", index, str(root))
+    assert found == "rawKey2019"
+    assert [r.getMessage() for r in caplog.records] == [
+        "torchcell-library/aaaBroken2020: manifest fails validation (3 errors), not "
+        "searched for 10.1000/raw; run `python -m torchcell.literature.manifest "
+        "validate`"
+    ]
     twice = (
         *index,
         index[1].model_copy(update={"path": "x.py", "citation_key": "otherKey"}),

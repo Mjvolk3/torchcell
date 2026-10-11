@@ -5,15 +5,17 @@
 
 """Provenance and integrity manifest for captured paper artifacts."""
 
+import argparse
 import hashlib
 import logging
 import re
+import sys
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -369,3 +371,90 @@ def write_manifest(artifact_dir: Path, manifest: Manifest) -> Path:
     dest.write_text(manifest.model_dump_json(indent=2))
     log.info("Manifest: wrote %s (%d files)", dest, len(manifest.files))
     return dest
+
+
+class ManifestFailure(BaseModel):
+    """One ``<key>/manifest.json`` that does not validate as a :class:`Manifest`."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    citation_key: str = Field(description="The key directory the manifest sits in.")
+    path: str = Field(description="Absolute path of the failing manifest.")
+    n_errors: int = Field(description="Number of pydantic validation errors.")
+    error: str = Field(description="The pydantic ValidationError, verbatim.")
+
+
+class MirrorScan(BaseModel):
+    """Every paper-key manifest under one mirror root, split into valid and failing."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    root: str
+    manifests: dict[str, Manifest] = Field(
+        description="Key directory name -> its validated manifest, in sorted order."
+    )
+    failures: tuple[ManifestFailure, ...]
+
+
+def scan_mirror(root: Path) -> MirrorScan:
+    """Validate every ``<root>/<key>/manifest.json``; report, never drop, the failures.
+
+    ``root`` is a mirror tree (``$DATA_ROOT/torchcell-library`` or
+    ``$DATA_ROOT/torchcell-raw``). Directories whose name starts with ``_`` (``_bib``,
+    ``_sync_reports``) are service stores with their own manifest models, not paper
+    keys, and are not read. A manifest that fails validation (bad JSON or the wrong
+    shape) is returned as a :class:`ManifestFailure` carrying the verbatim error, so a
+    caller that has to keep going over the other keys still names the bad one.
+    """
+    manifests: dict[str, Manifest] = {}
+    failures: list[ManifestFailure] = []
+    for manifest_path in sorted(root.glob(f"*/{MANIFEST_FILENAME}")):
+        key = manifest_path.parent.name
+        if key.startswith("_"):
+            continue
+        try:
+            manifests[key] = Manifest.model_validate_json(manifest_path.read_text())
+        except ValidationError as exc:
+            failures.append(
+                ManifestFailure(
+                    citation_key=key,
+                    path=str(manifest_path),
+                    n_errors=exc.error_count(),
+                    error=str(exc),
+                )
+            )
+    return MirrorScan(root=str(root), manifests=manifests, failures=tuple(failures))
+
+
+MIRROR_TREES: tuple[str, ...] = ("torchcell-library", "torchcell-raw")
+
+
+def main(argv: list[str] | None = None) -> int:
+    """``validate``: check every manifest in both mirrors; exit 1 naming each bad key.
+
+    The command-line counterpart of ``tc-lit``'s HTTP 500 on a corrupt manifest: a
+    failing manifest is reported with its validation error and fails the run, it is
+    never skipped silently.
+    """
+    parser = argparse.ArgumentParser(prog="python -m torchcell.literature.manifest")
+    sub = parser.add_subparsers(dest="command", required=True)
+    validate = sub.add_parser("validate", help="validate every mirror manifest")
+    validate.add_argument("--data-root", required=True, type=Path)
+    validate.add_argument("--tree", choices=MIRROR_TREES, action="append", default=None)
+    args = parser.parse_args(argv)
+    n_bad = 0
+    for tree in args.tree or MIRROR_TREES:
+        base = args.data_root / tree
+        if not base.is_dir():
+            print(f"{tree}: no such directory {base}", file=sys.stderr)
+            return 2
+        scan = scan_mirror(base)
+        print(f"{tree}: {len(scan.manifests)} valid, {len(scan.failures)} failing")
+        for failure in scan.failures:
+            print(f"FAIL {tree}/{failure.citation_key}: {failure.error}")
+        n_bad += len(scan.failures)
+    return 1 if n_bad else 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

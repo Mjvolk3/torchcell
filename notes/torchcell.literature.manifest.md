@@ -37,3 +37,7 @@ PR #585 review. A non-paper PDF at the key root (`SOM.pdf`, `References_Cited_SO
 ## 2026.10.07 - `original_filename` and `RetrievalMethod.pmc_cloud`
 
 `FileRecord.original_filename` keeps the publisher's file name when the bytes are stored under another name ([[torchcell.literature.capture_si]] writes `si/si<N>.<ext>`). It is declared with `exclude_if=lambda v: v is None`, so a record without it serializes exactly as before and the full-dump manifest tests stay byte-identical. `capture_si` also reads it as its own marker: an SI record without it came from another path. `RetrievalMethod.pmc_cloud` names a fetch from the PMC Article Datasets bucket.
+
+## 2026.10.11 - `scan_mirror` and the `validate` command (#923)
+
+`scan_mirror(root)` validates every `<root>/<key>/manifest.json` (skipping `_`-prefixed service stores) and returns a `MirrorScan`: the valid manifests by key, and a `ManifestFailure` per manifest that does not validate, carrying the verbatim pydantic error. `python -m torchcell.literature.manifest validate --data-root $DATA_ROOT` runs it over both mirrors and exits 1 naming each failing key, the command-line counterpart of `tc-lit`'s HTTP 500 on a corrupt manifest. The `--data` test `test_every_real_mirror_manifest_validates` asserts it finds none. The one failing manifest it found (Zhang 2020 raw) was regenerated, see [[scripts.lit_migrate_legacy_raw_manifest]].

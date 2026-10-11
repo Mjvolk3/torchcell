@@ -40,6 +40,7 @@ refuses any sha256-bearing identifier in their modules.
 
 from __future__ import annotations
 
+import os.path as osp
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Protocol
@@ -71,6 +72,7 @@ __all__ = [
     "SystematicNameLedger",
     "SystematicNameOutcome",
     "refusal_table",
+    "sga_systematic_name_currency",
 ]
 
 #: Written by each loader beside ``data.csv`` in ``preprocess/``.
@@ -353,6 +355,27 @@ class SystematicNameCurrency:
             renamed=renamed,
             refused=refused,
         )
+
+    def write_ledger(self, dataset_name: str, directory: str) -> SystematicNameLedger:
+        """Write :meth:`ledger` to ``<directory>/systematic_name_ledger.json``."""
+        ledger = self.ledger(dataset_name)
+        with open(osp.join(directory, SYSTEMATIC_NAME_LEDGER_FILENAME), "w") as handle:
+            handle.write(ledger.model_dump_json(indent=2))
+        return ledger
+
+
+def sga_systematic_name_currency(
+    genome: SystematicNameGenome | None, dataset: str
+) -> SystematicNameCurrency:
+    """The SGA-table currency check for one loader, refusing a build with no genome."""
+    if genome is None:
+        raise RuntimeError(
+            f"{dataset} requires an injected SCerevisiaeGenome: every released "
+            "systematic name is checked against R64 before a record is written (#893)"
+        )
+    return SystematicNameCurrency(
+        genome, SGA_SYSTEMATIC_RENAMES, SGA_SYSTEMATIC_REFUSALS
+    )
 
 
 # =========================================================================== #

@@ -39,6 +39,11 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.systematic_name_currency import (
+    SystematicNameGenome,
+    sga_systematic_name_currency,
+)
+from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -122,6 +127,27 @@ SCREEN_ID_PILOT = "kuzmin2020_s3_pilot_genome_wide_arrays"
 # colony size in order to estimate fitness (Fig. S1, Table S5)." Smf records and the
 # Dmf double-mutant query-strain records read their value from it.
 SCREEN_ID_QUERY_FITNESS = "kuzmin2020_s5_query_fitness_array"
+
+
+# Released systematic names (#897, #898, #899, #900). Tables S1 and S3 name 47 array
+# strains by an ORF the R64-4-1 annotation no longer carries as a locus. Every build
+# checks each released systematic name against the injected genome through
+# ``systematic_name_currency``: the 16 ORFs SGD renamed for nomenclature map to their
+# current name, and the 6 retired ORFs and 25 ORFs merged into a longer locus are
+# refused with their typed reason. Rows are refused after the reference noise is
+# computed, so no other record changes, and the count and the names are written to
+# ``preprocess/systematic_name_ledger.json``.
+
+
+def _stored_gene_name(allele: str) -> str:
+    """The gene name a perturbation stores for a released allele name.
+
+    The frame has had ``'`` replaced by ``_prime`` and ``Δ`` by ``_delta``; the ``_delta``
+    suffix is dropped and the prime restored. ``imp2'Δ`` (YIL154C, the one released name
+    with a prime) therefore stores ``imp2'``, as Costanzo 2016 stores the same strain,
+    and not ``imp2``, the standard name of YMR035W (#897).
+    """
+    return allele.replace("_prime", "'").split("_")[0]
 
 
 def _combine_screens(df_s1: pd.DataFrame, df_s3: pd.DataFrame) -> pd.DataFrame:
@@ -225,10 +251,9 @@ def _query_strain_uncertainty(std_val: Any) -> dict[str, Any]:
 def _query_pair_perturbations(row: pd.Series) -> list[GenePerturbationType]:
     """The two perturbations of a double-mutant query strain (no array gene).
 
-    Both carry the FULL query strain ID: the pair is one physical strain. The
-    ``split("_")[0]`` on the allele name is this module's convention (it drops the
-    "_delta" that replaces the delta symbol), so these genes are named as the
-    digenic, Tmf, and Tmi Kuzmin-2020 records name them.
+    Both carry the FULL query strain ID: the pair is one physical strain. The gene
+    name is :func:`_stored_gene_name` of the allele name, so these genes are named as
+    the digenic, Tmf, and Tmi Kuzmin-2020 records name them.
     """
     perturbations: list[GenePerturbationType] = []
     for idx in ("1", "2"):
@@ -236,7 +261,9 @@ def _query_pair_perturbations(row: pd.Series) -> list[GenePerturbationType]:
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row[f"Query systematic name_{idx}"],
-                    perturbed_gene_name=row[f"Query allele name_{idx}"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(
+                        row[f"Query allele name_{idx}"]
+                    ),
                     strain_id=row["Query strain ID"],
                 )
             )
@@ -244,7 +271,9 @@ def _query_pair_perturbations(row: pd.Series) -> list[GenePerturbationType]:
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row[f"Query systematic name_{idx}"],
-                    perturbed_gene_name=row[f"Query allele name_{idx}"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(
+                        row[f"Query allele name_{idx}"]
+                    ),
                     strain_id=row["Query strain ID"],
                 )
             )
@@ -352,9 +381,11 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset at the given root, triggering download/process."""
+        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -389,7 +420,10 @@ class SmfKuzmin2020Dataset(ExperimentDataset):
         """Read, preprocess, and serialize experiments into the LMDB store."""
         df = pd.read_excel(osp.join(self.raw_dir, self.raw_file_names), skiprows=1)
         df = self.preprocess_raw(df)
+        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
+        df = currency.apply(df, ["ORF1"]).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing Smf Files...")
@@ -500,9 +534,11 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset at the given root, triggering download/process."""
+        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
+        self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -550,7 +586,30 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
         )
 
         df = self.preprocess_raw(df_s1, df_s3, df_s5)
+        # Each record kind names its genes in its own columns; both are checked, and
+        # the digenic rows stay first.
+        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
+        digenic = df["record_kind"] == RECORD_KIND_DIGENIC_ARRAY_CROSS
+        query_strain = df["record_kind"] == RECORD_KIND_DOUBLE_MUTANT_QUERY_STRAIN
+        if not (digenic | query_strain).all():
+            raise ValueError(
+                f"{int((~(digenic | query_strain)).sum())} rows have an unknown "
+                "record_kind"
+            )
+        df = pd.concat(
+            [
+                currency.apply(
+                    df[digenic],
+                    ["Query systematic name no ho", "Array systematic name"],
+                ),
+                currency.apply(
+                    df[query_strain],
+                    ["Query systematic name_1", "Query systematic name_2"],
+                ),
+            ]
+        ).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing Dmf Files...")
@@ -683,13 +742,13 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             if query_perturbation_type == "KanMX_deletion":
                 perturbation = SgaKanMxDeletionPerturbation(
                     systematic_gene_name=query_systematic_name,
-                    perturbed_gene_name=query_allele_name.split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(query_allele_name),
                     strain_id=row["Query strain ID"],
                 )
             else:  # allele
                 perturbation = SgaAllelePerturbation(
                     systematic_gene_name=query_systematic_name,
-                    perturbed_gene_name=query_allele_name.split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(query_allele_name),
                     strain_id=row["Query strain ID"],
                 )
             perturbations.append(perturbation)
@@ -702,13 +761,13 @@ class DmfKuzmin2020Dataset(ExperimentDataset):
             if array_perturbation_type == "KanMX_deletion":
                 perturbation = SgaKanMxDeletionPerturbation(
                     systematic_gene_name=array_systematic_name,
-                    perturbed_gene_name=array_allele_name.split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(array_allele_name),
                     strain_id=row["Array strain ID"],
                 )
             else:  # temperature_sensitive; _array_perturbation_type admits no third
                 perturbation = SgaTsAllelePerturbation(
                     systematic_gene_name=array_systematic_name,
-                    perturbed_gene_name=array_allele_name.split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(array_allele_name),
                     strain_id=row["Array strain ID"],
                 )
             perturbations.append(perturbation)
@@ -774,9 +833,11 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset, optionally subsetting to subset_n records."""
+        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
+        self.genome = genome
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -818,9 +879,19 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
         )
 
         df = self.preprocess_raw(df_s1, df_s3)
+        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
+        df = currency.apply(
+            df,
+            [
+                "Query systematic name_1",
+                "Query systematic name_2",
+                "Array systematic name",
+            ],
+        ).reset_index(drop=True)
         if self.subset_n is not None:
             df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing Tmf Files...")
@@ -907,7 +978,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Query systematic name_1"],
-                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_1"]),
                     strain_id=row["Query strain ID_1"],
                 )
             )
@@ -915,7 +986,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row["Query systematic name_1"],
-                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_1"]),
                     strain_id=row["Query strain ID_1"],
                 )
             )
@@ -925,7 +996,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Query systematic name_2"],
-                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_2"]),
                     strain_id=row["Query strain ID_2"],
                 )
             )
@@ -933,7 +1004,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row["Query systematic name_2"],
-                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_2"]),
                     strain_id=row["Query strain ID_2"],
                 )
             )
@@ -943,7 +1014,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaTsAllelePerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -951,7 +1022,7 @@ class TmfKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -1011,9 +1082,11 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset, optionally subsetting to subset_n records."""
+        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
+        self.genome = genome
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -1055,9 +1128,14 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
         )
 
         df = self.preprocess_raw(df_s1, df_s3)
+        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
+        df = currency.apply(
+            df, ["Query systematic name no ho", "Array systematic name"]
+        ).reset_index(drop=True)
         if self.subset_n is not None:
             df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing Dmi Files...")
@@ -1140,7 +1218,9 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Query systematic name no ho"],
-                    perturbed_gene_name=row["Query allele name no ho"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(
+                        row["Query allele name no ho"]
+                    ),
                     strain_id=row["Query strain ID"],
                 )
             )
@@ -1148,7 +1228,9 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row["Query systematic name no ho"],
-                    perturbed_gene_name=row["Query allele name no ho"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(
+                        row["Query allele name no ho"]
+                    ),
                     strain_id=row["Query strain ID"],
                 )
             )
@@ -1158,7 +1240,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaTsAllelePerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -1166,7 +1248,7 @@ class DmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -1230,9 +1312,11 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         io_workers: int = 0,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
+        genome: SystematicNameGenome | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset, optionally subsetting to subset_n records."""
+        """Initialize the dataset; a build needs ``genome`` to check ORF names."""
+        self.genome = genome
         self.subset_n = subset_n
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -1274,9 +1358,19 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
         )
 
         df = self.preprocess_raw(df_s1, df_s3)
+        currency = sga_systematic_name_currency(self.genome, type(self).__name__)
+        df = currency.apply(
+            df,
+            [
+                "Query systematic name_1",
+                "Query systematic name_2",
+                "Array systematic name",
+            ],
+        ).reset_index(drop=True)
         if self.subset_n is not None:
             df = df.sample(n=self.subset_n, random_state=42).reset_index(drop=True)
         os.makedirs(self.preprocess_dir, exist_ok=True)
+        currency.write_ledger(self.name, self.preprocess_dir)
         df.to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
 
         log.info("Processing Tmi Files...")
@@ -1352,7 +1446,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Query systematic name_1"],
-                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_1"]),
                     strain_id=row["Query strain ID_1"],
                 )
             )
@@ -1360,7 +1454,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row["Query systematic name_1"],
-                    perturbed_gene_name=row["Query allele name_1"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_1"]),
                     strain_id=row["Query strain ID_1"],
                 )
             )
@@ -1370,7 +1464,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Query systematic name_2"],
-                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_2"]),
                     strain_id=row["Query strain ID_2"],
                 )
             )
@@ -1378,7 +1472,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaAllelePerturbation(
                     systematic_gene_name=row["Query systematic name_2"],
-                    perturbed_gene_name=row["Query allele name_2"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Query allele name_2"]),
                     strain_id=row["Query strain ID_2"],
                 )
             )
@@ -1388,7 +1482,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaTsAllelePerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -1396,7 +1490,7 @@ class TmiKuzmin2020Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=row["Array systematic name"],
-                    perturbed_gene_name=row["Array allele name"].split("_")[0],
+                    perturbed_gene_name=_stored_gene_name(row["Array allele name"]),
                     strain_id=row["Array strain ID"],
                 )
             )
@@ -1451,12 +1545,17 @@ def main() -> None:
 
     load_dotenv()
     root = osp.join(data_root(), "data/torchcell")
+    genome = SCerevisiaeGenome(
+        genome_root=osp.join(data_root(), "data/sgd/genome"),
+        go_root=osp.join(data_root(), "data/go"),
+        overwrite=False,
+    )
     datasets = [
-        SmfKuzmin2020Dataset(root=osp.join(root, "smf_kuzmin2020")),
-        DmfKuzmin2020Dataset(root=osp.join(root, "dmf_kuzmin2020")),
-        TmfKuzmin2020Dataset(root=osp.join(root, "tmf_kuzmin2020")),
-        DmiKuzmin2020Dataset(root=osp.join(root, "dmi_kuzmin2020")),
-        TmiKuzmin2020Dataset(root=osp.join(root, "tmi_kuzmin2020")),
+        SmfKuzmin2020Dataset(root=osp.join(root, "smf_kuzmin2020"), genome=genome),
+        DmfKuzmin2020Dataset(root=osp.join(root, "dmf_kuzmin2020"), genome=genome),
+        TmfKuzmin2020Dataset(root=osp.join(root, "tmf_kuzmin2020"), genome=genome),
+        DmiKuzmin2020Dataset(root=osp.join(root, "dmi_kuzmin2020"), genome=genome),
+        TmiKuzmin2020Dataset(root=osp.join(root, "tmi_kuzmin2020"), genome=genome),
     ]
 
     for dataset in datasets:

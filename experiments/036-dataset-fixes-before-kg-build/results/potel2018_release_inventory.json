@@ -1,0 +1,804 @@
+{
+  "citation_key": "potelWidespreadBacterialProtein2018",
+  "doi": "10.1038/nmeth.4580",
+  "identifier_resolution": {
+    "BW25113": {
+      "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+      "distinct_loci": 754,
+      "names_offered": 772,
+      "resolved_fraction": 0.9767,
+      "resolved_to_one_locus": 754,
+      "status_histogram": {
+        "ambiguous": 0,
+        "current": 0,
+        "non_gene_feature": 3,
+        "renamed": 751,
+        "retired": 18
+      },
+      "unresolved": [
+        "bioD1",
+        "ccdB",
+        "ettA",
+        "lapA",
+        "ompP",
+        "rmlA1",
+        "sopA",
+        "traD",
+        "traG",
+        "traI",
+        "traJ",
+        "traM",
+        "traP",
+        "traQ",
+        "traY",
+        "trbI",
+        "trbJ",
+        "yuaY"
+      ]
+    },
+    "MG1655": {
+      "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+      "distinct_loci": 756,
+      "names_offered": 772,
+      "resolved_fraction": 0.9793,
+      "resolved_to_one_locus": 756,
+      "status_histogram": {
+        "ambiguous": 0,
+        "current": 0,
+        "non_gene_feature": 2,
+        "renamed": 754,
+        "retired": 16
+      },
+      "unresolved": [
+        "bioD1",
+        "ccdB",
+        "corC",
+        "rmlA1",
+        "sopA",
+        "traD",
+        "traG",
+        "traI",
+        "traJ",
+        "traM",
+        "traP",
+        "traQ",
+        "traY",
+        "trbI",
+        "trbJ",
+        "yuaY"
+      ]
+    }
+  },
+  "jpost": "JPST000369",
+  "jpost_listing": [
+    {
+      "bytes": 254232392,
+      "name": "Ecoli_phospho_txt_glycerol_glucose_optimized.zip"
+    },
+    {
+      "bytes": 36299,
+      "name": "JPST000369.1.xml"
+    },
+    {
+      "bytes": 13832669477,
+      "name": "JPST000369_all.zip"
+    },
+    {
+      "bytes": 1023617833,
+      "name": "OR10_20160316_CMP_Ecoli_glucose_exp_4mg_IMAC_80pc.raw"
+    },
+    {
+      "bytes": 2866737,
+      "name": "OR10_20160316_CMP_Ecoli_glucose_exp_4mg_IMAC_80pc_evidence.txt"
+    },
+    {
+      "bytes": 1083750071,
+      "name": "OR10_20160316_CMP_Ecoli_glucose_stat_4mg_IMAC_80pc.raw"
+    },
+    {
+      "bytes": 2540077,
+      "name": "OR10_20160316_CMP_Ecoli_glucose_stat_4mg_IMAC_80pc_evidence.txt"
+    },
+    {
+      "bytes": 963782860,
+      "name": "OR10_20160316_CMP_Ecoli_glyc_stat_4mg_IMAC_80pc.raw"
+    },
+    {
+      "bytes": 2537148,
+      "name": "OR10_20160316_CMP_Ecoli_glyc_stat_4mg_IMAC_80pc_evidence.txt"
+    },
+    {
+      "bytes": 959764922,
+      "name": "OR11_20160131_CMP_Ecoli_1mg_IMAC_80pc.raw"
+    },
+    {
+      "bytes": 2290040,
+      "name": "OR11_20160131_CMP_Ecoli_1mg_IMAC_80pc_evidence.txt"
+    },
+    {
+      "bytes": 858318791,
+      "name": "OR11_20160209_CMP_Ecoli_PT_1mg_80pc.raw"
+    },
+    {
+      "bytes": 1199489,
+      "name": "OR11_20160209_CMP_Ecoli_PT_1mg_80pc_evidence.txt"
+    },
+    {
+      "bytes": 324125688,
+      "name": "OR11_20160412_CMP_Ecoli_glucose_exp_1mg_smallC_80pc.raw"
+    },
+    {
+      "bytes": 1824327,
+      "name": "OR11_20160412_CMP_Ecoli_glucose_exp_1mg_smallC_80pc_evidence.txt"
+    },
+    {
+      "bytes": 1022343396,
+      "name": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R1.raw"
+    },
+    {
+      "bytes": 1000877205,
+      "name": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R2.raw"
+    },
+    {
+      "bytes": 1052294934,
+      "name": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R3.raw"
+    },
+    {
+      "bytes": 1017286905,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R1.raw"
+    },
+    {
+      "bytes": 3366126,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R1_evidence.txt"
+    },
+    {
+      "bytes": 1013971255,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R2.raw"
+    },
+    {
+      "bytes": 2961126,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R2_evidence.txt"
+    },
+    {
+      "bytes": 1036860576,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R3.raw"
+    },
+    {
+      "bytes": 3912073,
+      "name": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R3_evidence.txt"
+    },
+    {
+      "bytes": 981653516,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R1.raw"
+    },
+    {
+      "bytes": 1034939681,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R2.raw"
+    },
+    {
+      "bytes": 1003332261,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R3.raw"
+    },
+    {
+      "bytes": 1032486765,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R1.raw"
+    },
+    {
+      "bytes": 1023653234,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R2.raw"
+    },
+    {
+      "bytes": 1015946595,
+      "name": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R3.raw"
+    },
+    {
+      "bytes": 14052,
+      "name": "mqpar.xml"
+    }
+  ],
+  "jpost_sample_map": {
+    "every_table_2_column_has_one_raw_file": true,
+    "raw_bytes": 17449006488,
+    "raw_files": 18,
+    "raw_files_not_in_table_2_columns": [
+      "OR10_20160316_CMP_Ecoli_glucose_exp_4mg_IMAC_80pc.raw",
+      "OR10_20160316_CMP_Ecoli_glucose_stat_4mg_IMAC_80pc.raw",
+      "OR10_20160316_CMP_Ecoli_glyc_stat_4mg_IMAC_80pc.raw",
+      "OR11_20160131_CMP_Ecoli_1mg_IMAC_80pc.raw",
+      "OR11_20160209_CMP_Ecoli_PT_1mg_80pc.raw",
+      "OR11_20160412_CMP_Ecoli_glucose_exp_1mg_smallC_80pc.raw"
+    ],
+    "table_2_column_to_raw_file": {
+      "Intensity glucose_exp1": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R1.raw",
+      "Intensity glucose_exp2": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R2.raw",
+      "Intensity glucose_exp3": "OR13_A2_20161014_CMP_Ecoli_glucose_exp_2mg_IMAC_R3.raw",
+      "Intensity glucose_stat1": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R1.raw",
+      "Intensity glucose_stat2": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R2.raw",
+      "Intensity glucose_stat3": "OR13_20160922_CMP_Ecoli_glucose_stat_2mg_IMAC_R3.raw",
+      "Intensity glycerol_exp1": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R1.raw",
+      "Intensity glycerol_exp2": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R2.raw",
+      "Intensity glycerol_exp3": "OR13_A2_20161014_CMP_Ecoli_glycerol_exp_2mg_IMAC_R3.raw",
+      "Intensity glycerol_stat1": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R1.raw",
+      "Intensity glycerol_stat2": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R2.raw",
+      "Intensity glycerol_stat3": "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R3.raw"
+    }
+  },
+  "mirror": "/scratch/projects/torchcell-scratch/torchcell-raw/potelWidespreadBacterialProtein2018",
+  "mirror_sha256": {
+    "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d",
+    "data/41592_2018_BFnmeth4580_MOESM4_ESM.xlsx": "f69ca61a0f0dba3987b26bcdf4bd9b0c8fcf8744495233bad678a23cf5682481",
+    "paper/thesis/Potel.pdf": "4252703b578f67372887e28112c7e0c1c135625dcebc2cbd752581634dbff7a4",
+    "paper/thesis/Potel.pdftotext.txt": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f",
+    "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdf": "f4cc85a6bf9aca3084641dd0340b006840484c00deef5a87aca3c868583edb3d",
+    "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de",
+    "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdf": "7ab7cabe3d1eb8479f8a3bcd98b3ac263c1429141ba02fda3f43d8d6b0401981",
+    "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43",
+    "si/41592_2018_BFnmeth4580_MOESM3_ESM.xlsx": "e6e4ef28ce90357fd497c3616269721557c44f0e3c76ae9c11cf506f3997c2ce",
+    "si/41592_2018_BFnmeth4580_MOESM5_ESM.xlsx": "c2ebaef8910fb2ec5109557943ce36079069c9894b072435c32addac44ab95ef",
+    "si/41592_2018_BFnmeth4580_MOESM6_ESM.legends.txt": "ea531578dfa930d3373218407a44f7690f3b062662d5995cdb3851bdd5b7998f",
+    "si/41592_2018_BFnmeth4580_MOESM6_ESM.xlsx": "31a986e2b9a1cc582b1265a0bc124693f4bcdbf941abb3398f27217d3f1d58bb",
+    "si/41592_2018_BFnmeth4580_MOESM7_ESM.xlsx": "61ff4b381c5f53f24ee1609ad80c9fd6c42e7c738579bf781dd94e1b83e89589"
+  },
+  "pmid": "29377012",
+  "proteome_store_key_shapes": {
+    "proteome_brunk2016": {
+      "build_commit": "83c443f88ee39e849818ee8c1daca8a9b786d43a",
+      "build_dirty": true,
+      "distinct_label_keys": 65,
+      "experiment_types": {
+        "bacterial_protein_abundance": 81
+      },
+      "records": 81,
+      "shared_with_potel_bw25113_loci": 0,
+      "shared_with_potel_mg1655_loci": 40,
+      "site_shaped_keys": []
+    },
+    "proteome_ishii2007": {
+      "build_commit": "83c443f88ee39e849818ee8c1daca8a9b786d43a",
+      "build_dirty": true,
+      "distinct_label_keys": 59,
+      "experiment_types": {
+        "bacterial_protein_abundance": 28
+      },
+      "records": 28,
+      "shared_with_potel_bw25113_loci": 49,
+      "shared_with_potel_mg1655_loci": 0,
+      "site_shaped_keys": []
+    },
+    "proteome_mori2021": {
+      "build_commit": "529b6bf5863943d824e1972865873b18c309f88a",
+      "build_dirty": true,
+      "distinct_label_keys": 2073,
+      "experiment_types": {
+        "bacterial_protein_abundance": 7
+      },
+      "records": 7,
+      "shared_with_potel_bw25113_loci": 0,
+      "shared_with_potel_mg1655_loci": 691,
+      "site_shaped_keys": []
+    },
+    "proteome_schmidt2016": {
+      "build_commit": "529b6bf5863943d824e1972865873b18c309f88a",
+      "build_dirty": true,
+      "distinct_label_keys": 2329,
+      "experiment_types": {
+        "bacterial_protein_abundance": 14
+      },
+      "records": 14,
+      "shared_with_potel_bw25113_loci": 708,
+      "shared_with_potel_mg1655_loci": 0,
+      "site_shaped_keys": []
+    },
+    "proteome_srm_set1_schmidt2016": {
+      "build_commit": "529b6bf5863943d824e1972865873b18c309f88a",
+      "build_dirty": true,
+      "distinct_label_keys": 41,
+      "experiment_types": {
+        "bacterial_protein_abundance": 11
+      },
+      "records": 11,
+      "shared_with_potel_bw25113_loci": 32,
+      "shared_with_potel_mg1655_loci": 0,
+      "site_shaped_keys": []
+    },
+    "proteome_srm_set2_schmidt2016": {
+      "build_commit": "529b6bf5863943d824e1972865873b18c309f88a",
+      "build_dirty": true,
+      "distinct_label_keys": 31,
+      "experiment_types": {
+        "bacterial_protein_abundance": 14
+      },
+      "records": 14,
+      "shared_with_potel_bw25113_loci": 26,
+      "shared_with_potel_mg1655_loci": 0,
+      "site_shaped_keys": []
+    }
+  },
+  "proteomexchange": "PXD008369",
+  "quotes": {
+    "biological_replicates_si_fig3": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "The same UV profiles were observed for the n=12 biological replicates.",
+      "sha256": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de"
+    },
+    "biological_replicates_si_fig6": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "The different intensities profiles derive from the totality of the n=12 biological replicates.",
+      "sha256": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de"
+    },
+    "carbon_sources": {
+      "chapters": [
+        "V",
+        "VI"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 2,
+      "quote": "supplemented with either additional 0.5% (w/v) glucose or 0.5% glycerol",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "class_i_phis": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "of the 246 pHis sites, 135 phosphosites could be retained as high- confidence Class I pHis sites (localization confidence \u2265 75%) (Table S2)",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "growth_phases_si_fig12": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "E. coli cells were collected at either mid-log phase or stationary phase according to OD",
+      "sha256": "4dee5c2a098fdaf95cfbe899c773348fe01281d535f9147708ffc9be79bd40de"
+    },
+    "imputation": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "missing value imputation was performed with default parameters (width is 0.3 and down shift is 1.8 for each replicate)",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "phis_counts": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "With a total number of 246 pHis sites on 173 histidine phosphoproteins",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "search_database": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "Raw data files were processed using the MaxQuant software (ver. 1.5.5.1) with the following search parameters: trypsin digestion with a maximum of 3 missed cleavages, reviewed E. coli K12 database (Uniprot, March 2016)",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "strain_and_medium": {
+      "chapters": [
+        "V",
+        "VI"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 2,
+      "quote": "E. coli strain W3110 was grown in M9 minimal medium, consisting of M9 salts",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "t2_intensity_column": {
+      "file": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+      "occurrences": 1,
+      "quote": "17. Intensity glucose_exp1, summed up eXtracted Ion Current (XIC) of all isotopic clusters associated with the identified phosphopeptdie sequence in the 1st replicate of glucose-fed exponential E. coli cells.",
+      "sha256": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d"
+    },
+    "t2_localization_column": {
+      "file": "data/41592_2018_BFnmeth4580_MOESM4_ESM.legends.txt",
+      "occurrences": 1,
+      "quote": "5. Localization prob, the probability of phosphosite assignment.",
+      "sha256": "a85a3a155971d28456c6b3661b96bc662dfc46310c1c0d487283cb4e8dcfb57d"
+    },
+    "t5_test": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM6_ESM.legends.txt",
+      "occurrences": 1,
+      "quote": "statistical analysis of detected changes between exponential and stationary phases of glycerol-fed E. coli. (t-test, with FDR \u2264 0.02 and S0=0.1)",
+      "sha256": "ea531578dfa930d3373218407a44f7690f3b062662d5995cdb3851bdd5b7998f"
+    },
+    "technical_triplicates_after_digestion": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "we made technical triplicates (after digestion, before enrichment) of each",
+      "sha256": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43"
+    },
+    "technical_triplicates_reporting_summary": {
+      "file": "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "Results were reproduced under 4 biological conditions, each consisting of technical",
+      "sha256": "9951a1ac02a5090d343134b97440acf618757c369e12310cc3b4ba23ee37ee43"
+    },
+    "technical_triplicates_thesis": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "Fe3+-IMAC was performed in technical triplicates for each biological groups",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "temperature_and_harvest": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "with vigorous shaking at 37\u00b0C. Cells were collected by centrifugation at mid-log phase (OD600= 0.6/0.5 for glucose / glycerol-fed cells) and stationary phase (OD600= 1.2/1.0 for glucose/ glycerol-fed cells) (Figure S12)",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "thesis_chapter_v_is_this_paper": {
+      "chapters": [
+        "front"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "Chapter V: Widespread bacterial protein histidine phosphorylation revealed by mass spectrometry-based proteomics",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "thesis_fdr_threshold": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "of less than 0.05 and a S0 (the minimal fold change) value of",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "thesis_publication_entry": {
+      "chapters": [
+        "VI"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "Potel, C. M., Lin, M.-H., Heck, A. J. R. & Lemeer, S. Widespread bacterial protein histidine phosphorylation revealed by mass spectrometry-based proteomics. Nature Methods 15, 187 (2018).",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    },
+    "thesis_t_test": {
+      "chapters": [
+        "V"
+      ],
+      "file": "paper/thesis/Potel.pdftotext.txt",
+      "occurrences": 1,
+      "quote": "The log2 scale of phosphosite intensity from technical Fe3+-IMAC triplicates were subjected into a two tailed t-test with a false discovery rate (FDR)",
+      "sha256": "05a506579dcbc869d056af2bc81ecabf4f82debb4a84dda73b7b35075fdbd81f"
+    }
+  },
+  "schema_fit": {
+    "classes_with_a_site_or_residue_field": {},
+    "phenotype_classes": 21
+  },
+  "source_data_fig1": [
+    [
+      "Protocol",
+      "Samples",
+      "#phosphopeptides"
+    ],
+    [
+      "Optimized",
+      "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R1",
+      "1149"
+    ],
+    [
+      "Optimized",
+      "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R2",
+      "1017"
+    ],
+    [
+      "Optimized",
+      "OR13_20160922_CMP_Ecoli_glycerol_stat_2mg_IMAC_R3",
+      "1263"
+    ],
+    [
+      "Standard + precipitation",
+      "OR10_20160316_CMP_Ecoli_glyc_stat_4mg_IMAC_80pc",
+      "333"
+    ],
+    [
+      "Standard + precipitation",
+      "OR10_20160316_CMP_Ecoli_glucose_stat_4mg_IMAC_80pc",
+      "442"
+    ],
+    [
+      "Standard + precipitation",
+      "OR10_20160316_CMP_Ecoli_glucose_exp_4mg_IMAC_80pc",
+      "331"
+    ],
+    [
+      "Standard",
+      "OR11_20160131_CMP_Ecoli_1mg_IMAC_80pc",
+      "137"
+    ],
+    [
+      "Standard",
+      "OR11_20160209_CMP_Ecoli_PT_1mg_80pc",
+      "75"
+    ],
+    [
+      "Standard",
+      "OR11_20160412_CMP_Ecoli_glucose_exp_1mg_smallC_80pc",
+      "69"
+    ],
+    [
+      "Summary:",
+      "std",
+      "std + prec",
+      "optimized"
+    ],
+    [
+      "137",
+      "333",
+      "1149"
+    ],
+    [
+      "75",
+      "442",
+      "1017"
+    ],
+    [
+      "69",
+      "331",
+      "1263"
+    ],
+    [
+      "ave",
+      "93.66666666666667",
+      "368.6666666666667",
+      "1143"
+    ],
+    [
+      "sd",
+      "37.647487742654675",
+      "63.51640208114234",
+      "123.10970717209915"
+    ]
+  ],
+  "strain_tokens_in_deposited_texts": {
+    "paper/thesis/Potel.pdftotext.txt": {
+      "BW25113": 0,
+      "MG1655": 0,
+      "W3110": 3
+    },
+    "si/41592_2018_BFnmeth4580_MOESM1_ESM.pdftotext.txt": {
+      "BW25113": 0,
+      "MG1655": 0,
+      "W3110": 0
+    },
+    "si/41592_2018_BFnmeth4580_MOESM2_ESM.pdftotext.txt": {
+      "BW25113": 0,
+      "MG1655": 0,
+      "W3110": 0
+    }
+  },
+  "table_2": {
+    "cells": 25548,
+    "columns": [
+      "Acc. No.",
+      "Protein names",
+      "Gene names",
+      "Positions",
+      "Localization prob",
+      "PEP",
+      "Score",
+      "Delta score",
+      "Diagnostic peak",
+      "Number of Phospho (HSTY)",
+      "Amino acid",
+      "Sequence window",
+      "Phospho (HSTY) Probabilities",
+      "Charge",
+      "Mass error [ppm]",
+      "Intensity",
+      "Intensity glucose_exp1",
+      "Intensity glucose_exp2",
+      "Intensity glucose_exp3",
+      "Intensity glucose_stat1",
+      "Intensity glucose_stat2",
+      "Intensity glucose_stat3",
+      "Intensity glycerol_exp1",
+      "Intensity glycerol_exp2",
+      "Intensity glycerol_exp3",
+      "Intensity glycerol_stat1",
+      "Intensity glycerol_stat2",
+      "Intensity glycerol_stat3"
+    ],
+    "diagnostic_peak_plus": 113,
+    "distinct_accession_strings": 781,
+    "duplicate_accession_residue_position": 0,
+    "localization_prob_at_least_0_75": {
+      "H": 135,
+      "S": 964,
+      "T": 340,
+      "Y": 143
+    },
+    "localization_prob_min": 0.20592,
+    "negative_or_non_numeric_cells": 0,
+    "nonzero_max": 37811000000.0,
+    "nonzero_median": 12294000.0,
+    "nonzero_min": 274350.0,
+    "nonzero_per_sample": {
+      "Intensity glucose_exp1": 989,
+      "Intensity glucose_exp2": 1002,
+      "Intensity glucose_exp3": 897,
+      "Intensity glucose_stat1": 1200,
+      "Intensity glucose_stat2": 1241,
+      "Intensity glucose_stat3": 1136,
+      "Intensity glycerol_exp1": 1064,
+      "Intensity glycerol_exp2": 1087,
+      "Intensity glycerol_exp3": 1054,
+      "Intensity glycerol_stat1": 1263,
+      "Intensity glycerol_stat2": 1201,
+      "Intensity glycerol_stat3": 1319
+    },
+    "phis_distinct_accession_strings": 173,
+    "phis_sites": 246,
+    "residues": {
+      "H": 246,
+      "S": 1220,
+      "T": 501,
+      "Y": 162
+    },
+    "rows": 2129,
+    "rows_naming_more_than_one_accession": 10,
+    "rows_naming_more_than_one_gene": 42,
+    "rows_naming_more_than_one_position": 42,
+    "sample_columns": [
+      "Intensity glucose_exp1",
+      "Intensity glucose_exp2",
+      "Intensity glucose_exp3",
+      "Intensity glucose_stat1",
+      "Intensity glucose_stat2",
+      "Intensity glucose_stat3",
+      "Intensity glycerol_exp1",
+      "Intensity glycerol_exp2",
+      "Intensity glycerol_exp3",
+      "Intensity glycerol_stat1",
+      "Intensity glycerol_stat2",
+      "Intensity glycerol_stat3"
+    ],
+    "sites_total_intensity_zero": 244,
+    "sites_zero_in_all_twelve": 245,
+    "total_intensity_vs_sum_of_twelve": {
+      "equal_within_1e-6_relative": 278,
+      "total_greater": 1130,
+      "total_smaller": 477
+    },
+    "zero_cells": 12095
+  },
+  "table_5_vs_table_2": {
+    "keys_found_in_table_2": 1436,
+    "keys_not_found_in_table_2": [
+      "P04391|S|82",
+      "P09373|S|648",
+      "P09373|S|651",
+      "P09373|S|734",
+      "P09373|Y|726",
+      "P09373|Y|736",
+      "P0A8N3|S|268",
+      "P0AB91|T|100",
+      "P0AC33|Y|252",
+      "P0AC33|Y|253",
+      "P0CE47|H|119",
+      "P0CE47|H|12",
+      "P0CE47|H|20",
+      "P0CE47|H|23",
+      "P0CE47|H|79",
+      "P0CE47|H|85",
+      "P0CE47|S|254",
+      "P0CE47|S|313",
+      "P0CE47|S|66",
+      "P0CE47|T|17",
+      "P0CE47|T|251",
+      "P0CE47|T|255",
+      "P0CE47|T|257",
+      "P0CE47|T|298",
+      "P0CE47|T|303",
+      "P0CE47|T|321",
+      "P0CE47|T|383",
+      "P0CE47|T|72",
+      "P0CE47|T|74",
+      "P0CE47|T|9",
+      "P0CE47|Y|332",
+      "P0CE47|Y|88",
+      "P77695|T|45"
+    ],
+    "max_abs_diff_log2": 5.072455946120158e-05,
+    "per_replicate": {
+      "exp1": {
+        "equal_log2_within_1e-3": 995,
+        "table_2_nonzero": 995,
+        "table_2_zero_so_table_5_value_is_imputed": 441
+      },
+      "exp2": {
+        "equal_log2_within_1e-3": 1011,
+        "table_2_nonzero": 1011,
+        "table_2_zero_so_table_5_value_is_imputed": 425
+      },
+      "exp3": {
+        "equal_log2_within_1e-3": 991,
+        "table_2_nonzero": 991,
+        "table_2_zero_so_table_5_value_is_imputed": 445
+      },
+      "stat1": {
+        "equal_log2_within_1e-3": 1187,
+        "table_2_nonzero": 1187,
+        "table_2_zero_so_table_5_value_is_imputed": 249
+      },
+      "stat2": {
+        "equal_log2_within_1e-3": 1122,
+        "table_2_nonzero": 1122,
+        "table_2_zero_so_table_5_value_is_imputed": 314
+      },
+      "stat3": {
+        "equal_log2_within_1e-3": 1207,
+        "table_2_nonzero": 1207,
+        "table_2_zero_so_table_5_value_is_imputed": 229
+      }
+    },
+    "rows": 1469,
+    "significant_plus": 594,
+    "unmatched_keys_by_table_2_row": {
+      "multi_accession_row": 9,
+      "one_accession_row_naming_several_genes": 24
+    }
+  },
+  "workbook_rows": {
+    "data/41592_2018_BFnmeth4580_MOESM4_ESM.xlsx": {
+      "Description": {
+        "declared": 36,
+        "with_content": 29
+      },
+      "Supplementary Table 2.": {
+        "declared": 2130,
+        "with_content": 2130
+      }
+    },
+    "si/41592_2018_BFnmeth4580_MOESM3_ESM.xlsx": {
+      "Description": {
+        "declared": 36,
+        "with_content": 14
+      },
+      "Supplementary Table 1.": {
+        "declared": 1048356,
+        "with_content": 35
+      }
+    },
+    "si/41592_2018_BFnmeth4580_MOESM5_ESM.xlsx": {
+      "Description": {
+        "declared": 18,
+        "with_content": 9
+      },
+      "Supplementary Table 3.": {
+        "declared": 252,
+        "with_content": 252
+      }
+    },
+    "si/41592_2018_BFnmeth4580_MOESM6_ESM.xlsx": {
+      "Description": {
+        "declared": 15,
+        "with_content": 14
+      },
+      "Supplementary Table 5.": {
+        "declared": 1470,
+        "with_content": 1470
+      }
+    },
+    "si/41592_2018_BFnmeth4580_MOESM7_ESM.xlsx": {
+      "Sheet1": {
+        "declared": 18,
+        "with_content": 16
+      }
+    }
+  }
+}

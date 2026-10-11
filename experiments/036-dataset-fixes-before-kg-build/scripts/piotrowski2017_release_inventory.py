@@ -81,6 +81,7 @@ class PoolCensus(BaseModel):
     n_pool_v2: int
     n_matrix_strains_in_pool: int
     pool_strains_not_in_matrix: list[str]
+    sensitized_fitness_sheet_genes: int
 
 
 class HcsCheck(BaseModel):
@@ -104,6 +105,21 @@ class Inventory(BaseModel):
     conditions: ConditionCensus
     pool: PoolCensus
     high_confidence_set: HcsCheck
+
+
+def sensitized_fitness_genes(path: Path) -> int:
+    """Data Set 2's second sheet: genes with an original and a sensitized SGA fitness."""
+    workbook = openpyxl.load_workbook(path, read_only=True, data_only=True)
+    rows = list(workbook["Fitness of WT vs sensitized mut"].iter_rows(values_only=True))
+    workbook.close()
+    if tuple(rows[2][:4]) != (
+        "Gene",
+        "Original SMF",
+        "Hypersensitive SMF",
+        "Difference",
+    ):
+        raise ValueError(f"unexpected header {rows[2][:4]!r}")
+    return sum(1 for row in rows[3:] if row[0] is not None)
 
 
 def hcs_check(path: Path, matrix: p.ReleasedMatrix) -> HcsCheck:
@@ -224,6 +240,9 @@ def main() -> None:
                 f"{e.common_name} ({e.orf})"
                 for e in pool
                 if e.common_name not in labels and e.orf not in labels
+            ),
+            sensitized_fitness_sheet_genes=sensitized_fitness_genes(
+                mirror / p.POOL.mirror_rel
             ),
         ),
         high_confidence_set=hcs_check(hcs_path, matrix),

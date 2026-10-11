@@ -92,7 +92,8 @@
       "VPS74 (YDR372C)",
       "VPS8 (YAL002W)",
       "YMR226C (YMR226C)"
-    ]
+    ],
+    "sensitized_fitness_sheet_genes": 3032
   },
   "high_confidence_set": {
     "sha256": "b07029062cb404a7edaf98e932b94f8b992446672b826ce257a84965aa6a55ae",

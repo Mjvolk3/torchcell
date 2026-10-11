@@ -22,7 +22,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "24 file(s) in library, 41528 worksheet row(s) counted; all intact",
+      "reason": "54 file(s) in library+raw, 59352 worksheet row(s) counted; all intact",
       "evidence": [
         {
           "value": "data availability: PubChem holds only the high-confidence subset; the full matrix is the SI",
@@ -38,7 +38,7 @@
           "note": null
         },
         {
-          "value": "replicates: 3 technical PCR replicates averaged into each DS5 value",
+          "value": "replicates: 3 technical PCR replicates by design; each Data Set 5 profile averages those the batch-effect filter kept and the correlation graph joined (1 to 3, not released per profile)",
           "provenance": {
             "source_uri": "paper.md",
             "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
@@ -49,6 +49,32 @@
           },
           "quote": "The genomic extractions for each plate were amplified in triplicate using three unique multiplex primer plates (three technical replicates).",
           "note": null
+        },
+        {
+          "value": "replicate collapsing: a released profile is the mean of the technical replicates the correlation graph joined",
+          "provenance": {
+            "source_uri": "si/si1.docx",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "38cddea8f1a497107304599271bcfcabfba7f65a4f7b3b616f26923be119959a",
+            "method": "paragraph text of word/document.xml (the w:t runs of each w:p concatenated); the NIHMS884855 Supplementary Note",
+            "page": "Supplementary Note, 'Chemical-genetic interaction scoring method'",
+            "retrieved": null
+          },
+          "quote": "In the “replicate collapsing” step, profiles from technical replicate conditions were collapsed into single, mean profiles. To determine which replicates would be collapsed into each final profile, a graph was constructed in which nodes were the technical replicates and edges indicated a correlation between two replicates above a certain threshold (“replicate correlation threshold”).",
+          "note": "a released profile is the mean of the replicates the correlation graph joined, and the batch-effect filter removed whole multiplex tags before that, so the count behind a profile is between 1 and the design's 3 and is not released"
+        },
+        {
+          "value": "matrix: Data Set 5 titles 11,983 profiles; it carries 11,984 columns, the extra one (Cond-008510) marked In_final_dataset = False in Data Set 4; its 291 rows name 289 pool strains (TCD1 and TCD2 labelled by ORF in the RIKEN columns)",
+          "provenance": {
+            "source_uri": "si/si13.xlsx",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+            "method": "cell value read with openpyxl (read_only, data_only)",
+            "page": "sheet 'All_conditions', cell A1",
+            "retrieved": null
+          },
+          "quote": "Supplementary dataset 5. Average chemical genomic profile of 11983 compounds",
+          "note": "the release carries 11,984 columns; the extra one is Cond-008510 (NPE1123), which Data Set 4 marks In_final_dataset = False"
         }
       ],
       "issue": null,
@@ -79,6 +105,19 @@
           },
           "quote": "The MATα query strain was crossed to an ordered array of MATa xxxΔ::kanMX deletion mutants",
           "note": null
+        },
+        {
+          "value": "readout: chemical-genetic z-score, positive = resistant, negative = sensitive (MeasurementType.z_score)",
+          "provenance": {
+            "source_uri": "si/si1.docx",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "38cddea8f1a497107304599271bcfcabfba7f65a4f7b3b616f26923be119959a",
+            "method": "paragraph text of word/document.xml (the w:t runs of each w:p concatenated); the NIHMS884855 Supplementary Note",
+            "page": "Supplementary Note, 'Chemical-genetic interaction scoring method'",
+            "retrieved": null
+          },
+          "quote": "Positive z-scores suggest resistance to the condition, and negative z-scores suggest sensitivity to the condition relative to the fitness of each mutant in the control condition.",
+          "note": "the orientation recorded before any pooling: negative is the sick strain, as in Vanacloig 2022, Hoepfner 2014 and Wildenhain 2015 and opposite to both Hillenmeyer 2008 arms"
         }
       ],
       "issue": null,
@@ -103,7 +142,8 @@
   "g3": {
     "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
     "trees_read": [
-      "library"
+      "library",
+      "raw"
     ],
     "files": [
       {
@@ -652,6 +692,419 @@
             "rows": 135
           }
         ]
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/0424db688268fa2ffb52fe87b471e88e33599522db1f8e5c25ce09fcd6396b4d.jpg",
+        "role": "ocr_image",
+        "bytes": 9143,
+        "sha256_manifest": "5d6ab893e72dcc967868893097f230b596a86892d65b1f28d9b40133ca7581aa",
+        "sha256_disk": "5d6ab893e72dcc967868893097f230b596a86892d65b1f28d9b40133ca7581aa",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/0463a7655a267e094244a1a02e63f67a14e157d159ac043d16249182920790ca.jpg",
+        "role": "ocr_image",
+        "bytes": 119525,
+        "sha256_manifest": "2a5eb274b69d2c5f1f197a723960ad7602f09958cf2b44838a40e8e1943412eb",
+        "sha256_disk": "2a5eb274b69d2c5f1f197a723960ad7602f09958cf2b44838a40e8e1943412eb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/04d7a4bbe6e6e1b1f7ff958edcc7777878f65e4d312d22d38e799bf1a43fb8f0.jpg",
+        "role": "ocr_image",
+        "bytes": 47769,
+        "sha256_manifest": "7df009f5c3162f3a4317b5b7afef2038bc6d71eb8d047b743eaca692dcc9269a",
+        "sha256_disk": "7df009f5c3162f3a4317b5b7afef2038bc6d71eb8d047b743eaca692dcc9269a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/1f7344571fc47ec3729b99492fda788ad3d7cca861789f5c6a6e97dd18545c86.jpg",
+        "role": "ocr_image",
+        "bytes": 93175,
+        "sha256_manifest": "2639ec7cec1eca92b7e277b8cf2c36f63f99e2998bf9ad07869932e7651d0f26",
+        "sha256_disk": "2639ec7cec1eca92b7e277b8cf2c36f63f99e2998bf9ad07869932e7651d0f26",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/2dda3f955640530ad825dc7550206d0597e46afc6b0cb433011e1096c6ced8c3.jpg",
+        "role": "ocr_image",
+        "bytes": 71052,
+        "sha256_manifest": "69d02246a0e7fe124912edfab46985ba85971670ec34a0ad099043cb71fc0b3d",
+        "sha256_disk": "69d02246a0e7fe124912edfab46985ba85971670ec34a0ad099043cb71fc0b3d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/3957727f4599f8f9f78b25af3b9a5749e1e818fd5c30f6ddd83e73dbebcaf6b3.jpg",
+        "role": "ocr_image",
+        "bytes": 140332,
+        "sha256_manifest": "01c93f655ebe109386e3aca3472125a3766423acbcfd9635cde40376bd5a9085",
+        "sha256_disk": "01c93f655ebe109386e3aca3472125a3766423acbcfd9635cde40376bd5a9085",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/3b15a4d7d2a9a5b98c0b7915918585dd7da0b13860afd9b2e825f2850c0990f3.jpg",
+        "role": "ocr_image",
+        "bytes": 370179,
+        "sha256_manifest": "be682dc2ef6d2822676aab8a80554e15a5c9986b9ba81ac1873c400bffcb577e",
+        "sha256_disk": "be682dc2ef6d2822676aab8a80554e15a5c9986b9ba81ac1873c400bffcb577e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/44fccbed9d631e441a2b40bd47d8f3da58118eda2f917e928999b574815549f1.jpg",
+        "role": "ocr_image",
+        "bytes": 282046,
+        "sha256_manifest": "8902b741b1dec4bfa58e26658b6b4a9962541d7f23d5a57e07ce5310d4ac42b5",
+        "sha256_disk": "8902b741b1dec4bfa58e26658b6b4a9962541d7f23d5a57e07ce5310d4ac42b5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/604ac322268dfbf1cbed726506979d9310f1a510b4bb28abb84d18a14dfe146c.jpg",
+        "role": "ocr_image",
+        "bytes": 28568,
+        "sha256_manifest": "55106d4f0c8b6672de39f863229ce7129355efc273b43c33beb692d7b3acb366",
+        "sha256_disk": "55106d4f0c8b6672de39f863229ce7129355efc273b43c33beb692d7b3acb366",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/6256c3a314c84b3a4648c50d56ce4fb6b43620c2d45e366d06b5a4da4d4f185d.jpg",
+        "role": "ocr_image",
+        "bytes": 85153,
+        "sha256_manifest": "7c6294e055d950ecb1b8c3ae31ea50e7fdb9834dfd1368fbbc12ed0eba8ab5aa",
+        "sha256_disk": "7c6294e055d950ecb1b8c3ae31ea50e7fdb9834dfd1368fbbc12ed0eba8ab5aa",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/657d312732475698836943d4374395274de91596c10afed4aaffd329df1985c2.jpg",
+        "role": "ocr_image",
+        "bytes": 91118,
+        "sha256_manifest": "bff61b6fe6aa515b1df5229f1e629422c174a94d9a3355cd283f290a051b9d07",
+        "sha256_disk": "bff61b6fe6aa515b1df5229f1e629422c174a94d9a3355cd283f290a051b9d07",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/7110901c696ed1f740ba02461985fa00691f5b5357f58dc6858f465cd6ee8a1d.jpg",
+        "role": "ocr_image",
+        "bytes": 91445,
+        "sha256_manifest": "76f370beb521d0b3aeb8608c73c885e9e25475dee40581f0d17ea891d11a643f",
+        "sha256_disk": "76f370beb521d0b3aeb8608c73c885e9e25475dee40581f0d17ea891d11a643f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/7a78449fd71f29e016a8ac1fe68109ef14885ea09c111570ce29392916dfafc2.jpg",
+        "role": "ocr_image",
+        "bytes": 33380,
+        "sha256_manifest": "f02a52ed44156d13030534e3e1cd3277fe8186124ff2d067fab6170140e0b982",
+        "sha256_disk": "f02a52ed44156d13030534e3e1cd3277fe8186124ff2d067fab6170140e0b982",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/7d151bf7dfbf2dce015285f952549e469d98686fd56be3a60c9e3dffe3293576.jpg",
+        "role": "ocr_image",
+        "bytes": 54777,
+        "sha256_manifest": "79d3fde573c356019f2dfa3e714fee14c238439adc6b09292086cf23fd0cbbfb",
+        "sha256_disk": "79d3fde573c356019f2dfa3e714fee14c238439adc6b09292086cf23fd0cbbfb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/90f9448482044169fd35b3be81f906cd9171d53218b8546873ffc66c80869087.jpg",
+        "role": "ocr_image",
+        "bytes": 92174,
+        "sha256_manifest": "de3cad77b4316c7c19eddcdc0602164aa95bbb1239c3bd9156451723235d235a",
+        "sha256_disk": "de3cad77b4316c7c19eddcdc0602164aa95bbb1239c3bd9156451723235d235a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/9315747a6f9ca86de0a597aff08d61c09a83d582f9e04c3b396b013b9876a4e6.jpg",
+        "role": "ocr_image",
+        "bytes": 39440,
+        "sha256_manifest": "c6a309be2cbe8d337c651b03e97686e1c4d43bde1a5eb9db222fe58f6cfa1dfb",
+        "sha256_disk": "c6a309be2cbe8d337c651b03e97686e1c4d43bde1a5eb9db222fe58f6cfa1dfb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/94c9a501b482b5e0b02aea9fa19e8ecdbc64dd1f9880278bae338341931ae9f2.jpg",
+        "role": "ocr_image",
+        "bytes": 74936,
+        "sha256_manifest": "7f295bdad0fa36a581cd29ca0178963c15d24c9b039a33ec75fd20626d1084cb",
+        "sha256_disk": "7f295bdad0fa36a581cd29ca0178963c15d24c9b039a33ec75fd20626d1084cb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/9710ae8bb2b72e4c5970bad02af71fd9a40e4dbec8360e6d5fe853999ecef2e6.jpg",
+        "role": "ocr_image",
+        "bytes": 33429,
+        "sha256_manifest": "cee9179c9a4b5c9dff2163960dfce2bff3f48744802258d11e6b85a94fb9920c",
+        "sha256_disk": "cee9179c9a4b5c9dff2163960dfce2bff3f48744802258d11e6b85a94fb9920c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/a918f173298e6c3462e7a3835f5a3992e5a794de472f750fb245182ef6fe128e.jpg",
+        "role": "ocr_image",
+        "bytes": 21450,
+        "sha256_manifest": "ed7d984c155a0aeaa450d56a711a0d1eeffe7ddd531a713159f408dddd35595f",
+        "sha256_disk": "ed7d984c155a0aeaa450d56a711a0d1eeffe7ddd531a713159f408dddd35595f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/c14bc3b1429a09c28996c295503b74c0a595a547ebf8602c35a1380b1d78a375.jpg",
+        "role": "ocr_image",
+        "bytes": 54916,
+        "sha256_manifest": "15eea33ca305906c51b4c1f987f49ceeb911d63ee7a668f4db7ebc68a2a29df6",
+        "sha256_disk": "15eea33ca305906c51b4c1f987f49ceeb911d63ee7a668f4db7ebc68a2a29df6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/d0b654f2546ed0ad10f77277ca9817e82e55f293a7765190b3dfd0bfcf0c9720.jpg",
+        "role": "ocr_image",
+        "bytes": 68421,
+        "sha256_manifest": "929c107bb63bb676b365acbca1139e9d728df05d7818ad2d71ccb9ed656fe1be",
+        "sha256_disk": "929c107bb63bb676b365acbca1139e9d728df05d7818ad2d71ccb9ed656fe1be",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/e105c405dfd0bb187cb4755a7dcbdf14d18f08adaae8fdc6111a887121cbebb9.jpg",
+        "role": "ocr_image",
+        "bytes": 41433,
+        "sha256_manifest": "48123ccf23eace4025c6a897952a9e9e928886b864e6c33cc8055d7e9297e68a",
+        "sha256_disk": "48123ccf23eace4025c6a897952a9e9e928886b864e6c33cc8055d7e9297e68a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si12/e7106c8711a091d50e66cd32857d4510602fa6bc5549f77ae558795bd8315add.jpg",
+        "role": "ocr_image",
+        "bytes": 41927,
+        "sha256_manifest": "ec75bcb456ba2b2c4fe9f418f5fa181328f9e3ff1f356beac1a0caa724b5e756",
+        "sha256_disk": "ec75bcb456ba2b2c4fe9f418f5fa181328f9e3ff1f356beac1a0caa724b5e756",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.md",
+        "role": "si_ocr",
+        "bytes": 22625,
+        "sha256_manifest": "72f84fde5548ede6105fe0c1782bf58f36b00e45a3d1b83cb94e2fef02d80542",
+        "sha256_disk": "72f84fde5548ede6105fe0c1782bf58f36b00e45a3d1b83cb94e2fef02d80542",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si12_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 39022,
+        "sha256_manifest": "5f79f240206f117ab9c1c8d1888a1e20a6f1a52ebe9367e723590aeb303949bd",
+        "sha256_disk": "5f79f240206f117ab9c1c8d1888a1e20a6f1a52ebe9367e723590aeb303949bd",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si12_middle.json",
+        "role": "ocr_layout",
+        "bytes": 814313,
+        "sha256_manifest": "8a15bde9f6788be18cbcbcd9e3b5ec16ef6be7c0a6bc0450edb3043a88c273cf",
+        "sha256_disk": "8a15bde9f6788be18cbcbcd9e3b5ec16ef6be7c0a6bc0450edb3043a88c273cf",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si12_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1032,
+        "sha256_manifest": "06f212c9ec78587ddcf8b680dfcd968be6c00e30318f303cdd7d2230dee58535",
+        "sha256_disk": "06f212c9ec78587ddcf8b680dfcd968be6c00e30318f303cdd7d2230dee58535",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/NIHMS884855-supplement-Suppl_Dataset_5.xlsx",
+        "role": "si_data",
+        "bytes": 32023928,
+        "sha256_manifest": "96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+        "sha256_disk": "96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "All_conditions",
+            "rows": 294
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/NIHMS884855-supplement-Suppl_Dataset_4.xlsx",
+        "role": "si_data",
+        "bytes": 3856915,
+        "sha256_manifest": "eba460fe354bafd4e57c2a8438201cdc9399cf97582e3d86adf3e9362f821f87",
+        "sha256_disk": "eba460fe354bafd4e57c2a8438201cdc9399cf97582e3d86adf3e9362f821f87",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 4",
+            "rows": 13972
+          },
+          {
+            "sheet": "RIKEN anticancer subset",
+            "rows": 23
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/NIHMS884855-supplement-Suppl_Dataset_2.xlsx",
+        "role": "si_data",
+        "bytes": 163993,
+        "sha256_manifest": "394505047acaea5e7e7d1afa2753e76be5356bb43abd4e01ec8eb6e1acd145a2",
+        "sha256_disk": "394505047acaea5e7e7d1afa2753e76be5356bb43abd4e01ec8eb6e1acd145a2",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 2",
+            "rows": 500
+          },
+          {
+            "sheet": "Fitness of WT vs sensitized mut",
+            "rows": 3035
+          }
+        ]
       }
     ],
     "walls": []
@@ -660,7 +1113,14 @@
     "doi": "10.1038/nchembio.2436",
     "pmid": null,
     "accessions": [],
-    "hits": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/nchembio.2436",
+        "where": "torchcell/datasets/scerevisiae/piotrowski2017.py",
+        "relation": "own"
+      }
+    ],
     "pmid_checked": false
   },
   "g4_value": null,
@@ -671,5 +1131,5 @@
     "proposed_class": null
   },
   "decided_at": "2026-10-11",
-  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+  "torchcell_commit": "ecc805bba853b921371e2ff27d6b6e22c0f8813a"
 }

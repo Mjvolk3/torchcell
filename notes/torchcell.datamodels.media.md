@@ -506,3 +506,7 @@ keys and 2 table rows ADDED, no pre-existing key's `media_identity` digest moved
 (`test_media_bacterial.py` pins all 54 pre-serve-50 keys, and every library key is either
 pinned there or declared in `BACTERIAL_MEDIA_USES`) and no pre-existing table row changed.
 A served medium or compound node id therefore does not move.
+
+## 2026.10.11 - SPORULATION_KAC and PBS
+
+Two library media for De Chiara 2022's life-cycle assays, each quoting its Methods: `SPORULATION_KAC` (2% potassium acetate, liquid; potassium acetate carries a typed `inchikey` gap until the compound table is re-curated, #1008) and `PBS` (no components; the source names phosphate-buffered saline "representing isotonic water" and prints no recipe), listed in `CARBON_FREE_MEDIA`.

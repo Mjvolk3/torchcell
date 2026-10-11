@@ -381,3 +381,7 @@ nor its inputs are in it -- and not a measurement.
 - `FITNESS_DATASETS` gains the eight Costanzo 2016 / Kuzmin 2018/2020 fitness stores with `stream: True` and `experiment_class`; `run_fitness` sends a streamed spec through `verify_fitness_dataset_streaming` and never materializes it.
 - New registries with their runners, called by `run_all` after `run_fitness`: `GENE_INTERACTION_DATASETS` / `run_gene_interaction`, `GENE_ESSENTIALITY_DATASETS` / `run_gene_essentiality`, `SYNTHETIC_PAIR_DATASETS` / `run_synthetic_pairs`. Each entry pins its released files and quotes; every `expected_count` is the release's count (`experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py`).
 - Helpers: `companion_pair_keys`, `viable_deletion_genes`, `released_synlethdb_pairs`, `drop_ledger_result`, `_audit_quotes`.
+
+## 2026.10.11 - Natural-isolate panel registry
+
+`NATURAL_ISOLATE_DATASETS` holds the three De Chiara 2022 stores (4,039 / 36,295 / 36,286 records), each verified by the loader's `verify_build` ([[torchcell.datasets.scerevisiae.dechiara2022]]), which validates each shared genotype once and replaces the deletion-keyed L4 rules with a sequence-variant containment floor. `run_natural_isolate` adds an L1 `registry_count` row (the store against the count pinned at registration) and is called last by `run_all`.

@@ -67,3 +67,7 @@ Records are unchanged for a verified raw file: no record-building code moved; th
 ## 2026.09.30 - ManifestPinMismatchError and check_manifest_pin (issue #561)
 
 Added `ManifestPinMismatchError(relpath, recorded, pin)`, with the message `raw-mirror manifest records sha256 <recorded> for <relpath>, but the loader pins <pin>`, and `check_manifest_pin(relpath, recorded, pin)`, which raises it when the two differ. Both are exported from `torchcell.data`. The seven loaders whose `download()` took the pin from the raw-mirror manifest (Baryshnikova 2010, Lian 2019, Mormino 2022, Smith 2006, Smith 2016, Vanacloig 2022, Wildenhain 2015) now treat their module constant as the one pin, and they use this check to cross-check the manifest, which is the retrieval record. Tests: [[tests.torchcell.datasets.scerevisiae.test_raw_pins]].
+
+## 2026.10.11 - An interned genotype is resolved by the sequential gene set
+
+`compute_gene_set_sequential` reads the genotype through the loaded `interned` table. A natural-isolate store (De Chiara 2022, [[torchcell.datasets.scerevisiae.dechiara2022]]) interns each isolate's genotype once, since it is constant across that isolate's records; a store whose genotypes are inline reads exactly as before. `knowledge_graphs.subset.select_indices` got the same resolution.

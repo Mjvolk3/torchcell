@@ -144,3 +144,7 @@ way. On the real stores (`--data`, `DATA_ROOT=/scratch/projects/torchcell-scratc
 `assert_dev_store_graph` for Rousset 2018 and Mutalik 2020 passes with the phage conf's
 left-off check now run UNEXEMPTED: before the fix that check had to skip
 `environment perturbation (chunked)`, because running it re-emitted the records' phages.
+
+## 2026.10.11 - life cycle phenotype node
+
+`_life_cycle_phenotype_node` and `_get_life_cycle_phenotype_reference_nodes` emit `life cycle phenotype` (De Chiara 2022); the keyed time course is a JSON string and the assay, sample counts and cells per sample stay typed properties.

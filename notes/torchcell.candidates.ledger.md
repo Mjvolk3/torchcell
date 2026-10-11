@@ -28,6 +28,7 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | potelWidespreadBacterialProtein2018 | bacteria | Potel 2018 phosphoproteome | ✓ | ■ | · | · | · | **blocked:ingest** |  | 2026-10-10 | `878d58607` |
 | priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | boocockSinglecellEQTLMapping2025 | yeast | Boocock 2025 (single-cell eQTL mapping) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `de58b18dc` |
+| dechiaraDomesticationReprogrammedBudding2022 | yeast | De Chiara 2022 (domestication and the life cycle) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `5af868d60` |
 | deloacheEnzymecoupledBiosensorEnables2015 | yeast | DeLoache 2015 (betaxanthin biosensor for (S)-reticuline) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
 | gaschGenomicExpressionPrograms2000 | yeast | Gasch 2000 (environmental stress response) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
 | guzmanUltrafastLabelfreeQuantification2024 | yeast | Guzman 2024 (Astral knockout proteomes, 104 strains) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |

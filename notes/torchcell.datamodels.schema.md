@@ -441,3 +441,14 @@ Graph side: `environment response phenotype` in `biocypher/config/torchcell_sche
 First consumer: Wang 2024 Table S2 ([[torchcell.datasets.ecoli.wang2024]]), 24,763 records each carrying both released values.
 
 Schema impact (`scripts/schema_impact_check.py --base origin/main`): one changed symbol, `EnvironmentResponsePhenotype` (three added optional fields plus the `_check` validator), 36 impacted dataset groups, 0 breaking. Every dataset whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
+
+## 2026.10.11 - Life-cycle phenotype family, cell yield, nitrogen dose, timed pre-culture
+
+Additive, for De Chiara 2022 ([[torchcell.datasets.scerevisiae.dechiara2022]]):
+
+- `LifeCyclePhenotype`: a culture's time course, `life_cycle` keyed `<measurement type>@<time><h|d>` (`life_cycle_key`, `parse_life_cycle_key`; one canonical spelling per time point) to a percentage. `LifeCycleMeasurementType` is `sporulation_efficiency`, `dyad_fraction` (a percent of the asci, not of the culture) and `stationary_phase_viability`; the first two are bounded by 100, a plate-normalized viability is not. `LifeCycleAssay` restricts each assay to the measurements it produces (`LIFE_CYCLE_ASSAY_MEASUREMENTS`). `LifeCycleExperiment` / `...Reference` declare a `CultureEnvironment`, so the induction protocol serializes.
+- `MeasurementType.cell_yield`, in `ABSOLUTE_MEASUREMENT_TYPES`: cells per colony population (Scan-o-matic), kept apart from `colony_size` (an end-point size on an image scale).
+- `ConcentrationUnit.mg_nitrogen_per_l` (`mg_N/L`): a nitrogen-equivalent dose, stored on the basis the source set it on.
+- `PreCultureSource.timed_culture`: a pre-culture of stated duration and unstated growth phase.
+
+Schema impact vs origin/main: 96 datasets impacted, 0 breaking.

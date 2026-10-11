@@ -762,6 +762,10 @@ def test_verify_build_dispatches_by_store_and_reads_the_caudal_store(
     from that store's LMDB in ``data.csv`` order (first, middle, last, first SACE_).
     """
     _caudal_store(data_root, [proteome[0], proteome[1]])
+    # verify_build reopens each store's LMDB; an env this process already holds
+    # (the fixtures read records) is refused by lmdb, so release both first.
+    proteome.close_lmdb()
+    turnover.close_lmdb()
     monkeypatch.setattr(
         m, "_sgd_genes", lambda root: {"YAL001C", "YBR001W", "Q0010", "R0040C"}
     )

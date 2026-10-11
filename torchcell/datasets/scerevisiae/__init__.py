@@ -26,6 +26,7 @@ from .dechiara2022 import (
     DoublingTimeDeChiara2022Dataset as DoublingTimeDeChiara2022Dataset,
 )
 from .dechiara2022 import LifeCycleDeChiara2022Dataset as LifeCycleDeChiara2022Dataset
+from .hale2024 import CrispriSegregantHale2024Dataset as CrispriSegregantHale2024Dataset
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
@@ -171,6 +172,8 @@ dechiara_datasets = [
     "CellYieldDeChiara2022Dataset",
 ]
 
+hale_datasets = ["CrispriSegregantHale2024Dataset"]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -209,4 +212,5 @@ __all__ = (
     + smith2016_datasets
     + baryshnikova_datasets
     + dechiara_datasets
+    + hale_datasets
 )

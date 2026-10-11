@@ -178,6 +178,8 @@ RUN_ALL_ORDER = [
     "run_segregant_expression",
     # jackson2020: the pseudobulk UMI-count family, called after the isolates.
     "run_pseudobulk_umi_count",
+    # Hale 2024: a CRISPRi guide on a segregant background.
+    "run_segregant_perturbation",
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
@@ -2190,6 +2192,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.FITNESS_DATASETS,
         runners.SEGREGANT_GROWTH_DATASETS,
         runners.SEGREGANT_EXPRESSION_DATASETS,
+        runners.SEGREGANT_PERTURBATION_DATASETS,
         runners.GENE_INTERACTION_DATASETS,
         runners.GENE_ESSENTIALITY_DATASETS,
         runners.SYNTHETIC_PAIR_DATASETS,
@@ -2213,6 +2216,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 11  # FITNESS_DATASETS
         + 1  # SEGREGANT_GROWTH_DATASETS
         + 1  # SEGREGANT_EXPRESSION_DATASETS
+        + 1  # SEGREGANT_PERTURBATION_DATASETS
         + 5  # GENE_INTERACTION_DATASETS
         + 1  # GENE_ESSENTIALITY_DATASETS
         + 2  # SYNTHETIC_PAIR_DATASETS

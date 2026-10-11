@@ -87,6 +87,7 @@ from torchcell.sequence.genome.registry import (
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     ECOLI_K12_W3110,
+    HALE2024_3S_VARIANTS,
     PETER2018_1011,
     PPUTIDA_KT2440,
     SGD_S288C_R64,
@@ -472,6 +473,14 @@ HOSTS: Final[tuple[HostToken, ...]] = (
         pattern=r"\bRM11",
         assembly_set=PETER2018_1011,
     ),
+    # The clinical parent of the Ehrenreich-lab BYx3S cross (Hale 2024, Matsui 2022). No
+    # public assembly exists; the tier holds the authors' 3S-vs-S288C variant table.
+    HostToken(
+        name="322134S",
+        organism="S. cerevisiae",
+        pattern=r"\b322134S\b",
+        assembly_set=HALE2024_3S_VARIANTS,
+    ),
     HostToken(
         name="SK1", organism="S. cerevisiae", pattern=r"\bSK1\b", assembly_set=None
     ),
@@ -486,7 +495,14 @@ K12_READABLE_HOSTS: Final = ("MG1655", "BW25113")
 #: Sets a genome class already reads: the schema's bacterial vocabulary (W3110 is
 #: deliberately outside it, registry.py) plus the two yeast sets the loaders resolve.
 READABLE_ASSEMBLY_SETS: Final[frozenset[str]] = frozenset(
-    (*get_args(schema.BacterialAssemblySet), SGD_S288C_R64, PETER2018_1011)
+    (
+        *get_args(schema.BacterialAssemblySet),
+        SGD_S288C_R64,
+        PETER2018_1011,
+        # Read by hale2024.build_parents (every BYx3S mosaic pins its 3S parent to it)
+        # and re-read row by row by the segregant-perturbation verifier against R64-4-1.
+        HALE2024_3S_VARIANTS,
+    )
 )
 
 _ORGANISM_OF_TABLE_ROW: Final = {"E. coli", "P. putida", "S. cerevisiae"}

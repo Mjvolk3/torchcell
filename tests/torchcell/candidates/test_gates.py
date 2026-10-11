@@ -40,6 +40,7 @@ from torchcell.sequence.genome.registry import (
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
     ECOLI_K12_W3110,
+    HALE2024_3S_VARIANTS,
     PETER2018_1011,
     SGD_S288C_R64,
 )
@@ -319,6 +320,27 @@ def test_g2_by_x_rm11_mosaic_resolves_rm_to_the_peter_panel(tier: Path) -> None:
     assert [(h.name, h.assembly_set) for h in run.record.hosts] == [
         ("S288C", SGD_S288C_R64),
         ("RM11-1a", PETER2018_1011),
+    ]
+
+
+def test_g2_hale_mosaic_pins_3s_to_its_variant_table(tier: Path) -> None:
+    """322134S names the 3S variant set: absent from the tier it is provisionable, and
+    once deposited it resolves and reads, so the BYx3S mosaic passes.
+    """
+    row = yeast_row(genotypes="169 BY4716 x 322134S segregants x 1,721 genes")
+    assert gates.hosts_named(row) == ("S288C", "322134S")
+    run = gates.evaluate_g2(row, str(tier), source_kind="primary")
+    assert (run.result.outcome, run.result.blocked_kind) == ("blocked", "provision")
+    assert run.result.reason == (
+        "haplotype_mosaic: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads; "
+        "322134S -> hale2024_322134S_variants is not in the tier"
+    )
+    write_assembly_set(tier, HALE2024_3S_VARIANTS)
+    run = gates.evaluate_g2(row, str(tier), source_kind="primary")
+    assert (run.result.outcome, run.record.outcome) == ("pass", "resolvable_readable")
+    assert [h.assembly_set for h in run.record.hosts] == [
+        SGD_S288C_R64,
+        HALE2024_3S_VARIANTS,
     ]
 
 

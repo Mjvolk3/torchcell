@@ -2895,6 +2895,84 @@ def run_genome_architecture(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# Perturbation-on-segregant datasets (a CRISPRi guide on a haplotype mosaic)
+# --------------------------------------------------------------------------- #
+SEGREGANT_PERTURBATION_DATASETS: dict[str, dict[str, Any]] = {
+    "crispri_segregant_hale2024": {
+        "root": "data/torchcell/crispri_segregant_hale2024",
+        # 2,923,436 ATC1 + 2,857,376 ATC2 + 2,911,823 CON gene-targeting lineages; the
+        # 106,796 control-gRNA lineages are the normalization reference and are ledgered.
+        "expected_count": 8692635,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.1038/s41467-024-48626-1",
+            citation_key="haleGenomescaleAnalysisInteractions2024",
+            method=(
+                "169 barcoded BY4716 x 322134S segregants and the BY parent, each "
+                "carrying one integrated dCas9-Mxi1 CRISPRi guide (8,046 guides, 1,721 "
+                "genes); one record per double-barcode lineage per assay (ATC1, ATC2 "
+                "induced with 250 ng/mL ATC, CON uninduced); phenotype = released "
+                "PyFitSeq relative fitness after the paper's control-gRNA and CON-mean "
+                "normalization, uncertainty = PyFitSeq estimation error (observed-"
+                "information SE); background = run-length-encoded HMM hard calls of "
+                "Supplemental Data 12 against BY (S288C R64-4-1) and 3S (its variant "
+                "table, genomes tier hale2024_322134S_variants); raw mirror "
+                "torchcell-raw/haleGenomescaleAnalysisInteractions2024 (PMC-cloud and "
+                "Figshare 10.6084/m9.figshare.24578995.v1 byte-identical)"
+            ),
+            page="Nat Commun 15:4234; Methods 'Fitness assay', 'Fitness estimation'; "
+            "Supplemental Data 1, 2, 3, 6, 7, 8, 12, 13",
+            sha256="8e60ce440713273e6845874fc7eaf4d386174f4f12cbc6e622d76c83e1172a67",
+        ),
+    }
+}
+
+
+def verify_segregant_perturbation_dataset(
+    name: str, data_root: str
+) -> VerificationReport:
+    """Verify one perturbation-on-segregant store (L0-L4) and write its report."""
+    from torchcell.datasets.scerevisiae import hale2024
+    from torchcell.sequence.genome.registry import HALE2024_3S_VARIANTS
+    from torchcell.verification.segregant_perturbation import (
+        verify_segregant_perturbation_streaming,
+    )
+
+    spec = SEGREGANT_PERTURBATION_DATASETS[name]
+    abs_root = osp.join(data_root, spec["root"])
+    genome = _genome(data_root)
+    s288c = resolve(SGD_S288C_R64, hale2024.S288C_ASSEMBLY_FSA, data_root=data_root)
+    variants = resolve(HALE2024_3S_VARIANTS, hale2024.SD13, data_root=data_root)
+    report = verify_segregant_perturbation_streaming(
+        stream_records(abs_root),
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        raw_dir=osp.join(abs_root, "raw"),
+        preprocess_dir=osp.join(abs_root, "preprocess"),
+        s288c_fasta=s288c,
+        variant_table=variants,
+        parent_files={hale2024.S288C_ASSEMBLY_FSA: s288c, hale2024.SD13: variants},
+        library_root=osp.join(data_root, "torchcell-library"),
+        raw_root=osp.join(data_root, "torchcell-raw"),
+        resolve_gene_name=genome.resolve_gene_name,
+        resolve_orf=hale2024.orf_resolver(genome),
+        sgd_genes=_sgd_gene_set(data_root),
+    )
+    _write_report(report, osp.join(abs_root, "preprocess"))
+    return report
+
+
+def run_segregant_perturbation(data_root: str) -> bool:
+    """Verify every perturbation-on-segregant dataset. True if all pass."""
+    all_passed = True
+    for name in SEGREGANT_PERTURBATION_DATASETS:
+        report = verify_segregant_perturbation_dataset(name, data_root)
+        print(report.summary())
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # #889: gene interaction, gene essentiality and SynLethDB pair families
 #
 # These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no
@@ -4292,6 +4370,7 @@ def run_all(data_root: str) -> bool:
     natural_isolate_ok = run_natural_isolate_response(data_root)
     segregant_expression_ok = run_segregant_expression(data_root)
     pseudobulk_umi_ok = run_pseudobulk_umi_count(data_root)
+    segregant_perturbation_ok = run_segregant_perturbation(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
@@ -4315,6 +4394,7 @@ def run_all(data_root: str) -> bool:
         and natural_isolate_ok
         and segregant_expression_ok
         and pseudobulk_umi_ok
+        and segregant_perturbation_ok
         and titer_ok
         and bacterial_protein_ok
         and bacterial_metabolite_ok

@@ -765,7 +765,10 @@ def _environment_perturbed_result(
     """L3 ``environment_perturbed`` row, shared by the eager and streaming verifiers.
 
     ``expected`` is how many records the loader DECLARES carry no environmental edit.
-    It is 0 for a response dataset, where an unperturbed record is a defect. For an
+    It is 0 for a response dataset whose release has no control arm, where an
+    unperturbed record is a defect. A release that runs its own no-treatment control as
+    records declares those records (Mutalik 2020's no-phage controls in the planktonic
+    culture, 29,392 of 286,344, #888). For an
     ABSOLUTE readout the base condition is itself a measured condition, so the declared
     count is the number of its records (Caglar 2017: the base condition was run in three
     separate experiments, 9 of 55 rows). Declared rather than waived: observed must equal
@@ -784,7 +787,8 @@ def _environment_perturbed_result(
             f"baseline temp={baseline_temp}, media={baseline_media!r})"
             if passed and expected == 0
             else f"{n_missing} of {n_records} experiments carry no environmental edit, "
-            f"as declared (the absolute readout's base condition; baseline temp="
+            f"as declared (a measured condition with no edit: an absolute readout's "
+            f"base condition or a released control arm; baseline temp="
             f"{baseline_temp}, media={baseline_media!r})"
             if passed
             else f"{n_missing} experiments have no environmental edit "
@@ -907,8 +911,9 @@ def verify_environment_response_dataset(
       cannot skip the zero check on a difference-scaled readout either. It is mutually
       exclusive with ``reference_centered=False``.
     - ``expected_unperturbed`` (default 0) is how many records carry no environmental
-      edit. Nonzero only for an absolute readout, whose base condition is a measured
-      condition; observed must EQUAL declared.
+      edit. Nonzero for an absolute readout, whose base condition is a measured
+      condition, and for a release that runs its own no-treatment control arm as
+      records (#888); observed must EQUAL declared.
     - ``expected_non_bracketing`` (default 0) is how many stored two-sided intervals do
       not bracket their value, which a nonlinear transform of a released interval can
       produce; observed must EQUAL declared.

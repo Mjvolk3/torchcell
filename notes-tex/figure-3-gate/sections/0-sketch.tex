@@ -10,27 +10,40 @@
 \label{sec:sketch}
 
 \begin{keybox}
-\textbf{Measured.} Panels a, b, c and f can be drawn now from committed result files
-(\cref{tab:morph-strains,tab:morph-target,tab:morph-v24}, and the v20 readout).
+\textbf{On file} (\fstat{file}). Panels a, b, c and f can be drawn now from committed
+result files (\cref{tab:morph-strains,tab:morph-target,tab:morph-v24}, and the v20 readout).
 
-\textbf{Not measured.} Panel d (a measured modality revealed, paired against the permuted
-and the genotype-only controls) is in flight on \file{cabbi}; panel e (per feature) has no
-dump behind it; panel g (the 1{,}011 isolates) is planned and likely not in time.
+\textbf{Partial} (\fstat{partial}). Panel d (the strain's measured modality as input, paired
+against the permuted and the genotype-only controls) is in flight on \file{cabbi}.
+
+\textbf{Idea only} (\fstat{idea}). Panel e (per feature) has no dump behind it; g (the
+1{,}011 isolates as more training strains) is not a panel of its own and is unlikely to be
+in time.
+
+Nothing in the figure is approved; every panel carries the section cross.
 \end{keybox}
 
 \tcfig{figures/fig3-si-morphology-sketch.pdf}{\textbf{The morphology SI figure, sketched
-before its panels exist.} Each box names the quantity, the statistic and the sample the panel
-will show, and the result file it will be drawn from; the status mark says whether that file
-is committed. \textbf{a}, the three single-deletion panels and their overlaps (counts).
-\textbf{b}, the target: per-feature replicate reliability, the 0.5 threshold that defines the
-116 moving features, the ceiling. \textbf{c}, genotype only: the ceiling, the sequence
+before its panels exist.} The key above the figure is the one the metabolism and
+environment gates use: after each panel letter the section status (red cross, not reviewed)
+and the figure status (filled circle on file, half circle partial, open circle idea only);
+color is the input family an arm reads (taupe, the gene's own sequence; the fourth palette
+slot, the strain's measured phenotype as input; gray, a permuted control), a data panel is
+white, and the shaded band is the transductive row. Each box names the quantity, the
+statistic and the sample the panel will show, and the result file it will be drawn from.
+\textbf{a}, the three single-deletion panels and their overlaps (counts). \textbf{b}, the
+target: per-feature replicate reliability, the 0.5 threshold that defines the 116 moving
+features, the ceiling. \textbf{c}, genotype only (inductive): the ceiling, the sequence
 baselines and the cell graph transformer read off the perturbed CLS, twelve split seeds.
-\textbf{d}, a measured modality revealed as input: the strain's own proteome (expression)
-against another strain's and against genotype only on the same strains, paired by split
-seed, beside the ridge from the same measurement. \textbf{e}, per feature: held-out Pearson
-against reliability for the best revealed arm. \textbf{f}, the conditioning triangle: the
-same contrast on the expression and proteome sides (v20). \textbf{g}, natural variation: the
-1{,}011 isolates with Caudal 2024 expression and Muenzner 2024 proteome, planned.}{fig:si-sketch}
+\textbf{d}, the strain's measured modality as input (transductive): its own proteome
+(expression) against another strain's and against genotype only on the same strains, paired
+by split seed, beside the ridge from the same measurement. \textbf{e}, per feature: held-out
+Pearson against reliability for the best measured-input arm. \textbf{f}, the conditioning
+triangle: the same contrast on the expression and proteome sides (v20). \textbf{g}, not a
+morphology panel: the 1{,}011 natural isolates (Caudal 2024 expression, built; Muenzner
+2024 proteome, next build) as extra training strains for the expression and proteome heads,
+to ask whether a thousand strains whose expression differs far more than the deletion
+panels' lifts those heads and, through them, the measured-input arms of d.}{fig:si-sketch}
 
 \pfstep{Every arm here is transductive in the sense the figure needs} The revealed modality
 is a gene-level measurement of the \emph{same} strain, present on every training, validation
@@ -50,11 +63,16 @@ expression, on the moving features). Panel c already says the genotype-only mode
 node-level measurements predict a cell-level phenotype and the genotype alone, through this
 trunk, does not.
 
-\pfstep{The 1{,}011 isolates} The same conditioning on natural variation needs the
-Muenzner 2024 proteome built beside the served Caudal 2024 transcriptomes; morphology is
-not measured on that panel, so the target there is the proteome from expression and the
-reverse. It is first in the next-build band of the expansion document and is noted here so
-the figure's slot exists; it is unlikely to be filled in this round.
+\pfstep{The 1{,}011 isolates are training data, not a panel} No morphology is measured on
+the Peter 2018 isolates, so they cannot be a morphology panel. The idea behind box g is
+narrower: the deletion panels vary expression little from strain to strain, and about a
+thousand natural isolates with the Caudal 2024 transcriptome (served) and the Muenzner 2024
+proteome (first in the next-build band of the expansion document) would give the expression
+and proteome heads far larger between-strain variation to learn from; the test is then
+whether those heads, and the morphology arms of panel d that read them, improve on the
+deletion strains. The open question before any run is how an isolate's genotype enters a
+model whose perturbation is a set of deleted genes. Hypothesis, untested. It is noted here so
+the slot exists; it is unlikely to be filled in this round.
 
 \input{tables/morph_v24_dataset}
 \input{tables/morph_v24}

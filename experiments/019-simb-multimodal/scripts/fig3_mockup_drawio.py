@@ -19,11 +19,18 @@ go in as embedded true-size SVGs, byte-identical to the files under
 $ASSET_IMAGES_DIR/019-simb-multimodal/, so
 notes/assets/publish/scripts/drawio_true_size_import.py --identify reports them CURRENT.
 
-STATUS MARKS. Each panel letter is followed by the section-status glyph of
-notes-tex/common/tcdoc.sty (green check, amber square, red x; same colors), and each
-figure carries a one-line key. They are mockup-only annotations: they live in their own
-draw.io layer, "mockup status marks", and STATUS_MARKS = False (or FIG3_STATUS_MARKS=0 in
-the environment) leaves them out entirely.
+STATUS MARKS. Each panel letter is followed by two symbols, the convention of the
+metabolism and environment gate figures: the section-status glyph of
+notes-tex/common/tcdoc.sty (the red cross; nothing here is reviewed) and the figure-status
+symbol of the same file's \fstat (filled circle on file, half circle partial, open circle
+idea only). Each figure carries its key ABOVE the panels, and a figure that colors boxes by
+input family adds the family swatches and the transductive band to that key. They are
+mockup-only annotations: they live in their own draw.io layer, "mockup status marks", and
+STATUS_MARKS = False (or FIG3_STATUS_MARKS=0 in the environment) leaves them out entirely.
+
+NO DUPLICATES. A panel appears in one mockup only; mockup B and SI-2 carry only what A does
+not show (B: the v19 paired difference and the reduced embedding study; SI-2 drops the
+triangle bars, which are A's panel c).
 
 UNITS. 100 draw.io units per inch. A full-width figure is designed to 702 units or less
 (the export adds a 1-unit border per side). Font sizes are the ladder of CLAUDE.md:
@@ -83,17 +90,43 @@ LETTER = 11.1
 
 STROKE = dict(zip(["orange", "red", "purple", "yellow", "blue", "gray"], PLOT_PALETTE))
 FILL = dict(zip(["orange", "red", "purple", "yellow", "blue", "gray"], PLOT_PALETTE_FILL))
+# Color is the INPUT FAMILY an arm reads, the encoding of the metabolism and environment
+# gate figures (experiments/031-betaxanthin-module/scripts/campaign_figures.py FAMILIES):
+# the gene's own sequence in the taupe slot, the strain's measured phenotype as input in
+# the fourth slot, the graph neighborhood in the third, a permuted or empty control in gray.
+# A panel that shows data and not an arm is drawn white with the gray stroke.
+FAMILY = {"sequence": 17, "measured phenotype": 3, "graph neighborhood": 2, "control": 5}
+STROKE.update({f: PLOT_PALETTE[i] for f, i in FAMILY.items()})
+FILL.update({f: PLOT_PALETTE_FILL[i] for f, i in FAMILY.items()})
+FAMILY_LABEL = {
+    "sequence": "the gene's own sequence (genotype only)",
+    "measured phenotype": "the strain's measured phenotype as input (transductive)",
+    "graph neighborhood": "graph neighbors",
+    "control": "permuted or nothing fitted (control)",
+}
+# The shaded transductive region of the gate figures (PLOT_REGION_FILL on the metabolism
+# branch, the terracotta fill); the band replaces a hatch, so the regime has one channel.
+REGION_FILL = PLOT_PALETTE_FILL[12]
 # The formula-box fill of manuscript Fig 1f (Fig1-torchcell-overview.drawio.svg), reused
 # so the operator schematic reads as the same notation.
 FIG1_FORMULA_FILL = "#F5EEDD"
-# Section-status notation of notes-tex/common/tcdoc.sty: \ding{51} stgrn, \ding{110}
-# styel, \ding{55} stred.
+# Two symbol sets after every panel letter, as in the metabolism and environment gates. The
+# SECTION status is the author's approval mark (notes-tex/common/tcdoc.sty \secstatus;
+# nothing in these figures is reviewed, so every panel carries the red cross). The FIGURE
+# status is \fstat of the same style file: filled circle on file, half circle partial, open
+# circle idea only. Neither set means approved.
+SECTION_GLYPH = ("✗", "#E53935")
+STATUS_COLOR = "#6E6E6E"
 STATUS = {
-    "ready": ("✓", "#43A047"),
-    "partial": ("■", "#E0A020"),
-    "todo": ("✗", "#E53935"),
+    "ready": ("●", "on file, in a committed result file"),
+    "partial": ("◐", "partial, unfinished or unscored"),
+    "todo": ("○", "idea only, nothing run"),
 }
+# Arial has no half circle; the status glyphs are set in DejaVu Sans, as the metabolism
+# gate's matplotlib sheets set them.
+GLYPH_FONT = "DejaVu Sans"
 MARKS_LAYER = "marks"
+KEY_H = 14.0  # one key row above the figure
 
 # The style draw.io itself writes for an embedded SVG image cell; kept identical to
 # notes/assets/publish/scripts/drawio_true_size_import.py so --identify matches.
@@ -165,42 +198,82 @@ class Figure:
             14,
         )
         if STATUS_MARKS:
-            glyph, color = STATUS[status]
+            section_glyph, section_color = SECTION_GLYPH
+            for dx, glyph, color, font in (
+                (10, section_glyph, section_color, "Arial"),
+                (18, STATUS[status][0], STATUS_COLOR, GLYPH_FONT),
+            ):
+                self._add(
+                    glyph,
+                    f"text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=0;"
+                    f"fontFamily={font};fontSize={FONT};fontColor={color};"
+                    f"strokeColor=none;fillColor=none;",
+                    x + dx,
+                    y + 2.5,
+                    10,
+                    11,
+                    parent=MARKS_LAYER,
+                )
+
+    def status_key(self, families: list[str] | None = None) -> None:
+        """The key ABOVE the figure: section status, figure status and, when the figure
+        colors its boxes by input family, the family colors. One line each."""
+        if not STATUS_MARKS:
+            return
+        section_glyph, section_color = SECTION_GLYPH
+        rows = [
+            f'<i>section status</i>&nbsp; <font color="{section_color}">{section_glyph}</font> '
+            f"not reviewed, nothing here is approved&nbsp;&nbsp;&nbsp;&nbsp; <i>figure status</i>&nbsp; "
+            + "&nbsp;&nbsp;&nbsp; ".join(
+                f'<font face="{GLYPH_FONT}" color="{STATUS_COLOR}">{glyph}</font> {label}'
+                for glyph, label in STATUS.values()
+            )
+        ]
+        if families:
+            swatches = "&nbsp;&nbsp;&nbsp; ".join(
+                f'<font style="background-color:{FILL[f]};border:1px solid {STROKE[f]};">'
+                f"&nbsp;&nbsp;&nbsp;&nbsp;</font> {FAMILY_LABEL[f]}"
+                for f in families
+            )
+            rows.append(f"<i>color, the input family</i>&nbsp; {swatches}")
+            rows.append(
+                f'<i>regime</i>&nbsp; <font style="background-color:{REGION_FILL};">'
+                "&nbsp;&nbsp;&nbsp;&nbsp;</font> shaded band: transductive, needs a measurement "
+                "of the strain itself; unshaded: inductive, the genotype alone"
+            )
+        for i, html in enumerate(reversed(rows)):
             self._add(
-                glyph,
+                html,
                 f"text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=0;"
-                f"fontFamily=Arial;fontSize={FONT};fontColor={color};"
-                f"strokeColor=none;fillColor=none;",
-                x + 10,
-                y + 2.5,
-                10,
-                11,
+                f"fontFamily=Arial;fontSize={FONT};fontColor=#000000;strokeColor=none;"
+                f"fillColor=none;",
+                0.0,
+                -KEY_H * (i + 1) - 6,
+                FULL,
+                KEY_H,
                 parent=MARKS_LAYER,
             )
 
-    def status_key(self) -> None:
-        """The one-line key to the status marks, under the figure."""
-        if not STATUS_MARKS:
-            return
-        parts = [
-            ("ready", "ready: can be drawn now from committed results"),
-            ("partial", "partial, or needs an author decision"),
-            ("todo", "not done, placeholder"),
-        ]
-        html = "&nbsp;&nbsp;&nbsp; ".join(
-            f'<font color="{STATUS[k][1]}">{STATUS[k][0]}</font> {label}'
-            for k, label in parts
+    def band(self, x: float, y: float, w: float, h: float, label: str) -> None:
+        """The shaded transductive region behind a group of panels; drawn first so the
+        panels sit on it, labeled at its top right inside the shading."""
+        self._add(
+            "",
+            f"rounded=0;whiteSpace=wrap;html=1;fillColor={REGION_FILL};strokeColor=none;",
+            x,
+            y,
+            w,
+            h,
         )
         self._add(
-            html,
-            f"text;html=1;whiteSpace=wrap;align=left;verticalAlign=top;spacing=0;"
+            f"<i>{label}</i>",
+            f"text;html=1;whiteSpace=wrap;align=right;verticalAlign=top;spacing=0;"
             f"fontFamily=Arial;fontSize={FONT};fontColor=#000000;strokeColor=none;"
             f"fillColor=none;",
-            0.0,
-            self.height + 6,
-            FULL,
+            x + w - 200,
+            y + 1,
+            198,
             12,
-            parent=MARKS_LAYER,
         )
 
     def text(
@@ -534,15 +607,11 @@ def mockup_a() -> Figure:
 
 
 def mockup_b() -> Figure:
+    """Only the panels mockup A does not already show: the strain-set schematic, the
+    ceiling bars, the per-seed baselines and the graph effect are A's a, b, f and g."""
     fig = Figure("fig3-mockup-B-genotype-only")
-    data_schematic(fig, 0.0, 0.0, "ready")
-    h1 = _panel(fig, "ceiling_vs_model", COL_HALF2, 0.0, "b", "partial")
-    y2 = h1 + ROW_GAP
-    h2 = _panel(fig, "v19_paired", 0.0, y2, "c", "ready")
-    _panel(fig, "baselines_by_seed_half", COL_HALF2, y2, "d", "partial")
-    y3 = y2 + h2 + ROW_GAP
-    _panel(fig, "graph_effect_wide", 0.0, y3, "e", "partial")
-    _panel(fig, "embedding_reduced", COL_AFTER_WIDE, y3, "f", "ready")
+    _panel(fig, "v19_paired", 0.0, 0.0, "a", "ready")
+    _panel(fig, "embedding_reduced", COL_HALF2, 0.0, "b", "ready")
     fig.status_key()
     return fig
 
@@ -562,12 +631,12 @@ def mockup_si_1() -> Figure:
 
 def mockup_si_2() -> Figure:
     fig = Figure("fig3-mockup-SI-2", math=True)
+    # The triangle bars (the six directed pairs of mockup A, panel c) are not repeated.
     h_full = _panel(fig, "embedding_full", 0.0, 0.0, "a", "ready")
-    h_tri = _panel(fig, "triangle", COL_HALF2, 0.0, "b", "partial")
-    _panel(fig, "graph_retrieval", COL_HALF2, h_tri + ROW_GAP, "c", "ready")
+    _panel(fig, "graph_retrieval", COL_HALF2, 0.0, "b", "ready")
     y2 = h_full + ROW_GAP
-    _panel(fig, "size_vs_score", 0.0, y2, "d", "partial")
-    operator_schematic(fig, FULL - WIDE, y2, "e", "partial")
+    _panel(fig, "size_vs_score", 0.0, y2, "c", "partial")
+    operator_schematic(fig, FULL - WIDE, y2, "d", "partial")
     fig.status_key()
     return fig
 

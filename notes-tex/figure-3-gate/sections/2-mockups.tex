@@ -67,11 +67,11 @@ h & \file{experiments/028-knockout-expression/results/proteome_expression_covari
 \end{tabular}}
 
 \clearpage
-\tcfig{figures/fig3-mockup-B-genotype-only.pdf}{\textbf{From the deletion alone the model
-reaches 13 to 29\,\% of the replicate ceiling, and the best nearest-neighbor baseline is
-within 0.01 of it on expression and above it on the proteome and morphology.}
-\textbf{a}, \textbf{b}, As \cref{fig:mockup-a}a and b. Ready; partial.
-\textbf{c}, Round v19, joint arm minus single-head arm per split seed: difference of the
+\tcfig{figures/fig3-mockup-B-genotype-only.pdf}{\textbf{Joint training does not lift the
+single heads, and the model's input composite is not the best gene representation.} Only
+the panels \cref{fig:mockup-a} does not show; the strain sets, the ceiling bars, the
+per-seed baselines and the graph effect are its a, b, f and g.
+\textbf{a}, Round v19, joint arm minus single-head arm per split seed: difference of the
 mean validation Pearson per feature over the registered window (expression epochs 1,000 to
 1,200, proteome 200 to 400), an unselected statistic. 11 of 12 split seeds, each a different
 train, validation and test partition with one initialization seed; 1,099 to 1,108 training
@@ -79,9 +79,7 @@ and 119 to 126 validation strains on the four seeds on file. Expression: mean $-
 11 above zero, one-sided $t$ $p = 0.55$. Proteome: mean $-0.017$, 1 of 11, $p = 0.64$
 against the margin $-0.015$ (dashed). Neither registered test rejects. Ready; split seed 11
 was unfinished.
-\textbf{d}, As \cref{fig:mockup-a}f at half width, same caveat. Partial.
-\textbf{e}, As \cref{fig:mockup-a}g at wide width. Partial.
-\textbf{f}, How much the gene representation matters to the two baselines: validation
+\textbf{b}, How much the gene representation matters to the two baselines: validation
 Pearson per feature, mean and s.d. over 4 split seeds, of the ridge baseline (squares) and
 the nearest-neighbor baseline (triangles), with rank and neighbor count selected on
 validation inside each seed. Five of 28 representations by rule, each the top of its class
@@ -97,8 +95,8 @@ that the v19 configuration inherits as \texttt{node\_embeddings}. Ready.}{fig:mo
 \toprule
 \multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-b}}} \\
 \midrule
-c & \file{joint_checkpoint_readout.json}, \texttt{v19.tests} (\texttt{H1a\_expression\_superiority}, \texttt{H1b\_proteome\_noninferiority}); strain counts from \file{split_gene_overlap_audit.json} \\
-f & \file{baselines_embedding_study.json}; the composite is defined in \file{experiments/019-simb-multimodal/scripts/expression_baselines_split.py} and matched to \file{conf/cgt_expr_v13_split.yaml} \\
+a & \file{joint_checkpoint_readout.json}, \texttt{v19.tests} (\texttt{H1a\_expression\_superiority}, \texttt{H1b\_proteome\_noninferiority}); strain counts from \file{split_gene_overlap_audit.json} \\
+b & \file{baselines_embedding_study.json}; the composite is defined in \file{experiments/019-simb-multimodal/scripts/expression_baselines_split.py} and matched to \file{conf/cgt_expr_v13_split.yaml} \\
 \bottomrule
 \end{tabular}}
 
@@ -146,18 +144,16 @@ track its parameter count.}
 Pearson per feature, mean and s.d. over 4 split seeds, ridge (squares) and nearest neighbor
 (triangles), expression (1,244 to 1,253 training strains) and proteome (3,581); rank and neighbor
 count selected on validation inside each seed. Bold, the model's input composite. Ready.
-\textbf{b}, The six directed pairs of \cref{fig:mockup-a}c as bars with the strain-permuted
-null (black line, on file for four pairs) and the shared-strain count. Partial.
-\textbf{c}, The graph as a retrieval key: validation Pearson of a neighbor average keyed on
+\textbf{b}, The graph as a retrieval key: validation Pearson of a neighbor average keyed on
 each graph's adjacency row minus the same with the rewired graph, mean and s.d. over 4 split
 seeds, expression and proteome. Neighbor count selected on validation. Ready.
-\textbf{d}, Parameter count against the rolling maximum of the validation Pearson, one point
+\textbf{c}, Parameter count against the rolling maximum of the validation Pearson, one point
 per expression-strand run (1,182 runs with both values; open, collapsed runs). The rolling
 maximum is biased upward and the runs differ in epochs run. The Pearson between
 $\log_{10}$ parameters and score is $-0.001$. Dashed, the v19 model at 6.67 million
 parameters for about 1,100 training strains, near 6,000 parameters per strain; its score is
 a window mean and is not placed on this axis. Partial.
-\textbf{e}, The perturbation operator in the notation of manuscript Fig.~1f; no data. Left,
+\textbf{d}, The perturbation operator in the notation of manuscript Fig.~1f; no data. Left,
 as drawn there. Right, as the code computes it and as the Methods write it: a softmax over
 the perturbed genes, which with one perturbed gene gives weight 1 to every gene. Partial,
 an author decision.}{fig:mockup-si-2}
@@ -169,9 +165,8 @@ an author decision.}{fig:mockup-si-2}
 \multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:mockup-si-2}}} \\
 \midrule
 a & \file{baselines_embedding_study.json} \\
-b & as \cref{fig:mockup-a}c, plus \texttt{triangle} of \file{joint_checkpoint_readout.json} for one strain count \\
-c & \file{graph_retrieval_baseline.json}, rounds \texttt{v13} and \texttt{v14}, \texttt{summary.paired} \\
-d & \file{round_leaderboards.csv} (\texttt{total\_param\_count}, \texttt{primary\_roll\_max}); \texttt{total\_param\_count} of \texttt{v19.runs} in \file{joint_checkpoint_readout.json}; \file{split_gene_overlap_audit.json} \\
-e & \file{torchcell/models/equivariant_cell_graph_transformer.py} (\texttt{EquivariantPerturbationTransform}); \file{paper/nature-biotech/sections/methods.tex} \\
+b & \file{graph_retrieval_baseline.json}, rounds \texttt{v13} and \texttt{v14}, \texttt{summary.paired} \\
+c & \file{round_leaderboards.csv} (\texttt{total\_param\_count}, \texttt{primary\_roll\_max}); \texttt{total\_param\_count} of \texttt{v19.runs} in \file{joint_checkpoint_readout.json}; \file{split_gene_overlap_audit.json} \\
+d & \file{torchcell/models/equivariant_cell_graph_transformer.py} (\texttt{EquivariantPerturbationTransform}); \file{paper/nature-biotech/sections/methods.tex} \\
 \bottomrule
 \end{tabular}}

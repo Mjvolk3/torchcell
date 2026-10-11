@@ -96,18 +96,18 @@
   {
    "arm": "CMP_expr",
    "change": "the strain's expression revealed, pooled readout, both-label strains",
-   "runs": 4,
-   "finished": 4,
+   "runs": 8,
+   "finished": 8,
    "collapsed": 0,
    "window": {
-    "n": 4,
-    "mean": 0.1322888125032023,
-    "sd": 0.11109659224152889
+    "n": 8,
+    "mean": 0.1265277840369299,
+    "sd": 0.07760997297552978
    },
    "roll_max": {
-    "n": 4,
-    "mean": 0.1882449632510543,
-    "sd": 0.07653370819801829
+    "n": 8,
+    "mean": 0.17638425822369755,
+    "sd": 0.05981624746892375
    }
   },
   {
@@ -125,6 +125,40 @@
     "n": 2,
     "mean": 0.07161639602854848,
     "sd": 0.0029726958556876132
+   }
+  },
+  {
+   "arm": "CM_prot",
+   "change": "the strain's proteome revealed, pooled readout, proteome-and-morphology strains",
+   "runs": 1,
+   "finished": 1,
+   "collapsed": 0,
+   "window": {
+    "n": 1,
+    "mean": 0.1707017234712839,
+    "sd": null
+   },
+   "roll_max": {
+    "n": 1,
+    "mean": 0.2012266546487808,
+    "sd": null
+   }
+  },
+  {
+   "arm": "CM_protperm",
+   "change": "another strain's proteome revealed, pooled readout, proteome-and-morphology strains",
+   "runs": 1,
+   "finished": 1,
+   "collapsed": 0,
+   "window": {
+    "n": 1,
+    "mean": 0.0659665503539145,
+    "sd": null
+   },
+   "roll_max": {
+    "n": 1,
+    "mean": 0.1877182438969612,
+    "sd": null
    }
   }
  ],
@@ -168,25 +202,31 @@
    "per_split": {}
   },
   "CM_prot - CM_protperm": {
-   "n": 0,
-   "mean": null,
+   "n": 1,
+   "mean": 0.1047351731173694,
    "sd": null,
-   "n_positive": 0,
-   "per_split": {}
+   "n_positive": 1,
+   "per_split": {
+    "0": 0.1047351731173694
+   }
   },
   "CM_prot - MP_cls": {
-   "n": 0,
-   "mean": null,
+   "n": 1,
+   "mean": 0.1008961802534759,
    "sd": null,
-   "n_positive": 0,
-   "per_split": {}
+   "n_positive": 1,
+   "per_split": {
+    "0": 0.1008961802534759
+   }
   },
   "CM_protperm - MP_cls": {
-   "n": 0,
-   "mean": null,
+   "n": 1,
+   "mean": -0.0038389928638935117,
    "sd": null,
    "n_positive": 0,
-   "per_split": {}
+   "per_split": {
+    "0": -0.0038389928638935117
+   }
   }
  },
  "runs": [
@@ -1395,6 +1435,118 @@
    "epoch_seconds": 3.9555410696288287
   },
   {
+   "id": "c7n4uhry",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/c7n4uhry",
+   "arm": "CMP_expr",
+   "split": 4,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.17417653575539588,
+   "roll_max": 0.18277755826711656,
+   "ladder": {
+    "200": 0.15547527596354485,
+    "400": 0.16686322167515755,
+    "600": 0.17683012932538986,
+    "800": 0.1642920933663845,
+    "1000": 0.17113990783691407,
+    "1199": 0.18277755826711656
+   },
+   "pred_sd_ratio_last": 22817060.0,
+   "loss_min": 0.17960381507873535,
+   "loss_min_epoch": 1173,
+   "loss_last": 0.1811906397342682,
+   "traineval_pearson_last": 0.24188020825386047,
+   "epoch_seconds": 3.9387420999801765
+  },
+  {
+   "id": "ofvbw64v",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/ofvbw64v",
+   "arm": "CMP_expr",
+   "split": 5,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.0956046561151743,
+   "roll_max": 0.15672255381941796,
+   "ladder": {
+    "200": 0.09158706553280353,
+    "400": 0.08661713935434819,
+    "600": 0.15555344372987748,
+    "800": 0.0802083857357502,
+    "1000": 0.10402419790625572,
+    "1199": 0.09622778892517089
+   },
+   "pred_sd_ratio_last": 7463988.0,
+   "loss_min": 0.19988498091697693,
+   "loss_min_epoch": 490,
+   "loss_last": 0.22211632132530212,
+   "traineval_pearson_last": 0.6081801652908325,
+   "epoch_seconds": 3.6817308773428707
+  },
+  {
+   "id": "9m4sm8w8",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/9m4sm8w8",
+   "arm": "CMP_expr",
+   "split": 6,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.08444404451176524,
+   "roll_max": 0.10498521365225315,
+   "ladder": {
+    "200": 0.09844503477215767,
+    "400": 0.09649971202015876,
+    "600": 0.10434201583266259,
+    "800": 0.09182158783078194,
+    "1000": 0.09545677155256271,
+    "1199": 0.07630889825522899
+   },
+   "pred_sd_ratio_last": 9555560.0,
+   "loss_min": 0.20749525725841522,
+   "loss_min_epoch": 574,
+   "loss_last": 0.21153955161571503,
+   "traineval_pearson_last": 0.2825864851474762,
+   "epoch_seconds": 3.9440375582646516
+  },
+  {
+   "id": "8h1hhkre",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/8h1hhkre",
+   "arm": "CMP_expr",
+   "split": 7,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.12884178590029477,
+   "roll_max": 0.21360888704657555,
+   "ladder": {
+    "200": 0.20037077292799949,
+    "400": 0.1798648752272129,
+    "600": 0.14713133908808232,
+    "800": 0.12950963713228703,
+    "1000": 0.12997675724327565,
+    "1199": 0.1375570897012949
+   },
+   "pred_sd_ratio_last": 3492554.25,
+   "loss_min": 0.19397354125976562,
+   "loss_min_epoch": 390,
+   "loss_last": 0.22157518565654755,
+   "traineval_pearson_last": 0.6244816184043884,
+   "epoch_seconds": 3.7394848033533257
+  },
+  {
    "id": "7qwc1qhz",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/7qwc1qhz",
    "arm": "MP_cls",
@@ -1449,6 +1601,62 @@
    "loss_last": 0.186873197555542,
    "traineval_pearson_last": 0.11306151002645493,
    "epoch_seconds": 7.135475352659064
+  },
+  {
+   "id": "44cutcxr",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/44cutcxr",
+   "arm": "CM_prot",
+   "split": 0,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.1707017234712839,
+   "roll_max": 0.2012266546487808,
+   "ladder": {
+    "200": 0.1602013401687145,
+    "400": 0.1993831567466259,
+    "600": 0.16085292398929596,
+    "800": 0.16069583371281623,
+    "1000": 0.16464852392673493,
+    "1199": 0.17161964923143386
+   },
+   "pred_sd_ratio_last": 6352262.5,
+   "loss_min": 0.20266412198543549,
+   "loss_min_epoch": 379,
+   "loss_last": 0.2183578908443451,
+   "traineval_pearson_last": 0.493316113948822,
+   "epoch_seconds": 10.98080399319277
+  },
+  {
+   "id": "11teotk2",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/11teotk2",
+   "arm": "CM_protperm",
+   "split": 0,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.0659665503539145,
+   "roll_max": 0.1877182438969612,
+   "ladder": {
+    "200": 0.06044681984931231,
+    "400": 0.0659963620826602,
+    "600": 0.07813271544873715,
+    "800": 0.10865058563649654,
+    "1000": 0.06815677452832461,
+    "1199": 0.06822414807975292
+   },
+   "pred_sd_ratio_last": 443.04498291015625,
+   "loss_min": 0.20295962691307068,
+   "loss_min_epoch": 772,
+   "loss_last": 0.20463767647743225,
+   "traineval_pearson_last": 0.07279994338750839,
+   "epoch_seconds": 11.000544923038806
   }
  ]
 }

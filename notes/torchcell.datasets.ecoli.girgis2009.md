@@ -326,3 +326,86 @@ every Table 1 dose row. Result: **PASS, every row green.** Highlights:
 ## 2026.10.11 - Doxycycline hyclate now resolves
 
 The Parsons 2006 loader added a compound-table row for doxycycline hyclate (`compound_identity_inputs/parsons2006.txt`: CID 54705095, the compound PubChem titles "Doxycycline hyclate", InChIKey `DWBSXBGBGHKWOT-WBYAVNBMSA-N`), and this loader passes the same label, so its doxycycline condition now carries that identity instead of an `inchikey` gap; eight antibiotics stay name-only. The node name is unchanged, but the stored compound gains identifiers, so the Girgis 2009 dev store must be rebuilt before the KG 4.0 build; nothing in the schema fingerprint marks it stale ([[torchcell.datasets.scerevisiae.parsons2006]]).
+
+## 2026.10.11 - Fifteen of the 17 antibiotics resolve (#726)
+
+The #726 curator pass ([[torchcell.datamodels.compound_identity]], 2026.10.11) added rows
+for amikacin, cefoxitin, fusidic acid, nitrofurantoin, piperacillin and streptomycin;
+doxycycline hyclate resolves through the Parsons 2006 row (the section above), which the pass
+joined when this branch was rebased onto it rather than adding a second row. The store
+below was built before that rebase, when the pass's own row gave doxycycline hyclate
+PubChem CID 54686183, so its doxycycline condition carries that identity until the next
+build, which takes CID 54705095. Two antibiotics still carry an `inchikey` gap and the module docstring and
+test now say which and why: `gentamycin`, the gentamicin homologue complex, whose row keeps
+PubChem CID 3467 with no single-molecule key (a TERMINAL gap, `not_reported_by_primary`), and
+`ampicillin`, which the pass did not reach because its row would move eight further stores
+(a recoverable gap). Casamino acids is now an UNDEFINED_MIXTURE row, the same reading the
+medium already gave it. Store rebuilt by slurm array 3809 (task 9).
+
+### L0-L4 after the rebuild
+
+#### `EnvChemgenGirgis2009Dataset`
+
+63,766 records; store built 2026-10-11 06:14 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 06:24 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 63766 records validated |
+| L1 | `count` | pass | observed 63766, expected 63766 |
+| L1 | `pair_uniqueness` | pass | 63766 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 63766 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'z_score' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 63766 records |
+| L3 | `environment_perturbed` | pass | all 63766 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 salts with 0.4% glucose, 0.1% casamino acids, 1 mM MgSO4, 0.1 mM CaCl2 and 1.5 uM thiamine, salt amounts not stated (Girgis 2009), liquid') |
+| L1 | `provenance_gaps` | pass | 262427 documented provenance gaps over 63766/63766 records; 1 deferred field(s): ['inchikey']; 1811799 undeclared None values over 17 carrier fields (top: Compound.inchi x637660, Compound.chebi_id x206470, Compound.smiles x71129, Compound.pubchem_cid x67582, Environment.dilution_rate_per_hour x63766) |
+| L1 | `canonical_gene_names` | pass | 3821 systematic names, one canonical spelling each, each current in the genome; 63 common names the resolver cannot place; 63 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 63766 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 59950 compound references carry a structure identifier; 3816 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 510128 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 63766 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3821 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 3821 measured systematic names is a gene of the current genome |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

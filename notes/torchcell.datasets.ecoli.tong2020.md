@@ -233,3 +233,92 @@ The two failing rows are the verifier's, not the records':
 Neither rule is changed here (scope); the exact changes are in the PR body. The L4 row
 names say "S288C" because the shared rule's wording is yeast; the universe passed is the
 strain's own GenBank loci.
+
+## 2026.10.11 - All 30 carbon sources carry a structure after the #726 curator pass
+
+The 17 carbon-source labels that had no compound-identity row (Fumarate, Galacturonate,
+Gluconate, Glucosamine, Glucuronate, Malate, Mannitol, N-acetyl Glucosamine, Oxaloacetate,
+Pyruvate, Ribose, Saccharate, Succinate, Thymidine, Fucose, D-alanine, alpha-ketoglutarate)
+were curated in [[torchcell.datamodels.compound_identity]] (2026.10.11); no loader code
+changed. Each header goes through PubChem's name index as written (the Greek `α` spelled
+out). Measured on the store rebuilt by slurm array 3809 (task 1): all 51 references to
+those labels carry an InChIKey (0 of 51 before), and the verifier's `compound_identity`
+rule reads 109,320 + 2,100 references with a structure identifier and 0 typed gaps; the
+record count is unchanged at 111,420.
+
+Four records change the NAME their carbon source carries, because the label collapses
+onto another dataset's row: `Fucose` -> `L-Fucose` (CID 17106), `Glucuronate` -> `D-Glucuronic
+Acid` (CID 94715), `Ribose` -> `D-ribose` (CID 10975657), `N-acetyl Glucosamine` ->
+`N-acetylglucosamine` (CID 1738118); `Gluconate`, `Glucosamine` and `Pyruvate` change case
+only. These are PubChem's readings of anion or unstereo names, recorded per label in
+`results/compound_curator_726_860.csv`. The carbon-source concentrations remain the
+deferred gap they were (CarPE, a manual-browser source).
+
+### L0-L4 after the rebuild
+
+#### `CarbonSourceTong2020Dataset`
+
+111,420 records; store built 2026-10-11 05:53 UTC; 3 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 06:13 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2100 records validated |
+| L1 | `count` | pass | observed 2100, expected 2100 |
+| L1 | `pair_uniqueness` | pass | 2100 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2100 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2100 records |
+| L1 | `provenance_gaps` | pass | 10500 documented provenance gaps over 2100/2100 records; 1 deferred field(s): ['magnitude']; 58100 undeclared None values over 9 carrier fields (top: Compound.inchi x35700, Compound.chebi_id x7700, Compound.smiles x2100, Environment.dilution_rate_per_hour x2100, Environment.duration_generations x2100) |
+| L1 | `canonical_gene_names` | pass | 70 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place; 1 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 2100 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 33600 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2100 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 70 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 70 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 2100 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 70 stored tags, statuses {'current': 69, 'non_gene_feature': 1}; 0 do not resolve to themselves |
+
+Report `verification_report_BW25113.json` (written 2026-10-11 06:12 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 109320 records validated |
+| L1 | `count` | pass | observed 109320, expected 109320 |
+| L1 | `pair_uniqueness` | pass | 109320 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 109320 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 109320 records |
+| L1 | `provenance_gaps` | pass | 327960 documented provenance gaps over 109320/109320 records; 1 deferred field(s): ['magnitude']; 3024520 undeclared None values over 9 carrier fields (top: Compound.inchi x1858440, Compound.chebi_id x400840, Compound.smiles x109320, Environment.dilution_rate_per_hour x109320, Environment.duration_generations x109320) |
+| L1 | `canonical_gene_names` | pass | 3644 systematic names, one canonical spelling each, each current in the genome; 108 common names the resolver cannot place; 108 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 109320 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 109320 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 1749120 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 109320 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3644 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 3644 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 109320 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 3644 stored tags, statuses {'current': 3536, 'non_gene_feature': 108}; 0 do not resolve to themselves |
+
+Report `verification_report_MG1655.json` (written 2026-10-11 06:13 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 2100 records validated |
+| L1 | `count` | pass | observed 2100, expected 2100 |
+| L1 | `pair_uniqueness` | pass | 2100 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | pass | 2100 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_one` | pass | reference fitness == 1.0 for all 2100 records |
+| L1 | `provenance_gaps` | pass | 10500 documented provenance gaps over 2100/2100 records; 1 deferred field(s): ['magnitude']; 58100 undeclared None values over 9 carrier fields (top: Compound.inchi x35700, Compound.chebi_id x7700, Compound.smiles x2100, Environment.dilution_rate_per_hour x2100, Environment.duration_generations x2100) |
+| L1 | `canonical_gene_names` | pass | 70 systematic names, one canonical spelling each, each current in the genome; 1 common names the resolver cannot place; 1 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 2100 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 33600 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 2100 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 70 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 70 measured systematic names is a gene of the current genome |
+| L1 | `pair_uniqueness_with_environment_perturbations` | pass | SUPPLEMENTARY: 2100 unique (strain, environment incl. perturbations) pairs, 0 duplicated |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 70 stored tags, statuses {'current': 69, 'non_gene_feature': 1}; 0 do not resolve to themselves |

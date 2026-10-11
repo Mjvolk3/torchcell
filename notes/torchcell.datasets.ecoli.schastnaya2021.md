@@ -260,3 +260,52 @@ edge set as the Fuhrer 2017 metabolome: one `bacterial perturbation` per record,
 is part of the medium. The dataset is case 11 of `BACTERIAL` in
 `tests/torchcell/adapters/_bacterial_adapter_cases.py` and entry 11 of the E. coli block
 of `kg_bacteria.yaml`, which the gate asserts positionally.
+
+## 2026.10.11 - The fructose medium joins the shared fructose row (#726)
+
+`MEDIA["FRUCTOSE"]` passes `D-fructose`, which the #726 curator pass folded into the
+existing `fructose` row (PubChem CID 2723872, the CID PubChem's name index gives both
+spellings; [[torchcell.datamodels.compound_identity]], 2026.10.11). The medium's carbon
+component is therefore named `fructose` and carries `LKDRXBCSQODPBY-VRPWFDPXSA-N`; it had
+a typed gap before. That is a rename of this dataset's fructose node (a full-rebuild
+change; the dataset is not in the served KG v2.0). The test now asserts the resolver's
+canonical name and the InChIKey rather than the loader's spelling. Store rebuilt by slurm
+array 3809 (task 25).
+
+### L0-L4 after the rebuild
+
+#### `MetabolomeSchastnaya2021Dataset`
+
+29 records; store built 2026-10-11 07:12 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:04 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 29 records validated |
+| L1 | `count` | pass | observed 29, expected 29 |
+| L1 | `genotype_environment_uniqueness` | pass | 29 unique (deletion set, medium) pairs, one record each |
+| L2 | `value_fidelity` | pass | 8843 values checked |
+| L3 | `reference_zero` | pass | reference level == 0 on the record's own keys for all 8843 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'fia_tof_ms_ion_log2_fold_change_vs_wild_type' |
+| L4 | `gene_containment_mg1655_b_numbers` | pass | 16 of 16 deleted loci are MG1655 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si3.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

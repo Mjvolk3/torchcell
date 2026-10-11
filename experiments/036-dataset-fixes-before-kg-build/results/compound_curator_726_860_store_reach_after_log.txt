@@ -1,0 +1,50 @@
+INFO -- This is BioCypher v0.5.43.
+INFO -- Logging into `biocypher-log/biocypher-20261011-025946.log`.
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+<frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+  fresh EnvChemgenHoepfner2014Dataset: 1 curated labels
+  fresh GeneInteractionBabu2014Dataset: 2 curated labels
+  fresh MrnaFractionBalakrishnan2022Dataset: 1 curated labels
+  fresh GeneInteractionButland2008Dataset: 2 curated labels
+  fresh RnaseqCaglar2017Dataset: 1 curated labels
+  fresh ProteomeCaglar2017Dataset: 1 curated labels
+  fresh DoublingTimeCaglar2017Dataset: 1 curated labels
+  fresh ProteinFoldChangeCaglar2017Dataset: 1 curated labels
+  fresh CrispriChemgenChoe2025Dataset: 7 curated labels
+  fresh GrowthRateCampos2018Dataset: 1 curated labels
+  fresh MorphologyCampos2018Dataset: 1 curated labels
+  fresh IsopentenolTiterFoo2014Dataset: 1 curated labels
+  fresh EnvChemgenGirgis2009Dataset: 9 curated labels
+  fresh GeneEssentialityGoodall2018Dataset: 1 curated labels
+  fresh RnaseqLamoureux2023Dataset: 15 curated labels
+  fresh GrowthRateLamoureux2023Dataset: 9 curated labels
+  fresh RnaseqPublicK12Lamoureux2023Dataset: 14 curated labels
+  fresh PhageRbTnseqMutalik2020Dataset: 1 curated labels
+  fresh CrisprPineneToleranceNiu2019Dataset: 1 curated labels
+  fresh RbTnseqPrice2018EcoliDataset: 44 curated labels
+  fresh GeneEssentialityPrice2018EcoliDataset: 1 curated labels
+  fresh EnvChemgenShiver2016Dataset: 4 curated labels
+  fresh ProteomeSchmidt2016Dataset: 4 curated labels
+  fresh ProteomeSrmSet1Schmidt2016Dataset: 4 curated labels
+  fresh ProteomeSrmSet2Schmidt2016Dataset: 4 curated labels
+  fresh GrowthRateS23Schmidt2016Dataset: 4 curated labels
+  fresh CarbonSourceTong2020Dataset: 17 curated labels
+  fresh CrispriGuideFitnessWang2018Dataset: 2 curated labels
+  fresh EnvChemgenWang2024Dataset: 1 curated labels
+  fresh ProteomeBanerjee2025Dataset: 2 curated labels
+  fresh RbTnseqBorchert2023Dataset: 4 curated labels
+  fresh RbTnseqBorchert2024Dataset: 63 curated labels
+  fresh IsoprenolTiterDeSiqueira2025Dataset: 1 curated labels
+  fresh ValerolactamTiterThompson2019Dataset: 1 curated labels
+  fresh LactamGrowthRateThompson2019Dataset: 1 curated labels
+  fresh IsoprenolSelectionMenasalvas2025Dataset: 1 curated labels
+  fresh CrispriArrayYunus2026Dataset: 1 curated labels
+  fresh CrispriDifferentialProteomeYunus2026Dataset: 1 curated labels
+  fresh CrispriKnockdownYunus2026Dataset: 1 curated labels
+  fresh IsoprenolTiterYunus2026Dataset: 1 curated labels
+  fresh CrispriPanelProteomeYunus2026Dataset: 1 curated labels
+  fresh InhibitorBioscreenVolk2021Dataset: 1 curated labels
+stale stores (0): []
+unreadable: []
+wrote experiments/036-dataset-fixes-before-kg-build/results/compound_curator_726_860_store_reach_after.json
+<sys>:0: DeprecationWarning: builtin type swigvarlink has no __module__ attribute

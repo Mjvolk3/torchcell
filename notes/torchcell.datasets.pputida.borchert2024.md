@@ -337,3 +337,41 @@ Coverage after the change (real release): `borchert2024` 111 samples (was 121), 
 records). The medium's recipe is Price 2018 Table S18; what blocks it is compound-identity
 rows for its salts (issue #860). When it lands, the 47,320 Rand records carry Rand 2017's
 publication.
+
+## 2026.10.11 - The 20 RCH2 samples are kept (#860); Rand 2017's 47,320 records reach the store
+
+`RCH2_defined_noCarbon` now maps to `MEDIA_LIBRARY["RCH2_DEFINED_NOCARBON_PRICE2018"]`,
+the recipe Price 2018 Supplementary Table 18 states for the Fitness Browser
+([[torchcell.datamodels.media]], 2026.10.11), and the `medium_not_in_media_library` drop
+rule is gone. The salts it needed (potassium chloride, sodium dihydrogen phosphate
+monohydrate, PIPES sesquisodium salt) and the RCH2 samples' one unresolved carbon source
+(`4-Hydroxyvalerate`; `Potassium acetate` was a Price 2018 label) came from the #726
+curator pass ([[torchcell.datamodels.compound_identity]], 2026.10.11), which also gave this
+store's other 63 gap labels their rows. Before the medium was added, the 20 samples were
+checked against the standard-error identity floor `|f / t| >= 0.1` the build re-checks on
+every kept Fitness Browser value: 0 violations.
+
+### Measured from the rebuilt store
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/borchert2024_rch2_records.py`
+(streams every record, resolves each interned environment), result
+`results/borchert2024_rch2_records.json`. Before: the store array 3733 built at main
+`52d376d6d` (2026-10-10), read from its `preprocess/dropped_records.json` and
+`source_studies.json`. After: slurm 3836 at this branch.
+
+| quantity | before | after |
+|---|---|---|
+| kept samples | 290 | 310 |
+| records (LMDB entries) | 1,372,280 | **1,466,920** (= 1,372,280 + 94,640) |
+| records on the RCH2 medium | 0 | 94,640 (20 screens) |
+| dropped by `medium_not_in_media_library` | 20 samples, 94,640 records | rule removed |
+| dropped by `reactor_process_not_representable` | 22 samples, 104,104 records | unchanged |
+| `rand2017` samples / kept | 10 / 0 | 10 / 10 |
+| records carrying Rand 2017's publication (doi 10.1038/s41564-017-0028-z) | 0 | **47,320** (set1IT078/079/082/083/084/085, set5IT075/076/081/082) |
+| `borchert2024` (compendium-attributed) samples / kept | 111 / 79 | 111 / 89 |
+
+Records by medium after the rebuild: MOPS minimal no-carbon 511,056; the Fitness Browser
+glucose no-nitrogen MOPS 492,128; Borchert 2023's modified M9 369,096; RCH2 94,640.
+The Rand 2017 attribution is untouched by the medium change: the ten samples keep the
+`rand2017` source study and its notes (the acetate pair attributed by the Methods quote
+only; the set5 glucose pair at the release's 20 mM against the Methods' 40 mM control).

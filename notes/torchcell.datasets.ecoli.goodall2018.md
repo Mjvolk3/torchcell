@@ -224,3 +224,60 @@ rows are different libraries and assays, so nothing is subsumed either way.
 - Not registered in `torchcell/verification/runners.py` (outside this branch's files);
   `run_verification` here runs the gate. No KG adapter or graph class handles
   `bacterial_gene_essentiality` yet; this branch builds only the dev LMDB.
+
+## 2026.10.11 - Chloramphenicol resolves (#726)
+
+The TL selection plates' `chloramphenicol` now resolves to the compound-identity row the
+#726 curator pass added (PubChem CID 5959, `WIIZWVCIJKGZOK-RKDXNWHRSA-N`, CHEBI:17698;
+[[torchcell.datamodels.compound_identity]], 2026.10.11). No loader code changed; the store
+was rebuilt by slurm array 3809 (task 13) and both chloramphenicol references now carry the
+InChIKey (0 of 2 before). Agar, tryptone and yeast extract keep their terminal rows.
+
+### L0-L4 after the rebuild
+
+#### `GeneEssentialityGoodall2018Dataset`
+
+8,203 records; store built 2026-10-11 07:02 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:04 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 8203 records validated |
+| L1 | `count` | pass | observed 8203, expected 8203 |
+| L1 | `one_record_per_gene_and_condition` | pass | 8203 (condition, locus) pairs, one single-insertion record each |
+| L2 | `calls_match_released_tables` | pass | 8203 records equal their Table S1/S4 row's call and locus |
+| L3 | `call_threshold_convention` | pass | TL: 4313/4313 calls follow +/-3.6, LB: 4313/4313 calls follow +/-3.6 |
+| L3 | `table_s1_counts_equal_the_paper` | pass | Table S1 {'essential': 358, 'non_essential': 3793, 'unclear': 162}; the paper states {'essential': 358, 'non_essential': 3793, 'unclear': 162} |
+| L1 | `provenance_gaps` | pass | 16399 documented provenance gaps over 8203/8203 records; 0 deferred field(s): []; 127136 undeclared None values over 9 carrier fields (top: Compound.inchi x32805, Compound.smiles x20504, Compound.chebi_id x16406, Compound.inchikey x16406, Compound.pubchem_cid x16406) |
+| L1 | `canonical_gene_names` | pass | 4172 systematic names, one canonical spelling each (no resolver supplied: spelling checked, annotation not) |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 16399 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 4105 records on a shared MEDIA_LIBRARY medium, 4098 on a medium deriving from one (2 distinct media) |
+| L4 | `gene_containment_bw25113_locus_tags` | pass | 4172 of 4172 disrupted loci are BW25113 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

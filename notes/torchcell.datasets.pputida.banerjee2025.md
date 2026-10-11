@@ -278,3 +278,35 @@ exist in `biocypher/config/torchcell_schema_config.yaml`, and
 - #726 -- `D-alanine` and `L-malate` have no compound-identity row (and D-alanine is NOT
   mapped onto the L-alanine row; the enantiomer is load-bearing here).
 - #753 -- the UniProt-to-locus-tag crosswalk, measured at 270 dropped labels.
+
+## 2026.10.11 - D-alanine and L-malate resolve (#726)
+
+The two rows this loader raised are in the table now ([[torchcell.datamodels.compound_identity]],
+2026.10.11): `D-alanine` (PubChem CID 71080, `QNAYBMKLOCPYGJ-UWTATZPHSA-N`, the D enantiomer,
+not the L-alanine row) and `L-malate` (CID 5459792, PubChem's `(S)-malate(2-)` record). Both
+are curated under this loader's own spelling, so the record names do not change; the module
+docstring now says the three carbon sources all carry an InChIKey. Store rebuilt by slurm
+array 3809 (task 29): 6 of 6 references carry the key (0 before).
+
+### L0-L4 after the rebuild
+
+#### `ProteomeBanerjee2025Dataset`
+
+6 records; store built 2026-10-11 07:26 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:04 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 6 records validated |
+| L1 | `count` | pass | observed 6, expected 6 |
+| L1 | `orf_uniqueness` | pass | 1 ORFs, 1 with multiple strains (expected) |
+| L2 | `value_fidelity` | pass | 13413 values checked |
+| L2 | `se_nonnegative` | pass | 13413 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 13413 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'diann_lfq_log2_intensity_replicate_mean' |
+| L1 | `group_uniqueness` | pass | 6 distinct (strain edit, carbon regime) samples, one record each |
+| L2 | `replicate_split` | pass | every stored n_replicates is one of [3, 4] |
+| L3 | `assembly_pin` | pass | all 6 records pin pputida_KT2440_ASM756v2 / D1b_gf |
+| L4 | `gene_containment_kt2440` | pass | all 2493 stored identifiers are loci of pputida_KT2440_ASM756v2 |
+| L4 | `stored_scale_is_the_released_log2_mean` | pass | all 13413 stored abundances re-join a released log2_mean cell with SE = released SD / sqrt(n) |

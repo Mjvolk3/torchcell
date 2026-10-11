@@ -304,3 +304,77 @@ genotype plus the phenotype.
   bookkeeping, not in our mapping. They are recoverable if the guide's gene is reassigned
   from its coordinates rather than from its released symbol, which is a change of identity
   policy and wants an explicit decision.
+
+## 2026.10.11 - Eleven of the twelve compounds resolve (#726)
+
+The #726 curator pass ([[torchcell.datamodels.compound_identity]], 2026.10.11) added rows
+for CCCP, pyocyanin, rifampicin, puromycin, phleomycin and chloramphenicol. Measured with
+the loader's own labels: 11 of the 12 screen compounds carry an InChIKey; polymyxin B does
+not, because it is the B1/B2 complex and PubChem's name index returns no CID for it, so its
+table row is UNRESOLVED_PUBLIC with that reason and the compound keeps its typed gap. The
+module docstring now says so. Phleomycin resolves to PubChem's name record (CID 72511); a
+commercial phleomycin may hold minor congeners, which is listed for review in the PR rather
+than decided here. Store rebuilt by slurm array 3809 (task 3): 18 of the 19 references to
+the curated labels carry an InChIKey (0 before).
+
+### L0-L4 after the rebuild
+
+#### `CrispriChemgenChoe2025Dataset`
+
+466,569 records; store built 2026-10-11 05:56 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 06:58 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 466569 records validated |
+| L1 | `count` | pass | observed 466569, expected 466569 |
+| L1 | `pair_uniqueness` | pass | 466569 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 466569 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 466569 records |
+| L3 | `environment_perturbed` | pass | all 466569 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB, Miller, with 35 ug/mL chloramphenicol and 100 ug/mL ampicillin (Choe 2025 CRISPRi screening cultures)') |
+| L1 | `provenance_gaps` | pass | 2371729 documented provenance gaps over 466569/466569 records; 1 deferred field(s): ['inchikey']; 14696910 undeclared None values over 19 carrier fields (top: Compound.inchi x3032675, Compound.chebi_id x1555210, Compound.pubchem_cid x1438591, Compound.smiles x1438591, Compound.inchikey x933138) |
+| L1 | `canonical_gene_names` | pass | 4156 systematic names, one canonical spelling each, each current in the genome; 120 common names the resolver cannot place; 120 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 466569 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 660946 compound references carry a structure identifier; 38884 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 933138 compound references carry a structure identifier; 466569 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 466569 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 4156 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 4156 measured systematic names is a gene of the current genome |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 4156 stored tags, statuses {'current': 4036, 'non_gene_feature': 120}; 0 do not resolve to themselves |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |

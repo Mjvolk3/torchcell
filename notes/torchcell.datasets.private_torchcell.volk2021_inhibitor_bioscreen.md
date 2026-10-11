@@ -246,3 +246,37 @@ mirror sha256s.
 - **Cannot be checked before the build**: the manifest entry and its closure, the
   snapshot, the served node counts, the fast-CSV writer path (needs the container's
   `biocypher==0.15.2`), and the neo4j-admin import of these CSVs.
+
+## 2026.10.11 - Lactic acid resolves to the stereo-free row (#726)
+
+The #726 curator pass added a `lactic acid` row (PubChem CID 612, InChIKey
+`JVTAAEKCZFNVCJ-UHFFFAOYSA-N`), for the Borchert and PRECISE-1K labels. Its InChIKey has no
+stereo layer, which is exactly what the stock sheet states: "Lactic Acid" from Sigma-Aldrich
+with no enantiomer. So `compound()` no longer replaces lactic acid's identity with
+`LACTIC_ACID_IDENTITY_GAP` (removed from `volk2021_sources.py`); the `LACTIC_ACID_STOCK`
+note records why the stereo-free key asserts no enantiomer. This reverses the module's
+earlier choice not to assign any key, so it is listed in the PR as an owner decision taken
+by recommendation. Store rebuilt by slurm array 3809 (task 19): 41 of 41 lactic acid
+references carry the key (0 before).
+
+### L0-L4 after the rebuild
+
+#### `InhibitorBioscreenVolk2021Dataset`
+
+977 records; store built 2026-10-11 07:11 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 07:11 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 977 records validated |
+| L1 | `count` | pass | observed 977, expected 977 |
+| L1 | `completeness` | pass | complete: 977/977 expected keys present |
+| L1 | `wells_per_run` | pass | records per run {'ex21': 180, 'ex23': 197, 'ex26': 200, 'ex27': 200, 'ex28': 200} == the layouts' wells |
+| L2 | `value_fidelity` | pass | 360 values checked |
+| L2 | `readout_split` | pass | 617 no-growth calls and 360 rates, split per run {'ex21': 63, 'ex23': 128, 'ex26': 155, 'ex27': 124, 'ex28': 147} |
+| L3 | `reference_one` | pass | reference relative growth rate == 1.0 for all 977 records, with the sample SD of {'ex21': 17, 'ex23': 8, 'ex26': 2, 'ex27': 2, 'ex28': 2} grown WT wells per run |
+| L3 | `wild_type_wells` | pass | 32 inhibitor-free wells, {'ex21': 18, 'ex23': 8, 'ex26': 2, 'ex27': 2, 'ex28': 2} per run; every other record carries a dosed inhibitor |
+| L3 | `no_growth_label` | pass | every no-growth call is severely_reduced, labelled {'ex21': ['no growth within 72 h'], 'ex23': ['no growth within 85 h'], 'ex26': ['no growth within 96 h'], 'ex27': ['no growth within 96 h'], 'ex28': ['no growth within 96 h']} |
+| L3 | `strain_background` | pass | all 977 references carry bAID (parent BY4742) with the integration 'Delta::KanMX-[dLbCpf1-VP]-[Csy4]-[dSpCas9-RD1152]-[SaCas9]' |
+| L4 | `software_trait_agreement` | pass | the served grew/no-grew call equals the Bioscreen software's on ex21 0.9778, ex23 0.9391, ex26 0.9850 |

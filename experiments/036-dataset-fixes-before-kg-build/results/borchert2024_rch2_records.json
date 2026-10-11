@@ -1,0 +1,61 @@
+{
+  "store": "data/torchcell/rbtnseq_borchert2024",
+  "lmdb_entries": 1466920,
+  "records_by_medium": {
+    "MOPS minimal medium, no carbon source (Neidhardt 1974 formulation as tabulated by Price 2018)": 511056,
+    "MOPS minimal media_Glucose_noNitrogen (Fitness Browser): MOPS_MINIMAL without ammonium chloride, plus D-glucose; nitrogen source per condition": 492128,
+    "Modified M9 (Borchert 2023): 6.78 g/L Na2HPO4, 3.00 g/L K2HPO4, 0.50 g/L NaCl, 1.66 g/L NH4Cl, 0.24 g/L MgSO4, 0.01 g/L CaCl2, 0.002 g/L FeSO4; carbon source per condition": 369096,
+    "RCH2 defined minimal medium, no carbon source (Price 2018 'RCH2_defined_noCarbon')": 94640
+  },
+  "records_by_publication_doi": {
+    "10.1128/aem.02430-21": 582036,
+    "10.1128/msystems.00942-23": 421148,
+    "10.1128/AEM.01665-20": 217672,
+    "10.1016/j.ymben.2023.04.007": 198744,
+    "10.1038/s41564-017-0028-z": 47320
+  },
+  "screens_by_publication_doi": {
+    "10.1016/j.ymben.2023.04.007": 42,
+    "10.1038/s41564-017-0028-z": 10,
+    "10.1128/AEM.01665-20": 46,
+    "10.1128/aem.02430-21": 123,
+    "10.1128/msystems.00942-23": 89
+  },
+  "rch2_screens": [
+    "set1IT078",
+    "set1IT079",
+    "set1IT080",
+    "set1IT081",
+    "set1IT082",
+    "set1IT083",
+    "set1IT084",
+    "set1IT085",
+    "set1IT086",
+    "set1IT087",
+    "set5IT075",
+    "set5IT076",
+    "set5IT081",
+    "set5IT082",
+    "set5IT083",
+    "set5IT084",
+    "set5IT085",
+    "set5IT086",
+    "set5IT087",
+    "set5IT088"
+  ],
+  "rch2_records": 94640,
+  "rand2017_doi": "10.1038/s41564-017-0028-z",
+  "rand2017_records": 47320,
+  "rand2017_screens": [
+    "set1IT078",
+    "set1IT079",
+    "set1IT082",
+    "set1IT083",
+    "set1IT084",
+    "set1IT085",
+    "set5IT075",
+    "set5IT076",
+    "set5IT081",
+    "set5IT082"
+  ]
+}

@@ -275,3 +275,83 @@ fine-tune arms separate calibration from joint training, and a per-combination r
 against the inhibitor count settles the inversion directly; the first two are queued on
 Delta (22788113 to 22788118) and the third is an analysis on the predictions already
 written.
+
+## 2026.10.10 - Round 1, the dose ablation: the dose FiLM makes the mixture readout worse
+
+The two dose-off arms ran on Delta (bfjt-delta-gpu, jobs 22788113 and 22788114) and
+finished between 13:58 and 16:43 CDT. Their per-fold CSVs sit in the Delta tree
+(`/scratch/bbub/mjvolk3/torchcell-040/.../results/mixture/r1_mix_van_{ex21,anchors}_off_L1_lh1/`)
+and are not yet rsynced here; the numbers below are the same values read from the W&B
+run summaries (project `torchcell_040-inhibitor-synergy-wetlab`, runs
+`mix_van_ex21_off_L1_lh1_f0` to `_f4` and `mix_van_anchors_off_L1_lh1_f0` to `_f4`).
+Median over the five folds of fold seed 0, three-seed ensemble, served call, beside the
+two dose-aware arms from GilaHyper 3720 / 3721.
+
+| readout | joint, dose FiLM | joint, dose off | anchors, dose FiLM | anchors, dose off | reference |
+|---|---|---|---|---|---|
+| ex23 growth over 63, AUROC | 0.475 | 0.586 | 0.295 | 0.413 | Loewe **0.958** |
+| ex23 worst-scenario Spearman, all 63 | -0.009 | 0.155 | -0.319 | -0.221 | Loewe **0.772** |
+| ex23 fitness over the 21 grown, Spearman | 0.377 | 0.251 | -0.346 | -0.310 | Bliss **0.573** |
+| isoboles ex26 / ex27 / ex28, observed minus predicted | -0.75 / -0.71 / -0.75 | -0.39 / -0.39 / -0.46 | -0.60 / -0.42 / -0.59 | -0.60 / -0.42 / -0.59 | Bliss -0.08 / -0.45 / -0.02 |
+| Vanacloig compound-cold, centered Spearman | 0.261 | 0.276 | 0.266 | 0.252 | ridge **0.359** |
+| ex21 over 180 wells, Spearman | 0.945 (train fit) | 0.433 (train fit, one value per compound) | 0.171 (held out) | 0.066 (held out) | |
+
+**Switching the dose off raises the growth AUROC in both host regimes** (0.475 to 0.586
+joint, 0.295 to 0.413 anchors), turns the worst-scenario ranking positive for the joint
+arm, and halves the isobole residual (-0.75 to -0.39 on ex26). The dose-off arm cannot
+fit ex21 (every well of a compound gets one value, so 0.433 is the between-compound
+potency ordering alone), yet it predicts the combinations better than the arm that fits
+the curves at 0.945. The isobole residuals are negative for every arm: observed minus
+predicted below zero means the model predicts MORE growth in the interior cells than was
+seen, and the dose-aware arms predict the most. Hypothesis (untested): the host head
+fitted on single-agent curves composes compounds near-additively or less, so adding an
+inhibitor lowers predicted fitness by less than it lowers observed fitness, and the
+sharper the single-agent fit the larger that gap. Every arm still sits below the
+model-free rule on every wet-lab readout; the dose ablation changes which arm is worst,
+not the conclusion.
+
+**On reading the zero-shot single-agent numbers.** The anchors arm's per-compound ex21
+Spearman swings from -0.93 to +0.91 for the same compound across folds (HMF: -0.72,
+-0.93, -0.77, 0.90, 0.91 for folds 0 to 4), and within one compound fitness falls
+monotonically with dose, so a model that only knows "more dose, less growth" scores near
+1.0 per compound. The per-compound Spearman is therefore not a zero-shot readout. The
+readout that carries information is the pooled Spearman over all 180 wells, which needs
+the six potencies ordered correctly, and it reads 0.171 (dose FiLM) and 0.066 (dose
+off): at most a weak potency ordering, with six compounds.
+
+## 2026.10.10 - Where a learned model can still earn the panel: regimes the rules cannot enter (proposal, awaiting a decision)
+
+The question the user asked after the round-1 table: the data are the paper's
+confirmation that Loewe or Bliss is the best predictor when the singles are known, so where
+can a model show an advantage. The answer is the information regimes in which the
+model-free rules have no prediction at all, or have one they cannot improve with data.
+Every regime below needs its own honest baseline, because "the rule cannot run" is not the
+same as "the model is good".
+
+| regime | what is known at prediction time | what is predicted | what Loewe / Bliss can do | honest baseline for the model | data (served call) | status |
+|---|---|---|---|---|---|---|
+| A. zero-shot singles | public screens only; no Bioscreen well | the six ex21 dose-response curves, or their IC30s | nothing; both need the single curves | public IC30 transfer where it exists (Vanacloig furfural 8.0 and HMF 3.3 mM, Hoepfner acetate 125 to 150 mM) and the all-compound mean curve | 180 wells, six potencies | measured: pooled Spearman 0.171 (anchors, dose FiLM), 0.066 (dose off) |
+| B. one inhibitor unknown | five ex21 curves and the public anchors; the sixth inhibitor's curve withheld | the sixth curve, and every ex23 combination that contains it | nothing for those combinations unless given a curve | the hybrid: the model's predicted curve for the sixth compound fitted as a Hill and fed to Loewe and Bliss; the ceiling is Loewe with the measured curve | six leave-one-inhibitor-out folds; 32 combinations contain any given inhibitor (15 pairs and 20 triples share it unequally) | to build: a `loco_ex21` host regime that folds over the inhibitor, and the hybrid scorer on the `_host.npy` predictions |
+| C. singles and pairs known, higher orders predicted | ex21 and the 15 ex23 pairs | the 20 triples, 15 quadruples, 6 quintuples and the sextuple (48 combinations, 3 grew) | a fixed prediction; neither rule learns from the pairs | the calibrated rule: Loewe or Bliss with one interaction parameter fitted on the 15 pairs (a global combination index) | growth boundary over 48, fitness over 3 | to build: pairs become trainable in this arm only, which changes the pre-registered test set and must be stated |
+| D. leave-one-pair-out | ex21 and 14 of the 15 pairs | the fifteenth pair | fixed prediction | the same calibrated rule, refitted per fold | 15 folds; 12 pairs grew, so the fitness ranking over 12 is the test | to build, with C |
+
+The pairs are where the fixed rules are weakest, which is also why they are the regime
+with room. On the 15 pairs alone (`mixture_rules.py`, `results/mixture_scores.csv`,
+served call, subset 2): Bliss from the ex21 fits ranks the twelve grown pairs at Spearman
+0.748 but calls growth at AUROC 0.333; Loewe calls growth at 0.611 and ranks at 0.357.
+The two rules also disagree by chemical class: for the weak-acid pairs Loewe is close and
+Bliss predicts 0.93 to 1.00 against observed 0.40 to 0.69, while for the aldehyde + acid
+pairs Bliss is close and Loewe predicts 0.07 to 0.24 against observed 0.42 to 0.46; and
+5-HMF with lactic or levulinic acid grew in no well although both rules predict growth
+(Bliss 0.54 to 0.57, Loewe 0.09 but above tau). A rule that picks Loewe within a class
+and Bliss across classes was tried as a scratch check (not a committed script, so no
+number is recorded here) and does not beat Loewe on growth, because it inherits Bliss's
+call on those two 5-HMF pairs. Which rule a pair follows is therefore the quantity a
+learned model could predict from compound features, and regime D is its test.
+
+What this costs. Regimes A and B need no new wet-lab data and keep ex23 untouched as a
+test set; B needs one trainer regime and one analysis script. Regimes C and D make the 15
+pairs training data in those arms, so the pre-registered "ex23 is never trained on" holds
+only for the arms of rounds 1 and 2 and the note must say so. Each regime is one arm of
+five or six folds at about two hours per card at PARALLEL=2. The decision to take is
+whether to open the pairs to training (C and D); A and B can start on the next free card.

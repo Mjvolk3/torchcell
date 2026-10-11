@@ -437,14 +437,25 @@ the three-seed ensemble; the bars are model-free and from the same wells):
 | **round 2: dose off, fold seeds 1 and 2** | 8 | 0.573 | 0.158 | 0.238 | -0.410 | **0.363** |
 | bar | | Loewe 0.958 | Loewe 0.772 | Bliss 0.573 | Bliss -0.082 | ridge 0.359 |
 
-**The fold seed moves the gene-level score more than any arm does, and that invalidates the
-round-1 ranking.** The dose-off joint arm reads 0.276 on fold seed 0 and 0.363 on fold seeds
-1 and 2. Every round-1 arm above was scored on fold seed 0 alone, and they span 0.252 to
-0.271, a range smaller than the fold-seed shift in a single arm. So the round-1 Vanacloig
-column ranks noise, and no architectural conclusion may be drawn from it until the surviving
-arms are replicated on the other two fold seeds. The wet-lab columns are not affected the
-same way (they are scored on the same 63 wells regardless of fold seed) but the arms still
-share the single fold seed, so the same caution applies with less force.
+**The fold seed moves the gene-level score more than any arm does, and the instability is
+the model's, not the benchmark's.** The dose-off joint arm reads 0.276 on fold seed 0 and
+0.363 on fold seeds 1 and 2. Nested ridge on the same store, scored per fold seed, reads
+0.356, 0.373 and 0.367 (`038 results/ladder/ladder_r2_scores.csv`), a range of 0.017. So
+the partitions are not of unequal difficulty; the transformer arm responds to which
+compounds land in which fold and ridge does not.
+
+Two consequences, and the first corrects an earlier reading in this note that called the
+round-1 ranking invalid. Every round-1 arm was scored on the SAME partition (fold seed 0),
+so comparisons AMONG them are paired and remain fair; what the spread shows is that the
+architectural differences (0.252 to 0.276 across six arms) are a quarter of the shift one
+arm shows between partitions, so they are small relative to the model's own partition
+sensitivity and there is no reason yet to believe the ordering carries to another partition.
+Second, and this is the real error, the ABSOLUTE comparison against ridge is unsafe on one
+partition: the same arm looks well below ridge on fold seed 0 and level with it on fold
+seeds 1 and 2. Any statement of the form "the cell graph transformer does not reach ridge"
+that rests on fold seed 0 alone is not supported. The wet-lab columns are scored on the same
+63 wells regardless of fold seed, so they are not affected this way, though the arms do still
+share one partition of the gene-level training data.
 
 **Public benchmark, the Delta rounds** (W&B project
 `torchcell_038-env-chemgen-vanacloig-cgt-corrected`, 120 runs finished 2026-10-10 evening;

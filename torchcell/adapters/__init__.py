@@ -155,6 +155,7 @@ from .hillenmeyer2008_adapter import (
 from .hoepfner2014_adapter import (
     EnvChemgenHoepfner2014Adapter as EnvChemgenHoepfner2014Adapter,
 )
+from .hu2007_adapter import MicroarrayScoreHu2007Adapter as MicroarrayScoreHu2007Adapter
 from .ishii2007_flux_adapter import FluxIshii2007Adapter as FluxIshii2007Adapter
 from .ishii2007_metabolome_adapter import (
     MetabolomeIshii2007Adapter as MetabolomeIshii2007Adapter,
@@ -406,6 +407,7 @@ oduibhir2014_adapters = ["SmfODuibhir2014Adapter"]
 
 expression_adapters = [
     "MicroarrayKemmeren2014Adapter",
+    "MicroarrayScoreHu2007Adapter",
     "SmMicroarraySameith2015Adapter",
     "DmMicroarraySameith2015Adapter",
     "CaudalPanTranscriptome2024Adapter",

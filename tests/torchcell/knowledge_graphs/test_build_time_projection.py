@@ -600,7 +600,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 3 (De Chiara 2022's life-cycle, doubling-time and cell-yield stores)
     # + 1 (Jackson 2020 pseudobulk single-cell UMI counts)
     # + 1 (Puddu 2019 realized genome architecture of the knockout collection)
-    # + 1 (Hale 2024 CRISPRi guides on BYx3S segregants).
+    # + 1 (Hale 2024 CRISPRi guides on BYx3S segregants)
+    # + 1 (#1022, Hu 2007 TF-deletion error-model scores).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -621,6 +622,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 2
         + 3
+        + 1
         + 1
         + 1
         + 1
@@ -648,6 +650,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "HomHillenmeyer2008Dataset",
         "IsolateGrowthPeter2018Dataset",
         "LifeCycleDeChiara2022Dataset",
+        "MicroarrayScoreHu2007Dataset",
         "NadalRibellesPerturbSeq2025Dataset",
         "ProteomeMessner2023Dataset",
         "ProteomeMuenzner2024Dataset",

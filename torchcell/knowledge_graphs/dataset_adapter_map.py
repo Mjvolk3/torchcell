@@ -97,6 +97,7 @@ from torchcell.adapters import (
     MetabolomeRapp2026Adapter,
     MetabolomeSchastnaya2021Adapter,
     MicroarrayKemmeren2014Adapter,
+    MicroarrayScoreHu2007Adapter,
     MismatchCrispriFitnessHawkins2020Adapter,
     Mormino2022Adapter,
     MorphologyCampos2018Adapter,
@@ -322,6 +323,7 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HomHillenmeyer2008Dataset,
 )
 from torchcell.datasets.scerevisiae.hoepfner2014 import EnvChemgenHoepfner2014Dataset
+from torchcell.datasets.scerevisiae.hu2007 import MicroarrayScoreHu2007Dataset
 from torchcell.datasets.scerevisiae.jackson2020 import (
     TfDeletionPseudobulkJackson2020Dataset,
 )
@@ -408,6 +410,7 @@ dataset_adapter_map: dict[type, type] = {
     SynthRescueYeastSynthLethDbDataset: SynthRescueYeastSynthLethDbAdapter,
     ScmdOhya2005Dataset: ScmdOhya2005Adapter,
     MicroarrayKemmeren2014Dataset: MicroarrayKemmeren2014Adapter,
+    MicroarrayScoreHu2007Dataset: MicroarrayScoreHu2007Adapter,
     SmMicroarraySameith2015Dataset: SmMicroarraySameith2015Adapter,
     DmMicroarraySameith2015Dataset: DmMicroarraySameith2015Adapter,
     CaudalPanTranscriptome2024Dataset: CaudalPanTranscriptome2024Adapter,

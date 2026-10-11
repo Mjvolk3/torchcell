@@ -96,18 +96,18 @@
   {
    "arm": "CMP_expr",
    "change": "the strain's expression revealed, pooled readout, both-label strains",
-   "runs": 8,
-   "finished": 8,
+   "runs": 10,
+   "finished": 10,
    "collapsed": 0,
    "window": {
-    "n": 8,
-    "mean": 0.1265277840369299,
-    "sd": 0.07760997297552978
+    "n": 10,
+    "mean": 0.12034067362248242,
+    "sd": 0.07234788465925099
    },
    "roll_max": {
-    "n": 8,
-    "mean": 0.17638425822369755,
-    "sd": 0.05981624746892375
+    "n": 10,
+    "mean": 0.16483524724841117,
+    "sd": 0.06104845325098697
    }
   },
   {
@@ -1545,6 +1545,62 @@
    "loss_last": 0.22157518565654755,
    "traineval_pearson_last": 0.6244816184043884,
    "epoch_seconds": 3.7394848033533257
+  },
+  {
+   "id": "z9hx3p6e",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/z9hx3p6e",
+   "arm": "CMP_expr",
+   "split": 8,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.13690554086118936,
+   "roll_max": 0.15839566439390182,
+   "ladder": {
+    "200": 0.14794526100158692,
+    "400": 0.14797353371977806,
+    "600": 0.1488423965871334,
+    "800": 0.13650063499808313,
+    "1000": 0.12818292155861855,
+    "1199": 0.13500854671001433
+   },
+   "pred_sd_ratio_last": 6543524.5,
+   "loss_min": 0.19120286405086517,
+   "loss_min_epoch": 781,
+   "loss_last": 0.19382238388061523,
+   "traineval_pearson_last": 0.3034042716026306,
+   "epoch_seconds": 3.8965735734519313
+  },
+  {
+   "id": "bxpu9c9q",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/bxpu9c9q",
+   "arm": "CMP_expr",
+   "split": 9,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.05427892306819558,
+   "roll_max": 0.07888274230062961,
+   "ladder": {
+    "200": 0.060191094130277636,
+    "400": 0.07184187564998865,
+    "600": 0.058072848059237,
+    "800": 0.05693121291697025,
+    "1000": 0.047768303845077756,
+    "1199": 0.049250035174191
+   },
+   "pred_sd_ratio_last": 5804418.0,
+   "loss_min": 0.19651062786579132,
+   "loss_min_epoch": 1105,
+   "loss_last": 0.19868500530719757,
+   "traineval_pearson_last": 0.2802013158798218,
+   "epoch_seconds": 3.9316022957785655
   },
   {
    "id": "7qwc1qhz",

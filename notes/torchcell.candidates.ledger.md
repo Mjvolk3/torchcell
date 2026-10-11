@@ -28,7 +28,28 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | potelWidespreadBacterialProtein2018 | bacteria | Potel 2018 phosphoproteome | ✓ | ■ | · | · | · | **blocked:ingest** |  | 2026-10-10 | `878d58607` |
 | priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | boocockSinglecellEQTLMapping2025 | yeast | Boocock 2025 (single-cell eQTL mapping) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `de58b18dc` |
+| deloacheEnzymecoupledBiosensorEnables2015 | yeast | DeLoache 2015 (betaxanthin biosensor for (S)-reticuline) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| gaschGenomicExpressionPrograms2000 | yeast | Gasch 2000 (environmental stress response) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
+| guzmanUltrafastLabelfreeQuantification2024 | yeast | Guzman 2024 (Astral knockout proteomes, 104 strains) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| hoMassiveQTLAnalysis2021 | yeast | Ho 2021 (industrial traits of the RM11-1a x YJM975 segregants) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| khaiwalPredictingNaturalVariation2025 | yeast | Khaiwal 2025 (33 new phenotypes on the 1,011 panel) | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #992 | 2026-10-11 | `e83a1e180` |
+| leeMappingCellularResponse2014 | yeast | Lee 2014 (HIP-HOP fitness signatures) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| leutertRegulatoryLandscapeYeast2023 | yeast | Leutert 2023 (phosphoproteome x 101 conditions) | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #921 | 2026-10-11 | `e83a1e180` |
+| lianCombinatorialMetabolicEngineering2017 | yeast | Lian 2017 (CRISPR-AID, beta-carotene) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
+| loeglerGenotypePhenotype10862025 | yeast | Loegler 2025 (1,086 near telomere-to-telomere genomes) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
+| messnerUltrafastProteomicsScanning2021 | yeast | Messner 2021 (Scanning SWATH yeast drug-response proteomes) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
+| muenznerNaturalProteomeDiversity2024 | yeast | Muenzner 2024 (natural-isolate proteome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `0e904e95a` |
+| odonnellTelomeretotelomereAssemblies1422023 | yeast | O'Donnell 2023 (telomere-to-telomere assemblies of 142 strains) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
+| parsonsExploringModeofActionBioactive2006 | yeast | Parsons 2006 (bioactive-compound profiling) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
 | peterGenomeEvolution10112018 | yeast | Peter 2018 (1,011 isolate genomes + phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `d88f3865c` |
+| piotrowskiFunctionalAnnotationChemical2017 | yeast | Piotrowski 2017 (MOSAIC diagnostic panel) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
+| sheMappingCausalVariants2018 | yeast | She 2018 (natural variant effects across a large isolate panel) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| trikkaIterativeCarotenogenicScreens2015 | yeast | Trikka 2015 (carotenogenic heterozygous screen) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
+| turcoGlobalAnalysisYeast2023 | yeast | Turco 2023 (Yeast Phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
+| vaishnavEvolutionEvolvabilityEngineering2022 | yeast | Vaishnav 2022 (regulatory DNA fitness landscape) | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #991 | 2026-10-11 | `e83a1e180` |
+| yoshikawaComprehensivePhenotypicAnalysis2009 | yeast | Yoshikawa 2009 (ethanol and salt stress growth of the deletion collection) | ✓ | ✓ | · | ✓ | ✓ | **pending** |  | 2026-10-11 | `e83a1e180` |
+| zackrissonScanomaticHighResolutionMicrobial2016 | yeast | Zackrisson 2016 (Scan-o-matic growth curves) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
+| zhangCombiningMechanisticMachine2020 | yeast | Zhang 2020 (combinatorial promoter library for tryptophan) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
 
 ### Aggregation decomposition
 

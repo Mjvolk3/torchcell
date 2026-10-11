@@ -6780,9 +6780,11 @@ class SegregantParent(ModelStrict):
 class SegregantGenotype(ModelStrict):
     """Strain-level haplotype mosaic of one haploid segregant from a two-parent cross.
 
-    ``blocks`` partition the called markers of every chromosome into parent-assigned
-    runs (see ``HaplotypeBlock``); the per-marker call matrix is a derived view
-    (re-expand each block at the cross's marker positions). ``call_method`` records
+    ``blocks`` partition the called markers of every chromosome into runs of one
+    parent and one posterior (see ``HaplotypeBlock``); the per-marker call matrix is a
+    derived view (re-expand each block at the cross's marker positions). A hard-call
+    release (posterior 1.0 everywhere) gives one block per parent run; a released
+    posterior that changes along a run of one parent splits that run at each change. ``call_method`` records
     how the released calls were produced (quoted from the source's code), and
     ``marker_matrix_sha256`` pins the released matrix the blocks were encoded from.
     """
@@ -6798,8 +6800,8 @@ class SegregantGenotype(ModelStrict):
     @field_validator("blocks", mode="after")
     @classmethod
     def _check_blocks(cls, blocks: list[HaplotypeBlock]) -> list[HaplotypeBlock]:
-        """Per chromosome: blocks are in ascending order, non-overlapping, and alternate
-        parents (two adjacent runs of the same parent would be one run).
+        """Per chromosome: blocks are in ascending order, non-overlapping, and no two
+        adjacent blocks share both parent and posterior (they would be one run).
         """
         if not blocks:
             raise ValueError("SegregantGenotype needs at least one HaplotypeBlock")
@@ -6812,9 +6814,10 @@ class SegregantGenotype(ModelStrict):
                     raise ValueError(
                         f"{chrom}: blocks overlap or are unordered at {prev.end} -> {cur.start}"
                     )
-                if cur.parent == prev.parent:
+                if cur.parent == prev.parent and cur.posterior == prev.posterior:
                     raise ValueError(
-                        f"{chrom}: adjacent blocks share parent {cur.parent}; merge them"
+                        f"{chrom}: adjacent blocks share parent {cur.parent} and "
+                        f"posterior {cur.posterior}; merge them"
                     )
         return blocks
 
@@ -6863,9 +6866,11 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
     the pin keeps a zero distinguishable from "not measured".
 
     ``n_cells`` is how many cells the counts are summed over: 1 for a single cell, more
-    for a segregant observed in several cells (pseudobulk). ``total_umis`` equals the sum
-    of ``umi_count`` and is stored so the size factor is explicit. ``cell_cycle_stage_counts``
-    and ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle
+    for a segregant observed in several cells (pseudobulk). ``total_umis`` is the UMI
+    total over EVERY feature of those cells' libraries, including features outside the
+    stored universe, so it is the size factor the source normalizes by and it is never
+    smaller than the sum of ``umi_count``. ``cell_cycle_stage_counts`` and
+    ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle
     stage label and by sequencing library, verbatim labels.
 
     Provenance: Boocock et al. 2025, eLife. See
@@ -6883,7 +6888,12 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
         ),
         repr=False,
     )
-    total_umis: int = Field(description="sum of umi_count over the feature universe")
+    total_umis: int = Field(
+        description=(
+            "UMI total over every feature of the cells, including features outside the "
+            "stored universe (the size factor); never smaller than the sum of umi_count"
+        )
+    )
     n_features: int = Field(
         description="size of the quantified feature universe the counts are taken over"
     )
@@ -6934,9 +6944,9 @@ class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
         """Totals agree with the per-gene dict and both partitions sum to n_cells."""
         if self.n_cells < 1:
             raise ValueError(f"n_cells must be a positive integer, got {self.n_cells}")
-        if self.total_umis != sum(self.umi_count.values()):
+        if self.total_umis < sum(self.umi_count.values()):
             raise ValueError(
-                f"total_umis {self.total_umis} != sum of umi_count "
+                f"total_umis {self.total_umis} is smaller than the sum of umi_count "
                 f"{sum(self.umi_count.values())}"
             )
         if self.n_features < len(self.umi_count):

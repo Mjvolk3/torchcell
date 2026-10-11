@@ -157,3 +157,33 @@ def test_blocks_must_alternate_and_not_overlap() -> None:
         )
     with pytest.raises(ValidationError, match="at least one"):
         SegregantGenotype.model_validate({**_genotype().model_dump(), "blocks": []})
+
+
+def test_a_posterior_change_within_one_parent_run_is_two_blocks() -> None:
+    """A released posterior (Boocock 2025) splits a run of one parent at each change of
+    level: same parent, different posterior is two blocks, and the same pair at the
+    same posterior is still one run that must be merged.
+    """
+    split = _blocks()
+    split[1] = HaplotypeBlock(
+        chromosome="chrI",
+        start=51_000,
+        end=229_000,
+        parent=1,
+        posterior=0.75,
+        n_markers=60,
+    )
+    genotype = SegregantGenotype.model_validate(
+        {**_genotype().model_dump(), "blocks": [b.model_dump() for b in split]}
+    )
+    assert [(b.parent, b.posterior) for b in genotype.blocks[:2]] == [
+        (1, 1.0),
+        (1, 0.75),
+    ]
+    merged = [split[0].model_copy(update={"posterior": 0.75}), *split[1:]]
+    with pytest.raises(
+        ValidationError, match="adjacent blocks share parent 1 and posterior 0.75"
+    ):
+        SegregantGenotype.model_validate(
+            {**_genotype().model_dump(), "blocks": [b.model_dump() for b in merged]}
+        )

@@ -1762,6 +1762,118 @@ medium and the Mulleder/Messner SM were indistinguishable strings. They are stil
 joined on composition here, and that is the honest state until Mulleder 2012 is mirrored.
 """
 
+# --------------------------------------------------------------------------- #
+# Boocock 2025 (eLife, doi 10.7554/eLife.95566) de novo segregant cultures. The
+# random-spore MATa segregants were FACS-sorted into the instrument's sheath fluid
+# (phosphate-buffered saline) and 2x YNB with 2% glucose was added on top, so the
+# culture is a mixture whose final strength depends on a sheath-fluid volume the paper
+# does not state. Every amount is therefore an IDENTITY without a number, with the
+# stated stock values in the provenance. The pilot pool of previously genotyped
+# segregants grew in the paper's own restatement of ``SM`` (6.7 g/L YNB w/o amino
+# acids, 2% glucose), which the loader carries as ``restated(SM, ...)``. Quotes are
+# verbatim substrings of the mirrored MinerU ``paper.md`` (LaTeX markup kept).
+# --------------------------------------------------------------------------- #
+_BOOCOCK2025 = "boocockSinglecellEQTLMapping2025"
+_BOOCOCK2025_SHA = "a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4"
+
+_BOOCOCK_SORT_QUOTE = (
+    "YNB with $2 \\%$ glucose was added to the sorted cells in sheath fluid (PBS, "
+    "Bio-Rad #12012932) and they were transferred to a shaking incubator and grown at "
+    "$3 0 ^ { \\circ } \\mathsf { C }$ ."
+)
+_BOOCOCK_HARVEST_QUOTE = (
+    "For our experiments with the BY and RM cross (YLK3051), the cells were harvested "
+    "in $2 \\times \\mathsf { Y N B }$ medium containing sheath fluid."
+)
+_BOOCOCK_PBS_QUOTE = (
+    "We grew the yeast segregants for scRNA-seq in a medium containing sheath fluid, a "
+    "phosphate-buffered saline (PBS) solution with a pH of 7.4"
+)
+_BOOCOCK_PILOT_YNB_QUOTE = (
+    "This pool of strains was then transferred to minimal YNB medium $\\left( 6 . 7 ~ "
+    "\\mathsf { g } / \\right|$ Difco Yeast Nitrogen Base w/o Amino Acids, $2 \\%$ "
+    "glucose)"
+)
+
+
+def _boocock_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A SourcedValue anchored to the mirrored Boocock 2025 ``paper.md``."""
+    return _sv(
+        value, quote, ck=_BOOCOCK2025, sha=_BOOCOCK2025_SHA, uri="paper.md", note=note
+    )
+
+
+YNB_SHEATH_FLUID_BOOCOCK2025 = Media(
+    name=(
+        "2x YNB + 2% glucose added to FACS sheath fluid (PBS, pH 7.4), liquid "
+        "(Boocock 2025 de novo segregant cultures)"
+    ),
+    state="liquid",
+    is_synthetic=True,
+    base_medium="YNB_SHEATH_FLUID_BOOCOCK2025",
+    components=[
+        _mixture(
+            "yeast nitrogen base (w/o amino acids)",
+            MediaComponentRole.other,
+            _DEFERRED,
+            provenance=[
+                _boocock_sv(
+                    "added as a 2x stock; final strength not stated",
+                    _BOOCOCK_SORT_QUOTE,
+                    note="the sentence opens '1 ml 2x' in the PDF; the OCR renders "
+                    "that prefix as LaTeX, so the quote starts at 'YNB'",
+                ),
+                _boocock_sv(
+                    "Difco Yeast Nitrogen Base w/o Amino Acids",
+                    _BOOCOCK_PILOT_YNB_QUOTE,
+                    note="the product the same Methods name for the pilot pool's YNB; "
+                    "the de novo sentence says only '2x YNB'",
+                ),
+            ],
+            note="the 2x stock was added to cells already in sheath fluid of unstated "
+            "volume, so no final concentration is recorded",
+        ),
+        _defined(
+            "D-glucose",
+            MediaComponentRole.carbon_source,
+            provenance=[
+                _boocock_sv(
+                    "2% in the added 2x YNB; final concentration not stated",
+                    _BOOCOCK_SORT_QUOTE,
+                )
+            ],
+            note="2% is the added medium's glucose, diluted by the sheath fluid to an "
+            "unstated final concentration",
+        ),
+        _mixture(
+            "phosphate-buffered saline (FACS sheath fluid, Bio-Rad #12012932)",
+            MediaComponentRole.buffer,
+            _DEFERRED,
+            provenance=[
+                _boocock_sv("PBS sheath fluid, pH 7.4", _BOOCOCK_PBS_QUOTE),
+                _boocock_sv("Bio-Rad #12012932", _BOOCOCK_SORT_QUOTE),
+            ],
+            note="the vendor's formulation; the paper states PBS at pH 7.4 and the "
+            "catalog number, not the salts",
+        ),
+    ],
+    provenance=[
+        _boocock_sv(
+            "2x YNB with sheath fluid, harvest medium of cross A",
+            _BOOCOCK_HARVEST_QUOTE,
+        ),
+        _boocock_sv(
+            "a medium containing sheath fluid, PBS pH 7.4",
+            _BOOCOCK_PBS_QUOTE,
+            note="the Results sentence that contrasts this medium with the unbuffered "
+            "minimal medium of the bulk eQTL study",
+        ),
+    ],
+)
+"""The de novo segregant culture of Boocock 2025: 2x YNB + 2% glucose on sorted cells in
+PBS sheath fluid. Stated for cross A; crosses B and C carry it as a documented
+representative (see ``[[torchcell.datasets.scerevisiae.boocock2025]]``)."""
+
 # =========================================================================== #
 # BACTERIAL MEDIA ([[plan.bacteria-ontology-genome]] section 3d, Step 5).
 #
@@ -4259,6 +4371,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "SM": SM,
     "SM_AGAR": SM_AGAR,
     "SM_DEFERRED": SM_DEFERRED,
+    "YNB_SHEATH_FLUID_BOOCOCK2025": YNB_SHEATH_FLUID_BOOCOCK2025,
     # bacterial media ([[plan.bacteria-ontology-genome]] Step 5; uses in BACTERIAL_MEDIA_USES)
     "LB": LB,
     "LB_AGAR": LB_AGAR,

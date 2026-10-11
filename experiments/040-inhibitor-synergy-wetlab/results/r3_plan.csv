@@ -8,7 +8,7 @@ job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs
 7,r3_vanhophet_e300_p0,vanhophet_e300,vanacloig hoepfner_hop hillenmeyer_het,3,300,compound,compound,0,0,1,5.8,12,
 8,r3_vanhophet_e300_p1,vanhophet_e300,vanacloig hoepfner_hop hillenmeyer_het,3,300,compound,compound,0,1,1,5.8,12,
 9,r3_vanhophet_e300_p2,vanhophet_e300,vanacloig hoepfner_hop hillenmeyer_het,3,300,compound,compound,0,2,1,5.8,12,
-10,r3_vanhop_e50,vanhop_e50,vanacloig hoepfner_hop,2,50,compound,compound,0,0 1 2,3,2.1,12,
+10,r3_vanhop_e50,vanhop_e50,vanacloig hoepfner_hop,2,50,compound,compound,0,0 1 2,3,2.1,12,"fit_on=pool, select=last"
 11,r3_vanhophet_e150_attr,vanhophet_e150_attr,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,source_encoding=attributes
 12,r3_vanhophet_e150_head,vanhophet_e150_head,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,source_head=True
 13,r3_vanhophet_e150_attr_head,vanhophet_e150_attr_head,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,"source_encoding=attributes, source_head=True"

@@ -69,8 +69,19 @@ BASE: dict[str, object] = {
     "cgt_layers": 1,
     "cgt_lambda": 0.0,
     "eval_epochs": 5,
-    "select": "last",
-    "fit_on": "pool",
+    # THE PROTOCOL CHANGED FOR THIS ROUND, and the first 150-epoch run is why. Under
+    # ``fit_on: pool`` the fold's validation compounds are inside the training set, so the
+    # logged validation score is in-sample: it climbs to 0.88 while the held-out score
+    # peaks at 0.304 near epoch 85 and falls to 0.274 by 115, and the Vanacloig held-out
+    # loss bottoms at 0.629 near epoch 35 and rises to 0.717 (run erueq4ns). Keeping
+    # ``select: last`` at 150 epochs would therefore report an overfitted model on every
+    # arm. ``fit_on: train`` holds the four validation compounds out so the selection
+    # signal is honest, and ``select: val`` stops at that signal's best step. The cost is
+    # four fitted compounds; the alternative is a round whose every arm is read past its
+    # own optimum. The bridge arm keeps round 1's pool-and-last protocol so the two rounds
+    # still join.
+    "select": "val",
+    "fit_on": "train",
     "gene_batch": 128,
     "env_chunk": 16,
     "host_batch": 16,
@@ -126,9 +137,9 @@ def arms() -> list[dict[str, object]]:
     # epochs inside every 150-epoch arm, so saturation is read from those curves and this
     # arm is the check that reading is right rather than the way it is measured
     out.append(arm("vanhophet_e300", "vanhophet", 300))
-    # the round-1 arm's own length, now with the hold-out, so the round-1 reading can be
-    # placed on this round's axis
-    out.append(arm("vanhop_e50", "vanhop", 50))
+    # the round-1 arm's own length AND its protocol, so the round-1 reading can be placed
+    # on this round's axis; the only arm here that keeps pool-and-last
+    out.append(arm("vanhop_e50", "vanhop", 50, fit_on="pool", select="last"))
 
     # 2. How the source enters: one learned token per source (the round-1 encoding), the
     #    typed attribute tokens, a per-source linear head, or both.

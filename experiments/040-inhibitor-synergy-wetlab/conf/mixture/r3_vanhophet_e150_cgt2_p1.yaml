@@ -9,8 +9,8 @@
 - cgt_layers: 2
   cgt_lambda: 0.0
   eval_epochs: 5
-  select: last
-  fit_on: pool
+  select: val
+  fit_on: train
   gene_batch: 128
   env_chunk: 16
   host_batch: 16

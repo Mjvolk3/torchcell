@@ -1987,11 +1987,34 @@ class Perturbation(GraphProcessor):
     Uses COO format for phenotypes and does not copy the base graph structure.
     """
 
-    def __init__(self) -> None:
-        """Initialize the CPU device used for tensor construction."""
+    def __init__(self, dataset_vocabulary: list[str] | None = None) -> None:
+        """Initialize the CPU device used for tensor construction.
+
+        ``dataset_vocabulary`` is the ordered list of source dataset names of the
+        training pool (the keys of ``processed/dataset_name_index.json``). When given,
+        every emitted phenotype value also carries ``phenotype_dataset_indices``, the
+        position of its entry's ``dataset_name`` in that list, so a store that keeps
+        every source entry per genotype (the 030 build) can train one row per entry
+        with the source as a token. A name outside the vocabulary raises: the token
+        table is sized to the pool, and a record from an unlisted source is a config
+        error, not a case to absorb. ``None`` emits nothing new, so every existing
+        dataset keeps its exact tensors.
+        """
         super().__init__()
         # Always use CPU for pin_memory compatibility
         self.device = torch.device("cpu")
+        self.dataset_vocabulary: list[str] | None = (
+            list(dataset_vocabulary) if dataset_vocabulary is not None else None
+        )
+        if self.dataset_vocabulary is not None and len(
+            set(self.dataset_vocabulary)
+        ) != len(self.dataset_vocabulary):
+            raise ValueError("dataset_vocabulary has a repeated name")
+        self._dataset_to_index: dict[str, int] = (
+            {name: i for i, name in enumerate(self.dataset_vocabulary)}
+            if self.dataset_vocabulary is not None
+            else {}
+        )
 
     def process(
         self,
@@ -2071,6 +2094,7 @@ class Perturbation(GraphProcessor):
         all_values: list[float] = []
         all_type_indices = []
         all_sample_indices = []
+        all_dataset_indices: list[int] = []
         phenotype_types = []
 
         # Initialize storage for statistic values
@@ -2091,7 +2115,17 @@ class Perturbation(GraphProcessor):
         # Process each experimental data point
         for item_idx, item in enumerate(data):
             # Get phenotype object from experiment
-            phenotype = cast(ExperimentType, item["experiment"]).phenotype
+            experiment = cast(ExperimentType, item["experiment"])
+            phenotype = experiment.phenotype
+            dataset_idx = -1
+            if self.dataset_vocabulary is not None:
+                dataset_name = experiment.dataset_name
+                if dataset_name not in self._dataset_to_index:
+                    raise ValueError(
+                        f"dataset {dataset_name!r} is not in the dataset vocabulary "
+                        f"of {len(self.dataset_vocabulary)} names"
+                    )
+                dataset_idx = self._dataset_to_index[dataset_name]
 
             # Process each phenotype type
             for type_idx, field_name in enumerate(phenotype_types):
@@ -2112,6 +2146,7 @@ class Perturbation(GraphProcessor):
                     all_values.extend(values)
                     all_type_indices.extend([type_idx] * len(values))
                     all_sample_indices.extend([item_idx] * len(values))
+                    all_dataset_indices.extend([dataset_idx] * len(values))
 
             # Process statistics in the same way
             for stat_type_idx, stat_field_name in enumerate(stat_types):
@@ -2143,6 +2178,12 @@ class Perturbation(GraphProcessor):
                 all_sample_indices, dtype=torch.long, device=self.device
             )
             integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+            if self.dataset_vocabulary is not None:
+                # Parallel to phenotype_values; its name deliberately avoids the
+                # substring "index" so PyG's collate does not offset it by num_nodes.
+                integrated_subgraph["gene"]["phenotype_dataset_indices"] = torch.tensor(
+                    all_dataset_indices, dtype=torch.long, device=self.device
+                )
         else:
             # Handle empty case with placeholder values
             integrated_subgraph["gene"]["phenotype_values"] = torch.tensor(
@@ -2155,6 +2196,13 @@ class Perturbation(GraphProcessor):
                 [0], dtype=torch.long, device=self.device
             )
             integrated_subgraph["gene"]["phenotype_types"] = phenotype_types
+            if self.dataset_vocabulary is not None:
+                # The placeholder row carries token 0 beside its NaN value, so every
+                # sample of a vocabulary-bearing dataset has the key (PyG raises when a
+                # batch mixes samples with and without it).
+                integrated_subgraph["gene"]["phenotype_dataset_indices"] = torch.tensor(
+                    [0], dtype=torch.long, device=self.device
+                )
 
         # Store statistic data in the graph. ALWAYS emit the four stat keys so the
         # COO schema is consistent across samples: a genotype whose phenotypes carry

@@ -1,0 +1,53 @@
+# experiments/030-solid-growth-multi/conf/cgt_030_s3_q_tok_embfit_004.yaml
+#
+# THE CLOSURE ARM ON THE QUERY-PAIR-DISJOINT SPLIT, COMPOSITE, PER ENTRY, TOKEN.
+# cgt_030_s3_r_tok_embfit_003 with the split and the pool changed together:
+#
+#   split   Q, 025's query-pair-disjoint assignment carried to the 030 build by query pair
+#           (subset_definitions_030_q.py; 420 recurring pairs, 301,236 / 37,705 / 37,791
+#           triples, the re-derived seeded assignment agrees with 025 pair for pair). A
+#           triple is held out WITH its query pair, so no training triple shares a
+#           held-out pair.
+#   pool    S3Q, the strict closure pool: S3 minus the 88 closure doubles whose gene pair
+#           IS a held-out query pair. On this build those 88 records carry 288 Costanzo
+#           entries, 136 Kuzmin query-strain double fitness entries (the measurement 030
+#           added, f_ij of the withheld pair), 56 Kuzmin digenic interaction entries and 6
+#           SynthLethDB entries; every one of them is a direct read of what the split
+#           withholds, so the whole record leaves. No training triple carries a held-out
+#           pair as a secondary pair (0 of 301,236), and after the exclusion no training
+#           record of any order carries a held-out pair (asserted by the script).
+#
+# What stays in training by design: the array-side doubles {i,k} and {j,k} of a held-out
+# triple {i,j,k}, the singles, and every other closure double. Those are the terms the
+# query-pair-disjoint question allows the model to see; a split that also withheld them
+# would be gene-disjoint, a different question.
+#
+# Reads against cgt_030_s3_r_tok_embfit_003 (same arm on the random split; seed 0 at
+# 0.5626 over epochs 150-163) and the 025 Q arms, which had no closure: composite
+# cgt_s0_q_kl_emb_017 0.235 and 0.203 (seeds 1, 2), control table 0.14 (epochs 10-29).
+# 025's own closure-on-Q config (cgt_s3_q_kl_fit_036) was never run.
+#
+# The pinned val/test triples differ from the R arm's, so the normalization constants
+# are refit on this arm's training entry rows (normalization_stats_030_s3q.json) and the
+# split cache is warmed under the S3Q pool tag before launch. The validation target is
+# reduced in-batch by the label policy, so no eval table is needed for the new split.
+#
+#   PROJECT_ROOT=<worktree> sbatch --gres=gpu:2 --time=30-00:00:00 --export=ALL,PROJECT_ROOT=<worktree>,GPUS=2 \
+#       -J 030-r1w1-q-emb-s0 experiments/030-solid-growth-multi/scripts/igb_mmli_cgt_030.slurm \
+#       cgt_030_s3_q_tok_embfit_004 +seed=0 trainer.devices=2 data_module.batch_size=512 trainer.max_epochs=1200
+defaults:
+  - cgt_030_s3_r_tok_embfit_003
+  - _self_
+
+wandb:
+  tags: [s3, s3_strict, split_Q, query_pair_disjoint, graph_reg_kl, fitness_joint, closure_doubles, unpinned_to_train, seq_embedding, full_gene_composite, param_matched, perturb_cls, cls_linear_readout, const_lr, const_lr_2.5e-4, per_entry, dataset_token, no_holdout, igb_mmli]
+
+subset:
+  indices: subset_S3Q_indices_030.json.gz
+  split_file: query_pair_disjoint_splits_030.json.gz
+  split_key: pinned
+  unpinned_to_train: true
+  exclude: null
+
+transforms:
+  fit_stats: normalization_stats_030_s3q.json

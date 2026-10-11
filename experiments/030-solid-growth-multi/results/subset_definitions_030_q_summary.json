@@ -1,0 +1,35 @@
+{
+  "seed": 42,
+  "query_pair_min_count": 5,
+  "n_triples": 376732,
+  "n_recurring_pairs": 420,
+  "n_pairs_025": 420,
+  "pairs_agree_with_025": true,
+  "rederived_assignment_agrees_with_025": true,
+  "pinned_counts": {
+    "train": 301236,
+    "val": 37705,
+    "test": 37791
+  },
+  "pinned_counts_025": {
+    "train": 301236,
+    "val": 37705,
+    "test": 37791
+  },
+  "n_heldout_pairs": 89,
+  "n_s3": 1121662,
+  "n_excluded_doubles": 88,
+  "excluded_double_entries_by_dataset": {
+    "DmfCostanzo2016Dataset": 144,
+    "DmiCostanzo2016Dataset": 144,
+    "DmfKuzmin2018Dataset": 71,
+    "DmfKuzmin2020Dataset": 65,
+    "DmiKuzmin2018Dataset": 33,
+    "DmiKuzmin2020Dataset": 23,
+    "SynthLethalityYeastSynthLethDbDataset": 6
+  },
+  "n_training_triples_with_heldout_secondary_pair": 0,
+  "n_s3q": 1121574,
+  "n_train_records": 1046078,
+  "heldout_pairs_in_training_after_exclusion": 0
+}

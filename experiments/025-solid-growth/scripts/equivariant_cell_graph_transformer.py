@@ -73,6 +73,7 @@ from torchcell.losses.point_dist_graph_reg import PointDistGraphReg
 from torchcell.models.equivariant_cell_graph_transformer import CellGraphTransformer
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.timestamp import timestamp
+from torchcell.trainers.compute_accounting import ComputeAccounting
 from torchcell.trainers.int_transformer_cell import RegressionTask
 from torchcell.transforms.coo_regression_to_classification import (
     COOInverseCompose,
@@ -839,6 +840,12 @@ def main(cfg: DictConfig) -> None:
         checkpoint_callback_best_mse,
         checkpoint_callback_best_pearson,
         checkpoint_callback_last,
+        # N, D and C for the scaling readout: one loss per record on this path, FLOPs
+        # measured on one real step (see torchcell.trainers.compute_accounting).
+        ComputeAccounting(
+            unit="records",
+            embedding_keys=("gene_embedding", "embedding_preprocessor"),
+        ),
     ]
 
     trainer = L.Trainer(

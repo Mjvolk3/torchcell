@@ -314,3 +314,120 @@ and a standard deviation, agreeing with the raw column at r 1.000000. 2020 built
 its digenic row count, and the Table S5 merge matched 0 rows. A third suspected defect was flagged
 and left alone: `SmfKuzmin2020Dataset` labels S5's bootstrap standard deviation as a sample sd over
 four colonies, where the SI describes bootstrapped means over 12 to 24 colony measurements.
+
+## 2026.09.26 - Per-entry training with a source-dataset token: built, smoke queued
+
+The training path for this build (plan [[plan.030-per-entry-dataset-token.2026.09.25]], branch `feat/030-per-entry-dataset-token`, PR #444). Every stored entry is a training row; the row's source dataset enters the readout of both heads as a one-hot over the build's 15 source datasets projected to 8 learnable dimensions (`CellGraphTransformer.dataset_token`, readout mode; the input-side placement is the deferred ablation). Validation and test on the pinned triples report one value per genotype under its own screen's token, the label policy's precedence (Kuzmin 2018, 2020, Costanzo, converted 0), so `val/gene_interaction/Pearson` reads against the 025 S3 arms; beside it the per-entry, per-token and cross-token (2018 rows under the 2020 token and back) Pearson. The single-value path is untouched when the token is off (tested bit-for-bit).
+
+The arm ([[experiments.030-solid-growth-multi.scripts.arm_030]]): S3 (1,121,662) minus the essentiality holdout (698 singles: the 198 released Merzbacher test genes that resolve here plus 250 + 250 coverage-matched singles, [[experiments.030-solid-growth-multi.scripts.build_essentiality_holdout_030]]) = 1,120,964 records; 010's random split pinned over the triples (301,386 / 37,673 / 37,673), everything else in train, 1,045,618 training records. The holdout is served as a second validation loader and scored as the AUROC of predicted single-deletion fitness (negated) against essentiality under the Costanzo single token and the SGD token (`val_ess/*`); PPI degree alone gives 0.591 released and 0.706 matched, the confound baseline. Normalization constants are fitted once on the training ENTRY rows and committed with the training set's fingerprint ([[experiments.030-solid-growth-multi.scripts.make_normalization_stats_030]]: gene_interaction sd 0.0506 over 2,339,105 rows, fitness sd 0.1579 over 2,360,393 rows).
+
+Smoke ([[experiments.030-solid-growth-multi.scripts.gh_smoke_dataset_token]], GilaHyper job 2861, one GPU): the split cache for seeds 0 to 2 is warmed under the final pool, then a token run and a control run in which every entry is cloned 0.3 normalized units higher under a synthetic token (or, in the control, under its original token), and [[experiments.030-solid-growth-multi.scripts.smoke_report_030]] applies the three criteria of the plan. On PASS: the build and the cache to IGB ([[experiments.030-solid-growth-multi.scripts.gh_sync_igb_030]]), then seed 0 of the first arm, closure composite + fitness (`cgt_030_s3_r_tok_embfit_001`), on mmli ([[experiments.030-solid-growth-multi.scripts.igb_mmli_cgt_030]]); seeds 1 and 2 after the first epoch's wall time and MaxRSS are read.
+
+## 2026.09.26 - Smoke PASS, build on IGB, first arm queued
+
+The dataset-token smoke passed on GilaHyper job 2867 after two redesigns ([[experiments.030-solid-growth-multi.scripts.smoke_report_030]]): the readout places a source's synthetic twin 0.285 above the source for a 0.3 offset, sd 0.053 across rows, and reading real rows under the twin raises their MSE by 0.055 (delta squared 0.09, band 0.045 to 0.135). Two things the failed submissions taught. A single synthetic token over every source cannot be read on the triples: Kuzmin 2018 triples sit at -0.87 normalized and 2020 at +0.16 against a training mixture at 0, and one global token bias carries that gap. And a paired control run cannot resolve a delta squared over 4 floor of 0.0225 when two runs' validation losses differ by 0.06 from initialization. The same partial models put the essentiality readout at AUROC 0.82 released and 0.76 matched against the PPI-degree baseline of 0.59 and 0.71 (three short epochs, a smoke, not a result).
+
+The build and the split cache were mirrored to IGB scratch by GilaHyper job 2862 ([[experiments.030-solid-growth-multi.scripts.gh_sync_igb_030]]); the first arm, `cgt_030_s3_r_tok_embfit_001` seed 0, goes to mmli from a detached worktree at the branch tip ([[experiments.030-solid-growth-multi.scripts.igb_mmli_cgt_030]]). Seeds 1 and 2 after the first epoch's wall time and MaxRSS are read.
+
+## 2026.09.28 - How the 030 training set is constructed, stage by stage
+
+The pool a 030 arm trains on is not the output of one query. It is the query's store passed
+through the dataset class's fixed pipeline and then two committed selection scripts. Every
+stage is a script in this experiment's folder or in `torchcell/data`, every artifact is
+committed with its counts asserted, and the trainer fingerprints the final training set, so
+the construction reproduces from the graph release without any hand step.
+
+**Stage order inside `Neo4jCellDataset`** (`torchcell/data/neo4j_cell.py`,
+`_determine_processing_steps`): raw -> conversion -> deduplication -> aggregation ->
+processed. Conversion runs before deduplication, and aggregation runs last. Each stage that
+is configured writes its own LMDB; a stage set to `None` is skipped.
+
+| stage | 025 build (`experiments/025-solid-growth/scripts/query.py`) | 030 build (`030-build` worktree, `experiments/030-solid-growth-multi/scripts/query.py`) |
+|---|---|---|
+| query | `001_multi_measurement.cql`, all alleles | the same query |
+| conversion | `CompositeFitnessConverter`: SGD essentiality and SynthLethDB lethal pairs become fitness 0 entries | the same converter |
+| deduplication | `MeanExperimentDeduplicator`: one value per (genotype, label) as the mean over sources, p by t-test | `None`: every source entry kept |
+| aggregation | `GenotypeAggregator`: one record per genotype | the same aggregator |
+| records | 13.5M | 13.5M |
+
+The merge is the only pipeline difference between the two builds. In 025 a single that is
+essential in SGD and measured by Costanzo holds one fitness, the mean of 0 and the
+measurement; in 030 it holds two entries under two source tokens.
+
+**Selection after the build, 030:**
+
+1. `closure_recompute_030.py` scans every double of the count index and writes
+   `closure/entries.parquet`: one row per stored entry of every single, every double whose
+   gene pair lies inside some triple, and every triple.
+2. `subset_definitions_030.py` turns the distinct record ids of that table into
+   `results/subset_S3_indices.json.gz` (1,121,662 records: 5,694 singles, 739,236 closure
+   doubles, 376,732 triples) and asserts each count. The 025 pool, built the same way by
+   `experiments/025-solid-growth/scripts/subset_definitions.py` on the 025 build, has
+   1,121,645; the 17 extra are genotypes the no-merge build keeps apart.
+3. `transfer_010_tmi_splits_030.py` carries the 010 random split over the triples by
+   gene-set identity (`results/pinned_splits_from_010_seed_42.json.gz`, 301,386 / 37,673 /
+   37,673, every 010 triple matched).
+4. `arm_030.py` resolves the arm: pool = subset minus `subset.exclude`; pinned val and
+   test are the 010 sets; with `unpinned_to_train` every other pool record trains. The
+   holdout arms (`fit_000`, `embfit_001`) exclude the 698 essentiality singles of
+   `build_essentiality_holdout_030.py` and serve them as `val_ess`; the no-holdout arms
+   (`fit_002`, `embfit_003`) set `exclude: null` and train the whole pool, which is the
+   025 S3 training set on the 030 build.
+5. `make_normalization_stats_030.py` fits the label constants on the training ENTRY rows
+   of that exact set and records `train_index_sha256`; the training script recomputes the
+   set and refuses a file whose fingerprint differs. `warm_split_cache_030.py` writes the
+   data module cache for each seed under a name that carries the pool hash, so a pool
+   change cannot reuse a stale split.
+
+Essentiality was never subsetted out. The SGD records (1,140) and SynthLethDB records
+(691) are in the query, survive conversion as fitness 0 entries, and sit in the S3 pool as
+singles. The holdout arm removed 698 specific single RECORDS from training for an AUROC
+readout; it did not remove the essentiality label from the data.
+
+## 2026.10.01 - How well a trigenic score reproduces itself on this build
+
+Script: [[experiments.030-solid-growth-multi.scripts.triple_noise_ceiling_030]]. Results:
+`results/triple_noise_ceiling_030.json`. The question was the empirical reproducibility of
+the trigenic interaction score, in Spearman as well as Pearson, on the triples we train on,
+since the only published all-triples figure is Dango's 0.59 Pearson between the two
+replicate screens of Kuzmin 2018 and Kuzmin 2020 published none.
+
+**A. Re-measured triples in the build.** The no-merge build keeps every entry, and 12,914 of
+the 376,732 S3 triples carry two or more interaction entries. One random pair per triple,
+exact duplicate rows dropped, bootstrap over triples for the interval.
+
+| pair class | n triples | Pearson | Spearman | Spearman 95% CI | median abs diff |
+|---|---|---|---|---|---|
+| all pairs | 12,914 | 0.489 | 0.271 | 0.255 to 0.288 | 0.050 |
+| same screen, same strains (Kuzmin 2020) | 11,013 | 0.440 | 0.234 | 0.217 to 0.251 | 0.051 |
+| same screen, same query, different array allele | 288 | 0.636 | 0.469 | 0.358 to 0.569 | 0.027 |
+| Kuzmin 2018 within screen | 61 | 0.639 | 0.539 | 0.309 to 0.717 | 0.022 |
+| Kuzmin 2018 vs Kuzmin 2020, same triple | 483 | 0.892 | 0.769 | 0.719 to 0.810 | 0.029 |
+
+The large class is 11,013 Kuzmin 2020 triples whose identical strain combination appears
+twice in the screen. Interpretation, carried over from the closure recompute (Section
+2026.09.25 above, the 2020 array SMF varies within a strain across Tables S1 and S3): these
+are the diagnostic-array screen and the pilot genome-wide screens scoring the same strains.
+Between those two screens the same strains agree at Pearson 0.44 and Spearman 0.23. The
+Pearson is carried by the tail of strong negative interactions; the bulk near zero does not
+rank reproducibly. The 483 triples measured in both 2018 and 2020 agree far better, at
+0.89 and 0.77; those are 2018 query strains re-screened in 2020 on the same diagnostic
+array, so the array format and protocol match in a way the S1 versus S3 pairs do not.
+Hypothesis (untested): the array format is the larger source of irreproducibility, not
+the year.
+
+**B. Noise propagated from the released p-values.** Treating the stored one-sided p as a
+normal test of the score against its propagated error gives a per-row SE of |tau| / z(p),
+median 0.050 on 2018 and 0.052 on 2020 against score sds of 0.054 and 0.063. Two synthetic
+replicates per row correlate at Pearson 0.23 / Spearman 0.24 (2018) and 0.30 / 0.35 (2020).
+This disagrees with Dango's measured 0.59 for 2018 by a factor of two in implied noise
+variance, and the 2026.09.20 recompute already found the trigenic p is not reproducible
+from the stored fitness SDs (rho 0.20 / 0.10), so the error model behind the trigenic p is
+not the one assumed here. Read B as unreliable and keep A.
+
+**What it means for the model.** The 030 composite run (job 2413840, xy3xnpau) reads
+Pearson 0.49 on Kuzmin 2018 validation rows and 0.39 on Kuzmin 2020 rows at epoch 78. On
+2020 that is within 0.05 of the between-screen agreement of the data with itself (0.44,
+n 11,013). The model logs no Spearman yet, so the rank comparison waits on the next run.
+Every number here is reproducibility between two measurements, not a bound on a predictor
+of the denoised score; that bound is the square root of the released score's reliability.

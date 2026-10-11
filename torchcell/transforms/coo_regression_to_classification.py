@@ -6,16 +6,21 @@
 """Transforms converting COO-format regression labels to classification targets."""
 
 from abc import ABC
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any, cast
 
 import numpy as np
+import pandas as pd
 import torch
+from numpy.typing import NDArray
 from torch_geometric.data import Batch, HeteroData
 from torch_geometric.transforms import BaseTransform, Compose
 
 if TYPE_CHECKING:
     from torchcell.data.neo4j_cell import Neo4jCellDataset
+
+# The per-label statistics a fit produces and ``fit_stats`` must supply.
+_STAT_KEYS = ("mean", "std", "min", "max", "q25", "q75")
 
 
 class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # BaseTransform is Any (torch_geometric untyped)
@@ -27,8 +32,22 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
         label_configs: dict[str, dict[str, Any]],
         eps: float = 1e-8,
         fit_indices: Iterable[int] | None = None,
+        fit_table: pd.DataFrame | None = None,
+        fit_stats: Mapping[str, Mapping[str, float]] | None = None,
     ):
         """Compute per-label normalization statistics from the dataset.
+
+        ``fit_table`` replaces ``label_df`` as the population: a long table with
+        columns ``label`` and ``value``, one row per stored ENTRY, for a store that
+        keeps several entries per record (the 030 build, where ``label_df`` holds one
+        arbitrary entry per record, the last written). The constants are then those of
+        the rows the per-entry loss trains on. Exclusive with ``fit_indices``.
+
+        ``fit_stats`` skips the fit altogether: ``{label: {"mean", "std", "min",
+        "max", "q25", "q75"}}`` computed elsewhere and committed (the 030 arms read
+        ``make_normalization_stats_030.py``'s file, so a compute node without the
+        4.9M-row entry table normalizes by the same constants GilaHyper fitted).
+        Exclusive with both other populations; every configured label must be present.
 
         Args:
             dataset: Neo4jCellDataset instance
@@ -40,6 +59,9 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
                     }
                 }
             eps: Small constant to avoid division by zero
+            fit_table: Per-entry population, columns ``label`` and ``value``; replaces
+                ``label_df`` and excludes ``fit_indices`` (see the summary above).
+            fit_stats: Precomputed per-label statistics (see the summary above).
             fit_indices: Record indices the statistics are computed over. ``None`` uses
                 every record, which is right when the dataset IS the arm's data and was
                 the only behavior before.
@@ -61,22 +83,50 @@ class COOLabelNormalizationTransform(BaseTransform):  # type: ignore[misc]  # Ba
         self.label_configs = label_configs
         self.eps = eps
         self.stats = {}
+        populations = sum(x is not None for x in (fit_table, fit_indices, fit_stats))
+        if populations > 1:
+            raise ValueError("give one of fit_table, fit_indices or fit_stats")
+        if fit_stats is not None:
+            for label, config in label_configs.items():
+                if label not in fit_stats:
+                    raise ValueError(f"fit_stats holds no entry for label {label!r}")
+                given = fit_stats[label]
+                absent = [k for k in _STAT_KEYS if k not in given]
+                if absent:
+                    raise ValueError(f"fit_stats[{label!r}] lacks {absent}")
+                self.stats[label] = {k: float(given[k]) for k in _STAT_KEYS} | {
+                    "strategy": config["strategy"]
+                }
+            return
 
         # Calculate statistics for each label
-        df = dataset.label_df.replace([np.inf, -np.inf], np.nan)
-        if fit_indices is not None:
-            wanted = set(fit_indices)
-            df = df[df["index"].isin(wanted)]
-            missing = len(wanted) - len(df)
-            if missing:
-                raise ValueError(
-                    f"fit_indices names {missing} record indices absent from label_df"
-                )
+        if fit_table is not None:
+            for column in ("label", "value"):
+                if column not in fit_table.columns:
+                    raise ValueError(f"fit_table lacks the {column!r} column")
+            df = fit_table.replace([np.inf, -np.inf], np.nan)
+        else:
+            df = dataset.label_df.replace([np.inf, -np.inf], np.nan)
+            if fit_indices is not None:
+                wanted = set(fit_indices)
+                df = df[df["index"].isin(wanted)]
+                missing = len(wanted) - len(df)
+                if missing:
+                    raise ValueError(
+                        f"fit_indices names {missing} record indices absent from label_df"
+                    )
         for label, config in label_configs.items():
-            if label not in df.columns:
-                raise ValueError(f"Label {label} not found in dataset")
-
-            values = cast(np.ndarray, df[label].dropna().values)
+            values: NDArray[Any]
+            if fit_table is not None:
+                values = (
+                    df.loc[df["label"] == label, "value"].dropna().to_numpy(dtype=float)
+                )
+                if values.size == 0:
+                    raise ValueError(f"fit_table holds no rows of label {label!r}")
+            else:
+                if label not in df.columns:
+                    raise ValueError(f"Label {label} not found in dataset")
+                values = cast(NDArray[Any], df[label].dropna().values)
             stats = {
                 "mean": float(np.mean(values)),
                 "std": float(np.std(values)),
@@ -256,7 +306,7 @@ class BaseBinningStrategy(ABC):
         # form is a compatible supertype so subclass overrides do not conflict.
         def compute_bins(
             self, *args: Any, **kwargs: Any
-        ) -> tuple[np.ndarray, dict[str, Any]]:
+        ) -> tuple[NDArray[Any], dict[str, Any]]:
             """Compute bin edges and metadata for the binning strategy.
 
             Returns:
@@ -351,8 +401,8 @@ class EqualWidthStrategy(BaseBinningStrategy):
     """Binning strategy with bins of equal width across the value range."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: NDArray[Any], num_bins: int
+    ) -> tuple[NDArray[Any], dict[str, Any]]:
         """Compute equal-width bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.linspace(non_nan.min(), non_nan.max(), num_bins + 1)
@@ -372,8 +422,8 @@ class EqualFrequencyStrategy(BaseBinningStrategy):
     """Binning strategy with bins holding roughly equal sample counts."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: NDArray[Any], num_bins: int
+    ) -> tuple[NDArray[Any], dict[str, Any]]:
         """Compute equal-frequency (quantile) bins."""
         non_nan = values[~np.isnan(values)]
         bin_edges = np.percentile(non_nan, np.linspace(0, 100, num_bins + 1))
@@ -393,8 +443,8 @@ class AutoBinStrategy(BaseBinningStrategy):
     """Binning strategy that picks the bin count from the data's spread."""
 
     def compute_bins(
-        self, values: np.ndarray, num_bins: int | None = None
-    ) -> tuple[np.ndarray, dict[str, Any]]:
+        self, values: NDArray[Any], num_bins: int | None = None
+    ) -> tuple[NDArray[Any], dict[str, Any]]:
         """Compute bins based on data std."""
         non_nan = values[~np.isnan(values)]
         std = np.std(non_nan)

@@ -1,0 +1,166 @@
+{
+  "tall": {
+    "sha256": "2fec89f98c602049f2964ca80821d540b50e579fe799d8694fd742731830accc",
+    "n_rows": 10454275,
+    "n_timecourses": 217,
+    "n_arrays": 1693,
+    "n_genes": 6175,
+    "n_tfs": 203,
+    "n_strain_tokens": 215,
+    "arrays_per_timecourse": {
+      "5": 2,
+      "6": 13,
+      "7": 18,
+      "8": 181,
+      "9": 1,
+      "11": 2
+    },
+    "sampling_minutes": [
+      0.0,
+      2.5,
+      5.0,
+      7.5,
+      8.0,
+      10.0,
+      12.5,
+      15.0,
+      18.0,
+      20.0,
+      30.0,
+      45.0,
+      60.0,
+      90.0,
+      100.0,
+      120.0,
+      180.0,
+      290.0
+    ],
+    "restriction_courses": {
+      "P": 208,
+      "M": 6,
+      "N": 3
+    },
+    "mechanism_courses": {
+      "ZEV": 168,
+      "GEV": 49
+    },
+    "repeated_tfs": {
+      "ARR1": 2,
+      "CBF1": 2,
+      "DAL80": 2,
+      "GCN4": 2,
+      "GEV": 2,
+      "GLN3": 3,
+      "GZF3": 2,
+      "MAC1": 2,
+      "MET4": 2,
+      "RDS2": 2,
+      "SWI1": 3,
+      "Z3EV": 2
+    },
+    "t0_nonzero_by_layer": {
+      "log2_ratio": 0,
+      "log2_cleaned_ratio": 0,
+      "log2_cleaned_ratio_zth2d": 0,
+      "log2_selected_timecourses": 0,
+      "log2_shrunken_timecourses": 0
+    },
+    "nonzero_series_by_layer": {
+      "log2_ratio": 1339974,
+      "log2_cleaned_ratio": 1339975,
+      "log2_cleaned_ratio_zth2d": 118134,
+      "log2_selected_timecourses": 100036,
+      "log2_shrunken_timecourses": 100036
+    },
+    "noise_sd_min": 0.0532589378209,
+    "reference_channel_min": 0.714855,
+    "sample_channel_min": 0.6671026,
+    "n_reference_channel_below_2": 11189
+  },
+  "strains": {
+    "sha256": "22b665e6c40cc36d0f6fdcf9ee51bc18548b72e450745aebba6de8abdfe9e2dc",
+    "n_rows": 216,
+    "rows_by_type": {
+      "TF": 203,
+      "Control": 3,
+      "Prediction": 10
+    },
+    "rows_by_background": {
+      "DBY12021": 37,
+      "SMY69": 6,
+      "SMY257_4ZEV": 1,
+      "SMY254": 161,
+      "Z3EV_HAP1": 11
+    },
+    "release_tokens_not_plain": {
+      "SMY108n": "SMY108",
+      "SMY117n": "SMY117",
+      "SMY156n": "SMY156",
+      "SMY2266a": "SMY2266",
+      "SMY2266b": "SMY2266",
+      "SMY2266c": "SMY2266",
+      "SMY254a": "SMY254",
+      "SMY254c": "SMY254",
+      "YukoSMY2047": "SMY2047",
+      "yRSM164": "SMY164",
+      "yRSM170": "SMY170",
+      "yRSM175": "SMY175",
+      "yRSM204": "SMY204",
+      "yRSM206": "SMY206",
+      "yRSM209": "SMY209",
+      "yRSM84": "SMY84",
+      "yRSM86": "SMY86",
+      "yRSM92": "SMY92"
+    },
+    "unlisted_strains": {
+      "SMY10": 8,
+      "SMY19": 7,
+      "SMY22": 6
+    },
+    "table_rows_without_a_course": [
+      "DBY12021"
+    ]
+  },
+  "validation": {
+    "sha256": "2dd041ba81ed89b000f4198112317f3600aa5035f36892a9b63fb9c6f95751dd",
+    "n_rows": 494000,
+    "tfs": [
+      "ANB1",
+      "ARN2",
+      "FMP48",
+      "HMX1",
+      "PHM6",
+      "PHO11",
+      "PHO5",
+      "STP4",
+      "YGL117W",
+      "YGR066C"
+    ],
+    "arrays_per_timecourse": {
+      "8": 10
+    },
+    "date_cells": 80
+  },
+  "geo": {
+    "sha256": {
+      "data/GSE142864-GPL16244_series_matrix.txt.gz": "871d1fddba1a32d2152d1dd6117d57b1b00876221a075f72ac54d8a50489cb08",
+      "data/GSE142864-GPL20785_series_matrix.txt.gz": "eed815375636378282ff082f5ecc93309a1f9499393d66f920bdeaacb7ff4f57"
+    },
+    "n_samples": 1768,
+    "replicate_t0_titles": [
+      "SMY26_MSN2__rep_t0",
+      "SMY27_MSN4_rep_t0",
+      "SMY57_HAP1_t0_rep"
+    ],
+    "idea_arrays_without_sample": 0,
+    "samples_not_in_idea": 0
+  },
+  "ev1": {
+    "sha256": "3e24a7dd82dda3c0d2e71312619584225dc6af1d622dacfa9451d0f082db3ec6",
+    "n_arrays": 1693,
+    "n_cells": 10454275,
+    "max_abs_diff": 4.999858539281386e-8,
+    "cells_not_9_decimal_rounding": 10906,
+    "zero_pattern_mismatches": 0
+  }
+}

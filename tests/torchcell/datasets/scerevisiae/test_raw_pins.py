@@ -159,6 +159,7 @@ def _pins_from_constants(
 #: Classes whose pins are the raw-mirror manifest's records rather than constants.
 MANIFEST_PINNED = {
     "Bloom2019Dataset",
+    "Boocock2025Dataset",
     "HetHillenmeyer2008Dataset",
     "HomHillenmeyer2008Dataset",
 }

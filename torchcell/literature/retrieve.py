@@ -49,13 +49,19 @@ kept as the default because the publisher CDNs the other retrievers use were cho
 against it; only the hosts in :data:`PLAIN_UA_HOSTS` get this one.
 """
 
-PLAIN_UA_HOSTS: frozenset[str] = frozenset({"zenodo.org"})
+PLAIN_UA_HOSTS: frozenset[str] = frozenset({"zenodo.org", "figshare.com"})
 """Hosts served :data:`_PLAIN_UA` instead of the browser string.
 
 Matched on the URL's host, exactly or as a subdomain of a listed host: ``zenodo.org``
 covers ``sandbox.zenodo.org`` (the same software), and the match is on a dotted boundary,
 so a host that merely ends in the same letters (``notzenodo.org``) is not covered. A host
 is added here only after its refusal is measured, with the measurement recorded.
+
+``figshare.com`` (its ``ndownloader.figshare.com`` file host), measured 2026-10-11 with
+curl on file 43268517 (Hale 2024 ``code.zip``): ``torchcell-literature`` and
+``python-httpx/0.27.0`` 200 with all 84,433 bytes, the Chrome 120 string 202 with an
+empty body, so a recorded ``zip_member`` retrieval of the Figshare archive did not
+re-run under the browser string.
 """
 
 #: The PMC Article Datasets bucket: ``<PMCID>.<version>/<file>`` per article version.

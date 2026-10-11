@@ -316,12 +316,15 @@ def test_pmc_oa_api_refuses_a_record_without_a_tgz_link(
         ("https://ZENODO.ORG/records/8284223", _PLAIN_UA),
         ("https://sandbox.zenodo.org/records/1", _PLAIN_UA),
         ("https://notzenodo.org/x", _UA),
+        ("https://ndownloader.figshare.com/files/43268517", _PLAIN_UA),
+        ("https://figshare.com/articles/dataset/x/24578995", _PLAIN_UA),
+        ("https://notfigshare.com/files/1", _UA),
         ("https://ars.els-cdn.com/content/image/1-s2.0-X-mmc2.xlsx", _UA),
         ("https://static-content.springer.com/esm/x_ESM.pdf", _UA),
     ],
 )
 def test_the_user_agent_is_chosen_by_host(url: str, expected: str) -> None:
-    """Zenodo and its subdomains get the plain agent; every other host the browser one.
+    """Zenodo, Figshare and their subdomains get the plain agent; others the browser one.
 
     The subdomain match is on a dotted boundary, so ``sandbox.zenodo.org`` is covered and
     ``notzenodo.org`` is not.
@@ -332,7 +335,7 @@ def test_the_user_agent_is_chosen_by_host(url: str, expected: str) -> None:
 def test_the_plain_agent_names_the_project_and_is_not_a_browser_string() -> None:
     assert _PLAIN_UA == "torchcell-literature (+https://github.com/Mjvolk3/torchcell)"
     assert "Mozilla" not in _PLAIN_UA and "Chrome" not in _PLAIN_UA
-    assert retrieve.PLAIN_UA_HOSTS == frozenset({"zenodo.org"})
+    assert retrieve.PLAIN_UA_HOSTS == frozenset({"zenodo.org", "figshare.com"})
 
 
 def test_a_zenodo_get_sends_the_plain_agent(server: Any) -> None:

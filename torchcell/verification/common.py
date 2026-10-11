@@ -60,7 +60,10 @@ __all__ = [
     "GeneNameResolution",
     "GeneNameResolver",
     "SharedRecordRules",
+    "declared_member_validator",
     "gap_carrier_fields",
+    "key_digest",
+    "l0_validated_row",
     "media_library_dumps",
     "shared_rule_results",
 ]
@@ -887,3 +890,85 @@ def shared_rule_results(
     )
     rules.add_all(records)
     return rules.results()
+
+
+# --------------------------------------------------------------------------- #
+# #889: the helpers the streaming family verifiers share
+# --------------------------------------------------------------------------- #
+#: The tag field each schema union discriminates its members on.
+_UNION_TAG_FIELDS: dict[str, str] = {
+    "ExperimentType": "experiment_type",
+    "ExperimentReferenceType": "experiment_reference_type",
+}
+
+
+def declared_member_validator(
+    class_name: str, *, union: str = "ExperimentType"
+) -> Callable[[Mapping[str, Any]], object]:
+    """Validate a stored mapping as the ONE union member its registry entry declares.
+
+    ``TypeAdapter(ExperimentType)`` tries a stored record against every member of a
+    33-way union; on a Costanzo 2016 record that costs 21 ms, which puts a
+    20,705,612-record store at 67 hours. Validating against the declared member costs
+    0.4 ms and is the stronger statement: the record must validate as the class it
+    claims to be (its ``experiment_type`` tag must be that class's), and a mapping that
+    validates as a member of the union validates as the union. ``class_name`` that is
+    not a member of ``union`` is a registry error and raises here, before any record
+    is read.
+    """
+    import typing
+
+    from torchcell.datamodels import schema
+
+    model = getattr(schema, class_name)
+    if model not in typing.get_args(getattr(schema, union)):
+        raise ValueError(f"{class_name} is not a member of schema.{union}")
+    tag_field = _UNION_TAG_FIELDS[union]
+    tag = model.model_fields[tag_field].default
+
+    def validate(stored: Mapping[str, Any]) -> object:
+        if stored.get(tag_field) != tag:
+            raise ValueError(
+                f"{tag_field} {stored.get(tag_field)!r} is not {class_name}'s {tag!r}"
+            )
+        return model.model_validate(stored)
+
+    return validate
+
+
+def key_digest(key: Any) -> bytes:
+    """A 16-byte digest of a signature tuple, for uniqueness sets over 20M records.
+
+    A signature is a nested tuple of strings, numbers and None, whose ``repr`` is
+    deterministic. Holding the digest instead of the tuple keeps a 20,705,612-key set at
+    about 2 GB instead of tens; the chance that two distinct keys share a 128-bit digest
+    over 2e7 keys is about 1e-24.
+    """
+    import hashlib
+
+    return hashlib.blake2b(repr(key).encode(), digest_size=16).digest()
+
+
+def l0_validated_row(
+    name: str, n_records: int, failures: list[dict[str, Any]], validated_as: str
+) -> LevelResult:
+    """The L0 row a single-pass verifier renders for one validated part of a record.
+
+    An empty store fails: a verifier that read no record has validated nothing.
+    """
+    return LevelResult(
+        level=Level.L0,
+        name=name,
+        passed=n_records > 0 and not failures,
+        message=(
+            f"{n_records} records validated as {validated_as}"
+            if not failures
+            else f"{len(failures)}/{n_records} records failed {validated_as} validation"
+        ),
+        details={
+            "n_records": n_records,
+            "n_failures": len(failures),
+            "failures": failures[:10],
+            "validated_as": validated_as,
+        },
+    )

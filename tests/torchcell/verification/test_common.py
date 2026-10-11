@@ -880,3 +880,62 @@ def test_shared_rule_results_forwards_every_option() -> None:
     assert _by_name(one_call)["gene_containment_sgd"].passed is True
     default = _by_name(shared_rule_results(_gene_records(), sgd_genes={"YA", "YB"}))
     assert default["gene_containment_sgd"].passed is False
+
+
+# --------------------------------------------------------------------------- #
+# #889: the helpers the streaming family verifiers share
+# --------------------------------------------------------------------------- #
+def test_declared_member_validator_checks_the_tag_then_the_model() -> None:
+    from torchcell.verification.common import declared_member_validator
+
+    validate = declared_member_validator("GeneEssentialityExperiment")
+    stored = {
+        "experiment_type": "gene essentiality",
+        "dataset_name": "d",
+        "genotype": {"perturbations": []},
+        "environment": {
+            "media": {"name": "m", "state": "solid", "is_synthetic": False}
+        },
+        "phenotype": {"is_essential": True},
+    }
+    assert type(validate(stored)).__name__ == "GeneEssentialityExperiment"
+    import pytest
+
+    with pytest.raises(ValueError, match="'fitness' is not GeneEssentialityExperiment"):
+        validate({**stored, "experiment_type": "fitness"})
+    with pytest.raises(ValueError):
+        validate({**stored, "phenotype": {"is_essential": "maybe"}})
+    with pytest.raises(
+        ValueError, match="not a member of schema.ExperimentReferenceType"
+    ):
+        declared_member_validator("FitnessExperiment", union="ExperimentReferenceType")
+    reference = declared_member_validator(
+        "FitnessExperimentReference", union="ExperimentReferenceType"
+    )
+    with pytest.raises(ValueError, match="experiment_reference_type None"):
+        reference({})
+
+
+def test_key_digest_is_sixteen_deterministic_bytes() -> None:
+    from torchcell.verification.common import key_digest
+
+    key = (("YAL001C", "sga_kanmx_deletion", None), (26.0, "SC"))
+    assert key_digest(key) == key_digest(tuple(key))
+    assert len(key_digest(key)) == 16
+    assert key_digest(key) != key_digest((("YAL001C",), (30.0, "SC")))
+
+
+def test_l0_validated_row_fails_an_empty_store_and_names_the_class() -> None:
+    from torchcell.verification.common import l0_validated_row
+
+    empty = l0_validated_row("structural", 0, [], "X")
+    assert empty.passed is False
+    assert empty.level is Level.L0
+    failed = l0_validated_row("structural", 2, [{"index": 1, "error": "e"}], "X")
+    assert failed.message == "1/2 records failed X validation"
+    ok = l0_validated_row("structural", 2, [], "X")
+    assert (ok.passed, ok.message, ok.details["validated_as"]) == (
+        True,
+        "2 records validated as X",
+        "X",
+    )

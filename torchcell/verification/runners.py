@@ -35,9 +35,11 @@ from __future__ import annotations
 
 import gzip
 import itertools
+import json
 import os
 import os.path as osp
 import pickle
+from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
 from typing import Any, NamedTuple, cast
 
@@ -62,7 +64,20 @@ from torchcell.verification.expression import (
     measured_gene_universe,
     verify_expression_dataset,
 )
-from torchcell.verification.fitness import verify_fitness_dataset
+from torchcell.verification.fitness import (
+    verify_fitness_dataset,
+    verify_fitness_dataset_streaming,
+)
+from torchcell.verification.gene_essentiality import (
+    essential_gene_set,
+    essential_without_viable_deletion_result,
+    verify_gene_essentiality_dataset,
+)
+from torchcell.verification.gene_interaction import (
+    ReleasedComparison,
+    pair_key,
+    verify_gene_interaction_dataset,
+)
 from torchcell.verification.levels import l4_cross_source
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
@@ -73,6 +88,17 @@ from torchcell.verification.morphology import (
     verify_morphology_dataset,
 )
 from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
+from torchcell.verification.released import (
+    COSTANZO2016_P_VALUE,
+    COSTANZO2016_SCORE,
+    KUZMIN_FINAL_SCORE,
+    KUZMIN_P_VALUE,
+    ReleasedFile,
+    drifted_files,
+    interaction_values_from_table,
+    sgd_inviable_null_annotations,
+    sgd_json_digest,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -83,6 +109,14 @@ from torchcell.verification.rnaseq import rnaseq_gene_set, verify_rnaseq_dataset
 from torchcell.verification.segregant_growth import (
     segregant_gene_set,
     verify_segregant_growth_streaming,
+)
+from torchcell.verification.sourced import SourcedValue, audit_sourced_value
+from torchcell.verification.synthetic_lethality import (
+    SYNTHETIC_LETHALITY,
+    SYNTHETIC_RESCUE,
+    ReleasedPairs,
+    pair_row_key,
+    verify_synthetic_pair_dataset,
 )
 from torchcell.verification.visual_score import (
     verify_visual_score_dataset,
@@ -2209,6 +2243,171 @@ FITNESS_DATASETS: dict[str, dict[str, Any]] = {
             page="Cell Syst 2026 Table S2 (mmc3.xlsx, sheet Table_S2)",
         ),
     },
+    # --- begin #889: the Costanzo 2016 and Kuzmin 2018/2020 fitness stores ----------- #
+    # Each count is the release's, derived by
+    # experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py
+    # (results/no_verifier_store_release_counts.json). Every store streams: the eager
+    # path validates against the 33-way ExperimentType union at 85 records/s, which is
+    # 67 hours for dmf_costanzo2016; the streaming twin validates each record as the
+    # FitnessExperiment it declares.
+    "smf_costanzo2016": {
+        "root": "data/torchcell/smf_costanzo2016",
+        # one record per (strain, temperature) cell of the SMF spreadsheet that states
+        # both a fitness and a stddev, duplicate cells removed
+        "expected_count": 20484,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/smf_costanzo2016/raw/"
+                "strain_ids_and_single_mutant_fitness.xlsx (Data File S1 archive, "
+                "thecellmap.org/costanzo2016)"
+            ),
+            citation_key="costanzoGlobalGeneticInteraction2016",
+            sha256="3b9d3351cdde8ee90832797193a1e8838be3ce6778b3761a9e57db2d3a6a9ccc",
+            method=(
+                "one record per (strain, temperature) cell of the single-mutant fitness "
+                "spreadsheet with a stated fitness and stddev at 26 or 30 C; uncertainty "
+                "= the released stddev as a bootstrap SE"
+            ),
+            page="Science 353:aaf1420, Data File S1 (strain ids and single mutant fitness)",
+        ),
+    },
+    "dmf_costanzo2016": {
+        "root": "data/torchcell/dmf_costanzo2016",
+        # every row of the four Data File S1 interaction tables
+        "expected_count": 20705612,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/dmf_costanzo2016/raw/{SGA_DAmP,SGA_ExE,"
+                "SGA_ExN_NxE,SGA_NxN}.txt (Data File S1, thecellmap.org/costanzo2016)"
+            ),
+            citation_key="costanzoGlobalGeneticInteraction2016",
+            sha256="c413d1bfab7e79a2db142ba3e43572411216f24c23df71bb1e180163da1304ae",
+            method=(
+                "one record per Data File S1 row: double mutant fitness and its "
+                "standard deviation (sample SD over 4 colonies) at the row's array type "
+                "and temperature; sha256 above is SGA_NxN.txt, the four pins are in "
+                "GENE_INTERACTION_DATASETS['dmi_costanzo2016']"
+            ),
+            page="Science 353:aaf1420, Data File S1 (pair-wise interaction format)",
+        ),
+    },
+    "smf_kuzmin2018": {
+        "root": "data/torchcell/smf_kuzmin2018",
+        # the 1,181 array alleles (each states an array SMF) + the 358 of 361 digenic
+        # query alleles that state a query fitness on some row
+        "expected_count": 1539,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/smf_kuzmin2018/raw/aao1729_data_s1.tsv",
+            citation_key="kuzminSystematicAnalysisComplex2018",
+            sha256="c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb",
+            method=(
+                "single-mutant fitness of the array strains (column 10) and of the "
+                "digenic single-mutant query strains (column 9) of Additional Data S1"
+            ),
+            page="Science 360:eaao1729, Additional Data S1",
+        ),
+    },
+    "dmf_kuzmin2018": {
+        "root": "data/torchcell/dmf_kuzmin2018",
+        # 410,399 digenic rows + the 172 trigenic double-mutant query strains that
+        # state a query fitness
+        "expected_count": 410571,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/dmf_kuzmin2018/raw/aao1729_data_s1.tsv",
+            citation_key="kuzminSystematicAnalysisComplex2018",
+            sha256="c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb",
+            method=(
+                "combined mutant fitness (column 11) and SD (column 12) of every "
+                "digenic row of Additional Data S1, plus the query fitness (column 9) "
+                "of each distinct trigenic double-mutant query strain"
+            ),
+            page="Science 360:eaao1729, Additional Data S1",
+        ),
+    },
+    "tmf_kuzmin2018": {
+        "root": "data/torchcell/tmf_kuzmin2018",
+        # every trigenic row
+        "expected_count": 91111,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/tmf_kuzmin2018/raw/aao1729_data_s1.tsv",
+            citation_key="kuzminSystematicAnalysisComplex2018",
+            sha256="c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb",
+            method=(
+                "combined mutant fitness (column 11) and SD (column 12) of every "
+                "trigenic row of Additional Data S1"
+            ),
+            page="Science 360:eaao1729, Additional Data S1",
+        ),
+    },
+    "smf_kuzmin2020": {
+        "root": "data/torchcell/smf_kuzmin2020",
+        # the 472 of Table S5's 480 single-mutant rows that state a fitness
+        "expected_count": 472,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/smf_kuzmin2020/raw/aaz5667-Table-S5.xlsx"
+            ),
+            citation_key="kuzminExploringWholegenomeDuplicate2020",
+            sha256="632405396de8e78807c6e94023780344ff53b2bfe4579a2a7609a4309693c6c0",
+            method="the 'Single mutant' rows of Table S5 that state a fitness",
+            page="Science 368:eaaz5667, Table S5",
+        ),
+    },
+    "dmf_kuzmin2020": {
+        "root": "data/torchcell/dmf_kuzmin2020",
+        # 632,797 Tables S1 + S3 digenic rows + the 201 of 240 trigenic double-mutant
+        # query strains whose fitness Table S5 states
+        "expected_count": 632998,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/dmf_kuzmin2020/raw/"
+                "aaz5667-Table-S{1,3,5}.xlsx"
+            ),
+            citation_key="kuzminExploringWholegenomeDuplicate2020",
+            sha256="4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def",
+            method=(
+                "combined mutant fitness and SD of every digenic row of Tables S1 (main "
+                "screen) and S3 (pilot screens), each tagged with its screen, plus the "
+                "Table S5 fitness of each distinct trigenic double-mutant query strain; "
+                "sha256 above is Table S1"
+            ),
+            page="Science 368:eaaz5667, Tables S1, S3, S5",
+        ),
+    },
+    "tmf_kuzmin2020": {
+        "root": "data/torchcell/tmf_kuzmin2020",
+        # Tables S1 + S3 trigenic rows
+        "expected_count": 301798,
+        "stream": True,
+        "experiment_class": "FitnessExperiment",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/tmf_kuzmin2020/raw/aaz5667-Table-S{1,3}.xlsx"
+            ),
+            citation_key="kuzminExploringWholegenomeDuplicate2020",
+            sha256="4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def",
+            method=(
+                "combined mutant fitness and SD of every trigenic row of Tables S1 and "
+                "S3, each tagged with its screen; sha256 above is Table S1"
+            ),
+            page="Science 368:eaaz5667, Tables S1 and S3",
+        ),
+    },
+    # --- end #889 --------------------------------------------------------------------- #
 }
 
 
@@ -2224,6 +2423,28 @@ def run_fitness(data_root: str) -> bool:
     all_passed = True
     for name, spec in FITNESS_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
+        if spec.get("stream"):
+            # #889: single pass, each record validated as its declared class.
+            reference = _first_genome_reference(abs_root)
+            streamed_host = _host_for_dataset(
+                name, (_reference_assembly_set(reference),), reference, data_root, hosts
+            )
+            streamed = verify_fitness_dataset_streaming(
+                stream_records(abs_root),
+                dataset_name=name,
+                provenance=spec["provenance"],
+                expected_count=spec["expected_count"],
+                experiment_class=spec["experiment_class"],
+                resolve_gene_name=streamed_host.resolve_gene_name,
+                sgd_genes=streamed_host.universe,
+                gene_universe_label=streamed_host.label,
+                min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+            )
+            out = _write_report(streamed, osp.join(abs_root, "preprocess"))
+            print(streamed.summary())
+            print(f"  -> wrote {out}\n")
+            all_passed = all_passed and streamed.passed
+            continue
         records = load_records(abs_root)
         host = _host_for_dataset(
             name,
@@ -2309,6 +2530,685 @@ def run_segregant_growth(data_root: str) -> bool:
             genome=genome,
             sgd_genes=sgd_genes,
             gene_set=segregant_gene_set(osp.join(abs_root, "preprocess")),
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
+# #889: gene interaction, gene essentiality and SynLethDB pair families
+#
+# These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no
+# verifier for. Each entry pins the released files the family verifier re-reads (the
+# store's own raw/ bytes, sha256 as consumed by the served build) and the sentences
+# that define them, so the L2 rules compare a store to its release rather than to its
+# loader. Every count is the release's, derived by
+# experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py.
+# --------------------------------------------------------------------------- #
+_COSTANZO2016_SI = Provenance(
+    source_uri="si/si1.md",
+    citation_key="costanzoGlobalGeneticInteraction2016",
+    sha256="1828703b0ff739fdf1c0d9232fe4fd81a3ce95a1b111780f55ef63bfa676880e",
+)
+_KUZMIN2018_SI = Provenance(
+    source_uri="si/si1.md",
+    citation_key="kuzminSystematicAnalysisComplex2018",
+    sha256="2ec80d05d823976e12add17699ad759bcd983768d2f53e7eb6c0185b963b8291",
+)
+_KUZMIN2020_SI = Provenance(
+    source_uri="si/si1.md",
+    citation_key="kuzminExploringWholegenomeDuplicate2020",
+    sha256="69179c57ada82e99faa40a800fa311e0ad300ac3bde8ea1f310e6c7caf9567fe",
+)
+_SYNLETHDB_PAPER = Provenance(
+    source_uri="paper.md",
+    citation_key="wangSynLethDB20Webbased2022",
+    sha256="acaee2c7e16480fb39656cdf6a5e7ac621c34f08b41433dcab2cebe7daf1f20a",
+)
+
+COSTANZO2016_DATA_FILE_S1: list[ReleasedFile] = [
+    ReleasedFile(
+        name="SGA_DAmP.txt",
+        sha256="581eafbc7a30155f5af7777101e6f94cfd03fcf0242ee76ecce47aa88d75ebc8",
+    ),
+    ReleasedFile(
+        name="SGA_ExE.txt",
+        sha256="84dfe41a09192479842dc0055373c35afcb5246c8e11bb9724326615f5162f7d",
+    ),
+    ReleasedFile(
+        name="SGA_ExN_NxE.txt",
+        sha256="d8b183a80da1d52bbf66c134d4707c1c243c2cf1689859aee72c28e4d4adffca",
+    ),
+    ReleasedFile(
+        name="SGA_NxN.txt",
+        sha256="c413d1bfab7e79a2db142ba3e43572411216f24c23df71bb1e180163da1304ae",
+    ),
+]
+KUZMIN2018_DATA_S1: list[ReleasedFile] = [
+    ReleasedFile(
+        name="aao1729_data_s1.tsv",
+        sha256="c82b60f98590071fcb07b74b672958a5863b58e03b78631e6235cb664ee82afb",
+    )
+]
+KUZMIN2020_TABLES_S1_S3: list[ReleasedFile] = [
+    ReleasedFile(
+        name="aaz5667-Table-S1.xlsx",
+        sha256="4180577d53d5012c6c747227cbeca8a2d09f59bd8028d3bb2f5fd84601c77def",
+    ),
+    ReleasedFile(
+        name="aaz5667-Table-S3.xlsx",
+        sha256="625420bed5de3563c9f1b4f1909a627aa4d8dd1b629c3f8a3596eb99e132c54f",
+    ),
+]
+
+_COSTANZO2016_QUOTES: list[SourcedValue] = [
+    SourcedValue(
+        value="Data File S1 holds every tested pair, unfiltered",
+        provenance=_COSTANZO2016_SI,
+        quote=(
+            "We note that Data Files S1-S2 contain raw interaction data corresponding "
+            "to all tested gene pairs."
+        ),
+        note="why the count is every released row and why both signs must be present",
+    ),
+    SourcedValue(
+        value="column 6 is the stored score",
+        provenance=_COSTANZO2016_SI,
+        quote="Genetic interaction score (ε)",
+        note="Data File S1 column list, 'Supplementary Data File Descriptions'",
+    ),
+]
+_KUZMIN2018_QUOTES: list[SourcedValue] = [
+    SourcedValue(
+        value="Additional Data S1 is the raw dataset",
+        provenance=_KUZMIN2018_SI,
+        quote="# Additional Data S1. Raw genetic interaction dataset.",
+        note="why the count is every released row of the arm and why both signs are "
+        "expected",
+    ),
+    SourcedValue(
+        value="column 7 is the stored score",
+        provenance=_KUZMIN2018_SI,
+        quote="7. Final genetic interaction score (trigenic tau / digenic epsilon).",
+        note="Additional Data S1 column 7; the loaders read its released header "
+        "'Adjusted genetic interaction score (epsilon or tau)'",
+    ),
+    SourcedValue(
+        value="digenic rows are double mutants",
+        provenance=_KUZMIN2018_SI,
+        quote=(
+            "‘digenic’ for double mutants resulting from a cross between a single "
+            "mutant control query and a single mutant array strain"
+        ),
+    ),
+    SourcedValue(
+        value="trigenic rows are triple mutants",
+        provenance=_KUZMIN2018_SI,
+        quote=(
+            "‘trigenic’ for triple mutants resulting from a cross between a double "
+            "mutant query and a single mutant array strain"
+        ),
+    ),
+]
+_KUZMIN2020_QUOTES: list[SourcedValue] = [
+    SourcedValue(
+        value="Table S1 is the main screen",
+        provenance=_KUZMIN2020_SI,
+        quote="# Table S1. Raw genetic interaction dataset.",
+    ),
+    SourcedValue(
+        value="Table S3 is the pilot screens",
+        provenance=_KUZMIN2020_SI,
+        quote="# Table S3. Raw genetic interaction dataset from pilot screens.",
+    ),
+    SourcedValue(
+        value="column 7 is the stored score",
+        provenance=_KUZMIN2020_SI,
+        quote="7. Final genetic interaction score (trigenic tau / digenic epsilon).",
+        note="Tables S1 and S3 column 7; released header 'Adjusted genetic interaction "
+        "score (epsilon or tau)'",
+    ),
+]
+
+
+def _interaction_spec(
+    name: str,
+    *,
+    expected_count: int,
+    order: int,
+    released_files: list[ReleasedFile],
+    score_column: str,
+    combined_type: str | None,
+    selection: str,
+    companion: str,
+    quotes: list[SourcedValue],
+    provenance: Provenance,
+) -> dict[str, Any]:
+    """One GENE_INTERACTION_DATASETS entry (every Costanzo/Kuzmin store has a p-value)."""
+    return {
+        "root": f"data/torchcell/{name}",
+        "expected_count": expected_count,
+        "order": order,
+        "released_files": released_files,
+        "score_column": score_column,
+        "p_value_column": COSTANZO2016_P_VALUE
+        if combined_type is None
+        else KUZMIN_P_VALUE,
+        "combined_type": combined_type,
+        "selection": selection,
+        "companion": companion,
+        "quotes": quotes,
+        "provenance": provenance,
+    }
+
+
+GENE_INTERACTION_DATASETS: dict[str, dict[str, Any]] = {
+    "dmi_costanzo2016": _interaction_spec(
+        "dmi_costanzo2016",
+        expected_count=20705612,
+        order=2,
+        released_files=COSTANZO2016_DATA_FILE_S1,
+        score_column=COSTANZO2016_SCORE,
+        combined_type=None,
+        selection="every row of the four Data File S1 tables",
+        companion="dmf_costanzo2016",
+        quotes=_COSTANZO2016_QUOTES,
+        provenance=Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/dmi_costanzo2016/raw/{SGA_DAmP,SGA_ExE,"
+                "SGA_ExN_NxE,SGA_NxN}.txt"
+            ),
+            citation_key="costanzoGlobalGeneticInteraction2016",
+            method=(
+                "one record per Data File S1 row: the genetic interaction score "
+                "(epsilon) and its P-value for the (query strain, array strain) pair at "
+                "the row's array type and temperature; reference score 0"
+            ),
+            page="Science 353:aaf1420, Data File S1 (pair-wise interaction format)",
+        ),
+    ),
+    "dmi_kuzmin2018": _interaction_spec(
+        "dmi_kuzmin2018",
+        expected_count=410399,
+        order=2,
+        released_files=KUZMIN2018_DATA_S1,
+        score_column=KUZMIN_FINAL_SCORE,
+        combined_type="digenic",
+        selection="the 'digenic' rows of Additional Data S1",
+        companion="dmf_kuzmin2018",
+        quotes=_KUZMIN2018_QUOTES,
+        provenance=Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/dmi_kuzmin2018/raw/aao1729_data_s1.tsv",
+            citation_key="kuzminSystematicAnalysisComplex2018",
+            sha256=KUZMIN2018_DATA_S1[0].sha256,
+            method=(
+                "one record per digenic row of Additional Data S1: the final genetic "
+                "interaction score (digenic epsilon, column 7) and its p value "
+                "(column 8); the ho deletion of a single-mutant control query is "
+                "dropped from the genotype"
+            ),
+            page="Science 360:eaao1729, Additional Data S1",
+        ),
+    ),
+    "tmi_kuzmin2018": _interaction_spec(
+        "tmi_kuzmin2018",
+        expected_count=91111,
+        order=3,
+        released_files=KUZMIN2018_DATA_S1,
+        score_column=KUZMIN_FINAL_SCORE,
+        combined_type="trigenic",
+        selection="the 'trigenic' rows of Additional Data S1",
+        companion="tmf_kuzmin2018",
+        quotes=_KUZMIN2018_QUOTES,
+        provenance=Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/tmi_kuzmin2018/raw/aao1729_data_s1.tsv",
+            citation_key="kuzminSystematicAnalysisComplex2018",
+            sha256=KUZMIN2018_DATA_S1[0].sha256,
+            method=(
+                "one record per trigenic row of Additional Data S1: the final genetic "
+                "interaction score (trigenic tau, column 7) and its p value (column 8)"
+            ),
+            page="Science 360:eaao1729, Additional Data S1",
+        ),
+    ),
+    "dmi_kuzmin2020": _interaction_spec(
+        "dmi_kuzmin2020",
+        expected_count=632797,
+        order=2,
+        released_files=KUZMIN2020_TABLES_S1_S3,
+        score_column=KUZMIN_FINAL_SCORE,
+        combined_type="digenic",
+        selection="the 'digenic' rows of Tables S1 and S3",
+        companion="dmf_kuzmin2020",
+        quotes=_KUZMIN2020_QUOTES,
+        provenance=Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/dmi_kuzmin2020/raw/aaz5667-Table-S{1,3}.xlsx"
+            ),
+            citation_key="kuzminExploringWholegenomeDuplicate2020",
+            sha256=KUZMIN2020_TABLES_S1_S3[0].sha256,
+            method=(
+                "one record per digenic row of Tables S1 (main screen) and S3 (pilot "
+                "screens), each tagged with its screen_id: the final genetic "
+                "interaction score (digenic epsilon) and its p-value"
+            ),
+            page="Science 368:eaaz5667, Tables S1 and S3",
+        ),
+    ),
+    "tmi_kuzmin2020": _interaction_spec(
+        "tmi_kuzmin2020",
+        expected_count=301798,
+        order=3,
+        released_files=KUZMIN2020_TABLES_S1_S3,
+        score_column=KUZMIN_FINAL_SCORE,
+        combined_type="trigenic",
+        selection="the 'trigenic' rows of Tables S1 and S3",
+        companion="tmf_kuzmin2020",
+        quotes=_KUZMIN2020_QUOTES,
+        provenance=Provenance(
+            source_uri=(
+                "$DATA_ROOT/data/torchcell/tmi_kuzmin2020/raw/aaz5667-Table-S{1,3}.xlsx"
+            ),
+            citation_key="kuzminExploringWholegenomeDuplicate2020",
+            sha256=KUZMIN2020_TABLES_S1_S3[0].sha256,
+            method=(
+                "one record per trigenic row of Tables S1 and S3, each tagged with its "
+                "screen_id: the final genetic interaction score (trigenic tau) and its "
+                "p-value"
+            ),
+            page="Science 368:eaaz5667, Tables S1 and S3",
+        ),
+    ),
+}
+
+
+def _audit_quotes(quotes: Sequence[SourcedValue], data_root: str) -> list[LevelResult]:
+    """One L3 ``provenance_audit`` row per quote, against the library's pinned bytes."""
+    library_root = osp.join(data_root, "torchcell-library")
+    return [audit_sourced_value(quote, library_root) for quote in quotes]
+
+
+def companion_pair_keys(abs_root: str) -> set[bytes]:
+    """Every (strain, environment) key digest of a companion fitness store."""
+    return {pair_key(record["experiment"]) for record in stream_records(abs_root)}
+
+
+def run_gene_interaction(data_root: str) -> bool:
+    """Verify the gene-interaction stores (L0-L4) and write reports. True if all pass.
+
+    Each store streams once; its released table and its companion fitness store's keys
+    are read first, the companion by a second stream that validates nothing.
+    """
+    hosts: dict[tuple[str, ...], _Host] = {}
+    all_passed = True
+    for name, spec in GENE_INTERACTION_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        raw_dir = osp.join(abs_root, "raw")
+        reference = _first_genome_reference(abs_root)
+        host = _host_for_dataset(
+            name, (_reference_assembly_set(reference),), reference, data_root, hosts
+        )
+        drift = drifted_files(raw_dir, spec["released_files"])
+        values = (
+            None
+            if drift
+            else interaction_values_from_table(
+                raw_dir,
+                spec["released_files"],
+                score_column=spec["score_column"],
+                p_value_column=spec["p_value_column"],
+                combined_type=spec["combined_type"],
+            )
+        )
+        released = ReleasedComparison(
+            files=[f.name for f in spec["released_files"]],
+            drift=drift,
+            values=values,
+            description=spec["selection"],
+        )
+        companion = spec["companion"]
+        report = verify_gene_interaction_dataset(
+            stream_records(abs_root),
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            order=spec["order"],
+            released=released,
+            companion_keys=companion_pair_keys(
+                osp.join(data_root, "data/torchcell", companion)
+            ),
+            companion_name=companion,
+            extra_results=_audit_quotes(spec["quotes"], data_root),
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
+    "gene_essentiality_sgd": {
+        "root": "data/torchcell/gene_essentiality_sgd",
+        # the inviable null S288C annotations of the SGD per-gene JSON release
+        "expected_count": 1329,
+        "sgd_genes_dir": "data/sgd/genome/genes",
+        # sha256 over the sorted "<file> <sha256>" lines of the 6,607 gene JSONs
+        "sgd_genes_digest": (
+            "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+        ),
+        # the viable full-deletion strains an essential gene must not have
+        "viable_deletion_store": "smf_costanzo2016",
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/sgd/genome/genes/<systematic name>.json (SGD API)",
+            citation_key="cherrySGDSaccharomycesGenome1998",
+            method=(
+                "one record per SGD phenotype annotation with mutant_type 'null', "
+                "strain 'S288C' and phenotype 'inviable': a single-gene deletion, "
+                "is_essential True, viable reference; the publication is the "
+                "annotation's own PubMed reference"
+            ),
+            page="SGD locus phenotype_details",
+        ),
+    }
+}
+
+#: The perturbation types of a FULL gene deletion in an SGA strain collection.
+_FULL_DELETION_TYPES = frozenset({"sga_kanmx_deletion", "sga_natmx_deletion"})
+
+
+def viable_deletion_genes(abs_root: str) -> dict[str, str]:
+    """``gene -> strain id`` of every full-deletion single mutant a fitness store grew."""
+    viable: dict[str, str] = {}
+    for record in stream_records(abs_root):
+        perturbations = record["experiment"]["genotype"]["perturbations"]
+        fitness = record["experiment"]["phenotype"]["fitness"]
+        if len(perturbations) != 1 or fitness is None or not fitness > 0:
+            continue
+        perturbation = perturbations[0]
+        if perturbation["perturbation_type"] in _FULL_DELETION_TYPES:
+            viable.setdefault(
+                str(perturbation["systematic_gene_name"]),
+                str(perturbation.get("strain_id")),
+            )
+    return viable
+
+
+def run_gene_essentiality(data_root: str) -> bool:
+    """Verify the gene-essentiality stores (L0-L4) and write reports. True if all pass."""
+    hosts: dict[tuple[str, ...], _Host] = {}
+    all_passed = True
+    for name, spec in GENE_ESSENTIALITY_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
+        genes_dir = osp.join(data_root, spec["sgd_genes_dir"])
+        observed = sgd_json_digest(genes_dir)
+        released = (
+            sgd_inviable_null_annotations(genes_dir)
+            if observed == spec["sgd_genes_digest"]
+            else None
+        )
+        viable_store = spec["viable_deletion_store"]
+        cross = essential_without_viable_deletion_result(
+            essential_gene_set(records),
+            viable_deletion_genes(osp.join(data_root, "data/torchcell", viable_store)),
+            viable_store=viable_store,
+        )
+        report = verify_gene_essentiality_dataset(
+            records,
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            released=released,
+            pinned_digest=spec["sgd_genes_digest"],
+            observed_digest=observed,
+            extra_results=[cross],
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
+        )
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
+    "syn_leth_db_yeast": {
+        "root": "data/torchcell/syn_leth_db_yeast",
+        # 14,000 released rows minus the 4 the loader ledger drops
+        "expected_count": 13996,
+        "kind": SYNTHETIC_LETHALITY,
+        "released_file": ReleasedFile(
+            name="Yeast_SL.csv",
+            sha256="091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
+        ),
+        "score_definition": "the normalized confidence score of an SL pair",
+        "stated_count": SourcedValue(
+            value=14000,
+            provenance=_SYNLETHDB_PAPER,
+            quote="14 000 of Saccharomyces cerevisiae",
+            note="the yeast SL pairs SynLethDB 2.0 holds",
+        ),
+        "quotes": [
+            SourcedValue(
+                value="the statistic score is a normalized confidence score",
+                provenance=_SYNLETHDB_PAPER,
+                quote=(
+                    "we integrated the scores of different types of sources into a "
+                    "normalized confdence score for every SL pair"
+                ),
+                note="OCR drops the 'fi' ligature ('confdence'); kept verbatim",
+            )
+        ],
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/syn_leth_db_yeast/raw/Yeast_SL.csv",
+            citation_key="wangSynLethDB20Webbased2022",
+            sha256="091e04dbab80044324970feea4a5fc933df0ab7c887042fd87419173129c56ca",
+            method=(
+                "one record per kept row of the SynLethDB 2.0 yeast SL file: both "
+                "sides resolved by Entrez id through the pinned NCBI GFF, "
+                "is_synthetic_lethal True, r.statistic_score, r.pubmed_id; drops in "
+                "preprocess/dropped_records.json"
+            ),
+            page="Nucleic Acids Res 51:D1 (SynLethDB 2.0), Yeast_SL.csv",
+        ),
+    },
+    "syn_rescue_db_yeast": {
+        "root": "data/torchcell/syn_rescue_db_yeast",
+        # 6,948 released rows minus the 6 the loader ledger drops
+        "expected_count": 6942,
+        "kind": SYNTHETIC_RESCUE,
+        "released_file": ReleasedFile(
+            name="Yeast_SR.csv",
+            sha256="d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4",
+        ),
+        "stated_count": None,
+        # SynLethDB 2.0 defines its confidence score for SL pairs only; the SR file's
+        # scores (74 rows, all from BioGRID, -1.0 to -0.21) have no sourced definition
+        "score_definition": None,
+        "quotes": [],
+        "provenance": Provenance(
+            source_uri="$DATA_ROOT/data/torchcell/syn_rescue_db_yeast/raw/Yeast_SR.csv",
+            citation_key="wangSynLethDB20Webbased2022",
+            sha256="d84fba780cfa55d59f4844324f5c203f85f09bcfe50bfff6de06169ade2a18f4",
+            method=(
+                "one record per kept row of the SynLethDB yeast SR file: both sides "
+                "resolved by Entrez id through the pinned NCBI GFF, "
+                "is_synthetic_rescue True, r.statistic_score (null in every row), "
+                "r.pubmed_id; drops in preprocess/dropped_records.json"
+            ),
+            page="SynLethDB 2.0 download, Yeast_SR.csv",
+        ),
+    },
+}
+
+
+def released_synlethdb_pairs(
+    csv_path: str, ledger: Mapping[str, Any], entrez_to_orf: Mapping[int, str]
+) -> tuple[Counter[Any], int]:
+    """The kept rows of a SynLethDB file as (ORF pair, score, PubMed id), and its row count.
+
+    Each side resolves by its Entrez id alone; a row the loader's ledger drops is skipped
+    by its source row number, so the comparison covers exactly the rows the loader kept.
+    """
+    import pandas as pd
+
+    frame = pd.read_csv(
+        csv_path,
+        dtype={"r.pubmed_id": str, "n1.identifier": "int64", "n2.identifier": "int64"},
+    )
+    dropped = {row["source_row"] for rule in ledger["rules"] for row in rule["rows"]}
+    rows: Counter[Any] = Counter()
+    for index, entrez_1, entrez_2, score, pubmed_id in zip(
+        frame.index,
+        frame["n1.identifier"],
+        frame["n2.identifier"],
+        frame["r.statistic_score"],
+        frame["r.pubmed_id"],
+        strict=True,
+    ):
+        if index in dropped:
+            continue
+        rows[
+            pair_row_key(
+                entrez_to_orf[int(entrez_1)],
+                entrez_to_orf[int(entrez_2)],
+                None if pd.isna(score) else float(score),
+                str(pubmed_id),
+            )
+        ] += 1
+    return rows, int(frame.shape[0])
+
+
+def drop_ledger_result(
+    csv_path: str, ledger: Mapping[str, Any], entrez_to_orf: Mapping[int, str]
+) -> LevelResult:
+    """L3 ``drop_ledger``: every ledgered drop meets its stated rule on the released row.
+
+    ``entrez_id_not_in_ncbi_gff``: an Entrez id of the row is absent from the pinned GFF;
+    ``same_gene_on_both_sides``: both ids resolve to one ORF;
+    ``gene_name_disagrees_with_entrez_id`` needs the genome's name resolver and is
+    checked only for its count (the ledger records 0 such rows in both files).
+    """
+    import pandas as pd
+
+    frame = pd.read_csv(
+        csv_path, dtype={"n1.identifier": "int64", "n2.identifier": "int64"}
+    )
+    wrong: list[str] = []
+    unchecked = 0
+    for rule in ledger["rules"]:
+        for row in rule["rows"]:
+            released = frame.loc[row["source_row"]]
+            ids = (int(released["n1.identifier"]), int(released["n2.identifier"]))
+            if ids != (row["n1_entrez"], row["n2_entrez"]):
+                wrong.append(f"row {row['source_row']}: ledger ids {ids} differ")
+            elif rule["rule"] == "entrez_id_not_in_ncbi_gff":
+                if all(entrez in entrez_to_orf for entrez in ids):
+                    wrong.append(f"row {row['source_row']}: both ids are in the GFF")
+            elif rule["rule"] == "same_gene_on_both_sides":
+                if entrez_to_orf.get(ids[0]) != entrez_to_orf.get(ids[1]):
+                    wrong.append(f"row {row['source_row']}: two different genes")
+            else:
+                unchecked += 1
+    n_drops = sum(len(rule["rows"]) for rule in ledger["rules"])
+    accounted = n_drops == ledger["dropped_records"]
+    return LevelResult(
+        level=Level.L3,
+        name="drop_ledger",
+        passed=accounted and not wrong,
+        message=(
+            f"each of the {n_drops} ledgered drops meets its rule on the released row"
+            + (f" ({unchecked} checked by count only)" if unchecked else "")
+            if accounted and not wrong
+            else f"{len(wrong)} ledgered drops do not meet their rule; ledger lists "
+            f"{n_drops} rows against dropped_records {ledger['dropped_records']}"
+        ),
+        details={
+            "n_drops": n_drops,
+            "dropped_records": ledger["dropped_records"],
+            "n_checked_by_count_only": unchecked,
+            "wrong": wrong[:20],
+        },
+    )
+
+
+def run_synthetic_pairs(data_root: str) -> bool:
+    """Verify the SynLethDB stores (L0-L4) and write reports. True if all pass."""
+    from torchcell.datasets.scerevisiae.synth_leth_db import (
+        NCBI_GFF_RELPATH,
+        load_entrez_to_orf,
+    )
+
+    entrez_to_orf = load_entrez_to_orf(
+        osp.join(data_root, "data/sgd/genome", NCBI_GFF_RELPATH)
+    )
+    hosts: dict[tuple[str, ...], _Host] = {}
+    all_passed = True
+    for name, spec in SYNTHETIC_PAIR_DATASETS.items():
+        abs_root = osp.join(data_root, spec["root"])
+        records = load_records(abs_root)
+        host = _host_for_dataset(
+            name,
+            _dataset_assembly_sets(records),
+            records[0]["reference"]["genome_reference"],
+            data_root,
+            hosts,
+        )
+        file = spec["released_file"]
+        csv_path = osp.join(abs_root, "raw", file.name)
+        with open(
+            osp.join(abs_root, "preprocess", "dropped_records.json"), encoding="utf-8"
+        ) as handle:
+            ledger = json.load(handle)
+        drift = drifted_files(osp.join(abs_root, "raw"), [file])
+        rows, n_rows = (
+            (None, None)
+            if drift
+            else released_synlethdb_pairs(csv_path, ledger, entrez_to_orf)
+        )
+        stated: SourcedValue | None = spec["stated_count"]
+        released = ReleasedPairs(
+            files=[file.name],
+            drift=drift,
+            rows=rows,
+            n_released_rows=n_rows,
+            n_dropped=ledger["dropped_records"],
+            stated_count=None if stated is None else int(stated.value),
+            stated_count_quote=None if stated is None else stated.quote,
+        )
+        extra = [] if drift else [drop_ledger_result(csv_path, ledger, entrez_to_orf)]
+        quotes = list(spec["quotes"]) + ([] if stated is None else [stated])
+        report = verify_synthetic_pair_dataset(
+            records,
+            kind=spec["kind"],
+            dataset_name=name,
+            provenance=spec["provenance"],
+            expected_count=spec["expected_count"],
+            released=released,
+            score_definition=spec["score_definition"],
+            extra_results=extra + _audit_quotes(quotes, data_root),
+            resolve_gene_name=host.resolve_gene_name,
+            sgd_genes=host.universe,
+            gene_universe_label=host.label,
+            min_containment=MIN_RNASEQ_GENE_CONTAINMENT,
         )
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
@@ -2932,6 +3832,9 @@ def run_all(data_root: str) -> bool:
     rnaseq_ok = run_rnaseq(data_root)
     environment_ok = run_environment_response(data_root)
     fitness_ok = run_fitness(data_root)
+    interaction_ok = run_gene_interaction(data_root)
+    essentiality_ok = run_gene_essentiality(data_root)
+    synthetic_pairs_ok = run_synthetic_pairs(data_root)
     segregant_ok = run_segregant_growth(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
@@ -2948,6 +3851,9 @@ def run_all(data_root: str) -> bool:
         and rnaseq_ok
         and environment_ok
         and fitness_ok
+        and interaction_ok
+        and essentiality_ok
+        and synthetic_pairs_ok
         and segregant_ok
         and titer_ok
         and bacterial_protein_ok

@@ -46,7 +46,11 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
-from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
+from torchcell.verification.fitness import (
+    fitness_gene_set,
+    verify_fitness_dataset,
+    verify_fitness_dataset_streaming,
+)
 from torchcell.verification.report import Level, LevelResult, Provenance
 
 PROV = Provenance(source_uri="test://synthetic", citation_key="oduibhirTest2014")
@@ -486,3 +490,93 @@ def test_fitness_gene_set_unions_every_perturbation() -> None:
     records = [_record(["YAL001C", "YBR085W"], 0.5), _record(["YJR155W"], 0.3)]
     assert fitness_gene_set(records) == {"YAL001C", "YBR085W", "YJR155W"}
     assert fitness_gene_set([]) == set()
+
+
+# --------------------------------------------------------------------------- #
+# #889: the single-pass twin
+# --------------------------------------------------------------------------- #
+def _stream(records: list[dict[str, Any]], **kwargs: Any) -> Any:
+    arguments: dict[str, Any] = {
+        "dataset_name": "fit",
+        "provenance": PROV,
+        "expected_count": len(records),
+        "experiment_class": "FitnessExperiment",
+    }
+    arguments.update(kwargs)
+    return verify_fitness_dataset_streaming(iter(records), **arguments)
+
+
+def test_streaming_twin_renders_the_eager_rows_and_messages() -> None:
+    records = _good_records()
+    eager = _verify(records, sgd_genes={"YAL001C", "YBR085W", "YJR155W"})
+    streamed = _stream(records, sgd_genes={"YAL001C", "YBR085W", "YJR155W"})
+    assert [r.name for r in streamed.results] == [r.name for r in eager.results]
+    assert [r.level for r in streamed.results] == [r.level for r in eager.results]
+    assert [r.message for r in streamed.results] == [r.message for r in eager.results]
+    assert streamed.passed is True
+    assert _result(streamed, "structural").details["validated_as"] == (
+        "FitnessExperiment"
+    )
+    assert _result(streamed, "pair_uniqueness").details == {
+        "n_pairs": 3,
+        "n_duplicated": 0,
+        "n_extra_records": 0,
+        "n_strains": 3,
+        "n_environments": 1,
+    }
+
+
+def test_streaming_twin_fails_the_same_rows_as_the_eager_verifier() -> None:
+    records = [
+        _record(["YAL001C"], 0.5, ref_fitness=1.02),
+        _record(["YAL001C"], 0.9, se=math.nan),
+        _record(["YJR155W"], 0.3),
+    ]
+    records[0]["experiment"]["phenotype"]["fitness"] = -0.5
+    records[0]["experiment"]["phenotype"]["fitness_se"] = -0.1
+    records[2]["experiment"]["phenotype"]["fitness"] = math.nan
+    eager = verify_fitness_dataset(
+        records, dataset_name="fit", provenance=PROV, expected_count=4
+    )
+    streamed = _stream(records, expected_count=4)
+    for name in (
+        "count",
+        "pair_uniqueness",
+        "value_fidelity",
+        "se_nonnegative",
+        "reference_one",
+    ):
+        assert _result(streamed, name).passed is False, name
+        assert _result(streamed, name).message == _result(eager, name).message, name
+    assert _result(streamed, "value_fidelity").details["bad"] == [
+        {"index": 0, "value": -0.5, "reason": "< 0.0"},
+        {"index": 2, "value": "nan", "reason": "nan"},
+    ]
+    assert _result(streamed, "pair_uniqueness").details["n_extra_records"] == 1
+
+
+def test_streaming_twin_validates_each_record_as_its_declared_class() -> None:
+    records = _good_records()
+    records[1]["experiment"]["experiment_type"] = "gene interaction"
+    report = _stream(records)
+    structural = _result(report, "structural")
+    assert structural.passed is False
+    assert structural.message == "1/3 records failed schema validation"
+    assert structural.details["failures"][0]["index"] == 1
+    assert (
+        "is not FitnessExperiment's 'fitness'"
+        in (structural.details["failures"][0]["error"])
+    )
+    with pytest.raises(ValueError, match="not a member of schema.ExperimentType"):
+        _stream(records, experiment_class="FitnessPhenotype")
+
+
+def test_streaming_value_problem_names_a_non_numeric_and_an_infinite_value() -> None:
+    records = _good_records()
+    records[0]["experiment"]["phenotype"]["fitness"] = "high"
+    records[1]["experiment"]["phenotype"]["fitness"] = math.inf
+    fidelity = _result(_stream(records), "value_fidelity")
+    assert fidelity.details["bad"] == [
+        {"index": 0, "value": "'high'", "reason": "non-numeric"},
+        {"index": 1, "value": "inf", "reason": "inf"},
+    ]

@@ -26,10 +26,16 @@ supplies the gene universe) the two L4 gene rules.
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Sequence
+from collections import Counter
+from collections.abc import Callable, Iterable, Sequence
 from typing import Any
 
-from torchcell.verification.common import GeneNameResolver, SharedRecordRules
+from torchcell.verification.common import (
+    GeneNameResolver,
+    SharedRecordRules,
+    declared_member_validator,
+    key_digest,
+)
 from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
 from torchcell.verification.report import (
     Level,
@@ -258,6 +264,169 @@ def verify_fitness_dataset(
     return report
 
 
+def verify_fitness_dataset_streaming(
+    records: Iterable[Record],
+    *,
+    dataset_name: str,
+    provenance: Provenance,
+    expected_count: int,
+    experiment_class: str,
+    resolve_gene_name: GeneNameResolver | None = None,
+    sgd_genes: set[str] | None = None,
+    gene_universe_label: str = "reference",
+    min_containment: float = 0.90,
+) -> VerificationReport:
+    """Single-pass, memory-bounded twin of :func:`verify_fitness_dataset` (#889).
+
+    The rows, their names, their order and their messages are the eager verifier's.
+    Two things differ, both because a 20,705,612-record store (Costanzo 2016 DMF) can be
+    neither materialized nor validated against the 33-way ``ExperimentType`` union in
+    reasonable time:
+
+    - L0 validates each experiment as the ``experiment_class`` its registry entry
+      declares (:func:`~torchcell.verification.common.declared_member_validator`),
+      which is the stronger statement.
+    - L1 ``pair_uniqueness`` holds a 16-byte digest of each (strain, environment) key
+      (:func:`~torchcell.verification.common.key_digest`), not the key itself.
+    """
+    validate = declared_member_validator(experiment_class)
+    n_records = 0
+    l0_failures: list[dict[str, Any]] = []
+    pair_counts: Counter[bytes] = Counter()
+    strains: set[bytes] = set()
+    environments: set[bytes] = set()
+    n_fitness = 0
+    bad_fitness: list[dict[str, Any]] = []
+    n_se = 0
+    bad_se: list[dict[str, Any]] = []
+    n_ref = 0
+    ref_worst = 0.0
+    shared = SharedRecordRules(
+        resolve_gene_name=resolve_gene_name,
+        sgd_genes=sgd_genes,
+        gene_universe_label=gene_universe_label,
+        min_containment=min_containment,
+    )
+    for i, rec in enumerate(records):
+        n_records += 1
+        exp = rec["experiment"]
+        shared.add(rec)
+        try:
+            validate(exp)
+        except (ValueError, TypeError) as err:
+            l0_failures.append({"index": i, "error": str(err)[:500]})
+        genotype = key_digest(_genotype_signature(exp))
+        environment = key_digest(_environment_signature(exp))
+        pair_counts[key_digest((genotype, environment))] += 1
+        strains.add(genotype)
+        environments.add(environment)
+        fitness = exp["phenotype"]["fitness"]
+        if fitness is not None:
+            n_fitness += 1
+            if (bad := _value_problem(i, fitness, minimum=0.0)) is not None:
+                bad_fitness.append(bad)
+        se = exp["phenotype"].get("fitness_se")
+        if se is not None and not (isinstance(se, float) and math.isnan(se)):
+            n_se += 1
+            if (bad := _value_problem(i, se, minimum=0.0)) is not None:
+                bad_se.append(bad)
+        reference = rec["reference"]["phenotype_reference"]["fitness"]
+        if reference is not None:
+            n_ref += 1
+            ref_worst = max(ref_worst, abs(float(reference) - 1.0))
+
+    report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
+    report.add(
+        LevelResult(
+            level=Level.L0,
+            name="structural",
+            passed=not l0_failures,
+            message=(
+                f"{n_records} records validated"
+                if not l0_failures
+                else f"{len(l0_failures)}/{n_records} records failed schema validation"
+            ),
+            details={
+                "n_records": n_records,
+                "n_failures": len(l0_failures),
+                "failures": l0_failures[:10],
+                "validated_as": experiment_class,
+            },
+        )
+    )
+    report.add(l1_count(n_records, expected_count))
+    n_duplicated = sum(1 for n in pair_counts.values() if n > 1)
+    report.add(
+        LevelResult(
+            level=Level.L1,
+            name="pair_uniqueness",
+            passed=not n_duplicated,
+            message=(
+                f"{len(pair_counts)} unique (strain, environment) records, one each"
+                if not n_duplicated
+                else f"{n_duplicated} (strain, environment) pairs appear in multiple "
+                "records"
+            ),
+            details={
+                "n_pairs": len(pair_counts),
+                "n_duplicated": n_duplicated,
+                "n_extra_records": sum(n - 1 for n in pair_counts.values() if n > 1),
+                "n_strains": len(strains),
+                "n_environments": len(environments),
+            },
+        )
+    )
+    report.add(_streamed_value_result("value_fidelity", n_fitness, bad_fitness))
+    report.add(_streamed_value_result("se_nonnegative", n_se, bad_se))
+    holds = ref_worst == 0.0
+    report.add(
+        LevelResult(
+            level=Level.L3,
+            name="reference_one",
+            passed=holds,
+            message=(
+                f"reference fitness == 1.0 for all {n_ref} records"
+                if holds
+                else f"reference fitness not identically 1.0: max|v-1|={ref_worst:.3g}"
+            ),
+            details={"n_values": n_ref, "worst_abs_dev": ref_worst},
+        )
+    )
+    for result in shared.results():
+        report.add(result)
+    return report
+
+
+def _value_problem(index: int, value: Any, *, minimum: float) -> dict[str, Any] | None:
+    """The :func:`~torchcell.verification.levels.l2_value_fidelity` verdict on ONE value."""
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return {"index": index, "value": repr(value), "reason": "non-numeric"}
+    if math.isnan(value):
+        return {"index": index, "value": "nan", "reason": "nan"}
+    if math.isinf(value):
+        return {"index": index, "value": repr(value), "reason": "inf"}
+    if value < minimum:
+        return {"index": index, "value": value, "reason": f"< {minimum}"}
+    return None
+
+
+def _streamed_value_result(
+    name: str, n_values: int, bad: list[dict[str, Any]]
+) -> LevelResult:
+    """The L2 row :func:`l2_value_fidelity` would render for the same values."""
+    return LevelResult(
+        level=Level.L2,
+        name=name,
+        passed=not bad,
+        message=(
+            f"{n_values} values checked"
+            if not bad
+            else f"{len(bad)}/{n_values} values invalid"
+        ),
+        details={"n_values": n_values, "n_bad": len(bad), "bad": bad[:20]},
+    )
+
+
 def fitness_gene_set(records: Sequence[Record]) -> set[str]:
     """Union of screened deleted gene names -- the L4 gene-containment key."""
     genes: set[str] = set()
@@ -269,4 +438,9 @@ def fitness_gene_set(records: Sequence[Record]) -> set[str]:
     return genes
 
 
-__all__ = ["verify_fitness_dataset", "fitness_gene_set", "Record"]
+__all__ = [
+    "verify_fitness_dataset",
+    "verify_fitness_dataset_streaming",
+    "fitness_gene_set",
+    "Record",
+]

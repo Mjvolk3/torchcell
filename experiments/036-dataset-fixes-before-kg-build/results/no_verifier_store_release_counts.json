@@ -1,0 +1,81 @@
+{
+  "release": {
+    "costanzo2016": {
+      "data_file_s1_rows_per_file": {
+        "SGA_DAmP.txt": 1391958,
+        "SGA_ExE.txt": 818570,
+        "SGA_ExN_NxE.txt": 5796145,
+        "SGA_NxN.txt": 12698939
+      },
+      "data_file_s1_rows": 20705612,
+      "smf_strain_rows": 10859,
+      "smf_stated_cells": 20484,
+      "smf_stated_cells_distinct": 20484
+    },
+    "kuzmin2018": {
+      "rows": 501510,
+      "digenic_rows": 410399,
+      "trigenic_rows": 91111,
+      "trigenic_query_strains_with_fitness": 172,
+      "distinct_array_alleles": 1181,
+      "array_alleles_with_array_fitness": 1181,
+      "distinct_digenic_query_alleles": 361,
+      "digenic_query_alleles_with_query_fitness": 358
+    },
+    "kuzmin2020": {
+      "aaz5667-Table-S1.xlsx": {
+        "digenic_rows": 537911,
+        "trigenic_rows": 256861
+      },
+      "aaz5667-Table-S3.xlsx": {
+        "digenic_rows": 94886,
+        "trigenic_rows": 44937
+      },
+      "s5_double_mutant_rows": 240,
+      "s5_double_mutant_rows_with_fitness": 201,
+      "digenic_rows": 632797,
+      "trigenic_rows": 301798,
+      "trigenic_query_strains": 240,
+      "trigenic_query_strains_with_fitness": 201,
+      "s5_single_mutant_rows": 480,
+      "s5_single_mutant_rows_with_fitness": 472
+    },
+    "sgd": {
+      "annotations": 1329,
+      "genes": 1140,
+      "distinct_gene_publication_pairs": 1305
+    },
+    "synlethdb": {
+      "syn_leth_db_yeast": {
+        "released_rows": 14000,
+        "ledger_source_records": 14000,
+        "ledger_dropped": 4,
+        "released_minus_dropped": 13996
+      },
+      "syn_rescue_db_yeast": {
+        "released_rows": 6948,
+        "ledger_source_records": 6948,
+        "ledger_dropped": 6,
+        "released_minus_dropped": 6942
+      }
+    }
+  },
+  "store_entries": {
+    "smf_costanzo2016": 20484,
+    "dmf_costanzo2016": 20705612,
+    "dmi_costanzo2016": 20705612,
+    "smf_kuzmin2018": 1539,
+    "dmf_kuzmin2018": 410571,
+    "tmf_kuzmin2018": 91111,
+    "dmi_kuzmin2018": 410399,
+    "tmi_kuzmin2018": 91111,
+    "smf_kuzmin2020": 472,
+    "dmf_kuzmin2020": 632998,
+    "tmf_kuzmin2020": 301798,
+    "dmi_kuzmin2020": 632797,
+    "tmi_kuzmin2020": 301798,
+    "gene_essentiality_sgd": 1329,
+    "syn_leth_db_yeast": 13996,
+    "syn_rescue_db_yeast": 6942
+  }
+}

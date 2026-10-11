@@ -42,7 +42,6 @@ from torchcell.datamodels.schema import (
 from torchcell.datamodels.strain_background import BAID_STRAIN
 from torchcell.datasets.private_torchcell import bioscreen as b
 from torchcell.datasets.private_torchcell import volk2021_inhibitor_bioscreen as v
-from torchcell.datasets.private_torchcell import volk2021_sources as s
 from torchcell.knowledge_graphs.dataset_adapter_map import (
     PRIVATE_DATASET_ADAPTER_MAP,
     PrivateDatasetRefused,
@@ -282,8 +281,10 @@ def test_compound_identities_and_their_gaps() -> None:
     assert [g.reason.value for g in names[b.Inhibitor.FA].provenance_gaps] == [
         "deferred_pending_source_review"
     ]
-    assert names[b.Inhibitor.LA].inchikey is None
-    assert names[b.Inhibitor.LA].provenance_gaps == [s.LACTIC_ACID_IDENTITY_GAP]
+    # the table's lactic acid row has no stereo layer, the stock's unstated enantiomer
+    assert names[b.Inhibitor.LA].inchikey == "JVTAAEKCZFNVCJ-UHFFFAOYSA-N"
+    assert names[b.Inhibitor.LA].pubchem_cid == 612
+    assert names[b.Inhibitor.LA].provenance_gaps == []
 
 
 def test_the_publication_is_the_deposited_report() -> None:

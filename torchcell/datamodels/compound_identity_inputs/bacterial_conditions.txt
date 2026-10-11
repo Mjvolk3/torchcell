@@ -142,7 +142,7 @@ glucarate | canonical
 glutamate
 Glutaraldehyde | canonical
 iron(II) chloride | canonical
-Isopropanol | canonical
+isopropanol | canonical
 kanamycin | canonical
 lactic acid | canonical
 leucine
@@ -244,6 +244,15 @@ polymyxin B | canonical | mixture=polymyxins B1 and B2 and minor congeners; PubC
 puromycin | canonical
 pyocyanin | canonical
 streptomycin | canonical
+
+# --- Niu 2019 pinene (#799; the line #726's comment proposes) ------------------------- #
+# Measured 2026-10-10: the name index answers 'alpha-pinene' with CID 6654, titled
+# (+-)-alpha-Pinene, the unspecified parent the comment asks for. It does NOT answer bare
+# 'pinene' with the same record: it returns CID 15837102, titled (-)-Pinene, whose
+# connectivity CC1=C2CC(C2(C)C)CC1 is neither alpha-pinene (CC1=CCC2CC1C2(C)C) nor
+# beta-pinene, so the label Niu 2019 passes stays a recorded gap rather than a near miss.
+alpha-pinene | canonical
+pinene | canonical | unresolved=PubChem's name index answers 'pinene' with CID 15837102, whose structure CC1=C2CC(C2(C)C)CC1 is neither alpha- nor beta-pinene; Niu 2019 doses "0.5% pinene" and names alpha-pinene only as the standard its production assay is quantified against, so which pinene was dosed is not stated
 
 # --- RCH2_defined_noCarbon base salts (Price 2018 Table S18; #860) --------------------- #
 potassium chloride | canonical

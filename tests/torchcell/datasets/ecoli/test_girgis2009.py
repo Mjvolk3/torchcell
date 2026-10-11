@@ -820,34 +820,37 @@ def test_the_seventeen_conditions_have_distinct_signatures() -> None:
     assert len(signatures) == 17
 
 
-def test_eight_antibiotics_are_name_only_and_carry_an_inchikey_gap() -> None:
-    """The curated compound table is not edited here, so the absence is typed.
+def test_two_antibiotics_carry_an_inchikey_gap_after_the_curator_pass() -> None:
+    """Seven of the nine gaps closed: six by #726, doxycycline hyclate by Parsons 2006.
 
-    Doxycycline hyclate resolves since the Parsons 2006 rows (CID 54705095).
+    Gentamycin is the gentamicin homologue complex, so its row keeps PubChem CID 3467
+    and its gap is terminal; ampicillin was not reached by that pass, so its gap is the
+    recoverable one. Doxycycline hyclate resolves to the Parsons 2006 row (CID 54705095).
     """
     gapped = {
         spec.compound_label
         for spec in m.DRUGS
         if m.antibiotic(spec).compound.inchikey is None
     }
-    assert gapped == {
-        "amikacin",
-        "ampicillin",
-        "cefoxitin",
-        "fusidic acid",
-        "gentamycin",
-        "nitrofurantoin",
-        "piperacillin",
-        "streptomycin",
-    }
+    assert gapped == {"ampicillin", "gentamycin"}
+    gentamycin = m.antibiotic(m.DRUGS_BY_CODE["gen"]).compound
+    assert gentamycin.pubchem_cid == 3467
+    assert [(g.field, g.reason) for g in gentamycin.provenance_gaps] == [
+        ("inchikey", ProvenanceGapReason.not_reported_by_primary)
+    ]
+    ampicillin = m.antibiotic(m.DRUGS_BY_CODE["amp"]).compound
+    assert [(g.field, g.reason) for g in ampicillin.provenance_gaps] == [
+        ("inchikey", ProvenanceGapReason.deferred_pending_source_review)
+    ]
+    amikacin = m.antibiotic(m.DRUGS_BY_CODE["amk"]).compound
+    assert amikacin.pubchem_cid == 37768
+    assert amikacin.provenance_gaps == []
     doxycycline = m.antibiotic(m.DRUGS_BY_CODE["dox"]).compound
     assert (doxycycline.name, doxycycline.pubchem_cid, doxycycline.inchikey) == (
         "doxycycline hyclate",
         54705095,
         "DWBSXBGBGHKWOT-WBYAVNBMSA-N",
     )
-    compound = m.antibiotic(m.DRUGS_BY_CODE["amk"]).compound
-    assert [gap.field for gap in compound.provenance_gaps] == ["inchikey"]
 
 
 def test_the_genotype_is_one_gene_level_transposon_insertion() -> None:

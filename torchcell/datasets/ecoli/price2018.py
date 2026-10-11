@@ -67,8 +67,11 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   That solvent is the one Table S4 records for the WILD-TYPE IC50 prescreen, and the
   paper never says the mutant fitness assays drew on those stocks, so every stress
   perturbation's ``description`` says so and ``Solvent.percent`` stays ``None`` (the
-  final vehicle fraction is not released). Compounds the pinned identity table does not
-  resolve carry the resolver's typed ``inchikey`` gap, the solvent ``water`` among them.
+  final vehicle fraction is not released). Every Condition_1 compound and every solvent,
+  ``water`` included, resolves through the pinned identity table since the #726 curator
+  pass; the three that still carry no InChIKey carry a TERMINAL gap, because Bacitracin
+  and Benzalkonium Chloride are homologue mixtures (a PubChem CID, no single-molecule
+  key) and casamino acids is an undefined hydrolysate.
 
 DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): the four sucrose and
 D-mannitol samples the authors' own 2021 note withdraws (``wetmore.AUTHOR_WITHDRAWAL``,
@@ -1453,8 +1456,8 @@ def stress_solvent(spec: SampleSpec, solvents: Mapping[str, str]) -> Solvent:
 
     A kept stress sample whose Condition_1 names no Table S4 compound is refused: all 55
     match by this rule, so a miss means the release changed, not that a vehicle is
-    unknown. ``water`` is not in the pinned compound-identity table, so its ``Compound``
-    carries the resolver's typed ``inchikey`` gap, as the unresolved stress labels do.
+    unknown. ``water`` resolves through the pinned compound-identity table (PubChem CID
+    962), like every Table S4 solvent.
     """
     if spec.condition is None:
         raise ValueError(f"{spec.name}: a stress sample names no condition")

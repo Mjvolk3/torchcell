@@ -7,9 +7,9 @@
   },
   "new": {
     "path": "torchcell/datamodels/compound_identity_table.json",
-    "sha256": "448c366cbe4fbf8e2a982437d4a0e7d33b4a3c22c1159be1211e8f65ba74d57b",
-    "records": 5677,
-    "keys": 11005
+    "sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
+    "records": 5679,
+    "keys": 11007
   },
   "keys_added": [
     "1,2-propanediol",
@@ -36,6 +36,7 @@
     "a-ketoglutaric acid disodium salt hydrate",
     "adenine hydrochloride hydrate",
     "alpha-methylglucoside",
+    "alpha-pinene",
     "aluminum chloride hydrate",
     "amikacin",
     "arginine",
@@ -146,6 +147,7 @@
     "phenylalanine",
     "phleomycin",
     "phosphomycin disodium salt",
+    "pinene",
     "piperacillin",
     "pipes sesquisodium salt",
     "polymyxin b",
@@ -199,7 +201,7 @@
     "no_key_renames_a_node": true,
     "nothing_lost": true,
     "no_key_removed": true,
-    "keys_added": 176,
+    "keys_added": 178,
     "newly_resolved": 0,
     "identifier_changes": 0
   }

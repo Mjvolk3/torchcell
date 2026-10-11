@@ -113,11 +113,13 @@ of their own, recorded in ``preprocess/not_loaded.json``:
   a number nor a single ``ResponseCategory``, because the footnote conflates "no change"
   with "negative effect", so it is left-censored and recorded rather than encoded.
 
-PINENE HAS NO CURATED COMPOUND ROW, AND THAT IS A TYPED GAP. The pinned
-compound-identity table resolves ``anhydrotetracycline`` and no spelling of pinene, so
-the stress compound carries a typed gap on its structure identifiers. That table is a
-sha256-pinned shared artifact whose curator re-queries PubChem for every row, so adding
-the row is issue #726's work rather than a dataset branch's.
+PINENE HAS A CURATED ROW THAT RECORDS WHY IT STAYS A TYPED GAP. The #726 curator pass
+queried it: PubChem's name index answers ``pinene`` with CID 15837102, whose structure is
+neither alpha- nor beta-pinene, and the paper names alpha-pinene only as the standard its
+production assay is quantified against, never as the dosed reagent. So the table's
+``pinene`` row is UNRESOLVED_PUBLIC with that reason, the stress compound keeps its typed
+gap on ``inchikey``, and ``alpha-pinene`` has its own row (CID 6654) for a source that
+states it.
 
 GUIDE SPACERS. Suppl. Table 1 releases 91 ``N20-<gene>`` oligos over 87 distinct names,
 each of the form ``CGGGGTACC`` + spacer + ``gttttagagctagaaatag``; the spacer is the
@@ -571,9 +573,10 @@ def pinene_challenge() -> SmallMoleculePerturbation:
     The dose is stored in ``ConcentrationUnit.percent``, the basis-free member, because
     the paper writes "0.5% pinene" with no w/v or v/v marker and pinene is a liquid
     terpene whose percent could honestly be either. The compound comes back from the
-    shared layer carrying a typed gap on its structure identifiers: the pinned
-    compound-identity table resolves no spelling of pinene, which is issue #726's
-    curation rather than something to guess from a near-miss name.
+    shared layer carrying a typed gap on its structure identifiers: the table's
+    ``pinene`` row records that PubChem's name index answers the bare name with a
+    structure that is neither alpha- nor beta-pinene (#726), and the paper never says
+    which pinene it dosed, so nothing is guessed from a near-miss name.
     """
     return SmallMoleculePerturbation(
         compound=resolved_compound("pinene"),

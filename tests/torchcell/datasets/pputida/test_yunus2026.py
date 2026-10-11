@@ -1169,6 +1169,10 @@ def test_check_isoprenol_identity_stops_on_a_disagreeing_curated_key(
     )
     with pytest.raises(RuntimeError, match="not the pinned"):
         y26.check_isoprenol_identity()
+    # a table that has lost the row returns a gapped name, which is refused too (#726)
+    monkeypatch.setattr(y26, "resolved_compound", lambda name: Compound(name=name))
+    with pytest.raises(RuntimeError, match="gives isoprenol None"):
+        y26.check_isoprenol_identity()
 
 
 # --------------------------------------------------------------------------- #

@@ -393,6 +393,12 @@ def test_isoprenol_goes_through_the_identity_layer_and_is_checked(
     monkeypatch.setattr(m, "resolved_compound", row("AAAAAAAAAAAAAA-BBBBBBBBBB-N"))
     with pytest.raises(m.CompoundIdentityConflictError, match="AAAAAAAAAAAAAA"):
         m.isoprenol_compound()
+    # the row exists, so a table that lost it (a gapped name) is refused too (#726)
+    monkeypatch.setattr(
+        m, "resolved_compound", lambda label: Compound(name="isoprenol")
+    )
+    with pytest.raises(m.CompoundIdentityConflictError, match="to None"):
+        m.isoprenol_compound()
 
 
 def test_the_recorded_inchikey_is_the_rdkit_key_of_the_smiles() -> None:

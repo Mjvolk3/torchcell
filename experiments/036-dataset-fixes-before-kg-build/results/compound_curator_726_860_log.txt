@@ -1,12 +1,12 @@
-  ... 50/169 name lookups
-  ... 100/169 name lookups
-  ... 150/169 name lookups
+  ... 50/170 name lookups
+  ... 100/170 name lookups
+  ... 150/170 name lookups
 {
   "input_list": "torchcell/datamodels/compound_identity_inputs/bacterial_conditions.txt",
-  "input_list_sha256": "6771c7a354c44af6faac1c210a2b5a46b130d1f379f584c39554a643315fac9f",
+  "input_list_sha256": "190b5b142f46527497c26620b078a85e06dafb0fe2ff10b84fabea2c042cb5ce",
   "pubchem_cache": "/scratch/projects/torchcell-scratch/tmp/pubchem_curator_cache_726_860_2026-10-10.json",
-  "pubchem_cache_sha256": "97c23e5b5df58ed50f14751190bb37ec44e5d2789274c61fa6faa02b3d440308",
-  "pubchem_cache_responses": 430,
+  "pubchem_cache_sha256": "1119efcc0538e82d5671d3467f7acd969c0c6f4ae536664cf68e1a6856dca4e9",
+  "pubchem_cache_responses": 434,
   "price2018_si3": "torchcell-library/priceMutantPhenotypesThousands2018/si/si3.xlsx",
   "price2018_si3_sha256": "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
   "table_before": {
@@ -14,19 +14,19 @@
     "records": 5533
   },
   "table_after": {
-    "sha256": "448c366cbe4fbf8e2a982437d4a0e7d33b4a3c22c1159be1211e8f65ba74d57b",
-    "records": 5677
+    "sha256": "d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa",
+    "records": 5679
   },
   "table_written": true,
-  "labels": 176,
+  "labels": 178,
   "labels_by_status": {
-    "RESOLVED": 165,
+    "RESOLVED": 166,
     "RESOLVED_MIXTURE": 4,
     "UNDEFINED_MIXTURE": 3,
-    "UNRESOLVED_PUBLIC": 4
+    "UNRESOLVED_PUBLIC": 5
   },
-  "labels_with_an_inchikey": 165,
-  "rows_added": 144,
+  "labels_with_an_inchikey": 166,
+  "rows_added": 146,
   "labels_folded_into_existing_rows": 26,
   "cas_checked": 63,
   "cas_disagreements": [
@@ -149,6 +149,11 @@
       "label": "polymyxin B",
       "status": "UNRESOLVED_PUBLIC",
       "why": "polymyxins B1 and B2 and minor congeners; PubChem's name index returns no CID for the label or for 'polymyxin B sulfate'"
+    },
+    {
+      "label": "pinene",
+      "status": "UNRESOLVED_PUBLIC",
+      "why": "PubChem's name index answers 'pinene' with CID 15837102, whose structure CC1=C2CC(C2(C)C)CC1 is neither alpha- nor beta-pinene; Niu 2019 doses \"0.5% pinene\" and names alpha-pinene only as the standard its production assay is quantified against, so which pinene was dosed is not stated"
     }
   ]
 }
@@ -179,7 +184,7 @@ folds (26):
   ['D-Sorbitol'] -> 'sorbitol' (CID 5780)
   ['thiamin'] -> 'thiamine' (CID 1130)
   ['Na-citrate'] -> 'sodium citrate' (CID 6224)
-renames (46):
+renames (47):
   '2-Furfuraldehyde' -> 'furfural' in ['RbTnseqPrice2018EcoliDataset']
   '5-Hydroxymethylfurfural' -> '5-(hydroxymethyl)furfural' in ['RbTnseqPrice2018EcoliDataset']
   'Chloramphenicol' -> 'chloramphenicol' (case only) in ['RbTnseqPrice2018EcoliDataset']
@@ -212,6 +217,7 @@ renames (46):
   'arginine' -> 'L-arginine' in ['RnaseqLamoureux2023Dataset']
   'doxycycline' -> '4-(dimethylamino)-1,5,10,11,12a-pentahydroxy-6-methyl-3,12-dioxo-3,4,4a,5,5a,6,12,12a-octahydrotetracene-2-carboximidic acid' in ['RnaseqPublicK12Lamoureux2023Dataset']
   'glutamate' -> 'L-glutamic acid' in ['RnaseqLamoureux2023Dataset']
+  'Isopropanol' -> 'isopropanol' (case only) in ['RnaseqPublicK12Lamoureux2023Dataset']
   'Kanamycin' -> 'kanamycin' (case only) in ['RnaseqLamoureux2023Dataset']
   'Lactic acid' -> 'lactic acid' (case only) in ['RbTnseqBorchert2023Dataset', 'RbTnseqBorchert2024Dataset']
   'leucine' -> 'L-leucine' in ['RnaseqLamoureux2023Dataset']
@@ -226,4 +232,4 @@ renames (46):
   'e-Amino-N-Caproic Acid' -> '6-aminohexanoic acid' in ['RbTnseqBorchert2024Dataset']
   'L-Aspartate' -> 'L-aspartic acid' in ['RbTnseqBorchert2024Dataset']
   'Nicotinic Acid' -> 'niacin' in ['RbTnseqBorchert2024Dataset']
-table sha256 = 448c366cbe4fbf8e2a982437d4a0e7d33b4a3c22c1159be1211e8f65ba74d57b
+table sha256 = d45d3ded9f090919addac2ded7bb077da1a0ef0181ca5e67d74d4a41b73ccbaa

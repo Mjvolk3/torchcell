@@ -152,9 +152,9 @@ the Methods hand to reference 21 ("Engineered strains were grown in a modified M
 medium as previously described21"), and each condition's p-CA, D-alanine and L-malate are
 ``EnvironmentPhysicalPerturbation(factor=carbon_source)``, which is the de Siqueira
 convention. ``p-CA`` is resolved through the compound table's ``p-coumaric acid`` row
-(the same reading Lim 2022 records for its "coumarate"); ``D-alanine`` and ``L-malate``
-have no curated row yet, so each carries a typed gap on ``inchikey`` and adding the two
-rows is raised in the PR rather than done here.
+(the same reading Lim 2022 records for its "coumarate"); ``D-alanine`` (PubChem CID
+71080) and ``L-malate`` (CID 5459792, the (S)-malate dianion) resolve through the rows
+the #726 curator pass added, so all three carbon sources carry an InChIKey.
 """
 
 from __future__ import annotations
@@ -1557,7 +1557,7 @@ def _carbon(name: str, value: float | None) -> EnvironmentPhysicalPerturbation:
 
 #: The source label each carbon source is resolved under. ``p-coumaric acid`` is the
 #: compound table's row for the paper's ``p-CA``, which is the reading Lim 2022 records
-#: for its own "coumarate"; the other two have no curated row yet and carry typed gaps.
+#: for its own "coumarate"; the other two resolve through rows the #726 pass added.
 PCA_COMPOUND = "p-coumaric acid"
 ALANINE_COMPOUND = "D-alanine"
 MALATE_COMPOUND = "L-malate"

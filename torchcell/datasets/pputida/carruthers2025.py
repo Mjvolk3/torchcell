@@ -1929,11 +1929,9 @@ def overexpression_environment() -> CultureEnvironment:
 def isoprenol_product() -> Any:
     """The product as a typed ``Compound`` through the shared compound-identity layer.
 
-    ``isoprenol`` (3-methyl-3-buten-1-ol) has no row in the committed
-    ``compound_identity_table.json``, so the resolver returns the honest typed absence:
-    the canonical name with a ``ProvenanceGap`` on ``inchikey``. Curating the row needs
-    a PubChem call against the committed input lists and is a human act, so it is raised
-    in the PR rather than done here.
+    ``isoprenol`` (3-methyl-3-buten-1-ol) resolves through the committed
+    ``compound_identity_table.json`` row (PubChem CID 12988, InChIKey
+    ``CPJRRXSHAYUTGL-UHFFFAOYSA-N``), so the product carries its full identity.
     """
     return resolved_compound("isoprenol")
 

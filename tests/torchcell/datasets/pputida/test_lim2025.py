@@ -203,6 +203,17 @@ def test_a_matching_compound_row_is_accepted(monkeypatch: pytest.MonkeyPatch) ->
     assert l25.isoprenol_compound().inchikey == l25.ISOPRENOL_INCHIKEY
 
 
+def test_a_table_without_the_isoprenol_row_stops_the_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The row exists since PR #729, so a gapped name is refused, not admitted (#726)."""
+    from torchcell.datamodels.schema import Compound
+
+    monkeypatch.setattr(l25, "resolved_compound", lambda name: Compound(name=name))
+    with pytest.raises(l25.CompoundIdentityConflictError, match="to None"):
+        l25.isoprenol_compound()
+
+
 # --------------------------------------------------------------------------- #
 # Synthetic: the genotype and environment builders
 # --------------------------------------------------------------------------- #

@@ -352,18 +352,20 @@ def test_a_stress_compound_keeps_its_printed_dose_and_table_s4s_vehicle() -> Non
         ConcentrationUnit.g_per_l,
     )
     assert perturbation.solvent is not None
-    # water is not in the pinned identity table, so the vehicle carries the typed gap
+    # water has a row since the #726 curator pass, so the vehicle carries its structure
     assert perturbation.solvent.name == "water"
     assert perturbation.solvent.percent is None
     assert perturbation.solvent.compound is not None
-    assert [g.field for g in perturbation.solvent.compound.provenance_gaps] == [
-        "inchikey"
-    ]
+    assert perturbation.solvent.compound.inchikey == "XLYOFNOQVPJJNP-UHFFFAOYSA-N"
+    assert perturbation.solvent.compound.provenance_gaps == []
     assert perturbation.provenance_gaps == []
     assert perturbation.description == p.STRESS_DESCRIPTION
     assert "wild-type IC50 prescreen" in perturbation.description
+    # the release's spelling is the row's canonical name, so only the identity is filled
     assert perturbation.compound.name == "Cephalothin sodium salt"
-    assert [g.field for g in perturbation.compound.provenance_gaps] == ["inchikey"]
+    assert perturbation.compound.inchikey == "VUFGUVLLDPOSBC-XRZFDKQNSA-M"
+    assert perturbation.compound.pubchem_cid == 23675321
+    assert perturbation.compound.provenance_gaps == []
     (dmso,) = p.build_environment(specs["set2IT053"], SOLVENTS).perturbations
     assert isinstance(dmso, SmallMoleculePerturbation)
     assert (dmso.concentration.value, dmso.concentration.unit) == (
@@ -679,7 +681,8 @@ def test_the_inventory_counts_samples_genes_and_records_by_rule() -> None:
     assert counts.source_records == counts.kept_records + sum(
         d.n_records for d in counts.drops
     )
-    assert counts.unidentified_compounds == {"Cephalothin sodium salt": 1}
+    # every Condition_1 of the synthetic release resolves since the #726 curator pass
+    assert counts.unidentified_compounds == {}
     # two kept stress samples, both on a water stock (Table S4), so both counts are the
     # same here; on the real sheet they differ (45 / 7 / 3 samples, 29 / 5 / 1 compounds)
     assert counts.stress_solvent_by_sample == {"water": 2}

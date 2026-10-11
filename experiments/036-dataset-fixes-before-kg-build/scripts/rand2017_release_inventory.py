@@ -58,7 +58,7 @@ from typing import Final, Literal
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from torchcell.data.experiment_dataset import write_verified
 from torchcell.literature.manifest import (
@@ -322,7 +322,10 @@ class ServedStore(BaseModel):
     kept_records: int
     rand_samples_in_release: int
     rand_samples_dropped: int
-    drop_rule: str
+    drop_rule: str | None = Field(
+        description="the rule that drops the Rand samples; None once they are kept "
+        "(#860 added the RCH2 medium, so a rebuilt store drops none of them)"
+    )
     drop_rule_samples: int
     drop_rule_records: int
     rand_records_served: int
@@ -585,10 +588,17 @@ def served_store() -> ServedStore:
             data_root() / COMPENDIUM_STORE / "preprocess" / "dropped_records.json"
         ).read_text()
     )
-    rule = "medium_not_in_media_library"
-    dropped = {s.split()[0] for s in ledger["by_rule"][rule]["samples"]}
+    by_rule = {
+        name: {s.split()[0] for s in entry["samples"]}
+        for name, entry in ledger["by_rule"].items()
+    }
+    rules = [name for name, samples in by_rule.items() if set(RAND_SAMPLES) & samples]
+    if len(rules) > 1:
+        raise ValueError(f"the Rand samples fall under several drop rules: {rules}")
+    rule = rules[0] if rules else None
+    dropped = by_rule[rule] if rule is not None else set()
     rand_dropped = sorted(set(RAND_SAMPLES) & dropped)
-    per_sample = ledger["by_rule"][rule]["n_records_not_written"] // len(dropped)
+    per_sample = ledger["kept_records"] // ledger["kept_samples"]
     return ServedStore(
         store=COMPENDIUM_STORE,
         kept_samples=ledger["kept_samples"],
@@ -597,7 +607,9 @@ def served_store() -> ServedStore:
         rand_samples_dropped=len(rand_dropped),
         drop_rule=rule,
         drop_rule_samples=len(dropped),
-        drop_rule_records=ledger["by_rule"][rule]["n_records_not_written"],
+        drop_rule_records=(
+            ledger["by_rule"][rule]["n_records_not_written"] if rule is not None else 0
+        ),
         rand_records_served=(len(RAND_SAMPLES) - len(rand_dropped)) * per_sample,
         rand_records_if_medium_lands=len(RAND_SAMPLES) * per_sample,
     )

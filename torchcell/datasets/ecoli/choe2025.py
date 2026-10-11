@@ -141,10 +141,11 @@ OD600. The treatment doses are all 0.04 to 0.36 of the Table S3 lethal dose, but
 paper states no rule relating the two, so ``DoseBasis.fixed`` records them as the
 explicit doses Table S3 prints. Table S3 gives sulfamethizole in mg/ml; 0.2 mg/ml is
 stored as 200 ug/mL, a unit conversion inside the paper's own mass-per-volume dimension
-(``ConcentrationUnit`` has no mg/mL member). Six of the twelve compounds (CCCP, polymyxin
-B, pyocyanin, rifampicin, puromycin, phleomycin) have no row in the shared
-compound-identity table, so ``resolved_compound`` returns them name-only with an
-``inchikey`` gap, which is the honest shipped state and the Wang 2015 precedent.
+(``ConcentrationUnit`` has no mg/mL member). Eleven of the twelve compounds
+resolve through the shared compound-identity table (CCCP, pyocyanin, rifampicin,
+puromycin and phleomycin since the #726 curator pass). Polymyxin B does not: it is the
+polymyxin B1/B2 complex and PubChem's name index returns no CID for it, so its table row
+records that reason and the compound keeps a typed ``inchikey`` gap.
 """
 
 from __future__ import annotations

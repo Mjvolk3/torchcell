@@ -45,6 +45,7 @@ from tests.torchcell.sequence.genome._bacterial_fixtures import (
     write_assembly,
 )
 from torchcell.data import ManifestPinMismatchError, RawSha256MismatchError
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     BacterialStrainBackground,
@@ -429,7 +430,12 @@ def test_every_released_carbon_source_has_one_sourced_component() -> None:
         assert component.concentration is not None
         assert component.concentration.unit is ConcentrationUnit.g_per_l
         assert component.concentration.value == m.CARBON_SOURCES[token][1]
-        assert component.compound.name == m.CARBON_SOURCES[token][0]
+        # the table's canonical name: 'D-fructose' folds into the 'fructose' row (#726)
+        assert component.compound.name == (
+            resolved_compound(m.CARBON_SOURCES[token][0]).name
+        )
+        assert component.compound.inchikey is not None
+    assert [c.compound.name for c in m.MEDIA["FRUCTOSE"].components] == ["fructose"]
 
 
 def test_environment_is_the_medium_at_37c_aerobic() -> None:

@@ -66,12 +66,13 @@ asserting them here would fabricate numbers this paper never gave. Every conditi
 medium has a library entry, so no condition is dropped for a medium reason. Casamino acids
 is an acid hydrolysate of casein with no structure to resolve
 (``ComponentDefinition.intrinsically_undefined``), which is why ``is_synthetic`` is False.
-Eight of the 17 antibiotics are not in the curated compound table (amikacin, ampicillin,
-cefoxitin, fusidic acid, gentamycin, nitrofurantoin, piperacillin, streptomycin), so
-``resolved_compound`` keeps the paper's label and attaches a typed gap on ``inchikey``; the
-table is not edited here. Doxycycline hyclate was the ninth until the Parsons 2006 loader
-added its row (CID 54705095, the compound PubChem titles "Doxycycline hyclate"), which this
-loader's label now resolves to.
+Fifteen of the 17 antibiotics resolve through the curated compound table: amikacin,
+cefoxitin, fusidic acid, nitrofurantoin, piperacillin and streptomycin since the #726
+curator pass, and doxycycline hyclate through the Parsons 2006 row (CID 54705095, the
+compound PubChem titles "Doxycycline hyclate"). Two carry a typed gap on ``inchikey``:
+gentamycin, the gentamicin homologue complex, whose row keeps PubChem CID 3467 and no
+single-molecule key (a terminal gap), and ampicillin, which that pass did not reach
+because its row would move eight further stores.
 
 STRAIN. MG1655 (``REFERENCE_STRAIN``), pinned to GCA_000005845.2. The library's parent is
 MG1655 ``delta-lacZ``, carried as a ``BacterialStrainBackground`` whose

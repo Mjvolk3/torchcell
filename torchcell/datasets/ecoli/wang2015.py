@@ -72,11 +72,10 @@ computed from, not for the ratio itself, and the per-replicate ODs are not relea
 ratio's SD therefore cannot be derived without assuming the four cultures independent.
 ``environment_response_uncertainty`` and ``environment_response_se`` are typed gaps.
 
-COMPOUND. ``isoprenol`` has no row in ``compound_identity_table.json`` yet, so
-``resolved_compound`` returns the name with an ``inchikey`` gap (the same object the
-Carruthers 2025 loader stores). Its identity, ``ISOPRENOL_INCHIKEY``, is recorded here and
-checked against the table's row, which now exists (PubChem CID 12988); a row disagreeing
-with the recorded key stops the build.
+COMPOUND. ``isoprenol`` resolves through ``compound_identity_table.json`` (PubChem CID
+12988, the same object the Carruthers 2025 loader stores). Its identity,
+``ISOPRENOL_INCHIKEY``, is recorded here and checked against the table's row; a row that
+disagrees with it, or a table that has lost it, stops the build.
 
 NOT LOADED, because the paper releases them only as figures or as another readout:
 the Fig. 2 time courses; the transporter overexpression strains on pTrc99A (Fig. 3C,
@@ -1118,11 +1117,10 @@ def isoprenol_compound() -> Compound:
     """Isoprenol through the shared compound-identity layer.
 
     The table's row (PubChem CID 12988) must carry ``ISOPRENOL_INCHIKEY`` or the build
-    stops; before that row existed the resolver returned the name with an ``inchikey``
-    gap, which this guard also admits.
+    stops. The row exists, so a gap on ``inchikey`` is no longer admitted (#726).
     """
     compound = resolved_compound(ISOPRENOL_LABEL)
-    if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:
+    if compound.inchikey != ISOPRENOL_INCHIKEY:
         raise CompoundIdentityConflictError(
             f"the compound-identity table resolves {ISOPRENOL_LABEL!r} to "
             f"{compound.inchikey}, not {ISOPRENOL_INCHIKEY}"

@@ -203,17 +203,13 @@ def medium() -> Media:
 
 
 def compound(inhibitor: b.Inhibitor) -> Compound:
-    """The inhibitor's identity through the resolver, with lactic acid's typed gap.
+    """The inhibitor's identity through the resolver.
 
-    Lactic acid's resolver gap is replaced by ``LACTIC_ACID_IDENTITY_GAP``: the stock
-    sheet does not state the enantiomer, which is terminal, not a pending curation.
+    Lactic acid resolves to the table's ``lactic acid`` row (PubChem CID 612, #726),
+    whose InChIKey carries no stereo layer: that is what the stock sheet's unstated
+    enantiomer is, so no enantiomer is asserted (``LACTIC_ACID_STOCK``).
     """
-    resolved = resolved_compound(RESOLVER_NAME[inhibitor])
-    if inhibitor is b.Inhibitor.LA:
-        return resolved.model_copy(
-            update={"provenance_gaps": [s.LACTIC_ACID_IDENTITY_GAP]}
-        )
-    return resolved
+    return resolved_compound(RESOLVER_NAME[inhibitor])
 
 
 def small_molecule(

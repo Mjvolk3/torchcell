@@ -46,8 +46,12 @@ samples the t column is not that statistic (measured: its sign disagrees with th
 for about half of all genes and is inverted on the strongly negative ones), so no standard
 error is derived there.
 
-DROPPED (``preprocess/dropped_records.json``): the 20 samples on ``RCH2_defined_noCarbon``,
-a medium the shared library does not carry, and the 22 bioreactor and adaptation samples,
+MEDIA. Each sample's ``media`` label maps to a ``MEDIA_LIBRARY`` object
+(:data:`MEDIA_BY_LABEL`). The 20 samples on ``RCH2_defined_noCarbon`` (sets 1 and 5, ten of
+them Rand 2017's own assays) are kept on ``RCH2_DEFINED_NOCARBON_PRICE2018``, the recipe
+Price 2018 Supplementary Table 18 states for the Fitness Browser (#860).
+
+DROPPED (``preprocess/dropped_records.json``): the 22 bioreactor and adaptation samples,
 whose distinguishing variables (dissolved-oxygen set point, feed regime, sampling time,
 solvent overlay) have no field on ``Environment``.
 
@@ -85,7 +89,7 @@ from torchcell.data import (
     verify_raw_files,
 )
 from torchcell.datamodels.compound_identity import resolved_compound
-from torchcell.datamodels.media import MOPS_MINIMAL
+from torchcell.datamodels.media import MOPS_MINIMAL, RCH2_DEFINED_NOCARBON_PRICE2018
 from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
@@ -1146,17 +1150,12 @@ def attribute_sample(sample: SampleMetadata) -> SampleAttribution:
 # --------------------------------------------------------------------------- #
 # Drops
 # --------------------------------------------------------------------------- #
-DROP_MEDIUM_NOT_IN_LIBRARY = "medium_not_in_media_library"
 DROP_REACTOR_PROCESS = "reactor_process_not_representable"
 DROP_RULES: dict[str, str] = {
-    DROP_MEDIUM_NOT_IN_LIBRARY: "the release's medium 'RCH2_defined_noCarbon' has no "
-    "MEDIA_LIBRARY entry and no library base it derives from, so its records would join "
-    "nothing; Price 2018 Table S18 states the recipe, and the entry is proposed in the "
-    "PR rather than invented here",
     DROP_REACTOR_PROCESS: "bioreactor and adaptation samples differ by dissolved-oxygen "
     "set point, batch or fed-batch feed rate, sampling time, solvent overlay and "
     "adaptation day, none of which has a field on Environment, so distinct conditions "
-    "would collapse into one environment",
+    "would collapse into one environment"
 }
 REACTOR_GROUPS: frozenset[str] = frozenset({"reactor", "reactor_pregrowth"})
 
@@ -1165,8 +1164,6 @@ def drop_reason(sample: SampleMetadata) -> str | None:
     """The drop rule a sample falls under, or ``None`` when it is kept."""
     if sample.exp_group in REACTOR_GROUPS:
         return DROP_REACTOR_PROCESS
-    if sample.media == "RCH2_defined_noCarbon":
-        return DROP_MEDIUM_NOT_IN_LIBRARY
     return None
 
 
@@ -1261,6 +1258,7 @@ MEDIA_BY_LABEL: dict[str, Media] = {
     "MOPS minimal media_noCarbon": MOPS_MINIMAL,
     "MOPS minimal media_Glucose_noNitrogen": FB_MOPS_GLUCOSE_NO_NITROGEN,
     "M9_medium": BORCHERT2023_M9,
+    "RCH2_defined_noCarbon": RCH2_DEFINED_NOCARBON_PRICE2018,
 }
 # --------------------------------------------------------------------------- #
 # Environment
@@ -1915,8 +1913,9 @@ class RbTnseqBorchert2024Dataset(ExperimentDataset):
         )
 
 
-#: Records of the full build: 290 kept samples x 4,732 genes.
-EXPECTED_RECORDS = 290 * N_GENES
+#: Records of the full build: 310 kept samples x 4,732 genes (the 332 released less the 22
+#: bioreactor and adaptation samples; the 20 RCH2 samples are kept since #860).
+EXPECTED_RECORDS = 310 * N_GENES
 
 
 def verify_build(
@@ -1928,7 +1927,7 @@ def verify_build(
 ) -> VerificationReport:
     """Run the environment-response L0-L4 verifier on a built tree and write its report.
 
-    The LMDB is streamed once (1.37M records are not materialized). Every record is
+    The LMDB is streamed once (1.47M records are not materialized). Every record is
     checked against the KT2440 genome its references pin: the resolver of the
     canonical-name rule, and as the L4 universe every GenBank locus of the assembly
     (5,786, pseudogenes and RNA tags included; the same set as the verification

@@ -34,7 +34,11 @@ import pytest
 
 import torchcell.datasets.pputida.borchert2024 as bt
 from torchcell.data import file_sha256
-from torchcell.datamodels.media import MOPS_MINIMAL
+from torchcell.datamodels.media import (
+    MEDIA_LIBRARY,
+    MOPS_MINIMAL,
+    RCH2_DEFINED_NOCARBON_PRICE2018,
+)
 from torchcell.datamodels.schema import (
     AssemblyReferenceGenome,
     EnvironmentPhysicalPerturbation,
@@ -343,13 +347,28 @@ def test_set12_thompson_conditions_and_the_set101_protocatechuate_pair() -> None
 
 def test_drop_rules(release: bt.Release) -> None:
     reasons = {s.exp_name: bt.drop_reason(s) for s in release.samples}
-    assert reasons.pop("set5IT001") == bt.DROP_MEDIUM_NOT_IN_LIBRARY
     assert reasons.pop("set8IT001") == bt.DROP_REACTOR_PROCESS
+    # the RCH2 sample is kept since #860: its medium is a library entry now
+    assert reasons.pop("set5IT001") is None
     assert set(reasons.values()) == {None}
-    assert set(bt.DROP_RULES) == {
-        bt.DROP_MEDIUM_NOT_IN_LIBRARY,
-        bt.DROP_REACTOR_PROCESS,
-    }
+    assert set(bt.DROP_RULES) == {bt.DROP_REACTOR_PROCESS}
+
+
+def test_rch2_samples_are_built_on_the_price_table_s18_medium(
+    release: bt.Release,
+) -> None:
+    """The release's 'RCH2_defined_noCarbon' maps to the library entry Table S18 states."""
+    environment = bt.build_environment(_sample(release, "set5IT001"))
+    assert environment.media is RCH2_DEFINED_NOCARBON_PRICE2018
+    assert (
+        environment.media.name == MEDIA_LIBRARY["RCH2_DEFINED_NOCARBON_PRICE2018"].name
+    )
+    (carbon,) = environment.perturbations
+    assert isinstance(carbon, EnvironmentPhysicalPerturbation)
+    assert carbon.agent is not None
+    assert carbon.agent.name == "D-glucose"
+    assert carbon.agent.inchikey == "WQZGKKKJIJFFOK-GASJEMHNSA-N"
+    assert bt.MEDIA_BY_LABEL["RCH2_defined_noCarbon"] is RCH2_DEFINED_NOCARBON_PRICE2018
 
 
 def test_condition_key_ignores_the_description_spelling(release: bt.Release) -> None:
@@ -464,8 +483,9 @@ def test_floor_violations_and_the_identity_check(release: bt.Release) -> None:
     t = np.array([[2.5, 0.2, 0.0], [0.4, 1.5, 0.0]])
     # 0.009 / 0.2 = 0.045 and 0.05 / 0.4 = 0.125: one breach; zeros are skipped
     assert bt.floor_violations(f, t) == 1
-    # kept Fitness Browser columns set16, set27, set10, set12: 12 pairs, 2 of them zero
-    assert bt.check_identity_floor(release) == 10
+    # kept Fitness Browser columns set16, set27, set10, set12 and (since #860) the RCH2
+    # set5 sample: 15 pairs, 2 of them zero
+    assert bt.check_identity_floor(release) == 13
     broken = release.model_copy(update={"t": release.t * 100})
     with pytest.raises(ValueError, match="below"):
         bt.check_identity_floor(broken)
@@ -657,10 +677,21 @@ def test_process_builds_one_record_per_gene_and_kept_sample(
         root=str(root),
         pputida_genome=FakeGenome(),  # type: ignore[arg-type]
     )
-    kept = [
-        i for i, row in enumerate(SAMPLES) if row[1] not in ("set5IT001", "set8IT001")
-    ]
+    kept = [i for i, row in enumerate(SAMPLES) if row[1] != "set8IT001"]
     assert len(dataset) == len(GENES) * len(kept)
+    rch2 = [
+        dataset[i]
+        for i in range(len(dataset))
+        if dataset[i]["experiment"]["phenotype"]["screen_id"] == "set5IT001"
+    ]
+    assert len(rch2) == len(GENES)
+    assert {r["experiment"]["environment"]["media"]["name"] for r in rch2} == {
+        RCH2_DEFINED_NOCARBON_PRICE2018.name
+    }
+    # the Rand 2017 attribution survives the medium becoming servable
+    assert {r["publication"]["doi"] for r in rch2} == {
+        bt.SOURCE_STUDIES["rand2017"].doi
+    }
 
     first = dataset.transform_item(dataset[0])
     (perturbation,) = first["experiment"].genotype.perturbations
@@ -685,8 +716,7 @@ def test_process_builds_one_record_per_gene_and_kept_sample(
     dropped = json.loads((preprocess / "dropped_records.json").read_text())
     assert dropped["kept_records"] == len(dataset)
     assert {k: v["n_records_not_written"] for k, v in dropped["by_rule"].items()} == {
-        bt.DROP_MEDIUM_NOT_IN_LIBRARY: len(GENES),
-        bt.DROP_REACTOR_PROCESS: len(GENES),
+        bt.DROP_REACTOR_PROCESS: len(GENES)
     }
     studies = json.loads((preprocess / "source_studies.json").read_text())
     assert {c["study"]: c["n_samples"] for c in studies["coverage"]} == {
@@ -785,15 +815,18 @@ def test_real_release_shape_and_superset_coverage() -> None:
     assert coverage["borchert2023"].n_samples == 42
     assert coverage["borchert2024"].n_samples == 111
     assert coverage["borchert2024"].n_kept_samples == 79
-    # Rand 2017's two days are in the release and all on the unserved RCH2 medium.
+    # Rand 2017's two days are in the release, all on the RCH2 medium, and kept (#860).
     assert (coverage["rand2017"].n_samples, coverage["rand2017"].n_kept_samples) == (
         10,
-        0,
+        10,
     )
     assert coverage["rand2017"].sets == ["set1", "set5"]
     drops = [bt.drop_reason(s) for s in release.samples]
-    assert drops.count(bt.DROP_MEDIUM_NOT_IN_LIBRARY) == 20
+    assert drops.count(None) == 310
     assert drops.count(bt.DROP_REACTOR_PROCESS) == 22
+    rch2 = [s for s in release.samples if s.media == "RCH2_defined_noCarbon"]
+    assert len(rch2) == 20
+    assert all(bt.drop_reason(s) is None for s in rch2)
     for _, sample in ((None, s) for s in release.samples if bt.drop_reason(s) is None):
         bt.build_environment(sample)
 
@@ -856,7 +889,7 @@ def test_built_lmdb_record_count() -> None:
         pytest.skip(f"not built: {lmdb_dir}")
     env = lmdb.open(lmdb_dir, readonly=True, lock=False)
     with env.begin() as txn:
-        assert txn.stat()["entries"] == 290 * bt.N_GENES
+        assert txn.stat()["entries"] == 310 * bt.N_GENES == 1_466_920
         raw = txn.get(b"0")
         assert raw is not None
         first = pickle.loads(raw)

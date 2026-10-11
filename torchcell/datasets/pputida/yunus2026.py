@@ -2683,14 +2683,15 @@ def panel_proteome_phenotype(values: Mapping[str, float]) -> ProteinAbundancePhe
 
 
 def check_isoprenol_identity() -> None:
-    """Stop if the compound table gains an isoprenol row with another InChIKey.
+    """Stop unless the compound table's isoprenol row carries the pinned InChIKey.
 
     The campaign's titers are not released, so no record stores the compound; the pinned
     key is checked against the table's row (landed in PR #729) so a later curation cannot
-    silently disagree with this module.
+    silently disagree with this module, and a table that has lost the row (a gap on
+    ``inchikey``) stops it too (#726).
     """
     compound = resolved_compound("isoprenol")
-    if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:
+    if compound.inchikey != ISOPRENOL_INCHIKEY:
         raise RuntimeError(
             f"the compound table now gives isoprenol {compound.inchikey}, not the "
             f"pinned {ISOPRENOL_INCHIKEY}"

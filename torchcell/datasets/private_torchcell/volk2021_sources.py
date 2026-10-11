@@ -621,7 +621,10 @@ LACTIC_ACID_STOCK = _archive(
     "Sheet1!A8=LA; Sheet1!B8=Lactic Acid; Sheet1!G8=90.08; Sheet1!I8=sigma aldrich",
     page="Sheet1 'Combinatoric Study' table, row 8",
     note="vendor named, product number and enantiomer (L-, D- or DL-) not; the molar "
-    "mass 90.08 g/mol is the same for all three (LACTIC_ACID_IDENTITY_GAP)",
+    "mass 90.08 g/mol is the same for all three. The compound table's 'lactic acid' "
+    "row (PubChem CID 612, added by the #726 curator pass) has no stereo layer in its "
+    "InChIKey (JVTAAEKCZFNVCJ-UHFFFAOYSA-N), which states exactly this: lactic acid of "
+    "unstated configuration",
 )
 FORMIC_ACID_STOCK = _archive(
     "formic acid",
@@ -706,14 +709,6 @@ ISOBOLE_ORIENTATION_GAP = ProvenanceGap(
     "distinguishable that way",
 )
 
-LACTIC_ACID_IDENTITY_GAP = ProvenanceGap(
-    field="inchikey",
-    reason=ProvenanceGapReason.not_reported_by_primary,
-    looked_in=archive_provenance(INHIBITORS_XLSX, "Sheet1 B8, G8, I8"),
-    note="the stock sheet names 'Lactic Acid' from 'sigma aldrich' with no product "
-    "number and no enantiomer (L-, D- or DL-), and the InChIKey differs between them, "
-    "so none is assigned (LACTIC_ACID_STOCK)",
-)
 SOLVENT_GAP = ProvenanceGap(
     field="solvent",
     reason=ProvenanceGapReason.not_reported_by_primary,
@@ -751,7 +746,6 @@ GAPS: tuple[ProvenanceGap, ...] = (
     EX21_INOCULUM_GAP,
     MEDIUM_RECIPE_GAP,
     ISOBOLE_ORIENTATION_GAP,
-    LACTIC_ACID_IDENTITY_GAP,
     SOLVENT_GAP,
     DURATION_GENERATIONS_GAP,
     PRE_CULTURE_GAP,

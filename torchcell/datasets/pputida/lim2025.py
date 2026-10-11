@@ -2256,10 +2256,11 @@ def isoprenol_compound() -> Compound:
     """Isoprenol through the shared compound-identity layer.
 
     The table's row (landed in PR #729) must carry :data:`ISOPRENOL_INCHIKEY` or the build
-    stops; a table without the row would return the name with an ``inchikey`` gap.
+    stops, and a table that has lost the row stops it too: the gap it would return is
+    closed, so it is no longer admitted (#726).
     """
     compound = resolved_compound(ISOPRENOL_LABEL)
-    if compound.inchikey is not None and compound.inchikey != ISOPRENOL_INCHIKEY:
+    if compound.inchikey != ISOPRENOL_INCHIKEY:
         raise CompoundIdentityConflictError(
             f"the compound-identity table resolves {ISOPRENOL_LABEL!r} to "
             f"{compound.inchikey}, not {ISOPRENOL_INCHIKEY}"

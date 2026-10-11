@@ -38152,6 +38152,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:36740",
+      "inchikey": "GRWFGVWFFZKLTI-UHFFFAOYSA-N",
+      "name": "alpha-pinene",
+      "pubchem_cid": 6654,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1=CCC2CC1C2(C)C",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/alpha-pinene/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "TUFYVOCKVJOUIR-UHFFFAOYSA-N",
       "name": "alpha-thujaplicin",
@@ -57195,13 +57208,13 @@
     {
       "chebi_id": "CHEBI:17824",
       "inchikey": "KFZMGEQAYNKOFK-UHFFFAOYSA-N",
-      "name": "Isopropanol",
+      "name": "isopropanol",
       "pubchem_cid": 3776,
       "resolution_status": "RESOLVED",
       "retrieval_method": "pubchem_api",
       "retrieved_at": "2026-10-11",
       "smiles": "CC(C)O",
-      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Isopropanol/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/isopropanol/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },
@@ -73490,6 +73503,19 @@
         "CID 4828"
       ],
       "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": null,
+      "name": "pinene",
+      "pubchem_cid": null,
+      "resolution_status": "UNRESOLVED_PUBLIC",
+      "retrieval_method": null,
+      "retrieved_at": "2026-10-11",
+      "smiles": null,
+      "source_url": null,
+      "synonyms": [],
+      "unresolved_reason": "PubChem's name index answers 'pinene' with CID 15837102, whose structure CC1=C2CC(C2(C)C)CC1 is neither alpha- nor beta-pinene; Niu 2019 doses \"0.5% pinene\" and names alpha-pinene only as the standard its production assay is quantified against, so which pinene was dosed is not stated"
     },
     {
       "chebi_id": "CHEBI:80484",

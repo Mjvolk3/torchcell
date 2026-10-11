@@ -352,6 +352,8 @@ The 16 rows of the sweep table (`--table`):
 
 The three rows above were the sweep's only `media_membership` failures. With their verifiers removed (`run_gene_essentiality`, `run_synthetic_pairs`), the mapped-store count drops by three and the sweep's remaining FAIL rows are the ones it already had for other reasons.
 
+`results/kg4_pre_build_verification_sweep.json` is restored to the 2026-10-09 sweep it already held (`git_head 6c3ff3994a`, the three stores FAIL on `media_membership` among other rules). The merged rows an earlier pass of this branch wrote are withdrawn: they were produced by `run_gene_essentiality` and `run_synthetic_pairs`, which this change deletes, and they pin a pre-rebase commit hash that exists nowhere. A results file names the commit that produced it, so the 2026-10-09 rows stand as the record of a sweep that genuinely ran against the served stores; the rows are simply about three datasets that have since left the graph.
+
 The earlier 2026.10.11 section here reported 132 of 137 mapped stores going stale. That was the breaking `Environment.media` change, now reverted: `scripts/schema_impact_check.py --base origin/main` reports no schema contract changes, and 11 of 165 built stores read stale, 8 of them pre-existing on main and 3 the now-unserved builds of these three stores. Nothing in this change requires a dev-store rebuild.
 
 ## 2026.10.12 - Running the preflight for one organism set

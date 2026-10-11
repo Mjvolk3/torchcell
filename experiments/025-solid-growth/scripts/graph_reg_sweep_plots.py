@@ -252,13 +252,21 @@ def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
     _box(ax)
 
 
-def _plain_log_ticks(ax: Axes, ticks: list[float]) -> None:
+def _plain_log_ticks(ax: Axes, ticks: list[float], compact: bool = False) -> None:
     """Log axis with decimal tick labels at full font size: the default 10^k mathtext puts
-    the exponent at 0.7 of the font, under the 5 pt floor.
+    the exponent at 0.7 of the font, under the 5 pt floor. `compact` writes a decade of
+    1,000 and above as `1e3`, for quarter-width panels where `1000000` would push the
+    axis label into the neighboring panel.
     """
+
+    def fmt(v: float, _: Any) -> str:
+        if compact and v >= 1000:
+            return f"1e{int(round(np.log10(v)))}"
+        return f"{v:g}"
+
     ax.yaxis.set_major_locator(FixedLocator(ticks))
     ax.yaxis.set_minor_locator(NullLocator())
-    ax.yaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+    ax.yaxis.set_major_formatter(FuncFormatter(fmt))
 
 
 def _stars(p: float | None) -> str:
@@ -705,22 +713,26 @@ def loss_figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
         2, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(95))
     )
     fig.subplots_adjust(
-        left=0.06, right=0.99, bottom=0.09, top=0.89, wspace=0.38, hspace=0.5
+        left=0.07, right=0.99, bottom=0.09, top=0.89, wspace=0.42, hspace=0.5
     )
     done = runs[runs.complete]
     h_ = hist[hist.run_id.isin(set(done.run_id))]
     arms = CURVE_ARMS + [
         ("kl_100", "KL λ = 100", ARM_COLOR["kl_100"], "-"),
     ]
-    # Short axis labels: the terms are defined in the caption.
+    # Short axis labels: the terms are defined in the caption. The two log columns share
+    # one scale and one set of decade ticks in both rows, so the four panels compare by
+    # eye; the linear columns keep a fixed tick step per column, chosen for the row's
+    # range (training and validation point losses do not overlap).
+    log_ticks = [0.1, 1, 10, 100, 1e3, 1e4, 1e5, 1e6]
     cols = [
-        ("loss", "total loss", True),
-        ("point_loss", "point loss", False),
-        ("weighted_dist", "distribution term", False),
-        ("graph_reg_loss", "penalty", True),
+        ("loss", "total loss", True, None),
+        ("point_loss", "point loss", False, (0.1, 0.02)),
+        ("weighted_dist", "distribution term", False, (0.005, 0.0025)),
+        ("graph_reg_loss", "penalty", True, None),
     ]
     for r, stage in enumerate(("train", "val")):
-        for c, (key, ylabel, log) in enumerate(cols):
+        for c, (key, ylabel, log, steps) in enumerate(cols):
             ax = axes[r, c]
             for z, (arm, label, color, ls) in enumerate(arms):
                 if key == "graph_reg_loss" and arm in ("kl_0", "mask"):
@@ -728,17 +740,16 @@ def loss_figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
                 _curve(ax, h_, arm, f"{stage}/{key}", color, ls, label, z=20 + z)
             if log:
                 ax.set_yscale("log")
+                ax.set_ylim(0.1, 3e6)
+                _plain_log_ticks(ax, log_ticks, compact=True)
+            else:
+                ax.yaxis.set_major_locator(MultipleLocator(steps[r]))
             if key == "graph_reg_loss":
-                _not_logged(ax, 0.5, ax.get_ylim()[0] * 1.6, ARM_COLOR["kl_0"])
-                _not_logged(ax, 0.5, ax.get_ylim()[0] * 1.6, ARM_COLOR["mask"])
-                ax.text(
-                    1.4,
-                    ax.get_ylim()[0] * 1.6,
-                    "none, mask: 0",
-                    va="center",
-                    fontsize=5,
-                )
+                _not_logged(ax, 0.6, 0.17, ARM_COLOR["kl_0"])
+                _not_logged(ax, 0.6, 0.17, ARM_COLOR["mask"])
+                ax.text(1.6, 0.17, "none, mask: 0", va="center", fontsize=5)
             ax.set_xlim(0, 29)
+            ax.xaxis.set_major_locator(MultipleLocator(10))
             ax.set_xlabel("Epoch")
             ax.set_ylabel(("Training " if stage == "train" else "Validation ") + ylabel)
             _box(ax)

@@ -38,7 +38,16 @@ from torchcell.datamodels.schema import (
     SgaNatMxDeletionPerturbation,
     Temperature,
 )
+from torchcell.datamodels.strain_background import R64_GFF
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.gene_alias_resolution import (
+    AliasResolutionRule,
+    PinnedAliasResolution,
+    candidate_orfs,
+    check_ambiguous_aliases,
+    pin_table,
+    resolve_gene_name_strict,
+)
 from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
@@ -98,6 +107,55 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # Checked 2026-10-02. The loaders stored 26687005 until then, the PubMed ID of an
 # unrelated eLife 2015 paper (#478).
 SAMEITH2015_PUBMED_ID = "26700642"
+
+# ============================================================================
+# Gene names in GEO sample titles (#886)
+# ============================================================================
+# A title token that is not systematic-shaped is resolved by
+# ``gene_alias_resolution.resolve_gene_name_strict``: a token with no candidate ORF is
+# not a gene name and is skipped, a token with one candidate resolves to it, and an
+# ambiguous token resolves only through its pin below, whose rule (the SGD standard name
+# in the R64 GFF) the build re-checks against the injected genome. Two tokens of
+# GSE42536 are ambiguous in R64 (measured 2026-10-10 over every title of the series):
+# SUT2 (YMR080C, YPR009W) in 4 arrays and GAT1 (YFL021W, YKR067W) in 6. The paper's own
+# list (Additional file 1, sheet "List of 215 GSTFs": "Ypr009W | Sut2", "Yfl021W |
+# Gat1") names the same ORFs. Before the fix both resolved through the gene table's
+# standard-name column to these ORFs, so no stored record changes. Each quote is the
+# verbatim start of the ORF's gene row in the R64-4-1 GFF.
+AMBIGUOUS_ALIAS_PINS = pin_table(
+    [
+        PinnedAliasResolution(
+            alias="SUT2",
+            systematic_name="YPR009W",
+            rule=AliasResolutionRule.SGD_STANDARD_NAME,
+            provenance=R64_GFF,
+            quote="ID=YPR009W;Name=YPR009W;gene=SUT2;",
+        ),
+        PinnedAliasResolution(
+            alias="GAT1",
+            systematic_name="YFL021W",
+            rule=AliasResolutionRule.SGD_STANDARD_NAME,
+            provenance=R64_GFF,
+            quote="ID=YFL021W;Name=YFL021W;gene=GAT1;",
+        ),
+    ]
+)
+_SYSTEMATIC_PREFIX_RE = re.compile(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?")
+
+
+def convert_title_token(genome: SCerevisiaeGenome, token: str) -> str | None:
+    """Resolve one title token to a systematic name, or None when it names no gene.
+
+    A systematic-shaped token is returned upper-cased; a token with no candidate ORF is
+    not a gene name (None); anything else goes through the refusing resolver, so an
+    ambiguous token without a pin raises ``GeneNameRefused`` (#886).
+    """
+    gene_upper = token.upper()
+    if _SYSTEMATIC_PREFIX_RE.match(gene_upper):
+        return gene_upper
+    if not candidate_orfs(genome, gene_upper):
+        return None
+    return resolve_gene_name_strict(genome, gene_upper, AMBIGUOUS_ALIAS_PINS)
 
 
 @register_dataset
@@ -205,6 +263,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse GEO expression data into single-mutant experiments and write LMDB."""
+        # Title-token resolution (#886): every (token, systematic) resolution is
+        # recorded for the build-time check.
+        self.title_resolutions: set[tuple[str, str]] = set()
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -277,6 +338,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
+        self._check_title_resolutions()
         log.info(f"Found {len(single_mutant_samples)} unique single mutant genes")
         log.info(f"Found {len(wt_samples)} wildtype samples")
         self.dropped_double_deletion_titles = multi_gene_titles
@@ -513,6 +575,23 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return gene_names
 
+    def _check_title_resolutions(self) -> None:
+        """Build-time check (#886): no title token's ORF came from an unpinned ambiguity.
+
+        Runs over every (token, systematic) resolution of the series' titles, a superset
+        of the names the store holds, before any record is written.
+        """
+        audit = check_ambiguous_aliases(
+            cast(SCerevisiaeGenome, self.genome),
+            sorted(self.title_resolutions),
+            AMBIGUOUS_ALIAS_PINS,
+        )
+        log.info(
+            "Sameith2015 ambiguous-name check: %d title resolutions, pinned names %s",
+            audit.n_pairs,
+            audit.ambiguous,
+        )
+
     def _is_valid_systematic_name(self, name: str) -> bool:
         """Validate that a systematic name matches the expected format."""
         if not name:
@@ -521,39 +600,15 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return bool(re.match(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$", name.upper()))
 
     def _convert_to_systematic(self, gene_name: str) -> str | None:
-        """Convert common gene name to systematic name."""
+        """Resolve a title token to a systematic name, recording the resolution (#886)."""
         if not gene_name:
             return None
-
-        gene_upper = gene_name.upper()
-
-        # Check if already systematic
-        if re.match(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?", gene_upper):
-            return gene_upper
-
-        genome = cast(SCerevisiaeGenome, self.genome)
-
-        # Try genome's gene_attribute_table
-        if hasattr(genome, "gene_attribute_table"):
-            df = genome.gene_attribute_table
-
-            # Check gene column
-            matches = df[df["gene"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-            # Check Alias column
-            matches = df[df["Alias"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-        # Try alias_to_systematic
-        if hasattr(genome, "alias_to_systematic"):
-            candidates = genome.alias_to_systematic.get(gene_upper, [])
-            if candidates:
-                return candidates[0]  # Return first match
-
-        return None
+        systematic = convert_title_token(
+            cast(SCerevisiaeGenome, self.genome), gene_name
+        )
+        if systematic is not None:
+            self.title_resolutions.add((gene_name.upper(), systematic))
+        return systematic
 
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
@@ -1028,6 +1083,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse GEO expression data into double-mutant experiments and write LMDB."""
+        # Title-token resolution (#886): every (token, systematic) resolution is
+        # recorded for the build-time check.
+        self.title_resolutions: set[tuple[str, str]] = set()
         # Initialize resolution statistics
         self.resolved_by_excel = 0
         self.resolved_by_gene_table = 0
@@ -1095,6 +1153,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
+        self._check_title_resolutions()
         log.info(f"Found {len(single_mutant_samples)} unique single mutant genes")
         log.info(f"Found {len(double_mutant_samples)} double mutant samples")
         log.info(f"Found {len(wt_samples)} wildtype samples")
@@ -1539,6 +1598,23 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return gene_names[:2]  # Return at most 2 genes for double mutants
 
+    def _check_title_resolutions(self) -> None:
+        """Build-time check (#886): no title token's ORF came from an unpinned ambiguity.
+
+        Runs over every (token, systematic) resolution of the series' titles, a superset
+        of the names the store holds, before any record is written.
+        """
+        audit = check_ambiguous_aliases(
+            cast(SCerevisiaeGenome, self.genome),
+            sorted(self.title_resolutions),
+            AMBIGUOUS_ALIAS_PINS,
+        )
+        log.info(
+            "Sameith2015 ambiguous-name check: %d title resolutions, pinned names %s",
+            audit.n_pairs,
+            audit.ambiguous,
+        )
+
     def _is_valid_systematic_name(self, name: str) -> bool:
         """Validate that a systematic name matches the expected format."""
         if not name:
@@ -1547,39 +1623,15 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return bool(re.match(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$", name.upper()))
 
     def _convert_to_systematic(self, gene_name: str) -> str | None:
-        """Convert common gene name to systematic name."""
+        """Resolve a title token to a systematic name, recording the resolution (#886)."""
         if not gene_name:
             return None
-
-        gene_upper = gene_name.upper()
-
-        # Check if already systematic
-        if re.match(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?", gene_upper):
-            return gene_upper
-
-        genome = cast(SCerevisiaeGenome, self.genome)
-
-        # Try genome's gene_attribute_table
-        if hasattr(genome, "gene_attribute_table"):
-            df = genome.gene_attribute_table
-
-            # Check gene column
-            matches = df[df["gene"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-            # Check Alias column
-            matches = df[df["Alias"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-        # Try alias_to_systematic
-        if hasattr(genome, "alias_to_systematic"):
-            candidates = genome.alias_to_systematic.get(gene_upper, [])
-            if candidates:
-                return candidates[0]  # Return first match
-
-        return None
+        systematic = convert_title_token(
+            cast(SCerevisiaeGenome, self.genome), gene_name
+        )
+        if systematic is not None:
+            self.title_resolutions.add((gene_name.upper(), systematic))
+        return systematic
 
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""

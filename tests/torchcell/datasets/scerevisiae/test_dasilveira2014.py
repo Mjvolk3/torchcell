@@ -82,6 +82,10 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.datasets.gene_alias_resolution import (
+    GeneNameRefusalReason,
+    GeneNameRefused,
+)
 from torchcell.datasets.scerevisiae import dasilveira2014 as m
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -114,11 +118,19 @@ _S10_ROWS: list[list[Any]] = [
 
 
 class _StubGenome:
-    gene_set = {"YAL001C", "YBR001C"}
+    """Two genes, two legacy names, and YPK1 shaped as in R64 (#886): the standard name
+    of YKL126W and a secondary alias of YJL093C. ``AMB1`` is an alias of both stub genes
+    and no pin covers it.
+    """
+
+    gene_set = {"YAL001C", "YBR001C", "YKL126W", "YJL093C"}
     alias_to_systematic: dict[str, list[str]] = {
         "YBR002C": ["YBR001C"],
         "YAL003W": ["YAL001C"],
+        "YPK1": ["YJL093C", "YKL126W"],
+        "AMB1": ["YAL001C", "YBR001C"],
     }
+    feature_index: dict[str, Any] = {"standard_to_ids": {"YPK1": ["YKL126W"]}}
 
 
 def _genome() -> SCerevisiaeGenome:
@@ -364,6 +376,10 @@ def test_ledger_logs_chebi_coverage_and_the_unresolved_orf(
             "da Silveira: 2 mutant records, 3 WT control rows -> measured reference "
             "(3 lipids), 1 unresolved ORFs (['YZZ999W'])",
         ),
+        (
+            "INFO",
+            "da Silveira ambiguous-name check: 2 (name, ORF) pairs, pinned names {}",
+        ),
         ("INFO", "Wrote 2 da Silveira lipidome experiments to LMDB"),
     ]
 
@@ -597,3 +613,64 @@ def test_main_builds_genome_and_dataset_under_data_root(
     assert calls[1][1]["root"] == f"{tmp_path}/data/torchcell/metabolite_dasilveira2014"
     assert type(calls[1][1]["genome"]) is _Genome
     assert capsys.readouterr().out == "len = 127\nitem[0]\n"
+
+
+def test_an_ambiguous_standard_name_is_stored_only_with_its_pinned_orf(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture
+) -> None:
+    """#886: ``YPK1`` has two candidate ORFs. The row ``YKL126W | YPK1`` matches the pin
+    (rule ``paper_gene_list``, the table's own row), so the build stores it and the
+    check reports the pinned name. A row pairing YPK1 with the other candidate is
+    refused before anything is written, because the table's own pairing then
+    contradicts the pin.
+    """
+    wt = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
+    good = [*wt, ["YKL126W", "YPK1", 1.5, 2.5, 3.5]]
+    with caplog.at_level(logging.INFO, logger=m.log.name):
+        dataset = m.MetaboliteDaSilveira2014Dataset(
+            root=str(_root(tmp_path / "good", good)), genome=_genome()
+        )
+    assert dataset[0]["experiment"] == _experiment(
+        "YKL126W", "YPK1", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
+    )
+    assert (
+        "da Silveira ambiguous-name check: 1 (name, ORF) pairs, pinned names "
+        "{'YPK1': 'YKL126W'}" in [r.getMessage() for r in caplog.records]
+    )
+    dataset.close_lmdb()
+    bad_root = _root(tmp_path / "bad", [*wt, ["YJL093C", "YPK1", 1, 1, 1]])
+    with pytest.raises(GeneNameRefused) as info:
+        m.MetaboliteDaSilveira2014Dataset(root=str(bad_root), genome=_genome())
+    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
+    assert info.value.refusal.candidates == ["YJL093C", "YKL126W"]
+    assert not (bad_root / "preprocess" / "data.csv").exists()
+    assert not (bad_root / "processed" / "lmdb").exists()
+
+
+def test_an_ambiguous_orf_cell_without_a_pin_is_refused(tmp_path: Path) -> None:
+    """#886: an ORF cell that is an ambiguous name with no pin raises a typed refusal
+    naming both candidates; it used to resolve to the first one. The pinned Table S4
+    has 0 such cells of 127 (every one is a live R64 ORF).
+    """
+    wt = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
+    root = _root(tmp_path, [*wt, ["AMB1", "X", 1, 1, 1]])
+    with pytest.raises(GeneNameRefused) as info:
+        m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
+    assert info.value.refusal.model_dump() == {
+        "name": "AMB1",
+        "reason": GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED,
+        "candidates": ["YAL001C", "YBR001C"],
+        "detail": "ambiguous name with no pinned resolution in the loader",
+    }
+    assert not (root / "processed" / "lmdb").exists()
+
+
+def test_the_two_pins_quote_their_own_table_rows() -> None:
+    """The pins are ``paper_gene_list`` rows of the pinned Table S4 Quant sheet."""
+    assert {
+        alias: (pin.systematic_name, pin.rule.value, pin.quote, pin.provenance.sha256)
+        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
+    } == {
+        "YPK1": ("YKL126W", "paper_gene_list", "YKL126W | YPK1", m.DATA_SHA256),
+        "SLT2": ("YHR030C", "paper_gene_list", "YHR030C | SLT2", m.DATA_SHA256),
+    }

@@ -43,6 +43,15 @@ reference); ``+ve Ctrl`` -> the baseline only; e.g. ``P-S-Y 6d`` ->
 [POX1, FAA1, FAA4, RPD3, SPT3, YAP6]. We ASSERT ``len(TF letters) + 3 == N`` for every
 parsed row. All 13 genes (baseline + 10 TFs) resolve to current R64 systematic ORFs.
 
+AMBIGUOUS NAME (#886): ``TFC7`` is the standard name of ``YOR110W`` (TFIIIC subunit tau 55)
+and a secondary alias of ``YNL039W`` (BDP1). Names resolve through
+``gene_alias_resolution.resolve_gene_name_strict``: a name with one candidate ORF resolves
+to it, an ambiguous name only through a pin in ``AMBIGUOUS_ALIAS_PINS`` whose rule is
+re-checked against the injected genome, and anything else is refused. The release names
+only the common name, so the rule for ``TFC7`` is the SGD standard name in the R64 GFF.
+Before this fix the loader took the first alias-table candidate and stored ``YNL039W`` in
+46 of 176 records. Every other name of the 13 has exactly one candidate ORF.
+
 REPLICATE STRUCTURE: 3 GC replicate columns per FFA. Some strains released fewer than 3
 replicates (an entire replicate column is blank across all FFAs -- 10 strains have 2, one
 strain (``G-O-T 6d``) has 1). We therefore compute ``n_replicates`` PER FFA from the count
@@ -108,7 +117,15 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
+from torchcell.datamodels.strain_background import R64_GFF
 from torchcell.datasets.dataset_registry import register_dataset
+from torchcell.datasets.gene_alias_resolution import (
+    AliasResolutionRule,
+    PinnedAliasResolution,
+    check_ambiguous_aliases,
+    pin_table,
+    resolve_gene_name_strict,
+)
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
@@ -140,6 +157,22 @@ _EXPECTED_CODE_TO_GENE = {
     "Y": "YAP6",
     "T": "TFC7",
 }
+
+# Ambiguous gene names of the release, each with the ORF stored for it and its source (#886).
+# ``TFC7`` has two candidate ORFs (YNL039W lists it as an alias; YOR110W owns it as its
+# standard name). The release gives no ORF, so the SGD standard name decides: the quote is
+# the verbatim start of YOR110W's gene row in the R64-4-1 GFF.
+AMBIGUOUS_ALIAS_PINS = pin_table(
+    [
+        PinnedAliasResolution(
+            alias="TFC7",
+            systematic_name="YOR110W",
+            rule=AliasResolutionRule.SGD_STANDARD_NAME,
+            provenance=R64_GFF,
+            quote="ID=YOR110W;Name=YOR110W;gene=TFC7;",
+        )
+    ]
+)
 
 # 5 FFAs x 3 replicate columns (0-based positions in the titer sheet; col0 = genotype).
 _FFA_COLUMNS: dict[str, list[int]] = {
@@ -231,17 +264,9 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         return code_to_gene
 
     def _resolve_systematic(self, name: str) -> str:
-        """Resolve a common/systematic gene name to a current R64 systematic ORF (required)."""
+        """Resolve a gene name to one R64 ORF; an ambiguous name needs its pin (#886)."""
         genome = cast(SCerevisiaeGenome, self.genome)
-        name = name.strip()
-        if name in genome.gene_set:
-            return name
-        candidates = genome.alias_to_systematic.get(name.upper(), [])
-        if candidates:
-            return candidates[0]
-        raise RuntimeError(
-            f"could not resolve gene name {name!r} to an R64 systematic ORF"
-        )
+        return resolve_gene_name_strict(genome, name, AMBIGUOUS_ALIAS_PINS)
 
     def _decode_genotype(
         self, label: str, code_to_gene: dict[str, str]
@@ -364,25 +389,54 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
         ref_dump = reference.model_dump()
         pub_dump = publication.model_dump()
 
-        os.makedirs(self.preprocess_dir, exist_ok=True)
-        os.makedirs(self.processed_dir, exist_ok=True)
+        # Every record is built, and the ambiguous-name check run over every stored
+        # (name, ORF) pair, BEFORE anything is written (#886).
+        experiments: list[MetaboliteExperiment] = []
+        genotypes: list[Genotype] = []
         summary: list[dict[str, Any]] = []
-        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
-        idx = 0
-        with env.begin(write=True) as txn:
-            for _, row in tqdm(df.iterrows(), total=len(df), desc="xue2025"):
-                label = str(row[0]).strip()
-                deleted = self._decode_genotype(label, code_to_gene)
-                if not deleted:  # true WT -> reference only, not an experiment record
-                    continue
-                genotype = self._genotype(deleted)
-                phenotype = self._phenotype_from_row(row)
-                experiment = MetaboliteExperiment(
+        for _, row in df.iterrows():
+            label = str(row[0]).strip()
+            deleted = self._decode_genotype(label, code_to_gene)
+            if not deleted:  # true WT -> reference only, not an experiment record
+                continue
+            genotype = self._genotype(deleted)
+            genotypes.append(genotype)
+            experiments.append(
+                MetaboliteExperiment(
                     dataset_name=self.name,
                     genotype=genotype,
                     environment=environment,
-                    phenotype=phenotype,
+                    phenotype=self._phenotype_from_row(row),
                 )
+            )
+            summary.append(
+                {
+                    "genotype": label,
+                    "n_deletions": len(deleted),
+                    "orfs": ";".join(genotype.systematic_gene_names),
+                }
+            )
+        audit = check_ambiguous_aliases(
+            self.genome,
+            (
+                (p.perturbed_gene_name, p.systematic_gene_name)
+                for genotype in genotypes
+                for p in genotype.perturbations
+            ),
+            AMBIGUOUS_ALIAS_PINS,
+        )
+        log.info(
+            "Xue2025 ambiguous-name check: %d (name, ORF) pairs, pinned names %s",
+            audit.n_pairs,
+            audit.ambiguous,
+        )
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env = lmdb.open(osp.join(self.processed_dir, "lmdb"), map_size=int(1e11))
+        idx = 0
+        with env.begin(write=True) as txn:
+            for experiment in tqdm(experiments, desc="xue2025"):
                 txn.put(
                     f"{idx}".encode(),
                     pickle.dumps(
@@ -392,13 +446,6 @@ class FattyAcidXue2025Dataset(ExperimentDataset):
                             "publication": pub_dump,
                         }
                     ),
-                )
-                summary.append(
-                    {
-                        "genotype": label,
-                        "n_deletions": len(deleted),
-                        "orfs": ";".join(genotype.systematic_gene_names),
-                    }
                 )
                 idx += 1
         env.close()

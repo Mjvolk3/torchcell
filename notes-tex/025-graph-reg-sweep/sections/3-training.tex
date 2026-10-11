@@ -59,3 +59,38 @@ freedom without touching the rest. The mask removes the same freedom in a differ
 way, by fixing the support and leaving the weights free, and it declines exactly as no
 penalty does, so if this hypothesis is right the part of layer 1 that drifts is the
 weighting within the support, not the support.
+
+\notesec{The whole objective, term by term}
+The loss the optimizer steps on is the point loss plus the distribution term, the
+Sinkhorn-regularized Wasserstein distance between the batch's predicted and observed
+label distributions at weight 0.1, plus the penalty of Eq.~\ref{eq:kl}. Figure~\ref{fig:losses}
+draws the three terms and their sum by epoch, on the training steps and on the
+validation pass, for the arms of Figure~\ref{fig:sweep}g to i and $\lambda = 100$. The
+sum is the penalty from $\lambda = 10^{-1}$ up: at epoch 29 the training total is 0.62
+with no penalty and 0.64 under the mask against 0.94 at $10^{-3}$, 30.6 at $10^{-1}$,
+299 at 1 and 30{,}100 at 100, the point loss underneath being 0.59 to 0.66 in every arm.
+The distribution term is small and the same everywhere: 0.032 at epoch 0 and 0.010 to
+0.012 at epoch 29 on the training steps (3 percent of the point loss, then 2), 0.029 to
+0.032 and 0.019 to 0.022 on the validation pass; it is not varied here and does not
+separate the arms. The penalty starts high and floors fast: $\lambda \times$ 16{,}600
+on the first training epoch and $\lambda \times$ 2{,}150 on the first validation pass,
+down to $\lambda \times$ 360 by epoch 13 and $\lambda \times$ 300 at epoch 29, the same
+floor on training and validation, which is the divergence of
+Figure~\ref{fig:sweep}d read along the run. The random-graph arm at $\lambda = 1$ floors
+three times higher, at 910, because a degree-matched rewiring is a harder target for the
+attention to match than the stored graph.
+
+\tcfig{figures/graph_reg_losses.pdf}{The training objective term by term, mean over
+complete seeds with a $\pm$ sd band, for no penalty, the hard mask, the prior at
+$\lambda = 10^{-3}$, $10^{-1}$, 1 and 100, and the prior at $\lambda = 1$ toward random
+graphs (dashed); read from W\&B by
+\file{experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py} and drawn by
+\file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. Top row, the
+training steps averaged over each epoch; bottom row, the validation pass at the end of
+each epoch. \textbf{a},~\textbf{e},~The total the optimizer steps on, point loss plus
+0.1 times the Wasserstein distance plus the penalty, log scale. \textbf{b},~\textbf{f},~The
+point loss, the z-scored mean squared error. \textbf{c},~\textbf{g},~The weighted
+distribution term, 0.1 times the Sinkhorn Wasserstein distance between the batch's
+predicted and observed label distributions. \textbf{d},~\textbf{h},~The penalty,
+$\lambda$ times the divergence, log scale; the two arms without a penalty are at
+0.}{fig:losses}

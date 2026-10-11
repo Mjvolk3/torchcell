@@ -74,12 +74,28 @@ EPOCH_KEYS = (
     "val/gene_interaction/Pearson",
     "val/gene_interaction/MSE",
     "val/point_loss",
+    "val/dist_loss",
+    "val/weighted_dist",
+    "val/total_loss",
     "val/graph_reg_loss",
+    "val/loss",
     "train/gene_interaction/Pearson",
     "train/cuda_peak_allocated_gb",
 )
-# Step-level scalars: averaged over the steps of an epoch.
-STEP_KEYS = ("train/point_loss", "train/graph_reg_loss", "train/loss")
+# Step-level scalars: averaged over the steps of an epoch. The loss module
+# (torchcell/losses/point_dist_graph_reg.py) logs point_loss, dist_loss (the Sinkhorn
+# Wasserstein distance), weighted_dist = 0.1 * dist_loss, graph_reg_loss (the model's
+# penalty, already lambda-weighted; the module's own graph weight is 1) and total_loss =
+# point + weighted dist + penalty; the trainer logs `loss`, the same total plus a zero
+# dummy term for unused parameters, which is what the optimizer steps on.
+STEP_KEYS = (
+    "train/point_loss",
+    "train/dist_loss",
+    "train/weighted_dist",
+    "train/total_loss",
+    "train/graph_reg_loss",
+    "train/loss",
+)
 PROBE_KEYS = (
     "probe/grad_norm/point",
     "probe/grad_norm/dist",

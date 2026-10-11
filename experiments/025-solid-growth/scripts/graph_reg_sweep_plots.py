@@ -693,6 +693,83 @@ def figure(
     _save(fig, name)
 
 
+def loss_figure(runs: pd.DataFrame, hist: pd.DataFrame) -> None:
+    """The whole training objective, term by term, by epoch: the total the optimizer
+    steps on, the point loss, the weighted distribution term (0.1 x Sinkhorn Wasserstein)
+    and the lambda-weighted penalty, on the training steps (mean over an epoch) and on
+    the validation pass. Totals and penalties span four decades across the ladder, so
+    those columns are log-scaled; the two arms without a penalty are marked at the
+    bottom of the penalty panels.
+    """
+    fig, axes = plt.subplots(
+        2, 4, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(95))
+    )
+    fig.subplots_adjust(
+        left=0.06, right=0.99, bottom=0.09, top=0.89, wspace=0.38, hspace=0.5
+    )
+    done = runs[runs.complete]
+    h_ = hist[hist.run_id.isin(set(done.run_id))]
+    arms = CURVE_ARMS + [
+        ("kl_100", "KL λ = 100", ARM_COLOR["kl_100"], "-"),
+    ]
+    # Short axis labels: the terms are defined in the caption.
+    cols = [
+        ("loss", "total loss", True),
+        ("point_loss", "point loss", False),
+        ("weighted_dist", "distribution term", False),
+        ("graph_reg_loss", "penalty", True),
+    ]
+    for r, stage in enumerate(("train", "val")):
+        for c, (key, ylabel, log) in enumerate(cols):
+            ax = axes[r, c]
+            for z, (arm, label, color, ls) in enumerate(arms):
+                if key == "graph_reg_loss" and arm in ("kl_0", "mask"):
+                    continue
+                _curve(ax, h_, arm, f"{stage}/{key}", color, ls, label, z=20 + z)
+            if log:
+                ax.set_yscale("log")
+            if key == "graph_reg_loss":
+                _not_logged(ax, 0.5, ax.get_ylim()[0] * 1.6, ARM_COLOR["kl_0"])
+                _not_logged(ax, 0.5, ax.get_ylim()[0] * 1.6, ARM_COLOR["mask"])
+                ax.text(
+                    1.4,
+                    ax.get_ylim()[0] * 1.6,
+                    "none, mask: 0",
+                    va="center",
+                    fontsize=5,
+                )
+            ax.set_xlim(0, 29)
+            ax.set_xlabel("Epoch")
+            ax.set_ylabel(("Training " if stage == "train" else "Validation ") + ylabel)
+            _box(ax)
+    # Quarter-width panels hold about 32 characters of 6 pt title.
+    axes[0, 0].set_title("Total is the penalty from λ = 0.1")
+    axes[0, 1].set_title("Point loss falls alike in every arm")
+    axes[0, 2].set_title("Distribution term: 3% of point loss")
+    axes[0, 3].set_title("Penalty falls 50-fold, then floors")
+    axes[1, 0].set_title("Held-out total is the penalty too")
+    axes[1, 1].set_title("Held-out point loss rises after 13")
+    axes[1, 2].set_title("Held-out distribution term, slow fall")
+    axes[1, 3].set_title("Held-out penalty floors with training")
+    handles, labels = axes[0, 1].get_legend_handles_labels()
+    fig.legend(
+        handles[::-1],
+        labels[::-1],
+        loc="upper center",
+        bbox_to_anchor=(0.53, 0.995),
+        ncol=7,
+        frameon=False,
+        fontsize=5,
+        handlelength=1.6,
+        handletextpad=0.4,
+        columnspacing=1.2,
+        borderpad=0.2,
+    )
+    for ax, letter in zip(axes.ravel(), "abcdefgh"):
+        panel_label(ax, letter)
+    _save(fig, "graph_reg_losses")
+
+
 def main() -> None:
     """The figure from the CSVs and the summary, plain and with the --dist shapes."""
     global DIST
@@ -704,6 +781,8 @@ def main() -> None:
     for name, DIST in (("graph_reg_sweep", True), ("graph_reg_sweep_plain", False)):
         figure(runs, hist, summary, name)
         print("wrote", osp.join(IMG_DIR, f"{name}.svg"))
+    loss_figure(runs, hist)
+    print("wrote", osp.join(IMG_DIR, "graph_reg_losses.svg"))
 
 
 if __name__ == "__main__":

@@ -30,3 +30,9 @@ Choices the plan did not fix, made here:
 - **G4 passes when G4-key is clean and no dev store was compared,** with the reason saying so. A value comparison is required only where a compendium could hide the row (the Thompson case), and it then fails the gate when subsumed.
 - **A dirty dev store is refused** (`DirtyStoreError`), per gotcha 6, before any record is read; the dataset class is never instantiated, so no `process()` or download can run.
 - `zlib.error` and a missing end-of-central-directory record both read as a bad archive; the first is raised by `testzip()` before the CRC check on a corrupt deflate stream (found by the bad-zip test).
+
+## 2026.10.10 - The DOI lookup skips the mirror's service stores
+
+`citation_key_for_doi` validated every `*/manifest.json` under `torchcell-library/` and `torchcell-raw/` as a paper `Manifest`, so `gate --row` crashed before G1 on any row whose DOI no module files: `torchcell-library/_bib/manifest.json` is the bibliography store's manifest (`version`, `bibs`) and has no `citation_key`. Found on the Potel 2018 row. The lookup now skips an underscore-prefixed directory, the rule `capture_si.py`, `backfill.py` and the tc-lit server already apply to `_bib` and `_sync_reports`; `test_citation_key_for_doi` writes a `_bib/manifest.json` and fails on the old code.
+
+A second crash on the same scan is a data defect, not this function's: `torchcell-raw/zhangCombiningMechanisticMachine2020/manifest.json` is the only one of 743 mirror manifests that fails `Manifest` (its hand-written retrieval records lack `retriever` and `sha256`), and a DOI that no manifest files reaches it in sorted order. Skipping an invalid manifest would be a silent fallback, so the record is left to the owner (#923); until then, a first gate run on an unmirrored row passes `--citation-key`.

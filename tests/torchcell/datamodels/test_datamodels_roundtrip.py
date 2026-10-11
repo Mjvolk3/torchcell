@@ -50,6 +50,8 @@ FIELD_VALUES: dict[str, Any] = {
     "mechanism_so_name": "deletion",
     "pubmed_id": "12345678",
     "sha256": "a" * 64,
+    # SingleCellExpressionPhenotype pins its feature universe by a 64-hex digest.
+    "feature_universe_sha256": "a" * 64,
 }
 
 # One call of each shape the #731 leaves carry, as released rows of the Lim 2025

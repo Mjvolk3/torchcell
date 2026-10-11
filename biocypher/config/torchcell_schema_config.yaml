@@ -603,6 +603,25 @@ mrna number fraction phenotype:
         mrna_number_fraction: str
         n_libraries: int
         measurement_type: str
+# Single-cell UMI counts of a haplotype-mosaic segregant (SingleCellExpressionPhenotype,
+# Boocock 2025): nonzero counts only, against a pinned feature universe, summed over the
+# genotype's cells. Each dict serializes to a JSON string, the multi-valued phenotype
+# convention; every property is named by its field.
+single cell expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        umi_count: str
+        total_umis: int
+        n_features: int
+        feature_universe_sha256: str
+        n_cells: int
+        cell_cycle_stage_counts: str
+        library_cell_counts: str
+        measurement_type: str
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -671,6 +690,7 @@ phenotype member of:
             promoter activity phenotype,
             bacterial morphology phenotype,
             mrna number fraction phenotype,
+            single cell expression phenotype,
         ]
     target: [experiment, experiment reference]
 

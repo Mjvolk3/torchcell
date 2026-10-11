@@ -488,10 +488,12 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # 38 and 60 since `mrna number fraction phenotype` (issue #854) and `protein synthesis
     # rate phenotype` (issue #857) joined: the same shape twice more, one node and two more data lines
     # source on that two-target edge each.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (38, 13, 60)
-    # 166 = 158 + 4 + 4: one node is a declaration, an ``is_a`` line and one data line per
-    # ``phenotype member of`` target, of which there are two.
-    assert len(lines) == 166
+    # 39 and 62 since `single cell expression phenotype` (Boocock 2025) joined: the same
+    # shape once more, one node and one more source on that two-target edge.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (39, 13, 62)
+    # 170 = 158 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and one data
+    # line per ``phenotype member of`` target, of which there are two.
+    assert len(lines) == 170
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

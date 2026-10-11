@@ -6840,6 +6840,145 @@ class SegregantGrowthExperiment(Experiment, ModelStrict):
 
 
 # --------------------------------------------------------------------------- #
+# --- begin boocock2025: single-cell expression of haplotype-mosaic segregants ---
+#
+# Boocock 2025 (eLife, doi 10.7554/eLife.95566) measures one-pot single-cell RNA-seq of
+# meiotic segregants: each cell is genotyped from its own transcribed SNPs and its
+# transcriptome is a vector of UMI counts. No existing expression leaf holds that.
+# ``PseudobulkExpressionPhenotype`` is a log2 fold change against a same-condition wild
+# type, and a segregant panel has no wild type; ``RNASeqExpressionPhenotype`` requires
+# TPM, which a 3' UMI assay does not produce. The leaf below stores what the release
+# holds, absolute UMI counts, and the pair below is the expression sibling of
+# ``SegregantGrowthExperiment``. Additive: the new names appear only in their own bodies
+# and the module-level unions and maps, so no served dataset's schema closure moves.
+# --------------------------------------------------------------------------- #
+class SingleCellExpressionPhenotype(Phenotype, ModelStrict):
+    """Single-cell RNA-seq UMI counts per gene, summed over the cells of one genotype.
+
+    ``umi_count`` holds every feature with a NONZERO count. The quantified feature
+    universe is pinned by ``n_features`` and ``feature_universe_sha256`` (sha256 of the
+    sorted feature ids joined by newlines), so a feature of that universe that is not a
+    key had zero UMIs in these cells; a gene outside the universe was not quantified.
+    Storing only the nonzero counts keeps a single cell to its ~10^3 detected genes, and
+    the pin keeps a zero distinguishable from "not measured".
+
+    ``n_cells`` is how many cells the counts are summed over: 1 for a single cell, more
+    for a segregant observed in several cells (pseudobulk). ``total_umis`` equals the sum
+    of ``umi_count`` and is stored so the size factor is explicit. ``cell_cycle_stage_counts``
+    and ``library_cell_counts`` partition the ``n_cells`` cells by the source's cell-cycle
+    stage label and by sequencing library, verbatim labels.
+
+    Provenance: Boocock et al. 2025, eLife. See
+    ``[[torchcell.datasets.scerevisiae.boocock2025]]``.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "umi_count"
+    label_statistic_name: str | None = None
+
+    umi_count: dict[str, int] = Field(
+        description=(
+            "SortedDict of per-feature UMI counts summed over the n_cells cells; only "
+            "nonzero counts are keys, a pinned-universe feature that is not a key had 0"
+        ),
+        repr=False,
+    )
+    total_umis: int = Field(description="sum of umi_count over the feature universe")
+    n_features: int = Field(
+        description="size of the quantified feature universe the counts are taken over"
+    )
+    feature_universe_sha256: str = Field(
+        description="sha256 of the sorted feature ids of that universe, newline-joined"
+    )
+    n_cells: int = Field(description="number of cells the counts are summed over")
+    cell_cycle_stage_counts: dict[str, int] = Field(
+        description="cells per source cell-cycle stage label; sums to n_cells"
+    )
+    library_cell_counts: dict[str, int] = Field(
+        description="cells per sequencing library (the source's batch); sums to n_cells"
+    )
+    measurement_type: str = Field(
+        default="scrnaseq_umi_count",
+        description="assay tag: 10x 3' single-cell RNA-seq UMI counts per feature",
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dict."""
+        return (
+            f"SingleCellExpressionPhenotype(genes={len(self.umi_count)}, "
+            f"total_umis={self.total_umis}, n_cells={self.n_cells})"
+        )
+
+    @field_validator("umi_count", mode="before")
+    @classmethod
+    def convert_and_validate_umi_count(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict; refuse empty input and any count that is not >= 1."""
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"umi_count must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not v:
+            raise ValueError("umi_count cannot be empty")
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(
+                    f"umi_count for {key} must be a positive integer (zeros are "
+                    f"omitted, not stored), got {value!r}"
+                )
+        return v
+
+    @model_validator(mode="after")
+    def _check_totals(self) -> "SingleCellExpressionPhenotype":
+        """Totals agree with the per-gene dict and both partitions sum to n_cells."""
+        if self.n_cells < 1:
+            raise ValueError(f"n_cells must be a positive integer, got {self.n_cells}")
+        if self.total_umis != sum(self.umi_count.values()):
+            raise ValueError(
+                f"total_umis {self.total_umis} != sum of umi_count "
+                f"{sum(self.umi_count.values())}"
+            )
+        if self.n_features < len(self.umi_count):
+            raise ValueError(
+                f"n_features {self.n_features} is smaller than the {len(self.umi_count)} "
+                "keyed features"
+            )
+        if not re.fullmatch(r"[0-9a-f]{64}", self.feature_universe_sha256):
+            raise ValueError("feature_universe_sha256 must be 64 lowercase hex digits")
+        for field_name in ("cell_cycle_stage_counts", "library_cell_counts"):
+            counts: dict[str, int] = getattr(self, field_name)
+            if any(n < 1 for n in counts.values()):
+                raise ValueError(f"{field_name} holds a non-positive count")
+            if sum(counts.values()) != self.n_cells:
+                raise ValueError(
+                    f"{field_name} sums to {sum(counts.values())}, not n_cells "
+                    f"{self.n_cells}"
+                )
+        if not self.measurement_type.strip():
+            raise ValueError("measurement_type cannot be blank")
+        return self
+
+
+class SegregantExpressionExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a segregant single-cell expression experiment."""
+
+    experiment_reference_type: str = "segregant_expression"
+    phenotype_reference: SingleCellExpressionPhenotype
+
+
+class SegregantExpressionExperiment(Experiment, ModelStrict):
+    """Single-cell expression of a haploid segregant (haplotype-mosaic genotype)."""
+
+    experiment_type: str = "segregant_expression"
+    genotype: SegregantGenotype  # type: ignore[assignment]  # sibling of Genotype, deliberately narrowed
+    phenotype: SingleCellExpressionPhenotype
+
+
+# --- end boocock2025 ---
+
+
+# --------------------------------------------------------------------------- #
 # Bacterial phenotypes (plan 3c). Three record types the fifty bacterial rows need
 # and that no existing class can hold; the other eight families they need are
 # REUSED unchanged, and get bacterial experiment pairs further below purely so
@@ -8206,6 +8345,7 @@ PhenotypeType = (
     | PromoterActivityPhenotype
     | BacterialMorphologyPhenotype  # issue #774
     | MrnaNumberFractionPhenotype  # issue #854
+    | SingleCellExpressionPhenotype  # boocock2025
 )
 
 ExperimentType = (
@@ -8246,6 +8386,7 @@ ExperimentType = (
     | BacterialVisualScoreExperiment
     | BacterialMorphologyExperiment  # issue #774
     | MrnaNumberFractionExperiment  # issue #854
+    | SegregantExpressionExperiment  # boocock2025
 )
 
 ExperimentReferenceType = (
@@ -8286,6 +8427,7 @@ ExperimentReferenceType = (
     | BacterialVisualScoreExperimentReference
     | BacterialMorphologyExperimentReference  # issue #774
     | MrnaNumberFractionExperimentReference  # issue #854
+    | SegregantExpressionExperimentReference  # boocock2025
 )
 
 
@@ -8326,6 +8468,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_visual_score": BacterialVisualScoreExperiment,
     "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperiment,  # issue #854
+    "segregant_expression": SegregantExpressionExperiment,  # boocock2025
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -8365,6 +8508,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_visual_score": BacterialVisualScoreExperimentReference,
     "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperimentReference,  # issue #854
+    "segregant_expression": SegregantExpressionExperimentReference,  # boocock2025
 }
 
 

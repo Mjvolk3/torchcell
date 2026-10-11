@@ -93,6 +93,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.FluxPhenotype: "flux phenotype",
     s.BacterialMorphologyPhenotype: "bacterial morphology phenotype",
     s.MrnaNumberFractionPhenotype: "mrna number fraction phenotype",
+    s.SingleCellExpressionPhenotype: "single cell expression phenotype",
 }
 
 PHENOTYPE_CHUNKED = "<phenotype> (chunked)"

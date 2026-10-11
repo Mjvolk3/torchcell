@@ -323,6 +323,10 @@ class CellAdapter:
                 self._mrna_number_fraction_phenotype_node,
             ),
             (
+                "single cell expression phenotype (chunked)",
+                self._single_cell_expression_phenotype_node,
+            ),
+            (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
             ),
@@ -406,6 +410,10 @@ class CellAdapter:
             (
                 "mrna number fraction phenotype reference",
                 self._get_mrna_number_fraction_phenotype_reference_nodes,
+            ),
+            (
+                "single cell expression phenotype reference",
+                self._get_single_cell_expression_phenotype_reference_nodes,
             ),
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
@@ -2833,6 +2841,66 @@ class CellAdapter:
                     preferred_id="mrna number fraction phenotype",
                     node_label="mrna number fraction phenotype",
                     properties=self._mrna_number_fraction_properties(phenotype),
+                )
+            )
+        return nodes
+
+    @staticmethod
+    def _single_cell_expression_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``SingleCellExpressionPhenotype`` (experiment or reference).
+
+        The three dicts serialize to JSON strings, the multi-valued phenotype convention;
+        the totals, the feature-universe pin and ``n_cells`` stay typed so a query can
+        size-normalize or tell a single cell from a pseudobulk without parsing a dict.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "umi_count": json.dumps(phenotype.umi_count),
+            "total_umis": phenotype.total_umis,
+            "n_features": phenotype.n_features,
+            "feature_universe_sha256": phenotype.feature_universe_sha256,
+            "n_cells": phenotype.n_cells,
+            "cell_cycle_stage_counts": json.dumps(phenotype.cell_cycle_stage_counts),
+            "library_cell_counts": json.dumps(phenotype.library_cell_counts),
+            "measurement_type": phenotype.measurement_type,
+        }
+
+    @data_chunker
+    def _single_cell_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="single cell expression phenotype",
+            properties=self._single_cell_expression_properties(phenotype),
+        )
+
+    def _get_single_cell_expression_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="single cell expression phenotype",
+                    node_label="single cell expression phenotype",
+                    properties=self._single_cell_expression_properties(phenotype),
                 )
             )
         return nodes

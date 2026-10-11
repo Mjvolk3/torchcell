@@ -547,3 +547,91 @@ Under the owner policy of 2026-10-10 (a served compendium is a processing refere
 Owner decision, 2026-10-11: author-withdrawn data is bad data and must not be stored. Measured against the built dev store (`$DATA_ROOT/data/torchcell/rbtnseq_price2018_ecoli/preprocess/samples.json`, built on main): this loader already REFUSES all four, with the drop rule `authors_withdrew_sucrose_and_mannitol_2021`, and the ledger (`dropped_records.json`) already counts them as 15,156 refused released values (4 samples x 3,789 release genes). 147 samples are kept, 553,896 records stored. **The record delta of the decision for this dataset is 0** and the store's bytes do not change, so no rebuild is called for on its account. (The store is not in the served tree either: `$DATA_ROOT/database/data/torchcell/` holds 19 yeast datasets and no `rbtnseq_price2018_ecoli`. It is a dev store awaiting KG 4.0, and the t-statistic schema change makes it stale for that rebuild regardless.)
 
 What did change here is that the refusal is now typed once instead of twice. `DROP_DISREGARDED` and the sucrose / D-mannitol condition set come from `wetmore2015.AUTHOR_WITHDRAWAL`, the frozen `AuthorWithdrawal` carrying the rule name, the `Condition_1` labels, and the authors' instruction and its cause as two `SourcedValue`s pinned to `data/bigfit/index.html` (sha256 `c4819e45...`). `DropRuleCount` gains `source`, so the withdrawal's verbatim quote and sha256 ride into `dropped_records.json` beside the count rather than living only in the rule's prose. The rule-name string is unchanged, so `samples.json` is byte-identical.
+
+## 2026.10.11 - 52 of the 53 unidentified condition labels resolve (#726)
+
+#726 opened on this dataset's 53 Condition_1 labels that the compound-identity table did not
+resolve, across 99 of the kept samples. The curator pass
+([[torchcell.datamodels.compound_identity]], 2026.10.11) curated all of them plus the solvent
+`water`. Measured from the store's own ledger (`preprocess/dropped_records.json`,
+`unidentified_compounds`): **53 labels over 99 samples before** (the store array 3733 built
+at main `52d376d6d`), **1 label over 4 samples after** (slurm array 3809, task 35): casamino
+acids, an acid hydrolysate of casein, whose row is UNDEFINED_MIXTURE and whose gap is now
+terminal. Bacitracin and Benzalkonium Chloride resolve to homologue-mixture rows (a PubChem
+CID, no single-molecule InChIKey), so the ledger counts them identified while the records
+keep a terminal `inchikey` gap. Kept records are unchanged at 553,896.
+
+Price 2018's own Tables S2-S4 state a CAS number for these labels (not for `water`), and
+every one was looked up: 54 of the 63 curated labels with a CAS agree with the CID the curator adopted; the nine
+others are explained in the compound-identity note, including three where the CAS names a
+different form than the label (the anhydrous salt for `a-Ketoglutaric acid disodium salt
+hydrate` and `Adenine hydrochloride hydrate`, lactic acid itself for `Sodium D,L-Lactate`).
+The label's form is kept there.
+
+Record compound NAMES that change, each a fold onto an existing row or a shared spelling:
+`2-Furfuraldehyde` -> `furfural`, `5-Hydroxymethylfurfural` -> `5-(hydroxymethyl)furfural`,
+`Cobalt chloride hexahydrate` -> `cobalt(II) chloride hexahydrate`, `copper (II) chloride
+dihydrate` -> `copper(II) chloride dihydrate`, `D-Cycloserine` -> `cycloserine`,
+`D-Fructose` -> `fructose`, `D-Galactose` -> `galactose`, `D-Mannose` -> `mannose`,
+`D-Sorbitol` -> `sorbitol`, `D-Xylose` -> `xylose`, `N-Acetyl-D-Glucosamine` ->
+`N-acetylglucosamine` (the CID its Table S2 CAS gives), `Sodium succinate dibasic
+hexahydrate` -> `disodium succinate hexahydrate`; and case only for `Chloramphenicol`,
+`Cytidine`, `D-Alanine`, `D-Ribose`, `Doxycycline hyclate`, `Glycolic Acid` and `Sodium
+pyruvate`. The module docstring and `stress_solvent`'s docstring no longer say water and
+the stress labels carry a gap, and the test now pins the resolved identities
+(`Cephalothin sodium salt` keeps its name and gains CID 23675321; `water` gains CID 962).
+
+`GeneEssentialityPrice2018EcoliDataset` was rebuilt too (task 14): its two kanamycin
+references now carry the key.
+
+### L0-L4 after the rebuild
+
+#### `RbTnseqPrice2018EcoliDataset`
+
+553,896 records; store built 2026-10-11 07:35 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 09:21 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 553896 records validated |
+| L1 | `count` | pass | observed 553896, expected 553896 |
+| L1 | `pair_uniqueness` | pass | 553896 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 553896 values checked |
+| L2 | `se_nonnegative` | pass | 553896 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 553896 records |
+| L3 | `environment_perturbed` | pass | all 553896 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB, Lennox (10 g/L tryptone, 5 g/L yeast extract, 5 g/L NaCl), liquid') |
+| L1 | `provenance_gaps` | pass | 1134168 documented provenance gaps over 553896/553896 records; 2 deferred field(s): ['n_samples', 'sample_unit']; 13316112 undeclared None values over 17 carrier fields (top: Compound.inchi x3952632, Compound.chebi_id x1386624, Environment.dilution_rate_per_hour x553896, Environment.duration_generations x553896, Environment.duration_hours x553896) |
+| L1 | `canonical_gene_names` | pass | 3768 systematic names, one canonical spelling each, each current in the genome; 143 common names the resolver cannot place; 143 are pseudogene loci the genome resolves to themselves |
+| L2 | `uncertainty_sanity` | pass | 553896 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 738528 compound references carry a structure identifier; 15072 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 2317320 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 553896 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (4 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 3768 measured genes are reference genes (>= 1.0) |
+| L4 | `current_genome_genes` | pass | every one of the 3768 measured systematic names is a gene of the current genome |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 3768 stored tags, statuses {'current': 3625, 'non_gene_feature': 143}; 0 do not resolve to themselves |
+
+#### `GeneEssentialityPrice2018EcoliDataset`
+
+320 records; store built 2026-10-11 07:02 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:03 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 320 records validated |
+| L1 | `count` | pass | observed 320, expected 320 |
+| L2 | `calls_match_table_s1` | pass | 320 records, one likely-essential locus each, from 324 released Keio rows |
+| L3 | `disjoint_from_the_fitness_genes` | pass | 324 likely-essential genes and 3789 genes with fitness values share none |
+| L3 | `label_caveat_on_every_record` | pass | all 320 records carry the 'nearly essential' label and the 6% to 16% FDR on their perturbation description |
+| L1 | `provenance_gaps` | pass | 960 documented provenance gaps over 320/320 records; 0 deferred field(s): []; 5440 undeclared None values over 7 carrier fields (top: Compound.inchi x1600, Compound.chebi_id x960, Compound.smiles x960, Compound.inchikey x640, Compound.pubchem_cid x640) |
+| L1 | `canonical_gene_names` | pass | 320 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 960 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 320 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 320 measured genes are BW25113 genes (>= 1.0) |
+| L4 | `current_genome_genes` | pass | every one of the 320 measured systematic names is a gene of the current genome |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` | pass | SUPPLEMENTARY: 320 stored tags, statuses {'current': 320}; 0 do not resolve to themselves |

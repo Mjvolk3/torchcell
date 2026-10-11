@@ -90,6 +90,9 @@ from .schema import (
     MeanDeletionPerturbation,
     MeasurementType,
     Media,
+    MicroarrayExpressionScoreExperiment,
+    MicroarrayExpressionScoreExperimentReference,
+    MicroarrayExpressionScorePhenotype,
     MrnaNumberFractionExperiment,
     MrnaNumberFractionExperimentReference,
     MrnaNumberFractionPhenotype,
@@ -297,6 +300,10 @@ __all__ = [
     "PseudobulkUmiCountPhenotype",
     "PseudobulkUmiCountExperiment",
     "PseudobulkUmiCountExperimentReference",
+    # issue #1022: the error-model microarray score family
+    "MicroarrayExpressionScorePhenotype",
+    "MicroarrayExpressionScoreExperiment",
+    "MicroarrayExpressionScoreExperimentReference",
     # conversion
     "ConversionEntry",
     "ConversionMap",

@@ -79,6 +79,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.SyntheticRescuePhenotype: "synthetic rescue phenotype",
     s.CalMorphPhenotype: "calmorph phenotype",
     s.MicroarrayExpressionPhenotype: "microarray expression phenotype",
+    s.MicroarrayExpressionScorePhenotype: "microarray expression score phenotype",
     s.RNASeqExpressionPhenotype: "rnaseq expression phenotype",
     s.PseudobulkExpressionPhenotype: "pseudobulk expression phenotype",
     s.VisualScorePhenotype: "visual score phenotype",

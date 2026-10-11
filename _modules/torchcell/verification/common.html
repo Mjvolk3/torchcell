@@ -174,7 +174,10 @@
     <span class="s2">"GeneNameResolution"</span><span class="p">,</span>
     <span class="s2">"GeneNameResolver"</span><span class="p">,</span>
     <span class="s2">"SharedRecordRules"</span><span class="p">,</span>
+    <span class="s2">"declared_member_validator"</span><span class="p">,</span>
     <span class="s2">"gap_carrier_fields"</span><span class="p">,</span>
+    <span class="s2">"key_digest"</span><span class="p">,</span>
+    <span class="s2">"l0_validated_row"</span><span class="p">,</span>
     <span class="s2">"media_library_dumps"</span><span class="p">,</span>
     <span class="s2">"shared_rule_results"</span><span class="p">,</span>
 <span class="p">]</span>
@@ -1022,6 +1025,88 @@
     <span class="n">rules</span><span class="o">.</span><span class="n">add_all</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">rules</span><span class="o">.</span><span class="n">results</span><span class="p">()</span></div>
 
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># #889: the helpers the streaming family verifiers share</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: The tag field each schema union discriminates its members on.</span>
+<span class="n">_UNION_TAG_FIELDS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"ExperimentType"</span><span class="p">:</span> <span class="s2">"experiment_type"</span><span class="p">,</span>
+    <span class="s2">"ExperimentReferenceType"</span><span class="p">:</span> <span class="s2">"experiment_reference_type"</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">declared_member_validator</span><span class="p">(</span>
+    <span class="n">class_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">union</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"ExperimentType"</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="nb">object</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Validate a stored mapping as the ONE union member its registry entry declares.</span>
+
+<span class="sd">    ``TypeAdapter(ExperimentType)`` tries a stored record against every member of a</span>
+<span class="sd">    33-way union; on a Costanzo 2016 record that costs 12 ms (85 records per second), which puts a</span>
+<span class="sd">    20,705,612-record store at 68 hours. Validating against the declared member costs</span>
+<span class="sd">    0.4 ms and is the stronger statement: the record must validate as the class it</span>
+<span class="sd">    claims to be (its ``experiment_type`` tag must be that class's), and a mapping that</span>
+<span class="sd">    validates as a member of the union validates as the union. ``class_name`` that is</span>
+<span class="sd">    not a member of ``union`` is a registry error and raises here, before any record</span>
+<span class="sd">    is read.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">typing</span>
+
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels</span><span class="w"> </span><span class="kn">import</span> <span class="n">schema</span>
+
+    <span class="n">model</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">class_name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">model</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">typing</span><span class="o">.</span><span class="n">get_args</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">schema</span><span class="p">,</span> <span class="n">union</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2"> is not a member of schema.</span><span class="si">{</span><span class="n">union</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">tag_field</span> <span class="o">=</span> <span class="n">_UNION_TAG_FIELDS</span><span class="p">[</span><span class="n">union</span><span class="p">]</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model_fields</span><span class="p">[</span><span class="n">tag_field</span><span class="p">]</span><span class="o">.</span><span class="n">default</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">stored</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">object</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">stored</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag_field</span><span class="p">)</span> <span class="o">!=</span> <span class="n">tag</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">tag_field</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">stored</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">tag_field</span><span class="p">)</span><span class="si">!r}</span><span class="s2"> is not </span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">'s </span><span class="si">{</span><span class="n">tag</span><span class="si">!r}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">model_validate</span><span class="p">(</span><span class="n">stored</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">validate</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">key_digest</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A 16-byte digest of a signature tuple, for uniqueness sets over 20M records.</span>
+
+<span class="sd">    A signature is a nested tuple of strings, numbers and None, whose ``repr`` is</span>
+<span class="sd">    deterministic. Holding the digest instead of the tuple keeps a 20,705,612-key set at</span>
+<span class="sd">    about 2 GB instead of tens; the chance that two distinct keys share a 128-bit digest</span>
+<span class="sd">    over 2e7 keys is about 1e-24.</span>
+<span class="sd">    """</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+
+    <span class="k">return</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">blake2b</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(),</span> <span class="n">digest_size</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">l0_validated_row</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_records</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">failures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">validated_as</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The L0 row a single-pass verifier renders for one validated part of a record.</span>
+
+<span class="sd">    An empty store fails: a verifier that read no record has validated nothing.</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L0</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="n">n_records</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">failures</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records validated as </span><span class="si">{</span><span class="n">validated_as</span><span class="si">}</span><span class="s2">"</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">failures</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records failed </span><span class="si">{</span><span class="n">validated_as</span><span class="si">}</span><span class="s2"> validation"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">"n_records"</span><span class="p">:</span> <span class="n">n_records</span><span class="p">,</span>
+            <span class="s2">"n_failures"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">),</span>
+            <span class="s2">"failures"</span><span class="p">:</span> <span class="n">failures</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span>
+            <span class="s2">"validated_as"</span><span class="p">:</span> <span class="n">validated_as</span><span class="p">,</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
 </pre></div>
 
            </div>

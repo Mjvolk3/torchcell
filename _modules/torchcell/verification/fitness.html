@@ -140,10 +140,16 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">Counter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">GeneNameResolver</span><span class="p">,</span> <span class="n">SharedRecordRules</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.common</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GeneNameResolver</span><span class="p">,</span>
+    <span class="n">SharedRecordRules</span><span class="p">,</span>
+    <span class="n">declared_member_validator</span><span class="p">,</span>
+    <span class="n">key_digest</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.levels</span><span class="w"> </span><span class="kn">import</span> <span class="n">l0_structural</span><span class="p">,</span> <span class="n">l1_count</span><span class="p">,</span> <span class="n">l2_value_fidelity</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.report</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Level</span><span class="p">,</span>
@@ -375,6 +381,169 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">verify_fitness_dataset_streaming</span><span class="p">(</span>
+    <span class="n">records</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Record</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">dataset_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="p">:</span> <span class="n">Provenance</span><span class="p">,</span>
+    <span class="n">expected_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">experiment_class</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">resolve_gene_name</span><span class="p">:</span> <span class="n">GeneNameResolver</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sgd_genes</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gene_universe_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"reference"</span><span class="p">,</span>
+    <span class="n">min_containment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">VerificationReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Single-pass, memory-bounded twin of :func:`verify_fitness_dataset` (#889).</span>
+
+<span class="sd">    The rows, their names, their order and their messages are the eager verifier's.</span>
+<span class="sd">    Two things differ, both because a 20,705,612-record store (Costanzo 2016 DMF) can be</span>
+<span class="sd">    neither materialized nor validated against the 33-way ``ExperimentType`` union in</span>
+<span class="sd">    reasonable time:</span>
+
+<span class="sd">    - L0 validates each experiment as the ``experiment_class`` its registry entry</span>
+<span class="sd">      declares (:func:`~torchcell.verification.common.declared_member_validator`),</span>
+<span class="sd">      which is the stronger statement.</span>
+<span class="sd">    - L1 ``pair_uniqueness`` holds a 16-byte digest of each (strain, environment) key</span>
+<span class="sd">      (:func:`~torchcell.verification.common.key_digest`), not the key itself.</span>
+<span class="sd">    """</span>
+    <span class="n">validate</span> <span class="o">=</span> <span class="n">declared_member_validator</span><span class="p">(</span><span class="n">experiment_class</span><span class="p">)</span>
+    <span class="n">n_records</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">l0_failures</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">pair_counts</span><span class="p">:</span> <span class="n">Counter</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="n">Counter</span><span class="p">()</span>
+    <span class="n">strains</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">environments</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">bytes</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="n">n_fitness</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">bad_fitness</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n_se</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">bad_se</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">n_ref</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">ref_worst</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">shared</span> <span class="o">=</span> <span class="n">SharedRecordRules</span><span class="p">(</span>
+        <span class="n">resolve_gene_name</span><span class="o">=</span><span class="n">resolve_gene_name</span><span class="p">,</span>
+        <span class="n">sgd_genes</span><span class="o">=</span><span class="n">sgd_genes</span><span class="p">,</span>
+        <span class="n">gene_universe_label</span><span class="o">=</span><span class="n">gene_universe_label</span><span class="p">,</span>
+        <span class="n">min_containment</span><span class="o">=</span><span class="n">min_containment</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">rec</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">records</span><span class="p">):</span>
+        <span class="n">n_records</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">exp</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
+        <span class="n">shared</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">rec</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">validate</span><span class="p">(</span><span class="n">exp</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">)</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">l0_failures</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="p">,</span> <span class="s2">"error"</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="p">)[:</span><span class="mi">500</span><span class="p">]})</span>
+        <span class="n">genotype</span> <span class="o">=</span> <span class="n">key_digest</span><span class="p">(</span><span class="n">_genotype_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
+        <span class="n">environment</span> <span class="o">=</span> <span class="n">key_digest</span><span class="p">(</span><span class="n">_environment_signature</span><span class="p">(</span><span class="n">exp</span><span class="p">))</span>
+        <span class="n">pair_counts</span><span class="p">[</span><span class="n">key_digest</span><span class="p">((</span><span class="n">genotype</span><span class="p">,</span> <span class="n">environment</span><span class="p">))]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">strains</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">genotype</span><span class="p">)</span>
+        <span class="n">environments</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">environment</span><span class="p">)</span>
+        <span class="n">fitness</span> <span class="o">=</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">fitness</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_fitness</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">bad</span> <span class="o">:=</span> <span class="n">_value_problem</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">fitness</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bad_fitness</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
+        <span class="n">se</span> <span class="o">=</span> <span class="n">exp</span><span class="p">[</span><span class="s2">"phenotype"</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"fitness_se"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">se</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">se</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">se</span><span class="p">)):</span>
+            <span class="n">n_se</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">bad</span> <span class="o">:=</span> <span class="n">_value_problem</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">se</span><span class="p">,</span> <span class="n">minimum</span><span class="o">=</span><span class="mf">0.0</span><span class="p">))</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bad_se</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
+        <span class="n">reference</span> <span class="o">=</span> <span class="n">rec</span><span class="p">[</span><span class="s2">"reference"</span><span class="p">][</span><span class="s2">"phenotype_reference"</span><span class="p">][</span><span class="s2">"fitness"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">reference</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">n_ref</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ref_worst</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">ref_worst</span><span class="p">,</span> <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">reference</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))</span>
+
+    <span class="n">report</span> <span class="o">=</span> <span class="n">VerificationReport</span><span class="p">(</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">dataset_name</span><span class="p">,</span> <span class="n">provenance</span><span class="o">=</span><span class="n">provenance</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L0</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"structural"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">l0_failures</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records validated"</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">l0_failures</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">l0_failures</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_records</span><span class="si">}</span><span class="s2"> records failed schema validation"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_records"</span><span class="p">:</span> <span class="n">n_records</span><span class="p">,</span>
+                <span class="s2">"n_failures"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">l0_failures</span><span class="p">),</span>
+                <span class="s2">"failures"</span><span class="p">:</span> <span class="n">l0_failures</span><span class="p">[:</span><span class="mi">10</span><span class="p">],</span>
+                <span class="s2">"validated_as"</span><span class="p">:</span> <span class="n">experiment_class</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">l1_count</span><span class="p">(</span><span class="n">n_records</span><span class="p">,</span> <span class="n">expected_count</span><span class="p">))</span>
+    <span class="n">n_duplicated</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pair_counts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L1</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"pair_uniqueness"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">n_duplicated</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">pair_counts</span><span class="p">)</span><span class="si">}</span><span class="s2"> unique (strain, environment) records, one each"</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">n_duplicated</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_duplicated</span><span class="si">}</span><span class="s2"> (strain, environment) pairs appear in multiple "</span>
+                <span class="s2">"records"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"n_pairs"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">pair_counts</span><span class="p">),</span>
+                <span class="s2">"n_duplicated"</span><span class="p">:</span> <span class="n">n_duplicated</span><span class="p">,</span>
+                <span class="s2">"n_extra_records"</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">pair_counts</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">if</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="s2">"n_strains"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">strains</span><span class="p">),</span>
+                <span class="s2">"n_environments"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">environments</span><span class="p">),</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_streamed_value_result</span><span class="p">(</span><span class="s2">"value_fidelity"</span><span class="p">,</span> <span class="n">n_fitness</span><span class="p">,</span> <span class="n">bad_fitness</span><span class="p">))</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">_streamed_value_result</span><span class="p">(</span><span class="s2">"se_nonnegative"</span><span class="p">,</span> <span class="n">n_se</span><span class="p">,</span> <span class="n">bad_se</span><span class="p">))</span>
+    <span class="n">holds</span> <span class="o">=</span> <span class="n">ref_worst</span> <span class="o">==</span> <span class="mf">0.0</span>
+    <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+        <span class="n">LevelResult</span><span class="p">(</span>
+            <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L3</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">"reference_one"</span><span class="p">,</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">holds</span><span class="p">,</span>
+            <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"reference fitness == 1.0 for all </span><span class="si">{</span><span class="n">n_ref</span><span class="si">}</span><span class="s2"> records"</span>
+                <span class="k">if</span> <span class="n">holds</span>
+                <span class="k">else</span> <span class="sa">f</span><span class="s2">"reference fitness not identically 1.0: max|v-1|=</span><span class="si">{</span><span class="n">ref_worst</span><span class="si">:</span><span class="s2">.3g</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">),</span>
+            <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_values"</span><span class="p">:</span> <span class="n">n_ref</span><span class="p">,</span> <span class="s2">"worst_abs_dev"</span><span class="p">:</span> <span class="n">ref_worst</span><span class="p">},</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">shared</span><span class="o">.</span><span class="n">results</span><span class="p">():</span>
+        <span class="n">report</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">report</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_value_problem</span><span class="p">(</span><span class="n">index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">minimum</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The :func:`~torchcell.verification.levels.l2_value_fidelity` verdict on ONE value."""</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"non-numeric"</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="s2">"nan"</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"nan"</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">math</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="s2">"inf"</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">minimum</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">index</span><span class="p">,</span> <span class="s2">"value"</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="s2">"reason"</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"&lt; </span><span class="si">{</span><span class="n">minimum</span><span class="si">}</span><span class="s2">"</span><span class="p">}</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_streamed_value_result</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">n_values</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">bad</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LevelResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The L2 row :func:`l2_value_fidelity` would render for the same values."""</span>
+    <span class="k">return</span> <span class="n">LevelResult</span><span class="p">(</span>
+        <span class="n">level</span><span class="o">=</span><span class="n">Level</span><span class="o">.</span><span class="n">L2</span><span class="p">,</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">passed</span><span class="o">=</span><span class="ow">not</span> <span class="n">bad</span><span class="p">,</span>
+        <span class="n">message</span><span class="o">=</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_values</span><span class="si">}</span><span class="s2"> values checked"</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">bad</span>
+            <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">n_values</span><span class="si">}</span><span class="s2"> values invalid"</span>
+        <span class="p">),</span>
+        <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">"n_values"</span><span class="p">:</span> <span class="n">n_values</span><span class="p">,</span> <span class="s2">"n_bad"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">bad</span><span class="p">),</span> <span class="s2">"bad"</span><span class="p">:</span> <span class="n">bad</span><span class="p">[:</span><span class="mi">20</span><span class="p">]},</span>
+    <span class="p">)</span>
+
+
 <div class="viewcode-block" id="fitness_gene_set">
 <a class="viewcode-back" href="../../../generated/torchcell.verification.fitness_gene_set.html#torchcell.verification.fitness_gene_set">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fitness_gene_set</span><span class="p">(</span><span class="n">records</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Record</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
@@ -389,7 +558,12 @@
 
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"verify_fitness_dataset"</span><span class="p">,</span> <span class="s2">"fitness_gene_set"</span><span class="p">,</span> <span class="s2">"Record"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"verify_fitness_dataset"</span><span class="p">,</span>
+    <span class="s2">"verify_fitness_dataset_streaming"</span><span class="p">,</span>
+    <span class="s2">"fitness_gene_set"</span><span class="p">,</span>
+    <span class="s2">"Record"</span><span class="p">,</span>
+<span class="p">]</span>
 </pre></div>
 
            </div>

@@ -419,3 +419,151 @@ round-1 arms started about 21:20 CDT (22788115 to 22788120); 22788115, 22788116 
 Delta rounds 11, 16 and 17 finished (W&B project
 `torchcell_038-env-chemgen-vanacloig-cgt-corrected`, last run 21:32 CDT); their CSVs
 await an rsync from the Delta tree before the 038 note can score them.
+
+## 2026.10.11 - Where the training stands, and whether Lian, HIPHOP and a scaling curve can carry the generality claim
+
+### The headline numbers of the last two days
+
+**Wet lab, every arm with score files here** (served call, median over the folds on file of
+the three-seed ensemble; the bars are model-free and from the same wells):
+
+| arm | folds | growth AUROC | worst-scenario | fitness, grown | furfural grid | Vanacloig |
+|---|---|---|---|---|---|---|
+| joint, anchors + ex21, dose FiLM | 5 | 0.475 | -0.009 | 0.377 | -0.751 | 0.261 |
+| anchors only, dose FiLM | 5 | 0.295 | -0.319 | -0.346 | -0.598 | 0.266 |
+| two-stage, head only | 5 | 0.556 | 0.093 | 0.216 | -0.569 | 0.271 |
+| two-stage, head + env encoder | 5 | 0.582 | 0.154 | 0.188 | -0.554 | 0.256 |
+| joint, two env layers | 5 | 0.469 | 0.002 | 0.341 | -0.765 | 0.252 |
+| **round 2: dose off, fold seeds 1 and 2** | 8 | 0.573 | 0.158 | 0.238 | -0.410 | **0.363** |
+| bar | | Loewe 0.958 | Loewe 0.772 | Bliss 0.573 | Bliss -0.082 | ridge 0.359 |
+
+**The fold seed moves the gene-level score more than any arm does, and that invalidates the
+round-1 ranking.** The dose-off joint arm reads 0.276 on fold seed 0 and 0.363 on fold seeds
+1 and 2. Every round-1 arm above was scored on fold seed 0 alone, and they span 0.252 to
+0.271, a range smaller than the fold-seed shift in a single arm. So the round-1 Vanacloig
+column ranks noise, and no architectural conclusion may be drawn from it until the surviving
+arms are replicated on the other two fold seeds. The wet-lab columns are not affected the
+same way (they are scored on the same 63 wells regardless of fold seed) but the arms still
+share the single fold seed, so the same caution applies with less force.
+
+**Public benchmark, the Delta rounds** (W&B project
+`torchcell_038-env-chemgen-vanacloig-cgt-corrected`, 120 runs finished 2026-10-10 evening;
+read from the run summaries because the per-compound CSVs are still in the Delta tree, so
+these are the per-run mean over folds of the last epoch's held-out centered Spearman, NOT
+the compound-level median the 038 note reports, and they are not directly comparable with
+ridge at 0.359):
+
+| round | arm | folds | median run score |
+|---|---|---|---|
+| 11 | bilinear control, seeds 3-5 / 6-8 | 15 / 15 | 0.311 / 0.311 |
+| 11 | environment encoder, seeds 3-5 / 6-8 | 15 / 15 | 0.232 / 0.272 |
+| 16 | environment encoder, 150 epochs | 15 | 0.276 |
+| 17 | encoder learning curve, 8 / 16 / 24 fitted compounds | 15 each | 0.163 / 0.230 / 0.270 |
+
+Two readings, both internal to this table and so unaffected by the scale caveat. The
+bilinear control is at or above the environment encoder on the corrected store in both seed
+groups, which repeats round 2's sign reversal against the build-001 record. And 150 epochs
+does not lift the encoder above its 50-epoch self (0.276 against 0.272 and 0.232), so the
+first hypothesis of the 038 note, that 50 epochs is not saturation, **fails**.
+
+### The learning curve is the one axis that is paying, and it is the scaling-law hook
+
+Round 17 is a clean data-axis sweep at fixed architecture and fixed compute per run. Fitting
+`score = a + b log2(compounds)` gives **b = 0.0675 per doubling** (a = -0.040; residuals
+within 0.0003, which with three points and two parameters is close to tautological and is
+not evidence of a power law). Extrapolated inside its own units, the curve reaches ridge's
+value at about 60 fitted compounds against the 28 the corrected store offers. That is the
+quantitative form of the standing 035 finding that gains came from data, not architecture.
+
+This is the corner where a scaling-law program could be run within scope, and
+[[experiments.041-scaling-laws.scripts.scaling_law_forms]] is the vocabulary for it. Two
+cautions that the 041 note itself makes. First, the forms there are floored
+(`E + A N^-alpha`); a three-point curve cannot separate a pure power law from a floored one,
+and panel c of that figure is the argument for fitting `L - E` rather than `L`, which needs
+more points before any exponent is quoted. Second, `D` is counted in records consumed, not
+in feature dimension, so the data axis here is compounds (28) crossed with strains (about
+3,500), and which of the two is the scaling variable is itself a design decision: the
+compound axis is the one the compound-cold protocol holds out, so it is the axis the forecast
+should be in. A usable curve needs more compound counts, not more seeds: the current three
+points are 8, 16 and 24, and 2, 4 and 28 are free to add.
+
+### Lian 2019 as a validation target: the measurement says no
+
+Measured in `scripts/lian_validation_feasibility.py`, written up in
+[[experiments.040-inhibitor-synergy-wetlab.scripts.lian_validation_feasibility]]. Three
+blockers, in order of severity:
+
+1. **Representation.** Of MAGIC's three orthogonal modes only CRISPRd maps onto a deletion
+   operator: 24,702 of 100,177 guides. CRISPRa and CRISPRi have no operator in any model on
+   file, so three quarters of the screen is unaddressable today.
+2. **The representable mode is the unreliable one.** Split-half reliability of the gene
+   score is 0.085 for CRISPRd round 1 against 0.339 for CRISPRi. Nothing can correlate with
+   a score that does not correlate with itself.
+3. **The reliable mode disagrees.** CRISPRi against the Vanacloig furfural profile reads
+   +0.022 with an attenuation ceiling of 0.51, and round 3 reads -0.019 against a ceiling of
+   0.58. That is a measured null, not a noise floor. Tail overlap is at the hypergeometric
+   expectation for every mode, round and tail.
+
+Two further facts that close the other angles. Lian is **single-compound**: furfural only,
+so it adds no compound diversity to a compound-cold protocol. Its three doses (5, 10, 15 mM)
+are **not a dose series**: the background accumulates edits with the round (round 2 adds
+SIZ1i, round 3 adds NAT1a), so dose and genotype move together and no pair of rounds isolates
+dose. There is no genome-wide CRISPRi chemogenomic reference in the store to validate the
+reliable mode against; Smith 2016 is a 20-gene tiling screen, and the Choe 2025 and Niu 2019
+CRISPR datasets are E. coli.
+
+**What Lian is still good for, and it is not nothing.** It is the only public screen on the
+bAID host, the same strain as the private Bioscreen runs. If the host head ever needs an
+anchor on this exact strain, Lian's untreated arm is the one public measurement of it. That
+is a host-identity use, not a profile-prediction validation, and it needs the enrichment
+readout typed as its own measurement type rather than read as fitness.
+
+### Does combining data help? The arms are running
+
+The question the paper's second theme asks is already in flight as round-1 arms
+`vanhop` (Hoepfner HIP/HOP added as a gene-level source) and `vanhophet` (Hoepfner plus
+Hillenmeyer HET), Delta jobs 22788119 and 22788120, submitted 2026-10-10 21:20. Those two
+arms are the direct test of whether the large chemogenomic screens lift compound-cold
+Vanacloig prediction. Given the fold-seed finding above, **neither arm can be read against
+the round-1 arms until all of them carry fold seeds 1 and 2**; the comparison that will be
+valid is `vanhop` against `van` on the same fold seeds.
+
+### The dose problem, which is the one that threatens the in-house use
+
+The in-house Bioscreen data are a dose-response target: the point of the host head is to
+draw a predicted line on an isobole grid and have it land near the observed front. The dose
+ablation says the opposite of what that needs. Switching the log-molar dose modulation off
+**improves** every wet-lab readout: growth AUROC 0.475 to 0.586 on fold seed 0 for the joint
+arm, 0.295 to 0.413 for the anchors arm, and the furfural-grid residual from -0.751 to
+-0.410. A model that predicts mixtures better when it cannot see the dose is not
+concentration-sensitive in any useful sense, and the planned isobole panel (the model's
+predicted front beside Loewe's and Bliss's, scored by the boundary overlap and the edge
+error, and by how jagged the predicted front is against a monotone closure) cannot be drawn
+honestly from an arm in that state. The boundary scorer and the monotone closure are on file
+and apply unchanged to a predicted surface; what is missing is a dose-aware arm that earns
+the panel. Hypothesis (untested), and the per-combination residual against inhibitor count
+tests it directly: the host head composes inhibitors near-additively, so predicted fitness
+falls too slowly as inhibitors are added, and the dose channel makes that worse by giving
+the head a second way to fit the single-agent curves it is already fitting.
+
+### The model is inside the cell graph transformer framework
+
+`train_mixture.py` restates 038's `TokenLayer`, `StrainBatch`, `strain_batch` and
+`build_encoder` verbatim (attribution block, commit 9427c0d4e), so the mixture model is the
+038 environment-encoder head with a compound-token set and a host readout, not a separate
+architecture. For the generality theme the claim available today is therefore that one
+encoder spans gene-level chemogenomics and host-level growth; the wet-lab arms do not yet
+support a claim that it spans them well.
+
+### For the discussion, not for a round
+
+Two ideas worth keeping in the SI rather than in a figure. First, the classical
+pharmacological layer: Bliss and Loewe are the two limiting composition rules, the boundary
+follows one or the other by pair, and nothing learned predicts the choice
+([[experiments.040-inhibitor-synergy-wetlab.scripts.rule_choice]]); building the two rules
+into the model as structure rather than asking it to rediscover them is the obvious next
+architecture, and the failure of the free-form head is the motivation. Second, basal state as
+a node feature: the models currently carry prior knowledge on the EDGES of the cell graph,
+and the node carries only identity. Encoding a measured basal statistic on the node, paired
+with a token naming the assay it came from, would put the same kind of prior on the node
+side. Both are hypotheses about architecture and neither has been run.

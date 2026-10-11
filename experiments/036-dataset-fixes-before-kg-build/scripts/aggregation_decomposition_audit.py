@@ -137,9 +137,6 @@ OWN_DATASET_FOR_SAMPLES: Final[dict[str, str]] = {
     b23.CITATION_KEY: "RbTnseqBorchert2023Dataset"
 }
 
-#: Branch loading Wetmore 2015 from its own release while this audit ran (not on main).
-WETMORE_OWN_RELEASE_BRANCH: Final = "feat/ecoli-wetmore2015-own-release"
-
 
 # --------------------------------------------------------------------------- #
 # Records
@@ -705,19 +702,6 @@ def audit_price(
         for k, v in by_source.items()
     }
     comparison = wetmore2015.release_comparison()
-    wetmore_check = SourceCrossCheck(
-        statistic="min_pearson_r",
-        value=comparison.min_pearson_r,
-        tolerance=None,
-        tolerance_basis="Price 2018 re-ran the RB-TnSeq statistics (versions 1.0.3, "
-        "1.1.0 or 1.1.1) over Wetmore 2015's 1.0.0 and states no expected agreement, "
-        "so the measured minimum is a pin; identity rests on the shared sample name and "
-        "metadata (wetmore2015.build_subsumption refuses a mismatch)",
-        n_samples=len(comparison.agreements),
-        n_values=sum(a.n_genes for a in comparison.agreements),
-        against="Wetmore 2015 release fit_logratios_good.tab, statistics 1.0.0 "
-        f"(sha256 {wetmore2015.manifest_sha256(wetmore2015.load_manifest(), wetmore2015.RELEASE_FITNESS)})",
-    )
     # The compendium release against the browser, value for value.
     release = pd.read_csv(wetmore2015.raw_path(wetmore2015.SUPERSET_FITNESS), sep="\t")
     release["locusId"] = release["locusId"].astype(str)
@@ -743,29 +727,7 @@ def audit_price(
     for source, members in sorted(by_source.items()):
         served = sum(1 for s in members if s["drop_rule"] is None)
         if source == wetmore2015.CITATION_KEY:
-            entry = SourceDecomposition(
-                source_label=f"doi:{norm_doi(wetmore2015.PAPER_DOI)}",
-                role="original_study",
-                citation_key=source,
-                doi=norm_doi(wetmore2015.PAPER_DOI),
-                dataset_class=PRICE_CLASS,
-                n_samples_in_compendium=len(members),
-                n_samples_served=served,
-                own_release=True,
-                own_release_kind="per_record_values",
-                own_release_url=RBARSEQ_URL,
-                own_release_access=access_from_manifest(
-                    wetmore2015.load_manifest(), wetmore2015.RELEASE_FITNESS
-                ),
-                mirrored=True,
-                loaded_as_own_dataset=False,
-                own_dataset_class=None,
-                cross_check=wetmore_check,
-                note="statistics 1.0.0 per-sample fitness, already in the raw mirror; "
-                f"being loaded on {WETMORE_OWN_RELEASE_BRANCH} (not on main when "
-                "measured). The browser attributes these samples "
-                f"{dict(second[source])}",
-            )
+            entry = wetmore_source(members, second[source], registered)
         else:
             entry = SourceDecomposition(
                 source_label=f"doi:{norm_doi(price2018.PAPER_DOI)}",
@@ -840,6 +802,69 @@ def audit_price(
             "GeneEssentialityPrice2018EcoliDataset: Price 2018's own call over the "
             "insertion maps, not an aggregation of other studies' values",
         ),
+    )
+
+
+def wetmore_source(
+    members: Sequence[Mapping[str, Any]],
+    second: Mapping[str, int],
+    registered: Mapping[str, tuple[str, ...]],
+) -> SourceDecomposition:
+    """Wetmore 2015's entry in the Price 2018 decomposition.
+
+    Its own release is loaded as its own dataset when a class is registered under its
+    key (``RbTnseqWetmore2015Dataset``, owner policy 2026-10-10). The cross-check is the
+    release-level comparison of every Wetmore sample the compendium carries
+    (``wetmore2015.all_sample_comparison``, the all-sample table, so ``set2IT045``, which
+    failed Wetmore's own cor12 rule, is included) against the bar the loader's L4 row
+    uses: Price 2018's median correlation between exact replicates, since the compendium
+    re-ran Wetmore's method on the same reads.
+    """
+    comparison = wetmore2015.all_sample_comparison()
+    own = registered.get(wetmore2015.CITATION_KEY, ())
+    if len(own) > 1:
+        raise ValueError(f"{wetmore2015.CITATION_KEY} registers {own}")
+    check = SourceCrossCheck(
+        statistic="min_pearson_r",
+        value=comparison.min_pearson_r,
+        tolerance=wetmore2015.COMPENDIUM_MIN_PEARSON_R,
+        tolerance_basis="Price 2018 states it analysed fitness 'as previously "
+        "described9' (ref 9 is Wetmore 2015) at statistics version 1.0.3 against "
+        "Wetmore's 1.0.0, so a shared sample's two values are two analyses of the same "
+        "reads; they must agree at least as well as Price's own median pair of exact "
+        "replicates, 'a median correlation of 0.87 for gene fitness values from defined "
+        "media experiments' (wetmore2015.SUPERSET_REPLICATE_AGREEMENT)",
+        n_samples=len(comparison.agreements),
+        n_values=sum(a.n_genes for a in comparison.agreements),
+        against="Wetmore 2015 release fit_logratios.tab (every sample), statistics "
+        "1.0.0 (sha256 "
+        f"{wetmore2015.manifest_sha256(wetmore2015.load_manifest(), wetmore2015.RELEASE_FITNESS_ALL)})",
+    )
+    loaded = (
+        f"loaded as {own[0]} from the release (statistics 1.0.0), whose L4 row "
+        "compendium_cross_check_price2018 checks the two dev stores"
+        if own
+        else "statistics 1.0.0 per-sample fitness in the raw mirror; not loaded"
+    )
+    return SourceDecomposition(
+        source_label=f"doi:{norm_doi(wetmore2015.PAPER_DOI)}",
+        role="original_study",
+        citation_key=wetmore2015.CITATION_KEY,
+        doi=norm_doi(wetmore2015.PAPER_DOI),
+        dataset_class=PRICE_CLASS,
+        n_samples_in_compendium=len(members),
+        n_samples_served=sum(1 for s in members if s["drop_rule"] is None),
+        own_release=True,
+        own_release_kind="per_record_values",
+        own_release_url=RBARSEQ_URL,
+        own_release_access=access_from_manifest(
+            wetmore2015.load_manifest(), wetmore2015.RELEASE_FITNESS
+        ),
+        mirrored=True,
+        loaded_as_own_dataset=bool(own),
+        own_dataset_class=own[0] if own else None,
+        cross_check=check,
+        note=f"{loaded}. The browser attributes these samples {dict(second)}",
     )
 
 

@@ -294,3 +294,17 @@ What the schema would need, as proposals:
 - For SPELL, a per-value imputation flag (the knn files), the two-channel reference of each study, and the platform; `MicroarrayExpressionPhenotype` exists and the Kemmeren 2014 loader is the precedent.
 - For YEASTRACT, the association is not a phenotype of a genotype in an environment. An `Indirect` row is a derived statement over an expression dataset that would be loaded from its own release (a regulator deletion's transcriptome); a `Direct` row needs a binding-measurement record class that does not exist. Hypothesis (untested): most `Indirect` rows reduce to expression datasets already planned through SPELL or GEO, and the association becomes an edge derived from them rather than a stored record.
 - A re-analysis source (Reimand 2010) needs a `source_label` for the re-analysis and a pointer to the original study it re-processed, so the decomposition can recurse.
+
+## 2026.10.11 - Wetmore 2015 is loaded as its own dataset; its Price 2018 cross-check gets a bound
+
+`RbTnseqWetmore2015Dataset` ([[torchcell.datasets.ecoli.wetmore2015]], branch `feat/ecoli-wetmore2015-own-release`) loads Wetmore 2015 from its own 1.0.0 release. The audit's Wetmore entry is now built by `wetmore_source` in `aggregation_decomposition_audit.py`, which reads `loaded_as_own_dataset` and `own_dataset_class` off the registry instead of hard-coding them, and the entry was recomputed with that function (the full audit needs the 10 GB browser snapshot and re-measures all four compendia; only this entry's inputs moved). The Price 2018 verdict was re-gated with `--decomposition` and the ledger section re-rendered.
+
+| field | before | now |
+|---|---|---|
+| `loaded_as_own_dataset` / `own_dataset_class` | no / None | yes / `RbTnseqWetmore2015Dataset` |
+| cross-check artifact | `fit_logratios_good.tab` (91 samples, 331,786 values) | `fit_logratios.tab`, every sample (92 samples, 335,432 values; `set2IT045`, failed by Wetmore's own cor12 rule, included) |
+| statistic, value | min Pearson r 0.98895 | min Pearson r 0.98895 (unchanged: `set2IT045` is 0.9903) |
+| tolerance | none (a pin) | **0.87**, Price 2018's "median correlation of 0.87 for gene fitness values from defined media experiments" between exact replicates |
+| Price counts | loadable 1, loaded 0, 92 samples loadable | loadable 0, loaded 1, 0 samples loadable |
+
+The bound is an owner decision taken by recommendation (the table above marked it so): Price states it analysed fitness "as previously described9" (ref 9 is Wetmore) at statistics 1.0.3, so a shared sample's two values are two analyses of the same reads and should agree at least as well as two independent exact replicates do. The same bar is the Wetmore loader's L4 row `compendium_cross_check_price2018`, which compares the two dev stores (83 samples in both, 301,124 values, min r 0.9889).

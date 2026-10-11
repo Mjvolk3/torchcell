@@ -26,7 +26,8 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | limMachinelearningPseudomonasPutida2022 | bacteria | Lim 2022 putidaPRECISE321 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | lamoureuxMultiscaleExpressionRegulation2023 | bacteria | PRECISE-1K | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | potelWidespreadBacterialProtein2018 | bacteria | Potel 2018 phosphoproteome | ✓ | ■ | · | · | · | **blocked:ingest** |  | 2026-10-10 | `878d58607` |
-| priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
+| priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `9f708b4e1` |
+| wetmoreRapidQuantificationMutant2015 | bacteria | Wetmore 2015 | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #726 | 2026-10-11 | `9f708b4e1` |
 | boocockSinglecellEQTLMapping2025 | yeast | Boocock 2025 (single-cell eQTL mapping) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `de58b18dc` |
 | dechiaraDomesticationReprogrammedBudding2022 | yeast | De Chiara 2022 (domestication and the life cycle) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `5af868d60` |
 | deloacheEnzymecoupledBiosensorEnables2015 | yeast | DeLoache 2015 (betaxanthin biosensor for (S)-reticuline) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
@@ -61,7 +62,7 @@ Plan decision 16: each source study of a served aggregation, against its own rel
 | borchertMachineLearningAnalysis2024 | 12 | 10 | 0 | 1 | 1 | 332 (290) |
 | limMachinelearningPseudomonasPutida2022 | 22 | 21 | 0 | 1 | 0 | 321 (180) |
 | lamoureuxMultiscaleExpressionRegulation2023 | 116 | 114 | 0 | 2 | 0 | 2710 (481) |
-| priceMutantPhenotypesThousands2018 | 2 | 1 | 0 | 1 | 0 | 162 (147) |
+| priceMutantPhenotypesThousands2018 | 2 | 0 | 0 | 1 | 1 | 162 (147) |
 
 | citation key | served class | source | role | samples (served) | own release | access | mirrored | loaded | cross-check |
 |---|---|---|---|---|---|---|---|---|---|
@@ -215,7 +216,7 @@ Plan decision 16: each source study of a served aggregation, against its own rel
 | lamoureuxMultiscaleExpressionRegulation2023 | RnaseqPublicK12Lamoureux2023Dataset | pmid:25429971 | original_study | 2 (0) | raw_reads_only | scriptable | no | no | · |
 | lamoureuxMultiscaleExpressionRegulation2023 | RnaseqPublicK12Lamoureux2023Dataset | pmid:30016375 | original_study | 2 (0) | per_record_values | scriptable | no | no | · |
 | lamoureuxMultiscaleExpressionRegulation2023 | RnaseqPublicK12Lamoureux2023Dataset | pmid:31270363 | original_study | 2 (2) | per_record_values | scriptable | no | no | · |
-| priceMutantPhenotypesThousands2018 | RbTnseqPrice2018EcoliDataset | doi:10.1128/mbio.00306-15 | original_study | 92 (84) | per_record_values | scriptable | yes | no | min_pearson_r 0.988954 (pin) |
+| priceMutantPhenotypesThousands2018 | RbTnseqPrice2018EcoliDataset | doi:10.1128/mbio.00306-15 | original_study | 92 (84) | per_record_values | scriptable | yes | RbTnseqWetmore2015Dataset | min_pearson_r 0.988954 (pass) |
 | priceMutantPhenotypesThousands2018 | RbTnseqPrice2018EcoliDataset | doi:10.1038/s41586-018-0124-0 | compendium_paper | 70 (63) | none | · | yes | no | · |
 
 ## 2026.10.11 - Decomposition tables

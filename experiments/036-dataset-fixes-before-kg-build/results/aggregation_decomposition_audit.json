@@ -50,18 +50,18 @@
           "own_release_url": "https://genomics.lbl.gov/supplemental/rbarseq/",
           "own_release_access": "scriptable",
           "mirrored": true,
-          "loaded_as_own_dataset": false,
-          "own_dataset_class": null,
+          "loaded_as_own_dataset": true,
+          "own_dataset_class": "RbTnseqWetmore2015Dataset",
           "cross_check": {
             "statistic": "min_pearson_r",
             "value": 0.9889538063315205,
-            "tolerance": null,
-            "tolerance_basis": "Price 2018 re-ran the RB-TnSeq statistics (versions 1.0.3, 1.1.0 or 1.1.1) over Wetmore 2015's 1.0.0 and states no expected agreement, so the measured minimum is a pin; identity rests on the shared sample name and metadata (wetmore2015.build_subsumption refuses a mismatch)",
-            "n_samples": 91,
-            "n_values": 331786,
-            "against": "Wetmore 2015 release fit_logratios_good.tab, statistics 1.0.0 (sha256 f65a093b7fba660f12a894200073e3d731cd0b8a3f313205a5760584f4e55935)"
+            "tolerance": 0.87,
+            "tolerance_basis": "Price 2018 states it analysed fitness 'as previously described9' (ref 9 is Wetmore 2015) at statistics version 1.0.3 against Wetmore's 1.0.0, so a shared sample's two values are two analyses of the same reads; they must agree at least as well as Price's own median pair of exact replicates, 'a median correlation of 0.87 for gene fitness values from defined media experiments' (wetmore2015.SUPERSET_REPLICATE_AGREEMENT)",
+            "n_samples": 92,
+            "n_values": 335432,
+            "against": "Wetmore 2015 release fit_logratios.tab (every sample), statistics 1.0.0 (sha256 adf240fcb677193cc9a14ea59ea0e86bfdf8ddb9345e7cf55c99f3df3cc15102)"
           },
-          "note": "statistics 1.0.0 per-sample fitness, already in the raw mirror; being loaded on feat/ecoli-wetmore2015-own-release (not on main when measured). The browser attributes these samples {'Wetmore15': 87, 'not-in-browser': 4, 'Price18': 1}"
+          "note": "loaded as RbTnseqWetmore2015Dataset from the release (statistics 1.0.0), whose L4 row compendium_cross_check_price2018 checks the two dev stores. The browser attributes these samples {'Wetmore15': 87, 'not-in-browser': 4, 'Price18': 1}"
         }
       ]
     },
@@ -2883,17 +2883,17 @@
         "original_studies": 1,
         "unattributed_releases": 0,
         "compendium_paper": 1,
-        "loadable_from_own_release": 1,
-        "loadable_scriptable": 1,
+        "loadable_from_own_release": 0,
+        "loadable_scriptable": 0,
         "loadable_walled": 0,
-        "loadable_per_record_values": 1,
+        "loadable_per_record_values": 0,
         "loadable_raw_reads_only": 0,
         "compendium_only": 1,
-        "loaded_as_own_dataset": 0,
+        "loaded_as_own_dataset": 1,
         "mirrored": 2,
         "samples": 162,
         "samples_served": 147,
-        "samples_loadable_from_own_release": 92,
+        "samples_loadable_from_own_release": 0,
         "samples_compendium_only": 70
       },
       "dropped_or_recomputed": [

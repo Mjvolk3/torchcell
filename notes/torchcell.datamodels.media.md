@@ -514,3 +514,51 @@ Two library media for De Chiara 2022's life-cycle assays, each quoting its Metho
 ## 2026.10.11 - Hackett 2020 IDEA chemostat media
 
 Four keys added in a delimited block before the SM section (none moved): `CHEMOSTAT_MINIMAL_HACKETT2020`, a base whose one component is a `composition_deferred` line naming Saldanha 2004 (`saldanhaNutritionalHomeostasisBatch2004`, not mirrored; the Methods grow every culture "as previously described with minor adjustments (Saldanha et al, 2004)"), and three derivatives that add the stated limiting nutrient: `CHEMOSTAT_P_LIMITED_HACKETT2020` (phosphate 0.02 g/L, "minimal medium under phosphate limitation $( 2 0 ~ \mathrm { m g / l } )$"; the weighed salt is not named, so the component is itself deferred rather than a guessed potassium or sodium phosphate), `CHEMOSTAT_N_LIMITED_HACKETT2020` (ammonium sulfate 0.04 g/L) and `CHEMOSTAT_MET_LIMITED_HACKETT2020` (L-methionine 0.0075 g/L, quoted from the GEO GSE142864 growth protocol deposited in the raw mirror, since the paper does not state it). All four are in `CARBON_FREE_MEDIA` (the carbon source is inside the deferred recipe) and their `media_identity` digests are pinned in `test_media_bacterial.py`. Used by [[torchcell.datasets.scerevisiae.hackett2020]].
+
+## 2026.10.11 - RCH2 defined minimal medium for Borchert 2024 (#860)
+
+### The entry
+
+`RCH2_DEFINED_NOCARBON_PRICE2018` (85 `MEDIA_LIBRARY` keys, from 84), sourced from Price 2018
+Supplementary Tables (`priceMutantPhenotypesThousands2018/si/si3.xlsx`, sha256
+`e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879`), sheet
+`TableS18_Medias`, block `RCH2_defined_noCarbon` (0-based rows 446-455), quoted as the
+xlsx row rendering the audit re-reads:
+
+| component | amount | role | identity |
+|---|---|---|---|
+| ammonium chloride | 0.25 g/L | nitrogen source | existing row |
+| potassium chloride | 0.1 g/L | bulk salt | new row, CID 4873, `WCUXLLCKKVVCTQ-UHFFFAOYSA-M` |
+| sodium dihydrogen phosphate monohydrate | 0.6 g/L | bulk salt | new row, CID 516949, `BBMHARZCALWXSL-UHFFFAOYSA-M` |
+| PIPES sesquisodium salt | 30 mM | buffer | new row, CID 3086462, `FPDACHMSOMILQI-UHFFFAOYSA-K` |
+| Wolfe's mineral mix | 1 X, carried as 1% (v/v) | trace element | `composition_deferred` mixture |
+| Wolfe's vitamin mix | 1 X, carried as 1% (v/v) | vitamin | `composition_deferred` mixture |
+
+It is its own base (`base_medium="RCH2_DEFINED_NOCARBON_PRICE2018"`, the `MOPS_MINIMAL`
+shape), carbon-free by name and listed in `CARBON_FREE_MEDIA`: each Borchert sample's
+Condition_1 (glucose, potassium acetate, levulinic acid, 4-hydroxyvalerate, vanillin,
+p-coumaric acid) is the carbon-source factor.
+
+### The Wolfe's mixes stay mixtures (the Fang 2025 trace-stock convention)
+
+The same sheet's "MEDIA SUPPLEMENT MIXES" block defines both mixes as 100X stocks
+(mineral: 14 salts, from 3 g/L magnesium sulfate heptahydrate to 0.3 mg/L sodium selenite
+pentahydrate; vitamin: 10 vitamins, from 10 mg/L pyridoxine HCl to 0.1 mg/L
+cyanocobalamin) and states '"X" is the concentration of the stock supplement mix'. Each
+mix is ONE component at the stated 1 X, carried as 1% (v/v) because 1 X of a 100X stock
+is a 1:100 dilution by the sheet's own definition (the way Fang 2025's "1 mL/L" is carried
+as 0.1% v/v), with three quotes: the medium row, the stock recipe, and the X definition.
+The diluted per-compound amounts would be a derivation rather than a stated value, so the
+fourteen salts and ten vitamins are not expanded, and #860's seven mix components
+(nitrilotriacetic acid, nickel chloride hexahydrate and the rest) did not need table rows.
+
+### Admission consequence
+
+`media.py`, `compound_identity.py` and `compound_identity_table.json` are all in
+`VALUE_SURFACE_RELPATHS`, so `kg_manifest admit` reports value drift on all three. Unlike
+the 2026.10.07 rounds, the reason is NOT "no served node moves": the same branch's curator
+pass ([[torchcell.datamodels.compound_identity]], 2026.10.11) changes two compounds of the
+served Hoepfner 2014 records, so this is the full-rebuild case, which KG 4.0 is. No
+pre-existing `MEDIA_LIBRARY` key's `media_identity` digest moved
+(`test_media_bacterial.py`, all 54 pinned keys pass), and the new entry is a distinct node
+from every other bacterial entry.

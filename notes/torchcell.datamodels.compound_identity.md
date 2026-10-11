@@ -317,3 +317,133 @@ names `CrispriDifferentialProteomeYunus2026Dataset` but not the other four, beca
 gate fingerprints the schema CLOSURE and a class that has been deleted outright is not in
 any closure to compare. A store that cannot be unpickled is the strongest possible
 staleness signal and the gate does not see it.
+
+## 2026.10.11 - #726 and #860: the curator pass over the bacterial condition labels
+
+Script: `experiments/036-dataset-fixes-before-kg-build/scripts/compound_curator_726_860.py`
+(the curator on ONE list, merged additively), with its log
+`results/compound_curator_726_860_log.txt`, per-label evidence
+`results/compound_curator_726_860.csv` / `.json`, the lookup-key diff
+`results/compound_identity_table_diff.json`, and the store measurement
+`scripts/compound_curator_726_860_store_reach.py` ->
+`results/compound_curator_726_860_store_reach_{before,after}.json`.
+Input list: `compound_identity_inputs/bacterial_conditions.txt` (sha256 `190b5b14...`).
+
+### PubChem answered from GilaHyper
+
+Three manual probes (`water`, `glucose`, `chloramphenicol`) returned HTTP 200 on
+2026-10-10, about 5.2 s each (the resolver stall, not a throttle), and the pass completed
+without the curator raising. 434 PubChem responses are cached at
+`$DATA_ROOT/tmp/pubchem_curator_cache_726_860_2026-10-10.json` (sha256 `1119efcc...`), so
+the run reproduces offline.
+
+### Scope: 178 labels
+
+Every single-substance label with a typed InChIKey gap in the built stores of the six
+datasets the two issues name (Price 2018 RB-TnSeq, Tong 2020, Goodall 2018, PRECISE-1K
+and its public-K12 arm, Borchert 2024), measured by the 2026.10.09 gap inventory; then
+every other gap label whose stores all lie in the set those rows already force a rebuild
+of (Girgis 2009, Choe 2025, Schmidt 2016 and others, so no extra store is touched); Banerjee
+2025's `D-alanine` and `L-malate` and Niu 2019's `pinene` from the issue comments; the
+three RCH2 base salts; and `4-Hydroxyvalerate`, a carbon source of the 20 dropped Borchert
+samples the inventory could not see. The 17 media-base and trace-stock preparations
+(`LB base, PRECISE-1K formulation`, `sauer trace element mixture`, `20AA_mix` and the rest)
+are NOT here: their loaders build a bare `Compound` without the resolver, so a row would
+change nothing; the 61 Lim 2022 environment placeholders never get a row.
+
+### Outcome
+
+| status | labels | meaning |
+|---|---|---|
+| RESOLVED | 166 | InChIKey + CID |
+| RESOLVED_MIXTURE | 4 | CID (and ChEBI where unique), no single-molecule key: Bacitracin, Benzalkonium Chloride, gentamycin, trimethoprim-sulfamethoxazole |
+| UNDEFINED_MIXTURE | 3 | no structure exists: casamino acids, Tween 20, Povidone-Iodine |
+| UNRESOLVED_PUBLIC | 5 | a recorded reason: DPD, PQ, ET2DA, polymyxin B, pinene |
+
+Table: 5,533 rows to 5,679 (146 rows added, 26 labels folded into the existing row that
+already holds their CID), sha256 `5a476def...` to `d45d3ded...`. The lookup-key diff
+against origin/main's table: 178 keys added, 0 keys renamed, 0 lost, 0 removed, 0
+identifier changes, so no existing row moved.
+
+**Folds (one compound, one node).** A label whose PubChem CID an existing row holds is
+added to that row as a synonym rather than given a second row; the InChIKeys must agree
+or the merge stops. Only the source label is added, never the PubChem Title.
+
+| label(s) | existing row | CID |
+|---|---|---|
+| `2,2'-Dipyridyl` | `2,2'-bipyridine` | 1474 |
+| `3-methyl-3-butenol` | `isoprenol` | 12988 |
+| `doxycycline` | the row Wildenhain's CID list named by PubChem's IUPAC Title (`4-(dimethylamino)-1,5,10,11,12a-pentahydroxy-...`) | 54671203 |
+| `4-Aminobutyric acid` | `gamma-aminobutyric acid` | 119 |
+| `5-Hydroxymethylfurfural` | `5-(hydroxymethyl)furfural` | 237332 |
+| `e-Amino-N-Caproic Acid` | `6-aminohexanoic acid` | 564 |
+| `Cobalt chloride hexahydrate` | `cobalt(II) chloride hexahydrate` | 24643 |
+| `copper (II) chloride dihydrate` | `copper(II) chloride dihydrate` | 61482 |
+| `D-Cycloserine` | `cycloserine` | 6234 |
+| `D-Fructose` | `fructose` | 2723872 |
+| `D-Galactose` | `galactose` | 6036 |
+| `D-Mannose` | `mannose` | 18950 |
+| `D-Sorbitol` | `sorbitol` | 5780 |
+| `D-Xylose` | `xylose` | 135191 |
+| `2-Furfuraldehyde` | `furfural` | 7362 |
+| `arginine`, `leucine`, `methionine`, `phenylalanine`, `threonine`, `tyrosine` | the `L-` rows | 6322, 6106, 6137, 6140, 6288, 6057 |
+| `glutamate` | `L-glutamic acid` | 33032 |
+| `L-Aspartate` | `L-aspartic acid` | 5960 |
+| `Nicotinic Acid` | `niacin` | 938 |
+| `thiamin` | `thiamine` | 1130 |
+| `Na-citrate` | `sodium citrate` | 6224 |
+
+The six unstereo amino-acid names (PRECISE-1K's `Supplement` cells) reach the `L-` rows
+because PubChem's name index answers each bare name with the L-enantiomer record; the
+Lamoureux loader deliberately leaves those labels unstereo, so this is PubChem's reading,
+not the paper's, and is listed here for review.
+
+**Lookups that are not the label as written** (each with its reason in the input list):
+`Propandiamine` -> `1,3-diaminopropane` (Schmidt 2022's conditions table, the source study
+of set29, lists "1,3 diaminopropane (N)"); `a-Ketoglutaric acid disodium salt hydrate`,
+`alpha-ketoglutarate` (`α-`) and `beta-hydroxyisobutanoate` (`3-hydroxyisobutyrate`), which
+the name index does not read as written; `Sodium D,L-Lactate` -> `sodium DL-lactate`;
+`Na-citrate` -> `sodium citrate`; `N-Acetyl-D-Glucosamine` by the CAS Price 2018 states
+(7512-17-6, CID 1738118), the record the Tong 2020 and PRECISE-1K spellings resolve to;
+and `4-Aminobutyric acid` by `cid=119`, because the name index answers it with CID 223130,
+whose structure `CC(CCC(=O)O)N` is 4-aminopentanoic acid (it answers
+"4-aminopentanoic acid" with the same CID).
+
+**The Price 2018 CAS cross-check.** Tables S2-S4 of `si3.xlsx` state a CAS number for 63
+of the labels. Each was looked up: 54 give the same CID the curator adopted. Of the other
+nine, two CAS numbers are absent from PubChem (Benzalkonium Chloride, D-Galacturonic Acid
+monohydrate); four give a second PubChem record of the same substance and form (copper
+chloride dihydrate, maltose monohydrate, mannose, nickel chloride hexahydrate), where the
+adopted record is kept because it is the one another dataset's label already resolves to
+or, for maltose and nickel, the one whose Title matches the label; and three name a
+different FORM than the label, an internal inconsistency of the release that is recorded,
+not resolved: `a-Ketoglutaric acid disodium salt hydrate` (CAS 305-72-6 is the anhydrous
+salt), `Adenine hydrochloride hydrate` (2922-28-3, anhydrous), and `Sodium D,L-Lactate`
+(50-21-5, lactic acid itself). The label's form is kept in all three.
+
+**Pinene (#799).** Measured, not hypothesized: the name index answers `alpha-pinene` with
+CID 6654, titled (+-)-alpha-Pinene, and bare `pinene` with CID 15837102, titled (-)-Pinene,
+whose connectivity `CC1=C2CC(C2(C)C)CC1` is neither alpha- nor beta-pinene. So the two do
+NOT collapse: `alpha-pinene` has its own RESOLVED row and `pinene`, the label Niu 2019
+passes, is an UNRESOLVED_PUBLIC row recording why. Niu 2019's records are unchanged.
+
+### Renames, and the one served dataset the rows change
+
+None of the 178 labels resolved before, so a rename can only take a record's compound from
+its release spelling to the row's canonical spelling. The store measurement over EVERY
+mapped dev store (`store_reach_before.json`, yeast included) finds 48 such
+(spelling, new name) pairs in 9 stores; 15 are case only (`Chloramphenicol` ->
+`chloramphenicol`), the rest are folds or collapses (`D-Fructose` -> `fructose`, `Ribose`
+-> `D-ribose`, `N-acetyl Glucosamine` -> `N-acetylglucosamine`). Every other store the
+rows reach only gains identifiers under an unchanged name.
+
+Of the 51 datasets the served KG v2.0 holds, exactly one is touched:
+**EnvChemgenHoepfner2014Dataset**, whose records carry `D-Sorbitol` and `Potassium
+Chloride` with InChIKeys derived from Hoepfner's own SMILES. A curated row outranks that
+derivation, so after a rebuild `D-Sorbitol` becomes `sorbitol` (same InChIKey, CID 5780
+filled) and `Potassium Chloride` becomes `potassium chloride` with PubChem's
+`WCUXLLCKKVVCTQ-UHFFFAOYSA-M` in place of the `-N` key Hoepfner's `[K+].Cl` SMILES gives.
+`scripts/schema_impact_check.py --base origin/main` reports "No schema contract changes"
+and so names no dataset, because the compound table is not in the schema closure; that is
+the #726 hazard, and it is why the store measurement exists. KG 4.0 is a full rebuild, so
+this is in scope; it is not an increment.

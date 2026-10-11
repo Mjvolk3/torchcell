@@ -15,8 +15,12 @@ rather than assumed absent.
 For each store it reports, per curated label it holds: the name the records carry, how
 many compound references carry it, how many of those have an InChIKey, and what the
 pinned table now returns for that name. A store is ``stale`` when any held compound
-differs from what the resolver would build today (name or InChIKey). Run before the
-rebuild for the rebuild set and after it to show the set is empty.
+differs from what the resolver would build today: its name, its InChIKey, a PubChem CID
+the row now fills, or the reason of its ``inchikey`` gap (a mixture row makes a
+recoverable gap terminal). The CID and gap-reason checks were added after the "before"
+run (whose 40-store set they would not have grown: every store holding a mixture label is
+in it), so the "after" run applies the stricter test. Run before the rebuild for the
+rebuild set and after it to show the set is empty.
 
 Reads each store the way ``bacterial_compound_identity_gaps.py`` does: the
 ``processed/interned`` env (every deduplicated environment), plus the records for a
@@ -47,6 +51,7 @@ from torchcell.database.build_dataset_lmdb import dataset_default_root
 from torchcell.datamodels.compound_identity import (
     _TABLE_SHA256,
     resolve_compound_identity,
+    resolved_compound,
 )
 from torchcell.datamodels.compound_identity_curate import read_name_list
 from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
@@ -99,7 +104,13 @@ def main() -> None:
             gaps.carries_a_compound_phenotype(dataset_class)
         )
         held: dict[str, dict[str, Any]] = defaultdict(
-            lambda: {"references": 0, "with_inchikey": 0, "inchikeys": set()}
+            lambda: {
+                "references": 0,
+                "with_inchikey": 0,
+                "inchikeys": set(),
+                "without_cid": 0,
+                "inchikey_gap_reasons": set(),
+            }
         )
         compounds = gaps.store_compounds(root, read_records)
         while True:
@@ -119,6 +130,13 @@ def main() -> None:
             if compound["inchikey"] is not None:
                 entry["with_inchikey"] += 1
                 entry["inchikeys"].add(compound["inchikey"])
+            if compound.get("pubchem_cid") is None:
+                entry["without_cid"] += 1
+            entry["inchikey_gap_reasons"].update(
+                str(gap["reason"])
+                for gap in compound.get("provenance_gaps") or []
+                if gap["field"] == "inchikey"
+            )
         if not held:
             continue
         labels: dict[str, Any] = {}
@@ -132,6 +150,22 @@ def main() -> None:
                 now.inchikey is not None
                 and entry["with_inchikey"] < (entry["references"])
             )
+            # A mixture row gains a CID but no InChIKey, and turns a recoverable gap into
+            # a terminal one; only a compound the RESOLVER built carries an inchikey gap
+            # (a media mixture is a bare Compound), so the reason is compared only there.
+            now_gap = [
+                str(gap.reason)
+                for gap in resolved_compound(label).provenance_gaps
+                if gap.field == "inchikey"
+            ]
+            cid_fills = now.pubchem_cid is not None and entry["without_cid"] > 0
+            reason_moves = bool(entry["inchikey_gap_reasons"]) and (
+                entry["inchikey_gap_reasons"] != set(now_gap)
+            )
+            differs = differs or (
+                cid_fills and bool(entry["inchikey_gap_reasons"] | entry["inchikeys"])
+            )
+            differs = differs or reason_moves
             stale = stale or differs or gap_closes
             labels[label] = {
                 "references": entry["references"],

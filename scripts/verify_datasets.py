@@ -59,6 +59,7 @@ FAMILIES: dict[str, tuple[str, str | None]] = {
     "ffa_xue2025": ("run_metabolite", "METABOLITE_DATASETS"),
     "proteome_zelezniak2018": ("run_protein", "PROTEIN_DATASETS"),
     "proteome_messner2023": ("run_protein", "PROTEIN_DATASETS"),
+    "proteome_muenzner2024": ("run_protein", "PROTEIN_DATASETS"),
     "caudal_pantranscriptome2024": ("run_rnaseq", "RNASEQ_DATASETS"),
     "nadal_ribelles_perturbseq2025": ("run_rnaseq", "RNASEQ_DATASETS"),
     "scmd_ohya2005": ("run_morphology", None),

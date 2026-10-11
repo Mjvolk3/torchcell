@@ -124,6 +124,7 @@ from torchcell.sequence.genome.registry import (
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification import runners
+from torchcell.verification.levels import l1_count
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -1318,6 +1319,40 @@ def test_run_metabolite_forwards_spec_flags_and_writes_every_report(
     )
 
 
+def test_run_protein_hands_a_natural_isolate_spec_to_its_loader_gate(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A ``natural_isolates`` entry is verified by ``muenzner2024.verify_build``.
+
+    The runner calls it with the store root and the data root, writes the report it
+    returns into that store's ``preprocess/``, and folds its pass/fail into the result.
+    """
+    from torchcell.datasets.scerevisiae import muenzner2024
+
+    calls: list[tuple[str, str]] = []
+
+    def gate(dataset_root: str, *, data_root: str | None = None) -> VerificationReport:
+        assert data_root is not None
+        calls.append((dataset_root, data_root))
+        report = VerificationReport(dataset_name="iso", provenance=PROV)
+        report.add(l1_count(2, 3))
+        return report
+
+    monkeypatch.setattr(muenzner2024, "verify_build", gate)
+    monkeypatch.setattr(
+        runners,
+        "PROTEIN_DATASETS",
+        {"iso": {**_spec("iso", expected_count=3), "natural_isolates": True}},
+    )
+    (tmp_path / "data/torchcell/iso/preprocess").mkdir(parents=True)
+    assert runners.run_protein(str(tmp_path)) is False
+    assert calls == [(str(tmp_path / "data/torchcell/iso"), str(tmp_path))]
+    written = _read_report(_root(tmp_path, "iso"))
+    assert written["dataset_name"] == "iso"
+    assert [r["name"] for r in written["results"]] == ["count"]
+    assert written["results"][0]["details"] == {"observed": 2, "expected": 3}
+
+
 def test_run_protein_forwards_allow_duplicate_orfs(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -1949,7 +1984,15 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.PROTEIN_DATASETS) == {
         "proteome_zelezniak2018": 97,
         "proteome_messner2023": 4699,
+        "proteome_muenzner2024": 794,
     }
+    # The natural-isolate proteome is verified by its loader's own gate (one record per
+    # isolate, a shared euploid reference, the Caudal overlap), not the ORF gate.
+    assert {
+        name
+        for name, spec in runners.PROTEIN_DATASETS.items()
+        if spec.get("natural_isolates")
+    } == {"proteome_muenzner2024"}
     assert (
         runners.PROTEIN_DATASETS["proteome_messner2023"]["allow_duplicate_orfs"] is True
     )
@@ -2089,7 +2132,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 3 + 1 + 14 + 2 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1
+    assert len(roots) == 3 + 1 + 14 + 3 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

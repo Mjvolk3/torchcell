@@ -887,6 +887,30 @@ PROTEIN_DATASETS: dict[str, dict[str, Any]] = {
             page="Cell 186:2018; Mendeley 10.17632/w8jtmnszd9.1 yeast5k_noimpute_wide.csv",
         ),
     },
+    # Natural isolates: one record per isolate (not per knocked-out ORF), a shared
+    # euploid-median reference, and an L4 against the built Caudal 2024 store. The gate
+    # is the loader module's ``verify_build`` (also what ``build_dataset_lmdb --verify``
+    # runs), so this entry dispatches there rather than to ``verify_protein_dataset``.
+    "proteome_muenzner2024": {
+        "root": "data/torchcell/proteome_muenzner2024",
+        "expected_count": 794,
+        "natural_isolates": True,
+        "provenance": Provenance(
+            source_uri=(
+                "https://pmc-oa-opendata.s3.amazonaws.com/PMC11153158.1/"
+                "41586_2024_7442_MOESM3_ESM.xlsx"
+            ),
+            citation_key="muenznerNaturalProteomeDiversity2024",
+            sha256="1e78de77ffeb5ffb4f64f3999765db62ec9f6b6729a71f75feb1b955f5d6e005",
+            method=(
+                "SWATH-MS (DIA-NN MaxLFQ, precursor batch-median corrected), "
+                "non-imputed; one acquisition per natural isolate vs a per-protein "
+                "median over the 518 euploid isolates of the integrated set; genotype "
+                "vs S288C from Peter 2018 by the Caudal 2024 construction"
+            ),
+            page="Nature 630:149; Supplementary Table 3",
+        ),
+    },
 }
 
 
@@ -900,6 +924,15 @@ def run_protein(data_root: str) -> bool:
     all_passed = True
     for name, spec in PROTEIN_DATASETS.items():
         abs_root = osp.join(data_root, spec["root"])
+        if spec.get("natural_isolates"):
+            from torchcell.datasets.scerevisiae.muenzner2024 import verify_build
+
+            report = verify_build(abs_root, data_root=data_root)
+            out = _write_report(report, osp.join(abs_root, "preprocess"))
+            print(report.summary())
+            print(f"  -> wrote {out}\n")
+            all_passed = all_passed and report.passed
+            continue
         records = load_records(abs_root)
         report = verify_protein_dataset(
             records,

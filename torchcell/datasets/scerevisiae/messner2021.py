@@ -71,7 +71,7 @@ GENOTYPE. "The auxotrophic S. cerevisiae strain BY4741 (his3, leu2, ura3, met15)
 rendered prototrophic by genomic knock-in of the missing genes": the reference is BY4741
 and every record's genotype is empty. The four knock-ins are not modeled (as in the Messner
 2023 and Mulleder loaders): ``ProteinAbundanceExperimentReference`` takes the base
-``ReferenceGenome``, which has no background slot.
+``ReferenceGenome``, which has no background slot (issue #1032).
 """
 
 from __future__ import annotations

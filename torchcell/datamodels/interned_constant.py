@@ -44,6 +44,20 @@ EXPERIMENT_POINTER_MIN_BYTES: dict[str, int] = {"environment": 512, "genotype": 
 """Top-level fields of ``experiment.model_dump()`` written as pointers, with the
 minimum JSON size (bytes) at which a value leaves the blob."""
 
+NESTED_POINTER_MIN_BYTES: dict[tuple[str, str], int] = {
+    ("genotype", "background"): 8192
+}
+"""``(field, sub-field)`` pairs written as pointers BEFORE the top-level rule runs.
+
+A perturbed segregant genotype (Hale 2024) is a background mosaic shared by every
+perturbation measured on that segregant plus a ~1 KB perturbation list. Pointing at the
+whole genotype would intern one constant per (segregant, guide) pair, each carrying the
+same 8.7 KB mosaic; pointing at the background interns one constant per segregant and
+leaves the small, varying perturbation inline. The kind written on the pointer is
+``"genotype.background"``. A genotype with no ``background`` key (every other genotype
+class) is untouched, so every other dataset's blob is byte-identical to before.
+"""
+
 
 def constant_id(payload: str) -> str:
     """The node id of an interned constant: sha256 of its exact JSON payload."""
@@ -55,15 +69,33 @@ def split_experiment_dump(
 ) -> tuple[dict[str, Any], list[tuple[str, str, str]]]:
     """Return ``(pointered dump, constants)`` for one ``experiment.model_dump()``.
 
-    ``constants`` is a list of ``(id, kind, payload)`` for every field that became a
-    pointer; ``payload`` is ``json.dumps`` of the field's value, byte-identical to the
+    ``constants`` is a list of ``(id, kind, payload)`` for every field (or nested
+    sub-field, kind ``"<field>.<sub>"``) that became a pointer; ``payload`` is ``json.dumps`` of the field's value, byte-identical to the
     bytes that value contributes to ``json.dumps(dump)``, so splicing
     ``json.loads(payload)`` back reproduces the inlined record. ``dump`` is not
     mutated.
     """
     out = dict(dump)
     constants: list[tuple[str, str, str]] = []
+    # A field that already holds a nested pointer stays inline: pointing at it again
+    # would bury that pointer inside a constant, where the query loader (which collects
+    # pointers from the Experiment blob only) would never resolve it.
+    nested: set[str] = set()
+    for (field, sub), min_bytes in NESTED_POINTER_MIN_BYTES.items():
+        value = dump.get(field)
+        if not isinstance(value, dict) or sub not in value:
+            continue
+        payload = json.dumps(value[sub])
+        if len(payload) < min_bytes:
+            continue
+        ref = constant_id(payload)
+        kind = f"{field}.{sub}"
+        constants.append((ref, kind, payload))
+        out[field] = {**value, sub: {POINTER_KEY: ref, "kind": kind}}
+        nested.add(field)
     for field, min_bytes in EXPERIMENT_POINTER_MIN_BYTES.items():
+        if field in nested:
+            continue
         payload = json.dumps(dump[field])
         if len(payload) < min_bytes:
             continue

@@ -17,6 +17,11 @@ Hand-derived values: the payloads are built so their sizes are exact.
 ``json.dumps({"blocks": "y" * k})`` is ``14 + k`` bytes, so ``k = 8178`` sits on the
 genotype floor and ``k = 8177`` one byte below. The two pinned digests are the
 standard sha256 of the empty string and of ``{}``.
+
+The nested rule (Hale 2024's perturbed segregant genotype) points at
+``genotype.background`` at 8192 bytes BEFORE the top-level rule runs, and a genotype that
+received a nested pointer is never pointed at again. ``json.dumps({"blocks": "z" * k})``
+is ``14 + k`` bytes, so ``k = 8178`` puts the background on its floor.
 """
 
 from __future__ import annotations
@@ -32,6 +37,7 @@ from torchcell.datamodels.interned_constant import (
     EXPERIMENT_POINTER_MIN_BYTES,
     INTERNED_CONSTANT_LABEL,
     INTERNED_CONSTANT_NEO4J_LABEL,
+    NESTED_POINTER_MIN_BYTES,
     POINTER_KEY,
     collect_pointers,
     constant_id,
@@ -171,3 +177,59 @@ def test_verified_constant_accepts_matching_and_rejects_mismatch() -> None:
         f"{_SHA_BRACES}; the store is corrupt",
     ):
         verified_constant(_SHA_EMPTY, "{}")
+
+
+def _perturbed(background_k: int, perturbation_k: int) -> dict[str, Any]:
+    return {
+        "background": {"blocks": "z" * background_k},
+        "background_role": "segregant",
+        "perturbations": [{"guide": "g" * perturbation_k}],
+    }
+
+
+def test_nested_threshold_is_pinned() -> None:
+    assert NESTED_POINTER_MIN_BYTES == {("genotype", "background"): 8192}
+
+
+def test_background_at_floor_is_pointed_and_the_genotype_stays_inline() -> None:
+    dump = {**_dump(env_k=499, geno_k=0), "genotype": _perturbed(8178, 9000)}
+    original = copy.deepcopy(dump)
+    out, constants = split_experiment_dump(dump)
+
+    bg_payload = json.dumps({"blocks": "z" * 8178})
+    assert len(bg_payload) == 8192
+    bg_id = _sha(bg_payload)
+    # The perturbation list alone is above the genotype floor, yet the genotype is not
+    # pointed at: it already holds the background pointer.
+    assert constants == [(bg_id, "genotype.background", bg_payload)]
+    assert out["genotype"] == {
+        "background": {"$ref": bg_id, "kind": "genotype.background"},
+        "background_role": "segregant",
+        "perturbations": [{"guide": "g" * 9000}],
+    }
+    assert out["environment"] == _environment(499)
+    assert dump == original
+
+    refs: set[str] = set()
+    collect_pointers(out, refs)
+    assert refs == {bg_id}
+    resolved = resolve_pointers(out, {bg_id: verified_constant(bg_id, bg_payload)})
+    assert json.dumps(resolved) == json.dumps(original)
+
+
+def test_background_below_floor_leaves_the_top_level_rule_in_charge() -> None:
+    dump = {**_dump(env_k=500, geno_k=0), "genotype": _perturbed(8177, 10)}
+    out, constants = split_experiment_dump(dump)
+
+    geno_payload = json.dumps(dump["genotype"])
+    env_payload = json.dumps(_environment(500))
+    assert constants == [
+        (_sha(env_payload), "environment", env_payload),
+        (_sha(geno_payload), "genotype", geno_payload),
+    ]
+    assert out["genotype"] == {"$ref": _sha(geno_payload), "kind": "genotype"}
+
+
+def test_a_genotype_without_a_background_is_unchanged_by_the_nested_rule() -> None:
+    dump = _dump(env_k=499, geno_k=8177)
+    assert split_experiment_dump(dump) == (dump, [])

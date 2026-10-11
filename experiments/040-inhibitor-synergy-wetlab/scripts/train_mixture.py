@@ -765,6 +765,11 @@ class Standardization(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     x: torch.Tensor  # [n_compounds, kept features], standardized on the fitted rows
+    #: the feature scaling itself, so a compound with no row in the table (a counterfactual
+    #: molecule, featurized by the same fingerprint) can be put on this model's scale
+    x_keep: NDArray[np.bool_]
+    x_mean: NDArray[np.float64]
+    x_sd: NDArray[np.float64]
     dose_center: float
     dose_scale: float
     y_mean: dict[str, float]
@@ -810,6 +815,9 @@ def standardize(
         y_sd[source.spec.name] = float(np.nanstd(block))
     return Standardization(
         x=torch.tensor(x_std, dtype=torch.float32, device=device),
+        x_keep=keep,
+        x_mean=mu,
+        x_sd=sd,
         dose_center=float(np.mean(doses)),
         dose_scale=spread if spread > 1e-8 else 1.0,
         y_mean=y_mean,
@@ -973,6 +981,9 @@ def save_checkpoint(
             "selected_step": selected_step,
             "standardization": {
                 "x": std.x.detach().cpu(),
+                "x_keep": std.x_keep,
+                "x_mean": std.x_mean,
+                "x_sd": std.x_sd,
                 "dose_center": std.dose_center,
                 "dose_scale": std.dose_scale,
                 "y_mean": std.y_mean,

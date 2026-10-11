@@ -402,6 +402,15 @@ class SourceSpec(BaseModel):
     label_policy: Literal["single", "mean"]
     #: one value per ``SOURCE_ATTRIBUTES`` entry
     attributes: dict[str, str]
+    #: whether this source's served dose IS an IC30, which is what licenses reading it as
+    #: a host anchor at fitness 0.70. A source dosed at a FIXED concentration carries no
+    #: such reading: most of its compounds are inactive at that concentration, so an
+    #: anchor would assert a 30 percent growth defect that was never measured.
+    #: Measured basis per source, 033 ``store_axes.csv`` column ``dose_basis``:
+    #: Vanacloig IC30 for 136,237 of 143,218 cells, Hoepfner IC30 for all 2,880,165,
+    #: Hillenmeyer fixed or unstated for all 2,591,199, Wildenhain unstated (one
+    #: screening concentration of 20 uM for all 5,170 compounds).
+    anchors_are_ic30: bool
 
 
 SPECS: dict[str, SourceSpec] = {
@@ -425,6 +434,7 @@ SPECS: dict[str, SourceSpec] = {
             "label": "log2_ratio",
             "assay": "barcode",
         },
+        anchors_are_ic30=True,
     ),
     "hoepfner_hop": SourceSpec(
         name="hoepfner_hop",
@@ -445,6 +455,7 @@ SPECS: dict[str, SourceSpec] = {
             "label": "sensitivity_score",
             "assay": "barcode",
         },
+        anchors_are_ic30=True,
     ),
     "hillenmeyer_het": SourceSpec(
         name="hillenmeyer_het",
@@ -465,6 +476,7 @@ SPECS: dict[str, SourceSpec] = {
             "label": "log2_ratio",
             "assay": "barcode",
         },
+        anchors_are_ic30=False,
     ),
     "wildenhain": SourceSpec(
         name="wildenhain",
@@ -489,6 +501,7 @@ SPECS: dict[str, SourceSpec] = {
             "label": "z_score",
             "assay": "liquid_od",
         },
+        anchors_are_ic30=False,
     ),
 }
 for _spec in SPECS.values():
@@ -974,6 +987,13 @@ def anchor_records(
     A compound served at several concentrations in one source has no unambiguous IC30
     among them, so it is left out; ``results/mixture/<name>_host_records.csv`` counts how
     many each source contributed.
+
+    ONLY A SOURCE WHOSE DOSE IS AN IC30 CONTRIBUTES (``anchors_are_ic30``). Reading a
+    fixed screening concentration as an IC30 asserts a growth defect that was never
+    measured, and it is not a small error of bookkeeping: Wildenhain's single 20 uM
+    concentration would add 5,170 such anchors, a hundred times the 55 wet-lab titration
+    records the host head is meant to learn from, and most of its compounds are inactive
+    at that concentration.
     """
     records = [
         HostRecord(
@@ -991,6 +1011,8 @@ def anchor_records(
         )
     ]
     for source in sources:
+        if not source.spec.anchors_are_ic30:
+            continue
         served = pd.Series(source.compounds).value_counts()
         for j, name in enumerate(source.compounds):
             if served[name] != 1 or not np.isfinite(source.log10_molar[j]):

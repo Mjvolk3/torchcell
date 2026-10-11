@@ -9,6 +9,8 @@ ingestible), a named host with no set (BL21, provisionable), an unnamed host, an
 Thompson-shaped fixture (one released column, the right sample and a wrong one).
 """
 
+import io
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -361,6 +363,23 @@ def test_leading_archive_of_a_concatenated_file() -> None:
     assert gates.leading_archive(first + first) == first
     with pytest.raises(ValueError, match="no zip end-of-central-directory"):
         gates.leading_archive(b"plain text")
+
+
+def test_leading_archive_skips_a_signature_inside_member_data() -> None:
+    """A stored member carrying the EOCD signature does not truncate the archive.
+
+    The Hackett 2020 IDEA zip holds the four signature bytes inside its deflate stream
+    ahead of its real record; a stored member reproduces that deterministically.
+    """
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_STORED) as archive:
+        archive.writestr("member.bin", b"head" + gates._EOCD_SIGNATURE + b"\x00" * 40)
+    data = buffer.getvalue()
+    assert data.find(gates._EOCD_SIGNATURE) < data.rfind(gates._EOCD_SIGNATURE)
+    assert gates.leading_archive(data) == data
+    assert gates.leading_archive(data + data) == data
+    with pytest.raises(ValueError, match="no consistent zip end-of-central-directory"):
+        gates.leading_archive(b"x" + gates._EOCD_SIGNATURE + b"\x00" * 30)
 
 
 def test_inventory_of_a_concatenated_archive(tmp_path: Path) -> None:

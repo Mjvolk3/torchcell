@@ -622,16 +622,55 @@ _XLSX_SUFFIXES: Final = (".xlsx", ".xlsm")
 INVENTORY_PREFIXES: Final = ("si/", "data/")
 
 
+_CENTRAL_DIRECTORY_SIGNATURE: Final = b"PK\x01\x02"
+_ZIP64_LOCATOR_SIGNATURE: Final = b"PK\x06\x07"
+_ZIP64_SENTINEL: Final = 0xFFFFFFFF
+
+
+def _is_eocd(data: bytes, eocd: int) -> bool:
+    """Whether the signature at ``eocd`` is a real end-of-central-directory record.
+
+    The four signature bytes also occur by chance inside compressed member data (the
+    Hackett 2020 IDEA zip, 368 MB, carries one at byte 164,465,128 ahead of its real
+    record), so a candidate counts only when its own fields agree with the bytes: the
+    record and its comment fit, and the central directory it points to ends exactly at
+    the record and starts with a central-directory header. A zip64 record stores the
+    0xFFFFFFFF sentinel there and is preceded by the zip64 locator instead.
+    """
+    if eocd + _EOCD_FIXED_BYTES > len(data):
+        return False
+    cd_size = int.from_bytes(data[eocd + 12 : eocd + 16], "little")
+    cd_offset = int.from_bytes(data[eocd + 16 : eocd + 20], "little")
+    comment_length = int.from_bytes(data[eocd + 20 : eocd + 22], "little")
+    if eocd + _EOCD_FIXED_BYTES + comment_length > len(data):
+        return False
+    if _ZIP64_SENTINEL in (cd_size, cd_offset):
+        return data[eocd - 20 : eocd - 16] == _ZIP64_LOCATOR_SIGNATURE
+    if cd_offset + cd_size != eocd:
+        return False
+    return cd_size == 0 or data[cd_offset : cd_offset + 4] == (
+        _CENTRAL_DIRECTORY_SIGNATURE
+    )
+
+
 def leading_archive(data: bytes) -> bytes:
     """The bytes up to and including the FIRST end-of-central-directory record.
 
     The concatenated-archive pattern of ``torchcell/datasets/ecoli/tong2020.py``: a file
     that is a complete zip followed by more bytes reads as the trailing archive, so the
-    leading archive is hashed separately.
+    leading archive is hashed separately. Only a candidate :func:`_is_eocd` accepts is a
+    record, so a signature inside compressed data does not truncate the archive.
     """
     eocd = data.find(_EOCD_SIGNATURE)
     if eocd < 0:
         raise ValueError("no zip end-of-central-directory record in the bytes")
+    while eocd >= 0 and not _is_eocd(data, eocd):
+        eocd = data.find(_EOCD_SIGNATURE, eocd + 1)
+    if eocd < 0:
+        raise ValueError(
+            "no consistent zip end-of-central-directory record: every signature found "
+            "disagrees with the central directory it would point to"
+        )
     comment_length = int.from_bytes(data[eocd + 20 : eocd + 22], "little")
     return data[: eocd + _EOCD_FIXED_BYTES + comment_length]
 

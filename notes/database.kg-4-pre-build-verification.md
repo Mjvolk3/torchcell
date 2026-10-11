@@ -298,3 +298,50 @@ records each). #889 proposes the enrollment.
 `yeastphenome` is an `ENVIRONMENT_RESPONSE_DATASETS` registry entry on `main` with no
 adapter-map entry, so it is not a mapped dataset and is outside this sweep (#757 tracks its
 own L3 failures).
+
+## 2026.10.11 - The 16 NO VERIFIER stores now verified (#889)
+
+Branch `feat/verification-uncovered-stores-889` enrolls the eight Costanzo 2016 / Kuzmin 2018/2020 fitness stores in `FITNESS_DATASETS` (streamed) and adds three family registries, `GENE_INTERACTION_DATASETS` (5 stores), `GENE_ESSENTIALITY_DATASETS` (1) and `SYNTHETIC_PAIR_DATASETS` (2), which the sweep's `REGISTRY_RUNNERS` now routes. `--list-routes` reads 135 mapped datasets: module=48, registry=87, none=0.
+
+The 16 rows were measured by the sweep on `6c3ff3994`, read-only against the dev stores (none of the 16 is in slurm array 3733's rebuild list, `/scratch/projects/torchcell/database/slurm/stale_classes_2026-10-10.txt`): 14 in a shell lane, `dmf_costanzo2016` and `dmi_costanzo2016` under slurm jobs 3766 and 3767 (`scripts/gh_no_verifier_store_sweep.slurm`), each lane merged with `--merge`. Every count oracle is the release's (`scripts/no_verifier_store_release_counts.py`), and every store's count equals it.
+
+**135 mapped datasets: 120 PASS, 15 FAIL, 0 NO VERIFIER, 0 ERROR.** Of the 16: 3 PASS (`smf_kuzmin2018`, `dmi_kuzmin2018`, `smf_kuzmin2020`), 13 FAIL for data reasons, each left failing and filed:
+
+| Store | Failing rules | Issue |
+|---|---|---|
+| `smf_costanzo2016` | canonical_gene_names, current_genome_genes | #893 |
+| `dmf_costanzo2016` | canonical_gene_names, uncertainty_sanity, current_genome_genes | #930 |
+| `dmi_costanzo2016` | canonical_gene_names, current_genome_genes | #979 |
+| `dmf_kuzmin2018` | uncertainty_sanity | #894 |
+| `tmf_kuzmin2018` | uncertainty_sanity | #895 |
+| `tmi_kuzmin2018` | signed_unclamped | #896 |
+| `dmf_kuzmin2020` | canonical_gene_names, uncertainty_sanity, current_genome_genes | #897 |
+| `tmf_kuzmin2020` | canonical_gene_names, current_genome_genes | #898 |
+| `dmi_kuzmin2020` | canonical_gene_names, current_genome_genes | #899 |
+| `tmi_kuzmin2020` | canonical_gene_names, current_genome_genes | #900 |
+| `gene_essentiality_sgd` | one_record_per_gene_and_publication, media_membership, no_viable_deletion_in_smf_costanzo2016 | #901 |
+| `syn_leth_db_yeast` | media_membership | #902 |
+| `syn_rescue_db_yeast` | score_defined_by_source, media_membership | #903 |
+
+Every release-reproduction rule passes: `released_values` on all five interaction stores (including the 20,705,612 Costanzo pairs), `released_annotations` on SGD, `released_rows` and `release_accounting` on both SynLethDB stores, and `fitness_companion_containment` on all five. The failures are about what the releases carry (retired ORFs, suppressor strains stored as plain deletions, released SDs of 0, a one-sided trigenic file, conditional SGD annotations, a medium no source states). Per-store L0-L4 tables are in each dataset's note.
+
+The 16 rows of the sweep table (`--table`):
+
+| Store | Records | Route | Result | Store built | Verified at HEAD | Report |
+|---|---:|---|---|---|---|---|
+| `smf_costanzo2016` | 20484 | `run_fitness[FITNESS_DATASETS:smf_costanzo2016]` | FAIL: L1 canonical_gene_names, L4 current_genome_genes (14 rules) | 2026-10-09T12:12:24 | `6c3ff3994a` | `data/torchcell/smf_costanzo2016/preprocess/verification_report.json` |
+| `dmf_costanzo2016` | 20705612 | `run_fitness[FITNESS_DATASETS:dmf_costanzo2016]` | FAIL: L1 canonical_gene_names, L2 uncertainty_sanity, L4 current_genome_genes (14 rules) | 2026-10-09T16:46:51 | `6c3ff3994a` | `data/torchcell/dmf_costanzo2016/preprocess/verification_report.json` |
+| `dmi_costanzo2016` | 20705612 | `run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_costanzo2016]` | FAIL: L1 canonical_gene_names, L4 current_genome_genes (22 rules) | 2026-10-09T16:35:07 | `6c3ff3994a` | `data/torchcell/dmi_costanzo2016/preprocess/verification_report.json` |
+| `smf_kuzmin2018` | 1539 | `run_fitness[FITNESS_DATASETS:smf_kuzmin2018]` | PASS (14 rules) | 2026-10-09T12:12:16 | `6c3ff3994a` | `data/torchcell/smf_kuzmin2018/preprocess/verification_report.json` |
+| `dmf_kuzmin2018` | 410571 | `run_fitness[FITNESS_DATASETS:dmf_kuzmin2018]` | FAIL: L2 uncertainty_sanity (14 rules) | 2026-10-09T12:17:39 | `6c3ff3994a` | `data/torchcell/dmf_kuzmin2018/preprocess/verification_report.json` |
+| `tmf_kuzmin2018` | 91111 | `run_fitness[FITNESS_DATASETS:tmf_kuzmin2018]` | FAIL: L2 uncertainty_sanity (14 rules) | 2026-10-09T12:13:52 | `6c3ff3994a` | `data/torchcell/tmf_kuzmin2018/preprocess/verification_report.json` |
+| `dmi_kuzmin2018` | 410399 | `run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_kuzmin2018]` | PASS (24 rules) | 2026-10-09T12:18:48 | `6c3ff3994a` | `data/torchcell/dmi_kuzmin2018/preprocess/verification_report.json` |
+| `tmi_kuzmin2018` | 91111 | `run_gene_interaction[GENE_INTERACTION_DATASETS:tmi_kuzmin2018]` | FAIL: L3 signed_unclamped (24 rules) | 2026-10-09T12:18:56 | `6c3ff3994a` | `data/torchcell/tmi_kuzmin2018/preprocess/verification_report.json` |
+| `smf_kuzmin2020` | 472 | `run_fitness[FITNESS_DATASETS:smf_kuzmin2020]` | PASS (14 rules) | 2026-10-09T12:18:57 | `6c3ff3994a` | `data/torchcell/smf_kuzmin2020/preprocess/verification_report.json` |
+| `dmf_kuzmin2020` | 632998 | `run_fitness[FITNESS_DATASETS:dmf_kuzmin2020]` | FAIL: L1 canonical_gene_names, L2 uncertainty_sanity, L4 current_genome_genes (14 rules) | 2026-10-09T12:27:26 | `6c3ff3994a` | `data/torchcell/dmf_kuzmin2020/preprocess/verification_report.json` |
+| `tmf_kuzmin2020` | 301798 | `run_fitness[FITNESS_DATASETS:tmf_kuzmin2020]` | FAIL: L1 canonical_gene_names, L4 current_genome_genes (14 rules) | 2026-10-09T12:23:24 | `6c3ff3994a` | `data/torchcell/tmf_kuzmin2020/preprocess/verification_report.json` |
+| `dmi_kuzmin2020` | 632797 | `run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_kuzmin2020]` | FAIL: L1 canonical_gene_names, L4 current_genome_genes (23 rules) | 2026-10-09T12:31:42 | `6c3ff3994a` | `data/torchcell/dmi_kuzmin2020/preprocess/verification_report.json` |
+| `tmi_kuzmin2020` | 301798 | `run_gene_interaction[GENE_INTERACTION_DATASETS:tmi_kuzmin2020]` | FAIL: L1 canonical_gene_names, L4 current_genome_genes (23 rules) | 2026-10-09T12:31:49 | `6c3ff3994a` | `data/torchcell/tmi_kuzmin2020/preprocess/verification_report.json` |
+| `gene_essentiality_sgd` | 1329 | `run_gene_essentiality[GENE_ESSENTIALITY_DATASETS:gene_essentiality_sgd]` | FAIL: L1 one_record_per_gene_and_publication, L4 no_viable_deletion_in_smf_costanzo2016, L3 media_membership (17 rules) | 2026-10-09T12:41:30 | `6c3ff3994a` | `data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json` |
+| `syn_leth_db_yeast` | 13996 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_leth_db_yeast]` | FAIL: L3 media_membership (21 rules) | 2026-10-09T12:32:04 | `6c3ff3994a` | `data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json` |
+| `syn_rescue_db_yeast` | 6942 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_rescue_db_yeast]` | FAIL: L2 score_defined_by_source, L3 media_membership (19 rules) | 2026-10-09T12:32:16 | `6c3ff3994a` | `data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json` |

@@ -6,60 +6,113 @@
       "dataset_class": "SmfCostanzo2016Dataset",
       "root": "data/torchcell/smf_costanzo2016",
       "records": 20484,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_costanzo2016]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "32 genes carry conflicting common-name spellings (136 records; 0 case-only); 35 systematic names are not the genome's current name; 25 common names resolve to another gene"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "35 systematic names are absent from the current genome over 74 records: YAR037W x2, YAR040C x2, YAR043C x2, YAR044W x2, YBR075W x2, YBR100W x2, YCL006C x2, YCL012W x2, YCL013W x2, YCL026C x2"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_costanzo2016/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 9.8,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:12:24"
     },
     "DmfCostanzo2016Dataset": {
       "dataset_class": "DmfCostanzo2016Dataset",
       "root": "data/torchcell/dmf_costanzo2016",
       "records": 20705612,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:dmf_costanzo2016]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "32 genes carry conflicting common-name spellings (292076 records; 0 case-only); 35 systematic names are not the genome's current name; 25 common names resolve to another gene"
+        },
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "2781/20705612 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "35 systematic names are absent from the current genome over 157605 records: YAR037W x4595, YAR040C x4652, YAR043C x4651, YAR044W x4647, YBR075W x4290, YBR100W x4497, YCL006C x4679, YCL012W x4706, YCL013W x4680, YCL026C x4583"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmf_costanzo2016/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 12649.8,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T16:46:51"
     },
     "DmiCostanzo2016Dataset": {
       "dataset_class": "DmiCostanzo2016Dataset",
       "root": "data/torchcell/dmi_costanzo2016",
       "records": 20705612,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_costanzo2016]",
+      "verdict": "FAIL",
+      "n_rules": 22,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "32 genes carry conflicting common-name spellings (292076 records; 0 case-only); 35 systematic names are not the genome's current name; 25 common names resolve to another gene"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "35 systematic names are absent from the current genome over 157605 records: YAR037W x4595, YAR040C x4652, YAR043C x4651, YAR044W x4647, YBR075W x4290, YBR100W x4497, YCL006C x4679, YCL012W x4706, YCL013W x4680, YCL026C x4583"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmi_costanzo2016/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 15114.3,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T16:35:07"
     },
     "SmfKuzmin2018Dataset": {
       "dataset_class": "SmfKuzmin2018Dataset",
       "root": "data/torchcell/smf_kuzmin2018",
       "records": 1539,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_kuzmin2018]",
+      "verdict": "PASS",
+      "n_rules": 14,
       "failed_rules": [],
-      "reports": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2018/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 1.6,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:12:16"
     },
     "SmfODuibhir2014Dataset": {
@@ -83,180 +136,322 @@
       "dataset_class": "DmfKuzmin2018Dataset",
       "root": "data/torchcell/dmf_kuzmin2018",
       "records": 410571,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:dmf_kuzmin2018]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "4/410399 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2018/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 244.4,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:17:39"
     },
     "TmfKuzmin2018Dataset": {
       "dataset_class": "TmfKuzmin2018Dataset",
       "root": "data/torchcell/tmf_kuzmin2018",
       "records": 91111,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:tmf_kuzmin2018]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "5/91111 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tmf_kuzmin2018/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 67.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:13:52"
     },
     "DmiKuzmin2018Dataset": {
       "dataset_class": "DmiKuzmin2018Dataset",
       "root": "data/torchcell/dmi_kuzmin2018",
       "records": 410399,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
+      "route": "registry",
+      "route_detail": "run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_kuzmin2018]",
+      "verdict": "PASS",
+      "n_rules": 24,
       "failed_rules": [],
-      "reports": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmi_kuzmin2018/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 298.9,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:18:48"
     },
     "TmiKuzmin2018Dataset": {
       "dataset_class": "TmiKuzmin2018Dataset",
       "root": "data/torchcell/tmi_kuzmin2018",
       "records": 91111,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_gene_interaction[GENE_INTERACTION_DATASETS:tmi_kuzmin2018]",
+      "verdict": "FAIL",
+      "n_rules": 24,
+      "failed_rules": [
+        {
+          "level": "L3",
+          "name": "signed_unclamped",
+          "passed": false,
+          "message": "91110 aggravating and 0 alleviating scores, 1 at exactly zero"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tmi_kuzmin2018/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 79.7,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:18:56"
     },
     "SmfKuzmin2020Dataset": {
       "dataset_class": "SmfKuzmin2020Dataset",
       "root": "data/torchcell/smf_kuzmin2020",
       "records": 472,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_kuzmin2020]",
+      "verdict": "PASS",
+      "n_rules": 14,
       "failed_rules": [],
-      "reports": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_kuzmin2020/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 1.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:18:57"
     },
     "DmfKuzmin2020Dataset": {
       "dataset_class": "DmfKuzmin2020Dataset",
       "root": "data/torchcell/dmf_kuzmin2020",
       "records": 632998,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:dmf_kuzmin2020]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene"
+        },
+        {
+          "level": "L2",
+          "name": "uncertainty_sanity",
+          "passed": false,
+          "message": "33/632998 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision)"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "47 systematic names are absent from the current genome over 1000 records: YAL043C-A x21, YAL058C-A x21, YAR037W x22, YAR040C x22, YAR043C x22, YAR044W x22, YBR075W x21, YBR090C-A x21, YBR100W x21, YCL006C x21"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmf_kuzmin2020/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 378.4,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:27:26"
     },
     "TmfKuzmin2020Dataset": {
       "dataset_class": "TmfKuzmin2020Dataset",
       "root": "data/torchcell/tmf_kuzmin2020",
       "records": 301798,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:tmf_kuzmin2020]",
+      "verdict": "FAIL",
+      "n_rules": 14,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "47 systematic names are absent from the current genome over 483 records: YAL043C-A x10, YAL058C-A x10, YAR037W x11, YAR040C x11, YAR043C x11, YAR044W x11, YBR075W x10, YBR090C-A x10, YBR100W x10, YCL006C x10"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tmf_kuzmin2020/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 225.3,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:23:24"
     },
     "DmiKuzmin2020Dataset": {
       "dataset_class": "DmiKuzmin2020Dataset",
       "root": "data/torchcell/dmi_kuzmin2020",
       "records": 632797,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_gene_interaction[GENE_INTERACTION_DATASETS:dmi_kuzmin2020]",
+      "verdict": "FAIL",
+      "n_rules": 23,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "47 systematic names are absent from the current genome over 1000 records: YAL043C-A x21, YAL058C-A x21, YAR037W x22, YAR040C x22, YAR043C x22, YAR044W x22, YBR075W x21, YBR090C-A x21, YBR100W x21, YCL006C x21"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dmi_kuzmin2020/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 496.4,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:31:42"
     },
     "TmiKuzmin2020Dataset": {
       "dataset_class": "TmiKuzmin2020Dataset",
       "root": "data/torchcell/tmi_kuzmin2020",
       "records": 301798,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_gene_interaction[GENE_INTERACTION_DATASETS:tmi_kuzmin2020]",
+      "verdict": "FAIL",
+      "n_rules": 23,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "canonical_gene_names",
+          "passed": false,
+          "message": "0 genes carry conflicting common-name spellings (0 records; 0 case-only); 47 systematic names are not the genome's current name; 40 common names resolve to another gene"
+        },
+        {
+          "level": "L4",
+          "name": "current_genome_genes",
+          "passed": false,
+          "message": "47 systematic names are absent from the current genome over 483 records: YAL043C-A x10, YAL058C-A x10, YAR037W x11, YAR040C x11, YAR043C x11, YAR044W x11, YBR075W x10, YBR090C-A x10, YBR100W x10, YCL006C x10"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tmi_kuzmin2020/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 301.9,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:31:49"
     },
     "GeneEssentialitySgdDataset": {
       "dataset_class": "GeneEssentialitySgdDataset",
       "root": "data/torchcell/gene_essentiality_sgd",
       "records": 1329,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_gene_essentiality[GENE_ESSENTIALITY_DATASETS:gene_essentiality_sgd]",
+      "verdict": "FAIL",
+      "n_rules": 17,
+      "failed_rules": [
+        {
+          "level": "L1",
+          "name": "one_record_per_gene_and_publication",
+          "passed": false,
+          "message": "9 (gene, environment, publication) keys hold more than one record (24 extra records, identical down to the publication)"
+        },
+        {
+          "level": "L4",
+          "name": "no_viable_deletion_in_smf_costanzo2016",
+          "passed": false,
+          "message": "24 of 1140 essential genes are viable full-deletion strains of smf_costanzo2016: YBL078C (YBL078C_dma147), YBR128C (YBR128C_dma297), YBR217W (YBR217W_dma368), YCR068W (YCR068W_dma583), YDL149W (YDL149W_dma726), YFR021W (YFR021W_dma1550), YGL180W (YGL180W_dma1725), YHR072W-A (YHR072W-A_sn4180), YHR099W (YHR099W_sn2005), YHR171W (YHR171W_dma2215)"
+        },
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 1329 records join nothing: YEPD (base_medium=None) x1329"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 27.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:41:30"
     },
     "SynthLethalityYeastSynthLethDbDataset": {
       "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
       "root": "data/torchcell/syn_leth_db_yeast",
       "records": 13996,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_leth_db_yeast]",
+      "verdict": "FAIL",
+      "n_rules": 21,
+      "failed_rules": [
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 13996 records join nothing: growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper) (base_medium=None) x13996"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 8.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:32:04"
     },
     "SynthRescueYeastSynthLethDbDataset": {
       "dataset_class": "SynthRescueYeastSynthLethDbDataset",
       "root": "data/torchcell/syn_rescue_db_yeast",
       "records": 6942,
-      "route": "none",
-      "route_detail": "-",
-      "verdict": "NO_VERIFIER",
-      "n_rules": 0,
-      "failed_rules": [],
-      "reports": [],
+      "route": "registry",
+      "route_detail": "run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_rescue_db_yeast]",
+      "verdict": "FAIL",
+      "n_rules": 19,
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "score_defined_by_source",
+          "passed": false,
+          "message": "74 of 6942 records state a score the source never defines (74 of them outside [0, 1])"
+        },
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 6942 records join nothing: growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper) (base_medium=None) x6942"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json"
+      ],
       "error": null,
-      "seconds": 0.0,
-      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "seconds": 4.5,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
       "manifest_built_at": "2026-10-09T12:32:16"
     },
     "ScmdOhya2005Dataset": {

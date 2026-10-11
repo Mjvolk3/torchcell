@@ -134,6 +134,15 @@
     <span class="n">morphology_assay</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.calmorph_labels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CALMORPH_LABELS</span><span class="p">,</span> <span class="n">CALMORPH_STATISTICS</span>
+
+<span class="c1"># --- begin ADDITIVE (Puddu 2019 genome architecture): the WGS architecture family ---</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.genome_architecture_features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ArchitectureAssay</span><span class="p">,</span>
+    <span class="n">ArchitectureBasis</span><span class="p">,</span>
+    <span class="n">architecture_assay</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># --- end ADDITIVE (Puddu 2019 genome architecture) ---</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">SourcedValue</span>
 
@@ -6332,6 +6341,206 @@
 
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># --- begin jackson2020: pseudobulk UMI counts of barcoded deletion strains ---</span>
+<span class="c1">#</span>
+<span class="c1"># Jackson 2020 (eLife 9:e51254) releases a raw single-cell UMI count matrix of 72</span>
+<span class="c1"># transcriptionally barcoded diploid deletion strains pooled in 11 growth conditions</span>
+<span class="c1"># (Source code 2: "gene expression values are unmodified transcript counts after</span>
+<span class="c1"># deartifacting using UMIs"), and its own pseudobulk sums those raw counts per strain and</span>
+<span class="c1"># condition. No served expression leaf holds that quantity:</span>
+<span class="c1"># ``PseudobulkExpressionPhenotype`` is a log2 fold change the release does not contain,</span>
+<span class="c1"># ``RNASeqExpressionPhenotype`` requires TPM, which a 3' UMI assay does not produce, and</span>
+<span class="c1"># ``MrnaNumberFractionPhenotype`` is for a release without counts. The leaf below stores</span>
+<span class="c1"># the released counts summed exactly as the paper's pseudobulk sums them, with the</span>
+<span class="c1"># per-cell library sizes the sum came from and the two drug-marker transcripts kept</span>
+<span class="c1"># apart from the gene features. The experiment pair states the strain background on a</span>
+<span class="c1"># ``StrainReferenceGenome`` and the culture protocol on a ``CultureEnvironment``.</span>
+<span class="c1"># Additive: the new names appear only in their own bodies and the module-level unions</span>
+<span class="c1"># and maps, so no served dataset's schema closure moves.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">PseudobulkUmiCountPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Single-cell UMI counts per gene summed over the cells of one strain (pseudobulk).</span>
+
+<span class="sd">    ``umi_count`` holds every gene feature with a NONZERO summed count. The quantified</span>
+<span class="sd">    gene-feature universe is pinned by ``n_features`` and ``feature_universe_sha256``</span>
+<span class="sd">    (sha256 of the sorted feature ids joined by newlines), so a universe feature that is</span>
+<span class="sd">    not a key had zero UMIs in these cells, and a gene outside the universe was not</span>
+<span class="sd">    quantified at all.</span>
+
+<span class="sd">    ``marker_umi_count`` holds the drug-resistance cassette transcripts the release counts</span>
+<span class="sd">    beside the genes (Jackson 2020: ``KANMX`` and ``NATMX``), every marker keyed, zeros</span>
+<span class="sd">    included; they are not R64 features, so they never enter ``umi_count``.</span>
+<span class="sd">    ``total_umis`` is the UMI total over every released feature of the cells, gene and</span>
+<span class="sd">    marker alike, so it equals the sum of the two dicts. ``n_cells`` is the number of</span>
+<span class="sd">    cells summed; ``cell_barcodes`` and ``cell_total_umis`` are those cells' droplet</span>
+<span class="sd">    barcodes and per-cell UMI totals, aligned and in release row order, so each cell's</span>
+<span class="sd">    library size (the size factor any per-cell normalization needs) survives the sum.</span>
+
+<span class="sd">    Provenance: Jackson et al. 2020, eLife. See</span>
+<span class="sd">    ``[[torchcell.datasets.scerevisiae.jackson2020]]``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"umi_count"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">umi_count</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"SortedDict of per-gene UMI counts summed over the n_cells cells; only "</span>
+            <span class="s2">"nonzero sums are keys, a pinned-universe feature that is not a key had 0"</span>
+        <span class="p">),</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">marker_umi_count</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"SortedDict of summed UMI counts of the cassette marker transcripts the "</span>
+            <span class="s2">"release counts beside the genes (e.g. KANMX, NATMX); every marker keyed, "</span>
+            <span class="s2">"zeros included"</span>
+        <span class="p">),</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">total_umis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"UMI total over every released feature (genes and markers) of the "</span>
+        <span class="s2">"cells; equals the sum of umi_count plus the sum of marker_umi_count"</span>
+    <span class="p">)</span>
+    <span class="n">n_features</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"size of the quantified gene-feature universe the counts are over"</span>
+    <span class="p">)</span>
+    <span class="n">feature_universe_sha256</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sha256 of the sorted gene-feature ids of that universe, "</span>
+        <span class="s2">"newline-joined"</span>
+    <span class="p">)</span>
+    <span class="n">n_cells</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"number of cells the counts are summed over"</span><span class="p">)</span>
+    <span class="n">cell_barcodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the summed cells' droplet barcodes, in release row order"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cell_total_umis</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per-cell UMI totals over every released feature, aligned with "</span>
+        <span class="s2">"cell_barcodes; sums to total_umis"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"scrnaseq_pseudobulk_umi_count"</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"assay tag: 10x 3' single-cell RNA-seq UMI counts summed per strain"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-gene dict."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"PseudobulkUmiCountPhenotype(genes=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umi_count</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"total_umis=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="si">}</span><span class="s2">, n_cells=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"umi_count"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_and_validate_umi_count</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce to a SortedDict; refuse empty input and any count that is not &gt;= 1."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"umi_count must be a per-gene dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"umi_count cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"umi_count for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be a positive integer (zeros are "</span>
+                    <span class="sa">f</span><span class="s2">"omitted, not stored), got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"marker_umi_count"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_marker_count</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce to a SortedDict of non-negative integer counts."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"marker_umi_count must be a per-marker dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"marker_umi_count for </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> must be a non-negative integer, "</span>
+                    <span class="sa">f</span><span class="s2">"got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_totals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"PseudobulkUmiCountPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Totals, cell lists and the universe pin agree with each other."""</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_cells must be a positive integer, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_barcodes</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_barcodes</span><span class="p">)</span><span class="si">}</span><span class="s2"> cell barcodes for n_cells </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_barcodes</span><span class="p">))</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cell_barcodes repeats a barcode"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">)</span><span class="si">}</span><span class="s2"> per-cell totals for n_cells "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_cells</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cell_total_umis holds a negative or boolean count"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"cell_total_umis sums to </span><span class="si">{</span><span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">)</span><span class="si">}</span><span class="s2">, not total_umis "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">summed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umi_count</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marker_umi_count</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">summed</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"umi_count + marker_umi_count sum to </span><span class="si">{</span><span class="n">summed</span><span class="si">}</span><span class="s2">, not total_umis "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_umis</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_features</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umi_count</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"n_features </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_features</span><span class="si">}</span><span class="s2"> is smaller than the </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umi_count</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                <span class="s2">"keyed features"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">umi_count</span><span class="p">)</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">marker_umi_count</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a feature is keyed as both a gene and a marker"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">re</span><span class="o">.</span><span class="n">fullmatch</span><span class="p">(</span><span class="sa">r</span><span class="s2">"[0-9a-f]</span><span class="si">{64}</span><span class="s2">"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">feature_universe_sha256</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"feature_universe_sha256 must be 64 lowercase hex digits"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">measurement_type</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"measurement_type cannot be blank"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PseudobulkUmiCountExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference for a pseudobulk UMI-count experiment (typed strain background).</span>
+
+<span class="sd">    ``genome_reference`` is a ``StrainReferenceGenome`` (the background the deletion</span>
+<span class="sd">    strains were built in, mating type and alleles sourced or gapped);</span>
+<span class="sd">    ``environment_reference`` is a ``CultureEnvironment``.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pseudobulk_umi_count"</span>
+    <span class="c1"># Narrowed to subclasses: this family states its background and culture protocol.</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
+    <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">PseudobulkUmiCountPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PseudobulkUmiCountExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Pseudobulk single-cell UMI counts of one deletion strain in one culture."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"pseudobulk_umi_count"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>  <span class="c1"># narrowed: this family states its culture protocol</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">PseudobulkUmiCountPhenotype</span>
+
+
+<span class="c1"># --- end jackson2020 ---</span>
+
+
 <div class="viewcode-block" id="VisualScorePhenotype">
 <a class="viewcode-back" href="../../../generated/torchcell.datamodels.schema.VisualScorePhenotype.html#torchcell.datamodels.schema.VisualScorePhenotype">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">VisualScorePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
@@ -9320,6 +9529,217 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># GENOME ARCHITECTURE BLOCK START (Puddu 2019, yeast expansion row 7)</span>
+<span class="c1"># The REALIZED genome content of one sequenced sample: repeat-array and replicon copy</span>
+<span class="c1"># numbers, per-chromosome copy number, a telomere-length proxy and a rearrangement</span>
+<span class="c1"># count, each read off whole-genome sequencing coverage.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1">#: How far a record's ``ANtot`` aggregate may differ from the sum of its own</span>
+<span class="c1">#: per-chromosome deviations before the record is refused. The aggregate is the source's</span>
+<span class="c1">#: own column and the per-chromosome values are the source's own columns, so the identity</span>
+<span class="c1">#: is a property of the RELEASE, not of this schema: measured over all 8,843 released</span>
+<span class="c1">#: Puddu 2019 colonies the largest disagreement is 3.1e-15, i.e. float noise.</span>
+<span class="n">PLOIDY_DEVIATION_ATOL</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitecturePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One sequenced sample's genome-architecture profile, keyed by its assay's symbols.</span>
+
+<span class="sd">    The quantity is the genome content the sequencing FOUND, as distinct from the edit</span>
+<span class="sd">    the strain was designed to carry: a kanMX deletion strain of the yeast knockout</span>
+<span class="sd">    collection is designed as one absent ORF and is realized as that ORF plus whatever</span>
+<span class="sd">    repeat expansion, plasmid or mitochondrial copy-number change, aneuploidy and</span>
+<span class="sd">    chromosomal rearrangement the collection accumulated. Puddu et al. 2019 (Nature</span>
+<span class="sd">    573:416) measured exactly that for 8,843 colonies of the homozygous diploid</span>
+<span class="sd">    collection, so the designed perturbation lives in ``Genotype`` and this phenotype</span>
+<span class="sd">    carries the realized architecture.</span>
+
+<span class="sd">    Why its own class rather than a field on an existing one. ``CalMorphPhenotype`` and</span>
+<span class="sd">    ``BacterialMorphologyPhenotype`` hold the right SHAPE (named per-sample values plus a</span>
+<span class="sd">    dispersion map) and the wrong quantities: both are microscopy morphology vocabularies</span>
+<span class="sd">    and neither can express a copy number per haploid genome. Nothing already in the</span>
+<span class="sd">    schema carries a per-chromosome copy number at all, which is why the Hoepfner 2014</span>
+<span class="sd">    background records a typed gap reading "The schema has no per-chromosome copy number,</span>
+<span class="sd">    so the aneuploidy and the amplification cannot be recorded per strain". This class is</span>
+<span class="sd">    additive: no served record changes.</span>
+
+<span class="sd">    Key semantics, which is the whole point of the class:</span>
+
+<span class="sd">    - ``assay`` names an :class:`~torchcell.datamodels.genome_architecture_features.ArchitectureAssay`</span>
+<span class="sd">      in ``GENOME_ARCHITECTURE_ASSAYS``, and that assay's symbols are the only permitted</span>
+<span class="sd">      keys. Every symbol DECLARES its unit basis there, because the numbers in one record</span>
+<span class="sd">      are not in one unit: a repeat copy number is per haploid genome, mtDNA and a plasmid</span>
+<span class="sd">      are per cell, a chromosome copy number is per cell with 2.0 as the diploid baseline,</span>
+<span class="sd">      and a telomere proxy is reads per million. A consumer that averages across keys is</span>
+<span class="sd">      averaging quantities the source never claimed were comparable.</span>
+<span class="sd">    - A record carries the features its sample was MEASURED for, not necessarily the whole</span>
+<span class="sd">      vocabulary: ``required`` coverage is the loader's statement, not this class's.</span>
+<span class="sd">    - ``genome_architecture_sd`` is the dispersion of the same symbols when the stored</span>
+<span class="sd">      value is a mean over samples (the wild-type reference profile), with</span>
+<span class="sd">      ``uncertainty_type`` naming WHAT that number is and ``n_samples`` /``sample_unit``</span>
+<span class="sd">      the design behind it. It is ``None`` for a single sequenced sample, which has no</span>
+<span class="sd">      dispersion.</span>
+<span class="sd">    - ``sample_id`` and ``sample_accession`` identify the sequenced sample the numbers</span>
+<span class="sd">      came from (the colony id and its archive accession). They are part of the</span>
+<span class="sd">      measurement: two colonies of one strain are two samples, never two replicates to be</span>
+<span class="sd">      averaged, and the accession is what makes the stored number traceable to the reads.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"genome_architecture_sd"</span>
+    <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the registered genome-architecture assay whose vocabulary names "</span>
+        <span class="s2">"the keys (a key of "</span>
+        <span class="s2">"torchcell.datamodels.genome_architecture_features.GENOME_ARCHITECTURE_ASSAYS)"</span>
+    <span class="p">)</span>
+    <span class="n">genome_architecture</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"per-sample values keyed by the assay's own symbol; each symbol's "</span>
+        <span class="s2">"unit basis is declared by the assay, so keys are never pooled"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">genome_architecture_sd</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"dispersion of the same symbols when the value is a mean over "</span>
+        <span class="s2">"samples; None for a single sequenced sample"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">uncertainty_type</span><span class="p">:</span> <span class="n">UncertaintyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"what the numbers in genome_architecture_sd ARE; required with them"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"samples the stored values are taken over"</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples physically is"</span>
+    <span class="p">)</span>
+    <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own identifier of the sequenced sample, verbatim "</span>
+        <span class="s2">"(Puddu's colony id 'SD0863b'); None for a profile that is not one sample"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_accession</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the sequence-archive accession of that sample, verbatim "</span>
+        <span class="s2">"('ERS838232'); None when the source releases none"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-feature dict."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"GenomeArchitecturePhenotype(assay=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="si">!r}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"features=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">)</span><span class="si">}</span><span class="s2">, sample_id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="si">!r}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">assay_vocabulary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArchitectureAssay</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The assay this record names, which is the authority on its keys."""</span>
+        <span class="k">return</span> <span class="n">architecture_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_against_the_assay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GenomeArchitecturePhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Keys belong to the named assay, values fit their basis, aggregates agree.</span>
+
+<span class="sd">        The assay lookup raises on an unregistered name, so a record can never be</span>
+<span class="sd">        written against a vocabulary this version of the schema does not hold.</span>
+<span class="sd">        """</span>
+        <span class="n">assay</span> <span class="o">=</span> <span class="n">architecture_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"genome_architecture cannot be empty (assay </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="si">!r}</span><span class="s2">)"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_keys</span><span class="p">(</span><span class="s2">"genome_architecture"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">,</span> <span class="n">assay</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">assay</span><span class="o">.</span><span class="n">validate_value</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_keys</span><span class="p">(</span>
+                <span class="s2">"genome_architecture_sd"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span><span class="p">,</span> <span class="n">assay</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">"genome_architecture_sd[</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">] must be a finite "</span>
+                        <span class="sa">f</span><span class="s2">"non-negative dispersion, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"genome_architecture_sd needs uncertainty_type to say what the "</span>
+                    <span class="s2">"number is (a sample SD and a standard error convert differently)"</span>
+                <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"uncertainty_type names the kind of a dispersion this record does not "</span>
+                <span class="s2">"carry; leave it None"</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_ploidy_deviation</span><span class="p">(</span><span class="n">assay</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_keys</span><span class="p">(</span>
+        <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">assay</span><span class="p">:</span> <span class="n">ArchitectureAssay</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Every key is a feature of the named assay."""</span>
+        <span class="n">permitted</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">assay</span><span class="o">.</span><span class="n">by_symbol</span><span class="p">)</span>
+        <span class="n">outside</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="n">permitted</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">outside</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">outside</span><span class="si">}</span><span class="s2"> are not features of assay </span><span class="si">{</span><span class="n">assay</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">; it "</span>
+                <span class="sa">f</span><span class="s2">"declares </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">permitted</span><span class="p">)</span><span class="si">}</span><span class="s2"> symbols"</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_ploidy_deviation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assay</span><span class="p">:</span> <span class="n">ArchitectureAssay</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""A stored ploidy-deviation aggregate equals the deviations it aggregates.</span>
+
+<span class="sd">        Only checked when the record carries BOTH the aggregate and every chromosome it</span>
+<span class="sd">        sums over: a reference profile that states the aggregate alone is stating what</span>
+<span class="sd">        the source published, not a derived sum.</span>
+<span class="sd">        """</span>
+        <span class="n">aggregates</span> <span class="o">=</span> <span class="n">assay</span><span class="o">.</span><span class="n">symbols_with_basis</span><span class="p">(</span><span class="n">ArchitectureBasis</span><span class="o">.</span><span class="n">ploidy_deviation_units</span><span class="p">)</span>
+        <span class="n">chromosomes</span> <span class="o">=</span> <span class="n">assay</span><span class="o">.</span><span class="n">symbols_with_basis</span><span class="p">(</span>
+            <span class="n">ArchitectureBasis</span><span class="o">.</span><span class="n">chromosome_copies_per_cell</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">aggregates</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">chromosomes</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">):</span>
+            <span class="k">return</span>
+        <span class="n">expected</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">chromosomes</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">aggregates</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">):</span>
+            <span class="n">stored</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">stored</span> <span class="o">-</span> <span class="n">expected</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">PLOIDY_DEVIATION_ATOL</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">stored</span><span class="si">}</span><span class="s2"> but the record's </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chromosomes</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"chromosome copy numbers deviate from 2.0 by </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> in total"</span>
+                <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitectureExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference profile for a genome-architecture experiment.</span>
+
+<span class="sd">    ``genome_reference`` is a ``StrainReferenceGenome`` so the diploid baseline every</span>
+<span class="sd">    chromosome copy number is read against, and the background alleles the collection</span>
+<span class="sd">    carries, are stated rather than implied.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">GenomeArchitecturePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitectureExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One sequenced sample's realized genome architecture under a designed genotype."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">GenomeArchitecturePhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># GENOME ARCHITECTURE BLOCK END (Puddu 2019, yeast expansion row 7)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -9347,6 +9767,9 @@
     <span class="o">|</span> <span class="n">MrnaNumberFractionPhenotype</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SingleCellExpressionPhenotype</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCyclePhenotype</span>  <span class="c1"># De Chiara 2022</span>
+    <span class="o">|</span> <span class="n">PseudobulkUmiCountPhenotype</span>  <span class="c1"># jackson2020</span>
+    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
+    <span class="o">|</span> <span class="n">GenomeArchitecturePhenotype</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9390,6 +9813,9 @@
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperiment</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperiment</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperiment</span>  <span class="c1"># De Chiara 2022</span>
+    <span class="o">|</span> <span class="n">PseudobulkUmiCountExperiment</span>  <span class="c1"># jackson2020</span>
+    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
+    <span class="o">|</span> <span class="n">GenomeArchitectureExperiment</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9433,6 +9859,9 @@
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperimentReference</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperimentReference</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperimentReference</span>  <span class="c1"># De Chiara 2022</span>
+    <span class="o">|</span> <span class="n">PseudobulkUmiCountExperimentReference</span>  <span class="c1"># jackson2020</span>
+    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
+    <span class="o">|</span> <span class="n">GenomeArchitectureExperimentReference</span>
 <span class="p">)</span>
 
 
@@ -9476,6 +9905,9 @@
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperiment</span><span class="p">,</span>  <span class="c1"># issue #854</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperiment</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperiment</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
+    <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperiment</span><span class="p">,</span>  <span class="c1"># jackson2020</span>
+    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
+    <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">GenomeArchitectureExperiment</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -9518,6 +9950,9 @@
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #854</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperimentReference</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperimentReference</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
+    <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperimentReference</span><span class="p">,</span>  <span class="c1"># jackson2020</span>
+    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
+    <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">GenomeArchitectureExperimentReference</span><span class="p">,</span>
 <span class="p">}</span>
 
 

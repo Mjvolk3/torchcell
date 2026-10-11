@@ -445,6 +445,15 @@
             <span class="c1"># --- begin De Chiara 2022: the life-cycle family ---</span>
             <span class="p">(</span><span class="s2">"life cycle phenotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_life_cycle_phenotype_node</span><span class="p">),</span>
             <span class="c1"># --- end De Chiara 2022 ---</span>
+            <span class="c1"># jackson2020: pseudobulk single-cell UMI counts</span>
+            <span class="p">(</span>
+                <span class="s2">"pseudobulk umi count phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pseudobulk_umi_count_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"genome architecture phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span>
                 <span class="s2">"fitness phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_fitness_phenotype_reference_nodes</span><span class="p">,</span>
@@ -540,6 +549,15 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_life_cycle_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="c1"># --- end De Chiara 2022 ---</span>
+            <span class="c1"># jackson2020: pseudobulk single-cell UMI counts</span>
+            <span class="p">(</span>
+                <span class="s2">"pseudobulk umi count phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_pseudobulk_umi_count_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"genome architecture phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_genome_architecture_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span><span class="s2">"dataset"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataset_nodes</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"publication (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publication_node</span><span class="p">),</span>
         <span class="p">]</span>
@@ -3108,6 +3126,136 @@
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="c1"># --- end De Chiara 2022 -------------------------------------------------- #</span>
+
+    <span class="c1"># --- begin jackson2020: the pseudobulk UMI-count phenotype node ---------------- #</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pseudobulk_umi_count_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``PseudobulkUmiCountPhenotype`` (experiment or reference).</span>
+
+<span class="sd">        The two count dicts and the two per-cell lists serialize to JSON strings, the</span>
+<span class="sd">        multi-valued phenotype convention; the totals, the cell count and the</span>
+<span class="sd">        feature-universe pin stay typed so a query can filter on depth or cell number</span>
+<span class="sd">        without parsing a dict.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"umi_count"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">umi_count</span><span class="p">),</span>
+            <span class="s2">"marker_umi_count"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">marker_umi_count</span><span class="p">),</span>
+            <span class="s2">"total_umis"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">total_umis</span><span class="p">,</span>
+            <span class="s2">"n_features"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_features</span><span class="p">,</span>
+            <span class="s2">"feature_universe_sha256"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">feature_universe_sha256</span><span class="p">,</span>
+            <span class="s2">"n_cells"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_cells</span><span class="p">,</span>
+            <span class="s2">"cell_barcodes"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">cell_barcodes</span><span class="p">),</span>
+            <span class="s2">"cell_total_umis"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">cell_total_umis</span><span class="p">),</span>
+            <span class="s2">"measurement_type"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">measurement_type</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pseudobulk_umi_count_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"pseudobulk umi count phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pseudobulk_umi_count_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_pseudobulk_umi_count_phenotype_reference_nodes</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"pseudobulk umi count phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"pseudobulk umi count phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pseudobulk_umi_count_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
+
+    <span class="c1"># --- end jackson2020 ---------------------------------------------------------- #</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``GenomeArchitecturePhenotype`` (experiment or reference).</span>
+
+<span class="sd">        The two dict-valued fields serialize to JSON strings, the multi-valued phenotype</span>
+<span class="sd">        convention, and ``assay`` rides beside them because a key inside those strings</span>
+<span class="sd">        is only interpretable against the assay that declares its unit basis. The sample</span>
+<span class="sd">        id and its archive accession stay typed: they are what makes one stored profile</span>
+<span class="sd">        traceable to the reads it was measured from.</span>
+<span class="sd">        """</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">genome_architecture_sd</span>
+        <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">uncertainty_type</span>
+        <span class="n">sample_unit</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"assay"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">assay</span><span class="p">,</span>
+            <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">),</span>
+            <span class="s2">"genome_architecture_sd"</span><span class="p">:</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dispersion</span><span class="p">)</span> <span class="k">if</span> <span class="n">dispersion</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">"uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">uncertainty</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">uncertainty</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sample_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_id</span><span class="p">,</span>
+            <span class="s2">"sample_accession"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_accession</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_architecture_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_genome_architecture_phenotype_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_dataset_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>

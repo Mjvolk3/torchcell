@@ -4531,6 +4531,404 @@
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
 
 
+<span class="c1"># =========================================================================== #</span>
+<span class="c1"># --- begin jackson2020: the media of Jackson 2020 (Supplementary file 1, Table 4) ---</span>
+<span class="c1">#</span>
+<span class="c1"># Jackson 2020 (eLife 9:e51254) grew one pool of prototrophic FY4/FY5 deletion strains</span>
+<span class="c1"># in eleven conditions on two kinds of medium: YP-based rich media and a minimal medium</span>
+<span class="c1"># built from three named sub-mixes ("Minimal Trace Metals (1x)", "Minimal Vitamins</span>
+<span class="c1"># (1x)", "Minimal Salts (1x)") plus a carbon and a nitrogen source. Supplementary</span>
+<span class="c1"># Table 4 states every ingredient with its mass concentration (and a molar one in</span>
+<span class="c1"># parentheses), so the sub-mixes are expanded into their twenty single-substance</span>
+<span class="c1"># components here, each at the weighed g/L the row states; the molar value rides in the</span>
+<span class="c1"># quote. ``MINIMAL_BASE_JACKSON2020`` is the three sub-mixes alone (no carbon, no</span>
+<span class="c1"># nitrogen) and every minimal derivative adds its two rows to it, so the seven minimal</span>
+<span class="c1"># conditions join at one base object. The rich YPD is the library's ``YPD_LIQUID`` (Table</span>
+<span class="c1"># 4 states the same three rows, restated in the loader); YP + ethanol is a new liquid</span>
+<span class="c1"># object because Table 4 states the ethanol as 2% v/v, where Bloom 2019's solid</span>
+<span class="c1"># ``YP_ETHANOL`` carries a w/v 2%. Quotes are row renderings of the xlsx (a row's</span>
+<span class="c1"># non-empty cells joined by " | "), the convention of the bacterial xlsx sources.</span>
+<span class="c1"># =========================================================================== #</span>
+<span class="n">_JACKSON2020</span> <span class="o">=</span> <span class="s2">"jacksonGeneRegulatoryNetwork2020"</span>
+<span class="n">_JACKSON2020_S4</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="n">_JACKSON2020</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"6c96fdf425f9d07c92d6bad8f44e54e1bebca6b83d06a7b7b3fbb06ea1923737"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"si/si6.xlsx"</span><span class="p">,</span>
+    <span class="n">method</span><span class="o">=</span><span class="s2">"row renderings of sheet 'Supplemental Table 4 - Media' (non-empty cells "</span>
+    <span class="s2">"joined by ' | ')"</span><span class="p">,</span>
+    <span class="n">page</span><span class="o">=</span><span class="s2">"Supplementary file 1, Supplemental Table 4"</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_s4</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">object</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SourcedValue</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""A SourcedValue on one row of Jackson 2020's Supplemental Table 4."""</span>
+    <span class="k">return</span> <span class="n">_cite</span><span class="p">(</span><span class="n">_JACKSON2020_S4</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_stated</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">read</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One Table 4 row as a component at the amount it states (``read`` as written)."""</span>
+    <span class="k">return</span> <span class="n">_stated</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">role</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">_jackson_s4</span><span class="p">(</span><span class="n">read</span><span class="p">,</span> <span class="n">quote</span><span class="p">),</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)</span>
+
+
+<span class="n">_JACKSON2020_TRACE_METALS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"boric acid"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0005</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"500 ug/L (8.09 uM)"</span><span class="p">,</span>
+        <span class="s2">"Minimal Trace Metals (1x) | 500 µg/L (8.09 µM) Boric Acid | Sigma #B6768"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"manganese(II) sulfate monohydrate"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (2.37 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (2.37 µM) Manganese (II) Sulfate Monohydrate | Sigma # M7634"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"zinc sulfate heptahydrate"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (1.39 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (1.39 µM) Zinc Sulfate Heptahydrate | Fisher #Z68-500"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"sodium molybdate dihydrate"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"200 ug/L (0.83 uM)"</span><span class="p">,</span>
+        <span class="s2">"200 µg/L (0.83 µM) Sodium Molybdate Dihydrate | Sigma #331058"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"iron(III) chloride hexahydrate"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"200 ug/L (0.74 uM)"</span><span class="p">,</span>
+        <span class="s2">"200 µg/L (0.74 µM) Ferric (III) Chloride Hexahydrate | Fisher #I88-100"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"potassium iodide"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.0001</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"100 ug/L (0.60 uM)"</span><span class="p">,</span>
+        <span class="s2">"100 µg/L (0.60 µM) Potassium Iodide | Sigma #60400"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"copper(II) sulfate pentahydrate"</span><span class="p">,</span>
+        <span class="n">_TRACE</span><span class="p">,</span>
+        <span class="mf">0.00004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"40 ug/L (0.16 uM)"</span><span class="p">,</span>
+        <span class="s2">"40 µg/L (0.16 µM) Copper (II) Sulfate Pentahydrate | Sigma #209198"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_JACKSON2020_VITAMINS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"myo-inositol"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"2 mg/L (11.10 uM)"</span><span class="p">,</span>
+        <span class="s2">"Minimal Vitamins (1x) | 2 mg/L (11.10 µM) Inositol | Acros Organics "</span>
+        <span class="s2">"#AC12226-1000"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the row writes 'Inositol'; the yeast vitamin is the myo isomer, the one "</span>
+        <span class="s2">"the library's YNB vitamin set carries"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"niacin"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (3.25 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (3.25 µM) Nicotinic Acid | Sigma #N4126"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the row writes 'Nicotinic Acid'; the identity table's row for it is "</span>
+        <span class="s2">"PubChem's 'niacin' (CID 938), the name the YNB vitamin set already uses"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"pyridoxine hydrochloride"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (1.95 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (1.95 µM) Pyridoxine Hydrochloride | Sigma #P9755"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"4-aminobenzoic acid"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"200 ug/L (1.46 uM)"</span><span class="p">,</span>
+        <span class="s2">"200 µg/L (1.46 µM) 4-Aminobenzoic Acid | Acros Organics #AC14621-2500"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"thiamine hydrochloride"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (1.19 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (1.19 µM) Thiamine Hydrochloride | Fisher #BP892-100"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"calcium pantothenate"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0004</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"400 ug/L (0.84 uM)"</span><span class="p">,</span>
+        <span class="s2">"400 µg/L (0.84 µM) D-Calcium Pantothenate | Acros Organics #AC24330-1000"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the row writes 'D-Calcium Pantothenate'; the table's 'calcium "</span>
+        <span class="s2">"pantothenate' row is the D salt (its InChIKey carries the stereo block)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"riboflavin"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.0002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"200 ug/L (0.53 uM)"</span><span class="p">,</span>
+        <span class="s2">"200 µg/L (0.53 µM) Riboflavin | Sigma #R4500-25G"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"biotin"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.000002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"2 ug/L (8.19 nM)"</span><span class="p">,</span>
+        <span class="s2">"2 µg/L (8.19 nM) D-Biotin | Fisher #BP232-1"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"the row writes 'D-Biotin', the natural isomer the table's 'biotin' row is"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"folic acid"</span><span class="p">,</span>
+        <span class="n">_VITAMIN</span><span class="p">,</span>
+        <span class="mf">0.000002</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"2 ug/L (4.53 nM)"</span><span class="p">,</span>
+        <span class="s2">"2 µg/L (4.53 nM) Folic Acid | Sigma #F7876"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_JACKSON2020_SALTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"calcium chloride dihydrate"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"0.1 g/L (0.68 mM)"</span><span class="p">,</span>
+        <span class="s2">"Minimal Salts (1x) | 0.1 g/L (0.68 mM) Calcium Chloride Dihydrate | Fisher "</span>
+        <span class="s2">"#C79-500"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"sodium chloride"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"0.1 g/L (1.71 mM)"</span><span class="p">,</span>
+        <span class="s2">"0.1 g/L (1.71 mM) Sodium Chloride | Fisher #BP358-212"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"magnesium chloride hexahydrate"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"0.5 g/L (2.46 mM)"</span><span class="p">,</span>
+        <span class="s2">"0.5 g/L (2.46 mM) Magnesium Chloride Hexahydrate | Sigma #M9272"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"potassium dihydrogen phosphate"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="s2">"1.0 g/L (7.35 mM)"</span><span class="p">,</span>
+        <span class="s2">"1.0 g/L (7.35 mM) Potassium Phosphate Monobasic | VWR #97062-346"</span><span class="p">,</span>
+        <span class="n">note</span><span class="o">=</span><span class="s2">"'Potassium Phosphate Monobasic' is KH2PO4, the table's 'potassium "</span>
+        <span class="s2">"dihydrogen phosphate' row"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">_JACKSON2020_MINIMAL_COMPONENTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="o">*</span><span class="n">_JACKSON2020_TRACE_METALS</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">_JACKSON2020_VITAMINS</span><span class="p">,</span>
+    <span class="o">*</span><span class="n">_JACKSON2020_SALTS</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">MINIMAL_BASE_JACKSON2020</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"Jackson 2020 minimal base (1x trace metals, 1x vitamins, 1x salts; no carbon "</span>
+    <span class="s2">"or nitrogen source)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"MINIMAL_BASE_JACKSON2020"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="n">_JACKSON2020_MINIMAL_COMPONENTS</span><span class="p">,</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_jackson_s4</span><span class="p">(</span>
+            <span class="s2">"every minimal medium is the three 1x sub-mixes plus its carbon and "</span>
+            <span class="s2">"nitrogen rows"</span><span class="p">,</span>
+            <span class="s2">"Minimal Media | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the next two rows are '1x Minimal Salts | Above' and '1x Minimal "</span>
+            <span class="s2">"Vitamins | Above'; the same three rows open every minimal medium of the "</span>
+            <span class="s2">"sheet"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""The three Table 4 sub-mixes, the shared base of Jackson 2020's seven minimal media."""</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_minimal</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">header_quote</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span><span class="p">:</span> <span class="n">MediaComponent</span><span class="p">,</span> <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Media</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""``MINIMAL_BASE_JACKSON2020`` plus one condition's carbon and nitrogen rows."""</span>
+    <span class="k">return</span> <span class="n">Media</span><span class="p">(</span>
+        <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+        <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">base_medium</span><span class="o">=</span><span class="s2">"MINIMAL_BASE_JACKSON2020"</span><span class="p">,</span>
+        <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">_JACKSON2020_MINIMAL_COMPONENTS</span><span class="p">,</span> <span class="o">*</span><span class="n">extra</span><span class="p">],</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">[</span><span class="n">_jackson_s4</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">header_quote</span><span class="p">,</span> <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">)],</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_glucose</span><span class="p">(</span>
+    <span class="n">quote_row</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"2% (w/v) glucose | BD Difco #DF0155-08-5"</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_jackson_stated</span><span class="p">(</span><span class="s2">"D-glucose"</span><span class="p">,</span> <span class="n">_CSRC</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="n">_PCT</span><span class="p">,</span> <span class="s2">"2% (w/v)"</span><span class="p">,</span> <span class="n">quote_row</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_ethanol</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"ethanol"</span><span class="p">,</span>
+        <span class="n">_CSRC</span><span class="p">,</span>
+        <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">_VV</span><span class="p">,</span>
+        <span class="s2">"2% (v/v)"</span><span class="p">,</span>
+        <span class="s2">"2% (v/v) ethanol | Pharmco-Aaper #111000200"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_jackson_ammonium_sulfate</span><span class="p">(</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="p">,</span> <span class="n">read</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">quote</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_jackson_stated</span><span class="p">(</span><span class="s2">"ammonium sulfate"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">read</span><span class="p">,</span> <span class="n">quote</span><span class="p">)</span>
+
+
+<span class="n">MMD_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 minimal medium, 2</span><span class="si">% g</span><span class="s2">lucose + 20 mM ammonium sulfate (MMD)"</span><span class="p">,</span>
+    <span class="s2">"Minimal Media | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+    <span class="n">_jackson_glucose</span><span class="p">(),</span>
+    <span class="n">_jackson_ammonium_sulfate</span><span class="p">(</span>
+        <span class="mf">20.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"20 mM"</span><span class="p">,</span> <span class="s2">"20 mM Ammonium Sulfate | Acros Organics #AC423400010"</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">MMETOH_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)"</span><span class="p">,</span>
+    <span class="s2">"Minimal Media (Ethanol) | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+    <span class="n">_jackson_ethanol</span><span class="p">(),</span>
+    <span class="n">_jackson_ammonium_sulfate</span><span class="p">(</span>
+        <span class="mf">20.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"20 mM"</span><span class="p">,</span> <span class="s2">"20 mM Ammonium Sulfate | Acros Organics #AC423400010"</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">NLIM_GLN_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 nitrogen-limited minimal medium, 2</span><span class="si">% g</span><span class="s2">lucose + 800 uM L-glutamine "</span>
+    <span class="s2">"(NLIM-GLN)"</span><span class="p">,</span>
+    <span class="s2">"Nitrogen Limiting Minimal Media (Glutamine) | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+    <span class="n">_jackson_glucose</span><span class="p">(),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"L-glutamine"</span><span class="p">,</span>
+        <span class="n">_NSRC</span><span class="p">,</span>
+        <span class="mf">800.0</span><span class="p">,</span>
+        <span class="n">_UM</span><span class="p">,</span>
+        <span class="s2">"800 uM"</span><span class="p">,</span>
+        <span class="s2">"800 µM L(+)-Glutamine | Acros Organics #119951000"</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">NLIM_PRO_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 nitrogen-limited minimal medium, 2</span><span class="si">% g</span><span class="s2">lucose + 800 uM L-proline "</span>
+    <span class="s2">"(NLIM-PRO)"</span><span class="p">,</span>
+    <span class="s2">"Nitrogen Limiting Minimal Media (Proline) | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+    <span class="n">_jackson_glucose</span><span class="p">(),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"L-proline"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="mf">800.0</span><span class="p">,</span> <span class="n">_UM</span><span class="p">,</span> <span class="s2">"800 uM"</span><span class="p">,</span> <span class="s2">"800 µM L-Proline | Sigma #P0380-100G"</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">NLIM_NH4_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 nitrogen-limited minimal medium, 2</span><span class="si">% g</span><span class="s2">lucose + 800 uM ammonium "</span>
+    <span class="s2">"sulfate (NLIM-NH4)"</span><span class="p">,</span>
+    <span class="s2">"Nitrogen Limiting Minimal Media (Ammonium Sulfate) | 1x Minimal Trace Metals | "</span>
+    <span class="s2">"Above"</span><span class="p">,</span>
+    <span class="n">_jackson_glucose</span><span class="p">(),</span>
+    <span class="n">_jackson_ammonium_sulfate</span><span class="p">(</span>
+        <span class="mf">800.0</span><span class="p">,</span> <span class="n">_UM</span><span class="p">,</span> <span class="s2">"800 uM"</span><span class="p">,</span> <span class="s2">"800 µM Ammonium Sulfate | Acros Organics #AC423400010"</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+<span class="n">NLIM_UREA_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 nitrogen-limited minimal medium, 2</span><span class="si">% g</span><span class="s2">lucose + 800 uM urea (NLIM-UREA)"</span><span class="p">,</span>
+    <span class="s2">"Nitrogen Limiting Minimal Media (Ammonium Sulfate) | 1x Minimal Trace Metals | "</span>
+    <span class="s2">"Above"</span><span class="p">,</span>
+    <span class="n">_jackson_glucose</span><span class="p">(),</span>
+    <span class="n">_jackson_stated</span><span class="p">(</span>
+        <span class="s2">"urea"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="mf">800.0</span><span class="p">,</span> <span class="n">_UM</span><span class="p">,</span> <span class="s2">"800 uM"</span><span class="p">,</span> <span class="s2">"800 µM Urea | Acros Organics #AC434720010"</span>
+    <span class="p">),</span>
+    <span class="n">note</span><span class="o">=</span><span class="s2">"Table 4 heads this block (sheet row 53) with the same name as the ammonium "</span>
+    <span class="s2">"block above it, 'Nitrogen Limiting Minimal Media (Ammonium Sulfate)'; its nitrogen "</span>
+    <span class="s2">"row is '800 µM Urea' (row 57), and Table 1 names the condition NLIM-UREA with "</span>
+    <span class="s2">"0.8 mM urea, so the heading is a copy of the previous block's and the urea row "</span>
+    <span class="s2">"is the medium"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">CSTARVE_JACKSON2020</span> <span class="o">=</span> <span class="n">_jackson_minimal</span><span class="p">(</span>
+    <span class="s2">"Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source "</span>
+    <span class="s2">"(CSTARVE)"</span><span class="p">,</span>
+    <span class="s2">"Starvation Media | 1x Minimal Trace Metals | Above"</span><span class="p">,</span>
+    <span class="n">_jackson_ammonium_sulfate</span><span class="p">(</span>
+        <span class="mf">1.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"1 mM"</span><span class="p">,</span> <span class="s2">"1 mM Ammonium Sulfate | Acros Organics #AC423400010"</span>
+    <span class="p">),</span>
+<span class="p">)</span>
+
+<span class="n">YP_ETHANOL_LIQUID_JACKSON2020</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"YP"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="o">*</span><span class="n">_YP_COMPONENTS</span><span class="p">,</span> <span class="n">_jackson_ethanol</span><span class="p">()],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_jackson_s4</span><span class="p">(</span>
+            <span class="s2">"1% yeast extract, 2% peptone, 2% (v/v) ethanol"</span><span class="p">,</span>
+            <span class="s2">"YPEthanol | 2% (w/v) peptone | BD Difco #DF0118-17-0"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the block's other rows are '2% (v/v) ethanol | Pharmco-Aaper "</span>
+            <span class="s2">"#111000200' and '1% (w/v) yeast extract | BD Difco #DF0127-17-9': the YP "</span>
+            <span class="s2">"base's two ingredients at the library's amounts, plus the ethanol"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Liquid YP + 2% v/v ethanol. Joins Bloom 2019's solid ``YP_ETHANOL`` at</span>
+<span class="sd">``base_medium == "YP"`` and at the ethanol compound, without its w/v basis."""</span>
+
+<span class="c1">#: The Jackson 2020 entries, keyed as MEDIA_LIBRARY keys them.</span>
+<span class="n">JACKSON2020_MEDIA</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Media</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"MINIMAL_BASE_JACKSON2020"</span><span class="p">:</span> <span class="n">MINIMAL_BASE_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"MMD_JACKSON2020"</span><span class="p">:</span> <span class="n">MMD_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"MMETOH_JACKSON2020"</span><span class="p">:</span> <span class="n">MMETOH_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"NLIM_GLN_JACKSON2020"</span><span class="p">:</span> <span class="n">NLIM_GLN_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"NLIM_PRO_JACKSON2020"</span><span class="p">:</span> <span class="n">NLIM_PRO_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"NLIM_NH4_JACKSON2020"</span><span class="p">:</span> <span class="n">NLIM_NH4_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"NLIM_UREA_JACKSON2020"</span><span class="p">:</span> <span class="n">NLIM_UREA_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"CSTARVE_JACKSON2020"</span><span class="p">:</span> <span class="n">CSTARVE_JACKSON2020</span><span class="p">,</span>
+    <span class="s2">"YP_ETHANOL_LIQUID_JACKSON2020"</span><span class="p">:</span> <span class="n">YP_ETHANOL_LIQUID_JACKSON2020</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="c1"># --- end jackson2020 ---</span>
+
+
 <span class="c1"># Registry of the canonical media (name -&gt; object), for discovery/migration.</span>
 <span class="n">MEDIA_LIBRARY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Media</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">"SD_MSG"</span><span class="p">:</span> <span class="n">SD_MSG</span><span class="p">,</span>
@@ -4607,6 +5005,7 @@
     <span class="s2">"MOPS_MINIMAL"</span><span class="p">:</span> <span class="n">MOPS_MINIMAL</span><span class="p">,</span>
     <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="n">MOPS_CASAMINO_WANG2018</span><span class="p">,</span>
     <span class="s2">"M9_MODIFIED_FANG2025"</span><span class="p">:</span> <span class="n">M9_MODIFIED_FANG2025</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">JACKSON2020_MEDIA</span><span class="p">,</span>  <span class="c1"># jackson2020: Supplementary file 1, Table 4</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>
@@ -4656,6 +5055,13 @@
     <span class="s2">"MOPS_CASAMINO_WANG2018"</span><span class="p">:</span> <span class="s2">"same as its MOPS base; Wang 2018's stated 10 g/L glucose "</span>
     <span class="s2">"is carried as a carbon-source factor so all four of its MOPS conditions share one "</span>
     <span class="s2">"base object"</span><span class="p">,</span>
+    <span class="c1"># --- begin jackson2020 ---</span>
+    <span class="s2">"MINIMAL_BASE_JACKSON2020"</span><span class="p">:</span> <span class="s2">"base; the three Table 4 sub-mixes, to which every "</span>
+    <span class="s2">"Jackson 2020 minimal medium adds its carbon and nitrogen rows"</span><span class="p">,</span>
+    <span class="s2">"CSTARVE_JACKSON2020"</span><span class="p">:</span> <span class="s2">"the carbon-starvation condition: Table 4's 'Starvation "</span>
+    <span class="s2">"Media' is the base plus 1 mM ammonium sulfate and Table 1 lists its carbon source "</span>
+    <span class="s2">"as None"</span><span class="p">,</span>
+    <span class="c1"># --- end jackson2020 ---</span>
 <span class="p">}</span>
 
 

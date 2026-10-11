@@ -47,6 +47,7 @@ from torchcell.adapters import (
     EnvChemgenHoepfner2014Adapter,
     EnvChemgenMota2024Adapter,
     EnvChemgenParsons2006Adapter,
+    EnvChemgenPiotrowski2017Adapter,
     EnvChemgenShiver2016Adapter,
     EnvChemgenVanacloig2022Adapter,
     EnvChemgenWang2015Adapter,
@@ -374,6 +375,9 @@ from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
 from torchcell.datasets.scerevisiae.ozaydin2013 import CarotenoidOzaydin2013Dataset
 from torchcell.datasets.scerevisiae.parsons2006 import EnvChemgenParsons2006Dataset
 from torchcell.datasets.scerevisiae.peter2018 import IsolateGrowthPeter2018Dataset
+from torchcell.datasets.scerevisiae.piotrowski2017 import (
+    EnvChemgenPiotrowski2017Dataset,
+)
 from torchcell.datasets.scerevisiae.puddu2019 import GenomeArchitecturePuddu2019Dataset
 from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
@@ -462,6 +466,7 @@ dataset_adapter_map: dict[type, type] = {
     CrisprMagicLian2019Dataset: Lian2019Adapter,
     CrispriMormino2022Dataset: Mormino2022Adapter,
     EnvChemgenVanacloig2022Dataset: EnvChemgenVanacloig2022Adapter,
+    EnvChemgenPiotrowski2017Dataset: EnvChemgenPiotrowski2017Adapter,
     EnvChemgenWildenhain2015Dataset: EnvChemgenWildenhain2015Adapter,
     EnvChemgenHoepfner2014Dataset: EnvChemgenHoepfner2014Adapter,
     HetHillenmeyer2008Dataset: HetHillenmeyer2008Adapter,

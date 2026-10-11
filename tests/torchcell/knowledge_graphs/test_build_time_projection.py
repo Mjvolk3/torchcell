@@ -606,7 +606,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Hackett 2020 IDEA induction time courses)
     # + 1 (Messner 2021 drug-response proteomes)
     # + 1 (Parsons 2006 chemical-genetic log2 ratios)
-    # + 1 (Wetmore 2015's own RB-TnSeq release, owner policy 2026-10-10).
+    # + 1 (Wetmore 2015's own RB-TnSeq release, owner policy 2026-10-10)
+    # + 1 (Piotrowski 2017 chemical-genetic z-scores).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -635,6 +636,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 1
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -652,6 +654,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "EnvChemgenHoepfner2014Dataset",
         "EnvChemgenMota2024Dataset",
         "EnvChemgenParsons2006Dataset",
+        "EnvChemgenPiotrowski2017Dataset",
         "EnvChemgenVanacloig2022Dataset",
         "EnvChemgenWildenhain2015Dataset",
         "FattyAcidSmith2006Dataset",

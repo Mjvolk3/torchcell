@@ -1,0 +1,62 @@
+# Piotrowski 2017 MOSAIC chemical genetics: one record per (diagnostic-pool deletion,
+# condition) z-score (count in the dataset note). Gene-keyed genotype (one barcoded kanMX
+# deletion of the 310-strain pool; the pdr1 pdr3 snq2 background rides on the genome
+# node), so genotype + perturbation nodes are served. The environment carries ONE
+# perturbation per record -- the condition's compound at its Data Set 4 dose in DMSO --
+# emitted as a first-class environment perturbation node; the reference is the screen's
+# DMSO control.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "environment response phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment response phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

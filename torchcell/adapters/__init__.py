@@ -270,6 +270,9 @@ from .parsons2006_adapter import (
 from .peter2018_adapter import (
     IsolateGrowthPeter2018Adapter as IsolateGrowthPeter2018Adapter,
 )
+from .piotrowski2017_adapter import (
+    EnvChemgenPiotrowski2017Adapter as EnvChemgenPiotrowski2017Adapter,
+)
 from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
@@ -474,6 +477,7 @@ environment_adapters = [
     "Lian2019Adapter",
     "Mormino2022Adapter",
     "EnvChemgenVanacloig2022Adapter",
+    "EnvChemgenPiotrowski2017Adapter",
     "EnvChemgenWildenhain2015Adapter",
     "EnvChemgenHoepfner2014Adapter",
     "HetHillenmeyer2008Adapter",

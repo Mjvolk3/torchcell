@@ -27,6 +27,7 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | lamoureuxMultiscaleExpressionRegulation2023 | bacteria | PRECISE-1K | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
 | potelWidespreadBacterialProtein2018 | bacteria | Potel 2018 phosphoproteome | ✓ | ■ | · | · | · | **blocked:ingest** |  | 2026-10-10 | `878d58607` |
 | priceMutantPhenotypesThousands2018 | bacteria | Price 2018 | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `aac409119` |
+| boocockSinglecellEQTLMapping2025 | yeast | Boocock 2025 (single-cell eQTL mapping) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `de58b18dc` |
 | peterGenomeEvolution10112018 | yeast | Peter 2018 (1,011 isolate genomes + phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `d88f3865c` |
 
 ### Aggregation decomposition

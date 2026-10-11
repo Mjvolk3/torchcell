@@ -193,10 +193,44 @@ def main() -> None:
     print(f"wrote {OUT}")
 
 
-def render(report_path: str) -> str:
-    """Markdown tables for the dendron note, from the inventory JSON and a verification
-    report (``preprocess/verification_report.json`` of the built store).
+def store_table(store_root: str) -> list[str]:
+    """Records, blocks per record and stored bytes per record, per panel, measured from
+    the built store (``preprocess/block_counts.csv`` and the LMDB values).
     """
+    import lmdb
+    import pandas as pd
+
+    blocks = pd.read_csv(osp.join(store_root, "preprocess", "block_counts.csv"))
+    env = lmdb.open(
+        osp.join(store_root, "processed", "lmdb"), readonly=True, lock=False
+    )
+    with env.begin() as txn:
+        sizes = {int(k): len(v) for k, v in txn.cursor()}
+    env.close()
+    blocks["bytes"] = [sizes[i] for i in range(len(blocks))]
+    lines = [
+        "| panel | records | blocks per record (min / median / max) | "
+        "stored bytes per record (median) |",
+        "|---|---|---|---|",
+    ]
+    for panel, frame in blocks.groupby("panel", sort=False):
+        lines.append(
+            f"| {panel} | {len(frame):,} | {frame.n_blocks.min()} / "
+            f"{frame.n_blocks.median():g} / {frame.n_blocks.max()} | "
+            f"{frame.bytes.median():,.0f} |"
+        )
+    lines.append(
+        f"| all | {len(blocks):,} | | {blocks.bytes.median():,.0f} "
+        f"(total {blocks.bytes.sum() / 1e9:.2f} GB) |"
+    )
+    return lines
+
+
+def render(store_root: str) -> str:
+    """Markdown tables for the dendron note, from the inventory JSON and the built store
+    (its ``preprocess/verification_report.json``, block counts and LMDB).
+    """
+    report_path = osp.join(store_root, "preprocess", "verification_report.json")
     with open(OUT) as handle:
         inventory = json.load(handle)
     lines = [
@@ -225,6 +259,7 @@ def render(report_path: str) -> str:
             )
     with open(report_path) as handle:
         report = json.load(handle)
+    lines += ["", *store_table(store_root)]
     lines += ["", "| level | rule | result | message |", "|---|---|---|---|"]
     for r in sorted(report["results"], key=lambda r: r["level"]):
         message = str(r["message"]).replace("|", "/")

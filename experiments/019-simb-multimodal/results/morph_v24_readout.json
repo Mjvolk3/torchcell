@@ -147,18 +147,18 @@
   {
    "arm": "CM_prot",
    "change": "the strain's proteome revealed, pooled readout, proteome-and-morphology strains",
-   "runs": 3,
-   "finished": 3,
+   "runs": 7,
+   "finished": 7,
    "collapsed": 0,
    "window": {
-    "n": 3,
-    "mean": 0.13348526451736686,
-    "sd": 0.033455550508819105
+    "n": 7,
+    "mean": 0.14137933373983416,
+    "sd": 0.031220845586314487
    },
    "roll_max": {
-    "n": 3,
-    "mean": 0.1672360986471176,
-    "sd": 0.0297437733142917
+    "n": 7,
+    "mean": 0.18290087793554577,
+    "sd": 0.0275032401577251
    }
   },
   {
@@ -241,14 +241,18 @@
    }
   },
   "CM_prot - MP_cls": {
-   "n": 3,
-   "mean": 0.06581129021321733,
-   "sd": 0.0314438511273913,
-   "n_positive": 3,
+   "n": 7,
+   "mean": 0.06311349035107663,
+   "sd": 0.04114300131780318,
+   "n_positive": 7,
    "per_split": {
     "0": 0.1008961802534759,
     "1": 0.04017541317269205,
-    "2": 0.05636227721348404
+    "2": 0.05636227721348404,
+    "3": 0.05260093607008457,
+    "4": 0.12997642209753396,
+    "5": 0.05827360125258564,
+    "6": 0.003509602397680306
    }
   },
   "CM_protperm - MP_cls": {
@@ -2445,6 +2449,118 @@
    "loss_last": 0.2242715209722519,
    "traineval_pearson_last": 0.6535233855247498,
    "epoch_seconds": 10.69430520736565
+  },
+  {
+   "id": "ok5uwrpy",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/ok5uwrpy",
+   "arm": "CM_prot",
+   "split": 3,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.11421910706907511,
+   "roll_max": 0.20824925899505614,
+   "ladder": {
+    "200": 0.12024547606706619,
+    "400": 0.1534417137503624,
+    "600": 0.09886317662894725,
+    "800": 0.1175969298928976,
+    "1000": 0.11266697607934476,
+    "1199": 0.12802334055304526
+   },
+   "pred_sd_ratio_last": 3345054.0,
+   "loss_min": 0.1834590584039688,
+   "loss_min_epoch": 1179,
+   "loss_last": 0.1843733936548233,
+   "traineval_pearson_last": 0.23073804378509521,
+   "epoch_seconds": 10.631089599253768
+  },
+  {
+   "id": "8yz1fiv8",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/8yz1fiv8",
+   "arm": "CM_prot",
+   "split": 4,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.1896755277365446,
+   "roll_max": 0.21279903650283813,
+   "ladder": {
+    "200": 0.15944280922412873,
+    "400": 0.1588510364294052,
+    "600": 0.15980653390288352,
+    "800": 0.20405061095952987,
+    "1000": 0.19281393960118293,
+    "1199": 0.180630574375391
+   },
+   "pred_sd_ratio_last": 167998.515625,
+   "loss_min": 0.19383582472801208,
+   "loss_min_epoch": 633,
+   "loss_last": 0.21051055192947388,
+   "traineval_pearson_last": 0.5658386945724487,
+   "epoch_seconds": 10.681270829701829
+  },
+  {
+   "id": "lyiv12k0",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/lyiv12k0",
+   "arm": "CM_prot",
+   "split": 5,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.12943298812955617,
+   "roll_max": 0.1635672204196453,
+   "ladder": {
+    "200": 0.1568073645234108,
+    "400": 0.15084434747695924,
+    "600": 0.14274670258164407,
+    "800": 0.15588379204273223,
+    "1000": 0.11063277348876,
+    "1199": 0.12202560231089592
+   },
+   "pred_sd_ratio_last": 78461.6875,
+   "loss_min": 0.1922997087240219,
+   "loss_min_epoch": 1089,
+   "loss_last": 0.19351427257061005,
+   "traineval_pearson_last": 0.21625004708766937,
+   "epoch_seconds": 10.694571559712038
+  },
+  {
+   "id": "lkhvlicu",
+   "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v24/runs/lkhvlicu",
+   "arm": "CM_prot",
+   "split": 6,
+   "state": "finished",
+   "last_epoch": 1199,
+   "finished": true,
+   "launch_epoch": 0,
+   "longest_dead_stretch": 0,
+   "collapsed": false,
+   "window_mean": 0.15587191969156267,
+   "roll_max": 0.19398233368992807,
+   "ladder": {
+    "200": 0.15991677418351175,
+    "400": 0.1833360217511654,
+    "600": 0.18864036798477174,
+    "800": 0.18528571650385856,
+    "1000": 0.16265769302845,
+    "1199": 0.15579379647970198
+   },
+   "pred_sd_ratio_last": 95038.0,
+   "loss_min": 0.18409445881843567,
+   "loss_min_epoch": 327,
+   "loss_last": 0.21494363248348236,
+   "traineval_pearson_last": 0.6912036538124084,
+   "epoch_seconds": 10.735923684653589
   },
   {
    "id": "11teotk2",

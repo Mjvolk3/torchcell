@@ -11,8 +11,9 @@ and the environment-response verifier reads only ``perturbations``, so neither s
 halves. This module is one streaming pass over the records plus a pass over the released
 files that re-derives what the records claim:
 
-- L0 ``structural`` -- every experiment validates as ``SegregantPerturbationExperiment``
-  (each distinct interned background is validated once and reused).
+- L0 ``structural`` -- every experiment validates as ``SegregantPerturbationExperiment``,
+  the class its ``experiment_type`` names (each distinct interned background and
+  environment is validated once and reused).
 - L1 ``count``; ``lineage_uniqueness`` (one record per (assay, double barcode));
   ``screen_partition`` (per-assay record counts equal the release's gene-targeting rows);
   ``ledger_balance`` (served + ledgered rows = released rows, per assay); plus the shared
@@ -163,15 +164,22 @@ def verify_segregant_perturbation_streaming(
     quotes audit against; ``None`` skips the L3 provenance audit (a synthetic release has
     no mirror to audit).
     """
-    from pydantic import TypeAdapter
-
     from torchcell.datamodels.schema import (
-        ExperimentType,
+        EXPERIMENT_TYPE_MAP,
+        Environment,
         SegregantGenotype,
         SegregantPerturbationExperiment,
     )
 
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    # L0 validates each record as the class its experiment_type names (how the dataset
+    # rebuilds it); the bare ExperimentType union tries every experiment class in turn
+    # and measured 10.3 ms per record here, 25 h over the store. The constant
+    # sub-objects (each distinct background and environment) are validated once and
+    # their instances reused, as the dataset's own read path does.
+    experiment_class = EXPERIMENT_TYPE_MAP["segregant_perturbation"]
+    if experiment_class is not SegregantPerturbationExperiment:
+        raise TypeError("segregant_perturbation does not name its experiment class")
+    validated_environments: dict[int, Environment] = {}
     assays, raw = read_released_tables(raw_dir)
     matrix = h.read_genotype_matrix(osp.join(raw_dir, h.SD12))
 
@@ -200,18 +208,24 @@ def verify_segregant_perturbation_streaming(
         background = genotype["background"]
         key = id(background)
         try:
+            if exp["experiment_type"] != "segregant_perturbation":
+                raise TypeError(f"experiment_type {exp['experiment_type']!r}")
             if key not in validated_backgrounds:
                 validated_backgrounds[key] = SegregantGenotype.model_validate(
                     background
                 )
-            model = validate(
+            env_key = id(exp["environment"])
+            if env_key not in validated_environments:
+                validated_environments[env_key] = Environment.model_validate(
+                    exp["environment"]
+                )
+            SegregantPerturbationExperiment.model_validate(
                 {
                     **exp,
                     "genotype": {**genotype, "background": validated_backgrounds[key]},
+                    "environment": validated_environments[env_key],
                 }
             )
-            if not isinstance(model, SegregantPerturbationExperiment):
-                raise TypeError(f"validated as {type(model).__name__}")
         except (ValueError, TypeError) as err:
             l0_failures.append({"record": n_records, "error": str(err)[:300]})
         phenotype = exp["phenotype"]

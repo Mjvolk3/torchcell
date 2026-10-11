@@ -84,10 +84,12 @@ levulinic acid it follows Loewe, and 5-HMF with either of those two grew in no w
 which Loewe calls and Bliss does not. \status{todo}\,\fstat{file}
 \textbf{b}, Leave-one-pair-out: each predictor gives a Loewe weight for the held-out
 pair, fitted on the other pairs, and the pair's fitness is that weight on Loewe plus its
-complement on Bliss. Mean absolute error over the held-out pairs, growth accuracy
-beside each bar. Pure Loewe has the lowest error, \hydlopoloewemae{}; pure Bliss the best
-growth call, \hydlopoblissacc{}, and the best ranking of the \hydrcnGrown{} grown pairs,
-\hydlopoblissspGrown{}. A fitted global weight (\hydlopoglobalWmae{}), the class rule
+complement on Bliss. Mean absolute error over the held-out pairs, with the Spearman
+over the \hydrcnGrown{} grown pairs beside each bar. Pure Loewe has the lowest error,
+\hydlopoloewemae{}; pure Bliss the best ranking of the grown pairs,
+\hydlopoblissspGrown{}, because its error is a level bias that leaves their order intact.
+The growth call is not shown: with \hydrcnGrown{} of \hydrcnPairs{} pairs grown, Bliss
+scores \hydlopoblissacc{} by predicting growth for every pair, a majority-class readout. A fitted global weight (\hydlopoglobalWmae{}), the class rule
 (\hydlopoclassRulemae{}), a fitted class weight (\hydlopoclassWmae{}) and profile
 similarity with the best available profiles (\hydloposimBestmae{}) or the all-predicted
 ones (\hydloposimPredmae{}) all land between the two rules. Nothing on file predicts the

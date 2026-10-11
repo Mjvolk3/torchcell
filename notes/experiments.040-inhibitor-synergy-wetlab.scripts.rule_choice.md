@@ -61,9 +61,13 @@ and accuracy 0.810 against Loewe's 0.958 and 0.825, worst-scenario Spearman 0.67
 (RMSE 0.148 against Loewe 0.208 and Bliss 0.259). It does not replace Loewe for the
 growth boundary.
 
-![](assets/images/040-inhibitor-synergy-wetlab/rule_choice_2026-10-10-23-56-14.svg)
+![](assets/images/040-inhibitor-synergy-wetlab/rule_choice_2026-10-10-23-58-07.svg)
 
 Left: observed pair fitness (black) against Bliss (orange squares) and Loewe (blue
 triangles) from the ex21 fits, grouped by chemical class; the dotted line is tau. Right:
-leave-one-pair-out mean absolute error of each rule-choice predictor, with its growth
-call accuracy.
+leave-one-pair-out mean absolute error of each rule-choice predictor, with its Spearman
+over the 12 grown pairs beside the bar. The growth-call accuracy in the table above is a
+majority-class readout here: 12 of 15 pairs grew, Bliss predicts growth for every pair
+and scores 0.800 by missing only the three that died, Loewe calls eight grown pairs dead
+and scores 0.467. Bliss's error is a level bias (too high for every acid pair) that
+leaves the order of the grown pairs intact, which is why it ranks best while erring most.

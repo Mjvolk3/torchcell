@@ -416,7 +416,7 @@ def figure(pairs: pd.DataFrame, lopo: pd.DataFrame) -> list[str]:
     ]
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=60, ha="right")
-    ax.set_ylim(-0.03, 1.3)
+    ax.set_ylim(-0.03, 1.15)
     ax.set_ylabel("pair fitness at the ex23 doses")
     bounds = p.groupby("k")["pair"].count().cumsum().tolist()
     starts = [0] + bounds[:-1]
@@ -429,8 +429,8 @@ def figure(pairs: pd.DataFrame, lopo: pd.DataFrame) -> list[str]:
             alpha=0.08 if name != "aldehyde + acid" else 0.0,
             linewidth=0,
         )
-        ax.text((s0 + e0 - 1) / 2, 1.06, name, ha="center", va="bottom")
-    ax.legend(loc="upper center", ncol=3, frameon=False)
+        ax.text((s0 + e0 - 1) / 2, 1.04, name, ha="center", va="bottom")
+    handles, labels = ax.get_legend_handles_labels()
     ax.set_title("which rule a pair follows splits by chemical class")
     mr.box(ax)
     mr.tenth_grid(ax, "y")
@@ -471,12 +471,13 @@ def figure(pairs: pd.DataFrame, lopo: pd.DataFrame) -> list[str]:
     ax.set_yticklabels([short[n] for n in show["predictor"]])
     ax.invert_yaxis()
     ax.set_xlabel("mean absolute error, 15 held-out pairs")
-    ax.set_title("leave-one-pair-out: predicting the rule")
+    ax.set_title("leave-one-pair-out: error of each rule-choice predictor")
     for yi, (_, r) in zip(y, show.iterrows(), strict=True):
-        ax.text(r["mae"] + 0.005, yi, f"acc {r['growth_accuracy']:.2f}", va="center")
+        ax.text(r["mae"] + 0.005, yi, f"rank {r['spearman_grown']:.2f}", va="center")
     ax.set_xlim(0, float(show["mae"].max()) * 1.35)
     mr.box(ax)
-    fig.subplots_adjust(left=0.06, right=0.99, top=0.9, bottom=0.3, wspace=0.55)
+    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False)
+    fig.subplots_adjust(left=0.06, right=0.99, top=0.9, bottom=0.36, wspace=0.55)
     mr.panel_letters(fig, axes)
     os.makedirs(IMAGES, exist_ok=True)
     stem = osp.join(IMAGES, f"rule_choice_{timestamp()}")

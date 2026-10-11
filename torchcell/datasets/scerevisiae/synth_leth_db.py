@@ -187,7 +187,7 @@ SYNLETHDB_ENVIRONMENT = Environment(
 
 # --- begin #903: the SR file's statistic score has no sourced definition -------- #
 #: The BioGRID 2019 update, SynLethDB 2.0's reference 22 (paper.pdf reference list,
-#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529-D541"). Not
+#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529–D541"). Not
 #: mirrored; reading it (and the row's own primary paper) is what would define the
 #: SR scores, so it is the gap's ``resolve_with``.
 BIOGRID_2019_REFERENCE = Provenance(

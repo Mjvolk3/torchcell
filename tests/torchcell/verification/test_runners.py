@@ -2273,7 +2273,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "tmi_kuzmin2020": (("Query strain ID", "Array strain ID"), 35),
     }
     assert _oracles(runners.GENE_ESSENTIALITY_DATASETS) == {
-        "gene_essentiality_sgd": 1329
+        "gene_essentiality_sgd": 1287
     }
     assert _oracles(runners.SYNTHETIC_PAIR_DATASETS) == {
         "syn_leth_db_yeast": 13996,
@@ -3265,14 +3265,33 @@ def test_companion_pair_keys_match_the_interaction_store_keys(tmp_path: Path) ->
     assert keys == {pair_key(_interaction_record(pair, 0.1, 0.2)["experiment"])}
 
 
-def _essentiality_record(gene: str, pubmed_id: str) -> Record:
+def _essentiality_record(
+    gene: str, pubmed_id: str, *, condition: bool = False
+) -> Record:
+    """An SGD-shaped record: no medium and no temperature (typed gaps), unless
+    ``condition``, which stands for an annotation SGD qualifies (here SC at 30 C).
+    """
     from torchcell.datamodels.schema import (
         GeneEssentialityExperiment,
         GeneEssentialityExperimentReference,
         GeneEssentialityPhenotype,
     )
+    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
-    env = Environment(media=SC, temperature=Temperature(value=30))
+    env = (
+        Environment(media=SC, temperature=Temperature(value=30))
+        if condition
+        else Environment(
+            media=None,
+            temperature=None,
+            provenance_gaps=[
+                ProvenanceGap(
+                    field=field, reason=ProvenanceGapReason.not_carried_by_curation
+                )
+                for field in ("media", "temperature")
+            ],
+        )
+    )
     experiment = GeneEssentialityExperiment(
         dataset_name="test",
         genotype=_genotype([gene]),
@@ -3299,17 +3318,28 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
 
     _write_lmdb(
         _root(tmp_path, "ess"),
-        [_essentiality_record("YAL001C", "7"), _essentiality_record("YBR085W", "8")],
+        [
+            _essentiality_record("YAL001C", "7"),
+            _essentiality_record("YBR085W", "8"),
+            _essentiality_record("YJR155W", "9", condition=True),
+        ],
     )
-    smf = _fitness_record("YBR085W", 0.9)
-    smf["experiment"]["genotype"]["perturbations"][0]["perturbation_type"] = (
-        "sga_kanmx_deletion"
+    # the loader's ledger: one more YAL001C annotation (PubMed 7), another allele
+    (_root(tmp_path, "ess") / "preprocess").mkdir(parents=True, exist_ok=True)
+    (_root(tmp_path, "ess") / "preprocess" / "dropped_records.json").write_text(
+        json.dumps({"rows": [{"systematic_name": "YAL001C", "pubmed_id": "7"}]})
     )
-    smf["experiment"]["genotype"]["perturbations"][0]["strain_id"] = "YBR085W_dma1"
-    _write_lmdb(_root(tmp_path, "smf"), [smf])
+    smf_records = []
+    for gene in ("YBR085W", "YJR155W"):
+        smf = _fitness_record(gene, 0.9)
+        perturbation = smf["experiment"]["genotype"]["perturbations"][0]
+        perturbation["perturbation_type"] = "sga_kanmx_deletion"
+        perturbation["strain_id"] = f"{gene}_dma1"
+        smf_records.append(smf)
+    _write_lmdb(_root(tmp_path, "smf"), smf_records)
     genes = tmp_path / "data" / "sgd" / "genome" / "genes"
     genes.mkdir(parents=True)
-    for gene, pubmed in (("YAL001C", 7), ("YBR085W", 8)):
+    for gene, pubmeds in (("YAL001C", (7, 7)), ("YBR085W", (8,)), ("YJR155W", (9,))):
         (genes / f"{gene}.json").write_text(
             json.dumps(
                 {
@@ -3320,6 +3350,7 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
                             "phenotype": {"display_name": "inviable"},
                             "reference": {"pubmed_id": pubmed},
                         }
+                        for pubmed in pubmeds
                     ]
                 }
             )
@@ -3328,7 +3359,7 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
     _stub_genome(monkeypatch)
     spec = {
         "root": "data/torchcell/ess",
-        "expected_count": 2,
+        "expected_count": 3,
         "sgd_genes_dir": "data/sgd/genome/genes",
         "sgd_genes_digest": sgd_json_digest(str(genes)),
         "viable_deletion_store": "smf",
@@ -3337,10 +3368,20 @@ def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
     monkeypatch.setattr(runners, "GENE_ESSENTIALITY_DATASETS", {"ess": spec})
     assert runners.run_gene_essentiality(str(tmp_path)) is False
     report = _read_report(_root(tmp_path, "ess"))
-    assert _result(report, "released_annotations")["passed"] is True
+    released = _result(report, "released_annotations")
+    assert released["passed"] is True
+    assert released["message"] == (
+        "the 3 stored (gene, PubMed id) records are the 4 inviable null S288C "
+        "annotations SGD releases, less the 1 the loader ledgers"
+    )
+    # #901: the conditional YJR155W record is not compared; YBR085W, unconditional, is
     cross = _result(report, "no_viable_deletion_in_smf")
     assert cross["passed"] is False
     assert cross["details"]["contradicted"] == {"YBR085W": "YBR085W_dma1"}
+    assert cross["details"]["n_essential"] == 2
+    assert cross["message"].startswith(
+        "1 of 2 unconditionally essential genes are viable full-deletion strains"
+    )
 
     monkeypatch.setitem(spec, "sgd_genes_digest", "0" * 64)
     runners.run_gene_essentiality(str(tmp_path))
@@ -3420,6 +3461,25 @@ def test_released_synlethdb_pairs_skip_ledgered_rows_and_resolve_by_entrez(
     assert n_rows == 4
     assert rows == {
         pair_row_key("YAL001C", "YBR085W", 0.9, "11"): 1,
+        pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
+    }
+
+
+def test_released_synlethdb_pairs_read_no_score_where_the_source_defines_none(
+    tmp_path: Path,
+) -> None:
+    """#903: with ``keep_scores`` False a released score reads None, as the store holds
+    it (a typed gap) for a file whose score no source defines.
+    """
+    from torchcell.verification.synthetic_lethality import pair_row_key
+
+    path = _write_synlethdb(tmp_path)
+    rows, n_rows = runners.released_synlethdb_pairs(
+        str(path), _ledger(), ENTREZ, keep_scores=False
+    )
+    assert n_rows == 4
+    assert rows == {
+        pair_row_key("YAL001C", "YBR085W", None, "11"): 1,
         pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
     }
 

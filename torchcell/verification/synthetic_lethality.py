@@ -22,7 +22,8 @@ PubMed id. The two arms differ only in their label field names, which
    paper defines no score for, L2 ``score_defined_by_source`` instead: no record may
    state one); L2 ``released_rows`` -- the stored (unordered ORF pair,
    score, PubMed id) multiset is the released file's kept rows, read from the pinned
-   CSV with each side resolved by its Entrez id through the pinned NCBI GFF; L2
+   CSV with each side resolved by its Entrez id through the pinned NCBI GFF (for a file
+   the source defines no score for, the released score is read as None, #903); L2
    ``release_accounting`` -- released rows = stored records + ledgered drops, and,
    where the release paper states the number, released rows = that number.
 4. L3 ``reference_negative`` -- every reference's label is False with no score, in the

@@ -355,3 +355,63 @@ pairs training data in those arms, so the pre-registered "ex23 is never trained 
 only for the arms of rounds 1 and 2 and the note must say so. Each regime is one arm of
 five or six folds at about two hours per card at PARALLEL=2. The decision to take is
 whether to open the pairs to training (C and D); A and B can start on the next free card.
+
+## 2026.10.10 - The boundary is the readout: no single rule draws it, and the choice splits by the acid
+
+The user's reframing, agreed and adopted: for several inhibitors the useful prediction is
+the shape in dose space inside which the host still grows, the line between alive and
+dead at different concentrations. The fixed-dose ex23 set gives one point per
+combination, so the boundary lives in the three isobole grids and in the single-agent
+curves that fix its intercepts. Two committed scripts now score it:
+`mixture_rules.py` (boundary table `results/isobole_boundary.csv`, the Bliss front on the
+isobole figure; [[experiments.040-inhibitor-synergy-wetlab.scripts.mixture_rules]]) and
+`rule_choice.py` (which rule each pair follows and whether anything predicts the choice;
+[[experiments.040-inhibitor-synergy-wetlab.scripts.rule_choice]]).
+
+**Bliss multiplies, Loewe adds.** Bliss multiplies surviving fractions, a sum on the log
+scale, two independent hits. Loewe adds doses, each as a fraction of the dose of that
+compound alone that gives the same effect, a shared capacity. With the steep ex21 curves
+the two fronts sit far apart, so which one a pair follows is a large, visible difference.
+
+**The grids (served call, 81 interior cells each, Jaccard of the predicted and observed
+alive regions):** furfural x acetic acid follows Bliss (0.73 against Loewe 0.29; Loewe
+kills 10 cells that grew), 5-HMF x acetic acid follows Bliss (0.70 against 0.29; 12 cells),
+formic acid x acetic acid follows Loewe (0.88 against 0.44; Bliss keeps 31 dead cells
+alive). The growth edge along acetic acid tracks the winning rule within a third to a half
+of a dose step and misses by one to three steps under the other.
+
+**The 15 fixed-dose pairs agree with the grids they share and refine the split.** All six
+acid + acid pairs follow Loewe. The eight aldehyde + acid pairs split by the acid, not the
+class: with acetic or formic acid the aldehyde pairs follow Bliss (HMF+AA, HMF+FA, FF+AA,
+FF+FA), with lactic or levulinic acid they follow Loewe (HMF+LA, HMF+LVA, FF+LA, FF+LVA),
+and the two 5-HMF pairs among those grew in no well, which Loewe calls and Bliss does not.
+This corrects the earlier reading in this note that the split is "aldehyde with acid
+follows Bliss": that holds for the two short acids only. Hypothesis (untested): acetic
+and formic acid at the ex23 doses act on a different capacity from the aldehydes, while
+lactic and levulinic acid at 20 and 6 g/L add to the same load the aldehydes draw on; the
+ex21 curves alone do not say which.
+
+**Can the choice be predicted? Not on these 15 pairs** (leave-one-pair-out, prediction =
+w Loewe + (1 - w) Bliss): pure Loewe has the lowest error (mean absolute 0.197) and pure
+Bliss the best growth call (0.800) and ranking of the grown pairs (0.748); a fitted
+global w, the class rule, a fitted class w and six profile-similarity predictors all land
+between the two (error 0.196 to 0.219). The no-parameter class hierarchy over all 63
+combinations (Loewe within class, Bliss across) reads growth AUROC 0.887 against Loewe's
+0.958, with the smallest fitness error over the grown combinations (RMSE 0.148 against
+0.208); it does not replace Loewe for the boundary. For the panel: the boundary is
+Loewe for the acids and Bliss for the short-acid + aldehyde pairs, both model-free; the
+rule choice is the quantity a model would have to supply, and nothing on file supplies
+it yet.
+
+**Round 1 closes on GilaHyper; round 2 opens.** The two fine-tune arms (3748 head only,
+3750 head + environment encoder, 2 h 04 and 2 h 06) read growth AUROC 0.556 and 0.582,
+worst-scenario 0.093 and 0.154, isobole residuals -0.41 to -0.57, Vanacloig 0.271 and
+0.256: the same band as the dose-off joint arm, still below every rule. The two-layer
+joint arm runs as 3791. Round 2 began with the replication of the dose-off joint arm on
+fold seeds 1 and 2 (`conf/mixture/r2_mix_van_ex21_off_L1_lh1.yaml`, ten configs, job
+3792, 24 GB requested against a measured 9.7 GB peak). On Delta all six remaining
+round-1 arms started about 21:20 CDT (22788115 to 22788120); 22788115, 22788116 and
+22788117 duplicate arms GilaHyper has run or is running and can be cancelled. The 038
+Delta rounds 11, 16 and 17 finished (W&B project
+`torchcell_038-env-chemgen-vanacloig-cgt-corrected`, last run 21:32 CDT); their CSVs
+await an rsync from the Delta tree before the 038 note can score them.

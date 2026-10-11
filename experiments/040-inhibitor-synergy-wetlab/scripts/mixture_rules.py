@@ -44,6 +44,14 @@ the two plate wells per cell), the Loewe additive front at the run's growth thre
 from the axis Hill fits, and counts of interior cells that contradict Loewe in each
 direction. HMF x AA (ex28) is analyzed but flagged: one run, growth islands at HMF
 2.0 g/L (039).
+
+BOUNDARY (``results/isobole_boundary.csv``). The alive / dead boundary of each grid is
+what the multi-inhibitor question asks for: the shape in dose space inside which the
+host still grows. Each rule's predicted alive region (prediction >= tau on the 81
+interior cells) is scored against the observed one by the Jaccard overlap, the cells
+wrong in each direction, and the growth edge (highest dose called alive) column by
+column and row by row in grid steps. The isobole figure draws the Loewe front (dashed)
+and the Bliss front (dotted, the Bliss level set at tau) over the observed outline.
 """
 
 from __future__ import annotations
@@ -573,12 +581,78 @@ def isobole_analysis(
             "mean": mean,
             "grew": grew,
             "excess": excess,
+            "bliss": bliss,
+            "loewe": loewe_pred,
+            "tau": np.array(grid.tau),
             "x": np.asarray(grid.x_doses),
             "a": np.asarray(grid.a_doses),
             "dx": np.array(dx),
             "da": np.array(da),
         }
     return summary, pd.DataFrame(cells), surfaces
+
+
+BOUNDARY_RULES = ("bliss", "loewe")
+
+
+def growth_edge(alive: np.ndarray) -> np.ndarray:
+    """Per column of an [rows, cols] alive mask: the highest alive row index, 0 if none.
+
+    Rows are inhibitor doses in grid steps, so the edge is the highest inhibitor dose
+    (in steps) at which growth is called in that acetic acid column; a column with no
+    alive cell has edge 0. Islands count: the edge is the highest alive row, not the
+    first dead one, so a grid with an island above a dead band reads the island.
+    """
+    rows = np.arange(alive.shape[0])[:, None]
+    return np.where(alive, rows, 0).max(axis=0)
+
+
+def boundary_scores(surfaces: dict[str, dict[str, np.ndarray]]) -> pd.DataFrame:
+    """How well each rule draws the alive / dead boundary of each isobole grid.
+
+    The boundary is scored on the 81 interior cells. A cell is alive under a rule when
+    the rule's predicted fitness is at least the grid's tau, the same call the observed
+    cells get. Three readouts per rule: the Jaccard overlap of the predicted and
+    observed alive regions; the cells wrong in each direction (predicted alive but
+    dead, predicted dead but alive); and the growth edge, the highest dose at which
+    growth is called, compared column by column along acetic acid (edge in inhibitor
+    steps) and row by row along the inhibitor (edge in acetic acid steps), as the mean
+    absolute and mean signed error in grid steps. One step is the grid's dose
+    increment (``ISOBOLES`` for the inhibitor, ``AA_STEP`` for acetic acid).
+    """
+    rows = []
+    for run, s in surfaces.items():
+        tau = float(s["tau"])
+        obs = s["grew"][1:, 1:]
+        for rule in BOUNDARY_RULES:
+            pred = (s[rule] >= tau)[1:, 1:]
+            inter = int((pred & obs).sum())
+            union = int((pred | obs).sum())
+            col_obs, col_pred = growth_edge(obs), growth_edge(pred)
+            row_obs, row_pred = growth_edge(obs.T), growth_edge(pred.T)
+            rows.append(
+                {
+                    "run": run,
+                    "pair": f"{NAMES['AA']}|{NAMES[ISOBOLES[run][0]]}",
+                    "rule": rule,
+                    "tau": tau,
+                    "n_interior_cells": int(obs.size),
+                    "n_alive_observed": int(obs.sum()),
+                    "n_alive_predicted": int(pred.sum()),
+                    "jaccard_alive": inter / union if union else np.nan,
+                    "n_predicted_alive_observed_dead": int((pred & ~obs).sum()),
+                    "n_predicted_dead_observed_alive": int((~pred & obs).sum()),
+                    "edge_by_column_mae_steps": float(
+                        np.abs(col_pred - col_obs).mean()
+                    ),
+                    "edge_by_column_signed_steps": float((col_pred - col_obs).mean()),
+                    "edge_by_row_mae_steps": float(np.abs(row_pred - row_obs).mean()),
+                    "edge_by_row_signed_steps": float((row_pred - row_obs).mean()),
+                    "inhibitor_step_g_per_l": ISOBOLES[run][1],
+                    "acetic_acid_step_g_per_l": AA_STEP,
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 # --------------------------------------------------------------------------- #
@@ -701,6 +775,18 @@ def plot_isoboles(
                 linewidth=1.0,
                 linestyle="--",
             )
+            # Bliss front at tau: the level set of the empirical Bliss surface. Drawn
+            # on the fitness row only; the excess row already shows Bliss as its zero.
+            if r == 0:
+                ax.contour(
+                    np.arange(grew.shape[1]),
+                    np.arange(grew.shape[0]),
+                    s["bliss"],
+                    levels=[float(s["tau"])],
+                    colors=[PLOT_PALETTE[0]],
+                    linewidths=1.0,
+                    linestyles=":",
+                )
             ax.set_xlim(-0.5, 9.5)
             ax.set_ylim(-0.5, 9.5)
             ax.set_xticks(range(10))
@@ -836,6 +922,26 @@ def main() -> None:
     pd.DataFrame(summary).to_csv(osp.join(RESULTS, "isobole_summary.csv"), index=False)
     cells.to_csv(osp.join(RESULTS, "isobole_cells.csv"), index=False)
     print(pd.DataFrame(summary).drop(columns="flag").round(3).T.to_string())
+    boundary = boundary_scores(surfaces)
+    boundary.to_csv(osp.join(RESULTS, "isobole_boundary.csv"), index=False)
+    print(
+        boundary[
+            [
+                "run",
+                "rule",
+                "n_alive_observed",
+                "n_alive_predicted",
+                "jaccard_alive",
+                "n_predicted_alive_observed_dead",
+                "n_predicted_dead_observed_alive",
+                "edge_by_column_mae_steps",
+                "edge_by_column_signed_steps",
+                "edge_by_row_mae_steps",
+            ]
+        ]
+        .round(3)
+        .to_string(index=False)
+    )
 
     written = plot_rules(table) + plot_isoboles(surfaces, summary) + plot_pairs(pairs)
     print("\n".join(written))

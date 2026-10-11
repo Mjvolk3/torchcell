@@ -932,6 +932,63 @@ def test_mrna_number_fraction_node_projects_the_dict_as_sorted_json() -> None:
     }
 
 
+def _expression_score(**kw: Any) -> s.MicroarrayExpressionScorePhenotype:
+    fields: dict[str, Any] = dict(
+        expression_score={"YBR001C": 1.5, "YAL001C": -3.0},
+        expression_score_p_value={"YBR001C": 0.133614, "YAL001C": 0.0027},
+        measurement_type="error_model_x_score_weighted_duplicate_average",
+        reference_basis="wild-type BY4741 culture",
+        array_platform="GEO GPL3588",
+        n_replicates=2,
+        harvest_optical_density=0.82,
+    )
+    fields.update(kw)
+    return s.MicroarrayExpressionScorePhenotype(**fields)
+
+
+def test_microarray_expression_score_node_projects_dicts_as_sorted_json() -> None:
+    """#1022: each per-gene dict is one JSON string; the scalars stay typed."""
+    phenotype = _expression_score()
+    [node] = _run(
+        "microarray expression score phenotype (chunked)", _phenotype_record(phenotype)
+    )
+    pid = _sha(phenotype)
+    assert (node.get_id(), node.get_label(), node.get_preferred_id()) == (
+        pid,
+        "microarray expression score phenotype",
+        f"phenotype_{pid}",
+    )
+    assert node.get_properties() == {
+        "id": pid,
+        "preferred_id": f"phenotype_{pid}",
+        "graph_level": "node",
+        "label_name": "expression_score",
+        "label_statistic_name": "expression_score_p_value",
+        "expression_score": '{"YAL001C": -3.0, "YBR001C": 1.5}',
+        "expression_score_p_value": '{"YAL001C": 0.0027, "YBR001C": 0.133614}',
+        "measurement_type": "error_model_x_score_weighted_duplicate_average",
+        "reference_basis": "wild-type BY4741 culture",
+        "array_platform": "GEO GPL3588",
+        "n_replicates": 2,
+        "harvest_optical_density": 0.82,
+    }
+
+
+def test_microarray_expression_score_reference_projects_its_absent_p_as_none() -> None:
+    """A reference is not tested against itself: no p-value map, no harvest density."""
+    phenotype = _expression_score(
+        expression_score={"YAL001C": 0.0},
+        expression_score_p_value=None,
+        harvest_optical_density=None,
+    )
+    props = CellAdapter._microarray_expression_score_properties(phenotype)
+    assert (props["expression_score_p_value"], props["harvest_optical_density"]) == (
+        None,
+        None,
+    )
+    assert props["expression_score"] == '{"YAL001C": 0.0}'
+
+
 def _morphology_record(phenotype: s.BacterialMorphologyPhenotype) -> dict[str, Any]:
     return {
         "experiment": s.BacterialMorphologyExperiment(
@@ -1043,6 +1100,15 @@ def test_bacterial_morphology_optional_fields_project_as_none() -> None:
             "mrna number fraction phenotype",
             [_fraction(), _fraction(), _fraction(n_libraries=1)],
         ),
+        (
+            "microarray expression score phenotype reference",
+            "microarray expression score phenotype",
+            [
+                _expression_score(),
+                _expression_score(),
+                _expression_score(harvest_optical_density=1.1),
+            ],
+        ),
     ],
 )
 def test_reference_phenotype_nodes_are_deduplicated_and_reach_their_edge(
@@ -1094,6 +1160,10 @@ NEW_CLASSES = {
     "mrna number fraction phenotype": (
         "mrna number fraction phenotype (chunked)",
         s.MrnaNumberFractionPhenotype,
+    ),
+    "microarray expression score phenotype": (
+        "microarray expression score phenotype (chunked)",
+        s.MicroarrayExpressionScorePhenotype,
     ),
 }
 
@@ -1186,6 +1256,12 @@ def test_the_new_methods_are_registered_and_the_served_edges_name_the_new_classe
         ),
         "mrna number fraction phenotype reference": (
             "_get_mrna_number_fraction_phenotype_reference_nodes"
+        ),
+        "microarray expression score phenotype (chunked)": (
+            "_microarray_expression_score_phenotype_node"
+        ),
+        "microarray expression score phenotype reference": (
+            "_get_microarray_expression_score_phenotype_reference_nodes"
         ),
     }.items():
         assert table[name] == fn

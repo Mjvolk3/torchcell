@@ -1,0 +1,2300 @@
+{
+  "data_root": "/scratch/projects/torchcell-scratch",
+  "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+  "datasets": {
+    "SmfCostanzo2016Dataset": {
+      "dataset_class": "SmfCostanzo2016Dataset",
+      "root": "data/torchcell/smf_costanzo2016",
+      "records": 20484,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:12:24"
+    },
+    "DmfCostanzo2016Dataset": {
+      "dataset_class": "DmfCostanzo2016Dataset",
+      "root": "data/torchcell/dmf_costanzo2016",
+      "records": 20705612,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T16:46:51"
+    },
+    "DmiCostanzo2016Dataset": {
+      "dataset_class": "DmiCostanzo2016Dataset",
+      "root": "data/torchcell/dmi_costanzo2016",
+      "records": 20705612,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T16:35:07"
+    },
+    "SmfKuzmin2018Dataset": {
+      "dataset_class": "SmfKuzmin2018Dataset",
+      "root": "data/torchcell/smf_kuzmin2018",
+      "records": 1539,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:12:16"
+    },
+    "SmfODuibhir2014Dataset": {
+      "dataset_class": "SmfODuibhir2014Dataset",
+      "root": "data/torchcell/smf_oduibhir2014",
+      "records": 1312,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_oduibhir2014]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_oduibhir2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 13.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:12:30"
+    },
+    "DmfKuzmin2018Dataset": {
+      "dataset_class": "DmfKuzmin2018Dataset",
+      "root": "data/torchcell/dmf_kuzmin2018",
+      "records": 410571,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:17:39"
+    },
+    "TmfKuzmin2018Dataset": {
+      "dataset_class": "TmfKuzmin2018Dataset",
+      "root": "data/torchcell/tmf_kuzmin2018",
+      "records": 91111,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:13:52"
+    },
+    "DmiKuzmin2018Dataset": {
+      "dataset_class": "DmiKuzmin2018Dataset",
+      "root": "data/torchcell/dmi_kuzmin2018",
+      "records": 410399,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:18:48"
+    },
+    "TmiKuzmin2018Dataset": {
+      "dataset_class": "TmiKuzmin2018Dataset",
+      "root": "data/torchcell/tmi_kuzmin2018",
+      "records": 91111,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:18:56"
+    },
+    "SmfKuzmin2020Dataset": {
+      "dataset_class": "SmfKuzmin2020Dataset",
+      "root": "data/torchcell/smf_kuzmin2020",
+      "records": 472,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:18:57"
+    },
+    "DmfKuzmin2020Dataset": {
+      "dataset_class": "DmfKuzmin2020Dataset",
+      "root": "data/torchcell/dmf_kuzmin2020",
+      "records": 632998,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:27:26"
+    },
+    "TmfKuzmin2020Dataset": {
+      "dataset_class": "TmfKuzmin2020Dataset",
+      "root": "data/torchcell/tmf_kuzmin2020",
+      "records": 301798,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:23:24"
+    },
+    "DmiKuzmin2020Dataset": {
+      "dataset_class": "DmiKuzmin2020Dataset",
+      "root": "data/torchcell/dmi_kuzmin2020",
+      "records": 632797,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:31:42"
+    },
+    "TmiKuzmin2020Dataset": {
+      "dataset_class": "TmiKuzmin2020Dataset",
+      "root": "data/torchcell/tmi_kuzmin2020",
+      "records": 301798,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:31:49"
+    },
+    "GeneEssentialitySgdDataset": {
+      "dataset_class": "GeneEssentialitySgdDataset",
+      "root": "data/torchcell/gene_essentiality_sgd",
+      "records": 1329,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:41:30"
+    },
+    "SynthLethalityYeastSynthLethDbDataset": {
+      "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
+      "root": "data/torchcell/syn_leth_db_yeast",
+      "records": 13996,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:32:04"
+    },
+    "SynthRescueYeastSynthLethDbDataset": {
+      "dataset_class": "SynthRescueYeastSynthLethDbDataset",
+      "root": "data/torchcell/syn_rescue_db_yeast",
+      "records": 6942,
+      "route": "none",
+      "route_detail": "-",
+      "verdict": "NO_VERIFIER",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:32:16"
+    },
+    "ScmdOhya2005Dataset": {
+      "dataset_class": "ScmdOhya2005Dataset",
+      "root": "data/torchcell/scmd_ohya2005",
+      "records": 4718,
+      "route": "registry",
+      "route_detail": "run_morphology",
+      "verdict": "PASS",
+      "n_rules": 10,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohya2005/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 42.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:32:38"
+    },
+    "MicroarrayKemmeren2014Dataset": {
+      "dataset_class": "MicroarrayKemmeren2014Dataset",
+      "root": "data/torchcell/microarray_kemmeren2014",
+      "records": 1484,
+      "route": "registry",
+      "route_detail": "run_expression[EXPRESSION_DATASETS:microarray_kemmeren2014]",
+      "verdict": "PASS",
+      "n_rules": 9,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/microarray_kemmeren2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 55.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:52:23"
+    },
+    "SmMicroarraySameith2015Dataset": {
+      "dataset_class": "SmMicroarraySameith2015Dataset",
+      "root": "data/torchcell/sm_microarray_sameith2015",
+      "records": 82,
+      "route": "registry",
+      "route_detail": "run_expression[EXPRESSION_DATASETS:sm_microarray_sameith2015]",
+      "verdict": "PASS",
+      "n_rules": 9,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/sm_microarray_sameith2015/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 53.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:44:28"
+    },
+    "DmMicroarraySameith2015Dataset": {
+      "dataset_class": "DmMicroarraySameith2015Dataset",
+      "root": "data/torchcell/dm_microarray_sameith2015",
+      "records": 72,
+      "route": "registry",
+      "route_detail": "run_expression[EXPRESSION_DATASETS:dm_microarray_sameith2015]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/dm_microarray_sameith2015/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 55.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:47:21"
+    },
+    "CaudalPanTranscriptome2024Dataset": {
+      "dataset_class": "CaudalPanTranscriptome2024Dataset",
+      "root": "data/torchcell/caudal_pantranscriptome2024",
+      "records": 943,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:caudal_pantranscriptome2024]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/caudal_pantranscriptome2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 21102.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:52:43"
+    },
+    "ScmdOhnuki2018Dataset": {
+      "dataset_class": "ScmdOhnuki2018Dataset",
+      "root": "data/torchcell/scmd_ohnuki2018",
+      "records": 1112,
+      "route": "registry",
+      "route_detail": "run_morphology_ohnuki",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 6.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:52:56"
+    },
+    "ScmdOhnuki2022Dataset": {
+      "dataset_class": "ScmdOhnuki2022Dataset",
+      "root": "data/torchcell/scmd_ohnuki2022",
+      "records": 1979,
+      "route": "registry",
+      "route_detail": "run_ohnuki_morphology",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/scmd_ohnuki2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 34.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:00"
+    },
+    "CarotenoidOzaydin2013Dataset": {
+      "dataset_class": "CarotenoidOzaydin2013Dataset",
+      "root": "data/torchcell/carotenoid_ozaydin2013",
+      "records": 4474,
+      "route": "registry",
+      "route_detail": "run_visual_score[VISUAL_SCORE_DATASETS:carotenoid_ozaydin2013]",
+      "verdict": "PASS",
+      "n_rules": 7,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/carotenoid_ozaydin2013/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 112.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:13"
+    },
+    "BetaxanthinCachera2023Dataset": {
+      "dataset_class": "BetaxanthinCachera2023Dataset",
+      "root": "data/torchcell/betaxanthin_cachera2023",
+      "records": 4719,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:betaxanthin_cachera2023]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/betaxanthin_cachera2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 127.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:14"
+    },
+    "MetaboliteDaSilveira2014Dataset": {
+      "dataset_class": "MetaboliteDaSilveira2014Dataset",
+      "root": "data/torchcell/metabolite_dasilveira2014",
+      "records": 127,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolite_dasilveira2014]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_dasilveira2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:23"
+    },
+    "MetaboliteZelezniak2018Dataset": {
+      "dataset_class": "MetaboliteZelezniak2018Dataset",
+      "root": "data/torchcell/metabolite_zelezniak2018",
+      "records": 129,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolite_zelezniak2018]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_zelezniak2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:25"
+    },
+    "ProteomeMessner2023Dataset": {
+      "dataset_class": "ProteomeMessner2023Dataset",
+      "root": "data/torchcell/proteome_messner2023",
+      "records": 4699,
+      "route": "registry",
+      "route_detail": "run_protein[PROTEIN_DATASETS:proteome_messner2023]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_messner2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 46.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:55:38"
+    },
+    "ProteomeZelezniak2018Dataset": {
+      "dataset_class": "ProteomeZelezniak2018Dataset",
+      "root": "data/torchcell/proteome_zelezniak2018",
+      "records": 97,
+      "route": "registry",
+      "route_detail": "run_protein[PROTEIN_DATASETS:proteome_zelezniak2018]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_zelezniak2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:35"
+    },
+    "AminoAcidMulleder2016Dataset": {
+      "dataset_class": "AminoAcidMulleder2016Dataset",
+      "root": "data/torchcell/amino_acid_mulleder2016",
+      "records": 4678,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:amino_acid_mulleder2016]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_mulleder2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 30.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:53:50"
+    },
+    "AminoAcidCooper2010Dataset": {
+      "dataset_class": "AminoAcidCooper2010Dataset",
+      "root": "data/torchcell/amino_acid_cooper2010",
+      "records": 4313,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:amino_acid_cooper2010]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/amino_acid_cooper2010/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 37.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:54:05"
+    },
+    "OrganicAcidYoshida2012Dataset": {
+      "dataset_class": "OrganicAcidYoshida2012Dataset",
+      "root": "data/torchcell/organic_acid_yoshida2012",
+      "records": 17,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:organic_acid_yoshida2012]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/organic_acid_yoshida2012/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:54:19"
+    },
+    "IsobutanolScreenLopez2024Dataset": {
+      "dataset_class": "IsobutanolScreenLopez2024Dataset",
+      "root": "data/torchcell/isobutanol_screen_lopez2024",
+      "records": 4554,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:isobutanol_screen_lopez2024]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_screen_lopez2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 21.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:54:32"
+    },
+    "IsobutanolValidatedLopez2024Dataset": {
+      "dataset_class": "IsobutanolValidatedLopez2024Dataset",
+      "root": "data/torchcell/isobutanol_validated_lopez2024",
+      "records": 224,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:isobutanol_validated_lopez2024]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isobutanol_validated_lopez2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:54:44"
+    },
+    "FattyAcidXue2025Dataset": {
+      "dataset_class": "FattyAcidXue2025Dataset",
+      "root": "data/torchcell/ffa_xue2025",
+      "records": 176,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:ffa_xue2025]",
+      "verdict": "FAIL",
+      "n_rules": 8,
+      "failed_rules": [
+        {
+          "level": "L4",
+          "name": "gene_containment_scmd_ohya2005",
+          "passed": false,
+          "message": "0.769 of scmd_ohya2005's 13 deletion genes are in Ohya (>= 0.9)"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ffa_xue2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T12:54:55"
+    },
+    "NadalRibellesPerturbSeq2025Dataset": {
+      "dataset_class": "NadalRibellesPerturbSeq2025Dataset",
+      "root": "data/torchcell/nadal_ribelles_perturbseq2025",
+      "records": 6188,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:nadal_ribelles_perturbseq2025]",
+      "verdict": "PASS",
+      "n_rules": 7,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/nadal_ribelles_perturbseq2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 83.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:04:04"
+    },
+    "Bloom2019Dataset": {
+      "dataset_class": "Bloom2019Dataset",
+      "root": "data/torchcell/bloom2019",
+      "records": 530100,
+      "route": "registry",
+      "route_detail": "run_segregant_growth[SEGREGANT_GROWTH_DATASETS:bloom2019]",
+      "verdict": "PASS",
+      "n_rules": 21,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/bloom2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2141.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:21:34"
+    },
+    "SmfBaryshnikova2010Dataset": {
+      "dataset_class": "SmfBaryshnikova2010Dataset",
+      "root": "data/torchcell/smf_baryshnikova2010",
+      "records": 5993,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:smf_baryshnikova2010]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/smf_baryshnikova2010/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 44.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:04:20"
+    },
+    "EnvChemgenCostanzo2021Dataset": {
+      "dataset_class": "EnvChemgenCostanzo2021Dataset",
+      "root": "data/torchcell/env_chemgen_costanzo2021",
+      "records": 61430,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_costanzo2021]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_costanzo2021/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 535.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:05:23"
+    },
+    "EnvChemgenAuesukaree2009Dataset": {
+      "dataset_class": "EnvChemgenAuesukaree2009Dataset",
+      "root": "data/torchcell/env_chemgen_auesukaree2009",
+      "records": 525,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_auesukaree2009]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_auesukaree2009/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:05:32"
+    },
+    "EnvChemgenMota2024Dataset": {
+      "dataset_class": "EnvChemgenMota2024Dataset",
+      "root": "data/torchcell/env_chemgen_mota2024",
+      "records": 1270,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_mota2024]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_mota2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 9.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:05:43"
+    },
+    "FattyAcidSmith2006Dataset": {
+      "dataset_class": "FattyAcidSmith2006Dataset",
+      "root": "data/torchcell/env_chemgen_smith2006",
+      "records": 12747,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_smith2006]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_smith2006/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 86.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:06:02"
+    },
+    "CrispriChemgenSmith2016Dataset": {
+      "dataset_class": "CrispriChemgenSmith2016Dataset",
+      "root": "data/torchcell/crispri_chemgen_smith2016",
+      "records": 7053,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:crispri_chemgen_smith2016]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_chemgen_smith2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 72.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:06:20"
+    },
+    "CrisprMagicLian2019Dataset": {
+      "dataset_class": "CrisprMagicLian2019Dataset",
+      "root": "data/torchcell/crispr_magic_lian2019",
+      "records": 266304,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:crispr_magic_lian2019]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispr_magic_lian2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3071.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:10:22"
+    },
+    "CrispriMormino2022Dataset": {
+      "dataset_class": "CrispriMormino2022Dataset",
+      "root": "data/torchcell/crispri_mormino2022",
+      "records": 12,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:crispri_mormino2022]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_mormino2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:10:31"
+    },
+    "EnvChemgenVanacloig2022Dataset": {
+      "dataset_class": "EnvChemgenVanacloig2022Dataset",
+      "root": "data/torchcell/env_chemgen_vanacloig2022",
+      "records": 118662,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_vanacloig2022]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_vanacloig2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 937.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:12:08"
+    },
+    "EnvChemgenWildenhain2015Dataset": {
+      "dataset_class": "EnvChemgenWildenhain2015Dataset",
+      "root": "data/torchcell/env_chemgen_wildenhain2015",
+      "records": 430820,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_wildenhain2015]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_wildenhain2015/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4932.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:20:55"
+    },
+    "EnvChemgenHoepfner2014Dataset": {
+      "dataset_class": "EnvChemgenHoepfner2014Dataset",
+      "root": "data/torchcell/env_chemgen_hoepfner2014",
+      "records": 3083827,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_hoepfner2014]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hoepfner2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 25988.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:37:02"
+    },
+    "HetHillenmeyer2008Dataset": {
+      "dataset_class": "HetHillenmeyer2008Dataset",
+      "root": "data/torchcell/env_chemgen_hillenmeyer2008_het",
+      "records": 2712677,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_hillenmeyer2008_het]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hillenmeyer2008_het/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 24689.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:58:21"
+    },
+    "HomHillenmeyer2008Dataset": {
+      "dataset_class": "HomHillenmeyer2008Dataset",
+      "root": "data/torchcell/env_chemgen_hillenmeyer2008_hom",
+      "records": 1063034,
+      "route": "registry",
+      "route_detail": "run_environment_response[ENVIRONMENT_RESPONSE_DATASETS:env_chemgen_hillenmeyer2008_hom]",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_hillenmeyer2008_hom/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 10223.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:51:08"
+    },
+    "GeneInteractionBabu2014Dataset": {
+      "dataset_class": "GeneInteractionBabu2014Dataset",
+      "root": "data/torchcell/gene_interaction_babu2014",
+      "records": 41988,
+      "route": "module",
+      "route_detail": "babu2014.run_verification",
+      "verdict": "PASS",
+      "n_rules": 32,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_babu2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 28.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:51:47"
+    },
+    "MrnaFractionBalakrishnan2022Dataset": {
+      "dataset_class": "MrnaFractionBalakrishnan2022Dataset",
+      "root": "data/torchcell/mrna_fraction_balakrishnan2022",
+      "records": 28,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:mrna_fraction_balakrishnan2022]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/mrna_fraction_balakrishnan2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.4,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:29:12"
+    },
+    "GeneInteractionButland2008Dataset": {
+      "dataset_class": "GeneInteractionButland2008Dataset",
+      "root": "data/torchcell/gene_interaction_butland2008",
+      "records": 301803,
+      "route": "module",
+      "route_detail": "butland2008.run_verification",
+      "verdict": "PASS",
+      "n_rules": 33,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/gene_interaction_butland2008/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 213.3,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-09T17:32:04"
+    },
+    "RnaseqCaglar2017Dataset": {
+      "dataset_class": "RnaseqCaglar2017Dataset",
+      "root": "data/torchcell/rnaseq_caglar2017",
+      "records": 152,
+      "route": "module",
+      "route_detail": "caglar2017.run_verification",
+      "verdict": "PASS",
+      "n_rules": 67,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_caglar2017/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:52:17"
+    },
+    "ProteomeCaglar2017Dataset": {
+      "dataset_class": "ProteomeCaglar2017Dataset",
+      "root": "data/torchcell/proteome_caglar2017",
+      "records": 105,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_caglar2017]",
+      "verdict": "PASS",
+      "n_rules": 69,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_caglar2017/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:52:30"
+    },
+    "DoublingTimeCaglar2017Dataset": {
+      "dataset_class": "DoublingTimeCaglar2017Dataset",
+      "root": "data/torchcell/doubling_time_caglar2017",
+      "records": 55,
+      "route": "module",
+      "route_detail": "caglar2017_doubling_time.verify_build",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/doubling_time_caglar2017/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:52:39"
+    },
+    "ProteinFoldChangeCaglar2017Dataset": {
+      "dataset_class": "ProteinFoldChangeCaglar2017Dataset",
+      "root": "data/torchcell/protein_fold_change_caglar2017",
+      "records": 8,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_fold_change[BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS:protein_fold_change_caglar2017]",
+      "verdict": "PASS",
+      "n_rules": 74,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/protein_fold_change_caglar2017/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:43:54"
+    },
+    "CrispriChemgenChoe2025Dataset": {
+      "dataset_class": "CrispriChemgenChoe2025Dataset",
+      "root": "data/torchcell/crispri_chemgen_choe2025",
+      "records": 466569,
+      "route": "module",
+      "route_detail": "choe2025.run_verification",
+      "verdict": "PASS",
+      "n_rules": 51,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_chemgen_choe2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3539.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:57:24"
+    },
+    "CrispriKnockdownCui2018Dataset": {
+      "dataset_class": "CrispriKnockdownCui2018Dataset",
+      "root": "data/torchcell/crispri_knockdown_cui2018",
+      "records": 141542,
+      "route": "module",
+      "route_detail": "cui2018.verify_build",
+      "verdict": "PASS",
+      "n_rules": 20,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_knockdown_cui2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1148.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:58:59"
+    },
+    "GrowthRateCampos2018Dataset": {
+      "dataset_class": "GrowthRateCampos2018Dataset",
+      "root": "data/torchcell/ecoli_growth_rate_campos2018",
+      "records": 3664,
+      "route": "module",
+      "route_detail": "campos2018.verify_build",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_growth_rate_campos2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 31.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:58:34"
+    },
+    "MorphologyCampos2018Dataset": {
+      "dataset_class": "MorphologyCampos2018Dataset",
+      "root": "data/torchcell/ecoli_morphology_campos2018",
+      "records": 3664,
+      "route": "module",
+      "route_detail": "campos2018.verify_morphology_build",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_morphology_campos2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 31.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:58:48"
+    },
+    "GrowthRateChoe2019Dataset": {
+      "dataset_class": "GrowthRateChoe2019Dataset",
+      "root": "data/torchcell/growth_rate_choe2019",
+      "records": 2,
+      "route": "module",
+      "route_detail": "choe2019_growth_rate.verify_growth_build",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_choe2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:58:58"
+    },
+    "MetabolomeBrunk2016Dataset": {
+      "dataset_class": "MetabolomeBrunk2016Dataset",
+      "root": "data/torchcell/metabolome_brunk2016",
+      "records": 117,
+      "route": "registry",
+      "route_detail": "run_bacterial_metabolite[BACTERIAL_METABOLITE_DATASETS:metabolome_brunk2016]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_brunk2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 5.8,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T01:46:28"
+    },
+    "ExometaboliteBrunk2016Dataset": {
+      "dataset_class": "ExometaboliteBrunk2016Dataset",
+      "root": "data/torchcell/exometabolite_brunk2016",
+      "records": 126,
+      "route": "registry",
+      "route_detail": "run_bacterial_metabolite[BACTERIAL_METABOLITE_DATASETS:exometabolite_brunk2016]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/exometabolite_brunk2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 6.3,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T01:46:28"
+    },
+    "ProteomeBrunk2016Dataset": {
+      "dataset_class": "ProteomeBrunk2016Dataset",
+      "root": "data/torchcell/proteome_brunk2016",
+      "records": 81,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_brunk2016]",
+      "verdict": "PASS",
+      "n_rules": 13,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_brunk2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 7.0,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:28:45"
+    },
+    "BiofuelTiterBrunk2016Dataset": {
+      "dataset_class": "BiofuelTiterBrunk2016Dataset",
+      "root": "data/torchcell/biofuel_titer_brunk2016",
+      "records": 72,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:biofuel_titer_brunk2016]",
+      "verdict": "PASS",
+      "n_rules": 10,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/biofuel_titer_brunk2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T01:47:24"
+    },
+    "IsopentenolTiterFoo2014Dataset": {
+      "dataset_class": "IsopentenolTiterFoo2014Dataset",
+      "root": "data/torchcell/isopentenol_titer_foo2014",
+      "records": 9,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isopentenol_titer_foo2014]",
+      "verdict": "FAIL",
+      "n_rules": 11,
+      "failed_rules": [
+        {
+          "level": "L0",
+          "name": "structural",
+          "passed": false,
+          "message": "9/9 records failed schema validation"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isopentenol_titer_foo2014/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.0,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:15:29"
+    },
+    "TranscriptionFactorKnockoutChoe2019Dataset": {
+      "dataset_class": "TranscriptionFactorKnockoutChoe2019Dataset",
+      "root": "data/torchcell/tf_knockout_growth_choe2019",
+      "records": 2,
+      "route": "module",
+      "route_detail": "choe2019_growth_rate.verify_tf_build",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/tf_knockout_growth_choe2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T13:59:09"
+    },
+    "MetabolomeFuhrer2017Dataset": {
+      "dataset_class": "MetabolomeFuhrer2017Dataset",
+      "root": "data/torchcell/metabolome_fuhrer2017",
+      "records": 3735,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolome_fuhrer2017]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_fuhrer2017/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 78.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:56"
+    },
+    "EnvChemgenGirgis2009Dataset": {
+      "dataset_class": "EnvChemgenGirgis2009Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_girgis2009",
+      "records": 63766,
+      "route": "module",
+      "route_detail": "girgis2009.verify_build",
+      "verdict": "PASS",
+      "n_rules": 57,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_girgis2009/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 523.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:08"
+    },
+    "GeneEssentialityGoodall2018Dataset": {
+      "dataset_class": "GeneEssentialityGoodall2018Dataset",
+      "root": "data/torchcell/gene_essentiality_goodall2018",
+      "records": 8203,
+      "route": "module",
+      "route_detail": "goodall2018.run_verification",
+      "verdict": "PASS",
+      "n_rules": 38,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_goodall2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:22"
+    },
+    "ProteinTurnoverGupta2024Dataset": {
+      "dataset_class": "ProteinTurnoverGupta2024Dataset",
+      "root": "data/torchcell/protein_turnover_gupta2024",
+      "records": 13,
+      "route": "module",
+      "route_detail": "gupta2024.verify_build",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/protein_turnover_gupta2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:35"
+    },
+    "MetabolomeIshii2007Dataset": {
+      "dataset_class": "MetabolomeIshii2007Dataset",
+      "root": "data/torchcell/metabolome_ishii2007",
+      "records": 28,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolome_ishii2007]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_ishii2007/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:44"
+    },
+    "ProteomeIshii2007Dataset": {
+      "dataset_class": "ProteomeIshii2007Dataset",
+      "root": "data/torchcell/proteome_ishii2007",
+      "records": 28,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_ishii2007]",
+      "verdict": "PASS",
+      "n_rules": 33,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_ishii2007/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:00:54"
+    },
+    "FluxIshii2007Dataset": {
+      "dataset_class": "FluxIshii2007Dataset",
+      "root": "data/torchcell/flux_ishii2007",
+      "records": 28,
+      "route": "module",
+      "route_detail": "ishii2007.run_verification",
+      "verdict": "PASS",
+      "n_rules": 29,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/flux_ishii2007/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:01:04"
+    },
+    "MismatchCrispriFitnessHawkins2020Dataset": {
+      "dataset_class": "MismatchCrispriFitnessHawkins2020Dataset",
+      "root": "data/torchcell/mismatch_crispri_fitness_hawkins2020",
+      "records": 24149,
+      "route": "module",
+      "route_detail": "hawkins2020.verify_build",
+      "verdict": "PASS",
+      "n_rules": 21,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/mismatch_crispri_fitness_hawkins2020/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 186.1,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T01:37:35"
+    },
+    "RnaseqLamoureux2023Dataset": {
+      "dataset_class": "RnaseqLamoureux2023Dataset",
+      "root": "data/torchcell/rnaseq_lamoureux2023",
+      "records": 241,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:rnaseq_lamoureux2023]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_lamoureux2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 5.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:01:11"
+    },
+    "GrowthRateLamoureux2023Dataset": {
+      "dataset_class": "GrowthRateLamoureux2023Dataset",
+      "root": "data/torchcell/growth_rate_lamoureux2023",
+      "records": 89,
+      "route": "module",
+      "route_detail": "lamoureux2023_growth.verify_build",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_lamoureux2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T11:45:04"
+    },
+    "RnaseqPublicK12Lamoureux2023Dataset": {
+      "dataset_class": "RnaseqPublicK12Lamoureux2023Dataset",
+      "root": "data/torchcell/rnaseq_public_k12_lamoureux2023",
+      "records": 240,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:rnaseq_public_k12_lamoureux2023]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rnaseq_public_k12_lamoureux2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:01:19"
+    },
+    "PromoterReporterMohiuddin2022Dataset": {
+      "dataset_class": "PromoterReporterMohiuddin2022Dataset",
+      "root": "data/torchcell/promoter_reporter_mohiuddin2022",
+      "records": 69480,
+      "route": "module",
+      "route_detail": "mohiuddin2022.run_verification",
+      "verdict": "PASS",
+      "n_rules": 24,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/promoter_reporter_mohiuddin2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 600.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:03:10"
+    },
+    "ProteomeMori2021Dataset": {
+      "dataset_class": "ProteomeMori2021Dataset",
+      "root": "data/torchcell/proteome_mori2021",
+      "records": 7,
+      "route": "module",
+      "route_detail": "mori2021.verify_build",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_mori2021/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:01:39"
+    },
+    "PhageRbTnseqMutalik2020Dataset": {
+      "dataset_class": "PhageRbTnseqMutalik2020Dataset",
+      "root": "data/torchcell/phage_rbtnseq_mutalik2020",
+      "records": 286344,
+      "route": "module",
+      "route_detail": "mutalik2020.verify_build",
+      "verdict": "FAIL",
+      "n_rules": 22,
+      "failed_rules": [
+        {
+          "level": "L3",
+          "name": "environment_perturbed",
+          "passed": false,
+          "message": "29392 experiments have no environmental edit (no perturbation, baseline temperature 37.0, baseline media); 0 declared"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/phage_rbtnseq_mutalik2020/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2457.8,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:04:34"
+    },
+    "CrisprPineneToleranceNiu2019Dataset": {
+      "dataset_class": "CrisprPineneToleranceNiu2019Dataset",
+      "root": "data/torchcell/crispr_pinene_tolerance_niu2019",
+      "records": 51,
+      "route": "module",
+      "route_detail": "niu2019.verify_build",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispr_pinene_tolerance_niu2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:03:55"
+    },
+    "RbTnseqPrice2018EcoliDataset": {
+      "dataset_class": "RbTnseqPrice2018EcoliDataset",
+      "root": "data/torchcell/rbtnseq_price2018_ecoli",
+      "records": 553896,
+      "route": "module",
+      "route_detail": "price2018.verify",
+      "verdict": "PASS",
+      "n_rules": 18,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_price2018_ecoli/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4340.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:09:05"
+    },
+    "GeneEssentialityPrice2018EcoliDataset": {
+      "dataset_class": "GeneEssentialityPrice2018EcoliDataset",
+      "root": "data/torchcell/gene_essentiality_price2018_ecoli",
+      "records": 320,
+      "route": "module",
+      "route_detail": "price2018.verify_essentiality",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_price2018_ecoli/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:04:47"
+    },
+    "CrispriCrossRachwalski2024Dataset": {
+      "dataset_class": "CrispriCrossRachwalski2024Dataset",
+      "root": "data/torchcell/crispri_cross_rachwalski2024",
+      "records": 48900,
+      "route": "module",
+      "route_detail": "rachwalski2024.run_verification",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_cross_rachwalski2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 574.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:05:32"
+    },
+    "MetabolomeRapp2026Dataset": {
+      "dataset_class": "MetabolomeRapp2026Dataset",
+      "root": "data/torchcell/metabolome_rapp2026",
+      "records": 1497,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolome_rapp2026]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_rapp2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 19.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:06:48"
+    },
+    "GrowthAucRapp2026Dataset": {
+      "dataset_class": "GrowthAucRapp2026Dataset",
+      "root": "data/torchcell/growth_auc_rapp2026",
+      "records": 1515,
+      "route": "registry",
+      "route_detail": "run_fitness[FITNESS_DATASETS:growth_auc_rapp2026]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_auc_rapp2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 14.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:07:03"
+    },
+    "MetaboliteIntensityRapp2026Dataset": {
+      "dataset_class": "MetaboliteIntensityRapp2026Dataset",
+      "root": "data/torchcell/metabolite_intensity_rapp2026",
+      "records": 407,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:metabolite_intensity_rapp2026]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_intensity_rapp2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:07:17"
+    },
+    "TargetedMetabolomeRapp2026Dataset": {
+      "dataset_class": "TargetedMetabolomeRapp2026Dataset",
+      "root": "data/torchcell/targeted_metabolome_rapp2026",
+      "records": 407,
+      "route": "registry",
+      "route_detail": "run_metabolite[METABOLITE_DATASETS:targeted_metabolome_rapp2026]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/targeted_metabolome_rapp2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:07:33"
+    },
+    "CrispriScreenRousset2018Dataset": {
+      "dataset_class": "CrispriScreenRousset2018Dataset",
+      "root": "data/torchcell/ecoli_crispri_rousset2018",
+      "records": 68436,
+      "route": "module",
+      "route_detail": "rousset2018.verify_build",
+      "verdict": "PASS",
+      "n_rules": 19,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_crispri_rousset2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 579.9,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:39:18"
+    },
+    "MetabolomeSchastnaya2021Dataset": {
+      "dataset_class": "MetabolomeSchastnaya2021Dataset",
+      "root": "data/torchcell/metabolome_schastnaya2021",
+      "records": 29,
+      "route": "module",
+      "route_detail": "schastnaya2021.verify_build",
+      "verdict": "PASS",
+      "n_rules": 27,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolome_schastnaya2021/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:08:35"
+    },
+    "EnvChemgenShiver2016Dataset": {
+      "dataset_class": "EnvChemgenShiver2016Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_shiver2016",
+      "records": 210998,
+      "route": "module",
+      "route_detail": "shiver2016.verify_build",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_shiver2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1785.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:10:48"
+    },
+    "ProteomeSchmidt2016Dataset": {
+      "dataset_class": "ProteomeSchmidt2016Dataset",
+      "root": "data/torchcell/proteome_schmidt2016",
+      "records": 14,
+      "route": "module",
+      "route_detail": "schmidt2016.verify_build",
+      "verdict": "PASS",
+      "n_rules": 11,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_schmidt2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:09:19"
+    },
+    "ProteomeSrmSet1Schmidt2016Dataset": {
+      "dataset_class": "ProteomeSrmSet1Schmidt2016Dataset",
+      "root": "data/torchcell/proteome_srm_set1_schmidt2016",
+      "records": 11,
+      "route": "module",
+      "route_detail": "schmidt2016_srm.verify_build",
+      "verdict": "PASS",
+      "n_rules": 10,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set1_schmidt2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:09:31"
+    },
+    "ProteomeSrmSet2Schmidt2016Dataset": {
+      "dataset_class": "ProteomeSrmSet2Schmidt2016Dataset",
+      "root": "data/torchcell/proteome_srm_set2_schmidt2016",
+      "records": 14,
+      "route": "module",
+      "route_detail": "schmidt2016_srm.verify_build",
+      "verdict": "PASS",
+      "n_rules": 10,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_srm_set2_schmidt2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.0,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:09:42"
+    },
+    "GrowthRateSchmidt2016Dataset": {
+      "dataset_class": "GrowthRateSchmidt2016Dataset",
+      "root": "data/torchcell/growth_rate_schmidt2016",
+      "records": 6,
+      "route": "module",
+      "route_detail": "schmidt2016_growth_rate.verify_build",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_schmidt2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:09:53"
+    },
+    "GrowthRateS23Schmidt2016Dataset": {
+      "dataset_class": "GrowthRateS23Schmidt2016Dataset",
+      "root": "data/torchcell/growth_rate_s23_schmidt2016",
+      "records": 15,
+      "route": "module",
+      "route_detail": "schmidt2016_s23_growth_rate.verify_build",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_rate_s23_schmidt2016/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T11:44:47"
+    },
+    "CarbonSourceTong2020Dataset": {
+      "dataset_class": "CarbonSourceTong2020Dataset",
+      "root": "data/torchcell/ecoli_carbon_source_tong2020",
+      "records": 111420,
+      "route": "module",
+      "route_detail": "tong2020.verify_build",
+      "verdict": "PASS",
+      "n_rules": 32,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_carbon_source_tong2020/preprocess/verification_report_BW25113.json",
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_carbon_source_tong2020/preprocess/verification_report_MG1655.json"
+      ],
+      "error": null,
+      "seconds": 1110.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:11:50"
+    },
+    "EnvChemgenWang2015Dataset": {
+      "dataset_class": "EnvChemgenWang2015Dataset",
+      "root": "data/torchcell/env_chemgen_wang2015",
+      "records": 46,
+      "route": "module",
+      "route_detail": "wang2015.run_verification",
+      "verdict": "PASS",
+      "n_rules": 40,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/env_chemgen_wang2015/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:10:58"
+    },
+    "GrowthWang2015Dataset": {
+      "dataset_class": "GrowthWang2015Dataset",
+      "root": "data/torchcell/growth_wang2015",
+      "records": 46,
+      "route": "module",
+      "route_detail": "wang2015_growth.verify_build",
+      "verdict": "PASS",
+      "n_rules": 30,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/growth_wang2015/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T11:44:55"
+    },
+    "CrispriGuideFfaEnrichmentFang2025Dataset": {
+      "dataset_class": "CrispriGuideFfaEnrichmentFang2025Dataset",
+      "root": "data/torchcell/crispri_guide_ffa_enrichment_fang2025",
+      "records": 15708,
+      "route": "module",
+      "route_detail": "fang2025.verify_build",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_guide_ffa_enrichment_fang2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 138.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:11:21"
+    },
+    "CrispriGuideFitnessWang2018Dataset": {
+      "dataset_class": "CrispriGuideFitnessWang2018Dataset",
+      "root": "data/torchcell/crispri_guide_fitness_wang2018",
+      "records": 240481,
+      "route": "module",
+      "route_detail": "wang2018.verify_build",
+      "verdict": "PASS",
+      "n_rules": 20,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_guide_fitness_wang2018/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2327.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:12:48"
+    },
+    "EnvChemgenWang2024Dataset": {
+      "dataset_class": "EnvChemgenWang2024Dataset",
+      "root": "data/torchcell/ecoli_env_chemgen_wang2024",
+      "records": 24763,
+      "route": "module",
+      "route_detail": "wang2024.verify_build",
+      "verdict": "PASS",
+      "n_rules": 39,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/ecoli_env_chemgen_wang2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 186.8,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:16:15"
+    },
+    "ProteomeBanerjee2025Dataset": {
+      "dataset_class": "ProteomeBanerjee2025Dataset",
+      "root": "data/torchcell/proteome_banerjee2025",
+      "records": 6,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_banerjee2025]",
+      "verdict": "PASS",
+      "n_rules": 13,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_banerjee2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2.7,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:12:01"
+    },
+    "RbTnseqBorchert2023Dataset": {
+      "dataset_class": "RbTnseqBorchert2023Dataset",
+      "root": "data/torchcell/rbtnseq_borchert2023",
+      "records": 10824,
+      "route": "module",
+      "route_detail": "borchert2023.verify_build",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2023/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 91.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:12:59"
+    },
+    "RbTnseqBorchert2024Dataset": {
+      "dataset_class": "RbTnseqBorchert2024Dataset",
+      "root": "data/torchcell/rbtnseq_borchert2024",
+      "records": 1372280,
+      "route": "module",
+      "route_detail": "borchert2024.verify_build",
+      "verdict": "PASS",
+      "n_rules": 17,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/rbtnseq_borchert2024/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 13798.1,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T01:41:53"
+    },
+    "IsoprenolTiterCarruthers2025Dataset": {
+      "dataset_class": "IsoprenolTiterCarruthers2025Dataset",
+      "root": "data/torchcell/isoprenol_titer_carruthers2025",
+      "records": 502,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_carruthers2025]",
+      "verdict": "FAIL",
+      "n_rules": 17,
+      "failed_rules": [
+        {
+          "level": "L0",
+          "name": "structural",
+          "passed": false,
+          "message": "502/502 records failed schema validation"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_carruthers2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 23.6,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:15:40"
+    },
+    "ProteomeCarruthers2025Dataset": {
+      "dataset_class": "ProteomeCarruthers2025Dataset",
+      "root": "data/torchcell/proteome_carruthers2025",
+      "records": 21,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_carruthers2025]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_carruthers2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 9.4,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:16:18"
+    },
+    "CampaignProteomeCarruthers2025Dataset": {
+      "dataset_class": "CampaignProteomeCarruthers2025Dataset",
+      "root": "data/torchcell/campaign_proteome_carruthers2025",
+      "records": 465,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:campaign_proteome_carruthers2025]",
+      "verdict": "PASS",
+      "n_rules": 11,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/campaign_proteome_carruthers2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 27.5,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:17:00"
+    },
+    "ProteomeFoldChangeCarruthers2025Dataset": {
+      "dataset_class": "ProteomeFoldChangeCarruthers2025Dataset",
+      "root": "data/torchcell/proteome_fold_change_carruthers2025",
+      "records": 16,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_fold_change[BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS:proteome_fold_change_carruthers2025]",
+      "verdict": "PASS",
+      "n_rules": 13,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_fold_change_carruthers2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.7,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:17:38"
+    },
+    "ProteomeDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomeDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_desiqueira2025",
+      "records": 17,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_desiqueira2025]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.9,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:17:54"
+    },
+    "ProteomePercentDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomePercentDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_percent_desiqueira2025",
+      "records": 17,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_percent_desiqueira2025]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_percent_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.8,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:18:10"
+    },
+    "ProteomeLog10PercentDeSiqueira2025Dataset": {
+      "dataset_class": "ProteomeLog10PercentDeSiqueira2025Dataset",
+      "root": "data/torchcell/proteome_log10_percent_desiqueira2025",
+      "records": 17,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_log10_percent_desiqueira2025]",
+      "verdict": "PASS",
+      "n_rules": 12,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_log10_percent_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.8,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:18:26"
+    },
+    "IsoprenolTiterDeSiqueira2025Dataset": {
+      "dataset_class": "IsoprenolTiterDeSiqueira2025Dataset",
+      "root": "data/torchcell/isoprenol_titer_desiqueira2025",
+      "records": 10,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_desiqueira2025]",
+      "verdict": "FAIL",
+      "n_rules": 11,
+      "failed_rules": [
+        {
+          "level": "L0",
+          "name": "structural",
+          "passed": false,
+          "message": "10/10 records failed schema validation"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_desiqueira2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.3,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:18:39"
+    },
+    "IsoprenylAcetateTiterKang2026Dataset": {
+      "dataset_class": "IsoprenylAcetateTiterKang2026Dataset",
+      "root": "data/torchcell/isoprenyl_acetate_titer_kang2026",
+      "records": 19,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenyl_acetate_titer_kang2026]",
+      "verdict": "FAIL",
+      "n_rules": 12,
+      "failed_rules": [
+        {
+          "level": "L0",
+          "name": "structural",
+          "passed": false,
+          "message": "19/19 records failed schema validation"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenyl_acetate_titer_kang2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.2,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:18:52"
+    },
+    "ValerolactamTiterThompson2019Dataset": {
+      "dataset_class": "ValerolactamTiterThompson2019Dataset",
+      "root": "data/torchcell/valerolactam_titer_thompson2019",
+      "records": 8,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:valerolactam_titer_thompson2019]",
+      "verdict": "ERROR",
+      "n_rules": 0,
+      "failed_rules": [],
+      "reports": [],
+      "error": "KeyError: ('KT2440', 48.0)",
+      "seconds": 0.0,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:15:03"
+    },
+    "LactamGrowthRateThompson2019Dataset": {
+      "dataset_class": "LactamGrowthRateThompson2019Dataset",
+      "root": "data/torchcell/lactam_growth_rate_thompson2019",
+      "records": 9,
+      "route": "module",
+      "route_detail": "thompson2019_valerolactam.verify_growth_build",
+      "verdict": "PASS",
+      "n_rules": 16,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/lactam_growth_rate_thompson2019/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.1,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:19:01"
+    },
+    "PutidaPrecise321Lim2022Dataset": {
+      "dataset_class": "PutidaPrecise321Lim2022Dataset",
+      "root": "data/torchcell/putida_precise321_lim2022",
+      "records": 180,
+      "route": "registry",
+      "route_detail": "run_rnaseq[RNASEQ_DATASETS:putida_precise321_lim2022]",
+      "verdict": "PASS",
+      "n_rules": 8,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/putida_precise321_lim2022/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.5,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T14:14:52"
+    },
+    "IsoprenolToleranceLim2025Dataset": {
+      "dataset_class": "IsoprenolToleranceLim2025Dataset",
+      "root": "data/torchcell/isoprenol_tolerance_lim2025",
+      "records": 3,
+      "route": "module",
+      "route_detail": "lim2025.run_tolerance_verification",
+      "verdict": "PASS",
+      "n_rules": 48,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_tolerance_lim2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-09T14:15:02"
+    },
+    "ProteomeLim2025Dataset": {
+      "dataset_class": "ProteomeLim2025Dataset",
+      "root": "data/torchcell/proteome_lim2025",
+      "records": 3,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_lim2025]",
+      "verdict": "PASS",
+      "n_rules": 42,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_lim2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.3,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-09T14:15:14"
+    },
+    "ProteomeFoldChangeLim2025Dataset": {
+      "dataset_class": "ProteomeFoldChangeLim2025Dataset",
+      "root": "data/torchcell/proteome_fold_change_lim2025",
+      "records": 4,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_fold_change[BACTERIAL_PROTEIN_FOLD_CHANGE_DATASETS:proteome_fold_change_lim2025]",
+      "verdict": "PASS",
+      "n_rules": 44,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_fold_change_lim2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-09T17:47:34"
+    },
+    "IsoprenolSelectionMenasalvas2025Dataset": {
+      "dataset_class": "IsoprenolSelectionMenasalvas2025Dataset",
+      "root": "data/torchcell/isoprenol_selection_menasalvas2025",
+      "records": 58,
+      "route": "module",
+      "route_detail": "menasalvas2025.verify_build",
+      "verdict": "PASS",
+      "n_rules": 20,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_selection_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 4.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:45:17"
+    },
+    "ProteomeMenasalvas2025Dataset": {
+      "dataset_class": "ProteomeMenasalvas2025Dataset",
+      "root": "data/torchcell/proteome_menasalvas2025",
+      "records": 6,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:proteome_menasalvas2025]",
+      "verdict": "PASS",
+      "n_rules": 15,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/proteome_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.6,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T10:39:06"
+    },
+    "MetaboliteGrowthPhaseMenasalvas2025Dataset": {
+      "dataset_class": "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+      "root": "data/torchcell/metabolite_growth_menasalvas2025",
+      "records": 3,
+      "route": "registry",
+      "route_detail": "run_bacterial_metabolite[BACTERIAL_METABOLITE_DATASETS:metabolite_growth_menasalvas2025]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_growth_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.2,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T10:39:15"
+    },
+    "MetaboliteProductionPhaseMenasalvas2025Dataset": {
+      "dataset_class": "MetaboliteProductionPhaseMenasalvas2025Dataset",
+      "root": "data/torchcell/metabolite_production_menasalvas2025",
+      "records": 3,
+      "route": "registry",
+      "route_detail": "run_bacterial_metabolite[BACTERIAL_METABOLITE_DATASETS:metabolite_production_menasalvas2025]",
+      "verdict": "PASS",
+      "n_rules": 14,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/metabolite_production_menasalvas2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T10:39:25"
+    },
+    "EnvMetalTnseqRoyet2025Dataset": {
+      "dataset_class": "EnvMetalTnseqRoyet2025Dataset",
+      "root": "data/torchcell/pputida_env_metal_tnseq_royet2025",
+      "records": 21583,
+      "route": "module",
+      "route_detail": "royet2025.verify_build",
+      "verdict": "PASS",
+      "n_rules": 34,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/pputida_env_metal_tnseq_royet2025/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 161.5,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:50:28"
+    },
+    "CrispriArrayYunus2026Dataset": {
+      "dataset_class": "CrispriArrayYunus2026Dataset",
+      "root": "data/torchcell/crispri_array_yunus2026",
+      "records": 25,
+      "route": "module",
+      "route_detail": "yunus2026.run_verification",
+      "verdict": "PASS",
+      "n_rules": 40,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_array_yunus2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.4,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:44:47"
+    },
+    "CrispriDifferentialProteomeYunus2026Dataset": {
+      "dataset_class": "CrispriDifferentialProteomeYunus2026Dataset",
+      "root": "data/torchcell/crispri_differential_proteome_yunus2026",
+      "records": 1,
+      "route": "module",
+      "route_detail": "yunus2026.run_verification",
+      "verdict": "PASS",
+      "n_rules": 40,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_differential_proteome_yunus2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:44:56"
+    },
+    "CrispriKnockdownYunus2026Dataset": {
+      "dataset_class": "CrispriKnockdownYunus2026Dataset",
+      "root": "data/torchcell/crispri_knockdown_yunus2026",
+      "records": 102,
+      "route": "module",
+      "route_detail": "yunus2026.run_verification",
+      "verdict": "PASS",
+      "n_rules": 40,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_knockdown_yunus2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 0.9,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:44:37"
+    },
+    "IsoprenolTiterYunus2026Dataset": {
+      "dataset_class": "IsoprenolTiterYunus2026Dataset",
+      "root": "data/torchcell/isoprenol_titer_yunus2026",
+      "records": 125,
+      "route": "registry",
+      "route_detail": "run_product_titer[PRODUCT_TITER_DATASETS:isoprenol_titer_yunus2026]",
+      "verdict": "FAIL",
+      "n_rules": 13,
+      "failed_rules": [
+        {
+          "level": "L0",
+          "name": "structural",
+          "passed": false,
+          "message": "125/125 records failed schema validation"
+        }
+      ],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/isoprenol_titer_yunus2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 1.3,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:19:10"
+    },
+    "CrispriPanelProteomeYunus2026Dataset": {
+      "dataset_class": "CrispriPanelProteomeYunus2026Dataset",
+      "root": "data/torchcell/crispri_panel_proteome_yunus2026",
+      "records": 125,
+      "route": "registry",
+      "route_detail": "run_bacterial_protein_abundance[BACTERIAL_PROTEIN_ABUNDANCE_DATASETS:crispri_panel_proteome_yunus2026]",
+      "verdict": "PASS",
+      "n_rules": 11,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/crispri_panel_proteome_yunus2026/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 2.2,
+      "git_head": "4c459d8e230c8b458988ed4f74c9f8317cdab901",
+      "manifest_built_at": "2026-10-10T04:19:20"
+    },
+    "InhibitorBioscreenVolk2021Dataset": {
+      "dataset_class": "InhibitorBioscreenVolk2021Dataset",
+      "root": "data/torchcell/inhibitor_bioscreen_volk2021",
+      "records": 977,
+      "route": "module",
+      "route_detail": "volk2021_inhibitor_bioscreen.verify_build",
+      "verdict": "PASS",
+      "n_rules": 11,
+      "failed_rules": [],
+      "reports": [
+        "/scratch/projects/torchcell-scratch/data/torchcell/inhibitor_bioscreen_volk2021/preprocess/verification_report.json"
+      ],
+      "error": null,
+      "seconds": 3.1,
+      "git_head": "acf2439be108d03b1cdd413ce91144f1c6395857",
+      "manifest_built_at": "2026-10-09T09:45:08"
+    }
+  }
+}

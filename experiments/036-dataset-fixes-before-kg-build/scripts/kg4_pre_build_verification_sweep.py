@@ -67,6 +67,7 @@ import os.path as osp
 import subprocess
 import sys
 import time
+from datetime import datetime
 from typing import Any, Literal
 
 import lmdb
@@ -361,6 +362,29 @@ MODULE_ROUTES: dict[str, ModuleRoute] = {
         entry="run_verification",
         positional=("crispri_knockdown_yunus2026", DATA_ROOT),
     ),
+    "MismatchCrispriFitnessHawkins2020Dataset": ModuleRoute(
+        module="torchcell.datasets.ecoli.hawkins2020",
+        entry="verify_build",
+        positional=(DATASET_ROOT,),
+        keywords={"data_root": DATA_ROOT},
+    ),
+    "EnvChemgenWang2024Dataset": ModuleRoute(
+        module="torchcell.datasets.ecoli.wang2024",
+        entry="verify_build",
+        positional=(DATASET_ROOT,),
+        keywords={"data_root": DATA_ROOT},
+    ),
+    "LactamGrowthRateThompson2019Dataset": ModuleRoute(
+        module="torchcell.datasets.pputida.thompson2019_valerolactam",
+        entry="verify_growth_build",
+        positional=(DATASET_ROOT, DATA_ROOT),
+    ),
+    "EnvMetalTnseqRoyet2025Dataset": ModuleRoute(
+        module="torchcell.datasets.pputida.royet2025",
+        entry="verify_build",
+        positional=(DATASET_ROOT,),
+        keywords={"data_root": DATA_ROOT},
+    ),
     "InhibitorBioscreenVolk2021Dataset": ModuleRoute(
         module="torchcell.datasets.private_torchcell.volk2021_inhibitor_bioscreen",
         entry="verify_build",
@@ -396,6 +420,8 @@ class DatasetSweep(BaseModel):
     reports: list[str] = Field(default_factory=list)
     error: str | None = None
     seconds: float = 0.0
+    git_head: str | None = None
+    manifest_built_at: str | None = None
 
 
 class SweepResults(BaseModel):
@@ -504,6 +530,18 @@ def record_count(abs_root: str) -> int:
         env.close()
 
 
+def manifest_built_at(abs_root: str) -> str | None:
+    """When the store's ``preprocess/build_manifest.json`` was written, ISO, or None.
+
+    Recorded beside every verdict so a row names the build it verified: a store rebuilt
+    after its row was measured has a newer manifest, and :func:`render_tables` marks it.
+    """
+    path = osp.join(abs_root, "preprocess", "build_manifest.json")
+    if not osp.isfile(path):
+        return None
+    return datetime.fromtimestamp(osp.getmtime(path)).isoformat(timespec="seconds")
+
+
 def _resolve_argument(argument: str, abs_root: str, data_root: str, cls: type) -> Any:
     """Turn one recorded argument into the value the entry point takes."""
     if argument == DATASET_ROOT:
@@ -596,6 +634,8 @@ def sweep_one(name: str, data_root: str) -> DatasetSweep:
         route=kind,
         route_detail=detail,
         verdict="NO_VERIFIER",
+        git_head=_git_head(),
+        manifest_built_at=manifest_built_at(abs_root),
     )
     if kind == "none":
         return row
@@ -619,6 +659,12 @@ def sweep_one(name: str, data_root: str) -> DatasetSweep:
     if not row.reports:
         row.verdict = "ERROR"
         row.error = "the route wrote no verification report"
+    if manifest_built_at(abs_root) != row.manifest_built_at:
+        row.verdict = "ERROR"
+        row.error = (
+            f"the store was rebuilt while it was being verified (manifest "
+            f"{row.manifest_built_at} -> {manifest_built_at(abs_root)})"
+        )
     return row
 
 
@@ -645,8 +691,10 @@ def render_tables(results: SweepResults) -> str:
         + ", ".join(f"{k} {totals[k]}" for k in sorted(totals))
     )
     lines.append("")
-    lines.append("| Store | Records | Route | Result | Report |")
-    lines.append("|---|---:|---|---|---|")
+    lines.append(
+        "| Store | Records | Route | Result | Store built | Verified at HEAD | Report |"
+    )
+    lines.append("|---|---:|---|---|---|---|---|")
     for row in verified:
         failed = (
             "PASS"
@@ -657,9 +705,16 @@ def render_tables(results: SweepResults) -> str:
                 else f"ERROR: {row.error}"
             )
         )
+        built_now = manifest_built_at(osp.join(results.data_root, row.root))
+        built = (
+            row.manifest_built_at
+            if built_now == row.manifest_built_at
+            else f"{row.manifest_built_at}, REBUILT {built_now}: re-run"
+        )
         lines.append(
             f"| `{row.root.rsplit('/', 1)[-1]}` | {row.records} | "
-            f"`{row.route_detail}` | {failed} ({row.n_rules} rules) | "
+            f"`{row.route_detail}` | {failed} ({row.n_rules} rules) | {built} | "
+            f"`{(row.git_head or '-')[:10]}` | "
             f"{_short_report(row.reports, results.data_root)} |"
         )
     lines.append("")
@@ -767,6 +822,12 @@ def main(argv: list[str] | None = None) -> int:
         help="render the results file as the dendron note's markdown tables and exit",
     )
     parser.add_argument(
+        "--stamp-before",
+        default=None,
+        help="with --merge: ISO time the merged rows' run started; a row without its "
+        "own manifest time gets the store's manifest time only if it is earlier",
+    )
+    parser.add_argument(
         "--merge",
         action="append",
         default=[],
@@ -798,7 +859,19 @@ def main(argv: list[str] | None = None) -> int:
     if args.merge:
         merged = load_results(out, data_root)
         for path in args.merge:
-            for name, row in load_results(path, data_root).datasets.items():
+            source = load_results(path, data_root)
+            for name, row in source.datasets.items():
+                if row.git_head is None:
+                    # A row written before rows carried their own HEAD: stamp the
+                    # HEAD of the results file it came from, which is the HEAD it ran
+                    # under, and the store's manifest only when that build predates
+                    # the run (a later build is a different store; re-run the row).
+                    row.git_head = source.git_head
+                    built = manifest_built_at(osp.join(data_root, row.root))
+                    if args.stamp_before is not None and built is not None:
+                        row.manifest_built_at = (
+                            built if built < args.stamp_before else None
+                        )
                 merged.datasets[name] = row
         save_results(merged, out)
         print(json.dumps(merged.totals(), indent=2))

@@ -3567,3 +3567,70 @@ def test_the_dechiara_entries_route_to_the_loader_verifier(
     assert spec["provenance"].sha256 == (
         "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e"
     )
+
+
+# --------------------------------------------------------------------------- #
+# #1022: the error-model microarray score family
+# --------------------------------------------------------------------------- #
+def test_run_expression_score_dispatches_to_each_loader_and_writes_its_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """Each registry entry's ``verify`` gets ``(<data root>/<root>, <data root>)``; its
+    report lands in that store's ``preprocess/``, and the family passes only if all do.
+    """
+    calls: list[tuple[str, str]] = []
+
+    def verify(passed: bool) -> Callable[[str, str], VerificationReport]:
+        def run(dataset_root: str, data_root: str) -> VerificationReport:
+            calls.append((dataset_root, data_root))
+            report = VerificationReport(
+                dataset_name=Path(dataset_root).name,
+                provenance=Provenance(source_uri="synthetic"),
+            )
+            report.add(
+                LevelResult(level=Level.L1, name="count", passed=passed, message="m")
+            )
+            return report
+
+        return run
+
+    monkeypatch.setattr(
+        runners,
+        "EXPRESSION_SCORE_DATASETS",
+        {
+            "a": {"root": "data/torchcell/a", "verify": verify(True)},
+            "b": {"root": "data/torchcell/b", "verify": verify(False)},
+        },
+    )
+    assert runners.run_expression_score(str(tmp_path)) is False
+    assert calls == [
+        (str(tmp_path / "data/torchcell/a"), str(tmp_path)),
+        (str(tmp_path / "data/torchcell/b"), str(tmp_path)),
+    ]
+    written = json.loads(
+        (tmp_path / "data/torchcell/a/preprocess/verification_report.json").read_text()
+    )
+    assert (written["dataset_name"], written["results"][0]["passed"]) == ("a", True)
+    assert "wrote" in capsys.readouterr().out
+
+
+def test_the_hu_score_entry_dispatches_to_the_loader_verify_build(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from torchcell.datasets.scerevisiae import hu2007
+
+    seen: list[tuple[str, str]] = []
+    sentinel = VerificationReport(
+        dataset_name="microarray_score_hu2007",
+        provenance=Provenance(source_uri="synthetic"),
+    )
+
+    def fake(dataset_root: str, data_root: str) -> VerificationReport:
+        seen.append((dataset_root, data_root))
+        return sentinel
+
+    monkeypatch.setattr(hu2007, "verify_build", fake)
+    spec = runners.EXPRESSION_SCORE_DATASETS["microarray_score_hu2007"]
+    assert spec["root"] == "data/torchcell/microarray_score_hu2007"
+    assert spec["verify"]("/store", "/root") is sentinel
+    assert seen == [("/store", "/root")]

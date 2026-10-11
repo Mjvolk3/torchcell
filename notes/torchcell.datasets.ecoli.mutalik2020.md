@@ -708,3 +708,104 @@ No loader change and no rebuild: nothing about the stored records moved. Verifie
 dev store with `--data`, `DATA_ROOT=/scratch/projects/torchcell-scratch`: over the records
 of a phage-bearing reference the phage lane emits one node per phage leaf and the served
 lane emits nothing.
+
+## 2026.10.10 - The no-phage controls are declared, and L3 environment_perturbed passes (#888)
+
+The 2026.10.07 section left L3 `environment_perturbed` red and said the fix belonged in the
+shared rule. #776 (`2e0bb89cd`, 2026-10-09) then gave the rule exactly that notion: the
+`expected_unperturbed` declaration, the count of records a loader DECLARES carry no
+environmental edit, with observed required to EQUAL declared. This loader landed two days
+before that parameter existed, so `verify_build` passed the default 0. KG 4.0 pre-build
+sweep (PR #890) filed it as #888.
+
+### The declaration and its source
+
+`verify_build` now passes `expected_unperturbed=read_declared_unperturbed(dataset_root)`,
+which is derived from the tree's own release files and never typed in:
+`declared_unperturbed_records` takes the no-phage controls of `Keio_exps_used.tab` whose
+released `Media` label (the `exps` member of their analysis set) is
+`UNPERTURBED_CONTROL_MEDIA_LABEL = "LB_plus_SM_buffer"`, and multiplies each by its analysis
+set's records per experiment (the frozen `EXPECTED_SET_CENSUS` divided by the set's kept
+experiments, refused if it does not divide exactly).
+
+The control it declares is the one the paper describes, bound as `NO_PHAGE_CONTROL` in
+`sourced_values()` and checked verbatim against the bytes by the data-gated mirror test.
+Mirror `paper.md`, sha256
+`c7aab1a1c4384a37f1f75f6ecafe2f538fc6ff22c7c39aceeebe988aba2e6cb5`, Methods, "Competitive
+growth experiments with RB-TnSeq library", line 230:
+
+> We also set up control “no-phage” competitive mutant fitness assays wherein we replaced phages with simply the phage dilution buffer.
+
+The sentence sits in the planktonic paragraph, so it describes the planktonic culture
+(2X LB plus buffer, the release's `LB_plus_SM_buffer`) with the phage left out.
+
+| Control set | Controls | Records per control | Records |
+|---|---:|---:|---:|
+| `set16_set19`, `LB_plus_SM_buffer` (`set16IT007`, `IT033`, `IT044`, `IT052`, `IT056`, `set19IT072`) | 6 | 3,667 | 22,002 |
+| `set28_set29`, `LB_plus_SM_buffer` (`set28IT004`, `IT007`) | 2 | 3,695 | 7,390 |
+| **declared** | **8** | | **29,392** |
+| not declared: `set16IT014`, plain `LB` | 1 | 3,667 | 3,667 |
+| not declared: `set30IT066`, `LB_agar` + kanamycin | 1 | 3,673 | 3,673 |
+| all no-phage controls (`EXPECTED_KIND_CENSUS`) | 10 | | 36,732 |
+
+### Which definition the declared count follows
+
+#888 asked whether the declaration follows the loader's 36,732 control records or the
+gate's 29,392. It follows the gate. The gate reads a record as unedited when it has no
+perturbation AND sits at the modal temperature AND the modal medium. Relative to that
+baseline culture, the plain-LB control lacks the SM buffer and its calcium and magnesium
+supplements, and the solid control is a different format with kanamycin; those are real
+medium differences that `Environment.media` already stores, so the gate is right to read
+them as edits. Declaring 36,732 would make the rule fail in the other direction. The gate's
+modal-medium rule is unchanged; a dataset-declared control SET (rather than a count) was not
+needed.
+
+### No stored record changes
+
+The diff touches `verify_build` and adds functions; `process()` selects through the same
+logic (`_kept_assays` now delegates to the module-level `kept_assays`, line for line the
+same body). Measured by building the store twice into scratch, under slurm, from the same
+raw mirror, and hashing every record in order (`sha256` over the sorted-key JSON of each
+`stream_records` record):
+
+| Build | Code | Records | Content sha256 |
+|---|---|---:|---|
+| job 3758 | `origin/main` `2860253f4` (git archive) | 286,344 | `8d1c1925c096d6e23538a842ee3c71bd6b87f4d338441b9284eaacc88ac6b954` |
+| job 3751 | this branch `4ede8d8e7` | 286,344 | `8d1c1925c096d6e23538a842ee3c71bd6b87f4d338441b9284eaacc88ac6b954` |
+
+`scripts/schema_impact_check.py --base origin/main`: no schema contract changes.
+
+### Verification result: 22 of 22 rows pass
+
+Run of `verify_build` from this branch on the job 3751 build (job 3759, 2,690 s):
+
+| Level | Rule | Result |
+|---|---|---|
+| L0 | `structural` | PASS, 286,344 records validated |
+| L1 | `count` | PASS, 286,344 = 286,344 |
+| L1 | `pair_uniqueness` | PASS, 286,344 unique |
+| L1 | `provenance_gaps` | PASS, 3 deferred fields (`inchikey`, `n_samples`, `sample_unit`) |
+| L1 | `canonical_gene_names` | PASS, 3,697 names; 132 pseudogene loci resolve to themselves |
+| L1 | `analysis_set_census` (SUPPLEMENTARY) | PASS, 212,686 / 33,255 / 40,403 |
+| L1 | `experiment_kind_census` (SUPPLEMENTARY) | PASS, 249,612 phage / 36,732 control |
+| L1 | `assay_format_census` (SUPPLEMENTARY) | PASS, 245,941 liquid / 40,403 solid |
+| L1 | `stored_tags_are_loci_of_the_pinned_assembly` (SUPPLEMENTARY) | PASS, 3,565 current + 132 non_gene_feature |
+| L1 | `gene_set_size` (SUPPLEMENTARY) | PASS, 3,697 |
+| L2 | `value_fidelity` | PASS, 286,344 |
+| L2 | `se_nonnegative` | PASS, 286,344 |
+| L2 | `interval_orientation` | PASS, 0 of 0 |
+| L2 | `uncertainty_sanity` | PASS, none a zero dispersion |
+| L3 | `measurement_type_consistent` | PASS, `log2_ratio` |
+| L3 | `reference_zero` | PASS, all 286,344 |
+| L3 | `environment_perturbed` | **PASS, 29,392 of 286,344 unedited, 29,392 declared** (was FAIL, 0 declared) |
+| L3 | `compound_identity` | PASS |
+| L3 | `media_compound_identity` | PASS, 811,295 identified, 40,403 typed gaps |
+| L3 | `media_membership` | PASS, 3 media deriving from a library base |
+| L4 | `gene_containment_sgd` | PASS, 1.000 of 3,697 |
+| L4 | `current_genome_genes` | PASS, 3,697 |
+
+The shared row's passing message used to say "the absolute readout's base condition", which
+misdescribes a control arm; it now names both kinds of declared unedited condition. Tests:
+three hermetic tests on a release-shaped axis (`_release_shaped_axis`, 78 kept experiments,
+10 controls) pin 29,392 and the two refusals; two `TestDevStore` data tests read 29,392 from
+the dev tree's raw files and from its `verification_report.json`.

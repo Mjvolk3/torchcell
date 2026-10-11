@@ -120,6 +120,7 @@ from torchcell.adapters import (
     ProteomeLim2025Adapter,
     ProteomeLog10PercentDeSiqueira2025Adapter,
     ProteomeMenasalvas2025Adapter,
+    ProteomeMessner2021Adapter,
     ProteomeMessner2023Adapter,
     ProteomeMori2021Adapter,
     ProteomeMuenzner2024Adapter,
@@ -351,6 +352,7 @@ from torchcell.datasets.scerevisiae.lopez2024 import (
     IsobutanolScreenLopez2024Dataset,
     IsobutanolValidatedLopez2024Dataset,
 )
+from torchcell.datasets.scerevisiae.messner2021 import ProteomeMessner2021Dataset
 from torchcell.datasets.scerevisiae.messner2023 import ProteomeMessner2023Dataset
 from torchcell.datasets.scerevisiae.mormino2022 import CrispriMormino2022Dataset
 from torchcell.datasets.scerevisiae.mota2024 import EnvChemgenMota2024Dataset
@@ -429,6 +431,7 @@ dataset_adapter_map: dict[type, type] = {
     BetaxanthinCachera2023Dataset: BetaxanthinCachera2023Adapter,
     MetaboliteDaSilveira2014Dataset: MetaboliteDaSilveira2014Adapter,
     MetaboliteZelezniak2018Dataset: MetaboliteZelezniak2018Adapter,
+    ProteomeMessner2021Dataset: ProteomeMessner2021Adapter,
     ProteomeMessner2023Dataset: ProteomeMessner2023Adapter,
     ProteomeMuenzner2024Dataset: ProteomeMuenzner2024Adapter,
     ProteinTurnoverMuenzner2024Dataset: ProteinTurnoverMuenzner2024Adapter,

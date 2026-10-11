@@ -2796,6 +2796,105 @@ def run_pseudobulk_umi_count(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# ADDITIVE (Puddu 2019 genome architecture): the WGS genome-architecture family.
+# One entry per store; the verifier re-reads the released workbook, so the spec pins
+# the sheet, its sha256 and the paper statistics the store must reproduce.
+# --------------------------------------------------------------------------- #
+GENOME_ARCHITECTURE_DATASETS: dict[str, dict[str, Any]] = {
+    "genome_architecture_puddu2019": {
+        "root": "data/torchcell/genome_architecture_puddu2019",
+        "raw_mirror": "torchcell-raw/pudduGenomeArchitectureStability2019",
+        # 8,843 released colonies minus the 8 wild-type BY4743 colonies (the reference
+        # rather than perturbation records) minus the 9 colonies whose released deletion
+        # names one of 5 ORFs the current R64 annotation retired.
+        "expected_count": 8826,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/pudduGenomeArchitectureStability2019/"
+                "si/si3.xlsx (raw mirror; the PMC Article Datasets object "
+                "EMS83962-supplement-Supp_Tab.xlsx)"
+            ),
+            citation_key="pudduGenomeArchitectureStability2019",
+            sha256=("fa369c18a31c9ec7f0ade8b63f0be6a595821ac360aa72b1e1dcd46ed8994214"),
+            method=(
+                "per-colony copy number of the rDNA and CUP1 arrays, mtDNA, the 2 "
+                "micron plasmid and Ty1-Ty5, a telomere-read proxy, the copy number of "
+                "all 16 chromosomes, their summed deviation from 2n and a rearrangement "
+                "count, each from Illumina HiSeqX coverage (Supplementary Table 3); the "
+                "deleted gene and the detected barcodes from Supplementary Table 6"
+            ),
+            page=(
+                "Nature 573:416 (doi:10.1038/s41586-019-1549-9); Methods "
+                "'Quantification of ...'; Supplementary Tables 1-4 and 6"
+            ),
+        ),
+    }
+}
+
+
+def verify_genome_architecture_dataset(
+    name: str, data_root: str, abs_root: str | None = None
+) -> VerificationReport:
+    """One GENOME_ARCHITECTURE_DATASETS entry's report (written by the caller).
+
+    ``abs_root`` defaults to the registry root under ``data_root``; the loader's
+    ``verify_build`` passes the store it just built. The released workbook is re-read
+    from the store's own ``raw/`` directory, so L2 compares the records to the bytes the
+    build consumed.
+    """
+    import torchcell.datasets.scerevisiae.puddu2019 as puddu
+    from torchcell.verification.genome_architecture import (
+        verify_genome_architecture_records,
+    )
+
+    spec = GENOME_ARCHITECTURE_DATASETS[name]
+    root = abs_root or osp.join(data_root, spec["root"])
+    workbook = osp.join(root, "raw", puddu.SI_TABLES_FILENAME)
+    colonies = puddu.read_colonies(workbook)
+    from torchcell.datamodels.genome_architecture_features import PUDDU2019_WGS_COVERAGE
+
+    symbols = list(PUDDU2019_WGS_COVERAGE.by_symbol)
+    released = {
+        str(row["SDname"]): {symbol: float(row[symbol]) for symbol in symbols}
+        for row in colonies.to_dict("records")
+    }
+    wild_type = colonies[colonies["Deletion"].str.match(puddu.WILD_TYPE_LABEL)]
+    report = verify_genome_architecture_records(
+        list(stream_records(root)),
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        required_features=frozenset(symbols),
+        released=released,
+        paper_values=list(puddu.PAPER_SOURCED_VALUES.values()),
+        workbook_values=list(puddu.WORKBOOK_SOURCED_VALUES.values()),
+        library_root=osp.join(data_root, "torchcell-library"),
+        workbook_cells=puddu.workbook_cell_strings(workbook),
+        rho0_feature="mitochondria",
+        rho0_threshold=1.0,
+        expected_rho0=puddu.PAPER_RHO0_COLONIES,
+        expected_aneuploid_fraction=puddu.PAPER_ANEUPLOID_FRACTION,
+        wild_type_rho0=int((wild_type["mitochondria"] < 1.0).sum()),
+        sgd_genes=_sgd_gene_set(data_root),
+        gene_universe_label="SGD S288C R64-4-1",
+        resolve_gene_name=_genome(data_root).resolve_gene_name,
+    )
+    return report
+
+
+def run_genome_architecture(data_root: str) -> bool:
+    """Verify genome-architecture datasets (L0-L4). True if all pass."""
+    all_passed = True
+    for name, spec in GENOME_ARCHITECTURE_DATASETS.items():
+        report = verify_genome_architecture_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # #889: gene interaction, gene essentiality and SynLethDB pair families
 #
 # These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no

@@ -2196,6 +2196,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.NATURAL_ISOLATE_RESPONSE_DATASETS,
         runners.NATURAL_ISOLATE_DATASETS,
         runners.PSEUDOBULK_UMI_COUNT_DATASETS,
+        runners.GENOME_ARCHITECTURE_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
@@ -2218,6 +2219,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 1  # NATURAL_ISOLATE_RESPONSE_DATASETS
         + 3  # NATURAL_ISOLATE_DATASETS
         + 1  # PSEUDOBULK_UMI_COUNT_DATASETS
+        + 1  # GENOME_ARCHITECTURE_DATASETS
     )
     assert all(
         isinstance(spec["provenance"], Provenance)

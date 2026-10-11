@@ -13,6 +13,10 @@ from torchcell.verification.expression import (
     verify_expression_dataset,
 )
 from torchcell.verification.fitness import fitness_gene_set, verify_fitness_dataset
+from torchcell.verification.genome_architecture import (
+    genome_architecture_gene_set,
+    verify_genome_architecture_records,
+)
 from torchcell.verification.levels import (
     l0_structural,
     l1_completeness,
@@ -92,4 +96,6 @@ __all__ = [
     "verify_metabolite_dataset",
     "fitness_gene_set",
     "verify_fitness_dataset",
+    "genome_architecture_gene_set",
+    "verify_genome_architecture_records",
 ]

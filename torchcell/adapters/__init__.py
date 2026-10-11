@@ -236,6 +236,9 @@ from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
 from .ozaydin2013_adapter import (
     CarotenoidOzaydin2013Adapter as CarotenoidOzaydin2013Adapter,
 )
+from .peter2018_adapter import (
+    IsolateGrowthPeter2018Adapter as IsolateGrowthPeter2018Adapter,
+)
 from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
@@ -407,6 +410,8 @@ proteome_metabolome_adapters = [
 
 segregant_adapters = ["Bloom2019Adapter"]
 
+natural_isolate_adapters = ["IsolateGrowthPeter2018Adapter"]
+
 environment_adapters = [
     "EnvChemgenCostanzo2021Adapter",
     "EnvChemgenAuesukaree2009Adapter",
@@ -526,6 +531,7 @@ __all__ = (
     + metabolite_adapters
     + proteome_metabolome_adapters
     + segregant_adapters
+    + natural_isolate_adapters
     + environment_adapters
     + baryshnikova_adapters
     + ecoli_adapters

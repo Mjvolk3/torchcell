@@ -70,6 +70,7 @@ from torchcell.adapters import (
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
+    IsolateGrowthPeter2018Adapter,
     IsopentenolTiterFoo2014Adapter,
     IsoprenolSelectionMenasalvas2025Adapter,
     IsoprenolTiterCarruthers2025Adapter,
@@ -337,6 +338,7 @@ from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
 from torchcell.datasets.scerevisiae.ohya2005 import ScmdOhya2005Dataset
 from torchcell.datasets.scerevisiae.ozaydin2013 import CarotenoidOzaydin2013Dataset
+from torchcell.datasets.scerevisiae.peter2018 import IsolateGrowthPeter2018Dataset
 from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
@@ -401,6 +403,7 @@ dataset_adapter_map: dict[type, type] = {
     FattyAcidXue2025Dataset: FattyAcidXue2025Adapter,
     NadalRibellesPerturbSeq2025Dataset: NadalRibellesPerturbSeq2025Adapter,
     Bloom2019Dataset: Bloom2019Adapter,
+    IsolateGrowthPeter2018Dataset: IsolateGrowthPeter2018Adapter,
     SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
     EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
     EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,

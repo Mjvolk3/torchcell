@@ -593,10 +593,11 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Hawkins 2020 mismatch-CRISPRi) + 4 (Brunk 2016's four released scales)
     # + 1 (#854: Balakrishnan 2022 mRNA number fractions)
     # + 1 (#857, Li 2014 synthesis rates)
-    # + 2 (Baba 2006 and Gerdes 2003 essentiality calls).
+    # + 2 (Baba 2006 and Gerdes 2003 essentiality calls)
+    # + 1 (Peter 2018 natural-isolate growth).
     assert (
         len(dataset_adapter_map)
-        == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2
+        == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -614,6 +615,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "FattyAcidSmith2006Dataset",
         "HetHillenmeyer2008Dataset",
         "HomHillenmeyer2008Dataset",
+        "IsolateGrowthPeter2018Dataset",
         "NadalRibellesPerturbSeq2025Dataset",
         "ProteomeMessner2023Dataset",
         "SmfBaryshnikova2010Dataset",

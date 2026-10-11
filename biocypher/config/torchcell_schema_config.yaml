@@ -491,6 +491,10 @@ protein fold change phenotype:
 # adjusted p-value plus the correction's name, scalar because a record holds one
 # response (Wang 2024 Table S2's TRANSIT p-value and Adj. p-value). Added with a FULL
 # rebuild, never an increment.
+# And the released test statistic plus the authors' later withdrawal (Wetmore 2015's own
+# release): RB-TnSeq's moderated t, and `source_withdrawal` as the typed reason a record
+# the authors told readers to disregard is flagged with (it is kept, not dropped). Added with a FULL
+# rebuild, never an increment.
 environment response phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -512,6 +516,8 @@ environment response phenotype:
         environment_response_p_value: float
         environment_response_p_value_adjusted: float
         p_value_adjustment_method: str
+        environment_response_t_statistic: float
+        source_withdrawal: str
 
 # How much of a named product a strain made (ProductTiterPhenotype). Every field but
 # provenance_gaps is projected: enums as their value, and the product, a typed

@@ -1,0 +1,27 @@
+%% SOURCE: experiments/030-solid-growth-multi/scripts/lower_order_baselines_030.py
+%% results/lower_order_baselines_030.csv; regenerate, do not edit
+\begin{tabular}{@{}l l rr rr r@{}}
+\toprule
+& & \multicolumn{2}{c}{pooled $r$} & \multicolumn{2}{c}{within-screen $r$} & \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}
+arm & rung & val & test & val & test & coverage \\
+\midrule
+R & N0 screen mean & 0.368 & 0.368 & 0.000 & 0.000 & 1.00 \\
+R & N1 mult., query double & 0.574 & 0.577 & 0.543 & 0.550 & 1.00 \\
+R & N2 mult., singles & 0.267 & 0.273 & 0.236 & 0.245 & 0.97 \\
+R & N1s strain-matched & 0.577 & 0.580 & 0.546 & 0.551 & 1.00 \\
+R & B1 additive gene ridge & 0.401 & 0.401 & 0.177 & 0.177 & 1.00 \\
+R & L1 ridge, lower-order & 0.606 & 0.609 & 0.543 & 0.549 & 1.00 \\
+R & L2 boosted trees, lower-order & 0.740 & 0.743 & 0.691 & 0.694 & 1.00 \\
+R & L3 ridge, genes + lower-order & 0.649 & 0.653 & 0.576 & 0.581 & 1.00 \\
+\midrule
+Q & N0 screen mean & 0.351 & 0.378 & 0.000 & 0.000 & 1.00 \\
+Q & N1 mult., query double & 0.599 & 0.566 & 0.571 & 0.538 & 1.00 \\
+Q & N2 mult., singles & 0.351 & 0.378 & 0.000 & 0.000 & 0.00 \\
+Q & N1s strain-matched & 0.603 & 0.573 & 0.574 & 0.544 & 1.00 \\
+Q & B1 additive gene ridge & 0.150 & 0.185 & 0.069 & 0.108 & 1.00 \\
+Q & L1 ridge, lower-order & 0.606 & 0.584 & 0.562 & 0.535 & 1.00 \\
+Q & L2 boosted trees, lower-order & 0.668 & 0.700 & 0.609 & 0.637 & 1.00 \\
+Q & L3 ridge, genes + lower-order & 0.622 & 0.611 & 0.556 & 0.536 & 1.00 \\
+\bottomrule
+\end{tabular}

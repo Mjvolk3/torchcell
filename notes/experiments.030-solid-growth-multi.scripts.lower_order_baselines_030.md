@@ -64,3 +64,65 @@ records the synced-epoch count and the last epoch; it is a validation number of 
 with no test evaluation.
 
 Launcher: [[experiments.030-solid-growth-multi.scripts.gh_lower_order_baselines_030]].
+
+## 2026.10.11 - Result: the lower-order arithmetic is a higher bar than the gene-identity ladder, and the transformer is under it
+
+GilaHyper job 3902 (16 CPUs, 64 GB, 7 min end to end; commit b5d3c1a4e). Terms resolved
+for 376,732 triples: every single present on 98 to 100 percent of rows, the query-strain
+double on 99.7 percent, eps_ij on 94.5 percent, the secondary-pair terms on 100 percent.
+The targets of all 75,346 pinned triples equal the trainer's eval table.
+
+![](assets/images/030-solid-growth-multi/lower_order_baselines_030_ladder_2026-10-11-06-25-46.svg)
+
+Pearson on the pinned triples, test unless marked. `results/lower_order_baselines_030.csv`.
+
+| rung | R test | R within-screen | Q test | Q within-screen |
+|---|---|---|---|---|
+| N0 screen mean (the floor) | 0.368 | 0 | 0.378 | 0 |
+| N1 -(eps_ik + eps_jk), zero parameters | 0.577 | 0.550 | 0.566 | 0.538 |
+| N1s strain-matched controls | 0.580 | 0.551 | 0.573 | 0.544 |
+| N2 f_i f_j f_k - f_ij f_k - eps_ik - eps_jk | 0.273 | 0.245 | masked on Q | |
+| B1 additive gene ridge (the 010 rung) | 0.401 | 0.177 | 0.185 | 0.108 |
+| L1 ridge, lower-order terms | 0.609 | 0.549 | 0.584 | 0.535 |
+| L2 boosted trees, lower-order terms | 0.743 | 0.694 | 0.700 | 0.637 |
+| L3 ridge, genes + lower-order | 0.653 | 0.581 | 0.611 | 0.536 |
+| F1 ridge, lower-order to f_ijk | 0.927 | 0.924 | 0.734 | 0.714 |
+| CGT 030 composite + fitness + token, VAL, last 10 synced epochs | 0.562 (ep 155-164) | 0.518 / 0.460 per screen (weekly note, ep 174-183) | 0.391 (ep 19-28) | 0.338 / 0.092 per screen (ep 13-22) |
+
+Paired bootstrap on test, 2,000 resamples (`results/lower_order_baselines_030_paired.csv`):
+L2 minus B1 +0.342 [+0.327, +0.359] on R and +0.515 [+0.501, +0.529] on Q; L2 minus N1
++0.165 [+0.152, +0.180] on R and +0.134 [+0.117, +0.153] on Q; L3 minus L2 -0.089 on both.
+
+Readings.
+
+1. **The zero-parameter null is above the transformer on both arms.** Predicting a
+   held-out triple's tau as minus the sum of its two digenic control scores, every term
+   a training record, scores 0.577 on R and 0.566 on Q; the model's validation reads
+   0.562 on R and 0.391 on Q. Within-screen the gap on Q is larger: N1 0.538 against
+   the model's 0.338 (2018) and 0.092 (2020). The joint model has not learned to use the
+   digenic terms it was given.
+2. **Boosted trees over the same terms reach 0.74 on R and 0.70 on Q**, and are still
+   0.13 to 0.17 above N1, so there is structure beyond the identity's own terms that a
+   small model reads from the lower-order measurements alone. On Q the query pair's
+   double and digenic score are masked (74,404 and 68,920 rows), so this is reached
+   without any measurement of the held-out pair.
+3. **Gene identity adds nothing once the terms are present.** L3 (genes + terms) is
+   below L2 and only 0.04 above L1 on R; on Q the one-hot rung alone is 0.185, below the
+   floor, as in 025.
+4. **The screens differ.** On Kuzmin 2020 the arithmetic alone gives 0.68 to 0.73; on
+   Kuzmin 2018 it gives 0.22 and the trees 0.55. Hypothesis (untested): the 2020
+   diagnostic-array screen measured its control queries on the same strains in the same
+   batch as the triples, so eps_ik and eps_jk carry the batch; the 2018 genome-wide
+   screen did not.
+5. **The fitness side is arithmetic.** A ridge over the lower-order terms predicts
+   f_ijk at 0.927 on R and 0.734 on Q, close to the fitness head's training-set 0.9.
+
+What this says about the cheating question: the concern was that the joint model gets
+tau "for free" through the lower-order terms. The free part is real and it is large,
+0.58 to 0.74 on held-out triples, and the model does not collect it. The number to beat
+is L2, not B1; the 025 additive-baselines document's ladder needs these rungs.
+
+Not done here: the transformer's own test predictions on 030 for a paired comparison
+(the checkpoints are on IGB; the per-triple predictions of every rung are written to
+`results/lower_order_baselines_030_pred_<arm>.parquet` for that pairing), and a
+Spearman readout of the model.

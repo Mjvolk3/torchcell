@@ -926,7 +926,7 @@ def plot_ladder(
         ax.axhline(floor, color="black", linewidth=0.5, linestyle=(0, (2, 2)))
         ax.set_xticks(x)
         ax.set_xticklabels(labels, rotation=45, ha="right")
-        ax.set_ylim(0, 0.7)
+        ax.set_ylim(0, 0.8)
         ax.yaxis.set_major_locator(MultipleLocator(0.2))
         ax.yaxis.set_minor_locator(MultipleLocator(0.1))
         ax.tick_params(which="minor", length=0)

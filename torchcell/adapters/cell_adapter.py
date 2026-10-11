@@ -327,10 +327,7 @@ class CellAdapter:
                 self._single_cell_expression_phenotype_node,
             ),
             # --- begin De Chiara 2022: the life-cycle family ---
-            (
-                "life cycle phenotype (chunked)",
-                self._life_cycle_phenotype_node,
-            ),
+            ("life cycle phenotype (chunked)", self._life_cycle_phenotype_node),
             # --- end De Chiara 2022 ---
             (
                 "fitness phenotype reference",

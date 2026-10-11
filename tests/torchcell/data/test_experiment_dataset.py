@@ -933,8 +933,10 @@ def test_the_sequential_gene_set_resolves_an_interned_genotype(
     dataset = InternedGenotypeToyDataset(root=str(tmp_path / "interned_slug"))
     env = lmdb.open(f"{dataset.processed_dir}/lmdb", readonly=True, lock=False)
     with env.begin() as txn:
-        raw = pickle.loads(txn.get(b"1"))
+        payload = txn.get(b"1")
     env.close()
+    assert payload is not None
+    raw = pickle.loads(payload)
     assert raw["experiment"]["genotype"] == {"$ref": "genotype-1", "name": "genotype"}
     assert dataset.compute_gene_set_sequential() == GeneSet(
         ["YAL001C", "YAL002W", "YBR001C"]

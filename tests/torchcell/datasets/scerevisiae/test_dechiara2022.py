@@ -613,6 +613,9 @@ def test_verify_build_passes_the_synthetic_life_cycle_store(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     _audited_library(data_root, monkeypatch)
+    # CI runs the whole suite in one process: release the fixture's LMDB handle before
+    # verify_build opens the same store with its own reader.
+    life_cycle.close_lmdb()
     report = m.verify_build(
         life_cycle.root, data_root=str(data_root), expected_viability_above_100=1
     )
@@ -679,6 +682,7 @@ def test_doubling_time_build_writes_one_record_per_released_cell(
     ) == (5, 5, 2, 5)
     assert ledger["refused_blocks"][0]["n_cells"] == 7
     _audited_library(data_root, monkeypatch)
+    doubling_time.close_lmdb()
     report = m.verify_build(doubling_time.root, data_root=str(data_root))
     assert report.passed, report.summary()
     assert {r.name for r in report.results} >= {

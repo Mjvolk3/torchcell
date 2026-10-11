@@ -9,14 +9,18 @@ drawn by \file{experiments/025-solid-growth/scripts/graph_reg_sweep_plots.py}. E
 keeps one color in every panel; the ladder axis names the arms, and the random-graph
 arms are dashed in \textbf{e} and \textbf{g}--\textbf{i}. Every
 point is one seed, filled in its arm's color with a black edge; a short black bar is the
-arm mean; a cross marks a quantity the model does not compute. The ladder axis is
+arm mean; in \textbf{a}--\textbf{c} and \textbf{f} the light shape behind a column is a
+normal density with that column's seed mean and standard deviation, a reading aid at
+three seeds rather than an estimate of the distribution; a cross marks a quantity the
+model does not compute. The ladder axis is
 $\log_{10} \lambda$ from $-5$ to 2, with \emph{none} the unpenalized arm, \emph{mask} the hard mask and
 \emph{r$-$3}, \emph{r$-$1} and \emph{r0} the degree-matched random-graph arms at
 $\lambda = 10^{-3}$, $10^{-1}$ and 1 (three, five and five seeds). \textbf{a},~Held-out Pearson on the
 37{,}673 validation triples at three readings per seed: epoch 29 (circle, left), max
 over epochs (triangle, middle, every run) and at the epoch of minimum validation point
 loss (square, right). Stars are the paired $t$ of each reading against no penalty on the
-same seeds, placed above that reading's column, one row per reading (* $p < 0.05$,
+same seeds, in a band above the data with one row per reading, the row's marker at its
+left end (* $p < 0.05$,
 ** $p < 0.01$, *** $p < 0.001$); the minimum-loss reading has none, its closest being
 $\lambda = 10^{-1}$
 at $p = 0.08$. \textbf{b},~Held-out point loss at epoch 29 (circle) and its minimum over epochs

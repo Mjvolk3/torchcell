@@ -93,10 +93,11 @@ ARM_INDEX = {
     "random_0.1": 14,  # dusty mauve
     "random_1": 8,  # dark purple
 }
-# --dist: a Gaussian with each column's seed mean and sd, drawn as a light shape behind
+# DIST: a Gaussian with each column's seed mean and sd, drawn as a light shape behind
 # the seed points in a, b, c and f. Three seeds give the two parameters and nothing more,
-# so it is a reading aid, not a density estimate; the points stay the data.
-DIST = False
+# so it is a reading aid, not a density estimate; the points stay the data. Set per
+# output by main().
+DIST = True
 
 
 GRID_COLOR, GRID_LW = "#E3E3E3", 0.3
@@ -170,9 +171,9 @@ CURVE_ARMS = [
 # Shades of one color did not separate the readings on review (2026-09-27), so the
 # reading is the marker shape and the arm is the color.
 READINGS = {
-    "fixed": ("o", -0.27, "val_pearson_fixed", 0.4745),
-    "max": ("^", 0.0, "val_pearson_max", 0.4705),
-    "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.4665),
+    "fixed": ("o", -0.27, "val_pearson_fixed", 0.484),
+    "max": ("^", 0.0, "val_pearson_max", 0.4785),
+    "min_loss": ("s", 0.27, "val_pearson_at_min_loss", 0.473),
 }
 PROBE_EPOCHS = [0, 1, 2, 5, 10, 20]
 X_LABEL = "log10 λ (graph prior weight); r, random graphs"
@@ -211,6 +212,7 @@ def _points(
     jitter: float = 0.07,
     size: float = 9,
     dist: bool = True,
+    dist_width: float = 0.16,
 ) -> None:
     """Seed points: arm color face, black edge; the arm mean as a short black bar.
 
@@ -222,7 +224,7 @@ def _points(
     if DIST and dist and len(vals) > 1 and vals.std(ddof=1) > 0:
         mu, sd = vals.mean(), vals.std(ddof=1)
         ys = np.linspace(mu - 2.5 * sd, mu + 2.5 * sd, 60)
-        half = 0.16 * np.exp(-0.5 * ((ys - mu) / sd) ** 2)
+        half = dist_width * np.exp(-0.5 * ((ys - mu) / sd) ** 2)
         ax.fill_betweenx(ys, x - half, x + half, facecolor=color, alpha=0.3, lw=0, zorder=2)
     ax.scatter(
         xs,
@@ -336,7 +338,22 @@ def figure(
                 a.text(
                     XPOS[arm] + dx, star_y, star, ha="center", va="center", fontsize=5.5
                 )
-    a.set_ylim(0.372, 0.478)
+    # The star rows sit in a band above the data, one row per reading; the reading's
+    # marker at the left end of each row says which row is which (review 2026-10-10:
+    # stars above the points were hard to track, and vertical stars harder still).
+    for marker, _, _, star_y in READINGS.values():
+        a.scatter(
+            [XPOS["kl_0"] - 0.3],
+            [star_y],
+            s=6,
+            marker=marker,
+            facecolor="white",
+            edgecolor="black",
+            linewidth=0.4,
+            zorder=4,
+            clip_on=False,
+        )
+    a.set_ylim(0.385, 0.505)
     a.set_ylabel("Held-out Pearson, gene interaction")
     a.set_title("Prior gains at epoch 29, little at the peak")
     _pearson_grid(a)
@@ -357,14 +374,19 @@ def figure(
             label=label,
         )
     a.plot([], [], color="black", lw=0.7, label="arm mean")
-    a.scatter([], [], s=0, label="paired t vs none: * p < 0.05, ** < 0.01, *** < 0.001")
+    # Legend in the top band, two columns, so the data sits low against the axis. The
+    # star key (paired t vs none, * p < 0.05, ** 0.01, *** 0.001) is in panel f and the
+    # caption; here each star row carries its reading's marker instead.
     a.legend(
-        loc="lower left",
+        loc="upper left",
+        ncol=2,
         frameon=False,
         fontsize=5,
         handletextpad=0.2,
         borderpad=0.1,
+        borderaxespad=0.15,
         labelspacing=0.15,
+        columnspacing=0.8,
         handlelength=1.2,
         markerscale=0.8,
     )
@@ -565,7 +587,14 @@ def figure(
                 continue
             diffs = np.array([b[k] - r[k] for k in seeds])
             _points(
-                f, g + dx, diffs, ARM_COLOR[bio], marker=marker, jitter=0.05, size=6
+                f,
+                g + dx,
+                diffs,
+                ARM_COLOR[bio],
+                marker=marker,
+                jitter=0.05,
+                size=6,
+                dist_width=0.07,  # three columns on this axis, so a unit is wide
             )
             if len(diffs) > 1 and diffs.std(ddof=1) > 0:
                 t = diffs.mean() / (diffs.std(ddof=1) / np.sqrt(len(diffs)))
@@ -670,7 +699,9 @@ def main() -> None:
     runs = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_runs.csv"))
     hist = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_history.csv"))
     summary = json.load(open(osp.join(RESULTS_DIR, "graph_reg_sweep_summary.json")))
-    for name, DIST in (("graph_reg_sweep", False), ("graph_reg_sweep_dist", True)):
+    # The shaded version is the figure (review 2026-10-10: the shapes group the seeds);
+    # the plain one is kept beside it for comparison.
+    for name, DIST in (("graph_reg_sweep", True), ("graph_reg_sweep_plain", False)):
         figure(runs, hist, summary, name)
         print("wrote", osp.join(IMG_DIR, f"{name}.svg"))
 

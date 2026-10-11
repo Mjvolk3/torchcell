@@ -603,7 +603,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Hale 2024 CRISPRi guides on BYx3S segregants)
     # + 1 (#1022, Hu 2007 TF-deletion error-model scores)
     # + 1 (Hackett 2020 IDEA induction time courses)
-    # + 1 (Messner 2021 drug-response proteomes).
+    # + 1 (Messner 2021 drug-response proteomes)
+    # + 1 (Parsons 2006 chemical-genetic log2 ratios).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -630,6 +631,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 1
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -646,6 +648,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "EnvChemgenCostanzo2021Dataset",
         "EnvChemgenHoepfner2014Dataset",
         "EnvChemgenMota2024Dataset",
+        "EnvChemgenParsons2006Dataset",
         "EnvChemgenVanacloig2022Dataset",
         "EnvChemgenWildenhain2015Dataset",
         "FattyAcidSmith2006Dataset",

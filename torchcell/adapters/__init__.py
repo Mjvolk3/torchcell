@@ -264,6 +264,9 @@ from .ohya2005_adapter import ScmdOhya2005Adapter as ScmdOhya2005Adapter
 from .ozaydin2013_adapter import (
     CarotenoidOzaydin2013Adapter as CarotenoidOzaydin2013Adapter,
 )
+from .parsons2006_adapter import (
+    EnvChemgenParsons2006Adapter as EnvChemgenParsons2006Adapter,
+)
 from .peter2018_adapter import (
     IsolateGrowthPeter2018Adapter as IsolateGrowthPeter2018Adapter,
 )
@@ -474,6 +477,7 @@ environment_adapters = [
     "EnvChemgenHoepfner2014Adapter",
     "HetHillenmeyer2008Adapter",
     "HomHillenmeyer2008Adapter",
+    "EnvChemgenParsons2006Adapter",
 ]
 
 baryshnikova_adapters = ["SmfBaryshnikova2010Adapter"]

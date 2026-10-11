@@ -346,6 +346,18 @@ The 16 rows of the sweep table (`--table`):
 | `syn_leth_db_yeast` | 13996 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_leth_db_yeast]` | FAIL: L3 media_membership (21 rules) | 2026-10-09T12:32:04 | `6c3ff3994a` | `data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json` |
 | `syn_rescue_db_yeast` | 6942 | `run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_rescue_db_yeast]` | FAIL: L2 score_defined_by_source, L3 media_membership (19 rules) | 2026-10-09T12:32:16 | `6c3ff3994a` | `data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json` |
 
+## 2026.10.11 - SGD essentiality and SynLethDB re-verified after their loader fixes (#901, #902, #903)
+
+The three stores were rebuilt on branch `fix/sgd-synlethdb-findings` and re-swept (`kg4_pre_build_verification_sweep.py --dataset <Class>`, rows merged into `results/kg4_pre_build_verification_sweep.json` with `--merge`): **135 mapped, 122 PASS, 13 FAIL**.
+
+| Store | Records | Before | After |
+|---|---:|---|---|
+| `gene_essentiality_sgd` | 1,329 -> 1,287 | FAIL: one_record_per_gene_and_publication, media_membership, no_viable_deletion_in_smf_costanzo2016 | FAIL: no_viable_deletion_in_smf_costanzo2016 only (7 of 1,119 unconditionally essential genes are viable deletions in Costanzo 2016, a source disagreement left failing) |
+| `syn_leth_db_yeast` | 13,996 | FAIL: media_membership | PASS |
+| `syn_rescue_db_yeast` | 6,942 | FAIL: score_defined_by_source, media_membership | PASS |
+
+What changed is in [[torchcell.datasets.scerevisiae.sgd]], [[torchcell.datasets.scerevisiae.synth_leth_db]] and [[torchcell.datamodels.schema]] (`Environment.media` optional only beside a typed gap). That schema change puts every other mapped store's closure out of date: on the branch, `build_dataset_lmdb --list-stale --include-private` names 132 of the 135, all but these three, so the full dev-store rebuild before KG 4.0 includes them.
+
 ## 2026.10.12 - Running the preflight for one organism set
 
 The live rebuild can now serve a subset of organisms (`KG_ORGANISMS`, [[database.slurm.scripts.gilahyper_live_rebuild-slurm_docker]]), and its freshness preflight walks only that set's map. The owner-side checks take the same set, so the list to rebuild from is the list the job would refuse on:

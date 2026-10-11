@@ -592,3 +592,107 @@ a node feature: the models currently carry prior knowledge on the EDGES of the c
 and the node carries only identity. Encoding a measured basal statistic on the node, paired
 with a token naming the assay it came from, would put the same kind of prior on the node
 side. Both are hypotheses about architecture and neither has been run.
+
+## 2026.10.11 - Round 3: what made the data-combining question unreadable, and the screen that replaces it
+
+### The multi-source arms were never trained to convergence, so rounds 1 and 2 cannot answer the question
+
+The W&B history of every round-1 arm carries a per-source training loss. Reading them
+together (project `torchcell_040-inhibitor-synergy-wetlab`, last-epoch values, three seeds
+per run):
+
+| arm | Vanacloig loss at epoch 50 | auxiliary loss at epoch 50 | drop over the last ten epochs, as a fraction of the first ten |
+|---|---|---|---|
+| `van`, one source | 0.25 to 0.28 | | 0.08 to 0.11 |
+| `vanhop` | 0.27 | Hoepfner 0.55 to 0.85 | 0.82 |
+| `vanhophet` | 0.23 | Hoepfner 0.49, Hillenmeyer 0.90 | 0.21 |
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/dcybes8q
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/ho094l4v
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/0nun8htb
+
+The single-source arm has saturated by epoch 40 and the learning rate is at zero by 50
+(OneCycle). The multi-source arms have not: the auxiliary sources are subsampled at
+`cond_batch` 24 conditions per step, so 50 epochs over the Vanacloig genes is a fraction
+of one pass over Hoepfner's 275 conditions or Hillenmeyer's 401. **So the Delta reading
+that adding Hoepfner gives 0.266 against the single-source arm's 0.253 compares a
+converged model with an unconverged one, and it is not evidence either way.**
+
+Two further defects found with it. Under `fit_on: pool` the validation compounds are
+inside the training set, so the curve logged as validation is in-sample (0.70 against a
+held-out 0.39 on the same run), and no held-out loss was logged for any source at all.
+
+### What the trainer now measures
+
+- **A hold-out per auxiliary source.** `aux_holdout: compound` holds out a tenth of the
+  source's compounds with every dose they were served at; `aux_holdout: dose` holds out one
+  served dose of every compound served at two or more. Each carries its own centered
+  Spearman per held-out condition and its own held-out loss, logged every evaluation.
+- **A held-out loss for Vanacloig too**, so saturation is read rather than inferred from
+  the training loss.
+- **Wildenhain 2015 as a fourth source** (deletion arm only; its 22,407 conditional-allele
+  cells have no operator in the model).
+- **Two source encodings beside the per-source token**: typed attribute tokens (ploidy,
+  perturbation, medium, label, assay) shared across sources that agree on an attribute, so
+  Hoepfner HOP and Vanacloig share the deletion and barcode tokens but not the medium; and
+  a per-source scale and shift on the shared decoder, which is one decoder with one linear
+  head per label.
+- **A gene-cold split**: whole deletion strains held out with every compound fitted, scored
+  raw and gene-centered over the held-out strains. 1,017 Hoepfner deletion genes lie
+  outside the Vanacloig panel, and no public source can validate a prediction on them
+  (Wildenhain agrees with Vanacloig at 0.078 over 761 shared pairs), so the in-house
+  deletion assay is the only test and this is where that claim starts.
+- **A checkpoint per fold and seed**, which is what a counterfactual needs.
+
+### A fabricated label, found by the four-source smoke
+
+`anchor_records` read every single-dose public compound as an IC30 anchor at host fitness
+0.70. Only Vanacloig and Hoepfner are dosed at an IC30. Hillenmeyer is dosed at a fixed or
+unstated concentration and Wildenhain at one 20 uM screening concentration for all 5,170 of
+its compounds, so the four-source smoke built **5,487 host anchors**, a hundred times the
+55 wet-lab titration records the host head exists to learn from, each asserting a 30 percent
+growth defect that was never measured, for compounds mostly inactive at that concentration.
+`SourceSpec.anchors_are_ic30` now gates it. Every affected arm was still pending.
+
+### The round, and where it runs
+
+`scripts/r3_sweep.py` writes 25 arms as 32 single-GPU jobs: the five source sets at 150
+epochs, 300 epochs on the heaviest, the round-1 length as a bridge, the three source
+encodings, two auxiliary weighting choices, three dose arms, three gene-cold arms, three
+capacity arms, and the two headline arms on fold seeds 1 and 2. One seed and three folds
+per arm, because the question is which directions move at all; the seed ensemble is what
+round 4 spends on the directions that do. No dependencies, no preemptible partition, and
+every job asks the 12 hour partition limit rather than its estimate, since the estimates
+are of a regime that has not converged. `results/r3_plan.csv` is the plan,
+`conf/mixture/r3_submit_delta.sh` the submission.
+
+Six arms are prescreened on GilaHyper (slurm 3893 to 3898): the three source sets, the
+dose arm, the gene-cold arm and the attribute encoding.
+
+### Posing a counterfactual
+
+`scripts/query_mixture.py` loads a checkpoint and answers four kinds of question no score
+table can, because each asks for a prediction at a point no experiment visited: the host's
+fitness in any medium (compounds named or given as SMILES, doses in mM); a two-compound
+dose grid with its alive region, the monotone closure of that region, and, where the pair
+matches one of the three 2021 isoboles, the Jaccard overlap and signed residual against the
+observed boundary on the model-free rules' own axis; the gene-level response under a medium
+for any gene of the cell graph, including the 3,020 outside the Vanacloig panel; and any
+genotype of any order under any medium. Every row says whether its compound and its genes
+were fitted, so an extrapolation is never read as an interpolation. Verified on a smoke
+checkpoint in all four modes.
+
+**The jaggedness readout the discussion needs comes free.** The monotone closure drops
+exactly the predicted surface's growth islands, which a rule-based front cannot have, so
+the count of dropped cells is how far the model's boundary departs from a shape Bliss or
+Loewe could draw.
+
+### What is measured about the sources themselves
+
+[[experiments.040-inhibitor-synergy-wetlab.scripts.source_axes]]: the per-source
+comparison basis (the compound-cold score as a fraction of each source's own reliability
+ceiling), the cross-source agreement that forbids treating the four labels as one quantity
+(0.118 at best, 0.013 at worst), and the measured dose structure of the public screens,
+where raising the dose scales a largely conserved profile rather than reordering it.

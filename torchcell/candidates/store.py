@@ -11,8 +11,11 @@ and outside the supported-queries hook pattern, which anchors on ``database/rele
 
 ``GRANDFATHERED`` is every dataset class registered when the gate landed (2026-10-10 at main
 ecbd943ac, 134 classes, derived from ``dataset_registry`` after importing every module under
-``torchcell/datasets``). It is sorted and frozen and can only shrink: a class leaves it
-when its verdict is written (the aggregation backfill starts with SynthLethDB). A class
+``torchcell/datasets``). It is sorted and can only shrink: a class leaves it when its
+verdict is written, or when the class stops being registered at all (2026-10-11 removed
+``GeneEssentialitySgdDataset``, ``SynthLethalityYeastSynthLethDbDataset`` and
+``SynthRescueYeastSynthLethDbDataset``, whose sources state no growth medium and are now
+provenance records; 131 left). A class
 registered after that date is not in it and must carry ``CITATION_KEY`` and a passing
 verdict.
 """
@@ -79,7 +82,6 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "FluxIshii2007Dataset",
     "GeneEssentialityGoodall2018Dataset",
     "GeneEssentialityPrice2018EcoliDataset",
-    "GeneEssentialitySgdDataset",
     "GeneInteractionBabu2014Dataset",
     "GeneInteractionButland2008Dataset",
     "GrowthAucRapp2026Dataset",
@@ -155,8 +157,6 @@ GRANDFATHERED: Final[tuple[str, ...]] = (
     "SmfKuzmin2018Dataset",
     "SmfKuzmin2020Dataset",
     "SmfODuibhir2014Dataset",
-    "SynthLethalityYeastSynthLethDbDataset",
-    "SynthRescueYeastSynthLethDbDataset",
     "TargetedMetabolomeRapp2026Dataset",
     "TmfKuzmin2018Dataset",
     "TmfKuzmin2020Dataset",

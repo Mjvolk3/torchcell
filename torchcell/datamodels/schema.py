@@ -4653,20 +4653,9 @@ class Environment(ProvenanceGapMixin):
 
     The culture protocol (#507) lives on the subclass ``CultureEnvironment``, not
     here: this class is in the schema closure of every served dataset.
-
-    ``media`` is ``None`` only beside a ``ProvenanceGap(field='media')`` (#901, #902,
-    #903): a source that states no growth medium (SynLethDB's aggregated pairs, an SGD
-    phenotype annotation with no condition) is a typed absence, never a stand-in
-    ``Media`` object. A free-text stand-in joins no shared medium and reads as a
-    medium nobody stated; the gap says why the medium is missing and where we looked.
     """
 
-    # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
-    media: Media | None = Field(
-        description="the base growth medium; None ONLY with a ProvenanceGap "
-        "(field='media') when the source states no medium, never a guessed medium"
-    )
-    # --- end #901/#902/#903 ------------------------------------------------------ #
+    media: Media
     temperature: Temperature | None = None
     perturbations: list[EnvironmentPerturbationType] = Field(
         default_factory=list,
@@ -4711,18 +4700,6 @@ class Environment(ProvenanceGapMixin):
                 f"aerobicity must be aerobic/anaerobic/microaerobic, got {v!r}"
             )
         return v
-
-    # --- begin #901/#902/#903: a typed gap on the medium ------------------------ #
-    @model_validator(mode="after")
-    def _medium_or_gap(self) -> "Environment":
-        """A medium is stated or carries a typed gap; never a silent ``None``.
-
-        The mixin enforces the converse (a gapped ``media`` must be ``None``).
-        """
-        _require_value_or_gap(self, ("media",))
-        return self
-
-    # --- end #901/#902/#903 ------------------------------------------------------ #
 
     # --- begin #753: the chemostat dilution rate --------------------------------- #
     @field_validator("dilution_rate_per_hour", mode="after")

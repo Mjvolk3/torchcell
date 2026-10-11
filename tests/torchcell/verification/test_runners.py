@@ -171,10 +171,8 @@ RUN_ALL_ORDER = [
     "run_rnaseq",
     "run_environment_response",
     "run_fitness",
-    # #889: the three yeast families the 2026.10.10 sweep found no verifier for.
+    # #889: the gene-interaction family the 2026.10.10 sweep found no verifier for.
     "run_gene_interaction",
-    "run_gene_essentiality",
-    "run_synthetic_pairs",
     "run_segregant_growth",
     # the Peter 2018 natural-isolate growth family, called after the segregants.
     "run_natural_isolate_response",
@@ -2272,13 +2270,6 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "dmi_kuzmin2020": (("Query strain ID", "Array strain ID"), 35),
         "tmi_kuzmin2020": (("Query strain ID", "Array strain ID"), 35),
     }
-    assert _oracles(runners.GENE_ESSENTIALITY_DATASETS) == {
-        "gene_essentiality_sgd": 1287
-    }
-    assert _oracles(runners.SYNTHETIC_PAIR_DATASETS) == {
-        "syn_leth_db_yeast": 13996,
-        "syn_rescue_db_yeast": 6942,
-    }
     assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
     assert _oracles(runners.NATURAL_ISOLATE_RESPONSE_DATASETS) == {
         "isolate_growth_peter2018": 33985
@@ -2311,8 +2302,6 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.SEGREGANT_EXPRESSION_DATASETS,
         runners.SEGREGANT_PERTURBATION_DATASETS,
         runners.GENE_INTERACTION_DATASETS,
-        runners.GENE_ESSENTIALITY_DATASETS,
-        runners.SYNTHETIC_PAIR_DATASETS,
         runners.NATURAL_ISOLATE_RESPONSE_DATASETS,
         runners.NATURAL_ISOLATE_DATASETS,
         runners.PSEUDOBULK_UMI_COUNT_DATASETS,
@@ -2324,6 +2313,9 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
     # One addend per registry above, in list order: each is that registry's size.
+    # 2026-10-11: gene_essentiality_sgd and the two SynLethDB stores left the
+    # served graph (their sources state no growth medium), so their two registries
+    # left with them.
     assert len(roots) == (
         3  # EXPRESSION_DATASETS
         + 1  # EXPRESSION_SCORE_DATASETS
@@ -2337,8 +2329,6 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 1  # SEGREGANT_EXPRESSION_DATASETS
         + 1  # SEGREGANT_PERTURBATION_DATASETS
         + 5  # GENE_INTERACTION_DATASETS
-        + 1  # GENE_ESSENTIALITY_DATASETS
-        + 2  # SYNTHETIC_PAIR_DATASETS
         + 1  # NATURAL_ISOLATE_RESPONSE_DATASETS
         + 3  # NATURAL_ISOLATE_DATASETS
         + 1  # PSEUDOBULK_UMI_COUNT_DATASETS
@@ -3263,354 +3253,6 @@ def test_companion_pair_keys_match_the_interaction_store_keys(tmp_path: Path) ->
     _write_lmdb(_root(tmp_path, "dmf"), [_double_fitness_record(pair, 0.5)])
     keys = runners.companion_pair_keys(str(_root(tmp_path, "dmf")))
     assert keys == {pair_key(_interaction_record(pair, 0.1, 0.2)["experiment"])}
-
-
-def _essentiality_record(
-    gene: str, pubmed_id: str, *, condition: bool = False
-) -> Record:
-    """An SGD-shaped record: no medium and no temperature (typed gaps), unless
-    ``condition``, which stands for an annotation SGD qualifies (here SC at 30 C).
-    """
-    from torchcell.datamodels.schema import (
-        GeneEssentialityExperiment,
-        GeneEssentialityExperimentReference,
-        GeneEssentialityPhenotype,
-    )
-    from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
-
-    env = (
-        Environment(media=SC, temperature=Temperature(value=30))
-        if condition
-        else Environment(
-            media=None,
-            temperature=None,
-            provenance_gaps=[
-                ProvenanceGap(
-                    field=field, reason=ProvenanceGapReason.not_carried_by_curation
-                )
-                for field in ("media", "temperature")
-            ],
-        )
-    )
-    experiment = GeneEssentialityExperiment(
-        dataset_name="test",
-        genotype=_genotype([gene]),
-        environment=env,
-        phenotype=GeneEssentialityPhenotype(is_essential=True),
-    )
-    reference = GeneEssentialityExperimentReference(
-        dataset_name="test",
-        genome_reference=_reference_genome(),
-        environment_reference=env.model_copy(),
-        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
-    )
-    return {
-        "experiment": experiment.model_dump(),
-        "reference": reference.model_dump(),
-        "publication": {"pubmed_id": pubmed_id},
-    }
-
-
-def test_run_gene_essentiality_reads_sgd_and_the_viable_deletion_store(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from torchcell.verification.released import sgd_json_digest
-
-    _write_lmdb(
-        _root(tmp_path, "ess"),
-        [
-            _essentiality_record("YAL001C", "7"),
-            _essentiality_record("YBR085W", "8"),
-            _essentiality_record("YJR155W", "9", condition=True),
-        ],
-    )
-    # the loader's ledger: one more YAL001C annotation (PubMed 7), another allele
-    (_root(tmp_path, "ess") / "preprocess").mkdir(parents=True, exist_ok=True)
-    (_root(tmp_path, "ess") / "preprocess" / "dropped_records.json").write_text(
-        json.dumps({"rows": [{"systematic_name": "YAL001C", "pubmed_id": "7"}]})
-    )
-    smf_records = []
-    for gene in ("YBR085W", "YJR155W"):
-        smf = _fitness_record(gene, 0.9)
-        perturbation = smf["experiment"]["genotype"]["perturbations"][0]
-        perturbation["perturbation_type"] = "sga_kanmx_deletion"
-        perturbation["strain_id"] = f"{gene}_dma1"
-        smf_records.append(smf)
-    _write_lmdb(_root(tmp_path, "smf"), smf_records)
-    genes = tmp_path / "data" / "sgd" / "genome" / "genes"
-    genes.mkdir(parents=True)
-    for gene, pubmeds in (("YAL001C", (7, 7)), ("YBR085W", (8,)), ("YJR155W", (9,))):
-        (genes / f"{gene}.json").write_text(
-            json.dumps(
-                {
-                    "phenotype_details": [
-                        {
-                            "mutant_type": "null",
-                            "strain": {"display_name": "S288C"},
-                            "phenotype": {"display_name": "inviable"},
-                            "reference": {"pubmed_id": pubmed},
-                        }
-                        for pubmed in pubmeds
-                    ]
-                }
-            )
-        )
-    _stub_sgd(monkeypatch, set(GENES))
-    _stub_genome(monkeypatch)
-    spec = {
-        "root": "data/torchcell/ess",
-        "expected_count": 3,
-        "sgd_genes_dir": "data/sgd/genome/genes",
-        "sgd_genes_digest": sgd_json_digest(str(genes)),
-        "viable_deletion_store": "smf",
-        "provenance": PROV,
-    }
-    monkeypatch.setattr(runners, "GENE_ESSENTIALITY_DATASETS", {"ess": spec})
-    assert runners.run_gene_essentiality(str(tmp_path)) is False
-    report = _read_report(_root(tmp_path, "ess"))
-    released = _result(report, "released_annotations")
-    assert released["passed"] is True
-    assert released["message"] == (
-        "the 3 stored (gene, PubMed id) records are the 4 inviable null S288C "
-        "annotations SGD releases, less the 1 the loader ledgers"
-    )
-    # #901: the conditional YJR155W record is not compared; YBR085W, unconditional, is
-    cross = _result(report, "no_viable_deletion_in_smf")
-    assert cross["passed"] is False
-    assert cross["details"]["contradicted"] == {"YBR085W": "YBR085W_dma1"}
-    assert cross["details"]["n_essential"] == 2
-    assert cross["message"].startswith(
-        "1 of 2 unconditionally essential genes are viable full-deletion strains"
-    )
-
-    monkeypatch.setitem(spec, "sgd_genes_digest", "0" * 64)
-    runners.run_gene_essentiality(str(tmp_path))
-    drift = _result(_read_report(_root(tmp_path, "ess")), "released_annotations")
-    assert drift["passed"] is False
-    assert drift["details"]["pinned_digest"] == "0" * 64
-
-
-def test_viable_deletion_genes_keeps_single_full_deletions_with_positive_fitness(
-    tmp_path: Path,
-) -> None:
-    def record(gene: str, fitness: float, kind: str) -> Record:
-        built = _fitness_record(gene, fitness)
-        perturbation = built["experiment"]["genotype"]["perturbations"][0]
-        perturbation["perturbation_type"] = kind
-        perturbation["strain_id"] = f"{gene}_x"
-        return built
-
-    double = _double_fitness_record(["YAL001C", "YBR085W"], 0.4)
-    dead = record("YJR155W", 0.9, "sga_kanmx_deletion")
-    dead["experiment"]["phenotype"]["fitness"] = 0.0
-    _write_lmdb(
-        _root(tmp_path, "smf"),
-        [
-            record("YAL001C", 0.9, "sga_natmx_deletion"),
-            record("YBR085W", 0.8, "damp"),
-            dead,
-            double,
-            record("YAL001C", 0.7, "sga_kanmx_deletion"),
-        ],
-    )
-    assert runners.viable_deletion_genes(str(_root(tmp_path, "smf"))) == {
-        "YAL001C": "YAL001C_x"
-    }
-
-
-def _write_synlethdb(raw: Path) -> Path:
-    path = raw / "Yeast_SL.csv"
-    path.write_text(
-        "n1.name,n1.identifier,n2.name,n2.identifier,r.cell_line,r.pubmed_id,"
-        "r.source,r.statistic_score\n"
-        "A,1,B,2,null,11,s,0.9\n"
-        "A,1,A,1,null,12,s,0.5\n"
-        "B,2,Z,9,null,13,s,null\n"
-        "C,3,B,2,null,14,s,null\n"
-    )
-    return path
-
-
-def _ledger() -> dict[str, Any]:
-    return {
-        "dropped_records": 2,
-        "rules": [
-            {
-                "rule": "entrez_id_not_in_ncbi_gff",
-                "rows": [{"source_row": 2, "n1_entrez": 2, "n2_entrez": 9}],
-            },
-            {"rule": "gene_name_disagrees_with_entrez_id", "rows": []},
-            {
-                "rule": "same_gene_on_both_sides",
-                "rows": [{"source_row": 1, "n1_entrez": 1, "n2_entrez": 1}],
-            },
-        ],
-    }
-
-
-ENTREZ = {1: "YAL001C", 2: "YBR085W", 3: "YJR155W"}
-
-
-def test_released_synlethdb_pairs_skip_ledgered_rows_and_resolve_by_entrez(
-    tmp_path: Path,
-) -> None:
-    from torchcell.verification.synthetic_lethality import pair_row_key
-
-    path = _write_synlethdb(tmp_path)
-    rows, n_rows = runners.released_synlethdb_pairs(str(path), _ledger(), ENTREZ)
-    assert n_rows == 4
-    assert rows == {
-        pair_row_key("YAL001C", "YBR085W", 0.9, "11"): 1,
-        pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
-    }
-
-
-def test_released_synlethdb_pairs_read_no_score_where_the_source_defines_none(
-    tmp_path: Path,
-) -> None:
-    """#903: with ``keep_scores`` False a released score reads None, as the store holds
-    it (a typed gap) for a file whose score no source defines.
-    """
-    from torchcell.verification.synthetic_lethality import pair_row_key
-
-    path = _write_synlethdb(tmp_path)
-    rows, n_rows = runners.released_synlethdb_pairs(
-        str(path), _ledger(), ENTREZ, keep_scores=False
-    )
-    assert n_rows == 4
-    assert rows == {
-        pair_row_key("YAL001C", "YBR085W", None, "11"): 1,
-        pair_row_key("YBR085W", "YJR155W", None, "14"): 1,
-    }
-
-
-def test_drop_ledger_checks_each_rule_on_the_released_row(tmp_path: Path) -> None:
-    path = _write_synlethdb(tmp_path)
-    ok = runners.drop_ledger_result(str(path), _ledger(), ENTREZ)
-    assert ok.passed is True
-    assert (
-        ok.message == "each of the 2 ledgered drops meets its rule on the released row"
-    )
-    wrong = _ledger()
-    wrong["rules"][0]["rows"] = [{"source_row": 0, "n1_entrez": 1, "n2_entrez": 2}]
-    wrong["rules"][2]["rows"] = [{"source_row": 3, "n1_entrez": 3, "n2_entrez": 2}]
-    wrong["rules"][1]["rows"] = [{"source_row": 2, "n1_entrez": 5, "n2_entrez": 9}]
-    bad = runners.drop_ledger_result(str(path), wrong, ENTREZ)
-    assert bad.passed is False
-    assert bad.details["wrong"] == [
-        "row 0: both ids are in the GFF",
-        "row 2: ledger ids (2, 9) differ",
-        "row 3: two different genes",
-    ]
-    by_count = _ledger()
-    by_count["rules"][1]["rows"] = [{"source_row": 3, "n1_entrez": 3, "n2_entrez": 2}]
-    by_count["dropped_records"] = 3
-    counted = runners.drop_ledger_result(str(path), by_count, ENTREZ)
-    assert counted.passed is True
-    assert counted.details["n_checked_by_count_only"] == 1
-
-
-def test_run_synthetic_pairs_wires_release_ledger_and_quotes(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    from torchcell.datamodels.schema import (
-        SgaKanMxDeletionPerturbation,
-        SyntheticLethalityExperiment,
-        SyntheticLethalityExperimentReference,
-        SyntheticLethalityPhenotype,
-    )
-    from torchcell.verification.released import ReleasedFile
-    from torchcell.verification.sourced import SourcedValue
-    from torchcell.verification.synthetic_lethality import SYNTHETIC_LETHALITY
-
-    def record(genes: tuple[str, str], score: float | None, pubmed: str) -> Record:
-        env = Environment(media=SC, temperature=Temperature(value=30))
-        genotype = Genotype(
-            perturbations=[
-                SgaKanMxDeletionPerturbation(
-                    systematic_gene_name=g, perturbed_gene_name=g, strain_id="S288C"
-                )
-                for g in genes
-            ]
-        )
-        experiment = SyntheticLethalityExperiment(
-            dataset_name="test",
-            genotype=genotype,
-            environment=env,
-            phenotype=SyntheticLethalityPhenotype(
-                synthetic_lethality_statistic_score=score
-            ),
-        )
-        reference = SyntheticLethalityExperimentReference(
-            dataset_name="test",
-            genome_reference=_reference_genome(),
-            environment_reference=env.model_copy(),
-            phenotype_reference=SyntheticLethalityPhenotype(is_synthetic_lethal=False),
-        )
-        return {
-            "experiment": experiment.model_dump(),
-            "reference": reference.model_dump(),
-            "publication": {"pubmed_id": pubmed},
-        }
-
-    abs_root = _root(tmp_path, "sl")
-    _write_lmdb(
-        abs_root,
-        [
-            record(("YAL001C", "YBR085W"), 0.9, "11"),
-            record(("YJR155W", "YBR085W"), None, "14"),
-        ],
-    )
-    (abs_root / "raw").mkdir()
-    path = _write_synlethdb(abs_root / "raw")
-    (abs_root / "preprocess").mkdir()
-    (abs_root / "preprocess" / "dropped_records.json").write_text(json.dumps(_ledger()))
-    monkeypatch.setattr(
-        "torchcell.datasets.scerevisiae.synth_leth_db.load_entrez_to_orf",
-        lambda gff: ENTREZ,
-    )
-    _stub_sgd(monkeypatch, set(GENES))
-    _stub_genome(monkeypatch)
-    audits: list[str] = []
-
-    def fake_audit(quote: SourcedValue, root: str) -> LevelResult:
-        audits.append(quote.quote)
-        return LevelResult(
-            level=Level.L3, name="provenance_audit", passed=True, message="m"
-        )
-
-    monkeypatch.setattr(runners, "audit_sourced_value", fake_audit)
-    stated = SourcedValue(
-        value=4,
-        provenance=Provenance(source_uri="paper.md", citation_key="k", sha256="s"),
-        quote="4 of yeast",
-    )
-    spec = {
-        "root": "data/torchcell/sl",
-        "expected_count": 2,
-        "kind": SYNTHETIC_LETHALITY,
-        "released_file": ReleasedFile(name="Yeast_SL.csv", sha256=_sha256(path)),
-        "score_definition": "normalized confidence",
-        "stated_count": stated,
-        "quotes": [],
-        "provenance": PROV,
-    }
-    monkeypatch.setattr(runners, "SYNTHETIC_PAIR_DATASETS", {"sl": spec})
-    assert runners.run_synthetic_pairs(str(tmp_path)) is True
-    report = _read_report(abs_root)
-    assert audits == ["4 of yeast"]
-    assert _result(report, "release_accounting")["message"] == (
-        "4 released rows = 2 stored + 2 ledgered drops; the release paper states 4"
-    )
-    assert _result(report, "drop_ledger")["passed"] is True
-
-    monkeypatch.setitem(
-        spec, "released_file", ReleasedFile(name="Yeast_SL.csv", sha256="0" * 64)
-    )
-    assert runners.run_synthetic_pairs(str(tmp_path)) is False
-    drifted = _read_report(abs_root)
-    assert "drop_ledger" not in _names(drifted)
-    assert _result(drifted, "released_rows")["passed"] is False
 
 
 def test_run_fitness_streams_a_spec_marked_stream(

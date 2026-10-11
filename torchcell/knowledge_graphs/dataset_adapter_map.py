@@ -72,7 +72,6 @@ from torchcell.adapters import (
     GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
-    GeneEssentialitySgdAdapter,
     GeneInteractionBabu2014Adapter,
     GeneInteractionButland2008Adapter,
     GenomeArchitecturePuddu2019Adapter,
@@ -160,8 +159,6 @@ from torchcell.adapters import (
     Smith2006Adapter,
     Smith2016Adapter,
     SmMicroarraySameith2015Adapter,
-    SynthLethalityYeastSynthLethDbAdapter,
-    SynthRescueYeastSynthLethDbAdapter,
     TargetedMetabolomeRapp2026Adapter,
     TfDeletionPseudobulkJackson2020Adapter,
     TmfKuzmin2018Adapter,
@@ -401,13 +398,8 @@ from torchcell.datasets.scerevisiae.sameith2015 import (
     DmMicroarraySameith2015Dataset,
     SmMicroarraySameith2015Dataset,
 )
-from torchcell.datasets.scerevisiae.sgd import GeneEssentialitySgdDataset
 from torchcell.datasets.scerevisiae.smith2006 import FattyAcidSmith2006Dataset
 from torchcell.datasets.scerevisiae.smith2016 import CrispriChemgenSmith2016Dataset
-from torchcell.datasets.scerevisiae.synth_leth_db import (
-    SynthLethalityYeastSynthLethDbDataset,
-    SynthRescueYeastSynthLethDbDataset,
-)
 from torchcell.datasets.scerevisiae.vanacloig2022 import EnvChemgenVanacloig2022Dataset
 from torchcell.datasets.scerevisiae.wildenhain2015 import (
     EnvChemgenWildenhain2015Dataset,
@@ -438,9 +430,6 @@ dataset_adapter_map: dict[type, type] = {
     TmfKuzmin2020Dataset: TmfKuzmin2020Adapter,
     DmiKuzmin2020Dataset: DmiKuzmin2020Adapter,
     TmiKuzmin2020Dataset: TmiKuzmin2020Adapter,
-    GeneEssentialitySgdDataset: GeneEssentialitySgdAdapter,
-    SynthLethalityYeastSynthLethDbDataset: SynthLethalityYeastSynthLethDbAdapter,
-    SynthRescueYeastSynthLethDbDataset: SynthRescueYeastSynthLethDbAdapter,
     ScmdOhya2005Dataset: ScmdOhya2005Adapter,
     MicroarrayKemmeren2014Dataset: MicroarrayKemmeren2014Adapter,
     MicroarrayScoreHu2007Dataset: MicroarrayScoreHu2007Adapter,

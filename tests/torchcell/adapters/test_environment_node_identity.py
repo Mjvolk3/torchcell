@@ -27,11 +27,7 @@ from torchcell.datamodels.identity import (
     temperature_identity,
 )
 from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import (
-    ProvenanceGap,
-    ProvenanceGapReason,
-    SourcedValue,
-)
+from torchcell.verification.sourced import SourcedValue
 
 _SHA = "0" * 64
 _NACL_KEY = "FAPWRFPIFSIZLT-UHFFFAOYSA-M"
@@ -113,10 +109,8 @@ def test_the_node_ids_are_the_identity_projections_not_the_dumps() -> None:
     record = _record(environment)
     adapter = _adapter()
 
-    (media_node,) = _undecorated(CellAdapter._media_node)(adapter, record, "media")
-    assert media_node.get_id() == identity_sha256(
-        media_identity(cast(s.Media, environment.media))
-    )
+    media_node = _undecorated(CellAdapter._media_node)(adapter, record, "media")
+    assert media_node.get_id() == identity_sha256(media_identity(environment.media))
 
     (temperature_node,) = _undecorated(CellAdapter._temperature_node)(
         adapter, record, "temperature"
@@ -148,8 +142,7 @@ def test_every_environment_edge_agrees_with_the_node_it_points_at() -> None:
     environment_id = _undecorated(CellAdapter._environment_node)(
         adapter, record, "environment"
     ).get_id()
-    (media_node,) = _undecorated(CellAdapter._media_node)(adapter, record, "media")
-    media_id = media_node.get_id()
+    media_id = _undecorated(CellAdapter._media_node)(adapter, record, "media").get_id()
     (temperature_node,) = _undecorated(CellAdapter._temperature_node)(
         adapter, record, "temperature"
     )
@@ -157,7 +150,7 @@ def test_every_environment_edge_agrees_with_the_node_it_points_at() -> None:
         adapter, record, "environment perturbation"
     )
 
-    (media_edge,) = _undecorated(CellAdapter._media_to_environment_edge)(
+    media_edge = _undecorated(CellAdapter._media_to_environment_edge)(
         adapter, record, "media to environment"
     )
     assert media_edge.get_source_id() == media_id
@@ -190,8 +183,8 @@ def test_two_datasets_stating_one_medium_reach_one_media_node() -> None:
     bloom = _record(
         s.Environment(media=_media("YPD plates", "bloom2019", "2% glucose plates"))
     )
-    (mota_node,) = _undecorated(CellAdapter._media_node)(adapter, mota, "media")
-    (bloom_node,) = _undecorated(CellAdapter._media_node)(adapter, bloom, "media")
+    mota_node = _undecorated(CellAdapter._media_node)(adapter, mota, "media")
+    bloom_node = _undecorated(CellAdapter._media_node)(adapter, bloom, "media")
     assert mota_node.get_id() == bloom_node.get_id()
     # the node still carries the stating dataset's own full dump and label
     assert mota_node.get_properties()["name"] != bloom_node.get_properties()["name"]
@@ -211,70 +204,6 @@ def test_a_gapped_temperature_is_a_different_environment_node() -> None:
     )
     assert measured.get_id() != gapped.get_id()
     assert gapped.get_properties()["temperature"] is None
-
-
-# --- A gapped medium (#901, #902, #903) -------------------------------------- #
-_MEDIUM_GAP = ProvenanceGap(
-    field="media",
-    reason=ProvenanceGapReason.not_carried_by_curation,
-    note="the curation states no growth medium",
-)
-
-
-def _gapped_medium_environment() -> s.Environment:
-    return s.Environment(media=None, provenance_gaps=[_MEDIUM_GAP])
-
-
-def test_a_gapped_medium_emits_no_media_node_and_no_media_edge() -> None:
-    """The temperature-gap rule applied to the medium: nothing to point at, no edge.
-
-    The environment node is still written, with ``media`` None, and its id is the
-    identity projection (``media`` None), so it never merges with a stated medium.
-    """
-    adapter = _adapter()
-    record = _record(_gapped_medium_environment())
-    assert _undecorated(CellAdapter._media_node)(adapter, record, "media") == []
-    assert (
-        _undecorated(CellAdapter._media_to_environment_edge)(
-            adapter, record, "media to environment"
-        )
-        == []
-    )
-    node = _undecorated(CellAdapter._environment_node)(adapter, record, "environment")
-    assert node.get_properties()["media"] is None
-    assert node.get_id() == identity_sha256(
-        environment_identity(_gapped_medium_environment())
-    )
-    stated = _undecorated(CellAdapter._environment_node)(
-        adapter,
-        _record(
-            s.Environment(media=_media("YPD plates", "mota2024", "20 g/L glucose"))
-        ),
-        "environment",
-    )
-    assert stated.get_id() != node.get_id()
-
-
-def test_reference_nodes_skip_a_gapped_medium_and_keep_a_stated_one() -> None:
-    """Reference environments: a gapped medium adds no media node; the rest dedupe."""
-    adapter = _adapter()
-    stated = s.Environment(media=_media("YPD plates", "mota2024", "20 g/L glucose"))
-
-    class _TwoReferences:
-        experiment_reference_index = [
-            _FakeReferenceIndexEntry(_gapped_medium_environment()),
-            _FakeReferenceIndexEntry(stated),
-            _FakeReferenceIndexEntry(stated),
-        ]
-
-    adapter.dataset = cast(Any, _TwoReferences())
-    (node,) = adapter._get_media_reference_nodes()
-    assert node.get_id() == identity_sha256(media_identity(cast(s.Media, stated.media)))
-    environment_nodes = adapter._get_environment_reference_nodes()
-    assert [n.get_properties()["media"] for n in environment_nodes] == [
-        None,
-        CellAdapter._media_property(stated.media),
-    ]
 
 
 def test_a_dose_change_is_a_different_environment_and_perturbation_node() -> None:

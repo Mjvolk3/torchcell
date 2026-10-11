@@ -232,8 +232,7 @@ def test_every_experiment_family_uses_the_shared_environment_class(kind: str) ->
         reference.model_fields["environment_reference"].annotation,
     ):
         assert annotation in allowed_environments
-        # #901/#902/#903: the shared Media, nullable only beside a typed medium gap
-        assert annotation.model_fields["media"].annotation == s.Media | None
+        assert annotation.model_fields["media"].annotation is s.Media
     assert reference.model_fields["genome_reference"].annotation in allowed_genomes
     assert (
         experiment.model_fields["environment"].annotation

@@ -58,7 +58,6 @@ adapters:
 
 datasets:
   - MetaboliteZelezniak2018Dataset # 95 records
-  - GeneEssentialitySgdDataset # 1,329
   - SmfKuzmin2018Dataset # 1,539
   - AminoAcidCooper2010Dataset # 4,313
   - FattyAcidSmith2006Dataset # 12,747

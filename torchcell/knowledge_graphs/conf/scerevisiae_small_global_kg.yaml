@@ -64,16 +64,3 @@ datasets:
   TmiKuzmin2020Dataset:
     path: data/torchcell/tmi_kuzmin2020
     kwargs: null
-
-  # Synth Leth
-  SynthLethalityYeastSynthLethDbDataset:
-    path: data/torchcell/synth_lethality_yeast_synth_leth_db
-    kwargs: null
-  SynthRescueYeastSynthLethDbDataset:
-    path: data/torchcell/synth_rescue_yeast_synth_leth_db
-    kwargs: null
-
-  # Gene Essentiality
-  GeneEssentialitySgdDataset:
-    path: data/torchcell/gene_essentiality_sgd
-    kwargs: null

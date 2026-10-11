@@ -726,3 +726,92 @@ is in-sample: it climbs to 0.88 while the held-out score falls. Every round-3 ar
 now uses `fit_on: train`, which holds the four validation compounds out, with `select: val`.
 The cost is four fitted compounds of 24. The `vanhop_e50` bridge arm keeps round 1's
 pool-and-last protocol so the two rounds still join, and it is the only arm that does.
+
+## 2026.10.11 - Round 3, wave 2: the cells that need no reading, submitted while wave 1 queues
+
+### Why a second wave before the first has run
+
+Round 3's 32 jobs went to Delta on `bfjt-delta-gpu` the same morning, and on that
+partition a job waits days before it starts. The screen will not be readable for most of a
+week, so the budget question is what can be queued now without waiting for it. The answer
+is every cell of the round-3 design that the paper needs whichever way the screen falls,
+plus the one axis the 038 note called the scaling-law hook. `scripts/r3_sweep.py --wave 2`
+writes them ([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_sweep]]): 26 jobs, 60
+configs, 161 estimated A40 hours, 312 requested, against the 14,431 hours the account
+holds (wave 1 asks 384).
+
+| block | arms | jobs |
+|---|---|---|
+| the ensemble on the source-set arms: seeds 1 and 2 on folds 0 to 2, three seeds on folds 3 and 4 | `van_e150`, `vanhop_e150`, `vanhophet_e150` | 11 |
+| the three-source arm on the other two partitions | `vanhophet_e150_fs1`, `_fs2` | 2 |
+| the host head under the held-out protocol | `van_e150_anchors`, `_ft`, `_ftenv`, `_lh0p1`, `vanhophet_e150_ftenv` | 5 |
+| the dose FiLM twins wave 1 left out | `van_e150_film`, `vanhophet_e150_film` | 2 |
+| the compound-count learning curve, with and without the public sources | `{van, vanhop, vanhophet}_e150_n{5, 10}` | 6 |
+
+Three of the blocks are the same question as round 1 asked, re-posed under a protocol
+that selects on a held-out signal. Round 1's host-head ranking (two-stage fine-tune of
+head plus encoder best on growth AUROC at 0.582, anchors-only worst at 0.295) and its dose
+ablation (FiLM off better on every wet-lab readout) were both read off models trained
+under pool-and-last at 50 epochs, which the first 150-epoch run showed reports an in-sample
+validation curve. Neither reading has been measured on a model selected on a held-out
+signal, and the wet-lab readouts of those arms are the panel.
+
+**The learning curve is the one block that adds a question.** Round 17 of 038 measured
+the single-source curve at 8, 16 and 24 fitted compounds of 24 and found 0.0675 per
+doubling; this wave measures 5, 10 and the fold's full train of 18 or 19 (the `e150`
+arms) under the held-out protocol, and crosses it with the two- and three-source sets. Whether
+an auxiliary source shifts the curve, rather than the single point at full data, is the
+data-combining question in its data-efficiency form: hypothesis (untested), the public
+screens are worth more at 5 fitted compounds than at 18.
+
+### One trainer change, smoked before the wave was written
+
+`n_fit_compounds` under `fit_on: train` now subsamples the fold's train compounds, so the
+validation compounds stay held out at every point of the curve and the centering set is
+the fitted compounds plus validation rather than train plus validation
+([[experiments.040-inhibitor-synergy-wetlab.scripts.train_mixture]]). The index logic
+is tested directly on all five folds (subsample inside train, disjoint from validation and
+test, deterministic, centering set equal to subsample plus validation, unchanged behavior
+with no subsample). The trainer cannot be smoked on the CPU: without flash attention the
+cell-graph attention materializes the gene-by-gene matrix, and a gene batch of 32 reached
+71 GB resident on the login node before it was killed, while gene batch 2 under a 48 GB
+virtual cap failed a 1.5 GB allocation. The four-step GPU smoke
+(`conf/mixture/r3w2_smoke.yaml`) is queued on GilaHyper, and the two learning-curve
+prescreens depend on it.
+
+The `_s12` seed configs (`mix_van_e150_s12_f0`, seeds 1 and 2) keep their own results
+directory and W&B run, and `wandb_view.arm_of` strips the suffix so they group under the
+arm with wave 1's seed-0 fold. The 111 `r3_*_p*.yaml` files of an earlier five-fold
+packing that `r3_plan.csv` never referenced were removed; the plan table is the record of
+what was submitted.
+
+### Where the machines stand at submission
+
+**Delta.** The pasted queue at 04:26 showed round 1's three-source arm (22788120) in its
+eighth hour on fold 4 and the eight 031 jobs pending, and predates the round-3 submission,
+so the 32 wave-1 jobs are not confirmed from here. Wave 2 goes to the same account; its
+learning-curve arms run the new code path, so the tree is re-rsynced first (anchored
+excludes, no delete flags), then
+
+```bash
+cd /scratch/bbub/mjvolk3/torchcell-040
+bash experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3w2_submit_delta.sh
+```
+
+**GilaHyper.** Four cards busy: the round-3 prescreens `vanhophet_e150` (3895) and
+`vanhop_e150_film_dose` (3896) at epochs 10 to 20 on the new protocol (W&B config
+confirms `fit_on: train`, `select: val`), the round-2 `ftenv` fold-seed replication
+(3824, half done), and the metabolic session's 031 pack (3822). Pending behind them are
+the other four prescreens, `van_e150_gene` (3897), `vanhophet_e150_attr` (3898), and
+`van_e150` and `vanhop_e150` (3900, 3901), the last two resubmitted at 04:23 so they pick
+up the protocol fix that 3893 and 3894 had started without. The first 150-epoch runs
+(erueq4ns, kwbjxl73) were cancelled for the same reason and are the crashed runs on W&B.
+Queued behind those are the wave-2 GPU smoke (3903) and seven single-source wave-2
+prescreens: the host-head arms `ft`, `ftenv`, `anchors` and `lh0p1` (3904 to 3907), the
+dose arm `film` (3908), and the learning-curve arms `n5` and `n10` (3909, 3910, which
+start only after the smoke passes). That keeps the three cards full through the day; the
+ensemble and three-source blocks are Delta's.
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/1ccu2v9b
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/2lacgu27

@@ -317,3 +317,30 @@ new row is populated and carries its call and its call's reference):
 The ex21 and Vanacloig rows are unchanged and read `call` = `both`. The printed summary and
 the W&B summary keys now group by call as well, so a key is
 `ex23/combinations/growth_auroc/served`.
+
+## 2026.10.11 - The learning curve under the held-out protocol
+
+`n_fit_compounds` now works under `fit_on: train` as well as `fit_on: pool`. Under
+`pool` it is 038's `subsample_pool`: the first `n` of a fixed shuffle of the fold's train
+and validation compounds together, which is how 038 round 17 measured the curve at 8, 16
+and 24 of 24. Under `train` it is `subsample_train`: the first `n` of a fixed shuffle of
+the fold's TRAIN compounds only (seeded by the fold seed, the fold and a salt of 19), so
+the four validation compounds stay held out at every point of the curve and `select: val`
+reads the same held-out signal every other round-3 arm selects on. The curve's points
+therefore differ only in how many compounds were fitted: 5, 10 and the fold's full train
+of 18 or 19 (28 compounds less 5 or 6 test and 4 validation).
+
+`centering_compounds` under `fit_on: train` is now the fitted compounds plus the
+validation compounds rather than train plus validation. With no subsample the two are the
+same set; with one, a compound the model never fitted no longer enters the predicted mean
+that centers the held-out score. Round 3's second wave
+([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_sweep]]) is the first user, in the
+`*_n5` and `*_n10` arms. Verified before the wave was written by calling the two
+functions on all five fold-seed-0 folds: the subsample has `n` members, all inside the
+fold's train and none in its validation or test, is the same on a second call and differs
+under another fold seed, the centering set is the subsample plus validation, and with no
+`n` both functions return what they returned before. A CPU run of the trainer is not
+possible at any useful size: without flash attention the attention materializes the
+gene-by-gene matrix and a gene batch of 32 reached 71 GB resident on the login node. The
+end-to-end check is the four-step GPU smoke `conf/mixture/r3w2_smoke.yaml`, queued on
+GilaHyper ahead of the learning-curve prescreens, which depend on it.

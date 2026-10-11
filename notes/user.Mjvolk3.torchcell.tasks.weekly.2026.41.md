@@ -36,3 +36,7 @@ created: 1791256185172
 ## 2026.10.10
 
 - [x] `docs/expansion-100-full-ranking` worktree: the yeast expansion document prints the whole ranking to 200 again as a closing section, all 167 candidate rows with links and a sources table (citation, link, reason, data location) for every row rather than the sixty; published to Zotero as version 15 [[experiments.database.expansion-100]]
+
+## 2026.10.11
+
+- [x] `exp/040-inhibitor-synergy-wetlab` worktree: round 3's second wave for Delta, written by `r3_sweep.py --wave 2` while wave 1 queues: 26 single-GPU jobs holding the cells that need no reading from the screen (the seed ensemble and last two folds of the three source-set arms, the three-source arm on fold seeds 1 and 2, the host-head and dose arms under the held-out protocol, and a compound-count learning curve with and without the public sources). One trainer change for the curve, `n_fit_compounds` under `fit_on: train`, tested on all five folds; the CPU smoke is impossible at any useful size (71 GB resident at gene batch 32), so the end-to-end check is GPU smoke 3903 on GilaHyper with the two learning-curve prescreens (3909, 3910) dependent on it, and five more single-source prescreens (3904 to 3908) behind the four pending wave-1 prescreens. The 111 stale `r3_*_p*.yaml` files of an earlier packing removed [[experiments.040-inhibitor-synergy-wetlab.scripts.r3_sweep]] [[experiments.040-inhibitor-synergy-wetlab.scripts.train_mixture]] [[experiments.040-inhibitor-synergy-wetlab]]

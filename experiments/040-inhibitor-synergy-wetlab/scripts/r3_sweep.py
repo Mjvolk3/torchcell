@@ -20,6 +20,16 @@ process, holding the folds of one arm, and no job is estimated past ``LIMIT_HOUR
 
 Writes ``r3_<arm>.yaml`` per arm, ``r3_submit_delta.sh`` (the sbatch lines, one per job),
 and ``results/r3_plan.csv`` (one row per job with its arm, folds and cost estimate).
+
+``--wave 2`` writes the SECOND WAVE (``r3w2_*``), submitted while the first is still
+queued: the cells of the first wave's design that are worth running whatever the first
+wave says. The seed ensemble and the last two folds of the three source-set arms (the
+paper's data-combining comparison needs five folds and three seeds whichever way it
+falls), the three-source arm on the other two partitions, the host-head arms under the
+held-out protocol (round 1 scored them under pool-and-last), the dose FiLM twins the
+first wave left out, and a compound-count learning curve with and without the public
+sources. Nothing in it waits on a first-wave reading; what does wait (the ensemble on
+the source encodings, weights, capacities and gene-cold arms) is round 4.
 """
 
 from __future__ import annotations
@@ -27,6 +37,7 @@ from __future__ import annotations
 import argparse
 import os
 import os.path as osp
+from typing import cast
 
 import pandas as pd
 import yaml
@@ -103,12 +114,18 @@ def arm(
     fold_seed: int = 0,
     split: str = "compound",
     aux_holdout: str | None = None,
+    folds: list[int] | None = None,
+    name_suffix: str = "",
     **overrides: object,
 ) -> dict[str, object]:
     """One arm: its source set, its length, and whatever it changes from ``BASE``.
 
     An arm with an auxiliary source holds out part of it by default (by compound), so the
     source has a held-out score; an arm whose question is the dose holds out doses.
+    ``folds`` defaults to the screening folds; ``name_suffix`` goes between the arm and
+    the fold in the config name (``mix_<arm><suffix>_f<fold>``), which is how the second
+    wave's seed configs stay distinct from the first wave's while ``wandb_view.arm_of``
+    still folds them into the same arm.
     """
     names = SOURCES[sources]
     if aux_holdout is None:
@@ -121,6 +138,8 @@ def arm(
         "fold_seed": fold_seed,
         "split": split,
         "aux_holdout": aux_holdout,
+        "folds": list(SCREEN_FOLDS) if folds is None else list(folds),
+        "name_suffix": name_suffix,
         "overrides": overrides,
     }
 
@@ -202,13 +221,89 @@ def arms() -> list[dict[str, object]]:
     return out
 
 
+def wave2_arms() -> list[dict[str, object]]:
+    """The second wave: the first wave's design completed where no reading is needed."""
+    out: list[dict[str, object]] = []
+    headline = ("van", "vanhop", "vanhophet")
+
+    # 1. The ensemble on the source-set arms. The first wave runs folds 0 to 2 with one
+    #    seed; the paper's comparison needs five folds and three seeds, so this adds
+    #    seeds 1 and 2 on the screened folds and all three seeds on the two others. The
+    #    config name carries ``_s12`` for the seed-only configs so neither the results
+    #    directory nor the W&B run collides with the first wave's.
+    for sources in headline:
+        out.append(
+            arm(
+                f"{sources}_e150",
+                sources,
+                150,
+                folds=[0, 1, 2],
+                name_suffix="_s12",
+                seeds=[1, 2],
+            )
+        )
+        out.append(arm(f"{sources}_e150", sources, 150, folds=[3, 4], seeds=[0, 1, 2]))
+
+    # 2. The three-source arm on the other two partitions (the first wave repeats only
+    #    the one- and two-source arms there).
+    for fold_seed in (1, 2):
+        out.append(
+            arm(f"vanhophet_e150_fs{fold_seed}", "vanhophet", 150, fold_seed=fold_seed)
+        )
+
+    # 3. The host head under the held-out protocol. Round 1 scored anchors-only, the
+    #    two-stage fine-tunes and the host weight under pool-and-last at 50 epochs; the
+    #    wet-lab readouts of those arms are the panel, and they have not been measured on
+    #    a model selected on a held-out signal.
+    out.append(arm("van_e150_anchors", "van", 150, host_train="anchors"))
+    out.append(arm("van_e150_ft", "van", 150, host_train="finetune_ex21"))
+    out.append(
+        arm(
+            "van_e150_ftenv",
+            "van",
+            150,
+            host_train="finetune_ex21",
+            finetune_scope="host_head+env_encoder",
+        )
+    )
+    out.append(arm("van_e150_lh0p1", "van", 150, lambda_host=0.1))
+    out.append(
+        arm(
+            "vanhophet_e150_ftenv",
+            "vanhophet",
+            150,
+            host_train="finetune_ex21",
+            finetune_scope="host_head+env_encoder",
+        )
+    )
+
+    # 4. The dose FiLM twins the first wave left out: the single-source arm with the
+    #    dose channel on (round 1's dose ablation, now under the held-out protocol), and
+    #    the three-source compound hold-out twin of ``vanhophet_e150_film_dose``.
+    out.append(arm("van_e150_film", "van", 150, dose="film"))
+    out.append(arm("vanhophet_e150_film", "vanhophet", 150, dose="film"))
+
+    # 5. The compound-count learning curve, with and without the public sources. Under
+    #    ``fit_on: train`` a fold fits its 18 or 19 train compounds; 5 and 10 are the
+    #    points below that and the ``e150`` arm is the full-train point. 038 round 17 measured the curve
+    #    single-source under pool-and-last (8, 16, 24 of 24); this is the same axis under
+    #    the held-out protocol, and whether an auxiliary source shifts it is the
+    #    data-combining question in its data-efficiency form.
+    for sources in headline:
+        for n_fit in (5, 10):
+            out.append(
+                arm(f"{sources}_e150_n{n_fit}", sources, 150, n_fit_compounds=n_fit)
+            )
+    return out
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
     for fold in folds:
         config = dict(BASE)
         config |= {
-            "name": f"mix_{spec['arm']}_f{fold}",
+            "name": f"mix_{spec['arm']}{spec['name_suffix']}_f{fold}",
             "sources": spec["sources"],
             "epochs": spec["epochs"],
             "fold_seed": spec["fold_seed"],
@@ -221,13 +316,19 @@ def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]
     return out
 
 
+def spec_seeds(spec: dict[str, object]) -> list[int]:
+    """The seeds a spec's configs run: its override, else the round's one seed."""
+    overrides = cast(dict[str, object], spec["overrides"])
+    return cast(list[int], overrides.get("seeds", BASE["seeds"]))
+
+
 def hours(spec: dict[str, object], n_folds: int) -> float:
     """Estimated single-A40 hours for ``n_folds`` folds of ``spec``."""
     per = (
         HOURS_PER_CONFIG_50[len(spec["sources"])]
         * int(spec["epochs"])
         / 50
-        * SEEDS_PER_FOLD
+        * len(spec_seeds(spec))
         / 3
     )
     if spec["overrides"].get("cond_batch") == 96:  # type: ignore[union-attr]
@@ -243,10 +344,10 @@ def hours(spec: dict[str, object], n_folds: int) -> float:
 
 
 def pack(spec: dict[str, object]) -> list[list[int]]:
-    """The arm's five folds split into jobs that each stay near ``TARGET_HOURS``."""
+    """The arm's folds split into jobs that each stay near ``TARGET_HOURS``."""
     per_fold = hours(spec, 1)
     per_job = max(1, int(TARGET_HOURS // per_fold))
-    folds = list(SCREEN_FOLDS)
+    folds = cast(list[int], spec["folds"])
     return [folds[i : i + per_job] for i in range(0, len(folds), per_job)]
 
 
@@ -254,24 +355,35 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--out-dir", default=osp.join(EXPERIMENT, "conf", "mixture"))
     parser.add_argument("--account", default="bfjt-delta-gpu")
+    parser.add_argument(
+        "--wave",
+        type=int,
+        default=1,
+        choices=(1, 2),
+        help="1 writes the r3_* screen, 2 the r3w2_* second wave (see the module doc)",
+    )
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
+    prefix = "r3" if args.wave == 1 else "r3w2"
+    specs = arms() if args.wave == 1 else wave2_arms()
 
     rows, lines = [], []
-    for spec in arms():
+    for spec in specs:
         groups = pack(spec)
         for k, folds in enumerate(groups):
             suffix = "" if len(groups) == 1 else f"_p{k}"
-            sweep = f"r3_{spec['arm']}{suffix}"
+            sweep = f"{prefix}_{spec['arm']}{spec['name_suffix']}{suffix}"
             path = osp.join(args.out_dir, f"{sweep}.yaml")
             estimate = hours(spec, len(folds))
             limit = LIMIT_HOURS
+            seeds = spec_seeds(spec)
             header = (
                 f"# experiments/040-inhibitor-synergy-wetlab/conf/mixture/{sweep}.yaml\n"
                 f"#\n"
-                f"# ROUND 3, ARM {spec['arm']}, folds {folds} of fold seed"
-                f" {spec['fold_seed']}, written by scripts/r3_sweep.py.\n"
+                f"# ROUND 3 WAVE {args.wave}, ARM {spec['arm']}, folds {folds} of fold seed"
+                f" {spec['fold_seed']}, seeds {seeds}, written by scripts/r3_sweep.py"
+                f"{' --wave 2' if args.wave == 2 else ''}.\n"
                 f"# Sources: {', '.join(spec['sources'])}."
                 f" Split: {spec['split']}. Auxiliary hold-out: {spec['aux_holdout']}."
                 f" Epochs: {spec['epochs']}.\n"
@@ -317,21 +429,34 @@ def main() -> None:
             )
 
     plan = pd.DataFrame(rows)
-    plan.to_csv(osp.join(RESULTS, "r3_plan.csv"), index=False)
-    script = osp.join(args.out_dir, "r3_submit_delta.sh")
+    plan_path = osp.join(RESULTS, f"{prefix}_plan.csv")
+    plan.to_csv(plan_path, index=False)
+    script = osp.join(args.out_dir, f"{prefix}_submit_delta.sh")
+    wave_note = (
+        ""
+        if args.wave == 1
+        else (
+            "# THE SECOND WAVE. The learning-curve arms (r3w2_*_n5, _n10) run a code path\n"
+            "# added after the first wave was rsynced (n_fit_compounds under fit_on: train),\n"
+            "# so re-rsync the tree before this script: anchored excludes, NO delete flags.\n"
+            "#\n"
+        )
+    )
     with open(script, "w") as f:
         f.write(
             "#!/bin/bash\n"
-            "# experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3_submit_delta.sh\n"
+            f"# experiments/040-inhibitor-synergy-wetlab/conf/mixture/{prefix}_submit_delta.sh\n"
             "#\n"
-            "# ROUND 3 SUBMISSION, written by scripts/r3_sweep.py. One GPU and one\n"
+            f"# ROUND 3 WAVE {args.wave} SUBMISSION, written by scripts/r3_sweep.py"
+            f"{' --wave 2' if args.wave == 2 else ''}. One GPU and one\n"
             "# process per job, no dependencies and no -preempt partition, so every job\n"
             "# is eligible the moment it is submitted.\n"
             "#\n"
+            f"{wave_note}"
             "#   ssh delta\n"
             "#   cd /scratch/bbub/mjvolk3/torchcell-040\n"
             "#   mkdir -p experiments/040-inhibitor-synergy-wetlab/slurm/output\n"
-            "#   bash experiments/040-inhibitor-synergy-wetlab/conf/mixture/r3_submit_delta.sh\n"
+            f"#   bash experiments/040-inhibitor-synergy-wetlab/conf/mixture/{prefix}_submit_delta.sh\n"
             "#\n"
             "# An account at its limit: rerun with ACCOUNT=<other>-delta-gpu, which sets\n"
             "# the matching QOS as well (an account change alone leaves the old QOS and\n"
@@ -357,7 +482,7 @@ def main() -> None:
         f"{plan['time_limit_hours'].sum()} hours requested"
     )
     print(f"wrote {script}")
-    print(f"wrote {osp.join(RESULTS, 'r3_plan.csv')}")
+    print(f"wrote {plan_path}")
 
 
 if __name__ == "__main__":

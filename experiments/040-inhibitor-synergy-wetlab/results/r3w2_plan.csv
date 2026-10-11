@@ -1,0 +1,27 @@
+job,sweep,arm,sources,n_sources,epochs,split,aux_holdout,fold_seed,folds,configs,estimated_hours,time_limit_hours,overrides
+1,r3w2_van_e150_s12,van_e150,vanacloig,1,150,compound,none,0,0 1 2,3,6.6,12,"seeds=[1, 2]"
+2,r3w2_van_e150,van_e150,vanacloig,1,150,compound,none,0,3 4,2,6.6,12,"seeds=[0, 1, 2]"
+3,r3w2_vanhop_e150_s12_p0,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1,2,8.4,12,"seeds=[1, 2]"
+4,r3w2_vanhop_e150_s12_p1,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,2,1,4.2,12,"seeds=[1, 2]"
+5,r3w2_vanhop_e150_p0,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,3,1,6.3,12,"seeds=[0, 1, 2]"
+6,r3w2_vanhop_e150_p1,vanhop_e150,vanacloig hoepfner_hop,2,150,compound,compound,0,4,1,6.3,12,"seeds=[0, 1, 2]"
+7,r3w2_vanhophet_e150_s12_p0,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0,1,5.8,12,"seeds=[1, 2]"
+8,r3w2_vanhophet_e150_s12_p1,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,1,1,5.8,12,"seeds=[1, 2]"
+9,r3w2_vanhophet_e150_s12_p2,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,2,1,5.8,12,"seeds=[1, 2]"
+10,r3w2_vanhophet_e150_p0,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,3,1,8.7,12,"seeds=[0, 1, 2]"
+11,r3w2_vanhophet_e150_p1,vanhophet_e150,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,4,1,8.7,12,"seeds=[0, 1, 2]"
+12,r3w2_vanhophet_e150_fs1,vanhophet_e150_fs1,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,1,0 1 2,3,8.7,12,
+13,r3w2_vanhophet_e150_fs2,vanhophet_e150_fs2,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,2,0 1 2,3,8.7,12,
+14,r3w2_van_e150_anchors,van_e150_anchors,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,host_train=anchors
+15,r3w2_van_e150_ft,van_e150_ft,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,host_train=finetune_ex21
+16,r3w2_van_e150_ftenv,van_e150_ftenv,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,"host_train=finetune_ex21, finetune_scope=host_head+env_encoder"
+17,r3w2_van_e150_lh0p1,van_e150_lh0p1,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,lambda_host=0.1
+18,r3w2_vanhophet_e150_ftenv,vanhophet_e150_ftenv,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,"host_train=finetune_ex21, finetune_scope=host_head+env_encoder"
+19,r3w2_van_e150_film,van_e150_film,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,dose=film
+20,r3w2_vanhophet_e150_film,vanhophet_e150_film,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,dose=film
+21,r3w2_van_e150_n5,van_e150_n5,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,n_fit_compounds=5
+22,r3w2_van_e150_n10,van_e150_n10,vanacloig,1,150,compound,none,0,0 1 2,3,3.3,12,n_fit_compounds=10
+23,r3w2_vanhop_e150_n5,vanhop_e150_n5,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1 2,3,6.3,12,n_fit_compounds=5
+24,r3w2_vanhop_e150_n10,vanhop_e150_n10,vanacloig hoepfner_hop,2,150,compound,compound,0,0 1 2,3,6.3,12,n_fit_compounds=10
+25,r3w2_vanhophet_e150_n5,vanhophet_e150_n5,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,n_fit_compounds=5
+26,r3w2_vanhophet_e150_n10,vanhophet_e150_n10,vanacloig hoepfner_hop hillenmeyer_het,3,150,compound,compound,0,0 1 2,3,8.7,12,n_fit_compounds=10

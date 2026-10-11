@@ -229,6 +229,9 @@ class MixtureConfig(BaseModel):
     eval_epochs: int = 1
     select: Literal["val", "last"] = "last"
     fit_on: Literal["train", "pool"] = "pool"
+    #: the learning curve: fit only this many of the fold's fittable compounds, a fixed
+    #: shuffle of the pool under ``fit_on: pool`` (038) or of the train compounds under
+    #: ``fit_on: train``, where the validation compounds stay held out at every point
     n_fit_compounds: int | None = None
     gene_batch: int = 128
     seeds: list[int] = [0, 1, 2]
@@ -252,16 +255,36 @@ def fitted_compounds(cfg: MixtureConfig, fold: Fold) -> list[int]:
         # every compound; the fold's indices are genes (fitted_genes)
         return list(range(cfg_n_compounds(cfg)))
     if cfg.fit_on == "train":
-        assert cfg.n_fit_compounds is None, "n_fit_compounds subsamples the pool"
-        return fold.train
+        return subsample_train(fold, cfg.fold_seed, cfg.n_fit_compounds)
     return subsample_pool(fold, cfg.fold_seed, cfg.n_fit_compounds)
 
 
+def subsample_train(fold: Fold, fold_seed: int, n: int | None) -> list[int]:
+    """The first ``n`` of a fixed shuffle of the fold's TRAIN compounds.
+
+    The learning curve under the held-out protocol (round 3, wave 2): the validation
+    compounds stay out of the fit whatever ``n`` is, so the selection signal is the same
+    held-out signal every other arm of the round selects on, and the curve's points
+    differ only in how many compounds were fitted. ``subsample_pool`` is its
+    ``fit_on: pool`` twin (038), which draws from train and validation together.
+    """
+    if n is None:
+        return fold.train
+    assert 2 <= n <= len(fold.train), f"{n} compounds asked of {len(fold.train)} train"
+    order = np.random.default_rng([fold_seed, fold.fold, 19]).permutation(fold.train)
+    return sorted(int(i) for i in order[:n])
+
+
 def centering_compounds(cfg: MixtureConfig, fold: Fold) -> list[int]:
-    """The compounds whose mean centers the held-out scores (038)."""
+    """The compounds whose mean centers the held-out scores (038).
+
+    Under ``fit_on: train`` the center is the fitted compounds plus the validation
+    compounds, which is every non-test compound unless ``n_fit_compounds`` subsampled
+    the fit; a compound the model never fitted does not enter the predicted mean.
+    """
     if cfg.fit_on == "pool" or cfg.split == "gene":
         return fitted_compounds(cfg, fold)
-    return sorted(fold.train + fold.val)
+    return sorted(fitted_compounds(cfg, fold) + fold.val)
 
 
 #: Set once per run from the loaded Vanacloig source, read by ``fitted_compounds`` under

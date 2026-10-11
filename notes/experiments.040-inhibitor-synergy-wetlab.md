@@ -378,7 +378,11 @@ alive regions):** furfural x acetic acid follows Bliss (0.73 against Loewe 0.29;
 kills 10 cells that grew), 5-HMF x acetic acid follows Bliss (0.70 against 0.29; 12 cells),
 formic acid x acetic acid follows Loewe (0.88 against 0.44; Bliss keeps 31 dead cells
 alive). The growth edge along acetic acid tracks the winning rule within a third to a half
-of a dose step and misses by one to three steps under the other.
+of a dose step and misses by one to three steps under the other. The observed region is
+scored raw and after a monotone closure (more inhibitor never rescues growth, so a grown
+cell above a dead one is a call error and is dropped); only the 5-HMF grid changes, five
+island cells go, and its Bliss overlap rises to 0.77 against Loewe 0.39. Any predicted
+surface gets the same closure before it is scored as a boundary.
 
 **The 15 fixed-dose pairs agree with the grids they share and refine the split.** All six
 acid + acid pairs follow Loewe. The eight aldehyde + acid pairs split by the acid, not the

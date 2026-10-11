@@ -50,8 +50,11 @@ what the multi-inhibitor question asks for: the shape in dose space inside which
 host still grows. Each rule's predicted alive region (prediction >= tau on the 81
 interior cells) is scored against the observed one by the Jaccard overlap, the cells
 wrong in each direction, and the growth edge (highest dose called alive) column by
-column and row by row in grid steps. The isobole figure draws the Loewe front (dashed)
-and the Bliss front (dotted, the Bliss level set at tau) over the observed outline.
+column and row by row in grid steps, against the raw observed region and against its
+MONOTONE CLOSURE (a cell is alive only if every cell with lower doses on both axes is
+alive; growth islands above dead cells are call errors and are dropped). The isobole
+figure outlines the closed region, marks the dropped cells with an x, and draws the
+Loewe front (dashed) and the Bliss front (dotted, the Bliss level set at tau).
 """
 
 from __future__ import annotations
@@ -585,6 +588,7 @@ def isobole_analysis(
                         "acetic_acid_g_per_l": ad,
                         "observed_mean": mean[i, j],
                         "grew_any_plate": bool(grew[i, j]),
+                        "grew_monotone": bool(monotone_alive(grew)[i, j]),
                         "bliss": bliss[i, j],
                         "excess_over_bliss": excess[i, j],
                         "loewe": loewe_pred[i, j],
@@ -593,6 +597,7 @@ def isobole_analysis(
         surfaces[run] = {
             "mean": mean,
             "grew": grew,
+            "grew_monotone": monotone_alive(grew),
             "excess": excess,
             "bliss": bliss,
             "loewe": loewe_pred,
@@ -606,6 +611,24 @@ def isobole_analysis(
 
 
 BOUNDARY_RULES = ("bliss", "loewe")
+
+
+def monotone_alive(grew: np.ndarray) -> np.ndarray:
+    """The downward-closed part of an alive mask: more inhibitor never rescues growth.
+
+    A cell is alive only if every cell with a dose no higher on BOTH axes is alive, so
+    an alive cell above a dead one (a growth island) is dropped. This is the
+    post-processing a dose-response boundary licenses: the observed call near the
+    boundary is noisy, and the one direction the biology forbids is growth returning
+    as dose rises. The origin (no inhibitor) is always alive.
+    """
+    out = np.zeros_like(grew, dtype=bool)
+    for i in range(grew.shape[0]):
+        for j in range(grew.shape[1]):
+            below = out[i - 1, j] if i else True
+            left = out[i, j - 1] if j else True
+            out[i, j] = bool(grew[i, j]) and bool(below) and bool(left)
+    return out
 
 
 def growth_edge(alive: np.ndarray) -> np.ndarray:
@@ -636,8 +659,10 @@ def boundary_scores(surfaces: dict[str, dict[str, np.ndarray]]) -> pd.DataFrame:
     rows = []
     for run, s in surfaces.items():
         tau = float(s["tau"])
-        obs = s["grew"][1:, 1:]
-        for rule in BOUNDARY_RULES:
+        for observed, rule in (
+            (o, r) for o in ("raw", "monotone") for r in BOUNDARY_RULES
+        ):
+            obs = (s["grew"] if observed == "raw" else s["grew_monotone"])[1:, 1:]
             pred = (s[rule] >= tau)[1:, 1:]
             inter = int((pred & obs).sum())
             union = int((pred | obs).sum())
@@ -647,8 +672,12 @@ def boundary_scores(surfaces: dict[str, dict[str, np.ndarray]]) -> pd.DataFrame:
                 {
                     "run": run,
                     "pair": f"{NAMES['AA']}|{NAMES[ISOBOLES[run][0]]}",
+                    "observed": observed,
                     "rule": rule,
                     "tau": tau,
+                    "n_islands_dropped": int(
+                        (s["grew"] & ~s["grew_monotone"])[1:, 1:].sum()
+                    ),
                     "n_interior_cells": int(obs.size),
                     "n_alive_observed": int(obs.sum()),
                     "n_alive_predicted": int(pred.sum()),
@@ -763,7 +792,9 @@ def plot_isoboles(
                 origin="lower",
                 **({"vmin": 0, "vmax": 1} if norm is None else {"norm": norm}),
             )
-            grew = s["grew"]
+            grew = s["grew_monotone"]
+            for i, j in zip(*np.nonzero(s["grew"] & ~grew), strict=True):
+                ax.plot(j, i, marker="x", color="black", markersize=3, linestyle="none")
             for i in range(grew.shape[0]):
                 for j in range(grew.shape[1]):
                     if not grew[i, j]:
@@ -820,15 +851,17 @@ def plot_isoboles(
                 cbar.outline.set_linewidth(0.5)
     handles = [
         plt.Line2D([], [], color="black", linewidth=0.9),
+        plt.Line2D([], [], marker="x", color="black", markersize=3, linestyle="none"),
         plt.Line2D([], [], color=BLUE, linewidth=1.0, linestyle="--"),
         plt.Line2D([], [], color=ORANGE, linewidth=1.0, linestyle=":"),
     ]
     labels = [
-        "observed alive region (cells that grew)",
+        "observed alive region, monotone closure",
+        "grew, dropped by the closure (island)",
         "Loewe additive front at tau",
         "Bliss independence front at tau",
     ]
-    fig.legend(handles, labels, loc="lower center", ncol=3, frameon=False)
+    fig.legend(handles, labels, loc="lower center", ncol=4, frameon=False)
     fig.subplots_adjust(
         left=0.07, right=0.9, top=0.95, bottom=0.14, hspace=0.5, wspace=0.45
     )
@@ -945,7 +978,9 @@ def main() -> None:
         boundary[
             [
                 "run",
+                "observed",
                 "rule",
+                "n_islands_dropped",
                 "n_alive_observed",
                 "n_alive_predicted",
                 "jaccard_alive",

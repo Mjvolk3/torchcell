@@ -88,6 +88,10 @@ REGISTRY_RUNNERS: dict[str, str] = {
     "RNASEQ_DATASETS": "run_rnaseq",
     "ENVIRONMENT_RESPONSE_DATASETS": "run_environment_response",
     "FITNESS_DATASETS": "run_fitness",
+    # #889: the gene-interaction, gene-essentiality and SynLethDB pair families
+    "GENE_INTERACTION_DATASETS": "run_gene_interaction",
+    "GENE_ESSENTIALITY_DATASETS": "run_gene_essentiality",
+    "SYNTHETIC_PAIR_DATASETS": "run_synthetic_pairs",
     "SEGREGANT_GROWTH_DATASETS": "run_segregant_growth",
     "PRODUCT_TITER_DATASETS": "run_product_titer",
     "BACTERIAL_PROTEIN_ABUNDANCE_DATASETS": "run_bacterial_protein_abundance",

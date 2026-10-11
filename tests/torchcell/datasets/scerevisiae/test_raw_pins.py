@@ -168,13 +168,6 @@ def _pins_from_constants(
     return by_class[cls.__name__]()
 
 
-#: Classes three of whose pins are the Peter genomes tier's manifest records.
-GENOME_TIER_PINNED = {
-    "CaudalPanTranscriptome2024Dataset",
-    "ProteomeMuenzner2024Dataset",
-    "ProteinTurnoverMuenzner2024Dataset",
-}
-
 #: Classes whose pins are the raw-mirror manifest's records rather than constants.
 MANIFEST_PINNED = {
     "Bloom2019Dataset",
@@ -189,6 +182,16 @@ MANIFEST_PINNED = {
 GENOME_TIER_PINNED = {
     "CaudalPanTranscriptome2024Dataset",
     "IsolateGrowthPeter2018Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+}
+
+#: The genome-tier-pinned classes whose ``_data_root`` is a method (the rest read a
+#: module-level ``_data_root``).
+DATA_ROOT_METHOD = {
+    "CaudalPanTranscriptome2024Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
 }
 
 
@@ -226,7 +229,7 @@ def _stub_pin_sources(
         )
     if cls.__name__.endswith("Hillenmeyer2008Dataset"):
         monkeypatch.setattr(module, "_load_sgd_genes", lambda root: set())
-    if cls.__name__ in GENOME_TIER_PINNED:
+    if cls.__name__ in DATA_ROOT_METHOD:
         monkeypatch.setattr(cls, "_data_root", lambda self: data_root)
     if cls.__name__ == "IsolateGrowthPeter2018Dataset":
         monkeypatch.setattr(module, "_data_root", lambda: data_root)

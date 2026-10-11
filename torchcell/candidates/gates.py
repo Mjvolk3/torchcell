@@ -756,6 +756,8 @@ def citation_key_for_doi(
         if not base.is_dir():
             continue
         for manifest_path in sorted(base.glob(f"*/{MANIFEST_FILENAME}")):
+            if manifest_path.parent.name.startswith("_"):
+                continue  # _bib and _sync_reports are service stores, not paper keys
             manifest = Manifest.model_validate_json(manifest_path.read_text())
             if manifest.doi is not None and manifest.doi.lower() == doi.lower():
                 return manifest.citation_key

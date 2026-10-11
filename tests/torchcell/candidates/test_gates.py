@@ -477,6 +477,9 @@ def test_citation_key_for_doi(
         root, "torchcell-raw", "rawKey2019", {"data/a.csv": b"x"}, doi="10.1000/RAW"
     )
     assert gates.citation_key_for_doi("10.1000/raw", index, str(root)) == "rawKey2019"
+    bib_store = root / "torchcell-library" / "_bib"
+    bib_store.mkdir(parents=True)
+    (bib_store / "manifest.json").write_text('{"version": 1, "bibs": []}')
     assert gates.citation_key_for_doi("10.1000/none", index, str(root)) is None
     assert gates.citation_key_for_doi("10.1000/none", index, None) is None
     twice = (

@@ -52,9 +52,15 @@ LAUNCH, DEAD, RULE = 0.05, 0.01, 50
 ARMS = {
     "M_cls": "genotype only, CLS readout, all calmorph strains",
     "M_pool": "genotype only, CLS plus gene pool, all calmorph strains",
-    "CM_expr": "the strain's expression revealed, both-label strains",
-    "CM_exprperm": "another strain's expression revealed, both-label strains",
+    "CM_expr": "the strain's expression revealed, CLS readout (blind to it by construction)",
+    "CM_exprperm": "another strain's expression revealed, CLS readout (blind to it by construction)",
+    "CMP_expr": "the strain's expression revealed, pooled readout, both-label strains",
+    "CMP_exprperm": "another strain's expression revealed, pooled readout, both-label strains",
+    "MP_cls": "genotype only, pooled readout, proteome-and-morphology strains",
+    "CM_prot": "the strain's proteome revealed, pooled readout, proteome-and-morphology strains",
+    "CM_protperm": "another strain's proteome revealed, pooled readout, proteome-and-morphology strains",
 }
+LADDER = [200, 400, 600, 800, 1000, 1199]
 REPO = osp.abspath(osp.join(osp.dirname(__file__), "..", "..", ".."))
 RESULTS = osp.join(osp.dirname(osp.dirname(osp.abspath(__file__))), "results")
 TABLES = osp.join(REPO, "notes-tex", "figure-3-gate", "tables")
@@ -77,6 +83,7 @@ def read_run(run: Any) -> dict[str, Any]:
         return st.mean(v) if len(v) >= 10 else None
 
     roll = max((trailing(e) or -1.0) for e in ep) if ep else None
+    ladder = {e: trailing(e) for e in LADDER if e <= last}
     sp = sorted((e, rows[e][RATIO]) for e in rows if RATIO in rows[e])
     launch = next((e for e, v in sp if v >= LAUNCH), None)
     longest = n = 0
@@ -102,6 +109,7 @@ def read_run(run: Any) -> dict[str, Any]:
         "collapsed": longest >= RULE,
         "window_mean": window,
         "roll_max": roll,
+        "ladder": ladder,
         "pred_sd_ratio_last": sp[-1][1] if sp else None,
         "loss_min": min(loss, key=lambda t: t[1])[1] if loss else None,
         "loss_min_epoch": min(loss, key=lambda t: t[1])[0] if loss else None,
@@ -156,18 +164,27 @@ def main() -> None:
 
     f = lambda v, p=3, w=8: f"{v:>{w}.{p}f}" if v is not None else f"{'':>{w}}"
     print(f"{'arm':<12}{'split':>5}{'id':>10}{'epoch':>6}{'launch':>7}{'dead':>5}{'window':>8}{'rollmax':>8}{'sd':>7}{'lossmin':>9}{'@ep':>6}{'train':>7}{'s/ep':>6}")
+    print("ladder (trailing 20-epoch mean at 200/400/600/800/1000/1199):")
+    for r in runs:
+        print(f"  {r['arm']:<12}{r['split']:>3} " + " ".join(f"{v:.3f}" if v is not None else "  -  " for v in r["ladder"].values()))
     for r in runs:
         print(f"{r['arm']:<12}{r['split']:>5}{r['id']:>10}{r['last_epoch']:>6}{str(r['launch_epoch']):>7}{r['longest_dead_stretch']:>5}{f(r['window_mean'])}{f(r['roll_max'])}{f(r['pred_sd_ratio_last'], 3, 7)}{f(r['loss_min'], 4, 9)}{str(r['loss_min_epoch']):>6}{f(r['traineval_pearson_last'], 3, 7)}{f(r['epoch_seconds'], 1, 6)}")
 
     arms = []
     for arm, desc in ARMS.items():
         rs = list(by.get(arm, {}).values())
+        if not rs:
+            continue
         fin = [r for r in rs if r["finished"]]
         arms.append({"arm": arm, "change": desc, "runs": len(rs), "finished": len(fin), "collapsed": sum(r["collapsed"] for r in rs),
                      "window": summarize([r["window_mean"] for r in fin]), "roll_max": summarize([r["roll_max"] for r in fin if r["roll_max"] is not None])})
     contrasts = {
         "CM_expr - CM_exprperm": paired(by.get("CM_expr", {}), by.get("CM_exprperm", {})),
         "M_pool - M_cls": paired(by.get("M_pool", {}), by.get("M_cls", {})),
+        "CMP_expr - CMP_exprperm": paired(by.get("CMP_expr", {}), by.get("CMP_exprperm", {})),
+        "CM_prot - CM_protperm": paired(by.get("CM_prot", {}), by.get("CM_protperm", {})),
+        "CM_prot - MP_cls": paired(by.get("CM_prot", {}), by.get("MP_cls", {})),
+        "CM_protperm - MP_cls": paired(by.get("CM_protperm", {}), by.get("MP_cls", {})),
     }
     ctx = context()
     print()
@@ -206,8 +223,10 @@ def main() -> None:
         "    arm & change & finished & collapsed & window Pearson & paired difference \\\\",
         "    \\midrule",
     ]
-    pair_of = {"CM_expr": ("CM_expr - CM_exprperm", "vs permuted"), "M_pool": ("M_pool - M_cls", "vs CLS alone")}
-    best = max((a for a in arms if a["window"]["n"]), key=lambda a: a["window"]["mean"])
+    pair_of = {"CM_expr": ("CM_expr - CM_exprperm", "vs permuted"), "M_pool": ("M_pool - M_cls", "vs CLS alone"),
+               "CMP_expr": ("CMP_expr - CMP_exprperm", "vs permuted"), "CM_prot": ("CM_prot - CM_protperm", "vs permuted"),
+               "CM_protperm": ("CM_protperm - MP_cls", "vs genotype only")}
+    best = max((a for a in arms if a["window"]["n"] and a["arm"] not in ("CM_expr", "CM_exprperm")), key=lambda a: a["window"]["mean"])
     for a in arms:
         w = a["window"]
         cell = f"{w['mean']:.3f} $\\pm$ {w['sd']:.3f}" if w["sd"] is not None else ("--" if w["mean"] is None else f"{w['mean']:.3f}")

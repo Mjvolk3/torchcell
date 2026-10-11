@@ -464,8 +464,13 @@ HOSTS: Final[tuple[HostToken, ...]] = (
         pattern=r"(?:\bSigma|Σ)1278b\b",
         assembly_set=None,
     ),
+    # RM11-1a is a member of the 1011 assemblies: Peter 2018 Table S1 lists it as
+    # standardized name AAA, the member Bloom 2019 and Boocock 2025 pin their RM parent to.
     HostToken(
-        name="RM11-1a", organism="S. cerevisiae", pattern=r"\bRM11", assembly_set=None
+        name="RM11-1a",
+        organism="S. cerevisiae",
+        pattern=r"\bRM11",
+        assembly_set=PETER2018_1011,
     ),
     HostToken(
         name="SK1", organism="S. cerevisiae", pattern=r"\bSK1\b", assembly_set=None

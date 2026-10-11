@@ -309,6 +309,19 @@ def test_g2_bloom_mosaic(tier: Path) -> None:
     assert (run.result.outcome, run.record.outcome) == ("fail", "absent_unnamed")
 
 
+def test_g2_by_x_rm11_mosaic_resolves_rm_to_the_peter_panel(tier: Path) -> None:
+    """RM11-1a is the 1011 assemblies' member AAA (Peter 2018 Table S1), so a BY x RM
+    row names two parents that both resolve and read.
+    """
+    row = yeast_row(why="BY (S288C) x RM11-1a segregants", genotypes="g")
+    run = gates.evaluate_g2(row, str(tier), source_kind="primary", verify=True)
+    assert (run.result.outcome, run.record.outcome) == ("pass", "resolvable_readable")
+    assert [(h.name, h.assembly_set) for h in run.record.hosts] == [
+        ("S288C", SGD_S288C_R64),
+        ("RM11-1a", PETER2018_1011),
+    ]
+
+
 def test_probe_host_detects_tampered_bytes(tier: Path) -> None:
     """resolve() re-hashes the tier, so altered bytes raise."""
     (tier / "torchcell-genomes" / ECOLI_K12_MG1655 / "genome.fna").write_bytes(b"x")

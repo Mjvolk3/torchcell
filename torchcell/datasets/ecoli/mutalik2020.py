@@ -497,6 +497,7 @@ def sourced_values() -> dict[str, SourcedValue]:
             "no-phage controls (one of them plain LB without SM buffer); the text says "
             "nine, and read_experiment_axis reports what the file holds",
         ),
+        "no_phage_control": NO_PHAGE_CONTROL,
         "measurement_type": _paper(
             "log2_ratio",
             "which we define as the normalized log2 change in the abundance of mutants "
@@ -1368,6 +1369,20 @@ ASSAY_MIXTURE = _paper(
 )
 
 
+NO_PHAGE_CONTROL = _paper(
+    "the planktonic culture with the phage replaced by phage dilution buffer",
+    "We also set up control \u201cno-phage\u201d competitive mutant fitness assays "
+    "wherein we replaced phages with simply the phage dilution buffer.",
+    page=_CULTURE_PAGE,
+    note="the sentence sits in the planktonic paragraph, between the 2X LB plus "
+    "buffer-diluted phage mixture and the 48-well plate it is grown in, so the control "
+    "it describes is the planktonic assay culture with no phage: the released medium "
+    "label LB_plus_SM_buffer, which is UNPERTURBED_CONTROL_MEDIA_LABEL. The released "
+    "experiment list carries two further controls in other cultures (plain LB, and "
+    "LB_agar with kanamycin), which this sentence does not describe",
+)
+
+
 def _lb_lines(provenance: SourcedValue) -> list[MediaComponent]:
     """The three LB ingredients, named with no amounts (the recipe is deferred)."""
     return [
@@ -2118,6 +2133,27 @@ def fitness_columns(columns: Iterable[str]) -> dict[str, str]:
     }
 
 
+def kept_assays(
+    axis: ExperimentAxis, released: Mapping[str, ReleasedAssay]
+) -> tuple[list[Assay], list[str]]:
+    """The record-bearing assays whose medium has a library base, and those dropped.
+
+    The start samples are excluded first: a time-zero sample is the denominator of every
+    log ratio and the release gives it no fitness column. ``process()`` and the declared
+    control count of :func:`declared_unperturbed_records` both select through this.
+    """
+    kept: list[Assay] = []
+    dropped: list[str] = []
+    for assay in axis.assays:
+        if assay.kind == "time_zero":
+            continue
+        if released[assay.exp_name].media_label not in MEDIA_BY_LABEL:
+            dropped.append(assay.exp_name)
+            continue
+        kept.append(assay)
+    return kept, dropped
+
+
 # --------------------------------------------------------------------------- #
 # The dataset
 # --------------------------------------------------------------------------- #
@@ -2209,16 +2245,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         The 21 start samples are excluded first: a time-zero sample is the denominator of
         every log ratio and the release gives it no fitness column.
         """
-        kept: list[Assay] = []
-        dropped: list[str] = []
-        for assay in axis.assays:
-            if assay.kind == "time_zero":
-                continue
-            if released[assay.exp_name].media_label not in MEDIA_BY_LABEL:
-                dropped.append(assay.exp_name)
-                continue
-            kept.append(assay)
-        return kept, dropped
+        return kept_assays(axis, released)
 
     @post_process
     def process(self) -> None:
@@ -2474,6 +2501,81 @@ EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 249612, "no_phage_control": 367
 #: Records per assay format, the split the 68 challenges must not collapse across.
 EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 245941, "solid": 40403}
 
+#: The released medium label of the no-phage controls that ARE the planktonic assay
+#: culture with the phage left out (``NO_PHAGE_CONTROL``). Their records carry no
+#: environmental edit at all, so the L3 ``environment_perturbed`` gate counts them, and
+#: :func:`declared_unperturbed_records` declares exactly them (#888). The other two
+#: released controls (plain ``LB`` and ``LB_agar``) sit in a medium other than the
+#: dataset's baseline and the gate reads that medium as their edit, so they are not
+#: declared.
+UNPERTURBED_CONTROL_MEDIA_LABEL = "LB_plus_SM_buffer"
+
+
+def records_per_experiment(kept: Sequence[Assay]) -> dict[str, int]:
+    """Records each kept experiment of an analysis set contributes, by analysis set.
+
+    Every experiment of a set shares that set's mapped genes, so the frozen per-set
+    census divides exactly by the set's kept experiments; a remainder means the census
+    and the experiment list disagree, and is refused.
+    """
+    per_set = Counter(assay.analysis_set for assay in kept)
+    if set(per_set) != set(EXPECTED_SET_CENSUS):
+        raise ValueError(
+            f"kept experiments span {sorted(per_set)}, the census pins "
+            f"{sorted(EXPECTED_SET_CENSUS)}"
+        )
+    out: dict[str, int] = {}
+    for analysis_set, n_experiments in per_set.items():
+        per_experiment, remainder = divmod(
+            EXPECTED_SET_CENSUS[analysis_set], n_experiments
+        )
+        if remainder:
+            raise ValueError(
+                f"{analysis_set}: {EXPECTED_SET_CENSUS[analysis_set]} records do not "
+                f"divide over its {n_experiments} kept experiments"
+            )
+        out[analysis_set] = per_experiment
+    return out
+
+
+def declared_unperturbed_records(
+    axis: ExperimentAxis, released: Mapping[str, ReleasedAssay]
+) -> int:
+    """The records the L3 ``environment_perturbed`` gate may find unedited (#888).
+
+    Derived from the release's own control list, never typed in: the no-phage controls
+    of ``Keio_exps_used.tab`` whose released medium is the planktonic assay culture
+    (:data:`UNPERTURBED_CONTROL_MEDIA_LABEL`), times the records each contributes. A
+    control carries no ``PhagePerturbation`` (the paper's ``NO_PHAGE_CONTROL``), so in
+    the baseline culture it is a measured condition with no environmental edit, the
+    same standing #776 gave an absolute readout's base condition.
+    """
+    kept, _ = kept_assays(axis, released)
+    per_experiment = records_per_experiment(kept)
+    kept_names = {assay.exp_name for assay in kept}
+    return sum(
+        per_experiment[assay.analysis_set]
+        for assay in axis.controls
+        if assay.exp_name in kept_names
+        and released[assay.exp_name].media_label == UNPERTURBED_CONTROL_MEDIA_LABEL
+    )
+
+
+def read_declared_unperturbed(dataset_root: str) -> int:
+    """:func:`declared_unperturbed_records` over a built tree's own raw files."""
+    raw = osp.join(dataset_root, "raw")
+    axis = parse_experiment_axis(
+        osp.join(raw, EXPS_USED_NAME), read_moi_workbook(osp.join(raw, S13_NAME))
+    )
+    released = read_released_assays(
+        {
+            analysis_set: osp.join(raw, analysis_set, "exps")
+            for analysis_set in sorted(set(ANALYSIS_SETS.values()))
+        }
+    )
+    return declared_unperturbed_records(axis, released)
+
+
 VERIFY_PROVENANCE = Provenance(
     source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{TARBALL_REL}",
     citation_key=CITATION_KEY,
@@ -2586,6 +2688,9 @@ def verify_build(
     materialized. Four SUPPLEMENTARY rows are appended -- the three censuses of
     :func:`experiment_census` and :func:`stored_tags_are_loci` -- and the shared
     ``pair_uniqueness`` and ``canonical_gene_names`` rows keep their own verdicts.
+    ``expected_unperturbed`` is the tree's own :func:`read_declared_unperturbed`: the
+    no-phage controls in the planktonic assay culture, which carry no environmental edit
+    by design (#888).
 
     This is the loader's own entry point rather than
     ``torchcell.verification.runners.run_environment_response``, which is yeast-only
@@ -2608,6 +2713,7 @@ def verify_build(
         sgd_genes=set(genome.genbank.loci),
         min_containment=1.0,
         resolve_gene_name=genome.resolve_gene_name,
+        expected_unperturbed=read_declared_unperturbed(dataset_root),
     )
     for row in experiment_census(stream_records(dataset_root)):
         report.add(row)

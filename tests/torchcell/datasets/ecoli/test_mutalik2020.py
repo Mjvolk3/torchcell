@@ -236,6 +236,10 @@ def test_every_sourced_value_is_auditable() -> None:
     assert values["n_samples"].provenance.citation_key == mut.WETMORE_KEY
     assert values["measurement_type"].value == "log2_ratio"
     assert values["reference_strain"].value == mut.REFERENCE_STRAIN
+    assert values["no_phage_control"] is mut.NO_PHAGE_CONTROL
+    assert "replaced phages with simply the phage dilution buffer" in (
+        mut.NO_PHAGE_CONTROL.quote
+    )
 
 
 @pytest.mark.data
@@ -1563,6 +1567,90 @@ def test_the_censuses_pin_the_set_kind_and_format_splits() -> None:
     assert sum(mut.EXPECTED_FORMAT_CENSUS.values()) == mut.EXPECTED_RECORDS
 
 
+def _release_shaped_axis() -> tuple[mut.ExperimentAxis, dict[str, mut.ReleasedAssay]]:
+    """An axis with the release's shape: 58 / 9 / 11 kept experiments and 10 controls.
+
+    Seven controls in set16/19 (six in the planktonic buffer culture, one in plain LB),
+    two in set28/29 (both buffer) and one solid-agar control in set30, plus one start
+    sample, which is never record-bearing.
+    """
+    layout = {
+        "Keio_ML9_set16_set19": ("set16", 58, ["LB_plus_SM_buffer"] * 6 + ["LB"]),
+        "Keio_ML9_set28_set29": ("set28", 9, ["LB_plus_SM_buffer"] * 2),
+        "Keio_ML9_set30": ("set30", 11, ["LB_agar"]),
+    }
+    assays = [
+        _assay("set16IT001", kind="time_zero", phage=None, moi=None, moi_source=None)
+    ]
+    released = {"set16IT001": _released("set16IT001")}
+    for analysis_set, (set_name, n_kept, control_media) in layout.items():
+        for index in range(n_kept):
+            exp_name = f"{set_name}IT{100 + index:03d}"
+            is_control = index < len(control_media)
+            media_label = (
+                control_media[index]
+                if is_control
+                else ("LB_agar" if set_name == "set30" else "LB_plus_SM_buffer")
+            )
+            assays.append(
+                _assay(
+                    exp_name,
+                    kind="no_phage_control" if is_control else "phage",
+                    phage=None if is_control else "T2",
+                    moi=None if is_control else 187.5,
+                    moi_source=None if is_control else "s13_table",
+                ).model_copy(
+                    update={"set_name": set_name, "analysis_set": analysis_set}
+                )
+            )
+            released[exp_name] = _released(
+                exp_name,
+                media_label=media_label,
+                state="solid" if media_label == "LB_agar" else "liquid",
+            )
+    return mut.ExperimentAxis(assays=tuple(assays)), released
+
+
+def test_the_declared_controls_are_the_planktonic_buffer_controls() -> None:
+    """#888: 8 buffer controls are declared; the plain-LB and solid ones are not."""
+    axis, released = _release_shaped_axis()
+    assert axis.counts["no_phage_control"] == 10
+    kept, dropped = mut.kept_assays(axis, released)
+    assert (len(kept), dropped) == (78, [])
+    assert mut.records_per_experiment(kept) == {
+        "Keio_ML9_set16_set19": 3667,
+        "Keio_ML9_set28_set29": 3695,
+        "Keio_ML9_set30": 3673,
+    }
+    declared = mut.declared_unperturbed_records(axis, released)
+    assert declared == 6 * 3667 + 2 * 3695 == 29392
+    # the two undeclared controls are what the gate reads as a medium edit
+    assert mut.EXPECTED_KIND_CENSUS["no_phage_control"] - declared == 3667 + 3673
+    assert mut.UNPERTURBED_CONTROL_MEDIA_LABEL == "LB_plus_SM_buffer"
+
+
+def test_a_control_whose_medium_has_no_library_base_is_not_declared() -> None:
+    """A dropped control contributes no record, so it is never declared."""
+    axis, released = _release_shaped_axis()
+    target = "set28IT100"
+    released[target] = released[target].model_copy(update={"media_label": "M9"})
+    kept, dropped = mut.kept_assays(axis, released)
+    assert dropped == [target]
+    # set28/29 now has 8 kept experiments, which its frozen census does not divide
+    with pytest.raises(ValueError, match="do not divide over its 8 kept"):
+        mut.declared_unperturbed_records(axis, released)
+
+
+def test_records_per_experiment_refuses_a_census_the_experiments_do_not_span() -> None:
+    """Every pinned analysis set must have kept experiments."""
+    axis, released = _release_shaped_axis()
+    kept, _ = mut.kept_assays(axis, released)
+    with pytest.raises(ValueError, match="kept experiments span"):
+        mut.records_per_experiment(
+            [a for a in kept if a.analysis_set != "Keio_ML9_set30"]
+        )
+
+
 def test_an_unreadable_screen_id_stops_the_census() -> None:
     """The census reads the experiment back out of the screen id, or refuses."""
     with pytest.raises(ValueError, match="unreadable screen_id"):
@@ -2209,6 +2297,24 @@ class TestDevStore:
         # the paper states its standard metrics are unsuitable under phage selection,
         # which is why the selection rule is Keio_exps_used.tab and not `u`
         assert ledger["release_quality_flag"] == {"True": 10, "False": 68}
+
+    def test_the_declared_controls_come_from_the_tree_s_own_release_files(self) -> None:
+        """#888: the raw experiment list declares 29,392 unedited control records."""
+        assert mut.read_declared_unperturbed(DEV_ROOT) == 29392
+
+    def test_the_report_passes_environment_perturbed_on_the_declared_controls(
+        self,
+    ) -> None:
+        """#888: the gate's unedited count equals the declaration in the store's report."""
+        import json as _json
+
+        report = _json.loads(
+            Path(DEV_ROOT, "preprocess", "verification_report.json").read_text()
+        )
+        (row,) = [r for r in report["results"] if r["name"] == "environment_perturbed"]
+        assert row["passed"]
+        assert row["details"]["n_missing"] == 29392
+        assert row["details"]["expected_unperturbed"] == 29392
 
     def test_the_store_serves_phage_challenges_and_phage_free_controls(self) -> None:
         """The LMDB's own length, gene set, reference count and first record."""

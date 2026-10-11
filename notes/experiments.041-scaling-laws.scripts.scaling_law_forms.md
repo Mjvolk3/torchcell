@@ -69,7 +69,21 @@ so $N^* \propto C^{a}$ and $D^* \propto C^{b}$ with $a + b = 1$. The split of a 
 
 ### GIFs, one per panel
 
-Nine GIFs, one for each panel of the figure above and named by its letter. Each is one sweep of one quantity with everything else pinned. The centered title is static across frames: what is drawn and what is held fixed, the constants and their source, and in italics the one-sentence takeaway of the sweep. The equation and the swept value sit inside the plot in a framed box, in a corner that stays clear for every frame of that sweep and opposite the legend; the box is pinned by its outer corner and the numbers are fixed width, so nothing slides when a value changes. Legends name every line, dotted ones included, and hold still from frame to frame. Both axes are logarithmic and both are ticked as powers of ten (10^0.2, 10^0.4, ... on the loss axis, which spans under a decade).
+Nine GIFs, one for each panel of the figure above and named by its letter. Each is one sweep of one quantity with everything else pinned, and each uses exactly the constants, forms and, where there are runs, the runs and random draws of its panel, so a frame of the GIF can be laid over the panel:
+
+| panel | GIF | the panel shows | the GIF sweeps | shared between them |
+|---|---|---|---|---|
+| a | `a_exponent_sweep` | $L(N)$ at $\alpha_N$ = 0.05, 0.076, 0.15 | $\alpha_N$ over 0.056 to 0.096, pinned at $N = 10^{7.5}$ | Kaplan form, $N_c = 8.8 \times 10^{13}$ |
+| b | `b_data_exponent_sweep` | $L(D)$ at $\alpha_D$ = 0.06, 0.095, 0.14 | $\alpha_D$ over 0.075 to 0.115, pinned at $D = 10^{8.5}$ | Kaplan form, $D_c = 5.4 \times 10^{13}$ |
+| c | `c_floor_sweep` | $E + AN^{-\alpha}$ at $E$ = 1.69 beside $L - E$ | $E$ from 0 to 2.5 | $A$ = 406.4, $\alpha$ = 0.34 |
+| d | `d_surface_sweep` | the surface with four budget lines and the frontier | one budget line, $C$ from $10^{18}$ to $10^{24}$ | the Chinchilla constants, the same contour levels |
+| e | `e_data_sweep` | cuts at $D$ = $10^8$ to $10^{11}$ | $D$ from $10^{7.5}$ to $10^{12.5}$ | the Chinchilla constants |
+| f | `f_params_sweep` | cuts at $N$ = $10^7$ to $10^{10}$ | $N$ from $10^{6.5}$ to $10^{11.5}$ | the Chinchilla constants |
+| g | `g_compute_sweep` | IsoFLOP curves at $C$ = $10^{19}$ to $10^{22}$ | $C$ from $10^{18}$ to $10^{23}$ | the Chinchilla constants, $D = C/6N$ |
+| h | `h_allocation_sweep` | $N^*$, $D^*$ under the Hoffmann and Besiroglu fits | $\beta$ from 0.2 to 0.4 at $\alpha$ = 0.34 | the Hoffmann allocation is the dashed reference |
+| i | `i_bootstrap` | fits with a 5 to 95% band from 300 resamples | resamples 1 to 100, one per frame | the same 15 runs, the same seed, the same draw order |
+
+The centered title is static across frames: what is drawn and what is held fixed, the constants and their source, and in italics the one-sentence takeaway of the sweep. The equation and the swept value sit inside the plot in a framed box, in a corner that stays clear for every frame of that sweep and opposite the legend; the box is pinned by its outer corner and the numbers are fixed width, so nothing slides when a value changes. Legends name every line, dotted ones included, and hold still from frame to frame. Both axes are logarithmic and both are ticked as powers of ten (10^0.2, 10^0.4, ... on the loss axis, which spans under a decade).
 
 The frames are typeset by real LaTeX (Latin Modern, `amsmath`) rather than matplotlib's mathtext, on a Nature "wide" panel canvas (118.9 mm) with 7 pt text at 190 dpi, about 890 pixels across, and 80 ms per frame; larger frames decoded too slowly to play. A title that would overrun the canvas shrinks toward 5.5 pt until it fits, measured from the DVI. Frames are quantized to the GIF palette without dithering so glyph edges stay smooth. matplotlib's Agg backend cannot rasterize `usetex` text without `dvipng`, which GilaHyper lacks, so each frame is written through the PDF backend (which reads the DVI itself) and rasterized with `pdftoppm`. The system TeX Live also omits `type1cm.sty`, which matplotlib's `usetex` preamble loads; it is installed in the user tree at `~/texmf/tex/latex/type1cm/type1cm.sty` (built from the CTAN `type1cm.ins` on 2026.10.09). The static 3x3 figure stays in Arial mathtext per the repo figure standard.
 
@@ -105,13 +119,27 @@ The frames are typeset by real LaTeX (Latin Modern, `amsmath`) rather than matpl
 
 ![](./assets/images/041-scaling-laws/scaling_gif_h_allocation_sweep.gif)
 
-**i, bootstrap.** Takeaway: resample the runs and refit, and the spread of the refits is the error bar on the exponent. One resample per frame: the fifteen fitted runs are redrawn with replacement (ring size = times drawn), $L = E + A N^{-\alpha}$ is refit, and the refits pile up into the band panel i shows at once. The 90% interval on $\alpha$ in the box settles as the resamples accumulate.
+**i, bootstrap.** Takeaway: resample the runs and refit, and the spread of the refits is the error bar on the exponent. One resample per frame, 100 in all: the fifteen fitted runs are redrawn with replacement (ring size = times drawn), $L = E + A N^{-\alpha}$ is refit, and the refits pile up into the 5 to 95% band that panel i shows at once. The draws are panel i's own, same seed and same order, so frame $k$ is the $k$-th of the 300 resamples behind that band. The refits differ by only a few percent in loss, which a log axis hides, so an inset histogram of the resampled $\alpha$ carries the motion: it fills in, and the 90% interval in the box settles, as the resamples accumulate.
 
 ![](./assets/images/041-scaling-laws/scaling_gif_i_bootstrap.gif)
 
-### Counting D: instances, not dimensions
+### What counts as more data
 
-`D` is the number of training examples the optimizer consumed, in the unit the loss averages over (tokens for a language model, records here), times nothing: epochs are a fixed hyperparameter and repeated records count for less than fresh ones (Muennighoff 2023, arXiv:2305.16264). The dimension of a record (features, genes in the genome, sequence length) is not `D`; it changes compute per record and the input width of the model. Full argument in section 3 of the notes-tex document.
+The rule that settles every case: $D$ is the number of distinct supervised targets the loss averages over. "More data" means more distinct measured targets, never more views of the same measurement. The unit is chosen once and held fixed across a sweep, because a curve whose $x$-axis changes meaning between runs is not a curve.
+
+The simple case first. A language model's loss is per token, so $D$ is tokens. A model trained on one label per record (the trigenic build: one interaction score per genotype) has a per-record loss, so $D$ is records, and the 376,732 records are the data. Everything else is a variation on which quantity the loss averages over.
+
+**Multi-label records.** A genotype measured on several phenotypes, say fitness, an interaction score and morphology, is one record with up to $K$ labels, and in a real build most records have only some of them observed. Count what the optimizer actually consumes: the number of observed (record, label) pairs. A record with three of ten labels observed contributes three. This matches a per-label loss (mean over observed labels) exactly, and it is the honest count under a per-record summed loss too, since a record with more labels observed carries more supervision. Two consequences. First, "more data" can mean new strains, new environments, or new phenotypes measured on strains already present; all three add observed pairs, and the curve does not care which. Second, labels have different noise floors, so each label has its own $E$; fit the scaling curve per label when the labels matter separately, and read the pooled curve as a weighted mix.
+
+**Multi-input records.** Several inputs per record, for example a sequence embedding, an expression profile and graph features for the same genotype, are not more data. They are the dimension of a record: they change what a record is, the input width of the model (part of $N$) and the compute per record, and $D$ is unchanged. Adding a modality is a sweep over architecture or features, and it belongs on a different axis of the ablation from the $D$-sweep. The exception is when the new input is also a target: an expression profile used as a supervised output is labels, and counts as above.
+
+**Tokens inside a record.** A gene-token model that reads a genotype as a set of six thousand tokens does not consume $D \times 6000$ tokens in the Kaplan sense. The loss is one number per record (or per observed label), so the tokens are dimension, not data. They do scale the compute per record, which is why $C$ is measured with a profiler here rather than taken as $6ND$.
+
+**Several datasets pooled.** When records come from different screens or papers, $D$ is still the sum of observed (record, label) pairs, but the $D$-sweep has to subsample within each dataset in proportion, or the curve measures a change in composition rather than in size. Subsample by the unit that leaks, a gene or a query pair, within each dataset.
+
+**Repetition is not data.** Epochs are a fixed training hyperparameter, not a multiplier on $D$; repeated records are worth less than fresh ones, and beyond about four epochs the return on repetition falls off quickly (Muennighoff 2023, arXiv:2305.16264). Augmented copies, resampled perturbation sets and re-weighted records are the same thing: more passes over the measurements already in hand, not more measurements.
+
+Full argument, with the leakage measurement on the trigenic build, in section 3 of the notes-tex document.
 
 ### How to run the sweeps: showing that more data and more compute pay
 

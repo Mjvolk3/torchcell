@@ -1256,10 +1256,14 @@ def gif_surface_sweep(path: str) -> None:
 
 
 def gif_bootstrap(path: str) -> None:
-    """One bootstrap resample per frame: the fifteen fitted runs are redrawn with
-    replacement, the floored form is refit, and the refits accumulate into the band
-    that panel i shows at once. The interval on alpha narrows to its value as the
-    resamples pile up.
+    """One bootstrap resample per frame, 100 in all: the fifteen fitted runs are
+    redrawn with replacement, the floored form is refit, and the refits accumulate
+    into the 5 to 95 percent band that panel i shows at once. The random draws are
+    the SAME as panel i's (same seed, same order), so frame k of this GIF is the k-th
+    of the 300 resamples behind that panel's band. Because the refits differ by only
+    a few percent in loss, which a log axis hides, an inset histogram of the
+    resampled alphas carries the motion: it fills in, and the 90 percent interval on
+    alpha settles, as the resamples pile up.
     """
     N, L = draw_runs(SYNTH)
     n_fit = SYNTH.n_fit_sizes * SYNTH.seeds_per_size
@@ -1267,12 +1271,14 @@ def gif_bootstrap(path: str) -> None:
     Nh, Lh = N[n_fit:], L[n_fit:]
     grid = np.logspace(5.8, 10.3, 200)
     E0, A0, al0 = fit_floored(Nf, Lf)
-    rng = np.random.default_rng(SYNTH.rng_seed + 2)
+    # Same generator and seed as figure_1 hands to panel_i, so the draws coincide.
+    rng = np.random.default_rng(SYNTH.rng_seed + 1)
     truth = SYNTH.truth
+    n_resamples = 100
     previous: list[FArray] = []
     alphas: list[float] = []
     frames = []
-    for i in range(40):
+    for i in range(n_resamples):
         idx = rng.integers(0, Nf.size, size=Nf.size)
         E, A, al = fit_floored(Nf[idx], Lf[idx])
         alphas.append(al)
@@ -1284,8 +1290,8 @@ def gif_bootstrap(path: str) -> None:
         )
         fig, ax = gif_figure(
             r"bootstrap over runs: redraw the 15 fitted runs with replacement, refit $L = E + A\,N^{-\alpha}$",
-            rf"synthetic runs from $\alpha$ = 0.34, $E$ = 1.69 with 2\% noise;  full-sample fit $\alpha$ = {al0:5.3f}",
-            rf"resample {i + 1:2d}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90\% interval on $\alpha$ so far {interval}",
+            rf"the same 15 synthetic runs and the same resamples as panel i;  full-sample fit $\alpha$ = {al0:5.3f}",
+            rf"resample {i + 1:3d} of {n_resamples}:  $\alpha$ = {al:5.3f}, $E$ = {E:4.2f};  90\% interval on $\alpha$ so far {interval}",
             takeaway="Resample the runs and refit: the spread of the refits is the error bar on the exponent.",
             equation=r"$L = E + A\,N^{-\alpha}$, refit on each resample",
             box_loc="lower left",
@@ -1297,10 +1303,54 @@ def gif_bootstrap(path: str) -> None:
             lw=0,
             label="fitted range (shaded)",
         )
-        for prev in previous:
-            ax.loglog(grid, prev, color=WHEAT, lw=0.5, alpha=0.25)
-        ax.plot([], [], color=WHEAT, lw=0.5, alpha=0.5, label="earlier refits")
+        previous.append(E + A * grid ** (-al))
+        if len(previous) >= 5:
+            band = np.percentile(np.asarray(previous), [5, 95], axis=0)
+            ax.fill_between(
+                grid,
+                band[0],
+                band[1],
+                color=WHEAT,
+                alpha=0.35,
+                lw=0,
+                label=r"5 to 95\% band so far",
+            )
+        for prev in previous[:-1]:
+            ax.loglog(grid, prev, color=WHEAT, lw=0.4, alpha=0.15)
+        ax.plot([], [], color=WHEAT, lw=0.4, alpha=0.5, label="earlier refits")
         ax.loglog(grid, E + A * grid ** (-al), color=WHEAT, lw=1.2, label="this refit")
+        # Inset: the resampled exponents so far. The curves move by a few percent,
+        # which a log axis hides; the histogram is where the resampling is visible.
+        ins = ax.inset_axes((0.34, 0.52, 0.27, 0.32))
+        ins.hist(
+            alphas,
+            bins=np.linspace(0.26, 0.44, 19).tolist(),
+            color=WHEAT,
+            edgecolor="black",
+            linewidth=0.3,
+        )
+        # The reference lines stop short of the top so the key above them stays clear.
+        ins.axvline(truth.alpha, ymax=0.74, color=CHARCOAL, lw=0.6, ls="--")
+        ins.axvline(al0, ymax=0.74, color=AMBER, lw=0.8)
+        if len(alphas) >= 5:
+            ins.axvline(lo, ymax=0.74, color=BRICK, lw=0.6, ls=":")
+            ins.axvline(hi, ymax=0.74, color=BRICK, lw=0.6, ls=":")
+        ins.set_xlim(0.26, 0.44)
+        ins.set_ylim(0, 30)
+        ins.set_xlabel(r"$\alpha$ per resample", fontsize=5.5, labelpad=1)
+        ins.set_ylabel("count", fontsize=5.5, labelpad=1)
+        ins.tick_params(labelsize=5, width=0.4, length=1.5, pad=1)
+        ins.text(
+            0.03,
+            0.96,
+            "dashed 0.34, solid fit\ndotted 90\\% interval",
+            transform=ins.transAxes,
+            fontsize=4.8,
+            ha="left",
+            va="top",
+            linespacing=1.2,
+        )
+        box(ins)
         ax.loglog(
             grid,
             truth.E + truth.A * grid ** (-truth.alpha),
@@ -1321,20 +1371,19 @@ def gif_bootstrap(path: str) -> None:
             facecolors="none",
             edgecolors=BRICK,
             linewidths=0.6,
-            label="drawn in this resample (size = times drawn)",
+            label="drawn this resample (size = draws)",
             zorder=5,
         )
         ax.plot(
             Nh, Lh, "o", ms=2.5, mfc="white", mec=GRAY, mew=0.6, label="held-out runs"
         )
-        previous.append(E + A * grid ** (-al))
         ax.set_xlim(grid[0], grid[-1])
         loss_axis(ax, 1.5, 7)
         ax.set_xlabel(r"parameters $N$")
         legend(ax, loc="upper right")
         frames.append(rasterize(fig))
         plt.close(fig)
-    frames_to_gif(frames, path, duration_ms=110)
+    frames_to_gif(frames, path, duration_ms=90)
 
 
 def gif_allocation_sweep(path: str) -> None:

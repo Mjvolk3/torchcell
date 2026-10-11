@@ -5519,6 +5519,198 @@ class MicroarrayExpressionExperiment(Experiment, ModelStrict):
     phenotype: MicroarrayExpressionPhenotype
 
 
+# --------------------------------------------------------------------------- #
+# MICROARRAY EXPRESSION SCORE BLOCK START (issue #1022)
+# A two-color microarray release that carries a per-gene error-model SCORE (and its
+# p-value) in place of a log ratio: the sibling of MicroarrayExpressionPhenotype.
+# --------------------------------------------------------------------------- #
+class MicroarrayExpressionScorePhenotype(Phenotype, ModelStrict):
+    """Per-gene error-model expression SCORE of a strain against a reference, with its
+    p-value: what a two-color microarray release carries when it releases no ratio.
+
+    Hu, Killion and Iyer 2007 (Nat Genet 39:683; GEO GSE4654) release every TF-deletion
+    transcriptome as the error model's ``X`` score, "a normalized, confidence-weighted
+    measure of each ratio", beside a p-value, and nothing else: no log ratio, no
+    channel intensity. ``X`` is SIGNED like the ratio it weighs (positive = higher in
+    the sample than in the reference) but it is a significance statistic, not a ratio:
+    on GSE4654 ``p == 2 * (1 - Phi(|X|))`` to within the release's rounding.
+
+    Why a sibling of ``MicroarrayExpressionPhenotype`` and not a relaxation of it: that
+    class's label ``expression_log2_ratio`` is documented as ``log2(sample/reference)``
+    and its linear ``expression`` field is required, so storing a score there would
+    assert a log ratio and a signal the release does not carry, and relaxing either
+    field would move the schema closure of the three served microarray stores
+    (Kemmeren 2014, both Sameith 2015 sets) for one release. This class holds exactly
+    what was released, so it is additive: no served record changes.
+
+    Key semantics follow the other dict-valued families: a gene whose spot the release
+    left null for this sample is not a key, never a 0. ``expression_score_p_value``
+    carries the released p-value key for key, or is None on a reference, whose score is
+    the neutral 0 by definition (a reference is not tested against itself).
+
+    ``measurement_type`` names the statistic and its pipeline; ``reference_basis``
+    names the denominator in the source's own terms; ``array_platform`` names the
+    array (a GEO GPL accession and its title), because a score is only comparable
+    within one platform's error model. ``n_replicates`` is the number of independent
+    cultures behind the strain's profile (one count per strain: the release does not
+    say how many arrays entered each gene's score). ``harvest_optical_density`` is the
+    culture density at harvest when the source releases it per strain.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "expression_score"
+    label_statistic_name: str | None = "expression_score_p_value"
+
+    expression_score: dict[str, float] = Field(
+        description=(
+            "SortedDict of the per-gene error-model score of the sample against the "
+            "reference, as released (signed: positive = higher in the sample); a gene "
+            "the release left null is not a key"
+        ),
+        repr=False,
+    )
+    expression_score_p_value: dict[str, float] | None = Field(
+        default=None,
+        description=(
+            "SortedDict of the released per-gene p-value of the score, a probability "
+            "in [0, 1], keyed exactly like expression_score; None on a reference"
+        ),
+        repr=False,
+    )
+    measurement_type: str = Field(
+        description="what the score is and how it was computed, e.g. "
+        "'error_model_x_score_weighted_replicate_average'"
+    )
+    reference_basis: str = Field(
+        description="what the reference channel is, in the source's own terms"
+    )
+    array_platform: str = Field(
+        description="the array the score was measured on, e.g. 'GEO GPL3588: UT Austin "
+        "Iyer yeast 6.4k ORF-only cDNA platform'"
+    )
+    n_replicates: int = Field(
+        description="independent cultures profiled for this strain (a strain-level "
+        "count; the release does not resolve it per gene)"
+    )
+    harvest_optical_density: float | None = Field(
+        default=None,
+        description="culture optical density at harvest as released (averaged over "
+        "the replicate cultures when the source says so); None when not released",
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-gene dicts."""
+        n_p = (
+            len(self.expression_score_p_value)
+            if self.expression_score_p_value is not None
+            else 0
+        )
+        return (
+            f"MicroarrayExpressionScorePhenotype(genes={len(self.expression_score)}, "
+            f"p_value_genes={n_p}, n_replicates={self.n_replicates})"
+        )
+
+    @field_validator("expression_score", mode="before")
+    @classmethod
+    def convert_and_validate_score(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict; refuse an empty map or a non-finite score."""
+        if not isinstance(v, dict):
+            raise ValueError(
+                f"expression_score must be a per-gene dict, got {type(v).__name__}"
+            )
+        if not v:
+            raise ValueError("expression_score cannot be empty")
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"expression_score for {key} is not a number")
+            if not math.isfinite(value):
+                raise ValueError(f"expression_score for {key} is not finite: {value}")
+        return v
+
+    @field_validator("expression_score_p_value", mode="before")
+    @classmethod
+    def convert_and_validate_p_value(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce to a SortedDict; every p-value is a probability in [0, 1]."""
+        if v is None:
+            return v
+        if not isinstance(v, dict):
+            raise ValueError(
+                "expression_score_p_value must be a per-gene dict, got "
+                f"{type(v).__name__}"
+            )
+        if not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        for key, value in v.items():
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"expression_score_p_value for {key} is not a number")
+            if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+                raise ValueError(
+                    f"expression_score_p_value for {key} is {value}, not a "
+                    "probability in [0, 1]"
+                )
+        return v
+
+    @field_validator("measurement_type", "reference_basis", "array_platform")
+    @classmethod
+    def validate_named(cls, v: str) -> str:
+        """The statistic, the denominator and the array are named, never blank."""
+        if not v.strip():
+            raise ValueError(
+                "measurement_type, reference_basis and array_platform cannot be blank"
+            )
+        return v
+
+    @field_validator("n_replicates", mode="after")
+    @classmethod
+    def validate_n_replicates(cls, v: int) -> int:
+        """At least one culture stands behind every profile."""
+        if v < 1:
+            raise ValueError(f"n_replicates must be a positive integer, got {v}")
+        return v
+
+    @field_validator("harvest_optical_density", mode="after")
+    @classmethod
+    def validate_harvest_optical_density(cls, v: float | None) -> float | None:
+        """A released density is finite and positive, or absent."""
+        if v is not None and (not math.isfinite(v) or v <= 0.0):
+            raise ValueError(
+                f"harvest_optical_density must be finite and positive, got {v}"
+            )
+        return v
+
+    @model_validator(mode="after")
+    def validate_p_value_keys(self) -> "MicroarrayExpressionScorePhenotype":
+        """A stored p-value map tests exactly the genes the score map carries."""
+        p_values = self.expression_score_p_value
+        if p_values is not None and set(p_values) != set(self.expression_score):
+            raise ValueError(
+                "expression_score_p_value must have the same keys as expression_score"
+            )
+        return self
+
+
+class MicroarrayExpressionScoreExperimentReference(ExperimentReference, ModelStrict):
+    """Reference context for a microarray expression-score experiment."""
+
+    experiment_reference_type: str = "microarray_expression_score"
+    phenotype_reference: MicroarrayExpressionScorePhenotype
+
+
+class MicroarrayExpressionScoreExperiment(Experiment, ModelStrict):
+    """Experiment measuring a microarray expression-score phenotype."""
+
+    experiment_type: str = "microarray_expression_score"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: MicroarrayExpressionScorePhenotype
+
+
+# --------------------------------------------------------------------------- #
+# MICROARRAY EXPRESSION SCORE BLOCK END (issue #1022)
+# --------------------------------------------------------------------------- #
+
+
 class RNASeqExpressionPhenotype(Phenotype, ModelStrict):
     """NGS (RNA-seq) expression phenotype: ABSOLUTE per-gene expression, not a ratio.
 
@@ -9212,6 +9404,7 @@ PhenotypeType = (
     | SyntheticRescuePhenotype
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
+    | MicroarrayExpressionScorePhenotype  # issue #1022
     | RNASeqExpressionPhenotype
     | PseudobulkExpressionPhenotype
     | VisualScorePhenotype
@@ -9244,6 +9437,7 @@ ExperimentType = (
     | SyntheticRescueExperiment
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
+    | MicroarrayExpressionScoreExperiment  # issue #1022
     | RNASeqExpressionExperiment
     | PseudobulkExpressionExperiment
     | VisualScoreExperiment
@@ -9291,6 +9485,7 @@ ExperimentReferenceType = (
     | SyntheticRescueExperimentReference
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
+    | MicroarrayExpressionScoreExperimentReference  # issue #1022
     | RNASeqExpressionExperimentReference
     | PseudobulkExpressionExperimentReference
     | VisualScoreExperimentReference
@@ -9338,6 +9533,7 @@ EXPERIMENT_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperiment,
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
+    "microarray_expression_score": MicroarrayExpressionScoreExperiment,  # issue #1022
     "rnaseq_expression": RNASeqExpressionExperiment,
     "pseudobulk_expression": PseudobulkExpressionExperiment,
     "visual_score": VisualScoreExperiment,
@@ -9384,6 +9580,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "synthetic rescue": SyntheticRescueExperimentReference,
     "calmorph": CalMorphExperimentReference,
     "microarray_expression": MicroarrayExpressionExperimentReference,
+    "microarray_expression_score": (  # issue #1022
+        MicroarrayExpressionScoreExperimentReference
+    ),
     "rnaseq_expression": RNASeqExpressionExperimentReference,
     "pseudobulk_expression": PseudobulkExpressionExperimentReference,
     "visual_score": VisualScoreExperimentReference,

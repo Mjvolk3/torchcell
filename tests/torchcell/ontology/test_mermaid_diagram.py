@@ -494,13 +494,16 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # umi count phenotype` (Jackson 2020) joined, 42 and 68 since `genome architecture
     # phenotype` (Puddu 2019) joined, the same shape again. 43, 14 and 70 since Hale
     # 2024's `perturbed segregant genotype` joined: one node, one more source on
-    # `genotype member of`, and the new one-line edge `segregant background of`.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (43, 14, 70)
+    # `genotype member of`, and the new one-line edge `segregant background of`. 44 and
+    # 72 since `microarray expression score phenotype` joined (issue #1022), the
+    # phenotype shape once more.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (44, 14, 72)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
-    # member of`` line and the ``segregant background of`` line.
-    assert len(lines) == 186
+    # member of`` line and the ``segregant background of`` line. 190 = 186 + 4 for the
+    # microarray expression score phenotype.
+    assert len(lines) == 190
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

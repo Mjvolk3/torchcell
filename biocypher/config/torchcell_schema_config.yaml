@@ -347,6 +347,28 @@ microarray expression phenotype:
         expression_log2_ratio: str
         expression_log2_ratio_se: str
 
+# --- begin #1022: the error-model microarray score family ---
+# A two-color microarray release that carries a per-gene error-model score and its
+# p-value in place of a log ratio (MicroarrayExpressionScorePhenotype; Hu 2007 GSE4654).
+# The per-gene dicts serialize to JSON strings, the multi-valued phenotype convention;
+# every property is named by its field so the phenotype <-> node class bijection
+# (torchcell/datamodels/ontology_checks.py) matches it without an alias table.
+microarray expression score phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        expression_score: str
+        expression_score_p_value: str
+        measurement_type: str
+        reference_basis: str
+        array_platform: str
+        n_replicates: int
+        harvest_optical_density: float
+# --- end #1022 ---
+
 rnaseq expression phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -763,6 +785,7 @@ phenotype member of:
             gene interaction phenotype,
             calmorph phenotype,
             microarray expression phenotype,
+            microarray expression score phenotype,
             rnaseq expression phenotype,
             pseudobulk expression phenotype,
             visual score phenotype,

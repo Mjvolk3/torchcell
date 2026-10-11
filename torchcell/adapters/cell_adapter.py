@@ -282,6 +282,10 @@ class CellAdapter:
                 self._microarray_expression_phenotype_node,
             ),
             (
+                "microarray expression score phenotype (chunked)",
+                self._microarray_expression_score_phenotype_node,
+            ),
+            (
                 "rnaseq expression phenotype (chunked)",
                 self._rnaseq_expression_phenotype_node,
             ),
@@ -372,6 +376,10 @@ class CellAdapter:
             (
                 "microarray expression phenotype reference",
                 self._get_microarray_expression_phenotype_reference_nodes,
+            ),
+            (
+                "microarray expression score phenotype reference",
+                self._get_microarray_expression_score_phenotype_reference_nodes,
             ),
             (
                 "rnaseq expression phenotype reference",
@@ -2155,6 +2163,73 @@ class CellAdapter:
                 )
             )
         return nodes
+
+    # --- begin #1022: the error-model microarray score family ---
+    @staticmethod
+    def _microarray_expression_score_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``MicroarrayExpressionScorePhenotype`` (experiment or
+        reference).
+
+        The per-gene dicts serialize to JSON strings, the multi-valued phenotype
+        convention; a reference's absent p-value map stays ``None``. The statistic, the
+        reference, the platform, the culture count and the harvest density stay typed
+        so a query can tell scores of one error model from another without parsing.
+        """
+        p_values = phenotype.expression_score_p_value
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "expression_score": json.dumps(phenotype.expression_score),
+            "expression_score_p_value": (
+                json.dumps(p_values) if p_values is not None else None
+            ),
+            "measurement_type": phenotype.measurement_type,
+            "reference_basis": phenotype.reference_basis,
+            "array_platform": phenotype.array_platform,
+            "n_replicates": phenotype.n_replicates,
+            "harvest_optical_density": phenotype.harvest_optical_density,
+        }
+
+    @data_chunker
+    def _microarray_expression_score_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="microarray expression score phenotype",
+            properties=self._microarray_expression_score_properties(phenotype),
+        )
+
+    def _get_microarray_expression_score_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="microarray expression score phenotype",
+                    node_label="microarray expression score phenotype",
+                    properties=self._microarray_expression_score_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end #1022 ---
 
     @data_chunker
     def _rnaseq_expression_phenotype_node(

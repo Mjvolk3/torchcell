@@ -1,0 +1,104 @@
+{
+  "matrix": {
+    "n_strains": 291,
+    "n_conditions": 11984,
+    "n_cells": 3487344,
+    "n_numeric": 3438421,
+    "n_na": 48923,
+    "na_columns_per_strain": {
+      "CTF3": 3565,
+      "LSM6": 3565,
+      "MMS22": 3565,
+      "RAD55": 3565,
+      "RPL43A": 3565,
+      "SAC3": 3565,
+      "TCD1": 8419,
+      "TCD2": 8419,
+      "UBP8": 3565,
+      "YHR003C": 3565,
+      "YKL027W": 3565
+    },
+    "columns_by_screen": {
+      "RIKEN": 8419,
+      "NCI/NIH/GSK": 3565
+    },
+    "label_differs_from_data_set_4": {
+      "Cond-000265": "Herboxy | Herboxydiene"
+    }
+  },
+  "conditions": {
+    "n_rows": 13966,
+    "n_in_final_dataset": 11983,
+    "n_high_confidence": 1522,
+    "matrix_columns_not_final": [
+      "Cond-008510"
+    ],
+    "final_not_in_matrix": [],
+    "matrix_columns_by_collection": {
+      "RIKEN NPDepo": 8419,
+      "GSK-KI": 326,
+      "NCI-MECH-DIV": 824,
+      "NCI-NP": 86,
+      "NCI-ONC": 97,
+      "NCI-STRUCT-DIV": 1487,
+      "NIHCC": 740,
+      "POSCON-CLINICAL-2013": 5
+    },
+    "dose_kinds": {
+      "single": 11976,
+      "range": 8
+    },
+    "range_doses": [
+      "Cond-000010 (-)-Ouabain (10-100-ug/ml)",
+      "Cond-000148 Cisplatin (0.1-10-ug/ml)",
+      "Cond-000220 FK228 (0.5-0.7-mM)",
+      "Cond-000227 Fluconazole (1-10-ug/ml)",
+      "Cond-000355 Mitomycin C (4-10-ug/ml)",
+      "Cond-009662 Nocodazole (0.3-10-ug/ml)",
+      "Cond-009728 Puromycin (50-67-ug/ml)",
+      "Cond-009748 Resveratrol (40-50-ug/ml)"
+    ],
+    "same_name_and_dose_groups": 23,
+    "same_name_dose_and_collection_groups": [
+      "Gramicidin S 10-ug/ml RIKEN NPDepo x2",
+      "Menatetrenone 10-ug/ml RIKEN NPDepo x2",
+      "Thiothixene 10-ug/ml RIKEN NPDepo x2"
+    ],
+    "matrix_columns_without_smiles": 26,
+    "matrix_columns_without_inchi": 33
+  },
+  "pool": {
+    "n_pool_v2": 310,
+    "n_matrix_strains_in_pool": 289,
+    "pool_strains_not_in_matrix": [
+      "AVT5 (YBL089W)",
+      "BAP2 (YBR068C)",
+      "CCZ1 (YBR131W)",
+      "ECM8 (YBR076W)",
+      "GTR1 (YML121W)",
+      "HCM1 (YCR065W)",
+      "HHF1 (YBR009C)",
+      "MUM2 (YBR057C)",
+      "NAM8 (YHR086W)",
+      "PEX2 (YJL210W)",
+      "PHO23 (YNL097C)",
+      "RTT107 (YHR154W)",
+      "SED1 (YDR077W)",
+      "SIC1 (YLR079W)",
+      "SIF2 (YBR103W)",
+      "TSA1 (YML028W)",
+      "UTH1 (YKR042W)",
+      "VPS29 (YHR012W)",
+      "VPS74 (YDR372C)",
+      "VPS8 (YAL002W)",
+      "YMR226C (YMR226C)"
+    ]
+  },
+  "high_confidence_set": {
+    "sha256": "b07029062cb404a7edaf98e932b94f8b992446672b826ce257a84965aa6a55ae",
+    "n_conditions": 1522,
+    "n_strains": 291,
+    "n_cells_compared": 442902,
+    "n_cells_unequal": 0
+  }
+}

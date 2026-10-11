@@ -86,6 +86,10 @@ def _pins_from_constants(
         "GenomeArchitecturePuddu2019Dataset": lambda: {
             m.SI_TABLES_FILENAME: m.SI_TABLES_XLSX_SHA256
         },
+        "MicroarrayScoreHu2007Dataset": lambda: {
+            raw.relpath.rsplit("/", 1)[-1]: raw.sha256
+            for raw in (m.SOFT, m.SI_TABLE1_TEXT)
+        },
         "AminoAcidCooper2010Dataset": lambda: {m.TABLE4_NAME: m.TABLE4_SHA256},
         **{
             name: lambda: {

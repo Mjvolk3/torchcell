@@ -14,3 +14,11 @@ This verifier exists because `ProteinAbundancePhenotype` datasets (WS9 Zelezniak
 - L1 `orf_uniqueness` guards against a knockout appearing in multiple records; L3 `measurement_type_consistent` refuses to silently mix assays.
 - Exposes `protein_gene_set` (the knocked-out ORF union) as the L4 overlap key; the cross-source containment check against the deletion collection is asserted by [[torchcell.verification.runners]], not here.
 - Built from the shared checks in [[torchcell.verification.levels]] and reported via [[torchcell.verification.report]].
+
+## 2026.10.11 - Natural-isolate gates (Muenzner 2024)
+
+- `verify_natural_isolate_proteome` and `verify_natural_isolate_turnover` serve stores whose records are natural isolates, each a perturbation set of thousands of leaves off S288C. L1 is one record per isolate (`strain_uniqueness`, shared with the RNA-seq family) plus `genotype_strain_consistency` (every leaf names one isolate); the ORF-uniqueness rule above does not apply.
+- L3 `shared_reference`: one population reference (the paper's euploid median) serves every record; the proteome gate requires it to cover every measured key, the turnover gate requires the uncovered cells to equal the build ledger's count (939 for Muenzner 2024). The turnover gate re-derives `half_life = ln 2 / degradation_rate` (tolerance 1e-9 relative).
+- L4: protein keys against the S288C R64 ORF + RNA set, the isolate overlap with the built Caudal 2024 store (an exact expected count), and `caudal_genotype_agreement` (sampled shared isolates must carry identical perturbation lists in both stores).
+- L0 validates against `EXPERIMENT_TYPE_MAP[experiment_type]`, not the `ExperimentType` union: the undiscriminated union tries every experiment class and every perturbation leaf, measured 21.8 s against 0.67 s for one 4,768-perturbation record.
+- Entry point: `torchcell.datasets.scerevisiae.muenzner2024.verify_build`, also what `build_dataset_lmdb --verify` and the `natural_isolates` entry of [[torchcell.verification.runners]] `PROTEIN_DATASETS` call. Results: [[torchcell.datasets.scerevisiae.muenzner2024]].

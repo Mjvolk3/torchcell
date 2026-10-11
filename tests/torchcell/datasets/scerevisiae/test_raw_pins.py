@@ -97,6 +97,9 @@ def _pins_from_constants(
             for name in DECHIARA_CLASSES
         },
         "EnvChemgenCostanzo2021Dataset": lambda: {m._S1_FILENAME: m._S1_SHA256},
+        "CrispriSegregantHale2024Dataset": lambda: {
+            name: spec.sha256 for name, spec in m.RELEASED_FILES.items()
+        },
         "MetaboliteDaSilveira2014Dataset": lambda: {
             m.DATA_FILENAME: m.DATA_SHA256,
             m.CHEBI_FILENAME: m.CHEBI_SHA256,

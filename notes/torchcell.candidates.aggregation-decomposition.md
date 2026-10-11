@@ -270,6 +270,16 @@ Serving a study from its own release and from the compendium would store each sa
 - The Price 2018 cross-check bound.
 - Seven registered classes sit under the four admissible verdicts' keys and could leave `GRANDFATHERED`. Five declare a module-level `CITATION_KEY`; `lamoureux2023_public_k12.py` and `lamoureux2023_growth.py` do not, so those two need one first. The enforcement test pins `len(GRANDFATHERED) == 134`, so any departure moves that pin.
 
+### Issues filed (2026-10-11)
+
+Umbrella #931 (`dataset`, `before-next-kg-build`), with the counts, the owner decisions and the Public K-12 list. One issue per original study loadable from its own release and not yet loaded, in the recommended order:
+
+- Borchert 2024 (9): #932 Schmidt 2022; #933 Thompson 2020; #934 Incha 2020; #935 Rand 2017; #936 Thompson 2019 lysine (browser pubId Thompson18); #937 Garber 2020; #938 Price 2019 (browser pubId Price18b); #939 Price 2021 (browser pubId Price21b); #940 Thompson 2019 valerolactam (browser pubId Thompson19).
+- Lim 2022 (12): #941 Pobre 2020; #942 Bojanovič 2017; #943 Miyazaki 2018; #944 Nakamura 2020; #945 Lim 2020; #946 Lim 2021; #947 D'Arrigo 2019; #948 Bentley 2020; #949 Xiao 2018; #950 Lei 2020; #951 La Rosa 2015; #952 Jayakody 2018.
+- PRECISE-1K (24): #953 Tan 2019; #954 Tan 2020; #955 Sastry 2019; #956 Choudhary 2020; #957 Sastry 2021; #958 Gao 2018; #959 Anand 2019 (OxyR Is a Convergent Target for...); #960 Guzmán 2018 (Enzyme promiscuity shapes evolutionary innovation and...); #961 Latif 2018; #962 Sandberg 2017; #963 Anand 2019 (Pseudogene repair driven by selection pressure...); #964 Guzmán 2018 (Reframing gene essentiality in terms of...); #965 Utrilla 2016; #966 Ebrahim 2016; #967 Kim 2018; #968 Anand 2019 (Adaptive evolution reveals a tradeoff between...); #969 Sandberg 2014; #970 Bordbar 2014; #971 Seo 2015 (Genome-wide Reconstruction of OxyR and SoxRS...); #972 Anand 2021; #973 Seo 2014; #974 Seo 2015 (Decoding genome-wide GadEWX-transcriptional regulatory networks reveals...); #975 LaCroix 2015; #976 Seo 2017.
+
+Not filed per study: Wetmore 2015 (in flight on `feat/ecoli-wetmore2015-own-release`), the unattributed releases, and Public K-12 (owner decisions in #931). Comments with the browser measurement went to #908 (7 Thompson 2019 lysine samples, not 4), #860 (the browser lists `RCH2_defined_noCarbon`; 16 Rand 2017 samples on it) and #861 (per-strain fitness file answers 200).
+
 ### Preparing for SPELL and YEASTRACT
 
 Nothing yeast is loaded here. Measured by `aggregation_decomposition_audit.py --yeast-only` (`results/aggregation_decomposition_yeast_sources.json`) and, for SPELL, recorded in [[experiments.015-spell.publications]].

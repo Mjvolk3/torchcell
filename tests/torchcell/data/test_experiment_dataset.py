@@ -898,3 +898,46 @@ def test_check_manifest_pin_names_the_path_and_both_digests() -> None:
         "aa",
         "bb",
     )
+
+
+class InternedGenotypeToyDataset(ToyDataset):
+    """The toy records with each GENOTYPE interned too, as a natural-isolate store does."""
+
+    @post_process
+    def process(self) -> None:
+        """Write the records with the genotype replaced by a ``$ref`` pointer."""
+        Path(self.preprocess_dir).mkdir(parents=True, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(f"{self.processed_dir}/lmdb")
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for i, (experiment, reference) in enumerate(RECORDS):
+                record = pickle.loads(
+                    self._intern_record(experiment, reference, PUBLICATION, itxn)
+                )
+                ref = f"genotype-{i}"
+                genotype = record["experiment"]["genotype"]
+                itxn.put(ref.encode(), pickle.dumps(genotype))
+                record["experiment"]["genotype"] = {"$ref": ref, "name": "genotype"}
+                txn.put(f"{i}".encode(), pickle.dumps(record))
+        env.close()
+        interned_env.close()
+
+
+def test_the_sequential_gene_set_resolves_an_interned_genotype(
+    tmp_path: Path, no_git: None
+) -> None:
+    """``compute_gene_set_sequential`` reads the genotype through the interned env.
+
+    The stored records carry ``{"$ref": "genotype-<i>"}`` where the genotype was, and
+    the gene set and the read-back records are those of the inline toy store.
+    """
+    dataset = InternedGenotypeToyDataset(root=str(tmp_path / "interned_slug"))
+    env = lmdb.open(f"{dataset.processed_dir}/lmdb", readonly=True, lock=False)
+    with env.begin() as txn:
+        raw = pickle.loads(txn.get(b"1"))
+    env.close()
+    assert raw["experiment"]["genotype"] == {"$ref": "genotype-1", "name": "genotype"}
+    assert dataset.compute_gene_set_sequential() == GeneSet(
+        ["YAL001C", "YAL002W", "YBR001C"]
+    )
+    assert dataset.gene_set == GeneSet(["YAL001C", "YAL002W", "YBR001C"])
+    assert dataset[1] == _dumped(1)

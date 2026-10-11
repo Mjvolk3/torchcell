@@ -226,3 +226,29 @@ def test_subset_dataset_samples_with_the_seed_and_sorts() -> None:
     assert subset_dataset(dataset, 3, 42) == ("view", [0, 1, 4])
     assert subset_dataset(dataset, 3) == ("view", [0, 1, 4])
     assert subset_dataset(dataset, 2, 42, [4, 1, 3]) == ("view", [3, 4])
+
+
+def test_select_indices_resolves_a_genotype_interned_in_the_sibling_env(
+    tmp_path: Path,
+) -> None:
+    """A record whose genotype is a ``$ref`` into ``../interned`` reads as the genotype.
+
+    Three records share one interned genotype (["A", "B"]) and one stays inline (["C"]),
+    the layout a natural-isolate store writes.
+    """
+    processed = tmp_path / "processed"
+    processed.mkdir()
+    ienv = lmdb.open(str(processed / "interned"), map_size=2**24)
+    with ienv.begin(write=True) as itxn:
+        itxn.put(b"g1", pickle.dumps(_record(["A", "B"])["experiment"]["genotype"]))
+    ienv.close()
+    pointer = {"experiment": {"genotype": {"$ref": "g1", "name": "genotype A B"}}}
+    env = lmdb.open(str(processed / "lmdb"), map_size=2**24)
+    with env.begin(write=True) as txn:
+        for index in (0, 1, 3):
+            txn.put(str(index).encode(), pickle.dumps(pointer))
+        txn.put(b"2", pickle.dumps(_record(["C"])))
+    env.close()
+    path = str(processed / "lmdb")
+    assert select_indices(path, RecordFilter(all_genes=["A", "B"])) == [0, 1, 3]
+    assert select_indices(path, RecordFilter(n_perturbations=[1])) == [2]

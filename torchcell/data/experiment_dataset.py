@@ -770,10 +770,18 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
             return self.compute_gene_set_sequential()
 
     def compute_gene_set_sequential(self) -> GeneSet:
-        """Compute the gene set by scanning every LMDB entry in order."""
+        """Compute the gene set by scanning every LMDB entry in order.
+
+        The genotype is resolved through the sibling ``interned`` env, so a store that
+        interns a genotype shared by many records (a natural isolate's perturbation
+        set, constant across its environments) reads the same as an inline one.
+        """
         gene_set = GeneSet()
         if self.env is None:
             self._init_db()
+        if self._interned is None:
+            self._load_interned()
+        interned = cast("dict[str, Any]", self._interned)
 
         with self.env.begin() as txn:
             cursor = txn.cursor()
@@ -783,7 +791,7 @@ class ExperimentDataset(Dataset, ABC):  # type: ignore[misc]  # Dataset is untyp
                 experiment = deserialized_data["experiment"]
 
                 extracted_gene_names = self.extract_systematic_gene_names(
-                    experiment["genotype"]
+                    resolve_interned(experiment["genotype"], interned)
                 )
                 for gene_name in extracted_gene_names:
                     gene_set.add(gene_name)

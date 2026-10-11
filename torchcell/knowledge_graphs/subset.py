@@ -39,6 +39,8 @@ from typing import Any
 import lmdb
 from pydantic import BaseModel, model_validator
 
+from torchcell.data.experiment_dataset import resolve_interned
+
 log = logging.getLogger(__name__)
 
 
@@ -127,16 +129,39 @@ def _perturbation_summary(record: dict[str, Any]) -> tuple[frozenset[str], int]:
     )
 
 
+def _interned_table(lmdb_path: str) -> dict[str, Any]:
+    """The sibling ``interned`` env of a records LMDB as a dict; empty when absent."""
+    interned_dir = osp.join(osp.dirname(osp.normpath(lmdb_path)), "interned")
+    if not osp.isdir(interned_dir):
+        return {}
+    ienv = lmdb.open(
+        interned_dir, readonly=True, lock=False, readahead=False, meminit=False
+    )
+    with ienv.begin() as itxn:
+        table = {key.decode(): pickle.loads(value) for key, value in itxn.cursor()}
+    ienv.close()
+    return table
+
+
 def select_indices(lmdb_path: str, record_filter: RecordFilter) -> list[int]:
-    """Return the indices of records satisfying ``record_filter``, in one LMDB pass."""
+    """Return the indices of records satisfying ``record_filter``, in one LMDB pass.
+
+    A genotype interned in the sibling ``interned`` env (a natural isolate's
+    perturbation set, shared by its records) is resolved before it is read.
+    """
     indices: list[int] = []
+    interned = _interned_table(lmdb_path)
     env = lmdb.open(
         lmdb_path, readonly=True, lock=False, readahead=False, meminit=False
     )
     with env.begin() as txn:
         total = txn.stat()["entries"]
         for key, value in txn.cursor():
-            genes, n_perturbations = _perturbation_summary(pickle.loads(value))
+            record = pickle.loads(value)
+            record["experiment"]["genotype"] = resolve_interned(
+                record["experiment"]["genotype"], interned
+            )
+            genes, n_perturbations = _perturbation_summary(record)
             if record_filter.matches(genes, n_perturbations):
                 indices.append(int(key.decode()))
     env.close()

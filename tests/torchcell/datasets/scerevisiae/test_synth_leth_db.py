@@ -141,23 +141,26 @@ def _genome(root: Path) -> SCerevisiaeGenome:
     return cast(SCerevisiaeGenome, _StubGenome(str(root)))
 
 
-_HEADER = "n1.name,n1.identifier,n2.name,n2.identifier,r.statistic_score,r.pubmed_id\n"
+_HEADER = (
+    "n1.name,n1.identifier,n2.name,n2.identifier,r.statistic_score,r.pubmed_id,"
+    "r.source\n"
+)
 _SL_ROWS = [
-    "TFC3,1001,VPS8,1002,0.85,12345678\n",  # 0: standard names
-    "TSV115,1001,EFB1,1003,0.5,23456789\n",  # 1: an alias
-    "YAL005C,1005,IMP2',1011,0.1,34567890\n",  # 2: systematic name, primed alias
-    "YAL014C,1014,TEF5,1003,0.3,45678901\n",  # 3: a name-less ORF
-    "SSA1,1005,VPS8,1002,,56789012\n",  # 4: empty score
-    "STM1,1012,EFB1,1003,0.2,333;444\n",  # 5: standard name shadowed by an alias
-    "VPS8,1001,EFB1,1003,0.4,222\n",  # 6: name disagrees with its Entrez id
-    "TFC3,1001,GHOST,9999,0.4,333\n",  # 7: Entrez id not in the GFF
-    "TFC3,1001,TSV115,1001,0.7,444\n",  # 8: one gene on both sides
-    "SHARED,1002,TFC3,1001,0.6,555\n",  # 9: an alias on two genes (ambiguous)
+    "TFC3,1001,VPS8,1002,0.85,12345678,Low Throughput\n",  # 0: standard names
+    "TSV115,1001,EFB1,1003,0.5,23456789,Low Throughput\n",  # 1: an alias
+    "YAL005C,1005,IMP2',1011,0.1,34567890,Low Throughput\n",  # 2: systematic name, primed alias
+    "YAL014C,1014,TEF5,1003,0.3,45678901,Low Throughput\n",  # 3: a name-less ORF
+    "SSA1,1005,VPS8,1002,,56789012,Low Throughput\n",  # 4: empty score
+    "STM1,1012,EFB1,1003,0.2,333;444,Low Throughput\n",  # 5: standard name shadowed by an alias
+    "VPS8,1001,EFB1,1003,0.4,222,Low Throughput\n",  # 6: name disagrees with its Entrez id
+    "TFC3,1001,GHOST,9999,0.4,333,Low Throughput\n",  # 7: Entrez id not in the GFF
+    "TFC3,1001,TSV115,1001,0.7,444,Low Throughput\n",  # 8: one gene on both sides
+    "SHARED,1002,TFC3,1001,0.6,555,Low Throughput\n",  # 9: an alias on two genes (ambiguous)
 ]
 _SR_ROWS = [
-    "TFC3,1001,VPS8,1002,0.42,11111111\n",
-    "SSA1,1005,YAL014C,1014,,22222222\n",
-    "EFB1,1003,EFB1,1003,,33333333\n",
+    "TFC3,1001,VPS8,1002,0.42,11111111,BioGRID\n",
+    "SSA1,1005,YAL014C,1014,,22222222,BioGRID\n",
+    "EFB1,1003,EFB1,1003,,33333333,BioGRID\n",
 ]
 
 _ENVIRONMENT = s.SYNLETHDB_ENVIRONMENT
@@ -462,17 +465,22 @@ def test_sl_side_files_single_reference_gene_set_and_ledger(
 def test_sr_records_match_the_source_rows_and_nan_score_becomes_none(
     sr: s.SynthRescueYeastSynthLethDbDataset,
 ) -> None:
-    """Record 0 (``TFC3,1001,VPS8,1002,0.42,11111111``): ``is_synthetic_rescue True``
-    score 0.42, reference ``False`` / None. Record 1 (``SSA1,1005,YAL014C,1014,,...``):
-    the empty score is ``None``. Row 2 (``EFB1`` twice, Entrez 1003 twice) is a self
-    pair and is dropped, so the store holds 2 records.
+    """Record 0 (``TFC3,1001,VPS8,1002,0.42,11111111``): ``is_synthetic_rescue True``,
+    reference ``False`` / None. The released 0.42 has no sourced definition (#903), so
+    the score is ``None`` with a ``deferred_pending_source_review`` gap whose note
+    carries 0.42, the source and the PMID verbatim. Record 1
+    (``SSA1,1005,YAL014C,1014,,...``): the empty score is ``None`` with NO gap (the
+    release states none). Row 2 (``EFB1`` twice, Entrez 1003 twice) is a self pair and is
+    dropped, so the store holds 2 records.
     """
     expected = SyntheticRescueExperiment(
         dataset_name="SynthRescueYeastSynthLethDbDataset",
         genotype=_pair(("YAL001C", "YAL002W"), ("TFC3", "VPS8")),
         environment=_ENVIRONMENT,
         phenotype=SyntheticRescuePhenotype(
-            is_synthetic_rescue=True, synthetic_rescue_statistic_score=0.42
+            is_synthetic_rescue=True,
+            synthetic_rescue_statistic_score=None,
+            provenance_gaps=[s.sr_score_gap(0.42, "BioGRID", "11111111")],
         ),
     )
     expected_reference = SyntheticRescueExperimentReference(
@@ -487,8 +495,17 @@ def test_sr_records_match_the_source_rows_and_nan_score_becomes_none(
     assert sr[0]["experiment"] == expected.model_dump()
     assert sr[0]["reference"] == expected_reference.model_dump()
     assert sr[0]["publication"] == _publication("11111111").model_dump()
+    (gap,) = sr[0]["experiment"]["phenotype"]["provenance_gaps"]
+    assert gap["field"] == "synthetic_rescue_statistic_score"
+    assert gap["reason"] == "deferred_pending_source_review"
+    assert gap["resolve_with"]["source_uri"] == "https://doi.org/10.1093/nar/gky1079"
+    assert gap["note"].startswith(
+        "Yeast_SR.csv states r.statistic_score 0.42 (r.source BioGRID, r.pubmed_id "
+        "11111111)"
+    )
     second = sr.transform_item(sr[1])
     assert second["experiment"].phenotype.synthetic_rescue_statistic_score is None
+    assert second["experiment"].phenotype.provenance_gaps == []
     assert second["experiment"].genotype.systematic_gene_names == ["YAL005C", "YAL014C"]
     assert second["publication"] == _publication("22222222")
     assert sr.raw_file_names == ["Yeast_SR.csv"]
@@ -845,3 +862,48 @@ def test_real_files_resolve_by_entrez_with_the_issue_counts(
                 if name in issue_table:
                     seen.setdefault(name, set()).add(orf)
     assert seen == {name: {orf} for name, orf in issue_table.items()}
+
+
+@pytest.mark.data
+def test_real_files_state_74_undefined_sr_scores_and_four_sl_source_types() -> None:
+    """On the pinned files (#902, #903, and the aggregation record of plan decision 15):
+    ``Yeast_SR.csv`` states a score on 74 of 6,948 rows, every one ``r.source`` BioGRID
+    and PubMed 24470217, from -1.0 to -0.2, so each becomes a typed gap; ``Yeast_SL.csv``
+    names four source types and 1,741 distinct PubMed ids, every SL score in [0.25, 1].
+    """
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    data_root = os.environ["DATA_ROOT"]
+    sr = s._read_synlethdb_csv(
+        osp.join(data_root, "data/torchcell/syn_rescue_db_yeast/raw", s.SR_CSV_NAME)
+    )
+    scored = sr[sr["r.statistic_score"].notna()]
+    assert (len(sr), len(scored)) == (6948, 74)
+    assert set(scored["r.source"]) == {"BioGRID"}
+    assert set(scored["r.pubmed_id"]) == {"24470217"}
+    assert (scored["r.statistic_score"].min(), scored["r.statistic_score"].max()) == (
+        -1.0,
+        -0.2,
+    )
+    gaps = [
+        s.sr_score_gap(float(v), str(src), str(pmid))
+        for v, src, pmid in zip(
+            scored["r.statistic_score"],
+            scored["r.source"],
+            scored["r.pubmed_id"],
+            strict=True,
+        )
+    ]
+    assert {g.reason.value for g in gaps} == {"deferred_pending_source_review"}
+    sl = s._read_synlethdb_csv(
+        osp.join(data_root, "data/torchcell/syn_leth_db_yeast/raw", s.SL_CSV_NAME)
+    )
+    assert sl["r.source"].value_counts().to_dict() == {
+        "High Throughput": 7721,
+        "Low Throughput": 4944,
+        "High Throughput|Low Throughput": 1248,
+        "Text Mining": 87,
+    }
+    assert sl["r.pubmed_id"].nunique() == 1741
+    assert sl["r.statistic_score"].between(0.25, 1.0).all()

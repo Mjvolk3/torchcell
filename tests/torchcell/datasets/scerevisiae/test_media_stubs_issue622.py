@@ -15,8 +15,8 @@ no provenance. Each loader now emits a sourced medium object. Pinned here:
   the library YPD, MES buffer, Trp/Ura/Ade), so its identity is NOT ``YPD_LIQUID``'s,
   and the tryptophan amount printed as "40 mg/ml" is held as an open gap;
 - SynLethDB carries no medium and no temperature, so its environment is a
-  composition-deferred placeholder medium plus a ``not_carried_by_curation`` gap on
-  ``temperature``;
+  ``not_carried_by_curation`` gap on both (since #902/#903 the medium is ``None`` with
+  a typed gap; the composition-deferred placeholder medium of #622 joined nothing);
 - every loader-side quote is a verbatim substring of its pinned mirror file (skipped
   when the mirror is not mounted).
 """
@@ -30,12 +30,7 @@ import pytest
 
 from torchcell.datamodels.identity import media_identity
 from torchcell.datamodels.media import SC, SC_URA, YPD_LIQUID
-from torchcell.datamodels.schema import (
-    ComponentDefinition,
-    Concentration,
-    ConcentrationUnit,
-    Media,
-)
+from torchcell.datamodels.schema import Concentration, ConcentrationUnit, Media
 from torchcell.datasets.scerevisiae import (
     caudal2024,
     dasilveira2014,
@@ -172,20 +167,20 @@ def test_da_silveira_ypd_is_its_own_printed_recipe() -> None:
 
 
 def test_synlethdb_environment_carries_no_invented_medium_or_temperature() -> None:
-    """The old ``YEPD`` solid at 30 C was a default no SynLethDB field states."""
+    """The old ``YEPD`` solid at 30 C was a default no SynLethDB field states; since
+    #902/#903 neither the medium nor the temperature is an object, both are gaps.
+    """
     env = synth_leth_db.SYNLETHDB_ENVIRONMENT
     assert env.temperature is None
+    assert env.media is None
     assert [(g.field, g.reason) for g in env.provenance_gaps] == [
-        ("temperature", ProvenanceGapReason.not_carried_by_curation)
+        ("media", ProvenanceGapReason.not_carried_by_curation),
+        ("temperature", ProvenanceGapReason.not_carried_by_curation),
     ]
-    media = env.media
-    assert media.base_medium is None
-    assert len(media.components) == 1
-    only = media.components[0]
-    assert only.definition is ComponentDefinition.composition_deferred
-    assert only.concentration is None
-    assert media.provenance[0].quote == synth_leth_db.SYNLETHDB_ENTRY_FIELDS_QUOTE
-    assert "YEPD" not in media.name
+    medium_gap = env.provenance_gaps[0]
+    assert medium_gap.looked_in is not None
+    assert medium_gap.looked_in.citation_key == synth_leth_db.SYNLETHDB_CITATION_KEY
+    assert synth_leth_db.SYNLETHDB_ENTRY_FIELDS_QUOTE in str(medium_gap.note)
 
 
 def _all_loader_media() -> list[tuple[str, Media]]:
@@ -193,7 +188,6 @@ def _all_loader_media() -> list[tuple[str, Media]]:
         *((loader, media) for loader, media, _, _ in _RESTATED),
         ("ozaydin2013", ozaydin2013.OZAYDIN_SC_URA_AGAR),
         ("dasilveira2014", dasilveira2014.DA_SILVEIRA_YPD),
-        ("synth_leth_db", synth_leth_db.SYNLETHDB_MEDIUM_NOT_CARRIED),
     ]
 
 
@@ -221,9 +215,9 @@ def test_loader_quotes_are_verbatim_in_the_mirrored_papers() -> None:
         *(sv for _, _, _, statements in _RESTATED for sv in statements),
         *ozaydin2013.SOURCED_VALUES.values(),
         *dasilveira2014.SOURCED_VALUES.values(),
-        *synth_leth_db.SYNLETHDB_MEDIUM_NOT_CARRIED.provenance,
+        *synth_leth_db.SYNLETHDB_SOURCED_QUOTES,
     ]
-    assert len(loader_values) == 21
+    assert len(loader_values) == 24
     for value in loader_values:
         result = audit_sourced_value(value, root)
         assert result.passed, f"{value.provenance.citation_key}: {result.message}"

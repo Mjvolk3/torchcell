@@ -40,7 +40,6 @@ Reads ``closure/entries.parquet`` under ``$DATA_ROOT``; writes
 
 from __future__ import annotations
 
-import json
 import os
 import os.path as osp
 import re

@@ -1,7 +1,7 @@
 # experiments/030-solid-growth-multi/scripts/subset_definitions_030_q.py
 # [[experiments.030-solid-growth-multi.scripts.subset_definitions_030_q]]
 # https://github.com/Mjvolk3/torchcell/tree/main/experiments/030-solid-growth-multi/scripts/subset_definitions_030_q
-"""The query-pair-disjoint (Q) split and the strict closure pool S3Q on the 030 build.
+r"""The query-pair-disjoint (Q) split and the strict closure pool S3Q on the 030 build.
 
 025 defined Q (``experiments/025-solid-growth/scripts/subset_definitions.py``): every
 gene pair that recurs in at least 5 triples is a candidate query pair; each triple is

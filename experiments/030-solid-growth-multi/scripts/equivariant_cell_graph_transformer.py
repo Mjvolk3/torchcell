@@ -252,13 +252,21 @@ def main(cfg: DictConfig) -> None:
     norm_config = transform_config["normalization"]
     stats_name = str(wandb.config.transforms["fit_stats"])
     stats_file = load_json_artifact(stats_name)
+    # An ARM refuses constants fitted on another training set. A scaling-sweep SUBSET of
+    # that arm keeps the full pool's constants on purpose (`transforms.fit_stats_strict:
+    # false`), so every point of the curve optimizes the same normalized target and the
+    # normalized losses are comparable across D; the original-unit metrics are unaffected.
+    stats_strict = bool(wandb_cfg["transforms"].get("fit_stats_strict", True))
     if stats_file["train_index_sha256"] != train_sha:
-        raise ValueError(
+        msg = (
             f"{stats_name} was fitted on training set {stats_file['train_index_sha256'][:12]} "
             f"({stats_file['n_train_records']} records); this arm trains "
-            f"{train_sha[:12]} ({len(train_records)} records). Rerun "
-            "make_normalization_stats_030.py for this arm."
+            f"{train_sha[:12]} ({len(train_records)} records)."
         )
+        if stats_strict:
+            raise ValueError(msg + " Rerun make_normalization_stats_030.py for this arm.")
+        print(f"fit_stats_strict=false: {msg} Using the file's constants (a sweep subset).")
+        wandb.log({"arm/fit_stats_foreign": 1})
     norm_transform = COOLabelNormalizationTransform(
         dataset, norm_config, fit_stats=stats_file["stats"]
     )

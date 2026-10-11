@@ -36,12 +36,25 @@ back when reviewing. The reference is `notes-tex/modeling/scaling-laws/`.
 5. **The evaluation set is fixed and its leak audit is written down**: which training
    records could carry a held-out unit, how many, and that they were removed
    (`subset_definitions_030_q_summary.json` is the model).
-6. **Loss is logged, not only the downstream metric.** `val/point_loss` (normalized MSE)
-   is what a power law is fit to; Pearson plateaus and is the readout, not the fit target.
+6. **Loss is logged, not only the downstream metric, and it is fitted in LABEL units.**
+   `val/point_loss` is in each arm's own normalized units (the constants are fitted per
+   training set), so it is not comparable across arms or across a D sweep that refits
+   them. The fit target is the original-unit MSE after the inverse transform,
+   `val/gene_interaction/MSE`, and on the trigenic builds the per-screen keys
+   `val/token/<Tmi...>/gene_interaction/MSE`: the two Kuzmin screens differ in mean by
+   about one sd, which puts a 0.35 Pearson floor under every pooled number and a
+   different replicate floor under each screen, so curves are fitted per screen. A
+   sweep's subsets keep the FULL pool's normalization constants
+   (`transforms.fit_stats_strict=false` on 030) so the optimization target does not move
+   with D. Pearson plateaus and is the readout, not the fit target.
 7. **Seeds where they are cheap**: three at the two smallest sizes of any size ladder,
    so the bootstrap has a noise floor.
 8. **Learning rate suits each size** (tuned per size, or at least checked at the
    smallest), and the epoch budget is sized from a measured learning curve, not guessed.
+   Pace is per GPU: a 4-GPU epoch time read as a 1-GPU time was 4x wrong once (one A40
+   does about 68 records/s at the 180x8 size, 4.3 h per S3Q epoch). Every grid starts
+   with a short calibration job that logs `compute/records_seen` and
+   `compute/gpu_hours_cumulative`.
 9. **The replicate floor E is computed before the sweep**, in the loss's units, from the
    re-measured records of the evaluation set (`triple_noise_ceiling_030.py` has the
    method). A fitted E below it is a wrong fit; one far above says the model family is
@@ -66,3 +79,7 @@ back when reviewing. The reference is `notes-tex/modeling/scaling-laws/`.
 - Forms, fitting code, synthetic exercise: `experiments/041-scaling-laws/scripts/scaling_law_forms.py`.
 - Replicate floor on the trigenic score: `experiments/030-solid-growth-multi/scripts/triple_noise_ceiling_030.py`.
 - Design for the trigenic build: `notes-tex/modeling/scaling-laws/sections/5-torchcell.tex`.
+- The Delta grid as built: `experiments/030-solid-growth-multi/scripts/delta_submit_scaling_030.sh`
+  (030 per-entry, 5 sizes x 4 subsets, chains), `experiments/025-solid-growth/scripts/
+  delta_submit_scaling.sh` (the paired merged-label curve), readout
+  `experiments/030-solid-growth-multi/scripts/scaling_readout_030.py`.

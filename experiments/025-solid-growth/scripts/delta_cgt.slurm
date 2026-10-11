@@ -138,6 +138,18 @@ if [[ "$STAGE_LMDB" == "1" && "$CONFIG_NAME" != cgt_010b_* ]]; then
   trap 'rm -rf "${SLURM_TMPDIR:-/tmp}/$SLURM_JOB_ID"' EXIT
 fi
 
+# ---- CONTINUATION (the 025 script takes +resume.ckpt_path since 2026-10-11) ----
+# RESUME_FROM_JOB=<slurm job id> resumes the full training state of that job's
+# <run>-last.ckpt under $DATA_ROOT/models/checkpoints/*-<jobid>_*/ (checkpoints stay on
+# /scratch; only the LMDB is local). Submit the link with --dependency=afterany:<jobid>.
+if [[ -n "${RESUME_FROM_JOB:-}" ]]; then
+  # After staging, DELTA_DATA_ROOT/models is a symlink back to /scratch, so this resolves either way.
+  mapfile -t CKPTS < <(ls -t "$DELTA_DATA_ROOT"/models/checkpoints/*-"${RESUME_FROM_JOB}"_*/*-last.ckpt 2>/dev/null)
+  [[ "${#CKPTS[@]}" -ge 1 ]] || { echo "ERROR: no *-last.ckpt for job $RESUME_FROM_JOB under models/checkpoints" >&2; exit 1; }
+  echo "resuming from ${CKPTS[0]}"
+  OVERRIDES+=("+resume.ckpt_path=${CKPTS[0]}")
+fi
+
 cd "$PROJECT_ROOT/experiments" || exit 1
 
 export DATA_ROOT="$DELTA_DATA_ROOT"

@@ -861,7 +861,17 @@ def main(cfg: DictConfig) -> None:
         precision=wandb.config.trainer.get("precision", "32-true"),
     )
 
-    trainer.fit(model=task, datamodule=data_module)
+    # A continuation: `+resume.ckpt_path=<...-last.ckpt>` hands Lightning the full training
+    # state (weights, optimizer, epoch counter, the compute-accounting counters), as the
+    # 030 script does; `model.checkpoint_path` above is weights-only and starts at epoch 0.
+    resume_cfg = wandb_cfg.get("resume") or {}
+    ckpt_path = resume_cfg.get("ckpt_path")
+    if ckpt_path is not None:
+        if not osp.exists(ckpt_path):
+            raise FileNotFoundError(f"resume.ckpt_path not found: {ckpt_path}")
+        wandb.config.update({"resumed_from": ckpt_path}, allow_val_change=True)
+        print(f"resuming full training state from {ckpt_path}")
+    trainer.fit(model=task, datamodule=data_module, ckpt_path=ckpt_path)
 
     # Store metrics in variables first
     mse = trainer.callback_metrics["val/gene_interaction/MSE"].item()

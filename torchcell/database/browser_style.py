@@ -110,6 +110,7 @@ LANE_OF_LABEL: dict[str, str] = {
     # store carries, and no variant dataset is served yet.
     "BacterialSequenceVariantPerturbation": "genotype",
     "SegregantGenotype": "genotype",
+    "PerturbedSegregantGenotype": "genotype",  # Hale 2024
     "CrisprConstruct": "genotype",
     "Environment": "environment",
     "Media": "environment",
@@ -143,6 +144,7 @@ CAPTION_OF_LABEL: dict[str, str] = {
     "BacterialPerturbation": "{perturbed_gene_name}",
     "BacterialSequenceVariantPerturbation": "{perturbed_gene_name}",
     "SegregantGenotype": "{segregant_id}",
+    "PerturbedSegregantGenotype": "{segregant_id}",
     "CrisprConstruct": "{effector}",
     "Environment": "{media}",
     "Media": "{name}",

@@ -229,6 +229,13 @@ class CellAdapter:
             ("experiment (chunked)", self._experiment_node),
             ("genotype (chunked)", self._genotype_node),
             ("segregant genotype (chunked)", self._segregant_genotype_node),
+            # --- begin Hale 2024: a perturbation on a segregant background ---
+            (
+                "perturbed segregant genotype (chunked)",
+                self._perturbed_segregant_genotype_node,
+            ),
+            ("segregant background (chunked)", self._segregant_background_node),
+            # --- end Hale 2024 ---
             ("perturbation (chunked)", self._perturbation_node),
             ("bacterial perturbation (chunked)", self._bacterial_perturbation_node),
             (
@@ -460,6 +467,12 @@ class CellAdapter:
                 "perturbation to genotype (chunked)",
                 self._perturbation_to_genotype_edges,
             ),
+            # --- begin Hale 2024 ---
+            (
+                "segregant background to genotype (chunked)",
+                self._segregant_background_to_genotype_edge,
+            ),
+            # --- end Hale 2024 ---
             (
                 "crispr construct to perturbation (chunked)",
                 self._crispr_construct_to_perturbation_edges,
@@ -1053,6 +1066,75 @@ class CellAdapter:
         self, data: dict[str, Any], method_name: str
     ) -> BioCypherNode:
         return self._segregant_genotype_node_from(data["experiment"].genotype)
+
+    # --- Perturbed segregant genotypes (Hale 2024; a sibling of Genotype) ---
+    # A PerturbedSegregantGenotype is a segregant mosaic PLUS designed gene-keyed
+    # perturbations. Its own node carries both halves' queryable scalars (the cross and
+    # segregant of the background, the gene lists of the perturbations), so a gene-keyed
+    # query that reaches it also sees it is not an S288C derivative. The background is
+    # ALSO emitted as the plain ``segregant genotype`` node it is (id = sha256 of its
+    # dump), joined by ``segregant background of``, so every perturbation measured on one
+    # segregant hangs off one shared background node. ``perturbation (chunked)`` and the
+    # CRISPR construct methods read ``genotype.perturbations`` and work unchanged.
+
+    @staticmethod
+    def _perturbed_segregant_genotype_node_from(genotype: Any) -> BioCypherNode:
+        genotype_id = hashlib.sha256(
+            json.dumps(genotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        background = genotype.background
+        return BioCypherNode(
+            node_id=genotype_id,
+            preferred_id="perturbed segregant genotype",
+            node_label="perturbed segregant genotype",
+            properties={
+                "cross": background.cross,
+                "segregant_id": background.segregant_id,
+                "background_role": genotype.background_role,
+                "parent_1": background.parent_1.name,
+                "parent_2": background.parent_2.name,
+                "n_blocks": len(background.blocks),
+                "systematic_gene_names": genotype.systematic_gene_names,
+                "perturbed_gene_names": genotype.perturbed_gene_names,
+                "perturbation_types": genotype.perturbation_types,
+            },
+        )
+
+    @data_chunker
+    def _perturbed_segregant_genotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        return self._perturbed_segregant_genotype_node_from(data["experiment"].genotype)
+
+    @data_chunker
+    def _segregant_background_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        """The background mosaic of a perturbed segregant, as a ``segregant genotype``."""
+        return self._segregant_genotype_node_from(
+            data["experiment"].genotype.background
+        )
+
+    @staticmethod
+    def _segregant_background_to_genotype_edge_from(genotype: Any) -> BioCypherEdge:
+        return BioCypherEdge(
+            source_id=hashlib.sha256(
+                json.dumps(genotype.background.model_dump()).encode("utf-8")
+            ).hexdigest(),
+            target_id=hashlib.sha256(
+                json.dumps(genotype.model_dump()).encode("utf-8")
+            ).hexdigest(),
+            relationship_label="segregant background of",
+        )
+
+    @data_chunker
+    def _segregant_background_to_genotype_edge(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherEdge:
+        """Join the background mosaic to the perturbed genotype built on it."""
+        return self._segregant_background_to_genotype_edge_from(
+            data["experiment"].genotype
+        )
 
     @data_chunker
     def _perturbation_node(

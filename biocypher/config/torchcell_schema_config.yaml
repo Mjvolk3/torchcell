@@ -156,6 +156,25 @@ segregant genotype:
         parent_2: str
         n_blocks: int
 
+# Designed gene-keyed perturbations on a segregant (or parent) background
+# (PerturbedSegregantGenotype, Hale 2024): the background's cross/segregant/parents and
+# the perturbations' gene lists on ONE node, so a gene-keyed query that reaches it also
+# sees it is not an S288C derivative. The background mosaic is also emitted as its own
+# `segregant genotype` node and joined by `segregant background of`.
+perturbed segregant genotype:
+    is_a: genotype
+    represented_as: node
+    properties:
+        cross: str
+        segregant_id: str
+        background_role: str
+        parent_1: str
+        parent_2: str
+        n_blocks: int
+        systematic_gene_names: list
+        perturbed_gene_names: list
+        perturbation_types: list
+
 # The engineered CRISPR machinery a perturbation was made with (CrisprConstruct): the
 # guide spacer + the Cas effector fusion + the library sub-pool it was screened in. It
 # is its OWN node class rather than extra properties on `perturbation`, because
@@ -694,7 +713,7 @@ genotype member of:
     is_a: participates in
     represented_as: edge
     input_label: genotype member of
-    source: [genotype, segregant genotype]
+    source: [genotype, segregant genotype, perturbed segregant genotype]
     target: experiment
 
 # Three sources since `bacterial sequence variant perturbation` joined, so input_label
@@ -707,6 +726,14 @@ perturbation member of:
     input_label: perturbation member of
     source: [perturbation, bacterial perturbation, bacterial sequence variant perturbation]
     target: genotype
+
+# The background mosaic a perturbed segregant genotype was built on (Hale 2024): one
+# `segregant genotype` node per segregant, shared by every perturbation measured on it.
+segregant background of:
+    is_a: part of
+    represented_as: edge
+    source: segregant genotype
+    target: perturbed segregant genotype
 
 # A bacterial CRISPRi leaf carries the shared CrisprConstruct, so its construct edge
 # targets a `bacterial perturbation` node.

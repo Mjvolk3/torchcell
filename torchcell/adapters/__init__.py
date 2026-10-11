@@ -142,6 +142,7 @@ from .goodall2018_adapter import (
 from .gupta2024_adapter import (
     ProteinTurnoverGupta2024Adapter as ProteinTurnoverGupta2024Adapter,
 )
+from .hale2024_adapter import Hale2024Adapter as Hale2024Adapter
 from .hawkins2020_adapter import (
     MismatchCrispriFitnessHawkins2020Adapter as MismatchCrispriFitnessHawkins2020Adapter,
 )
@@ -434,7 +435,12 @@ proteome_metabolome_adapters = [
     "AminoAcidCooper2010Adapter",
 ]
 
-segregant_adapters = ["Bloom2019Adapter", "Boocock2025Adapter", "Nguessan2025Adapter"]
+segregant_adapters = [
+    "Bloom2019Adapter",
+    "Boocock2025Adapter",
+    "Nguessan2025Adapter",
+    "Hale2024Adapter",
+]
 
 natural_isolate_adapters = [
     "IsolateGrowthPeter2018Adapter",

@@ -599,7 +599,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 2 (Muenzner 2024: the natural-isolate proteome and its turnover subset)
     # + 3 (De Chiara 2022's life-cycle, doubling-time and cell-yield stores)
     # + 1 (Jackson 2020 pseudobulk single-cell UMI counts)
-    # + 1 (Puddu 2019 realized genome architecture of the knockout collection).
+    # + 1 (Puddu 2019 realized genome architecture of the knockout collection)
+    # + 1 (Hale 2024 CRISPRi guides on BYx3S segregants).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -622,6 +623,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 3
         + 1
         + 1
+        + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -632,6 +634,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "CrisprMagicLian2019Dataset",
         "CrispriChemgenSmith2016Dataset",
         "CrispriMormino2022Dataset",
+        "CrispriSegregantHale2024Dataset",
         "DoublingTimeDeChiara2022Dataset",
         "EnvChemgenAuesukaree2009Dataset",
         "EnvChemgenCostanzo2021Dataset",

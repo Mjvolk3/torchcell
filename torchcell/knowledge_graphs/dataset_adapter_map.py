@@ -73,6 +73,7 @@ from torchcell.adapters import (
     Hale2024Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
+    InductionTimecourseHackett2020Adapter,
     IsobutanolScreenLopez2024Adapter,
     IsobutanolValidatedLopez2024Adapter,
     IsolateGrowthPeter2018Adapter,
@@ -317,6 +318,9 @@ from torchcell.datasets.scerevisiae.dechiara2022 import (
     DoublingTimeDeChiara2022Dataset,
     LifeCycleDeChiara2022Dataset,
 )
+from torchcell.datasets.scerevisiae.hackett2020 import (
+    InductionTimecourseHackett2020Dataset,
+)
 from torchcell.datasets.scerevisiae.hale2024 import CrispriSegregantHale2024Dataset
 from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HetHillenmeyer2008Dataset,
@@ -411,6 +415,7 @@ dataset_adapter_map: dict[type, type] = {
     ScmdOhya2005Dataset: ScmdOhya2005Adapter,
     MicroarrayKemmeren2014Dataset: MicroarrayKemmeren2014Adapter,
     MicroarrayScoreHu2007Dataset: MicroarrayScoreHu2007Adapter,
+    InductionTimecourseHackett2020Dataset: InductionTimecourseHackett2020Adapter,
     SmMicroarraySameith2015Dataset: SmMicroarraySameith2015Adapter,
     DmMicroarraySameith2015Dataset: DmMicroarraySameith2015Adapter,
     CaudalPanTranscriptome2024Dataset: CaudalPanTranscriptome2024Adapter,

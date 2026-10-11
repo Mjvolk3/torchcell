@@ -142,6 +142,9 @@ from .goodall2018_adapter import (
 from .gupta2024_adapter import (
     ProteinTurnoverGupta2024Adapter as ProteinTurnoverGupta2024Adapter,
 )
+from .hackett2020_adapter import (
+    InductionTimecourseHackett2020Adapter as InductionTimecourseHackett2020Adapter,
+)
 from .hale2024_adapter import Hale2024Adapter as Hale2024Adapter
 from .hawkins2020_adapter import (
     MismatchCrispriFitnessHawkins2020Adapter as MismatchCrispriFitnessHawkins2020Adapter,
@@ -413,6 +416,7 @@ expression_adapters = [
     "CaudalPanTranscriptome2024Adapter",
     "NadalRibellesPerturbSeq2025Adapter",
     "TfDeletionPseudobulkJackson2020Adapter",
+    "InductionTimecourseHackett2020Adapter",
 ]
 
 morphology_adapters = ["ScmdOhnuki2018Adapter", "ScmdOhnuki2022Adapter"]

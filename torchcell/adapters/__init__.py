@@ -226,6 +226,9 @@ from .menasalvas2025_metabolite_production_adapter import (
 from .menasalvas2025_proteome_adapter import (
     ProteomeMenasalvas2025Adapter as ProteomeMenasalvas2025Adapter,
 )
+from .messner2021_adapter import (
+    ProteomeMessner2021Adapter as ProteomeMessner2021Adapter,
+)
 from .messner2023_adapter import (
     ProteomeMessner2023Adapter as ProteomeMessner2023Adapter,
 )
@@ -434,6 +437,7 @@ metabolite_adapters = [
 proteome_metabolome_adapters = [
     "MetaboliteZelezniak2018Adapter",
     "ProteomeZelezniak2018Adapter",
+    "ProteomeMessner2021Adapter",
     "ProteomeMessner2023Adapter",
     "ProteomeMuenzner2024Adapter",
     "ProteinTurnoverMuenzner2024Adapter",

@@ -1,4 +1,4 @@
-%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/4-state.tex
+%% notes-tex/wet-lab/env-case-study-gate/sections/4-state.tex
 %% SOURCE: hand-authored state record. Measured values are macros of
 %% tables/gate_numbers.tex. Job identifiers and dates are from
 %% notes/experiments.040-inhibitor-synergy-wetlab.md (sections of 2026.10.10) and from
@@ -53,3 +53,13 @@ model arm that does neither still earns the row, because the comparison is the p
 rules are computed from six titrations on the same strain, and a model trained on
 \hydnPoolCompounds{} public compounds that cannot beat them is the measurement the
 section needs to report.
+
+\pfstep{The same day, evening} The first mixture round ran: two arms on the GilaHyper
+cards named for this work, two on Delta, two more on GilaHyper by the evening, and the
+rest on Delta overnight; \cref{tab:arms} holds the arms with files here. The third
+hypothesis above held in its pessimistic half: no arm beats Loewe on growth or Bliss on
+fitness, and the dose-aware arms do not beat the highest single agent either. The
+readout was then reframed around the alive and dead boundary (\cref{sec:boundary}),
+which is model-free and splits by pair, and the leave-one-pair-out test of rule-choice
+predictors was added as the bar a learned model must clear. Round two began with the
+replication of the dose-off joint arm on two further fold seeds.

@@ -1,6 +1,6 @@
-# notes-tex/wet-lab/hydrolysate-figure-gate/Makefile
+# notes-tex/wet-lab/env-case-study-gate/Makefile
 # [[experiments.040-inhibitor-synergy-wetlab.scripts.figure_gate_panels]]
-# https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/wet-lab/hydrolysate-figure-gate/Makefile
+# https://github.com/Mjvolk3/torchcell/tree/main/notes-tex/wet-lab/env-case-study-gate/Makefile
 #
 # Mockups of the hydrolysate inhibitor figure (manuscript R5, drug exposure) and its
 # supplement, held for a decision. No Zotero collection and no citations: the document
@@ -11,7 +11,7 @@
 #   make           build the PDF
 #   make check     formatting / provenance / status gate
 
-DOC := hydrolysate-figure-gate
+DOC := env-case-study-gate
 ZOTERO_COLLECTION          :=
 ZOTERO_PERSONAL_COLLECTION :=
 PLOT_SLUGS := 040-inhibitor-synergy-wetlab

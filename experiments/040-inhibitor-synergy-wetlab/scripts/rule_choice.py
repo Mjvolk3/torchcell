@@ -293,6 +293,7 @@ def pair_table(rows: list[PairRow], sims: pd.DataFrame) -> pd.DataFrame:
 
 def grid_table() -> pd.DataFrame:
     b = pd.read_csv(osp.join(RESULTS, "isobole_boundary.csv"))
+    b = b[b["observed"] == "monotone"]
     wide = b.pivot(index=["run", "pair"], columns="rule", values="jaccard_alive")
     wide = wide.reset_index()
     wide["closer_rule"] = np.where(wide["loewe"] > wide["bliss"], "loewe", "bliss")
@@ -476,6 +477,7 @@ def figure(pairs: pd.DataFrame, lopo: pd.DataFrame) -> list[str]:
     ax.set_xlim(0, float(show["mae"].max()) * 1.35)
     mr.box(ax)
     fig.subplots_adjust(left=0.06, right=0.99, top=0.9, bottom=0.3, wspace=0.55)
+    mr.panel_letters(fig, axes)
     os.makedirs(IMAGES, exist_ok=True)
     stem = osp.join(IMAGES, f"rule_choice_{timestamp()}")
     savefig_true_size_svg(fig, stem + ".svg")

@@ -5,7 +5,7 @@
 r"""Mockups of the hydrolysate inhibitor figure (manuscript R5) and its supplement.
 
 Five sheets, every plotted value read from a committed result file; nothing is typed
-into a panel. They are held for a decision in ``notes-tex/wet-lab/hydrolysate-figure-gate/``
+into a panel. They are held for a decision in ``notes-tex/wet-lab/env-case-study-gate/``
 before any of them enters the paper. Nothing in them is approved: the marks say only
 what is on file.
 
@@ -37,7 +37,7 @@ idea only). None of the three means approved. ``GATE_STATUS_MARKS=0`` leaves the
 Writes the sheets to ``$ASSET_IMAGES_DIR/040-inhibitor-synergy-wetlab/`` (PNG and
 true-size SVG, timestamped), the manifest ``results/figure_gate_manifest.json``, the
 caption numbers as ``results/figure_gate_numbers.json`` and as LaTeX macros in
-``notes-tex/wet-lab/hydrolysate-figure-gate/tables/gate_numbers.tex`` and
+``notes-tex/wet-lab/env-case-study-gate/tables/gate_numbers.tex`` and
 ``gate_figure_names.tex``. Run from the repo root::
 
     PYTHONPATH=$PWD ~/miniconda3/envs/torchcell/bin/python \
@@ -86,7 +86,7 @@ ASSET_IMAGES_DIR = os.environ["ASSET_IMAGES_DIR"]
 SLUG = "040-inhibitor-synergy-wetlab"
 R040 = osp.join(EXPERIMENT_ROOT, SLUG, "results")
 REPO = osp.dirname(EXPERIMENT_ROOT)
-DOC_TABLES = osp.join(REPO, "notes-tex", "wet-lab", "hydrolysate-figure-gate", "tables")
+DOC_TABLES = osp.join(REPO, "notes-tex", "wet-lab", "env-case-study-gate", "tables")
 
 #: Unlanded sibling worktrees. Absolute, recorded in the manifest, never copied. A
 #: worktree sits at ``<worktrees>/<group>/<branch>``, so the worktrees root is two
@@ -289,6 +289,14 @@ class Reads:
         self.ladder_scores = self.csv(osp.join(R038, "ladder", "ladder_r2_scores.csv"))
         self.bil = self.folds(osp.join(R038, "factorized", "r9_control"))
         self.envenc = self.folds(osp.join(R038, "factorized", "r10_envenc"))
+        self.boundary = self.csv(osp.join(R040, "isobole_boundary.csv"))
+        self.rc_pairs = self.csv(osp.join(R040, "rule_choice_pairs.csv"))
+        self.rc_lopo = self.csv(osp.join(R040, "rule_choice_lopo.csv"))
+        self.rc_orders = self.csv(osp.join(R040, "rule_choice_higher_orders.csv"))
+        self.arms = {
+            osp.basename(d): self.folds(d)
+            for d in sorted(glob.glob(osp.join(R040, "mixture", "r1_*")))
+        }
 
     def csv(self, path: str) -> pd.DataFrame:
         """Read one CSV and record its path."""
@@ -2394,6 +2402,118 @@ def fig_si3(R: Reads) -> dict[str, str]:
 # ------------------------------------------------------------------------------ main
 
 
+def newest_svg(stem: str) -> dict[str, str]:
+    """The newest ``<stem>_<timestamp>.svg`` of the experiment's image directory.
+
+    The boundary and rule-choice figures are drawn by mixture_rules.py and
+    rule_choice.py, which are committed scripts of this experiment; the gate document
+    places them unchanged, so the sheet is the newest file each script wrote.
+    """
+    files = sorted(glob.glob(osp.join(ASSET_IMAGES_DIR, SLUG, f"{stem}_*.svg")))
+    assert files, f"no {stem}_*.svg under {osp.join(ASSET_IMAGES_DIR, SLUG)}"
+    svg = files[-1]
+    name = osp.splitext(osp.basename(svg))[0]
+    return {"name": name, "png": svg[:-4] + ".png", "svg": svg}
+
+
+ARM_SHORT = {
+    "r1_mix_van_ex21_film_L1_lh1": "jointFilm",
+    "r1_mix_van_anchors_film_L1_lh1": "anchorsFilm",
+    "r1_mix_van_ex21_off_L1_lh1": "jointOff",
+    "r1_mix_van_anchors_off_L1_lh1": "anchorsOff",
+    "r1_mix_van_ft_film_L1_lh1": "ftHead",
+    "r1_mix_van_ftenv_film_L1_lh1": "ftEnv",
+    "r1_mix_van_ex21_film_L2_lh1": "jointTwoLayer",
+    "r1_mix_van_ex21_film_L1_lh0p1": "jointLambdaTenth",
+    "r1_mix_vanhop_ex21_film_L1_lh1": "jointHoepfner",
+    "r1_mix_vanhophet_ex21_film_L1_lh1": "jointHoepfnerHet",
+}
+
+
+def boundary_numbers(R: Reads) -> None:
+    """Caption numbers for the boundary readout, the rule choice and the model arms."""
+    b = R.boundary
+    for _, r in b.iterrows():
+        key = f"bnd_{r['run']}_{r['observed']}_{r['rule']}"
+        num(f"{key}_jaccard", float(r["jaccard_alive"]))
+        num(f"{key}_aliveDead", int(r["n_predicted_alive_observed_dead"]))
+        num(f"{key}_deadAlive", int(r["n_predicted_dead_observed_alive"]))
+        num(f"{key}_edgeMae", float(r["edge_by_column_mae_steps"]))
+    for run, g in b.groupby("run"):
+        num(f"bnd_{run}_islands", int(g["n_islands_dropped"].iloc[0]))
+        num(
+            f"bnd_{run}_aliveRaw",
+            int(g[g.observed == "raw"]["n_alive_observed"].iloc[0]),
+        )
+        num(
+            f"bnd_{run}_aliveMonotone",
+            int(g[g.observed == "monotone"]["n_alive_observed"].iloc[0]),
+        )
+    p = R.rc_pairs
+    for cls, g in p.groupby("pair_class"):
+        tag = cls.replace("|", "_")
+        num(f"rc_{tag}_n", int(len(g)))
+        num(f"rc_{tag}_loewe", int((g.closer_rule == "loewe").sum()))
+        num(f"rc_{tag}_bliss", int((g.closer_rule == "bliss").sum()))
+    num("rc_nPairs", int(len(p)))
+    num("rc_nGrown", int(p.grew.sum()))
+    lopo = R.rc_lopo.set_index("predictor")
+    for name, tag in (
+        ("bliss", "bliss"),
+        ("loewe", "loewe"),
+        ("global_w", "globalW"),
+        ("class_rule", "classRule"),
+        ("class_w", "classW"),
+        ("similarity_best_available_spearman_centered", "simBest"),
+        ("similarity_all_predicted_spearman_centered", "simPred"),
+    ):
+        num(f"lopo_{tag}_mae", float(lopo.loc[name, "mae"]))
+        num(f"lopo_{tag}_acc", float(lopo.loc[name, "growth_accuracy"]))
+        num(f"lopo_{tag}_spGrown", float(lopo.loc[name, "spearman_grown"]))
+    o = R.rc_orders
+    for rule, tag in (("loewe_ex21", "loewe"), ("class_hierarchy", "hier")):
+        row = o[(o.subset == "all") & (o.rule == rule)].iloc[0]
+        num(f"orders_{tag}_auroc", float(row["auroc"]))
+        num(f"orders_{tag}_rmse", float(row["rmse_grown"]))
+        num(f"orders_{tag}_worst", float(row["worst_scenario_spearman"]))
+    for arm, scores in R.arms.items():
+        tag = ARM_SHORT[arm]
+        if scores.empty or "member" not in scores:
+            continue
+        e = scores[scores.member == "ensemble"]
+
+        def med(task: str, subset: str, metric: str, call: str | None) -> float:
+            s = e[(e.task == task) & (e.subset == subset) & (e.metric == metric)]
+            if call is not None:
+                s = s[s.call == call]
+            return float(s.value.median())
+
+        num(f"arm_{tag}_folds", int(e.fold.nunique()))
+        num(f"arm_{tag}_auroc", med("ex23", "combinations", "growth_auroc", "served"))
+        num(
+            f"arm_{tag}_worst",
+            med("ex23", "combinations", "worst_scenario_spearman", "served"),
+        )
+        num(
+            f"arm_{tag}_fitGrown",
+            med("ex23", "combinations_that_grew", "fitness_spearman", "served"),
+        )
+        num(
+            f"arm_{tag}_isoTwoSix",
+            med(
+                "isobole_ex26",
+                "interior_cells",
+                "mean_observed_minus_predicted",
+                "served",
+            ),
+        )
+        num(
+            f"arm_{tag}_van",
+            med("vanacloig", "test_compounds", "centered_spearman_median", None),
+        )
+    num("arms_scored", int(sum(1 for a in R.arms.values() if not a.empty)))
+
+
 def main() -> None:
     """Draw every sheet, then write the manifest, the numbers and the macros."""
     R = Reads()
@@ -2404,6 +2524,9 @@ def main() -> None:
         "si2": fig_si2(R),
         "si3": fig_si3(R),
     }
+    boundary_numbers(R)
+    figures["boundary"] = newest_svg("mixture_rules_isoboles")
+    figures["rulechoice"] = newest_svg("rule_choice")
     internal = {k: v for k, v in R.paths.items() if not k.startswith("/")}
     external = {k: v for k, v in R.paths.items() if k.startswith("/")}
     manifest = {

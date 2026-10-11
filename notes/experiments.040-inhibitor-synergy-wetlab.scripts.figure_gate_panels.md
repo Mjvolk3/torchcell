@@ -50,8 +50,8 @@ directories are globbed, so a panel fills in as that round writes.
 - `$ASSET_IMAGES_DIR/040-inhibitor-synergy-wetlab/gate_*.png` and `.svg` (true size)
 - `experiments/040-inhibitor-synergy-wetlab/results/figure_gate_manifest.json`
 - `experiments/040-inhibitor-synergy-wetlab/results/figure_gate_numbers.json`
-- `notes-tex/wet-lab/hydrolysate-figure-gate/tables/gate_numbers.tex` and
+- `notes-tex/wet-lab/env-case-study-gate/tables/gate_numbers.tex` and
   `gate_figure_names.tex`
 
-The document that places them is `notes-tex/wet-lab/hydrolysate-figure-gate/`; run
+The document that places them is `notes-tex/wet-lab/env-case-study-gate/`; run
 `make numbers plots all check` there.

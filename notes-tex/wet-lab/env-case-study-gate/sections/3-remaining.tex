@@ -1,4 +1,4 @@
-%% notes-tex/wet-lab/hydrolysate-figure-gate/sections/3-remaining.tex
+%% notes-tex/wet-lab/env-case-study-gate/sections/3-remaining.tex
 %% SOURCE: hand-authored status table. Each status repeats the word the panel script
 %% draws; each "what remains" entry is a gap in the result files named under the figures
 %% of sections/2-mockups.tex, or a round recorded as running or planned in
@@ -44,13 +44,19 @@
       same running round. Until then the panel shows ridge against the measured profile
       and the screen's own repeat, and the transformer row is a label with no bar. \\
     main, j & \fstat{partial} &
-      The model's predicted single-agent curves do not exist. They need the host head
-      fitted on the titration run, in both variants the plan names: trained on the public
-      dose anchors alone, and calibrated on the titration run. \\
+      The host head's predicted single-agent curves now exist for the anchors-only arm
+      (zero-shot) and the arms that train on the titration run (\cref{sec:boundary});
+      the panel is not yet drawn from them. \\
     main, k, l & \fstat{partial} &
-      The model's predictions over the combinations and over the isobole grids do not
-      exist. The rules are on file and are the bars. If the model does not beat them, the
-      panels ship with the rules and the model side by side and the text says so. \\
+      Round-one model predictions over the combinations and the isobole grids are on
+      file for \hydarmsscored{} arms and below the rules on every readout
+      (\cref{tab:arms}); the boundary scorer of \cref{sec:boundary} has not yet been
+      run on the model surfaces. The panels ship with the rules and the model side by
+      side and the text says so, unless a queued arm clears a bar. \\
+    boundary, a--f; rule choice, a, b & \fstat{file} &
+      Nothing. Both figures of \cref{sec:boundary} are drawn by committed scripts from
+      committed result files. Open: whether the boundary overlap replaces growth AUROC as
+      the primary wet-lab statistic. \\
     main, b, d, g, h & \fstat{file} &
       Nothing. Every drawn value is in a committed result file. These four are what the
       figure can claim today. \\

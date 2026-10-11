@@ -1,0 +1,37 @@
+# experiments/025-solid-growth/conf/cgt_s0_r_kl_emb_040.yaml
+#
+# THE COMPOSITE SEQUENCE EMBEDDING UNDER THE SWEEP'S PROTOCOL, NO FITNESS HEAD.
+# cgt_s0_r_kl_ctrl_013 (S0 triples, pinned 010 random split, normalizer fit on train,
+# AdamW 2.5e-4 constant, 30 epochs) with the learnable gene table replaced by the frozen
+# composite of cgt_s0_r_kl_embfit_035: SpeciesLM upstream and downstream flanks, CaLM and
+# ProtT5 (3,328 dims, each source min-max scaled per feature before concatenation), through
+# the two-layer preprocessor of hidden width 339, which matches the table's parameter count
+# (1,190,769 against 1,189,260). Unlike embfit_035 there is no fitness head, so this arm
+# differs from the sweep's ctrl_013 in the representation alone.
+#
+# Round 3 of the graph-regularization study (notes-tex/025-graph-reg-sweep, Section 6):
+# with graph_reg_lambda=0 and =1 it asks whether the prior still adds anything once the
+# representation has removed the late decline on its own (measured: embfit_035 against
+# fit_014 reads +0.016 at epoch 29 and nothing at the peak, three seeds each).
+#
+#   sbatch --account=bfjt-delta-gpu --time=24:00:00 -J 025-r3-emb-l1-s1 \
+#     experiments/025-solid-growth/scripts/delta_cgt.slurm cgt_s0_r_kl_emb_040 \
+#     model.graph_regularization.graph_reg_lambda=1 +seed=1
+defaults:
+  - cgt_s0_r_kl_ctrl_013
+  - _self_
+
+wandb:
+  tags: [s0, split_R, graph_reg_kl, seq_embedding, full_gene_composite, param_matched, fit_on_train, const_lr, const_lr_2.5e-4, epochs_30, graph_reg_round3]
+
+cell_dataset:
+  node_embeddings: [fudt_upstream, calm, prot_T5_all, fudt_downstream]
+
+model:
+  learnable_embedding:
+    enabled: false
+    size: ${model.hidden_channels}
+    preprocessor:
+      num_layers: 2
+      hidden_dim: 339
+      dropout: 0.1

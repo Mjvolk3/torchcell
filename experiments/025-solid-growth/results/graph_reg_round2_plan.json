@@ -1,0 +1,476 @@
+{
+ "protocol": "cgt_s0_r_kl_ctrl_013, Delta gpuA40x4, 4 x A40 per run",
+ "min_per_epoch": 27.0,
+ "arms": [
+  {
+   "round": "1b",
+   "group": "do graphs help",
+   "name": "random graphs, KL 1",
+   "change": "rand_031, graph_reg_lambda=1",
+   "needs_code": "",
+   "seeds": 5,
+   "epochs": 30,
+   "figure": "F1 a-c, f",
+   "config": "cgt_s0_r_kl_rand_031",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 270
+  },
+  {
+   "round": "1b",
+   "group": "do graphs help",
+   "name": "random graphs, KL 0.1",
+   "change": "rand_031, graph_reg_lambda=0.1",
+   "needs_code": "",
+   "seeds": 5,
+   "epochs": 30,
+   "figure": "F1 a-c, f",
+   "config": "cgt_s0_r_kl_rand_031",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=0.1"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 270
+  },
+  {
+   "round": "1b",
+   "group": "prior vs mask",
+   "name": "KL 10",
+   "change": "graph_reg_lambda=10",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=10"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "1b",
+   "group": "prior vs mask",
+   "name": "KL 100",
+   "change": "graph_reg_lambda=100",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=100"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "1b",
+   "group": "completion",
+   "name": "KL 1e-5, seed 2",
+   "change": "graph_reg_lambda=1e-5, seed=2",
+   "needs_code": "",
+   "seeds": 1,
+   "epochs": 30,
+   "figure": "F1 a-e",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1e-5"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 54
+  },
+  {
+   "round": "2",
+   "group": "reach",
+   "name": "mask, 2-hop, directed",
+   "change": "attention_mask hops=2, symmetric=false",
+   "needs_code": "k-hop support: reachability within k steps, self-loops kept",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "+model.attention_mask.hops=2",
+    "+model.attention_mask.symmetric=false"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
+   "group": "reach",
+   "name": "mask, 3-hop, directed",
+   "change": "attention_mask hops=3, symmetric=false",
+   "needs_code": "same",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "+model.attention_mask.hops=3",
+    "+model.attention_mask.symmetric=false"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
+   "group": "reach",
+   "name": "KL 1, 2-hop target",
+   "change": "graph_regularization hops=2",
+   "needs_code": "k-hop target: row-normalized k-hop indicator",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "+model.graph_regularization.hops=2"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
+   "group": "reach",
+   "name": "KL 1, 3-hop target",
+   "change": "graph_regularization hops=3",
+   "needs_code": "same",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-f",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "+model.graph_regularization.hops=3"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
+   "group": "direction",
+   "name": "KL 1, symmetric targets",
+   "change": "graph_regularization symmetrize=true",
+   "needs_code": "symmetrize A for the directed graphs before row normalization",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-c",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "+model.graph_regularization.symmetrize=true"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "2",
+   "group": "direction",
+   "name": "mask, directed",
+   "change": "attention_mask symmetric=false",
+   "needs_code": "drop the transpose write in the mask builder",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F2 a-c",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "+model.attention_mask.symmetric=false"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "mask, layers 1-2",
+   "change": "attention_mask layers=[1,2]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "model.attention_mask.layers=[1,2]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "mask, layers 3-4",
+   "change": "attention_mask layers=[3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "model.attention_mask.layers=[3,4]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "mask, layers 1-4",
+   "change": "attention_mask layers=[1,2,3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "model.attention_mask.layers=[1,2,3,4]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "KL 1, layers 1-2",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[1,2]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "model.graph_regularization.graph_reg_layer=[1,2]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "KL 1, layers 3-4",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "model.graph_regularization.graph_reg_layer=[3,4]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "placement (optional)",
+   "name": "KL 1, layers 1-4",
+   "change": "graph_reg_lambda=1, graph_reg_layer=[1,2,3,4]",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 a-c",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "model.graph_regularization.graph_reg_layer=[1,2,3,4]"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "budget",
+   "name": "no penalty, 60 epochs",
+   "change": "graph_reg_lambda=0, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 d-e",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=0",
+    "trainer.max_epochs=60"
+   ],
+   "hours": 48,
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "round": "3",
+   "group": "budget",
+   "name": "mask, 60 epochs",
+   "change": "mask_028, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 d-e",
+   "config": "cgt_s0_r_mask_028",
+   "overrides": [
+    "trainer.max_epochs=60"
+   ],
+   "hours": 48,
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "round": "3",
+   "group": "budget",
+   "name": "KL 1, 60 epochs",
+   "change": "graph_reg_lambda=1, max_epochs=60",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 60,
+   "figure": "F3 d-e",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1",
+    "trainer.max_epochs=60"
+   ],
+   "hours": 48,
+   "wall_h": 27.0,
+   "gpu_h": 324
+  },
+  {
+   "round": "3",
+   "group": "representation",
+   "name": "composite embedding, no penalty",
+   "change": "emb_040, graph_reg_lambda=0",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_emb_040",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=0"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "representation",
+   "name": "composite embedding, KL 1",
+   "change": "emb_040, graph_reg_lambda=1",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_emb_040",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1"
+   ],
+   "hours": 24,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "width",
+   "name": "hidden 360, table, no penalty",
+   "change": "hidden_channels=360, graph_reg_lambda=0",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.hidden_channels=360",
+    "model.graph_regularization.graph_reg_lambda=0"
+   ],
+   "hours": 48,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "width",
+   "name": "hidden 360, table, KL 1",
+   "change": "hidden_channels=360, graph_reg_lambda=1",
+   "needs_code": "",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_ctrl_013",
+   "overrides": [
+    "model.hidden_channels=360",
+    "model.graph_regularization.graph_reg_lambda=1"
+   ],
+   "hours": 48,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "width",
+   "name": "hidden 360, composite, no penalty",
+   "change": "emb_w360_041, graph_reg_lambda=0",
+   "needs_code": "preprocessor re-matched (h = 644)",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_emb_w360_041",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=0"
+   ],
+   "hours": 48,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  },
+  {
+   "round": "3",
+   "group": "width",
+   "name": "hidden 360, composite, KL 1",
+   "change": "emb_w360_041, graph_reg_lambda=1",
+   "needs_code": "preprocessor re-matched (h = 644)",
+   "seeds": 3,
+   "epochs": 30,
+   "figure": "F3 f",
+   "config": "cgt_s0_r_kl_emb_w360_041",
+   "overrides": [
+    "model.graph_regularization.graph_reg_lambda=1"
+   ],
+   "hours": 48,
+   "wall_h": 13.5,
+   "gpu_h": 162
+  }
+ ],
+ "total_runs": 80,
+ "runs_per_round": {
+  "1b": 17,
+  "2": 18,
+  "3": 45
+ },
+ "total_gpu_h": 4806,
+ "code_changes": [
+  "drop the transpose write in the mask builder",
+  "k-hop support: reachability within k steps, self-loops kept",
+  "k-hop target: row-normalized k-hop indicator",
+  "preprocessor re-matched (h = 644)",
+  "same",
+  "symmetrize A for the directed graphs before row normalization"
+ ],
+ "submitter": "/home/michaelvolk/Documents/projects/torchcell.worktrees/feat/025-graph-reg-sweep-readout/experiments/025-solid-growth/scripts/delta_submit_round2.sh"
+}

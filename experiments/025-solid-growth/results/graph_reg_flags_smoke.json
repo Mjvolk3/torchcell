@@ -1,0 +1,281 @@
+{
+ "n_genes": 6607,
+ "variants": {
+  "kl_1hop": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 60087.046875,
+   "graph_reg_loss": 60087.00390625,
+   "finite": true,
+   "seconds": 29.4,
+   "peak_rss_gb": 46.8,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  },
+  "kl_2hop": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 22391.40234375,
+   "graph_reg_loss": 22391.361328125,
+   "finite": true,
+   "seconds": 38.0,
+   "peak_rss_gb": 46.9,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  },
+  "kl_3hop": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 12555.8564453125,
+   "graph_reg_loss": 12555.814453125,
+   "finite": true,
+   "seconds": 43.1,
+   "peak_rss_gb": 46.9,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  },
+  "kl_symmetric": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 32603.4453125,
+   "graph_reg_loss": 32603.404296875,
+   "finite": true,
+   "seconds": 38.7,
+   "peak_rss_gb": 46.9,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  },
+  "kl_layers_1_4": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 240380.578125,
+   "graph_reg_loss": 240380.53125,
+   "finite": true,
+   "seconds": 36.9,
+   "peak_rss_gb": 56.0,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  },
+  "mask_1hop": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.04249054938554764,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 25.5,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.0065,
+    0.0019,
+    0.0093,
+    0.0069,
+    0.0007,
+    0.0007,
+    0.0458,
+    0.0378,
+    0.0035
+   ]
+  },
+  "mask_directed": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.0350177064538002,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 25.4,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.0033,
+    0.001,
+    0.0047,
+    0.0035,
+    0.0004,
+    0.0004,
+    0.023,
+    0.019,
+    0.0018
+   ]
+  },
+  "mask_2hop_directed": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.03350743651390076,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 27.0,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.0588,
+    0.0042,
+    0.0258,
+    0.0293,
+    0.0014,
+    0.0006,
+    0.2667,
+    0.2231,
+    0.0106
+   ]
+  },
+  "mask_3hop_directed": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.03265272080898285,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 32.0,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.1367,
+    0.0106,
+    0.0317,
+    0.0429,
+    0.0041,
+    0.0009,
+    0.3994,
+    0.3243,
+    0.0311
+   ]
+  },
+  "mask_2hop_symmetric": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.04000249132514,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 33.3,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.6141,
+    0.458,
+    0.5858,
+    0.0828,
+    0.0057,
+    0.0015,
+    0.6945,
+    0.6747,
+    0.0374
+   ]
+  },
+  "mask_layers_3_4": {
+   "params": 4774861,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 0.023544760420918465,
+   "graph_reg_loss": 0.0,
+   "finite": true,
+   "seconds": 25.5,
+   "peak_rss_gb": 56.0,
+   "mask_allowed_fraction_per_head": [
+    0.0065,
+    0.0019,
+    0.0093,
+    0.0069,
+    0.0007,
+    0.0007,
+    0.0458,
+    0.0378,
+    0.0035
+   ]
+  },
+  "table_360": {
+   "params": 16677721,
+   "pred_shape": [
+    2,
+    1
+   ],
+   "loss": 60118.18359375,
+   "graph_reg_loss": 60117.984375,
+   "finite": true,
+   "seconds": 29.7,
+   "peak_rss_gb": 56.0,
+   "target_rows_all_zero": {
+    "physical": 0,
+    "regulatory": 0,
+    "string12_0_coexpression": 0,
+    "string12_0_cooccurence": 0,
+    "string12_0_database": 0,
+    "string12_0_experimental": 0,
+    "string12_0_fusion": 0,
+    "string12_0_neighborhood": 0,
+    "tflink": 0
+   }
+  }
+ }
+}

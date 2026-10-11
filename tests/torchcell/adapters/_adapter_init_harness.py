@@ -16,9 +16,9 @@ checks here are:
   the dataset's graph shape (phenotype kind, whether per-perturbation nodes, CRISPR
   constructs or environment perturbations are served, whether the perturbation nodes
   are the bacterial class, and the memory-reduction factor written on chunked
-  methods) plus whether the genotype is a segregant, which is
-  DERIVED from the paired dataset's ``experiment_class`` genotype type hint
-  (``SegregantGenotype``) rather than written per case. ``phage`` is the second
+  methods) plus the genotype kind (plain, segregant, or a perturbation on a segregant),
+  which is DERIVED from the paired dataset's ``experiment_class`` genotype type hint
+  (``SegregantGenotype`` / ``PerturbedSegregantGenotype``) rather than written per case. ``phage`` is the second
   environment-side node class, independent of ``env_perturbation`` since issue #756: it
   adds the ``phage perturbation`` node pair and rides the same two
   ``environment perturbation to environment`` edges, whose graph class declares both node
@@ -109,7 +109,11 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
         ("experiment (chunked)",),
     ],
     "genotype to experiment (chunked)": [
-        ("genotype (chunked)", "segregant genotype (chunked)"),
+        (
+            "genotype (chunked)",
+            "segregant genotype (chunked)",
+            "perturbed segregant genotype (chunked)",
+        ),
         ("experiment (chunked)",),
     ],
     "perturbation to genotype (chunked)": [
@@ -118,7 +122,12 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
             "bacterial perturbation (chunked)",
             "bacterial sequence variant perturbation (chunked)",
         ),
-        ("genotype (chunked)",),
+        ("genotype (chunked)", "perturbed segregant genotype (chunked)"),
+    ],
+    # Hale 2024: the background mosaic node joined to the perturbed genotype.
+    "segregant background to genotype (chunked)": [
+        ("segregant background (chunked)",),
+        ("perturbed segregant genotype (chunked)",),
     ],
     "crispr construct to perturbation (chunked)": [
         ("crispr construct (chunked)",),
@@ -169,6 +178,8 @@ EDGE_ENDPOINTS: dict[str, list[tuple[str, ...]]] = {
 NODE_LINK: dict[str, str] = {
     "genotype (chunked)": "genotype to experiment (chunked)",
     "segregant genotype (chunked)": "genotype to experiment (chunked)",
+    "perturbed segregant genotype (chunked)": "genotype to experiment (chunked)",
+    "segregant background (chunked)": "segregant background to genotype (chunked)",
     "perturbation (chunked)": "perturbation to genotype (chunked)",
     "bacterial perturbation (chunked)": "perturbation to genotype (chunked)",
     "bacterial sequence variant perturbation (chunked)": (
@@ -224,10 +235,35 @@ class AdapterCase(NamedTuple):
     prints: bool = False
 
 
-def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str]]:
-    """Node and edge method names in registration-table order."""
+GenotypeKind = typing.Literal["plain", "segregant", "perturbed_segregant"]
+
+
+def expected_methods(
+    shape: Shape, segregant: bool | GenotypeKind
+) -> tuple[list[str], list[str]]:
+    """Node and edge method names in registration-table order.
+
+    ``segregant`` is the paired dataset's genotype kind (``dataset_genotype_kind``); a
+    bare bool is read as ``"segregant"`` / ``"plain"``. A perturbed segregant (Hale 2024)
+    serves its own genotype node plus the background mosaic node and their edge.
+    """
+    kind = (
+        ("segregant" if segregant else "plain")
+        if isinstance(segregant, bool)
+        else segregant
+    )
     nodes = ["experiment reference", "genome", "experiment (chunked)"]
-    nodes.append("segregant genotype (chunked)" if segregant else "genotype (chunked)")
+    if kind == "perturbed_segregant":
+        nodes += [
+            "perturbed segregant genotype (chunked)",
+            "segregant background (chunked)",
+        ]
+    else:
+        nodes.append(
+            "segregant genotype (chunked)"
+            if kind == "segregant"
+            else "genotype (chunked)"
+        )
     if shape.perturbation:
         nodes.append(
             "bacterial perturbation (chunked)"
@@ -277,6 +313,8 @@ def expected_methods(shape: Shape, segregant: bool) -> tuple[list[str], list[str
     ]
     if shape.perturbation:
         edges.append("perturbation to genotype (chunked)")
+    if kind == "perturbed_segregant":
+        edges.append("segregant background to genotype (chunked)")
     if shape.crispr:
         edges.append("crispr construct to perturbation (chunked)")
     edges += [
@@ -305,7 +343,7 @@ def _entry(name: str, mrf: float | None) -> dict[str, Any]:
     return {"method_name": name}
 
 
-def expected_conf(shape: Shape, segregant: bool) -> dict[str, Any]:
+def expected_conf(shape: Shape, segregant: bool | GenotypeKind) -> dict[str, Any]:
     """The whole conf as a plain container."""
     nodes, edges = expected_methods(shape, segregant)
     return {
@@ -354,10 +392,13 @@ def paired_dataset_class(adapter_cls: type[Any]) -> type[Any]:
     return paired[0]
 
 
-def dataset_genotype_is_segregant(dataset_cls: type[Any]) -> bool:
-    """Whether the dataset's ``experiment_class`` types its genotype as a segregant."""
+def dataset_genotype_kind(dataset_cls: type[Any]) -> GenotypeKind:
+    """The genotype kind the dataset's ``experiment_class`` types its genotype as."""
     experiment_cls = dataset_cls.experiment_class.fget(None)
-    return typing.get_type_hints(experiment_cls)["genotype"] is s.SegregantGenotype
+    hint = typing.get_type_hints(experiment_cls)["genotype"]
+    if hint is s.PerturbedSegregantGenotype:
+        return "perturbed_segregant"
+    return "segregant" if hint is s.SegregantGenotype else "plain"
 
 
 def _rows_equal(actual: list[list[Any]], expected: list[list[Any]]) -> bool:
@@ -403,7 +444,7 @@ def assert_construction(
 
     paired = paired_dataset_class(case.adapter_cls)
     assert paired is case.dataset_cls, (paired, case.dataset_cls)
-    segregant = dataset_genotype_is_segregant(paired)
+    segregant = dataset_genotype_kind(paired)
     expected = expected_conf(case.shape, segregant)
     assert OmegaConf.to_container(adapter.config) == expected
     nodes, edges = expected_methods(case.shape, segregant)

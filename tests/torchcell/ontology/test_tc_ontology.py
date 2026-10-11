@@ -143,8 +143,10 @@ def _lines(out: str) -> list[str]:
 def test_real_schema_compact_table(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """The committed ``torchcell_schema_config.yaml``: 42 nodes (38 under six Biolink
-    parents, 4 auto-mapped by name), 13 edges under five relations, 11 concepts in all.
+    """The committed ``torchcell_schema_config.yaml``: 43 nodes (39 under six Biolink
+    parents, 4 auto-mapped by name), 14 edges under five relations, 11 concepts in all.
+    Hale 2024 added ``perturbed segregant genotype`` under genotype and the ``segregant
+    background of`` edge under part of.
     ``interned constant`` (tcdb-002) is a third ``information content entity`` beside
     experiment and experiment reference; ``bacterial perturbation`` joins genotype and
     the product titer, protein turnover and flux phenotypes join phenotypic feature,
@@ -169,7 +171,7 @@ def test_real_schema_compact_table(
         f"{'environmental exposure':25} → environment, environment perturbation, "
         "media, temperature",
         f"{'genotype':25} → bacterial perturbation, bacterial sequence variant "
-        "perturbation, perturbation, segregant genotype",
+        "perturbation, perturbation, perturbed segregant genotype, segregant genotype",
         "information content entity → experiment, experiment reference, interned "
         "constant",
         f"{'nucleic acid entity':25} → crispr construct",
@@ -191,12 +193,12 @@ def test_real_schema_compact_table(
         f"{'mentions':25} → publication mentions experiment",
         f"{'part of':25} → crispr construct member of, environment perturbation "
         "member of, experiment member of, experiment reference member of, media "
-        "member of, temperature member of",
+        "member of, segregant background of, temperature member of",
         f"{'participates in':25} → environment member of, genome member of, "
         "genotype member of, phenotype member of",
     ]
-    assert "Nodes:    38/42 explicit + 4 auto-mapped = 42/42 total" in lines
-    assert "Edges:    13/13 mapped to 5 Biolink concepts" in lines
+    assert "Nodes:    39/43 explicit + 4 auto-mapped = 43/43 total" in lines
+    assert "Edges:    14/14 mapped to 5 Biolink concepts" in lines
     assert "Total:    11 unique Biolink concepts used" in lines
     assert "✓ 4 nodes auto-mapped by name matching" in lines
     assert not any("Warning" in line for line in lines)
@@ -206,15 +208,16 @@ def test_compact_headers_count_the_schema(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     """The compact headers print ``len(nodes)`` and ``len(edges)`` (issue #532; they were
-    the literals 16 and 11): the committed schema has 42 nodes (``interned constant``
+    the literals 16 and 11): the committed schema has 43 nodes (``interned constant``
     joined in tcdb-002, then the four bacterial-program classes, ``phage
     perturbation``, ``promoter activity phenotype``, ``bacterial sequence
     variant perturbation``, ``bacterial morphology phenotype``, for #770
     ``protein fold change phenotype``, for #854 ``mrna number fraction phenotype``
     for #857 ``protein synthesis rate phenotype``, for Boocock 2025 ``single cell
     expression phenotype``, for De Chiara 2022 ``life cycle phenotype``, for Jackson
-    2020 ``pseudobulk umi count phenotype`` and, for Puddu 2019, ``genome architecture
-    phenotype``) and 13 edges, the small test schema 3 nodes and
+    2020 ``pseudobulk umi count phenotype``, for Puddu 2019 ``genome architecture
+    phenotype``, then Hale 2024's ``perturbed segregant genotype``) and 14 edges (the
+    last ``segregant background of``), the small test schema 3 nodes and
     2 edges (its stray string entry is neither).
     """
     monkeypatch.chdir(tmp_path)
@@ -222,7 +225,7 @@ def test_compact_headers_count_the_schema(
 
     small = tmp_path / "schema.yaml"
     small.write_text(yaml.safe_dump(SCHEMA))
-    for path, n_nodes, n_edges in ((REAL_SCHEMA, 42, 13), (small, 3, 2)):
+    for path, n_nodes, n_edges in ((REAL_SCHEMA, 43, 14), (small, 3, 2)):
         print_schema_mappings(str(path), compact=True)
         lines = _lines(capsys.readouterr().out)
         assert f"📦 NODES ({n_nodes} total)" in lines
@@ -241,7 +244,10 @@ def test_real_schema_expanded_joins_list_endpoints_with_a_bar(
 
     print_schema_mappings(str(REAL_SCHEMA), compact=False)
     lines = _lines(capsys.readouterr().out)
-    assert "└─ genotype member of: genotype | segregant genotype → experiment" in lines
+    assert (
+        "└─ genotype member of: genotype | segregant genotype | perturbed segregant "
+        "genotype → experiment" in lines
+    )
     assert (
         "└─ environment member of: environment → experiment | experiment reference"
         in lines

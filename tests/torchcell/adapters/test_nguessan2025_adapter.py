@@ -15,7 +15,7 @@ from tests.torchcell.adapters._adapter_init_harness import (
     Shape,
     assert_graph_integrity,
     assert_missing_conf,
-    dataset_genotype_is_segregant,
+    dataset_genotype_kind,
     dataset_phenotype_class,
     expected_conf,
     expected_methods,
@@ -78,7 +78,7 @@ def test_init_serves_the_exact_conf_and_wires_the_base_adapter(
         loader_batch_size=50,
     )
     shape = _INIT_CASES[0].shape
-    assert dataset_genotype_is_segregant(Nguessan2025Dataset)
+    assert dataset_genotype_kind(Nguessan2025Dataset) == "segregant"
     assert OmegaConf.to_container(adapter.config) == expected_conf(shape, True)
     nodes, edges = expected_methods(shape, True)
     assert [m for m in adapter.supported_node_methods if m in set(nodes)] == nodes

@@ -70,6 +70,7 @@ from torchcell.adapters import (
     GrowthRateS23Schmidt2016Adapter,
     GrowthRateSchmidt2016Adapter,
     GrowthWang2015Adapter,
+    Hale2024Adapter,
     HetHillenmeyer2008Adapter,
     HomHillenmeyer2008Adapter,
     IsobutanolScreenLopez2024Adapter,
@@ -315,6 +316,7 @@ from torchcell.datasets.scerevisiae.dechiara2022 import (
     DoublingTimeDeChiara2022Dataset,
     LifeCycleDeChiara2022Dataset,
 )
+from torchcell.datasets.scerevisiae.hale2024 import CrispriSegregantHale2024Dataset
 from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HetHillenmeyer2008Dataset,
     HomHillenmeyer2008Dataset,
@@ -435,6 +437,7 @@ dataset_adapter_map: dict[type, type] = {
     Boocock2025Dataset: Boocock2025Adapter,
     TfDeletionPseudobulkJackson2020Dataset: TfDeletionPseudobulkJackson2020Adapter,
     GenomeArchitecturePuddu2019Dataset: GenomeArchitecturePuddu2019Adapter,
+    CrispriSegregantHale2024Dataset: Hale2024Adapter,
     SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
     EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
     EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,

@@ -2430,6 +2430,106 @@ class CrisprInterferencePerturbation(ExpressionModulationPerturbation, ModelStri
 
 
 # --------------------------------------------------------------------------- #
+# begin ADDITIVE (Hackett 2020): an inducible synthetic promoter inserted upstream of a
+# present yeast gene. The expression axis without CRISPR: the gene stays PRESENT, its
+# coding sequence and copy number are unchanged, and a synthetic promoter (with its
+# selection marker) is INSERTED between the native promoter and the start codon, so the
+# native DNA is displaced rather than removed. The mechanism is therefore SO:0000667
+# ``insertion``, not the ``delins`` of the bacterial ``PromoterReplacementPerturbation``
+# (whose locus-tag validator and required ``gene_namespace`` make it bacterial-only).
+# A new leaf and a new member of ``GenePerturbationType``; nothing above changes.
+# --------------------------------------------------------------------------- #
+class InduciblePromoterInsertionPerturbation(
+    ExpressionModulationPerturbation, ModelStrict
+):
+    """A synthetic inducible promoter inserted in front of a present gene's ORF.
+
+    Hackett 2020 (IDEA) places each induced regulator under a beta-estradiol-responsive
+    synthetic promoter: a cassette of selection marker plus promoter (``KanMX-Z3EVpr``,
+    ``KanMX-Pgal1``, ``URA3::Z3EVpr``) inserted "directly between a target gene's first
+    methionine residue and its native promoter to prevent the removal of any genomic
+    DNA". The promoter answers a synthetic transcription factor the strain BACKGROUND
+    carries (``GEV``, ``ZEV``, ``4ZEV``, ``Z3EV``); that activator is an integrated
+    cassette of the ``StrainBackground``, named here in ``responsive_to`` so the edit
+    says which activator drives it. The INDUCER and its dose are not here: they are a
+    ``SmallMoleculePerturbation`` on the environment (one canonical encoding, as the
+    bacterial ``PromoterReplacementPerturbation.is_inducible`` docstring sets out).
+
+    ``expression_direction`` is ``"increased"``: the designed edit is induced
+    overexpression, which is the direction under the inducer. The uninduced level can
+    sit below the native one (Hackett: "86% of synthetic promoter-driven TF alleles have
+    lower expression than native promoter-driven TF alleles"); that is a property of
+    the record's environment (no inducer), not of the edit. ``crispr`` is re-declared
+    optional and stays ``None``: no guide or Cas effector is involved.
+    """
+
+    description: str = (
+        "Inducible synthetic promoter inserted upstream of a present gene's start codon"
+    )
+    perturbation_type: Literal["inducible_promoter_insertion"] = (
+        "inducible_promoter_insertion"
+    )
+    mechanism_so_id: str = "SO:0000667"
+    mechanism_so_name: str = "insertion"
+    expression_direction: str = "increased"
+    promoter_name: str = Field(
+        description="the inserted promoter part, verbatim (e.g. 'Z3EVpr', 'Pgal1', "
+        "'4ZEVpr')"
+    )
+    cassette: str = Field(
+        description="the inserted cassette as the source writes it, gene included "
+        "(e.g. 'KanMX-Z3EVpr-OPI1', 'URA3::Z3EVpr-HMX1')"
+    )
+    marker: str = Field(
+        description="selection marker the cassette carries, verbatim (e.g. 'KanMX', "
+        "'URA3')"
+    )
+    responsive_to: str = Field(
+        description="the synthetic transcription factor of the background that "
+        "activates the promoter under the inducer, verbatim (e.g. 'ZEV', 'GEV')"
+    )
+    native_promoter_retained: bool = Field(
+        description="True when the cassette was inserted between the native promoter "
+        "and the start codon without removing native DNA (the native promoter is "
+        "displaced upstream, not deleted)"
+    )
+    strain_id: str = Field(
+        description="the strain carrying the edit, as the source's strain table names it"
+    )
+    crispr: CrisprConstruct | None = Field(  # type: ignore[assignment]
+        default=None,
+        description="no guide-directed machinery is involved in a promoter insertion; "
+        "the field is inherited from the expression axis and stays None",
+    )
+
+    @model_validator(mode="after")
+    def _check_insertion(self) -> "InduciblePromoterInsertionPerturbation":
+        """The promoter, cassette, marker and activator are named; no CRISPR payload."""
+        for name in (
+            "promoter_name",
+            "cassette",
+            "marker",
+            "responsive_to",
+            "strain_id",
+        ):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be empty")
+        if self.crispr is not None:
+            raise ValueError("a promoter insertion carries no CRISPR construct")
+        if self.expression_direction != "increased":
+            raise ValueError(
+                "an inducible promoter insertion is designed for induced "
+                "overexpression; expression_direction must be 'increased'"
+            )
+        return self
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (Hackett 2020)
+# --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
 # Bacterial perturbation leaves (plan 3a).
 #
 # Each is a subclass of the axis leaf its OUTCOME already belongs to, so every
@@ -3636,6 +3736,7 @@ GenePerturbationType = (
     | EngineeredCopyNumberPerturbation
     | CrisprActivationPerturbation
     | CrisprInterferencePerturbation
+    | InduciblePromoterInsertionPerturbation  # Hackett 2020 (additive)
     | BacterialDeletionPerturbation
     | TransposonInsertionPerturbation
     | BacterialCrisprInterferencePerturbation
@@ -5708,6 +5809,214 @@ class MicroarrayExpressionScoreExperiment(Experiment, ModelStrict):
 
 # --------------------------------------------------------------------------- #
 # MICROARRAY EXPRESSION SCORE BLOCK END (issue #1022)
+# --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
+# begin ADDITIVE (Hackett 2020): one array of an induction time course.
+#
+# A two-colour microarray time course after a transcription factor is induced in a
+# chemostat. Three NEW classes, siblings of the microarray family rather than
+# subclasses of it: the phenotype carries layers ``MicroarrayExpressionPhenotype``
+# has no field for, and a subclass would make the served ``microarray expression
+# phenotype`` node class ambiguous (its discriminating properties would also be fields
+# of the subclass, ``ontology_checks.phenotype_label_map``). The phenotype therefore
+# names its primary layer ``log2_cleaned`` and has its own graph class, ``induction
+# timecourse expression phenotype``. No served dataset's schema closure moves
+# through these classes; the new ``GenePerturbationType`` member is the only change a
+# served closure sees.
+#
+# - The reference narrows ``genome_reference`` to ``StrainReferenceGenome`` (the typed
+#   background, which carries the synthetic activator cassette) and
+#   ``environment_reference`` to ``CultureEnvironment`` (the chemostat), as
+#   ``StrainEnvironmentResponseExperimentReference`` does for #507: pydantic v2
+#   serializes a field by its DECLARED type, so a subclass in a base slot loses fields.
+# - The sampling time after induction is ``Environment.duration_hours``, the field the
+#   served Brunk 2016 time course already uses for "hours post-induction"; no time
+#   field is added.
+# --------------------------------------------------------------------------- #
+class InductionTimecourseExpressionPhenotype(Phenotype, ModelStrict):
+    """One array of an induction time course, with every released processing layer.
+
+    PRIMARY LAYER (``label_name``): ``log2_cleaned``, the cleaned log2 ratio relative
+    to the same culture at t = 0 (0 at t = 0 by construction), with the induction
+    system's common response and the prominent outliers removed by the authors. Its
+    statistic (``label_statistic_name``) is ``log2_noise_sd``, the authors' noise-model
+    standard deviation of each cleaned observation; one array per culture and time
+    point, so it is the standard error of the single observation. ``None`` with a typed
+    gap when the release carries no noise model for the array.
+
+    FURTHER LAYERS (all keyed by the same genes as ``log2_cleaned``):
+
+    - ``sample_channel_intensity`` / ``reference_channel_intensity``: the median
+      fluorescence of the sample and of the common reference RNA hybridized against it
+      on the same array (linear scale).
+    - ``log2_ratio_unprocessed``: log2(sample / reference channel) minus the same
+      gene's value at t = 0, before cleaning.
+    - ``log2_thresholded``, ``log2_selected``, ``log2_shrunken``: the hard-thresholded,
+      timecourse-selected and observation-level-shrunken layers. A timecourse the
+      authors' noise model does not keep is exactly 0 in them: an analysis decision,
+      not a measured zero. ``None`` with a typed gap when not released.
+
+    IDENTITY: ``timecourse_id`` is the release's key of the time course (strain, date,
+    limitation, induction system), ``strain_label`` the release's strain token,
+    ``experiment_date`` the release's date token and ``release_table`` the released
+    table the values were read from, all verbatim. Repeated time courses of one strain
+    stay distinct records through them.
+    """
+
+    graph_level: str = "node"
+    label_name: str = "log2_cleaned"
+    label_statistic_name: str | None = "log2_noise_sd"
+
+    log2_cleaned: dict[str, float] = Field(
+        description="cleaned log2 ratio per gene, relative to the same culture at t = 0",
+        repr=False,
+    )
+    log2_noise_sd: dict[str, float] | None = Field(
+        description="authors' noise-model standard deviation of each cleaned value; "
+        "None only with a typed gap",
+        repr=False,
+    )
+    sample_channel_intensity: dict[str, float] = Field(
+        description="sample-channel median fluorescence per gene (linear scale)",
+        repr=False,
+    )
+    reference_channel_intensity: dict[str, float] = Field(
+        description="reference-channel median fluorescence per gene (linear scale)",
+        repr=False,
+    )
+    log2_ratio_unprocessed: dict[str, float] = Field(
+        description="log2(sample / reference channel) minus the gene's t = 0 value, "
+        "before cleaning",
+        repr=False,
+    )
+    log2_thresholded: dict[str, float] | None = Field(
+        description="cleaned values hard-thresholded by the noise model; None only "
+        "with a typed gap",
+        repr=False,
+    )
+    log2_selected: dict[str, float] | None = Field(
+        description="thresholded values kept only in timecourses passing the "
+        "biological-feasibility selection; None only with a typed gap",
+        repr=False,
+    )
+    log2_shrunken: dict[str, float] | None = Field(
+        description="selected values with observation-level shrinkage toward 0; None "
+        "only with a typed gap",
+        repr=False,
+    )
+    timecourse_id: str = Field(
+        description="the release's key of the time course this array belongs to, "
+        "verbatim"
+    )
+    strain_label: str = Field(
+        description="the strain token as the release writes it (e.g. 'SMY2266a')"
+    )
+    experiment_date: str | None = Field(
+        description="the release's date token for the time course, verbatim; None "
+        "only with a typed gap"
+    )
+    release_table: str = Field(
+        description="the released table the values were read from, verbatim file name"
+    )
+
+    def __repr__(self) -> str:
+        """Summarize instead of printing ~50,000 numbers."""
+        return (
+            f"InductionTimecourseExpressionPhenotype(timecourse_id="
+            f"{self.timecourse_id!r}, genes={len(self.log2_cleaned)})"
+        )
+
+    @field_validator(
+        "log2_cleaned",
+        "log2_noise_sd",
+        "sample_channel_intensity",
+        "reference_channel_intensity",
+        "log2_ratio_unprocessed",
+        "log2_thresholded",
+        "log2_selected",
+        "log2_shrunken",
+        mode="before",
+    )
+    @classmethod
+    def _sorted_finite_layer(cls, v: Any) -> Any:  # raw pre-validation input
+        """Coerce a layer to a SortedDict and refuse an empty or non-finite one."""
+        if v is None:
+            return v
+        if isinstance(v, dict) and not isinstance(v, SortedDict):
+            v = SortedDict(v)
+        if not v:
+            raise ValueError("an expression layer cannot be empty")
+        for key, value in v.items():
+            if not math.isfinite(value):
+                raise ValueError(f"non-finite value for gene {key}: {value}")
+        return v
+
+    @model_validator(mode="after")
+    def _check_layers(self) -> "InductionTimecourseExpressionPhenotype":
+        """One gene set across layers; intensities and noise non-negative; set or gapped."""
+        keys = set(self.log2_cleaned)
+        layers = {
+            "log2_noise_sd": self.log2_noise_sd,
+            "sample_channel_intensity": self.sample_channel_intensity,
+            "reference_channel_intensity": self.reference_channel_intensity,
+            "log2_ratio_unprocessed": self.log2_ratio_unprocessed,
+            "log2_thresholded": self.log2_thresholded,
+            "log2_selected": self.log2_selected,
+            "log2_shrunken": self.log2_shrunken,
+        }
+        for name, layer in layers.items():
+            if layer is not None and set(layer) != keys:
+                raise ValueError(f"{name} must have the genes of log2_cleaned")
+        for name in (
+            "log2_noise_sd",
+            "sample_channel_intensity",
+            "reference_channel_intensity",
+        ):
+            layer = layers[name]
+            negative = [] if layer is None else [g for g, v in layer.items() if v < 0]
+            if negative:
+                raise ValueError(f"{name} cannot be negative, got it at {negative[:5]}")
+        _require_value_or_gap(
+            self,
+            (
+                "experiment_date",
+                "log2_noise_sd",
+                "log2_thresholded",
+                "log2_selected",
+                "log2_shrunken",
+            ),
+        )
+        for name in ("timecourse_id", "strain_label", "release_table"):
+            if not getattr(self, name).strip():
+                raise ValueError(f"{name} cannot be empty")
+        return self
+
+
+class InductionTimecourseExpressionExperimentReference(
+    ExperimentReference, ModelStrict
+):
+    """The same culture at t = 0, on its typed strain background, in its chemostat."""
+
+    experiment_reference_type: str = "induction_timecourse_expression"
+    genome_reference: StrainReferenceGenome
+    environment_reference: CultureEnvironment
+    phenotype_reference: InductionTimecourseExpressionPhenotype
+
+
+class InductionTimecourseExpressionExperiment(Experiment, ModelStrict):
+    """One array of an induction time course (genotype, chemostat at a time, layers)."""
+
+    experiment_type: str = "induction_timecourse_expression"
+    environment: CultureEnvironment
+    # Declared here: torchcell.data reads ``__annotations__["phenotype"]``, which holds
+    # only a class's OWN annotations.
+    phenotype: InductionTimecourseExpressionPhenotype
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (Hackett 2020)
 # --------------------------------------------------------------------------- #
 
 
@@ -9405,6 +9714,7 @@ PhenotypeType = (
     | CalMorphPhenotype
     | MicroarrayExpressionPhenotype
     | MicroarrayExpressionScorePhenotype  # issue #1022
+    | InductionTimecourseExpressionPhenotype  # Hackett 2020 (additive)
     | RNASeqExpressionPhenotype
     | PseudobulkExpressionPhenotype
     | VisualScorePhenotype
@@ -9438,6 +9748,7 @@ ExperimentType = (
     | CalMorphExperiment
     | MicroarrayExpressionExperiment
     | MicroarrayExpressionScoreExperiment  # issue #1022
+    | InductionTimecourseExpressionExperiment  # Hackett 2020 (additive)
     | RNASeqExpressionExperiment
     | PseudobulkExpressionExperiment
     | VisualScoreExperiment
@@ -9486,6 +9797,7 @@ ExperimentReferenceType = (
     | CalMorphExperimentReference
     | MicroarrayExpressionExperimentReference
     | MicroarrayExpressionScoreExperimentReference  # issue #1022
+    | InductionTimecourseExpressionExperimentReference  # Hackett 2020 (additive)
     | RNASeqExpressionExperimentReference
     | PseudobulkExpressionExperimentReference
     | VisualScoreExperimentReference
@@ -9534,6 +9846,7 @@ EXPERIMENT_TYPE_MAP = {
     "calmorph": CalMorphExperiment,
     "microarray_expression": MicroarrayExpressionExperiment,
     "microarray_expression_score": MicroarrayExpressionScoreExperiment,  # issue #1022
+    "induction_timecourse_expression": InductionTimecourseExpressionExperiment,  # Hackett 2020
     "rnaseq_expression": RNASeqExpressionExperiment,
     "pseudobulk_expression": PseudobulkExpressionExperiment,
     "visual_score": VisualScoreExperiment,
@@ -9582,6 +9895,9 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "microarray_expression": MicroarrayExpressionExperimentReference,
     "microarray_expression_score": (  # issue #1022
         MicroarrayExpressionScoreExperimentReference
+    ),
+    "induction_timecourse_expression": (  # Hackett 2020
+        InductionTimecourseExpressionExperimentReference
     ),
     "rnaseq_expression": RNASeqExpressionExperimentReference,
     "pseudobulk_expression": PseudobulkExpressionExperimentReference,

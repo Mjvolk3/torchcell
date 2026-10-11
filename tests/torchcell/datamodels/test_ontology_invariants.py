@@ -55,6 +55,7 @@ from torchcell.datamodels.schema import (
     GenePerturbationType,
     HeterologousPathwayPerturbation,
     HeterozygousDeletionPerturbation,
+    InduciblePromoterInsertionPerturbation,
     KanMxDeletionPerturbation,
     MarkerDeletionPerturbation,
     MeanDeletionPerturbation,
@@ -288,6 +289,17 @@ FACTORY: dict[type[GenePerturbation], dict[str, Any]] = {
         "crispr": CrisprConstruct(
             effector="dSpCas9-RD1152", guide_sequence="CGTACTACCAGATAACCTAA"
         ),
+    },
+    # Hackett 2020: the SMY2049 row of Table EV1, 'KanMX-Z3EVpr-ACA1'.
+    InduciblePromoterInsertionPerturbation: {
+        "systematic_gene_name": "YER045C",
+        "perturbed_gene_name": "ACA1",
+        "promoter_name": "Z3EVpr",
+        "cassette": "KanMX-Z3EVpr-ACA1",
+        "marker": "KanMX",
+        "responsive_to": "ZEV",
+        "native_promoter_retained": True,
+        "strain_id": "SMY2049",
     },
     # Bacterial leaves: the identity is a locus tag of the namespace the record
     # declares, so each one names a REAL tag of its host (measured from that host's

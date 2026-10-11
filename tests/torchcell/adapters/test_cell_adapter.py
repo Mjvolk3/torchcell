@@ -385,6 +385,7 @@ NODE_METHODS = [
     "calmorph phenotype (chunked)",
     "microarray expression phenotype (chunked)",
     "microarray expression score phenotype (chunked)",
+    "induction timecourse expression phenotype (chunked)",
     "rnaseq expression phenotype (chunked)",
     "pseudobulk expression phenotype (chunked)",
     "visual score phenotype (chunked)",
@@ -411,6 +412,7 @@ NODE_METHODS = [
     "calmorph phenotype reference",
     "microarray expression phenotype reference",
     "microarray expression score phenotype reference",
+    "induction timecourse expression phenotype reference",
     "rnaseq expression phenotype reference",
     "pseudobulk expression phenotype reference",
     "visual score phenotype reference",
@@ -456,7 +458,7 @@ EDGE_METHODS = [
 def test_supported_method_names_are_the_registration_tables_in_order(
     recorder: _WandbRecorder,
 ) -> None:
-    """75 node methods and 17 edge methods, in the order ``__init__`` registers them;
+    """77 node methods and 17 edge methods, in the order ``__init__`` registers them;
     every "(chunked)" name maps to a decorated handler and every other name to a
     ``_get_`` collector, which is how ``get_nodes`` routes them.
     """

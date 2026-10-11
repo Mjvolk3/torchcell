@@ -1501,6 +1501,183 @@ YNB_GLUCOSE_SOLID = Media(
 """Solid YNB + 2% glucose as pinned for the Bloom 2019 YNB / pH 3 / pH 8 plates."""
 
 # --------------------------------------------------------------------------- #
+# begin ADDITIVE (Hackett 2020): the IDEA chemostat media.
+#
+# Hackett 2020 (Mol Syst Biol 16:e9174) grew every induction time course in a chemostat
+# "as previously described with minor adjustments (Saldanha et al, 2004)", on a minimal
+# medium limited for ONE nutrient. The paper states the limiting nutrient and its
+# amount and nothing else of the recipe, so the rest of the formulation (carbon source,
+# salts, vitamins, trace metals) is ONE deferred line naming Saldanha 2004, which is not
+# mirrored. The limiting amount of each derived medium is the stated number. Two of the
+# three limitations are in the paper's Methods; methionine limitation (the met6-delta
+# strains of McIsaac 2012) is stated only by the authors' GEO series GSE142864, whose
+# series-matrix file is deposited in the raw mirror and quoted from there. The paper
+# writes mg/l; the library has no mg/L unit, so amounts are g/L (20 mg/l = 0.02 g/L).
+# Quotes are verbatim substrings of the pinned bytes (MinerU LaTeX markup kept).
+# --------------------------------------------------------------------------- #
+_HACKETT2020 = "hackettLearningCausalNetworks2020"
+_HACKETT2020_SHA = "78ec9f04356e813f0a2042f8c84435a37364523cb633437c0e07d7eadf4828a8"
+#: The GEO series matrix carrying the growth protocol, in the raw mirror (gzip text).
+_HACKETT2020_GEO_URI = (
+    "torchcell-raw/hackettLearningCausalNetworks2020/data/"
+    "GSE142864-GPL20785_series_matrix.txt.gz"
+)
+_HACKETT2020_GEO_SHA = (
+    "eed815375636378282ff082f5ecc93309a1f9499393d66f920bdeaacb7ff4f57"
+)
+#: Deferral target, not mirrored: Saldanha, Brauer & Botstein 2004, Mol Biol Cell
+#: 15:4089-4104, the chemostat media the Methods defer to.
+_SALDANHA2004 = "saldanhaNutritionalHomeostasisBatch2004"
+
+_HACKETT_CHEMOSTAT_QUOTE = (
+    "For all experiments, cells were grown under continuous culturing conditions in "
+    "$5 0 0 \\mathrm { - m l }$ vessels as previously described with minor adjustments "
+    "(Saldanha et al, 2004)."
+)
+_HACKETT_P_QUOTE = (
+    "For the majority of experiments, cultures were maintained with minimal medium "
+    "under phosphate limitation $( 2 0 ~ \\mathrm { m g / l } )$ ."
+)
+_HACKETT_N_QUOTE = (
+    "Nitrogen-limited cultures were maintained at $4 0 ~ \\mathrm { { m g / l } }$ "
+    "ammonium sulfate."
+)
+_HACKETT_MET_QUOTE = (
+    "Methionine-limited cultures (McIsaac et al, 2012) were maintained at 7.5 mg/L "
+    "methionine."
+)
+
+
+def _hackett_sv(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A SourcedValue anchored to the mirrored Hackett 2020 ``paper.md``."""
+    return _sv(
+        value, quote, ck=_HACKETT2020, sha=_HACKETT2020_SHA, uri="paper.md", note=note
+    )
+
+
+def _hackett_geo_sv(
+    value: object, quote: str, *, note: str | None = None
+) -> SourcedValue:
+    """A SourcedValue anchored to the deposited GEO GSE142864 series matrix."""
+    return _sv(
+        value,
+        quote,
+        ck=_HACKETT2020,
+        sha=_HACKETT2020_GEO_SHA,
+        uri=_HACKETT2020_GEO_URI,
+        note=note,
+    )
+
+
+_HACKETT_DEFERRED_BASE_LINE = _mixture(
+    "minimal chemostat medium, Saldanha 2004 formulation (Hackett 2020 adjustments)",
+    MediaComponentRole.other,
+    _DEFERRED,
+    provenance=[
+        _hackett_sv(
+            "composition deferred to Saldanha 2004, with unstated minor adjustments",
+            _HACKETT_CHEMOSTAT_QUOTE,
+        )
+    ],
+    note="Hackett 2020 states only the growth-limiting nutrient and its amount; the "
+    "carbon source, salts, vitamins and trace metals of the minimal medium sit in "
+    "Saldanha et al. 2004, Mol Biol Cell 15:4089-4104, which is not mirrored, and the "
+    "'minor adjustments' are not described, so no amount is copied in",
+    defers_to=[_SALDANHA2004],
+)
+
+CHEMOSTAT_MINIMAL_HACKETT2020 = Media(
+    name="minimal chemostat medium (Hackett 2020, composition deferred to Saldanha "
+    "2004), liquid",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="CHEMOSTAT_MINIMAL_HACKETT2020",
+    components=[_HACKETT_DEFERRED_BASE_LINE],
+    provenance=[
+        _hackett_sv(
+            "chemostat culture as in Saldanha 2004, with minor adjustments",
+            _HACKETT_CHEMOSTAT_QUOTE,
+        )
+    ],
+)
+"""The deferred base of the three IDEA limitations; no record is grown on it directly."""
+
+
+def _hackett_limited(
+    name: str, limiting: MediaComponent, statement: SourcedValue
+) -> Media:
+    """The deferred base plus one stated growth-limiting nutrient."""
+    return Media(
+        name=name,
+        state="liquid",
+        is_synthetic=True,
+        base_medium="CHEMOSTAT_MINIMAL_HACKETT2020",
+        components=[*CHEMOSTAT_MINIMAL_HACKETT2020.components, limiting],
+        provenance=[statement],
+    )
+
+
+CHEMOSTAT_P_LIMITED_HACKETT2020 = _hackett_limited(
+    "phosphate-limited minimal chemostat medium, 20 mg/l phosphate (Hackett 2020), "
+    "liquid",
+    _mixture(
+        "phosphate, weighed salt not named (Hackett 2020 phosphate limitation)",
+        MediaComponentRole.bulk_salt,
+        _DEFERRED,
+        concentration=_c(0.02, _GL),
+        provenance=[
+            _hackett_sv("phosphate 20 mg/l, growth-limiting", _HACKETT_P_QUOTE)
+        ],
+        note="the growth-limiting nutrient. The sentence gives 20 mg/l of 'phosphate' "
+        "without naming the salt it was weighed as (a potassium phosphate and a sodium "
+        "phosphate are different reagents with different InChIKeys), so the amount is "
+        "the stated number and the reagent's identity is deferred to Saldanha 2004",
+        defers_to=[_SALDANHA2004],
+    ),
+    _hackett_sv("phosphate-limited minimal medium", _HACKETT_P_QUOTE),
+)
+"""Phosphate limitation, the IDEA standard ("For the majority of experiments")."""
+
+CHEMOSTAT_N_LIMITED_HACKETT2020 = _hackett_limited(
+    "nitrogen-limited minimal chemostat medium, 40 mg/l ammonium sulfate (Hackett "
+    "2020), liquid",
+    _defined(
+        "ammonium sulfate",
+        MediaComponentRole.nitrogen_source,
+        concentration=_c(0.04, _GL),
+        provenance=[
+            _hackett_sv("ammonium sulfate 40 mg/l, growth-limiting", _HACKETT_N_QUOTE)
+        ],
+        note="the growth-limiting nutrient and the sole nitrogen source (the Results "
+        "say 'with ammonium sulfate used as the sole nitrogen source in both cases')",
+    ),
+    _hackett_sv("nitrogen-limited minimal medium", _HACKETT_N_QUOTE),
+)
+"""Nitrogen limitation, used for the Gln3, Dal80 and Gzf3 repeat time courses."""
+
+CHEMOSTAT_MET_LIMITED_HACKETT2020 = _hackett_limited(
+    "methionine-limited minimal chemostat medium, 7.5 mg/L methionine (Hackett 2020, "
+    "GEO GSE142864), liquid",
+    _defined(
+        "L-methionine",
+        MediaComponentRole.amino_acid,
+        concentration=_c(0.0075, _GL),
+        provenance=[
+            _hackett_geo_sv("methionine 7.5 mg/L, growth-limiting", _HACKETT_MET_QUOTE)
+        ],
+        note="the growth-limiting nutrient of the met6-delta strains (McIsaac 2012); "
+        "the protocol writes 'methionine', recorded as the L-amino acid a methionine "
+        "auxotroph takes up. Stated only in the GEO growth protocol, not in the paper",
+    ),
+    _hackett_geo_sv("methionine-limited minimal medium", _HACKETT_MET_QUOTE),
+)
+"""Methionine limitation, the six met6-delta time courses (restriction token 'M')."""
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (Hackett 2020)
+# --------------------------------------------------------------------------- #
+
+# --------------------------------------------------------------------------- #
 # SM (synthetic minimal) -- the Ralser-lab prototrophic-collection medium.
 #
 # "Synthetic minimal" is not one recipe across papers, which is why these are three
@@ -4847,6 +5024,11 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "YP_ETHANOL": YP_ETHANOL,
     "YPD_ETHANOL": YPD_ETHANOL,
     "YNB_GLUCOSE_SOLID": YNB_GLUCOSE_SOLID,
+    # Hackett 2020 IDEA chemostat media (additive)
+    "CHEMOSTAT_MINIMAL_HACKETT2020": CHEMOSTAT_MINIMAL_HACKETT2020,
+    "CHEMOSTAT_P_LIMITED_HACKETT2020": CHEMOSTAT_P_LIMITED_HACKETT2020,
+    "CHEMOSTAT_N_LIMITED_HACKETT2020": CHEMOSTAT_N_LIMITED_HACKETT2020,
+    "CHEMOSTAT_MET_LIMITED_HACKETT2020": CHEMOSTAT_MET_LIMITED_HACKETT2020,
     "SM": SM,
     "SM_AGAR": SM_AGAR,
     "SM_DEFERRED": SM_DEFERRED,
@@ -4904,6 +5086,13 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "SYNH3_MINUS": "the hydrolysate sugars sit inside a composition deferred to "
     "Zhang 2019, which is not mirrored",
     "SYNBASE": "same deferral as its SynH3- base",
+    # Hackett 2020 (additive): the carbon source is inside the deferred Saldanha recipe
+    "CHEMOSTAT_MINIMAL_HACKETT2020": "Hackett 2020 states only the limiting nutrient, "
+    "so the carbon source sits inside a composition deferred to Saldanha 2004, which "
+    "is not mirrored",
+    "CHEMOSTAT_P_LIMITED_HACKETT2020": "same deferral as its Hackett 2020 base",
+    "CHEMOSTAT_N_LIMITED_HACKETT2020": "same deferral as its Hackett 2020 base",
+    "CHEMOSTAT_MET_LIMITED_HACKETT2020": "same deferral as its Hackett 2020 base",
     "SM_DEFERRED": "Zelezniak 2018 states no recipe, so the carbon source sits inside "
     "a composition deferred to Mulleder 2012, which is not mirrored",
     "PBS": "a starvation buffer: De Chiara 2022 uses it as plain water, with no carbon "

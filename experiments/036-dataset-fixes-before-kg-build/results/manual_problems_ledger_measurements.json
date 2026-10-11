@@ -1,0 +1,716 @@
+{
+  "measured_at": "2026-10-10T23:45:57-05:00",
+  "hostname": "gilahyper",
+  "git_head": "edd48664ae566393995e41965975e7593c7abef8",
+  "stores": [
+    {
+      "store": "ecoli_carbon_source_tong2020",
+      "ledger_row": "#788 item 3 (CarPE concentrations)",
+      "records": 111420
+    },
+    {
+      "store": "mrna_fraction_balakrishnan2022",
+      "ledger_row": "#853, #906",
+      "records": 28
+    },
+    {
+      "store": "metabolome_ishii2007",
+      "ledger_row": "#699",
+      "records": 28
+    },
+    {
+      "store": "proteome_ishii2007",
+      "ledger_row": "#699",
+      "records": 28
+    },
+    {
+      "store": "flux_ishii2007",
+      "ledger_row": "#699",
+      "records": 28
+    },
+    {
+      "store": "isoprenyl_acetate_titer_kang2026",
+      "ledger_row": "#788 item 4 (Kang reference titer)",
+      "records": 19
+    },
+    {
+      "store": "rbtnseq_borchert2024",
+      "ledger_row": "#726 / #860, #908",
+      "records": 1372280
+    },
+    {
+      "store": "rbtnseq_borchert2023",
+      "ledger_row": "#913",
+      "records": 10824
+    },
+    {
+      "store": "crispri_guide_fitness_wang2018",
+      "ledger_row": "#879",
+      "records": 240481
+    },
+    {
+      "store": "pputida_env_metal_tnseq_royet2025",
+      "ledger_row": "#909",
+      "records": 21583
+    },
+    {
+      "store": "proteome_brunk2016",
+      "ledger_row": "#904",
+      "records": 81
+    },
+    {
+      "store": "isoprenol_selection_menasalvas2025",
+      "ledger_row": "#915",
+      "records": 58
+    },
+    {
+      "store": "protein_fold_change_caglar2017",
+      "ledger_row": "#914",
+      "records": 8
+    },
+    {
+      "store": "ecoli_crispri_rousset2018",
+      "ledger_row": "#905",
+      "records": 68436
+    },
+    {
+      "store": "crispri_knockdown_cui2018",
+      "ledger_row": "#905",
+      "records": 141542
+    },
+    {
+      "store": "inhibitor_bioscreen_volk2021",
+      "ledger_row": "#912",
+      "records": 977
+    },
+    {
+      "store": "ffa_xue2025",
+      "ledger_row": "#887",
+      "records": 176
+    },
+    {
+      "store": "tmi_kuzmin2018",
+      "ledger_row": "#896",
+      "records": 91111
+    },
+    {
+      "store": "dmf_kuzmin2018",
+      "ledger_row": "#894",
+      "records": 410571
+    },
+    {
+      "store": "tmf_kuzmin2018",
+      "ledger_row": "#895",
+      "records": 91111
+    },
+    {
+      "store": "dmf_kuzmin2020",
+      "ledger_row": "#897",
+      "records": 632998
+    },
+    {
+      "store": "gene_essentiality_sgd",
+      "ledger_row": "#901",
+      "records": 1329
+    },
+    {
+      "store": "syn_leth_db_yeast",
+      "ledger_row": "#902",
+      "records": 13996
+    },
+    {
+      "store": "syn_rescue_db_yeast",
+      "ledger_row": "#903",
+      "records": 6942
+    }
+  ],
+  "zotero": [
+    {
+      "citation_key": "babuQuantitativeGenomeWideGenetic2014",
+      "modules": [
+        "babu2014.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "JATA7UWL",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "balakrishnanPrinciplesGeneRegulation2022",
+      "modules": [
+        "balakrishnan2022.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "banerjeeAddressingGenomeScale2025",
+      "modules": [
+        "banerjee2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "SN9VNHBW",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "banerjeeGenomescalePathwayEngineering2024",
+      "modules": [],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": false
+    },
+    {
+      "citation_key": "borchertMachineLearningAnalysis2024",
+      "modules": [
+        "borchert2024.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "SPBIFLRA",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "borchertRBTnSeqIdentifiesGenetic2023",
+      "modules": [
+        "borchert2023.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "RLCK6CIG",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "brunkCharacterizingStrainVariation2016",
+      "modules": [
+        "brunk2016.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "butlandESGAColiSynthetic2008",
+      "modules": [
+        "butland2008.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "TYBJ6MRN",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "caglarColiMolecularPhenotype2017",
+      "modules": [
+        "caglar2017.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "J7RZ35GU",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "caiMCF2ChemManuallyCurated2023",
+      "modules": [
+        "cai2023.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "7W3QKWGX",
+      "in_raw_mirror": false
+    },
+    {
+      "citation_key": "camposGenomewidePhenotypicAnalysis2018",
+      "modules": [
+        "campos2018.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "88BMRUYA",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "carruthersAutomationMachineLearning2025",
+      "modules": [
+        "carruthers2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "AA8CHAGB",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "choeAdaptiveLaboratoryEvolution2019",
+      "modules": [
+        "choe2019_growth_rate.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "L6YNE2MW",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "choeRapidIdentificationKey2025",
+      "modules": [
+        "choe2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "4YMZTVMF",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "cuiCRISPRiScreenColi2018",
+      "modules": [
+        "cui2018.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "QECVXJXR",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "desiqueiraAlternateRoutesAcetate2025",
+      "modules": [
+        "desiqueira2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "ZU5L6XE6",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "fangGenomescaleCRISPRiScreen2025",
+      "modules": [
+        "fang2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "GZSEXHXK",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "fooImprovingMicrobialBiogasoline2014",
+      "modules": [
+        "foo2014.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "D527AW54",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "fuhrerGenomewideLandscapeGene2017",
+      "modules": [
+        "fuhrer2017.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "XDITVX8R",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "girgisGeneticArchitectureIntrinsic2009",
+      "modules": [
+        "girgis2009.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "7YGUZVX3",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "goodallEssentialGenomeEscherichia2018",
+      "modules": [
+        "goodall2018.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "LRZGPS93",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "guptaGlobalProteinTurnover2024",
+      "modules": [
+        "gupta2024.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "33JEIYMV",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "hawkinsMismatchCRISPRiRevealsCovarying2020",
+      "modules": [
+        "hawkins2020.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "ZZ93E4AL",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "ishiiMultipleHighThroughputAnalyses2007",
+      "modules": [
+        "ishii2007.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "ME8Q5BIB",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "kangMultilayeredMetabolicRemodeling2026",
+      "modules": [
+        "kang2026.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "DY4DBHZE",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "lamoureuxMultiscaleExpressionRegulation2023",
+      "modules": [
+        "lamoureux2023.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "WTEWMT3W",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "liLeveragingLargeLanguage2024",
+      "modules": [
+        "li2024.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "CIXN6Z6T",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "liQuantifyingAbsoluteProtein2014",
+      "modules": [
+        "li2014.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "limEvolutionguidedToleranceEngineering2025",
+      "modules": [
+        "lim2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "ZHJ9TIKT",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "limMachinelearningPseudomonasPutida2022",
+      "modules": [
+        "lim2022.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "KGILDDFD",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "menasalvasBiosensordrivenStrainEngineering2025",
+      "modules": [
+        "menasalvas2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "3WNNJE3D",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "mohiuddinHighthroughputScreeningPromoter2022",
+      "modules": [
+        "mohiuddin2022.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "moriCoarseFineAbsolute2021",
+      "modules": [
+        "mori2021.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "WFD3ZVP7",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "mutalikHighthroughputMappingPhage2020",
+      "modules": [
+        "mutalik2020.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "SHUSIDHG",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "nicholsPhenotypicLandscapeBacterial2011",
+      "modules": [],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": false
+    },
+    {
+      "citation_key": "niuGenomicTranscriptionalChanges2019",
+      "modules": [
+        "niu2019.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "5BBQ2FL2",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "priceMutantPhenotypesThousands2018",
+      "modules": [
+        "price2018.py",
+        "wetmore2015.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "HYJLM6UQ",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "rachwalskiMobileCRISPRiCollection2024",
+      "modules": [
+        "rachwalski2024.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "SFMXAVZC",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "randMetabolicPathwayCatabolizing2017",
+      "modules": [],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "rappMetabolomeColiCRISPRi2026",
+      "modules": [
+        "rapp2026.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "2H4MMCFN",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "roussetGenomewideCRISPRdCas9Screens2018",
+      "modules": [
+        "rousset2018.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "E3N8ZJZG",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "royetHighThroughputTnSeqScreens2025",
+      "modules": [
+        "royet2025.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "XRHGBCZY",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "schastnayaExtensiveRegulationEnzyme2021",
+      "modules": [
+        "schastnaya2021.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "N549A43Y",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "schmidtQuantitativeConditiondependentEscherichia2016",
+      "modules": [
+        "schmidt2016.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "R6W7M2HA",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "shiverChemicalGenomicScreenNeglected2016",
+      "modules": [
+        "shiver2016.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "F45WTKK3",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "tetenevaGenomewideScreenGenetic2024",
+      "modules": [
+        "teteneva2024.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": false
+    },
+    {
+      "citation_key": "thompsonMassivelyParallelFitness2019",
+      "modules": [],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "thompsonOmicsdrivenIdentificationElimination2019",
+      "modules": [
+        "thompson2019_valerolactam.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "tongGeneDispensabilityEscherichia2020",
+      "modules": [
+        "tong2020.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "DG6K6MH7",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "typasHighthroughputQuantitativeAnalyses2008",
+      "modules": [
+        "typas2008.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "NBMYG65F",
+      "in_raw_mirror": false
+    },
+    {
+      "citation_key": "wangDynamicInterplayMultidrug2015",
+      "modules": [
+        "wang2015.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "KH5VCG8B",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "wangGenomeWideScreenRevealsCellular2024",
+      "modules": [
+        "wang2024.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "wangPooledCRISPRInterference2018",
+      "modules": [
+        "wang2018.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "V4I2M99M",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "wetmoreRapidQuantificationMutant2015",
+      "modules": [
+        "wetmore2015.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "EQDQ865W",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "yunusPredictiveCRISPRmediatedGene2026",
+      "modules": [
+        "yunus2026.py"
+      ],
+      "in_library_mirror": true,
+      "zotero_item_key": "KYDVM98Y",
+      "in_raw_mirror": true
+    },
+    {
+      "citation_key": "zhangCeCaFDBCuratedDatabase2015",
+      "modules": [
+        "zhang2015.py"
+      ],
+      "in_library_mirror": false,
+      "zotero_item_key": null,
+      "in_raw_mirror": true
+    }
+  ],
+  "deposits": [
+    {
+      "row": "#699 Ishii 2007 SOM",
+      "path": "/scratch/projects/torchcell-scratch/torchcell-raw/ishiiMultipleHighThroughputAnalyses2007/si",
+      "present": false
+    },
+    {
+      "row": "#853 Balakrishnan 2022 Table S6",
+      "path": "/scratch/projects/torchcell-scratch/torchcell-raw/balakrishnanPrinciplesGeneRegulation2022/data/NIHMS1856867-supplement-Table_S6.xlsx",
+      "present": false
+    },
+    {
+      "row": "#788 item 3 Tong 2020 CarPE",
+      "path": "/scratch/projects/torchcell-scratch/torchcell-raw/tongGeneDispensabilityEscherichia2020/data/carpe",
+      "present": false
+    },
+    {
+      "row": "#691 Nichols 2011 paper",
+      "path": "/scratch/projects/torchcell-scratch/torchcell-library/nicholsPhenotypicLandscapeBacterial2011",
+      "present": false
+    }
+  ],
+  "manifests_without_bindings": [
+    "dmf_costanzo2016_1e5",
+    "dmf_costanzo2016_5e5",
+    "dmi_costanzo2016_1e5",
+    "dmi_costanzo2016_5e5",
+    "env_chemgen_auesukaree2009.deprecated-2026-09-12b",
+    "env_chemgen_vanacloig2022.deprecated-2026-09-13-pre-gaps",
+    "env_chemgen_vanacloig2022.superseded-2026-09-12-libsize"
+  ],
+  "disk": [
+    {
+      "what": "/scratch/projects/torchcell-scratch/data/torchcell/**/*.superseded.*",
+      "directories": 838,
+      "du_human": "508G"
+    },
+    {
+      "what": "/scratch/projects/torchcell-scratch/data/torchcell/**/deprecated-*",
+      "directories": 69,
+      "du_human": "293G"
+    },
+    {
+      "what": "/scratch/projects/torchcell-deprecated",
+      "directories": 162,
+      "du_human": "68G"
+    },
+    {
+      "what": "/db/database/biocypher-out/2026-10-09_07-20-33",
+      "directories": 1,
+      "du_human": "170G"
+    },
+    {
+      "what": "/db/database/data.superseded.2026-10-06_04-41-16",
+      "directories": 1,
+      "du_human": "135G"
+    }
+  ],
+  "pubchem": [
+    {
+      "name": "potassium chloride",
+      "http_status": 200,
+      "seconds": 5.25
+    },
+    {
+      "name": "sodium dihydrogen phosphate",
+      "http_status": 200,
+      "seconds": 0.17
+    },
+    {
+      "name": "nicotinic acid",
+      "http_status": 200,
+      "seconds": 0.17
+    },
+    {
+      "name": "cyanocobalamin",
+      "http_status": 200,
+      "seconds": 0.17
+    },
+    {
+      "name": "valerolactam",
+      "http_status": 200,
+      "seconds": 0.18
+    },
+    {
+      "name": "isoprenol",
+      "http_status": 200,
+      "seconds": 0.19
+    }
+  ]
+}

@@ -107,6 +107,17 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "n_samples": 245,
         "sample_unit": "cell",
     },
+    # The same reason as the morphology phenotype above: the generic builder's "x" is
+    # neither a registered genome-architecture assay nor one of its symbols, and the
+    # ANtot aggregate has to agree with the chromosome values beside it.
+    "torchcell.datamodels.schema.GenomeArchitecturePhenotype": {
+        "assay": "puddu2019_wgs_coverage",
+        "genome_architecture": {"rDNA": 117.19, "chr01": 2.0, "ANtot": 0.0, "GCR": 0.0},
+        "n_samples": 1,
+        "sample_unit": "colony",
+        "sample_id": "SD0863b",
+        "sample_accession": "ERS838232",
+    },
     "torchcell.datamodels.schema.BackgroundAllele": {
         "systematic_gene_name": "YOR202W",
         "gene_name": "HIS3",

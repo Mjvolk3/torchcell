@@ -1,13 +1,24 @@
-%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-01 21:40 UTC) -- GENERATED, do not edit
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-11 01:26 UTC) -- GENERATED, do not edit
 
-\begin{tabular}{llrrrrl}
+\begin{longtable}{llrrrrl}
+\caption{\runsCaption}\label{tab:runs}\\
 \toprule
 arm & seed & epochs & Pearson, ep 29 & max (epoch) & gradient ratio, ep 0 & W\&B run \\
 \midrule
+\endfirsthead
+\toprule
+arm & seed & epochs & Pearson, ep 29 & max (epoch) & gradient ratio, ep 0 & W\&B run \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
 no penalty ($\lambda = 0$) & 1 & 30 & 0.4243 & 0.4476 (16) & 0.00 & \texttt{zvtj3waw} \\
 no penalty ($\lambda = 0$) & 2 & 30 & 0.4248 & 0.4460 (15) & 0.00 & \texttt{4vgeyw2i} \\
 no penalty ($\lambda = 0$) & 3 & 30 & 0.4253 & 0.4493 (16) & 0.00 & \texttt{mmiydyws} \\
 KL $\lambda = 10^{-5}$ & 1 & 30 & 0.4213 & 0.4456 (13) & 0.00 & \texttt{rldsrcnr} \\
+KL $\lambda = 10^{-5}$ & 2 & 30 & 0.4272 & 0.4479 (15) & 0.00 & \texttt{8ttjk7ru} \\
 KL $\lambda = 10^{-5}$ & 3 & 30 & 0.4180 & 0.4425 (14) & 0.00 & \texttt{7fx9njte} \\
 KL $\lambda = 10^{-4}$ & 1 & 30 & 0.4189 & 0.4473 (16) & 0.01 & \texttt{r2i3i9xq} \\
 KL $\lambda = 10^{-4}$ & 2 & 30 & 0.4297 & 0.4486 (15) & 0.00 & \texttt{h8zhfq2d} \\
@@ -30,6 +41,12 @@ hard mask, layer 1 & 3 & 30 & 0.4222 & 0.4458 (17) & 0.00 & \texttt{tpixauk7} \\
 KL $\lambda = 10^{-3}$, random graphs & 1 & 30 & 0.4169 & 0.4459 (13) & 0.15 & \texttt{usgha5w6} \\
 KL $\lambda = 10^{-3}$, random graphs & 2 & 30 & 0.4329 & 0.4500 (19) & 0.04 & \texttt{9tqgl66k} \\
 KL $\lambda = 10^{-3}$, random graphs & 3 & 30 & 0.4104 & 0.4456 (14) & 0.41 & \texttt{zuw5z7k4} \\
+KL $\lambda = 10$ & 1 & 30 & 0.4532 & 0.4562 (24) & 1457.92 & \texttt{zs8hylbw} \\
+KL $\lambda = 10$ & 2 & 30 & 0.4415 & 0.4486 (17) & 369.90 & \texttt{tkp6zlre} \\
+KL $\lambda = 10$ & 3 & 30 & 0.4381 & 0.4519 (24) & 3988.77 & \texttt{j8xlrvrb} \\
+KL $\lambda = 100$ & 1 & 30 & 0.4474 & 0.4580 (27) & 14960.61 & \texttt{hx4s7bxa} \\
+KL $\lambda = 100$ & 2 & 30 & 0.4406 & 0.4406 (29) & 3783.01 & \texttt{i1l1jhm8} \\
+KL $\lambda = 100$ & 3 & 30 & 0.4403 & 0.4535 (24) & 40438.52 & \texttt{dnlc6pib} \\
 KL $\lambda = 10^{-1}$, random graphs & 1 & 30 & 0.4343 & 0.4343 (29) & 14.78 & \texttt{u6he7prk} \\
 KL $\lambda = 10^{-1}$, random graphs & 2 & 30 & 0.4300 & 0.4376 (12) & 3.71 & \texttt{h7wumv3p} \\
 KL $\lambda = 10^{-1}$, random graphs & 3 & 30 & 0.4203 & 0.4341 (19) & 40.87 & \texttt{w7wt6bmo} \\
@@ -40,5 +57,52 @@ KL $\lambda = 1$, random graphs & 2 & 30 & 0.4298 & 0.4342 (14) & 37.41 & \textt
 KL $\lambda = 1$, random graphs & 3 & 30 & 0.4260 & 0.4404 (22) & 405.90 & \texttt{gtmbi3fw} \\
 KL $\lambda = 1$, random graphs & 4 & 30 & 0.4256 & 0.4348 (28) & 20.97 & \texttt{urwi2lxu} \\
 KL $\lambda = 1$, random graphs & 5 & 30 & 0.4212 & 0.4287 (19) & 223.91 & \texttt{n0vst095} \\
-\bottomrule
-\end{tabular}
+hard mask, directed & 1 & 30 & 0.4228 & 0.4482 (19) & 0.00 & \texttt{ojdk2wjb} \\
+hard mask, directed & 2 & 30 & 0.4233 & 0.4490 (17) & 0.00 & \texttt{pl7w8p23} \\
+hard mask, directed & 3 & 30 & 0.4020 & 0.4477 (14) & 0.00 & \texttt{ofajio46} \\
+hard mask, 2 hops, directed & 1 & 30 & 0.4151 & 0.4419 (13) & 0.00 & \texttt{5tnf7v0s} \\
+hard mask, 2 hops, directed & 2 & 30 & 0.4261 & 0.4453 (15) & 0.00 & \texttt{ol8loxg2} \\
+hard mask, 2 hops, directed & 3 & 30 & 0.4172 & 0.4395 (13) & 0.00 & \texttt{z3yp3qvg} \\
+hard mask, 3 hops, directed & 1 & 30 & 0.4135 & 0.4448 (18) & 0.00 & \texttt{aypj6d9b} \\
+hard mask, 3 hops, directed & 2 & 30 & 0.4200 & 0.4417 (15) & 0.00 & \texttt{6qzsjdj2} \\
+hard mask, 3 hops, directed & 3 & 30 & 0.4180 & 0.4477 (14) & 0.00 & \texttt{n4r2coej} \\
+KL $\lambda = 1$, 2-hop target & 1 & 30 & 0.4319 & 0.4376 (25) & 67.88 & \texttt{ys7mz0e8} \\
+KL $\lambda = 1$, 2-hop target & 2 & 30 & 0.4430 & 0.4432 (28) & 18.82 & \texttt{p7us24x7} \\
+KL $\lambda = 1$, 2-hop target & 3 & 30 & 0.4390 & 0.4463 (22) & 181.67 & \texttt{qhypj06y} \\
+KL $\lambda = 1$, 3-hop target & 1 & 30 & 0.4343 & 0.4484 (28) & 43.67 & \texttt{tly5od5x} \\
+KL $\lambda = 1$, 3-hop target & 2 & 30 & 0.4368 & 0.4382 (26) & 12.36 & \texttt{b8joneh6} \\
+KL $\lambda = 1$, 3-hop target & 3 & 30 & 0.4155 & 0.4392 (28) & 113.27 & \texttt{95fs8pfw} \\
+KL $\lambda = 1$, symmetric target & 1 & 30 & 0.4465 & 0.4465 (29) & 114.54 & \texttt{3faippxa} \\
+KL $\lambda = 1$, symmetric target & 2 & 30 & 0.4437 & 0.4515 (27) & 28.32 & \texttt{2rb2lshh} \\
+KL $\lambda = 1$, symmetric target & 3 & 30 & 0.4273 & 0.4496 (22) & 333.25 & \texttt{16l3gkau} \\
+hard mask, layers 1--2 & 1 & 30 & 0.4222 & 0.4468 (16) & 0.00 & \texttt{jcneeoxl} \\
+hard mask, layers 1--2 & 2 & 30 & 0.4144 & 0.4453 (15) & 0.00 & \texttt{do0jnbry} \\
+hard mask, layers 1--2 & 3 & 30 & 0.4196 & 0.4460 (14) & 0.00 & \texttt{677afro6} \\
+hard mask, layers 3--4 & 1 & 30 & 0.4163 & 0.4453 (13) & 0.00 & \texttt{udcsvf86} \\
+hard mask, layers 3--4 & 2 & 30 & 0.4224 & 0.4442 (12) & 0.00 & \texttt{u2cqgyt0} \\
+hard mask, layers 3--4 & 3 & 30 & 0.4078 & 0.4461 (14) & 0.00 & \texttt{trha5wbm} \\
+hard mask, layers 1--4 & 1 & 30 & 0.4279 & 0.4478 (18) & 0.00 & \texttt{xpz6qsw7} \\
+hard mask, layers 1--4 & 2 & 30 & 0.4348 & 0.4475 (15) & 0.00 & \texttt{hov78sie} \\
+hard mask, layers 1--4 & 3 & 30 & 0.4164 & 0.4440 (14) & 0.00 & \texttt{k8rhye1o} \\
+KL $\lambda = 1$, layers 1--2 & 1 & 30 & 0.4407 & 0.4480 (27) & 191.86 & \texttt{4htu7x9c} \\
+KL $\lambda = 1$, layers 1--2 & 2 & 30 & 0.4262 & 0.4397 (22) & 54.02 & \texttt{jvhj6w7p} \\
+KL $\lambda = 1$, layers 1--2 & 3 & 30 & 0.4436 & 0.4508 (28) & 581.12 & \texttt{0py9yk6e} \\
+KL $\lambda = 1$, layers 3--4 & 1 & 30 & 0.4421 & 0.4453 (26) & 242.57 & \texttt{zy2us0hw} \\
+KL $\lambda = 1$, layers 3--4 & 2 & 30 & 0.4537 & 0.4537 (29) & 56.02 & \texttt{175ssbar} \\
+KL $\lambda = 1$, layers 3--4 & 3 & 30 & 0.4405 & 0.4475 (25) & 797.09 & \texttt{hpm8im1i} \\
+no penalty, 60 epochs & 1 & 60 & 0.4140 & 0.4412 (15) & 0.00 & \texttt{htqyeonz} \\
+no penalty, 60 epochs & 2 & 60 & 0.4188 & 0.4477 (15) & 0.00 & \texttt{ye4iu9ra} \\
+no penalty, 60 epochs & 3 & 60 & 0.4133 & 0.4405 (14) & 0.00 & \texttt{beggtb67} \\
+hard mask, 60 epochs & 1 & 60 & 0.4201 & 0.4455 (18) & 0.00 & \texttt{680dsbq0} \\
+hard mask, 60 epochs & 2 & 60 & 0.4278 & 0.4479 (17) & 0.00 & \texttt{rol0rp8k} \\
+hard mask, 60 epochs & 3 & 60 & 0.4104 & 0.4451 (15) & 0.00 & \texttt{038gk8dm} \\
+KL $\lambda = 1$, 60 epochs & 1 & 60 & 0.4379 & 0.4571 (20) & 146.51 & \texttt{o3dyrd28} \\
+KL $\lambda = 1$, 60 epochs & 2 & 60 & 0.4393 & 0.4469 (23) & 37.17 & \texttt{fb3jeniw} \\
+KL $\lambda = 1$, 60 epochs & 3 & 60 & 0.4468 & 0.4475 (46) & 399.95 & \texttt{vdtfq7fb} \\
+no penalty, composite embedding & 1 & 30 (5 NaN) & -0.0084 & 0.0091 (12) & 0.00 & \texttt{3rswgmkm} \\
+no penalty, composite embedding & 2 & 30 (11 NaN) & -- & 0.0784 (15) & 0.00 & \texttt{ev4kv036} \\
+no penalty, composite embedding & 3 & 30 (6 NaN) & -0.0030 & 0.1303 (9) & 0.00 & \texttt{tma2rpjf} \\
+KL $\lambda = 1$, composite embedding & 1 & 30 & 0.4142 & 0.4179 (28) & 49.33 & \texttt{1aniekse} \\
+KL $\lambda = 1$, composite embedding & 2 & 30 & 0.4212 & 0.4212 (29) & 546.91 & \texttt{ng5kw1h9} \\
+KL $\lambda = 1$, composite embedding & 3 & 30 & 0.4276 & 0.4307 (28) & 54.65 & \texttt{583mvatn} \\
+\end{longtable}

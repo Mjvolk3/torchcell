@@ -1,10 +1,20 @@
-%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-01 21:40 UTC) -- GENERATED, do not edit
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-11 01:26 UTC) -- GENERATED, do not edit
 
-\begin{tabular}{llrlrrr}
+\begin{longtable}{llrlrrr}
+\caption{\pairedCaption}\label{tab:paired}\\
 \toprule
 arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\
 \midrule
-KL $\lambda = 10^{-5}$ & epoch 29 & 2 & -0.003, -0.007 & -0.0051 $\downarrow$ & -2.4 & 0.252 \\
+\endfirsthead
+\toprule
+arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\
+\midrule
+\endhead
+\midrule
+\endfoot
+\bottomrule
+\endlastfoot
+KL $\lambda = 10^{-5}$ & epoch 29 & 3 & -0.003, +0.002, -0.007 & -0.0026 & -0.9 & 0.448 \\
 KL $\lambda = 10^{-4}$ & epoch 29 & 3 & -0.005, +0.005, -0.016 & -0.0054 & -0.9 & 0.459 \\
 KL $\lambda = 10^{-3}$ (control) & epoch 29 & 3 & +0.005, +0.013, +0.005 & +0.0077 $\uparrow$ & 2.9 & 0.103 \\
 KL $\lambda = 10^{-2}$ & epoch 29 & 3 & +0.011, +0.014, +0.013 & +0.0129 $\uparrow$ & 17.7 & 0.003 \\
@@ -12,9 +22,25 @@ KL $\lambda = 10^{-1}$ & epoch 29 & 3 & +0.029, +0.023, +0.010 & +0.0202 $\uparr
 KL $\lambda = 1$ & epoch 29 & 3 & +0.021, +0.023, +0.021 & +0.0218 $\uparrow$ & 30.0 & 0.001 \\
 hard mask, layer 1 & epoch 29 & 3 & -0.001, -0.007, -0.003 & -0.0036 $\downarrow$ & -2.2 & 0.160 \\
 KL $\lambda = 10^{-3}$, random graphs & epoch 29 & 3 & -0.007, +0.008, -0.015 & -0.0047 & -0.7 & 0.557 \\
+KL $\lambda = 10$ & epoch 29 & 3 & +0.029, +0.017, +0.013 & +0.0195 $\uparrow$ & 4.0 & 0.056 \\
+KL $\lambda = 100$ & epoch 29 & 3 & +0.023, +0.016, +0.015 & +0.0180 $\uparrow$ & 7.1 & 0.019 \\
 KL $\lambda = 10^{-1}$, random graphs & epoch 29 & 3 & +0.010, +0.005, -0.005 & +0.0034 & 0.8 & 0.518 \\
 KL $\lambda = 1$, random graphs & epoch 29 & 3 & +0.008, +0.005, +0.001 & +0.0045 $\uparrow$ & 2.2 & 0.160 \\
-KL $\lambda = 10^{-5}$ & max over epochs & 2 & -0.002, -0.007 & -0.0044 $\downarrow$ & -1.9 & 0.313 \\
+hard mask, directed & epoch 29 & 3 & -0.002, -0.001, -0.023 & -0.0088 $\downarrow$ & -1.2 & 0.352 \\
+hard mask, 2 hops, directed & epoch 29 & 3 & -0.009, +0.001, -0.008 & -0.0053 & -1.6 & 0.252 \\
+hard mask, 3 hops, directed & epoch 29 & 3 & -0.011, -0.005, -0.007 & -0.0076 $\downarrow$ & -4.3 & 0.050 \\
+KL $\lambda = 1$, 2-hop target & epoch 29 & 3 & +0.008, +0.018, +0.014 & +0.0131 $\uparrow$ & 4.3 & 0.051 \\
+KL $\lambda = 1$, 3-hop target & epoch 29 & 3 & +0.010, +0.012, -0.010 & +0.0041 & 0.6 & 0.619 \\
+KL $\lambda = 1$, symmetric target & epoch 29 & 3 & +0.022, +0.019, +0.002 & +0.0144 $\uparrow$ & 2.3 & 0.148 \\
+hard mask, layers 1--2 & epoch 29 & 3 & -0.002, -0.010, -0.006 & -0.0061 $\downarrow$ & -2.6 & 0.125 \\
+hard mask, layers 3--4 & epoch 29 & 3 & -0.008, -0.002, -0.018 & -0.0093 $\downarrow$ & -2.1 & 0.169 \\
+hard mask, layers 1--4 & epoch 29 & 3 & +0.004, +0.010, -0.009 & +0.0016 & 0.3 & 0.805 \\
+KL $\lambda = 1$, layers 1--2 & epoch 29 & 3 & +0.016, +0.001, +0.018 & +0.0120 $\uparrow$ & 2.2 & 0.154 \\
+KL $\lambda = 1$, layers 3--4 & epoch 29 & 3 & +0.018, +0.029, +0.015 & +0.0206 $\uparrow$ & 4.9 & 0.039 \\
+hard mask, 60 epochs & epoch 29 & 3 & +0.006, +0.009, -0.003 & +0.0041 & 1.1 & 0.373 \\
+KL $\lambda = 1$, 60 epochs & epoch 29 & 3 & +0.024, +0.021, +0.034 & +0.0260 $\uparrow$ & 6.7 & 0.022 \\
+KL $\lambda = 1$, composite embedding & epoch 29 & 2 & +0.423, +0.431 & +0.4267 $\uparrow$ & 106.8 & 0.006 \\
+KL $\lambda = 10^{-5}$ & max over epochs & 3 & -0.002, +0.002, -0.007 & -0.0023 & -0.9 & 0.455 \\
 KL $\lambda = 10^{-4}$ & max over epochs & 3 & -0.000, +0.003, -0.006 & -0.0013 & -0.5 & 0.659 \\
 KL $\lambda = 10^{-3}$ (control) & max over epochs & 3 & +0.002, +0.001, +0.006 & +0.0029 $\uparrow$ & 2.2 & 0.163 \\
 KL $\lambda = 10^{-2}$ & max over epochs & 3 & +0.005, +0.005, +0.005 & +0.0049 $\uparrow$ & 81.1 & 0.000 \\
@@ -22,9 +48,25 @@ KL $\lambda = 10^{-1}$ & max over epochs & 3 & +0.011, +0.008, -0.001 & +0.0060 
 KL $\lambda = 1$ & max over epochs & 3 & +0.007, +0.003, +0.003 & +0.0041 $\uparrow$ & 3.0 & 0.094 \\
 hard mask, layer 1 & max over epochs & 3 & -0.005, +0.003, -0.003 & -0.0017 & -0.7 & 0.557 \\
 KL $\lambda = 10^{-3}$, random graphs & max over epochs & 3 & -0.002, +0.004, -0.004 & -0.0005 & -0.2 & 0.857 \\
+KL $\lambda = 10$ & max over epochs & 3 & +0.009, +0.003, +0.003 & +0.0046 $\uparrow$ & 2.3 & 0.147 \\
+KL $\lambda = 100$ & max over epochs & 3 & +0.010, -0.005, +0.004 & +0.0031 & 0.7 & 0.570 \\
 KL $\lambda = 10^{-1}$, random graphs & max over epochs & 3 & -0.013, -0.008, -0.015 & -0.0123 $\downarrow$ & -6.1 & 0.026 \\
 KL $\lambda = 1$, random graphs & max over epochs & 3 & -0.011, -0.012, -0.009 & -0.0106 $\downarrow$ & -12.2 & 0.007 \\
-KL $\lambda = 10^{-5}$ & at min val loss & 2 & +0.001, -0.004 & -0.0015 & -0.6 & 0.670 \\
+hard mask, directed & max over epochs & 3 & +0.001, +0.003, -0.002 & +0.0006 & 0.5 & 0.673 \\
+hard mask, 2 hops, directed & max over epochs & 3 & -0.006, -0.001, -0.010 & -0.0054 $\downarrow$ & -2.1 & 0.174 \\
+hard mask, 3 hops, directed & max over epochs & 3 & -0.003, -0.004, -0.002 & -0.0029 $\downarrow$ & -3.6 & 0.069 \\
+KL $\lambda = 1$, 2-hop target & max over epochs & 3 & -0.010, -0.003, -0.003 & -0.0052 $\downarrow$ & -2.2 & 0.157 \\
+KL $\lambda = 1$, 3-hop target & max over epochs & 3 & +0.001, -0.008, -0.010 & -0.0057 & -1.7 & 0.229 \\
+KL $\lambda = 1$, symmetric target & max over epochs & 3 & -0.001, +0.006, +0.000 & +0.0016 & 0.8 & 0.518 \\
+hard mask, layers 1--2 & max over epochs & 3 & -0.001, -0.001, -0.003 & -0.0016 $\downarrow$ & -1.9 & 0.196 \\
+hard mask, layers 3--4 & max over epochs & 3 & -0.002, -0.002, -0.003 & -0.0024 $\downarrow$ & -6.3 & 0.024 \\
+hard mask, layers 1--4 & max over epochs & 3 & +0.000, +0.002, -0.005 & -0.0012 & -0.6 & 0.623 \\
+KL $\lambda = 1$, layers 1--2 & max over epochs & 3 & +0.000, -0.006, +0.002 & -0.0015 & -0.6 & 0.610 \\
+KL $\lambda = 1$, layers 3--4 & max over epochs & 3 & -0.002, +0.008, -0.002 & +0.0012 & 0.4 & 0.755 \\
+hard mask, 60 epochs & max over epochs & 3 & +0.004, +0.000, +0.005 & +0.0031 $\uparrow$ & 2.1 & 0.166 \\
+KL $\lambda = 1$, 60 epochs & max over epochs & 3 & +0.016, -0.001, +0.007 & +0.0074 & 1.5 & 0.266 \\
+KL $\lambda = 1$, composite embedding & max over epochs & 3 & +0.409, +0.343, +0.300 & +0.3506 $\uparrow$ & 11.1 & 0.008 \\
+KL $\lambda = 10^{-5}$ & at min val loss & 3 & +0.001, +0.009, -0.004 & +0.0020 & 0.5 & 0.657 \\
 KL $\lambda = 10^{-4}$ & at min val loss & 3 & -0.002, +0.005, +0.000 & +0.0012 & 0.6 & 0.635 \\
 KL $\lambda = 10^{-3}$ (control) & at min val loss & 3 & -0.002, +0.009, +0.004 & +0.0037 & 1.1 & 0.380 \\
 KL $\lambda = 10^{-2}$ & at min val loss & 3 & -0.002, +0.016, +0.006 & +0.0066 & 1.3 & 0.335 \\
@@ -32,7 +74,22 @@ KL $\lambda = 10^{-1}$ & at min val loss & 3 & +0.015, +0.017, +0.005 & +0.0124 
 KL $\lambda = 1$ & at min val loss & 3 & +0.009, +0.005, -0.007 & +0.0024 & 0.5 & 0.672 \\
 hard mask, layer 1 & at min val loss & 3 & -0.005, +0.009, +0.001 & +0.0018 & 0.4 & 0.714 \\
 KL $\lambda = 10^{-3}$, random graphs & at min val loss & 3 & -0.005, +0.015, +0.000 & +0.0031 & 0.5 & 0.656 \\
+KL $\lambda = 10$ & at min val loss & 3 & +0.004, +0.004, -0.003 & +0.0018 & 0.8 & 0.494 \\
+KL $\lambda = 100$ & at min val loss & 3 & +0.000, +0.002, -0.004 & -0.0008 & -0.5 & 0.679 \\
 KL $\lambda = 10^{-1}$, random graphs & at min val loss & 3 & -0.013, +0.003, -0.009 & -0.0064 & -1.4 & 0.309 \\
 KL $\lambda = 1$, random graphs & at min val loss & 3 & -0.018, -0.001, -0.010 & -0.0096 $\downarrow$ & -1.9 & 0.194 \\
-\bottomrule
-\end{tabular}
+hard mask, directed & at min val loss & 3 & -0.003, +0.007, +0.002 & +0.0021 & 0.8 & 0.523 \\
+hard mask, 2 hops, directed & at min val loss & 3 & -0.002, +0.005, -0.003 & -0.0002 & -0.1 & 0.949 \\
+hard mask, 3 hops, directed & at min val loss & 3 & -0.002, -0.001, -0.003 & -0.0018 $\downarrow$ & -2.9 & 0.103 \\
+KL $\lambda = 1$, 2-hop target & at min val loss & 3 & -0.009, -0.001, -0.001 & -0.0037 $\downarrow$ & -1.3 & 0.310 \\
+KL $\lambda = 1$, 3-hop target & at min val loss & 3 & -0.006, -0.005, -0.010 & -0.0069 $\downarrow$ & -4.6 & 0.044 \\
+KL $\lambda = 1$, symmetric target & at min val loss & 3 & -0.005, +0.017, +0.007 & +0.0060 & 1.0 & 0.441 \\
+hard mask, layers 1--2 & at min val loss & 3 & -0.002, +0.009, -0.007 & -0.0001 & -0.0 & 0.985 \\
+hard mask, layers 3--4 & at min val loss & 3 & -0.001, +0.009, -0.002 & +0.0020 & 0.6 & 0.632 \\
+hard mask, layers 1--4 & at min val loss & 3 & +0.004, +0.012, -0.001 & +0.0049 & 1.4 & 0.309 \\
+KL $\lambda = 1$, layers 1--2 & at min val loss & 3 & -0.005, -0.002, +0.005 & -0.0008 & -0.3 & 0.816 \\
+KL $\lambda = 1$, layers 3--4 & at min val loss & 3 & -0.007, +0.019, -0.010 & +0.0007 & 0.1 & 0.948 \\
+hard mask, 60 epochs & at min val loss & 3 & -0.000, -0.003, +0.004 & +0.0004 & 0.2 & 0.855 \\
+KL $\lambda = 1$, 60 epochs & at min val loss & 3 & +0.016, +0.001, -0.003 & +0.0048 & 0.8 & 0.487 \\
+KL $\lambda = 1$, composite embedding & at min val loss & 2 & +0.420, +0.422 & +0.4210 $\uparrow$ & 714.4 & 0.001 \\
+\end{longtable}

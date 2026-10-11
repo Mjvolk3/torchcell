@@ -63,18 +63,19 @@ penalized layer materializes its attention.
 \footnotesize
 \caption{The arms. Every arm is \texttt{cgt\_s0\_r\_kl\_ctrl\_013} with the one change
 named; the control itself is the ladder's $\lambda = 10^{-3}$ point. Complete runs are
-those with 30 logged epochs on W\&B at the pull of 2026-09-27; a seed listed as partial
-was still running.}
+those with 30 logged epochs on W\&B; at the pull of 2026-10-10 every seed listed is
+complete (the $\lambda = 10$ and 100 arms, the second seed of $10^{-5}$ and the random
+arms at $10^{-1}$ and 1 were added in round 1b, Section~\ref{sec:round2}).}
 \label{tab:design}
-\begin{tabular}{llll}
+\begin{tabular}{lp{5.6cm}p{4.4cm}p{2.8cm}}
 \toprule
 arm & change on the control & graph target & complete seeds \\
 \midrule
 no penalty & \texttt{graph\_reg\_lambda=0} & none & 1, 2, 3 \\
-prior ladder & \texttt{graph\_reg\_lambda} $\in \{10^{-5}, 10^{-4}, 10^{-2}, 10^{-1}, 1\}$ & nine biological graphs, layer 1 & 1, 2, 3 each; $10^{-5}$: 1, 3 \\
+prior ladder & \texttt{graph\_reg\_lambda} $\in \{10^{-5}, 10^{-4}, 10^{-2}, 10^{-1}, 1, 10, 100\}$ & nine biological graphs, layer 1 & 1, 2, 3 each \\
 control & none & nine biological graphs, layer 1, $\lambda = 10^{-3}$ & 1, 2, 3 \\
 hard mask & \texttt{cgt\_s0\_r\_mask\_028}: mask on, $\lambda = 0$ & nine biological graphs, layer 1 & 1, 2, 3 \\
-random graphs & \texttt{cgt\_s0\_r\_kl\_rand\_031}: rewiring on & nine rewired graphs, layer 1, $\lambda = 10^{-3}$ & 1, 2; 3 partial (epoch 16) \\
+random graphs & \texttt{cgt\_s0\_r\_kl\_rand\_031}: rewiring on & nine rewired graphs, layer 1, $\lambda = 10^{-3}$; $10^{-1}$ and 1 & 1, 2, 3; 1 to 5 each \\
 \bottomrule
 \end{tabular}
 \end{table}

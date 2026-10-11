@@ -208,6 +208,10 @@ class RunRow(BaseModel):
     slurm_job: str
     epochs_logged: int
     complete: bool
+    # Epochs whose validation Pearson was logged as NaN (undefined, e.g. constant
+    # predictions on the epoch). They count toward epochs_logged, are left out of the
+    # fixed / max / window statistics, and void the window when they fall inside it.
+    val_pearson_nan_epochs: int
     val_pearson_fixed: float | None
     val_pearson_max: float
     val_pearson_max_epoch: int
@@ -353,7 +357,9 @@ def build_row(
 ) -> RunRow:
     """Summarize one run."""
     arm, lam, mask, rand = classify(run.config)
-    val = epoch_vals["val/gene_interaction/Pearson"]
+    val_logged = epoch_vals["val/gene_interaction/Pearson"]
+    val = {e: v for e, v in val_logged.items() if not math.isnan(v)}
+    nan_epochs = len(val_logged) - len(val)
     best_epoch = max(val, key=lambda e: val[e])
     window = [v for e, v in val.items() if WINDOW[0] <= e <= WINDOW[1]]
     full_window = len(window) == WINDOW[1] - WINDOW[0] + 1
@@ -377,8 +383,9 @@ def build_row(
         state=run.state,
         host=(run.metadata or {}).get("host", ""),
         slurm_job=job,
-        epochs_logged=len(val),
-        complete=len(val) >= BUDGET,
+        epochs_logged=len(val_logged),
+        complete=len(val_logged) >= BUDGET,
+        val_pearson_nan_epochs=nan_epochs,
         val_pearson_fixed=_at(val, FIXED_EPOCH),
         val_pearson_max=val[best_epoch],
         val_pearson_max_epoch=best_epoch,
@@ -507,6 +514,7 @@ def pull(
             f"{row.arm:14s} seed {row.seed} {row.run_id} {row.state:8s} epochs {row.epochs_logged:2d} "
             f"fixed {row.val_pearson_fixed if row.val_pearson_fixed is None else round(row.val_pearson_fixed, 4)} "
             f"max {row.val_pearson_max:.4f}@{row.val_pearson_max_epoch}"
+            + (f" NaN epochs {row.val_pearson_nan_epochs}" if row.val_pearson_nan_epochs else "")
         )
     return rows, hist, excluded
 
@@ -656,8 +664,10 @@ def paired(runs: pd.DataFrame) -> list[PairedRow]:
             reference = reference_arm(arm)
             if arm == reference:
                 continue
-            ref = pool[pool.arm == reference].set_index("seed")[col]
-            sub = pool[pool.arm == arm].set_index("seed")[col]
+            # A seed without the reading (its validation Pearson at that epoch was NaN,
+            # a collapsed run) has no difference to contribute and is left out.
+            ref = pool[pool.arm == reference].set_index("seed")[col].dropna()
+            sub = pool[pool.arm == arm].set_index("seed")[col].dropna()
             seeds = sorted(set(sub.index) & set(ref.index))
             if not seeds:
                 continue
@@ -790,13 +800,28 @@ def write_tables(
     with open(osp.join(TABLES_DIR, "t1b-diagnostics.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 
+    # t2 and t3 run past one page, so they are longtables; the caption prose lives in the
+    # document as \runsCaption and \pairedCaption, and the header repeats on every page.
+    head = (
+        "arm & seed & epochs & Pearson, ep 29 & max (epoch) & "
+        "gradient ratio, ep 0 & W\\&B run \\\\"
+    )
     lines = [
         src,
-        "\\begin{tabular}{llrrrrl}",
+        "\\begin{longtable}{llrrrrl}",
+        "\\caption{\\runsCaption}\\label{tab:runs}\\\\",
         "\\toprule",
-        "arm & seed & epochs & Pearson, ep 29 & max (epoch) & "
-        "gradient ratio, ep 0 & W\\&B run \\\\",
+        head,
         "\\midrule",
+        "\\endfirsthead",
+        "\\toprule",
+        head,
+        "\\midrule",
+        "\\endhead",
+        "\\midrule",
+        "\\endfoot",
+        "\\bottomrule",
+        "\\endlastfoot",
     ]
     for arm in ARM_ORDER:
         sub = runs[runs.arm == arm].sort_values("seed")
@@ -812,21 +837,35 @@ def write_tables(
                 else f"{float(r['probe_ratio_epoch0']):.2f}"
             )
             ep = f"{int(r['epochs_logged'])}" + ("" if r["complete"] else " (running)")
+            nan_epochs = int(r["val_pearson_nan_epochs"])
+            if nan_epochs:
+                ep += f" ({nan_epochs} NaN)"
             lines.append(
                 f"{ARM_LABEL[arm]} & {int(r['seed'])} & {ep} & {fixed} & "
                 f"{float(r['val_pearson_max']):.4f} ({int(r['val_pearson_max_epoch'])}) & "
                 f"{ratio} & \\texttt{{{r['run_id']}}} \\\\"
             )
-    lines += ["\\bottomrule", "\\end{tabular}"]
+    lines += ["\\end{longtable}"]
     with open(osp.join(TABLES_DIR, "t2-runs.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 
+    head = "arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\\\"
     lines = [
         src,
-        "\\begin{tabular}{llrlrrr}",
+        "\\begin{longtable}{llrlrrr}",
+        "\\caption{\\pairedCaption}\\label{tab:paired}\\\\",
         "\\toprule",
-        "arm & reading & $n$ & difference by seed & mean & paired $t$ & $p$ \\\\",
+        head,
         "\\midrule",
+        "\\endfirsthead",
+        "\\toprule",
+        head,
+        "\\midrule",
+        "\\endhead",
+        "\\midrule",
+        "\\endfoot",
+        "\\bottomrule",
+        "\\endlastfoot",
     ]
     for p_ in pairs:
         diffs = ", ".join(f"{d:+.3f}" for d in p_.diffs)
@@ -836,7 +875,7 @@ def write_tables(
             f"{ARM_LABEL[p_.arm]} & {READING_LABEL[p_.reading]} & {len(p_.diffs)} & "
             f"{diffs} & {p_.mean_diff:+.4f}{ARROW[p_.direction]} & {t_txt} & {p_txt} \\\\"
         )
-    lines += ["\\bottomrule", "\\end{tabular}"]
+    lines += ["\\end{longtable}"]
     with open(osp.join(TABLES_DIR, "t3-paired.tex"), "w") as fh:
         fh.write("\n".join(lines) + "\n")
 

@@ -81,6 +81,8 @@ ARM_INDEX = {
     "kl_0.01": 12,  # terracotta
     "kl_0.1": 3,  # wheat
     "kl_1": 4,  # steel blue
+    "kl_10": 10,  # dark blue
+    "kl_100": 17,  # taupe
     "mask": 1,  # brick
     "random_0.001": 2,  # lilac
     "random_0.1": 14,  # dusty mauve
@@ -113,6 +115,8 @@ LADDER = [
     "kl_0.01",
     "kl_0.1",
     "kl_1",
+    "kl_10",
+    "kl_100",
     "mask",
     RANDOM,
     "random_0.1",
@@ -123,7 +127,9 @@ LADDER = [
 RANDOM_PAIRS = [("kl_0.001", RANDOM), ("kl_0.1", "random_0.1"), ("kl_1", "random_1")]
 # Exponents of lambda at full size: mathtext superscripts render at 0.7 of the font
 # (4.2 pt at 6 pt), under Nature's 5 pt floor, so the axis carries log10 lambda instead.
-LADDER_TICKS = ["none", "−5", "−4", "−3", "−2", "−1", "0", "mask", "r−3", "r−1", "r0"]
+LADDER_TICKS = [
+    "none", "−5", "−4", "−3", "−2", "−1", "0", "1", "2", "mask", "r−3", "r−1", "r0",
+]
 # The random columns sit after a gap, so their labels clear the mask label.
 XPOS = {
     arm: i + (0.5 if arm.startswith("random_") else 0.0) for i, arm in enumerate(LADDER)
@@ -136,6 +142,8 @@ ARM_SHORT = {
     "kl_0.01": "1e-2",
     "kl_0.1": "0.1",
     "kl_1": "1",
+    "kl_10": "10",
+    "kl_100": "100",
     RANDOM: "r1e-3",
     "random_0.1": "r0.1",
     "random_1": "r1",
@@ -215,7 +223,8 @@ def _not_logged(ax: Axes, x: float, y: float, color: str) -> None:
 
 def _ladder_axis(ax: Axes, xlabel: str = X_LABEL) -> None:
     ax.set_xticks([XPOS[a] for a in LADDER])
-    ax.set_xticklabels(LADDER_TICKS)
+    # Thirteen columns in a third-width panel: the labels sit at Nature's 5 pt floor.
+    ax.set_xticklabels(LADDER_TICKS, fontsize=5)
     ax.set_xlim(-0.6, XPOS[LADDER[-1]] + 0.6)
     ax.set_xlabel(xlabel)
     _box(ax)
@@ -501,8 +510,8 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     _not_logged(e, 0, 1.4e-3, ARM_COLOR["mask"])
     e.text(0.35, 1.4e-3, "none, mask: 0", va="center", fontsize=5, color="black")
     e.set_yscale("log")
-    e.set_ylim(1e-3, 5e3)
-    _plain_log_ticks(e, [0.001, 0.01, 0.1, 1, 10, 100, 1000])
+    e.set_ylim(1e-3, 5e5)
+    _plain_log_ticks(e, [0.001, 0.01, 0.1, 1, 10, 100, 1000, 10000, 100000])
     e.set_xticks(xs)
     e.set_xticklabels([str(p) for p in PROBE_EPOCHS])
     e.set_xlim(-0.4, len(PROBE_EPOCHS) + 0.7)

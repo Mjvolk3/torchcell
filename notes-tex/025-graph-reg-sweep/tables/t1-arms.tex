@@ -1,11 +1,11 @@
-%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-01 21:40 UTC) -- GENERATED, do not edit
+%% SOURCE: experiments/025-solid-growth/scripts/graph_reg_sweep_readout.py (W&B zhao-group/torchcell_025-solid-growth_equivariant_cell_graph_transformer, pulled 2026-10-11 01:26 UTC) -- GENERATED, do not edit
 
 \begin{tabular}{lrrrr}
 \toprule
 arm & $n$ & Pearson, epoch 29 & Pearson, max over epochs & Pearson, at min val loss \\
 \midrule
 no penalty ($\lambda = 0$) & 3 & 0.425 $\pm$ 0.000 & 0.448 $\pm$ 0.002 & 0.440 $\pm$ 0.005 \\
-KL $\lambda = 10^{-5}$ & 2 & 0.420 $\pm$ 0.002 $\downarrow$ & 0.444 $\pm$ 0.002 $\downarrow$ & 0.442 $\pm$ 0.004 \\
+KL $\lambda = 10^{-5}$ & 3 & 0.422 $\pm$ 0.005 & 0.445 $\pm$ 0.003 & 0.442 $\pm$ 0.003 \\
 KL $\lambda = 10^{-4}$ & 3 & 0.419 $\pm$ 0.010 & 0.446 $\pm$ 0.003 & 0.442 $\pm$ 0.001 \\
 KL $\lambda = 10^{-3}$ (control) & 3 & 0.432 $\pm$ 0.005 $\uparrow$ & 0.451 $\pm$ 0.004 $\uparrow$ & 0.444 $\pm$ 0.003 \\
 KL $\lambda = 10^{-2}$ & 3 & 0.438 $\pm$ 0.002 $\uparrow$ & 0.453 $\pm$ 0.002 $\uparrow$ & 0.447 $\pm$ 0.005 \\
@@ -13,7 +13,25 @@ KL $\lambda = 10^{-1}$ & 3 & 0.445 $\pm$ 0.009 $\uparrow$ & \textbf{0.454 $\pm$ 
 KL $\lambda = 1$ & 3 & \textbf{0.447 $\pm$ 0.001} $\uparrow$ & 0.452 $\pm$ 0.003 $\uparrow$ & 0.443 $\pm$ 0.009 \\
 hard mask, layer 1 & 3 & 0.421 $\pm$ 0.003 $\downarrow$ & 0.446 $\pm$ 0.003 & 0.442 $\pm$ 0.003 \\
 KL $\lambda = 10^{-3}$, random graphs & 3 & 0.420 $\pm$ 0.012 & 0.447 $\pm$ 0.002 & 0.444 $\pm$ 0.006 \\
+KL $\lambda = 10$ & 3 & 0.444 $\pm$ 0.008 $\uparrow$ & 0.452 $\pm$ 0.004 $\uparrow$ & 0.442 $\pm$ 0.005 \\
+KL $\lambda = 100$ & 3 & 0.443 $\pm$ 0.004 $\uparrow$ & 0.451 $\pm$ 0.009 & 0.440 $\pm$ 0.004 \\
 KL $\lambda = 10^{-1}$, random graphs & 5 & 0.430 $\pm$ 0.006 & 0.437 $\pm$ 0.003 $\downarrow$ & 0.434 $\pm$ 0.004 \\
 KL $\lambda = 1$, random graphs & 5 & 0.427 $\pm$ 0.004 $\uparrow$ & 0.435 $\pm$ 0.004 $\downarrow$ & 0.430 $\pm$ 0.006 $\downarrow$ \\
+hard mask, directed & 3 & 0.416 $\pm$ 0.012 $\downarrow$ & 0.448 $\pm$ 0.001 & 0.443 $\pm$ 0.002 \\
+hard mask, 2 hops, directed & 3 & 0.419 $\pm$ 0.006 & 0.442 $\pm$ 0.003 $\downarrow$ & 0.440 $\pm$ 0.001 \\
+hard mask, 3 hops, directed & 3 & 0.417 $\pm$ 0.003 $\downarrow$ & 0.445 $\pm$ 0.003 $\downarrow$ & 0.439 $\pm$ 0.004 $\downarrow$ \\
+KL $\lambda = 1$, 2-hop target & 3 & 0.438 $\pm$ 0.006 $\uparrow$ & 0.442 $\pm$ 0.004 $\downarrow$ & 0.437 $\pm$ 0.004 $\downarrow$ \\
+KL $\lambda = 1$, 3-hop target & 3 & 0.429 $\pm$ 0.012 & 0.442 $\pm$ 0.006 & 0.434 $\pm$ 0.004 $\downarrow$ \\
+KL $\lambda = 1$, symmetric target & 3 & 0.439 $\pm$ 0.010 $\uparrow$ & 0.449 $\pm$ 0.003 & 0.446 $\pm$ 0.007 \\
+hard mask, layers 1--2 & 3 & 0.419 $\pm$ 0.004 $\downarrow$ & 0.446 $\pm$ 0.001 $\downarrow$ & 0.440 $\pm$ 0.004 \\
+hard mask, layers 3--4 & 3 & 0.415 $\pm$ 0.007 $\downarrow$ & 0.445 $\pm$ 0.001 $\downarrow$ & 0.442 $\pm$ 0.002 \\
+hard mask, layers 1--4 & 3 & 0.426 $\pm$ 0.009 & 0.446 $\pm$ 0.002 & 0.445 $\pm$ 0.003 \\
+KL $\lambda = 1$, layers 1--2 & 3 & 0.437 $\pm$ 0.009 $\uparrow$ & 0.446 $\pm$ 0.006 & 0.440 $\pm$ 0.007 \\
+KL $\lambda = 1$, layers 3--4 & 3 & 0.445 $\pm$ 0.007 $\uparrow$ & 0.449 $\pm$ 0.004 & 0.441 $\pm$ 0.011 \\
+no penalty, 60 epochs & 3 & 0.415 $\pm$ 0.003 & 0.443 $\pm$ 0.004 & 0.440 $\pm$ 0.001 \\
+hard mask, 60 epochs & 3 & 0.419 $\pm$ 0.009 & 0.446 $\pm$ 0.001 $\uparrow$ & 0.440 $\pm$ 0.004 \\
+KL $\lambda = 1$, 60 epochs & 3 & 0.441 $\pm$ 0.005 $\uparrow$ & 0.450 $\pm$ 0.006 & 0.445 $\pm$ 0.011 \\
+no penalty, composite embedding & 3 & -0.006 $\pm$ 0.004 & 0.073 $\pm$ 0.061 & -0.002 $\pm$ 0.001 \\
+KL $\lambda = 1$, composite embedding & 3 & 0.421 $\pm$ 0.007 $\uparrow$ & 0.423 $\pm$ 0.007 $\uparrow$ & 0.423 $\pm$ 0.007 $\uparrow$ \\
 \bottomrule
 \end{tabular}

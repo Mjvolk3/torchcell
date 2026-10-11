@@ -24,7 +24,7 @@ Derived expectations: LMDB iterates keys in byte order, so eleven records writte
 ``"0"``..``"10"`` come back as 0, 1, 10, 2, ..., 9. An expression L4 with reference universe
 {A, B, C} and other universe {A, B, C, D} has ``n_overlap`` 4 and one disagreement,
 ``{"entity": "D", "a": 0.0, "b": 1.0, "diff": 1.0}``. A gene containment of {A, B, D} in
-Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls eighteen family
+Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls nineteen family
 runners in a fixed order (``RUN_ALL_ORDER``, which is the list this module stubs) and
 evaluates every one before combining with ``and``.
 
@@ -179,8 +179,10 @@ RUN_ALL_ORDER = [
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
-    # #770: the protein fold-change family, called last in run_all.
+    # #770: the protein fold-change family.
     "run_bacterial_protein_fold_change",
+    # De Chiara 2022: the natural-isolate panel stores, called last in run_all.
+    "run_natural_isolate",
 ]
 
 
@@ -1885,6 +1887,13 @@ def test_run_all_calls_every_family_in_order_without_short_circuit(
     assert runners.run_all("/root") is False
     assert calls == [(name, "/root") for name in RUN_ALL_ORDER]
 
+    # Each natural-isolate family carries its own verdict: neither one's result is
+    # overwritten by the other's.
+    for failing in ("run_natural_isolate_response", "run_natural_isolate"):
+        calls = _patch_runners(monkeypatch, failing={failing})
+        assert runners.run_all("/root") is False, failing
+        assert calls == [(name, "/root") for name in RUN_ALL_ORDER]
+
 
 def test_main_returns_the_shell_code_and_prints_the_banner(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
@@ -2127,12 +2136,13 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.GENE_ESSENTIALITY_DATASETS,
         runners.SYNTHETIC_PAIR_DATASETS,
         runners.NATURAL_ISOLATE_RESPONSE_DATASETS,
+        runners.NATURAL_ISOLATE_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 3 + 1 + 14 + 3 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1
+    assert len(roots) == 3 + 1 + 14 + 3 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1 + 3
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries
@@ -3373,3 +3383,101 @@ def test_run_fitness_streams_a_spec_marked_stream(
         "FitnessExperiment"
     )
     assert _result(report, "pair_uniqueness")["details"]["n_extra_records"] == 0
+
+
+# --------------------------------------------------------------------------- #
+# Natural-isolate panels (De Chiara 2022)
+# --------------------------------------------------------------------------- #
+def _count_report(observed: int) -> VerificationReport:
+    report = VerificationReport(
+        dataset_name="life_cycle_dechiara2022",
+        provenance=Provenance(source_uri="x", citation_key="k"),
+    )
+    report.add(
+        LevelResult(
+            level=Level.L1,
+            name="count",
+            passed=True,
+            message="",
+            details={"observed": observed, "expected": observed},
+        )
+    )
+    return report
+
+
+def test_registry_count_compares_the_store_with_the_pinned_count() -> None:
+    ok = runners.registry_count_result(_count_report(4039), 4039)
+    assert (ok.level, ok.name, ok.passed, ok.message) == (
+        Level.L1,
+        "registry_count",
+        True,
+        "observed 4039, registry pins 4039",
+    )
+    drift = runners.registry_count_result(_count_report(4038), 4039)
+    assert (drift.passed, drift.details) == (
+        False,
+        {"observed": 4038, "expected": 4039},
+    )
+
+
+def test_run_natural_isolate_runs_each_store_and_writes_its_report(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Each registered store is verified by its own entry and its report written."""
+    seen: list[str] = []
+
+    def verify(dataset_root: str, data_root: str) -> VerificationReport:
+        seen.append(dataset_root)
+        return _count_report(7)
+
+    monkeypatch.setattr(
+        runners,
+        "NATURAL_ISOLATE_DATASETS",
+        {
+            "a_store": {
+                "root": "data/torchcell/a_store",
+                "expected_count": 7,
+                "verify": verify,
+            },
+            "b_store": {
+                "root": "data/torchcell/b_store",
+                "expected_count": 8,
+                "verify": verify,
+            },
+        },
+    )
+    for name in ("a_store", "b_store"):
+        (tmp_path / "data" / "torchcell" / name / "preprocess").mkdir(parents=True)
+    assert runners.run_natural_isolate(str(tmp_path)) is False
+    assert seen == [
+        str(tmp_path / "data/torchcell/a_store"),
+        str(tmp_path / "data/torchcell/b_store"),
+    ]
+    written = json.loads(
+        (
+            tmp_path / "data/torchcell/b_store/preprocess/verification_report.json"
+        ).read_text()
+    )
+    assert [r["name"] for r in written["results"]] == ["count", "registry_count"]
+    assert [r["passed"] for r in written["results"]] == [True, False]
+
+
+def test_the_dechiara_entries_route_to_the_loader_verifier(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from torchcell.datasets.scerevisiae import dechiara2022
+
+    calls: list[tuple[str, str]] = []
+
+    def fake(dataset_root: str, *, data_root: str) -> VerificationReport:
+        calls.append((dataset_root, data_root))
+        return _count_report(1)
+
+    monkeypatch.setattr(dechiara2022, "verify_build", fake)
+    spec = runners.NATURAL_ISOLATE_DATASETS["cell_yield_dechiara2022"]
+    report = spec["verify"]("/root/x", "/root")
+    assert calls == [("/root/x", "/root")]
+    assert report.dataset_name == "life_cycle_dechiara2022"
+    assert spec["provenance"].sha256 == (
+        "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e"
+    )

@@ -3995,6 +3995,99 @@ def run_bacterial_protein_fold_change(data_root: str) -> bool:
     )
 
 
+# --------------------------------------------------------------------------- #
+# Natural-isolate panels (De Chiara 2022): each record's genotype is one of the
+# 1,011 Peter 2018 isolates as a perturbation set off S288C, interned once per isolate
+# and shared by its records. The loader's own ``verify_build`` is the gate: it validates
+# each shared genotype once, compares every stored value with its released cell, and
+# replaces the deletion-keyed L4 rules (which would read ~5,000 natural edits per record
+# as off-genome deletions) with a sequence-variant containment floor.
+# --------------------------------------------------------------------------- #
+def _verify_dechiara(dataset_root: str, data_root: str) -> VerificationReport:
+    from torchcell.datasets.scerevisiae import dechiara2022
+
+    return dechiara2022.verify_build(dataset_root, data_root=data_root)
+
+
+def _dechiara_provenance(block: str) -> Provenance:
+    return Provenance(
+        source_uri=(
+            "$DATA_ROOT/torchcell-raw/dechiaraDomesticationReprogrammedBudding2022/si/"
+            "41559_2022_1671_MOESM4_ESM.xlsx (raw mirror; retrieved from "
+            "https://static-content.springer.com/esm/art%3A10.1038%2Fs41559-022-01671-9/"
+            "MediaObjects/41559_2022_1671_MOESM4_ESM.xlsx)"
+        ),
+        citation_key="dechiaraDomesticationReprogrammedBudding2022",
+        sha256="b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+        method=(
+            f"Supplementary Table 3 {block}; genotype per isolate from Peter 2018's "
+            "gene-keyed stores in the genomes tier (sequence variants, accessory "
+            "presences, core absences off S288C), interned once per isolate"
+        ),
+        page="Nat Ecol Evol 6:448-460, Supplementary Tables (MOESM4)",
+    )
+
+
+NATURAL_ISOLATE_DATASETS: dict[str, dict[str, Any]] = {
+    "life_cycle_dechiara2022": {
+        "root": "data/torchcell/life_cycle_dechiara2022",
+        # 850 KAc + 826 PBS sporulation + 749 PBS viability + 807 SDC + 807 CR
+        # protocol time courses over 905 isolates; measured on the dev store.
+        "expected_count": 4039,
+        "provenance": _dechiara_provenance(
+            "'Sporulation' and 'Chronological life span' columns (13 time points)"
+        ),
+        "verify": _verify_dechiara,
+    },
+    "doubling_time_dechiara2022": {
+        "root": "data/torchcell/doubling_time_dechiara2022",
+        # every non-missing 'Doubling time - absolute values' cell of 43 environments
+        "expected_count": 36295,
+        "provenance": _dechiara_provenance("'Doubling time - absolute values' (h)"),
+        "verify": _verify_dechiara,
+    },
+    "cell_yield_dechiara2022": {
+        "root": "data/torchcell/cell_yield_dechiara2022",
+        # every non-missing 'Yield - absolute values' cell (9 fewer than doubling time)
+        "expected_count": 36286,
+        "provenance": _dechiara_provenance("'Yield - absolute values' (cells)"),
+        "verify": _verify_dechiara,
+    },
+}
+
+
+def registry_count_result(report: VerificationReport, expected: int) -> LevelResult:
+    """L1 ``registry_count``: the store's record count is the registry's pinned one.
+
+    The loader's own ``count`` row compares the store with the release it was built
+    from; this row compares it with the count measured when the store was registered,
+    so a release-and-store drift that agree with each other still fails.
+    """
+    (count,) = [r for r in report.results if r.name == "count"]
+    observed = int(count.details["observed"])
+    return LevelResult(
+        level=Level.L1,
+        name="registry_count",
+        passed=observed == expected,
+        message=f"observed {observed}, registry pins {expected}",
+        details={"observed": observed, "expected": expected},
+    )
+
+
+def run_natural_isolate(data_root: str) -> bool:
+    """Verify the natural-isolate panel stores (L0-L4) and write reports."""
+    all_passed = True
+    for spec in NATURAL_ISOLATE_DATASETS.values():
+        abs_root = osp.join(data_root, spec["root"])
+        report = cast("VerificationReport", spec["verify"](abs_root, data_root))
+        report.add(registry_count_result(report, spec["expected_count"]))
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
 def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
@@ -4017,6 +4110,7 @@ def run_all(data_root: str) -> bool:
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
     bacterial_fold_change_ok = run_bacterial_protein_fold_change(data_root)
+    natural_isolate_panel_ok = run_natural_isolate(data_root)
     return (
         expression_ok
         and morphology_ok
@@ -4038,6 +4132,7 @@ def run_all(data_root: str) -> bool:
         and bacterial_protein_ok
         and bacterial_metabolite_ok
         and bacterial_fold_change_ok
+        and natural_isolate_panel_ok
     )
 
 

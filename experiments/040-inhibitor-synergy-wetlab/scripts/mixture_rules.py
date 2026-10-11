@@ -193,6 +193,24 @@ def box(ax: plt.Axes) -> None:
         ax.spines[side].set_linewidth(0.5)
 
 
+def panel_letters(fig: plt.Figure, axes: list[plt.Axes] | np.ndarray) -> None:
+    """Nature panel letters: 8 pt bold lowercase at each panel's top-left, outside."""
+    fig.canvas.draw()
+    for letter, ax in zip("abcdefghijklmnop", axes, strict=False):
+        bbox = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(
+            fig.transFigure.inverted()
+        )
+        fig.text(
+            bbox.x0,
+            bbox.y1,
+            letter,
+            fontsize=8,
+            fontweight="bold",
+            ha="left",
+            va="bottom",
+        )
+
+
 def tenth_grid(ax: plt.Axes, axis: str) -> None:
     target = ax.yaxis if axis == "y" else ax.xaxis
     target.set_major_locator(MultipleLocator(0.2))
@@ -865,6 +883,7 @@ def plot_isoboles(
     fig.subplots_adjust(
         left=0.07, right=0.9, top=0.95, bottom=0.14, hspace=0.5, wspace=0.45
     )
+    panel_letters(fig, axes.ravel())
     return save(fig, "mixture_rules_isoboles")
 
 

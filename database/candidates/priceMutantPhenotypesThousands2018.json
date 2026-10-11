@@ -1,0 +1,538 @@
+{
+  "citation_key": "priceMutantPhenotypesThousands2018",
+  "table": "bacteria",
+  "row_name": "Price 2018",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "aggregation: the E. coli Keio arm re-analyzes Wetmore 2015's samples (statistics version 1.0.3 against 1.0.0) beside samples first described here; every record names the paper that first reported its sample",
+      "evidence": [
+        {
+          "value": 385,
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "priceMutantPhenotypesThousands2018",
+            "sha256": "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods (paper.md line 177)",
+            "retrieved": null
+          },
+          "quote": "Our analysis includes 385 successful experiments from Wetmore et al.9 and 36 successful experiments from Melnyk et al.12.",
+          "note": "385 of this paper's 387 successes across five bacteria; for E. coli the count is measured sample by sample in subsumption_record"
+        },
+        {
+          "value": "the samples not carried from Wetmore 2015 are first described here",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "priceMutantPhenotypesThousands2018",
+            "sha256": "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods, 'Mutant fitness assays' (paper.md line 177)",
+            "retrieved": null
+          },
+          "quote": "The other 4,449 successful fitness assays are described here for the first time.",
+          "note": "beside wetmore2015.SUPERSET_INCLUDES_THIS_PAPER (385 from Wetmore, 36 from Melnyk). INFERENCE, not a per-sample statement: Table S20 gives KEIO_ML9 one reference (PMID 25968644, Wetmore 2015) and no other E. coli library, so a Keio sample not carried from Wetmore is taken as new here"
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "20 file(s) in library+raw, 34855 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "aggregation",
+  "aggregation": {
+    "n_source_studies": 2,
+    "attribution_field": "Publication per sample: Wetmore 2015 for wetmore2015.subsumption_record().carried, else Price 2018 (price2018.SampleSource)",
+    "value_origin": "re_measured",
+    "n_sources_mirrored": 2,
+    "net_new_vs_served": 0,
+    "evidence": [
+      {
+        "value": 385,
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "priceMutantPhenotypesThousands2018",
+          "sha256": "f3443cdcb2f722b5e6aa6d999f67d68a6f845eb9eb45ad0bac1cc4c24ea53e2d",
+          "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+          "page": "Methods (paper.md line 177)",
+          "retrieved": null
+        },
+        "quote": "Our analysis includes 385 successful experiments from Wetmore et al.9 and 36 successful experiments from Melnyk et al.12.",
+        "note": "385 of this paper's 387 successes across five bacteria; for E. coli the count is measured sample by sample in subsumption_record"
+      }
+    ],
+    "sources": [
+      {
+        "source_label": "doi:10.1038/s41586-018-0124-0",
+        "role": "compendium_paper",
+        "citation_key": "priceMutantPhenotypesThousands2018",
+        "doi": "10.1038/s41586-018-0124-0",
+        "dataset_class": "RbTnseqPrice2018EcoliDataset",
+        "n_samples_in_compendium": 70,
+        "n_samples_served": 63,
+        "own_release": false,
+        "own_release_kind": "none",
+        "own_release_url": null,
+        "own_release_access": null,
+        "mirrored": true,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "first described in Price 2018; the Fitness Browser serves the compendium release's values (max_abs_diff 8.88e-16 over 158 samples)"
+      },
+      {
+        "source_label": "doi:10.1128/mbio.00306-15",
+        "role": "original_study",
+        "citation_key": "wetmoreRapidQuantificationMutant2015",
+        "doi": "10.1128/mbio.00306-15",
+        "dataset_class": "RbTnseqPrice2018EcoliDataset",
+        "n_samples_in_compendium": 92,
+        "n_samples_served": 84,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://genomics.lbl.gov/supplemental/rbarseq/",
+        "own_release_access": "scriptable",
+        "mirrored": true,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": {
+          "statistic": "min_pearson_r",
+          "value": 0.9889538063315205,
+          "tolerance": null,
+          "tolerance_basis": "Price 2018 re-ran the RB-TnSeq statistics (versions 1.0.3, 1.1.0 or 1.1.1) over Wetmore 2015's 1.0.0 and states no expected agreement, so the measured minimum is a pin; identity rests on the shared sample name and metadata (wetmore2015.build_subsumption refuses a mismatch)",
+          "n_samples": 91,
+          "n_values": 331786,
+          "against": "Wetmore 2015 release fit_logratios_good.tab, statistics 1.0.0 (sha256 f65a093b7fba660f12a894200073e3d731cd0b8a3f313205a5760584f4e55935)"
+        },
+        "note": "statistics 1.0.0 per-sample fitness, already in the raw mirror; being loaded on feat/ecoli-wetmore2015-own-release (not on main when measured). The browser attributes these samples {'Wetmore15': 87, 'not-in-browser': 4, 'Price18': 1}"
+      }
+    ]
+  },
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "priceMutantPhenotypesThousands2018",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 1418164,
+        "sha256_manifest": "f16f11f1ec5a333ad91b119fb229a054c6e9cbe8280b8c3d73cdfe2bd304a4ec",
+        "sha256_disk": "f16f11f1ec5a333ad91b119fb229a054c6e9cbe8280b8c3d73cdfe2bd304a4ec",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 79139,
+        "sha256_manifest": "f4514d19f1d581d51dfb200c2becf490a97bdae04a9936d8472ac845353841b1",
+        "sha256_disk": "f4514d19f1d581d51dfb200c2becf490a97bdae04a9936d8472ac845353841b1",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 5631030,
+        "sha256_manifest": "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
+        "sha256_disk": "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS1_LikelyEssentialGenes",
+            "rows": 13883
+          },
+          {
+            "sheet": "TableS2_Carbon",
+            "rows": 158
+          },
+          {
+            "sheet": "TableS3_Nitrogen",
+            "rows": 182
+          },
+          {
+            "sheet": "TableS4_Stress",
+            "rows": 220
+          },
+          {
+            "sheet": "TableS5_Experiments",
+            "rows": 4889
+          },
+          {
+            "sheet": "TableS6_4G11carbon",
+            "rows": 62
+          },
+          {
+            "sheet": "TableS7_Ecoli_SpecificPheno",
+            "rows": 255
+          },
+          {
+            "sheet": "TableS8_ConservedLinks",
+            "rows": 13202
+          },
+          {
+            "sheet": "TableS9_CisplatinGenes",
+            "rows": 76
+          },
+          {
+            "sheet": "TableS10_XyloseGenes",
+            "rows": 32
+          },
+          {
+            "sheet": "TableS11_ABCtransporter",
+            "rows": 119
+          },
+          {
+            "sheet": "TableS12_GeneAnnotations",
+            "rows": 475
+          },
+          {
+            "sheet": "TableS13_UncharProteins",
+            "rows": 345
+          },
+          {
+            "sheet": "TableS14_RB_TnSeq_Bacteria",
+            "rows": 33
+          },
+          {
+            "sheet": "TableS15_Oligos",
+            "rows": 95
+          },
+          {
+            "sheet": "TableS16_Plasmids",
+            "rows": 23
+          },
+          {
+            "sheet": "TableS17_SingleStrains",
+            "rows": 31
+          },
+          {
+            "sheet": "TableS18_Medias",
+            "rows": 651
+          },
+          {
+            "sheet": "TableS19_GenomeSequencing",
+            "rows": 7
+          },
+          {
+            "sheet": "TableS20_Mutagenesis",
+            "rows": 42
+          },
+          {
+            "sheet": "TableS21_subsystem_CarbonLinks",
+            "rows": 37
+          },
+          {
+            "sheet": "TableS22_GenomeAnnotations",
+            "rows": 38
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/208bf21545bdd0aa8f8be31c689707eb3b14e10b3b31739810bcc1f1b389c46d.jpg",
+        "role": "ocr_image",
+        "bytes": 135185,
+        "sha256_manifest": "6cdf78a1867b61e111d1160f5368fb6bc46d51b8f44cadfe1d17555afb1803c4",
+        "sha256_disk": "6cdf78a1867b61e111d1160f5368fb6bc46d51b8f44cadfe1d17555afb1803c4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/2d0a7fb97d635d8d6d2f1b87fd9bdfd8d9dcbd835df251668a07c0d84bf9943e.jpg",
+        "role": "ocr_image",
+        "bytes": 32386,
+        "sha256_manifest": "757c6f3c28b5e8a1e3e188e5395dbd21a95604baa163ff7019ea0237461fab18",
+        "sha256_disk": "757c6f3c28b5e8a1e3e188e5395dbd21a95604baa163ff7019ea0237461fab18",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/479267131ed27f543bf33f616ed35badc706b03735e34368ec146ba3ec53eefa.jpg",
+        "role": "ocr_image",
+        "bytes": 111957,
+        "sha256_manifest": "c624329b0a04dc5dba8342957e158f57aedae15bf4da712ed3fbc82064ea2d4e",
+        "sha256_disk": "c624329b0a04dc5dba8342957e158f57aedae15bf4da712ed3fbc82064ea2d4e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/543e74057e97b724741ba02011d107a4e5f98fb4bbe0e217db24bcc90a3cc500.jpg",
+        "role": "ocr_image",
+        "bytes": 64172,
+        "sha256_manifest": "77d02bd03b150cd7b34c86a084108891b4d1ae0a976c53077ce3f4caf1d49d4d",
+        "sha256_disk": "77d02bd03b150cd7b34c86a084108891b4d1ae0a976c53077ce3f4caf1d49d4d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/952a7e8e79a4566656fe2678c522c033619ebb72672f3201d56d04cea871161d.jpg",
+        "role": "ocr_image",
+        "bytes": 89251,
+        "sha256_manifest": "7b57c89c3916453f7b742230f0b62d64a6dc587759a1541380a4aaa90c9c6787",
+        "sha256_disk": "7b57c89c3916453f7b742230f0b62d64a6dc587759a1541380a4aaa90c9c6787",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/651d7d34f85ff3dfd6f8682523c0e849f11e1d84cddbe8f65d7309872b20875f.jpg",
+        "role": "ocr_image",
+        "bytes": 11725,
+        "sha256_manifest": "d432eb43e5b529552262eb6fdc454389512e59202e4cbaa6f11e5778cde2d0a3",
+        "sha256_disk": "d432eb43e5b529552262eb6fdc454389512e59202e4cbaa6f11e5778cde2d0a3",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 69403,
+        "sha256_manifest": "1c68b123ebb7516b6c7163985d3c9aee7f17f13651e844c3565f9bddb21b350e",
+        "sha256_disk": "1c68b123ebb7516b6c7163985d3c9aee7f17f13651e844c3565f9bddb21b350e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 97548,
+        "sha256_manifest": "47b6b266c100dfe49a0a11e9c1c9c5ef98daf791a315021a655fb4157bb3894a",
+        "sha256_disk": "47b6b266c100dfe49a0a11e9c1c9c5ef98daf791a315021a655fb4157bb3894a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 2118651,
+        "sha256_manifest": "17df6cf0caa5daa0b0e95f32e3617ddf5363799abc062a95867f86ee0693c9e5",
+        "sha256_disk": "17df6cf0caa5daa0b0e95f32e3617ddf5363799abc062a95867f86ee0693c9e5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 972,
+        "sha256_manifest": "5adea7dd684ab20fa270afd59d138f9dc4831072fa8154b75e883c63380646a5",
+        "sha256_disk": "5adea7dd684ab20fa270afd59d138f9dc4831072fa8154b75e883c63380646a5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.md",
+        "role": "si_ocr",
+        "bytes": 10224,
+        "sha256_manifest": "477b3fd33a5e18e20a09182743a723c31c773aca86ff0019120665ff66b17c1c",
+        "sha256_disk": "477b3fd33a5e18e20a09182743a723c31c773aca86ff0019120665ff66b17c1c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 22403,
+        "sha256_manifest": "268e509053d7ea1549231a27ba48eb4947c03602f4e5a44531d8dea5528167fc",
+        "sha256_disk": "268e509053d7ea1549231a27ba48eb4947c03602f4e5a44531d8dea5528167fc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_middle.json",
+        "role": "ocr_layout",
+        "bytes": 289972,
+        "sha256_manifest": "ee866f266acd9bb1c048139b5a6b64bb9b714282382b6aad5680def80c8efe69",
+        "sha256_disk": "ee866f266acd9bb1c048139b5a6b64bb9b714282382b6aad5680def80c8efe69",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 972,
+        "sha256_manifest": "865c5822d2eed095e8eed97f131778d6b07c4e04b33783f30b28967b3c656d39",
+        "sha256_disk": "865c5822d2eed095e8eed97f131778d6b07c4e04b33783f30b28967b3c656d39",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/bigfit/html/Keio/fit_standard_error_obs.tab",
+        "role": "raw_data",
+        "bytes": 15286922,
+        "sha256_manifest": "1ab5a4f016f2e6abd9f87667e2a6991360820a63785e0f4957636f267e3237ab",
+        "sha256_disk": "1ab5a4f016f2e6abd9f87667e2a6991360820a63785e0f4957636f267e3237ab",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/bigfit/html/Keio/fit_standard_error_naive.tab",
+        "role": "raw_data",
+        "bytes": 15335635,
+        "sha256_manifest": "b1260e6833dd17acad7612099a1ba5b9dfe09a304c311e925fa2036dad55b7ee",
+        "sha256_disk": "b1260e6833dd17acad7612099a1ba5b9dfe09a304c311e925fa2036dad55b7ee",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/bigfit/html/Keio/fit_t.tab",
+        "role": "raw_data",
+        "bytes": 15369681,
+        "sha256_manifest": "444f4cac23cd1028bf200a87a4d2d0c8842e0a0ba77f4235ca2c90cbbfa577c8",
+        "sha256_disk": "444f4cac23cd1028bf200a87a4d2d0c8842e0a0ba77f4235ca2c90cbbfa577c8",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s41586-018-0124-0",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41586-018-0124-0",
+        "where": "torchcell/datasets/ecoli/price2018.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "6c516821f5da6f58da878ee0bbd9f986e97b9c39"
+}

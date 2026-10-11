@@ -1,0 +1,672 @@
+{
+  "citation_key": "limMachinelearningPseudomonasPutida2022",
+  "table": "bacteria",
+  "row_name": "Lim 2022 putidaPRECISE321",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "aggregation: 321 RNA-seq profiles re-quantified as log2(TPM + 1) from read counts across 21 projects; every record names its source study",
+      "evidence": [
+        {
+          "value": {
+            "samples": 321,
+            "conditions": 118,
+            "projects": 21
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "limMachinelearningPseudomonasPutida2022",
+            "sha256": "d5f49a99d0cf59427a7414eacd5db44ad39831c1fe89783911bf8f358520282a",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Results 2.1 (paper.md line 44)",
+            "retrieved": null
+          },
+          "quote": "It consists of 321 samples from 118 unique experimental conditions across 21 projects",
+          "note": null
+        },
+        {
+          "value": {
+            "collected": 541,
+            "sra": 435,
+            "bentley2020": 9,
+            "newly_generated": 97
+          },
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "limMachinelearningPseudomonasPutida2022",
+            "sha256": "d5f49a99d0cf59427a7414eacd5db44ad39831c1fe89783911bf8f358520282a",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods 4.1 (paper.md line 146)",
+            "retrieved": null
+          },
+          "quote": "a total of 541 P. putida RNA-Seq samples were collected; 435 samples were obtained from the NCBI Sequence Read Archive (SRA, https://www.ncbi.nlm.nih.gov/sra, published before Aug 31, 2020); 9 samples were obtained from a previous study (Bentley et al., 2020); 97 samples were newly generated in this study (Supplementary Data)",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: KT2440 -> pputida_KT2440_ASM756v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "4 file(s) in library+raw, 38838 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "RNASeqExpressionPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "aggregation",
+  "aggregation": {
+    "n_source_studies": 22,
+    "attribution_field": "Publication (the sample sheet's DOI, else PMID, else Lim 2022); preprocess/sample_ledger.json per sample",
+    "value_origin": "re_measured",
+    "n_sources_mirrored": 1,
+    "net_new_vs_served": 21,
+    "evidence": [
+      {
+        "value": {
+          "samples": 321,
+          "conditions": 118,
+          "projects": 21
+        },
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "limMachinelearningPseudomonasPutida2022",
+          "sha256": "d5f49a99d0cf59427a7414eacd5db44ad39831c1fe89783911bf8f358520282a",
+          "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+          "page": "Results 2.1 (paper.md line 44)",
+          "retrieved": null
+        },
+        "quote": "It consists of 321 samples from 118 unique experimental conditions across 21 projects",
+        "note": null
+      }
+    ],
+    "sources": [
+      {
+        "source_label": "doi:10.1016/j.ymben.2022.04.004",
+        "role": "compendium_paper",
+        "citation_key": "limMachinelearningPseudomonasPutida2022",
+        "doi": "10.1016/j.ymben.2022.04.004",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 96,
+        "n_samples_served": 31,
+        "own_release": false,
+        "own_release_kind": "none",
+        "own_release_url": null,
+        "own_release_access": null,
+        "mirrored": true,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "in-house samples of projects ['ALE', 'Aromatic', 'Muconate']; their reads are Lim 2022's own GEO deposits ['GSE193493', 'GSE198395']"
+      },
+      {
+        "source_label": "doi:10.1099/mic.0.000875",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1099/mic.0.000875",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 36,
+        "n_samples_served": 36,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE129nnn/GSE129947/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE129947_Expression_values_novel_ncRNA_2vs.txt.gz']; projects ['Bioreactor2']"
+      },
+      {
+        "source_label": "doi:10.1128/AEM.03236-16",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1128/aem.03236-16",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 21,
+        "n_samples_served": 21,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE85nnn/GSE85475/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE85475_KBojanovic_Processed_data_Stress.xlsx.gz', 'GSE85475_KBojanovic_Processed_data_Stress_ptt.txt.gz']; projects ['Multistress']"
+      },
+      {
+        "source_label": "doi:10.1038/s41598-018-23858-6",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1038/s41598-018-23858-6",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 18,
+        "n_samples_served": 0,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJDB5812&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "40 ENA read runs; no processed GEO table; projects ['Mobile_gene']"
+      },
+      {
+        "source_label": "doi:10.3389/fmicb.2020.01099",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.3389/fmicb.2020.01099",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 18,
+        "n_samples_served": 2,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA602340&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "28 ENA read runs; no processed GEO table; projects ['HNS_protein']"
+      },
+      {
+        "source_label": "doi:10.1039/D0GC01663B",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1039/d0gc01663b",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 16,
+        "n_samples_served": 10,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE149nnn/GSE149827/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE149827_TPM_values.csv.gz']; projects ['ALE']"
+      },
+      {
+        "source_label": "doi:10.1021/acssuschemeng.1c03765",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1021/acssuschemeng.1c03765",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 14,
+        "n_samples_served": 0,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE155nnn/GSE155767/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE155767_deseq2-tpm-galactose.csv.gz', 'GSE155767_deseq2-tpm-xylose.csv.gz']; projects ['ALE']"
+      },
+      {
+        "source_label": "pmid:30298597",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1111/1758-2229.12704",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 11,
+        "n_samples_served": 11,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE118nnn/GSE118554/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSM3333090_Cit1.txt.gz', 'GSM3333091_Cit2.txt.gz', 'GSM3333092_Cit3.txt.gz', 'GSM3333093_Fer1.txt.gz']; projects ['Carbon']"
+      },
+      {
+        "source_label": "doi:10.1016/j.ymben.2020.01.001",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1016/j.ymben.2020.01.001",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 9,
+        "n_samples_served": 3,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE198nnn/GSE198795/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE198795_log_tpm_2020_Bentley.csv.gz']; projects ['Muconate']"
+      },
+      {
+        "source_label": "project:FleQ (PRJNA535401)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 9,
+        "n_samples_served": 6,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA535401&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "9 ENA read runs; no processed GEO table; projects ['FleQ']"
+      },
+      {
+        "source_label": "project:RelA (PRJNA455888,PRJNA455889...)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 9,
+        "n_samples_served": 9,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA455888&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "9 ENA read runs; no processed GEO table; projects ['RelA']"
+      },
+      {
+        "source_label": "project:Phase (PRJNA338850,PRJNA338876)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 8,
+        "n_samples_served": 8,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE85nnn/GSE85578/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE85578_KBojanovic_Processed_data_KB1.xlsx', 'GSE85581_KBojanovic_Processed_data_KB4.xlsx', 'GSE85581_KBojanovic_Processed_data_KB4_coIP.ptt.txt.gz']; projects ['Phase']"
+      },
+      {
+        "source_label": "project:ZnO (PRJEB9788)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 8,
+        "n_samples_served": 8,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJEB9788&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "11 ENA read runs; no processed GEO table; projects ['ZnO']"
+      },
+      {
+        "source_label": "doi:10.1128/AEM.01210-18",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1128/aem.01210-18",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 3,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA449573&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "6 ENA read runs; no processed GEO table; projects ['FinR']"
+      },
+      {
+        "source_label": "doi:10.3389/fmicb.2020.573857",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.3389/fmicb.2020.573857",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 6,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA606809&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "18 ENA read runs; no processed GEO table; projects ['Zn']"
+      },
+      {
+        "source_label": "project:Carbon2 (PRJNA457015,PRJNA457016...)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 6,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA457015&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "6 ENA read runs; no processed GEO table; projects ['Carbon2']"
+      },
+      {
+        "source_label": "project:Fuel (PRJNA455030,PRJNA455031...)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 6,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA455030&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "6 ENA read runs; no processed GEO table; projects ['Fuel']"
+      },
+      {
+        "source_label": "project:Mobile_gene2 (PRJDB5812)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 0,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJDB5812&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "40 ENA read runs; no processed GEO table; projects ['Mobile_gene2']"
+      },
+      {
+        "source_label": "project:Myristic_acid (PRJNA480068)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 6,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE116nnn/GSE116756/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSE116756_10033956.1KT_Glu_Exp_KT_Myr_Exp.toptags_edgeR.csv.gz', 'GSE116756_genes_FPKM.txt.gz']; projects ['Myristic_acid']"
+      },
+      {
+        "source_label": "pmid:25711694",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1111/1462-2920.12812",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 6,
+        "n_samples_served": 2,
+        "own_release": true,
+        "own_release_kind": "per_record_values",
+        "own_release_url": "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE63nnn/GSE63987/suppl/",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "GEO supplementary files ['GSM1561825_WT1.Gene.rpkm.txt.gz', 'GSM1561826_WT2.Gene.rpkm.txt.gz', 'GSM1561827_CRC1.Gene.rpkm.txt.gz', 'GSM1561828_CRC2.Gene.rpkm.txt.gz']; projects ['Crc']"
+      },
+      {
+        "source_label": "doi:10.1039/C8EE00460A",
+        "role": "original_study",
+        "citation_key": null,
+        "doi": "10.1039/c8ee00460a",
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 4,
+        "n_samples_served": 4,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA398404&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "4 ENA read runs; no processed GEO table; projects ['Glycolaldehyde']"
+      },
+      {
+        "source_label": "project:Bioreactor1 (PRJNA520374,PRJNA520375)",
+        "role": "unattributed_release",
+        "citation_key": null,
+        "doi": null,
+        "dataset_class": "PutidaPrecise321Lim2022Dataset",
+        "n_samples_in_compendium": 2,
+        "n_samples_served": 2,
+        "own_release": true,
+        "own_release_kind": "raw_reads_only",
+        "own_release_url": "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=PRJNA520374&result=read_run&fields=run_accession&format=tsv",
+        "own_release_access": "scriptable",
+        "mirrored": false,
+        "loaded_as_own_dataset": false,
+        "own_dataset_class": null,
+        "cross_check": null,
+        "note": "2 ENA read runs; no processed GEO table; projects ['Bioreactor1']"
+      }
+    ]
+  },
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "KT2440",
+        "assembly_set": "pputida_KT2440_ASM756v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "limMachinelearningPseudomonasPutida2022",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.docx",
+        "role": "si_data",
+        "bytes": 3659504,
+        "sha256_manifest": "64e1df3103b221051fb52e9d62afb39582367e20996bedc46f4d6f23e73f4750",
+        "sha256_disk": "64e1df3103b221051fb52e9d62afb39582367e20996bedc46f4d6f23e73f4750",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 39604837,
+        "sha256_manifest": "10e81a18fdfd08b9e27581f877dd0ae2a169946508b1ed5dabbe444210420970",
+        "sha256_disk": "10e81a18fdfd08b9e27581f877dd0ae2a169946508b1ed5dabbe444210420970",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "ReadMe",
+            "rows": 8
+          },
+          {
+            "sheet": "1-Sample_list",
+            "rows": 551
+          },
+          {
+            "sheet": "2-Gene table",
+            "rows": 5565
+          },
+          {
+            "sheet": "3-TRN",
+            "rows": 1994
+          },
+          {
+            "sheet": "4-iM table",
+            "rows": 85
+          },
+          {
+            "sheet": "5-X",
+            "rows": 5566
+          },
+          {
+            "sheet": "6-M",
+            "rows": 5565
+          },
+          {
+            "sheet": "7-A",
+            "rows": 85
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si2.xlsx",
+        "role": "raw_data",
+        "bytes": 39604837,
+        "sha256_manifest": "10e81a18fdfd08b9e27581f877dd0ae2a169946508b1ed5dabbe444210420970",
+        "sha256_disk": "10e81a18fdfd08b9e27581f877dd0ae2a169946508b1ed5dabbe444210420970",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "ReadMe",
+            "rows": 8
+          },
+          {
+            "sheet": "1-Sample_list",
+            "rows": 551
+          },
+          {
+            "sheet": "2-Gene table",
+            "rows": 5565
+          },
+          {
+            "sheet": "3-TRN",
+            "rows": 1994
+          },
+          {
+            "sheet": "4-iM table",
+            "rows": 85
+          },
+          {
+            "sheet": "5-X",
+            "rows": 5566
+          },
+          {
+            "sheet": "6-M",
+            "rows": 5565
+          },
+          {
+            "sheet": "7-A",
+            "rows": 85
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "data/counts.csv",
+        "role": "raw_data",
+        "bytes": 10104672,
+        "sha256_manifest": "59a8a1ac6b45c44a490d15a8c24a58c1083b623ed215aec758cad687cd8dbfc0",
+        "sha256_disk": "59a8a1ac6b45c44a490d15a8c24a58c1083b623ed215aec758cad687cd8dbfc0",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.ymben.2022.04.004",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1016/j.ymben.2022.04.004",
+        "where": "torchcell/datasets/pputida/lim2022.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "RNASeqExpressionPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "6c516821f5da6f58da878ee0bbd9f986e97b9c39"
+}

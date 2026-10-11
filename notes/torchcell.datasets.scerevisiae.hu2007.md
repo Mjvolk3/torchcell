@@ -77,7 +77,7 @@ No sequence data; nothing in the genomes tier.
 
 ### L0-L4 verification
 
-`python -m torchcell.database.build_dataset_lmdb --dataset MicroarrayScoreHu2007Dataset --retire-existing --verify` (the loader's `verify_build`; registry `EXPRESSION_SCORE_DATASETS`, family runner `run_expression_score`). Report: `$DATA_ROOT/data/torchcell/microarray_score_hu2007/preprocess/verification_report.json`. The dev store was rebuilt from the clean tree at `387bca933` (12 s; build manifest `torchcell_dirty: false`, absent from `--list-stale`), and its `--verify` pass reproduced the table below row for row.
+`python -m torchcell.database.build_dataset_lmdb --dataset MicroarrayScoreHu2007Dataset --retire-existing --verify` (the loader's `verify_build`; registry `EXPRESSION_SCORE_DATASETS`, family runner `run_expression_score`). Report: `$DATA_ROOT/data/torchcell/microarray_score_hu2007/preprocess/verification_report.json`. The dev store was rebuilt from the clean tree at `f6e894ddf` after the rebase onto `628a0412a` (12 s; build manifest `torchcell_dirty: false`, absent from `--list-stale`), and its `--verify` pass reproduced the table below row for row.
 
 | level | rule | result |
 |---|---|---|
@@ -105,6 +105,10 @@ No sequence data; nothing in the genomes tier.
 | 95th percentile | 0.376 | 0.162 |
 
 172 of the 255 matched r exceed the mismatched median, 79 exceed the mismatched 95th percentile and 45 the 99th; 54 are negative. Highest: YIR033W (MGA2) 0.623, YDR310C (SUM1) 0.489, YLR403W (SFP1) 0.478, YOL004W (SIN3) 0.478, YPL254W (HFI1) 0.457. The two measurements of one strain are two records, never a duplicate. Hypothesis (untested): the low median reflects that most TF deletions change few genes in either screen, plus the different media (Hu YPD; the Kemmeren loader records SC) and statistics (an error-weighted score against a log ratio); neither factor was measured separately here.
+
+### Candidate gate
+
+`python -m torchcell.candidates gate --row "Hu 2007" --table yeast --phenotype-class MicroarrayExpressionScorePhenotype --write`: G1 to G5 pass, outcome `admissible`; verdict `database/candidates/huGeneticReconstructionFunctional2007.json`. G4-value (`overlap`) was not run: it compares one scalar per record and these records are per-gene maps; the L2 `released_value_fidelity` row compares every stored value with the release instead. The ledger was not appended: `ledger` refuses a second 2026.10.11 section and one already exists.
 
 ### Next build
 

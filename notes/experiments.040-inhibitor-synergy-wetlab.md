@@ -696,3 +696,33 @@ comparison basis (the compound-cold score as a fraction of each source's own rel
 ceiling), the cross-source agreement that forbids treating the four labels as one quantity
 (0.118 at best, 0.013 at worst), and the measured dose structure of the public screens,
 where raising the dose scales a largely conserved profile rather than reordering it.
+
+### Correction, the same day: the target task overfits while the auxiliary sources are still learning
+
+The first 150-epoch arm (single source, `mix_van_e150_f0`) settles the length question and
+reverses half of the section above.
+
+https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/runs/erueq4ns
+
+| epoch | training loss | Vanacloig held-out loss | held-out centered Spearman | in-sample validation |
+|---|---|---|---|---|
+| 35 | 0.269 | **0.629** | 0.200 | 0.515 |
+| 85 | 0.124 | 0.639 | **0.304** | 0.844 |
+| 115 | 0.092 | 0.717 | 0.274 | 0.884 |
+
+The training loss falls throughout, the held-out loss bottoms near epoch 35 and rises
+after, and the held-out score peaks near epoch 85. So on the TARGET task the arms are not
+undertrained at 50 epochs; past about epoch 85 they are overtrained, and round 1's choice
+of 50 sat near the held-out optimum by luck rather than by design.
+
+Both readings stand together, and that is the point: the auxiliary losses were still
+falling at epoch 50 while the Vanacloig held-out loss had already turned. **The right
+training length is not one number across sources**, which is the argument for logging a
+held-out loss per source rather than reading the pooled training loss.
+
+The consequence for the round is the selection signal, not the length. Under `fit_on: pool`
+the fold's validation compounds are inside the training set, so the logged validation score
+is in-sample: it climbs to 0.88 while the held-out score falls. Every round-3 arm therefore
+now uses `fit_on: train`, which holds the four validation compounds out, with `select: val`.
+The cost is four fitted compounds of 24. The `vanhop_e50` bridge arm keeps round 1's
+pool-and-last protocol so the two rounds still join, and it is the only arm that does.

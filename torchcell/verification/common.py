@@ -908,8 +908,8 @@ def declared_member_validator(
     """Validate a stored mapping as the ONE union member its registry entry declares.
 
     ``TypeAdapter(ExperimentType)`` tries a stored record against every member of a
-    33-way union; on a Costanzo 2016 record that costs 21 ms, which puts a
-    20,705,612-record store at 67 hours. Validating against the declared member costs
+    33-way union; on a Costanzo 2016 record that costs 12 ms (85 records per second), which puts a
+    20,705,612-record store at 68 hours. Validating against the declared member costs
     0.4 ms and is the stronger statement: the record must validate as the class it
     claims to be (its ``experiment_type`` tag must be that class's), and a mapping that
     validates as a member of the union validates as the union. ``class_name`` that is

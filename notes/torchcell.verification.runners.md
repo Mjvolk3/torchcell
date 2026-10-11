@@ -375,3 +375,9 @@ two L4 gene rows, the ones a host selection decides, pass. I did not re-run yeas
 under `origin/main` to measure the before state (another 18-minute materialization per
 pass), so "it failed these two before" is an inference from the diff -- neither rule's code
 nor its inputs are in it -- and not a measurement.
+
+## 2026.10.10 - Three yeast families and eight streamed fitness stores (#889)
+
+- `FITNESS_DATASETS` gains the eight Costanzo 2016 / Kuzmin 2018/2020 fitness stores with `stream: True` and `experiment_class`; `run_fitness` sends a streamed spec through `verify_fitness_dataset_streaming` and never materializes it.
+- New registries with their runners, called by `run_all` after `run_fitness`: `GENE_INTERACTION_DATASETS` / `run_gene_interaction`, `GENE_ESSENTIALITY_DATASETS` / `run_gene_essentiality`, `SYNTHETIC_PAIR_DATASETS` / `run_synthetic_pairs`. Each entry pins its released files and quotes; every `expected_count` is the release's count (`experiments/036-dataset-fixes-before-kg-build/scripts/no_verifier_store_release_counts.py`).
+- Helpers: `companion_pair_keys`, `viable_deletion_genes`, `released_synlethdb_pairs`, `drop_ledger_result`, `_audit_quotes`.

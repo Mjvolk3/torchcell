@@ -345,6 +345,13 @@
             <span class="p">(</span><span class="s2">"experiment (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_experiment_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"genotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genotype_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"segregant genotype (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_genotype_node</span><span class="p">),</span>
+            <span class="c1"># --- begin Hale 2024: a perturbation on a segregant background ---</span>
+            <span class="p">(</span>
+                <span class="s2">"perturbed segregant genotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_perturbed_segregant_genotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span><span class="s2">"segregant background (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_background_node</span><span class="p">),</span>
+            <span class="c1"># --- end Hale 2024 ---</span>
             <span class="p">(</span><span class="s2">"perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_node</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"bacterial perturbation (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bacterial_perturbation_node</span><span class="p">),</span>
             <span class="p">(</span>
@@ -451,6 +458,10 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_pseudobulk_umi_count_phenotype_node</span><span class="p">,</span>
             <span class="p">),</span>
             <span class="p">(</span>
+                <span class="s2">"genome architecture phenotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_phenotype_node</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span>
                 <span class="s2">"fitness phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_fitness_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
@@ -550,6 +561,10 @@
                 <span class="s2">"pseudobulk umi count phenotype reference"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_get_pseudobulk_umi_count_phenotype_reference_nodes</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="p">(</span>
+                <span class="s2">"genome architecture phenotype reference"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_get_genome_architecture_phenotype_reference_nodes</span><span class="p">,</span>
+            <span class="p">),</span>
             <span class="p">(</span><span class="s2">"dataset"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_dataset_nodes</span><span class="p">),</span>
             <span class="p">(</span><span class="s2">"publication (chunked)"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_publication_node</span><span class="p">),</span>
         <span class="p">]</span>
@@ -568,6 +583,12 @@
                 <span class="s2">"perturbation to genotype (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_perturbation_to_genotype_edges</span><span class="p">,</span>
             <span class="p">),</span>
+            <span class="c1"># --- begin Hale 2024 ---</span>
+            <span class="p">(</span>
+                <span class="s2">"segregant background to genotype (chunked)"</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_background_to_genotype_edge</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="c1"># --- end Hale 2024 ---</span>
             <span class="p">(</span>
                 <span class="s2">"crispr construct to perturbation (chunked)"</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_crispr_construct_to_perturbation_edges</span><span class="p">,</span>
@@ -1179,6 +1200,75 @@
         <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_genotype_node_from</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="p">)</span>
+
+    <span class="c1"># --- Perturbed segregant genotypes (Hale 2024; a sibling of Genotype) ---</span>
+    <span class="c1"># A PerturbedSegregantGenotype is a segregant mosaic PLUS designed gene-keyed</span>
+    <span class="c1"># perturbations. Its own node carries both halves' queryable scalars (the cross and</span>
+    <span class="c1"># segregant of the background, the gene lists of the perturbations), so a gene-keyed</span>
+    <span class="c1"># query that reaches it also sees it is not an S288C derivative. The background is</span>
+    <span class="c1"># ALSO emitted as the plain ``segregant genotype`` node it is (id = sha256 of its</span>
+    <span class="c1"># dump), joined by ``segregant background of``, so every perturbation measured on one</span>
+    <span class="c1"># segregant hangs off one shared background node. ``perturbation (chunked)`` and the</span>
+    <span class="c1"># CRISPR construct methods read ``genotype.perturbations`` and work unchanged.</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_perturbed_segregant_genotype_node_from</span><span class="p">(</span><span class="n">genotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">genotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="n">background</span> <span class="o">=</span> <span class="n">genotype</span><span class="o">.</span><span class="n">background</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">genotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"perturbed segregant genotype"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"perturbed segregant genotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="p">{</span>
+                <span class="s2">"cross"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">cross</span><span class="p">,</span>
+                <span class="s2">"segregant_id"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">segregant_id</span><span class="p">,</span>
+                <span class="s2">"background_role"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">background_role</span><span class="p">,</span>
+                <span class="s2">"parent_1"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">parent_1</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">"parent_2"</span><span class="p">:</span> <span class="n">background</span><span class="o">.</span><span class="n">parent_2</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="s2">"n_blocks"</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">background</span><span class="o">.</span><span class="n">blocks</span><span class="p">),</span>
+                <span class="s2">"systematic_gene_names"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">systematic_gene_names</span><span class="p">,</span>
+                <span class="s2">"perturbed_gene_names"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbed_gene_names</span><span class="p">,</span>
+                <span class="s2">"perturbation_types"</span><span class="p">:</span> <span class="n">genotype</span><span class="o">.</span><span class="n">perturbation_types</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">)</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_perturbed_segregant_genotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_perturbed_segregant_genotype_node_from</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="p">)</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_segregant_background_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The background mosaic of a perturbed segregant, as a ``segregant genotype``."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_genotype_node_from</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span><span class="o">.</span><span class="n">background</span>
+        <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_segregant_background_to_genotype_edge_from</span><span class="p">(</span><span class="n">genotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherEdge</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">BioCypherEdge</span><span class="p">(</span>
+            <span class="n">source_id</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">background</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+            <span class="n">target_id</span><span class="o">=</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">genotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">(),</span>
+            <span class="n">relationship_label</span><span class="o">=</span><span class="s2">"segregant background of"</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_segregant_background_to_genotype_edge</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherEdge</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Join the background mosaic to the perturbed genotype built on it."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_segregant_background_to_genotype_edge_from</span><span class="p">(</span>
+            <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">genotype</span>
+        <span class="p">)</span>
 
     <span class="nd">@data_chunker</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">_perturbation_node</span><span class="p">(</span>
@@ -3183,6 +3273,71 @@
         <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="c1"># --- end jackson2020 ---------------------------------------------------------- #</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">"""Node properties of a ``GenomeArchitecturePhenotype`` (experiment or reference).</span>
+
+<span class="sd">        The two dict-valued fields serialize to JSON strings, the multi-valued phenotype</span>
+<span class="sd">        convention, and ``assay`` rides beside them because a key inside those strings</span>
+<span class="sd">        is only interpretable against the assay that declares its unit basis. The sample</span>
+<span class="sd">        id and its archive accession stay typed: they are what makes one stored profile</span>
+<span class="sd">        traceable to the reads it was measured from.</span>
+<span class="sd">        """</span>
+        <span class="n">dispersion</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">genome_architecture_sd</span>
+        <span class="n">uncertainty</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">uncertainty_type</span>
+        <span class="n">sample_unit</span> <span class="o">=</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_unit</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">"graph_level"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">graph_level</span><span class="p">,</span>
+            <span class="s2">"label_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_name</span><span class="p">,</span>
+            <span class="s2">"label_statistic_name"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">label_statistic_name</span><span class="p">,</span>
+            <span class="s2">"assay"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">assay</span><span class="p">,</span>
+            <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">),</span>
+            <span class="s2">"genome_architecture_sd"</span><span class="p">:</span> <span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">dispersion</span><span class="p">)</span> <span class="k">if</span> <span class="n">dispersion</span> <span class="k">else</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="s2">"uncertainty_type"</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">uncertainty</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">uncertainty</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">"n_samples"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">n_samples</span><span class="p">,</span>
+            <span class="s2">"sample_unit"</span><span class="p">:</span> <span class="n">sample_unit</span><span class="o">.</span><span class="n">value</span> <span class="k">if</span> <span class="n">sample_unit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">"sample_id"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_id</span><span class="p">,</span>
+            <span class="s2">"sample_accession"</span><span class="p">:</span> <span class="n">phenotype</span><span class="o">.</span><span class="n">sample_accession</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="nd">@data_chunker</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genome_architecture_phenotype_node</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">method_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BioCypherNode</span><span class="p">:</span>
+        <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span><span class="o">.</span><span class="n">phenotype</span>
+        <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">BioCypherNode</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+            <span class="n">preferred_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">"phenotype_</span><span class="si">{</span><span class="n">phenotype_id</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+            <span class="n">node_label</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+            <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_genome_architecture_phenotype_reference_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_node_ids</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">experiment_reference_index</span><span class="p">):</span>
+            <span class="n">phenotype</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reference</span><span class="o">.</span><span class="n">phenotype_reference</span>
+            <span class="n">phenotype_id</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">phenotype</span><span class="o">.</span><span class="n">model_dump</span><span class="p">())</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">"utf-8"</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">phenotype_id</span> <span class="ow">in</span> <span class="n">seen_node_ids</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">seen_node_ids</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">phenotype_id</span><span class="p">)</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">BioCypherNode</span><span class="p">(</span>
+                    <span class="n">node_id</span><span class="o">=</span><span class="n">phenotype_id</span><span class="p">,</span>
+                    <span class="n">preferred_id</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+                    <span class="n">node_label</span><span class="o">=</span><span class="s2">"genome architecture phenotype"</span><span class="p">,</span>
+                    <span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_genome_architecture_properties</span><span class="p">(</span><span class="n">phenotype</span><span class="p">),</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">nodes</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_get_dataset_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">BioCypherNode</span><span class="p">]:</span>
         <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span>

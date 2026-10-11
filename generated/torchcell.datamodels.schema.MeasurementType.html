@@ -206,6 +206,13 @@ growth curve, from calibrated colony images (De Chiara 2022’s Scan-o-matic
 which is an end-point size on an image scale (pixels): this is a cell count, and
 the source does not say whether it is the final population or the gain over the
 inoculum, so it is named for what the source calls it.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">relative_fitness</span></code>: SIGNED fitness of one barcode lineage relative to the mean
+fitness of the pooled population it competed in, as a lineage-tracking estimator
+reports it from read-count trajectories (Hale 2024: PyFitSeq Malthusian fitness on
+a time axis in generations, then shifted per assay to a stated reference); 0 =
+grows like the reference. Distinct from <code class="docutils literal notranslate"><span class="pre">log2_ratio</span></code> (an end-point abundance
+ratio, not a fitted growth rate) and from <code class="docutils literal notranslate"><span class="pre">relative_growth_rate</span></code> (a ratio against
+a wild-type well, not a difference against a pooled population).</p></li>
 </ul>
 </dd></dl>
 

@@ -342,6 +342,18 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "score_semantics": "higher is more colored",
         "target_product": "beta-carotene",
     },
+    # jackson2020: the pseudobulk UMI-count phenotype's totals must agree with its two
+    # dicts and its per-cell list, which the generic builder cannot arrange.
+    "torchcell.datamodels.schema.PseudobulkUmiCountPhenotype": {
+        "umi_count": {"YAL001C": 3},
+        "marker_umi_count": {"KANMX": 1},
+        "total_umis": 4,
+        "n_features": 1,
+        "feature_universe_sha256": "a" * 64,
+        "n_cells": 1,
+        "cell_barcodes": ["AAACCTGAGAAACCAT"],
+        "cell_total_umis": [4],
+    },
 }
 
 # class qualname -> why no example exists. Strict: a class listed here that DOES round

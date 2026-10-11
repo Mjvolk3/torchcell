@@ -95,6 +95,7 @@ PHENOTYPE_METHOD: dict[type[Any], str] = {
     s.MrnaNumberFractionPhenotype: "mrna number fraction phenotype",
     s.SingleCellExpressionPhenotype: "single cell expression phenotype",
     s.LifeCyclePhenotype: "life cycle phenotype",
+    s.PseudobulkUmiCountPhenotype: "pseudobulk umi count phenotype",
 }
 
 PHENOTYPE_CHUNKED = "<phenotype> (chunked)"

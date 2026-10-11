@@ -58,6 +58,17 @@ from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 PRE_EXISTING_MEDIA_DIGESTS: dict[str, str] = {
     # De Chiara 2022: the starvation buffer, a new key pinned when it was added
     "PBS": "9643902743539e691b82f32387ebf3a11210b07ec0add05c2055f9388f1c36cf",
+    # --- begin jackson2020: the Table 4 media, new keys pinned when they were added ---
+    "CSTARVE_JACKSON2020": "f07c0ac4ece8f04c3339045ec345bf05b033d947aa44515886b1ad1d44c3709f",
+    "MINIMAL_BASE_JACKSON2020": "983afe02232d40cde63b9a2bc09f6c65d8fd8dff4871007ecde72948b6534594",
+    "MMD_JACKSON2020": "daa42fb29b9b0f695a4f52f9db9aac50fe72b02debbcd97e28e13b7f3a8d9fe0",
+    "MMETOH_JACKSON2020": "39c065e70278662e6813c0f5aedae1bdff16d350dc70b6db75e2e7796de1c317",
+    "NLIM_GLN_JACKSON2020": "21b8cff7510f26b1f26dcf19da3054bcc35907a940bfba842592e2ee3f318419",
+    "NLIM_NH4_JACKSON2020": "25544b3f4f913626fe0aa638eeda1176d89264944098bc5134042db58f23b09a",
+    "NLIM_PRO_JACKSON2020": "ea7884705627d094e76d52a07c096f21b22e3036e51cf61a3bb38f2db520dcb4",
+    "NLIM_UREA_JACKSON2020": "77919f7645c07aab362f975e91f66494bc51450adacc6d5b04f349b98fdb622e",
+    "YP_ETHANOL_LIQUID_JACKSON2020": "57920541cf86682a90434b21c972129ba5ad669f4046b85ed764267c87dcc29e",
+    # --- end jackson2020 ---
     "SC": "d7ea21cf75fb333f87cbc98974171f865f6466ac226020596c4c5ce8b6536f7d",
     "SC_MINUS_4_AMINOBENZOIC_ACID": "9487cb0bd907a7ac5025cb3f28f26f280084c79093b1103a6263c4896ecc13bb",
     "SC_MINUS_ADENINE": "83ddd124e6c6dd9a767cdc5cd7221afac849a05d2b1f839edb2c63cdc4f24d9d",

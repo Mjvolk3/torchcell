@@ -490,11 +490,12 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # source on that two-target edge each.
     # 39 and 62 since `single cell expression phenotype` (Boocock 2025) joined: the same
     # shape once more, one node and one more source on that two-target edge. 40 and 64
-    # since `life cycle phenotype` (De Chiara 2022) joined, the same shape again.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (40, 13, 64)
-    # 174 = 158 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and one data
-    # line per ``phenotype member of`` target, of which there are two.
-    assert len(lines) == 174
+    # since `life cycle phenotype` (De Chiara 2022) joined, 41 and 66 since `pseudobulk
+    # umi count phenotype` (Jackson 2020) joined, the same shape again.
+    assert (len(gen.nodes), n_edges, n_data_lines) == (41, 13, 66)
+    # 178 = 158 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and one
+    # data line per ``phenotype member of`` target, of which there are two.
+    assert len(lines) == 178
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

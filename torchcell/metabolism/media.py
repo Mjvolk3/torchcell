@@ -315,6 +315,19 @@ _DISSOCIATION: dict[str, tuple[str, ...]] = {
     "sodium chloride": ("sodium", "chloride"),
     # De Chiara 2022's KAc sporulation medium: the acetate is the carbon source
     "potassium acetate": ("potassium", "acetate"),
+    # --- begin jackson2020: the Table 4 trace metals and salts, weighed as hydrates ---
+    # Each resolves to the ions a GEM carries; an ion the GEM lacks (molybdate, iodide,
+    # iron(3+): yeast-GEM 9.0.2 has none of the three) is tried and not matched.
+    "manganese(ii) sulfate monohydrate": ("manganese(2+)", "sulfate"),
+    "zinc sulfate heptahydrate": ("zinc(2+)", "sulfate"),
+    "sodium molybdate dihydrate": ("sodium", "molybdate"),
+    "iron(iii) chloride hexahydrate": ("iron(3+)", "chloride"),
+    "potassium iodide": ("potassium", "iodide"),
+    "copper(ii) sulfate pentahydrate": ("copper(2+)", "sulfate"),
+    "calcium chloride dihydrate": ("calcium(2+)", "chloride"),
+    "magnesium chloride hexahydrate": ("magnesium(2+)", "chloride"),
+    "potassium dihydrogen phosphate": ("potassium", "phosphate"),
+    # --- end jackson2020 ---
 }
 
 

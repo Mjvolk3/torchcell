@@ -4411,6 +4411,404 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
 
 
+# =========================================================================== #
+# --- begin jackson2020: the media of Jackson 2020 (Supplementary file 1, Table 4) ---
+#
+# Jackson 2020 (eLife 9:e51254) grew one pool of prototrophic FY4/FY5 deletion strains
+# in eleven conditions on two kinds of medium: YP-based rich media and a minimal medium
+# built from three named sub-mixes ("Minimal Trace Metals (1x)", "Minimal Vitamins
+# (1x)", "Minimal Salts (1x)") plus a carbon and a nitrogen source. Supplementary
+# Table 4 states every ingredient with its mass concentration (and a molar one in
+# parentheses), so the sub-mixes are expanded into their twenty single-substance
+# components here, each at the weighed g/L the row states; the molar value rides in the
+# quote. ``MINIMAL_BASE_JACKSON2020`` is the three sub-mixes alone (no carbon, no
+# nitrogen) and every minimal derivative adds its two rows to it, so the seven minimal
+# conditions join at one base object. The rich YPD is the library's ``YPD_LIQUID`` (Table
+# 4 states the same three rows, restated in the loader); YP + ethanol is a new liquid
+# object because Table 4 states the ethanol as 2% v/v, where Bloom 2019's solid
+# ``YP_ETHANOL`` carries a w/v 2%. Quotes are row renderings of the xlsx (a row's
+# non-empty cells joined by " | "), the convention of the bacterial xlsx sources.
+# =========================================================================== #
+_JACKSON2020 = "jacksonGeneRegulatoryNetwork2020"
+_JACKSON2020_S4 = Provenance(
+    citation_key=_JACKSON2020,
+    sha256="6c96fdf425f9d07c92d6bad8f44e54e1bebca6b83d06a7b7b3fbb06ea1923737",
+    source_uri="si/si6.xlsx",
+    method="row renderings of sheet 'Supplemental Table 4 - Media' (non-empty cells "
+    "joined by ' | ')",
+    page="Supplementary file 1, Supplemental Table 4",
+)
+
+
+def _jackson_s4(value: object, quote: str, *, note: str | None = None) -> SourcedValue:
+    """A SourcedValue on one row of Jackson 2020's Supplemental Table 4."""
+    return _cite(_JACKSON2020_S4, value, quote, note=note)
+
+
+def _jackson_stated(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+    quote: str,
+    *,
+    note: str | None = None,
+) -> MediaComponent:
+    """One Table 4 row as a component at the amount it states (``read`` as written)."""
+    return _stated(name, role, value, unit, _jackson_s4(read, quote), note=note)
+
+
+_JACKSON2020_TRACE_METALS = [
+    _jackson_stated(
+        "boric acid",
+        _TRACE,
+        0.0005,
+        _GL,
+        "500 ug/L (8.09 uM)",
+        "Minimal Trace Metals (1x) | 500 µg/L (8.09 µM) Boric Acid | Sigma #B6768",
+    ),
+    _jackson_stated(
+        "manganese(II) sulfate monohydrate",
+        _TRACE,
+        0.0004,
+        _GL,
+        "400 ug/L (2.37 uM)",
+        "400 µg/L (2.37 µM) Manganese (II) Sulfate Monohydrate | Sigma # M7634",
+    ),
+    _jackson_stated(
+        "zinc sulfate heptahydrate",
+        _TRACE,
+        0.0004,
+        _GL,
+        "400 ug/L (1.39 uM)",
+        "400 µg/L (1.39 µM) Zinc Sulfate Heptahydrate | Fisher #Z68-500",
+    ),
+    _jackson_stated(
+        "sodium molybdate dihydrate",
+        _TRACE,
+        0.0002,
+        _GL,
+        "200 ug/L (0.83 uM)",
+        "200 µg/L (0.83 µM) Sodium Molybdate Dihydrate | Sigma #331058",
+    ),
+    _jackson_stated(
+        "iron(III) chloride hexahydrate",
+        _TRACE,
+        0.0002,
+        _GL,
+        "200 ug/L (0.74 uM)",
+        "200 µg/L (0.74 µM) Ferric (III) Chloride Hexahydrate | Fisher #I88-100",
+    ),
+    _jackson_stated(
+        "potassium iodide",
+        _TRACE,
+        0.0001,
+        _GL,
+        "100 ug/L (0.60 uM)",
+        "100 µg/L (0.60 µM) Potassium Iodide | Sigma #60400",
+    ),
+    _jackson_stated(
+        "copper(II) sulfate pentahydrate",
+        _TRACE,
+        0.00004,
+        _GL,
+        "40 ug/L (0.16 uM)",
+        "40 µg/L (0.16 µM) Copper (II) Sulfate Pentahydrate | Sigma #209198",
+    ),
+]
+
+_JACKSON2020_VITAMINS = [
+    _jackson_stated(
+        "myo-inositol",
+        _VITAMIN,
+        0.002,
+        _GL,
+        "2 mg/L (11.10 uM)",
+        "Minimal Vitamins (1x) | 2 mg/L (11.10 µM) Inositol | Acros Organics "
+        "#AC12226-1000",
+        note="the row writes 'Inositol'; the yeast vitamin is the myo isomer, the one "
+        "the library's YNB vitamin set carries",
+    ),
+    _jackson_stated(
+        "niacin",
+        _VITAMIN,
+        0.0004,
+        _GL,
+        "400 ug/L (3.25 uM)",
+        "400 µg/L (3.25 µM) Nicotinic Acid | Sigma #N4126",
+        note="the row writes 'Nicotinic Acid'; the identity table's row for it is "
+        "PubChem's 'niacin' (CID 938), the name the YNB vitamin set already uses",
+    ),
+    _jackson_stated(
+        "pyridoxine hydrochloride",
+        _VITAMIN,
+        0.0004,
+        _GL,
+        "400 ug/L (1.95 uM)",
+        "400 µg/L (1.95 µM) Pyridoxine Hydrochloride | Sigma #P9755",
+    ),
+    _jackson_stated(
+        "4-aminobenzoic acid",
+        _VITAMIN,
+        0.0002,
+        _GL,
+        "200 ug/L (1.46 uM)",
+        "200 µg/L (1.46 µM) 4-Aminobenzoic Acid | Acros Organics #AC14621-2500",
+    ),
+    _jackson_stated(
+        "thiamine hydrochloride",
+        _VITAMIN,
+        0.0004,
+        _GL,
+        "400 ug/L (1.19 uM)",
+        "400 µg/L (1.19 µM) Thiamine Hydrochloride | Fisher #BP892-100",
+    ),
+    _jackson_stated(
+        "calcium pantothenate",
+        _VITAMIN,
+        0.0004,
+        _GL,
+        "400 ug/L (0.84 uM)",
+        "400 µg/L (0.84 µM) D-Calcium Pantothenate | Acros Organics #AC24330-1000",
+        note="the row writes 'D-Calcium Pantothenate'; the table's 'calcium "
+        "pantothenate' row is the D salt (its InChIKey carries the stereo block)",
+    ),
+    _jackson_stated(
+        "riboflavin",
+        _VITAMIN,
+        0.0002,
+        _GL,
+        "200 ug/L (0.53 uM)",
+        "200 µg/L (0.53 µM) Riboflavin | Sigma #R4500-25G",
+    ),
+    _jackson_stated(
+        "biotin",
+        _VITAMIN,
+        0.000002,
+        _GL,
+        "2 ug/L (8.19 nM)",
+        "2 µg/L (8.19 nM) D-Biotin | Fisher #BP232-1",
+        note="the row writes 'D-Biotin', the natural isomer the table's 'biotin' row is",
+    ),
+    _jackson_stated(
+        "folic acid",
+        _VITAMIN,
+        0.000002,
+        _GL,
+        "2 ug/L (4.53 nM)",
+        "2 µg/L (4.53 nM) Folic Acid | Sigma #F7876",
+    ),
+]
+
+_JACKSON2020_SALTS = [
+    _jackson_stated(
+        "calcium chloride dihydrate",
+        _SALT,
+        0.1,
+        _GL,
+        "0.1 g/L (0.68 mM)",
+        "Minimal Salts (1x) | 0.1 g/L (0.68 mM) Calcium Chloride Dihydrate | Fisher "
+        "#C79-500",
+    ),
+    _jackson_stated(
+        "sodium chloride",
+        _SALT,
+        0.1,
+        _GL,
+        "0.1 g/L (1.71 mM)",
+        "0.1 g/L (1.71 mM) Sodium Chloride | Fisher #BP358-212",
+    ),
+    _jackson_stated(
+        "magnesium chloride hexahydrate",
+        _SALT,
+        0.5,
+        _GL,
+        "0.5 g/L (2.46 mM)",
+        "0.5 g/L (2.46 mM) Magnesium Chloride Hexahydrate | Sigma #M9272",
+    ),
+    _jackson_stated(
+        "potassium dihydrogen phosphate",
+        _SALT,
+        1.0,
+        _GL,
+        "1.0 g/L (7.35 mM)",
+        "1.0 g/L (7.35 mM) Potassium Phosphate Monobasic | VWR #97062-346",
+        note="'Potassium Phosphate Monobasic' is KH2PO4, the table's 'potassium "
+        "dihydrogen phosphate' row",
+    ),
+]
+
+_JACKSON2020_MINIMAL_COMPONENTS = [
+    *_JACKSON2020_TRACE_METALS,
+    *_JACKSON2020_VITAMINS,
+    *_JACKSON2020_SALTS,
+]
+
+MINIMAL_BASE_JACKSON2020 = Media(
+    name="Jackson 2020 minimal base (1x trace metals, 1x vitamins, 1x salts; no carbon "
+    "or nitrogen source)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="MINIMAL_BASE_JACKSON2020",
+    components=_JACKSON2020_MINIMAL_COMPONENTS,
+    provenance=[
+        _jackson_s4(
+            "every minimal medium is the three 1x sub-mixes plus its carbon and "
+            "nitrogen rows",
+            "Minimal Media | 1x Minimal Trace Metals | Above",
+            note="the next two rows are '1x Minimal Salts | Above' and '1x Minimal "
+            "Vitamins | Above'; the same three rows open every minimal medium of the "
+            "sheet",
+        )
+    ],
+)
+"""The three Table 4 sub-mixes, the shared base of Jackson 2020's seven minimal media."""
+
+
+def _jackson_minimal(
+    name: str, header_quote: str, *extra: MediaComponent, note: str | None = None
+) -> Media:
+    """``MINIMAL_BASE_JACKSON2020`` plus one condition's carbon and nitrogen rows."""
+    return Media(
+        name=name,
+        state="liquid",
+        is_synthetic=True,
+        base_medium="MINIMAL_BASE_JACKSON2020",
+        components=[*_JACKSON2020_MINIMAL_COMPONENTS, *extra],
+        provenance=[_jackson_s4(name, header_quote, note=note)],
+    )
+
+
+def _jackson_glucose(
+    quote_row: str = "2% (w/v) glucose | BD Difco #DF0155-08-5",
+) -> MediaComponent:
+    return _jackson_stated("D-glucose", _CSRC, 2.0, _PCT, "2% (w/v)", quote_row)
+
+
+def _jackson_ethanol() -> MediaComponent:
+    return _jackson_stated(
+        "ethanol",
+        _CSRC,
+        2.0,
+        _VV,
+        "2% (v/v)",
+        "2% (v/v) ethanol | Pharmco-Aaper #111000200",
+    )
+
+
+def _jackson_ammonium_sulfate(
+    value: float, unit: ConcentrationUnit, read: str, quote: str
+) -> MediaComponent:
+    return _jackson_stated("ammonium sulfate", _NSRC, value, unit, read, quote)
+
+
+MMD_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 minimal medium, 2% glucose + 20 mM ammonium sulfate (MMD)",
+    "Minimal Media | 1x Minimal Trace Metals | Above",
+    _jackson_glucose(),
+    _jackson_ammonium_sulfate(
+        20.0, _MM, "20 mM", "20 mM Ammonium Sulfate | Acros Organics #AC423400010"
+    ),
+)
+MMETOH_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 minimal medium, 2% (v/v) ethanol + 20 mM ammonium sulfate (MMEtOH)",
+    "Minimal Media (Ethanol) | 1x Minimal Trace Metals | Above",
+    _jackson_ethanol(),
+    _jackson_ammonium_sulfate(
+        20.0, _MM, "20 mM", "20 mM Ammonium Sulfate | Acros Organics #AC423400010"
+    ),
+)
+NLIM_GLN_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-glutamine "
+    "(NLIM-GLN)",
+    "Nitrogen Limiting Minimal Media (Glutamine) | 1x Minimal Trace Metals | Above",
+    _jackson_glucose(),
+    _jackson_stated(
+        "L-glutamine",
+        _NSRC,
+        800.0,
+        _UM,
+        "800 uM",
+        "800 µM L(+)-Glutamine | Acros Organics #119951000",
+    ),
+)
+NLIM_PRO_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM L-proline "
+    "(NLIM-PRO)",
+    "Nitrogen Limiting Minimal Media (Proline) | 1x Minimal Trace Metals | Above",
+    _jackson_glucose(),
+    _jackson_stated(
+        "L-proline", _NSRC, 800.0, _UM, "800 uM", "800 µM L-Proline | Sigma #P0380-100G"
+    ),
+)
+NLIM_NH4_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM ammonium "
+    "sulfate (NLIM-NH4)",
+    "Nitrogen Limiting Minimal Media (Ammonium Sulfate) | 1x Minimal Trace Metals | "
+    "Above",
+    _jackson_glucose(),
+    _jackson_ammonium_sulfate(
+        800.0, _UM, "800 uM", "800 µM Ammonium Sulfate | Acros Organics #AC423400010"
+    ),
+)
+NLIM_UREA_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 nitrogen-limited minimal medium, 2% glucose + 800 uM urea (NLIM-UREA)",
+    "Nitrogen Limiting Minimal Media (Ammonium Sulfate) | 1x Minimal Trace Metals | "
+    "Above",
+    _jackson_glucose(),
+    _jackson_stated(
+        "urea", _NSRC, 800.0, _UM, "800 uM", "800 µM Urea | Acros Organics #AC434720010"
+    ),
+    note="Table 4 heads this block (sheet row 53) with the same name as the ammonium "
+    "block above it, 'Nitrogen Limiting Minimal Media (Ammonium Sulfate)'; its nitrogen "
+    "row is '800 µM Urea' (row 57), and Table 1 names the condition NLIM-UREA with "
+    "0.8 mM urea, so the heading is a copy of the previous block's and the urea row "
+    "is the medium",
+)
+CSTARVE_JACKSON2020 = _jackson_minimal(
+    "Jackson 2020 carbon-starvation medium, 1 mM ammonium sulfate, no carbon source "
+    "(CSTARVE)",
+    "Starvation Media | 1x Minimal Trace Metals | Above",
+    _jackson_ammonium_sulfate(
+        1.0, _MM, "1 mM", "1 mM Ammonium Sulfate | Acros Organics #AC423400010"
+    ),
+)
+
+YP_ETHANOL_LIQUID_JACKSON2020 = Media(
+    name="YP + 2% (v/v) ethanol, liquid (Jackson 2020 YPEtOH)",
+    state="liquid",
+    is_synthetic=False,
+    base_medium="YP",
+    components=[*_YP_COMPONENTS, _jackson_ethanol()],
+    provenance=[
+        _jackson_s4(
+            "1% yeast extract, 2% peptone, 2% (v/v) ethanol",
+            "YPEthanol | 2% (w/v) peptone | BD Difco #DF0118-17-0",
+            note="the block's other rows are '2% (v/v) ethanol | Pharmco-Aaper "
+            "#111000200' and '1% (w/v) yeast extract | BD Difco #DF0127-17-9': the YP "
+            "base's two ingredients at the library's amounts, plus the ethanol",
+        )
+    ],
+)
+"""Liquid YP + 2% v/v ethanol. Joins Bloom 2019's solid ``YP_ETHANOL`` at
+``base_medium == "YP"`` and at the ethanol compound, without its w/v basis."""
+
+#: The Jackson 2020 entries, keyed as MEDIA_LIBRARY keys them.
+JACKSON2020_MEDIA: dict[str, Media] = {
+    "MINIMAL_BASE_JACKSON2020": MINIMAL_BASE_JACKSON2020,
+    "MMD_JACKSON2020": MMD_JACKSON2020,
+    "MMETOH_JACKSON2020": MMETOH_JACKSON2020,
+    "NLIM_GLN_JACKSON2020": NLIM_GLN_JACKSON2020,
+    "NLIM_PRO_JACKSON2020": NLIM_PRO_JACKSON2020,
+    "NLIM_NH4_JACKSON2020": NLIM_NH4_JACKSON2020,
+    "NLIM_UREA_JACKSON2020": NLIM_UREA_JACKSON2020,
+    "CSTARVE_JACKSON2020": CSTARVE_JACKSON2020,
+    "YP_ETHANOL_LIQUID_JACKSON2020": YP_ETHANOL_LIQUID_JACKSON2020,
+}
+# --- end jackson2020 ---
+
+
 # Registry of the canonical media (name -> object), for discovery/migration.
 MEDIA_LIBRARY: dict[str, Media] = {
     "SD_MSG": SD_MSG,
@@ -4487,6 +4885,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "MOPS_MINIMAL": MOPS_MINIMAL,
     "MOPS_CASAMINO_WANG2018": MOPS_CASAMINO_WANG2018,
     "M9_MODIFIED_FANG2025": M9_MODIFIED_FANG2025,
+    **JACKSON2020_MEDIA,  # jackson2020: Supplementary file 1, Table 4
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -4536,6 +4935,13 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "MOPS_CASAMINO_WANG2018": "same as its MOPS base; Wang 2018's stated 10 g/L glucose "
     "is carried as a carbon-source factor so all four of its MOPS conditions share one "
     "base object",
+    # --- begin jackson2020 ---
+    "MINIMAL_BASE_JACKSON2020": "base; the three Table 4 sub-mixes, to which every "
+    "Jackson 2020 minimal medium adds its carbon and nitrogen rows",
+    "CSTARVE_JACKSON2020": "the carbon-starvation condition: Table 4's 'Starvation "
+    "Media' is the base plus 1 mM ammonium sulfate and Table 1 lists its carbon source "
+    "as None",
+    # --- end jackson2020 ---
 }
 
 

@@ -58,7 +58,7 @@ from typing import Any, Final, Literal
 import pandas as pd
 import requests
 from dotenv import load_dotenv
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from torchcell.candidates.gates import (
     LIBRARY_DIR,
@@ -84,6 +84,7 @@ REPO: Final = Path(__file__).resolve().parents[3]
 RESULTS: Final = REPO / "experiments/036-dataset-fixes-before-kg-build/results"
 AUDIT_JSON: Final = RESULTS / "aggregation_decomposition_audit.json"
 PROBES_JSON: Final = RESULTS / "aggregation_decomposition_probes.json"
+TABLES_MD: Final = RESULTS / "aggregation_decomposition_tables.md"
 SCRIPT: Final = (
     "experiments/036-dataset-fixes-before-kg-build/scripts/"
     "aggregation_decomposition_audit.py"
@@ -160,6 +161,12 @@ class Probe(_Frozen):
     )
     runs: int | None = Field(default=None, description="ENA read runs listed")
     doi: str | None = Field(default=None, description="PubMed's DOI for a PMID probe")
+    attempts: int = Field(
+        default=1,
+        ge=1,
+        description="requests made; above 1 only when --reprobe-failed re-asked after "
+        "a server error (5xx) or a raised request",
+    )
 
 
 class Probes(_Frozen):
@@ -216,6 +223,7 @@ class AuditResult(_Frozen):
     script: str
     measured_at: str
     feba: dict[str, Any]
+    invalid_manifests: tuple[str, ...]
     decompositions: tuple[DecompositionRecord, ...]
     audit: tuple[CompendiumAudit, ...]
 
@@ -259,24 +267,43 @@ class MirrorIndex(_Frozen):
     by_doi: dict[str, str]
     by_title: dict[str, str]
     trees: dict[str, tuple[str, ...]]
+    invalid_manifests: tuple[str, ...] = Field(
+        description="manifests that do not validate as the current Manifest model; "
+        "their citation_key, doi and title are still read"
+    )
 
 
 def mirror_index(root: Path) -> MirrorIndex:
-    """Read every ``manifest.json`` of both mirrors (a key may sit in both)."""
+    """Read every key's ``manifest.json`` of both mirrors (a key may sit in both).
+
+    Only ``citation_key``, ``doi`` and ``title`` are read, so a manifest written under
+    an older model still indexes; it is listed in ``invalid_manifests``.
+    """
     by_doi: dict[str, str] = {}
     by_title: dict[str, str] = {}
     trees: dict[str, list[str]] = {}
+    invalid: list[str] = []
     for tree in (LIBRARY_DIR, RAW_DIR):
         for path in sorted((root / tree).glob(f"*/{MANIFEST_FILENAME}")):
-            manifest = Manifest.model_validate_json(path.read_text())
-            key = manifest.citation_key
+            if path.parent.name.startswith("_"):
+                continue  # service directories (_bib, _sync_reports), not keys
+            text = path.read_text()
+            data = json.loads(text)
+            try:
+                Manifest.model_validate_json(text)
+            except ValidationError:
+                invalid.append(f"{tree}/{path.parent.name}")
+            key = str(data["citation_key"])
             trees.setdefault(key, []).append(tree)
-            if manifest.doi:
-                by_doi.setdefault(norm_doi(manifest.doi), key)
-            if manifest.title:
-                by_title.setdefault(norm_title(manifest.title), key)
+            if data.get("doi"):
+                by_doi.setdefault(norm_doi(str(data["doi"])), key)
+            if data.get("title"):
+                by_title.setdefault(norm_title(str(data["title"])), key)
     return MirrorIndex(
-        by_doi=by_doi, by_title=by_title, trees={k: tuple(v) for k, v in trees.items()}
+        by_doi=by_doi,
+        by_title=by_title,
+        trees={k: tuple(v) for k, v in trees.items()},
+        invalid_manifests=tuple(invalid),
     )
 
 
@@ -406,6 +433,27 @@ def probe(session: requests.Session, url: str, method: Literal["GET", "HEAD"]) -
     )
 
 
+def transient(record: Probe) -> bool:
+    """A server error or a raised request: worth asking again, never read as an answer."""
+    return record.status is None or record.status >= 500
+
+
+def reprobe_failed(probes: Probes, *, attempts: int = 3, pause: float = 5.0) -> Probes:
+    """Re-ask every transient probe up to ``attempts`` times in all; record the count."""
+    session = requests.Session()
+    session.headers["User-Agent"] = USER_AGENT
+    out = dict(probes.probes)
+    for url, record in probes.probes.items():
+        tries = record.attempts
+        current = record
+        while transient(current) and tries < attempts:
+            time.sleep(pause)
+            current = probe(session, url, record.method)
+            tries += 1
+        out[url] = current.model_copy(update={"attempts": tries})
+    return Probes(probed_at=probes.probed_at, probes=out)
+
+
 def run_probes(plan: Sequence[tuple[str, Literal["GET", "HEAD"]]]) -> Probes:
     """Probe every planned URL once, then each GEO RAW.tar's filelist.txt."""
     session = requests.Session()
@@ -467,6 +515,8 @@ def sequencing_release(
         url = geo_suppl_url(gse)
         urls.append(url)
         record = probes[url]
+        if transient(record):
+            raise SystemExit(f"{url}: transient probe; run --reprobe-failed")
         if record.status == 200:
             listed_ok = True
             names = list(record.names)
@@ -488,6 +538,8 @@ def sequencing_release(
         url = ena_runs_url(project)
         urls.append(url)
         record = probes[url]
+        if transient(record):
+            raise SystemExit(f"{url}: transient probe; run --reprobe-failed")
         if record.status == 200 and record.runs:
             ena_ok = True
             runs += record.runs
@@ -644,9 +696,9 @@ def audit_price(
         by_source.setdefault(s["source"], []).append(s)
     second: dict[str, Counter[str]] = {
         k: Counter(
-            (fb[s["name"]]["pubId"] or "<no pubId>")
+            (fb[s["name"]]["pubId"] or "no-pubId")
             if s["name"] in fb
-            else "<not in browser>"
+            else "not-in-browser"
             for s in v
         )
         for k, v in by_source.items()
@@ -749,9 +801,7 @@ def audit_price(
     sub = wetmore2015.subsumption_record()
     dropped = json.loads((price_store(root) / "dropped_records.json").read_text())
     names = {s["name"] for s in samples}
-    extra = Counter(
-        (e["pubId"] or "<no pubId>") for n, e in fb.items() if n not in names
-    )
+    extra = Counter((e["pubId"] or "no-pubId") for n, e in fb.items() if n not in names)
     findings = (
         "statistics recomputed: the compendium re-ran the RB-TnSeq code (1.0.3) over "
         "Wetmore 2015's samples scored at 1.0.0; per-sample Pearson r min "
@@ -844,15 +894,15 @@ def audit_borchert(
         attribution = b24.attribute_sample(s).study
         if s.exp_name in fb:
             pub = fb[s.exp_name]["pubId"] or ""
-            label = f"fitness-browser:{pub}" if pub else "fitness-browser:<no pubId>"
+            label = f"fitness-browser:{pub}" if pub else "fitness-browser:no-pubId"
         else:
             label = f"compendium:{attribution}"
         groups.setdefault(label, []).append(s)
         own_attr.setdefault(label, Counter())[attribution] += 1
         fb_attr.setdefault(label, Counter())[
-            (fb[s.exp_name]["pubId"] or "<no pubId>")
+            (fb[s.exp_name]["pubId"] or "no-pubId")
             if s.exp_name in fb
-            else "<not in browser>"
+            else "not-in-browser"
         ] += 1
     # Borchert 2023's own SI against the compendium (re-measured, not recalled).
     comparisons = b23.read_comparisons(root / BORCHERT2023_RELEASE_REL)
@@ -889,11 +939,17 @@ def audit_borchert(
                 tolerance=ROUNDING_HALF_UNIT,
                 basis=ROUNDING_BASIS,
             )
-            if pub == "<no pubId>":
+            if pub == "no-pubId":
                 key, doi, role = None, None, "unattributed_release"
                 source_label = "fitness-browser:no-pubId"
             else:
-                key, doi = fb_study(pub, publications, mirrors)
+                named = {k for k in own_attr[label] if k != "borchert2024"}
+                if len(named) == 1:
+                    # The compendium already names this study: its pinned DOI and key.
+                    study = b24.SOURCE_STUDIES[named.pop()]  # type: ignore[index]
+                    key, doi = study.citation_key, norm_doi(study.doi)
+                else:
+                    key, doi = fb_study(pub, publications, mirrors)
                 role = "original_study"
                 source_label = f"doi:{doi}" if doi else f"fitness-browser:{pub}"
             entry = SourceDecomposition(
@@ -981,7 +1037,7 @@ def audit_borchert(
         )
     names_in_release = {s.exp_name for s in release.samples}
     extra = Counter(
-        (e["pubId"] or "<no pubId>") for n, e in fb.items() if n not in names_in_release
+        (e["pubId"] or "no-pubId") for n, e in fb.items() if n not in names_in_release
     )
     fields_absent = (
         "vessel",
@@ -1403,7 +1459,7 @@ def audit_lamoureux(
                 P1K_CLASS,
                 rows,
                 served_p1k,
-                {"<empty DOI>": len(rows)},
+                {"empty-DOI": len(rows)},
             )
         else:
             doi = label[4:] if label.startswith("doi:") else None
@@ -1444,6 +1500,12 @@ def audit_lamoureux(
         "cells exist only in the release metadata",
         f"PRECISE-1K: {int(precise['DOI'].notna().sum())} of {len(precise)} samples name "
         "an earlier paper in the DOI column; the rest are first released in PRECISE-1K",
+        "accessions missing: of the "
+        f"{int(precise['DOI'].isna().sum())} first-released samples, "
+        f"{int((precise['DOI'].isna() & precise['GEO'].isna() & precise['SRX'].isna()).sum())} "
+        "carry no GEO or SRX accession and are named only by an s3://precise-db path in "
+        "R1, although the Data Availability says the accession numbers are listed in "
+        "the metadata file (lamoureux2023.DATA_AVAILABILITY's paragraph)",
         "values recomputed: every library re-aligned to NC_000913.3 and re-quantified "
         "(lamoureux2023.ALIGNMENT_REFERENCE, UNIT); the Public K-12 log2[TPM] is not "
         "released at all, so its served TPM is computed from released counts "
@@ -1533,17 +1595,133 @@ def static_plan() -> list[tuple[str, Literal["GET", "HEAD"]]]:
     ]
 
 
+# --------------------------------------------------------------------------- #
+# Markdown tables for the dendron note (regenerated from the results JSON)
+# --------------------------------------------------------------------------- #
+TABLE_HEADER: Final = (
+    "| source | role | samples (served) | own release | access | mirrored | loaded | "
+    "L4 cross-check | compendium's attribution |\n"
+    "|---|---|---|---|---|---|---|---|---|"
+)
+COUNT_KEYS: Final = (
+    "studies",
+    "loadable_scriptable",
+    "loadable_walled",
+    "loadable_per_record_values",
+    "loadable_raw_reads_only",
+    "compendium_only",
+    "loaded_as_own_dataset",
+    "mirrored",
+    "samples",
+    "samples_served",
+    "samples_loadable_from_own_release",
+    "samples_compendium_only",
+)
+
+
+def _check_cell(check: SourceCrossCheck | None) -> str:
+    if check is None:
+        return "not measured"
+    verdict = {True: "pass", False: "FAIL", None: "pin"}[check.passes]
+    bound = "" if check.tolerance is None else f" vs {check.tolerance:g}"
+    return (
+        f"{check.statistic} {check.value:.4g}{bound} ({verdict}; "
+        f"{check.n_samples} samples)"
+    )
+
+
+def _row(source: SourceDecomposition, detail: SourceDetail) -> str:
+    attribution = "; ".join(
+        f"{k} {v}" for k, v in detail.compendium_attribution.items()
+    )
+    if detail.second_attribution:
+        browser = ", ".join(f"{k} {v}" for k, v in detail.second_attribution.items())
+        attribution += f" (browser: {browser})"
+    return (
+        f"| {source.source_label} | {source.role} | {source.n_samples_in_compendium} "
+        f"({source.n_samples_served}) | {source.own_release_kind} | "
+        f"{source.own_release_access or '-'} | "
+        f"{source.citation_key or 'no'} | {source.own_dataset_class or 'no'} | "
+        f"{_check_cell(source.cross_check)} | {attribution.replace('|', '/')} |"
+    )
+
+
+def markdown_tables(result: AuditResult) -> str:
+    """Per compendium: counts, the per-source table, and what it dropped or recomputed.
+
+    A served class with more than 30 sources lists only those with a served sample and
+    totals the rest by role and release kind.
+    """
+    blocks: list[str] = [
+        f"Generated by `{SCRIPT}` from `results/{AUDIT_JSON.name}` "
+        f"(measured {result.measured_at[:10]}). Do not edit by hand."
+    ]
+    for record, audit in zip(result.decompositions, result.audit, strict=True):
+        details = {(d.source_label, d.dataset_class): d for d in audit.details}
+        counts = ", ".join(f"{k} {audit.counts[k]}" for k in COUNT_KEYS)
+        blocks.append(f"#### {audit.citation_key}\n\nCounts: {counts}.")
+        for klass in audit.dataset_classes:
+            sources = sorted(
+                (s for s in record.sources if s.dataset_class == klass),
+                key=lambda s: (-s.n_samples_in_compendium, s.source_label),
+            )
+            shown = (
+                sources
+                if len(sources) <= 30
+                else [s for s in sources if s.n_samples_served > 0]
+            )
+            rows = [_row(s, details[(s.source_label, klass)]) for s in shown]
+            rest = [s for s in sources if s not in shown]
+            if rest:
+                totals = Counter((s.role, s.own_release_kind) for s in rest)
+                samples = sum(s.n_samples_in_compendium for s in rest)
+                rows.append(
+                    f"| {len(rest)} more, none served | "
+                    + ", ".join(f"{r} {k}: {n}" for (r, k), n in sorted(totals.items()))
+                    + f" | {samples} (0) | | | | | | |"
+                )
+            blocks.append(
+                f"`{klass}` ({len(sources)} sources)\n\n"
+                + "\n".join([TABLE_HEADER, *rows])
+            )
+        dropped = "\n".join(f"- {line}" for line in audit.dropped_or_recomputed)
+        blocks.append(f"Dropped or recomputed relative to the originals:\n\n{dropped}")
+        if audit.not_decomposed:
+            blocks.append(
+                "Not decomposed:\n\n"
+                + "\n".join(f"- {line}" for line in audit.not_decomposed)
+            )
+    return "\n\n".join(blocks) + "\n"
+
+
 def main(argv: list[str] | None = None) -> None:
     """Probe (optionally), audit, and write both results files."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    parser.add_argument("--feba-db", required=True, type=Path)
+    parser.add_argument("--feba-db", type=Path)
+    parser.add_argument(
+        "--tables-only",
+        action="store_true",
+        help="only re-render the markdown tables from the committed results JSON",
+    )
     parser.add_argument("--network", action="store_true")
+    parser.add_argument(
+        "--reprobe-failed",
+        action="store_true",
+        help="re-ask the committed probes that answered 5xx or raised",
+    )
     parser.add_argument(
         "--no-verify-feba",
         action="store_true",
         help="skip the 10 GB sha256 re-hash (size is still checked)",
     )
     args = parser.parse_args(argv)
+    if args.tables_only:
+        result = AuditResult.model_validate_json(AUDIT_JSON.read_text())
+        TABLES_MD.write_text(markdown_tables(result))
+        print(f"wrote {TABLES_MD}")
+        return
+    if args.feba_db is None:
+        parser.error("--feba-db is required unless --tables-only")
     root = data_root()
     if args.network:
         plan = static_plan() + lim_plan(root) + lamoureux_plan(root)
@@ -1551,6 +1729,11 @@ def main(argv: list[str] | None = None) -> None:
         PROBES_JSON.write_text(probes.model_dump_json(indent=2) + "\n")
         print(f"wrote {PROBES_JSON} ({len(probes.probes)} probes)")
     probes = Probes.model_validate_json(PROBES_JSON.read_text())
+    if args.reprobe_failed:
+        probes = reprobe_failed(probes)
+        PROBES_JSON.write_text(probes.model_dump_json(indent=2) + "\n")
+        left = sum(1 for p in probes.probes.values() if transient(p))
+        print(f"re-probed; {left} probes still transient")
     if args.no_verify_feba and args.feba_db.stat().st_size != FEBA_BYTES:
         raise SystemExit(f"{args.feba_db}: size differs from the pin")
     feba = Feba(args.feba_db, verify=not args.no_verify_feba)
@@ -1575,10 +1758,12 @@ def main(argv: list[str] | None = None) -> None:
             "mirrored": False,
             "sha256_verified_this_run": not args.no_verify_feba,
         },
+        invalid_manifests=mirrors.invalid_manifests,
         decompositions=tuple(r[0] for r in results),
         audit=tuple(r[1] for r in results),
     )
     AUDIT_JSON.write_text(result.model_dump_json(indent=2) + "\n")
+    TABLES_MD.write_text(markdown_tables(result))
     for audit in result.audit:
         print(audit.citation_key, json.dumps(audit.counts))
     print(f"wrote {AUDIT_JSON}")

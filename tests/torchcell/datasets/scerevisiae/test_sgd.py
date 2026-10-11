@@ -1,80 +1,64 @@
 # tests/torchcell/datasets/scerevisiae/test_sgd.py
 # [[tests.torchcell.datasets.scerevisiae.test_sgd]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_sgd.py
-"""Hermetic build of the SGD gene-essentiality loader on a stub graph and a fake Entrez.
+"""Hermetic build of the SGD gene-essentiality loader on a fixture dump and a fake Entrez.
 
-The loader has no raw files; ``process()`` walks ``scerevisiae_graph.G_raw`` and fetches
-each phenotype's publication through ``Bio.Entrez``. Here ``G_raw`` is a three-node
-networkx graph and ``Entrez.efetch``/``Entrez.read`` are replaced on ``Bio.Entrez`` itself
-(the module object the loader holds), so ``get_publication_info`` runs for real against
-canned records; ``time.sleep`` and ``random.uniform`` are patched the same way. ``DATA_ROOT``
-points into ``tmp_path``; a ``data/sgd/genome/genes/`` directory with 100 ``.json`` files
-satisfies the "genes already downloaded" check, so ``main_get_all_genes`` is not called.
+The loader reads SGD's per-gene API dump (``$DATA_ROOT/data/sgd/genome/genes/*.json``)
+and refuses bytes off its digest pin, so each build here writes a small dump into
+``tmp_path`` and sets the module pin to that dump's digest. ``Entrez.efetch`` and
+``Entrez.read`` are replaced on ``Bio.Entrez`` itself (the module object the loader
+holds), so ``get_publication_info`` runs for real against canned records.
 
-Graph:
-    YAL001C  four phenotype_details: inviable/null/S288C (PubMed 111, locus TFC3) -> record;
-             viable/null/S288C, inviable/reduction of function/S288C, inviable/null/W303
-             -> skipped
+Fixture dump (2026.10.11, #901: allele rule, carried conditions, typed gaps):
+    YAL001C  TFC3: one inviable / null / S288C ``tfc3-Δ`` (PubMed 111) -> record; a
+             viable, a "reduction of function" and a W303 entry -> skipped
     YBR001C  no phenotype_details -> nothing
-    YCR001W  two inviable/null/S288C entries (PubMed 222 and 333) -> two records
+    YCR001W  two ``ycr001w-Δ`` annotations (PubMed 222 and 333) -> two records
+    YDR001C  ATG9: ``atg9-Δ`` under "nitrogen starvation" (PubMed 444) -> record with a
+             nitrogen-source edit; ``atg9-K12A`` and ``atg9Δ10-20`` (PubMed 444, same
+             condition) -> ledgered, never stored
+    YEL001C  ``yel001c-∆`` spelled with U+2206, under "elevated temperature, 37 °C"
+             (PubMed 111) -> record at 37 C
 
 Canned Entrez: 111 has the DOI ``10.1/aaa`` in ELocationID; 222 has a ``pii`` there and the
-DOI ``10.2/bbb`` in ArticleIdList; 333 has no DOI, so ``doi``/``doi_url`` are None.
+DOI ``10.2/bbb`` in ArticleIdList; 333 and 444 have no DOI.
 
-2026.09.30 (Phase 15): the same three-node graph and canned Entrez, plus
-
-- the gene-file threshold: ``process`` counts only ``*.json`` names under
-  ``$DATA_ROOT/data/sgd/genome/genes`` (line 166) and fetches below 100 (line 171), so
-  a missing directory counts 0 and 99 ``.json`` plus one ``.txt`` still counts 99; both
-  call the (faked) ``main_get_all_genes`` once, 100 ``.json`` calls it zero times. With
-  ``DATA_ROOT`` unset the build is refused by ``torchcell.graph.sgd.data_root``.
-- the content-hash collapse the essentiality showcase page reports (1,329 stored records,
-  1,140 graph nodes): the node id is ``sha256(json.dumps(experiment.model_dump()))``
-  (``cell_adapter.py`` line 527), the experiment excludes the publication, so the two
-  YCR001W records (PubMed 222 and 333) hash to one id: 3 records, 2 ids.
-- the assumed environment the showcase page documents (``# HACK ... all meta data is
-  guessed``, lines 213 to 240): YEPD, solid, not synthetic, 30 C, already pinned on every
-  record by the full-dump equality of the first test, with the reference phenotype
-  ``is_essential=False`` pinned again through ``transform_item``.
-- ``main`` with the genome, the graph and the dataset replaced by recorders.
-
-2026.10.01 (issue #533): the Phase 15 findings are retired. ``main`` builds the genome
-with ``overwrite=False`` (``overwrite=True`` races a concurrent rebuild of the shared
-genome) and the dataset at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``; the
-gene-directory check refuses an unset ``DATA_ROOT`` instead of falling back to the
-relative path ``"data"``. The content-hash collapse above is an adapter matter
-(``cell_adapter.py``) and stays pinned here as observed behavior.
+History: the 2024 loader walked ``SCerevisiaeGraph.G_raw`` (a pickle built from the same
+dump), stored every annotation as a whole-gene SGA KanMX deletion on a guessed YEPD
+solid medium at 30 C, and downloaded the dump when fewer than 100 files were present.
 """
 
 from __future__ import annotations
 
 import hashlib
 import json
-import logging
 import random
 import time
+from collections import Counter
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
-import networkx as nx
 import pandas as pd
 import pytest
 from Bio import Entrez
 
 from torchcell.datamodels.schema import (
+    Concentration,
+    ConcentrationUnit,
     Environment,
+    EnvironmentPhysicalPerturbation,
     GeneEssentialityExperiment,
     GeneEssentialityExperimentReference,
     GeneEssentialityPhenotype,
     Genotype,
-    Media,
+    PhysicalFactor,
     Publication,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
 from torchcell.datasets.scerevisiae import sgd as m
-from torchcell.graph import SCerevisiaeGraph
+from torchcell.verification.sourced import ProvenanceGapReason
 
 
 class _Elem(str):
@@ -106,6 +90,7 @@ _RECORDS: dict[str, dict[str, Any]] = {
         [_Elem("22222", {"IdType": "pubmed"}), _Elem("10.2/bbb", {"IdType": "doi"})],
     ),
     "333": _article([], [_Elem("33333", {"IdType": "pubmed"})]),
+    "444": _article([], [_Elem("44444", {"IdType": "pubmed"})]),
 }
 
 
@@ -143,79 +128,122 @@ def _install_entrez(monkeypatch: pytest.MonkeyPatch, fail_first: int = 0) -> lis
     return fetched
 
 
-def _phenotype(pubmed_id: str, locus: str) -> dict[str, Any]:
+_ANNOTATION_ID = iter(range(1000, 2000))
+
+
+def _annotation(
+    pubmed_id: str,
+    locus: str,
+    allele: str,
+    *,
+    conditions: list[dict[str, Any]] | None = None,
+    note: str | None = None,
+    mutant_type: str = "null",
+    strain: str = "S288C",
+    phenotype: str = "inviable",
+) -> dict[str, Any]:
+    """One ``phenotype_details`` entry in the shape SGD's locus API returns it."""
     return {
-        "mutant_type": "null",
-        "strain": {"display_name": "S288C"},
-        "phenotype": {"display_name": "inviable"},
-        "reference": {"pubmed_id": int(pubmed_id)},
+        "id": next(_ANNOTATION_ID),
+        "mutant_type": mutant_type,
         "locus": {"display_name": locus},
+        "experiment": {"display_name": "classical genetics"},
+        "strain": {"display_name": strain},
+        "properties": [
+            {
+                "class_type": "BIOITEM",
+                "bioitem": {"display_name": allele},
+                "note": "",
+                "role": "Allele",
+            },
+            *(conditions or []),
+        ],
+        "note": note,
+        "phenotype": {"display_name": phenotype},
+        "reference": {"pubmed_id": int(pubmed_id)},
     }
 
 
-def _graph() -> SCerevisiaeGraph:
-    g = nx.Graph()
-    g.add_node(
-        "YAL001C",
-        phenotype_details=[
-            _phenotype("111", "TFC3"),
-            {**_phenotype("111", "TFC3"), "phenotype": {"display_name": "viable"}},
-            {**_phenotype("111", "TFC3"), "mutant_type": "reduction of function"},
-            {**_phenotype("111", "TFC3"), "strain": {"display_name": "W303"}},
-        ],
-    )
-    g.add_node("YBR001C")
-    g.add_node(
-        "YCR001W",
-        phenotype_details=[_phenotype("222", "YCR001W"), _phenotype("333", "YCR001W")],
-    )
+_NITROGEN = {"class_type": "media", "note": "nitrogen starvation", "unit": ""}
+_HOT = {
+    "class_type": "temperature",
+    "note": "elevated temperature, 37 °C",
+    "unit": "°C",
+}
 
-    class _StubGraph:
-        G_raw = g
+_DUMP: dict[str, list[dict[str, Any]] | None] = {
+    "YAL001C": [
+        _annotation("111", "TFC3", "tfc3-Δ"),
+        _annotation("111", "TFC3", "tfc3-Δ", phenotype="viable"),
+        _annotation("111", "TFC3", "tfc3-Δ", mutant_type="reduction of function"),
+        _annotation("111", "TFC3", "tfc3-Δ", strain="W303"),
+    ],
+    "YBR001C": None,
+    "YCR001W": [
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+        _annotation("333", "YCR001W", "ycr001w-Δ"),
+    ],
+    "YDR001C": [
+        _annotation("444", "ATG9", "atg9-Δ", conditions=[_NITROGEN]),
+        _annotation("444", "ATG9", "atg9-K12A", conditions=[_NITROGEN]),
+        _annotation("444", "ATG9", "atg9Δ10-20", conditions=[_NITROGEN], note="n"),
+    ],
+    "YEL001C": [_annotation("111", "YEL001C", "yel001c-∆", conditions=[_HOT])],
+}
 
-    return cast(SCerevisiaeGraph, _StubGraph())
 
-
-def _genes_dir(data_root: Path, n_files: int) -> None:
+def _write_dump(data_root: Path, dump: dict[str, list[dict[str, Any]] | None]) -> Path:
     genes = data_root / "data" / "sgd" / "genome" / "genes"
     genes.mkdir(parents=True)
-    for k in range(n_files):
-        (genes / f"gene{k}.json").write_text("{}")
+    for orf, details in dump.items():
+        (genes / f"{orf}.json").write_text(
+            json.dumps({"locus": {"format_name": orf}, "phenotype_details": details}),
+            encoding="utf-8",
+        )
+    (genes / "README.txt").write_text("not a gene file", encoding="utf-8")
+    return genes
+
+
+def _pin(monkeypatch: pytest.MonkeyPatch, genes: Path) -> None:
+    monkeypatch.setattr(m, "SGD_GENES_DIGEST", m.sgd_genes_digest(str(genes)))
+
+
+def _build(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    dump: dict[str, list[dict[str, Any]] | None],
+) -> m.GeneEssentialitySgdDataset:
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    _pin(monkeypatch, _write_dump(data_root, dump))
+    _install_entrez(monkeypatch)
+    return m.GeneEssentialitySgdDataset(root=str(tmp_path / "gene_essentiality_sgd"))
 
 
 @pytest.fixture
 def dataset(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> m.GeneEssentialitySgdDataset:
-    data_root = tmp_path / "data_root"
-    monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _genes_dir(data_root, 100)
-    _install_entrez(monkeypatch)
-
-    def _no_gene_download() -> None:
-        raise AssertionError("main_get_all_genes called with 100 gene files present")
-
-    monkeypatch.setattr(m, "main_get_all_genes", _no_gene_download)
-    return m.GeneEssentialitySgdDataset(
-        root=str(tmp_path / "gene_essentiality_sgd"), scerevisiae_graph=_graph()
-    )
+    return _build(tmp_path, monkeypatch, _DUMP)
 
 
-_ENVIRONMENT = Environment(
-    media=Media(name="YEPD", state="solid", is_synthetic=False),
-    temperature=Temperature(value=30),
+_GENOME = ReferenceGenome(species="Saccharomyces cerevisiae", strain="S288C")
+_NITROGEN_ENVIRONMENT = Environment(
+    media=None,
+    temperature=None,
+    perturbations=[
+        EnvironmentPhysicalPerturbation(
+            factor=PhysicalFactor.nitrogen_source, description="nitrogen starvation"
+        )
+    ],
+    provenance_gaps=[m.SGD_MEDIUM_GAP, m.SGD_TEMPERATURE_GAP],
 )
-_REFERENCE = GeneEssentialityExperimentReference(
-    dataset_name="GeneEssentialitySgdDataset",
-    genome_reference=ReferenceGenome(
-        species="Saccharomyces cerevisiae", strain="S288C"
-    ),
-    environment_reference=_ENVIRONMENT,
-    phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
-).model_dump()
+_HOT_ENVIRONMENT = Environment(
+    media=None, temperature=Temperature(value=37.0), provenance_gaps=[m.SGD_MEDIUM_GAP]
+)
 
 
-def _experiment(gene: str, locus: str) -> dict[str, Any]:
+def _experiment(gene: str, locus: str, environment: Environment) -> dict[str, Any]:
     return GeneEssentialityExperiment(
         dataset_name="GeneEssentialitySgdDataset",
         genotype=Genotype(
@@ -227,24 +255,41 @@ def _experiment(gene: str, locus: str) -> dict[str, Any]:
                 )
             ]
         ),
-        environment=_ENVIRONMENT,
+        environment=environment,
         phenotype=GeneEssentialityPhenotype(is_essential=True),
     ).model_dump()
 
 
-def test_one_record_per_inviable_null_s288c_phenotype(
+def _reference(environment: Environment) -> dict[str, Any]:
+    return GeneEssentialityExperimentReference(
+        dataset_name="GeneEssentialitySgdDataset",
+        genome_reference=_GENOME,
+        environment_reference=environment,
+        phenotype_reference=GeneEssentialityPhenotype(is_essential=False),
+    ).model_dump()
+
+
+def test_one_record_per_whole_gene_deletion_annotation_in_file_order(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """Three records: YAL001C once (three of its four phenotype entries fail a filter) and
-    YCR001W twice, once per inviable entry, each with its own publication. The DOI is
-    taken from ELocationID first, then ArticleIdList, else left None.
+    """Five records, files in sorted order and annotations in SGD's order: TFC3 once (its
+    other three entries fail the null / S288C / inviable filter), YCR001W twice, ATG9 once
+    (two of its three annotations name another allele) and YEL001C once. Each record's
+    environment is the one its condition property states; the reference is viable in
+    that same environment.
     """
-    assert len(dataset) == 3
-    assert dataset[0]["experiment"] == _experiment("YAL001C", "TFC3")
-    assert dataset[1]["experiment"] == _experiment("YCR001W", "YCR001W")
-    assert dataset[2]["experiment"] == _experiment("YCR001W", "YCR001W")
-    assert dataset[0]["reference"] == _REFERENCE
-    assert [dataset[i]["publication"] for i in range(3)] == [
+    assert len(dataset) == 5
+    expected = [
+        ("YAL001C", "TFC3", m.SGD_ENVIRONMENT),
+        ("YCR001W", "YCR001W", m.SGD_ENVIRONMENT),
+        ("YCR001W", "YCR001W", m.SGD_ENVIRONMENT),
+        ("YDR001C", "ATG9", _NITROGEN_ENVIRONMENT),
+        ("YEL001C", "YEL001C", _HOT_ENVIRONMENT),
+    ]
+    for index, (gene, locus, environment) in enumerate(expected):
+        assert dataset[index]["experiment"] == _experiment(gene, locus, environment)
+        assert dataset[index]["reference"] == _reference(environment)
+    assert [dataset[i]["publication"] for i in range(5)] == [
         Publication(
             pubmed_id="111",
             pubmed_url="https://pubmed.ncbi.nlm.nih.gov/111/",
@@ -257,18 +302,76 @@ def test_one_record_per_inviable_null_s288c_phenotype(
             doi="10.2/bbb",
             doi_url="https://doi.org/10.2/bbb",
         ).model_dump(),
+        *(
+            Publication(
+                pubmed_id=pmid,
+                pubmed_url=f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
+                doi=None,
+                doi_url=None,
+            ).model_dump()
+            for pmid in ("333", "444")
+        ),
         Publication(
-            pubmed_id="333",
-            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/333/",
-            doi=None,
-            doi_url=None,
+            pubmed_id="111",
+            pubmed_url="https://pubmed.ncbi.nlm.nih.gov/111/",
+            doi="10.1/aaa",
+            doi_url="https://doi.org/10.1/aaa",
         ).model_dump(),
     ]
 
 
+def test_no_record_carries_a_guessed_medium_or_temperature(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """The old loader stored YEPD solid at 30 C on every record. Now the medium is a
+    ``not_carried_by_curation`` gap on all five records (anchored to the pinned dump),
+    and the temperature is a gap except where SGD states 37 C.
+    """
+    for index in range(len(dataset)):
+        environment = dataset[index]["experiment"]["environment"]
+        assert environment["media"] is None
+        gaps = {gap["field"]: gap for gap in environment["provenance_gaps"]}
+        assert gaps["media"]["reason"] == "not_carried_by_curation"
+        assert gaps["media"]["looked_in"]["sha256"] == (
+            "1cb4ed59556b1534e28eb79ad21135cdb5a149f78dca8df4924f473e39eef409"
+        )
+        if index == 4:
+            assert environment["temperature"] == {"value": 37.0, "unit": "Celsius"}
+            assert "temperature" not in gaps
+        else:
+            assert environment["temperature"] is None
+            assert gaps["temperature"]["reason"] == "not_carried_by_curation"
+
+
+def test_other_alleles_are_ledgered_verbatim_not_stored(
+    dataset: m.GeneEssentialitySgdDataset,
+) -> None:
+    """``atg9-K12A`` and ``atg9Δ10-20`` are ledgered with their SGD id, PubMed id,
+    condition and note; the ledger accounts for every inviable null S288C annotation.
+    """
+    ledger = m.SgdDropLog.model_validate_json(
+        (Path(dataset.preprocess_dir) / "dropped_records.json").read_text()
+    )
+    assert (ledger.source_annotations, ledger.kept_records, ledger.dropped_records) == (
+        7,
+        5,
+        2,
+    )
+    assert ledger.rule == "allele_not_whole_gene_deletion"
+    assert ledger.sgd_genes_digest == m.SGD_GENES_DIGEST
+    assert [
+        (r.systematic_name, r.allele, r.pubmed_id, r.conditions, r.note)
+        for r in ledger.rows
+    ] == [
+        ("YDR001C", "atg9-K12A", "444", ["media: nitrogen starvation"], None),
+        ("YDR001C", "atg9Δ10-20", "444", ["media: nitrogen starvation"], "n"),
+    ]
+    assert len({r.sgd_annotation_id for r in ledger.rows}) == 2
+
+
 def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
-    """No raw files, no ``data.csv``; the gene set is the two genes with records and one
-    reference covers all three.
+    """No raw files, no ``data.csv``; the gene set is the four genes with records and
+    each distinct environment has its own reference.
     """
     assert dataset.raw_file_names == []
     preprocess = Path(dataset.root) / "preprocess"
@@ -276,35 +379,153 @@ def test_side_files(dataset: m.GeneEssentialitySgdDataset) -> None:
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
         "YCR001W",
+        "YDR001C",
+        "YEL001C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 1, 2]]
+    assert sorted(entry["member_indices"] for entry in index) == [[0, 1, 2], [3], [4]]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "gene_essentiality_sgd"
     assert manifest["loader_class"] == "GeneEssentialitySgdDataset"
     assert manifest["loader_module"] == "torchcell.datasets.scerevisiae.sgd"
-    assert {"GeneEssentialityExperiment", "SgaKanMxDeletionPerturbation"} <= set(
-        manifest["closure"]
+    assert {
+        "GeneEssentialityExperiment",
+        "SgaKanMxDeletionPerturbation",
+        "Environment",
+    } <= set(manifest["closure"])
+
+
+@pytest.mark.parametrize(
+    ("allele", "locus", "whole"),
+    [
+        ("atg8-Δ", "ATG8", True),
+        ("yil102c-A-∆", "YIL102C-A", True),
+        ("ATG8-Δ", "ATG8", True),
+        ("sac1Δ114-503", "SAC1", False),
+        ("cdc24p-∆CH", "CDC24", False),
+        ("cdc42-111", "CDC42", False),
+        ("Nog1-(1-426)", "NOG1", False),
+        ("rsc3-C15G", "RSC30", False),
+        ("atg8-Δ", "ATG80", False),
+    ],
+)
+def test_whole_gene_deletion_is_sgds_gene_delta_name(
+    allele: str, locus: str, whole: bool
+) -> None:
+    """``<gene>-Δ`` with either delta code point and any case; nothing else."""
+    assert m.is_whole_gene_deletion(allele, locus) is whole
+
+
+def test_every_condition_of_the_pinned_dump_maps_to_its_own_environment() -> None:
+    """The four verbatim pairs map to four distinct environments, none on a medium:
+    nitrogen starvation is a qualitative nitrogen-source edit, 2% glucose a
+    carbon-source edit of D-glucose at a basis-free 2 percent, the 37 C pair the
+    temperature, and the stateless YPD a gap that quotes it.
+    """
+    conditions = m.SGD_CONDITIONS
+    assert set(conditions) == {
+        ("media", "nitrogen starvation"),
+        ("media", "2% glucose"),
+        ("media", "YPD with 2% glucose"),
+        ("temperature", "elevated temperature, 37 °C"),
+    }
+    assert all(env.media is None for env in conditions.values())
+    (glucose,) = conditions[("media", "2% glucose")].perturbations
+    assert isinstance(glucose, EnvironmentPhysicalPerturbation)
+    assert glucose.factor is PhysicalFactor.carbon_source
+    assert glucose.magnitude == Concentration(value=2.0, unit=ConcentrationUnit.percent)
+    assert glucose.agent is not None
+    assert glucose.agent.inchikey == "WQZGKKKJIJFFOK-GASJEMHNSA-N"
+    ypd = conditions[("media", "YPD with 2% glucose")]
+    assert ypd.perturbations == []
+    assert "'YPD with 2% glucose'" in str(ypd.provenance_gaps[0].note)
+    dumps = {
+        json.dumps(env.model_dump(), sort_keys=True) for env in conditions.values()
+    }
+    assert (
+        len(dumps | {json.dumps(m.SGD_ENVIRONMENT.model_dump(), sort_keys=True)}) == 5
     )
+    assert m.SGD_MEDIUM_GAP.reason is ProvenanceGapReason.not_carried_by_curation
 
 
-def test_gene_download_is_triggered_below_100_gene_files(
+def test_an_unknown_condition_refuses_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With 99 gene JSON files under ``$DATA_ROOT/data/sgd/genome/genes`` the loader calls
-    ``main_get_all_genes`` exactly once before building; the build itself is unchanged.
+    """A condition pair outside the closed vocabulary is named, never guessed."""
+    dump = dict(_DUMP)
+    dump["YFL001W"] = [
+        _annotation(
+            "111",
+            "DEG1",
+            "deg1-Δ",
+            conditions=[{"class_type": "media", "note": "YPGal", "unit": ""}],
+        )
+    ]
+    with pytest.raises(m.SgdConditionError, match=r"YFL001W .*'YPGal'"):
+        _build(tmp_path, monkeypatch, dump)
+    assert not (tmp_path / "gene_essentiality_sgd" / "processed" / "lmdb").exists()
+
+
+def test_two_kept_annotations_of_one_record_refuse_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The whole-gene allele twice for one gene, condition and paper is one fact twice."""
+    dump = dict(_DUMP)
+    dump["YCR001W"] = [
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+        _annotation("222", "YCR001W", "ycr001w-Δ"),
+    ]
+    with pytest.raises(m.DuplicateSgdAnnotationError, match="YCR001W"):
+        _build(tmp_path, monkeypatch, dump)
+
+
+def test_an_annotation_without_one_allele_refuses_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    detail = _annotation("111", "TFC3", "tfc3-Δ")
+    detail["properties"] = []
+    with pytest.raises(
+        m.SgdAlleleError, match=r"YAL001C.json annotation \d+: 0 alleles"
+    ):
+        _build(tmp_path, monkeypatch, {"YAL001C": [detail]})
+
+
+def test_bytes_off_the_pin_and_a_missing_dump_refuse_the_build(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The digest covers every ``.json`` name and its bytes; a non-JSON file does not
+    count. Editing one file, or building with no dump, raises ``SgdDumpDigestError``
+    before any Entrez call or store write.
     """
     data_root = tmp_path / "data_root"
     monkeypatch.setenv("DATA_ROOT", str(data_root))
-    _genes_dir(data_root, 99)
-    _install_entrez(monkeypatch)
-    calls: list[None] = []
-    monkeypatch.setattr(m, "main_get_all_genes", lambda: calls.append(None))
-    dataset = m.GeneEssentialitySgdDataset(
-        root=str(tmp_path / "gene_essentiality_sgd"), scerevisiae_graph=_graph()
+    fetched = _install_entrez(monkeypatch)
+    with pytest.raises(m.SgdDumpDigestError, match="does not exist"):
+        m.GeneEssentialitySgdDataset(root=str(tmp_path / "a"))
+    genes = _write_dump(data_root, _DUMP)
+    _pin(monkeypatch, genes)
+    (genes / "README.txt").write_text("edited", encoding="utf-8")
+    assert m.sgd_genes_digest(str(genes)) == m.SGD_GENES_DIGEST
+    (genes / "YBR001C.json").write_text("{}", encoding="utf-8")
+    with pytest.raises(m.SgdDumpDigestError, match="is not the pinned"):
+        m.GeneEssentialitySgdDataset(root=str(tmp_path / "b"))
+    assert fetched == []
+    assert not (tmp_path / "b" / "processed" / "lmdb").exists()
+
+
+def test_the_digest_is_sha256_over_sorted_name_and_file_sha256_lines(
+    tmp_path: Path,
+) -> None:
+    (tmp_path / "B.json").write_bytes(b"b")
+    (tmp_path / "A.json").write_bytes(b"a")
+    lines = [
+        f"A.json {hashlib.sha256(b'a').hexdigest()}",
+        f"B.json {hashlib.sha256(b'b').hexdigest()}",
+    ]
+    assert (
+        m.sgd_genes_digest(str(tmp_path))
+        == hashlib.sha256("\n".join(lines).encode()).hexdigest()
     )
-    assert calls == [None]
-    assert len(dataset) == 3
 
 
 def test_get_publication_info_retries_with_exponential_backoff(
@@ -351,25 +572,34 @@ def test_create_experiment_raises_when_publication_lookup_fails(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(m, "get_publication_info", lambda pubmed_id: None)
+    annotation = m.SgdAnnotation(
+        sgd_annotation_id=1,
+        systematic_name="YAL001C",
+        locus_display_name="TFC3",
+        allele="tfc3-Δ",
+        pubmed_id="999",
+        experiment="classical genetics",
+        conditions=(),
+        note=None,
+    )
     with pytest.raises(
         ValueError,
         match="Unable to retrieve publication information for PubMed ID: 999",
     ):
         m.GeneEssentialitySgdDataset.create_experiment(
-            "GeneEssentialitySgdDataset", "YAL001C", _phenotype("999", "TFC3")
+            "GeneEssentialitySgdDataset", annotation, m.SGD_ENVIRONMENT
         )
 
 
 def test_stored_items_retype_through_the_essentiality_classes(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """``transform_item`` rebuilds each stored item through the declared classes (lines
-    129 to 136): a ``GeneEssentialityExperiment`` whose phenotype is essential, a
+    """``transform_item`` rebuilds each stored item through the declared classes: a
+    ``GeneEssentialityExperiment`` whose phenotype is essential, a
     ``GeneEssentialityExperimentReference`` whose phenotype is not, and a ``Publication``,
-    each dumping back to exactly the stored dictionary. A class wired to the wrong schema
-    (for example a fitness experiment) would fail on the first record.
+    each dumping back to exactly the stored dictionary, gapped medium included.
     """
-    for index in range(3):
+    for index in range(len(dataset)):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is GeneEssentialityExperiment
@@ -380,16 +610,16 @@ def test_stored_items_retype_through_the_essentiality_classes(
         assert typed["publication"].model_dump() == item["publication"]
         assert typed["experiment"].phenotype.is_essential is True
         assert typed["reference"].phenotype_reference.is_essential is False
+        assert typed["experiment"].environment.media is None
 
 
 def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
     dataset: m.GeneEssentialitySgdDataset,
 ) -> None:
-    """The KG node id of an experiment is the sha256 of its JSON dump
-    (``cell_adapter.py`` line 527), and the stored experiment carries no publication. The
-    two YCR001W records differ only in their publication (PubMed 222 and 333), so the
-    three records map to two node ids: the loader-level cause of the 1,329 stored records
-    becoming 1,140 graph nodes.
+    """The KG node id of an experiment is the sha256 of its JSON dump, and the stored
+    experiment carries no publication. The two YCR001W records differ only in their
+    publication (PubMed 222 and 333), so they map to one node id; the nitrogen-starved
+    ATG9 record and the 37 C record are their own nodes.
     """
     ids = [
         hashlib.sha256(
@@ -397,79 +627,28 @@ def test_publication_is_outside_the_content_hash_so_repeat_annotations_collapse(
                 GeneEssentialityExperiment(**dataset[i]["experiment"]).model_dump()
             ).encode("utf-8")
         ).hexdigest()
-        for i in range(3)
+        for i in range(len(dataset))
     ]
     assert ids[1] == ids[2]
-    assert ids[0] != ids[1]
-    assert len(set(ids)) == 2
-    assert dataset[1]["publication"]["pubmed_id"] == "222"
-    assert dataset[2]["publication"]["pubmed_id"] == "333"
-
-
-@pytest.mark.parametrize(
-    ("n_json", "n_other", "make_dir", "n_fetches", "message"),
-    [
-        (0, 0, False, 1, "SGD gene data incomplete or missing (found 0 files)."),
-        (99, 1, True, 1, "SGD gene data incomplete or missing (found 99 files)."),
-        (100, 0, True, 0, "SGD gene data already exists (100 gene files found)"),
-    ],
-)
-def test_gene_file_threshold_counts_json_files_only(
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    caplog: pytest.LogCaptureFixture,
-    n_json: int,
-    n_other: int,
-    make_dir: bool,
-    n_fetches: int,
-    message: str,
-) -> None:
-    """The fetch runs when fewer than 100 ``*.json`` files sit under
-    ``$DATA_ROOT/data/sgd/genome/genes``: a missing directory counts 0, a ``.txt`` beside
-    99 ``.json`` files is not counted (99 < 100, fetch), and exactly 100 ``.json`` files
-    skip it. The logged count is the ``.json`` count; the build is three records each time.
-    """
-    data_root = tmp_path / "data_root"
-    monkeypatch.setenv("DATA_ROOT", str(data_root))
-    if make_dir:
-        _genes_dir(data_root, n_json)
-        for k in range(n_other):
-            (
-                data_root / "data" / "sgd" / "genome" / "genes" / f"note{k}.txt"
-            ).write_text("")
-    _install_entrez(monkeypatch)
-    calls: list[None] = []
-    monkeypatch.setattr(m, "main_get_all_genes", lambda: calls.append(None))
-    with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.GeneEssentialitySgdDataset(
-            root=str(tmp_path / "gene_essentiality_sgd"), scerevisiae_graph=_graph()
-        )
-    assert len(calls) == n_fetches
-    assert message in [r.getMessage() for r in caplog.records if r.name == m.log.name]
-    assert len(dataset) == 3
+    assert len(set(ids)) == 4
 
 
 def test_unset_data_root_refuses_the_build(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """With ``DATA_ROOT`` unset the gene-directory check refuses with the named
-    ``data_root`` error instead of reading a directory relative to the working directory:
-    100 ``.json`` files under ``<cwd>/data/data/sgd/genome/genes`` are not consulted, no
-    fetch runs and no LMDB store is written.
+    """With ``DATA_ROOT`` unset the build refuses with the named ``data_root`` error
+    instead of reading a directory relative to the working directory.
     """
     monkeypatch.delenv("DATA_ROOT")
     monkeypatch.chdir(tmp_path)
-    _genes_dir(tmp_path / "data", 100)
+    _write_dump(tmp_path / "data", _DUMP)
     _install_entrez(monkeypatch)
-    calls: list[None] = []
-    monkeypatch.setattr(m, "main_get_all_genes", lambda: calls.append(None))
     root = tmp_path / "gene_essentiality_sgd"
     with pytest.raises(ValueError) as info:
-        m.GeneEssentialitySgdDataset(root=str(root), scerevisiae_graph=_graph())
+        m.GeneEssentialitySgdDataset(root=str(root))
     assert str(info.value) == (
         "DATA_ROOT environment variable is not set. Please set it in your .env file."
     )
-    assert calls == []
     assert not (root / "processed" / "lmdb").exists()
 
 
@@ -485,57 +664,54 @@ def test_no_raw_stage(dataset: m.GeneEssentialitySgdDataset) -> None:
     frame = pd.DataFrame({"gene": ["YAL001C"], "is_essential": [True]})
     returned = dataset.preprocess_raw(frame)
     assert returned is frame
-    assert returned.to_dict("list") == {"gene": ["YAL001C"], "is_essential": [True]}
 
 
-def test_main_wires_genome_graph_and_dataset(
+def test_main_builds_the_dataset_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go``, the
-    graph from the SGD, STRING and TFLink roots with that genome, and the dataset with that
-    graph, then prints the dataset. The three classes are recorders, so nothing is built.
-    The genome is opened with ``overwrite=False`` (never rebuilt under a concurrent
-    reader) and the dataset is rooted at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``.
+    """``main`` roots the dataset at ``$DATA_ROOT/data/torchcell/gene_essentiality_sgd``
+    and prints it; no genome or graph is built, since the source is the dump itself.
     """
-    import torchcell.graph as graph_module
-    import torchcell.sequence.genome.scerevisiae.s288c as s288c_module
-
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    calls: list[tuple[str, dict[str, Any]]] = []
-
-    class _Genome:
-        def __init__(self, **kwargs: Any) -> None:
-            calls.append(("genome", kwargs))
-
-    class _Graph:
-        def __init__(self, **kwargs: Any) -> None:
-            calls.append(("graph", kwargs))
+    calls: list[dict[str, Any]] = []
 
     class _Dataset:
         def __init__(self, **kwargs: Any) -> None:
-            calls.append(("dataset", kwargs))
+            calls.append(kwargs)
 
         def __repr__(self) -> str:
-            return "GeneEssentialitySgdDataset(3)"
+            return "GeneEssentialitySgdDataset(5)"
 
-    monkeypatch.setattr(s288c_module, "SCerevisiaeGenome", _Genome)
-    monkeypatch.setattr(graph_module, "SCerevisiaeGraph", _Graph)
     monkeypatch.setattr(m, "GeneEssentialitySgdDataset", _Dataset)
     m.main()
-    assert [name for name, _ in calls] == ["genome", "graph", "dataset"]
-    assert calls[0][1] == {
-        "genome_root": f"{tmp_path}/data/sgd/genome",
-        "go_root": f"{tmp_path}/data/go",
-        "overwrite": False,
+    assert calls == [{"root": f"{tmp_path}/data/torchcell/gene_essentiality_sgd"}]
+    assert capsys.readouterr().out == "GeneEssentialitySgdDataset(5)\n"
+
+
+@pytest.mark.data
+def test_the_pinned_dump_holds_the_issue_counts() -> None:
+    """On the real ``$DATA_ROOT/data/sgd/genome/genes`` (#901): the digest is the pin;
+    1,329 inviable null S288C annotations; 1,287 name the whole-gene deletion and 42
+    another allele; the kept ones repeat no (gene, condition, PubMed id) key; 21 carry
+    a condition (18 nitrogen starvation, one each of the other three pairs).
+    """
+    import os
+    import os.path as osp
+
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    genes_dir = osp.join(os.environ["DATA_ROOT"], m.SGD_GENES_RELPATH)
+    m.verify_sgd_dump(genes_dir)
+    annotations = m.inviable_null_annotations(genes_dir)
+    kept, dropped = m.split_by_allele(annotations)
+    assert (len(annotations), len(kept), len(dropped)) == (1329, 1287, 42)
+    m.refuse_duplicate_annotations(kept)
+    assert Counter(a.conditions for a in kept if a.conditions) == {
+        (("media", "nitrogen starvation"),): 18,
+        (("media", "2% glucose"),): 1,
+        (("media", "YPD with 2% glucose"),): 1,
+        (("temperature", "elevated temperature, 37 °C"),): 1,
     }
-    graph_kwargs = calls[1][1]
-    assert set(graph_kwargs) == {"sgd_root", "string_root", "tflink_root", "genome"}
-    assert graph_kwargs["sgd_root"] == f"{tmp_path}/data/sgd/genome"
-    assert graph_kwargs["string_root"] == f"{tmp_path}/data/string"
-    assert graph_kwargs["tflink_root"] == f"{tmp_path}/data/tflink"
-    assert type(graph_kwargs["genome"]) is _Genome
-    assert list(calls[2][1]) == ["root", "scerevisiae_graph"]
-    assert calls[2][1]["root"] == f"{tmp_path}/data/torchcell/gene_essentiality_sgd"
-    assert type(calls[2][1]["scerevisiae_graph"]) is _Graph
-    assert capsys.readouterr().out == "GeneEssentialitySgdDataset(3)\n"
+    assert {m.condition_environment(a).media for a in kept} == {None}

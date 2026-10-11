@@ -80,9 +80,6 @@ if __name__ == "__main__":
 
     from dotenv import load_dotenv
 
-    from torchcell.graph import SCerevisiaeGraph
-    from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
-
     load_dotenv()
     time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     DATA_ROOT = cast(str, os.getenv("DATA_ROOT"))
@@ -98,16 +95,9 @@ if __name__ == "__main__":
         biocypher_config_path=BIOCYPHER_CONFIG_PATH,
         schema_config_path=SCHEMA_CONFIG_PATH,
     )
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(DATA_ROOT, "data/sgd/genome"), overwrite=True
-    )
-    graph = SCerevisiaeGraph(
-        sgd_root=osp.join(DATA_ROOT, "data/sgd/genome"), genome=genome
-    )
-
+    # the source is the pinned SGD per-gene dump, so no genome or graph is built (#901)
     dataset = GeneEssentialitySgdDataset(
-        root=osp.join(DATA_ROOT, "data/torchcell/gene_essentiality_sgd"),
-        scerevisiae_graph=graph,
+        root=osp.join(DATA_ROOT, "data/torchcell/gene_essentiality_sgd")
     )
     adapter = GeneEssentialitySgdAdapter(
         dataset=dataset,

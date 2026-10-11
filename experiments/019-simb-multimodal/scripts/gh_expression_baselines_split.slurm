@@ -67,6 +67,12 @@ BASELINES_LABEL="${BASELINES_LABEL:-expression_log2_ratio}"
 #       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
 BASELINES_EMBEDDING_SET="${BASELINES_EMBEDDING_SET:-gate}"
 COMMON=(--dataset-tag "$BASELINES_TAG" --label "$BASELINES_LABEL" --embedding-set "$BASELINES_EMBEDDING_SET")
+# The morphology round's target is the 116 moving CalMorph features (v24):
+#   sbatch --array=0-3 --export=ALL,BASELINES_LABEL=calmorph,BASELINES_FEATURE_SUBSET=experiments/019-simb-multimodal/results/calmorph_moving_features.json \
+#       experiments/019-simb-multimodal/scripts/gh_expression_baselines_split.slurm
+if [ -n "${BASELINES_FEATURE_SUBSET:-}" ]; then
+  COMMON+=(--feature-subset "$BASELINES_FEATURE_SUBSET")
+fi
 case "$TASK" in
   0|1|2|3) ARGS=(--split-seed "$TASK" "${COMMON[@]}") ;;
   4)       ARGS=(--split-seed 0 --fold-test-into-train "${COMMON[@]}") ;;

@@ -201,6 +201,14 @@ def parse_args() -> argparse.Namespace:
         default=None,
         help="keep only records carrying every one of these phenotype labels",
     )
+    # The morphology round v24 scores the 116 moving CalMorph features, so its baselines
+    # must too: a json with a "moving" list of feature names (calmorph_moving_features.json).
+    # Results land in a `_moving` family so the all-feature seeds are never overwritten.
+    p.add_argument(
+        "--feature-subset",
+        default=None,
+        help="json with a 'moving' list; keep only those target features",
+    )
     return p.parse_args()
 
 
@@ -227,7 +235,7 @@ def _load_split(
 
 
 def _load_records(
-    base: str, indices: list[int], label: str
+    base: str, indices: list[int], label: str, subset: set[str] | None = None
 ) -> tuple[list[list[str]], np.ndarray, list[str]]:
     """Expression rows for the given record indices, in that order.
 
@@ -258,8 +266,12 @@ def _load_records(
                 )
             d = expr[0]["experiment"]["phenotype"][label]
             if keys is None:
-                keys = sorted(d)
-            if set(d) != set(keys):
+                keys = sorted(d) if subset is None else sorted(set(d) & subset)
+                if subset is not None and len(keys) != len(subset):
+                    raise ValueError(
+                        f"{len(subset) - len(keys)} subset features are not in the record"
+                    )
+            if not set(keys) <= set(d):
                 raise ValueError(f"record {idx} has a different gene key set")
             perts.append(
                 [
@@ -289,6 +301,10 @@ def _pert_matrix(
 
 def main() -> None:
     args = parse_args()
+    subset: set[str] | None = None
+    if args.feature_subset:
+        with open(args.feature_subset) as f:
+            subset = set(json.load(f)["moving"])
     data_root = os.environ["DATA_ROOT"]
     base = osp.join(
         data_root, "data/torchcell/experiments/019-simb-multimodal", args.dataset_tag
@@ -311,7 +327,7 @@ def main() -> None:
     for name, idx in split.items():
         if not idx:
             continue
-        p, mat, k = _load_records(base, idx, args.label)
+        p, mat, k = _load_records(base, idx, args.label, subset)
         if keys is None:
             keys = k
         elif k != keys:
@@ -497,6 +513,8 @@ def main() -> None:
         # (2026-10-04) ran expression_log2_ratio on fig3_proteome with the default of the
         # branch above and overwrote the protein_abundance seeds 0 to 3.
         family = f"baselines_split_{args.dataset_tag}_{args.label}"
+    if subset is not None:
+        family += "_moving"
     dst_dir = osp.join(
         experiment_results_dir("019-simb-multimodal", __file__),
         family + ("" if args.embedding_set == "gate" else f"_{args.embedding_set}"),

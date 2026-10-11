@@ -4,28 +4,28 @@
   \centering
   \footnotesize
   \setlength{\tabcolsep}{3pt}
-  \caption[Which served measurement predicts morphology]{Ridge from each served per-deletion measurement to the 116 moving CalMorph features, out of fold: the median over features of the Pearson across held-out strains, alone on the strains the dataset shares with Ohya 2005, and the gain of Messner plus the dataset over Messner alone on the strains both cover. One seed and one fold split; Messner alone ranges 0.214 to 0.289 across the strain subsets of the contrasts, so a difference under about 0.04 is not resolved. The null is a row permutation of the input. Bold, the best alone and the best gain. Combined panels on the 4,075 strains all four cover: Messner 0.231, the three growth panels together 0.317, Messner plus the three 0.323, permuted null -0.007. \src{experiments/019-simb-multimodal/scripts/morphology_input_screen.py}}
+  \caption[Which served measurement predicts morphology]{Ridge from each served per-deletion measurement to the 116 moving CalMorph features, out of fold: the median over features of the Pearson across held-out strains, alone on the strains the dataset shares with Ohya 2005, and the gain of Messner plus the dataset over Messner alone on the strains both cover. One seed and one fold split; Messner alone ranges 0.214 to 0.289 across the strain subsets of the contrasts, so a difference under about 0.04 is not resolved. The null is a row permutation of the input. Bold, the best alone and the best gain. Combined panels on the 4,075 strains all four cover: Messner 0.240, the three growth panels together 0.310, Messner plus the three 0.326, permuted null 0.016. \src{experiments/019-simb-multimodal/scripts/morphology_input_screen.py}}
   \label{tab:morph-input-screen}
   \begin{tabular}{@{}>{\raggedright\arraybackslash}p{50mm}*{6}{>{\raggedleft\arraybackslash}p{18mm}}@{}}
     \toprule
     input (served dataset) & strains shared with Ohya (n) & features kept (n) & median held-out Pearson, alone & permuted null, median Pearson & strains shared with Messner (n) & gain over Messner alone, median Pearson \\
     \midrule
-    Kemmeren 2014 expression (array log2 ratio) & 1,438 & 6,169 & \textbf{0.352} & -0.021 & 1,321 & +0.045 \\
-    Ohnuki 2022 CalMorph (three-deletion background) & 1,973 & 281 & 0.339 & -0.006 & 1,840 & \textbf{+0.111} \\
-    YeastPhenome growth z (dev build, 80 screens) & 4,678 & 62 & 0.287 & -0.019 & 4,279 & +0.034 \\
-    Hoepfner 2014 HOP chemogenomics & 4,402 & 300 & 0.283 & -0.019 & 4,079 & +0.038 \\
+    Kemmeren 2014 expression (array log2 ratio) & 1,438 & 6,169 & \textbf{0.345} & 0.005 & 1,321 & \textbf{+0.094} \\
+    Ohnuki 2022 CalMorph (three-deletion background) & 1,973 & 281 & 0.334 & -0.003 & 1,840 & +0.093 \\
     Messner 2023 proteome (SWATH, log2 to reference) & 4,314 & 1,830 & 0.282 & -0.009 & 4,314 & reference \\
-    Hillenmeyer 2008 HOP chemogenomics & 4,597 & 249 & 0.245 & -0.008 & 4,210 & +0.021 \\
-    Mulleder 2016 amino-acid pools & 4,443 & 19 & 0.138 & 0.009 & 4,208 & -0.007 \\
-    Cachera 2023 betaxanthin & 4,653 & 1 & 0.134 & -0.026 & 4,265 & -0.005 \\
-    Vanacloig-Pedros 2022 inhibitor response, 34 & 3,528 & 34 & 0.119 & -0.000 & 3,290 & +0.012 \\
-    Costanzo 2016 single-mutant fitness & 4,188 & 2 & 0.113 & -0.012 & 3,893 & +0.007 \\
-    Nadal-Ribelles 2025 pseudobulk expression & 2,959 & 11,269 & 0.112 & -0.010 & 2,732 & -0.028 \\
-    Costanzo 2021 differential fitness, 14 conditions & 3,559 & 14 & 0.106 & 0.013 & 3,350 & +0.014 \\
-    Cooper 2010 amino-acid peaks & 4,219 & 16 & 0.102 & -0.008 & 3,873 & +0.005 \\
-    Smith 2006 fatty-acid clear zone & 4,186 & 3 & 0.077 & -0.033 & 3,862 & +0.010 \\
-    Lopez 2024 isobutanol biosensor & 4,320 & 1 & 0.048 & -0.018 & 3,988 & -0.012 \\
-    Ozaydin 2013 carotenoid color & 4,233 & 1 & -0.012 & -0.031 & 3,912 & -0.001 \\
+    YeastPhenome growth z (dev build, 80 screens) & 4,678 & 62 & 0.276 & 0.002 & 4,279 & +0.044 \\
+    Hoepfner 2014 HOP chemogenomics & 4,402 & 300 & 0.263 & -0.020 & 4,079 & +0.067 \\
+    Hillenmeyer 2008 HOP chemogenomics & 4,597 & 249 & 0.246 & 0.002 & 4,210 & +0.025 \\
+    Mulleder 2016 amino-acid pools & 4,443 & 19 & 0.144 & -0.014 & 4,208 & +0.009 \\
+    Cachera 2023 betaxanthin & 4,653 & 1 & 0.133 & -0.032 & 4,265 & -0.001 \\
+    Vanacloig-Pedros 2022 inhibitor response, 34 & 3,528 & 34 & 0.129 & -0.010 & 3,290 & +0.001 \\
+    Nadal-Ribelles 2025 pseudobulk expression & 2,959 & 11,269 & 0.124 & -0.017 & 2,732 & -0.022 \\
+    Costanzo 2016 single-mutant fitness & 4,179 & 2 & 0.121 & -0.040 & 3,885 & +0.004 \\
+    Costanzo 2021 differential fitness, 14 conditions & 3,559 & 14 & 0.107 & -0.003 & 3,350 & -0.002 \\
+    Cooper 2010 amino-acid peaks & 4,219 & 16 & 0.094 & 0.005 & 3,873 & +0.012 \\
+    Lopez 2024 isobutanol biosensor & 4,320 & 1 & 0.054 & -0.025 & 3,988 & -0.009 \\
+    Smith 2006 fatty-acid clear zone & 4,186 & 3 & 0.048 & -0.023 & 3,862 & -0.016 \\
+    Ozaydin 2013 carotenoid color & 4,233 & 1 & -0.024 & -0.021 & 3,912 & -0.010 \\
     \bottomrule
   \end{tabular}
 \end{table}

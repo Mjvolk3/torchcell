@@ -3,7 +3,7 @@
 %% experiments/019-simb-multimodal/scripts/wandb_campaign_census.py from every torchcell_019* W&B
 %% project (pulled 2026-10-11); tables/morphology_input_screen.tex and
 %% results/morphology_input_screen.json by experiments/019-simb-multimodal/scripts/morphology_input_screen.py
-%% (the 2026-10-11 screen; slurm job 3858 reruns it under the committed paths). The isolate facts
+%% (slurm job 3919, 2026-10-11, under gh_morphology_input_screen.slurm). The isolate facts
 %% are read from torchcell/datasets/scerevisiae/caudal2024.py, the dev LMDB of
 %% caudal_pantranscriptome2024, results/expression_ceiling_all.json and
 %% notes/experiments.018-natural-isolate-genomics.expression-modeling-setup.md.
@@ -25,10 +25,11 @@ genotype 0.085 $\pm$ 0.008 (v16, 12 runs); with the strain's expression as input
 0.078 (8 runs, unpaired); with its proteome 0.171 (1 run, partial).
 
 \textbf{Other served data} (\cref{tab:morph-input-screen}, one seed). The chemogenomic
-growth matrices predict the moving features as well as the proteome does: Hoepfner 2014 HOP
-0.283 on 4{,}402 strains and Hillenmeyer 2008 HOP 0.245 on 4{,}597, against Messner 0.282 on
-4{,}314 and Kemmeren 0.352 on 1{,}438. The three growth panels together reach 0.317 on the
-4{,}075 strains all four cover, where Messner reads 0.231 and adds 0.006 on top of them.
+growth matrices predict the moving features nearly as well as the proteome does: Hoepfner
+2014 HOP 0.263 on 4{,}402 strains and Hillenmeyer 2008 HOP 0.246 on 4{,}597, against Messner
+0.282 on 4{,}314 and Kemmeren 0.345 on 1{,}438. The three growth panels together reach 0.310
+on the 4{,}075 strains all four cover, where Messner reads 0.240 and adds 0.016 on top of
+them.
 
 \textbf{The 1{,}011 isolates} do not reach morphology (none is measured on them) and cannot
 enter the current model (an isolate is a set of about 5{,}300 perturbed gene names with no
@@ -64,13 +65,13 @@ not about the genotype encoder.
 \pfstep{What else in the database predicts morphology} The ridge test the proteome and
 expression screens used was run on every served per-deletion matrix
 (\cref{tab:morph-input-screen}). Two findings. First, the multi-condition growth matrices
-are as informative as the proteome and cover three times the strains of the expression
-panel; their condition count matters (the 14-condition Costanzo 2021 and the 34-condition
-Vanacloig 2022 read 0.11 and 0.12, the 249- and 300-condition HOP sets 0.25 and 0.28), and
-one-column product screens read 0.05 to 0.13. Second, Ohnuki 2022, CalMorph on 1{,}982 of
-the same deletions in a three-deletion background, predicts Ohya morphology at 0.339 and
-adds 0.111 to Messner, which is morphology predicting morphology across backgrounds, a
-transfer measure and not a new modality. Caveats, all unmeasured: part of the growth signal
+are nearly as informative as the proteome and cover three times the strains of the
+expression panel; their condition count matters (the 14-condition Costanzo 2021 and the
+34-condition Vanacloig 2022 read 0.11 and 0.13, the 249- and 300-condition HOP sets 0.25
+and 0.26), and one-column product screens read 0.05 to 0.13. Second, Ohnuki 2022, CalMorph
+on 1{,}982 of the same deletions in a three-deletion background, predicts Ohya morphology
+at 0.334 and adds 0.093 to Messner, which is morphology predicting morphology across
+backgrounds, a transfer measure and not a new modality. Caveats, all unmeasured: part of the growth signal
 is likely a shared slow-growth axis (removing it cut the proteome screen by about a third);
 the growth media are not the CalMorph culture; and a growth profile exists only for a strain
 already screened, so an arm that reads it is transductive in the same sense as the

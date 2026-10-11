@@ -23,6 +23,9 @@ set -euo pipefail
 source ~/miniconda3/etc/profile.d/conda.sh
 conda activate torchcell
 cd "${SLURM_SUBMIT_DIR:?submit from the repository root}"
-export PYTHONPATH="$PWD"
+# No PYTHONPATH=$PWD here: the served LMDBs were pickled under the schema of main
+# (SourceType and the artifact tier), which this branch's torchcell/ does not carry, so
+# the records must unpickle against the installed package (the primary checkout on main).
+unset PYTHONPATH
 export OMP_NUM_THREADS=8 OPENBLAS_NUM_THREADS=8 MKL_NUM_THREADS=8
 python experiments/019-simb-multimodal/scripts/morphology_input_screen.py

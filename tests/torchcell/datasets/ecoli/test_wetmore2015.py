@@ -14,19 +14,56 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 import os.path as osp
+import shutil
 from datetime import UTC, datetime
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
+import lmdb
+import numpy as np
+import openpyxl
 import pandas as pd
 import pytest
 
 import torchcell.datasets.ecoli.wetmore2015 as w
+from tests.torchcell.sequence.genome._bacterial_fixtures import (
+    BW25113_LOCI,
+    MG1655_GAF,
+    MG1655_LOCI,
+    forbid_network,
+    serve_tier,
+    write_assembly,
+)
 from torchcell.data import ManifestPinMismatchError
-from torchcell.datamodels.schema import MeasurementType, UncertaintyType
+from torchcell.datamodels.media import (
+    LB_LENNOX,
+    M9_NOCARBON_WETMORE2015,
+    M9_NONITROGEN_WETMORE2015,
+)
+from torchcell.datamodels.schema import (
+    AssemblyReferenceGenome,
+    ConcentrationUnit,
+    EnvironmentPhysicalPerturbation,
+    MeasurementType,
+    PhysicalFactor,
+    UncertaintyType,
+)
+from torchcell.datasets.bacteria_common import LocusTagResolutionError
 from torchcell.datasets.dataset_registry import dataset_registry
+from torchcell.sequence.genome.base import GeneNameResolution, GeneNameStatus
+from torchcell.sequence.genome.ecoli.k12 import (
+    BW25113_ASSEMBLY,
+    MG1655_ASSEMBLY,
+    EckCrosswalk,
+    EckPair,
+    EcoliK12BW25113Genome,
+    EcoliK12MG1655Genome,
+)
+from torchcell.verification.report import Level
 from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 
 DATA_ROOT = os.environ.get("DATA_ROOT", "")
@@ -672,3 +709,959 @@ def test_the_gene_table_is_mg1655_named_for_a_bw25113_library() -> None:
         "ambiguous": 6,
     }
     assert (finding.eck_one_to_one, finding.eck_numeric_disagreements) == (3768, 1)
+
+
+# =========================================================================== #
+# The loader: this paper's own release (owner policy 2026-10-10)
+# =========================================================================== #
+def _s1_row(
+    name: str,
+    group: str,
+    media: str,
+    condition: str | None,
+    concentration: float | None,
+    units: str | None,
+    *,
+    temperature: float = 37.0,
+    generations: float | None = 6.5,
+    library: str = "Keio_ML9",
+    liquid: str = "Liquid",
+    aerobic: str = "Aerobic",
+    condition_2: str | None = None,
+) -> dict[str, Any]:
+    """One Data Set S1 ``Expts_Keio`` row, with the columns the loader reads."""
+    return {
+        "Setname": f"Keio_ML9_{name[:4]}",
+        "Mutant Library": library,
+        "Media": media,
+        "Group": group,
+        "Temperature (°C)": temperature,
+        "Liquid_v_solid": liquid,
+        "Aerobic_v_Aerobic": aerobic,
+        "Condition_1": condition,
+        "Concentration_1": concentration,
+        "Units_1": units,
+        "Condition_2": condition_2,
+        "EndOD": 1.2,
+        "Total Generations": generations,
+        "name": name,
+        "short": f"{condition} ({group})" if condition else group,
+    }
+
+
+def _s1_quality(name: str, short: str, g_med: float = 200.0) -> dict[str, Any]:
+    """A quality row whose ``u`` is what the paper's rules make of its metrics."""
+    metrics = {"gMed": g_med, "mad12": 0.2, "cor12": 0.3, "adjcor": 0.01, "gccor": 0.02}
+    successful = g_med >= 50.0
+    return {"name": name, "short": short, **metrics, "u": successful}
+
+
+_M9C = "M9 minimal media_noCarbon"
+_M9N = "M9 minimal media_noNitrogen"
+_MOPS = "MOPS Rich Defined media_noCarbon"
+#: Time0, a glucose sample, a withdrawn sucrose sample, a failed fumarate sample, a MOPS
+#: Rich Defined sample, a nitrogen source, casamino acids in mg/mL, and an LB sample at
+#: 28 C with no Total Generations.
+S1_ROWS = [
+    _s1_row("set1IT001", "Time0", "LB", None, None, None),
+    _s1_row("set1IT003", "carbon source", _M9C, "D-Glucose", 20.0, "mM"),
+    _s1_row("set1IT007", "carbon source", _M9C, "Sucrose", 20.0, "mM"),
+    _s1_row("set1IT030", "carbon source", _M9C, "Sodium Fumarate dibasic", 20.0, "mM"),
+    _s1_row("set1IT067", "carbon source", _MOPS, "D-Glucose", 22.0, "mM"),
+    _s1_row("set1IT071", "nitrogen source", _M9N, "L-Arginine", 10.0, "mM"),
+    _s1_row("set1IT059", "carbon source", _M9C, "casamino acids", 2.0, "mg/mL"),
+    _s1_row(
+        "set2IT069", "LB", "LB", None, None, None, temperature=28.0, generations=None
+    ),
+]
+S1_QUALITY = [
+    _s1_quality("set1IT001", "Time0"),
+    _s1_quality("set1IT003", "D-Glucose (C)"),
+    _s1_quality("set1IT007", "Sucrose (C)"),
+    _s1_quality("set1IT030", "Fumarate (C)", g_med=49.0),
+    _s1_quality("set1IT067", "D-Glucose (C) MOPS"),
+    _s1_quality("set1IT071", "L-Arginine (N)"),
+    _s1_quality("set1IT059", "casaminos (C)"),
+    _s1_quality("set2IT069", "LB"),
+]
+#: The samples the paper's rules pass, in Data Set S1 order (the good table's columns).
+SUCCESSFUL = [
+    "set1IT003",
+    "set1IT007",
+    "set1IT067",
+    "set1IT071",
+    "set1IT059",
+    "set2IT069",
+]
+
+
+def _specs(rows: list[dict[str, Any]] | None = None) -> tuple[w.SampleSpec, ...]:
+    return w.classify_samples(
+        pd.DataFrame(S1_ROWS if rows is None else rows), pd.DataFrame(S1_QUALITY)
+    )
+
+
+def test_classify_samples_drops_failed_and_unlisted_media_and_flags_withdrawn() -> None:
+    specs = {s.name: s for s in _specs()}
+    assert list(specs) == [r["name"] for r in S1_ROWS[1:]]
+    assert {n: s.drop_rule for n, s in specs.items()} == {
+        "set1IT003": None,
+        "set1IT007": None,
+        "set1IT030": w.DROP_FAILED_QUALITY,
+        "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY,
+        "set1IT071": None,
+        "set1IT059": None,
+        "set2IT069": None,
+    }
+    assert [n for n, s in specs.items() if s.withdrawn] == ["set1IT007"]
+    assert specs["set1IT030"].quality.failed_rules() == ("g_med_min",)
+    assert specs["set2IT069"].total_generations is None
+    assert specs["set2IT069"].temperature_c == 28.0
+    assert specs["set1IT059"].units == "mg/mL"
+    assert specs["set1IT003"].screen_id == "Keio:set1IT003"
+
+
+@pytest.mark.parametrize(
+    ("override", "message"),
+    [
+        ({"Mutant Library": "Keio_ML9a"}, "Mutant Library is 'Keio_ML9a', not"),
+        ({"Liquid_v_solid": "Solid"}, "Liquid_v_solid is 'Solid', not 'Liquid'"),
+        ({"Aerobic_v_Aerobic": "Anaerobic"}, "Aerobic_v_Aerobic is 'Anaerobic'"),
+        ({"Condition_2": "Glycerol"}, "a second condition 'Glycerol'"),
+        ({"Media": "marine broth"}, "unknown medium 'marine broth'"),
+        ({"Group": "stress"}, "no kept sample of group 'stress' expected"),
+        ({"Media": _M9N}, "group 'carbon source' on medium"),
+    ],
+)
+def test_classify_samples_refuses_what_the_release_does_not_state(
+    override: dict[str, Any], message: str
+) -> None:
+    rows = [dict(r) for r in S1_ROWS]
+    rows[1].update(override)
+    with pytest.raises(ValueError, match=message):
+        _specs(rows)
+
+
+def test_classify_samples_refuses_a_verdict_its_rules_do_not_reproduce() -> None:
+    quality = pd.DataFrame(S1_QUALITY)
+    quality.loc[quality["name"] == "set1IT030", "u"] = True
+    with pytest.raises(ValueError, match=r"set1IT030: u = True but the paper's rules"):
+        w.classify_samples(pd.DataFrame(S1_ROWS), quality)
+    with pytest.raises(ValueError, match=r"no quality row: \['set1IT003'\]"):
+        w.classify_samples(
+            pd.DataFrame(S1_ROWS), quality.loc[quality["name"] != "set1IT003"]
+        )
+
+
+def _good_frames(
+    samples: list[str], genes: list[str], *, extra: tuple[str, ...] = ()
+) -> dict[str, pd.DataFrame]:
+    """A release over ``genes`` x ``samples`` whose t follows the paper's rule exactly.
+
+    ``extra`` samples appear in the t and SE tables only (failed samples, Time0), as
+    in the real release.
+    """
+    every = [*samples, *extra]
+    grid = np.arange(len(genes) * len(every), dtype=np.float64).reshape(len(genes), -1)
+    fit = grid / 8.0 - 2.0
+    obs = 0.1 + grid / 100.0
+    naive = 0.3 - grid / 200.0
+    t = fit / np.sqrt(0.1**2 + np.maximum(obs, naive) ** 2)
+    ids = {"locusId": list(range(100, 100 + len(genes))), "sysName": genes}
+
+    def frame(values: np.ndarray[Any, Any], names: list[str]) -> pd.DataFrame:
+        columns = {f"{s} desc": values[:, every.index(s)] for s in names}
+        return pd.DataFrame({**ids, "desc": "a gene", **columns})
+
+    return {
+        "fit_logratios_good.tab": frame(fit, samples),
+        "fit_t.tab": frame(t, every),
+        "fit_standard_error_obs.tab": frame(obs, every),
+        "fit_standard_error_naive.tab": frame(naive, every),
+    }
+
+
+def _align(frames: dict[str, pd.DataFrame], samples: list[str]) -> w.ReleaseTables:
+    return w.align_release(
+        fitness=frames["fit_logratios_good.tab"],
+        t=frames["fit_t.tab"],
+        se_obs=frames["fit_standard_error_obs.tab"],
+        se_naive=frames["fit_standard_error_naive.tab"],
+        samples=samples,
+        sigma=0.1,
+    )
+
+
+def test_align_release_takes_the_larger_se_and_checks_the_released_t() -> None:
+    frames = _good_frames(["setA1", "setA2"], ["b0001", "b0002"], extra=("setA3",))
+    release = _align(frames, ["setA2", "setA1"])
+    assert release.samples == ("setA2", "setA1")
+    assert release.b_numbers == ("b0001", "b0002")
+    # grid columns: setA1 -> 0, setA2 -> 1; genes are rows of three columns
+    assert release.fitness.tolist() == [[-1.875, -2.0], [-1.5, -1.625]]
+    assert release.standard_error.tolist() == [
+        [pytest.approx(0.295), 0.3],
+        [pytest.approx(0.28), pytest.approx(0.285)],
+    ]
+    assert release.n_values == 4
+    assert release.n_naive_larger == 4
+    assert release.t_max_abs_deviation < 1e-12
+    expected_t = release.fitness / np.sqrt(0.01 + release.standard_error**2)
+    np.testing.assert_allclose(release.t, expected_t, rtol=0, atol=1e-12)
+
+
+def test_align_release_refuses_inconsistent_tables() -> None:
+    def refused(frames: dict[str, pd.DataFrame], message: str) -> None:
+        with pytest.raises(ValueError, match=message):
+            _align(frames, ["setA1", "setA2"])
+
+    frames = _good_frames(["setA1", "setA2"], ["b0001", "b0002"])
+    frames["fit_t.tab"].loc[0, "sysName"] = "b0009"
+    refused(frames, "t: gene rows differ")
+    frames = _good_frames(["setA1", "setA2", "setA3"], ["b0001"])
+    refused(frames, r"only in fitness \['setA3'\]")
+    frames = _good_frames(["setA1", "setA2"], ["b0001"])
+    frames["fit_standard_error_obs.tab"] = frames["fit_standard_error_obs.tab"].drop(
+        columns=["setA2 desc"]
+    )
+    refused(frames, r"se_obs: samples absent \['setA2'\]")
+    frames = _good_frames(["setA1", "setA2"], ["b0001"])
+    frames["fit_t.tab"] = frames["fit_t.tab"].rename(
+        columns={"setA2 desc": "setA2 other"}
+    )
+    refused(frames, r"t: header text differs for \['setA2'\]")
+    frames = _good_frames(["setA1", "setA2"], ["b0001"])
+    frames["fit_logratios_good.tab"].loc[0, "setA1 desc"] = np.nan
+    refused(frames, "fitness: 1 missing values")
+    frames = _good_frames(["setA1", "setA2"], ["b0001"])
+    frames["fit_standard_error_naive.tab"].loc[0, "setA1 desc"] = -1.0
+    frames["fit_standard_error_obs.tab"].loc[0, "setA1 desc"] = 0.0
+    refused(frames, "a standard-error estimate is not positive")
+    frames = _good_frames(["setA1", "setA2"], ["b0001"])
+    frames["fit_t.tab"].loc[0, "setA1 desc"] = 99.0
+    refused(frames, r"the released t is not fit / sqrt\(0.1\^2 \+ SE\^2\)")
+    duplicated = _good_frames(["setA1"], ["b0001"])["fit_t.tab"]
+    duplicated["setA1 again"] = duplicated["setA1 desc"]
+    with pytest.raises(ValueError, match="t: sample setA1 has two columns"):
+        w._fitness_columns(duplicated, "t")
+
+
+def test_build_environment_reads_each_sample_from_its_own_columns() -> None:
+    specs = {s.name: s for s in _specs()}
+    glucose = w.build_environment(specs["set1IT003"])
+    assert glucose.media == M9_NOCARBON_WETMORE2015
+    assert glucose.temperature is not None
+    assert glucose.temperature.value == 37.0
+    assert glucose.duration_generations == 6.5
+    assert [g.field for g in glucose.provenance_gaps] == ["duration_hours"]
+    (source,) = glucose.perturbations
+    assert isinstance(source, EnvironmentPhysicalPerturbation)
+    assert source.magnitude is not None
+    assert (source.factor, source.magnitude.value, source.magnitude.unit) == (
+        PhysicalFactor.carbon_source,
+        20.0,
+        ConcentrationUnit.millimolar,
+    )
+    assert source.agent is not None
+    assert source.agent.name == "D-glucose"
+    arginine = w.build_environment(specs["set1IT071"])
+    assert arginine.media == M9_NONITROGEN_WETMORE2015
+    (nitrogen,) = arginine.perturbations
+    assert isinstance(nitrogen, EnvironmentPhysicalPerturbation)
+    assert nitrogen.factor == PhysicalFactor.nitrogen_source
+    (casamino,) = w.build_environment(specs["set1IT059"]).perturbations
+    assert isinstance(casamino, EnvironmentPhysicalPerturbation)
+    assert casamino.magnitude is not None
+    assert (casamino.magnitude.value, casamino.magnitude.unit) == (
+        2.0,
+        ConcentrationUnit.g_per_l,
+    )
+    lb = w.build_environment(specs["set2IT069"])
+    assert (lb.media, lb.perturbations, lb.duration_generations) == (
+        LB_LENNOX,
+        [],
+        None,
+    )
+    assert [g.field for g in lb.provenance_gaps] == [
+        "duration_hours",
+        "duration_generations",
+    ]
+    assert lb.temperature is not None
+    assert lb.temperature.value == 28.0
+
+
+def test_build_environment_refuses_a_dropped_or_malformed_sample() -> None:
+    specs = {s.name: s for s in _specs()}
+    with pytest.raises(ValueError, match="set1IT030 is dropped"):
+        w.build_environment(specs["set1IT030"])
+    with pytest.raises(ValueError, match="a plain sample names 'x'"):
+        w.build_environment(specs["set2IT069"].model_copy(update={"condition": "x"}))
+    with pytest.raises(ValueError, match="a carbon source sample names no condition"):
+        w.build_environment(specs["set1IT003"].model_copy(update={"condition": None}))
+    with pytest.raises(ValueError, match="'D-Glucose' has no dose"):
+        w.build_environment(specs["set1IT003"].model_copy(update={"units": None}))
+    with pytest.raises(ValueError, match="unknown unit 'uM'"):
+        w.build_environment(specs["set1IT003"].model_copy(update={"units": "uM"}))
+
+
+@pytest.fixture
+def k12(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome]:
+    """Both synthetic K-12 genomes; the network refuses."""
+    files = write_assembly(tmp_path / "tier", MG1655_ASSEMBLY, MG1655_LOCI, MG1655_GAF)
+    files |= write_assembly(tmp_path / "tier", BW25113_ASSEMBLY, BW25113_LOCI)
+    forbid_network(monkeypatch)
+    serve_tier(monkeypatch, files)
+    return (
+        EcoliK12MG1655Genome(genome_root=str(tmp_path / "mg1655"), overwrite=True),
+        EcoliK12BW25113Genome(genome_root=str(tmp_path / "bw25113"), overwrite=True),
+    )
+
+
+#: Four map (b0003 crosses numbers, b0004 is a pseudogene); b0005 is not one-to-one,
+#: b0006 is absent from BW25113, b0099 is not an MG1655 locus.
+SYNTHETIC_GENES = ["b0001", "b0002", "b0003", "b0004", "b0005", "b0006", "b0099"]
+
+
+def test_map_genes_places_one_to_one_eck_pairs_and_types_the_rest(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    mg1655, bw25113 = k12
+    with pytest.raises(LocusTagResolutionError, match="places 4 of 7 genes"):
+        w.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
+    monkeypatch.setattr(w, "MIN_ECK_ROUTE_FRACTION", 0.5)
+    mapping, report = w.map_genes(SYNTHETIC_GENES, mg1655, bw25113, label="synthetic")
+    assert {b: (m.locus_tag, m.perturbed_gene_name) for b, m in mapping.items()} == {
+        "b0001": ("BW25113_0001", "thrL"),
+        "b0002": ("BW25113_0002", "thrA"),
+        "b0003": ("BW25113_4412", "hokC"),
+        "b0004": ("BW25113_0004", "BW25113_0004"),
+    }
+    assert report.numeric_disagreements == (("b0003", "BW25113_4412", "ECK0003"),)
+    assert [(u.b_number, u.reason, u.eck) for u in report.unmapped] == [
+        ("b0005", "eck_not_one_to_one", ("ECK0005",)),
+        ("b0006", "eck_absent_from_bw25113", ("ECK0006",)),
+        ("b0099", "b_number_not_in_mg1655_annotation", ()),
+    ]
+    assert report.unmapped_by_reason == {
+        "eck_not_one_to_one": 1,
+        "eck_absent_from_bw25113": 1,
+        "b_number_not_in_mg1655_annotation": 1,
+    }
+    assert (report.n_symbol_names, report.n_tag_names) == (3, 1)
+    assert report.reconcile_layer_histogram["gene synonym"] == 4
+
+
+def test_unmapped_reason_covers_every_way_a_pair_is_missing() -> None:
+    crosswalk = EckCrosswalk(
+        shared=("ECK0001", "ECK0005"),
+        pairs=(EckPair(eck="ECK0001", mg1655="b0001", bw25113="BW25113_0001"),),
+        mg1655_only=("ECK0006",),
+        bw25113_only=(),
+    )
+    ecks = {"b0001": ("ECK0001",), "b0007": (), "b0008": ("ECK0008",)}
+    assert w.unmapped_reason("b0007", crosswalk, ecks).reason == (
+        "mg1655_locus_has_no_eck_synonym"
+    )
+    with pytest.raises(ValueError, match="b0001 has a one-to-one pair"):
+        w.unmapped_reason("b0001", crosswalk, ecks)
+    with pytest.raises(ValueError, match="is paired, absent and not shared"):
+        w.unmapped_reason("b0008", crosswalk, ecks)
+
+
+def test_gene_symbol_keeps_a_symbol_only_when_it_resolves_back() -> None:
+    def resolve(name: str) -> GeneNameResolution:
+        return GeneNameResolution(
+            input_name=name,
+            status=GeneNameStatus.RENAMED
+            if name == "thrL"
+            else GeneNameStatus.AMBIGUOUS,
+            systematic_name="BW25113_0001" if name == "thrL" else None,
+        )
+
+    assert w.gene_symbol("thrL", "BW25113_0001", resolve) == "thrL"
+    assert w.gene_symbol("dup", "BW25113_0002", resolve) == "BW25113_0002"
+    assert w.gene_symbol(None, "BW25113_0003", resolve) == "BW25113_0003"
+
+
+def test_build_phenotype_stores_the_t_the_se_and_the_withdrawal() -> None:
+    kept = w.build_phenotype(
+        -1.5, 0.25, -5.57, screen_id="Keio:set1IT003", withdrawn=False
+    )
+    assert (
+        kept.environment_response,
+        kept.environment_response_se,
+        kept.environment_response_uncertainty_type,
+        kept.environment_response_t_statistic,
+        kept.source_withdrawal,
+    ) == (-1.5, 0.25, UncertaintyType.standard_error, -5.57, None)
+    assert [g.field for g in kept.provenance_gaps] == ["n_samples", "sample_unit"]
+    flagged = w.build_phenotype(
+        0.1, 0.2, 0.44, screen_id="Keio:set1IT007", withdrawn=True
+    )
+    assert flagged.source_withdrawal == w.WITHDRAWAL
+    assert flagged.source_withdrawal.reason == "problematic_stock_solution"
+    assert flagged.source_withdrawal.provenance.quote == (
+        w.STOCK_SOLUTION_CORRECTION.quote
+    )
+
+
+def _write_s1(path: Path) -> None:
+    with pd.ExcelWriter(path) as writer:
+        pd.DataFrame(S1_ROWS).to_excel(
+            writer, sheet_name=w.DATA_SET_S1_EXPERIMENTS_SHEET, index=False
+        )
+        pd.DataFrame(S1_QUALITY).to_excel(
+            writer, sheet_name=w.DATA_SET_S1_QUALITY_SHEET, index=False
+        )
+        pd.DataFrame([["Total Generations", "Total number of doublings"]]).to_excel(
+            writer, sheet_name="ReadMe", index=False, header=False
+        )
+
+
+@pytest.fixture
+def mirrored(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> Path:
+    """A tmp ``DATA_ROOT`` whose mirrors hold the synthetic release; returns it."""
+    source = tmp_path / "source"
+    source.mkdir()
+    frames = _good_frames(SUCCESSFUL, SYNTHETIC_GENES, extra=("set1IT030", "set1IT001"))
+    for name, frame in frames.items():
+        frame.to_csv(source / name, sep="\t", index=False)
+    _write_s1(source / "si1.xlsx")
+    monkeypatch.setattr(
+        w,
+        "LOADER_FILE_NAMES",
+        {
+            name: (
+                "raw",
+                f"data/{name}",
+                hashlib.sha256((source / name).read_bytes()).hexdigest(),
+            )
+            for name in sorted(os.listdir(source))
+        },
+    )
+    monkeypatch.setattr(
+        w, "loader_source_path", lambda name, data_root=None: source / name
+    )
+    genomes = dict(zip(("MG1655", "BW25113"), k12, strict=True))
+    monkeypatch.setattr(
+        w, "bacterial_genome", lambda host, strain, data_root=None: genomes[strain]
+    )
+    monkeypatch.setattr(w, "assembly_reference", lambda strain: _pin())
+    monkeypatch.setattr(w, "MIN_ECK_ROUTE_FRACTION", 0.5)
+    data_root = tmp_path / "data_root"
+    monkeypatch.setenv("DATA_ROOT", str(data_root))
+    monkeypatch.delenv("TC_DATA_URL", raising=False)
+    return data_root
+
+
+def _pin() -> AssemblyReferenceGenome:
+    return AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain="BW25113",
+        assembly_set="ecoli_K12_BW25113_ASM75055v1",
+        assembly_accession="GCA_000750555.1",
+    )
+
+
+def _dataset_root(data_root: Path) -> Path:
+    return data_root / w.DATASET_ROOT_REL
+
+
+def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
+    root = _dataset_root(mirrored)
+    dataset = w.RbTnseqWetmore2015Dataset(root=str(root))
+    # five kept samples (set1IT067 is on MOPS Rich Defined) x four mapped genes
+    assert len(dataset) == 20
+    assert sorted(dataset.gene_set) == [
+        "BW25113_0001",
+        "BW25113_0002",
+        "BW25113_0004",
+        "BW25113_4412",
+    ]
+    references = dataset.experiment_reference_index
+    assert references is not None
+    assert len(references) == 5
+    first = dataset[0]
+    phenotype = first["experiment"]["phenotype"]
+    assert phenotype["screen_id"] == "Keio:set1IT003"
+    assert phenotype["environment_response"] == -2.0
+    assert phenotype["environment_response_se"] == pytest.approx(0.3)
+    assert phenotype["environment_response_t_statistic"] == pytest.approx(
+        -2.0 / math.sqrt(0.01 + 0.09)
+    )
+    assert phenotype["source_withdrawal"] is None
+    perturbation = first["experiment"]["genotype"]["perturbations"][0]
+    assert (
+        perturbation["systematic_gene_name"],
+        perturbation["identifier_mapping"],
+        perturbation["transposon"],
+        perturbation["library_pool"],
+    ) == (
+        "BW25113_0001",
+        {"source_identifier": "b0001", "route": "eck_crosswalk"},
+        "Tn5 transpososome",
+        "KEIO_ML9",
+    )
+    assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
+    withdrawn = [
+        dataset[i]["experiment"]["phenotype"]["source_withdrawal"]["reason"]
+        for i in range(len(dataset))
+        if dataset[i]["experiment"]["phenotype"]["screen_id"] == "Keio:set1IT007"
+    ]
+    assert withdrawn == ["problematic_stock_solution"] * 4
+    drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
+    assert (drops["source_records"], drops["stored_records"]) == (49, 20)
+    assert [
+        (d["rule"], d["kept"], d["items"], d["n_records"]) for d in drops["rules"]
+    ] == [
+        (w.DROP_FAILED_QUALITY, False, ["set1IT030"], 7),
+        (w.DROP_MEDIUM_NOT_IN_LIBRARY, False, ["set1IT067"], 7),
+        (w.DROP_NO_ECK_PAIR, False, ["b0005", "b0006", "b0099"], 15),
+        (w.FLAG_WITHDRAWN, True, ["set1IT007"], 4),
+    ]
+    # every released value is accounted for: stored + the three drop rules
+    assert drops["source_records"] == 20 + 7 + 7 + 15
+    assert drops["withdrawn_flagged"] == ["set1IT007"]
+    assert drops["quality_rules_reproduce_u"] is True
+    standard_error = json.loads(
+        (root / "preprocess" / "standard_error.json").read_text()
+    )
+    assert (standard_error["n_values"], standard_error["sigma"]) == (42, 0.1)
+    assert (root / "preprocess" / "build_manifest.json").is_file()
+    assert sorted(os.listdir(root / "raw")) == sorted(w.LOADER_FILE_NAMES)
+
+
+def test_a_genome_of_the_wrong_strain_is_refused(
+    k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
+) -> None:
+    dataset = w.RbTnseqWetmore2015Dataset.__new__(w.RbTnseqWetmore2015Dataset)
+    dataset.ecoli_genome = k12[0]
+    with pytest.raises(TypeError, match="expected the BW25113 genome"):
+        dataset._bw25113()
+    dataset.ecoli_genome = k12[1]
+    assert dataset._bw25113() is k12[1]
+    with pytest.raises(NotImplementedError, match="builds its records in process"):
+        dataset.create_experiment()
+    frame = pd.DataFrame({"a": [1]})
+    assert dataset.preprocess_raw(frame) is frame
+
+
+def _served_copy(data_root: Path, drop_rules: dict[str, str | None]) -> Path:
+    """A compendium store holding this build's records, with its own samples.json."""
+    superset = data_root / w.SUPERSET_DATASET_ROOT_REL
+    shutil.copytree(_dataset_root(data_root) / "processed", superset / "processed")
+    (superset / "preprocess").mkdir(parents=True)
+    rows = [{"name": name, "drop_rule": rule} for name, rule in drop_rules.items()]
+    (superset / "preprocess" / "samples.json").write_text(json.dumps(rows))
+    return superset
+
+
+def test_verify_build_runs_every_row_and_the_compendium_cross_check(
+    mirrored: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    root = _dataset_root(mirrored)
+    w.RbTnseqWetmore2015Dataset(root=str(root))
+    with pytest.raises(FileNotFoundError, match="the compendium store the L4"):
+        w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+    _served_copy(
+        mirrored,
+        {"set1IT003": None, "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY, "set9": None},
+    )
+    monkeypatch.setattr(
+        w,
+        "subsumption_record",
+        lambda data_root=None: SimpleNamespace(
+            carried=("set1IT003", "set1IT067", "set1IT071")
+        ),
+    )
+    monkeypatch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
+    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+    results = {r.name: r for r in report.results}
+    assert {name: r.passed for name, r in results.items() if not r.passed} == {}
+    assert results["count"].passed is True
+    assert results["withdrawn_samples_flagged_not_dropped"].message == (
+        "SUPPLEMENTARY: 4 records of 1 samples flagged ['problematic_stock_solution'] "
+        "(['set1IT007']); 0 samples partly flagged"
+    )
+    cross = results["compendium_cross_check_price2018"]
+    assert cross.level == Level.L4
+    # the copy holds the same values, so every compared sample agrees exactly
+    assert cross.details["compared"] == ["set1IT003", "set1IT071"]
+    assert cross.details["absent_here"] == {"set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY}
+    assert cross.details["absent_there"] == {"set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY}
+    assert [a["pearson_r"] for a in cross.details["agreements"]] == [
+        pytest.approx(1.0),
+        pytest.approx(1.0),
+    ]
+    written = json.loads((root / "preprocess" / "verification_report.json").read_text())
+    assert written["dataset_name"] == "RbTnseqWetmore2015Dataset"
+    check = json.loads(
+        (root / "preprocess" / "compendium_cross_check.json").read_text()
+    )
+    assert check["n_values_compared"] == 8
+
+
+def _value(
+    sample: str,
+    tag: str,
+    value: float,
+    *,
+    se: float | None = 0.2,
+    t: float | None = None,
+    withdrawal: str | None = None,
+) -> w.StoredValue:
+    return w.StoredValue(
+        sample=sample,
+        tag=tag,
+        value=value,
+        standard_error=se,
+        t_statistic=value / math.sqrt(0.01 + 0.04) if t is None else t,
+        withdrawal=withdrawal,
+    )
+
+
+def test_compendium_cross_check_measures_agreement_and_names_every_absence() -> None:
+    own = [_value("s1", g, v) for g, v in (("a", 1.0), ("b", 2.0), ("c", 3.0))]
+    own += [_value("s2", "a", 0.5)]
+    served = [_value("s1", g, v) for g, v in (("a", 1.1), ("b", 1.9), ("c", 3.4))]
+    served += [_value("s3", "a", 0.0)]
+    check = w.compendium_cross_check(
+        own,
+        served,
+        ["s1", "s2", "s3", "s4"],
+        {"s3": "failed_paper_quality_rules", "s4": "medium_not_in_media_library"},
+        {"s1": None, "s2": "authors_withdrew", "s3": None, "s4": "medium"},
+        min_pearson_r=0.9,
+    )
+    assert check.compared == ("s1",)
+    assert check.absent_here == {
+        "s3": "failed_paper_quality_rules",
+        "s4": "medium_not_in_media_library",
+    }
+    assert check.absent_there == {"s2": "authors_withdrew", "s4": "medium"}
+    (agreement,) = check.agreements
+    assert agreement.n_genes == 3
+    assert agreement.max_abs_difference == pytest.approx(0.4)
+    assert agreement.median_abs_difference == pytest.approx(0.1)
+    assert agreement.pearson_r == pytest.approx(
+        np.corrcoef([1, 2, 3], [1.1, 1.9, 3.4])[0, 1]
+    )
+    assert check.largest_differences[0].tag == "c"
+    assert check.largest_differences[0].difference == pytest.approx(-0.4)
+    assert check.n_values_compared == 3
+    assert check.passed is True
+    result = w.cross_check_result(check, "store")
+    assert result.passed is True
+    assert "largest single-gene difference -0.400 log2 (s1 c)" in result.message
+    strict = w.compendium_cross_check(
+        own, served, ["s1"], {}, {"s1": None}, min_pearson_r=0.999
+    )
+    assert strict.passed is False
+    assert w.cross_check_result(strict, "store").passed is False
+
+
+def test_compendium_cross_check_refuses_an_unexplained_absence_or_gene_set() -> None:
+    own = [_value("s1", "a", 1.0), _value("s1", "b", 2.0)]
+    served = [_value("s1", "a", 1.0)]
+    with pytest.raises(ValueError, match="here \\['s2'\\], in the compendium store"):
+        w.compendium_cross_check(own, served, ["s1", "s2"], {}, {"s1": None, "s2": "x"})
+    with pytest.raises(ValueError, match="s1: the two stores hold different genes"):
+        w.compendium_cross_check(own, served, ["s1"], {}, {"s1": None})
+    empty = w.compendium_cross_check(own, [], ["s1"], {}, {"s1": "dropped there"})
+    assert (empty.passed, empty.compared, empty.absent_there) == (
+        False,
+        (),
+        {"s1": "dropped there"},
+    )
+    assert "per-sample Pearson r none" in w.cross_check_result(empty, "x").message
+
+
+def test_withdrawal_census_and_t_identity_rows() -> None:
+    reason = "problematic_stock_solution"
+    values = [
+        _value("set1IT007", "a", 1.0, withdrawal=reason),
+        _value("set1IT003", "a", -1.0),
+    ]
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
+        assert w.withdrawal_census(values).passed is True
+        mixed = [*values, _value("set1IT007", "b", 0.5)]
+        result = w.withdrawal_census(mixed)
+        assert (result.passed, result.details["mixed"]) == (False, ["set1IT007"])
+    assert w.t_identity(values, 0.1).passed is True
+    off = w.t_identity([*values, _value("s", "a", 1.0, t=9.0)], 0.1)
+    assert off.passed is False
+    assert off.details["max_abs_deviation"] == pytest.approx(9.0 - 1 / math.sqrt(0.05))
+    missing = w.t_identity([_value("s", "a", 1.0, se=None)], 0.1)
+    assert (missing.passed, missing.details["missing"]) == (False, 1)
+
+
+def test_stored_values_reads_one_perturbation_per_record() -> None:
+    record = {
+        "experiment": {
+            "phenotype": {
+                "screen_id": "Keio:set1IT007",
+                "environment_response": -1.0,
+                "environment_response_se": 0.2,
+                "environment_response_t_statistic": -4.47,
+                "source_withdrawal": {"reason": "problematic_stock_solution"},
+            },
+            "genotype": {"perturbations": [{"systematic_gene_name": "BW25113_0001"}]},
+        }
+    }
+    (value,) = w.stored_values([record])
+    assert value == w.StoredValue(
+        sample="set1IT007",
+        tag="BW25113_0001",
+        value=-1.0,
+        standard_error=0.2,
+        t_statistic=-4.47,
+        withdrawal="problematic_stock_solution",
+    )
+    # a compendium record written before the t field existed reads None for it
+    old = json.loads(json.dumps(record))
+    del old["experiment"]["phenotype"]["environment_response_t_statistic"]
+    del old["experiment"]["phenotype"]["source_withdrawal"]
+    assert w.stored_values([old])[0].t_statistic is None
+    two = json.loads(json.dumps(record))
+    two["experiment"]["genotype"]["perturbations"] *= 2
+    with pytest.raises(ValueError, match="expected one perturbation, got 2"):
+        w.stored_values([two])
+
+
+def test_stored_tags_are_loci_accepts_genes_and_self_resolving_pseudogenes() -> None:
+    def resolve(tag: str) -> GeneNameResolution:
+        status = {
+            "BW25113_0001": GeneNameStatus.CURRENT,
+            "BW25113_0004": GeneNameStatus.NON_GENE_FEATURE,
+        }.get(tag, GeneNameStatus.RETIRED)
+        return GeneNameResolution(input_name=tag, status=status, systematic_name=tag)
+
+    ok = w.stored_tags_are_loci(["BW25113_0004", "BW25113_0001"], resolve)
+    assert (ok.passed, ok.details["statuses"]) == (
+        True,
+        {"non_gene_feature": 1, "current": 1},
+    )
+    bad = w.stored_tags_are_loci(["BW25113_9999"], resolve)
+    assert (bad.passed, bad.details["not_a_locus"]) == (False, ["BW25113_9999"])
+
+
+def test_xlsx_text_joins_cells_and_rows(tmp_path: Path) -> None:
+    path = tmp_path / "book.xlsx"
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    assert sheet is not None
+    sheet.append(["a", None, "b"])
+    sheet.append([None, None])
+    sheet.append([1, 2.5])
+    workbook.create_sheet("second").append(["c"])
+    workbook.save(path)
+    assert w.xlsx_text(str(path)) == "a | b / 1 | 2.5\nc"
+
+
+def test_loader_source_path_checks_the_pin_of_each_mirror(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[tuple[str, ...]] = []
+
+    def library(key: str, rel: str, pin: str, root: str | None = None) -> Path:
+        calls.append(("library", key, rel, pin, str(root)))
+        return Path("/library") / rel
+
+    def raw(rel: str, root: str | None = None) -> Path:
+        calls.append(("raw", rel, str(root)))
+        return Path("/raw") / rel
+
+    monkeypatch.setattr(w, "library_path", library)
+    monkeypatch.setattr(w, "raw_path", raw)
+    assert w.loader_source_path("si1.xlsx", "/dr") == Path("/library/si/si1.xlsx")
+    assert w.loader_source_path("fit_t.tab", "/dr") == Path(
+        "/raw/data/rbarseq/html/Keio/fit_t.tab"
+    )
+    assert calls == [
+        ("library", w.CITATION_KEY, w.DATA_SET_S1, w.DATA_SET_S1_SHA256, "/dr"),
+        ("raw", w.RELEASE_T, "/dr"),
+    ]
+
+
+def test_inventory_closes_over_every_released_value() -> None:
+    specs = _specs()
+    identifiers = w.IdentifierReport(
+        n_source_genes=7,
+        n_mapped=4,
+        mapped_fraction=4 / 7,
+        min_fraction=0.5,
+        numeric_disagreements=(),
+        unmapped=tuple(
+            w.UnmappedGene(b_number=b, reason="eck_not_one_to_one", eck=())
+            for b in ("b0005", "b0006", "b0099")
+        ),
+        unmapped_by_reason={"eck_not_one_to_one": 3},
+        reconcile_status_histogram={},
+        reconcile_layer_histogram={},
+        n_symbol_names=3,
+        n_tag_names=1,
+    )
+    counts = w.inventory(specs, identifiers)
+    assert (
+        counts.condition_samples,
+        counts.successful,
+        counts.stored_samples,
+        counts.source_records,
+        counts.good_table_records,
+        counts.stored_records,
+        counts.flagged_records,
+    ) == (7, 6, 5, 49, 42, 20, 4)
+    assert counts.stored_samples_by_group == {
+        "carbon source": 3,
+        "nitrogen source": 1,
+        "LB": 1,
+    }
+    assert [f.name for f in counts.failed] == ["set1IT030"]
+    assert counts.failed[0].failed_rules == ("g_med_min",)
+    dropped = sum(r.n_records for r in counts.rules if not r.kept)
+    assert counts.stored_records + dropped == counts.source_records
+    assert counts.unidentified_compounds == {"casamino acids": 1}
+
+
+def test_the_command_line_dispatches_each_command(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    monkeypatch.setattr(w, "retrieve_raw_files", lambda dest: f"retrieved {dest}")
+    monkeypatch.setattr(
+        w, "deposit_raw_mirror", lambda source_dir: f"deposited {source_dir}"
+    )
+    monkeypatch.setattr(w, "report", lambda: {"n": 1})
+    verified: list[tuple[str, str]] = []
+
+    def verify(root: str, *, data_root: str) -> SimpleNamespace:
+        verified.append((root, data_root))
+        return SimpleNamespace(summary=lambda: "verified")
+
+    monkeypatch.setattr(w, "verify_build", verify)
+    monkeypatch.setenv("DATA_ROOT", "/dr")
+    w.main(["retrieve", "--dest", "/x"])
+    w.main(["deposit", "--source-dir", "/y"])
+    w.main(["report"])
+    w.main(["verify"])
+    assert capsys.readouterr().out.splitlines() == [
+        "retrieved /x",
+        "deposited /y",
+        "{",
+        '  "n": 1',
+        "}",
+        "verified",
+    ]
+    assert verified == [(f"/dr/{w.DATASET_ROOT_REL}", "/dr")]
+
+
+def test_comparison_summary_names_the_worst_sample_and_the_bar() -> None:
+    comparison = w.ReleaseComparison(
+        n_source_genes=3,
+        n_superset_genes=4,
+        n_source_genes_in_superset=3,
+        agreements=(
+            w.ExperimentAgreement(
+                name="s1", n_genes=3, pearson_r=0.99, max_abs_difference=0.4
+            ),
+            w.ExperimentAgreement(
+                name="s2", n_genes=3, pearson_r=0.8, max_abs_difference=1.2
+            ),
+        ),
+    )
+    assert w._comparison_summary(comparison) == {
+        "n_source_genes": 3,
+        "n_superset_genes": 4,
+        "n_source_genes_in_superset": 3,
+        "n_shared_samples": 2,
+        "min_pearson_r": 0.8,
+        "median_pearson_r": pytest.approx(0.895),
+        "max_abs_difference": 1.2,
+        "max_abs_difference_sample": "s2",
+        "samples_below_replicate_bar": ["s2"],
+    }
+
+
+# --------------------------------------------------------------------------- #
+# The loader on the real mirrors (--data)
+# --------------------------------------------------------------------------- #
+@pytest.mark.data
+@pytest.mark.skipif(
+    not (MIRRORS_PRESENT and TIER_PRESENT),
+    reason="requires the mirrors and the built K-12 data.db caches",
+)
+def test_the_loader_inventory_off_the_deposited_bytes() -> None:
+    counts, identifiers = w.loader_inventory()
+    assert (
+        counts.condition_samples,
+        counts.successful,
+        counts.stored_samples,
+        counts.source_genes,
+        counts.stored_genes,
+        counts.stored_records,
+    ) == (101, 92, 88, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    assert counts.stored_samples == w.EXPECTED_SAMPLES
+    assert counts.quality_rules_reproduce_u is True
+    assert [f.name for f in counts.failed] == [
+        "set1IT030",
+        "set1IT033",
+        "set1IT034",
+        "set2IT024",
+        "set2IT034",
+        "set2IT045",
+        "set2IT055",
+        "set2IT079",
+        "set2IT090",
+    ]
+    assert counts.withdrawn_flagged == w.EXPECTED_WITHDRAWN
+    assert counts.stored_samples_by_group == {
+        "carbon source": 61,
+        "nitrogen source": 26,
+        "LB": 1,
+    }
+    dropped = sum(r.n_records for r in counts.rules if not r.kept)
+    assert counts.stored_records + dropped == counts.source_records == 101 * 3646
+    assert identifiers.unmapped_by_reason == {
+        "b_number_not_in_mg1655_annotation": 7,
+        "eck_absent_from_bw25113": 6,
+        "eck_not_one_to_one": 5,
+    }
+    assert len(counts.unidentified_compounds) == 30
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not MIRRORS_PRESENT, reason="requires the mirrors")
+def test_all_92_shared_samples_agree_with_the_compendium_release() -> None:
+    summary = w._comparison_summary(w.all_sample_comparison())
+    assert summary["n_shared_samples"] == 92
+    assert summary["samples_below_replicate_bar"] == []
+    assert summary["min_pearson_r"] == pytest.approx(0.98895, abs=1e-5)
+    assert summary["max_abs_difference"] == pytest.approx(2.5725, abs=1e-4)
+    assert summary["max_abs_difference_sample"] == "set1IT028"
+
+
+DEV_STORE = osp.join(DATA_ROOT, w.DATASET_ROOT_REL, "processed", "lmdb")
+
+
+@pytest.mark.data
+@pytest.mark.skipif(not osp.isdir(DEV_STORE), reason="requires the dev LMDB")
+def test_the_dev_build_holds_every_expected_record_and_its_report_passes() -> None:
+    environment = lmdb.open(DEV_STORE, readonly=True, lock=False)
+    try:
+        assert environment.stat()["entries"] == w.EXPECTED_RECORDS
+    finally:
+        environment.close()
+    report = json.loads(
+        Path(DEV_STORE)
+        .parents[1]
+        .joinpath("preprocess", "verification_report.json")
+        .read_text()
+    )
+    assert {r["name"]: r["passed"] for r in report["results"] if not r["passed"]} == {}

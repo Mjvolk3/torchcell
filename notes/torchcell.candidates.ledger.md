@@ -41,7 +41,7 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | messnerUltrafastProteomicsScanning2021 | yeast | Messner 2021 (Scanning SWATH yeast drug-response proteomes) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
 | muenznerNaturalProteomeDiversity2024 | yeast | Muenzner 2024 (natural-isolate proteome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `0e904e95a` |
 | odonnellTelomeretotelomereAssemblies1422023 | yeast | O'Donnell 2023 (telomere-to-telomere assemblies of 142 strains) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
-| parsonsExploringModeofActionBioactive2006 | yeast | Parsons 2006 (bioactive-compound profiling) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `93f986695` |
+| parsonsExploringModeofActionBioactive2006 | yeast | Parsons 2006 (bioactive-compound profiling) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `1a4a9381a` |
 | peterGenomeEvolution10112018 | yeast | Peter 2018 (1,011 isolate genomes + phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `d88f3865c` |
 | piotrowskiFunctionalAnnotationChemical2017 | yeast | Piotrowski 2017 (MOSAIC diagnostic panel) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
 | sheMappingCausalVariants2018 | yeast | She 2018 (natural variant effects across a large isolate panel) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |

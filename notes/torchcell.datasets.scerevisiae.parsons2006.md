@@ -8,7 +8,7 @@ created: 1791746748302
 
 ## 2026.10.11 - Loaded: the chemical-genetic compendium from its own Table S7
 
-Yeast Zotero audit rank 2 ([[database.yeast-zotero-collection-audit.2026.10.11]], schedule row 60, Zotero `3PRLBH7Y`). Parsons et al. 2006, Cell 126:611 (doi 10.1016/j.cell.2006.06.040, PMID 16901791) screened the pooled MATa haploid deletion collection, read out by its barcodes on Agilent arrays, against 82 conditions (75 compounds, 7 crude extracts). Loader `torchcell/datasets/scerevisiae/parsons2006.py`, class `EnvChemgenParsons2006Dataset`, store `$DATA_ROOT/data/torchcell/env_chemgen_parsons2006/` (built at `93f986695`, clean tree).
+Yeast Zotero audit rank 2 ([[database.yeast-zotero-collection-audit.2026.10.11]], schedule row 60, Zotero `3PRLBH7Y`). Parsons et al. 2006, Cell 126:611 (doi 10.1016/j.cell.2006.06.040, PMID 16901791) screened the pooled MATa haploid deletion collection, read out by its barcodes on Agilent arrays, against 82 conditions (75 compounds, 7 crude extracts). Loader `torchcell/datasets/scerevisiae/parsons2006.py`, class `EnvChemgenParsons2006Dataset`, store `$DATA_ROOT/data/torchcell/env_chemgen_parsons2006/` (built at `1a4a9381a`, clean tree).
 
 ### Records (measured from the built store)
 
@@ -92,4 +92,4 @@ Each was deposited from the literature mirror's bytes (`si/si2.xls`, `si3`, `si5
 
 `scripts/schema_impact_check.py --base origin/main`: "No schema contract changes vs origin/main." The compound-table rows are not in the schema closure; they add keys only (the diff above).
 
-Candidate gate: `python -m torchcell.candidates gate --citation-key parsonsExploringModeofActionBioactive2006 --table yeast --phenotype-class EnvironmentResponsePhenotype --write` at `93f986695`: G1 to G5 pass, outcome admissible (G3 now reads library + raw, 27 files); the audit's evidence quotes were kept. `candidates audit`: ok 79. The G4-value overlap of the release against this store's own records (291,457 cells, every column matched at max abs diff 0) reads as "subsumed" by design, so it is not folded into the verdict.
+Candidate gate: `python -m torchcell.candidates gate --citation-key parsonsExploringModeofActionBioactive2006 --table yeast --phenotype-class EnvironmentResponsePhenotype --write` at `1a4a9381a`: G1 to G5 pass, outcome admissible (G3 now reads library + raw, 27 files); the audit's evidence quotes were kept. `candidates audit`: ok 79. The G4-value overlap of the release against this store's own records (291,457 cells, every column matched at max abs diff 0) reads as "subsumed" by design, so it is not folded into the verdict.

@@ -10,7 +10,7 @@ created: 1791746756253
 
 Issue #1000: yp-data v1.0 curates Parsons 2006 (PMID 16901791) from the same Table S7 [[torchcell.datasets.scerevisiae.parsons2006]] reads. The script reads both sides read-only and writes `experiments/database/results/parsons2006_yeastphenome_crosscheck.json`. The two yp-data files are fetched by hand at commit `83e2917b` (the curl recipe is in the docstring) and verified against the sha256 pins in the script.
 
-Measured on the clean dev store (build commit `93f986695`, 291,673 records):
+Measured on the clean dev store (build commit `1a4a9381a`, 291,673 records):
 
 | comparison | joined cells | Pearson | Spearman | exact negations |
 |---|---|---|---|---|

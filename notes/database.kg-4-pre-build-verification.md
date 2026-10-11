@@ -348,7 +348,7 @@ The 16 rows of the sweep table (`--table`):
 
 ## 2026.10.11 - SGD essentiality and SynLethDB re-verified after their loader fixes (#901, #902, #903)
 
-The three stores were rebuilt on branch `fix/sgd-synlethdb-findings` and re-swept (`kg4_pre_build_verification_sweep.py --dataset <Class>`, rows merged into `results/kg4_pre_build_verification_sweep.json` with `--merge`): **135 mapped, 122 PASS, 13 FAIL**.
+The three stores were rebuilt on branch `fix/sgd-synlethdb-findings` and re-swept (`kg4_pre_build_verification_sweep.py --dataset <Class>`, rows merged into `results/kg4_pre_build_verification_sweep.json` with `--merge`): the results file now reads **135 rows, 122 PASS, 13 FAIL** (137 are mapped now; `GeneEssentialityBaba2006Dataset` and `GeneEssentialityGerdes2003Dataset`, mapped since the sweep, have no row yet).
 
 | Store | Records | Before | After |
 |---|---:|---|---|
@@ -356,7 +356,7 @@ The three stores were rebuilt on branch `fix/sgd-synlethdb-findings` and re-swep
 | `syn_leth_db_yeast` | 13,996 | FAIL: media_membership | PASS |
 | `syn_rescue_db_yeast` | 6,942 | FAIL: score_defined_by_source, media_membership | PASS |
 
-What changed is in [[torchcell.datasets.scerevisiae.sgd]], [[torchcell.datasets.scerevisiae.synth_leth_db]] and [[torchcell.datamodels.schema]] (`Environment.media` optional only beside a typed gap). That schema change puts every other mapped store's closure out of date: on the branch, `build_dataset_lmdb --list-stale --include-private` names 132 of the 135, all but these three, so the full dev-store rebuild before KG 4.0 includes them.
+What changed is in [[torchcell.datasets.scerevisiae.sgd]], [[torchcell.datasets.scerevisiae.synth_leth_db]] and [[torchcell.datamodels.schema]] (`Environment.media` optional only beside a typed gap). That schema change puts every other mapped store's closure out of date: on the branch, 132 of the 137 mapped stores read stale (the three rebuilt here read fresh; `dmi_kuzmin2020` and `tmi_kuzmin2020` have no manifest), so the full dev-store rebuild before KG 4.0 includes them.
 
 ## 2026.10.12 - Running the preflight for one organism set
 

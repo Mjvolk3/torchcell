@@ -63,7 +63,6 @@ class CuratedRow(BaseModel):
 SECTIONS = [
     "Fitness + genetic interaction",
     "Environmental / chemogenomic",
-    "Viability",
     "Morphology",
     "Expression (microarray)",
     "Expression (RNA-seq)",
@@ -99,9 +98,6 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Environmental / chemogenomic", name="Lian 2019 (MAGIC CRISPR-AID)", genotypes="266,415", env="3", phenotype="furfural tolerance fitness (log2-ratio)", data_subpath="data/torchcell/crispr_magic_lian2019"),
     CuratedRow(section="Environmental / chemogenomic", name="Mormino 2022 (CRISPRi acetic-acid)", genotypes="12", env="1", phenotype="acetic-acid sensitivity (categorical)", data_subpath="data/torchcell/crispri_mormino2022"),
     CuratedRow(section="Environmental / chemogenomic", name="Smith 2016 (CRISPRi chem-genetic)", genotypes="1,035", env="8", phenotype="chemogenomic fitness (log2-ratio)", data_subpath="data/torchcell/crispri_chemgen_smith2016"),
-    CuratedRow(section="Viability", name="SGD (essentiality)", genotypes="1,329", env="1", phenotype="gene essentiality", data_subpath="data/torchcell/gene_essentiality_sgd"),
-    CuratedRow(section="Viability", name="SynLethDB (lethal)", genotypes="14,000", env="1", phenotype="synthetic lethality", data_subpath="data/torchcell/synth_lethality_yeast_synth_leth_db"),
-    CuratedRow(section="Viability", name="SynLethDB (rescue)", genotypes="6,948", env="1", phenotype="synthetic rescue", data_subpath="data/torchcell/synth_rescue_yeast_synth_leth_db"),
     CuratedRow(section="Morphology", name="Ohya 2005 (SCMD CalMorph)", genotypes="4,718", env="1", phenotype="cell morphology (CalMorph)", data_subpath="database/data/torchcell/scmd_ohya2005"),
     CuratedRow(section="Morphology", name="Ohnuki 2018 (SCMD CalMorph)", genotypes="1,112", env="1", phenotype="cell morphology (CalMorph)", data_subpath="data/torchcell/scmd_ohnuki2018"),
     CuratedRow(section="Morphology", name="Ohnuki 2022 (SCMD CalMorph)", genotypes="1,979", env="1", phenotype="cell morphology (CalMorph)", data_subpath="data/torchcell/scmd_ohnuki2022"),
@@ -123,6 +119,19 @@ CURATED: list[CuratedRow] = [
     CuratedRow(section="Metabolite", name="Xue 2025 (free fatty acids, private)", genotypes="176", env="1", phenotype="free-fatty-acid titer", data_subpath="data/torchcell/ffa_xue2025"),
     CuratedRow(section="Metabolite", name="Lopez 2024 (isobutanol screen, private)", genotypes="4,554", env="1", phenotype="isobutanol biosensor fold-change", data_subpath="data/torchcell/isobutanol_screen_lopez2024"),
     CuratedRow(section="Metabolite", name="Lopez 2024 (isobutanol validated, private)", genotypes="224", env="1", phenotype="isobutanol biosensor fold-change (validated)", data_subpath="data/torchcell/isobutanol_validated_lopez2024"),
+]
+
+#: Rows removed on 2026-10-11, when their sources were settled as provenance records:
+#: ``Environment.media`` is required (owner decision) and none of these three sources
+#: states a growth medium, so each produces 0 storable records
+#: (torchcell/datasets/scerevisiae/{sgd,synth_leth_db}.py). They emptied the whole
+#: "Viability" section, which is why it left SECTIONS. Kept verbatim so restoring them
+#: is one move if the owner decides otherwise, and excluded from CURATED so a render
+#: cannot list a dataset the graph does not hold.
+UNSERVED_SINCE_2026_10_11: list[CuratedRow] = [
+    CuratedRow(section="Viability", name="SGD (essentiality)", genotypes="1,329", env="1", phenotype="gene essentiality", data_subpath="data/torchcell/gene_essentiality_sgd"),
+    CuratedRow(section="Viability", name="SynLethDB (lethal)", genotypes="14,000", env="1", phenotype="synthetic lethality", data_subpath="data/torchcell/synth_lethality_yeast_synth_leth_db"),
+    CuratedRow(section="Viability", name="SynLethDB (rescue)", genotypes="6,948", env="1", phenotype="synthetic rescue", data_subpath="data/torchcell/synth_rescue_yeast_synth_leth_db"),
 ]
 
 # Datasets in scope but not yet built (no LMDB) -> no signal.

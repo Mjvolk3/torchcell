@@ -53,11 +53,13 @@ of them exact duplicates of a sibling record across 9 (gene, PubMed id) keys
 the genes SGD calls inviable have a viable full-deletion single-mutant fitness in
 ``SmfCostanzo2016Dataset`` (4,581 viable full deletions). Keeping only whole-gene
 deletion alleles removes one (YNL031C, three ``hht2`` point alleles), and of the
-remaining 23, 16 are conditional, 15 of them under nitrogen starvation and all 15
-autophagy genes (``ATG1``, ``ATG3``, ``ATG7``-``ATG18``), which are viable in rich
-medium and inviable without nitrogen. 7 disagreements are unconditional
-(:data:`UNCONDITIONAL_DISAGREEMENTS`) and remain unexplained. A store that discarded the
-condition could not tell the two groups apart.
+remaining 23, **all 16 conditional ones are annotated under nitrogen starvation**
+(:data:`CONDITIONAL_DISAGREEMENTS`; 14 of the 16 loci are ATG-named, the other two SAC1
+and VPS30), and SGD's own note on those annotations reads "essential for autophagy;
+inviable after 3 day nitrogen starvation followed by transfer to rich media plates".
+The remaining 7 disagreements are unconditional (:data:`UNCONDITIONAL_DISAGREEMENTS`)
+and remain unexplained. A store that discarded the condition could not tell the two
+groups apart.
 
 Script and committed results:
 ``experiments/036-dataset-fixes-before-kg-build/scripts/sgd_synlethdb_findings.py``,
@@ -151,8 +153,9 @@ UNCONDITIONAL_DISAGREEMENTS: Final[tuple[str, ...]] = (
     "YOR182C",
 )
 
-#: The 16 genes whose disagreement IS explained by the annotation's condition, 15 of
-#: them autophagy genes measured under nitrogen starvation.
+#: The 16 genes whose disagreement IS explained by the annotation's condition. All 16
+#: are annotated under nitrogen starvation; 14 of the loci are ATG-named, the other two
+#: are SAC1 and VPS30.
 CONDITIONAL_DISAGREEMENTS: Final[tuple[str, ...]] = (
     "YBL078C",
     "YBR128C",

@@ -851,6 +851,7 @@
       "smiles": "CC1CCC(C(C1)O)C(C)C",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/16666/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
+        "(1R, 2S, 5R) - ( - ) - Menthol",
         "CID 16666"
       ],
       "unresolved_reason": null
@@ -7560,6 +7561,21 @@
     },
     {
       "chebi_id": null,
+      "inchikey": "PPQJCISYYXZCAE-UHFFFAOYSA-N",
+      "name": "1,10-phenanthroline hydrate",
+      "pubchem_cid": 21226,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1=CC2=C(C3=C(C=CC=N3)C=C2)N=C1.O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/21226/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "1-10 Phenanthroline monohydrate"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
       "inchikey": "QPXDKQBBJCTNOY-UHFFFAOYSA-N",
       "name": "1,10-phenanthroline hydrochloride",
       "pubchem_cid": 73350,
@@ -10027,6 +10043,21 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2735263/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 2735263"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:90690",
+      "inchikey": "LUFAORPFSVMJIW-ZRJUGLEFSA-N",
+      "name": "1-(6-(((17beta)-3-methoxyestra-1,3,5(10)-trien-17-yl)amino)hexyl)-1h-pyrrole-2,5-dione",
+      "pubchem_cid": 104794,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC12CCC3C(C1CCC2NCCCCCCN4C(=O)C=CC4=O)CCC5=C3C=CC(=C5)OC",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/104794/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "U-73122"
       ],
       "unresolved_reason": null
     },
@@ -15949,7 +15980,8 @@
       "smiles": "C1COCCN1C2=CC(=O)C3=C(O2)C(=CC=C3)C4=CC=CC=C4",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/3973/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
-        "CID 3973"
+        "CID 3973",
+        "LY 294002 hydrochloride"
       ],
       "unresolved_reason": null
     },
@@ -18502,6 +18534,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:50098",
+      "inchikey": "GBHCABUWWQUMAJ-UHFFFAOYSA-N",
+      "name": "2-hydrazinoethanol",
+      "pubchem_cid": 8017,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C(CO)NN",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/8017/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "2-Hydroxyethilhidrazine"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:44401",
       "inchikey": "WVCHIGAIXREVNS-UHFFFAOYSA-N",
       "name": "2-hydroxy-1,4-naphthoquinone",
@@ -19354,6 +19401,21 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/135419190/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 135419190"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:229941",
+      "inchikey": "NDNUANOUGZGEPO-UHFFFAOYSA-N",
+      "name": "2-propylpiperidine",
+      "pubchem_cid": 9985,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCCC1CCCCN1",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/9985/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "( +/- ) Coniine"
       ],
       "unresolved_reason": null
     },
@@ -27411,6 +27473,19 @@
       "synonyms": [
         "CID 96009"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:44616",
+      "inchikey": "TXUZVZSFRXZGTL-QPLCGJKRSA-N",
+      "name": "4-hydroxytamoxifen",
+      "pubchem_cid": 449459,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCC(=C(C1=CC=C(C=C1)O)C2=CC=C(C=C2)OCCN(C)C)C3=CC=CC=C3",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/449459/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -36132,6 +36207,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:28987",
+      "inchikey": "RSWGJHLUYNHPMX-ONCXSQPRSA-N",
+      "name": "abietic acid",
+      "pubchem_cid": 10569,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(C)C1=CC2=CCC3C(C2CC1)(CCCC3(C)C(=O)O)C",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/10569/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "( - )-Abietic acid"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:93824",
       "inchikey": "CZCIKBSVHDNIDH-UHFFFAOYSA-N",
       "name": "abrine (l)",
@@ -37199,6 +37289,19 @@
     },
     {
       "chebi_id": null,
+      "inchikey": null,
+      "name": "alamethicin",
+      "pubchem_cid": 76958618,
+      "resolution_status": "RESOLVED_MIXTURE",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": null,
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/76958618/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": "Table S1 footnote: \"A mixture of alamethicin analogs\"; CID 76958618 is the PubChem compound CAS 27061-78-5 resolves to, kept as the substance identifier with no single-molecule InChIKey"
+    },
+    {
+      "chebi_id": null,
       "inchikey": "YGPSJZOEDVAXAB-UHFFFAOYSA-N",
       "name": "alanine, 3-anthraniloyl-, dl-",
       "pubchem_cid": 846,
@@ -37972,6 +38075,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:2619",
+      "inchikey": "WOLHOYHSEKDWQH-UHFFFAOYSA-N",
+      "name": "amantadine hydrochloride",
+      "pubchem_cid": 64150,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1C2CC3CC1CC(C2)(C3)N.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/64150/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:48565",
       "inchikey": "BLGXFZZNTVWLAY-UHFFFAOYSA-N",
       "name": "amberlite cg 400",
@@ -38133,6 +38249,19 @@
       "synonyms": [
         "CID 2157"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:2664",
+      "inchikey": "ITPDYQOUSLNIHG-UHFFFAOYSA-N",
+      "name": "amiodarone hydrochloride",
+      "pubchem_cid": 441325,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCCCC1=C(C2=CC=CC=C2O1)C(=O)C3=CC(=C(C(=C3)I)OCCN(CC)CC)I.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/441325/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -39375,6 +39504,7 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5702198/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 5702198",
+        "cis-diamminedichloroplatinum (II) Cisplatin",
         "cisplatin"
       ],
       "unresolved_reason": null
@@ -39588,6 +39718,21 @@
       "synonyms": [
         "Aureobasidin-A",
         "aureobasidin A"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:204237",
+      "inchikey": "QAHZDGAHECEVRM-HXKCHMFGSA-N",
+      "name": "basiliskamide a",
+      "pubchem_cid": 643667,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCC(C)C(C(C)C(CC=CC=CC(=O)N)O)OC(=O)C=CC1=CC=CC=C1",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/basiliskamide%20A/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Basiliskamide"
       ],
       "unresolved_reason": null
     },
@@ -40854,6 +40999,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "SMNPLAKEGAEPJD-UHFFFAOYSA-N",
+      "name": "bisbenzimidazole trihydrochloride",
+      "pubchem_cid": 31953,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CN1CCN(CC1)C2=CC3=C(C=C2)N=C(N3)C4=CC5=C(C=C4)N=C(N5)C6=CC=C(C=C6)O.Cl.Cl.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/31953/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Hoechst 33258"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:3127",
       "inchikey": "VHYCDWMUTMEGQY-UHFFFAOYSA-N",
       "name": "bisoprolol",
@@ -41797,7 +41957,8 @@
       "smiles": "CC1CCC2(C(CC(C(O2)C(C)C(=O)C3=CC=CN3)C)C)OC1CC4=NC5=C(O4)C=CC(=C5C(=O)O)NC",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/11957499/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
-        "CID 11957499"
+        "CID 11957499",
+        "Calcium ionophore A23187"
       ],
       "unresolved_reason": null
     },
@@ -41909,6 +42070,7 @@
       "smiles": "CCC1(C2=C(COC1=O)C(=O)N3CC4=CC5=CC=CC=C5N=C4C3=C2)O",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/24360/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
+        "(S)-(+)-Camptothecin",
         "CID 24360"
       ],
       "unresolved_reason": null
@@ -43473,6 +43635,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:3649",
+      "inchikey": "FBSMERQALIEGJT-UHFFFAOYSA-N",
+      "name": "chlorpromazine hydrochloride",
+      "pubchem_cid": 6240,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CN(C)CCCN1C2=CC=CC=C2SC3=C1C=C(C=C3)Cl.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/6240/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:3650",
       "inchikey": "RKWGIWYCVPQPMF-UHFFFAOYSA-N",
       "name": "chlorpropamide",
@@ -44602,6 +44777,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:3753",
+      "inchikey": "PYTMYKVIJXPNBD-UHFFFAOYSA-N",
+      "name": "Clomiphene citrate",
+      "pubchem_cid": 60974,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCN(CC)CCOC1=CC=C(C=C1)C(=C(C2=CC=CC=C2)Cl)C3=CC=CC=C3.C(C(=O)O)C(CC(=O)O)(C(=O)O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/60974/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:47780",
       "inchikey": "GDLIGKIOYRNHDA-UHFFFAOYSA-N",
       "name": "clomipramine",
@@ -45473,6 +45661,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:38615",
+      "inchikey": "SZINUGQCTHLQAZ-DQYPLSBCSA-N",
+      "name": "cyclopiazonic acid",
+      "pubchem_cid": 54682463,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(=O)C1=C(C2C3C(CC4=C5C3=CNC5=CC=C4)C(N2C1=O)(C)C)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/54682463/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:40009",
       "inchikey": "DYDCUQKUCUHJBH-UWTATZPHSA-N",
       "name": "cycloserine",
@@ -45695,6 +45896,19 @@
       "synonyms": [
         "CID 2725694"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:144392",
+      "inchikey": "ZMAODHOXRBLOQO-TZVKRXPSSA-N",
+      "name": "cytochalasin a",
+      "pubchem_cid": 5458383,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1CCCC(=O)C=CC(=O)OC23C(C=CC1)C(C(=C)C(C2C(NC3=O)CC4=CC=CC=C4)C)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5458383/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -46563,6 +46777,19 @@
       "synonyms": [
         "CID 2995"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:4449",
+      "inchikey": "XAEWZDYWZHIUCT-UHFFFAOYSA-N",
+      "name": "desipramine hydrochloride",
+      "pubchem_cid": 65327,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CNCCCN1C2=CC=CC=C2CCC3=CC=CC=C31.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/65327/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -48789,6 +49016,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "DWBSXBGBGHKWOT-WBYAVNBMSA-N",
+      "name": "doxycycline hyclate",
+      "pubchem_cid": 54705095,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCO.CC1C2C(C3C(C(=O)C(=C(C3(C(=O)C2=C(C4=C1C=CC=C4O)O)O)O)C(=O)N)N(C)C)O.O.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/54705095/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:51380",
       "inchikey": "HCFDWZZGGLSKEP-UHFFFAOYSA-N",
       "name": "doxylamine",
@@ -48934,6 +49174,19 @@
       "synonyms": [
         "CID 3180"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:4725",
+      "inchikey": "KNZADIMHVBBPOA-UHFFFAOYSA-N",
+      "name": "dyclonine hydrochloride",
+      "pubchem_cid": 68304,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCCCOC1=CC=C(C=C1)C(=O)CCN2CCCCC2.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/68304/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -49201,6 +49454,21 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/10219/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 10219"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "HUEYSSLYFJVUIS-MRFSYGAJSA-N",
+      "name": "emetine hydrochloride",
+      "pubchem_cid": 6603320,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCC1CN2CCC3=CC(=C(C=C3C2CC1CC4C5=CC(=C(C=C5CCN4)OC)OC)OC)OC.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/6603320/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Emetine dihydrochloride hydrate"
       ],
       "unresolved_reason": null
     },
@@ -53950,6 +54218,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:228876",
+      "inchikey": "VNPLYCKZIUTKJM-UHFFFAOYSA-N",
+      "name": "harmine hydrochloride",
+      "pubchem_cid": 5359389,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1=NC=CC2=C1NC3=C2C=CC(=C3)OC.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5359389/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": null,
       "inchikey": "LBBJNGFCXDOYMQ-UHFFFAOYSA-N",
       "name": "harmol",
@@ -54719,6 +55000,19 @@
       "retrieved_at": "2026-09-12",
       "smiles": "CC(=CC1=CC(=C(C=C1)OC2C(C(C(O2)C(=O)C)O)O)O)C(=O)NC3C(C(C4C(C3O)OCO4)O)O",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/hygromycin/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:16976",
+      "inchikey": "GRRNUXAQVGOGFE-HUCHGKBZSA-N",
+      "name": "hygromycin b",
+      "pubchem_cid": 56928061,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CNC1CC(C(C(C1O)OC2C3C(C(C(O2)CO)O)OC4(O3)C(C(C(C(O4)C(CO)N)O)O)O)O)N",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/56928061/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [],
       "unresolved_reason": null
     },
@@ -56683,6 +56977,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "CVHKULVNPGAEQM-WCCKRBBISA-N",
+      "name": "l-cysteine, s-(2-aminoethyl)-, hydrochloride",
+      "pubchem_cid": 16218879,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C(CSCC(C(=O)O)N)N.Cl",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/16218879/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Thialysine"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:16345",
       "inchikey": "ADVPTQAUNPRNPO-REOHCLBHSA-N",
       "name": "l-cysteinesulfinic acid",
@@ -57122,6 +57431,19 @@
       "source_url": null,
       "synonyms": [],
       "unresolved_reason": "genus name that does not pick a congener (A or B)"
+    },
+    {
+      "chebi_id": "CHEBI:49703",
+      "inchikey": "NSHPHXHGRHSMIK-JRIKCGFMSA-N",
+      "name": "latrunculin b",
+      "pubchem_cid": 6436219,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1CCC2CC(CC(O2)(C3CSC(=O)N3)O)OC(=O)C=C(CCC=C1)C",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/6436219/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
     },
     {
       "chebi_id": "CHEBI:92030",
@@ -60626,7 +60948,8 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/4156/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 4156",
-        "MMS"
+        "MMS",
+        "Methanesulfonic acid methyl ester (MMS)"
       ],
       "unresolved_reason": null
     },
@@ -67027,7 +67350,9 @@
       "retrieved_at": "2026-09-12",
       "smiles": "C1C(C(C(C(C1N)OC2C(C(C(C(O2)CN)O)O)N)OC3C(C(C(O3)CO)OC4C(C(C(C(O4)CN)O)O)N)O)O)N.OS(=O)(=O)O",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/neomycin%20sulfate/property/Title,InChIKey,ConnectivitySMILES/JSON",
-      "synonyms": [],
+      "synonyms": [
+        "Neomycin B trisulfate salt hydrate"
+      ],
       "unresolved_reason": null
     },
     {
@@ -67293,6 +67618,21 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5390108/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "CID 5390108"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "MOYOTUKECQMGHE-PDEFJWSRSA-M",
+      "name": "nigericin sodium",
+      "pubchem_cid": 16760591,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1CCC(OC1C(C)C(=O)[O-])CC2CC(C(C3(O2)C(CC(O3)(C)C4CCC(O4)(C)C5C(CC(O5)C6C(CC(C(O6)(CO)O)C)C)C)C)C)OC.[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/16760591/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Nigericin"
       ],
       "unresolved_reason": null
     },
@@ -68035,6 +68375,7 @@
       "smiles": "CC1C=CC=CCCC=CC=CC=CC=CC(CC2C(C(CC(O2)(CC(C(CCC(CC(CC(CC(=O)OC(C(C1O)C)C)O)O)O)O)O)O)O)C(=O)O)OC3C(C(C(C(O3)C)O)N)O",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/nystatin/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
+        "Nystatin dihydrate",
         "nystatin"
       ],
       "unresolved_reason": null
@@ -68394,6 +68735,19 @@
         "CID 5283454"
       ],
       "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:84314",
+      "inchikey": null,
+      "name": "Oligomycin",
+      "pubchem_cid": null,
+      "resolution_status": "RESOLVED_MIXTURE",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": null,
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Oligomycin/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": "Table S1 footnote: \"A mixture of oligomycins A, B and C\"; CAS 1404-19-9 has no PubChem compound, so the identity is the ChEBI mixture class"
     },
     {
       "chebi_id": null,
@@ -69520,6 +69874,19 @@
       "synonyms": [
         "CID 4735"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:7977",
+      "inchikey": "YBVNFKZSMZGRAD-UHFFFAOYSA-N",
+      "name": "pentamidine isethionate",
+      "pubchem_cid": 8813,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1=CC(=CC=C1C(=N)N)OCCCCCOC2=CC=C(C=C2)C(=N)N.C(CS(=O)(=O)O)O.C(CS(=O)(=O)O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/8813/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -71106,6 +71473,19 @@
       "synonyms": [
         "CID 447213"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:75253",
+      "inchikey": "BQVCCPGCDUSGOE-UHFFFAOYSA-N",
+      "name": "phenylarsine oxide",
+      "pubchem_cid": 4778,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1=CC=C(C=C1)[As]=O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/4778/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -74129,6 +74509,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:556075",
+      "inchikey": "WYZWZEOGROVVHK-GTMNPGAYSA-N",
+      "name": "radicicol",
+      "pubchem_cid": 6323491,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1CC2C(O2)C=CC=CC(=O)CC3=C(C(=CC(=C3Cl)O)O)C(=O)O1",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/6323491/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:16634",
       "inchikey": "MUPFEKGTMRGPLJ-ZQSKZDJDSA-N",
       "name": "raffinose",
@@ -74152,7 +74545,8 @@
       "smiles": "C1CCN(CC1)CCOC2=CC=C(C=C2)C(=O)C3=C(SC4=C3C=CC(=C4)O)C5=CC=C(C=C5)O",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/5035/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
-        "CID 5035"
+        "CID 5035",
+        "Raloxifene hydrochloride"
       ],
       "unresolved_reason": null
     },
@@ -77197,6 +77591,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:278547",
+      "inchikey": "PXIPVTKHYLBLMZ-UHFFFAOYSA-N",
+      "name": "sodium azide",
+      "pubchem_cid": 33557,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "[N-]=[N+]=[N-].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/33557/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:64103",
       "inchikey": "MFBOGIVSZKQAPD-UHFFFAOYSA-M",
       "name": "sodium butyrate",
@@ -78288,6 +78695,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:9348",
+      "inchikey": "ZDXMLEQEMNLCQG-UHFFFAOYSA-N",
+      "name": "sulfometuron-methyl",
+      "pubchem_cid": 52997,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1=CC(=NC(=N1)NC(=O)NS(=O)(=O)C2=CC=CC=C2C(=O)OC)C",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/52997/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Sulfometuron methyl"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:26836",
       "inchikey": "QAOWNCQODCNURD-UHFFFAOYSA-N",
       "name": "sulfuric acid",
@@ -79302,6 +79724,19 @@
       "synonyms": [
         "CID 5429"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:52550",
+      "inchikey": "WYWWBYFHNAICRK-OYJWPUFYSA-N",
+      "name": "theopalauamide",
+      "pubchem_cid": 16144544,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(C1C(=O)NCC(C(=O)NC(CCCC(=O)NC2CC3=C[N+](=CN3C4C(C(C(C(O4)CO)O)O)O)CC(C(=O)NC(C(=O)NC(C(=O)N1)C(C(=O)N)O)CC(=O)N)NC(=O)C(NC(=O)CC(NC(=O)C(NC(=O)C(NC(=O)C(NC2=O)C(C)O)CO)CC5=CC=CC=C5)C(C=C(C)C=CC6=CC=CC=C6)O)CO)C(=O)[O-])O)C7=CC=C(C=C7)Br",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Theopalauamide/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -80708,6 +81143,7 @@
       "smiles": "CN1CCN(CC1)CCCN2C3=CC=CC=C3SC4=C2C=C(C=C4)C(F)(F)F.Cl.Cl",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/trifluoperazine%20dihydrochloride/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
+        "Trifluoroperazine dihydrochloride",
         "trifluoperazine dihydrochloride"
       ],
       "unresolved_reason": null
@@ -81630,6 +82066,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:38320",
+      "inchikey": "WEYVVCKOOFYHRW-SFHVURJKSA-N",
+      "name": "usnic acid, (r)-",
+      "pubchem_cid": 478125,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1=C(C(=C2C(=C1O)C3(C(=CC(=C(C3=O)C(=O)C)O)O2)C)C(=O)C)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/478125/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "(+)-Usnic acid"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:57481",
       "inchikey": "PGAVKCOVUIYSFO-XVFCMESISA-K",
       "name": "utp trianion",
@@ -81672,6 +82123,19 @@
       "synonyms": [
         "CID 119607"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:28545",
+      "inchikey": "FCFNRCROJUBPLU-DNDCDFAISA-N",
+      "name": "valinomycin",
+      "pubchem_cid": 3000706,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC1C(=O)NC(C(=O)OC(C(=O)NC(C(=O)OC(C(=O)NC(C(=O)OC(C(=O)NC(C(=O)OC(C(=O)NC(C(=O)OC(C(=O)NC(C(=O)O1)C(C)C)C(C)C)C(C)C)C)C(C)C)C(C)C)C(C)C)C)C(C)C)C(C)C)C(C)C",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/3000706/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -81892,7 +82356,9 @@
       "retrieved_at": "2026-09-12",
       "smiles": "CC1CCOC(=O)C=CC=CC(=O)OC2CC3C4(C2(C5(CCC(=CC5O3)C)COC(=O)C1O)C)CO4",
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/verrucarin%20A/property/Title,InChIKey,ConnectivitySMILES/JSON",
-      "synonyms": [],
+      "synonyms": [
+        "Verrucarin"
+      ],
       "unresolved_reason": null
     },
     {

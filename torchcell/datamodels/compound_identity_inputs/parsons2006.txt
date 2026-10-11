@@ -1,0 +1,84 @@
+# compound_identity_inputs/parsons2006.txt
+# Source: yeast Zotero audit row 2 (Parsons 2006, parsonsExploringModeofActionBioactive2006),
+# Supplementary Table 1 (mmc2.xls, sha256 959f14d2dab418a9b1dd1125e302b2e28c1de372d8d7ee249d369d30fb518353):
+# the 82 screened conditions, each with its CAS number. A label below is the Table S1
+# "Chemical Compound" cell with surrounding whitespace and its footnote asterisks removed,
+# which is the string torchcell/datasets/scerevisiae/parsons2006.py passes to the resolver.
+# Each identity is the PubChem compound its Table S1 CAS number resolves to (PUG REST
+# compound/name/<CAS>, probed 2026-10-11), not a name match. 28 Table S1 names already
+# resolve to their CAS compound through existing rows (actinomycin D, amphotericin B,
+# anisomycin, artemisinin, benomyl, brefeldin A, caffeine, caspofungin, cerulenin,
+# clotrimazole, emodin, fenpropimorph, FK506, fluconazole, geldanamycin, haloperidol,
+# hydrogen peroxide, hydroxyurea, mitomycin C, nocodazole, papuamide B, parthenolide,
+# plumbagin, rapamycin, staurosporine, tamoxifen, trichostatin A, wortmannin) and tunicamycin
+# to its existing mixture row, so they have no line here. A cid= line whose CID is an
+# existing row only adds the label to that row's synonyms; no existing name changes.
+# Not listed: agelasine E and stichloroside (PubChem name index returns no compound; the
+# paper names no congener of stichloroside) and the seven crude extracts. The loader drops
+# their records under compound_without_a_structure_identifier.
+( - )-Abietic acid | cid=10569
+( +/- ) Coniine | cid=9985
+(+)-Usnic acid | cid=478125
+# joins the existing (-)-menthol row
+(1R, 2S, 5R) - ( - ) - Menthol | cid=16666
+# joins the existing camptothecin row
+(S)-(+)-Camptothecin | cid=24360
+1-10 Phenanthroline monohydrate | cid=21226
+2-Hydroxyethilhidrazine | cid=8017
+4-Hydroxytamoxifen | cid=449459
+Alamethicin | cid=76958618 | mixture=Table S1 footnote: "A mixture of alamethicin analogs"; CID 76958618 is the PubChem compound CAS 27061-78-5 resolves to, kept as the substance identifier with no single-molecule InChIKey
+Amantadine hydrochloride | cid=64150
+Amiodarone hydrochloride | cid=441325
+# Table S1 says Basiliskamide (no CAS); the Methods name the compound screened: "Natural
+# product extracts, pap B, agelasine E, and basiliskamide A were from the collection of R.
+# Andersen."
+Basiliskamide | query=basiliskamide A
+# joins the existing calcimycin row
+Calcium ionophore A23187 | cid=11957499
+Chlorpromazine hydrochloride | cid=6240
+# CAS 15663-27-1 resolves to CID 5460033, whose InChIKey LXZZYRPGZAFOLE-UHFFFAOYSA-L is the
+# key of CID 5702198, the row "cisplatin" already resolves to (PubChem carries cisplatin
+# twice). The label joins that row so the compound stays one node.
+cis-diamminedichloroplatinum (II) Cisplatin | cid=5702198
+# PubChem titles CID 60974 "Clostilbegit", a trade name; the Table S1 name is kept
+Clomiphene citrate | cid=60974 | canonical
+Cyclopiazonic acid | cid=54682463
+Cytochalasin A | cid=5458383
+Desipramine hydrochloride | cid=65327
+# CAS 24390-14-5 resolves to three CIDs; 54705095 is the one PubChem titles
+# "Doxycycline hyclate", the Table S1 name
+Doxycycline hyclate | cid=54705095
+Dyclonine hydrochloride | cid=68304
+Emetine dihydrochloride hydrate | cid=6603320
+Harmine hydrochloride | cid=5359389
+Hoechst 33258 | cid=31953
+Hygromycin B | cid=56928061
+Latrunculin B | cid=6436219
+# joins the existing LY294002 row (2-(4-morpholinyl)-8-phenyl-4h-1-benzopyran-4-one)
+LY 294002 hydrochloride | cid=3973
+# joins the existing methyl methanesulfonate row
+Methanesulfonic acid methyl ester (MMS) | cid=4156
+# joins the existing neomycin sulfate row
+Neomycin B trisulfate salt hydrate | cid=197162
+Nigericin | cid=16760591
+# joins the existing nystatin row
+Nystatin dihydrate | cid=6433272
+# CAS 1404-19-9 has no PubChem compound record; ChEBI:84314 is "oligomycin mixture" ("Any
+# mixture comprising two or more oligomycins.", OLS4 2026-10-11)
+Oligomycin | chebi=CHEBI:84314 | mixture=Table S1 footnote: "A mixture of oligomycins A, B and C"; CAS 1404-19-9 has no PubChem compound, so the identity is the ChEBI mixture class
+Pentamidine isethionate | cid=8813
+Phenylarsine oxide | cid=4778
+Radicicol | cid=6323491
+# joins the existing raloxifene row (PubChem resolves the hydrochloride's CAS 84449-90-1 to it)
+Raloxifene hydrochloride | cid=5035
+Sodium azide | cid=33557
+Sulfometuron methyl | cid=52997
+# no CAS in Table S1; the PubChem name index resolves the Table S1 name
+Theopalauamide
+Thialysine | cid=16218879
+# joins the existing trifluoperazine hydrochloride row (Table S1 spells it "Trifluoroperazine")
+Trifluoroperazine dihydrochloride | cid=66064
+U-73122 | cid=104794
+Valinomycin | cid=3000706
+# joins the existing verrucarin a row
+Verrucarin | cid=6326658

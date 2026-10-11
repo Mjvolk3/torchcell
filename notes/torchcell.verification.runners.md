@@ -385,3 +385,7 @@ nor its inputs are in it -- and not a measurement.
 ## 2026.10.11 - Natural-isolate panel registry
 
 `NATURAL_ISOLATE_DATASETS` holds the three De Chiara 2022 stores (4,039 / 36,295 / 36,286 records), each verified by the loader's `verify_build` ([[torchcell.datasets.scerevisiae.dechiara2022]]), which validates each shared genotype once and replaces the deletion-keyed L4 rules with a sequence-variant containment floor. `run_natural_isolate` adds an L1 `registry_count` row (the store against the count pinned at registration) and is called last by `run_all`.
+
+## 2026.10.11 - The Costanzo 2016 and Kuzmin 2020 counts exclude refused ORFs (#893, #897)
+
+The loaders now refuse every row naming an ORF R64-4-1 retired or merged ([[torchcell.datasets.systematic_name_currency]]), so the #889 oracles are the release's count less those rows, measured by `experiments/036-dataset-fixes-before-kg-build/scripts/yeast_gene_id_currency.py`: smf / dmf / dmi Costanzo 2016 20,410 / 20,548,007 / 20,548,007 (was 20,484 / 20,705,612 / 20,705,612); dmf / tmf / dmi / tmi Kuzmin 2020 632,340 / 301,481 / 632,139 / 301,481 (was 632,998 / 301,798 / 632,797 / 301,798). `_interaction_spec` gains `strain_columns` and `refused_orfs`, passed to `interaction_values_from_table`; the Kuzmin 2018 entries refuse none. No registry root is added, so the root count is unchanged (72 after the 2026.10.11 rebase onto main).

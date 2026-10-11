@@ -373,6 +373,38 @@ def test_resolve_strains_applies_every_rule_and_keeps_the_rename() -> None:
     assert p.constructed_orf(strains[0]) is None
 
 
+def _twins(
+    values: list[list[float]],
+) -> tuple[p.ReleasedMatrix, list[p.ResolvedStrain]]:
+    entry = p.PoolStrain(orf="YAL001C", common_name="TFC3", barcode="A" * 20)
+    other = p.PoolStrain(orf="YAL002W", common_name="VPS8", barcode="C" * 20)
+    matrix = p.ReleasedMatrix(
+        strains=["YAL001C", "TFC3", "VPS8"],
+        condition_ids=["Cond-000001", "Cond-000002"],
+        condition_labels=["A", "B"],
+        values=np.asarray(values, dtype=np.float64),
+    )
+    strains = p.resolve_strains(
+        matrix.strains,
+        [entry, other],
+        _FakeGenome(),  # type: ignore[arg-type]  # the slice of the genome API used
+    )
+    return matrix, strains
+
+
+def test_one_pool_strain_under_two_labels_in_disjoint_columns_is_recorded() -> None:
+    """The TCD1/YHR003C shape: one strain, labelled by ORF in one screen's columns."""
+    matrix, strains = _twins([[1.0, np.nan], [np.nan, 2.0], [3.0, 4.0]])
+    assert [s.systematic_name for s in strains] == ["YAL001C", "YAL001C", "YAL002W"]
+    assert p.strains_labelled_twice(matrix, strains) == {"YAL001C": ["YAL001C", "TFC3"]}
+
+
+def test_two_labels_scored_in_one_condition_are_refused_as_a_duplicate() -> None:
+    matrix, strains = _twins([[1.0, np.nan], [5.0, 2.0], [3.0, 4.0]])
+    with pytest.raises(ValueError, match="scored twice in one condition"):
+        p.strains_labelled_twice(matrix, strains)
+
+
 def test_resolve_strains_refuses_a_label_outside_the_pool() -> None:
     pool = [p.PoolStrain(orf="YAL001C", common_name="TFC3", barcode="A" * 20)]
     with pytest.raises(ValueError, match="not a pool v2.0 member"):
@@ -588,6 +620,7 @@ def test_condition_ledger_lists_routes_pool_census_and_renames(built: Any) -> No
     assert by_id["Cond-000001"].in_high_confidence_set is True
     assert by_id["Cond-000002"].n_scored_strains == 7
     assert ledger.renamed_strains == {"YAL058C-A": "YAL056C-A"}
+    assert ledger.strains_labelled_twice == {}
     assert len(ledger.absent_pool_strains) == p.POOL_V2.value - len(_STRAINS)
     assert ledger.released_key_comparisons == 3
     assert ledger.released_key_disagreements == 0

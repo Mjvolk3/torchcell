@@ -19,9 +19,12 @@ RELEASE (PMC Article Datasets bucket, PMC6056180.1, NIHMS884855; mirrored under
 ``$DATA_ROOT/torchcell-raw/piotrowskiFunctionalAnnotationChemical2017/si/``):
 
 - Supplementary Data Set 5 (``Suppl_Dataset_5.xlsx``, sheet ``All_conditions``): the
-  matrix, 291 strains (rows, by common name) x 11,984 conditions (columns
-  ``Cond-NNNNNN_<name>``), 3,438,421 numeric z-scores and 48,923 ``NA`` cells. Its title
-  reads "Average chemical genomic profile of 11983 compounds".
+  matrix, 291 strain rows x 11,984 conditions (columns ``Cond-NNNNNN_<name>``),
+  3,438,421 numeric z-scores and 48,923 ``NA`` cells. Its title reads "Average chemical
+  genomic profile of 11983 compounds". The 291 rows name 289 pool strains: TCD1
+  (YHR003C) and TCD2 (YKL027W) each appear twice, under the ORF in the RIKEN columns
+  and under the standard name in the NCI/NIH/GSK columns, and each row is ``NA`` wherever
+  its twin is scored (``ConditionLedger.strains_labelled_twice``).
 - Supplementary Data Set 4 (``Suppl_Dataset_4.xlsx``): one row per condition (13,966),
   its name, dose, library, ``In_final_dataset`` and ``In_high_confidence_set`` flags,
   percent growth, and the OpenBabel SMILES and InChI.
@@ -47,10 +50,10 @@ each screen was normalized against its own DMSO profiles with its own filters.
 THE TWO SCREENS. The Note splits the work into a "RIKEN" screen (every RIKEN NPDepo
 compound) and an "NCI/NIH/GSK" screen ("all remaining compounds"), each with its own
 count filters, LDA components and replicate-correlation threshold, so ``screen_id`` is the
-screen and the reference is per screen. The release itself confirms the split: the 8
-strains missing from 3,565 columns are missing from exactly the non-RIKEN columns, and the
-2 strains missing from 8,419 columns from exactly the RIKEN ones (the NCI/NIH/GSK screen
-ran a strain count filter, the RIKEN screen did not). ``replicate_id`` is the condition id
+screen and the reference is per screen. The release itself confirms the split: the 7
+strains ``NA`` in 3,565 columns are ``NA`` in exactly the non-RIKEN columns (the
+NCI/NIH/GSK screen ran a strain count filter, the RIKEN screen did not), and the two
+twice-labelled strains change label at exactly that boundary. ``replicate_id`` is the condition id
 (``Cond-NNNNNN``): the same compound at the same dose is released as more than one
 condition (three RIKEN pairs, and NSC compounds held by two NCI libraries), and each is an
 independent well, not a duplicate.
@@ -538,7 +541,7 @@ GTR1_AVT5_REMOVED = _note(
     "were over represented following growth in a specific set of conditions and thus "
     "accounted for a large majority of the read counts (Supplementary Fig. 7).",
     page=_NOTE_SCORING,
-    note="two of the 19 pool-v2.0 strains Data Set 5 does not carry; the other 17 are "
+    note="two of the 21 pool-v2.0 strains Data Set 5 does not carry; the other 19 are "
     "absent with no stated reason (listed in the condition ledger's absent_pool_strains)",
 )
 POOL_V2 = _paper(
@@ -1004,6 +1007,33 @@ def resolve_strains(
     return resolved
 
 
+def strains_labelled_twice(
+    matrix: ReleasedMatrix, strains: list[ResolvedStrain]
+) -> dict[str, list[str]]:
+    """Pool strains that more than one Data Set 5 row names, with those row labels.
+
+    Two rows naming one pool strain are one strain under two labels only when no
+    condition scores both; a condition that did would be a duplicate measurement, so it
+    raises. Measured on the release: TCD1/YHR003C and TCD2/YKL027W, each pair split
+    exactly at the RIKEN vs NCI/NIH/GSK column boundary.
+    """
+    rows_by_orf: dict[str, list[int]] = {}
+    for i, strain in enumerate(strains):
+        rows_by_orf.setdefault(strain.pool.orf, []).append(i)
+    twice: dict[str, list[str]] = {}
+    for orf, rows in sorted(rows_by_orf.items()):
+        if len(rows) < 2:
+            continue
+        scored = (~np.isnan(matrix.values[rows])).sum(axis=0)
+        if int((scored > 1).sum()) > 0:
+            raise ValueError(
+                f"pool strain {orf} is scored twice in one condition by rows "
+                f"{[strains[i].label for i in rows]}"
+            )
+        twice[orf] = [strains[i].label for i in rows]
+    return twice
+
+
 def constructed_orf(strain: ResolvedStrain) -> ConstructedOrf | None:
     """The ORF a RENAMED pool strain was built against; ``None`` for a current gene."""
     if strain.systematic_name is None or strain.systematic_name == strain.pool.orf:
@@ -1135,6 +1165,7 @@ class ConditionLedger(BaseModel):
     released_key_comparisons: int
     absent_pool_strains: list[str]
     renamed_strains: dict[str, str]
+    strains_labelled_twice: dict[str, list[str]]
 
 
 # --------------------------------------------------------------------------- #
@@ -1505,6 +1536,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
         conditions = read_conditions(self._raw(CONDITIONS))
         pool = read_pool(self._raw(POOL))
         strains = resolve_strains(matrix.strains, pool, default_genome())
+        labelled_twice = strains_labelled_twice(matrix, strains)
         validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
 
         n_strains, n_conditions = matrix.values.shape
@@ -1686,6 +1718,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                 ledger_compounds,
                 strains,
                 pool,
+                labelled_twice,
             ),
         )
         self._write_json("n_samples_derivation.json", N_SAMPLES_DERIVATION.derivation)
@@ -1728,6 +1761,7 @@ def _condition_ledger(
     compounds: dict[int, CompoundLedgerEntry],
     strains: list[ResolvedStrain],
     pool: list[PoolStrain],
+    labelled_twice: dict[str, list[str]],
 ) -> ConditionLedger:
     """Every released condition with its fate and identity route, plus the pool census."""
     scored = (~np.isnan(matrix.values)).sum(axis=0)
@@ -1785,6 +1819,7 @@ def _condition_ledger(
             for s in strains
             if s.systematic_name is not None and s.systematic_name != s.pool.orf
         },
+        strains_labelled_twice=labelled_twice,
     )
 
 

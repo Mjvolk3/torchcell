@@ -1728,12 +1728,14 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_piotrowski2017": {
         "root": "data/torchcell/env_chemgen_piotrowski2017",
-        # Supplementary Data Set 5: 291 diagnostic-pool strains x 11,984 conditions =
-        # 3,487,344 cells, 48,923 of them NA, so 3,438,421 released z-scores; minus the
-        # one column Data Set 4 marks In_final_dataset = False (Cond-008510) and the 8
-        # conditions whose dose cell is a range. Every strain is kept (290 current R64
-        # genes, YAL058C-A kept as YAL056C-A with a ConstructedOrf). Rules + counts:
-        # preprocess/dropped_records.json; per-condition fates: preprocess/conditions.json.
+        # Supplementary Data Set 5: 291 strain rows (289 pool strains; TCD1 and TCD2 are
+        # labelled by ORF in the RIKEN columns and by name in the others) x 11,984
+        # conditions = 3,487,344 cells, 48,923 of them NA, so 3,438,421 released z-scores;
+        # minus the one column Data Set 4 marks In_final_dataset = False (Cond-008510,
+        # 289 cells) and the 8 conditions whose dose cell is a range (2,312 cells). Every
+        # pool strain is kept (YAL058C-A as YAL056C-A with a ConstructedOrf). Rules +
+        # counts: preprocess/dropped_records.json; per-condition fates and the pool
+        # census: preprocess/conditions.json.
         "expected_count": 3435820,
         # ~3.4M records -> single-pass streaming gate, as for Hoepfner 2014.
         "stream": True,

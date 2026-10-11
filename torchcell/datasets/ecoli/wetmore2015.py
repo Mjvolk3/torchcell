@@ -2714,7 +2714,14 @@ class CompendiumAgreement(BaseModel):
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     sample: str
-    n_genes: int
+    n_genes: int = Field(description="genes both stores hold for the sample, compared")
+    n_only_here: int = Field(
+        description="genes this store holds that the compendium's sample lacks; the "
+        "compendium's gene set contains every one of this release's genes, so 0"
+    )
+    n_only_there: int = Field(
+        description="genes only the compendium holds (its larger gene set; not compared)"
+    )
     pearson_r: float
     max_abs_difference: float
     median_abs_difference: float
@@ -2759,9 +2766,12 @@ class CompendiumCrossCheck(BaseModel):
 
     @property
     def passed(self) -> bool:
-        """Every compared sample agrees at least as well as the replicate bar."""
+        """Every compared sample holds no gene the compendium lacks and agrees at least
+        as well as the replicate bar.
+        """
         return bool(self.agreements) and all(
-            a.pearson_r >= self.min_pearson_r for a in self.agreements
+            a.pearson_r >= self.min_pearson_r and a.n_only_here == 0
+            for a in self.agreements
         )
 
 
@@ -2779,8 +2789,10 @@ def compendium_cross_check(
     ``absent_here`` names the shared samples this store does not hold, with this
     loader's rule; ``served_drop_rules`` is the compendium store's own per-sample rule
     (None = kept), which names why a shared sample is absent there. A shared sample
-    absent from a store without a rule naming it is refused, as is a compared sample
-    whose gene sets differ between the stores.
+    absent from a store without a rule naming it is refused. Each compared sample is
+    scored on the genes both stores hold (the compendium's gene set is larger: 3,768
+    against this release's 3,628 placed genes); a gene held here and not there is
+    counted and fails the row, and two stores sharing no gene are refused.
     """
     mine: dict[str, dict[str, float]] = {}
     for v in own:
@@ -2809,9 +2821,9 @@ def compendium_cross_check(
     differences: list[GeneDifference] = []
     n_values = 0
     for sample in compared:
-        if set(mine[sample]) != set(theirs[sample]):
-            raise ValueError(f"{sample}: the two stores hold different genes")
-        tags = sorted(mine[sample])
+        tags = sorted(set(mine[sample]) & set(theirs[sample]))
+        if not tags:
+            raise ValueError(f"{sample}: the two stores share no gene")
         x = np.array([mine[sample][g] for g in tags])
         y = np.array([theirs[sample][g] for g in tags])
         gaps = np.abs(x - y)
@@ -2820,6 +2832,8 @@ def compendium_cross_check(
             CompendiumAgreement(
                 sample=sample,
                 n_genes=len(tags),
+                n_only_here=len(set(mine[sample]) - set(theirs[sample])),
+                n_only_there=len(set(theirs[sample]) - set(mine[sample])),
                 pearson_r=float(np.corrcoef(x, y)[0, 1]),
                 max_abs_difference=float(gaps.max()),
                 median_abs_difference=float(np.median(gaps)),

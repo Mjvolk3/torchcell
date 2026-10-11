@@ -1331,6 +1331,8 @@ def test_compendium_cross_check_measures_agreement_and_names_every_absence() -> 
     own = [_value("s1", g, v) for g, v in (("a", 1.0), ("b", 2.0), ("c", 3.0))]
     own += [_value("s2", "a", 0.5)]
     served = [_value("s1", g, v) for g, v in (("a", 1.1), ("b", 1.9), ("c", 3.4))]
+    # the compendium's gene set is larger; its extra gene is counted, never compared
+    served += [_value("s1", "d", 9.0)]
     served += [_value("s3", "a", 0.0)]
     check = w.compendium_cross_check(
         own,
@@ -1347,6 +1349,7 @@ def test_compendium_cross_check_measures_agreement_and_names_every_absence() -> 
     }
     assert check.absent_there == {"s2": "authors_withdrew", "s4": "medium"}
     (agreement,) = check.agreements
+    assert (agreement.n_only_here, agreement.n_only_there) == (0, 1)
     assert agreement.n_genes == 3
     assert agreement.max_abs_difference == pytest.approx(0.4)
     assert agreement.median_abs_difference == pytest.approx(0.1)
@@ -1372,8 +1375,19 @@ def test_compendium_cross_check_refuses_an_unexplained_absence_or_gene_set() -> 
     served = [_value("s1", "a", 1.0)]
     with pytest.raises(ValueError, match="here \\['s2'\\], in the compendium store"):
         w.compendium_cross_check(own, served, ["s1", "s2"], {}, {"s1": None, "s2": "x"})
-    with pytest.raises(ValueError, match="s1: the two stores hold different genes"):
-        w.compendium_cross_check(own, served, ["s1"], {}, {"s1": None})
+    # a gene held here and not in the compendium's sample is counted and fails the row
+    nested = w.compendium_cross_check(own, served, ["s1"], {}, {"s1": None})
+    (agreement,) = nested.agreements
+    assert (agreement.n_genes, agreement.n_only_here, agreement.n_only_there) == (
+        1,
+        1,
+        0,
+    )
+    assert nested.passed is False
+    with pytest.raises(ValueError, match="s1: the two stores share no gene"):
+        w.compendium_cross_check(
+            own, [_value("s1", "z", 1.0)], ["s1"], {}, {"s1": None}
+        )
     empty = w.compendium_cross_check(own, [], ["s1"], {}, {"s1": "dropped there"})
     assert (empty.passed, empty.compared, empty.absent_there) == (
         False,

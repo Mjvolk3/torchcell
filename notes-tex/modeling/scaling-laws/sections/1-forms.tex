@@ -12,8 +12,7 @@ the runs one can afford predicts the loss of a run one cannot. The literature
 carries two functional forms, and the difference between them is a floor.
 
 \notesec{Kaplan: one axis at a time}
-Kaplan et al.\ (arXiv:2001.08361, mirrored as
-\texttt{kaplanScalingLawsNeural2020}) fit each axis separately, with the other axes made large enough not to limit:
+Kaplan et al.\ (arXiv:2001.08361, in the mirror) fit each axis separately, with the other axes made large enough not to limit:
 \begin{equation}
   L(N) = \left(\frac{N_c}{N}\right)^{\alpha_N}, \qquad
   L(D) = \left(\frac{D_c}{D}\right)^{\alpha_D}.
@@ -37,8 +36,7 @@ embedding matrix bends the curve at small $N$, because the embedding scales with
 vocabulary rather than with the capacity the loss responds to.
 
 \notesec{Chinchilla: a joint form with a floor}
-Hoffmann et al.\ (arXiv:2203.15556, mirrored as
-\texttt{hoffmannTrainingComputeOptimalLarge2022}) fit both axes at once and let the loss bottom out:
+Hoffmann et al.\ (arXiv:2203.15556, in the mirror) fit both axes at once and let the loss bottom out:
 \begin{equation}
   L(N, D) = E + \frac{A}{N^{\alpha}} + \frac{B}{D^{\beta}}.
   \label{eq:chinchilla}
@@ -73,8 +71,7 @@ along one budget line $6ND = C$, a U in $N$ whose minimum sits on the frontier.
 \src{experiments/041-scaling-laws/scripts/scaling\_law\_forms.py, ChinchillaFit.a / .b / .G}
 
 \notesec{The same runs, a different fit}
-Besiroglu et al.\ (arXiv:2404.10102, mirrored as
-\texttt{besirogluChinchillaScalingReplication2024}) refit the Approach~3 data and got $E = 1.82$, $A = 482$, $B = 2085$,
+Besiroglu et al.\ (arXiv:2404.10102, in the mirror) refit the Approach~3 data and got $E = 1.82$, $A = 482$, $B = 2085$,
 $\alpha = 0.35$, $\beta = 0.37$, which moves the allocation to $a = 0.513$ and
 $b = 0.487$. The same runs support two frontiers that differ visibly over the
 budgets that matter (panel~h), which is the standing argument for reporting an

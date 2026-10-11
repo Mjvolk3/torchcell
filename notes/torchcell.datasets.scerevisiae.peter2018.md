@@ -70,7 +70,7 @@ The two matrices from the 2026-07-13 retrieval were re-fetched 2026-10-11 (bytes
 
 ### L0-L4 verification
 
-`python -m torchcell.database.build_dataset_lmdb --dataset IsolateGrowthPeter2018Dataset --retire-existing --verify` (the loader's `verify_build` runs `runners.verify_natural_isolate_dataset`; the family runner is `run_natural_isolate_response`, registry `NATURAL_ISOLATE_RESPONSE_DATASETS`). Report: `$DATA_ROOT/data/torchcell/isolate_growth_peter2018/preprocess/verification_report.json`. All 21 rows pass; the full pass takes about 15 minutes and 14 GB (971 genotypes are validated once each and held).
+`python -m torchcell.database.build_dataset_lmdb --dataset IsolateGrowthPeter2018Dataset --retire-existing --verify` (the loader's `verify_build` runs `runners.verify_natural_isolate_dataset`; the family runner is `run_natural_isolate_response`, registry `NATURAL_ISOLATE_RESPONSE_DATASETS`). Report: `$DATA_ROOT/data/torchcell/isolate_growth_peter2018/preprocess/verification_report.json`. All 21 rows pass; the full pass takes about 15 minutes and 14 GB (971 genotypes are validated once each and held). The dev store was rebuilt from the clean tree at `1cc02bb69` (233 s; build manifest `torchcell_dirty: false`, `check_store` reads `fresh`), and its `--verify` pass reproduced the table below row for row.
 
 | level | rule | result |
 |---|---|---|

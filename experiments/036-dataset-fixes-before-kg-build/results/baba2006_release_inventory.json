@@ -1,0 +1,205 @@
+{
+  "citation_key": "babaConstructionEscherichiaColi2006",
+  "doi": "10.1038/msb4100050",
+  "identifier_resolution_bw25113": {
+    "ambiguous": 0,
+    "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+    "kept_on_collision": 47,
+    "off_namespace_by_call": {
+      "not_obtained": 6,
+      "obtained": 166
+    },
+    "off_namespace_not_obtained": [
+      "yabQ JW0056 b0057",
+      "none JW5190 none",
+      "none JW5193 none",
+      "none JW5379 none",
+      "yqgD JW2908 b2941",
+      "tnaB JW5622 b3709"
+    ],
+    "on_namespace": 4116,
+    "resolved_fraction": 0.9708488805970149,
+    "retired": 125,
+    "status_histogram": {
+      "ambiguous": 0,
+      "current": 0,
+      "non_gene_feature": 153,
+      "renamed": 4010,
+      "retired": 125
+    },
+    "unique_jw": 4288
+  },
+  "mirror": "/scratch/projects/torchcell-scratch/torchcell-raw/babaConstructionEscherichiaColi2006",
+  "mirror_sha256": {
+    "data/msb4100050-s4.xls": "897599a5401367356aa2823ed939524561894a9120ef86bad923200b56770bac",
+    "data/msb4100050-s5.xls": "a1a9c30b6cd703ff835f2809b420afe38b1c139865c9af87566a410669a30d2e",
+    "data/msb4100050-s8.xls": "ded72d1f890d47b0544fa52edcb491b187a010fa6b938437fc04418e08e31638",
+    "paper/PMC1681482.1.txt": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+  },
+  "quotes": {
+    "colonies_tested": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "From every gene deletion experiment, four or eight KmR colonies were chosen and checked for ones with the correct structure by PCR",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "essential_candidates": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "these 3985 genes are (probably) nonessential, while the 303 genes (including 37 genes of unknown function), for which no mutants were found, are candidates for essential genes",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "lb": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "Cells were routinely grown in LB medium containing 1% Bacto Tryptone (Difco), 0.5% yeast extract (Difco), and 0.5% NaCl",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "percent_footnote": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "bPercent of the four or eight KmR colonies shown to have the correct structure by PCR as described in text is given.",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "scoring_rule": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "Mutants were scored as correct if two or more colonies had the expected structure based on PCR tests for both junction fragments.",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "secm": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "The exceptional case, secM, has a translational arrest sequence",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "selection": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "Our standard protocol usually yielded 10–1000 KmR colonies when cells were incubated aerobically at 37°C on Luria broth (LB) agar containing 30 μg/ml kanamycin.",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "strain": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "The Keio collection is comprised of 3985 deletions in duplicate (7970 total) of E. coli K-12 strain BW25113",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "table_6": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "Essential gene candidates are given in Supplementary Table 6.",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    },
+    "targeted_and_obtained": {
+      "file": "paper/PMC1681482.1.txt",
+      "quote": "Of 4288 genes targeted, deletions were obtained for 3985 ORFs (Supplementary Table 3).",
+      "sha256": "6e39bc2f12aecceac568f91dfcd068e109433132df618dc68624d317737bf3cd"
+    }
+  },
+  "schema_fit": {
+    "deletion_leaf": {
+      "cassette": "kanamycin cassette",
+      "collection": "Keio collection",
+      "construction": null,
+      "deletion_type": "bacterial",
+      "description": "Bacterial gene deletion, identified by a namespaced locus tag",
+      "gene_namespace": "ecoli_k12_bw25113_locus_tag",
+      "identifier_mapping": {
+        "route": "jw_synonym",
+        "source_identifier": "JW0001"
+      },
+      "mechanism_so_id": "SO:0000159",
+      "mechanism_so_name": "deletion",
+      "perturbation_type": "bacterial_deletion",
+      "perturbed_gene_name": "thrA",
+      "provenance": "engineered",
+      "state": "absent",
+      "systematic_gene_name": "BW25113_0002"
+    },
+    "essential": {
+      "graph_level": "node",
+      "is_essential": true,
+      "label_name": "is_essential",
+      "label_statistic_name": null,
+      "provenance_gaps": []
+    },
+    "no_field_for": [
+      "the evidence type (a construction outcome, not a growth measurement)",
+      "the PCR counts behind the call (verified, colonies tested, percent)",
+      "'candidate' status of the 303 (the paper's own word)"
+    ],
+    "non_essential": {
+      "graph_level": "node",
+      "is_essential": false,
+      "label_name": "is_essential",
+      "label_statistic_name": null,
+      "provenance_gaps": []
+    },
+    "phenotype_fields": [
+      "graph_level",
+      "is_essential",
+      "label_name",
+      "label_statistic_name",
+      "provenance_gaps"
+    ]
+  },
+  "tables": {
+    "colonies_tested_histogram": {
+      "4.0": 382,
+      "8.0": 3906
+    },
+    "eck_values_on_more_than_one_table_s3_row": 33,
+    "not_obtained_od600_cells": {
+      "N.A. | N.A. | N.A.": 303
+    },
+    "obtained_with_all_three_od600": 3984,
+    "percent_equals_verified_over_tested": 4288,
+    "reserved_genetic_column_targeted": {
+      "-": 223,
+      "?": 186,
+      "E": 597,
+      "N": 2977,
+      "N*": 6,
+      "X": 299
+    },
+    "scoring_rule_two_or_more_verified": {
+      "not_obtained": 303,
+      "not_obtained_equals_table_s6": true,
+      "not_obtained_with_one_verified": [
+        "secM JW5007 (1 of 8)"
+      ],
+      "obtained": 3985
+    },
+    "table_s2_distinct_jw": 4288,
+    "table_s2_rows": 4288,
+    "table_s3_distinct_jw": 4378,
+    "table_s3_header_labels": [
+      "1. ECK number",
+      "2. gene",
+      "3. W3110 information",
+      "4. MG1655 information",
+      "5. verified",
+      "6. colonies tested",
+      "7. percent",
+      "8. cell growth (OD600)",
+      "9. genetic",
+      "10. PEC",
+      "11. MG_Tn5",
+      "12. Score",
+      "13. Ortholog",
+      "14. Bs ID",
+      "15. Bs gene",
+      "16. Bs essential",
+      "17. comment"
+    ],
+    "table_s3_rows": 4378,
+    "table_s3_targeted_rows": 4288,
+    "table_s3_untargeted_na_rows": 90,
+    "table_s6_rows": 303,
+    "targeted_jw_equal_table_s2": true,
+    "untargeted_jw_in_table_s2": 0,
+    "verified_histogram": {
+      "0.0": 302,
+      "1.0": 1,
+      "2.0": 188,
+      "3.0": 176,
+      "4.0": 485,
+      "5.0": 316,
+      "6.0": 439,
+      "7.0": 729,
+      "8.0": 1652
+    }
+  }
+}

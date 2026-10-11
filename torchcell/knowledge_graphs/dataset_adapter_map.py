@@ -52,6 +52,8 @@ from torchcell.adapters import (
     ExometaboliteBrunk2016Adapter,
     FattyAcidXue2025Adapter,
     FluxIshii2007Adapter,
+    GeneEssentialityBaba2006Adapter,
+    GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Adapter,
     GeneEssentialityPrice2018EcoliAdapter,
     GeneEssentialitySgdAdapter,
@@ -153,6 +155,7 @@ from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
     InhibitorBioscreenVolk2021Adapter,
 )
 from torchcell.data.experiment_dataset import Visibility
+from torchcell.datasets.ecoli.baba2006 import GeneEssentialityBaba2006Dataset
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset,
@@ -185,6 +188,7 @@ from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
+from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
 from torchcell.datasets.ecoli.girgis2009 import EnvChemgenGirgis2009Dataset
 from torchcell.datasets.ecoli.goodall2018 import GeneEssentialityGoodall2018Dataset
 from torchcell.datasets.ecoli.gupta2024 import ProteinTurnoverGupta2024Dataset
@@ -431,6 +435,8 @@ dataset_adapter_map: dict[type, type] = {
     TranscriptionFactorKnockoutChoe2019Dataset: TranscriptionFactorKnockoutChoe2019Adapter,
     MetabolomeFuhrer2017Dataset: MetabolomeFuhrer2017Adapter,
     EnvChemgenGirgis2009Dataset: EnvChemgenGirgis2009Adapter,
+    GeneEssentialityBaba2006Dataset: GeneEssentialityBaba2006Adapter,
+    GeneEssentialityGerdes2003Dataset: GeneEssentialityGerdes2003Adapter,
     GeneEssentialityGoodall2018Dataset: GeneEssentialityGoodall2018Adapter,
     ProteinTurnoverGupta2024Dataset: ProteinTurnoverGupta2024Adapter,
     MetabolomeIshii2007Dataset: MetabolomeIshii2007Adapter,

@@ -1,0 +1,192 @@
+{
+  "citation_key": "gerdesExperimentalDeterminationSystem2003",
+  "table": "bacteria",
+  "row_name": "Gerdes 2003",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Transposon fitness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "6 file(s) in raw, 0 worksheet row(s) counted; all intact; Table S1 is BIFF .xls, which this counter does not open; counted off the deposited bytes by experiments/036-dataset-fixes-before-kg-build/scripts/gerdes2003_release_inventory.py: 4,291 rows (619 E, 3,114 N, 6 N*, 331 X, 221 ?). The article body is not deposited (walled, #925).",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named); values compared by content in experiments/036-dataset-fixes-before-kg-build/scripts/essentiality_call_agreement_baba2006_gerdes2003.py (the overlap CLI refuses the dirty dev stores), on 3,578 loci carried to BW25113 by one-to-one ECK pairs: vs GeneEssentialityGoodall2018Dataset TL 3,113 of 3,465 agree (kappa 0.53), LB 3,105 of 3,468 (0.51); 218 of the 274 GeneEssentialityPrice2018EcoliDataset loci it shares are essential here; vs Baba 2006 205 both essential of 3,551. No served store holds these calls: independent, not subsumed.",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "GeneEssentialityPhenotype exists, but its one boolean carries no evidence type: is_essential=True here is insertion depletion after 23 doublings of a pooled culture (it can include slow growers), and the assertion error, the X (331) and ? (221) calls and the insertion positions have no field (kept in preprocess/calls.csv). Records load as the release's E/N calls; the gap is #924.",
+      "evidence": [
+        {
+          "value": "insertion depletion after 23 doublings of a pool",
+          "provenance": {
+            "source_uri": "si/assertion_of_essentiality.pdftotext.txt",
+            "citation_key": "gerdesExperimentalDeterminationSystem2003",
+            "sha256": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+            "method": "pdftotext -layout of the essentiality-assertion criteria PDF (raw mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Failure to recover inserts, or the presence of only a limited number of inserts at the very ends of a coding sequence, suggests that the gene is essential under these growth conditions.",
+          "note": null
+        },
+        {
+          "value": "X: 331 rows with no boolean",
+          "provenance": {
+            "source_uri": "si/supplementary_table.html",
+            "citation_key": "gerdesExperimentalDeterminationSystem2003",
+            "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+            "method": "the Table S1 page of the Supplementary Online Material (raw mirror)",
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "= Indicates the gene was not covered.",
+          "note": null
+        }
+      ],
+      "issue": 924,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "absent",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "gerdesExperimentalDeterminationSystem2003",
+    "trees_read": [
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "data/table_s1.xls",
+        "role": "raw_data",
+        "bytes": 1158144,
+        "sha256_manifest": "2c4c24570ef1fa40303ed1c1fe24f0c02d7fa5975bd4560d48b29c9e3790b56e",
+        "sha256_disk": "2c4c24570ef1fa40303ed1c1fe24f0c02d7fa5975bd4560d48b29c9e3790b56e",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/supplementary_table.html",
+        "role": "si_data",
+        "bytes": 8898,
+        "sha256_manifest": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+        "sha256_disk": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/genetic.pdf",
+        "role": "si_pdf",
+        "bytes": 1119035,
+        "sha256_manifest": "2e8cb6f0a7cb62220b3ab8b762228b6c0fc2df81104885605d64c98bf2f16d8e",
+        "sha256_disk": "2e8cb6f0a7cb62220b3ab8b762228b6c0fc2df81104885605d64c98bf2f16d8e",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/assertion_of_essentiality.pdf",
+        "role": "si_pdf",
+        "bytes": 22627,
+        "sha256_manifest": "cf73ff78b52a021226ea6a8cccbd57f744fc4a16ae2cbe2f034e7b626da9976e",
+        "sha256_disk": "cf73ff78b52a021226ea6a8cccbd57f744fc4a16ae2cbe2f034e7b626da9976e",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/genetic.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 8990,
+        "sha256_manifest": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668",
+        "sha256_disk": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/assertion_of_essentiality.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 7766,
+        "sha256_manifest": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+        "sha256_disk": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1128/jb.185.19.5673-5684.2003",
+    "pmid": null,
+    "accessions": [],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "GeneEssentialityPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "aab08e0290961a827de5930ace2af752c44d2fdd"
+}

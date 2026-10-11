@@ -1,0 +1,501 @@
+{
+  "baba2006_reserved_column": {
+    "baba_b_numbers": 4282,
+    "baba_table_s3_sha256": "a1a9c30b6cd703ff835f2809b420afe38b1c139865c9af87566a410669a30d2e",
+    "differing": {
+      "b0322": [
+        [
+          "-"
+        ],
+        [
+          "E"
+        ]
+      ],
+      "b1016": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1017": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1169": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1170": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1720": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1721": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1933": [
+        [
+          "-"
+        ],
+        [
+          "?"
+        ]
+      ],
+      "b1964": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1965": [
+        [
+          "-"
+        ],
+        [
+          "?"
+        ]
+      ],
+      "b1966": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b1979": [
+        [
+          "-"
+        ],
+        [
+          "?"
+        ]
+      ],
+      "b1980": [
+        [
+          "-"
+        ],
+        [
+          "X"
+        ]
+      ],
+      "b2088": [
+        [
+          "E"
+        ],
+        [
+          "E",
+          "N"
+        ]
+      ],
+      "b2227": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b3444": [
+        [
+          "X"
+        ],
+        [
+          "E",
+          "X"
+        ]
+      ],
+      "b3445": [
+        [
+          "N"
+        ],
+        [
+          "?",
+          "N"
+        ]
+      ],
+      "b3767": [
+        [
+          "-"
+        ],
+        [
+          "N"
+        ]
+      ],
+      "b4273": [
+        [
+          "X"
+        ],
+        [
+          "N",
+          "X"
+        ]
+      ],
+      "b4284": [
+        [
+          "X"
+        ],
+        [
+          "N",
+          "X"
+        ]
+      ]
+    },
+    "differing_on_a_repeated_gerdes_b_number": 5,
+    "differing_where_baba_says_absent": 15,
+    "identical_call": 4113,
+    "shared_b_numbers": 4133
+  },
+  "citation_key": "gerdesExperimentalDeterminationSystem2003",
+  "doi": "10.1128/JB.185.19.5673-5684.2003",
+  "identifier_resolution_mg1655": {
+    "ambiguous": {
+      "b2978": [
+        "b4467",
+        "b4468"
+      ],
+      "b3692": [
+        "b4477",
+        "b4478"
+      ]
+    },
+    "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+    "kept_on_collision": [
+      "b0255",
+      "b0257",
+      "b0359",
+      "b0362",
+      "b0371",
+      "b0374",
+      "b0500",
+      "b0501",
+      "b0625",
+      "b0626",
+      "b1016",
+      "b1017",
+      "b1169",
+      "b1170",
+      "b1458",
+      "b1459",
+      "b1509",
+      "b1510",
+      "b1720",
+      "b1721",
+      "b1933",
+      "b1935",
+      "b1964",
+      "b1965",
+      "b1966",
+      "b1979",
+      "b1980",
+      "b1995",
+      "b1998",
+      "b2116",
+      "b2117",
+      "b2612",
+      "b2613",
+      "b2654",
+      "b2656",
+      "b2658",
+      "b2680",
+      "b2681",
+      "b2857",
+      "b2858",
+      "b2884",
+      "b2885",
+      "b2999",
+      "b3000",
+      "b3111",
+      "b3112",
+      "b3245",
+      "b3246",
+      "b3372",
+      "b3373",
+      "b4283",
+      "b4285",
+      "b4338",
+      "b4339",
+      "b4343",
+      "b4344",
+      "b4404",
+      "b4405"
+    ],
+    "outside_namespace": [
+      "b0018.1"
+    ],
+    "resolved_fraction": 0.9900426742532006,
+    "retired": [
+      "b0018.1",
+      "b0079",
+      "b0100",
+      "b0302",
+      "b0332",
+      "b0370",
+      "b0395",
+      "b0510",
+      "b0538",
+      "b0609",
+      "b0663",
+      "b0669",
+      "b0671",
+      "b0725",
+      "b0816",
+      "b1005",
+      "b1030",
+      "b1052",
+      "b1354",
+      "b1364",
+      "b1367",
+      "b1437",
+      "b1903",
+      "b2084",
+      "b2191",
+      "b2596",
+      "b2651",
+      "b3004",
+      "b3007",
+      "b3036",
+      "b3122",
+      "b3254",
+      "b3837",
+      "b3914",
+      "b3948",
+      "b3975",
+      "b4091",
+      "b4247",
+      "b4250",
+      "b4274"
+    ],
+    "status_histogram": {
+      "ambiguous": 2,
+      "current": 4027,
+      "non_gene_feature": 122,
+      "renamed": 27,
+      "retired": 40
+    },
+    "stored_under_another_tag": [
+      "b0519 -> b4572",
+      "b1173 -> b4521",
+      "b1239 -> b4573",
+      "b1371 -> b4570",
+      "b1416 -> b4493",
+      "b1898 -> b4460",
+      "b2031 -> b4571",
+      "b2227 -> b4500",
+      "b2337 -> b4661",
+      "b2639 -> b2641",
+      "b2773 -> b4463",
+      "b2932 -> b4465",
+      "b2974 -> b4466",
+      "b3016 -> b4469",
+      "b3109 -> b4470",
+      "b3217 -> b4569",
+      "b3285 -> b4473",
+      "b3420 -> b4475",
+      "b3435 -> b4476",
+      "b3489 -> b4660",
+      "b3681 -> b4556",
+      "b3694 -> b4479",
+      "b3763 -> b4480",
+      "b3767 -> b4488",
+      "b3814 -> b4482",
+      "b3913 -> b4484",
+      "b4103 -> b4583",
+      "b4229 -> b4485",
+      "b4276 -> b4575"
+    ],
+    "unique_blattner_ids": 4218
+  },
+  "mirror": "/scratch/projects/torchcell-scratch/torchcell-raw/gerdesExperimentalDeterminationSystem2003",
+  "mirror_sha256": {
+    "data/table_s1.xls": "2c4c24570ef1fa40303ed1c1fe24f0c02d7fa5975bd4560d48b29c9e3790b56e",
+    "paper/pubmed_13129938.xml": "294205fd9da3bab725f0c8f398a0c8ddaecc7e79d569d544f3e23249c84b5d5b",
+    "si/assertion_of_essentiality.pdf": "cf73ff78b52a021226ea6a8cccbd57f744fc4a16ae2cbe2f034e7b626da9976e",
+    "si/assertion_of_essentiality.pdftotext.txt": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95",
+    "si/genetic.pdf": "2e8cb6f0a7cb62220b3ab8b762228b6c0fc2df81104885605d64c98bf2f16d8e",
+    "si/genetic.pdftotext.txt": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668",
+    "si/supplementary_table.html": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510"
+  },
+  "quotes": {
+    "abstract_conditions": {
+      "file": "paper/pubmed_13129938.xml",
+      "quote": "genes required for robust aerobic growth of Escherichia coli in rich media.",
+      "sha256": "294205fd9da3bab725f0c8f398a0c8ddaecc7e79d569d544f3e23249c84b5d5b"
+    },
+    "abstract_counts": {
+      "file": "paper/pubmed_13129938.xml",
+      "quote": "We identified 620 genes as essential and 3,126 genes as dispensable for growth under these conditions.",
+      "sha256": "294205fd9da3bab725f0c8f398a0c8ddaecc7e79d569d544f3e23249c84b5d5b"
+    },
+    "accd_called_nonessential": {
+      "file": "si/supplementary_table.html",
+      "quote": "is called nonessential and <i>pdxJ</i> is called essential regardless of convincing arguments to the contrary.",
+      "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510"
+    },
+    "conditions": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "Throughout the fermentation temperature was held at 37o C, dissolved oxygen at 30-50% of saturation, and the pH at 6.95 (via titration with 5% H3PO4).",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    },
+    "essential_rule": {
+      "file": "si/assertion_of_essentiality.pdftotext.txt",
+      "quote": "All ORFs longer then 240 base pairs in length (>80 AA) free",
+      "sha256": "f19345e2a9c768d5ffb8e9cc3c0d0437487dbc036755170e7576401262f89f95"
+    },
+    "medium_base": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "tryptone 10 g/L, yeast extract 5 g/L, NaCl 50 mM, NH4Cl 9.5 mM, MgCl2 0.528 mM, K2SO4 0.276 mM, FeSO4 0.01 mM, CaCl2 5x10-4 mM, and K2HPO4 1.32 mM;",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    },
+    "outgrowth": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "Cells were grown in batch culture for 23 population doublings (12 hrs) to a cell density of 1.4x109.",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    },
+    "overview_unambiguous": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "Unambiguous (non)essentiality assertions made for 3,746 (87%) E. coli ORFs",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    },
+    "strain": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "Strain. Escherichia coli strain MG1655 (F- λ- ilvG rfb50 rph1) (Jensen, 1993) was used.",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    },
+    "table_conditions": {
+      "file": "si/supplementary_table.html",
+      "quote": "under conditions of aerobic logarithmic cell growth in rich medium.",
+      "sha256": "f29982272aab87de1c402e2fd1b2a0c5d6cd54cbfbcd259816a2245681100510"
+    },
+    "transposon": {
+      "file": "si/genetic.pdftotext.txt",
+      "quote": "artificial transposon EZ::TN<KAN-2> (Epicentre Technologies, Madison, WI)",
+      "sha256": "932b56c3d8f8593a64477edfb9f610e3dd91b97e06b95c84862a4c2f953f9668"
+    }
+  },
+  "schema_fit": {
+    "essential": {
+      "graph_level": "node",
+      "is_essential": true,
+      "label_name": "is_essential",
+      "label_statistic_name": null,
+      "provenance_gaps": []
+    },
+    "no_field_for": [
+      "the evidence type (no insertion recovered after 23 doublings of a pool)",
+      "the assertion error (a per-gene probability of a chance miss)",
+      "the insertion positions behind an N call",
+      "the X (not covered) and ? (ambiguous) categories"
+    ],
+    "transposon_leaf": {
+      "barcode": null,
+      "description": "Transposon insertion disrupting a gene, with its mapped insertion site",
+      "gene_namespace": "ecoli_k12_mg1655_bnumber",
+      "identifier_mapping": null,
+      "insertion_position": null,
+      "insertion_strand": null,
+      "library_pool": null,
+      "mechanism_so_id": "SO:0001218",
+      "mechanism_so_name": "transgenic_insertion",
+      "perturbation_type": "transposon_insertion",
+      "perturbed_gene_name": "dnaK",
+      "provenance": "engineered",
+      "state": "absent",
+      "systematic_gene_name": "b0014",
+      "transposon": "EZ::TN<KAN-2>"
+    }
+  },
+  "table_s1": {
+    "blattner_ids_on_two_or_more_rows": {
+      "b2088": 2,
+      "b2089": 2,
+      "b3444": 2,
+      "b3445": 2,
+      "b3505": 2,
+      "b4215": 2,
+      "b4272": 2,
+      "b4273": 2,
+      "b4284": 2
+    },
+    "call_histogram": {
+      "?": 221,
+      "E": 619,
+      "N": 3114,
+      "N*": 6,
+      "X": 331
+    },
+    "counts_vs_texts": {
+      "abstract_dispensable": 3126,
+      "abstract_essential": 620,
+      "overview_unambiguous": 3746,
+      "table_ambiguous": 221,
+      "table_essential": 619,
+      "table_non_essential_n_plus_n_star": 3120,
+      "table_unambiguous": 3739,
+      "table_x": 331
+    },
+    "essential_rows_without_assertion_error": [
+      "proC b0386"
+    ],
+    "header": [
+      "start",
+      "",
+      "gene",
+      "E/N",
+      "length",
+      "transposon insertions",
+      "assertion error",
+      "SP_ID",
+      "fucntional role",
+      "Blattner ID",
+      "ERGO",
+      "scale: 0 - 1"
+    ],
+    "n_star_rows": [
+      "ftsK b0890",
+      "rpsA b0911",
+      "kdsA b1215",
+      "accD b2316",
+      "usg b2319",
+      "nusA b3169"
+    ],
+    "rows": 4291,
+    "rows_on_repeated_blattner_ids": 18,
+    "rows_without_blattner_id": 64,
+    "rows_without_blattner_id_by_call": {
+      "?": 12,
+      "E": 2,
+      "N": 41,
+      "X": 9
+    },
+    "sheet_name": "EC_from_SP_Mark"
+  }
+}

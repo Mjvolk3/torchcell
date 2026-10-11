@@ -3,6 +3,9 @@
 from .auesukaree2009_adapter import (
     EnvChemgenAuesukaree2009Adapter as EnvChemgenAuesukaree2009Adapter,
 )
+from .baba2006_adapter import (
+    GeneEssentialityBaba2006Adapter as GeneEssentialityBaba2006Adapter,
+)
 from .babu2014_adapter import (
     GeneInteractionBabu2014Adapter as GeneInteractionBabu2014Adapter,
 )
@@ -116,6 +119,9 @@ from .foo2014_adapter import (
 )
 from .fuhrer2017_adapter import (
     MetabolomeFuhrer2017Adapter as MetabolomeFuhrer2017Adapter,
+)
+from .gerdes2003_adapter import (
+    GeneEssentialityGerdes2003Adapter as GeneEssentialityGerdes2003Adapter,
 )
 from .girgis2009_adapter import (
     EnvChemgenGirgis2009Adapter as EnvChemgenGirgis2009Adapter,
@@ -439,6 +445,8 @@ ecoli_adapters = [
     "TranscriptionFactorKnockoutChoe2019Adapter",
     "MetabolomeFuhrer2017Adapter",
     "EnvChemgenGirgis2009Adapter",
+    "GeneEssentialityBaba2006Adapter",
+    "GeneEssentialityGerdes2003Adapter",
     "GeneEssentialityGoodall2018Adapter",
     "GeneEssentialityPrice2018EcoliAdapter",
     "ProteinTurnoverGupta2024Adapter",

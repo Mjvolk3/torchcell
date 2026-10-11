@@ -15,6 +15,9 @@ sourcing layer.
 
 - ``cui2018`` -- ``CrispriKnockdownCui2018Dataset``: the genome-wide dCas9 knockdown
   screen, one record per (guide, screened strain) over the two dCas9-dose regimes.
+- ``baba2006`` -- ``GeneEssentialityBaba2006Dataset``: the Keio construction outcome of
+  each targeted BW25113 ORF, essential when fewer than two PCR-verified colonies were
+  obtained (the paper's scoring rule), one record per ORF.
 - ``babu2014`` -- ``GeneInteractionBabu2014Dataset``: the genome-wide eSGA digenic
   interaction map, one record per released (donor, recipient) pair with its signed
   colony-size S score. The first consumer of ``BacterialGeneInteractionExperiment``,
@@ -73,6 +76,9 @@ sourcing layer.
 - ``girgis2009`` -- ``EnvChemgenGirgis2009Dataset``: the 17-antibiotic transposon
   selection read by microarray genetic footprinting, one combined z-score per
   (MG1655 gene, drug).
+- ``gerdes2003`` -- ``GeneEssentialityGerdes2003Dataset``: MG1655 genetic-footprinting
+  essentiality calls (Table S1 of the authors' supplement), E true and N false; X and ?
+  have no boolean and are dropped.
 - ``goodall2018`` -- ``GeneEssentialityGoodall2018Dataset``: BW25113 gene-level TraDIS
   essentiality calls.
 - ``gupta2024`` -- ``ProteinTurnoverGupta2024Dataset``: per-protein total turnover in 13
@@ -210,6 +216,7 @@ sourcing layer.
   the 42 pairs, so the row is blocked rather than subsumed.
 """
 
+from .baba2006 import GeneEssentialityBaba2006Dataset as GeneEssentialityBaba2006Dataset
 from .babu2014 import GeneInteractionBabu2014Dataset as GeneInteractionBabu2014Dataset
 from .balakrishnan2022 import (
     MrnaFractionBalakrishnan2022Dataset as MrnaFractionBalakrishnan2022Dataset,
@@ -242,6 +249,9 @@ from .fang2025 import (
 )
 from .foo2014 import IsopentenolTiterFoo2014Dataset as IsopentenolTiterFoo2014Dataset
 from .fuhrer2017 import MetabolomeFuhrer2017Dataset as MetabolomeFuhrer2017Dataset
+from .gerdes2003 import (
+    GeneEssentialityGerdes2003Dataset as GeneEssentialityGerdes2003Dataset,
+)
 from .girgis2009 import EnvChemgenGirgis2009Dataset as EnvChemgenGirgis2009Dataset
 from .goodall2018 import (
     GeneEssentialityGoodall2018Dataset as GeneEssentialityGoodall2018Dataset,

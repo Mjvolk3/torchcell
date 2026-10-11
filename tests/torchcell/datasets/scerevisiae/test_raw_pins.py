@@ -104,6 +104,18 @@ def _pins_from_constants(
             m.MATRIX_FILENAME: m.MATRIX_SHA256,
             m.METADATA_FILENAME: m.METADATA_SHA256,
         },
+        "ProteomeMuenzner2024Dataset": lambda: {
+            m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
+            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
+            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
+            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+        },
+        "ProteinTurnoverMuenzner2024Dataset": lambda: {
+            m.SI_TABLES_FILENAME: m.SI_TABLES_SHA256,
+            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
+            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
+            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+        },
         "CrispriMormino2022Dataset": lambda: {
             m.PDF_FILENAME: m.PDF_SHA256,
             m.PAPER_MD: m.PAPER_MD_SHA256,
@@ -156,6 +168,13 @@ def _pins_from_constants(
     return by_class[cls.__name__]()
 
 
+#: Classes three of whose pins are the Peter genomes tier's manifest records.
+GENOME_TIER_PINNED = {
+    "CaudalPanTranscriptome2024Dataset",
+    "ProteomeMuenzner2024Dataset",
+    "ProteinTurnoverMuenzner2024Dataset",
+}
+
 #: Classes whose pins are the raw-mirror manifest's records rather than constants.
 MANIFEST_PINNED = {
     "Bloom2019Dataset",
@@ -207,7 +226,7 @@ def _stub_pin_sources(
         )
     if cls.__name__.endswith("Hillenmeyer2008Dataset"):
         monkeypatch.setattr(module, "_load_sgd_genes", lambda root: set())
-    if cls.__name__ == "CaudalPanTranscriptome2024Dataset":
+    if cls.__name__ in GENOME_TIER_PINNED:
         monkeypatch.setattr(cls, "_data_root", lambda self: data_root)
     if cls.__name__ == "IsolateGrowthPeter2018Dataset":
         monkeypatch.setattr(module, "_data_root", lambda: data_root)

@@ -38,6 +38,10 @@ from .lopez2024 import (
 from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mormino2022 import CrispriMormino2022Dataset as CrispriMormino2022Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
+from .muenzner2024 import (
+    ProteinTurnoverMuenzner2024Dataset as ProteinTurnoverMuenzner2024Dataset,
+)
+from .muenzner2024 import ProteomeMuenzner2024Dataset as ProteomeMuenzner2024Dataset
 from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016Dataset
 from .nadal_ribelles2025 import (
     NadalRibellesPerturbSeq2025Dataset as NadalRibellesPerturbSeq2025Dataset,

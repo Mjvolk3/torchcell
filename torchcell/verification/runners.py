@@ -3072,7 +3072,11 @@ def released_synlethdb_pairs(
 
     frame = pd.read_csv(
         csv_path,
-        dtype={"r.pubmed_id": str, "n1.identifier": "int64", "n2.identifier": "int64"},
+        dtype={
+            "r.pubmed_id": "str",
+            "n1.identifier": "int64",
+            "n2.identifier": "int64",
+        },
     )
     dropped = {row["source_row"] for rule in ledger["rules"] for row in rule["rows"]}
     rows: Counter[Any] = Counter()

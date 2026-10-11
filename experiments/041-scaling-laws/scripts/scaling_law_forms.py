@@ -1285,9 +1285,7 @@ def gif_bootstrap(path: str) -> None:
         lo, hi = (
             np.percentile(alphas, [5, 95]) if len(alphas) >= 5 else (np.nan, np.nan)
         )
-        interval = (
-            f"[{lo:5.3f}, {hi:5.3f}]" if len(alphas) >= 5 else "(needs 5 resamples)"
-        )
+        interval = f"[{lo:5.3f}, {hi:5.3f}]" if len(alphas) >= 5 else "[  n/a,   n/a]"
         fig, ax = gif_figure(
             r"bootstrap over runs: redraw the 15 fitted runs with replacement, refit $L = E + A\,N^{-\alpha}$",
             rf"the same 15 synthetic runs and the same resamples as panel i;  full-sample fit $\alpha$ = {al0:5.3f}",
@@ -1306,22 +1304,26 @@ def gif_bootstrap(path: str) -> None:
         previous.append(E + A * grid ** (-al))
         if len(previous) >= 5:
             band = np.percentile(np.asarray(previous), [5, 95], axis=0)
-            ax.fill_between(
-                grid,
-                band[0],
-                band[1],
-                color=WHEAT,
-                alpha=0.35,
-                lw=0,
-                label=r"5 to 95\% band so far",
-            )
+            ax.fill_between(grid, band[0], band[1], color=WHEAT, alpha=0.35, lw=0)
+        # The band's legend entry is registered on EVERY frame through a zero-area
+        # proxy, so the legend has the same entries, size and place from frame one;
+        # an entry that appears at the fifth resample makes the legend jump.
+        ax.fill_between(
+            grid[:1],
+            1.0,
+            1.0,
+            color=WHEAT,
+            alpha=0.35,
+            lw=0,
+            label=r"5 to 95\% band so far",
+        )
         for prev in previous[:-1]:
             ax.loglog(grid, prev, color=WHEAT, lw=0.4, alpha=0.15)
         ax.plot([], [], color=WHEAT, lw=0.4, alpha=0.5, label="earlier refits")
         ax.loglog(grid, E + A * grid ** (-al), color=WHEAT, lw=1.2, label="this refit")
         # Inset: the resampled exponents so far. The curves move by a few percent,
         # which a log axis hides; the histogram is where the resampling is visible.
-        ins = ax.inset_axes((0.34, 0.52, 0.27, 0.32))
+        ins = ax.inset_axes((0.24, 0.62, 0.26, 0.30))
         ins.hist(
             alphas,
             bins=np.linspace(0.26, 0.44, 19).tolist(),

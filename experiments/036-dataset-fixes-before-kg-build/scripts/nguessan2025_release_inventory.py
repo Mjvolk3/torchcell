@@ -15,7 +15,8 @@ mirror's ``manifest.json``) and writes
   strain (distribution and histogram), the unassigned cells and how many of them sit at
   or above the third UMI quartile (the paper's doublet definition starts there);
 - the records: nonzero genes per pseudobulk record and the JSON bytes of its
-  ``umi_count``, and the reference pseudobulk;
+  ``umi_count``, the reference pseudobulk, and the mating-type genes the verifier's
+  MAT rule reads (fraction of strains detecting each, its reference UMIs);
 - the Dryad side: which of the four walled files are on disk, and when all are, the
   batch-1 strain count, the SNP count, and per assigned strain the blocks and pickled
   genotype bytes at a pure called-parent run and the 0.1, 0.05, 0.02 and 0.01 grids, the
@@ -42,6 +43,10 @@ from torchcell.datamodels.schema import HaplotypeBlock
 from torchcell.datasets.scerevisiae import nguessan2025 as ng
 from torchcell.datasets.scerevisiae.bloom2019 import encode_blocks
 from torchcell.verification.runners import _sgd_gene_set
+from torchcell.verification.segregant_expression_reference_panel import (
+    A_SPECIFIC,
+    ALPHA_SPECIFIC,
+)
 
 STEPS: list[float | None] = [None, 0.1, 0.05, 0.02, 0.01]
 OUT = "experiments/036-dataset-fixes-before-kg-build/results/nguessan2025_release_inventory.json"
@@ -151,6 +156,18 @@ def assignment_section(release: Any, assignment: Any) -> dict[str, Any]:
     all_rows = sorted(r for rows in cells.values() for r in rows)
     reference = np.asarray(release.counts[all_rows].sum(axis=0)).ravel()
     histogram = Counter(int(n) for n in per)
+    mating: dict[str, dict[str, float | int]] = {}
+    column = {g: j for j, g in enumerate(release.genes)}
+    for gene in (*A_SPECIFIC, *ALPHA_SPECIFIC):
+        if gene not in column:
+            continue
+        j = column[gene]
+        detected = [float(release.counts[cells[i], j].sum() > 0) for i in sorted(cells)]
+        mating[gene] = {
+            "class": "a" if gene in A_SPECIFIC else "alpha",
+            "fraction_of_strains_detected": round(float(np.mean(detected)), 4),
+            "reference_umis": int(reference[j]),
+        }
     return {
         "assigned_cells": n_assigned,
         "assigned_strains": len(cells),
@@ -168,6 +185,7 @@ def assignment_section(release: Any, assignment: Any) -> dict[str, Any]:
         "record_nonzero_genes": _distribution(nonzero),
         "record_umi_count_json_bytes": _distribution(json_bytes),
         "record_umi_count_json_bytes_total": int(sum(json_bytes)),
+        "mating_type_genes": mating,
         "reference_nonzero_genes": int((reference > 0).sum()),
         "reference_umis": int(reference.sum()),
     }

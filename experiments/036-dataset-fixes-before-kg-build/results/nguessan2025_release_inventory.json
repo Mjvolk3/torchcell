@@ -22,6 +22,53 @@
       "8": 115,
       "9": 82
     },
+    "mating_type_genes": {
+      "YFL026W": {
+        "class": "a",
+        "fraction_of_strains_detected": 0.8994,
+        "reference_umis": 29123
+      },
+      "YGL032C": {
+        "class": "a",
+        "fraction_of_strains_detected": 0.4717,
+        "reference_umis": 3354
+      },
+      "YGL089C": {
+        "class": "alpha",
+        "fraction_of_strains_detected": 0.0034,
+        "reference_umis": 11
+      },
+      "YIL015W": {
+        "class": "a",
+        "fraction_of_strains_detected": 0.7275,
+        "reference_umis": 12070
+      },
+      "YJR004C": {
+        "class": "alpha",
+        "fraction_of_strains_detected": 0.0654,
+        "reference_umis": 206
+      },
+      "YKL178C": {
+        "class": "alpha",
+        "fraction_of_strains_detected": 0.0091,
+        "reference_umis": 27
+      },
+      "YKL209C": {
+        "class": "a",
+        "fraction_of_strains_detected": 0.6608,
+        "reference_umis": 5868
+      },
+      "YNL145W": {
+        "class": "a",
+        "fraction_of_strains_detected": 0.0142,
+        "reference_umis": 42
+      },
+      "YPL187W": {
+        "class": "alpha",
+        "fraction_of_strains_detected": 0.001,
+        "reference_umis": 3
+      }
+    },
     "mean_cells_per_strain": 4.8333,
     "record_nonzero_genes": {
       "max": 5111.0,

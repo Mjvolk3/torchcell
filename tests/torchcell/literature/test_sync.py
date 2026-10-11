@@ -11,6 +11,7 @@ from torchcell.literature.backfill import library_root
 from torchcell.literature.sync import (
     DEFAULT_COLLECTIONS,
     DEFAULT_PERSONAL_ROOTS,
+    SCEREVISIAE_COLLECTION,
     KeySyncResult,
     SyncMode,
     parse_root_list,
@@ -404,12 +405,18 @@ def test_sync_collection_reports_unsupported_and_a_failed_capture(
     assert str(records[0].exc_info[1]) == "upstream 503"
 
 
-def test_default_collections_reach_the_nested_bacterial_collections() -> None:
-    """The bacterial collections sit under ``database/`` and need their own pass."""
+def test_default_collections_reach_the_nested_organism_collections() -> None:
+    """The organism collections sit under ``database/`` and need their own pass.
+
+    ``Saccharomyces-cerevisiae`` joined 2026-10-11: yeast dataset papers filed only in
+    that subcollection were invisible to the nightly ``database`` pass.
+    """
     assert DEFAULT_COLLECTIONS == (
         "database",
         "paper",
         "microbe-perturb-seq",
         "Escherichia-coli",
         "Pseudomonas-putida",
+        "Saccharomyces-cerevisiae",
     )
+    assert SCEREVISIAE_COLLECTION == "Saccharomyces-cerevisiae"

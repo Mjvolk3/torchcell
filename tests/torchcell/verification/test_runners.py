@@ -2141,15 +2141,17 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "smf_baryshnikova2010": 5993,
         "growth_auc_rapp2026": 1515,  # #753: + the recovered phnE record,
         # #889: each the release's count
-        # (results/no_verifier_store_release_counts.json)
-        "smf_costanzo2016": 20484,
-        "dmf_costanzo2016": 20705612,
+        # (results/no_verifier_store_release_counts.json); Costanzo 2016 and Kuzmin
+        # 2020 less the rows naming a refused ORF (#893, #897;
+        # results/yeast_gene_id_currency.json)
+        "smf_costanzo2016": 20484 - 74,
+        "dmf_costanzo2016": 20705612 - 157605,
         "smf_kuzmin2018": 1539,
         "dmf_kuzmin2018": 410571,
         "tmf_kuzmin2018": 91111,
         "smf_kuzmin2020": 472,
-        "dmf_kuzmin2020": 632998,
-        "tmf_kuzmin2020": 301798,
+        "dmf_kuzmin2020": 632998 - 658,
+        "tmf_kuzmin2020": 301798 - 317,
     }
     assert {
         name for name, spec in runners.FITNESS_DATASETS.items() if spec.get("stream")
@@ -2164,11 +2166,23 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "tmf_kuzmin2020",
     }
     assert _oracles(runners.GENE_INTERACTION_DATASETS) == {
-        "dmi_costanzo2016": 20705612,
+        "dmi_costanzo2016": 20705612 - 157605,
         "dmi_kuzmin2018": 410399,
         "tmi_kuzmin2018": 91111,
-        "dmi_kuzmin2020": 632797,
-        "tmi_kuzmin2020": 301798,
+        "dmi_kuzmin2020": 632797 - 658,
+        "tmi_kuzmin2020": 301798 - 317,
+    }
+    # The stores whose loaders refuse an ORF R64-4-1 retired or merged drop its
+    # released rows from the compared multiset; Kuzmin 2018 refuses none.
+    assert {
+        name: (spec["strain_columns"], len(spec["refused_orfs"]))
+        for name, spec in runners.GENE_INTERACTION_DATASETS.items()
+    } == {
+        "dmi_costanzo2016": (("Query Strain ID", "Array Strain ID"), 35),
+        "dmi_kuzmin2018": ((), 0),
+        "tmi_kuzmin2018": ((), 0),
+        "dmi_kuzmin2020": (("Query strain ID", "Array strain ID"), 35),
+        "tmi_kuzmin2020": (("Query strain ID", "Array strain ID"), 35),
     }
     assert _oracles(runners.GENE_ESSENTIALITY_DATASETS) == {
         "gene_essentiality_sgd": 1329

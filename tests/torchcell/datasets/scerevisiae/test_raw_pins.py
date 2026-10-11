@@ -122,6 +122,10 @@ def _pins_from_constants(
         "IsobutanolValidatedLopez2024Dataset": lambda: {
             m._XLSX_FILENAME: m._XLSX_SHA256
         },
+        "ProteomeMessner2021Dataset": lambda: {
+            m.REPORT_FILENAME: m.REPORT_SHA256,
+            m.INFO_FILENAME: m.INFO_SHA256,
+        },
         "ProteomeMessner2023Dataset": lambda: {
             m.MATRIX_FILENAME: m.MATRIX_SHA256,
             m.METADATA_FILENAME: m.METADATA_SHA256,
@@ -487,9 +491,10 @@ def test_the_recorder_checks_presence_and_records_without_hashing(
     ]
 
 
-#: The seven loaders whose ``download()`` used to take its pin from the manifest, one
-#: row per mirror file (11): ``(module, class, relpath constant, pin constant, files
-#: checked before it)``, each earlier file as ``(relpath, pin, raw file name)`` constants.
+#: The seven loaders whose ``download()`` used to take its pin from the manifest, plus
+#: Messner 2021, written that way from the start, one row per mirror file (13):
+#: ``(module, class, relpath constant, pin constant, files checked before it)``, each
+#: earlier file as ``(relpath, pin, raw file name)`` constants.
 MANIFEST_CHECKED_DOWNLOADS: list[
     tuple[str, str, str, str, tuple[tuple[str, str, str], ...]]
 ] = [
@@ -501,6 +506,14 @@ MANIFEST_CHECKED_DOWNLOADS: list[
         "DESIGN_D_REL",
         "DESIGN_D_SHA256",
         (("TSV_REL", "TSV_SHA256", "TSV_FILENAME"),),
+    ),
+    ("messner2021", "ProteomeMessner2021Dataset", "REPORT_REL", "REPORT_SHA256", ()),
+    (
+        "messner2021",
+        "ProteomeMessner2021Dataset",
+        "INFO_REL",
+        "INFO_SHA256",
+        (("REPORT_REL", "REPORT_SHA256", "REPORT_FILENAME"),),
     ),
     ("mormino2022", "CrispriMormino2022Dataset", "PDF_REL", "PDF_SHA256", ()),
     (

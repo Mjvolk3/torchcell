@@ -48,6 +48,7 @@ from .lopez2024 import (
 from .lopez2024 import (
     IsobutanolValidatedLopez2024Dataset as IsobutanolValidatedLopez2024Dataset,
 )
+from .messner2021 import ProteomeMessner2021Dataset as ProteomeMessner2021Dataset
 from .messner2023 import ProteomeMessner2023Dataset as ProteomeMessner2023Dataset
 from .mormino2022 import CrispriMormino2022Dataset as CrispriMormino2022Dataset
 from .mota2024 import EnvChemgenMota2024Dataset as EnvChemgenMota2024Dataset
@@ -122,7 +123,7 @@ cooper_datasets = ["AminoAcidCooper2010Dataset"]
 
 zelezniak_datasets = ["ProteomeZelezniak2018Dataset", "MetaboliteZelezniak2018Dataset"]
 
-messner_datasets = ["ProteomeMessner2023Dataset"]
+messner_datasets = ["ProteomeMessner2021Dataset", "ProteomeMessner2023Dataset"]
 
 vanacloig_datasets = ["EnvChemgenVanacloig2022Dataset"]
 

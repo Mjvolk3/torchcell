@@ -366,17 +366,23 @@ def test_turnover_builds_three_isolates_and_a_partial_euploid_reference(
 
 
 def test_both_builds_verify_their_four_raw_files_before_reading(
-    proteome: m.ProteomeMuenzner2024Dataset, raw_pin_calls: list[Any]
+    proteome: m.ProteomeMuenzner2024Dataset, data_root: Path, raw_pin_calls: list[Any]
 ) -> None:
-    """The recorder saw the workbook pin and the three Peter-tier pins."""
+    """The recorder saw the workbook pin and the three Peter-tier manifest pins.
+
+    The Peter pins are read back from the tier manifest the fixture wrote (the synthetic
+    matrices are gzip-compressed with a timestamp, so their digest is per write).
+    """
+    from torchcell.sequence.genome.registry import PETER2018_1011, load_genome_manifest
+
     calls = [c for c in raw_pin_calls if c[1] == proteome.raw_dir]
     assert len(calls) == 1
     pins = calls[0][2]
     assert sorted(pins) == sorted(m.RAW_FILES)
     assert pins[m.SI_TABLES_FILENAME] == m.SI_TABLES_SHA256
-    peter = _raw_bytes()
+    tier = load_genome_manifest(PETER2018_1011, str(data_root))
     for name in (m.REFGENE_TAR_NAME, m.PRESENCE_NAME, m.COPYNUMBER_NAME):
-        assert pins[name] == hashlib.sha256(peter[name]).hexdigest()
+        assert pins[name] == tier.record(name).sha256
 
 
 def test_an_off_pin_workbook_is_refused_before_any_record(

@@ -3309,3 +3309,92 @@ def test_yeast_turnover_experiment_reconstructs_through_its_tag() -> None:
 
 
 # --- end muenzner2024 --------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
+# Issue #1022: MicroarrayExpressionScorePhenotype, the error-model score family
+# --------------------------------------------------------------------------- #
+def _expression_score(**kw: Any) -> s.MicroarrayExpressionScorePhenotype:
+    fields: dict[str, Any] = dict(
+        expression_score={"YBR001C": 1.5, "YAL001C": -3.0},
+        expression_score_p_value={"YBR001C": 0.133614, "YAL001C": 0.0027},
+        measurement_type="error_model_x_score_weighted_duplicate_average",
+        reference_basis="wild-type BY4741 culture",
+        array_platform="GEO GPL3588",
+        n_replicates=2,
+        harvest_optical_density=0.82,
+    )
+    fields.update(kw)
+    return s.MicroarrayExpressionScorePhenotype(**fields)
+
+
+def test_expression_score_sorts_its_keys_and_names_its_statistic() -> None:
+    phenotype = _expression_score()
+    assert list(phenotype.expression_score.items()) == [
+        ("YAL001C", -3.0),
+        ("YBR001C", 1.5),
+    ]
+    assert phenotype.expression_score_p_value is not None
+    assert list(phenotype.expression_score_p_value) == ["YAL001C", "YBR001C"]
+    assert (phenotype.label_name, phenotype.label_statistic_name) == (
+        "expression_score",
+        "expression_score_p_value",
+    )
+    assert repr(phenotype) == (
+        "MicroarrayExpressionScorePhenotype(genes=2, p_value_genes=2, n_replicates=2)"
+    )
+    reference = _expression_score(
+        expression_score={"YAL001C": 0.0},
+        expression_score_p_value=None,
+        harvest_optical_density=None,
+    )
+    assert repr(reference) == (
+        "MicroarrayExpressionScorePhenotype(genes=1, p_value_genes=0, n_replicates=2)"
+    )
+
+
+@pytest.mark.parametrize(
+    "fields,message",
+    [
+        ({"expression_score": {}}, "expression_score cannot be empty"),
+        ({"expression_score": [1.0]}, "must be a per-gene dict"),
+        ({"expression_score": {"YAL001C": True}}, "is not a number"),
+        ({"expression_score": {"YAL001C": math.inf}}, "is not finite"),
+        ({"expression_score_p_value": [0.5]}, "must be a per-gene dict"),
+        (
+            {"expression_score_p_value": {"YAL001C": 1.5, "YBR001C": 0.1}},
+            "not a probability in \\[0, 1\\]",
+        ),
+        (
+            {"expression_score_p_value": {"YAL001C": "0.1", "YBR001C": 0.1}},
+            "is not a number",
+        ),
+        ({"expression_score_p_value": {"YAL001C": 0.1}}, "same keys"),
+        ({"measurement_type": " "}, "cannot be blank"),
+        ({"array_platform": ""}, "cannot be blank"),
+        ({"n_replicates": 0}, "positive integer"),
+        ({"harvest_optical_density": 0.0}, "finite and positive"),
+        ({"harvest_optical_density": math.nan}, "finite and positive"),
+    ],
+)
+def test_expression_score_refuses_what_a_score_record_cannot_be(
+    fields: dict[str, Any], message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        _expression_score(**fields)
+
+
+def test_expression_score_family_is_in_every_union_and_map() -> None:
+    assert s.MicroarrayExpressionScorePhenotype in typing.get_args(s.PhenotypeType)
+    assert s.MicroarrayExpressionScoreExperiment in typing.get_args(s.ExperimentType)
+    assert s.MicroarrayExpressionScoreExperimentReference in typing.get_args(
+        s.ExperimentReferenceType
+    )
+    assert (
+        s.EXPERIMENT_TYPE_MAP["microarray_expression_score"]
+        is s.MicroarrayExpressionScoreExperiment
+    )
+    assert (
+        s.EXPERIMENT_REFERENCE_TYPE_MAP["microarray_expression_score"]
+        is s.MicroarrayExpressionScoreExperimentReference
+    )

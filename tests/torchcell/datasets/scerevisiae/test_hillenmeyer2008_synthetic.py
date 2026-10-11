@@ -482,6 +482,10 @@ def test_het_side_files_gene_set_reference_index_and_manifest(
         "SmallMoleculePerturbation",
         "Solvent",
         "SourceType",
+        # The authors' withdrawal of a measurement, reached through the
+        # environment-response phenotype (Wetmore 2015's own release).
+        "SourceWithdrawal",
+        "SourceWithdrawalReason",
         "StrainBackground",
         "StrainConstruction",
         "StrainEnvironmentResponseExperiment",

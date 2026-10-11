@@ -20,12 +20,18 @@ counting and containment:
 5. L2 ``essential_label`` -- every experiment says ``is_essential`` True.
 6. L2 ``released_annotations`` -- the stored (gene, PubMed id) multiset is the
    multiset of matching annotations in the pinned SGD per-gene JSON release
-   (:func:`torchcell.verification.released.sgd_inviable_null_annotations`).
+   (:func:`torchcell.verification.released.sgd_inviable_null_annotations`), less the
+   annotations the loader's drop ledger names (#901: an allele other than the
+   whole-gene deletion); a ledgered annotation SGD does not release fails the rule.
 7. L3 ``reference_viable`` -- every reference says ``is_essential`` False, in the
    experiment's own environment.
 8. Shared rules, and the two L4 gene rules against the S288C universe.
 
-The caller adds any cross-dataset L4 rows (``extra_results``).
+The caller adds any cross-dataset L4 rows (``extra_results``). The SGD runner's L4
+``no_viable_deletion_in_smf_costanzo2016`` compares only the unconditional records
+(:func:`states_no_condition`): an annotation SGD qualifies with a condition (nitrogen
+starvation, 37 C) says the gene is essential under that condition, which a deletion
+grown on the SGA medium does not contradict (#901).
 """
 
 from __future__ import annotations
@@ -53,6 +59,7 @@ from torchcell.verification.report import (
 __all__ = [
     "Record",
     "essential_gene_set",
+    "states_no_condition",
     "essential_without_viable_deletion_result",
     "released_annotations_result",
     "verify_gene_essentiality_dataset",
@@ -67,16 +74,22 @@ def released_annotations_result(
     *,
     pinned_digest: str,
     observed_digest: str,
+    ledgered: Counter[tuple[str, str]] | None = None,
 ) -> LevelResult:
     """L2 ``released_annotations``: the stored (gene, PubMed) multiset is SGD's.
 
     ``released`` is None when the per-gene JSON digest drifted from its pin; the rule
-    then fails on the drift alone and the annotations are not compared.
+    then fails on the drift alone and the annotations are not compared. ``ledgered``
+    is the (gene, PubMed id) multiset of the loader's drop ledger: each must be a
+    released annotation (else the rule fails on the ledger), and the store is compared
+    with the release less them.
     """
+    ledgered = ledgered if ledgered is not None else Counter()
     details: dict[str, Any] = {
         "pinned_digest": pinned_digest,
         "observed_digest": observed_digest,
         "n_stored": sum(stored.values()),
+        "n_ledgered": sum(ledgered.values()),
     }
     if released is None:
         return LevelResult(
@@ -86,9 +99,24 @@ def released_annotations_result(
             message="the SGD per-gene JSON release drifted from its pin: not compared",
             details=details,
         )
-    only_stored = stored - released
-    only_released = released - stored
+    unreleased_drops = ledgered - released
+    if unreleased_drops:
+        return LevelResult(
+            level=Level.L2,
+            name="released_annotations",
+            passed=False,
+            message=f"{sum(unreleased_drops.values())} ledgered annotations are not "
+            "in the SGD release",
+            details={
+                **details,
+                "unreleased_drops": sorted(map(str, unreleased_drops))[:20],
+            },
+        )
+    kept = released - ledgered
+    only_stored = stored - kept
+    only_released = kept - stored
     passed = not only_stored and not only_released
+    less = f", less the {sum(ledgered.values())} the loader ledgers" if ledgered else ""
     return LevelResult(
         level=Level.L2,
         name="released_annotations",
@@ -96,6 +124,7 @@ def released_annotations_result(
         message=(
             f"the {sum(stored.values())} stored (gene, PubMed id) records are the "
             f"{sum(released.values())} inviable null S288C annotations SGD releases"
+            + less
             if passed
             else f"{sum(only_stored.values())} stored records have no SGD annotation and "
             f"{sum(only_released.values())} SGD annotations have no record"
@@ -118,6 +147,7 @@ def verify_gene_essentiality_dataset(
     released: Counter[tuple[str, str]] | None,
     pinned_digest: str,
     observed_digest: str,
+    ledgered: Counter[tuple[str, str]] | None = None,
     extra_results: Sequence[LevelResult] = (),
     resolve_gene_name: GeneNameResolver | None = None,
     sgd_genes: set[str] | None = None,
@@ -256,6 +286,7 @@ def verify_gene_essentiality_dataset(
             released,
             pinned_digest=pinned_digest,
             observed_digest=observed_digest,
+            ledgered=ledgered,
         )
     )
     report.add(
@@ -279,25 +310,55 @@ def verify_gene_essentiality_dataset(
     return report
 
 
-def essential_gene_set(records: Iterable[Record]) -> set[str]:
-    """The systematic names a gene-essentiality store calls essential."""
+def states_no_condition(environment: Mapping[str, Any]) -> bool:
+    """True when an environment states no medium, no temperature and no edit.
+
+    That is an SGD annotation with no condition property: the essentiality it asserts
+    is unqualified. A stated medium only in a gap's note (SGD's stateless "YPD with 2%
+    glucose", #984) is not machine-readable and reads as no condition.
+    """
+    return (
+        environment.get("media") is None
+        and environment.get("temperature") is None
+        and not environment.get("perturbations")
+    )
+
+
+def essential_gene_set(
+    records: Iterable[Record], *, unconditional_only: bool = False
+) -> set[str]:
+    """The systematic names a gene-essentiality store calls essential.
+
+    With ``unconditional_only``, only records whose environment states no condition
+    (:func:`states_no_condition`) count.
+    """
     return {
         str(p["systematic_gene_name"])
         for rec in records
         for p in rec["experiment"]["genotype"]["perturbations"]
         if rec["experiment"]["phenotype"]["is_essential"] is True
+        and (
+            not unconditional_only
+            or states_no_condition(rec["experiment"]["environment"])
+        )
     }
 
 
 def essential_without_viable_deletion_result(
-    essential: set[str], viable_deletions: Mapping[str, str], *, viable_store: str
+    essential: set[str],
+    viable_deletions: Mapping[str, str],
+    *,
+    viable_store: str,
+    scope: str = "essential",
 ) -> LevelResult:
     """L4: no gene the store calls essential was grown as a viable full deletion.
 
     ``viable_deletions`` maps each gene a fitness store holds as a single full-deletion
     strain with a positive fitness to one such strain id. A gene in both sets is a
     contradiction between the two stores on the same S288C background: one says its
-    deletion is inviable, the other grew it.
+    deletion is inviable, the other grew it. ``scope`` names the essential set in the
+    message ("essential", or "unconditionally essential" when the caller kept only the
+    records that state no condition).
     """
     contradicted = sorted(essential & set(viable_deletions))
     return LevelResult(
@@ -305,16 +366,17 @@ def essential_without_viable_deletion_result(
         name=f"no_viable_deletion_in_{viable_store}",
         passed=bool(essential) and not contradicted,
         message=(
-            f"none of the {len(essential)} essential genes is a viable full-deletion "
+            f"none of the {len(essential)} {scope} genes is a viable full-deletion "
             f"strain of {viable_store}"
             if not contradicted
-            else f"{len(contradicted)} of {len(essential)} essential genes are viable "
+            else f"{len(contradicted)} of {len(essential)} {scope} genes are viable "
             f"full-deletion strains of {viable_store}: "
             + ", ".join(
                 f"{gene} ({viable_deletions[gene]})" for gene in contradicted[:10]
             )
         ),
         details={
+            "scope": scope,
             "n_essential": len(essential),
             "n_viable_deletions": len(viable_deletions),
             "n_contradicted": len(contradicted),

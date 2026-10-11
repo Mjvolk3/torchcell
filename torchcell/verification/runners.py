@@ -3688,8 +3688,10 @@ def run_gene_interaction(data_root: str) -> bool:
 GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
     "gene_essentiality_sgd": {
         "root": "data/torchcell/gene_essentiality_sgd",
-        # the inviable null S288C annotations of the SGD per-gene JSON release
-        "expected_count": 1329,
+        # the 1,329 inviable null S288C annotations of the SGD per-gene JSON release
+        # less the 42 whose allele is not the whole-gene deletion, which the loader
+        # ledgers in preprocess/dropped_records.json (#901)
+        "expected_count": 1287,
         "sgd_genes_dir": "data/sgd/genome/genes",
         # sha256 over the sorted "<file> <sha256>" lines of the 6,607 gene JSONs
         "sgd_genes_digest": (
@@ -3702,9 +3704,11 @@ GENE_ESSENTIALITY_DATASETS: dict[str, dict[str, Any]] = {
             citation_key="cherrySGDSaccharomycesGenome1998",
             method=(
                 "one record per SGD phenotype annotation with mutant_type 'null', "
-                "strain 'S288C' and phenotype 'inviable': a single-gene deletion, "
-                "is_essential True, viable reference; the publication is the "
-                "annotation's own PubMed reference"
+                "strain 'S288C' and phenotype 'inviable' whose allele is the "
+                "whole-gene deletion '<gene>-Δ' (others ledgered): a single-gene "
+                "deletion, is_essential True, viable reference, the annotation's "
+                "condition carried and an unstated medium or temperature a typed gap; "
+                "the publication is the annotation's own PubMed reference"
             ),
             page="SGD locus phenotype_details",
         ),
@@ -3753,11 +3757,20 @@ def run_gene_essentiality(data_root: str) -> bool:
             if observed == spec["sgd_genes_digest"]
             else None
         )
+        with open(
+            osp.join(abs_root, "preprocess", "dropped_records.json"), encoding="utf-8"
+        ) as handle:
+            ledger = json.load(handle)
+        ledgered = Counter(
+            (str(row["systematic_name"]), str(row["pubmed_id"]))
+            for row in ledger["rows"]
+        )
         viable_store = spec["viable_deletion_store"]
         cross = essential_without_viable_deletion_result(
-            essential_gene_set(records),
+            essential_gene_set(records, unconditional_only=True),
             viable_deletion_genes(osp.join(data_root, "data/torchcell", viable_store)),
             viable_store=viable_store,
+            scope="unconditionally essential",
         )
         report = verify_gene_essentiality_dataset(
             records,
@@ -3767,6 +3780,7 @@ def run_gene_essentiality(data_root: str) -> bool:
             released=released,
             pinned_digest=spec["sgd_genes_digest"],
             observed_digest=observed,
+            ledgered=ledgered,
             extra_results=[cross],
             resolve_gene_name=host.resolve_gene_name,
             sgd_genes=host.universe,
@@ -3832,7 +3846,9 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
         ),
         "stated_count": None,
         # SynLethDB 2.0 defines its confidence score for SL pairs only; the SR file's
-        # scores (74 rows, all from BioGRID, -1.0 to -0.21) have no sourced definition
+        # scores (74 rows, all from BioGRID, -1.0 to -0.2) have no sourced definition,
+        # so the loader stores each as a typed gap (#903) and released_rows compares
+        # the released score as None
         "score_definition": None,
         "quotes": [],
         "provenance": Provenance(
@@ -3842,7 +3858,8 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
             method=(
                 "one record per kept row of the SynLethDB yeast SR file: both sides "
                 "resolved by Entrez id through the pinned NCBI GFF, "
-                "is_synthetic_rescue True, r.statistic_score (null in every row), "
+                "is_synthetic_rescue True, no score (the 74 released r.statistic_score "
+                "values are typed gaps, #903), "
                 "r.pubmed_id; drops in preprocess/dropped_records.json"
             ),
             page="SynLethDB 2.0 download, Yeast_SR.csv",
@@ -3852,12 +3869,19 @@ SYNTHETIC_PAIR_DATASETS: dict[str, dict[str, Any]] = {
 
 
 def released_synlethdb_pairs(
-    csv_path: str, ledger: Mapping[str, Any], entrez_to_orf: Mapping[int, str]
+    csv_path: str,
+    ledger: Mapping[str, Any],
+    entrez_to_orf: Mapping[int, str],
+    *,
+    keep_scores: bool = True,
 ) -> tuple[Counter[Any], int]:
     """The kept rows of a SynLethDB file as (ORF pair, score, PubMed id), and its row count.
 
     Each side resolves by its Entrez id alone; a row the loader's ledger drops is skipped
     by its source row number, so the comparison covers exactly the rows the loader kept.
+    With ``keep_scores`` False (a file the source defines no score for, the SR file)
+    every released score reads None, which is what ``score_defined_by_source`` asks of
+    the store (#903).
     """
     import pandas as pd
 
@@ -3885,7 +3909,7 @@ def released_synlethdb_pairs(
             pair_row_key(
                 entrez_to_orf[int(entrez_1)],
                 entrez_to_orf[int(entrez_2)],
-                None if pd.isna(score) else float(score),
+                None if pd.isna(score) or not keep_scores else float(score),
                 str(pubmed_id),
             )
         ] += 1
@@ -3977,7 +4001,12 @@ def run_synthetic_pairs(data_root: str) -> bool:
         rows, n_rows = (
             (None, None)
             if drift
-            else released_synlethdb_pairs(csv_path, ledger, entrez_to_orf)
+            else released_synlethdb_pairs(
+                csv_path,
+                ledger,
+                entrez_to_orf,
+                keep_scores=spec["score_definition"] is not None,
+            )
         )
         stated: SourcedValue | None = spec["stated_count"]
         released = ReleasedPairs(

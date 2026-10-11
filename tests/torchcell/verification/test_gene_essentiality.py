@@ -36,6 +36,7 @@ from torchcell.verification.gene_essentiality import (
     essential_gene_set,
     essential_without_viable_deletion_result,
     released_annotations_result,
+    states_no_condition,
     verify_gene_essentiality_dataset,
 )
 from torchcell.verification.report import Level, LevelResult, Provenance
@@ -256,3 +257,91 @@ def test_essential_genes_grown_as_viable_deletions_contradict() -> None:
 def test_essential_gene_set_skips_a_record_that_is_not_essential() -> None:
     records = [_record(["YAL001C"], "1"), _record(["YBR085W"], "2", essential=False)]
     assert essential_gene_set(records) == {"YAL001C"}
+
+
+# --------------------------------------------------------------------------- #
+# #901: the loader's drop ledger and SGD's condition qualifiers
+# --------------------------------------------------------------------------- #
+def test_released_annotations_take_the_ledgered_annotations_out_of_the_release() -> (
+    None
+):
+    """The release has YAL001C / PubMed 1 twice (two alleles); the loader stores one and
+    ledgers the other, so the store matches the release less the ledger.
+    """
+    released = RELEASED + Counter({("YAL001C", "1"): 1})
+    ledgered = Counter({("YAL001C", "1"): 1})
+    report = _verify(_records(), released=released, ledgered=ledgered)
+    result = _result(report, "released_annotations")
+    assert result.passed is True
+    assert result.message == (
+        "the 3 stored (gene, PubMed id) records are the 4 inviable null S288C "
+        "annotations SGD releases, less the 1 the loader ledgers"
+    )
+    assert result.details["n_ledgered"] == 1
+    without_ledger = _result(
+        _verify(_records(), released=released), "released_annotations"
+    )
+    assert without_ledger.passed is False
+    assert without_ledger.message == (
+        "0 stored records have no SGD annotation and 1 SGD annotations have no record"
+    )
+
+
+def test_a_ledgered_annotation_sgd_does_not_release_fails_the_rule() -> None:
+    result = released_annotations_result(
+        Counter(ROWS),
+        RELEASED,
+        pinned_digest="p",
+        observed_digest="p",
+        ledgered=Counter({("YJR155W", "9"): 1}),
+    )
+    assert result.passed is False
+    assert result.message == "1 ledgered annotations are not in the SGD release"
+    assert result.details["unreleased_drops"] == ["('YJR155W', '9')"]
+
+
+def test_only_records_stating_no_condition_are_unconditionally_essential() -> None:
+    """The fixture's records state SC at 30 C, so none is unconditional; a record with
+    no medium, no temperature and no edit is.
+    """
+    assert essential_gene_set(_records(), unconditional_only=True) == set()
+    bare = _record(["YJR155W"], "9")
+    bare["experiment"]["environment"] = {
+        "media": None,
+        "temperature": None,
+        "perturbations": [],
+    }
+    assert essential_gene_set([*_records(), bare], unconditional_only=True) == {
+        "YJR155W"
+    }
+    assert states_no_condition(bare["experiment"]["environment"]) is True
+    assert (
+        states_no_condition(
+            {"media": None, "temperature": {"value": 37.0}, "perturbations": []}
+        )
+        is False
+    )
+    assert (
+        states_no_condition(
+            {
+                "media": None,
+                "temperature": None,
+                "perturbations": [{"perturbation_type": "environment_physical"}],
+            }
+        )
+        is False
+    )
+
+
+def test_the_scope_names_the_compared_set_in_the_message() -> None:
+    result = essential_without_viable_deletion_result(
+        {"YAL001C"},
+        {"YAL001C": "YAL001C_sn1"},
+        viable_store="smf",
+        scope="unconditionally essential",
+    )
+    assert result.message == (
+        "1 of 1 unconditionally essential genes are viable full-deletion strains of "
+        "smf: YAL001C (YAL001C_sn1)"
+    )
+    assert result.details["scope"] == "unconditionally essential"

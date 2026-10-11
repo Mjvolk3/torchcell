@@ -4502,6 +4502,111 @@ MOPS_CASAMINO_WANG2018 = Media(
 acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""
 
 
+# --------------------------------------------------------------------------- #
+# RCH2 defined minimal medium, no carbon (Price 2018 Supplementary Table 18, the Fitness
+# Browser's own media table). Borchert 2024's compendium names it for 20 P. putida
+# KT2440 samples, ten of them Rand 2017's own Putida_ML5 assays (#860). The two Wolfe's
+# mixes follow the Fang 2025 trace-stock convention: each is ONE component at the stated
+# 1 X, with its 100X stock recipe quoted from the same sheet, because the diluted amounts
+# of its fourteen salts or ten vitamins would be a derivation rather than a stated value.
+# The sheet defines "X" itself ('"X" is the concentration of the stock supplement mix')
+# and prints each mix as 100X, so 1 X is a 1:100 dilution, carried as 1% (v/v) the way
+# Fang 2025's "1 mL/L" is carried as 0.1% (v/v).
+# --------------------------------------------------------------------------- #
+_Q_PRICE_RCH2 = (
+    "Media | RCH2_defined_noCarbon / Description | Defined minimal media for soil and "
+    "groundwater bacteria with no carbon / Minimal | =TRUE() / Controlled vocabulary | "
+    "Concentration | Units / Ammonium chloride | 0.25 | g/L / Potassium Chloride | 0.1 "
+    "| g/L / Sodium phosphate monobasic monohydrate | 0.6 | g/L / PIPES sesquisodium "
+    "salt | 30 | mM / Wolfe's mineral mix | 1 | X / Wolfe's vitamin mix | 1 | X"
+)
+_Q_PRICE_X = (
+    'MEDIA SUPPLEMENT MIXES / "X" is the concentration of the stock supplement mix / '
+    "See individual medias for the concentration of supplement used."
+)
+_Q_PRICE_WOLFE_MINERAL = (
+    "Media | Wolfe's mineral mix / Description | Standard 100X mineral solution (based "
+    "on Wolfe's formulation) / X | 100 / Controlled vocabulary | Concentration | Units / "
+    "Magnesium Sulfate Heptahydrate | 3 | g/L / Nitrilotriacetic acid | 1.5 | g/L / "
+    "Sodium Chloride | 1 | g/L / Manganese (II) sulfate monohydrate | 0.5 | g/L / Cobalt "
+    "chloride hexahydrate | 0.1 | g/L / Zinc sulfate heptahydrate | 0.1 | g/L / Calcium "
+    "Chloride Dihydrate | 0.1 | g/L / Iron (II) sulfate heptahydrate | 0.1 | g/L / "
+    "Nickel (II) chloride hexahydrate | 0.025 | g/L / Aluminum potassium sulfate "
+    "dodecahydrate | 0.02 | g/L / Copper (II) sulfate pentahydrate | 0.01 | g/L / Boric "
+    "Acid | 0.01 | g/L / Sodium Molybdate Dihydrate | 0.01 | g/L / Sodium selenite "
+    "pentahydrate | 0.3 | mg/L"
+)
+_Q_PRICE_WOLFE_VITAMIN = (
+    "Media | Wolfe's vitamin mix / Description | Standard 100X vitamin solution (based "
+    "on Wolfe's formulation) / X | 100 / Controlled vocabulary | Concentration | Units / "
+    "pyridoxine HCl | 10 | mg/L / 4-Aminobenzoic acid | 5 | mg/L / Lipoic acid | 5 | "
+    "mg/L / Nicotinic Acid | 5 | mg/L / Riboflavin | 5 | mg/L / thiamine HCl | 5 | mg/L "
+    "/ calcium pantothenate | 5 | mg/L / biotin | 2 | mg/L / Folic Acid | 2 | mg/L / "
+    "Cyanocobalamin | 0.1 | mg/L"
+)
+_WOLFE_DILUTION_NOTE = (
+    "1 X of the sheet's 100X stock is a 1:100 dilution, carried as 1% (v/v); the sheet "
+    'defines "X" as the concentration of the stock supplement mix. The stock recipe is '
+    "the second quote and stays a mixture here (the Fang 2025 trace-stock convention): "
+    "its diluted per-compound amounts would be a derivation, not a stated value"
+)
+
+
+def _rch2(
+    name: str,
+    role: MediaComponentRole,
+    value: float,
+    unit: ConcentrationUnit,
+    read: str,
+) -> MediaComponent:
+    return _stated(name, role, value, unit, _cite(_PRICE2018_S3, read, _Q_PRICE_RCH2))
+
+
+def _wolfe_mix(name: str, role: MediaComponentRole, stock_quote: str) -> MediaComponent:
+    return _mixture(
+        name,
+        role,
+        _DEFERRED,
+        concentration=_c(1.0, _VV),
+        provenance=[
+            _cite(_PRICE2018_S3, "1 X", _Q_PRICE_RCH2, note=_WOLFE_DILUTION_NOTE),
+            _cite(_PRICE2018_S3, "100X stock recipe", stock_quote),
+            _cite(_PRICE2018_S3, "X is the stock concentration", _Q_PRICE_X),
+        ],
+        note=_WOLFE_DILUTION_NOTE,
+    )
+
+
+RCH2_DEFINED_NOCARBON_PRICE2018 = Media(
+    name="RCH2 defined minimal medium, no carbon source (Price 2018 "
+    "'RCH2_defined_noCarbon')",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="RCH2_DEFINED_NOCARBON_PRICE2018",
+    components=[
+        _rch2("ammonium chloride", _NSRC, 0.25, _GL, "0.25 g/L"),
+        _rch2("potassium chloride", _SALT, 0.1, _GL, "0.1 g/L"),
+        _rch2("sodium dihydrogen phosphate monohydrate", _SALT, 0.6, _GL, "0.6 g/L"),
+        _rch2("PIPES sesquisodium salt", _BUFFER, 30.0, _MM, "30 mM"),
+        _wolfe_mix("Wolfe's mineral mix", _TRACE, _Q_PRICE_WOLFE_MINERAL),
+        _wolfe_mix("Wolfe's vitamin mix", _VITAMIN, _Q_PRICE_WOLFE_VITAMIN),
+    ],
+    provenance=[
+        _cite(
+            _PRICE2018_S3,
+            "RCH2_defined_noCarbon",
+            _Q_PRICE_RCH2,
+            note="the Fitness Browser's media table, which Borchert 2024's compendium "
+            "release names for 20 P. putida samples; the carbon source is each "
+            "sample's Condition_1, carried as EnvironmentPhysicalPerturbation(factor="
+            "carbon_source)",
+        )
+    ],
+)
+"""Price 2018's RCH2 defined minimal medium without carbon: the medium of Borchert 2024's
+20 RCH2 samples, ten of them Rand 2017's own assays (row 8)."""
+
+
 #: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,
 #: first author, year) use each bacterial entry, and how the paper states it. "names" means
 #: the paper names the formulation without printing amounts; every other use is a stated
@@ -4583,6 +4688,11 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "43 Fang 2025: both rounds of the CRISPRi-FACS screen (500 mL flasks holding "
         "100 mL), and every tube and flask fermentation; the glucose variant the same "
         "sentence offers is used by one titer figure and by no screen record",
+    ),
+    "RCH2_DEFINED_NOCARBON_PRICE2018": (
+        "8 Borchert 2024: the 20 compendium samples on 'RCH2_defined_noCarbon' (sets 1 "
+        "and 5 of the Putida_ML5 library), ten of them Rand 2017's own assays; the "
+        "release names the medium and Price 2018 Table S18 states it",
     ),
 }
 """Use map for the bacterial entries; the keys are exactly the bacterial media."""
@@ -5068,6 +5178,7 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "MOPS_CASAMINO_WANG2018": MOPS_CASAMINO_WANG2018,
     "M9_MODIFIED_FANG2025": M9_MODIFIED_FANG2025,
     **JACKSON2020_MEDIA,  # jackson2020: Supplementary file 1, Table 4
+    "RCH2_DEFINED_NOCARBON_PRICE2018": RCH2_DEFINED_NOCARBON_PRICE2018,
 } | {
     _hm_key(compound, partial): HILLENMEYER_DROPOUT_MEDIA[label]
     for label, compound, partial in _HILLENMEYER_DROPOUTS
@@ -5131,6 +5242,9 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "Media' is the base plus 1 mM ammonium sulfate and Table 1 lists its carbon source "
     "as None",
     # --- end jackson2020 ---
+    "RCH2_DEFINED_NOCARBON_PRICE2018": "the carbon source is the variable of the "
+    "RB-TnSeq carbon-source experiments (Borchert 2024: glucose, potassium acetate, "
+    "levulinic acid, 4-hydroxyvalerate, vanillin or p-coumaric acid)",
 }
 
 

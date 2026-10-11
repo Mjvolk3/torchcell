@@ -42,6 +42,7 @@ from torchcell.datamodels.media import (
     M9_SCHMIDT2016,
     MEDIA_LIBRARY,
     MOPS_MINIMAL,
+    RCH2_DEFINED_NOCARBON_PRICE2018,
     _check_library,
 )
 from torchcell.datamodels.schema import (
@@ -187,6 +188,7 @@ def test_every_bacterial_base_is_a_library_member() -> None:
         "M9_DIFCO",
         "DAVIS_MINIMAL",
         "MOPS_MINIMAL",
+        "RCH2_DEFINED_NOCARBON_PRICE2018",
     }
     assert bases <= set(BACTERIAL_MEDIA_USES)
     assert oc.media_base_issues() == []
@@ -317,6 +319,82 @@ def test_mops_minimal_adjudicates_the_sulfate_row_and_defers_to_neidhardt() -> N
         c.defers_to == ["neidhardtCultureMediumEnterobacteria1974"]
         for c in MOPS_MINIMAL.components
     )
+
+
+def test_rch2_is_price_table_s18_with_the_wolfe_mixes_kept_as_mixtures() -> None:
+    """The four stated salts resolve; the two 1 X mixes stay mixtures at 1% (v/v) (#860).
+
+    Table S18 states 0.25 g/L NH4Cl, 0.1 g/L KCl, 0.6 g/L NaH2PO4.H2O and 30 mM PIPES
+    sesquisodium salt, and the two Wolfe's mixes at 1 X of a 100X stock. The mixes follow
+    the Fang 2025 trace-stock convention: one component each, with the stock recipe
+    quoted, never a derived per-salt amount.
+    """
+    media = RCH2_DEFINED_NOCARBON_PRICE2018
+    stated = {
+        c.compound.name: (c.concentration.value, c.concentration.unit, c.role)
+        for c in media.components
+        if c.definition is ComponentDefinition.defined and c.concentration is not None
+    }
+    assert stated == {
+        "ammonium chloride": (
+            0.25,
+            ConcentrationUnit.g_per_l,
+            MediaComponentRole.nitrogen_source,
+        ),
+        "potassium chloride": (
+            0.1,
+            ConcentrationUnit.g_per_l,
+            MediaComponentRole.bulk_salt,
+        ),
+        "sodium dihydrogen phosphate monohydrate": (
+            0.6,
+            ConcentrationUnit.g_per_l,
+            MediaComponentRole.bulk_salt,
+        ),
+        "PIPES sesquisodium salt": (
+            30.0,
+            ConcentrationUnit.millimolar,
+            MediaComponentRole.buffer,
+        ),
+    }
+    inchikeys = {
+        c.compound.name: c.compound.inchikey
+        for c in media.components
+        if c.definition is ComponentDefinition.defined
+    }
+    assert inchikeys["potassium chloride"] == "WCUXLLCKKVVCTQ-UHFFFAOYSA-M"
+    assert inchikeys["sodium dihydrogen phosphate monohydrate"] == (
+        "BBMHARZCALWXSL-UHFFFAOYSA-M"
+    )
+    assert inchikeys["PIPES sesquisodium salt"] == "FPDACHMSOMILQI-UHFFFAOYSA-K"
+    mixes = {
+        c.compound.name: c
+        for c in media.components
+        if c.definition is ComponentDefinition.composition_deferred
+    }
+    assert sorted(mixes) == ["Wolfe's mineral mix", "Wolfe's vitamin mix"]
+    for mix in mixes.values():
+        assert mix.concentration is not None
+        assert (mix.concentration.value, mix.concentration.unit) == (
+            1.0,
+            ConcentrationUnit.percent_v_v,
+        )
+        assert [sv.value for sv in mix.provenance] == [
+            "1 X",
+            "100X stock recipe",
+            "X is the stock concentration",
+        ]
+    assert "Nitrilotriacetic acid | 1.5 | g/L" in (
+        mixes["Wolfe's mineral mix"].provenance[1].quote
+    )
+    assert "Cyanocobalamin | 0.1 | mg/L" in (
+        mixes["Wolfe's vitamin mix"].provenance[1].quote
+    )
+    assert media.base_medium == "RCH2_DEFINED_NOCARBON_PRICE2018"
+    assert "RCH2_DEFINED_NOCARBON_PRICE2018" in CARBON_FREE_MEDIA
+    assert {sv.provenance.sha256 for sv in media.provenance} == {
+        "e5dbf3d5c97cfc12f49d7fd83f84bc95c16cbe963309a561fff20f442788b879"
+    }
 
 
 def test_an_unstated_amount_stays_an_open_gap() -> None:

@@ -1,0 +1,30 @@
+{
+  "old": {
+    "path": "/scratch/projects/torchcell-scratch/tmp/compound_identity_table_5a476def_before_726.json",
+    "sha256": "5a476defa3b109b373c7957001cb186c37668485e35afcf66ce058e739a85921",
+    "records": 5533,
+    "keys": 10829
+  },
+  "new": {
+    "path": "torchcell/datamodels/compound_identity_table.json",
+    "sha256": "448c366cbe4fbf8e2a982437d4a0e7d33b4a3c22c1159be1211e8f65ba74d57b",
+    "records": 5677,
+    "keys": 11005
+  },
+  "keys_removed": [],
+  "renames": [],
+  "newly_resolved": [],
+  "lost": [],
+  "identifier_changes": [],
+  "verdict": {
+    "bytes_identical": false,
+    "no_key_renames_a_node": true,
+    "nothing_lost": true,
+    "no_key_removed": true,
+    "keys_added": 176,
+    "newly_resolved": 0,
+    "identifier_changes": 0
+  }
+}
+keys added: 176
+wrote experiments/036-dataset-fixes-before-kg-build/results/compound_identity_table_diff.json

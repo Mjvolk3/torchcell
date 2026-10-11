@@ -95,7 +95,7 @@ sub() {   # sub <denominator|full>
 }
 declare -A EPOCHS=([64]=240 [16]=120 [4]=40 [full]=10)
 declare -A LINKS=([64]=1 [16]=1 [4]=1 [full]=1)
-CHAIN_HEADLINE="${CHAIN_HEADLINE:-1}"
+CHAIN_HEADLINE="${CHAIN_HEADLINE:-0}"
 
 if [[ "$ONLY" == "calib" ]]; then
   submit "030-sclw1-calib" 3 "" $(size 180 8) $(sub full) +seed=1 trainer.max_epochs=1 trainer.limit_train_batches=400 >/dev/null

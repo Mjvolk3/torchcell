@@ -64,7 +64,7 @@ chain() {  # chain <name> <links> [overrides...]
 sub() { if [[ "$1" == "full" ]]; then echo "subset.indices=subset_S3Q_indices.json.gz"; else echo "subset.indices=subset_S3Q_frac$1_indices.json.gz"; fi; }
 declare -A EPOCHS=([64]=240 [16]=120 [4]=40 [full]=10)
 declare -A LINKS=([64]=1 [16]=1 [4]=1 [full]=1)
-CHAIN_HEADLINE="${CHAIN_HEADLINE:-1}"
+CHAIN_HEADLINE="${CHAIN_HEADLINE:-0}"
 if [[ "$CHAIN_HEADLINE" == "1" ]]; then LINKS[full]=3; EPOCHS[full]=30; fi
 for d in 64 16 4 full; do
   chain "025-sclw1-N180L8-D$d-s1" "${LINKS[$d]}" $(sub "$d") +seed=1 "trainer.max_epochs=${EPOCHS[$d]}"

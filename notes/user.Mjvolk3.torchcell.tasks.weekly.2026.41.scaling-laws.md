@@ -11,4 +11,5 @@ created: 1791533063921
 
 - [x] Started the scaling-laws explainer as a notes-tex document in a new `modeling/` group, with the Kaplan and Chinchilla forms, counting rules for `N`, `D`, `C` on strain data, the minimal ablation, and a plan for the trigenic build [[scaling-laws]]
 - [x] Wrote the 3 x 3 figure of both forms, nine GIF sweeps, one per panel, typeset by LaTeX, and the generated constants table [[experiments.041-scaling-laws.scripts.scaling_law_forms]]
-- [ ] Decide on adding the five scaling-law papers to the library (they are flagged external until then)
+- [x] Kaplan 2020, Hoffmann 2022 and Besiroglu 2024 added to the library by hand and mirrored by `lit_sync` (2026.10.11); the script note opens with a LaTeX introduction to the equations read from them [[experiments.041-scaling-laws.scripts.scaling_law_forms]]
+- [ ] Yang 2022 (muP) and Muennighoff 2023 remain flagged external

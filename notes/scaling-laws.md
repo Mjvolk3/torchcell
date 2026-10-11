@@ -15,7 +15,8 @@ Status: every section `todo`. No torchcell number anywhere in it.
 
 ### Open items
 
-- [ ] Decide whether Kaplan 2020, Hoffmann 2022, Besiroglu 2024, Yang 2022 (muP) and Muennighoff 2023 go into the library; until then they are named by arXiv id and flagged `\external`.
+- [x] Kaplan 2020, Hoffmann 2022 and Besiroglu 2024 are in the library and mirrored (2026.10.11, from `torchcell-queue/torchcell-in`): `kaplanScalingLawsNeural2020`, `hoffmannTrainingComputeOptimalLarge2022`, `besirogluChinchillaScalingReplication2024`.
+- [ ] Yang 2022 (muP) and Muennighoff 2023 are still named by arXiv id and flagged `\external`.
 - [ ] Run the `D`-sweep on the 025 disjoint split (1/64, 1/16, 1/4, 1 by query pair) before anything else; it is the sweep that says whether a new screen or a larger model pays more.
 - [ ] Compute the replicate-noise bound on `E` from the Kuzmin/Costanzo SD columns in the loss's own units before fitting anything.
 - [ ] Where it lands in the manuscript: a Methods subsection plus one three-panel figure (`L` vs `D`, `N`, `C`); the paper's status chips decide when.

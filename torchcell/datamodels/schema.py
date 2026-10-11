@@ -20,6 +20,15 @@ from torchcell.datamodels.bacterial_morphology_features import (
     morphology_assay,
 )
 from torchcell.datamodels.calmorph_labels import CALMORPH_LABELS, CALMORPH_STATISTICS
+
+# --- begin ADDITIVE (Puddu 2019 genome architecture): the WGS architecture family ---
+from torchcell.datamodels.genome_architecture_features import (
+    ArchitectureAssay,
+    ArchitectureBasis,
+    architecture_assay,
+)
+
+# --- end ADDITIVE (Puddu 2019 genome architecture) ---
 from torchcell.datamodels.pydant import ModelStrict
 from torchcell.verification.sourced import ProvenanceGap, SourcedValue
 
@@ -8857,6 +8866,217 @@ class LifeCycleExperiment(Experiment, ModelStrict):
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# GENOME ARCHITECTURE BLOCK START (Puddu 2019, yeast expansion row 7)
+# The REALIZED genome content of one sequenced sample: repeat-array and replicon copy
+# numbers, per-chromosome copy number, a telomere-length proxy and a rearrangement
+# count, each read off whole-genome sequencing coverage.
+# --------------------------------------------------------------------------- #
+#: How far a record's ``ANtot`` aggregate may differ from the sum of its own
+#: per-chromosome deviations before the record is refused. The aggregate is the source's
+#: own column and the per-chromosome values are the source's own columns, so the identity
+#: is a property of the RELEASE, not of this schema: measured over all 8,843 released
+#: Puddu 2019 colonies the largest disagreement is 3.1e-15, i.e. float noise.
+PLOIDY_DEVIATION_ATOL = 1e-6
+
+
+class GenomeArchitecturePhenotype(Phenotype, ModelStrict):
+    """One sequenced sample's genome-architecture profile, keyed by its assay's symbols.
+
+    The quantity is the genome content the sequencing FOUND, as distinct from the edit
+    the strain was designed to carry: a kanMX deletion strain of the yeast knockout
+    collection is designed as one absent ORF and is realized as that ORF plus whatever
+    repeat expansion, plasmid or mitochondrial copy-number change, aneuploidy and
+    chromosomal rearrangement the collection accumulated. Puddu et al. 2019 (Nature
+    573:416) measured exactly that for 8,843 colonies of the homozygous diploid
+    collection, so the designed perturbation lives in ``Genotype`` and this phenotype
+    carries the realized architecture.
+
+    Why its own class rather than a field on an existing one. ``CalMorphPhenotype`` and
+    ``BacterialMorphologyPhenotype`` hold the right SHAPE (named per-sample values plus a
+    dispersion map) and the wrong quantities: both are microscopy morphology vocabularies
+    and neither can express a copy number per haploid genome. Nothing already in the
+    schema carries a per-chromosome copy number at all, which is why the Hoepfner 2014
+    background records a typed gap reading "The schema has no per-chromosome copy number,
+    so the aneuploidy and the amplification cannot be recorded per strain". This class is
+    additive: no served record changes.
+
+    Key semantics, which is the whole point of the class:
+
+    - ``assay`` names an :class:`~torchcell.datamodels.genome_architecture_features.ArchitectureAssay`
+      in ``GENOME_ARCHITECTURE_ASSAYS``, and that assay's symbols are the only permitted
+      keys. Every symbol DECLARES its unit basis there, because the numbers in one record
+      are not in one unit: a repeat copy number is per haploid genome, mtDNA and a plasmid
+      are per cell, a chromosome copy number is per cell with 2.0 as the diploid baseline,
+      and a telomere proxy is reads per million. A consumer that averages across keys is
+      averaging quantities the source never claimed were comparable.
+    - A record carries the features its sample was MEASURED for, not necessarily the whole
+      vocabulary: ``required`` coverage is the loader's statement, not this class's.
+    - ``genome_architecture_sd`` is the dispersion of the same symbols when the stored
+      value is a mean over samples (the wild-type reference profile), with
+      ``uncertainty_type`` naming WHAT that number is and ``n_samples`` /``sample_unit``
+      the design behind it. It is ``None`` for a single sequenced sample, which has no
+      dispersion.
+    - ``sample_id`` and ``sample_accession`` identify the sequenced sample the numbers
+      came from (the colony id and its archive accession). They are part of the
+      measurement: two colonies of one strain are two samples, never two replicates to be
+      averaged, and the accession is what makes the stored number traceable to the reads.
+    """
+
+    graph_level: str = "global"
+    label_name: str = "genome_architecture"
+    label_statistic_name: str | None = "genome_architecture_sd"
+    assay: str = Field(
+        description="the registered genome-architecture assay whose vocabulary names "
+        "the keys (a key of "
+        "torchcell.datamodels.genome_architecture_features.GENOME_ARCHITECTURE_ASSAYS)"
+    )
+    genome_architecture: dict[str, float] = Field(
+        description="per-sample values keyed by the assay's own symbol; each symbol's "
+        "unit basis is declared by the assay, so keys are never pooled",
+        repr=False,
+    )
+    genome_architecture_sd: dict[str, float] | None = Field(
+        default=None,
+        description="dispersion of the same symbols when the value is a mean over "
+        "samples; None for a single sequenced sample",
+        repr=False,
+    )
+    uncertainty_type: UncertaintyType | None = Field(
+        default=None,
+        description="what the numbers in genome_architecture_sd ARE; required with them",
+    )
+    n_samples: int | None = Field(
+        default=None, description="samples the stored values are taken over"
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None, description="what one sample in n_samples physically is"
+    )
+    sample_id: str | None = Field(
+        default=None,
+        description="the source's own identifier of the sequenced sample, verbatim "
+        "(Puddu's colony id 'SD0863b'); None for a profile that is not one sample",
+    )
+    sample_accession: str | None = Field(
+        default=None,
+        description="the sequence-archive accession of that sample, verbatim "
+        "('ERS838232'); None when the source releases none",
+    )
+
+    def __repr__(self) -> str:
+        """Summary repr instead of dumping the per-feature dict."""
+        return (
+            f"GenomeArchitecturePhenotype(assay={self.assay!r}, "
+            f"features={len(self.genome_architecture)}, sample_id={self.sample_id!r})"
+        )
+
+    @property
+    def assay_vocabulary(self) -> ArchitectureAssay:
+        """The assay this record names, which is the authority on its keys."""
+        return architecture_assay(self.assay)
+
+    @model_validator(mode="after")
+    def validate_against_the_assay(self) -> "GenomeArchitecturePhenotype":
+        """Keys belong to the named assay, values fit their basis, aggregates agree.
+
+        The assay lookup raises on an unregistered name, so a record can never be
+        written against a vocabulary this version of the schema does not hold.
+        """
+        assay = architecture_assay(self.assay)
+        if not self.genome_architecture:
+            raise ValueError(
+                f"genome_architecture cannot be empty (assay {self.assay!r})"
+            )
+        self._check_keys("genome_architecture", self.genome_architecture, assay)
+        for symbol, value in self.genome_architecture.items():
+            assay.validate_value(symbol, float(value))
+        if self.genome_architecture_sd is not None:
+            self._check_keys(
+                "genome_architecture_sd", self.genome_architecture_sd, assay
+            )
+            for symbol, value in self.genome_architecture_sd.items():
+                if not math.isfinite(float(value)) or float(value) < 0.0:
+                    raise ValueError(
+                        f"genome_architecture_sd[{symbol}] must be a finite "
+                        f"non-negative dispersion, got {value}"
+                    )
+            if self.uncertainty_type is None:
+                raise ValueError(
+                    "genome_architecture_sd needs uncertainty_type to say what the "
+                    "number is (a sample SD and a standard error convert differently)"
+                )
+        elif self.uncertainty_type is not None:
+            raise ValueError(
+                "uncertainty_type names the kind of a dispersion this record does not "
+                "carry; leave it None"
+            )
+        self._check_ploidy_deviation(assay)
+        return self
+
+    @staticmethod
+    def _check_keys(
+        field: str, values: dict[str, float], assay: ArchitectureAssay
+    ) -> None:
+        """Every key is a feature of the named assay."""
+        permitted = frozenset(assay.by_symbol)
+        outside = sorted(set(values) - permitted)
+        if outside:
+            raise ValueError(
+                f"{field}: {outside} are not features of assay {assay.name}; it "
+                f"declares {len(permitted)} symbols"
+            )
+
+    def _check_ploidy_deviation(self, assay: ArchitectureAssay) -> None:
+        """A stored ploidy-deviation aggregate equals the deviations it aggregates.
+
+        Only checked when the record carries BOTH the aggregate and every chromosome it
+        sums over: a reference profile that states the aggregate alone is stating what
+        the source published, not a derived sum.
+        """
+        aggregates = assay.symbols_with_basis(ArchitectureBasis.ploidy_deviation_units)
+        chromosomes = assay.symbols_with_basis(
+            ArchitectureBasis.chromosome_copies_per_cell
+        )
+        if not aggregates or not chromosomes <= set(self.genome_architecture):
+            return
+        expected = sum(
+            abs(float(self.genome_architecture[symbol]) - 2.0) for symbol in chromosomes
+        )
+        for symbol in aggregates & set(self.genome_architecture):
+            stored = float(self.genome_architecture[symbol])
+            if abs(stored - expected) > PLOIDY_DEVIATION_ATOL:
+                raise ValueError(
+                    f"{symbol} is {stored} but the record's {len(chromosomes)} "
+                    f"chromosome copy numbers deviate from 2.0 by {expected} in total"
+                )
+
+
+class GenomeArchitectureExperimentReference(ExperimentReference, ModelStrict):
+    """Reference profile for a genome-architecture experiment.
+
+    ``genome_reference`` is a ``StrainReferenceGenome`` so the diploid baseline every
+    chromosome copy number is read against, and the background alleles the collection
+    carries, are stated rather than implied.
+    """
+
+    experiment_reference_type: str = "genome_architecture"
+    genome_reference: StrainReferenceGenome
+    phenotype_reference: GenomeArchitecturePhenotype
+
+
+class GenomeArchitectureExperiment(Experiment, ModelStrict):
+    """One sequenced sample's realized genome architecture under a designed genotype."""
+
+    experiment_type: str = "genome_architecture"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    phenotype: GenomeArchitecturePhenotype
+
+
+# --------------------------------------------------------------------------- #
+# GENOME ARCHITECTURE BLOCK END (Puddu 2019, yeast expansion row 7)
+# --------------------------------------------------------------------------- #
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -8885,6 +9105,8 @@ PhenotypeType = (
     | SingleCellExpressionPhenotype  # boocock2025
     | LifeCyclePhenotype  # De Chiara 2022
     | PseudobulkUmiCountPhenotype  # jackson2020
+    # ADDITIVE (Puddu 2019 genome architecture)
+    | GenomeArchitecturePhenotype
 )
 
 ExperimentType = (
@@ -8929,6 +9151,8 @@ ExperimentType = (
     | SegregantExpressionExperiment  # boocock2025
     | LifeCycleExperiment  # De Chiara 2022
     | PseudobulkUmiCountExperiment  # jackson2020
+    # ADDITIVE (Puddu 2019 genome architecture)
+    | GenomeArchitectureExperiment
 )
 
 ExperimentReferenceType = (
@@ -8973,6 +9197,8 @@ ExperimentReferenceType = (
     | SegregantExpressionExperimentReference  # boocock2025
     | LifeCycleExperimentReference  # De Chiara 2022
     | PseudobulkUmiCountExperimentReference  # jackson2020
+    # ADDITIVE (Puddu 2019 genome architecture)
+    | GenomeArchitectureExperimentReference
 )
 
 
@@ -9017,6 +9243,8 @@ EXPERIMENT_TYPE_MAP = {
     "segregant_expression": SegregantExpressionExperiment,  # boocock2025
     "life_cycle": LifeCycleExperiment,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperiment,  # jackson2020
+    # ADDITIVE (Puddu 2019 genome architecture)
+    "genome_architecture": GenomeArchitectureExperiment,
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -9060,6 +9288,8 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "segregant_expression": SegregantExpressionExperimentReference,  # boocock2025
     "life_cycle": LifeCycleExperimentReference,  # De Chiara 2022
     "pseudobulk_umi_count": PseudobulkUmiCountExperimentReference,  # jackson2020
+    # ADDITIVE (Puddu 2019 genome architecture)
+    "genome_architecture": GenomeArchitectureExperimentReference,
 }
 
 

@@ -1,0 +1,2102 @@
+{
+  "source": {
+    "path": "/scratch/projects/torchcell-scratch/torchcell-library/dechiaraDomesticationReprogrammedBudding2022/si/si4.xlsx",
+    "sha256": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e"
+  },
+  "sheets": {
+    "Supplementary Table 1": [
+      33,
+      152
+    ],
+    "Supplementary Table 2": [
+      40,
+      5
+    ],
+    "Supplementary Table 3": [
+      1014,
+      195
+    ],
+    "Supplementary Table 4": [
+      45,
+      9
+    ],
+    "Supplementary Table 5": [
+      378,
+      17
+    ],
+    "Supplementary Table 6": [
+      1113,
+      17
+    ],
+    "Supplementary Table 7": [
+      450,
+      16
+    ],
+    "Supplementary Table 8": [
+      254,
+      2
+    ],
+    "Supplementary Table 9": [
+      226,
+      18
+    ],
+    "Supplementary Table 10": [
+      102,
+      5
+    ],
+    "Supplementary Table 11": [
+      54,
+      7
+    ],
+    "Supplementary Table 12": [
+      19,
+      4
+    ],
+    "Supplementary Table 13": [
+      9,
+      7
+    ]
+  },
+  "supplementary_table_3": {
+    "n_isolates": 1011,
+    "n_columns": 195,
+    "n_growth_environments": 43,
+    "growth_environments": [
+      "Adenine",
+      "Alanine",
+      "Arabinose_0.5",
+      "Arabinose_2",
+      "Arabinose_8",
+      "Citrulline",
+      "Fructose_0.5",
+      "Fructose_2",
+      "Fructose_32",
+      "Fructose_8",
+      "Glucose_0.5",
+      "Glucose_1",
+      "Glucose_16",
+      "Glucose_2",
+      "Glucose_32",
+      "Glucose_50",
+      "Glucose_8",
+      "Glycerol_0.5",
+      "Glycerol_2",
+      "Glycine",
+      "Isoleucine",
+      "Malic_Acid",
+      "Maltose_0.5",
+      "Maltose_2",
+      "Maltose_32",
+      "Maltose_8",
+      "Mannitol_2",
+      "Methionine",
+      "NH4",
+      "Phenylalanine",
+      "Raffinose_2",
+      "Raffinose_8",
+      "Serine",
+      "Sucrose_2",
+      "Sucrose_32",
+      "Sucrose_8",
+      "Threonine",
+      "Tryptophan",
+      "Valine",
+      "Xylose_0.5",
+      "Xylose_2",
+      "Xylose_8",
+      "YPD"
+    ],
+    "names_unique": true,
+    "n_names_in_peter_presence_matrix": 1011,
+    "n_sace_isolates": 93,
+    "n_sace_isolates_with_any_absolute_growth_value": 0,
+    "clade_class_counts": {
+      "dom": 582,
+      "unassigned": 369,
+      "wild": 60
+    },
+    "ploidy_counts": {
+      "2": 787,
+      "1": 133,
+      "3": 46,
+      "4": 39,
+      "5": 6
+    },
+    "max_value": {
+      "Sporulation in water": 73.7,
+      "Asci at 24h": 100.0,
+      "Dyads at 24h": 100.0,
+      "Asci at 72h": 100.0,
+      "Dyads at 72h": 100.0,
+      "CLS in water (day 8)": 98.51,
+      "CLS in water (day 20)": 96.8,
+      "CLS in SDC (day 7)": 114.5283589,
+      "CLS in SDC (day 21)": 142.8399342,
+      "CLS in SDC (day 35)": 157.6881011,
+      "CLS in crSDC (day 7)": 98.76888358,
+      "CLS in crSDC (day 21)": 95.75224408,
+      "CLS in crSDC (day 35)": 99.53357932
+    }
+  },
+  "column_counts": {
+    "Sporulation in water": {
+      "non_missing": 826,
+      "supplementary_table_10": 826
+    },
+    "Asci at 24h": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Dyads at 24h": {
+      "non_missing": 464,
+      "supplementary_table_10": 464
+    },
+    "Asci at 72h": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Dyads at 72h": {
+      "non_missing": 665,
+      "supplementary_table_10": 665
+    },
+    "CLS in water (day 8)": {
+      "non_missing": 735,
+      "supplementary_table_10": 735
+    },
+    "CLS in water (day 20)": {
+      "non_missing": 748,
+      "supplementary_table_10": 748
+    },
+    "CLS in SDC (day 7)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "CLS in SDC (day 21)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "CLS in SDC (day 35)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "CLS in crSDC (day 7)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "CLS in crSDC (day 21)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "CLS in crSDC (day 35)": {
+      "non_missing": 807,
+      "supplementary_table_10": 807
+    },
+    "Adenine_doublingtime": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Adenine_doublingtime_hours": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Adenine_yield": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Adenine_yield_cellscount": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Alanine_doublingtime": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Alanine_doublingtime_hours": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Alanine_yield": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Alanine_yield_cellscount": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Arabinose_0.5_doublingtime": {
+      "non_missing": 740,
+      "supplementary_table_10": 740
+    },
+    "Arabinose_0.5_doublingtime_hours": {
+      "non_missing": 740,
+      "supplementary_table_10": 740
+    },
+    "Arabinose_0.5_yield": {
+      "non_missing": 740,
+      "supplementary_table_10": 740
+    },
+    "Arabinose_0.5_yield_cellscount": {
+      "non_missing": 740,
+      "supplementary_table_10": 740
+    },
+    "Arabinose_2_doublingtime": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Arabinose_2_doublingtime_hours": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Arabinose_2_yield": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Arabinose_2_yield_cellscount": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Arabinose_8_doublingtime": {
+      "non_missing": 764,
+      "supplementary_table_10": 764
+    },
+    "Arabinose_8_doublingtime_hours": {
+      "non_missing": 764,
+      "supplementary_table_10": 764
+    },
+    "Arabinose_8_yield": {
+      "non_missing": 764,
+      "supplementary_table_10": 764
+    },
+    "Arabinose_8_yield_cellscount": {
+      "non_missing": 764,
+      "supplementary_table_10": 764
+    },
+    "Citrulline_doublingtime": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Citrulline_doublingtime_hours": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Citrulline_yield": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Citrulline_yield_cellscount": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Fructose_0.5_doublingtime": {
+      "non_missing": 868,
+      "supplementary_table_10": 868
+    },
+    "Fructose_0.5_doublingtime_hours": {
+      "non_missing": 868,
+      "supplementary_table_10": 868
+    },
+    "Fructose_0.5_yield": {
+      "non_missing": 868,
+      "supplementary_table_10": 868
+    },
+    "Fructose_0.5_yield_cellscount": {
+      "non_missing": 868,
+      "supplementary_table_10": 868
+    },
+    "Fructose_2_doublingtime": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Fructose_2_doublingtime_hours": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Fructose_2_yield": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Fructose_2_yield_cellscount": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Fructose_32_doublingtime": {
+      "non_missing": 860,
+      "supplementary_table_10": 860
+    },
+    "Fructose_32_doublingtime_hours": {
+      "non_missing": 860,
+      "supplementary_table_10": 860
+    },
+    "Fructose_32_yield": {
+      "non_missing": 860,
+      "supplementary_table_10": 860
+    },
+    "Fructose_32_yield_cellscount": {
+      "non_missing": 860,
+      "supplementary_table_10": 860
+    },
+    "Fructose_8_doublingtime": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Fructose_8_doublingtime_hours": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Fructose_8_yield": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Fructose_8_yield_cellscount": {
+      "non_missing": 845,
+      "supplementary_table_10": 845
+    },
+    "Glucose_0.5_doublingtime": {
+      "non_missing": 890,
+      "supplementary_table_10": 890
+    },
+    "Glucose_0.5_doublingtime_hours": {
+      "non_missing": 890,
+      "supplementary_table_10": 890
+    },
+    "Glucose_0.5_yield": {
+      "non_missing": 890,
+      "supplementary_table_10": 890
+    },
+    "Glucose_0.5_yield_cellscount": {
+      "non_missing": 890,
+      "supplementary_table_10": 890
+    },
+    "Glucose_1_doublingtime": {
+      "non_missing": 867,
+      "supplementary_table_10": 867
+    },
+    "Glucose_1_doublingtime_hours": {
+      "non_missing": 867,
+      "supplementary_table_10": 867
+    },
+    "Glucose_1_yield": {
+      "non_missing": 867,
+      "supplementary_table_10": 867
+    },
+    "Glucose_1_yield_cellscount": {
+      "non_missing": 867,
+      "supplementary_table_10": 867
+    },
+    "Glucose_16_doublingtime": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_16_doublingtime_hours": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_16_yield": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_16_yield_cellscount": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_2_doublingtime": {
+      "non_missing": 880,
+      "supplementary_table_10": 880
+    },
+    "Glucose_2_doublingtime_hours": {
+      "non_missing": 880,
+      "supplementary_table_10": 880
+    },
+    "Glucose_2_yield": {
+      "non_missing": 880,
+      "supplementary_table_10": 880
+    },
+    "Glucose_2_yield_cellscount": {
+      "non_missing": 880,
+      "supplementary_table_10": 880
+    },
+    "Glucose_32_doublingtime": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_32_doublingtime_hours": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_32_yield": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_32_yield_cellscount": {
+      "non_missing": 874,
+      "supplementary_table_10": 874
+    },
+    "Glucose_50_doublingtime": {
+      "non_missing": 882,
+      "supplementary_table_10": 882
+    },
+    "Glucose_50_doublingtime_hours": {
+      "non_missing": 882,
+      "supplementary_table_10": 882
+    },
+    "Glucose_50_yield": {
+      "non_missing": 882,
+      "supplementary_table_10": 882
+    },
+    "Glucose_50_yield_cellscount": {
+      "non_missing": 882,
+      "supplementary_table_10": 882
+    },
+    "Glucose_8_doublingtime": {
+      "non_missing": 879,
+      "supplementary_table_10": 879
+    },
+    "Glucose_8_doublingtime_hours": {
+      "non_missing": 879,
+      "supplementary_table_10": 879
+    },
+    "Glucose_8_yield": {
+      "non_missing": 879,
+      "supplementary_table_10": 879
+    },
+    "Glucose_8_yield_cellscount": {
+      "non_missing": 879,
+      "supplementary_table_10": 879
+    },
+    "Glycerol_0.5_doublingtime": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Glycerol_0.5_doublingtime_hours": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Glycerol_0.5_yield": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Glycerol_0.5_yield_cellscount": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Glycerol_2_doublingtime": {
+      "non_missing": 870,
+      "supplementary_table_10": 870
+    },
+    "Glycerol_2_doublingtime_hours": {
+      "non_missing": 870,
+      "supplementary_table_10": 870
+    },
+    "Glycerol_2_yield": {
+      "non_missing": 870,
+      "supplementary_table_10": 870
+    },
+    "Glycerol_2_yield_cellscount": {
+      "non_missing": 870,
+      "supplementary_table_10": 870
+    },
+    "Glycine_doublingtime": {
+      "non_missing": 834,
+      "supplementary_table_10": 834
+    },
+    "Glycine_doublingtime_hours": {
+      "non_missing": 834,
+      "supplementary_table_10": 834
+    },
+    "Glycine_yield": {
+      "non_missing": 834,
+      "supplementary_table_10": 834
+    },
+    "Glycine_yield_cellscount": {
+      "non_missing": 834,
+      "supplementary_table_10": 834
+    },
+    "Isoleucine_doublingtime": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "Isoleucine_doublingtime_hours": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "Isoleucine_yield": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "Isoleucine_yield_cellscount": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "Malic_Acid_doublingtime": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Malic_Acid_doublingtime_hours": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Malic_Acid_yield": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Malic_Acid_yield_cellscount": {
+      "non_missing": 804,
+      "supplementary_table_10": 804
+    },
+    "Maltose_0.5_doublingtime": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Maltose_0.5_doublingtime_hours": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Maltose_0.5_yield": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Maltose_0.5_yield_cellscount": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Maltose_2_doublingtime": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Maltose_2_doublingtime_hours": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Maltose_2_yield": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Maltose_2_yield_cellscount": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Maltose_32_doublingtime": {
+      "non_missing": 858,
+      "supplementary_table_10": 858
+    },
+    "Maltose_32_doublingtime_hours": {
+      "non_missing": 858,
+      "supplementary_table_10": 858
+    },
+    "Maltose_32_yield": {
+      "non_missing": 858,
+      "supplementary_table_10": 858
+    },
+    "Maltose_32_yield_cellscount": {
+      "non_missing": 858,
+      "supplementary_table_10": 858
+    },
+    "Maltose_8_doublingtime": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Maltose_8_doublingtime_hours": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Maltose_8_yield": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Maltose_8_yield_cellscount": {
+      "non_missing": 838,
+      "supplementary_table_10": 838
+    },
+    "Mannitol_2_doublingtime": {
+      "non_missing": 864,
+      "supplementary_table_10": 864
+    },
+    "Mannitol_2_doublingtime_hours": {
+      "non_missing": 864,
+      "supplementary_table_10": 864
+    },
+    "Mannitol_2_yield": {
+      "non_missing": 864,
+      "supplementary_table_10": 864
+    },
+    "Mannitol_2_yield_cellscount": {
+      "non_missing": 864,
+      "supplementary_table_10": 864
+    },
+    "Methionine_doublingtime": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "Methionine_doublingtime_hours": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "Methionine_yield": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "Methionine_yield_cellscount": {
+      "non_missing": 847,
+      "supplementary_table_10": 847
+    },
+    "NH4_doublingtime": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "NH4_doublingtime_hours": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "NH4_yield": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "NH4_yield_cellscount": {
+      "non_missing": 849,
+      "supplementary_table_10": 849
+    },
+    "Phenylalanine_doublingtime": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Phenylalanine_doublingtime_hours": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Phenylalanine_yield": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Phenylalanine_yield_cellscount": {
+      "non_missing": 843,
+      "supplementary_table_10": 843
+    },
+    "Raffinose_2_doublingtime": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Raffinose_2_doublingtime_hours": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Raffinose_2_yield": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Raffinose_2_yield_cellscount": {
+      "non_missing": 850,
+      "supplementary_table_10": 850
+    },
+    "Raffinose_8_doublingtime": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Raffinose_8_doublingtime_hours": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Raffinose_8_yield": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Raffinose_8_yield_cellscount": {
+      "non_missing": 848,
+      "supplementary_table_10": 848
+    },
+    "Serine_doublingtime": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Serine_doublingtime_hours": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Serine_yield": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Serine_yield_cellscount": {
+      "non_missing": 844,
+      "supplementary_table_10": 844
+    },
+    "Sucrose_2_doublingtime": {
+      "non_missing": 866,
+      "supplementary_table_10": 866
+    },
+    "Sucrose_2_doublingtime_hours": {
+      "non_missing": 866,
+      "supplementary_table_10": 866
+    },
+    "Sucrose_2_yield": {
+      "non_missing": 866,
+      "supplementary_table_10": 866
+    },
+    "Sucrose_2_yield_cellscount": {
+      "non_missing": 866,
+      "supplementary_table_10": 866
+    },
+    "Sucrose_32_doublingtime": {
+      "non_missing": 886,
+      "supplementary_table_10": 886
+    },
+    "Sucrose_32_doublingtime_hours": {
+      "non_missing": 886,
+      "supplementary_table_10": 886
+    },
+    "Sucrose_32_yield": {
+      "non_missing": 886,
+      "supplementary_table_10": 886
+    },
+    "Sucrose_32_yield_cellscount": {
+      "non_missing": 886,
+      "supplementary_table_10": 886
+    },
+    "Sucrose_8_doublingtime": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Sucrose_8_doublingtime_hours": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Sucrose_8_yield": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Sucrose_8_yield_cellscount": {
+      "non_missing": 861,
+      "supplementary_table_10": 861
+    },
+    "Threonine_doublingtime": {
+      "non_missing": 841,
+      "supplementary_table_10": 841
+    },
+    "Threonine_doublingtime_hours": {
+      "non_missing": 841,
+      "supplementary_table_10": 841
+    },
+    "Threonine_yield": {
+      "non_missing": 841,
+      "supplementary_table_10": 841
+    },
+    "Threonine_yield_cellscount": {
+      "non_missing": 841,
+      "supplementary_table_10": 841
+    },
+    "Tryptophan_doublingtime": {
+      "non_missing": 830,
+      "supplementary_table_10": 830
+    },
+    "Tryptophan_doublingtime_hours": {
+      "non_missing": 830,
+      "supplementary_table_10": 830
+    },
+    "Tryptophan_yield": {
+      "non_missing": 830,
+      "supplementary_table_10": 830
+    },
+    "Tryptophan_yield_cellscount": {
+      "non_missing": 830,
+      "supplementary_table_10": 830
+    },
+    "Valine_doublingtime": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Valine_doublingtime_hours": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Valine_yield": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Valine_yield_cellscount": {
+      "non_missing": 846,
+      "supplementary_table_10": 846
+    },
+    "Xylose_0.5_doublingtime": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_0.5_doublingtime_hours": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_0.5_yield": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_0.5_yield_cellscount": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_2_doublingtime": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_2_doublingtime_hours": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_2_yield": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_2_yield_cellscount": {
+      "non_missing": 812,
+      "supplementary_table_10": 812
+    },
+    "Xylose_8_doublingtime": {
+      "non_missing": 799,
+      "supplementary_table_10": 799
+    },
+    "Xylose_8_doublingtime_hours": {
+      "non_missing": 799,
+      "supplementary_table_10": 799
+    },
+    "Xylose_8_yield": {
+      "non_missing": 799,
+      "supplementary_table_10": 799
+    },
+    "Xylose_8_yield_cellscount": {
+      "non_missing": 799,
+      "supplementary_table_10": 799
+    },
+    "YPD_doublingtime": {
+      "non_missing": 792,
+      "supplementary_table_10": 792
+    },
+    "YPD_doublingtime_hours": {
+      "non_missing": 792,
+      "supplementary_table_10": 792
+    },
+    "YPD_yield": {
+      "non_missing": 792,
+      "supplementary_table_10": 792
+    },
+    "YPD_yield_cellscount": {
+      "non_missing": 792,
+      "supplementary_table_10": 792
+    }
+  },
+  "n_columns_where_count_differs_from_table_10": 0,
+  "block_alignment": {
+    "n_rows": 1011,
+    "n_rows_without_absolute_values": 105,
+    "n_rows_too_few_values_to_match": 1,
+    "n_matched": 905,
+    "alphabetical_offset_counts": {
+      "-1": 516,
+      "0": 386,
+      "274": 1,
+      "-10": 1,
+      "356": 1
+    },
+    "n_self_aligned": 386,
+    "n_misaligned": 519,
+    "misaligned_names": [
+      "AKM",
+      "BDM",
+      "BDN",
+      "BDP",
+      "BDQ",
+      "BDR",
+      "BDS",
+      "BDT",
+      "BDV",
+      "BEA",
+      "BEB",
+      "BEC",
+      "BED",
+      "BEE",
+      "BEF",
+      "BEG",
+      "BEH",
+      "BEI",
+      "BEK",
+      "BEM",
+      "BEN",
+      "BEP",
+      "BEQ",
+      "BER",
+      "BES",
+      "BET",
+      "BEV",
+      "BFA",
+      "BFB",
+      "BFC",
+      "BFD",
+      "BFE",
+      "BFG",
+      "BFH",
+      "BFK",
+      "BFL",
+      "BFM",
+      "BFN",
+      "BFP",
+      "BFQ",
+      "BFR",
+      "BFS",
+      "BFT",
+      "BFV",
+      "BGA",
+      "BGB",
+      "BGC",
+      "BGD",
+      "BGE",
+      "BGF",
+      "BGG",
+      "BGH",
+      "BGI",
+      "BGK",
+      "BGL",
+      "BGM",
+      "BGN",
+      "BGP",
+      "BGQ",
+      "BGR",
+      "BGS",
+      "BGT",
+      "BGV",
+      "BHA",
+      "BHB",
+      "BHC",
+      "BHD",
+      "BHE",
+      "BHF",
+      "BHG",
+      "BHH",
+      "BHI",
+      "BHK",
+      "BHL",
+      "BHM",
+      "BHN",
+      "BHP",
+      "BHQ",
+      "BHR",
+      "BHS",
+      "BHT",
+      "BHV",
+      "BIA",
+      "BIB",
+      "BIC",
+      "BID",
+      "BIE",
+      "BIF",
+      "BIG",
+      "BIH",
+      "BII",
+      "BIK",
+      "BIL",
+      "BIM",
+      "BIN",
+      "BIP",
+      "BIQ",
+      "BIR",
+      "BIS",
+      "BIT",
+      "BKA",
+      "BKC",
+      "BKD",
+      "BKE",
+      "BKF",
+      "BKG",
+      "BKH",
+      "BKI",
+      "BKK",
+      "BKL",
+      "BKM",
+      "BKN",
+      "BKP",
+      "BKQ",
+      "BKR",
+      "BKS",
+      "BKT",
+      "BLA",
+      "BLB",
+      "BLC",
+      "BLD",
+      "BLE",
+      "BLF",
+      "BLG",
+      "BLH",
+      "BLI",
+      "BLK",
+      "BLL",
+      "BLM",
+      "BLN",
+      "BLP",
+      "BLQ",
+      "BLR",
+      "BLS",
+      "BLT",
+      "BLV",
+      "BMA",
+      "BMB",
+      "BMC",
+      "BMD",
+      "BME",
+      "BMF",
+      "BMG",
+      "BMH",
+      "BMI",
+      "BMK",
+      "BML",
+      "BMM",
+      "BMN",
+      "BMQ",
+      "BMR",
+      "BMV",
+      "BNA",
+      "BNB",
+      "BNC",
+      "BND",
+      "BNE",
+      "BNF",
+      "BNG",
+      "BNH",
+      "BNI",
+      "BNK",
+      "BNL",
+      "BNM",
+      "BNN",
+      "BNP",
+      "BNQ",
+      "BNR",
+      "BNT",
+      "BNV",
+      "BPA",
+      "BPB",
+      "BPC",
+      "BPF",
+      "BPG",
+      "BPH",
+      "BPI",
+      "BPK",
+      "BPL",
+      "BPM",
+      "BPN",
+      "BPP",
+      "BPQ",
+      "BPR",
+      "BPT",
+      "BPV",
+      "BQA",
+      "BQB",
+      "BQC",
+      "BQE",
+      "BQG",
+      "BQH",
+      "BQI",
+      "BQM",
+      "BQN",
+      "BQP",
+      "BQQ",
+      "BQR",
+      "BQS",
+      "BQT",
+      "BRA",
+      "BRB",
+      "BRC",
+      "BRD",
+      "BRE",
+      "BRF",
+      "BRG",
+      "BRH",
+      "BRK",
+      "BRL",
+      "BRM",
+      "BRP",
+      "BRQ",
+      "BRV",
+      "BSA",
+      "BSB",
+      "BSC",
+      "BSD",
+      "BSE",
+      "BSG",
+      "BSI",
+      "BSK",
+      "BSL",
+      "BSM",
+      "BSN",
+      "BSP",
+      "BSR",
+      "BSS",
+      "BST",
+      "BTA",
+      "BTB",
+      "BTC",
+      "BTD",
+      "BTE",
+      "BTF",
+      "BTG",
+      "BTH",
+      "BTI",
+      "BTL",
+      "BTN",
+      "BTP",
+      "BTR",
+      "BTS",
+      "BTT",
+      "BTV",
+      "BVA",
+      "BVB",
+      "BVC",
+      "BVD",
+      "BVE",
+      "BVF",
+      "BVG",
+      "BVH",
+      "BVK",
+      "BVM",
+      "BVT",
+      "BVV",
+      "CAA",
+      "CAB",
+      "CAC",
+      "CAD",
+      "CAE",
+      "CAF",
+      "CAH",
+      "CAI",
+      "CAK",
+      "CAL",
+      "CAM",
+      "CAN",
+      "CAP",
+      "CAQ",
+      "CAR",
+      "CAS",
+      "CAT",
+      "CAV",
+      "CBA",
+      "CBB",
+      "CBC",
+      "CBD",
+      "CBE",
+      "CBF",
+      "CBG",
+      "CBH",
+      "CBI",
+      "CBK",
+      "CBL",
+      "CBM",
+      "CBN",
+      "CBR",
+      "CCC",
+      "CCD",
+      "CCE",
+      "CCF",
+      "CCG",
+      "CCH",
+      "CCI",
+      "CCL",
+      "CCM",
+      "CCN",
+      "CCP",
+      "CCQ",
+      "CCR",
+      "CCS",
+      "CCT",
+      "CCV",
+      "CDA",
+      "CDB",
+      "CDC",
+      "CDD",
+      "CDE",
+      "CDF",
+      "CDG",
+      "CDH",
+      "CDI",
+      "CDK",
+      "CDL",
+      "CDM",
+      "CDN",
+      "CDP",
+      "CDQ",
+      "CDR",
+      "CDS",
+      "CDT",
+      "CDV",
+      "CEA",
+      "CEB",
+      "CEC",
+      "CED",
+      "CEE",
+      "CEF",
+      "CEG",
+      "CEH",
+      "CEI",
+      "CEK",
+      "CEL",
+      "CEM",
+      "CEN",
+      "CEP",
+      "CEQ",
+      "CER",
+      "CES",
+      "CET",
+      "CEV",
+      "CFA",
+      "CFB",
+      "CFC",
+      "CFD",
+      "CFE",
+      "CFF",
+      "CFG",
+      "CFH",
+      "CFI",
+      "CFM",
+      "CFN",
+      "CFP",
+      "CFQ",
+      "CFR",
+      "CFS",
+      "CFT",
+      "CFV",
+      "CGB",
+      "CGC",
+      "CGD",
+      "CGE",
+      "CGG",
+      "CGH",
+      "CGI",
+      "CGK",
+      "CGL",
+      "CGN",
+      "CGP",
+      "CGQ",
+      "CGR",
+      "CGS",
+      "CGT",
+      "CGV",
+      "CHA",
+      "CHB",
+      "CHC",
+      "CHD",
+      "CHE",
+      "CHF",
+      "CHR",
+      "CHS",
+      "CHT",
+      "CHV",
+      "CIA",
+      "CIB",
+      "CIC",
+      "CID",
+      "CIE",
+      "CIF",
+      "CIG",
+      "CIH",
+      "CII",
+      "CIK",
+      "CIL",
+      "CIM",
+      "CIN",
+      "CIP",
+      "CIQ",
+      "CIR",
+      "CIS",
+      "CIT",
+      "CIV",
+      "CKA",
+      "CKB",
+      "CKC",
+      "CKD",
+      "CKE",
+      "CKF",
+      "CKG",
+      "CKH",
+      "CKI",
+      "CKK",
+      "CKL",
+      "CKM",
+      "CKN",
+      "CKP",
+      "CKQ",
+      "CKR",
+      "CKS",
+      "CKT",
+      "CKV",
+      "CLA",
+      "CLB",
+      "CLC",
+      "CLD",
+      "CLG",
+      "CLH",
+      "CLI",
+      "CLK",
+      "CLL",
+      "CLM",
+      "CLN",
+      "CLP",
+      "CLQ",
+      "CLR",
+      "CLS",
+      "CLT",
+      "CLV",
+      "CMB",
+      "CMC",
+      "CMD",
+      "CME",
+      "CMF",
+      "CMG",
+      "CMH",
+      "CMI",
+      "CMK",
+      "CML",
+      "CMM",
+      "CMN",
+      "CMP",
+      "CMQ",
+      "CMS",
+      "CMT",
+      "CNB",
+      "CNC",
+      "CNE",
+      "CNF",
+      "CNG",
+      "CNH",
+      "CNI",
+      "CNK",
+      "CNL",
+      "CNM",
+      "CNN",
+      "CNP",
+      "CNQ",
+      "CNR",
+      "CNS",
+      "CNT",
+      "CNV",
+      "CPA",
+      "CPB",
+      "CPC",
+      "CPD",
+      "CPE",
+      "CPF",
+      "CPG",
+      "CPI",
+      "CPK",
+      "CPL",
+      "CPM",
+      "CPN",
+      "CPQ",
+      "CPR",
+      "CPS",
+      "CPT",
+      "CQA",
+      "CQB",
+      "CQC",
+      "CQD",
+      "CQE",
+      "CQF",
+      "CQG",
+      "CQH",
+      "CQI",
+      "CQK",
+      "CQL",
+      "CQM",
+      "CQN",
+      "CQP",
+      "CQQ",
+      "CQR",
+      "CQS",
+      "CQT",
+      "CQV",
+      "CRA",
+      "CRB",
+      "CRC",
+      "CRD",
+      "CRE",
+      "CRG",
+      "CRH",
+      "CRI",
+      "CRK",
+      "CRL"
+    ],
+    "r_best_quantiles_1_5_50": [
+      0.9643879441112869,
+      0.9968220767974466,
+      0.9999521945464895
+    ]
+  },
+  "absolute_minus_normalized_offset_on_aligned_rows": [
+    {
+      "environment": "Adenine",
+      "doubling_time_offset_mean": 1.8885045319540652,
+      "doubling_time_offset_sd": 0.0037105290189445544,
+      "yield_offset_mean": 20.625680616282484,
+      "yield_offset_sd": 0.0465054834079641
+    },
+    {
+      "environment": "Alanine",
+      "doubling_time_offset_mean": 1.0952035099521782,
+      "doubling_time_offset_sd": 0.0036385482767449825,
+      "yield_offset_mean": 23.684625802695106,
+      "yield_offset_sd": 0.03285701170572487
+    },
+    {
+      "environment": "Arabinose_0.5",
+      "doubling_time_offset_mean": 3.591057244972797,
+      "doubling_time_offset_sd": 0.006985171137774134,
+      "yield_offset_mean": 17.910912627329083,
+      "yield_offset_sd": 0.026556604547079973
+    },
+    {
+      "environment": "Arabinose_2",
+      "doubling_time_offset_mean": 2.5891459995025667,
+      "doubling_time_offset_sd": 0.0028081019090492104,
+      "yield_offset_mean": 18.757434416924315,
+      "yield_offset_sd": 0.00856801382440244
+    },
+    {
+      "environment": "Arabinose_8",
+      "doubling_time_offset_mean": 2.5071534515481653,
+      "doubling_time_offset_sd": 0.007000008848793542,
+      "yield_offset_mean": 18.425735286483878,
+      "yield_offset_sd": 0.013447427081277993
+    },
+    {
+      "environment": "Citrulline",
+      "doubling_time_offset_mean": 1.9632376315557487,
+      "doubling_time_offset_sd": 0.0021339138839330135,
+      "yield_offset_mean": 20.15015403485235,
+      "yield_offset_sd": 0.01048887525533968
+    },
+    {
+      "environment": "Fructose_0.5",
+      "doubling_time_offset_mean": 2.140616819293424,
+      "doubling_time_offset_sd": 0.00409349740340497,
+      "yield_offset_mean": 20.40472706292934,
+      "yield_offset_sd": 0.018195242599640706
+    },
+    {
+      "environment": "Fructose_2",
+      "doubling_time_offset_mean": 1.2397709324796153,
+      "doubling_time_offset_sd": 0.003366738637698965,
+      "yield_offset_mean": 22.74653591451251,
+      "yield_offset_sd": 0.0268478569102627
+    },
+    {
+      "environment": "Fructose_32",
+      "doubling_time_offset_mean": 1.67805691642249,
+      "doubling_time_offset_sd": 0.0013003009687363753,
+      "yield_offset_mean": 22.687161896212263,
+      "yield_offset_sd": 0.00893557477481812
+    },
+    {
+      "environment": "Fructose_8",
+      "doubling_time_offset_mean": 1.2914286376376447,
+      "doubling_time_offset_sd": 0.0025045022367057405,
+      "yield_offset_mean": 23.586126936675267,
+      "yield_offset_sd": 0.05948515926097329
+    },
+    {
+      "environment": "Glucose_0.5",
+      "doubling_time_offset_mean": 1.9963879316974833,
+      "doubling_time_offset_sd": 0.003512792600503409,
+      "yield_offset_mean": 19.597595394178526,
+      "yield_offset_sd": 0.026224592259133737
+    },
+    {
+      "environment": "Glucose_1",
+      "doubling_time_offset_mean": 0.9885981484513787,
+      "doubling_time_offset_sd": 0.0032910870449761637,
+      "yield_offset_mean": 22.280893364269584,
+      "yield_offset_sd": 0.03198115565180924
+    },
+    {
+      "environment": "Glucose_16",
+      "doubling_time_offset_mean": 1.1261185728404572,
+      "doubling_time_offset_sd": 0.0322452321666941,
+      "yield_offset_mean": 22.280448423075672,
+      "yield_offset_sd": 0.04083330473396143
+    },
+    {
+      "environment": "Glucose_2",
+      "doubling_time_offset_mean": 1.1233197215241584,
+      "doubling_time_offset_sd": 0.00487841041945444,
+      "yield_offset_mean": 23.130596474215327,
+      "yield_offset_sd": 0.1205679223475379
+    },
+    {
+      "environment": "Glucose_32",
+      "doubling_time_offset_mean": 1.2603862620374415,
+      "doubling_time_offset_sd": 0.004383321696004669,
+      "yield_offset_mean": 23.40614684847732,
+      "yield_offset_sd": 0.06403279779606358
+    },
+    {
+      "environment": "Glucose_50",
+      "doubling_time_offset_mean": 1.784339052034319,
+      "doubling_time_offset_sd": 0.009685615570108906,
+      "yield_offset_mean": 23.003556704715063,
+      "yield_offset_sd": 0.15553989177672514
+    },
+    {
+      "environment": "Glucose_8",
+      "doubling_time_offset_mean": 1.1422724839737686,
+      "doubling_time_offset_sd": 0.0017563706291941086,
+      "yield_offset_mean": 22.983644715189058,
+      "yield_offset_sd": 0.025777257368109985
+    },
+    {
+      "environment": "Glycerol_0.5",
+      "doubling_time_offset_mean": 1.6447464894705972,
+      "doubling_time_offset_sd": 0.01257295338698665,
+      "yield_offset_mean": 18.95127046323673,
+      "yield_offset_sd": 0.06186220670094531
+    },
+    {
+      "environment": "Glycerol_2",
+      "doubling_time_offset_mean": 2.20344715098362,
+      "doubling_time_offset_sd": 0.02323999574179746,
+      "yield_offset_mean": 21.852810717646545,
+      "yield_offset_sd": 0.013219963161260858
+    },
+    {
+      "environment": "Glycine",
+      "doubling_time_offset_mean": 3.053020320012719,
+      "doubling_time_offset_sd": 0.027469440876290545,
+      "yield_offset_mean": 20.026396441206913,
+      "yield_offset_sd": 0.020201159885576338
+    },
+    {
+      "environment": "Isoleucine",
+      "doubling_time_offset_mean": 2.010391505751469,
+      "doubling_time_offset_sd": 0.0034164780161624084,
+      "yield_offset_mean": 23.081415889015055,
+      "yield_offset_sd": 0.026039422391011535
+    },
+    {
+      "environment": "Malic_Acid",
+      "doubling_time_offset_mean": 2.8718663785189644,
+      "doubling_time_offset_sd": 0.0050962551175061915,
+      "yield_offset_mean": 17.911157556900235,
+      "yield_offset_sd": 0.0543566226155492
+    },
+    {
+      "environment": "Maltose_0.5",
+      "doubling_time_offset_mean": 2.4532439323477333,
+      "doubling_time_offset_sd": 0.0183228417849231,
+      "yield_offset_mean": 19.07552590672954,
+      "yield_offset_sd": 0.02078148073314406
+    },
+    {
+      "environment": "Maltose_2",
+      "doubling_time_offset_mean": 1.381362976877063,
+      "doubling_time_offset_sd": 0.020448679203963666,
+      "yield_offset_mean": 22.198027697781303,
+      "yield_offset_sd": 0.035439069023335136
+    },
+    {
+      "environment": "Maltose_32",
+      "doubling_time_offset_mean": 1.6431594315762994,
+      "doubling_time_offset_sd": 0.007706308113332936,
+      "yield_offset_mean": 23.15475426261221,
+      "yield_offset_sd": 0.03266362931527441
+    },
+    {
+      "environment": "Maltose_8",
+      "doubling_time_offset_mean": 1.3046269000835542,
+      "doubling_time_offset_sd": 0.0042656010374662115,
+      "yield_offset_mean": 23.328823098456105,
+      "yield_offset_sd": 0.034763190062211555
+    },
+    {
+      "environment": "Mannitol_2",
+      "doubling_time_offset_mean": 2.5138821601097505,
+      "doubling_time_offset_sd": 0.006115109417498955,
+      "yield_offset_mean": 19.632064398789225,
+      "yield_offset_sd": 0.0981798011334182
+    },
+    {
+      "environment": "Methionine",
+      "doubling_time_offset_mean": 1.5483899727858443,
+      "doubling_time_offset_sd": 0.0017015583850279168,
+      "yield_offset_mean": 21.692192992606806,
+      "yield_offset_sd": 0.05969422165417103
+    },
+    {
+      "environment": "NH4",
+      "doubling_time_offset_mean": 1.2096050829441833,
+      "doubling_time_offset_sd": 0.002485758616911753,
+      "yield_offset_mean": 21.12217696889887,
+      "yield_offset_sd": 0.030543121581504393
+    },
+    {
+      "environment": "Phenylalanine",
+      "doubling_time_offset_mean": 1.6246013816977,
+      "doubling_time_offset_sd": 0.004990615879117888,
+      "yield_offset_mean": 20.107474869351098,
+      "yield_offset_sd": 0.015474996034493307
+    },
+    {
+      "environment": "Raffinose_2",
+      "doubling_time_offset_mean": 1.0835619791494193,
+      "doubling_time_offset_sd": 0.0023866993754552077,
+      "yield_offset_mean": 22.78898772322361,
+      "yield_offset_sd": 0.012461113121640765
+    },
+    {
+      "environment": "Raffinose_8",
+      "doubling_time_offset_mean": 0.6066277133967182,
+      "doubling_time_offset_sd": 0.004894608109436317,
+      "yield_offset_mean": 23.222527772599598,
+      "yield_offset_sd": 0.03220736542978666
+    },
+    {
+      "environment": "Serine",
+      "doubling_time_offset_mean": 1.6720957257757132,
+      "doubling_time_offset_sd": 0.0015914951940281695,
+      "yield_offset_mean": 20.863329099333303,
+      "yield_offset_sd": 0.018284013610599746
+    },
+    {
+      "environment": "Sucrose_2",
+      "doubling_time_offset_mean": 0.8610876161091283,
+      "doubling_time_offset_sd": 0.009913069109665319,
+      "yield_offset_mean": 23.050224230618046,
+      "yield_offset_sd": 0.06801974793159783
+    },
+    {
+      "environment": "Sucrose_32",
+      "doubling_time_offset_mean": 0.89146824321319,
+      "doubling_time_offset_sd": 0.024395158492118416,
+      "yield_offset_mean": 23.68119718310791,
+      "yield_offset_sd": 0.08611619076339384
+    },
+    {
+      "environment": "Sucrose_8",
+      "doubling_time_offset_mean": 0.8596541029072291,
+      "doubling_time_offset_sd": 0.0017311912006303797,
+      "yield_offset_mean": 23.4778814858444,
+      "yield_offset_sd": 0.010392872127428518
+    },
+    {
+      "environment": "Threonine",
+      "doubling_time_offset_mean": 2.8702603246620013,
+      "doubling_time_offset_sd": 0.004432441143590066,
+      "yield_offset_mean": 20.04784355330582,
+      "yield_offset_sd": 0.021323619746202904
+    },
+    {
+      "environment": "Tryptophan",
+      "doubling_time_offset_mean": 2.5997936219512305,
+      "doubling_time_offset_sd": 0.002635656219853196,
+      "yield_offset_mean": 19.592554285592904,
+      "yield_offset_sd": 0.0039159215098466885
+    },
+    {
+      "environment": "Valine",
+      "doubling_time_offset_mean": 1.844436098064039,
+      "doubling_time_offset_sd": 0.001994597938630401,
+      "yield_offset_mean": 20.631775616464058,
+      "yield_offset_sd": 0.0182952524532492
+    },
+    {
+      "environment": "Xylose_0.5",
+      "doubling_time_offset_mean": 2.5082435155670635,
+      "doubling_time_offset_sd": 0.005779361928304868,
+      "yield_offset_mean": 18.375351911985984,
+      "yield_offset_sd": 0.0184955921425941
+    },
+    {
+      "environment": "Xylose_2",
+      "doubling_time_offset_mean": 2.042600519117235,
+      "doubling_time_offset_sd": 0.02394218258100311,
+      "yield_offset_mean": 20.17481016234275,
+      "yield_offset_sd": 0.018964096061316504
+    },
+    {
+      "environment": "Xylose_8",
+      "doubling_time_offset_mean": 3.340535468470978,
+      "doubling_time_offset_sd": 0.005973678312568468,
+      "yield_offset_mean": 17.83531765425784,
+      "yield_offset_sd": 0.0334234733884553
+    },
+    {
+      "environment": "YPD",
+      "doubling_time_offset_mean": 0.5083014038016432,
+      "doubling_time_offset_sd": 0.010092356620669743,
+      "yield_offset_mean": 23.181069058760503,
+      "yield_offset_sd": 0.2824580687869966
+    }
+  ],
+  "genotype_adjudication": [
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "aligned",
+      "block": "normalized_doubling_time",
+      "n_present": 359,
+      "n_absent": 11,
+      "median_present": 0.0970357063563615,
+      "median_absent": -0.0693052246354496,
+      "p_two_sided": 0.00031434895432906623
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "aligned",
+      "block": "absolute_doubling_time",
+      "n_present": 359,
+      "n_absent": 11,
+      "median_present": 1.94286003792447,
+      "median_absent": 1.72966498045932,
+      "p_two_sided": 0.00030412037938904016
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "aligned",
+      "block": "normalized_yield",
+      "n_present": 359,
+      "n_absent": 11,
+      "median_present": -0.302927838773858,
+      "median_absent": 0.139856611838189,
+      "p_two_sided": 0.0015492176645455391
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "aligned",
+      "block": "absolute_yield",
+      "n_present": 359,
+      "n_absent": 11,
+      "median_present": 7002286.24176189,
+      "median_absent": 9517668.61850113,
+      "p_two_sided": 0.0015955625794150535
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "misaligned",
+      "block": "normalized_doubling_time",
+      "n_present": 482,
+      "n_absent": 13,
+      "median_present": 0.0474804892825703,
+      "median_absent": 0.023269269811995,
+      "p_two_sided": 0.67914882455105
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "misaligned",
+      "block": "absolute_doubling_time",
+      "n_present": 484,
+      "n_absent": 12,
+      "median_present": 1.880338662146075,
+      "median_absent": 1.7227159737456401,
+      "p_two_sided": 0.0030815355410515285
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "misaligned",
+      "block": "normalized_yield",
+      "n_present": 482,
+      "n_absent": 13,
+      "median_present": -0.11819061210116749,
+      "median_absent": -0.0348301028648699,
+      "p_two_sided": 0.9475161230841292
+    },
+    {
+      "gene_column": "X4646.YIL162W",
+      "environment": "Sucrose_2",
+      "rows": "misaligned",
+      "block": "absolute_yield",
+      "n_present": 484,
+      "n_absent": 12,
+      "median_present": 7861722.47860774,
+      "median_absent": 9512400.64603734,
+      "p_two_sided": 0.04537136985498149
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "aligned",
+      "block": "normalized_doubling_time",
+      "n_present": 222,
+      "n_absent": 134,
+      "median_present": -0.0647369477474896,
+      "median_absent": 0.0723044129056313,
+      "p_two_sided": 0.05468790420547568
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "aligned",
+      "block": "absolute_doubling_time",
+      "n_present": 222,
+      "n_absent": 134,
+      "median_present": 2.4871040995251548,
+      "median_absent": 2.734605687567255,
+      "p_two_sided": 0.05375712787352521
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "aligned",
+      "block": "normalized_yield",
+      "n_present": 222,
+      "n_absent": 134,
+      "median_present": -0.352881085776561,
+      "median_absent": -0.838423912291096,
+      "p_two_sided": 0.0021835676436034843
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "aligned",
+      "block": "absolute_yield",
+      "n_present": 222,
+      "n_absent": 134,
+      "median_present": 3763814.97477216,
+      "median_absent": 2684851.006888925,
+      "p_two_sided": 0.002040629672903348
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "misaligned",
+      "block": "normalized_doubling_time",
+      "n_present": 275,
+      "n_absent": 211,
+      "median_present": -0.076875417509178,
+      "median_absent": -0.0743944967647359,
+      "p_two_sided": 0.7234517899730699
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "misaligned",
+      "block": "absolute_doubling_time",
+      "n_present": 275,
+      "n_absent": 212,
+      "median_present": 2.3575253047692,
+      "median_absent": 2.593024365681305,
+      "p_two_sided": 0.000235515691533609
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "misaligned",
+      "block": "normalized_yield",
+      "n_present": 275,
+      "n_absent": 211,
+      "median_present": -0.169623246661566,
+      "median_absent": -0.163918364230641,
+      "p_two_sided": 0.968811159056145
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_2",
+      "rows": "misaligned",
+      "block": "absolute_yield",
+      "n_present": 275,
+      "n_absent": 212,
+      "median_present": 4584923.38440399,
+      "median_absent": 3996611.49114825,
+      "p_two_sided": 0.000832518677806056
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "aligned",
+      "block": "normalized_doubling_time",
+      "n_present": 220,
+      "n_absent": 138,
+      "median_present": -0.04096574477321645,
+      "median_absent": 0.0837308034956295,
+      "p_two_sided": 0.04110901657962646
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "aligned",
+      "block": "absolute_doubling_time",
+      "n_present": 220,
+      "n_absent": 138,
+      "median_present": 2.4055019022973303,
+      "median_absent": 2.61622002590271,
+      "p_two_sided": 0.04131744659766217
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "aligned",
+      "block": "normalized_yield",
+      "n_present": 220,
+      "n_absent": 138,
+      "median_present": -0.517536417358704,
+      "median_absent": -1.3020559040475201,
+      "p_two_sided": 1.2379945027541039e-05
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "aligned",
+      "block": "absolute_yield",
+      "n_present": 220,
+      "n_absent": 138,
+      "median_present": 7339779.91207154,
+      "median_absent": 4260346.06271261,
+      "p_two_sided": 1.1406960690082657e-05
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "misaligned",
+      "block": "normalized_doubling_time",
+      "n_present": 274,
+      "n_absent": 205,
+      "median_present": -0.0516909801790646,
+      "median_absent": -0.0720416869249329,
+      "p_two_sided": 0.47018357212508755
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "misaligned",
+      "block": "absolute_doubling_time",
+      "n_present": 269,
+      "n_absent": 211,
+      "median_present": 2.25073836666264,
+      "median_absent": 2.59421993257832,
+      "p_two_sided": 0.0002336537056878309
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "misaligned",
+      "block": "normalized_yield",
+      "n_present": 274,
+      "n_absent": 205,
+      "median_present": -0.5500594089751045,
+      "median_absent": -0.521912536484427,
+      "p_two_sided": 0.8735796985286544
+    },
+    {
+      "gene_column": "X4188.YGR289C",
+      "environment": "Maltose_8",
+      "rows": "misaligned",
+      "block": "absolute_yield",
+      "n_present": 269,
+      "n_absent": 211,
+      "median_present": 8888891.53422751,
+      "median_absent": 6582862.36373187,
+      "p_two_sided": 2.2193049058280653e-06
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "aligned",
+      "block": "normalized_doubling_time",
+      "n_present": 232,
+      "n_absent": 129,
+      "median_present": -0.09081684565896715,
+      "median_absent": 0.0796787856859064,
+      "p_two_sided": 0.0553692127099425
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "aligned",
+      "block": "absolute_doubling_time",
+      "n_present": 232,
+      "n_absent": 129,
+      "median_present": 2.928683382224325,
+      "median_absent": 3.29612225535939,
+      "p_two_sided": 0.056722477338849386
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "aligned",
+      "block": "normalized_yield",
+      "n_present": 232,
+      "n_absent": 129,
+      "median_present": -0.41664763256464754,
+      "median_absent": -1.69465799616916,
+      "p_two_sided": 4.079126541890775e-10
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "aligned",
+      "block": "absolute_yield",
+      "n_present": 232,
+      "n_absent": 129,
+      "median_present": 7194253.795381965,
+      "median_absent": 2876114.61307626,
+      "p_two_sided": 3.2637970573037576e-10
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "misaligned",
+      "block": "normalized_doubling_time",
+      "n_present": 288,
+      "n_absent": 208,
+      "median_present": -0.02632222451583945,
+      "median_absent": -0.01578775084304785,
+      "p_two_sided": 0.4191645370027106
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "misaligned",
+      "block": "absolute_doubling_time",
+      "n_present": 289,
+      "n_absent": 208,
+      "median_present": 2.85284789961986,
+      "median_absent": 3.489211677736515,
+      "p_two_sided": 2.4834906358622295e-08
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "misaligned",
+      "block": "normalized_yield",
+      "n_present": 288,
+      "n_absent": 208,
+      "median_present": -0.7121427859353775,
+      "median_absent": -1.012676787715135,
+      "p_two_sided": 0.2988214488913127
+    },
+    {
+      "gene_column": "X4187.YGR288W",
+      "environment": "Maltose_32",
+      "rows": "misaligned",
+      "block": "absolute_yield",
+      "n_present": 289,
+      "n_absent": 208,
+      "median_present": 8651737.17905604,
+      "median_absent": 3786608.080987145,
+      "p_two_sided": 5.945295097891065e-14
+    }
+  ],
+  "hpf1_like_cls": [
+    {
+      "column": "CLS in crSDC (day 7)",
+      "n_with_hpf1_like": 89,
+      "n_without": 718,
+      "p_two_sided": 1.8722007235690016e-09
+    },
+    {
+      "column": "CLS in crSDC (day 21)",
+      "n_with_hpf1_like": 89,
+      "n_without": 718,
+      "p_two_sided": 8.593156307468887e-09
+    },
+    {
+      "column": "CLS in crSDC (day 35)",
+      "n_with_hpf1_like": 89,
+      "n_without": 718,
+      "p_two_sided": 1.638776802048312e-05
+    }
+  ]
+}

@@ -285,6 +285,10 @@ class CellAdapter:
                 "microarray expression score phenotype (chunked)",
                 self._microarray_expression_score_phenotype_node,
             ),
+            (  # Hackett 2020 (additive)
+                "induction timecourse expression phenotype (chunked)",
+                self._induction_timecourse_expression_phenotype_node,
+            ),
             (
                 "rnaseq expression phenotype (chunked)",
                 self._rnaseq_expression_phenotype_node,
@@ -380,6 +384,10 @@ class CellAdapter:
             (
                 "microarray expression score phenotype reference",
                 self._get_microarray_expression_score_phenotype_reference_nodes,
+            ),
+            (  # Hackett 2020 (additive)
+                "induction timecourse expression phenotype reference",
+                self._get_induction_timecourse_expression_phenotype_reference_nodes,
             ),
             (
                 "rnaseq expression phenotype reference",
@@ -2230,6 +2238,83 @@ class CellAdapter:
         return nodes
 
     # --- end #1022 ---
+
+    # --- begin ADDITIVE (Hackett 2020): induction time course arrays -------------- #
+    @data_chunker
+    def _induction_timecourse_expression_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        properties = {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "log2_cleaned": json.dumps(phenotype.log2_cleaned),
+            "log2_noise_sd": (
+                json.dumps(phenotype.log2_noise_sd)
+                if phenotype.log2_noise_sd is not None
+                else None
+            ),
+            "log2_shrunken": (
+                json.dumps(phenotype.log2_shrunken)
+                if phenotype.log2_shrunken is not None
+                else None
+            ),
+            "timecourse_id": phenotype.timecourse_id,
+            "strain_label": phenotype.strain_label,
+            "experiment_date": phenotype.experiment_date,
+            "release_table": phenotype.release_table,
+        }
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="induction timecourse expression phenotype",
+            properties=properties,
+        )
+
+    def _get_induction_timecourse_expression_phenotype_reference_nodes(
+        self,
+    ) -> list[BioCypherNode]:
+        nodes = []
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            properties = {
+                "graph_level": phenotype.graph_level,
+                "label_name": phenotype.label_name,
+                "label_statistic_name": phenotype.label_statistic_name,
+                "log2_cleaned": json.dumps(phenotype.log2_cleaned),
+                "log2_noise_sd": (
+                    json.dumps(phenotype.log2_noise_sd)
+                    if phenotype.log2_noise_sd is not None
+                    else None
+                ),
+                "log2_shrunken": (
+                    json.dumps(phenotype.log2_shrunken)
+                    if phenotype.log2_shrunken is not None
+                    else None
+                ),
+                "timecourse_id": phenotype.timecourse_id,
+                "strain_label": phenotype.strain_label,
+                "experiment_date": phenotype.experiment_date,
+                "release_table": phenotype.release_table,
+            }
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="induction timecourse expression phenotype",
+                    node_label="induction timecourse expression phenotype",
+                    properties=properties,
+                )
+            )
+        return nodes
+
+    # --- end ADDITIVE (Hackett 2020) ------------------------------------------------ #
 
     @data_chunker
     def _rnaseq_expression_phenotype_node(

@@ -495,15 +495,17 @@ def test_real_schema_diagram(md: ModuleType) -> None:
     # phenotype` (Puddu 2019) joined, the same shape again. 43, 14 and 70 since Hale
     # 2024's `perturbed segregant genotype` joined: one node, one more source on
     # `genotype member of`, and the new one-line edge `segregant background of`. 44 and
-    # 72 since `microarray expression score phenotype` joined (issue #1022), the
+    # 72 since `microarray expression score phenotype` joined (issue #1022), 45 and 74
+    # since `induction timecourse expression phenotype` (Hackett 2020) joined, the
     # phenotype shape once more.
-    assert (len(gen.nodes), n_edges, n_data_lines) == (44, 14, 72)
+    assert (len(gen.nodes), n_edges, n_data_lines) == (45, 14, 74)
     # 182 = 158 + 4 + 4 + 4 + 4 + 4 + 4: one node is a declaration, an ``is_a`` line and
     # one data line per ``phenotype member of`` target, of which there are two. 186 =
     # 182 + 4 for Hale 2024: the node's declaration and ``is_a`` line, its ``genotype
     # member of`` line and the ``segregant background of`` line. 190 = 186 + 4 for the
-    # microarray expression score phenotype.
-    assert len(lines) == 190
+    # microarray expression score phenotype, 194 = 190 + 4 for the induction timecourse
+    # expression phenotype.
+    assert len(lines) == 194
     assert lines[2:9] == [
         "    %% Biolink Classes (Parent Entity Types)",
         '    BioticExposure["biotic exposure"]',

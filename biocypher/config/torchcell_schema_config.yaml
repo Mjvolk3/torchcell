@@ -369,6 +369,27 @@ microarray expression score phenotype:
         harvest_optical_density: float
 # --- end #1022 ---
 
+# One array of an induction time course (InductionTimecourseExpressionPhenotype, Hackett
+# 2020 IDEA): the cleaned log2 ratio vs the same culture at t = 0 with the authors' noise
+# SD, the shrunken layer the paper's analyses use, and the release's identity of the
+# time course. Each dict is a JSON string (the multi-valued convention); the channel
+# intensities and the unprocessed, thresholded and selected layers travel in the
+# experiment blob only.
+induction timecourse expression phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        log2_cleaned: str
+        log2_noise_sd: str
+        log2_shrunken: str
+        timecourse_id: str
+        strain_label: str
+        experiment_date: str
+        release_table: str
+
 rnaseq expression phenotype:
     is_a: phenotypic feature
     represented_as: node
@@ -786,6 +807,7 @@ phenotype member of:
             calmorph phenotype,
             microarray expression phenotype,
             microarray expression score phenotype,
+            induction timecourse expression phenotype,
             rnaseq expression phenotype,
             pseudobulk expression phenotype,
             visual score phenotype,

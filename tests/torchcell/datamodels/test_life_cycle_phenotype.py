@@ -156,3 +156,27 @@ def test_the_family_is_registered_in_the_unions_and_maps() -> None:
     assert s.LIFE_CYCLE_BOUNDED_PERCENT == frozenset({SPO, DYAD})
     assert s.ConcentrationUnit.mg_nitrogen_per_l.value == "mg_N/L"
     assert s.MeasurementType.cell_yield in s.ABSOLUTE_MEASUREMENT_TYPES
+
+
+def test_a_timed_pre_culture_states_its_duration() -> None:
+    """De Chiara's 24 h YPD and 48 h YPA steps are timed cultures, not overnight ones."""
+    step = s.PreCulture(source=s.PreCultureSource.timed_culture, duration_hours=48.0)
+    assert (step.source.value, step.duration_hours) == ("timed_culture", 48.0)
+    assert len({m.value for m in s.PreCultureSource}) == len(s.PreCultureSource) == 5
+
+
+def test_the_sporulation_and_starvation_media_are_library_members() -> None:
+    from torchcell.datamodels.media import CARBON_FREE_MEDIA, MEDIA_LIBRARY
+
+    kac = MEDIA_LIBRARY["SPORULATION_KAC"]
+    assert [(c.compound.name, c.concentration) for c in kac.components] == [
+        (
+            "potassium acetate",
+            s.Concentration(value=2.0, unit=s.ConcentrationUnit.percent_w_v),
+        )
+    ]
+    assert [g.field for g in kac.components[0].compound.provenance_gaps] == ["inchikey"]
+    assert (kac.state, kac.base_medium) == ("liquid", "SPORULATION_KAC")
+    pbs = MEDIA_LIBRARY["PBS"]
+    assert (pbs.components, pbs.base_medium) == ([], "PBS")
+    assert "PBS" in CARBON_FREE_MEDIA

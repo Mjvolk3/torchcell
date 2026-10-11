@@ -56,6 +56,8 @@ from torchcell.verification.sourced import SourcedValue, audit_sourced_value
 #: ``identity_sha256(media_identity(m))`` for every key MEDIA_LIBRARY held before the
 #: bacterial additions. A change here means an existing medium's served node id moved.
 PRE_EXISTING_MEDIA_DIGESTS: dict[str, str] = {
+    # De Chiara 2022: the starvation buffer, a new key pinned when it was added
+    "PBS": "9643902743539e691b82f32387ebf3a11210b07ec0add05c2055f9388f1c36cf",
     "SC": "d7ea21cf75fb333f87cbc98974171f865f6466ac226020596c4c5ce8b6536f7d",
     "SC_MINUS_4_AMINOBENZOIC_ACID": "9487cb0bd907a7ac5025cb3f28f26f280084c79093b1103a6263c4896ecc13bb",
     "SC_MINUS_ADENINE": "83ddd124e6c6dd9a767cdc5cd7221afac849a05d2b1f839edb2c63cdc4f24d9d",
@@ -83,6 +85,8 @@ PRE_EXISTING_MEDIA_DIGESTS: dict[str, str] = {
     "SM": "dbabb035f9b19f89372341d24b22849c41587e24ef60fd5465012dbdcbe3e2d6",
     "SM_AGAR": "28eee7363aae21f4b077cf85163132709db49ab24d9208d7d397fc187fadd212",
     "SM_DEFERRED": "70273303dd7a8f5d112a45f7852c75801617b2f4ad56b6afeca51c9a83657568",
+    # De Chiara 2022: the KAc sporulation medium, a new key pinned when it was added
+    "SPORULATION_KAC": "d81369e41094d391ca52aba4816ed3b2d869d34e7dcb5b0c8b53615a59995722",
     "SYNBASE": "0d98c0290f1a6c0072179abf52844eee8e5d2c561933414d760493925aeaeef2",
     "SYNH3_MINUS": "83e630b702a97c4b21b4babb59156a3e7ab865e1ae12dd928ca8b8ba2340254f",
     "YNB": "672d96a8c8909c79b88fd590ffe4d275a66c2943435c49c401947b03a4a69fc5",

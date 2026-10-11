@@ -115,8 +115,9 @@ def test_identified_means_identified_not_merely_gapped() -> None:
             if not oc.compound_has_identity(compound):
                 gapped[compound.name] = key
     # agar has a ChEBI and a CID but no single-molecule InChIKey, so it IS identified;
-    # cellobiose is the one library substance the pinned table has not resolved yet.
-    assert sorted(gapped) == ["cellobiose"], gapped
+    # cellobiose and potassium acetate (De Chiara 2022's sporulation medium) are the
+    # library substances the pinned table has not resolved yet.
+    assert sorted(gapped) == ["cellobiose", "potassium acetate"], gapped
 
 
 def test_undefined_preparations_carry_no_identity_gap() -> None:

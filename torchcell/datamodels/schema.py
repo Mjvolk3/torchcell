@@ -4477,12 +4477,18 @@ class PreCultureSource(StrEnum):
       positive counts: "grown overnight until log phase (OD600= 2.0)").
     - ``thaw_recovery``: thawed and recovered briefly in medium (Hoepfner HOP:
       "thawed and recovered for 3 h in YPD").
+    - ``timed_culture``: grown for a stated time (``PreCulture.duration_hours``) whose
+      growth phase the source does not state (De Chiara 2022: a 24 h YPD culture before
+      transfer into PBS, a 48 h presporulation culture before sporulation medium).
+      Distinct from ``overnight_culture`` because the duration is stated and is not
+      overnight.
     """
 
     frozen_stock = "frozen_stock"
     overnight_culture = "overnight_culture"
     log_phase_culture = "log_phase_culture"
     thaw_recovery = "thaw_recovery"
+    timed_culture = "timed_culture"  # De Chiara 2022 (additive)
 
 
 class PreCulture(ProvenanceGapMixin):

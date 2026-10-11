@@ -1874,6 +1874,87 @@ YNB_SHEATH_FLUID_BOOCOCK2025 = Media(
 PBS sheath fluid. Stated for cross A; crosses B and C carry it as a documented
 representative (see ``[[torchcell.datasets.scerevisiae.boocock2025]]``)."""
 
+
+# --------------------------------------------------------------------------- #
+# Sporulation and starvation media (De Chiara 2022). Two media a life-cycle assay
+# runs in rather than grows in: the potassium acetate sporulation medium and the
+# phosphate-buffered saline that stands in for plain water. Both quote De Chiara
+# 2022's Methods (``paper.md``, sha256 from the key's manifest).
+# --------------------------------------------------------------------------- #
+_DECHIARA2022 = "dechiaraDomesticationReprogrammedBudding2022"
+_DECHIARA2022_SHA = "ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1"
+
+_Q_DECHIARA_KAC = (
+    "Presporulated cells were transferred to sporulation media $( 2 \\% \\mathrm { K A c }$ "
+    ") into $2 5 0 \\mathrm { m l }$ flasks at a 5:1 volume/medium ratio"
+)
+_Q_DECHIARA_PBS = (
+    "A total of $2 0 \\mu \\mathrm { l }$ of each culture was transferred to a new "
+    "96-well plate containing $1 8 0 \\mu \\mathrm { l }$ of phosphate-buffered saline "
+    "(PBS), representing isotonic water."
+)
+
+SPORULATION_KAC = Media(
+    name="KAc sporulation medium (2% potassium acetate)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="SPORULATION_KAC",
+    components=[
+        _defined(
+            "potassium acetate",
+            MediaComponentRole.carbon_source,
+            concentration=_c(2.0, _PCT),
+            provenance=[
+                _sv(
+                    "2% potassium acetate",
+                    _Q_DECHIARA_KAC,
+                    ck=_DECHIARA2022,
+                    sha=_DECHIARA2022_SHA,
+                    uri="paper.md",
+                )
+            ],
+            note=_PERCENT_BASIS_NOTE,
+        )
+    ],
+    provenance=[
+        _sv(
+            "sporulation medium: 2% KAc, nothing else stated",
+            _Q_DECHIARA_KAC,
+            ck=_DECHIARA2022,
+            sha=_DECHIARA2022_SHA,
+            uri="paper.md",
+            note="the nitrogen-free, respiratory-carbon medium that induces meiosis; "
+            "the source states potassium acetate and no other ingredient",
+        )
+    ],
+)
+"""Potassium acetate sporulation medium: nitrogen starvation on a respiratory carbon
+source, the laboratory trigger of meiosis. De Chiara 2022 states 2% KAc and nothing more;
+potassium acetate is not yet in the pinned compound table, so it carries a typed gap."""
+
+PBS = Media(
+    name="PBS (phosphate-buffered saline)",
+    state="liquid",
+    is_synthetic=True,
+    base_medium="PBS",
+    components=[],
+    provenance=[
+        _sv(
+            "phosphate-buffered saline standing in for plain water; no recipe stated",
+            _Q_DECHIARA_PBS,
+            ck=_DECHIARA2022,
+            sha=_DECHIARA2022_SHA,
+            uri="paper.md",
+            note="a starvation buffer with no carbon or nitrogen source; the source "
+            "names PBS and prints no composition, so no component is entered",
+        )
+    ],
+)
+"""Phosphate-buffered saline as a starvation medium: De Chiara 2022 transfers cultures
+into it to trace sporulation and survival in the absence of every nutrient. No recipe is
+stated, so the components stay empty rather than borrowing a textbook formulation."""
+
+
 # =========================================================================== #
 # BACTERIAL MEDIA ([[plan.bacteria-ontology-genome]] section 3d, Step 5).
 #
@@ -4372,6 +4453,9 @@ MEDIA_LIBRARY: dict[str, Media] = {
     "SM_AGAR": SM_AGAR,
     "SM_DEFERRED": SM_DEFERRED,
     "YNB_SHEATH_FLUID_BOOCOCK2025": YNB_SHEATH_FLUID_BOOCOCK2025,
+    # De Chiara 2022: a sporulation medium and a starvation buffer
+    "SPORULATION_KAC": SPORULATION_KAC,
+    "PBS": PBS,
     # bacterial media ([[plan.bacteria-ontology-genome]] Step 5; uses in BACTERIAL_MEDIA_USES)
     "LB": LB,
     "LB_AGAR": LB_AGAR,
@@ -4423,6 +4507,8 @@ CARBON_FREE_MEDIA: dict[str, str] = {
     "SYNBASE": "same deferral as its SynH3- base",
     "SM_DEFERRED": "Zelezniak 2018 states no recipe, so the carbon source sits inside "
     "a composition deferred to Mulleder 2012, which is not mirrored",
+    "PBS": "a starvation buffer: De Chiara 2022 uses it as plain water, with no carbon "
+    "or nitrogen source",
     "LB": "complex; the carbon is in the undefined tryptone and yeast extract, and no "
     "carbon source is added",
     "LB_AGAR": "complex; the carbon is in the undefined tryptone and yeast extract",

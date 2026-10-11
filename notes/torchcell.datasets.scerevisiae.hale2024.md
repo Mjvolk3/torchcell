@@ -98,6 +98,8 @@ that the source did not average.
 - Released tables already satisfy two of the paper's filters (T0 >= 5 normalized reads,
   minimum 5.86; >= 100 guides per segregant, minimum 132); 1 ATC1 and 2 CON guides sit in
   a single segregant. The log-likelihood rule cannot be re-checked on post-filter data.
+- 14,374 of the 14,395 Supplemental Data 12 marker positions are rows of the 3S variant
+  table; the other 21 are not (issue #1013 records it beside the missing assembly).
 - Supplemental Data 4 barcode counts do not equal the released rows per segregant (3 of
   170 equal), so they count barcodes before the fitness filters and are not consumed.
 - Supplemental Data 1's `genotype_data` column is undocumented and unused by the
@@ -124,7 +126,10 @@ that the source did not average.
    and PyFitSeq log-likelihoods have no phenotype field and stay in the raw mirror.
 6. Perturbations and the publication are always interned: inline they kept every record
    at 2,299 bytes, over LMDB's half-page node limit, which put all 8,692,635 records on
-   overflow pages (34 GB).
+   overflow pages (34 GB). At 1,824 bytes there are 0 overflow pages, but the store is
+   still 31 GB with 7,910,297 leaf pages for 8,692,635 entries: `str(idx)` keys arrive
+   out of lexicographic order, so page splits leave about one record per 4 KB page. A
+   shared-writer property, not changed here.
 7. The candidate row named neither parent and gave Kruglyak L as last author (it is
    Ehrenreich IM); both corrected in `build_candidate_datasets_table.py`. The rendered
    notes-tex tables are not regenerated in this branch. A `322134S` host token resolves
@@ -155,3 +160,49 @@ that the source did not average.
 `relative_fitness`; the four unions and maps gained members); 44 datasets stale via
 `MeasurementType` / `ExperimentType`, 0 breaking. KG 4.0 is a full rebuild, so no
 incremental admission is attempted.
+
+### Build and verification
+
+Built and verified in one slurm job (3918, 4 CPUs, 40 G) at `9ac9f4754` with
+`python -m torchcell.database.build_dataset_lmdb --dataset CrispriSegregantHale2024Dataset
+--retire-existing --verify`: build 364 s, verification about 1 h 33 min, peak RSS 36.4 GB,
+wall 1:39:47. Report: `preprocess/verification_report.json`; all 25 levels pass.
+
+| level | check | result |
+|---|---|---|
+| L0 | structural | 8,692,635 / 8,692,635 validate as `SegregantPerturbationExperiment` |
+| L1 | count | 8,692,635 (expected 8,692,635) |
+| L1 | lineage_uniqueness | 0 duplicate, 0 unreleased lineages, 0 released gene rows unserved |
+| L1 | screen_partition | ATC1 2,923,436 / ATC2 2,857,376 / CON 2,911,823 = the release |
+| L1 | ledger_balance | served + ledgered - released = 0 per assay; 83 control gRNAs |
+| L1 | provenance_gaps | 8,692,635 documented gaps (one `duration_hours` per record); 0 deferred |
+| L1 | canonical_gene_names | 1,721 names, one spelling each, all current |
+| L2 | uncertainty_sanity | 8,692,635 labeled, no zero dispersion |
+| L2 | value_fidelity | every fitness, error, background, guide and ORF equals its cell |
+| L2 | normalization_reproduced | offsets recomputed from 77 control gRNAs within 3.7e-16 |
+| L2 | mosaic_round_trip | 170 / 170 backgrounds re-expand to their SD12 column |
+| L3 | compound_identity, media_compound_identity, media_membership | pass; one medium (SC-Ura) |
+| L3 | reference_zero | 0.0 for ATC1, ATC2, CON |
+| L3 | environment_documented | ATC1 and ATC2 anhydrotetracycline 0.25 ug/mL, CON none |
+| L3 | measurement_typed | relative_fitness / pooled barcode / standard_error / n = 1 |
+| L3 | sourced_values | 28 / 28 quotes present in their pinned sources |
+| L4 | gene_containment_sgd, current_genome_genes | 1,721 / 1,721 |
+| L4 | matrix_subset_agreement | 5,717 / 5,717 SD2 markers in SD12; 0 of 1,039,423 cells disagree |
+| L4 | variant_reference | 43,828 / 43,828 SNV and deletion rows carry the R64-4-1 base |
+| L4 | guide_targets | 7,963 / 7,963 served guides carry their SD3 ORF |
+| L4 | parents_pinned | BY -> `sgd_S288C_R64-4-1_20230830`, 3S -> `hale2024_322134S_variants` |
+
+L0 first ran on the `ExperimentType` union: 10.3 ms per record, about 25 h for the store
+(measured on 20,000), so the job was cancelled and L0 now validates each record as the
+class its `experiment_type` names, with each distinct background and environment
+validated once (193 us per record). The two superseded store copies were moved to
+`/scratch/projects/torchcell-deprecated` with `scripts/deprecate.sh`.
+
+### Not done here
+
+- The candidate ledger (`notes/torchcell.candidates.ledger.md`) already has its
+  2026.10.11 section and `ledger` appends one per day, so the Hale row appears at the
+  next regeneration; the verdict JSON is in `database/candidates/`.
+- The rendered notes-tex schedule tables still show the old Hale row text (author, no
+  parents); only the table script was corrected.
+- Incremental admission is not attempted: KG 4.0 is a full rebuild.

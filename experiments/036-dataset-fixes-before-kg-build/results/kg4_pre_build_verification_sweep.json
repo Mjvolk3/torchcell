@@ -367,26 +367,38 @@
     "GeneEssentialitySgdDataset": {
       "dataset_class": "GeneEssentialitySgdDataset",
       "root": "data/torchcell/gene_essentiality_sgd",
-      "records": 1287,
+      "records": 1329,
       "route": "registry",
       "route_detail": "run_gene_essentiality[GENE_ESSENTIALITY_DATASETS:gene_essentiality_sgd]",
       "verdict": "FAIL",
       "n_rules": 17,
       "failed_rules": [
         {
+          "level": "L1",
+          "name": "one_record_per_gene_and_publication",
+          "passed": false,
+          "message": "9 (gene, environment, publication) keys hold more than one record (24 extra records, identical down to the publication)"
+        },
+        {
           "level": "L4",
           "name": "no_viable_deletion_in_smf_costanzo2016",
           "passed": false,
-          "message": "7 of 1119 unconditionally essential genes are viable full-deletion strains of smf_costanzo2016: YHR072W-A (YHR072W-A_sn4180), YHR099W (YHR099W_sn2005), YJL012C (YJL012C_dma2460), YLR293C (YLR293C_sn2067), YNL138W-A (YNL138W-A_sn4590), YOR167C (YOR167C_dma4583), YOR182C (YOR182C_dma4575)"
+          "message": "24 of 1140 essential genes are viable full-deletion strains of smf_costanzo2016: YBL078C (YBL078C_dma147), YBR128C (YBR128C_dma297), YBR217W (YBR217W_dma368), YCR068W (YCR068W_dma583), YDL149W (YDL149W_dma726), YFR021W (YFR021W_dma1550), YGL180W (YGL180W_dma1725), YHR072W-A (YHR072W-A_sn4180), YHR099W (YHR099W_sn2005), YHR171W (YHR171W_dma2215)"
+        },
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 1329 records join nothing: YEPD (base_medium=None) x1329"
         }
       ],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/gene_essentiality_sgd/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 28.9,
-      "git_head": "e695cf2d939c34ec20df9c82905b870b7ff8711f",
-      "manifest_built_at": "2026-10-11T01:58:34"
+      "seconds": 27.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
+      "manifest_built_at": "2026-10-09T12:41:30"
     },
     "SynthLethalityYeastSynthLethDbDataset": {
       "dataset_class": "SynthLethalityYeastSynthLethDbDataset",
@@ -394,16 +406,23 @@
       "records": 13996,
       "route": "registry",
       "route_detail": "run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_leth_db_yeast]",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "n_rules": 21,
-      "failed_rules": [],
+      "failed_rules": [
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 13996 records join nothing: growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper) (base_medium=None) x13996"
+        }
+      ],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/syn_leth_db_yeast/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 7.0,
-      "git_head": "e695cf2d939c34ec20df9c82905b870b7ff8711f",
-      "manifest_built_at": "2026-10-11T01:49:07"
+      "seconds": 8.1,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
+      "manifest_built_at": "2026-10-09T12:32:04"
     },
     "SynthRescueYeastSynthLethDbDataset": {
       "dataset_class": "SynthRescueYeastSynthLethDbDataset",
@@ -411,16 +430,29 @@
       "records": 6942,
       "route": "registry",
       "route_detail": "run_synthetic_pairs[SYNTHETIC_PAIR_DATASETS:syn_rescue_db_yeast]",
-      "verdict": "PASS",
+      "verdict": "FAIL",
       "n_rules": 19,
-      "failed_rules": [],
+      "failed_rules": [
+        {
+          "level": "L2",
+          "name": "score_defined_by_source",
+          "passed": false,
+          "message": "74 of 6942 records state a score the source never defines (74 of them outside [0, 1])"
+        },
+        {
+          "level": "L3",
+          "name": "media_membership",
+          "passed": false,
+          "message": "1 free-text media over 6942 records join nothing: growth medium not carried by SynLethDB (stated, if at all, by each record's primary paper) (base_medium=None) x6942"
+        }
+      ],
       "reports": [
         "/scratch/projects/torchcell-scratch/data/torchcell/syn_rescue_db_yeast/preprocess/verification_report.json"
       ],
       "error": null,
-      "seconds": 3.8,
-      "git_head": "e695cf2d939c34ec20df9c82905b870b7ff8711f",
-      "manifest_built_at": "2026-10-11T01:49:17"
+      "seconds": 4.5,
+      "git_head": "6c3ff3994a44db9a5798f868078e58d3d5f6881a",
+      "manifest_built_at": "2026-10-09T12:32:16"
     },
     "ScmdOhya2005Dataset": {
       "dataset_class": "ScmdOhya2005Dataset",

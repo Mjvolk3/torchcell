@@ -153,6 +153,8 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">model_validator</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">resolve_interned</span>
+
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
@@ -250,18 +252,41 @@
     <span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_interned_table</span><span class="p">(</span><span class="n">lmdb_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The sibling ``interned`` env of a records LMDB as a dict; empty when absent."""</span>
+    <span class="n">interned_dir</span> <span class="o">=</span> <span class="n">osp</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">osp</span><span class="o">.</span><span class="n">normpath</span><span class="p">(</span><span class="n">lmdb_path</span><span class="p">)),</span> <span class="s2">"interned"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">osp</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">interned_dir</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{}</span>
+    <span class="n">ienv</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+        <span class="n">interned_dir</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span>
+    <span class="p">)</span>
+    <span class="k">with</span> <span class="n">ienv</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">itxn</span><span class="p">:</span>
+        <span class="n">table</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">():</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">itxn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()}</span>
+    <span class="n">ienv</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">table</span>
+
+
 <div class="viewcode-block" id="select_indices">
 <a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.subset.select_indices.html#torchcell.knowledge_graphs.subset.select_indices">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">select_indices</span><span class="p">(</span><span class="n">lmdb_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">record_filter</span><span class="p">:</span> <span class="n">RecordFilter</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">"""Return the indices of records satisfying ``record_filter``, in one LMDB pass."""</span>
+<span class="w">    </span><span class="sd">"""Return the indices of records satisfying ``record_filter``, in one LMDB pass.</span>
+
+<span class="sd">    A genotype interned in the sibling ``interned`` env (a natural isolate's</span>
+<span class="sd">    perturbation set, shared by its records) is resolved before it is read.</span>
+<span class="sd">    """</span>
     <span class="n">indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">interned</span> <span class="o">=</span> <span class="n">_interned_table</span><span class="p">(</span><span class="n">lmdb_path</span><span class="p">)</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">lmdb</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
         <span class="n">lmdb_path</span><span class="p">,</span> <span class="n">readonly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">readahead</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">meminit</span><span class="o">=</span><span class="kc">False</span>
     <span class="p">)</span>
     <span class="k">with</span> <span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
         <span class="n">total</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">stat</span><span class="p">()[</span><span class="s2">"entries"</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">():</span>
-            <span class="n">genes</span><span class="p">,</span> <span class="n">n_perturbations</span> <span class="o">=</span> <span class="n">_perturbation_summary</span><span class="p">(</span><span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">]</span> <span class="o">=</span> <span class="n">resolve_interned</span><span class="p">(</span>
+                <span class="n">record</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">][</span><span class="s2">"genotype"</span><span class="p">],</span> <span class="n">interned</span>
+            <span class="p">)</span>
+            <span class="n">genes</span><span class="p">,</span> <span class="n">n_perturbations</span> <span class="o">=</span> <span class="n">_perturbation_summary</span><span class="p">(</span><span class="n">record</span><span class="p">)</span>
             <span class="k">if</span> <span class="n">record_filter</span><span class="o">.</span><span class="n">matches</span><span class="p">(</span><span class="n">genes</span><span class="p">,</span> <span class="n">n_perturbations</span><span class="p">):</span>
                 <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">decode</span><span class="p">()))</span>
     <span class="n">env</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>

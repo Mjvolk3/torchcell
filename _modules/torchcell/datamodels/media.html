@@ -1994,6 +1994,87 @@
 <span class="sd">PBS sheath fluid. Stated for cross A; crosses B and C carry it as a documented</span>
 <span class="sd">representative (see ``[[torchcell.datasets.scerevisiae.boocock2025]]``)."""</span>
 
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># Sporulation and starvation media (De Chiara 2022). Two media a life-cycle assay</span>
+<span class="c1"># runs in rather than grows in: the potassium acetate sporulation medium and the</span>
+<span class="c1"># phosphate-buffered saline that stands in for plain water. Both quote De Chiara</span>
+<span class="c1"># 2022's Methods (``paper.md``, sha256 from the key's manifest).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_DECHIARA2022</span> <span class="o">=</span> <span class="s2">"dechiaraDomesticationReprogrammedBudding2022"</span>
+<span class="n">_DECHIARA2022_SHA</span> <span class="o">=</span> <span class="s2">"ca68d65691eaff4d6c1b6bf474a4ecef57a5bc41467b51ac993d816cfa033ea1"</span>
+
+<span class="n">_Q_DECHIARA_KAC</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Presporulated cells were transferred to sporulation media $( 2 </span><span class="se">\\</span><span class="s2">% </span><span class="se">\\</span><span class="s2">mathrm { K A c }$ "</span>
+    <span class="s2">") into $2 5 0 </span><span class="se">\\</span><span class="s2">mathrm { m l }$ flasks at a 5:1 volume/medium ratio"</span>
+<span class="p">)</span>
+<span class="n">_Q_DECHIARA_PBS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"A total of $2 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ of each culture was transferred to a new "</span>
+    <span class="s2">"96-well plate containing $1 8 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { l }$ of phosphate-buffered saline "</span>
+    <span class="s2">"(PBS), representing isotonic water."</span>
+<span class="p">)</span>
+
+<span class="n">SPORULATION_KAC</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"KAc sporulation medium (2% potassium acetate)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"SPORULATION_KAC"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_defined</span><span class="p">(</span>
+            <span class="s2">"potassium acetate"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">carbon_source</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="n">_PCT</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_sv</span><span class="p">(</span>
+                    <span class="s2">"2% potassium acetate"</span><span class="p">,</span>
+                    <span class="n">_Q_DECHIARA_KAC</span><span class="p">,</span>
+                    <span class="n">ck</span><span class="o">=</span><span class="n">_DECHIARA2022</span><span class="p">,</span>
+                    <span class="n">sha</span><span class="o">=</span><span class="n">_DECHIARA2022_SHA</span><span class="p">,</span>
+                    <span class="n">uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_PERCENT_BASIS_NOTE</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_sv</span><span class="p">(</span>
+            <span class="s2">"sporulation medium: 2% KAc, nothing else stated"</span><span class="p">,</span>
+            <span class="n">_Q_DECHIARA_KAC</span><span class="p">,</span>
+            <span class="n">ck</span><span class="o">=</span><span class="n">_DECHIARA2022</span><span class="p">,</span>
+            <span class="n">sha</span><span class="o">=</span><span class="n">_DECHIARA2022_SHA</span><span class="p">,</span>
+            <span class="n">uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the nitrogen-free, respiratory-carbon medium that induces meiosis; "</span>
+            <span class="s2">"the source states potassium acetate and no other ingredient"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Potassium acetate sporulation medium: nitrogen starvation on a respiratory carbon</span>
+<span class="sd">source, the laboratory trigger of meiosis. De Chiara 2022 states 2% KAc and nothing more;</span>
+<span class="sd">potassium acetate is not yet in the pinned compound table, so it carries a typed gap."""</span>
+
+<span class="n">PBS</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"PBS (phosphate-buffered saline)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"PBS"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_sv</span><span class="p">(</span>
+            <span class="s2">"phosphate-buffered saline standing in for plain water; no recipe stated"</span><span class="p">,</span>
+            <span class="n">_Q_DECHIARA_PBS</span><span class="p">,</span>
+            <span class="n">ck</span><span class="o">=</span><span class="n">_DECHIARA2022</span><span class="p">,</span>
+            <span class="n">sha</span><span class="o">=</span><span class="n">_DECHIARA2022_SHA</span><span class="p">,</span>
+            <span class="n">uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"a starvation buffer with no carbon or nitrogen source; the source "</span>
+            <span class="s2">"names PBS and prints no composition, so no component is entered"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Phosphate-buffered saline as a starvation medium: De Chiara 2022 transfers cultures</span>
+<span class="sd">into it to trace sporulation and survival in the absence of every nutrient. No recipe is</span>
+<span class="sd">stated, so the components stay empty rather than borrowing a textbook formulation."""</span>
+
+
 <span class="c1"># =========================================================================== #</span>
 <span class="c1"># BACTERIAL MEDIA ([[plan.bacteria-ontology-genome]] section 3d, Step 5).</span>
 <span class="c1">#</span>
@@ -4492,6 +4573,9 @@
     <span class="s2">"SM_AGAR"</span><span class="p">:</span> <span class="n">SM_AGAR</span><span class="p">,</span>
     <span class="s2">"SM_DEFERRED"</span><span class="p">:</span> <span class="n">SM_DEFERRED</span><span class="p">,</span>
     <span class="s2">"YNB_SHEATH_FLUID_BOOCOCK2025"</span><span class="p">:</span> <span class="n">YNB_SHEATH_FLUID_BOOCOCK2025</span><span class="p">,</span>
+    <span class="c1"># De Chiara 2022: a sporulation medium and a starvation buffer</span>
+    <span class="s2">"SPORULATION_KAC"</span><span class="p">:</span> <span class="n">SPORULATION_KAC</span><span class="p">,</span>
+    <span class="s2">"PBS"</span><span class="p">:</span> <span class="n">PBS</span><span class="p">,</span>
     <span class="c1"># bacterial media ([[plan.bacteria-ontology-genome]] Step 5; uses in BACTERIAL_MEDIA_USES)</span>
     <span class="s2">"LB"</span><span class="p">:</span> <span class="n">LB</span><span class="p">,</span>
     <span class="s2">"LB_AGAR"</span><span class="p">:</span> <span class="n">LB_AGAR</span><span class="p">,</span>
@@ -4543,6 +4627,8 @@
     <span class="s2">"SYNBASE"</span><span class="p">:</span> <span class="s2">"same deferral as its SynH3- base"</span><span class="p">,</span>
     <span class="s2">"SM_DEFERRED"</span><span class="p">:</span> <span class="s2">"Zelezniak 2018 states no recipe, so the carbon source sits inside "</span>
     <span class="s2">"a composition deferred to Mulleder 2012, which is not mirrored"</span><span class="p">,</span>
+    <span class="s2">"PBS"</span><span class="p">:</span> <span class="s2">"a starvation buffer: De Chiara 2022 uses it as plain water, with no carbon "</span>
+    <span class="s2">"or nitrogen source"</span><span class="p">,</span>
     <span class="s2">"LB"</span><span class="p">:</span> <span class="s2">"complex; the carbon is in the undefined tryptone and yeast extract, and no "</span>
     <span class="s2">"carbon source is added"</span><span class="p">,</span>
     <span class="s2">"LB_AGAR"</span><span class="p">:</span> <span class="s2">"complex; the carbon is in the undefined tryptone and yeast extract"</span><span class="p">,</span>

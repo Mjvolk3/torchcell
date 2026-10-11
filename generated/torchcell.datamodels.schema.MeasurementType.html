@@ -200,6 +200,12 @@ Distinct from <code class="docutils literal notranslate"><span class="pre">relat
 TYPE in the same condition, and the numbers are generation times), from
 <code class="docutils literal notranslate"><span class="pre">differential_fitness</span></code> (a signed difference, 0 at the control) and from
 <code class="docutils literal notranslate"><span class="pre">control_regression_residual</span></code> (a residual with the control slope removed).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cell_yield</span></code>: ABSOLUTE number of cells a colony population yields over its
+growth curve, from calibrated colony images (De Chiara 2022’s Scan-o-matic
+“total cell yields (y)”, released in cells). Distinct from <code class="docutils literal notranslate"><span class="pre">colony_size</span></code>,
+which is an end-point size on an image scale (pixels): this is a cell count, and
+the source does not say whether it is the final population or the gain over the
+inoculum, so it is named for what the source calls it.</p></li>
 </ul>
 </dd></dl>
 

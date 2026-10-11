@@ -954,10 +954,18 @@
 <div class="viewcode-block" id="ExperimentDataset.compute_gene_set_sequential">
 <a class="viewcode-back" href="../../../generated/torchcell.data.ExperimentDataset.html#torchcell.data.ExperimentDataset.compute_gene_set_sequential">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_gene_set_sequential</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneSet</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Compute the gene set by scanning every LMDB entry in order."""</span>
+<span class="w">        </span><span class="sd">"""Compute the gene set by scanning every LMDB entry in order.</span>
+
+<span class="sd">        The genotype is resolved through the sibling ``interned`` env, so a store that</span>
+<span class="sd">        interns a genotype shared by many records (a natural isolate's perturbation</span>
+<span class="sd">        set, constant across its environments) reads the same as an inline one.</span>
+<span class="sd">        """</span>
         <span class="n">gene_set</span> <span class="o">=</span> <span class="n">GeneSet</span><span class="p">()</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_db</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_load_interned</span><span class="p">()</span>
+        <span class="n">interned</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="s2">"dict[str, Any]"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_interned</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">begin</span><span class="p">()</span> <span class="k">as</span> <span class="n">txn</span><span class="p">:</span>
             <span class="n">cursor</span> <span class="o">=</span> <span class="n">txn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span>
@@ -967,7 +975,7 @@
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">deserialized_data</span><span class="p">[</span><span class="s2">"experiment"</span><span class="p">]</span>
 
                 <span class="n">extracted_gene_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">extract_systematic_gene_names</span><span class="p">(</span>
-                    <span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">]</span>
+                    <span class="n">resolve_interned</span><span class="p">(</span><span class="n">experiment</span><span class="p">[</span><span class="s2">"genotype"</span><span class="p">],</span> <span class="n">interned</span><span class="p">)</span>
                 <span class="p">)</span>
                 <span class="k">for</span> <span class="n">gene_name</span> <span class="ow">in</span> <span class="n">extracted_gene_names</span><span class="p">:</span>
                     <span class="n">gene_set</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">gene_name</span><span class="p">)</span>

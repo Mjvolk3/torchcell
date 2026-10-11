@@ -4150,8 +4150,16 @@
     <span class="n">percent</span> <span class="o">=</span> <span class="s2">"percent"</span>
     <span class="n">ug_per_ml</span> <span class="o">=</span> <span class="s2">"ug/mL"</span>
     <span class="n">g_per_l</span> <span class="o">=</span> <span class="s2">"g/L"</span>
-    <span class="n">ph</span> <span class="o">=</span> <span class="s2">"pH"</span>  <span class="c1"># dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit</span></div>
+    <span class="n">ph</span> <span class="o">=</span> <span class="s2">"pH"</span>  <span class="c1"># dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit</span>
+    <span class="c1"># --- begin De Chiara 2022: a nitrogen-equivalent dose ------------------------- #</span>
+    <span class="c1"># Milligrams of NITROGEN per litre, not of the compound: an alternative nitrogen</span>
+    <span class="c1"># source dosed so every source supplies the same nitrogen (De Chiara 2022: "the</span>
+    <span class="c1"># alternative nitrogen source at growth yield limiting concentrations (30 mg N</span>
+    <span class="c1"># l-1)"). Converting it to a compound mass needs the compound's nitrogen content,</span>
+    <span class="c1"># which the source does not do, so the dose is stored on the basis it was set on.</span>
+    <span class="n">mg_nitrogen_per_l</span> <span class="o">=</span> <span class="s2">"mg_N/L"</span></div>
 
+    <span class="c1"># --- end De Chiara 2022 ------------------------------------------------------- #</span>
 
 
 <div class="viewcode-block" id="DoseBasis">
@@ -4870,12 +4878,18 @@
 <span class="sd">      positive counts: "grown overnight until log phase (OD600= 2.0)").</span>
 <span class="sd">    - ``thaw_recovery``: thawed and recovered briefly in medium (Hoepfner HOP:</span>
 <span class="sd">      "thawed and recovered for 3 h in YPD").</span>
+<span class="sd">    - ``timed_culture``: grown for a stated time (``PreCulture.duration_hours``) whose</span>
+<span class="sd">      growth phase the source does not state (De Chiara 2022: a 24 h YPD culture before</span>
+<span class="sd">      transfer into PBS, a 48 h presporulation culture before sporulation medium).</span>
+<span class="sd">      Distinct from ``overnight_culture`` because the duration is stated and is not</span>
+<span class="sd">      overnight.</span>
 <span class="sd">    """</span>
 
     <span class="n">frozen_stock</span> <span class="o">=</span> <span class="s2">"frozen_stock"</span>
     <span class="n">overnight_culture</span> <span class="o">=</span> <span class="s2">"overnight_culture"</span>
     <span class="n">log_phase_culture</span> <span class="o">=</span> <span class="s2">"log_phase_culture"</span>
-    <span class="n">thaw_recovery</span> <span class="o">=</span> <span class="s2">"thaw_recovery"</span></div>
+    <span class="n">thaw_recovery</span> <span class="o">=</span> <span class="s2">"thaw_recovery"</span>
+    <span class="n">timed_culture</span> <span class="o">=</span> <span class="s2">"timed_culture"</span>  <span class="c1"># De Chiara 2022 (additive)</span></div>
 
 
 
@@ -6867,6 +6881,12 @@
 <span class="sd">      TYPE in the same condition, and the numbers are generation times), from</span>
 <span class="sd">      ``differential_fitness`` (a signed difference, 0 at the control) and from</span>
 <span class="sd">      ``control_regression_residual`` (a residual with the control slope removed).</span>
+<span class="sd">    - ``cell_yield``: ABSOLUTE number of cells a colony population yields over its</span>
+<span class="sd">      growth curve, from calibrated colony images (De Chiara 2022's Scan-o-matic</span>
+<span class="sd">      "total cell yields (y)", released in cells). Distinct from ``colony_size``,</span>
+<span class="sd">      which is an end-point size on an image scale (pixels): this is a cell count, and</span>
+<span class="sd">      the source does not say whether it is the final population or the gain over the</span>
+<span class="sd">      inoculum, so it is named for what the source calls it.</span>
 <span class="sd">    """</span>
 
     <span class="n">log2_ratio</span> <span class="o">=</span> <span class="s2">"log2_ratio"</span>
@@ -6880,7 +6900,8 @@
     <span class="n">control_regression_residual</span> <span class="o">=</span> <span class="s2">"control_regression_residual"</span>
     <span class="n">colony_size</span> <span class="o">=</span> <span class="s2">"colony_size"</span>
     <span class="c1"># ADDITIVE (Peter 2018 phenome): a same-strain test-over-control growth ratio.</span>
-    <span class="n">condition_growth_ratio</span> <span class="o">=</span> <span class="s2">"condition_growth_ratio"</span></div>
+    <span class="n">condition_growth_ratio</span> <span class="o">=</span> <span class="s2">"condition_growth_ratio"</span>
+    <span class="n">cell_yield</span> <span class="o">=</span> <span class="s2">"cell_yield"</span>  <span class="c1"># De Chiara 2022 (additive)</span></div>
 
 
 
@@ -6955,9 +6976,14 @@
 <span class="c1">#: every record's type to be a member here, which is what keeps the relief from being a</span>
 <span class="c1">#: blanket relaxation. ``colony_size`` is here because Bloom 2019's two control-plate</span>
 <span class="c1">#: conditions release the raw colony radius; ``growth_rate`` because Caglar 2017 Table S5</span>
-<span class="c1">#: releases a doubling time in minutes.</span>
+<span class="c1">#: releases a doubling time in minutes; ``cell_yield`` because De Chiara 2022 releases</span>
+<span class="c1">#: each colony population's cell yield in cells.</span>
 <span class="n">ABSOLUTE_MEASUREMENT_TYPES</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">MeasurementType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
-    <span class="p">{</span><span class="n">MeasurementType</span><span class="o">.</span><span class="n">growth_rate</span><span class="p">,</span> <span class="n">MeasurementType</span><span class="o">.</span><span class="n">colony_size</span><span class="p">}</span>
+    <span class="p">{</span>
+        <span class="n">MeasurementType</span><span class="o">.</span><span class="n">growth_rate</span><span class="p">,</span>
+        <span class="n">MeasurementType</span><span class="o">.</span><span class="n">colony_size</span><span class="p">,</span>
+        <span class="n">MeasurementType</span><span class="o">.</span><span class="n">cell_yield</span><span class="p">,</span>  <span class="c1"># De Chiara 2022: cells per colony population</span>
+    <span class="p">}</span>
 <span class="p">)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># end ABSOLUTE environment-response readouts (#776)</span>
@@ -9038,6 +9064,262 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># LIFE CYCLE BLOCK START (De Chiara 2022)</span>
+<span class="c1"># Progression through the sexual cycle and survival in stationary phase, read as the</span>
+<span class="c1"># percentage of a culture's cells in a state at a time after the culture was induced</span>
+<span class="c1"># or entered stationary phase. A time course of one culture is one record.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCycleMeasurementType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""What one life-cycle number counts, as a percentage.</span>
+
+<span class="sd">    - ``sporulation_efficiency``: asci over all cells counted. De Chiara 2022:</span>
+<span class="sd">      "Sporulation efficiency was estimated as the number of asci divided by the total</span>
+<span class="sd">      cell count." A part over its whole, so it lies in [0, 100].</span>
+<span class="sd">    - ``dyad_fraction``: two-spore asci (dyads) over asci, so a percentage of the</span>
+<span class="sd">      SPORULATED cells, not of the culture. Undefined when a culture formed no ascus,</span>
+<span class="sd">      which is why a record carries no dyad key at a time point with no asci.</span>
+<span class="sd">    - ``stationary_phase_viability``: viable cells over cells at a time after the</span>
+<span class="sd">      culture entered stationary phase (chronological life span). A percentage</span>
+<span class="sd">      normalized to controls on the same plate can exceed 100 (De Chiara 2022: "data</span>
+<span class="sd">      were normalized to four internal controls distributed in each plate"; 37 of its</span>
+<span class="sd">      released values lie above 100), so it is bounded below only.</span>
+<span class="sd">    """</span>
+
+    <span class="n">sporulation_efficiency</span> <span class="o">=</span> <span class="s2">"sporulation_efficiency"</span>
+    <span class="n">dyad_fraction</span> <span class="o">=</span> <span class="s2">"dyad_fraction"</span>
+    <span class="n">stationary_phase_viability</span> <span class="o">=</span> <span class="s2">"stationary_phase_viability"</span>
+
+
+<span class="c1">#: Measurement types that are a part over its whole, so a value above 100 is refused.</span>
+<span class="n">LIFE_CYCLE_BOUNDED_PERCENT</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">LifeCycleMeasurementType</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">sporulation_efficiency</span><span class="p">,</span>
+        <span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">dyad_fraction</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCycleAssay</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""HOW a life-cycle percentage was read off a culture.</span>
+
+<span class="sd">    - ``microscopy_ascus_count``: asci and cells counted under an optical microscope.</span>
+<span class="sd">    - ``flow_cytometry_scatter``: spores told from vegetative cells by forward and side</span>
+<span class="sd">      scatter (cell size and granularity) on a flow cytometer, no stain.</span>
+<span class="sd">    - ``flow_cytometry_viability_stain``: dead cells told from living ones by uptake of</span>
+<span class="sd">      membrane-impermeable nucleic-acid dyes (propidium iodide, YO-PRO-1).</span>
+<span class="sd">    """</span>
+
+    <span class="n">microscopy_ascus_count</span> <span class="o">=</span> <span class="s2">"microscopy_ascus_count"</span>
+    <span class="n">flow_cytometry_scatter</span> <span class="o">=</span> <span class="s2">"flow_cytometry_scatter"</span>
+    <span class="n">flow_cytometry_viability_stain</span> <span class="o">=</span> <span class="s2">"flow_cytometry_viability_stain"</span>
+
+
+<span class="c1">#: The measurement types each assay can produce; a record mixing others is refused.</span>
+<span class="n">LIFE_CYCLE_ASSAY_MEASUREMENTS</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+    <span class="n">LifeCycleAssay</span><span class="p">,</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">LifeCycleMeasurementType</span><span class="p">]</span>
+<span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">LifeCycleAssay</span><span class="o">.</span><span class="n">microscopy_ascus_count</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">sporulation_efficiency</span><span class="p">,</span>
+            <span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">dyad_fraction</span><span class="p">,</span>
+        <span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">LifeCycleAssay</span><span class="o">.</span><span class="n">flow_cytometry_scatter</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">sporulation_efficiency</span><span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">LifeCycleAssay</span><span class="o">.</span><span class="n">flow_cytometry_viability_stain</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">(</span>
+        <span class="p">{</span><span class="n">LifeCycleMeasurementType</span><span class="o">.</span><span class="n">stationary_phase_viability</span><span class="p">}</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCycleTimeUnit</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The unit a life-cycle time point is stated in, as the source states it."""</span>
+
+    <span class="n">hour</span> <span class="o">=</span> <span class="s2">"h"</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="s2">"d"</span>
+
+
+<span class="n">_LIFE_CYCLE_KEY_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span>
+    <span class="sa">r</span><span class="s2">"^(?P&lt;measurement&gt;[a-z_]+)@(?P&lt;time&gt;\d+(?:\.\d+)?)(?P&lt;unit&gt;h|d)$"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">life_cycle_key</span><span class="p">(</span>
+    <span class="n">measurement_type</span><span class="p">:</span> <span class="n">LifeCycleMeasurementType</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">LifeCycleTimeUnit</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ``life_cycle`` key of one time point: ``&lt;measurement type&gt;@&lt;time&gt;&lt;unit&gt;``.</span>
+
+<span class="sd">    ``sporulation_efficiency@24h``, ``stationary_phase_viability@35d``. A whole time is</span>
+<span class="sd">    written without a decimal point, so one time point has one spelling.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="ow">or</span> <span class="n">time</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"a life-cycle time point is finite and &gt;= 0, got </span><span class="si">{</span><span class="n">time</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">written</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="p">))</span> <span class="k">if</span> <span class="nb">float</span><span class="p">(</span><span class="n">time</span><span class="p">)</span><span class="o">.</span><span class="n">is_integer</span><span class="p">()</span> <span class="k">else</span> <span class="nb">repr</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">time</span><span class="p">))</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">LifeCycleMeasurementType</span><span class="p">(</span><span class="n">measurement_type</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">@</span><span class="si">{</span><span class="n">written</span><span class="si">}{</span><span class="n">LifeCycleTimeUnit</span><span class="p">(</span><span class="n">unit</span><span class="p">)</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_life_cycle_key</span><span class="p">(</span>
+    <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LifeCycleMeasurementType</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">LifeCycleTimeUnit</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Split a ``life_cycle`` key into (measurement type, time, unit); refuse others.</span>
+
+<span class="sd">    The key must also be the canonical spelling ``life_cycle_key`` writes, so</span>
+<span class="sd">    ``spo@24.0h`` and ``spo@24h`` cannot both name one time point.</span>
+<span class="sd">    """</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">_LIFE_CYCLE_KEY_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">match</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"life-cycle key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> is not '&lt;measurement type&gt;@&lt;time&gt;&lt;h|d&gt;'"</span>
+        <span class="p">)</span>
+    <span class="n">measurement</span> <span class="o">=</span> <span class="n">LifeCycleMeasurementType</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"measurement"</span><span class="p">))</span>
+    <span class="n">time</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"time"</span><span class="p">))</span>
+    <span class="n">unit</span> <span class="o">=</span> <span class="n">LifeCycleTimeUnit</span><span class="p">(</span><span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">"unit"</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">life_cycle_key</span><span class="p">(</span><span class="n">measurement</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span> <span class="o">!=</span> <span class="n">key</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"life-cycle key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2"> is not canonical; write "</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">life_cycle_key</span><span class="p">(</span><span class="n">measurement</span><span class="p">,</span><span class="w"> </span><span class="n">time</span><span class="p">,</span><span class="w"> </span><span class="n">unit</span><span class="p">)</span><span class="si">!r}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">measurement</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">unit</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCyclePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A culture's progression through the life cycle, as percentages over time.</span>
+
+<span class="sd">    One record is one culture followed over time by one assay: an isolate in</span>
+<span class="sd">    sporulation medium counted at 24 h and 72 h, or a stationary-phase culture stained</span>
+<span class="sd">    at days 7, 21 and 35. ``life_cycle`` maps ``life_cycle_key(...)`` to the released</span>
+<span class="sd">    percentage, so the time course stays in the record that measured it and each value</span>
+<span class="sd">    says what it counts and when.</span>
+
+<span class="sd">    Why a new leaf rather than an existing one: ``FitnessPhenotype`` is a positive</span>
+<span class="sd">    growth ratio that clamps non-positive values, ``EnvironmentResponsePhenotype`` is</span>
+<span class="sd">    one scalar response per record and has no time axis, and a sporulation efficiency</span>
+<span class="sd">    is neither a growth rate nor a response to an added compound. The class is</span>
+<span class="sd">    additive: no served record changes.</span>
+
+<span class="sd">    Fields beside the values:</span>
+
+<span class="sd">    - ``assay``: how the percentages were read; every key's measurement type must be</span>
+<span class="sd">      one the assay produces (``LIFE_CYCLE_ASSAY_MEASUREMENTS``).</span>
+<span class="sd">    - ``n_samples`` / ``sample_unit``: independent cultures behind each value, both set</span>
+<span class="sd">      or both ``None`` (a ``None`` the source does not state is a typed gap).</span>
+<span class="sd">    - ``cells_per_sample``: cells counted per culture and time point;</span>
+<span class="sd">      ``cells_per_sample_is_minimum`` marks a source that states a floor ("&gt;100 cells")</span>
+<span class="sd">      rather than a count.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"life_cycle"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="n">life_cycle</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">"'&lt;measurement type&gt;@&lt;time&gt;&lt;h|d&gt;' -&gt; percentage of cells, in sorted key "</span>
+            <span class="s2">"order; a time point the source did not release (or a ratio it left "</span>
+            <span class="s2">"undefined) is not a key"</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">assay</span><span class="p">:</span> <span class="n">LifeCycleAssay</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">"how the percentages were read"</span><span class="p">)</span>
+    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"independent cultures behind each value; None when not stated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples is"</span>
+    <span class="p">)</span>
+    <span class="n">cells_per_sample</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cells counted per culture and time point; None when not stated"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">cells_per_sample_is_minimum</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"True when the source states a floor ('&gt;100 cells') rather than a "</span>
+        <span class="s2">"count; requires cells_per_sample"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">"life_cycle"</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">validate_life_cycle</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Sort the keys; every key canonical, every value a valid percentage."""</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"life_cycle must be a dict, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"life_cycle cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">measurement</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_life_cycle_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"life_cycle[</span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">] is not a number"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="ow">or</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"life_cycle[</span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">] must be a finite percentage &gt;= 0, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">measurement</span> <span class="ow">in</span> <span class="n">LIFE_CYCLE_BOUNDED_PERCENT</span> <span class="ow">and</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="mf">100.0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"life_cycle[</span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">] = </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">: a </span><span class="si">{</span><span class="n">measurement</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> is a part of "</span>
+                    <span class="s2">"its whole and cannot exceed 100"</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">)</span> <span class="k">else</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_life_cycle</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"LifeCyclePhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The assay produces every key's measurement; counts are positive and paired."""</span>
+        <span class="n">allowed</span> <span class="o">=</span> <span class="n">LIFE_CYCLE_ASSAY_MEASUREMENTS</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">life_cycle</span><span class="p">:</span>
+            <span class="n">measurement</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_life_cycle_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">measurement</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> does not measure </span><span class="si">{</span><span class="n">measurement</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"(key </span><span class="si">{</span><span class="n">key</span><span class="si">!r}</span><span class="s2">)"</span>
+                <span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">)</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_unit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"n_samples and sample_unit are set together or not at all"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"n_samples must be &gt;= 1, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_samples</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cells_per_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cells_per_sample</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"cells_per_sample must be &gt;= 1, got </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">cells_per_sample</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cells_per_sample_is_minimum</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">cells_per_sample</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"cells_per_sample_is_minimum requires cells_per_sample"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summary repr naming the assay and the time points."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"LifeCyclePhenotype(assay=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">, "</span>
+            <span class="sa">f</span><span class="s2">"keys=</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">life_cycle</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCycleExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Reference for a life-cycle experiment; its environment states the protocol."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"life_cycle"</span>
+    <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">LifeCyclePhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">LifeCycleExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One culture's life-cycle time course under one assay and one protocol.</span>
+
+<span class="sd">    ``environment`` is a ``CultureEnvironment`` because a sporulation efficiency is</span>
+<span class="sd">    meaningless without the protocol that induced it (pre-sporulation medium, vessel,</span>
+<span class="sd">    shaking, inoculum density); declared, not inherited, so pydantic serializes it.</span>
+<span class="sd">    """</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"life_cycle"</span>
+    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">LifeCyclePhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># LIFE CYCLE BLOCK END (De Chiara 2022)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -9064,6 +9346,7 @@
     <span class="o">|</span> <span class="n">BacterialMorphologyPhenotype</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionPhenotype</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SingleCellExpressionPhenotype</span>  <span class="c1"># boocock2025</span>
+    <span class="o">|</span> <span class="n">LifeCyclePhenotype</span>  <span class="c1"># De Chiara 2022</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9106,6 +9389,7 @@
     <span class="o">|</span> <span class="n">BacterialMorphologyExperiment</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperiment</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperiment</span>  <span class="c1"># boocock2025</span>
+    <span class="o">|</span> <span class="n">LifeCycleExperiment</span>  <span class="c1"># De Chiara 2022</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9148,6 +9432,7 @@
     <span class="o">|</span> <span class="n">BacterialMorphologyExperimentReference</span>  <span class="c1"># issue #774</span>
     <span class="o">|</span> <span class="n">MrnaNumberFractionExperimentReference</span>  <span class="c1"># issue #854</span>
     <span class="o">|</span> <span class="n">SegregantExpressionExperimentReference</span>  <span class="c1"># boocock2025</span>
+    <span class="o">|</span> <span class="n">LifeCycleExperimentReference</span>  <span class="c1"># De Chiara 2022</span>
 <span class="p">)</span>
 
 
@@ -9190,6 +9475,7 @@
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperiment</span><span class="p">,</span>  <span class="c1"># issue #774</span>
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperiment</span><span class="p">,</span>  <span class="c1"># issue #854</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperiment</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
+    <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperiment</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -9231,6 +9517,7 @@
     <span class="s2">"bacterial_morphology"</span><span class="p">:</span> <span class="n">BacterialMorphologyExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #774</span>
     <span class="s2">"mrna_number_fraction"</span><span class="p">:</span> <span class="n">MrnaNumberFractionExperimentReference</span><span class="p">,</span>  <span class="c1"># issue #854</span>
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperimentReference</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
+    <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperimentReference</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
 <span class="p">}</span>
 
 

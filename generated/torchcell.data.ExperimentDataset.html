@@ -248,6 +248,9 @@ collected, so an intergenic variant still reaches the genes it sits between.</p>
 <dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.compute_gene_set_sequential">
 <span class="sig-name descname"><span class="pre">compute_gene_set_sequential</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="torchcell.sequence.GeneSet.html#torchcell.sequence.GeneSet" title="torchcell.sequence.data.GeneSet"><span class="pre">GeneSet</span></a></span></span><a class="reference internal" href="../_modules/torchcell/data/experiment_dataset.html#ExperimentDataset.compute_gene_set_sequential"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#torchcell.data.ExperimentDataset.compute_gene_set_sequential" title="Link to this definition"></a></dt>
 <dd><p>Compute the gene set by scanning every LMDB entry in order.</p>
+<p>The genotype is resolved through the sibling <code class="docutils literal notranslate"><span class="pre">interned</span></code> env, so a store that
+interns a genotype shared by many records (a natural isolate’s perturbation
+set, constant across its environments) reads the same as an inline one.</p>
 </dd></dl>
 
 <dl class="py method">

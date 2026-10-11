@@ -1,0 +1,905 @@
+{
+  "citation_key": "wetmoreRapidQuantificationMutant2015",
+  "doi": "10.1128/mBio.00306-15",
+  "files": [
+    {
+      "mirror": "torchcell-library",
+      "path": "si/si1.xlsx",
+      "pin": "428a06cae37867c8d21541f64d80da082e67743e1b1def9238a14e7726bc7150",
+      "sha256": "428a06cae37867c8d21541f64d80da082e67743e1b1def9238a14e7726bc7150",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/index.html",
+      "pin": "9085883893edd0d5216327fd003ea68fd09f98c92d4d0b0300e3fd629f3bc875",
+      "sha256": "9085883893edd0d5216327fd003ea68fd09f98c92d4d0b0300e3fd629f3bc875",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_logratios_good.tab",
+      "pin": "f65a093b7fba660f12a894200073e3d731cd0b8a3f313205a5760584f4e55935",
+      "sha256": "f65a093b7fba660f12a894200073e3d731cd0b8a3f313205a5760584f4e55935",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_logratios_good.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_genes.tab",
+      "pin": "3eae36f697a32008673a03f6bcbca0d1b0581aa980175264c55e698a93a9ef73",
+      "sha256": "3eae36f697a32008673a03f6bcbca0d1b0581aa980175264c55e698a93a9ef73",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_genes.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/bigfit/index.html",
+      "pin": "c4819e452ab54dfd3748242a3d4cf0f04021071aefadb2f07f2806afa32e3555",
+      "sha256": "c4819e452ab54dfd3748242a3d4cf0f04021071aefadb2f07f2806afa32e3555",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/bigfit/",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/bigfit/html/Keio/index.html",
+      "pin": "f05323ffce7701df45ddac9aebc2bab3838b111899b584838d90af0deee23803",
+      "sha256": "f05323ffce7701df45ddac9aebc2bab3838b111899b584838d90af0deee23803",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/bigfit/html/Keio/",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/bigfit/html/Keio/fit_quality.tab",
+      "pin": "7d4b15733d8e258628a8f71831867c2d72294b82a0afca7ad53a6a9a603336e5",
+      "sha256": "7d4b15733d8e258628a8f71831867c2d72294b82a0afca7ad53a6a9a603336e5",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/bigfit/html/Keio/fit_quality.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/bigfit/html/Keio/fit_logratios_good.tab",
+      "pin": "b37f038702ef0b792bdc02af9f42adf3a5838bc08513249c89983f6a7647e8fd",
+      "sha256": "b37f038702ef0b792bdc02af9f42adf3a5838bc08513249c89983f6a7647e8fd",
+      "retrieved_at": "2026-10-07",
+      "url": "https://genomics.lbl.gov/supplemental/bigfit/html/Keio/fit_logratios_good.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_t.tab",
+      "pin": "fcebd1de3403898bc76bc499952bde61875d75f419477abf5d18cd1148b08dd0",
+      "sha256": "fcebd1de3403898bc76bc499952bde61875d75f419477abf5d18cd1148b08dd0",
+      "retrieved_at": "2026-10-10",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_t.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_standard_error_obs.tab",
+      "pin": "06cc6122f7a3551d948084e0b600d4f185936720f026ba0dba152b6f57828d3f",
+      "sha256": "06cc6122f7a3551d948084e0b600d4f185936720f026ba0dba152b6f57828d3f",
+      "retrieved_at": "2026-10-10",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_standard_error_obs.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_standard_error_naive.tab",
+      "pin": "6b2c70e805c337f1ec1353e3e2d30e7261e5b29300266ef9c094a37e4ea9489b",
+      "sha256": "6b2c70e805c337f1ec1353e3e2d30e7261e5b29300266ef9c094a37e4ea9489b",
+      "retrieved_at": "2026-10-10",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_standard_error_naive.tab",
+      "intact": true
+    },
+    {
+      "mirror": "torchcell-raw",
+      "path": "data/rbarseq/html/Keio/fit_logratios.tab",
+      "pin": "adf240fcb677193cc9a14ea59ea0e86bfdf8ddb9345e7cf55c99f3df3cc15102",
+      "sha256": "adf240fcb677193cc9a14ea59ea0e86bfdf8ddb9345e7cf55c99f3df3cc15102",
+      "retrieved_at": "2026-10-10",
+      "url": "https://genomics.lbl.gov/supplemental/rbarseq/html/Keio/fit_logratios.tab",
+      "intact": true
+    }
+  ],
+  "samples": {
+    "expts_rows": 111,
+    "time_zero_rows": 10,
+    "condition_samples": 101,
+    "successful": [
+      "set1IT003",
+      "set1IT004",
+      "set1IT005",
+      "set1IT006",
+      "set1IT007",
+      "set1IT008",
+      "set1IT009",
+      "set1IT010",
+      "set1IT011",
+      "set1IT012",
+      "set1IT013",
+      "set1IT014",
+      "set1IT015",
+      "set1IT016",
+      "set1IT017",
+      "set1IT018",
+      "set1IT019",
+      "set1IT020",
+      "set1IT021",
+      "set1IT022",
+      "set1IT023",
+      "set1IT024",
+      "set1IT025",
+      "set1IT026",
+      "set1IT027",
+      "set1IT028",
+      "set1IT029",
+      "set1IT031",
+      "set1IT032",
+      "set1IT035",
+      "set1IT036",
+      "set1IT037",
+      "set1IT038",
+      "set1IT039",
+      "set1IT040",
+      "set1IT041",
+      "set1IT042",
+      "set1IT043",
+      "set1IT044",
+      "set1IT045",
+      "set1IT046",
+      "set1IT047",
+      "set1IT048",
+      "set1IT051",
+      "set1IT052",
+      "set1IT053",
+      "set1IT054",
+      "set1IT055",
+      "set1IT056",
+      "set1IT057",
+      "set1IT058",
+      "set1IT059",
+      "set1IT060",
+      "set1IT061",
+      "set1IT062",
+      "set1IT063",
+      "set1IT064",
+      "set1IT065",
+      "set1IT066",
+      "set1IT067",
+      "set1IT068",
+      "set1IT069",
+      "set1IT070",
+      "set1IT071",
+      "set1IT072",
+      "set1IT073",
+      "set1IT074",
+      "set1IT075",
+      "set1IT076",
+      "set1IT077",
+      "set1IT078",
+      "set1IT079",
+      "set1IT080",
+      "set1IT081",
+      "set1IT082",
+      "set1IT083",
+      "set1IT084",
+      "set1IT085",
+      "set1IT086",
+      "set1IT087",
+      "set1IT088",
+      "set1IT089",
+      "set1IT090",
+      "set1IT091",
+      "set1IT092",
+      "set1IT093",
+      "set1IT094",
+      "set1IT095",
+      "set1IT096",
+      "set2IT069",
+      "set2IT095",
+      "set2IT096"
+    ],
+    "failed": {
+      "set1IT030": [
+        "g_med_min"
+      ],
+      "set1IT033": [
+        "g_med_min"
+      ],
+      "set1IT034": [
+        "g_med_min"
+      ],
+      "set2IT024": [
+        "cor12_min"
+      ],
+      "set2IT034": [
+        "cor12_min"
+      ],
+      "set2IT045": [
+        "cor12_min"
+      ],
+      "set2IT055": [
+        "cor12_min"
+      ],
+      "set2IT079": [
+        "cor12_min"
+      ],
+      "set2IT090": [
+        "cor12_min"
+      ]
+    },
+    "paper_rules_reproduce_u": true,
+    "by_medium": {
+      "M9 minimal media_noCarbon": 64,
+      "M9 minimal media_noNitrogen": 26,
+      "LB": 7,
+      "MOPS Rich Defined media_noCarbon": 4
+    },
+    "successful_by_medium": {
+      "M9 minimal media_noCarbon": 61,
+      "M9 minimal media_noNitrogen": 26,
+      "MOPS Rich Defined media_noCarbon": 4,
+      "LB": 1
+    },
+    "withdrawn": {
+      "set1IT007": "Sucrose",
+      "set1IT008": "Sucrose",
+      "set1IT043": "D-Mannitol",
+      "set1IT044": "D-Mannitol"
+    },
+    "withdrawn_successful": [
+      "set1IT007",
+      "set1IT008",
+      "set1IT043",
+      "set1IT044"
+    ]
+  },
+  "values": {
+    "genes": 3646,
+    "b_number_sysnames": 3646,
+    "good_table_samples": 92,
+    "all_table_samples": 106,
+    "all_table_time_zero_columns": [
+      "set1IT002",
+      "set1IT049",
+      "set1IT050",
+      "set2IT091",
+      "set2IT092"
+    ],
+    "good_values_equal_all_table": 0.0,
+    "t_identity_max_abs_deviation": 1.9895196601282805e-13,
+    "naive_se_larger_fraction_successful": 0.24352178683011758
+  },
+  "against_compendium_release": {
+    "wetmore_genes": 3646,
+    "price_genes": 3789,
+    "shared_genes": 3646,
+    "shared_samples": 92,
+    "min_pearson_r": 0.9889538063315205,
+    "median_pearson_r": 0.9971275547460938,
+    "replicate_bar": 0.87,
+    "below_bar": [],
+    "wetmore_samples_price_release_lacks": [
+      "set1IT029",
+      "set1IT030",
+      "set1IT033",
+      "set1IT034",
+      "set2IT024",
+      "set2IT034",
+      "set2IT055",
+      "set2IT079",
+      "set2IT090"
+    ],
+    "per_sample": {
+      "set1IT003": {
+        "pearson_r": 0.9972316455338276,
+        "max_abs_difference": 1.6096959421397496,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT004": {
+        "pearson_r": 0.9966246082350121,
+        "max_abs_difference": 1.6102000612372995,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT005": {
+        "pearson_r": 0.997868117194545,
+        "max_abs_difference": 1.1333450684318298,
+        "max_difference_sys_name": "b0726"
+      },
+      "set1IT006": {
+        "pearson_r": 0.9978589622435912,
+        "max_abs_difference": 1.6490619579747299,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT007": {
+        "pearson_r": 0.9980013899144725,
+        "max_abs_difference": 0.9889239142531401,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT008": {
+        "pearson_r": 0.9979263623483233,
+        "max_abs_difference": 1.6331204989723798,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT009": {
+        "pearson_r": 0.9978810265265324,
+        "max_abs_difference": 0.98047539064815,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT010": {
+        "pearson_r": 0.997321309005215,
+        "max_abs_difference": 1.5993918160775698,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT011": {
+        "pearson_r": 0.9970978217026617,
+        "max_abs_difference": 1.9500260662317501,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT012": {
+        "pearson_r": 0.9979156281729568,
+        "max_abs_difference": 0.9887639132206099,
+        "max_difference_sys_name": "b3725"
+      },
+      "set1IT013": {
+        "pearson_r": 0.9979188497049367,
+        "max_abs_difference": 1.02196387405162,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT014": {
+        "pearson_r": 0.9969723106806255,
+        "max_abs_difference": 1.7270920582359297,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT015": {
+        "pearson_r": 0.9976582214436549,
+        "max_abs_difference": 1.60796583721159,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT016": {
+        "pearson_r": 0.9974252562513287,
+        "max_abs_difference": 1.13855957427563,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT017": {
+        "pearson_r": 0.9966184441769884,
+        "max_abs_difference": 1.6160659363609904,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT018": {
+        "pearson_r": 0.9974752838167534,
+        "max_abs_difference": 1.7380424494976299,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT019": {
+        "pearson_r": 0.9965988868806821,
+        "max_abs_difference": 2.22524290174145,
+        "max_difference_sys_name": "b2019"
+      },
+      "set1IT020": {
+        "pearson_r": 0.9967474971091408,
+        "max_abs_difference": 1.7773116849657802,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT021": {
+        "pearson_r": 0.9970547232620937,
+        "max_abs_difference": 1.9402678867506298,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT022": {
+        "pearson_r": 0.9971198328000375,
+        "max_abs_difference": 1.9600061144699499,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT023": {
+        "pearson_r": 0.9979140649350144,
+        "max_abs_difference": 1.206429109778958,
+        "max_difference_sys_name": "b3725"
+      },
+      "set1IT024": {
+        "pearson_r": 0.9969261717626591,
+        "max_abs_difference": 1.9421182641594994,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT025": {
+        "pearson_r": 0.9975385234908248,
+        "max_abs_difference": 1.9732774874017593,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT026": {
+        "pearson_r": 0.9973974931051195,
+        "max_abs_difference": 1.9594436136562399,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT027": {
+        "pearson_r": 0.9964310386675472,
+        "max_abs_difference": 1.8684149321386396,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT028": {
+        "pearson_r": 0.9970010485724135,
+        "max_abs_difference": 2.5725005075970397,
+        "max_difference_sys_name": "b2500"
+      },
+      "set1IT031": {
+        "pearson_r": 0.9979383363573333,
+        "max_abs_difference": 1.58724446194616,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT032": {
+        "pearson_r": 0.9971478387716302,
+        "max_abs_difference": 1.9288405906109505,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT035": {
+        "pearson_r": 0.9976646166548899,
+        "max_abs_difference": 1.5903831195604803,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT036": {
+        "pearson_r": 0.9971290410288248,
+        "max_abs_difference": 1.93659740199982,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT037": {
+        "pearson_r": 0.9968556299172056,
+        "max_abs_difference": 1.71712319967552,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT038": {
+        "pearson_r": 0.9973450598567615,
+        "max_abs_difference": 1.5916755697944396,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT039": {
+        "pearson_r": 0.996747270695743,
+        "max_abs_difference": 1.77663736940635,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT040": {
+        "pearson_r": 0.99680533033261,
+        "max_abs_difference": 1.8673368720295604,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT041": {
+        "pearson_r": 0.997410495540947,
+        "max_abs_difference": 1.6214555370117698,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT042": {
+        "pearson_r": 0.9974726842629817,
+        "max_abs_difference": 1.6185527185635302,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT043": {
+        "pearson_r": 0.9972891404753531,
+        "max_abs_difference": 1.9532495370333205,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT044": {
+        "pearson_r": 0.9980304286458355,
+        "max_abs_difference": 1.7131578858485303,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT045": {
+        "pearson_r": 0.9973032329939512,
+        "max_abs_difference": 1.95426773604584,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT046": {
+        "pearson_r": 0.996890157069991,
+        "max_abs_difference": 1.9362894464774598,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT047": {
+        "pearson_r": 0.9971128204704744,
+        "max_abs_difference": 1.6626520094342796,
+        "max_difference_sys_name": "b2019"
+      },
+      "set1IT048": {
+        "pearson_r": 0.997820034379937,
+        "max_abs_difference": 0.8304486799243103,
+        "max_difference_sys_name": "b2564"
+      },
+      "set1IT051": {
+        "pearson_r": 0.9977043198841248,
+        "max_abs_difference": 1.16958634691547,
+        "max_difference_sys_name": "b3870"
+      },
+      "set1IT052": {
+        "pearson_r": 0.9969679574322494,
+        "max_abs_difference": 1.5928276025550403,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT053": {
+        "pearson_r": 0.997141331581056,
+        "max_abs_difference": 1.8144677546198107,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT054": {
+        "pearson_r": 0.9972007582078121,
+        "max_abs_difference": 1.8285888674899802,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT055": {
+        "pearson_r": 0.996552269679239,
+        "max_abs_difference": 1.9529741659706694,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT056": {
+        "pearson_r": 0.9974797450226333,
+        "max_abs_difference": 1.6045003289760298,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT057": {
+        "pearson_r": 0.9971757717921805,
+        "max_abs_difference": 1.80759053987585,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT058": {
+        "pearson_r": 0.9971655212530632,
+        "max_abs_difference": 1.6146825190250604,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT059": {
+        "pearson_r": 0.9961021977856928,
+        "max_abs_difference": 1.6270638940783702,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT060": {
+        "pearson_r": 0.9959569936710047,
+        "max_abs_difference": 1.8075853516193199,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT061": {
+        "pearson_r": 0.9973327413660823,
+        "max_abs_difference": 1.6012981952915797,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT062": {
+        "pearson_r": 0.9970023436010652,
+        "max_abs_difference": 1.6361265641045204,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT063": {
+        "pearson_r": 0.9979655496915092,
+        "max_abs_difference": 1.57247396807026,
+        "max_difference_sys_name": "b0113"
+      },
+      "set1IT064": {
+        "pearson_r": 0.9964942462295435,
+        "max_abs_difference": 1.96308452622577,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT065": {
+        "pearson_r": 0.9973679962527426,
+        "max_abs_difference": 1.5843775803805795,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT066": {
+        "pearson_r": 0.9973687937301947,
+        "max_abs_difference": 1.2037827881121204,
+        "max_difference_sys_name": "b2019"
+      },
+      "set1IT067": {
+        "pearson_r": 0.9960000909741643,
+        "max_abs_difference": 1.15296909967856,
+        "max_difference_sys_name": "b3725"
+      },
+      "set1IT068": {
+        "pearson_r": 0.9929635364199991,
+        "max_abs_difference": 1.1475971676656729,
+        "max_difference_sys_name": "b2935"
+      },
+      "set1IT069": {
+        "pearson_r": 0.9951105156957635,
+        "max_abs_difference": 0.6111134681235493,
+        "max_difference_sys_name": "b2564"
+      },
+      "set1IT070": {
+        "pearson_r": 0.9917922931761947,
+        "max_abs_difference": 1.243454171263825,
+        "max_difference_sys_name": "b3290"
+      },
+      "set1IT071": {
+        "pearson_r": 0.9938477764836643,
+        "max_abs_difference": 1.6415181802471301,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT072": {
+        "pearson_r": 0.9937709613922926,
+        "max_abs_difference": 1.822037420683889,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT073": {
+        "pearson_r": 0.9964385251011391,
+        "max_abs_difference": 1.9048697617065802,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT074": {
+        "pearson_r": 0.9967048800198178,
+        "max_abs_difference": 1.8871286806397096,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT075": {
+        "pearson_r": 0.9969221756168917,
+        "max_abs_difference": 1.7134405220780202,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT076": {
+        "pearson_r": 0.9977010211897877,
+        "max_abs_difference": 1.03570742452176,
+        "max_difference_sys_name": "b3870"
+      },
+      "set1IT077": {
+        "pearson_r": 0.9974839449085934,
+        "max_abs_difference": 1.5886618692133405,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT078": {
+        "pearson_r": 0.9967906938266847,
+        "max_abs_difference": 1.9422007550133502,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT079": {
+        "pearson_r": 0.9969691243414853,
+        "max_abs_difference": 1.8253215180098503,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT080": {
+        "pearson_r": 0.9977172683570119,
+        "max_abs_difference": 1.1403664847735704,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT081": {
+        "pearson_r": 0.9973185420674834,
+        "max_abs_difference": 1.5848826615528404,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT082": {
+        "pearson_r": 0.9971260684633627,
+        "max_abs_difference": 1.59336470895362,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT083": {
+        "pearson_r": 0.9959272868341155,
+        "max_abs_difference": 1.9263880330190002,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT084": {
+        "pearson_r": 0.9969669897144309,
+        "max_abs_difference": 1.5949473551698605,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT085": {
+        "pearson_r": 0.9963298937790417,
+        "max_abs_difference": 1.9233947480857694,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT086": {
+        "pearson_r": 0.9968655464781006,
+        "max_abs_difference": 1.9366425381970398,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT087": {
+        "pearson_r": 0.9967881104649617,
+        "max_abs_difference": 1.7149045029019203,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT088": {
+        "pearson_r": 0.9975579269767959,
+        "max_abs_difference": 1.5864783636146602,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT089": {
+        "pearson_r": 0.9974857815048928,
+        "max_abs_difference": 1.9141212880645604,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT090": {
+        "pearson_r": 0.9970998419913633,
+        "max_abs_difference": 1.9130688430626606,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT091": {
+        "pearson_r": 0.9974121577028372,
+        "max_abs_difference": 1.7240203024140301,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT092": {
+        "pearson_r": 0.9972772352142929,
+        "max_abs_difference": 1.0849640158016403,
+        "max_difference_sys_name": "b4177"
+      },
+      "set1IT093": {
+        "pearson_r": 0.9947502775449727,
+        "max_abs_difference": 1.8948556809450103,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT094": {
+        "pearson_r": 0.9941584764763548,
+        "max_abs_difference": 1.92506611280215,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT095": {
+        "pearson_r": 0.9977064935016482,
+        "max_abs_difference": 1.93738862454558,
+        "max_difference_sys_name": "b2476"
+      },
+      "set1IT096": {
+        "pearson_r": 0.9976134389377734,
+        "max_abs_difference": 1.7445348946139103,
+        "max_difference_sys_name": "b4177"
+      },
+      "set2IT045": {
+        "pearson_r": 0.9902782717730638,
+        "max_abs_difference": 0.5172315051953098,
+        "max_difference_sys_name": "b0726"
+      },
+      "set2IT069": {
+        "pearson_r": 0.9889538063315205,
+        "max_abs_difference": 0.5208448191315911,
+        "max_difference_sys_name": "b3619"
+      },
+      "set2IT095": {
+        "pearson_r": 0.995789007729104,
+        "max_abs_difference": 2.1785073230324605,
+        "max_difference_sys_name": "b4177"
+      },
+      "set2IT096": {
+        "pearson_r": 0.9955468159447971,
+        "max_abs_difference": 2.1642220150516405,
+        "max_difference_sys_name": "b4177"
+      }
+    }
+  },
+  "against_compendium_store": {
+    "store": "data/torchcell/rbtnseq_price2018_ecoli",
+    "records": 553896,
+    "built_from_commit": "52d376d6da1bbf6a8b73a982c816b34d48e189d4",
+    "built_from_dirty_tree": true,
+    "table_s5_samples": 162,
+    "carried_from_wetmore": 92,
+    "carried_and_kept": [
+      "set1IT003",
+      "set1IT004",
+      "set1IT005",
+      "set1IT006",
+      "set1IT009",
+      "set1IT010",
+      "set1IT011",
+      "set1IT012",
+      "set1IT013",
+      "set1IT014",
+      "set1IT015",
+      "set1IT016",
+      "set1IT017",
+      "set1IT018",
+      "set1IT019",
+      "set1IT020",
+      "set1IT021",
+      "set1IT022",
+      "set1IT023",
+      "set1IT024",
+      "set1IT025",
+      "set1IT026",
+      "set1IT027",
+      "set1IT028",
+      "set1IT031",
+      "set1IT032",
+      "set1IT035",
+      "set1IT036",
+      "set1IT037",
+      "set1IT038",
+      "set1IT039",
+      "set1IT040",
+      "set1IT041",
+      "set1IT042",
+      "set1IT045",
+      "set1IT046",
+      "set1IT047",
+      "set1IT048",
+      "set1IT051",
+      "set1IT052",
+      "set1IT053",
+      "set1IT054",
+      "set1IT055",
+      "set1IT056",
+      "set1IT057",
+      "set1IT058",
+      "set1IT059",
+      "set1IT060",
+      "set1IT061",
+      "set1IT062",
+      "set1IT063",
+      "set1IT064",
+      "set1IT065",
+      "set1IT066",
+      "set1IT071",
+      "set1IT072",
+      "set1IT073",
+      "set1IT074",
+      "set1IT075",
+      "set1IT076",
+      "set1IT077",
+      "set1IT078",
+      "set1IT079",
+      "set1IT080",
+      "set1IT081",
+      "set1IT082",
+      "set1IT083",
+      "set1IT084",
+      "set1IT085",
+      "set1IT086",
+      "set1IT087",
+      "set1IT088",
+      "set1IT089",
+      "set1IT090",
+      "set1IT091",
+      "set1IT092",
+      "set1IT093",
+      "set1IT094",
+      "set1IT095",
+      "set1IT096",
+      "set2IT045",
+      "set2IT069",
+      "set2IT095",
+      "set2IT096"
+    ],
+    "carried_and_dropped": {
+      "set1IT007": "authors_withdrew_sucrose_and_mannitol_2021",
+      "set1IT008": "authors_withdrew_sucrose_and_mannitol_2021",
+      "set1IT043": "authors_withdrew_sucrose_and_mannitol_2021",
+      "set1IT044": "authors_withdrew_sucrose_and_mannitol_2021",
+      "set1IT067": "medium_not_in_media_library",
+      "set1IT068": "medium_not_in_media_library",
+      "set1IT069": "medium_not_in_media_library",
+      "set1IT070": "medium_not_in_media_library"
+    },
+    "wetmore_successful_absent_from_store": [
+      "set1IT007",
+      "set1IT008",
+      "set1IT029",
+      "set1IT043",
+      "set1IT044",
+      "set1IT067",
+      "set1IT068",
+      "set1IT069",
+      "set1IT070"
+    ],
+    "store_phenotype_fields": [
+      "assay_type",
+      "category",
+      "category_label",
+      "confidence_level",
+      "environment_response",
+      "environment_response_lower",
+      "environment_response_p_value",
+      "environment_response_p_value_adjusted",
+      "environment_response_se",
+      "environment_response_uncertainty",
+      "environment_response_uncertainty_type",
+      "environment_response_upper",
+      "graph_level",
+      "label_name",
+      "label_statistic_name",
+      "measurement_type",
+      "n_samples",
+      "p_value_adjustment_method",
+      "provenance_gaps",
+      "replicate_id",
+      "sample_unit",
+      "screen_id",
+      "units"
+    ],
+    "store_stores_a_t_statistic": false
+  }
+}

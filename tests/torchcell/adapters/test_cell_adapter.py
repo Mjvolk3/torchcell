@@ -1116,9 +1116,8 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "environment_response_p_value": None,
             "environment_response_p_value_adjusted": None,
             "p_value_adjustment_method": None,
-            # Wetmore 2015's own release: the released t and an authors' withdrawal
+            # Wetmore 2015's own release: the test statistic the source released
             "environment_response_t_statistic": None,
-            "source_withdrawal": None,
         },
     ),
     (
@@ -1152,9 +1151,8 @@ PHENOTYPE_CASES: list[tuple[str, str, Any, Any, dict[str, Any]]] = [
             "environment_response_p_value": None,
             "environment_response_p_value_adjusted": None,
             "p_value_adjustment_method": None,
-            # Wetmore 2015's own release: the released t and an authors' withdrawal
+            # Wetmore 2015's own release: the test statistic the source released
             "environment_response_t_statistic": None,
-            "source_withdrawal": None,
         },
     ),
 ]
@@ -1253,9 +1251,8 @@ def test_only_the_environment_response_reference_collector_deduplicates(
                 "environment_response_p_value": None,
                 "environment_response_p_value_adjusted": None,
                 "p_value_adjustment_method": None,
-                # Wetmore 2015's own release: the released t and an authors' withdrawal
+                # Wetmore 2015's own release: the test statistic the source released
                 "environment_response_t_statistic": None,
-                "source_withdrawal": None,
             },
             preferred_id="environment response phenotype",
         )

@@ -35,9 +35,6 @@ table (``fit_logratios_good.tab``, the successful samples), in
   read-count SE (``fit_standard_error_naive.tab``, ``sdNaive``). The build checks the
   released t against it for every stored value;
 * the released moderated t itself is stored in ``environment_response_t_statistic``;
-* the four sucrose and D-mannitol samples the authors withdrew in 2021 are KEPT and each
-  of their records carries ``source_withdrawal`` (reason
-  ``problematic_stock_solution``, the authors' instruction verbatim);
 * genotype: one ``TransposonInsertionPerturbation`` per gene (``transposon`` = Table 1's
   "Tn5 transpososome", ``library_pool`` = Table S1's KEIO_ML9), on BW25113 as Table S1
   states it ("wild-type strain"), so the reference is ``assembly_reference("BW25113")``
@@ -51,16 +48,22 @@ table (``fit_logratios_good.tab``, the successful samples), in
   (°C)``, and ``Total Generations`` as ``duration_generations``;
 * reference: the typical gene of the same sample, response 0 by the normalization.
 
-Not stored, each with a typed reason in ``preprocess/dropped_records.json``: the 9
-condition samples that failed the paper's own rules (the paper's analyses exclude them;
-their values stay in the deposited ``fit_logratios.tab``), the 4 samples on ``MOPS Rich
-Defined media_noCarbon`` (no media-library entry, and Data Set S1's micronutrient
-amounts for it are unusable as printed), and the genes with no one-to-one ECK pair.
+Not stored, each with a typed reason in ``preprocess/dropped_records.json``: the 4
+sucrose and D-mannitol samples the authors themselves withdrew in 2021
+(:data:`AUTHOR_WITHDRAWAL`, the rule the compendium loader refuses the same four samples
+under; author-withdrawn data is bad data, so it is refused rather than stored and
+flagged, and the refusal carries the authors' instruction and its cause verbatim with
+their sha256), the 9 condition samples that failed the paper's own rules (the paper's
+analyses exclude them; their values stay in the deposited ``fit_logratios.tab``), the 4
+samples on ``MOPS Rich Defined media_noCarbon`` (no media-library entry, and Data Set
+S1's micronutrient amounts for it are unusable as printed), and the genes with no
+one-to-one ECK pair.
 
 WHAT THIS MODULE STILL PROVIDES TO OTHERS. The RB-TnSeq statistics as ``SourcedValue``
 constants (every RB-TnSeq row defers to this paper), the record of which Price 2018
 samples this paper first reported (:func:`subsumption_record`, read by the Price 2018
-loader for its attribution and its withdrawn samples), the release-to-release value
+loader for its attribution and its withdrawn samples), the typed author withdrawal both
+RB-TnSeq loaders refuse on (:data:`AUTHOR_WITHDRAWAL`), the release-to-release value
 comparison (:func:`release_comparison`), the identifier finding
 (:func:`identifier_reconciliation`), and the raw mirror (:func:`deposit_raw_mirror`).
 """
@@ -127,8 +130,6 @@ from torchcell.datamodels.schema import (
     Media,
     PhysicalFactor,
     Publication,
-    SourceWithdrawal,
-    SourceWithdrawalReason,
     Temperature,
     TransposonInsertionPerturbation,
     UncertaintyType,
@@ -681,8 +682,48 @@ STOCK_SOLUTION_CORRECTION = _release(
     "samples set1IT043/set1IT044 show exactly that in its own release, and its sucrose "
     "samples set1IT007/set1IT008 grew although BW25113 does not use sucrose",
 )
-#: Data Set S1 ``Condition_1`` values the 2021 note covers.
-DISREGARDED_CONDITIONS: frozenset[str] = frozenset(STOCK_SOLUTION_CORRECTION.value)
+
+
+class AuthorWithdrawal(BaseModel):
+    """A source's own authors telling readers to disregard part of what they published.
+
+    The typed refusal reason both RB-TnSeq loaders refuse on. Author-withdrawn data is
+    bad data: the authors state the measured response is not a response to the named
+    compound, so no record of it is stored, by either this paper's loader or the
+    compendium's. ``rule`` is the drop-rule name the refusal is counted under in each
+    loader's ``preprocess/dropped_records.json``; ``conditions`` are the Data Set S1 /
+    Table S5 ``Condition_1`` labels the note covers; ``instruction`` and ``cause`` are
+    the authors' own words, each bound to the sha256-pinned mirror file they were read
+    from, so the refusal is audited the way every sourced value is.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    rule: str
+    conditions: frozenset[str]
+    instruction: SourcedValue = Field(
+        description="the authors' instruction to disregard the data, verbatim"
+    )
+    cause: SourcedValue = Field(
+        description="what the authors found was wrong, verbatim: why the data is bad"
+    )
+
+
+#: The 2021 stock-solution withdrawal, the one refusal reason that is the source's own.
+AUTHOR_WITHDRAWAL = AuthorWithdrawal(
+    rule="authors_withdrew_sucrose_and_mannitol_2021",
+    conditions=frozenset(STOCK_SOLUTION_CORRECTION.value),
+    instruction=STOCK_SOLUTION_CORRECTION,
+    cause=_release(
+        ("Sucrose", "D-Mannitol"),
+        "After publishing this data, Morgan Price and Adam Deutschbauer discovered "
+        "that our stock solutions for sucrose and D-mannitol were problematic.",
+        relpath=SUPERSET_TOP_PAGE,
+        page="'Note added September 10, 2021'",
+        note="the stock solution was wrong, so the measured response is not a response "
+        "to the named compound: the values are refused, not stored and flagged",
+    ),
+)
 
 N_SAMPLES_GAP = ProvenanceGap(
     field="n_samples",
@@ -817,15 +858,6 @@ SUCCESS_FIELD = _release(
     page="Documentation, 'The quality scores in the table of experiments'",
     note="Data Set S1 Expt_Quality_Keio carries the same column; the paper's five rules "
     "(SUCCESS_RULES) reproduce it for all 101 condition samples",
-)
-WITHDRAWAL_REASON = _release(
-    SourceWithdrawalReason.problematic_stock_solution,
-    "After publishing this data, Morgan Price and Adam Deutschbauer discovered that our "
-    "stock solutions for sucrose and D-mannitol were problematic.",
-    relpath=SUPERSET_TOP_PAGE,
-    page="'Note added September 10, 2021'",
-    note="the typed reason every withdrawn record carries; the instruction itself is "
-    "STOCK_SOLUTION_CORRECTION, which each record's SourceWithdrawal quotes",
 )
 SATURATED_GROWTH = _paper(
     "grown to saturation, no fixed duration",
@@ -1275,7 +1307,7 @@ def build_subsumption(
                 end_od=_optional_float(row["EndOD"]),
                 source_quality=source_quality,
                 in_superset=in_superset,
-                disregarded_by_authors=condition in DISREGARDED_CONDITIONS,
+                disregarded_by_authors=condition in AUTHOR_WITHDRAWAL.conditions,
             )
         )
         if source_quality.successful != in_superset:
@@ -1684,14 +1716,20 @@ def read_release(raw_dir: str, samples: Sequence[str]) -> ReleaseTables:
     )
 
 
-# Samples: retention, the withdrawal flag, the environment ----------------------- #
+# Samples: retention, the refusals, the environment ------------------------------- #
 DROP_FAILED_QUALITY = "failed_paper_quality_rules"
 DROP_MEDIUM_NOT_IN_LIBRARY = "medium_not_in_media_library"
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
-#: Not a drop: the samples this rule names are STORED, each record flagged.
-FLAG_WITHDRAWN = "authors_withdrew_sucrose_and_mannitol_2021"
+#: The authors' own withdrawal, the same rule name the compendium loader refuses under.
+DROP_WITHDRAWN = AUTHOR_WITHDRAWAL.rule
 
 DROP_RULES: dict[str, str] = {
+    DROP_WITHDRAWN: "the source's own authors told readers to disregard it: the "
+    f"compendium page's 2021 note ({AUTHOR_WITHDRAWAL.instruction.quote!r}) after they "
+    f"found that {AUTHOR_WITHDRAWAL.cause.quote!r} The measured response is therefore "
+    "not a response to the named compound, so no record of these samples is stored "
+    "(the compendium loader refuses the same four samples under the same rule); their "
+    "values stay in the deposited fit_logratios_good.tab",
     DROP_FAILED_QUALITY: "Data Set S1 Expt_Quality_Keio scores the sample u = FALSE, and "
     "the paper's five rules (SUCCESS_RULES) reproduce that verdict: the paper's "
     "analyses exclude it and the release's gene-fitness table omits it. Its values stay "
@@ -1703,10 +1741,14 @@ DROP_RULES: dict[str, str] = {
     DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
     "BW25113 locus (absent from the MG1655 annotation, no ECK synonym, or an ECK id "
     "BW25113 lacks or carries on several loci); per gene in identifier_mapping.json",
-    FLAG_WITHDRAWN: "KEPT, not dropped: the compendium page's 2021 note "
-    f"({STOCK_SOLUTION_CORRECTION.quote!r}) withdraws this paper's E. coli sucrose and "
-    "D-mannitol samples, so every record of them carries source_withdrawal "
-    "(problematic_stock_solution) with that quote",
+}
+#: The source statement a rule rests on: a verbatim quote bound to its sha256. Only the
+#: two rules the source itself states have one. The medium rule rests on this loader's
+#: media library and the ECK rule on its own identifier typing, so neither has an entry
+#: (``DropRuleCount.source`` is None there, and its description says what the rule is).
+DROP_RULE_SOURCES: dict[str, SourcedValue] = {
+    DROP_WITHDRAWN: AUTHOR_WITHDRAWAL.instruction,
+    DROP_FAILED_QUALITY: SUCCESS_FIELD,
 }
 
 #: Data Set S1 ``Media`` -> the library object (each quotes Data Set S1's Media tab).
@@ -1758,7 +1800,6 @@ class SampleSpec(BaseModel):
     total_generations: float | None
     quality: QualityMetrics
     drop_rule: str | None
-    withdrawn: bool
 
     @property
     def screen_id(self) -> str:
@@ -1784,9 +1825,9 @@ def classify_samples(
     sample must be the Keio_ML9 library, liquid, aerobic, and carry no second
     condition, else it is refused; its quality verdict ``u`` must equal the paper's
     five rules applied to its own metrics, else it is refused. A sample is then dropped
-    by exactly one rule, checked in this order: failed quality, a medium outside the
-    library. A kept sample must name a known group whose medium fits it. A kept
-    sucrose or D-mannitol sample is flagged ``withdrawn``.
+    by exactly one rule, checked in this order (the compendium loader's order): the
+    authors' 2021 withdrawal, failed quality, a medium outside the library. A kept
+    sample must name a known group whose medium fits it.
     """
     condition_rows = experiments.loc[experiments["Group"] != "Time0"]
     samples = _unique_index(condition_rows, "Expts_Keio")
@@ -1814,7 +1855,9 @@ def classify_samples(
         media_label = str(row["Media"])
         group = str(row["Group"])
         drop: str | None = None
-        if not metrics.successful:
+        if condition in AUTHOR_WITHDRAWAL.conditions:
+            drop = DROP_WITHDRAWN
+        elif not metrics.successful:
             drop = DROP_FAILED_QUALITY
         elif media_label in UNLISTED_MEDIA:
             drop = DROP_MEDIUM_NOT_IN_LIBRARY
@@ -1838,7 +1881,6 @@ def classify_samples(
                 total_generations=_optional_float(row["Total Generations"]),
                 quality=metrics,
                 drop_rule=drop,
-                withdrawn=drop is None and condition in DISREGARDED_CONDITIONS,
             )
         )
     return tuple(specs)
@@ -2114,10 +2156,6 @@ DESCRIPTION = (
     "release names an MG1655 b-number, mapped to this BW25113 locus through its "
     "one-to-one ECK pair (identifier_mapping)"
 )
-#: The flag every record of a withdrawn sample carries.
-WITHDRAWAL = SourceWithdrawal(
-    reason=WITHDRAWAL_REASON.value, provenance=STOCK_SOLUTION_CORRECTION
-)
 PUBLICATION = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
 
 
@@ -2141,12 +2179,7 @@ def build_genotype(mapping: GeneMapping) -> Genotype:
 
 
 def build_phenotype(
-    fitness: float,
-    standard_error: float,
-    t_statistic: float,
-    *,
-    screen_id: str,
-    withdrawn: bool,
+    fitness: float, standard_error: float, t_statistic: float, *, screen_id: str
 ) -> EnvironmentResponsePhenotype:
     """One gene's fitness in one sample, with the paper's SE and the released t."""
     return EnvironmentResponsePhenotype(
@@ -2156,7 +2189,6 @@ def build_phenotype(
         environment_response_uncertainty=standard_error,
         environment_response_uncertainty_type=UncertaintyType.standard_error,
         environment_response_t_statistic=t_statistic,
-        source_withdrawal=WITHDRAWAL if withdrawn else None,
         screen_id=screen_id,
         units=UNITS,
         provenance_gaps=[N_SAMPLES_GAP, SAMPLE_UNIT_GAP],
@@ -2252,7 +2284,6 @@ def iter_records(
                         float(release.standard_error[i, j]),
                         float(release.t[i, j]),
                         screen_id=sample.spec.screen_id,
-                        withdrawn=sample.spec.withdrawn,
                     ),
                 ),
                 sample.reference,
@@ -2260,11 +2291,11 @@ def iter_records(
             )
 
 
-#: What the build writes (measured on the deposited release, 2026-10-10).
-EXPECTED_SAMPLES = 88
+#: What the build writes (measured on the deposited release, 2026-10-11).
+EXPECTED_SAMPLES = 84
 EXPECTED_GENES = 3628
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
-#: The withdrawn samples, stored and flagged.
+#: The withdrawn samples, refused: no record of them is stored.
 EXPECTED_WITHDRAWN: tuple[str, ...] = (
     "set1IT007",
     "set1IT008",
@@ -2275,19 +2306,25 @@ EXPECTED_WITHDRAWN: tuple[str, ...] = (
 
 # Inventory ---------------------------------------------------------------------- #
 class DropRuleCount(BaseModel):
-    """One retention rule, what it removed (or flagged), and the released values involved.
+    """One retention rule, what it removed, and the released values involved.
 
     ``n_records`` counts released gene-fitness values (``fit_logratios.tab`` covers
-    every sample), so the rules close over ``Inventory.source_records``: stored + the
-    dropped rules' values = condition samples x release genes.
+    every sample), so the rules close over ``Inventory.source_records``: stored + every
+    rule's values = condition samples x release genes.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
     rule: str
     scope: Literal["sample", "gene"]
-    kept: bool = Field(description="True for the flag rule: its records are stored")
     description: str
+    source: SourcedValue | None = Field(
+        default=None,
+        description="the source's own statement the rule rests on, verbatim and bound "
+        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES). None for a "
+        "rule that rests on this loader's typing rather than on a statement of the "
+        "source: the media library, the ECK crosswalk",
+    )
     items: tuple[str, ...]
     n_records: int
 
@@ -2316,7 +2353,9 @@ class Inventory(BaseModel):
     stored_samples: int
     stored_samples_by_group: dict[str, int]
     stored_samples_by_medium: dict[str, int]
-    withdrawn_flagged: tuple[str, ...]
+    withdrawn_refused: tuple[str, ...] = Field(
+        description="the samples the authors' 2021 note withdraws: refused, not stored"
+    )
     source_genes: int
     stored_genes: int
     source_records: int = Field(
@@ -2328,7 +2367,6 @@ class Inventory(BaseModel):
         "gene-fitness table (fit_logratios_good.tab)"
     )
     stored_records: int
-    flagged_records: int
     rules: tuple[DropRuleCount, ...]
     unidentified_compounds: dict[str, int] = Field(
         description="Condition_1 labels of stored samples the identity table does not "
@@ -2345,35 +2383,25 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
         DropRuleCount(
             rule=rule,
             scope="sample",
-            kept=False,
             description=DROP_RULES[rule],
+            source=DROP_RULE_SOURCES.get(rule),
             items=tuple(s.name for s in specs if s.drop_rule == rule),
             n_records=sum(1 for s in specs if s.drop_rule == rule)
             * identifiers.n_source_genes,
         )
-        for rule in (DROP_FAILED_QUALITY, DROP_MEDIUM_NOT_IN_LIBRARY)
+        for rule in (DROP_WITHDRAWN, DROP_FAILED_QUALITY, DROP_MEDIUM_NOT_IN_LIBRARY)
     ]
     rules.append(
         DropRuleCount(
             rule=DROP_NO_ECK_PAIR,
             scope="gene",
-            kept=False,
             description=DROP_RULES[DROP_NO_ECK_PAIR],
+            source=DROP_RULE_SOURCES.get(DROP_NO_ECK_PAIR),
             items=tuple(u.b_number for u in identifiers.unmapped),
             n_records=len(identifiers.unmapped) * len(kept),
         )
     )
-    withdrawn = tuple(s.name for s in kept if s.withdrawn)
-    rules.append(
-        DropRuleCount(
-            rule=FLAG_WITHDRAWN,
-            scope="sample",
-            kept=True,
-            description=DROP_RULES[FLAG_WITHDRAWN],
-            items=withdrawn,
-            n_records=len(withdrawn) * genes,
-        )
-    )
+    withdrawn = tuple(s.name for s in specs if s.drop_rule == DROP_WITHDRAWN)
     unidentified = Counter(
         s.condition
         for s in kept
@@ -2400,13 +2428,12 @@ def inventory(specs: Sequence[SampleSpec], identifiers: IdentifierReport) -> Inv
         stored_samples=len(kept),
         stored_samples_by_group=dict(Counter(s.group for s in kept)),
         stored_samples_by_medium=dict(Counter(s.media_label for s in kept)),
-        withdrawn_flagged=withdrawn,
+        withdrawn_refused=withdrawn,
         source_genes=identifiers.n_source_genes,
         stored_genes=genes,
         source_records=len(specs) * identifiers.n_source_genes,
         good_table_records=len(successful) * identifiers.n_source_genes,
         stored_records=len(kept) * genes,
-        flagged_records=len(withdrawn) * genes,
         rules=tuple(rules),
         unidentified_compounds=dict(sorted(unidentified.items())),
     )
@@ -2624,7 +2651,6 @@ class StoredValue(BaseModel):
     value: float
     standard_error: float | None
     t_statistic: float | None
-    withdrawal: str | None
 
 
 def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
@@ -2635,7 +2661,6 @@ def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
         perturbations = record["experiment"]["genotype"]["perturbations"]
         if len(perturbations) != 1:
             raise ValueError(f"expected one perturbation, got {len(perturbations)}")
-        withdrawal = phenotype.get("source_withdrawal")
         out.append(
             StoredValue(
                 sample=str(phenotype["screen_id"]).removeprefix(f"{ORG_ID}:"),
@@ -2643,40 +2668,41 @@ def stored_values(records: Iterable[Mapping[str, Any]]) -> list[StoredValue]:
                 value=float(phenotype["environment_response"]),
                 standard_error=phenotype["environment_response_se"],
                 t_statistic=phenotype.get("environment_response_t_statistic"),
-                withdrawal=None if withdrawal is None else str(withdrawal["reason"]),
             )
         )
     return out
 
 
 def withdrawal_census(values: Sequence[StoredValue]) -> LevelResult:
-    """SUPPLEMENTARY L1: exactly the withdrawn samples' records carry the flag, all of them.
+    """SUPPLEMENTARY L1: not one record of a withdrawn sample is in the store.
 
-    A withdrawn sample is stored, never dropped, so the flag is what separates its
-    records from the rest; a flag on another sample, or a withdrawn record without it,
-    would let a consumer filtering on the reason keep the wrong values.
+    The authors told readers to disregard these four samples, so the store must hold no
+    record of them at all: a stored record would put data its own authors withdrew in
+    front of a consumer who never read the note. The row also checks that the stored
+    samples are the rest of the kept set, so a refusal cannot quietly take more.
     """
-    by_sample: dict[str, Counter[str | None]] = {}
-    for v in values:
-        by_sample.setdefault(v.sample, Counter())[v.withdrawal] += 1
-    flagged = sorted(s for s, c in by_sample.items() if c[None] == 0)
-    mixed = sorted(s for s, c in by_sample.items() if c[None] and len(c) > 1)
-    reasons = sorted({str(v.withdrawal) for v in values if v.withdrawal is not None})
-    passed = (
-        tuple(flagged) == EXPECTED_WITHDRAWN
-        and not mixed
-        and reasons == [SourceWithdrawalReason.problematic_stock_solution.value]
-    )
-    n_flagged = sum(1 for v in values if v.withdrawal is not None)
+    stored = sorted({v.sample for v in values})
+    withdrawn_present = sorted(set(stored) & set(EXPECTED_WITHDRAWN))
+    n_records = sum(1 for v in values if v.sample in set(EXPECTED_WITHDRAWN))
+    passed = not withdrawn_present and len(stored) == EXPECTED_SAMPLES
     return LevelResult(
         level=Level.L1,
-        name="withdrawn_samples_flagged_not_dropped",
+        name="withdrawn_samples_refused_not_stored",
         passed=passed,
         message=(
-            f"SUPPLEMENTARY: {n_flagged} records of {len(flagged)} samples flagged "
-            f"{reasons} ({flagged}); {len(mixed)} samples partly flagged"
+            f"SUPPLEMENTARY: {n_records} records of the {len(EXPECTED_WITHDRAWN)} "
+            f"samples the authors withdrew ({list(EXPECTED_WITHDRAWN)}); "
+            f"{len(withdrawn_present)} of them are in the store; {len(stored)} samples "
+            f"stored, expected {EXPECTED_SAMPLES}"
         ),
-        details={"flagged": flagged, "mixed": mixed, "expected": EXPECTED_WITHDRAWN},
+        details={
+            "withdrawn": list(EXPECTED_WITHDRAWN),
+            "withdrawn_present": withdrawn_present,
+            "n_stored_samples": len(stored),
+            "rule": DROP_WITHDRAWN,
+            "quote": AUTHOR_WITHDRAWAL.instruction.quote,
+            "sha256": AUTHOR_WITHDRAWAL.instruction.provenance.sha256,
+        },
     )
 
 
@@ -2910,8 +2936,8 @@ def verify_build(
 
     The gene universe and resolver are BW25113's (every GenBank locus, pseudogenes
     included), the assembly every record pins. Four SUPPLEMENTARY rows are added: the
-    stored tags are loci of that assembly (L1), exactly the withdrawn samples are
-    flagged (L1), every stored t matches its stored SE (L2), and the cross-check against
+    stored tags are loci of that assembly (L1), no record of a withdrawn sample is
+    stored (L1), every stored t matches its stored SE (L2), and the cross-check against
     the Price 2018 compendium's dev store (L4, :func:`compendium_cross_check`), which
     reads that store read-only and refuses when it is absent.
     """

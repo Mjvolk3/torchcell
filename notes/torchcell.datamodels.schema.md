@@ -442,20 +442,25 @@ First consumer: Wang 2024 Table S2 ([[torchcell.datasets.ecoli.wang2024]]), 24,7
 
 Schema impact (`scripts/schema_impact_check.py --base origin/main`): one changed symbol, `EnvironmentResponsePhenotype` (three added optional fields plus the `_check` validator), 36 impacted dataset groups, 0 breaking. Every dataset whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
 
-## 2026.10.10 - A released t statistic and an authors' withdrawal on the environment-response phenotype
+## 2026.10.10 - A released t statistic on the environment-response phenotype
 
-`EnvironmentResponsePhenotype` gains two optional fields in their own `ADDITIVE (Wetmore 2015 own release)` block, after #863's:
+`EnvironmentResponsePhenotype` gains one optional field in its own `ADDITIVE (Wetmore 2015 own release)` block, after #863's:
 
 - `environment_response_t_statistic`: the test statistic the source released for the response, verbatim. For RB-TnSeq it is Wetmore 2015's moderated t, `t = f / sqrt(sigma^2 + max(V_e, V_n))` with sigma 0.1 (Methods (iv)). It is a function of the response and its standard error and is stored because the release states it, not recomputed; like the p-value it is a test of the number, so it never feeds `environment_response_uncertainty` or the derived SE. The validator refuses a non-finite t and a t with no numeric response.
-- `source_withdrawal: SourceWithdrawal | None`: set when the source's own authors later told readers to disregard the measurement. `SourceWithdrawal(reason, provenance)` carries the typed `SourceWithdrawalReason` (one member, `problematic_stock_solution`) and the authors' instruction as a `SourcedValue` (file, sha256, verbatim quote). The record is KEPT and flagged, never dropped, so what the release published stays queryable and a consumer filters on the reason. The field holding the `SourcedValue` is named `provenance`, the one name `test_sourced_value_fields_keep_one_name` lets a `SourcedValue` field carry.
 
-`SourceWithdrawal` sits on the ontology figure's provenance lane (`LANE_ROOTS` in `torchcell/paper/ontology_graph.py`): it is a statement about where the record stands with its source.
+Graph side: `environment response phenotype` declares `environment_response_t_statistic: float`; `CellAdapter._environment_response_properties` projects it. The property is named after the field, which `test_phenotype_classes_and_node_classes_are_in_bijection` requires.
 
-Graph side: `environment response phenotype` declares `environment_response_t_statistic: float` and `source_withdrawal: str` (the reason's value); `CellAdapter._environment_response_properties` projects both. The property is named after the field, which `test_phenotype_classes_and_node_classes_are_in_bijection` requires.
+First consumer: Wetmore 2015's own release ([[torchcell.datasets.ecoli.wetmore2015]]), 304,752 records each carrying the released t.
 
-First consumer: Wetmore 2015's own release ([[torchcell.datasets.ecoli.wetmore2015]]), 319,264 records each carrying the released t, 14,512 of them (the sucrose and D-mannitol samples) carrying the withdrawal.
+Schema impact (`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`): one changed symbol, `EnvironmentResponsePhenotype` (one added optional field plus the `_check` validator), 37 impacted dataset groups (against main `d88f3865c`, the Wetmore store included), 0 breaking. Every store whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
 
-Schema impact (`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`): `EnvironmentResponsePhenotype` modified (two added optional fields plus the `_check` validator), `SourceWithdrawal` and `SourceWithdrawalReason` added; 37 impacted dataset groups (against main `d88f3865c`, the Wetmore store included), 0 breaking. Every store whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
+## 2026.10.11 - No schema type carries an authors' withdrawal: withdrawn data is refused, not stored
+
+Owner decision, 2026-10-11: author-withdrawn data is bad data and must not be stored. The first draft of the section above also added `SourceWithdrawal` and `SourceWithdrawalReason` and a `source_withdrawal` field on `EnvironmentResponsePhenotype`, so that Wetmore 2015's four sucrose and D-mannitol samples could be kept and flagged. All three are removed, for the reason the decision gives: the authors state the measured response is not a response to the named compound, so the value is wrong, not merely caveated, and a flag beside a wrong value puts it in front of every consumer who does not filter on the flag.
+
+Where the withdrawal lives instead: it is a property of the BUILD, not of a record, so it belongs with the other refusals. `wetmore2015.AUTHOR_WITHDRAWAL` (a frozen `AuthorWithdrawal` model) carries the drop-rule name, the `Condition_1` labels the note covers, and the authors' instruction and its cause as two `SourcedValue`s pinned to `data/bigfit/index.html` (sha256 `c4819e45...`). Both RB-TnSeq loaders refuse on that one object, and each ledger entry (`DropRuleCount.source`) carries the quote with its sha256 into `preprocess/dropped_records.json`.
+
+Consequence for the record schema: nothing. A refused record is absent, so no field, no graph property and no ontology lane root is needed, and `ontology_graph.LANE_ROOTS` keeps the class count it has on main (re-derived after the rebase onto main `32bb760c1`: 197 classes on both, and 1,021 declared fields against main's 1,020, the one new t field).
 
 ## 2026.10.11 - Life-cycle phenotype family, cell yield, nitrogen dose, timed pre-culture
 

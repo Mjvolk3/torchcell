@@ -18,7 +18,8 @@ re-derivation of the loader's:
    (gMed >= 50, mad12 <= 0.5, cor12 >= 0.1, |gccor| <= 0.2, |adjcor| <= 0.25) reproduce
    it; the failed samples with the rule each trips.
 3. **The authors' withdrawal.** The condition samples whose ``Condition_1`` is sucrose
-   or D-mannitol, which the compendium page's 2021 note withdraws.
+   or D-mannitol, which the compendium page's 2021 note withdraws; both RB-TnSeq loaders
+   refuse them, so this section is the count of what is NOT stored.
 4. **Genes and values.** Genes of the gene-fitness table, sample columns of the
    successful-sample table and of the all-sample table, and the t identity
    ``t = fit / sqrt(0.1^2 + max(se_obs, se_naive)^2)`` over every value.
@@ -69,7 +70,7 @@ RULES = {
     "abs_gccor_max": lambda q: abs(q["gccor"]) <= 0.2,
     "abs_adjcor_max": lambda q: abs(q["adjcor"]) <= 0.25,
 }
-WITHDRAWN_CONDITIONS = ("Sucrose", "D-Mannitol")
+WITHDRAWN_CONDITIONS = tuple(sorted(w.AUTHOR_WITHDRAWAL.conditions))
 SIGMA = 0.1
 
 

@@ -89,10 +89,6 @@ LANE_ROOTS: dict[str, tuple[str, ...]] = {
         "ReferenceGenome",
         "SOTerm",
         "ArtifactRef",
-        # The source's own authors withdrawing a measurement after publication: a
-        # statement about where the record stands with its source, carried on the
-        # phenotype but read as provenance (Wetmore 2015's own release).
-        "SourceWithdrawal",
     ),
 }
 

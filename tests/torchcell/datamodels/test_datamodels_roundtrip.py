@@ -233,21 +233,6 @@ EXAMPLES: dict[str, dict[str, Any]] = {
             {"field": "provenance", "reason": "deferred_pending_source_review"}
         ],
     },
-    # Wetmore 2015's own release: the provenance is a SourcedValue (value: Any), which the
-    # generic builder cannot invent, so the flag the loader writes is committed here.
-    "torchcell.datamodels.schema.SourceWithdrawal": {
-        "reason": "problematic_stock_solution",
-        "provenance": {
-            "value": ["Sucrose", "D-Mannitol"],
-            "quote": "Please disregard any of the data from this publication regarding "
-            "sucrose or D-mannitol.",
-            "provenance": {
-                "source_uri": "data/bigfit/index.html",
-                "citation_key": "wetmoreRapidQuantificationMutant2015",
-                "sha256": "c4819e452ab54dfd3748242a3d4cf0f04021071aefadb2f07f2806afa32e3555",
-            },
-        },
-    },
     # A phage challenge always has a dose, so the builder's bare `name` is refused: the
     # MOI is stated or it is a typed gap.
     "torchcell.datamodels.schema.PhagePerturbation": {

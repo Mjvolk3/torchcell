@@ -7,10 +7,10 @@ KEIO_ML9) as knowledge-graph nodes and edges.
 
 One record per (gene, successful sample): a single ``TransposonInsertionPerturbation``
 served as a ``bacterial perturbation`` node, and the gene fitness as an
-``EnvironmentResponsePhenotype`` carrying the released moderated t and, on the four
-withdrawn sucrose and D-mannitol samples, the typed withdrawal reason. A carbon or
-nitrogen source is an ``EnvironmentPhysicalPerturbation``, served as an environment
-perturbation.
+``EnvironmentResponsePhenotype`` carrying the released moderated t. The four sucrose and
+D-mannitol samples the authors withdrew in 2021 are refused by the loader, so no node
+here is one of theirs. A carbon or nitrogen source is an
+``EnvironmentPhysicalPerturbation``, served as an environment perturbation.
 """
 
 import os.path as osp

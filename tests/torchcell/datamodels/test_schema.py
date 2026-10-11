@@ -41,12 +41,7 @@ from torchcell.datamodels.schema import (
     SgaKanMxDeletionPerturbation,
     Temperature,
 )
-from torchcell.verification.report import Provenance
-from torchcell.verification.sourced import (
-    ProvenanceGap,
-    ProvenanceGapReason,
-    SourcedValue,
-)
+from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
 
 
 @pytest.fixture
@@ -2499,23 +2494,7 @@ def test_environment_response_p_values_are_probabilities_with_a_named_correction
         )
 
 
-# Wetmore 2015's own release: the released moderated t and an authors' withdrawal.
-
-
-def _withdrawal() -> Any:
-    return s.SourceWithdrawal(
-        reason=s.SourceWithdrawalReason.problematic_stock_solution,
-        provenance=SourcedValue(
-            value=("Sucrose", "D-Mannitol"),
-            quote="Please disregard any of the data from this publication regarding "
-            "sucrose or D-mannitol.",
-            provenance=Provenance(
-                source_uri="data/bigfit/index.html",
-                citation_key="wetmoreRapidQuantificationMutant2015",
-                sha256="c" * 64,
-            ),
-        ),
-    )
+# Wetmore 2015's own release: the released moderated t.
 
 
 def test_environment_response_t_statistic_is_stored_and_never_feeds_the_se() -> None:
@@ -2547,23 +2526,6 @@ def test_environment_response_t_statistic_is_finite_and_tests_a_number() -> None
             category=s.ResponseCategory.reduced,
             environment_response_t_statistic=2.0,
         )
-
-
-def test_a_withdrawn_measurement_is_kept_with_its_typed_reason() -> None:
-    """The flag rides on the record; the value is untouched and the statement verbatim."""
-    flagged = _response(source_withdrawal=_withdrawal())
-    assert flagged.environment_response == -0.7
-    assert flagged.source_withdrawal is not None
-    assert flagged.source_withdrawal.reason == "problematic_stock_solution"
-    assert flagged.source_withdrawal.provenance.quote.startswith("Please disregard")
-    assert _response().source_withdrawal is None
-    assert [m.value for m in s.SourceWithdrawalReason] == ["problematic_stock_solution"]
-    with pytest.raises(ValidationError, match="Input should be 'problematic_stock"):
-        s.SourceWithdrawal.model_validate(
-            {"reason": "bad_stock", "provenance": _withdrawal().provenance}
-        )
-    with pytest.raises(ValidationError, match="Field required"):
-        s.SourceWithdrawal.model_validate({"reason": "problematic_stock_solution"})
 
 
 def _interaction(**overrides: Any) -> Any:

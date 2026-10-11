@@ -348,7 +348,21 @@ def test_the_module_registers_exactly_its_own_release_dataset() -> None:
 def test_sourced_vocabulary_for_the_rb_tnseq_rows() -> None:
     assert w.GENE_FITNESS_IS_LOG2.value is MeasurementType.log2_ratio
     assert w.UNCERTAINTY_TYPE.value is UncertaintyType.standard_error
-    assert w.DISREGARDED_CONDITIONS == frozenset({"Sucrose", "D-Mannitol"})
+    assert w.AUTHOR_WITHDRAWAL.conditions == frozenset({"Sucrose", "D-Mannitol"})
+    assert w.AUTHOR_WITHDRAWAL.rule == w.DROP_WITHDRAWN
+    assert w.AUTHOR_WITHDRAWAL.instruction.quote == (
+        "Please disregard any of the data from this publication regarding sucrose or "
+        "D-mannitol."
+    )
+    assert w.AUTHOR_WITHDRAWAL.cause.quote == (
+        "After publishing this data, Morgan Price and Adam Deutschbauer discovered "
+        "that our stock solutions for sucrose and D-mannitol were problematic."
+    )
+    assert (
+        w.AUTHOR_WITHDRAWAL.instruction.provenance.sha256
+        == w.AUTHOR_WITHDRAWAL.cause.provenance.sha256
+        == w.RAW_FILES[w.SUPERSET_TOP_PAGE].sha256
+    )
     assert w.STRAIN.value == w.STRAIN_TABLE_S1.value == w.REFERENCE_STRAIN == "BW25113"
     assert w.SIGNIFICANT_ABS_T.value == 4.0
     assert w.T_STATISTIC_SIGMA.value == 0.1
@@ -801,19 +815,18 @@ def _specs(rows: list[dict[str, Any]] | None = None) -> tuple[w.SampleSpec, ...]
     )
 
 
-def test_classify_samples_drops_failed_and_unlisted_media_and_flags_withdrawn() -> None:
+def test_classify_samples_refuses_withdrawn_failed_and_unlisted_media() -> None:
     specs = {s.name: s for s in _specs()}
     assert list(specs) == [r["name"] for r in S1_ROWS[1:]]
     assert {n: s.drop_rule for n, s in specs.items()} == {
         "set1IT003": None,
-        "set1IT007": None,
+        "set1IT007": w.DROP_WITHDRAWN,
         "set1IT030": w.DROP_FAILED_QUALITY,
         "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY,
         "set1IT071": None,
         "set1IT059": None,
         "set2IT069": None,
     }
-    assert [n for n, s in specs.items() if s.withdrawn] == ["set1IT007"]
     assert specs["set1IT030"].quality.failed_rules() == ("g_med_min",)
     assert specs["set2IT069"].total_generations is None
     assert specs["set2IT069"].temperature_c == 28.0
@@ -1086,26 +1099,42 @@ def test_gene_symbol_keeps_a_symbol_only_when_it_resolves_back() -> None:
     assert w.gene_symbol(None, "BW25113_0003", resolve) == "BW25113_0003"
 
 
-def test_build_phenotype_stores_the_t_the_se_and_the_withdrawal() -> None:
-    kept = w.build_phenotype(
-        -1.5, 0.25, -5.57, screen_id="Keio:set1IT003", withdrawn=False
-    )
+def test_build_phenotype_stores_the_t_and_the_papers_se() -> None:
+    kept = w.build_phenotype(-1.5, 0.25, -5.57, screen_id="Keio:set1IT003")
     assert (
         kept.environment_response,
         kept.environment_response_se,
         kept.environment_response_uncertainty_type,
         kept.environment_response_t_statistic,
-        kept.source_withdrawal,
-    ) == (-1.5, 0.25, UncertaintyType.standard_error, -5.57, None)
+    ) == (-1.5, 0.25, UncertaintyType.standard_error, -5.57)
     assert [g.field for g in kept.provenance_gaps] == ["n_samples", "sample_unit"]
-    flagged = w.build_phenotype(
-        0.1, 0.2, 0.44, screen_id="Keio:set1IT007", withdrawn=True
-    )
-    assert flagged.source_withdrawal == w.WITHDRAWAL
-    assert flagged.source_withdrawal.reason == "problematic_stock_solution"
-    assert flagged.source_withdrawal.provenance.quote == (
-        w.STOCK_SOLUTION_CORRECTION.quote
-    )
+
+
+def test_the_withdrawal_outranks_the_quality_and_medium_rules() -> None:
+    """A withdrawn sample is refused for the withdrawal, whatever else it trips.
+
+    The authors' instruction is about the compound, so it holds even for a sample that
+    would have been dropped anyway; the ledger must name the reason a reader has to act
+    on, and it is the same rule the compendium loader refuses under.
+    """
+    rows = [dict(r) for r in S1_ROWS]
+    quality = [dict(q) for q in S1_QUALITY]
+    for row in rows:
+        if row["name"] == "set1IT067":
+            row["Condition_1"] = "D-Mannitol"
+    for entry in quality:
+        if entry["name"] == "set1IT030":
+            entry["short"] = "Sucrose (C)"
+    for row in rows:
+        if row["name"] == "set1IT030":
+            row["Condition_1"] = "Sucrose"
+    specs = {
+        spec.name: spec
+        for spec in w.classify_samples(pd.DataFrame(rows), pd.DataFrame(quality))
+    }
+    assert specs["set1IT030"].drop_rule == w.DROP_WITHDRAWN
+    assert specs["set1IT067"].drop_rule == w.DROP_WITHDRAWN
+    assert specs["set1IT030"].quality.failed_rules() == ("g_med_min",)
 
 
 def _write_s1(path: Path) -> None:
@@ -1177,8 +1206,9 @@ def _dataset_root(data_root: Path) -> Path:
 def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> None:
     root = _dataset_root(mirrored)
     dataset = w.RbTnseqWetmore2015Dataset(root=str(root))
-    # five kept samples (set1IT067 is on MOPS Rich Defined) x four mapped genes
-    assert len(dataset) == 20
+    # four kept samples (set1IT007 withdrawn, set1IT030 failed, set1IT067 on MOPS Rich
+    # Defined) x four mapped genes
+    assert len(dataset) == 16
     assert sorted(dataset.gene_set) == [
         "BW25113_0001",
         "BW25113_0002",
@@ -1187,7 +1217,7 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     ]
     references = dataset.experiment_reference_index
     assert references is not None
-    assert len(references) == 5
+    assert len(references) == 4
     first = dataset[0]
     phenotype = first["experiment"]["phenotype"]
     assert phenotype["screen_id"] == "Keio:set1IT003"
@@ -1196,7 +1226,6 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
     assert phenotype["environment_response_t_statistic"] == pytest.approx(
         -2.0 / math.sqrt(0.01 + 0.09)
     )
-    assert phenotype["source_withdrawal"] is None
     perturbation = first["experiment"]["genotype"]["perturbations"][0]
     assert (
         perturbation["systematic_gene_name"],
@@ -1210,25 +1239,30 @@ def test_the_loader_builds_the_synthetic_release_end_to_end(mirrored: Path) -> N
         "KEIO_ML9",
     )
     assert first["publication"]["doi"] == "10.1128/mBio.00306-15"
-    withdrawn = [
-        dataset[i]["experiment"]["phenotype"]["source_withdrawal"]["reason"]
-        for i in range(len(dataset))
-        if dataset[i]["experiment"]["phenotype"]["screen_id"] == "Keio:set1IT007"
-    ]
-    assert withdrawn == ["problematic_stock_solution"] * 4
+    # the withdrawn sample is absent from the store, not flagged in it
+    assert {
+        dataset[i]["experiment"]["phenotype"]["screen_id"] for i in range(len(dataset))
+    } == {"Keio:set1IT003", "Keio:set1IT071", "Keio:set1IT059", "Keio:set2IT069"}
     drops = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert (drops["source_records"], drops["stored_records"]) == (49, 20)
-    assert [
-        (d["rule"], d["kept"], d["items"], d["n_records"]) for d in drops["rules"]
-    ] == [
-        (w.DROP_FAILED_QUALITY, False, ["set1IT030"], 7),
-        (w.DROP_MEDIUM_NOT_IN_LIBRARY, False, ["set1IT067"], 7),
-        (w.DROP_NO_ECK_PAIR, False, ["b0005", "b0006", "b0099"], 15),
-        (w.FLAG_WITHDRAWN, True, ["set1IT007"], 4),
+    assert (drops["source_records"], drops["stored_records"]) == (49, 16)
+    assert [(d["rule"], d["items"], d["n_records"]) for d in drops["rules"]] == [
+        (w.DROP_WITHDRAWN, ["set1IT007"], 7),
+        (w.DROP_FAILED_QUALITY, ["set1IT030"], 7),
+        (w.DROP_MEDIUM_NOT_IN_LIBRARY, ["set1IT067"], 7),
+        (w.DROP_NO_ECK_PAIR, ["b0005", "b0006", "b0099"], 12),
     ]
-    # every released value is accounted for: stored + the three drop rules
-    assert drops["source_records"] == 20 + 7 + 7 + 15
-    assert drops["withdrawn_flagged"] == ["set1IT007"]
+    # every released value is accounted for: stored + the four drop rules
+    assert drops["source_records"] == 16 + 7 + 7 + 7 + 12
+    assert drops["withdrawn_refused"] == ["set1IT007"]
+    # the refusal carries the authors' own words, bound to the file they were read from
+    withdrawal = next(d for d in drops["rules"] if d["rule"] == w.DROP_WITHDRAWN)
+    assert withdrawal["source"]["quote"] == (
+        "Please disregard any of the data from this publication regarding sucrose or "
+        "D-mannitol."
+    )
+    assert withdrawal["source"]["provenance"]["sha256"] == (
+        w.RAW_FILES[w.SUPERSET_TOP_PAGE].sha256
+    )
     assert drops["quality_rules_reproduce_u"] is True
     standard_error = json.loads(
         (root / "preprocess" / "standard_error.json").read_text()
@@ -1269,7 +1303,7 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
     root = _dataset_root(mirrored)
     w.RbTnseqWetmore2015Dataset(root=str(root))
     with pytest.raises(FileNotFoundError, match="the compendium store the L4"):
-        w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+        w.verify_build(str(root), data_root=str(mirrored), expected_count=16)
     _served_copy(
         mirrored,
         {"set1IT003": None, "set1IT067": w.DROP_MEDIUM_NOT_IN_LIBRARY, "set9": None},
@@ -1282,13 +1316,14 @@ def test_verify_build_runs_every_row_and_the_compendium_cross_check(
         ),
     )
     monkeypatch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
-    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=20)
+    monkeypatch.setattr(w, "EXPECTED_SAMPLES", 4)
+    report = w.verify_build(str(root), data_root=str(mirrored), expected_count=16)
     results = {r.name: r for r in report.results}
     assert {name: r.passed for name, r in results.items() if not r.passed} == {}
     assert results["count"].passed is True
-    assert results["withdrawn_samples_flagged_not_dropped"].message == (
-        "SUPPLEMENTARY: 4 records of 1 samples flagged ['problematic_stock_solution'] "
-        "(['set1IT007']); 0 samples partly flagged"
+    assert results["withdrawn_samples_refused_not_stored"].message == (
+        "SUPPLEMENTARY: 0 records of the 1 samples the authors withdrew "
+        "(['set1IT007']); 0 of them are in the store; 4 samples stored, expected 4"
     )
     cross = results["compendium_cross_check_price2018"]
     assert cross.level == Level.L4
@@ -1315,7 +1350,6 @@ def _value(
     *,
     se: float | None = 0.2,
     t: float | None = None,
-    withdrawal: str | None = None,
 ) -> w.StoredValue:
     return w.StoredValue(
         sample=sample,
@@ -1323,7 +1357,6 @@ def _value(
         value=value,
         standard_error=se,
         t_statistic=value / math.sqrt(0.01 + 0.04) if t is None else t,
-        withdrawal=withdrawal,
     )
 
 
@@ -1398,17 +1431,21 @@ def test_compendium_cross_check_refuses_an_unexplained_absence_or_gene_set() -> 
 
 
 def test_withdrawal_census_and_t_identity_rows() -> None:
-    reason = "problematic_stock_solution"
-    values = [
-        _value("set1IT007", "a", 1.0, withdrawal=reason),
-        _value("set1IT003", "a", -1.0),
-    ]
+    values = [_value("set1IT003", "a", -1.0), _value("set1IT059", "a", 0.4)]
     with pytest.MonkeyPatch.context() as patch:
         patch.setattr(w, "EXPECTED_WITHDRAWN", ("set1IT007",))
+        patch.setattr(w, "EXPECTED_SAMPLES", 2)
         assert w.withdrawal_census(values).passed is True
-        mixed = [*values, _value("set1IT007", "b", 0.5)]
-        result = w.withdrawal_census(mixed)
-        assert (result.passed, result.details["mixed"]) == (False, ["set1IT007"])
+        # one record of a withdrawn sample fails the row and names the sample
+        stored = [*values, _value("set1IT007", "b", 0.5)]
+        result = w.withdrawal_census(stored)
+        assert result.passed is False
+        assert result.details["withdrawn_present"] == ["set1IT007"]
+        assert "1 records of the 1 samples the authors withdrew" in result.message
+        assert result.details["quote"].startswith("Please disregard")
+        assert result.details["rule"] == w.DROP_WITHDRAWN
+        # losing a sample that is not withdrawn fails the row too
+        assert w.withdrawal_census(values[:1]).passed is False
     assert w.t_identity(values, 0.1).passed is True
     off = w.t_identity([*values, _value("s", "a", 1.0, t=9.0)], 0.1)
     assert off.passed is False
@@ -1425,7 +1462,6 @@ def test_stored_values_reads_one_perturbation_per_record() -> None:
                 "environment_response": -1.0,
                 "environment_response_se": 0.2,
                 "environment_response_t_statistic": -4.47,
-                "source_withdrawal": {"reason": "problematic_stock_solution"},
             },
             "genotype": {"perturbations": [{"systematic_gene_name": "BW25113_0001"}]},
         }
@@ -1437,12 +1473,10 @@ def test_stored_values_reads_one_perturbation_per_record() -> None:
         value=-1.0,
         standard_error=0.2,
         t_statistic=-4.47,
-        withdrawal="problematic_stock_solution",
     )
     # a compendium record written before the t field existed reads None for it
     old = json.loads(json.dumps(record))
     del old["experiment"]["phenotype"]["environment_response_t_statistic"]
-    del old["experiment"]["phenotype"]["source_withdrawal"]
     assert w.stored_values([old])[0].t_statistic is None
     two = json.loads(json.dumps(record))
     two["experiment"]["genotype"]["perturbations"] *= 2
@@ -1531,17 +1565,27 @@ def test_inventory_closes_over_every_released_value() -> None:
         counts.source_records,
         counts.good_table_records,
         counts.stored_records,
-        counts.flagged_records,
-    ) == (7, 6, 5, 49, 42, 20, 4)
+    ) == (7, 6, 4, 49, 42, 16)
     assert counts.stored_samples_by_group == {
-        "carbon source": 3,
+        "carbon source": 2,
         "nitrogen source": 1,
         "LB": 1,
     }
     assert [f.name for f in counts.failed] == ["set1IT030"]
     assert counts.failed[0].failed_rules == ("g_med_min",)
-    dropped = sum(r.n_records for r in counts.rules if not r.kept)
+    assert counts.withdrawn_refused == ("set1IT007",)
+    dropped = sum(r.n_records for r in counts.rules)
     assert counts.stored_records + dropped == counts.source_records
+    # the refusal of the withdrawn sample is a drop rule carrying the authors' words
+    withdrawal = next(r for r in counts.rules if r.rule == w.DROP_WITHDRAWN)
+    assert (withdrawal.scope, withdrawal.items, withdrawal.n_records) == (
+        "sample",
+        ("set1IT007",),
+        7,
+    )
+    assert withdrawal.source is w.AUTHOR_WITHDRAWAL.instruction
+    # a rule that rests on this loader's own typing states no source quote
+    assert next(r for r in counts.rules if r.rule == w.DROP_NO_ECK_PAIR).source is None
     assert counts.unidentified_compounds == {"casamino acids": 1}
 
 
@@ -1620,7 +1664,7 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         counts.source_genes,
         counts.stored_genes,
         counts.stored_records,
-    ) == (101, 92, 88, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
+    ) == (101, 92, 84, w.EXPECTED_GENES + 18, w.EXPECTED_GENES, w.EXPECTED_RECORDS)
     assert counts.stored_samples == w.EXPECTED_SAMPLES
     assert counts.quality_rules_reproduce_u is True
     assert [f.name for f in counts.failed] == [
@@ -1634,20 +1678,25 @@ def test_the_loader_inventory_off_the_deposited_bytes() -> None:
         "set2IT079",
         "set2IT090",
     ]
-    assert counts.withdrawn_flagged == w.EXPECTED_WITHDRAWN
+    assert counts.withdrawn_refused == w.EXPECTED_WITHDRAWN
     assert counts.stored_samples_by_group == {
-        "carbon source": 61,
+        "carbon source": 57,
         "nitrogen source": 26,
         "LB": 1,
     }
-    dropped = sum(r.n_records for r in counts.rules if not r.kept)
+    # 4 withdrawn x 3,646 released genes, refused with the authors' own words
+    withdrawal = next(r for r in counts.rules if r.rule == w.DROP_WITHDRAWN)
+    assert (withdrawal.items, withdrawal.n_records) == (w.EXPECTED_WITHDRAWN, 14584)
+    assert withdrawal.source is w.AUTHOR_WITHDRAWAL.instruction
+    dropped = sum(r.n_records for r in counts.rules)
     assert counts.stored_records + dropped == counts.source_records == 101 * 3646
     assert identifiers.unmapped_by_reason == {
         "b_number_not_in_mg1655_annotation": 7,
         "eck_absent_from_bw25113": 6,
         "eck_not_one_to_one": 5,
     }
-    assert len(counts.unidentified_compounds) == 30
+    # 29, not 30: the withdrawn samples' own Condition_1 label is refused with them
+    assert len(counts.unidentified_compounds) == 29
 
 
 @pytest.mark.data

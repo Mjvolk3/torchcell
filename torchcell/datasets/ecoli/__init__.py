@@ -193,7 +193,8 @@ sourcing layer.
 - ``wetmore2015`` -- ``RbTnseqWetmore2015Dataset``: the RB-TnSeq method paper's own
   release (statistics version 1.0.0), one record per (gene, successful sample) with the
   paper's per-gene SE and its released moderated t; the sucrose and D-mannitol samples
-  the authors withdrew in 2021 are stored and flagged. Loaded under the owner policy of
+  the authors withdrew in 2021 are REFUSED, under the same typed reason the Price 2018
+  loader refuses them (``wetmore2015.AUTHOR_WITHDRAWAL``). Loaded under the owner policy of
   2026-10-10 although the Price 2018 compendium above re-analyzes the same samples; the
   compendium is its L4 cross-check, and the module still holds the record of which
   compendium samples this paper first reported.

@@ -71,7 +71,10 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   resolve carry the resolver's typed ``inchikey`` gap, the solvent ``water`` among them.
 
 DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): the four sucrose and
-D-mannitol samples the authors' 2021 note withdraws; the four ``MOPS Rich Defined
+D-mannitol samples the authors' own 2021 note withdraws (``wetmore.AUTHOR_WITHDRAWAL``,
+the typed refusal reason Wetmore 2015's own loader refuses the same four samples under:
+author-withdrawn data is bad data, so it is refused by both, never stored and flagged);
+the four ``MOPS Rich Defined
 media_noCarbon`` samples (no media-library entry); the seven soft-agar motility samples
 (no media-library entry for 0.3% LB Lennox agar, and the readout is a spatial cut, not
 growth in a condition).
@@ -850,7 +853,8 @@ DEFERRED_VALUES: dict[str, SourcedValue] = {
     "NORMALIZATION": wetmore.NORMALIZATION,
     "SUPERSET_RELEASE": wetmore.SUPERSET_RELEASE,
     "SUPERSET_INCLUDES_THIS_PAPER": wetmore.SUPERSET_INCLUDES_THIS_PAPER,
-    "STOCK_SOLUTION_CORRECTION": wetmore.STOCK_SOLUTION_CORRECTION,
+    "STOCK_SOLUTION_CORRECTION": wetmore.AUTHOR_WITHDRAWAL.instruction,
+    "STOCK_SOLUTION_CAUSE": wetmore.AUTHOR_WITHDRAWAL.cause,
 }
 
 N_SAMPLES_GAP = ProvenanceGap(
@@ -1242,15 +1246,19 @@ PUBLICATIONS: dict[SampleSource, Publication] = {
     ),
 }
 
-DROP_DISREGARDED = "authors_withdrew_sucrose_and_mannitol_2021"
+#: The authors' own withdrawal, the same typed reason Wetmore 2015's loader refuses on.
+DROP_DISREGARDED = wetmore.AUTHOR_WITHDRAWAL.rule
 DROP_MEDIUM_NOT_IN_LIBRARY = "medium_not_in_media_library"
 DROP_MOTILITY = "motility_soft_agar_assay"
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 
 DROP_RULES: dict[str, str] = {
-    DROP_DISREGARDED: "the compendium page's 2021 note: "
-    f"{wetmore.STOCK_SOLUTION_CORRECTION.quote!r}; the condition is sucrose or "
-    "D-mannitol (wetmore2015.DISREGARDED_CONDITIONS)",
+    DROP_DISREGARDED: "the source's own authors told readers to disregard it: the "
+    f"compendium page's 2021 note ({wetmore.AUTHOR_WITHDRAWAL.instruction.quote!r}) "
+    f"after they found that {wetmore.AUTHOR_WITHDRAWAL.cause.quote!r} The condition is "
+    "sucrose or D-mannitol (wetmore2015.AUTHOR_WITHDRAWAL.conditions), so the measured "
+    "response is not a response to the named compound and no record of these samples "
+    "is stored, by this loader or by Wetmore 2015's own",
     DROP_MEDIUM_NOT_IN_LIBRARY: "'MOPS Rich Defined media_noCarbon' has no MEDIA_LIBRARY "
     "entry (Table S18 states it; the bacterial media tranche left it out), and a "
     "free-text medium joins nothing",
@@ -1260,6 +1268,12 @@ DROP_RULES: dict[str, str] = {
     DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
     "BW25113 locus (absent from the MG1655 annotation, no ECK synonym, or an ECK id "
     "BW25113 lacks or carries on several loci); per gene in identifier_mapping.json",
+}
+#: The source's own statement a rule rests on, verbatim with its sha256. Only the
+#: withdrawal is the source's own; the other three rules are this loader's typing (the
+#: media library, the motility readout, the ECK crosswalk), so they carry None.
+DROP_RULE_SOURCES: dict[str, SourcedValue] = {
+    DROP_DISREGARDED: wetmore.AUTHOR_WITHDRAWAL.instruction
 }
 
 #: Table S5 ``Media`` -> the library object. Anything else is refused.
@@ -1388,7 +1402,7 @@ def classify_samples(
         media_label = str(row["Media"])
         group = str(row["Group"])
         drop: str | None = None
-        if condition in wetmore.DISREGARDED_CONDITIONS:
+        if condition in wetmore.AUTHOR_WITHDRAWAL.conditions:
             drop = DROP_DISREGARDED
         elif media_label in UNLISTED_MEDIA:
             drop = DROP_MEDIUM_NOT_IN_LIBRARY
@@ -1885,6 +1899,13 @@ class DropRuleCount(BaseModel):
     rule: str
     scope: Literal["sample", "gene"]
     description: str
+    source: SourcedValue | None = Field(
+        default=None,
+        description="the source's own statement the rule rests on, verbatim and bound "
+        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES). None for a "
+        "rule that rests on this loader's typing rather than on a statement of the "
+        "source: the media library, the motility readout, the ECK crosswalk",
+    )
     items: tuple[str, ...]
     n_records: int
 
@@ -1935,6 +1956,7 @@ def inventory(
             rule=rule,
             scope="sample",
             description=DROP_RULES[rule],
+            source=DROP_RULE_SOURCES.get(rule),
             items=tuple(s.name for s in specs if s.drop_rule == rule),
             n_records=sum(1 for s in specs if s.drop_rule == rule)
             * identifiers.n_source_genes,
@@ -1946,6 +1968,7 @@ def inventory(
             rule=DROP_NO_ECK_PAIR,
             scope="gene",
             description=DROP_RULES[DROP_NO_ECK_PAIR],
+            source=DROP_RULE_SOURCES.get(DROP_NO_ECK_PAIR),
             items=tuple(u.b_number for u in identifiers.unmapped),
             n_records=len(identifiers.unmapped) * len(kept),
         )

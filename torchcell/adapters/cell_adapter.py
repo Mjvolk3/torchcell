@@ -1827,15 +1827,9 @@ class CellAdapter:
                 phenotype.environment_response_p_value_adjusted
             ),
             "p_value_adjustment_method": phenotype.p_value_adjustment_method,
-            # Wetmore 2015's own release: the released test statistic, and the typed
-            # reason of an authors' withdrawal (the record is kept and flagged).
+            # Wetmore 2015's own release: the test statistic the source released.
             "environment_response_t_statistic": (
                 phenotype.environment_response_t_statistic
-            ),
-            "source_withdrawal": (
-                str(phenotype.source_withdrawal.reason.value)
-                if phenotype.source_withdrawal is not None
-                else None
             ),
         }
 

@@ -7109,49 +7109,6 @@ RATIO_REFERENCE_VALUE: float = 1.0
 # --------------------------------------------------------------------------- #
 
 
-# --------------------------------------------------------------------------- #
-# ADDITIVE (Wetmore 2015 own release): a typed flag for a measurement the source's
-# own authors later told readers to disregard. The record is KEPT and flagged, so what
-# the release carried stays queryable and a consumer filters on the typed reason.
-# Nothing above this block changes.
-# --------------------------------------------------------------------------- #
-class SourceWithdrawalReason(StrEnum):
-    """Why a source's own authors later told readers to disregard a measurement.
-
-    - ``problematic_stock_solution``: the reagent stock the condition was made from was
-      later found to be wrong, so the measured response is not a response to the named
-      compound. The Fitness Browser compendium page's "Note added September 10, 2021"
-      withdraws the E. coli sucrose and D-mannitol samples this way ("our stock
-      solutions for sucrose and D-mannitol were problematic"), and the same samples are
-      Wetmore 2015's ``set1IT007``, ``set1IT008``, ``set1IT043`` and ``set1IT044``.
-    """
-
-    problematic_stock_solution = "problematic_stock_solution"
-
-
-class SourceWithdrawal(ModelStrict):
-    """The source's own authors later told readers to disregard this measurement.
-
-    ``reason`` is the typed axis a consumer filters on. ``provenance`` is the authors'
-    instruction verbatim, bound to the sha256-pinned artifact it was read from, so the
-    flag is audited the way every sourced value is (the field carries the one name every
-    ``SourcedValue`` field carries). A record carrying this is still a record of what the
-    release published: the flag says the authors no longer stand by it, which is a
-    different fact from the record being absent.
-    """
-
-    reason: SourceWithdrawalReason
-    provenance: SourcedValue = Field(
-        description="the authors' instruction to disregard, verbatim, with the pinned "
-        "artifact it was read from (file, sha256, section)"
-    )
-
-
-# --------------------------------------------------------------------------- #
-# end ADDITIVE (Wetmore 2015 own release)
-# --------------------------------------------------------------------------- #
-
-
 class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     """A strain's fitness/growth RESPONSE to an environmental perturbation.
 
@@ -7322,10 +7279,9 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
     # ----------------------------------------------------------------------- #
     # ----------------------------------------------------------------------- #
     # ADDITIVE (Wetmore 2015 own release): the released test statistic of the
-    # response, and the authors' later withdrawal of the measurement. A test
-    # statistic is a TEST of the number, like the p-value above, so it never feeds
-    # environment_response_uncertainty or the derived SE. Nothing above this block
-    # changes.
+    # response. A test statistic is a TEST of the number, like the p-value above,
+    # so it never feeds environment_response_uncertainty or the derived SE.
+    # Nothing above this block changes.
     # ----------------------------------------------------------------------- #
     environment_response_t_statistic: float | None = Field(
         default=None,
@@ -7335,13 +7291,6 @@ class EnvironmentResponsePhenotype(Phenotype, ModelStrict):
         "of the response and its standard error and is stored because the release "
         "states it, not recomputed. The statistic is named in `units` or the "
         "dataset's provenance. None when the source releases no statistic.",
-    )
-    source_withdrawal: SourceWithdrawal | None = Field(
-        default=None,
-        description="set when the source's own authors later told readers to "
-        "disregard this measurement: the typed reason plus their verbatim statement. "
-        "The record is kept and flagged, never dropped, so what the release carried "
-        "stays queryable. None for a measurement the authors stand by.",
     )
     # ----------------------------------------------------------------------- #
     # end ADDITIVE (Wetmore 2015 own release)

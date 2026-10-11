@@ -1366,6 +1366,25 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
                 f"{N_WILD_TYPE_COLONIES}"
             )
         served = colonies.drop(index=wild_type.index).reset_index(drop=True)
+        if len(served) != N_KNOCKOUT_COLONIES:
+            raise ReleaseShapeError(
+                f"{len(served)} knockout colonies in Table 3, expected "
+                f"{N_KNOCKOUT_COLONIES}"
+            )
+        per_strain = served["Deletion"].value_counts().value_counts()
+        strata = dict(
+            zip(per_strain.index.astype(int).tolist(), per_strain.astype(int).tolist())
+        )
+        if strata != COLONIES_PER_STRAIN_LEGEND:
+            raise ReleaseShapeError(
+                f"colonies per knockout strain {sorted(strata.items())} differ from the "
+                f"Extended Data Fig. 1c legend {sorted(COLONIES_PER_STRAIN_LEGEND.items())}"
+            )
+        if served["Deletion"].nunique() != N_KNOCKOUT_STRAINS:
+            raise ReleaseShapeError(
+                f"{served['Deletion'].nunique()} knockout strains, expected "
+                f"{N_KNOCKOUT_STRAINS}"
+            )
 
         released_genes = self._released_gene_of_colony(served, barcodes, gene_of_common)
         resolved = resolve_released_genes(released_genes.values(), self._resolver())
@@ -1454,6 +1473,11 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         interned_env.close()
         if idx != N_SERVED_RECORDS:
             raise ReleaseShapeError(f"wrote {idx} records, expected {N_SERVED_RECORDS}")
+        if sum(refused.values()) != N_RETIRED_ORF_COLONIES:
+            raise ReleaseShapeError(
+                f"refused {sum(refused.values())} colonies on a retired ORF, expected "
+                f"{N_RETIRED_ORF_COLONIES}"
+            )
         self._gene_names = gene_names
         pd.DataFrame(rows).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False

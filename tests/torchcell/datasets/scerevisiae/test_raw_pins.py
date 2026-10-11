@@ -83,6 +83,9 @@ def _pins_from_constants(
             m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
             m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
         },
+        "GenomeArchitecturePuddu2019Dataset": lambda: {
+            m.SI_TABLES_FILENAME: m.SI_TABLES_XLSX_SHA256
+        },
         "AminoAcidCooper2010Dataset": lambda: {m.TABLE4_NAME: m.TABLE4_SHA256},
         **{
             name: lambda: {

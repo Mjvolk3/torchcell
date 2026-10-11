@@ -74,12 +74,17 @@ ORANGE, RED, PURPLE, YELLOW, BLUE, GRAY = PLOT_PALETTE[:6]
 TERRACOTTA, SAND, SLATE = PLOT_PALETTE[12], PLOT_PALETTE[15], PLOT_PALETTE[16]
 # Palette index of each arm's color.
 ARM_INDEX = {
+    # Reassigned 2026-10-10 on review ("swap the yellows, oranges and beiges for reds or
+    # purples"): the two weights that behave like no penalty are grays, the control keeps
+    # the one orange as the anchor, the next two weights are the two remaining reds, the
+    # strong weights are the blues, and the three purples stay with the random graphs.
+    # The palette has three reds and three purples, so one orange and one taupe remain.
     "kl_0": 5,  # gray
-    "kl_1e-05": 15,  # sand
+    "kl_1e-05": 11,  # dark gray
     "kl_0.0001": 16,  # slate
-    "kl_0.001": 0,  # amber
-    "kl_0.01": 12,  # terracotta
-    "kl_0.1": 3,  # wheat
+    "kl_0.001": 0,  # amber (the control)
+    "kl_0.01": 7,  # dark red
+    "kl_0.1": 13,  # rose-brown
     "kl_1": 4,  # steel blue
     "kl_10": 10,  # dark blue
     "kl_100": 17,  # taupe
@@ -88,6 +93,10 @@ ARM_INDEX = {
     "random_0.1": 14,  # dusty mauve
     "random_1": 8,  # dark purple
 }
+# --dist: a Gaussian with each column's seed mean and sd, drawn as a light shape behind
+# the seed points in a, b, c and f. Three seeds give the two parameters and nothing more,
+# so it is a reading aid, not a density estimate; the points stay the data.
+DIST = False
 
 
 GRID_COLOR, GRID_LW = "#E3E3E3", 0.3
@@ -201,9 +210,20 @@ def _points(
     marker: str = "o",
     jitter: float = 0.07,
     size: float = 9,
+    dist: bool = True,
 ) -> None:
-    """Seed points: arm color face, black edge; the arm mean as a short black bar."""
+    """Seed points: arm color face, black edge; the arm mean as a short black bar.
+
+    With DIST on, a Gaussian of the seeds' mean and sd (n >= 2, sd > 0) sits behind the
+    points as a symmetric shape spanning +-2.5 sd, half-width 0.16 column units at its
+    mode.
+    """
     xs = x + np.linspace(-jitter, jitter, len(vals)) if len(vals) > 1 else np.array([x])
+    if DIST and dist and len(vals) > 1 and vals.std(ddof=1) > 0:
+        mu, sd = vals.mean(), vals.std(ddof=1)
+        ys = np.linspace(mu - 2.5 * sd, mu + 2.5 * sd, 60)
+        half = 0.16 * np.exp(-0.5 * ((ys - mu) / sd) ** 2)
+        ax.fill_betweenx(ys, x - half, x + half, facecolor=color, alpha=0.3, lw=0, zorder=2)
     ax.scatter(
         xs,
         vals,
@@ -275,7 +295,12 @@ def _curve(
         )
 
 
-def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> None:
+def figure(
+    runs: pd.DataFrame,
+    hist: pd.DataFrame,
+    summary: dict[str, Any],
+    name: str = "graph_reg_sweep",
+) -> None:
     """The 3 x 3 figure."""
     fig, axes = plt.subplots(
         3, 3, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(165))
@@ -368,6 +393,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
             size=6,
         )
     b.set_ylabel("Held-out point loss (z-scored MSE)")
+    b.set_ylim(0.785, 0.915)  # pinned so the --dist shapes do not stretch the axis
     b.set_title("Held-out loss falls with λ from 0.001 up")
     b.yaxis.set_major_locator(MultipleLocator(0.02))
     _ladder_axis(b)
@@ -440,7 +466,7 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
     for arm in LADDER:
         vals = done[done.arm == arm].val_divergence_fixed.dropna().to_numpy()
         if len(vals):
-            _points(d, XPOS[arm], vals, ARM_COLOR[arm])
+            _points(d, XPOS[arm], vals, ARM_COLOR[arm], dist=False)
     d.set_yscale("log")
     d.set_ylim(2e2, 3e3)
     _plain_log_ticks(d, [300, 1000, 3000])
@@ -635,16 +661,18 @@ def figure(runs: pd.DataFrame, hist: pd.DataFrame, summary: dict[str, Any]) -> N
 
     for p_, letter in zip(ax, "abcdefghi"):
         panel_label(p_, letter)
-    _save(fig, "graph_reg_sweep")
+    _save(fig, name)
 
 
 def main() -> None:
-    """The figure from the CSVs and the summary."""
+    """The figure from the CSVs and the summary, plain and with the --dist shapes."""
+    global DIST
     runs = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_runs.csv"))
     hist = pd.read_csv(osp.join(RESULTS_DIR, "graph_reg_sweep_history.csv"))
     summary = json.load(open(osp.join(RESULTS_DIR, "graph_reg_sweep_summary.json")))
-    figure(runs, hist, summary)
-    print("wrote", osp.join(IMG_DIR, "graph_reg_sweep.svg"))
+    for name, DIST in (("graph_reg_sweep", False), ("graph_reg_sweep_dist", True)):
+        figure(runs, hist, summary, name)
+        print("wrote", osp.join(IMG_DIR, f"{name}.svg"))
 
 
 if __name__ == "__main__":

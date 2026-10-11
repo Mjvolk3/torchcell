@@ -52042,6 +52042,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:176419",
+      "inchikey": "JLCFMMIWBSZOIS-UHFFFAOYSA-N",
+      "name": "fin56",
+      "pubchem_cid": 118986699,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1CCC(CC1)NS(=O)(=O)C2=CC3=C(C=C2)C4=C(C3=NO)C=C(C=C4)S(=O)(=O)NC5CCCCC5",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/FIN56/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:94598",
       "inchikey": "BFUJHVVEMMWLHC-UHFFFAOYSA-N",
       "name": "fipexide",
@@ -52516,6 +52529,19 @@
       "synonyms": [
         "CID 3401"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "ZGGHKIMDNBDHJB-RPQBTBOMSA-M",
+      "name": "fluvastatin sodium",
+      "pubchem_cid": 23679527,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(C)N1C2=CC=CC=C2C(=C1C=CC(CC(CC(=O)[O-])O)O)C3=CC=C(C=C3)F.[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Fluvastatin%20Sodium/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -61083,6 +61109,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:6924",
+      "inchikey": "MCCACAIVAXEFAL-UHFFFAOYSA-N",
+      "name": "miconazole nitrate",
+      "pubchem_cid": 68553,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1=CC(=C(C=C1Cl)Cl)COC(CN2C=CN=C2)C3=C(C=C(C=C3)Cl)Cl.[N+](=O)(O)[O-]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Miconazole%20Nitrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:6933",
       "inchikey": "PTKSEFOSCHHMPD-UHFFFAOYSA-N",
       "name": "midodrine",
@@ -69379,6 +69418,21 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "ZCTCZKWJFTYNMZ-WKUCUCPSSA-J",
+      "name": "pemetrexed disodium hemipentahydrate",
+      "pubchem_cid": 135564527,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1=CC(=CC=C1CCC2=CNC3=C2C(=O)NC(=N3)N)C(=O)NC(CCC(=O)[O-])C(=O)[O-].C1=CC(=CC=C1CCC2=CNC3=C2C(=O)NC(=N3)N)C(=O)NC(CCC(=O)[O-])C(=O)[O-].O.O.O.O.O.[Na+].[Na+].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Pemetrexed%20Disodium%20Hydrate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Pemetrexed Disodium Hydrate"
+      ],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:94718",
       "inchikey": "XULIXFLCVXWHRF-UHFFFAOYSA-N",
       "name": "pempidine",
@@ -72009,6 +72063,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": null,
+      "inchikey": "RHGYHLPFVJEAOC-FFNUKLMVSA-L",
+      "name": "pitavastatin calcium",
+      "pubchem_cid": 5282451,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C1CC1C2=NC3=CC=CC=C3C(=C2C=CC(CC(CC(=O)[O-])O)O)C4=CC=C(C=C4)F.C1CC1C2=NC3=CC=CC=C3C(=C2C=CC(CC(CC(=O)[O-])O)O)C4=CC=C(C=C4)F.[Ca+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Pitavastatin%20Calcium/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:50212",
       "inchikey": "FIADGNVRKBPQEU-UHFFFAOYSA-N",
       "name": "pizotifen",
@@ -72213,6 +72280,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:71223",
+      "inchikey": "OGSBUKJUDHAQEA-WMCAAGNKSA-N",
+      "name": "pralatrexate",
+      "pubchem_cid": 148121,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "C#CCC(CC1=CN=C2C(=N1)C(=NC(=N2)N)N)C3=CC=C(C=C3)C(=O)NC(CCC(=O)O)C(=O)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Pralatrexate/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:8354",
       "inchikey": "JBKPUQTUERUYQE-UHFFFAOYSA-O",
       "name": "pralidoxime",
@@ -72270,6 +72350,19 @@
       "synonyms": [
         "CID 6710660"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:8361",
+      "inchikey": "VWBQYTRBTXKKOG-IYNICTALSA-M",
+      "name": "pravastatin sodium",
+      "pubchem_cid": 16759173,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CCC(C)C(=O)OC1CC(C=C2C1C(C(C=C2)C)CCC(CC(CC(=O)[O-])O)O)O.[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Pravastatin%20Sodium/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {
@@ -74866,6 +74959,19 @@
       "unresolved_reason": null
     },
     {
+      "chebi_id": "CHEBI:77249",
+      "inchikey": "LALFOYNTGMUKGG-BGRFNVSISA-L",
+      "name": "rosuvastatin calcium",
+      "pubchem_cid": 5282455,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(C)C1=NC(=NC(=C1C=CC(CC(CC(=O)[O-])O)O)C2=CC=C(C=C2)F)N(C)S(=O)(=O)C.CC(C)C1=NC(=NC(=C1C=CC(CC(CC(=O)[O-])O)O)C2=CC=C(C=C2)F)N(C)S(=O)(=O)C.[Ca+2]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Rosuvastatin%20Calcium/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
+      "unresolved_reason": null
+    },
+    {
       "chebi_id": "CHEBI:28201",
       "inchikey": "JUVIOZPCNVVQFO-HBGVWJBISA-N",
       "name": "rotenone",
@@ -77173,6 +77279,21 @@
       "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/sodium%20glyoxylate/property/Title,InChIKey,ConnectivitySMILES/JSON",
       "synonyms": [
         "SodiumGlyoxylate"
+      ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": "CHEBI:50679",
+      "inchikey": "DASQOOZCTWOQPA-GXKRWWSZSA-L",
+      "name": "sodium methotrexate",
+      "pubchem_cid": 11329481,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CN(CC1=CN=C2C(=N1)C(=NC(=N2)N)N)C3=CC=C(C=C3)C(=O)NC(CCC(=O)[O-])C(=O)[O-].[Na+].[Na+]",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Methotrexate%20Disodium/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [
+        "Methotrexate Disodium"
       ],
       "unresolved_reason": null
     },
@@ -81375,6 +81496,19 @@
       "synonyms": [
         "CID 5634"
       ],
+      "unresolved_reason": null
+    },
+    {
+      "chebi_id": null,
+      "inchikey": "YNWVFADWVLCOPU-MDWZMJQESA-N",
+      "name": "uniconazole",
+      "pubchem_cid": 6436604,
+      "resolution_status": "RESOLVED",
+      "retrieval_method": "pubchem_api",
+      "retrieved_at": "2026-10-11",
+      "smiles": "CC(C)(C)C(C(=CC1=CC=C(C=C1)Cl)N2C=NC=N2)O",
+      "source_url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/name/Uniconazole/property/Title,InChIKey,ConnectivitySMILES/JSON",
+      "synonyms": [],
       "unresolved_reason": null
     },
     {

@@ -1,0 +1,21 @@
+# compound_identity_inputs/messner2021.txt
+# Source: Messner 2021 (Nat Biotechnol, doi 10.1038/s41587-021-00860-4) yeast drug screen.
+# Labels are the "Compound" column of Supplementary Table 4 ("Drugs and corresponding drug
+# class"), copied verbatim from the OCR of the SI PDF in the library mirror
+# ($DATA_ROOT/torchcell-library/messnerUltrafastProteomicsScanning2021/si/si1.md, sha256
+# 30bb324267d8c64057cfcd629fbb6bc57b278d6ff40be8a55f7c4329ce90792d), plus the two agents the
+# Methods name outside that table ("samples treated with folic acid and FIN56 were excluded
+# from the analysis", paper.md) and the DMSO control. Salts keep the form the table names,
+# as hillenmeyer2008.txt does (econazole nitrate). Only the ten labels below lacked a row
+# on 2026-10-11; Pyrimethamine, Clotrimazole, Lovastatin, Ketoconazole, Atorvastatin,
+# Simvastatin, Itraconazole, folic acid and DMSO already resolve and are not repeated.
+Rosuvastatin Calcium
+Fluvastatin Sodium
+Pitavastatin Calcium
+Pemetrexed Disodium Hydrate
+Pralatrexate
+Pravastatin Sodium
+Miconazole Nitrate
+Methotrexate Disodium
+Uniconazole
+FIN56

@@ -192,6 +192,14 @@ two normalized fitnesses): a regression residual removes the control-plate slope
 the two are not comparable numbers.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">colony_size</span></code>: ABSOLUTE end-point colony size (mean radius in image pixels for the
 Bloom 2019 control plates); non-negative, unnormalized, scale is the assay’s own.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">condition_growth_ratio</span></code>: a strain’s end-point growth on the TEST plate divided by
+the SAME strain’s growth on the control plate of the same screen (Peter 2018: the
+“growth ratio between stress media and standard YPD medium at 30 C” of each of 971
+natural isolates); 1.0 = grows as on the control, non-negative, 0 = no colony.
+Distinct from <code class="docutils literal notranslate"><span class="pre">relative_growth_rate</span></code> (the denominator there is the run’s WILD
+TYPE in the same condition, and the numbers are generation times), from
+<code class="docutils literal notranslate"><span class="pre">differential_fitness</span></code> (a signed difference, 0 at the control) and from
+<code class="docutils literal notranslate"><span class="pre">control_regression_residual</span></code> (a residual with the control slope removed).</p></li>
 </ul>
 </dd></dl>
 

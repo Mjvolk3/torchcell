@@ -140,6 +140,7 @@ def _pins_from_constants(
         "NadalRibellesPerturbSeq2025Dataset": lambda: {
             name: m.SHA256_EXPECTED[name] for name in m.RAW_FILES
         },
+        "TfDeletionPseudobulkJackson2020Dataset": lambda: dict(m.RAW_FILES),
         "SmfODuibhir2014Dataset": lambda: {m._RAW_FILENAME: m._DATASET_S2_SHA256},
         "ScmdOhnuki2018Dataset": lambda: {
             name: spec["sha256"] for name, spec in m._RAW_FILES.items()

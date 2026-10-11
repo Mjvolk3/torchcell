@@ -176,6 +176,8 @@ RUN_ALL_ORDER = [
     "run_natural_isolate_response",
     # Boocock 2025: the segregant single-cell expression family, after its growth twin.
     "run_segregant_expression",
+    # jackson2020: the pseudobulk UMI-count family, called after the isolates.
+    "run_pseudobulk_umi_count",
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
@@ -1852,6 +1854,58 @@ def test_run_natural_isolate_response_wires_the_streaming_verifier(
     assert report.passed is True
 
 
+def test_run_pseudobulk_umi_count_wires_the_streaming_verifier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The runner streams the store and hands over the raw dir, the library mirror, the
+    genome, the SGD universe and the spec's floor; it writes the report into the store's
+    preprocess dir, and the per-dataset entry point reads a store passed by path.
+    """
+    abs_root = _root(tmp_path, "pb")
+    _write_lmdb(abs_root, [{"i": 0}, {"i": 1}])
+    sgd_calls = _stub_sgd(monkeypatch, {"YAL001C"})
+    genome_calls = _stub_genome(monkeypatch)
+    captured: dict[str, Any] = {}
+
+    def fake_verify(records: Iterable[Record], **kwargs: Any) -> VerificationReport:
+        captured.update(kwargs)
+        captured["records"] = list(records)
+        report = VerificationReport(
+            dataset_name=kwargs["dataset_name"], provenance=kwargs["provenance"]
+        )
+        return report.add(
+            LevelResult(
+                level=Level.L1, name="count", passed=True, message="m", details={}
+            )
+        )
+
+    monkeypatch.setattr(runners, "verify_pseudobulk_umi_count_streaming", fake_verify)
+    monkeypatch.setattr(
+        runners,
+        "PSEUDOBULK_UMI_COUNT_DATASETS",
+        {"pb": _spec("pb", expected_count=7, min_feature_containment=0.5)},
+    )
+    assert runners.run_pseudobulk_umi_count(str(tmp_path)) is True
+    assert (sgd_calls, genome_calls) == ([str(tmp_path)], [str(tmp_path)])
+    assert captured["records"] == [{"i": 0}, {"i": 1}]
+    assert (captured["dataset_name"], captured["expected_count"]) == ("pb", 7)
+    assert captured["provenance"] is PROV
+    assert captured["raw_dir"] == str(abs_root / "raw")
+    assert captured["library_root"] == str(tmp_path / "torchcell-library")
+    assert isinstance(captured["genome"], _FakeGenome)
+    assert captured["sgd_genes"] == {"YAL001C"}
+    assert captured["min_feature_containment"] == 0.5
+    assert _names(_read_report(abs_root)) == ["count"]
+    other = tmp_path / "elsewhere"
+    _write_lmdb(other, [{"i": 9}])
+    report = runners.verify_pseudobulk_umi_count_dataset(
+        "pb", str(tmp_path), str(other)
+    )
+    assert captured["records"] == [{"i": 9}]
+    assert captured["raw_dir"] == str(other / "raw")
+    assert report.passed is True
+
+
 # --------------------------------------------------------------------------- #
 # run_all + main
 # --------------------------------------------------------------------------- #
@@ -2111,6 +2165,10 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     assert _oracles(runners.NATURAL_ISOLATE_RESPONSE_DATASETS) == {
         "isolate_growth_peter2018": 33985
     }
+    assert _oracles(runners.PSEUDOBULK_UMI_COUNT_DATASETS) == {
+        "tf_deletion_pseudobulk_jackson2020": 784
+    }
+    assert runners.MIN_JACKSON_FEATURE_CONTAINMENT == 0.999
     assert (runners.MIN_GENE_OVERLAP, runners.MIN_RNASEQ_GENE_CONTAINMENT) == (
         0.90,
         0.90,
@@ -2137,12 +2195,30 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.SYNTHETIC_PAIR_DATASETS,
         runners.NATURAL_ISOLATE_RESPONSE_DATASETS,
         runners.NATURAL_ISOLATE_DATASETS,
+        runners.PSEUDOBULK_UMI_COUNT_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 3 + 1 + 14 + 3 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1 + 3
+    # One addend per registry above, in list order: each is that registry's size.
+    assert len(roots) == (
+        3  # EXPRESSION_DATASETS
+        + 1  # VISUAL_SCORE_DATASETS
+        + 14  # METABOLITE_DATASETS
+        + 3  # PROTEIN_DATASETS
+        + 6  # RNASEQ_DATASETS
+        + 13  # ENVIRONMENT_RESPONSE_DATASETS
+        + 11  # FITNESS_DATASETS
+        + 1  # SEGREGANT_GROWTH_DATASETS
+        + 1  # SEGREGANT_EXPRESSION_DATASETS
+        + 5  # GENE_INTERACTION_DATASETS
+        + 1  # GENE_ESSENTIALITY_DATASETS
+        + 2  # SYNTHETIC_PAIR_DATASETS
+        + 1  # NATURAL_ISOLATE_RESPONSE_DATASETS
+        + 3  # NATURAL_ISOLATE_DATASETS
+        + 1  # PSEUDOBULK_UMI_COUNT_DATASETS
+    )
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

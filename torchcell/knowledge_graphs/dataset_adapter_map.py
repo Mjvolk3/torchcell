@@ -144,6 +144,7 @@ from torchcell.adapters import (
     SynthLethalityYeastSynthLethDbAdapter,
     SynthRescueYeastSynthLethDbAdapter,
     TargetedMetabolomeRapp2026Adapter,
+    TfDeletionPseudobulkJackson2020Adapter,
     TmfKuzmin2018Adapter,
     TmfKuzmin2020Adapter,
     TmiKuzmin2018Adapter,
@@ -318,6 +319,9 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     HomHillenmeyer2008Dataset,
 )
 from torchcell.datasets.scerevisiae.hoepfner2014 import EnvChemgenHoepfner2014Dataset
+from torchcell.datasets.scerevisiae.jackson2020 import (
+    TfDeletionPseudobulkJackson2020Dataset,
+)
 from torchcell.datasets.scerevisiae.kemmeren2014 import MicroarrayKemmeren2014Dataset
 from torchcell.datasets.scerevisiae.kuzmin2018 import (
     DmfKuzmin2018Dataset,
@@ -427,6 +431,7 @@ dataset_adapter_map: dict[type, type] = {
     Bloom2019Dataset: Bloom2019Adapter,
     IsolateGrowthPeter2018Dataset: IsolateGrowthPeter2018Adapter,
     Boocock2025Dataset: Boocock2025Adapter,
+    TfDeletionPseudobulkJackson2020Dataset: TfDeletionPseudobulkJackson2020Adapter,
     SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
     EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
     EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,

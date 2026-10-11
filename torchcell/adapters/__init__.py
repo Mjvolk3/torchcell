@@ -161,6 +161,9 @@ from .ishii2007_metabolome_adapter import (
 from .ishii2007_proteome_adapter import (
     ProteomeIshii2007Adapter as ProteomeIshii2007Adapter,
 )
+from .jackson2020_adapter import (
+    TfDeletionPseudobulkJackson2020Adapter as TfDeletionPseudobulkJackson2020Adapter,
+)
 from .kang2026_adapter import (
     IsoprenylAcetateTiterKang2026Adapter as IsoprenylAcetateTiterKang2026Adapter,
 )
@@ -403,6 +406,7 @@ expression_adapters = [
     "DmMicroarraySameith2015Adapter",
     "CaudalPanTranscriptome2024Adapter",
     "NadalRibellesPerturbSeq2025Adapter",
+    "TfDeletionPseudobulkJackson2020Adapter",
 ]
 
 morphology_adapters = ["ScmdOhnuki2018Adapter", "ScmdOhnuki2022Adapter"]

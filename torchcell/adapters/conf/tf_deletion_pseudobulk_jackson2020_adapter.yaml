@@ -1,0 +1,62 @@
+# Jackson 2020 pseudobulk single-cell UMI counts: 784 (barcoded strain, condition)
+# records over 72 strains (11 TF deletions + the HO-deletion control, six constructions
+# each) and 11 shake-flask conditions. Full genotype: one barcoded homozygous deletion
+# per strain, a first-class perturbation node. The RAPA condition's rapamycin is an
+# environment-perturbation node. The temperature methods are enabled as in every conf,
+# and write nothing here: the flask temperature is not stated, so every environment
+# carries a typed gap on it and no temperature node or edge is emitted.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "environment perturbation (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation reference"
+    - method_name: "pseudobulk umi count phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "pseudobulk umi count phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "perturbation to genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment perturbation to environment reference"
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

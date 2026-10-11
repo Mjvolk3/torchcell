@@ -1,0 +1,101 @@
+{
+  "n_records": 784,
+  "n_references": 11,
+  "n_strains": 72,
+  "n_genotypes": 12,
+  "records_per_condition": {
+    "YPD": 70,
+    "DIAUXY": 72,
+    "RAPA": 70,
+    "YPEtOH": 72,
+    "MMD": 72,
+    "MMEtOH": 72,
+    "NLIM-GLN": 71,
+    "NLIM-PRO": 72,
+    "NLIM-NH4": 71,
+    "NLIM-UREA": 72,
+    "CSTARVE": 70
+  },
+  "cells_per_condition": {
+    "YPD": 11037,
+    "DIAUXY": 3332,
+    "RAPA": 11805,
+    "YPEtOH": 1427,
+    "MMD": 1894,
+    "MMEtOH": 581,
+    "NLIM-GLN": 1644,
+    "NLIM-PRO": 853,
+    "NLIM-NH4": 1111,
+    "NLIM-UREA": 992,
+    "CSTARVE": 3549
+  },
+  "reference_cells_per_condition": {
+    "YPD": 976,
+    "DIAUXY": 314,
+    "RAPA": 932,
+    "YPEtOH": 134,
+    "MMD": 204,
+    "MMEtOH": 26,
+    "NLIM-GLN": 148,
+    "NLIM-PRO": 65,
+    "NLIM-NH4": 121,
+    "NLIM-UREA": 147,
+    "CSTARVE": 239
+  },
+  "cells_per_record": {
+    "min": 1.0,
+    "median": 23.0,
+    "max": 266.0
+  },
+  "umis_per_record": {
+    "min": 594.0,
+    "median": 43850.5,
+    "max": 749705.0
+  },
+  "nonzero_genes_per_record": {
+    "min": 298.0,
+    "median": 4028.5,
+    "max": 5561.0
+  },
+  "gene_features_in_universe": 6827,
+  "gene_features_nonzero_somewhere": 6518,
+  "marker_umis": {
+    "KANMX": 199778,
+    "NATMX": 617833
+  },
+  "marker_share_of_umis": 0.009767949799912645,
+  "strain_conditions_without_cells": [
+    "stp2_E12 x YPD",
+    "stp2_G12 x YPD",
+    "stp2_E12 x RAPA",
+    "stp2_G12 x RAPA",
+    "gcn4_G10 x NLIM-GLN",
+    "gcn4_A10 x NLIM-NH4",
+    "stp2_E12 x CSTARVE",
+    "stp2_G12 x CSTARVE"
+  ],
+  "table_s2_genotype_disagreements": [
+    "stp1_H11",
+    "stp2_A12",
+    "stp2_D12",
+    "stp2_E12",
+    "stp2_F12",
+    "stp2_G12",
+    "stp2_H12"
+  ],
+  "legacy_features": {
+    "YIL168W": "merged into YIL167W; kept distinct",
+    "YIL080W": "retired: not in R64-4-1",
+    "YIR044C": "merged into YIR043C; kept distinct",
+    "YFL057C": "merged into YFL056C; kept distinct",
+    "YAR062W": "merged into YAR061W; kept distinct"
+  },
+  "remapped_feature_count": 114,
+  "raw_mirror_sha256": {
+    "elife-51254-code2.tsv.gz": "4bb210b7a1e2e9724e475ab516de646fbc36f2638ac6ade3bf15bf66ffb8c011",
+    "elife-51254-supp1.xlsx": "6c96fdf425f9d07c92d6bad8f44e54e1bebca6b83d06a7b7b3fbb06ea1923737",
+    "figure_common_settings.R": "bf6b384c4f341d1a2c4a13024829967593b697bdfa109fa728f686d2c78acf9c",
+    "TRIZOL_BULK.tsv": "95b5823d5da02d8c762399f5f537d8a92a16a8f8267bcad291a4c47d29944b1b",
+    "bcdel_1_barcodes.fasta": "f16e245dde905c79f487b32c56a8eaeb07a5b530b71df8033afafa7c24904359"
+  }
+}

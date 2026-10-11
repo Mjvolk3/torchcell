@@ -19,3 +19,7 @@ The vacuous pass above removed the only failing result for a dataset whose recor
 - `declared_member_validator(class_name, union=...)`: validates a stored mapping as the one union member a registry declares, after checking its type tag. Validating a Costanzo 2016 record against the 33-way `ExperimentType` union costs 12 ms (85 records per second, 68 hours for 20,705,612 records); against the declared member, 0.4 ms.
 - `key_digest`: 16-byte blake2b of a signature's `repr`, for uniqueness sets over 20M records.
 - `l0_validated_row`: the L0 row of a single-pass verifier; an empty store fails.
+
+## 2026.10.11 - media_membership counts a typed medium gap (#901, #902, #903)
+
+An environment with `media` None and a `ProvenanceGap(field='media')` is a declared absence: L3 `media_membership` records it as `gapped:<reason>`, passes, and adds "N with a typed medium gap (<reason> xN)" to the message and `n_gapped_records` / `gapped_reasons` to the details (the message is unchanged when no record is gapped). A missing medium with no gap stays free text and fails as before. Test `test_media_membership_passes_a_typed_medium_gap_and_counts_it` in [[tests.torchcell.verification.test_common]].

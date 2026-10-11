@@ -313,6 +313,8 @@ _DISSOCIATION: dict[str, tuple[str, ...]] = {
     "potassium phosphate buffer": ("potassium", "phosphate"),
     "magnesium sulfate": ("mg(2+)", "sulfate"),
     "sodium chloride": ("sodium", "chloride"),
+    # De Chiara 2022's KAc sporulation medium: the acetate is the carbon source
+    "potassium acetate": ("potassium", "acetate"),
 }
 
 

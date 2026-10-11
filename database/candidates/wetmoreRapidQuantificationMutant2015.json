@@ -30,7 +30,7 @@
     {
       "gate": "G4",
       "outcome": "pass",
-      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "reason": "no key held by another module (0 mention(s)); no PMID check. Values compared against the Price 2018 dev store data/torchcell/rbtnseq_price2018_ecoli (553,896 records, built from 52d376d6 on a tree git reports dirty, read through stream_records): 83 of the 92 samples Price 2018 Table S5 carries from this paper are in both stores. DUPLICATED BY CONTENT: the compendium re-analyzes the same reads ('Fitness data was analysed as previously described9 .', statistics version 1.0.3 against this release's 1.0.0); per-sample Pearson r on the shared genes min 0.9889, median 0.9971; the nearest served sample by max abs difference is the column's own name for 81 of 83 (set1IT083 and set1IT094 sit nearer their exact replicate by that outlier-driven statistic, margins 0.13 and 0.09). NOT A COPY: no released column is within the copy-test tolerance 1e-9 of any served sample (smallest best max abs difference 0.52). ADMITTED under the owner policy of 2026-10-10: a served compendium is a processing reference and a sanity check, not the source of record; an original study with its own per-record release is loaded from that release, attributed to itself and cross-checked against the compendium (L4 row compendium_cross_check_price2018: 83 samples, every r >= 0.87, Price 2018's median exact-replicate r).",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -1022,7 +1022,678 @@
     ],
     "pmid_checked": false
   },
-  "g4_value": null,
+  "g4_value": {
+    "store": "data/torchcell/rbtnseq_price2018_ecoli",
+    "store_commit": "52d376d6da1bbf6a8b73a982c816b34d48e189d4",
+    "records_read": 553896,
+    "tolerance": 1e-9,
+    "matches": [
+      {
+        "released_column": "set1IT003",
+        "best_sample": "set1IT003",
+        "best_max_abs_diff": 1.6096959421397496,
+        "runner_up_sample": "set1IT004",
+        "runner_up_max_abs_diff": 2.4584367885134695,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT004",
+        "best_sample": "set1IT004",
+        "best_max_abs_diff": 1.6102000612372995,
+        "runner_up_sample": "set1IT006",
+        "runner_up_max_abs_diff": 2.1882732732830403,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT005",
+        "best_sample": "set1IT005",
+        "best_max_abs_diff": 1.1333450684318298,
+        "runner_up_sample": "set1IT006",
+        "runner_up_max_abs_diff": 2.0651929005471628,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT006",
+        "best_sample": "set1IT006",
+        "best_max_abs_diff": 1.6490619579747299,
+        "runner_up_sample": "set1IT004",
+        "runner_up_max_abs_diff": 2.0573094765015494,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT009",
+        "best_sample": "set1IT009",
+        "best_max_abs_diff": 0.98047539064815,
+        "runner_up_sample": "set1IT010",
+        "runner_up_max_abs_diff": 2.1578369144298404,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT010",
+        "best_sample": "set1IT010",
+        "best_max_abs_diff": 1.5993918160775698,
+        "runner_up_sample": "set1IT009",
+        "runner_up_max_abs_diff": 2.19040083375763,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT011",
+        "best_sample": "set1IT011",
+        "best_max_abs_diff": 1.9500260662317501,
+        "runner_up_sample": "set1IT012",
+        "runner_up_max_abs_diff": 2.9392182752424296,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT012",
+        "best_sample": "set1IT012",
+        "best_max_abs_diff": 0.9887639132206099,
+        "runner_up_sample": "set1IT011",
+        "runner_up_max_abs_diff": 3.9943101713329803,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT013",
+        "best_sample": "set1IT013",
+        "best_max_abs_diff": 1.02196387405162,
+        "runner_up_sample": "set1IT014",
+        "runner_up_max_abs_diff": 2.4292311179119803,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT014",
+        "best_sample": "set1IT014",
+        "best_max_abs_diff": 1.7270920582359297,
+        "runner_up_sample": "set1IT013",
+        "runner_up_max_abs_diff": 2.45303131349253,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT015",
+        "best_sample": "set1IT015",
+        "best_max_abs_diff": 1.60796583721159,
+        "runner_up_sample": "set1IT016",
+        "runner_up_max_abs_diff": 2.21044532940655,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT016",
+        "best_sample": "set1IT016",
+        "best_max_abs_diff": 1.13855957427563,
+        "runner_up_sample": "set1IT015",
+        "runner_up_max_abs_diff": 2.4545505776509295,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT017",
+        "best_sample": "set1IT017",
+        "best_max_abs_diff": 1.6160659363609904,
+        "runner_up_sample": "set1IT018",
+        "runner_up_max_abs_diff": 3.19215509680348,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT018",
+        "best_sample": "set1IT018",
+        "best_max_abs_diff": 1.7380424494976299,
+        "runner_up_sample": "set1IT017",
+        "runner_up_max_abs_diff": 3.1793026730454397,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT019",
+        "best_sample": "set1IT019",
+        "best_max_abs_diff": 2.22524290174145,
+        "runner_up_sample": "set1IT020",
+        "runner_up_max_abs_diff": 2.6492402311971395,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT020",
+        "best_sample": "set1IT020",
+        "best_max_abs_diff": 1.7773116849657802,
+        "runner_up_sample": "set1IT019",
+        "runner_up_max_abs_diff": 2.6706954602160002,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT021",
+        "best_sample": "set1IT021",
+        "best_max_abs_diff": 1.9402678867506298,
+        "runner_up_sample": "set1IT022",
+        "runner_up_max_abs_diff": 2.67913568701682,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT022",
+        "best_sample": "set1IT022",
+        "best_max_abs_diff": 1.9600061144699499,
+        "runner_up_sample": "set1IT021",
+        "runner_up_max_abs_diff": 1.963934979629284,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT023",
+        "best_sample": "set1IT023",
+        "best_max_abs_diff": 1.206429109778958,
+        "runner_up_sample": "set1IT056",
+        "runner_up_max_abs_diff": 3.7577981746893303,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT024",
+        "best_sample": "set1IT024",
+        "best_max_abs_diff": 1.9421182641594994,
+        "runner_up_sample": "set1IT026",
+        "runner_up_max_abs_diff": 2.6802434043650005,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT025",
+        "best_sample": "set1IT025",
+        "best_max_abs_diff": 1.9732774874017593,
+        "runner_up_sample": "set1IT026",
+        "runner_up_max_abs_diff": 2.4438764468304104,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT026",
+        "best_sample": "set1IT026",
+        "best_max_abs_diff": 1.9594436136562399,
+        "runner_up_sample": "set1IT025",
+        "runner_up_max_abs_diff": 2.2521845964008094,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT027",
+        "best_sample": "set1IT027",
+        "best_max_abs_diff": 1.8684149321386396,
+        "runner_up_sample": "set1IT028",
+        "runner_up_max_abs_diff": 2.599192454564399,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT028",
+        "best_sample": "set1IT028",
+        "best_max_abs_diff": 2.5725005075970397,
+        "runner_up_sample": "set1IT027",
+        "runner_up_max_abs_diff": 4.150199174035199,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT031",
+        "best_sample": "set1IT031",
+        "best_max_abs_diff": 1.58724446194616,
+        "runner_up_sample": "set1IT032",
+        "runner_up_max_abs_diff": 2.8751941598025104,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT032",
+        "best_sample": "set1IT032",
+        "best_max_abs_diff": 1.9288405906109505,
+        "runner_up_sample": "set1IT031",
+        "runner_up_max_abs_diff": 2.0588750018094,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT035",
+        "best_sample": "set1IT035",
+        "best_max_abs_diff": 1.5903831195604803,
+        "runner_up_sample": "set1IT031",
+        "runner_up_max_abs_diff": 3.8379713111152154,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT036",
+        "best_sample": "set1IT036",
+        "best_max_abs_diff": 1.93659740199982,
+        "runner_up_sample": "set1IT035",
+        "runner_up_max_abs_diff": 2.9117083223609805,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT037",
+        "best_sample": "set1IT037",
+        "best_max_abs_diff": 1.71712319967552,
+        "runner_up_sample": "set1IT038",
+        "runner_up_max_abs_diff": 2.4258979785433903,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT038",
+        "best_sample": "set1IT038",
+        "best_max_abs_diff": 1.5916755697944396,
+        "runner_up_sample": "set1IT037",
+        "runner_up_max_abs_diff": 2.3884309779965602,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT039",
+        "best_sample": "set1IT039",
+        "best_max_abs_diff": 1.77663736940635,
+        "runner_up_sample": "set1IT040",
+        "runner_up_max_abs_diff": 2.46711710257434,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT040",
+        "best_sample": "set1IT040",
+        "best_max_abs_diff": 1.8673368720295604,
+        "runner_up_sample": "set1IT039",
+        "runner_up_max_abs_diff": 2.4459056442098497,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT041",
+        "best_sample": "set1IT041",
+        "best_max_abs_diff": 1.6214555370117698,
+        "runner_up_sample": "set1IT047",
+        "runner_up_max_abs_diff": 4.642701046918674,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT042",
+        "best_sample": "set1IT042",
+        "best_max_abs_diff": 1.6185527185635302,
+        "runner_up_sample": "set1IT012",
+        "runner_up_max_abs_diff": 4.511496779387993,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT045",
+        "best_sample": "set1IT045",
+        "best_max_abs_diff": 1.95426773604584,
+        "runner_up_sample": "set1IT046",
+        "runner_up_max_abs_diff": 2.6739089787099877,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT046",
+        "best_sample": "set1IT046",
+        "best_max_abs_diff": 1.9362894464774598,
+        "runner_up_sample": "set1IT045",
+        "runner_up_max_abs_diff": 2.224109633142849,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT047",
+        "best_sample": "set1IT047",
+        "best_max_abs_diff": 1.6626520094342796,
+        "runner_up_sample": "set1IT048",
+        "runner_up_max_abs_diff": 2.72591948985508,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT048",
+        "best_sample": "set1IT048",
+        "best_max_abs_diff": 0.8304486799243103,
+        "runner_up_sample": "set1IT047",
+        "runner_up_max_abs_diff": 2.6315215947569204,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT051",
+        "best_sample": "set1IT051",
+        "best_max_abs_diff": 1.16958634691547,
+        "runner_up_sample": "set1IT052",
+        "runner_up_max_abs_diff": 3.243015807308,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT052",
+        "best_sample": "set1IT052",
+        "best_max_abs_diff": 1.5928276025550403,
+        "runner_up_sample": "set1IT051",
+        "runner_up_max_abs_diff": 3.5573320962864803,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT053",
+        "best_sample": "set1IT053",
+        "best_max_abs_diff": 1.8144677546198107,
+        "runner_up_sample": "set1IT039",
+        "runner_up_max_abs_diff": 3.1180587726234306,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT054",
+        "best_sample": "set1IT054",
+        "best_max_abs_diff": 1.8285888674899802,
+        "runner_up_sample": "set1IT039",
+        "runner_up_max_abs_diff": 3.2240510382076004,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT055",
+        "best_sample": "set1IT055",
+        "best_max_abs_diff": 1.9529741659706694,
+        "runner_up_sample": "set1IT056",
+        "runner_up_max_abs_diff": 2.6272635640806605,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT056",
+        "best_sample": "set1IT056",
+        "best_max_abs_diff": 1.6045003289760298,
+        "runner_up_sample": "set1IT065",
+        "runner_up_max_abs_diff": 3.12532482241537,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT057",
+        "best_sample": "set1IT057",
+        "best_max_abs_diff": 1.80759053987585,
+        "runner_up_sample": "set1IT058",
+        "runner_up_max_abs_diff": 3.15519624681082,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT058",
+        "best_sample": "set1IT058",
+        "best_max_abs_diff": 1.6146825190250604,
+        "runner_up_sample": "set1IT057",
+        "runner_up_max_abs_diff": 3.18656799674929,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT059",
+        "best_sample": "set1IT059",
+        "best_max_abs_diff": 1.6270638940783702,
+        "runner_up_sample": "set1IT060",
+        "runner_up_max_abs_diff": 2.67807611603877,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT060",
+        "best_sample": "set1IT060",
+        "best_max_abs_diff": 1.8075853516193199,
+        "runner_up_sample": "set1IT059",
+        "runner_up_max_abs_diff": 2.8131488837313903,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT061",
+        "best_sample": "set1IT061",
+        "best_max_abs_diff": 1.6012981952915797,
+        "runner_up_sample": "set1IT062",
+        "runner_up_max_abs_diff": 2.28997395849712,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT062",
+        "best_sample": "set1IT062",
+        "best_max_abs_diff": 1.6361265641045204,
+        "runner_up_sample": "set1IT061",
+        "runner_up_max_abs_diff": 2.1679966320694595,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT063",
+        "best_sample": "set1IT063",
+        "best_max_abs_diff": 1.57247396807026,
+        "runner_up_sample": "set1IT064",
+        "runner_up_max_abs_diff": 3.020756923586551,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT064",
+        "best_sample": "set1IT064",
+        "best_max_abs_diff": 1.96308452622577,
+        "runner_up_sample": "set1IT063",
+        "runner_up_max_abs_diff": 3.01647983649128,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT065",
+        "best_sample": "set1IT065",
+        "best_max_abs_diff": 1.5843775803805795,
+        "runner_up_sample": "set1IT056",
+        "runner_up_max_abs_diff": 2.958997861661814,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT066",
+        "best_sample": "set1IT066",
+        "best_max_abs_diff": 1.2037827881121204,
+        "runner_up_sample": "set1IT065",
+        "runner_up_max_abs_diff": 2.8331932836718794,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT071",
+        "best_sample": "set1IT071",
+        "best_max_abs_diff": 1.6415181802471301,
+        "runner_up_sample": "set1IT072",
+        "runner_up_max_abs_diff": 2.1543349156037603,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT072",
+        "best_sample": "set1IT072",
+        "best_max_abs_diff": 1.822037420683889,
+        "runner_up_sample": "set1IT071",
+        "runner_up_max_abs_diff": 3.24958311476986,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT073",
+        "best_sample": "set1IT073",
+        "best_max_abs_diff": 1.9048697617065802,
+        "runner_up_sample": "set1IT074",
+        "runner_up_max_abs_diff": 2.4131203320302896,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT074",
+        "best_sample": "set1IT074",
+        "best_max_abs_diff": 1.8871286806397096,
+        "runner_up_sample": "set1IT073",
+        "runner_up_max_abs_diff": 2.40240626847324,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT075",
+        "best_sample": "set1IT075",
+        "best_max_abs_diff": 1.7134405220780202,
+        "runner_up_sample": "set1IT076",
+        "runner_up_max_abs_diff": 2.2985969504876604,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT076",
+        "best_sample": "set1IT076",
+        "best_max_abs_diff": 1.03570742452176,
+        "runner_up_sample": "set1IT075",
+        "runner_up_max_abs_diff": 2.38851467026463,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT077",
+        "best_sample": "set1IT077",
+        "best_max_abs_diff": 1.5886618692133405,
+        "runner_up_sample": "set1IT078",
+        "runner_up_max_abs_diff": 3.1567610249030604,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT078",
+        "best_sample": "set1IT078",
+        "best_max_abs_diff": 1.9422007550133502,
+        "runner_up_sample": "set1IT077",
+        "runner_up_max_abs_diff": 3.1611383210844997,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT079",
+        "best_sample": "set1IT079",
+        "best_max_abs_diff": 1.8253215180098503,
+        "runner_up_sample": "set1IT080",
+        "runner_up_max_abs_diff": 3.1838579681603396,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT080",
+        "best_sample": "set1IT080",
+        "best_max_abs_diff": 1.1403664847735704,
+        "runner_up_sample": "set1IT079",
+        "runner_up_max_abs_diff": 3.1751212546756595,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT081",
+        "best_sample": "set1IT081",
+        "best_max_abs_diff": 1.5848826615528404,
+        "runner_up_sample": "set1IT082",
+        "runner_up_max_abs_diff": 2.89703397126853,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT082",
+        "best_sample": "set1IT082",
+        "best_max_abs_diff": 1.59336470895362,
+        "runner_up_sample": "set1IT081",
+        "runner_up_max_abs_diff": 2.8820624835856297,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT083",
+        "best_sample": "set1IT084",
+        "best_max_abs_diff": 1.7974119893871,
+        "runner_up_sample": "set1IT083",
+        "runner_up_max_abs_diff": 1.9263880330190002,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT084",
+        "best_sample": "set1IT084",
+        "best_max_abs_diff": 1.5949473551698605,
+        "runner_up_sample": "set1IT083",
+        "runner_up_max_abs_diff": 2.8629944106948804,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT085",
+        "best_sample": "set1IT085",
+        "best_max_abs_diff": 1.9233947480857694,
+        "runner_up_sample": "set1IT086",
+        "runner_up_max_abs_diff": 2.2101403907426205,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT086",
+        "best_sample": "set1IT086",
+        "best_max_abs_diff": 1.9366425381970398,
+        "runner_up_sample": "set1IT085",
+        "runner_up_max_abs_diff": 2.6769963211763,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT087",
+        "best_sample": "set1IT087",
+        "best_max_abs_diff": 1.7149045029019203,
+        "runner_up_sample": "set1IT005",
+        "runner_up_max_abs_diff": 3.6653207607022997,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT088",
+        "best_sample": "set1IT088",
+        "best_max_abs_diff": 1.5864783636146602,
+        "runner_up_sample": "set1IT087",
+        "runner_up_max_abs_diff": 3.75322477556932,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT089",
+        "best_sample": "set1IT089",
+        "best_max_abs_diff": 1.9141212880645604,
+        "runner_up_sample": "set1IT090",
+        "runner_up_max_abs_diff": 1.9736025247363305,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT090",
+        "best_sample": "set1IT090",
+        "best_max_abs_diff": 1.9130688430626606,
+        "runner_up_sample": "set1IT089",
+        "runner_up_max_abs_diff": 2.0146237820696795,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT091",
+        "best_sample": "set1IT091",
+        "best_max_abs_diff": 1.7240203024140301,
+        "runner_up_sample": "set1IT092",
+        "runner_up_max_abs_diff": 2.11929661534423,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT092",
+        "best_sample": "set1IT092",
+        "best_max_abs_diff": 1.0849640158016403,
+        "runner_up_sample": "set1IT091",
+        "runner_up_max_abs_diff": 2.1094164425695103,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT093",
+        "best_sample": "set1IT093",
+        "best_max_abs_diff": 1.8948556809450103,
+        "runner_up_sample": "set1IT094",
+        "runner_up_max_abs_diff": 2.141812620490141,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT094",
+        "best_sample": "set1IT093",
+        "best_max_abs_diff": 1.83331920852563,
+        "runner_up_sample": "set1IT094",
+        "runner_up_max_abs_diff": 1.92506611280215,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT095",
+        "best_sample": "set1IT095",
+        "best_max_abs_diff": 1.93738862454558,
+        "runner_up_sample": "set1IT096",
+        "runner_up_max_abs_diff": 2.67732676749839,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set1IT096",
+        "best_sample": "set1IT096",
+        "best_max_abs_diff": 1.7445348946139103,
+        "runner_up_sample": "set1IT095",
+        "runner_up_max_abs_diff": 3.7317994477181697,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set2IT069",
+        "best_sample": "set2IT069",
+        "best_max_abs_diff": 0.5208448191315911,
+        "runner_up_sample": "set2IT045",
+        "runner_up_max_abs_diff": 1.4394227452475672,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set2IT095",
+        "best_sample": "set2IT095",
+        "best_max_abs_diff": 2.1785073230324605,
+        "runner_up_sample": "set2IT093",
+        "runner_up_max_abs_diff": 3.15507073032796,
+        "keys_compared": 3628
+      },
+      {
+        "released_column": "set2IT096",
+        "best_sample": "set2IT096",
+        "best_max_abs_diff": 2.1642220150516405,
+        "runner_up_sample": "set2IT094",
+        "runner_up_max_abs_diff": 2.40440458235691,
+        "keys_compared": 3628
+      }
+    ]
+  },
   "g5": {
     "phenotype_class": "EnvironmentResponsePhenotype",
     "class_exists": true,
@@ -1060,6 +1731,6 @@
     ],
     "proposed_class": null
   },
-  "decided_at": "2026-10-10",
-  "torchcell_commit": "41e1cb37d1d3365c5d812fb58d663eec94b51ab7"
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "23702df2bdc45ea869bb74ca18e3c00f594c82d8"
 }

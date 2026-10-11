@@ -595,10 +595,11 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#857, Li 2014 synthesis rates)
     # + 2 (Baba 2006 and Gerdes 2003 essentiality calls)
     # + 1 (Peter 2018 natural-isolate growth)
-    # + 1 (Boocock 2025 single-cell segregant panels).
+    # + 1 (Boocock 2025 single-cell segregant panels)
+    # + 2 (Muenzner 2024: the natural-isolate proteome and its turnover subset).
     assert (
         len(dataset_adapter_map)
-        == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1
+        == 110 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {
@@ -620,6 +621,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "IsolateGrowthPeter2018Dataset",
         "NadalRibellesPerturbSeq2025Dataset",
         "ProteomeMessner2023Dataset",
+        "ProteomeMuenzner2024Dataset",
+        "ProteinTurnoverMuenzner2024Dataset",
         "SmfBaryshnikova2010Dataset",
         "SmfODuibhir2014Dataset",
     }

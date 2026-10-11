@@ -227,7 +227,7 @@ def test_every_mapped_dataset_fingerprints_the_conf_its_adapter_loads(
     assert resolved == opened
 
 
-#: The eight adapter modules that serve more than one dataset class, and the conf each
+#: The nine adapter modules that serve more than one dataset class, and the conf each
 #: class binds (issue #743). Pinned as a literal table rather than derived, because the
 #: defect was a resolution that silently handed every class the module's FIRST conf: a
 #: derived expectation would have agreed with it. Measured 2026-10-09 by
@@ -259,6 +259,13 @@ MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
         "TmfKuzmin2020Dataset": "tmf_kuzmin2020_adapter.yaml",
         "TmiKuzmin2020Dataset": "tmi_kuzmin2020_adapter.yaml",
     },
+    # Added 2026-10-11 with the Muenzner 2024 loaders (one module, two adapters).
+    "muenzner2024_adapter.py": {
+        "ProteinTurnoverMuenzner2024Dataset": (
+            "protein_turnover_muenzner2024_adapter.yaml"
+        ),
+        "ProteomeMuenzner2024Dataset": "proteome_muenzner2024_adapter.yaml",
+    },
     "lopez2024_adapter.py": {
         "IsobutanolScreenLopez2024Dataset": (
             "isobutanol_screen_lopez2024_adapter.yaml"
@@ -286,8 +293,8 @@ MULTI_CLASS_MODULE_CONFS: dict[str, dict[str, str]] = {
 }
 
 
-def test_the_multi_class_modules_are_exactly_these_eight() -> None:
-    """A ninth multi-class module, or a class added to one of the eight, lands here.
+def test_the_multi_class_modules_are_exactly_these_nine() -> None:
+    """A tenth multi-class module, or a class added to one of the nine, lands here.
 
     Both directions: every class the table names resolves to the files the table states,
     AND the classes that SHARE an adapter module are exactly the ones it names. So a new

@@ -218,6 +218,12 @@ from .mohiuddin2022_adapter import (
 from .mori2021_adapter import ProteomeMori2021Adapter as ProteomeMori2021Adapter
 from .mormino2022_adapter import Mormino2022Adapter as Mormino2022Adapter
 from .mota2024_adapter import EnvChemgenMota2024Adapter as EnvChemgenMota2024Adapter
+from .muenzner2024_adapter import (
+    ProteinTurnoverMuenzner2024Adapter as ProteinTurnoverMuenzner2024Adapter,
+)
+from .muenzner2024_adapter import (
+    ProteomeMuenzner2024Adapter as ProteomeMuenzner2024Adapter,
+)
 from .mulleder2016_adapter import (
     AminoAcidMulleder2016Adapter as AminoAcidMulleder2016Adapter,
 )
@@ -406,6 +412,8 @@ proteome_metabolome_adapters = [
     "MetaboliteZelezniak2018Adapter",
     "ProteomeZelezniak2018Adapter",
     "ProteomeMessner2023Adapter",
+    "ProteomeMuenzner2024Adapter",
+    "ProteinTurnoverMuenzner2024Adapter",
     "AminoAcidMulleder2016Adapter",
     "AminoAcidCooper2010Adapter",
 ]

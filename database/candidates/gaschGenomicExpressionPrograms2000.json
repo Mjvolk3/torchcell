@@ -1,0 +1,82 @@
+{
+  "citation_key": "gaschGenomicExpressionPrograms2000",
+  "table": "yeast",
+  "row_name": "Gasch 2000 (environmental stress response)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Expression / single cell', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): DBY7286 (background not stated in the paper): no tier set",
+      "evidence": [
+        {
+          "value": "host strain, background not stated",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "gaschGenomicExpressionPrograms2000",
+            "sha256": "e22b3e01f5664a00b9a6fdcd4c78bacd5803e5c31f285f45b98c47a871a98fbb",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Wild-type DBY7286 cells harboring each plasmid",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "DBY7286 (background not stated in the paper)",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

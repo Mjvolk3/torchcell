@@ -1,0 +1,381 @@
+{
+  "citation_key": "leutertRegulatoryLandscapeYeast2023",
+  "table": "yeast",
+  "row_name": "Leutert 2023 (phosphoproteome x 101 conditions)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Expression / single cell', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set (composed: hosts named by the paper): BY4741 (S288C derivative) -> sgd_S288C_R64-4-1_20230830",
+      "evidence": [
+        {
+          "value": "genotype basis and host strains",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "leutertRegulatoryLandscapeYeast2023",
+            "sha256": "705eb7cc0197ab8dc16a07c41db4c3d8528bdb5447dfdc8e3a82636e0e9b11d4",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The S288C-derivative BY4741 (MATa his3Δ1 leu2Δ0 met15Δ0 ura3Δ0) S. cerevisiae strain was used for all treatments, except for the diploid condition where BY4743 was used.",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "12 file(s) in library, 839912 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "no Phenotype subclass 'PhosphositeFoldChangePhenotype' in schema.py",
+      "evidence": [
+        {
+          "value": "data availability and which PRIDE accession holds which data",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "leutertRegulatoryLandscapeYeast2023",
+            "sha256": "705eb7cc0197ab8dc16a07c41db4c3d8528bdb5447dfdc8e3a82636e0e9b11d4",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The MS proteomics data have been deposited to the ProteomeXchange Consortium via the PRIDE82 partner repository with the dataset identifiers PXD035029 for the ultradeep reference phosphoproteomic DDA data, PXD035050 for the quantitative phosphoproteomic DIA data, and PXD034997 for the quantitative proteomics DIA data.",
+          "note": null
+        },
+        {
+          "value": "Table S6 fold changes are treatment vs untreated (reference_basis)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "leutertRegulatoryLandscapeYeast2023",
+            "sha256": "705eb7cc0197ab8dc16a07c41db4c3d8528bdb5447dfdc8e3a82636e0e9b11d4",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Significant differential expression was then calculated for each treatment against the untreated samples",
+          "note": null
+        }
+      ],
+      "issue": 921,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "BY4741 (S288C derivative)",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "leutertRegulatoryLandscapeYeast2023",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 1290430,
+        "sha256_manifest": "822462fccd2a8f2b1e3918c9880ea21427eca4a1b498abd674f2bd61e902892a",
+        "sha256_disk": "822462fccd2a8f2b1e3918c9880ea21427eca4a1b498abd674f2bd61e902892a",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 3043124,
+        "sha256_manifest": "a56a2b8a74b877275d82a6baad85cda893998fcd87ed215f0b105624a4ee9ea9",
+        "sha256_disk": "a56a2b8a74b877275d82a6baad85cda893998fcd87ed215f0b105624a4ee9ea9",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.pdf",
+        "role": "si_pdf",
+        "bytes": 968038,
+        "sha256_manifest": "e5b3b76e37e4d7e502948d6a9e6f300dcfc9337cdc57b1132e468d7ff788b611",
+        "sha256_disk": "e5b3b76e37e4d7e502948d6a9e6f300dcfc9337cdc57b1132e468d7ff788b611",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 167112,
+        "sha256_manifest": "1f32436f7abf3179eee5769d431b3ab3d22a7b07da8f417c37520cd4af7fad35",
+        "sha256_disk": "1f32436f7abf3179eee5769d431b3ab3d22a7b07da8f417c37520cd4af7fad35",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "description Table S1",
+            "rows": 16403
+          },
+          {
+            "sheet": "meta_treatments",
+            "rows": 103
+          },
+          {
+            "sheet": "meta_phospho_samples",
+            "rows": 598
+          },
+          {
+            "sheet": "meta_deep_phospho_samples",
+            "rows": 125
+          },
+          {
+            "sheet": "meta_total_proteome_samples",
+            "rows": 127
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 3622321,
+        "sha256_manifest": "c3002c4eb2c47f0d2d4e5617349d998eb332cab1158c63fdbb91d0237b3c8bb7",
+        "sha256_disk": "c3002c4eb2c47f0d2d4e5617349d998eb332cab1158c63fdbb91d0237b3c8bb7",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "description_Table_S2",
+            "rows": 19
+          },
+          {
+            "sheet": "deep_phospho_psites",
+            "rows": 36406
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.csv",
+        "role": "si_data",
+        "bytes": 411692655,
+        "sha256_manifest": "0ad5acaa7a3e54fc7e7f147f00243e51fae71e4814d28d573b3282ec49904970",
+        "sha256_disk": "0ad5acaa7a3e54fc7e7f147f00243e51fae71e4814d28d573b3282ec49904970",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 8503721,
+        "sha256_manifest": "fc5304c701fe8b8afe7362cd1ff0962043dfafa6ab987391d86a87a686fa5cc2",
+        "sha256_disk": "fc5304c701fe8b8afe7362cd1ff0962043dfafa6ab987391d86a87a686fa5cc2",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table_S4",
+            "rows": 26
+          },
+          {
+            "sheet": "protein_abundance",
+            "rows": 154981
+          },
+          {
+            "sheet": "protein_diff_reg",
+            "rows": 36901
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.csv",
+        "role": "si_data",
+        "bytes": 208729574,
+        "sha256_manifest": "17cdde8bfaa14e14609cd60e3c51855cb06273d6089ba956613bc0df8cbcc031",
+        "sha256_disk": "17cdde8bfaa14e14609cd60e3c51855cb06273d6089ba956613bc0df8cbcc031",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 42462584,
+        "sha256_manifest": "12412d7697e36534699d53c0c75dbb1a138ea0f31519010afd673aea446acebe",
+        "sha256_disk": "12412d7697e36534699d53c0c75dbb1a138ea0f31519010afd673aea446acebe",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "description_Table_S6",
+            "rows": 17
+          },
+          {
+            "sheet": "p_site_diff_reg",
+            "rows": 529401
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 1143291,
+        "sha256_manifest": "9d99ad33f733a2dbc404bbbfc051310172fdb0fdd554502f61376b694d597f87",
+        "sha256_disk": "9d99ad33f733a2dbc404bbbfc051310172fdb0fdd554502f61376b694d597f87",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "description Table S7",
+            "rows": 44
+          },
+          {
+            "sheet": "cluster_psites",
+            "rows": 21177
+          },
+          {
+            "sheet": "marker_psites",
+            "rows": 58
+          },
+          {
+            "sheet": "cluster_treatments",
+            "rows": 49
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 208563,
+        "sha256_manifest": "6c4eaacd309d0bee55981cec670e0707e46e40231778d92674f761ecc0cc3ba7",
+        "sha256_disk": "6c4eaacd309d0bee55981cec670e0707e46e40231778d92674f761ecc0cc3ba7",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "description Table S8",
+            "rows": 30
+          },
+          {
+            "sheet": "tor_wcna",
+            "rows": 40059
+          },
+          {
+            "sheet": "kin_sub_relation",
+            "rows": 1143
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.xlsx",
+        "role": "si_data",
+        "bytes": 12862235,
+        "sha256_manifest": "bab8517ee0a2d2a6616a3f2c0be44a9c5355891a95168c52dba693a1c306d42f",
+        "sha256_disk": "bab8517ee0a2d2a6616a3f2c0be44a9c5355891a95168c52dba693a1c306d42f",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description_Table_S8 ",
+            "rows": 26
+          },
+          {
+            "sheet": "p_sites_coreg",
+            "rows": 2189
+          },
+          {
+            "sheet": "networks_coreg",
+            "rows": 30
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s41594-023-01115-3",
+    "pmid": null,
+    "accessions": [
+      "PXD034997"
+    ],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "PhosphositeFoldChangePhenotype",
+    "class_exists": false,
+    "unresolved_compounds": [],
+    "proposed_class": "PhosphositeFoldChangePhenotype"
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

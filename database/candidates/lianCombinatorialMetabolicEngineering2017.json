@@ -1,0 +1,82 @@
+{
+  "citation_key": "lianCombinatorialMetabolicEngineering2017",
+  "table": "yeast",
+  "row_name": "Lian 2017 (CRISPR-AID, beta-carotene)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='CRISPR library screen', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): CEN.PK2-1C: no tier set",
+      "evidence": [
+        {
+          "value": "host strain / genotype basis",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "lianCombinatorialMetabolicEngineering2017",
+            "sha256": "c0ef82dbfdf1f577b87428253cf8207988bad0c9e2927ab8ccb67878f71943d1",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "S. cerevisiae CEN.PK2-1C strain (EUROSCARF, Frankfurt, Germany) was used as the host",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "CEN.PK2-1C",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

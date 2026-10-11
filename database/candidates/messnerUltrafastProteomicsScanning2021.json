@@ -1,0 +1,156 @@
+{
+  "citation_key": "messnerUltrafastProteomicsScanning2021",
+  "table": "yeast",
+  "row_name": "Messner 2021 (Scanning SWATH yeast drug-response proteomes)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Modality / backbone', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [
+        {
+          "value": "host strain",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The auxotrophic S. cerevisiae strain BY4741",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "2 file(s) in library, 0 worksheet row(s) counted; all intact",
+      "evidence": [
+        {
+          "value": "data availability: the yeast drug screen is deposited",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The data generated for the benchmarks and the drug response screen in yeast have been deposited at the ProteomeXchange Consortium via the",
+          "note": null
+        },
+        {
+          "value": "PRIDE accession",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "partner repository, with the dataset identifier PXD023613",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "ProteinAbundancePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "messnerUltrafastProteomicsScanning2021",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 4553617,
+        "sha256_manifest": "4e3e5e9f6c3b586490434da5042f1ae6cb096baa32f5dd2b13da900085a07e90",
+        "sha256_disk": "4e3e5e9f6c3b586490434da5042f1ae6cb096baa32f5dd2b13da900085a07e90",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 1749381,
+        "sha256_manifest": "738c4613041c2acefe1794a4c2f5817aaff272400bb8595d3a9a1a61197c54c8",
+        "sha256_disk": "738c4613041c2acefe1794a4c2f5817aaff272400bb8595d3a9a1a61197c54c8",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s41587-021-00860-4",
+    "pmid": null,
+    "accessions": [
+      "PXD023613"
+    ],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "ProteinAbundancePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

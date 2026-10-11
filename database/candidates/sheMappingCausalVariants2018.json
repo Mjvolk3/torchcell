@@ -1,0 +1,178 @@
+{
+  "citation_key": "sheMappingCausalVariants2018",
+  "table": "yeast",
+  "row_name": "She 2018 (natural variant effects across a large isolate panel)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Natural variation', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "haplotype_mosaic (composed: hosts named by the paper): RM11-1a (1,011-panel isolate AAA) -> peter2018_1011_assemblies; YJM975 (1,011-panel isolate YBA) -> peter2018_1011_assemblies",
+      "evidence": [
+        {
+          "value": "cross parents",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "sheMappingCausalVariants2018",
+            "sha256": "418f04347b9368eea84a22f8a6b190fd3d867d98ecdbce8a6c47f13490928b9b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "a vineyard in California (RM-11a) (Torok et al., 1996) and a patient in Italy (YJM975a)",
+          "note": null
+        },
+        {
+          "value": "genotype basis: sequenced F6 segregants",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "sheMappingCausalVariants2018",
+            "sha256": "418f04347b9368eea84a22f8a6b190fd3d867d98ecdbce8a6c47f13490928b9b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "haploid progeny and performed whole-genome sequencing on clonal expansions of each individual",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "blocked",
+      "reason": "composed: the per-segregant genotype and phenotype matrices were released only in a Dropbox folder that reads 'File Deleted' (2026-10-11T10:57:58Z); raw reads remain on SRA PRJNA387489. Recipe in #70",
+      "evidence": [
+        {
+          "value": "per-record data were deposited only in the 'additional data' (Dropbox) link",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "sheMappingCausalVariants2018",
+            "sha256": "418f04347b9368eea84a22f8a6b190fd3d867d98ecdbce8a6c47f13490928b9b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "All genotype and phenotype data are shared freely in the additional data",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "wall"
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "haplotype_mosaic",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "RM11-1a (1,011-panel isolate AAA)",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "YJM975 (1,011-panel isolate YBA)",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "sheMappingCausalVariants2018",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 82484,
+        "sha256_manifest": "d95eae9d05fe166d8e9cbe58e1600e8463fbc2584cbb12d155490634d7778e4a",
+        "sha256_disk": "d95eae9d05fe166d8e9cbe58e1600e8463fbc2584cbb12d155490634d7778e4a",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 59143,
+        "sha256_manifest": "c8c4b2177937b3343aaa81d89d35b158072ea881695b2195d494864be99f33c0",
+        "sha256_disk": "c8c4b2177937b3343aaa81d89d35b158072ea881695b2195d494864be99f33c0",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 106
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 257723,
+        "sha256_manifest": "1be2a634056a701a2bd346e1c4e4ecc41421b5399c881a8c3156edf27236d815",
+        "sha256_disk": "1be2a634056a701a2bd346e1c4e4ecc41421b5399c881a8c3156edf27236d815",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS3.csv",
+            "rows": 728
+          },
+          {
+            "sheet": "Column Legend",
+            "rows": 26
+          }
+        ]
+      }
+    ],
+    "walls": [
+      "the per-segregant genotype and phenotype matrices were released only in a Dropbox folder that reads 'File Deleted' (2026-10-11T10:57:58Z); raw reads remain on SRA PRJNA387489. Recipe in #70"
+    ]
+  },
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

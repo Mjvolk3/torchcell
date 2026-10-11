@@ -1,0 +1,221 @@
+{
+  "citation_key": "turcoGlobalAnalysisYeast2023",
+  "table": "yeast",
+  "row_name": "Turco 2023 (Yeast Phenome)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "aggregation: Yeast Phenome re-serves every published YKO screen after extracting each paper's values and rescaling each screen to a mode-referenced NPV; its own measurements are spot assays for two ORFs",
+      "evidence": [
+        {
+          "value": "classification (e): an aggregation of published screens",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "turcoGlobalAnalysisYeast2023",
+            "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "a data library that aggregates and annotates all published screens of the YKO collection",
+          "note": null
+        },
+        {
+          "value": "value_origin = derived_by_aggregator: values are extracted from publications, not re-measured",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "turcoGlobalAnalysisYeast2023",
+            "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "devised a reproducible computational pipeline for extracting, formatting, and normalizing data from each publication",
+          "note": null
+        },
+        {
+          "value": "normalization (NPV)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "turcoGlobalAnalysisYeast2023",
+            "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "we used the mode as a reference to normalize each screen using a modified $z$ score transformation",
+          "note": null
+        },
+        {
+          "value": "data availability: per-record original values",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "turcoGlobalAnalysisYeast2023",
+            "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The original phenotypic values, along with Python code for data extraction and processing, are available at https://github.com/yeastphenome/yp-data and Zenodo at https://doi.org/10.5281/zenodo.7714347.",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "1 file(s) in library, 0 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (1 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "aggregation",
+  "aggregation": {
+    "n_source_studies": 517,
+    "attribution_field": "the release's Datasets/<PMID>/ folder (also the last field of every value-file column header); the loader stores it as Publication.pubmed_id",
+    "value_origin": "derived_by_aggregator",
+    "n_sources_mirrored": 17,
+    "net_new_vs_served": 507,
+    "evidence": [
+      {
+        "value": "classification (e): an aggregation of published screens",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "turcoGlobalAnalysisYeast2023",
+          "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "a data library that aggregates and annotates all published screens of the YKO collection",
+        "note": null
+      },
+      {
+        "value": "value_origin = derived_by_aggregator: values are extracted from publications, not re-measured",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "turcoGlobalAnalysisYeast2023",
+          "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "devised a reproducible computational pipeline for extracting, formatting, and normalizing data from each publication",
+        "note": null
+      },
+      {
+        "value": "normalization (NPV)",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "turcoGlobalAnalysisYeast2023",
+          "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "we used the mode as a reference to normalize each screen using a modified $z$ score transformation",
+        "note": null
+      },
+      {
+        "value": "data availability: per-record original values",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "turcoGlobalAnalysisYeast2023",
+          "sha256": "b666d48f699a69bb2d95ff0d8e5ffe9514fba9127096c0b559bbb6dd9301bf8a",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "The original phenotypic values, along with Python code for data extraction and processing, are available at https://github.com/yeastphenome/yp-data and Zenodo at https://doi.org/10.5281/zenodo.7714347.",
+        "note": null
+      }
+    ],
+    "sources": null
+  },
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "turcoGlobalAnalysisYeast2023",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 10229380,
+        "sha256_manifest": "12258e5763b61419c1991274a078a6b33e3fbf29da90491b1da11cc06ac8585b",
+        "sha256_disk": "12258e5763b61419c1991274a078a6b33e3fbf29da90491b1da11cc06ac8585b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1126/sciadv.adg5702",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1126/sciadv.adg5702",
+        "where": "torchcell/datasets/scerevisiae/yeastphenome.py",
+        "relation": "mentioned"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

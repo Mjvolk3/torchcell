@@ -1,0 +1,258 @@
+{
+  "citation_key": "parsonsExploringModeofActionBioactive2006",
+  "table": "yeast",
+  "row_name": "Parsons 2006 (bioactive-compound profiling)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Tolerance / robustness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "10 file(s) in library, 0 worksheet row(s) counted; all intact",
+      "evidence": [
+        {
+          "value": "Table S7 (si8.xls) is the original per-strain matrix; S8 is the derived clustered matrix",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "parsonsExploringModeofActionBioactive2006",
+            "sha256": "dfc222acef11c4d66807946cb36f8e99f73de5d3af2715967674bc029193c886",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "For the original data set used to generate the cluster see Table S7 and for the complete clustered data set see Table S8.",
+          "note": null
+        },
+        {
+          "value": "stated 4,111 strains matches the measured 4,111 ORF rows of Table S7",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "parsonsExploringModeofActionBioactive2006",
+            "sha256": "dfc222acef11c4d66807946cb36f8e99f73de5d3af2715967674bc029193c886",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "applied to a data matrix X of 4111 deletion mutant strains by 82 compounds",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [
+        {
+          "value": "statistic orientation is log2(control/treated), the opposite of the log2_ratio docstring's treatment/control",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "parsonsExploringModeofActionBioactive2006",
+            "sha256": "dfc222acef11c4d66807946cb36f8e99f73de5d3af2715967674bc029193c886",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "ratios of the control divided by sample intensities were computed for each tag",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "parsonsExploringModeofActionBioactive2006",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 767741,
+        "sha256_manifest": "6770574dbc48f0beca1648870fb6d72984c1f4bc7b140dd490cdc34c713bf14b",
+        "sha256_disk": "6770574dbc48f0beca1648870fb6d72984c1f4bc7b140dd490cdc34c713bf14b",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xls",
+        "role": "si_data",
+        "bytes": 45056,
+        "sha256_manifest": "959f14d2dab418a9b1dd1125e302b2e28c1de372d8d7ee249d369d30fb518353",
+        "sha256_disk": "959f14d2dab418a9b1dd1125e302b2e28c1de372d8d7ee249d369d30fb518353",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xls",
+        "role": "si_data",
+        "bytes": 27648,
+        "sha256_manifest": "766140a410419b19456235db2e4909e56b24e3523bcc0f6f7aa698ae13eb6870",
+        "sha256_disk": "766140a410419b19456235db2e4909e56b24e3523bcc0f6f7aa698ae13eb6870",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xls",
+        "role": "si_data",
+        "bytes": 19968,
+        "sha256_manifest": "f46460ff4bbb0da1e151cf97c244eebe4bd2f69f4fe953352fd232e624441014",
+        "sha256_disk": "f46460ff4bbb0da1e151cf97c244eebe4bd2f69f4fe953352fd232e624441014",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xls",
+        "role": "si_data",
+        "bytes": 5171712,
+        "sha256_manifest": "0446eae63b5b08af7a1a94fa3b8d42d70f1c75b55a60e0aa6e03fea189753a01",
+        "sha256_disk": "0446eae63b5b08af7a1a94fa3b8d42d70f1c75b55a60e0aa6e03fea189753a01",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xls",
+        "role": "si_data",
+        "bytes": 26624,
+        "sha256_manifest": "aad43ee49707e7a9e3a8561826d722f6052fd0de0fdca1bd89e71169fe436577",
+        "sha256_disk": "aad43ee49707e7a9e3a8561826d722f6052fd0de0fdca1bd89e71169fe436577",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xls",
+        "role": "si_data",
+        "bytes": 67584,
+        "sha256_manifest": "e595f3ba42ff6c2af78b983a22b836e9de2466f03ce3ee6835bc1a1d4a1a6d7c",
+        "sha256_disk": "e595f3ba42ff6c2af78b983a22b836e9de2466f03ce3ee6835bc1a1d4a1a6d7c",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xls",
+        "role": "si_data",
+        "bytes": 6239232,
+        "sha256_manifest": "564e94c963424687edc24ed23b6e3c6882b70c246a2524057cf1dc5f393c848f",
+        "sha256_disk": "564e94c963424687edc24ed23b6e3c6882b70c246a2524057cf1dc5f393c848f",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xls",
+        "role": "si_data",
+        "bytes": 2345984,
+        "sha256_manifest": "ac946be4fd108c477c90824f15bed70e9e2eb90fd5de70fcf8b014b2467d5f00",
+        "sha256_disk": "ac946be4fd108c477c90824f15bed70e9e2eb90fd5de70fcf8b014b2467d5f00",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xls",
+        "role": "si_data",
+        "bytes": 33280,
+        "sha256_manifest": "c98eb022013242e9bb5608c80009cf080d3f5c4e807217a442c774e2383af9ec",
+        "sha256_disk": "c98eb022013242e9bb5608c80009cf080d3f5c4e807217a442c774e2383af9ec",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1016/j.cell.2006.06.040",
+    "pmid": null,
+    "accessions": [],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

@@ -1,0 +1,88 @@
+{
+  "citation_key": "trikkaIterativeCarotenogenicScreens2015",
+  "table": "yeast",
+  "row_name": "Trikka 2015 (carotenogenic heterozygous screen)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Metabolite / precursor', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): BY4741 deletion library (S288C) -> sgd_S288C_R64-4-1_20230830; EG60 (carotenogenic parent): no tier set",
+      "evidence": [
+        {
+          "value": "screening parent: EG60 background, so diploids are EG60 x BY4741 hybrids",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "trikkaIterativeCarotenogenicScreens2015",
+            "sha256": "b48ed2c4eb19263f6f01e103cafc1e8da6678a79082e0269a303fa3ba8d76e9a",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "This strain was created by transforming EG60 wild type Mat α haploid cells with the linearized vector YEplac195-YB/I/E",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "BY4741 deletion library (S288C)",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "EG60 (carotenogenic parent)",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

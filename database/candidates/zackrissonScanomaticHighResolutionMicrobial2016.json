@@ -1,0 +1,378 @@
+{
+  "citation_key": "zackrissonScanomaticHighResolutionMicrobial2016",
+  "table": "yeast",
+  "row_name": "Zackrisson 2016 (Scan-o-matic growth curves)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Modality / backbone', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "blocked",
+      "reason": "composed: the one genotype x environment screen (BY4742 YKO, glucose +/- 0.85 M NaCl, n = 3) appears only as figure points; the 21 SI files are figures, a methods PDF and movies. Recipe: author request (#999)",
+      "evidence": [
+        {
+          "value": "data availability: no deposited dataset",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "zackrissonScanomaticHighResolutionMicrobial2016",
+            "sha256": "4dc6fecc7e422221b95772827e47ade65b055dfb8c4bc9e690945cdd77feac12",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The authors state that all data necessary for confirming the conclusions presented in the article are represented fully within the article.",
+          "note": null
+        },
+        {
+          "value": "genotype basis of the only genotype x environment screen",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "zackrissonScanomaticHighResolutionMicrobial2016",
+            "sha256": "4dc6fecc7e422221b95772827e47ade65b055dfb8c4bc9e690945cdd77feac12",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "colonies corresponding to single yeast gene knockouts of the haploid BY4742 deletion collection (Giaever et al. 2002), with WT control colonies interleaved in every fourth position",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "wall"
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "zackrissonScanomaticHighResolutionMicrobial2016",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.html",
+        "role": "si_data",
+        "bytes": 3642,
+        "sha256_manifest": "6767720eb22588e06395f1e47a50148203b3a8d917e89350d956a2160dd6b2e1",
+        "sha256_disk": "6767720eb22588e06395f1e47a50148203b3a8d917e89350d956a2160dd6b2e1",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 2083635,
+        "sha256_manifest": "4534bc5bd5d859f95d88c5fd929296efb9e0f5aced4d7f26b5b764d71de05682",
+        "sha256_disk": "4534bc5bd5d859f95d88c5fd929296efb9e0f5aced4d7f26b5b764d71de05682",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.pdf",
+        "role": "si_pdf",
+        "bytes": 2862152,
+        "sha256_manifest": "372d69d1ffbc31a5f6f8c824cac6f7e08d0a9ff5e61f7608643180fe3a759553",
+        "sha256_disk": "372d69d1ffbc31a5f6f8c824cac6f7e08d0a9ff5e61f7608643180fe3a759553",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.pdf",
+        "role": "si_pdf",
+        "bytes": 974892,
+        "sha256_manifest": "d3aa04192e85bec82888cc5193370154314e0302962feb8165eefc66aaf8a489",
+        "sha256_disk": "d3aa04192e85bec82888cc5193370154314e0302962feb8165eefc66aaf8a489",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.pdf",
+        "role": "si_pdf",
+        "bytes": 1068800,
+        "sha256_manifest": "116a04a6cc8ce55560dcbbf5a2d21e3a18f3ad27bf5937000d6ca6477e221603",
+        "sha256_disk": "116a04a6cc8ce55560dcbbf5a2d21e3a18f3ad27bf5937000d6ca6477e221603",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.pdf",
+        "role": "si_pdf",
+        "bytes": 1290374,
+        "sha256_manifest": "29535a0890421324097e1f77f17698267315b3f897148afe800dcd9d0eee29f6",
+        "sha256_disk": "29535a0890421324097e1f77f17698267315b3f897148afe800dcd9d0eee29f6",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.pdf",
+        "role": "si_pdf",
+        "bytes": 125254,
+        "sha256_manifest": "d16c788cef34f540110c88cec3c154301881732b76a4a134f1c86a970866c254",
+        "sha256_disk": "d16c788cef34f540110c88cec3c154301881732b76a4a134f1c86a970866c254",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.pdf",
+        "role": "si_pdf",
+        "bytes": 450759,
+        "sha256_manifest": "74291663fe7c82d7edead626bf6af047659782401f41d514ca3e138a469bac96",
+        "sha256_disk": "74291663fe7c82d7edead626bf6af047659782401f41d514ca3e138a469bac96",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.pdf",
+        "role": "si_pdf",
+        "bytes": 1900237,
+        "sha256_manifest": "8021cedea679ff66575798e5ade27e9ce79003fb139ad9acd66ac0af1cfd91bf",
+        "sha256_disk": "8021cedea679ff66575798e5ade27e9ce79003fb139ad9acd66ac0af1cfd91bf",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.pdf",
+        "role": "si_pdf",
+        "bytes": 797135,
+        "sha256_manifest": "444182d3e250e1e4796f02aacb01f27650ba65f5ea5b784664d7ec24eec19499",
+        "sha256_disk": "444182d3e250e1e4796f02aacb01f27650ba65f5ea5b784664d7ec24eec19499",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.pdf",
+        "role": "si_pdf",
+        "bytes": 482834,
+        "sha256_manifest": "63c969ae59e105f96b09c99ee862f88ccaa4052127bed5f6aeedc7a5c9d35126",
+        "sha256_disk": "63c969ae59e105f96b09c99ee862f88ccaa4052127bed5f6aeedc7a5c9d35126",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.pdf",
+        "role": "si_pdf",
+        "bytes": 2349666,
+        "sha256_manifest": "6effea6628ccac549eacf792850ef2831a409ce57aa7de296a8d77d43985e131",
+        "sha256_disk": "6effea6628ccac549eacf792850ef2831a409ce57aa7de296a8d77d43985e131",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.pdf",
+        "role": "si_pdf",
+        "bytes": 3196969,
+        "sha256_manifest": "58b094b5069f0b94442ff985967f3fef485fa68662b4366f03f95ed502954a83",
+        "sha256_disk": "58b094b5069f0b94442ff985967f3fef485fa68662b4366f03f95ed502954a83",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si14.pdf",
+        "role": "si_pdf",
+        "bytes": 568653,
+        "sha256_manifest": "1008be0f01e3cd53b83ae8ac6ebed7f8e5afc5b14f7b5b1461ad71806af235a9",
+        "sha256_disk": "1008be0f01e3cd53b83ae8ac6ebed7f8e5afc5b14f7b5b1461ad71806af235a9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si15.pdf",
+        "role": "si_pdf",
+        "bytes": 1316862,
+        "sha256_manifest": "984d436c549767238a8e6489b628d3bce72ecb2060bb1f818069d5747a0dac3a",
+        "sha256_disk": "984d436c549767238a8e6489b628d3bce72ecb2060bb1f818069d5747a0dac3a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si16.pdf",
+        "role": "si_pdf",
+        "bytes": 272017,
+        "sha256_manifest": "16315c92a2fd72709a258f1ffb95d1f4821af671f3b4da8acdcdd1c0d783314a",
+        "sha256_disk": "16315c92a2fd72709a258f1ffb95d1f4821af671f3b4da8acdcdd1c0d783314a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si17.pdf",
+        "role": "si_pdf",
+        "bytes": 279953,
+        "sha256_manifest": "a62060a4a3b02fd7aae0a817c24736f24c51b6f42fa77836a0fccaf385630814",
+        "sha256_disk": "a62060a4a3b02fd7aae0a817c24736f24c51b6f42fa77836a0fccaf385630814",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si18.pdf",
+        "role": "si_pdf",
+        "bytes": 208621,
+        "sha256_manifest": "ac8287488d47fe51bfe43c25f0b0f44d25e0ee3355c4b7916cb959be61374937",
+        "sha256_disk": "ac8287488d47fe51bfe43c25f0b0f44d25e0ee3355c4b7916cb959be61374937",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si19.avi",
+        "role": "si_data",
+        "bytes": 806262,
+        "sha256_manifest": "f720818482e30e3e6bd909ccfe74353a017101443d4b367aa294e0229ead2c11",
+        "sha256_disk": "f720818482e30e3e6bd909ccfe74353a017101443d4b367aa294e0229ead2c11",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si20.avi",
+        "role": "si_data",
+        "bytes": 1107152,
+        "sha256_manifest": "7f95a0273a8acc38c46aecc0364c29fa7155085b540e112beb95bce59082d517",
+        "sha256_disk": "7f95a0273a8acc38c46aecc0364c29fa7155085b540e112beb95bce59082d517",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si21.avi",
+        "role": "si_data",
+        "bytes": 2081318,
+        "sha256_manifest": "ef08318cd1a6f4a357c43ed79bf61fb955d8e9f7b5d5e786d1cefa85b391ec2d",
+        "sha256_disk": "ef08318cd1a6f4a357c43ed79bf61fb955d8e9f7b5d5e786d1cefa85b391ec2d",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": [
+      "the one genotype x environment screen (BY4742 YKO, glucose +/- 0.85 M NaCl, n = 3) appears only as figure points; the 21 SI files are figures, a methods PDF and movies. Recipe: author request (#999)"
+    ]
+  },
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

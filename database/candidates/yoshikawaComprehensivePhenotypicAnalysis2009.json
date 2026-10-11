@@ -1,0 +1,107 @@
+{
+  "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+  "table": "yeast",
+  "row_name": "Yoshikawa 2009 (ethanol and salt stress growth of the deletion collection)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Tolerance / robustness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [
+        {
+          "value": "genotype basis: BY4742 haploid deletion collection",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "We evaluated the growth of single gene deletion strains derived from S. cerevisiae BY4742",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "the manifests in ('library',) list nothing under si/ or data/",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [
+        {
+          "value": "replicates: two independent cultures per condition",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "We simultaneously obtained 720 sets of information regarding the specific growth rates of the standard strain from the cultivation of all the deletion strains in 90 microtiter plates twice under each condition.",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": {
+    "doi": "10.1111/j.1567-1364.2008.00456.x",
+    "pmid": null,
+    "accessions": [],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

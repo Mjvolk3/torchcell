@@ -1,0 +1,675 @@
+{
+  "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+  "table": "yeast",
+  "row_name": "Piotrowski 2017 (MOSAIC diagnostic panel)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Tolerance / robustness', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "24 file(s) in library, 41528 worksheet row(s) counted; all intact",
+      "evidence": [
+        {
+          "value": "data availability: PubChem holds only the high-confidence subset; the full matrix is the SI",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "All high-confidence chemical-genetic data and associated compound information has been deposited to PubChem",
+          "note": null
+        },
+        {
+          "value": "replicates: 3 technical PCR replicates averaged into each DS5 value",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The genomic extractions for each plate were amplified in triplicate using three unique multiplex primer plates (three technical replicates).",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "EnvironmentResponsePhenotype exists; compounds resolve",
+      "evidence": [
+        {
+          "value": "genotype basis: kanMX deletions introduced into the 3-delta background by SGA",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+            "sha256": "9314a0dd932c1b20b4dc4297de4ce9452b09f314bf100f05f2fe718fb3415fc1",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The MATα query strain was crossed to an ordered array of MATa xxxΔ::kanMX deletion mutants",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "piotrowskiFunctionalAnnotationChemical2017",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.docx",
+        "role": "si_data",
+        "bytes": 31321,
+        "sha256_manifest": "38cddea8f1a497107304599271bcfcabfba7f65a4f7b3b616f26923be119959a",
+        "sha256_disk": "38cddea8f1a497107304599271bcfcabfba7f65a4f7b3b616f26923be119959a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 13538,
+        "sha256_manifest": "b0842df1d52f91226784aa042e146b2743168a40e76cb5828e04f4d8fb9e0259",
+        "sha256_disk": "b0842df1d52f91226784aa042e146b2743168a40e76cb5828e04f4d8fb9e0259",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 16",
+            "rows": 70
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 14007,
+        "sha256_manifest": "e658e63b2a75b4c7e843760fc00f1c3b07bfbca4ebc4d3c28a8d03e7cf0470f5",
+        "sha256_disk": "e658e63b2a75b4c7e843760fc00f1c3b07bfbca4ebc4d3c28a8d03e7cf0470f5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 17",
+            "rows": 54
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 15379,
+        "sha256_manifest": "f2da741f0ae88736703eec0a7bfe878e889174975707836f373b34de60499bcc",
+        "sha256_disk": "f2da741f0ae88736703eec0a7bfe878e889174975707836f373b34de60499bcc",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "RIKEN ChemGen diversity set",
+            "rows": 36
+          },
+          {
+            "sheet": "NCI_NIH_GSK diversity sets",
+            "rows": 50
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 537892,
+        "sha256_manifest": "9c8678da601f114748aa5a372ef3400b21758e1cdd207cdadbdcb046f2a4cd7b",
+        "sha256_disk": "9c8678da601f114748aa5a372ef3400b21758e1cdd207cdadbdcb046f2a4cd7b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "DNA Replication & Repair",
+            "rows": 95
+          },
+          {
+            "sheet": "Glycosylation etc",
+            "rows": 299
+          },
+          {
+            "sheet": "Vesicle Traffic",
+            "rows": 156
+          },
+          {
+            "sheet": "Mitosis & Chrom Seg",
+            "rows": 311
+          },
+          {
+            "sheet": "mRNA Processing",
+            "rows": 70
+          },
+          {
+            "sheet": "Nuclear-cytoplasmic Transport",
+            "rows": 56
+          },
+          {
+            "sheet": "Cell Polarity",
+            "rows": 268
+          },
+          {
+            "sheet": "Transcription & Chromatin Organ",
+            "rows": 68
+          },
+          {
+            "sheet": "Protein Degradation",
+            "rows": 31
+          },
+          {
+            "sheet": "rDNA & ncDNA processing",
+            "rows": 20
+          },
+          {
+            "sheet": "tRNA Wobble Modification",
+            "rows": 23
+          },
+          {
+            "sheet": "Metabolism & FA Biosynthesis",
+            "rows": 17
+          },
+          {
+            "sheet": "Respiration, Oxidative Phosphor",
+            "rows": 103
+          },
+          {
+            "sheet": "Ribosome Biogenesis",
+            "rows": 8
+          },
+          {
+            "sheet": "Peroxisome",
+            "rows": 19
+          },
+          {
+            "sheet": "Cytokinesis",
+            "rows": 16
+          },
+          {
+            "sheet": "MVB Sorting & pH Dependent Si",
+            "rows": 9
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 163993,
+        "sha256_manifest": "394505047acaea5e7e7d1afa2753e76be5356bb43abd4e01ec8eb6e1acd145a2",
+        "sha256_disk": "394505047acaea5e7e7d1afa2753e76be5356bb43abd4e01ec8eb6e1acd145a2",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 2",
+            "rows": 500
+          },
+          {
+            "sheet": "Fitness of WT vs sensitized mut",
+            "rows": 3035
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 17091,
+        "sha256_manifest": "36df6068bd7820f2128321d5777a8ecdb016fe8ea15f9e7d576a3cc9f37e2eb3",
+        "sha256_disk": "36df6068bd7820f2128321d5777a8ecdb016fe8ea15f9e7d576a3cc9f37e2eb3",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 20",
+            "rows": 62
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 656881,
+        "sha256_manifest": "66d85ea34ad5c38eaae8f11f403a6e0a3be9c570ae648765cb93491b4cf789cc",
+        "sha256_disk": "66d85ea34ad5c38eaae8f11f403a6e0a3be9c570ae648765cb93491b4cf789cc",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "RIKEN NP",
+            "rows": 1297
+          },
+          {
+            "sheet": "GSK KI",
+            "rows": 1297
+          },
+          {
+            "sheet": "RIKEN NPD",
+            "rows": 1297
+          },
+          {
+            "sheet": "RIKEN NPDepo",
+            "rows": 1297
+          },
+          {
+            "sheet": "NIHCC",
+            "rows": 1297
+          },
+          {
+            "sheet": "NCI NP",
+            "rows": 1297
+          },
+          {
+            "sheet": "NCI MECH DIV",
+            "rows": 1297
+          },
+          {
+            "sheet": "NCI STRUCT DIV",
+            "rows": 1297
+          },
+          {
+            "sheet": "NCI ONC",
+            "rows": 1297
+          },
+          {
+            "sheet": "RIKEN anti-cancer",
+            "rows": 1297
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 61292,
+        "sha256_manifest": "87e385c733257ce9813257d0d3ddba80d48abb0525cd0bba8ac91750e10df6ac",
+        "sha256_disk": "87e385c733257ce9813257d0d3ddba80d48abb0525cd0bba8ac91750e10df6ac",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Best bioprocess",
+            "rows": 47
+          },
+          {
+            "sheet": "All bioprocesses",
+            "rows": 303
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xls",
+        "role": "si_data",
+        "bytes": 153088,
+        "sha256_manifest": "1bab697b722de873a23f9677b0bf50cc06e04059d7627709a8dcf60f844d9548",
+        "sha256_disk": "1bab697b722de873a23f9677b0bf50cc06e04059d7627709a8dcf60f844d9548",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 3856915,
+        "sha256_manifest": "eba460fe354bafd4e57c2a8438201cdc9399cf97582e3d86adf3e9362f821f87",
+        "sha256_disk": "eba460fe354bafd4e57c2a8438201cdc9399cf97582e3d86adf3e9362f821f87",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 4",
+            "rows": 13972
+          },
+          {
+            "sheet": "RIKEN anticancer subset",
+            "rows": 23
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.pdf",
+        "role": "si_pdf",
+        "bytes": 1883087,
+        "sha256_manifest": "cb56c23f3b04dfd069b376924222a2ee4627f6dd40863359640c2b37678d3d3f",
+        "sha256_disk": "cb56c23f3b04dfd069b376924222a2ee4627f6dd40863359640c2b37678d3d3f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.xlsx",
+        "role": "si_data",
+        "bytes": 32023928,
+        "sha256_manifest": "96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+        "sha256_disk": "96e07f956f7edeb07359fc8b1fa5c72a167bf9bb18d1e8a680c76362e97aaefd",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "All_conditions",
+            "rows": 294
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si14.xlsx",
+        "role": "si_data",
+        "bytes": 4064592,
+        "sha256_manifest": "b07029062cb404a7edaf98e932b94f8b992446672b826ce257a84965aa6a55ae",
+        "sha256_disk": "b07029062cb404a7edaf98e932b94f8b992446672b826ce257a84965aa6a55ae",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "High_confidence_conditions",
+            "rows": 294
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si15.xlsx",
+        "role": "si_data",
+        "bytes": 22389,
+        "sha256_manifest": "cadd8564bf6b21b591852aa3ae30cd693696585c5f13c84dc57b2c69cafc6a59",
+        "sha256_disk": "cadd8564bf6b21b591852aa3ae30cd693696585c5f13c84dc57b2c69cafc6a59",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl dataset 7",
+            "rows": 292
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si16.xlsx",
+        "role": "si_data",
+        "bytes": 879521,
+        "sha256_manifest": "92cf2f5bbfb2eaf971c3e01dab66323bfd16a28ad1a7071410db8268fda12c16",
+        "sha256_disk": "92cf2f5bbfb2eaf971c3e01dab66323bfd16a28ad1a7071410db8268fda12c16",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 8",
+            "rows": 4111
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si17.xlsx",
+        "role": "si_data",
+        "bytes": 62309,
+        "sha256_manifest": "66e231a6c7374691e775f5d2342b4b1310274117bbb2fe12c01e7232ac0c2693",
+        "sha256_disk": "66e231a6c7374691e775f5d2342b4b1310274117bbb2fe12c01e7232ac0c2693",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl dataset 9",
+            "rows": 278
+          },
+          {
+            "sheet": "Suppl dataset 9.1",
+            "rows": 12
+          },
+          {
+            "sheet": "Suppl dataset 9.2",
+            "rows": 1231
+          },
+          {
+            "sheet": "Suppl dataset 9.3",
+            "rows": 26
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si18.xlsx",
+        "role": "si_data",
+        "bytes": 18789,
+        "sha256_manifest": "c593bf9630821e6586dabd354e55f3e4a7988c883c0b7d004947f552fd5fa553",
+        "sha256_disk": "c593bf9630821e6586dabd354e55f3e4a7988c883c0b7d004947f552fd5fa553",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 1",
+            "rows": 9
+          },
+          {
+            "sheet": "Compounds of the halo assay",
+            "rows": 441
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si19.xlsx",
+        "role": "si_data",
+        "bytes": 62660,
+        "sha256_manifest": "e4c66cd694621beb522a4f22e57d97d5c0dc245cbac4355720e8e860f17a50ec",
+        "sha256_disk": "e4c66cd694621beb522a4f22e57d97d5c0dc245cbac4355720e8e860f17a50ec",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl dataset 10",
+            "rows": 17
+          },
+          {
+            "sheet": "Suppl dataset 10.1",
+            "rows": 1193
+          },
+          {
+            "sheet": "Suppl dataset 10.2",
+            "rows": 42
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si20.xlsx",
+        "role": "si_data",
+        "bytes": 9940,
+        "sha256_manifest": "6e924de559e5d2144c73bf1a7db118f2cd75f089a9b0b685cd2873b40e7dcbd5",
+        "sha256_disk": "6e924de559e5d2144c73bf1a7db118f2cd75f089a9b0b685cd2873b40e7dcbd5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl dataset 11",
+            "rows": 27
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si21.xls",
+        "role": "si_data",
+        "bytes": 59392,
+        "sha256_manifest": "2d92de1cbdd63ae0bbc4720f64d631de3881bfabeba5d3103e6681a1b54f144b",
+        "sha256_disk": "2d92de1cbdd63ae0bbc4720f64d631de3881bfabeba5d3103e6681a1b54f144b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si22.xls",
+        "role": "si_data",
+        "bytes": 59392,
+        "sha256_manifest": "2d92de1cbdd63ae0bbc4720f64d631de3881bfabeba5d3103e6681a1b54f144b",
+        "sha256_disk": "2d92de1cbdd63ae0bbc4720f64d631de3881bfabeba5d3103e6681a1b54f144b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si23.xlsx",
+        "role": "si_data",
+        "bytes": 27744,
+        "sha256_manifest": "1da38e09bf87e7ccde8d47234e84191e2c450fb3be7417e9ccff31ac0bc201dc",
+        "sha256_disk": "1da38e09bf87e7ccde8d47234e84191e2c450fb3be7417e9ccff31ac0bc201dc",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 12",
+            "rows": 435
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si24.xlsx",
+        "role": "si_data",
+        "bytes": 34035,
+        "sha256_manifest": "663a35ea543ed032d04dc540709f4d9257a0231c21d5211348d484cae9a30d75",
+        "sha256_disk": "663a35ea543ed032d04dc540709f4d9257a0231c21d5211348d484cae9a30d75",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Suppl. dataset 14",
+            "rows": 135
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/nchembio.2436",
+    "pmid": null,
+    "accessions": [],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

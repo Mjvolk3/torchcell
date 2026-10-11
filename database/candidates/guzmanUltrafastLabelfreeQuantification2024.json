@@ -1,0 +1,482 @@
+{
+  "citation_key": "guzmanUltrafastLabelfreeQuantification2024",
+  "table": "yeast",
+  "row_name": "Guzman 2024 (Astral knockout proteomes, 104 strains)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Modality / backbone', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [
+        {
+          "value": "genotype basis and host strain (and the MATalpha vs diploid inconsistency)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "guzmanUltrafastLabelfreeQuantification2024",
+            "sha256": "aec8c783e23d75ed23906986554181419475f27b0f7440ae3592fc498ce51009",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "S288C isogenic yeast strains (MATα) wild-type, BY4743 and BY4743 yeast knockout collection from Horizon Discovery",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "blocked",
+      "reason": "composed: the protein matrix is released (si/si13.xlsx) but the strains are labeled KO1 to KO104 and no file (paper, 15 SI files, PRIDE SDRF) names the deleted gene. Recipe: request the KO-number to ORF key from the Olsen lab (#998)",
+      "evidence": [
+        {
+          "value": "stated KO count (104, matches 104 KO numbers in si13) and gene classes, with no gene list",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "guzmanUltrafastLabelfreeQuantification2024",
+            "sha256": "aec8c783e23d75ed23906986554181419475f27b0f7440ae3592fc498ce51009",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "we applied this to analyze a yeast strain library consisting of 104 gene knockouts targeting cell cycle, proteasome, DNA damage response and kinase genes",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "wall"
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "guzmanUltrafastLabelfreeQuantification2024",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 2517475,
+        "sha256_manifest": "7a34580fb0750853060217cf6843bdfad3992c1bc3adec7c6b60ea2e03fabbb4",
+        "sha256_disk": "7a34580fb0750853060217cf6843bdfad3992c1bc3adec7c6b60ea2e03fabbb4",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 73974,
+        "sha256_manifest": "22f2384c5d2b665b351c3872884ea11bf9bd3d39d207ee911dac6dd33e07e6f0",
+        "sha256_disk": "22f2384c5d2b665b351c3872884ea11bf9bd3d39d207ee911dac6dd33e07e6f0",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 2514868,
+        "sha256_manifest": "48c25f289bb1bf2a435c841f915f5e80510b255680b23614635fea76af1689f8",
+        "sha256_disk": "48c25f289bb1bf2a435c841f915f5e80510b255680b23614635fea76af1689f8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "PGs",
+            "rows": 10812
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 16530,
+        "sha256_manifest": "61911d6661b10ba8cef81b3a1bae75c39397afbacdedde45e7cfd2d3c3b8df08",
+        "sha256_disk": "61911d6661b10ba8cef81b3a1bae75c39397afbacdedde45e7cfd2d3c3b8df08",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Experiment general settings",
+            "rows": 33
+          },
+          {
+            "sheet": "MS parameters overview",
+            "rows": 41
+          },
+          {
+            "sheet": "LC paremeters overview",
+            "rows": 30
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 1938671,
+        "sha256_manifest": "3e2ae630e941cfc37ee2ec309045b694bd0de1da49b491104287ad270267b474",
+        "sha256_disk": "3e2ae630e941cfc37ee2ec309045b694bd0de1da49b491104287ad270267b474",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "SNv18_1000ng_60min",
+            "rows": 9793
+          },
+          {
+            "sheet": "SNv18_1000ng_30min",
+            "rows": 9630
+          },
+          {
+            "sheet": "SNv18_200ng_15min",
+            "rows": 8148
+          },
+          {
+            "sheet": "SNV18_200ng_5min",
+            "rows": 6868
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 5891209,
+        "sha256_manifest": "c6fb0631df56c0d5d4c3a0640a951007ab78c31fa6005821c4c60ea745a6fbd5",
+        "sha256_disk": "c6fb0631df56c0d5d4c3a0640a951007ab78c31fa6005821c4c60ea745a6fbd5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Description",
+            "rows": 5
+          },
+          {
+            "sheet": "a. IDs Overview - METHOD OPT",
+            "rows": 42
+          },
+          {
+            "sheet": "b. PGs SNv17 - METHOD OPT",
+            "rows": 9009
+          },
+          {
+            "sheet": "c. IDs Overview - LOW INPUT",
+            "rows": 27
+          },
+          {
+            "sheet": "d.PGs Results SNv18 - LOW INPUT",
+            "rows": 7040
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 148419229,
+        "sha256_manifest": "4fe7e32094ce43fc61269b0620277c3ae1a29070618d0361660b9d495ce88d4d",
+        "sha256_disk": "4fe7e32094ce43fc61269b0620277c3ae1a29070618d0361660b9d495ce88d4d",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Key_MSAvsCtrl_5min",
+            "rows": 75
+          },
+          {
+            "sheet": "MSAvsCTRL5min_ID_pep",
+            "rows": 1
+          },
+          {
+            "sheet": "MSAvsCTRL30min_ID_pep",
+            "rows": 161891
+          },
+          {
+            "sheet": "Key_MSAvsCtrl_30min",
+            "rows": 71
+          },
+          {
+            "sheet": "MSAvsCTRL5min_IDs",
+            "rows": 7915
+          },
+          {
+            "sheet": "MSAvsCTRL30mn_IDS",
+            "rows": 9201
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 102935,
+        "sha256_manifest": "0e5bb4b78f184942e8f0f62b50840cf1703b447b01be47f0903e4d98a781f93f",
+        "sha256_disk": "0e5bb4b78f184942e8f0f62b50840cf1703b447b01be47f0903e4d98a781f93f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Experiment overview",
+            "rows": 1276
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 1725339,
+        "sha256_manifest": "45456d7ff1a4ac6220aff52005b7150c851d9f409656d1836ae4a85aa5d33627",
+        "sha256_disk": "45456d7ff1a4ac6220aff52005b7150c851d9f409656d1836ae4a85aa5d33627",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "MSMSvsRT",
+            "rows": 8879
+          },
+          {
+            "sheet": "MSMSperSec",
+            "rows": 71
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 4622031,
+        "sha256_manifest": "01970fe4f35cc216e8bcafb81701f40ca63d8cc74bacd1ec03b47502a8b91a7e",
+        "sha256_disk": "01970fe4f35cc216e8bcafb81701f40ca63d8cc74bacd1ec03b47502a8b91a7e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "SNv18_1000ng_60min",
+            "rows": 9793
+          },
+          {
+            "sheet": "SNv18_1000ng_30min",
+            "rows": 9630
+          },
+          {
+            "sheet": "SNv18_200ng_15min",
+            "rows": 8148
+          },
+          {
+            "sheet": "SNV18_200ng_5min",
+            "rows": 6868
+          },
+          {
+            "sheet": "Low amounts",
+            "rows": 7040
+          },
+          {
+            "sheet": "Single cell",
+            "rows": 5465
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 5420419,
+        "sha256_manifest": "634a514409bf358a900ce97bbfb6f98a3a6c69b7f023a5ea15ccaac27430d803",
+        "sha256_disk": "634a514409bf358a900ce97bbfb6f98a3a6c69b7f023a5ea15ccaac27430d803",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Numbers",
+            "rows": 55
+          },
+          {
+            "sheet": "Ratios",
+            "rows": 104323
+          },
+          {
+            "sheet": "MetaData",
+            "rows": 28
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.xlsx",
+        "role": "si_data",
+        "bytes": 1130485,
+        "sha256_manifest": "0a33e1eff253c7ae6fc9d5b5a7d4c40404cc00d8f70dd156068f7eef1276b67c",
+        "sha256_disk": "0a33e1eff253c7ae6fc9d5b5a7d4c40404cc00d8f70dd156068f7eef1276b67c",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Fractionation scheme_PG_all",
+            "rows": 12990
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.xlsx",
+        "role": "si_data",
+        "bytes": 19570124,
+        "sha256_manifest": "6772df03faa6c9feb1d12dfcf3230248895e0a755424403d1fe01c0f884db1b5",
+        "sha256_disk": "6772df03faa6c9feb1d12dfcf3230248895e0a755424403d1fe01c0f884db1b5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "KO PG collection ",
+            "rows": 4963
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si14.xlsx",
+        "role": "si_data",
+        "bytes": 20483367,
+        "sha256_manifest": "5859a420cc41aa1f07753614c75817b7f1c5b4230039668b313f29f4b03f243e",
+        "sha256_disk": "5859a420cc41aa1f07753614c75817b7f1c5b4230039668b313f29f4b03f243e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Key_MSAvsCtrl_5min",
+            "rows": 75
+          },
+          {
+            "sheet": "Key_MSAvsCtrl_30min",
+            "rows": 71
+          },
+          {
+            "sheet": "MSAvsCTRL5min_IDs",
+            "rows": 7915
+          },
+          {
+            "sheet": "MSAvsCTRL30mn_IDS",
+            "rows": 9201
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si15.xlsx",
+        "role": "si_data",
+        "bytes": 27888195,
+        "sha256_manifest": "bf76d45d8324f734dfe8faef1439677b9b78cd29e4a2d989d9773a6b236e2341",
+        "sha256_disk": "bf76d45d8324f734dfe8faef1439677b9b78cd29e4a2d989d9773a6b236e2341",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "CV distribution ",
+            "rows": 2001
+          },
+          {
+            "sheet": "5min_SShot",
+            "rows": 85311
+          },
+          {
+            "sheet": "15min_SShot",
+            "rows": 129952
+          },
+          {
+            "sheet": "30min_SShot",
+            "rows": 200882
+          },
+          {
+            "sheet": "60min_SShot",
+            "rows": 201161
+          }
+        ]
+      }
+    ],
+    "walls": [
+      "the protein matrix is released (si/si13.xlsx) but the strains are labeled KO1 to KO104 and no file (paper, 15 SI files, PRIDE SDRF) names the deleted gene. Recipe: request the KO-number to ORF key from the Olsen lab (#998)"
+    ]
+  },
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

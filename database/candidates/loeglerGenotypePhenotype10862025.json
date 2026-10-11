@@ -1,0 +1,183 @@
+{
+  "citation_key": "loeglerGenotypePhenotype10862025",
+  "table": "yeast",
+  "row_name": "Loegler 2025 (1,086 near telomere-to-telomere genomes)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "aggregation: the genomes are new; every one of its 8,153 traits (TableS11) is re-served from earlier releases for GWAS, so as a phenotype dataset it is an aggregation whose originals load on their own",
+      "evidence": [
+        {
+          "value": "assembly + phenotype deposit on Zenodo",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "loeglerGenotypePhenotype10862025",
+            "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Genomes and annotations, gene-based pangenome, graph-based pangenomes, SV matrix and phenotypes generated are available on Zenodo",
+          "note": null
+        },
+        {
+          "value": "phenotypes are re-used, not new (refs 19-22)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "loeglerGenotypePhenotype10862025",
+            "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "This resource complements previous phenotypic data spanning 241 colony growth traits (used here as organismal trait proxies), and 8,150 molecular traits, including transcriptomic and proteomic measurements",
+          "note": null
+        },
+        {
+          "value": "identity of ref 19 (growth traits source)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "loeglerGenotypePhenotype10862025",
+            "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "19. Peter, J. et al. Genome evolution across 1,011 Saccharomyces cerevisiae isolates.",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): 1,086-isolate near-T2T assembly set (Loegler 2025): no tier set",
+      "evidence": [
+        {
+          "value": "raw read deposit",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "loeglerGenotypePhenotype10862025",
+            "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Sequencing reads associated with this work are available at the European Nucleotide Archive under the accessions PRJEB77686 and PRJEB81147.",
+          "note": null
+        },
+        {
+          "value": "isolate count (matches 1,086 distinct names measured in TableS2)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "loeglerGenotypePhenotype10862025",
+            "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "resulting in 1,086 isolates overall",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "aggregation",
+  "aggregation": {
+    "n_source_studies": 4,
+    "attribution_field": "TableS11 Pheno_Type (Growth, Transcriptomics, Proteomics) and the paper's refs 19-22 (Peter 2018, Caudal 2024, Muenzner 2024, Teyssonniere 2024); 65 SC*/YNB* growth conditions carry no attributable source",
+    "value_origin": "derived_by_aggregator",
+    "n_sources_mirrored": 3,
+    "net_new_vs_served": null,
+    "evidence": [
+      {
+        "value": "assembly + phenotype deposit on Zenodo",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "loeglerGenotypePhenotype10862025",
+          "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "Genomes and annotations, gene-based pangenome, graph-based pangenomes, SV matrix and phenotypes generated are available on Zenodo",
+        "note": null
+      },
+      {
+        "value": "phenotypes are re-used, not new (refs 19-22)",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "loeglerGenotypePhenotype10862025",
+          "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "This resource complements previous phenotypic data spanning 241 colony growth traits (used here as organismal trait proxies), and 8,150 molecular traits, including transcriptomic and proteomic measurements",
+        "note": null
+      },
+      {
+        "value": "identity of ref 19 (growth traits source)",
+        "provenance": {
+          "source_uri": "paper.md",
+          "citation_key": "loeglerGenotypePhenotype10862025",
+          "sha256": "3d2a5caedf52019d42af7a1f2fe9a9273b2d889d60fba07c14c078ab041b0bf8",
+          "method": null,
+          "page": null,
+          "retrieved": null
+        },
+        "quote": "19. Peter, J. et al. Genome evolution across 1,011 Saccharomyces cerevisiae isolates.",
+        "note": null
+      }
+    ],
+    "sources": null
+  },
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "1,086-isolate near-T2T assembly set (Loegler 2025)",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

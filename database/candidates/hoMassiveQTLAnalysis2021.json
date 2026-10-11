@@ -1,0 +1,318 @@
+{
+  "citation_key": "hoMassiveQTLAnalysis2021",
+  "table": "yeast",
+  "row_name": "Ho 2021 (industrial traits of the RM11-1a x YJM975 segregants)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Natural variation', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "haplotype_mosaic (composed: hosts named by the paper): RM11-1a (1,011-panel isolate AAA) -> peter2018_1011_assemblies; YJM975 (1,011-panel isolate YBA) -> peter2018_1011_assemblies",
+      "evidence": [
+        {
+          "value": "genotype basis: segregants of RM11-1a x YJM975",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "hoMassiveQTLAnalysis2021",
+            "sha256": "8913bfee34532387fcd246b02d837abc1e1ea94faca3e4f4eeacca1d02cc5187",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "segregants were obtained from a cross of two phenotypically divergent S. cerevisiae strains, RM11-1a, a natural vineyard isolate",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "blocked",
+      "reason": "composed: phenotypes are released, but the genotypes come from She & Jarosz 2018, whose genotype matrix and id crosswalk were only in a Dropbox folder now deleted. Recipe in #70",
+      "evidence": [
+        {
+          "value": "per-segregant phenotypes released in Additional file 3 (OCR drops the 'fi' ligature)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "hoMassiveQTLAnalysis2021",
+            "sha256": "8913bfee34532387fcd246b02d837abc1e1ea94faca3e4f4eeacca1d02cc5187",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "segregants for the mapping experiments are included in the Additional fle 3",
+          "note": null
+        },
+        {
+          "value": "genotypes are not released by this paper; deferral to She & Jarosz",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "hoMassiveQTLAnalysis2021",
+            "sha256": "8913bfee34532387fcd246b02d837abc1e1ea94faca3e4f4eeacca1d02cc5187",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "genotypic data of the panel were obtained from She & Jarosz (2018)",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "wall"
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "haplotype_mosaic",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "RM11-1a (1,011-panel isolate AAA)",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "YJM975 (1,011-panel isolate YBA)",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "hoMassiveQTLAnalysis2021",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si_data/13068_2021_2059_MOESM1_ESM.docx",
+        "role": "si_data",
+        "bytes": 2264354,
+        "sha256_manifest": "065631dffb81bc0a6ea227203f08504eabae4d24526a1cc203724864a816c81b",
+        "sha256_disk": "065631dffb81bc0a6ea227203f08504eabae4d24526a1cc203724864a816c81b",
+        "retrieval_method": null,
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si_data/13068_2021_2059_MOESM2_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3214575,
+        "sha256_manifest": "a478e95827039498f3715f8727d256c1be24b62b5af7772fd5afb099e24e6929",
+        "sha256_disk": "a478e95827039498f3715f8727d256c1be24b62b5af7772fd5afb099e24e6929",
+        "retrieval_method": null,
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Table S1",
+            "rows": 925
+          },
+          {
+            "sheet": "Table S2",
+            "rows": 804
+          },
+          {
+            "sheet": "Table S3",
+            "rows": 679
+          },
+          {
+            "sheet": "Table S4",
+            "rows": 46
+          },
+          {
+            "sheet": "Table S5",
+            "rows": 57
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si_data/13068_2021_2059_MOESM3_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 414617,
+        "sha256_manifest": "7857557eaeb21591edf16141cb9a13c6eb4219343c05564be67808fc80256e74",
+        "sha256_disk": "7857557eaeb21591edf16141cb9a13c6eb4219343c05564be67808fc80256e74",
+        "retrieval_method": null,
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "For the mapping experiments",
+            "rows": 1153
+          },
+          {
+            "sheet": "Sheet1",
+            "rows": 0
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si_data/13068_2021_2059_MOESM4_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 4686198,
+        "sha256_manifest": "06e799f4d00c976ef3b6033ae72859807ccc7a04f8ee240bebd5aa160822875c",
+        "sha256_disk": "06e799f4d00c976ef3b6033ae72859807ccc7a04f8ee240bebd5aa160822875c",
+        "retrieval_method": null,
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Figure 1",
+            "rows": 1153
+          },
+          {
+            "sheet": "Figure 2A",
+            "rows": 679
+          },
+          {
+            "sheet": "Figure 2B",
+            "rows": 12735
+          },
+          {
+            "sheet": "Figure 2C",
+            "rows": 679
+          },
+          {
+            "sheet": "Figure 2D",
+            "rows": 649
+          },
+          {
+            "sheet": "Figure 2E",
+            "rows": 101
+          },
+          {
+            "sheet": "Figure 3",
+            "rows": 12055
+          },
+          {
+            "sheet": "Figure 4",
+            "rows": 369
+          },
+          {
+            "sheet": "Figure 5B",
+            "rows": 1153
+          },
+          {
+            "sheet": "Figure 5C",
+            "rows": 25
+          },
+          {
+            "sheet": "Figure 5D",
+            "rows": 19
+          },
+          {
+            "sheet": "Figure 5E",
+            "rows": 98
+          },
+          {
+            "sheet": "Figure 6B",
+            "rows": 1153
+          },
+          {
+            "sheet": "Figur 6C",
+            "rows": 13
+          },
+          {
+            "sheet": "Figure 6D",
+            "rows": 19
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si_data/13068_2021_2059_MOESM5_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 14164249,
+        "sha256_manifest": "d9c985b8908f3628832cbc4fe1bf97dc928611889e7ba9713277bae49a78747e",
+        "sha256_disk": "d9c985b8908f3628832cbc4fe1bf97dc928611889e7ba9713277bae49a78747e",
+        "retrieval_method": null,
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Figure S1",
+            "rows": 1153
+          },
+          {
+            "sheet": "Figure S2",
+            "rows": 12823
+          },
+          {
+            "sheet": "Figure S3",
+            "rows": 23
+          },
+          {
+            "sheet": "FIgure S4",
+            "rows": 131
+          },
+          {
+            "sheet": "Figure S5",
+            "rows": 61
+          },
+          {
+            "sheet": "Figure S6A",
+            "rows": 299549
+          },
+          {
+            "sheet": "Figure S6B",
+            "rows": 1092
+          },
+          {
+            "sheet": "Figure S7B",
+            "rows": 20
+          },
+          {
+            "sheet": "Figure S7C",
+            "rows": 23
+          }
+        ]
+      }
+    ],
+    "walls": [
+      "phenotypes are released, but the genotypes come from She & Jarosz 2018, whose genotype matrix and id crosswalk were only in a Dropbox folder now deleted. Recipe in #70"
+    ]
+  },
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

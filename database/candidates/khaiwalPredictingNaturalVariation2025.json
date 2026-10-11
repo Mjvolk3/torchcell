@@ -1,0 +1,461 @@
+{
+  "citation_key": "khaiwalPredictingNaturalVariation2025",
+  "table": "yeast",
+  "row_name": "Khaiwal 2025 (33 new phenotypes on the 1,011 panel)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: the candidate is the 33 phenotypes EV1 marks 'Not Published' and releases here; the paper's 190 other traits are re-served from four earlier studies and its model scores are predictions, so neither is part of the candidate",
+      "evidence": [
+        {
+          "value": "new antifungal measurements",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "khaiwalPredictingNaturalVariation2025",
+            "sha256": "4172e8d113c7af1db8d99fb6828aa918aa69ec4198e5f7e7ed0386a915e35b0b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "33 unpublished phenotypes of which 22 phenotypes belong to growth measured in eight different antifungal drugs",
+          "note": null
+        },
+        {
+          "value": "new cell-feature and CLS measurements",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "khaiwalPredictingNaturalVariation2025",
+            "sha256": "4172e8d113c7af1db8d99fb6828aa918aa69ec4198e5f7e7ed0386a915e35b0b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "and 11 independently measured phenotypes, including cell size, DNA content, cell flocculation frequency, and CLS measured in rapamycin which are released in this study",
+          "note": null
+        },
+        {
+          "value": "aggregation: most traits re-used (Peter 2018, De Chiara 2022, D'Angiolo 2023, Galardini 2019)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "khaiwalPredictingNaturalVariation2025",
+            "sha256": "4172e8d113c7af1db8d99fb6828aa918aa69ec4198e5f7e7ed0386a915e35b0b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "we compiled 190 published life history traits measured across the 1011 S. cerevisiae collection in four main studies",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads; Peter 2018 isolates -> peter2018_1011_assemblies resolves and reads",
+      "evidence": [
+        {
+          "value": "genotype panel",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "khaiwalPredictingNaturalVariation2025",
+            "sha256": "4172e8d113c7af1db8d99fb6828aa918aa69ec4198e5f7e7ed0386a915e35b0b",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "223 traits measured across 1011 genome-sequenced Saccharomyces cerevisiae strains",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "13 file(s) in library, 35235 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "no Phenotype subclass 'CellFeaturePhenotype' in schema.py",
+      "evidence": [],
+      "issue": 992,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "Peter 2018 isolates",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "khaiwalPredictingNaturalVariation2025",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 4092798,
+        "sha256_manifest": "250f201113c8e1dec7d49a48aa5ab889a18bb3b478068eb167423192ec5bf175",
+        "sha256_disk": "250f201113c8e1dec7d49a48aa5ab889a18bb3b478068eb167423192ec5bf175",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 1336502,
+        "sha256_manifest": "a87c735aa6ce6d2f9ae12a29b9971f4d33b55a0f2154d981a3545388ccab9e4a",
+        "sha256_disk": "a87c735aa6ce6d2f9ae12a29b9971f4d33b55a0f2154d981a3545388ccab9e4a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 2426734,
+        "sha256_manifest": "de4c39640239dcf76ac839cf2d143fc96d5b6b01907929ea0ec9f5d259722055",
+        "sha256_disk": "de4c39640239dcf76ac839cf2d143fc96d5b6b01907929ea0ec9f5d259722055",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 26
+          },
+          {
+            "sheet": "EV1-Phenotypes data",
+            "rows": 1012
+          },
+          {
+            "sheet": "EV1-Phenotypes annotation",
+            "rows": 224
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 2138541,
+        "sha256_manifest": "1941a2baf161064f83bc2a7c8ff5f133a740c8a1a61c4b8cf34a28526e70c3a8",
+        "sha256_disk": "1941a2baf161064f83bc2a7c8ff5f133a740c8a1a61c4b8cf34a28526e70c3a8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 12
+          },
+          {
+            "sheet": "EV2-Replicates variance",
+            "rows": 1012
+          },
+          {
+            "sheet": "EV2-Correlarion vs Variance",
+            "rows": 191
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 8516078,
+        "sha256_manifest": "e661d06dd93e2af81fa924e26ca9ca36bcc0a09f56dc43528b351c924b973ec0",
+        "sha256_disk": "e661d06dd93e2af81fa924e26ca9ca36bcc0a09f56dc43528b351c924b973ec0",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 14
+          },
+          {
+            "sheet": "EV3-Gene knockout phenotypes",
+            "rows": 201
+          },
+          {
+            "sheet": "EV3-Gene knockout data",
+            "rows": 4555
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 354171,
+        "sha256_manifest": "79516f09ace006fe6b58ddc5412ec16666d2803f4509d1b61e28278b796395a2",
+        "sha256_disk": "79516f09ace006fe6b58ddc5412ec16666d2803f4509d1b61e28278b796395a2",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 18
+          },
+          {
+            "sheet": "EV4- All GWAS Hits",
+            "rows": 4847
+          },
+          {
+            "sheet": "EV4- LD Filtered Hits",
+            "rows": 4584
+          },
+          {
+            "sheet": "EV4-Mutfunc predictions",
+            "rows": 15
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 423681,
+        "sha256_manifest": "8d7d97c78bfe6bbdba76af7510e1581a6a8da85af302053585b042c3c7c0fb23",
+        "sha256_disk": "8d7d97c78bfe6bbdba76af7510e1581a6a8da85af302053585b042c3c7c0fb23",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 26
+          },
+          {
+            "sheet": "EV5-Engineered strains",
+            "rows": 22
+          },
+          {
+            "sheet": "EV5- Phenotypes",
+            "rows": 8269
+          },
+          {
+            "sheet": "EV5- IntraPhenotypes comparison",
+            "rows": 14
+          },
+          {
+            "sheet": "EV-BackgroundComparisons",
+            "rows": 313
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 53245,
+        "sha256_manifest": "f72fcfb43bd8be6f917d0a003c174c56812703d2c298dbaae9e6c8cfac95e114",
+        "sha256_disk": "f72fcfb43bd8be6f917d0a003c174c56812703d2c298dbaae9e6c8cfac95e114",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 19
+          },
+          {
+            "sheet": "EV6-GWAS statistics per gene",
+            "rows": 1272
+          },
+          {
+            "sheet": "EV6-GO enrichment ",
+            "rows": 12
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 47159,
+        "sha256_manifest": "15d26f28a1340ed17734ed3010f308b3e88480be71cab592478611f4c1cfc398",
+        "sha256_disk": "15d26f28a1340ed17734ed3010f308b3e88480be71cab592478611f4c1cfc398",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 7
+          },
+          {
+            "sheet": "EV7- Modules Naturalcollection",
+            "rows": 69
+          },
+          {
+            "sheet": "EV7- Genes Naturalcollection",
+            "rows": 100
+          },
+          {
+            "sheet": "EV7- GOterm Naturalcollection",
+            "rows": 268
+          },
+          {
+            "sheet": "EV7-Modules Deletioncollection ",
+            "rows": 26
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 194294,
+        "sha256_manifest": "a7c2dd6f5b6155bf99f3b83ad8fe223b32940d8ee6f4b68b1f52d60699668c08",
+        "sha256_disk": "a7c2dd6f5b6155bf99f3b83ad8fe223b32940d8ee6f4b68b1f52d60699668c08",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Legend",
+            "rows": 12
+          },
+          {
+            "sheet": "EV8-MultiLASSO FIscores",
+            "rows": 583
+          },
+          {
+            "sheet": "EV8-Goenrich MultiLASSO",
+            "rows": 31
+          },
+          {
+            "sheet": "EV8-MultiGBM FIscores",
+            "rows": 5395
+          },
+          {
+            "sheet": "EV8-Goenrich MultiGBM",
+            "rows": 61
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 80753441,
+        "sha256_manifest": "013b79e8209295d02dbd4b06d404f04d6715fa85df5d6862b84b0278e16f82ed",
+        "sha256_disk": "013b79e8209295d02dbd4b06d404f04d6715fa85df5d6862b84b0278e16f82ed",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 1
+          },
+          {
+            "sheet": "P(AF)_scores",
+            "rows": 1012
+          },
+          {
+            "sheet": "LOF",
+            "rows": 1012
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.csv",
+        "role": "si_data",
+        "bytes": 3182,
+        "sha256_manifest": "becc6be47ddaf09e94fd2d9ef4f2cb77327f956ff66dacad8db47a509abe5cbd",
+        "sha256_disk": "becc6be47ddaf09e94fd2d9ef4f2cb77327f956ff66dacad8db47a509abe5cbd",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.pdf",
+        "role": "si_pdf",
+        "bytes": 1446063,
+        "sha256_manifest": "2d7e1de92bcc53a1535852fb1cdd5013eb0bce08a83c3f6339214e07417b537f",
+        "sha256_disk": "2d7e1de92bcc53a1535852fb1cdd5013eb0bce08a83c3f6339214e07417b537f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s44320-025-00136-y",
+    "pmid": null,
+    "accessions": [],
+    "hits": [],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "CellFeaturePhenotype",
+    "class_exists": false,
+    "unresolved_compounds": [],
+    "proposed_class": "CellFeaturePhenotype and ChronologicalLifespanPhenotype"
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

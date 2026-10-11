@@ -1,0 +1,108 @@
+{
+  "citation_key": "odonnellTelomeretotelomereAssemblies1422023",
+  "table": "yeast",
+  "row_name": "O'Donnell 2023 (telomere-to-telomere assemblies of 142 strains)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Natural variation', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): ScRAP 142-strain T2T assembly set (O'Donnell 2023): no tier set",
+      "evidence": [
+        {
+          "value": "accessions per assembly class",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "odonnellTelomeretotelomereAssemblies1422023",
+            "sha256": "af1fbc3c3bcc8d4219dc70664d0916141ff14f987137e628febf394f735fc1da",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The assembly/annotation accessions are PRJEB59413, PRJEB59129, PRJEB59231, PRJEB59232 and PRJEB59230 for unphased nuclear, HP1, HP2, HP (for polyploids) and mitochondrial assemblies, respectively.",
+          "note": null
+        },
+        {
+          "value": "assembly count (matches the 197 rows measured in Supp Table 1)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "odonnellTelomeretotelomereAssemblies1422023",
+            "sha256": "af1fbc3c3bcc8d4219dc70664d0916141ff14f987137e628febf394f735fc1da",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The panel comprises 197 nuclear and 136 mitochondrial genome assemblies, including 100 newly sequenced genomes",
+          "note": null
+        },
+        {
+          "value": "strains chosen from the Peter 2018 panel (overlap)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "odonnellTelomeretotelomereAssemblies1422023",
+            "sha256": "af1fbc3c3bcc8d4219dc70664d0916141ff14f987137e628febf394f735fc1da",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The rationale for the selection of the 100 strains de novo sequenced in this study was based mainly on the knowledge gained from the 1,011 genome project",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "ScRAP 142-strain T2T assembly set (O'Donnell 2023)",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

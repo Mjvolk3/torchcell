@@ -1,0 +1,132 @@
+{
+  "citation_key": "deloacheEnzymecoupledBiosensorEnables2015",
+  "table": "yeast",
+  "row_name": "DeLoache 2015 (betaxanthin biosensor for (S)-reticuline)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Metabolite / precursor', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads",
+      "evidence": [
+        {
+          "value": "host strain",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "deloacheEnzymecoupledBiosensorEnables2015",
+            "sha256": "9eef4f50c4b49de068087ace81fd5502db09ba5d5daeb3846a3d64ba4ee86fec",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The base S. cerevisiae strain for all experiments in this article was BY4741",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "blocked",
+      "reason": "composed: SI Table 1 lists 54 strains with construct GenBank accessions and 0 phenotype values; fluorescence and LC/MS titers are figure-only and the mutant library was screened by eye. Recipe: author request (#996)",
+      "evidence": [
+        {
+          "value": "the variant library was screened by visual inspection, so no per-variant signal was ever recorded for the library",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "deloacheEnzymecoupledBiosensorEnables2015",
+            "sha256": "9eef4f50c4b49de068087ace81fd5502db09ba5d5daeb3846a3d64ba4ee86fec",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "the most intensely yellow colonies were isolated for further analysis",
+          "note": null
+        },
+        {
+          "value": "only six first-round mutants carry a released genotype, which is why the loadable unit is a strain panel and not a library",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "deloacheEnzymecoupledBiosensorEnables2015",
+            "sha256": "9eef4f50c4b49de068087ace81fd5502db09ba5d5daeb3846a3d64ba4ee86fec",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "We narrowed our set of hits to six by removing duplicate genotypes",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "wall"
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G3 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "deloacheEnzymecoupledBiosensorEnables2015",
+    "trees_read": [
+      "library"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 19971212,
+        "sha256_manifest": "fa5922dc23976e7c9edbf4cdce8e37141ff1074196191b80804760e7c902779b",
+        "sha256_disk": "fa5922dc23976e7c9edbf4cdce8e37141ff1074196191b80804760e7c902779b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      }
+    ],
+    "walls": [
+      "SI Table 1 lists 54 strains with construct GenBank accessions and 0 phenotype values; fluorescence and LC/MS titers are figure-only and the mutant library was screened by eye. Recipe: author request (#996)"
+    ]
+  },
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

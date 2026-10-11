@@ -1,0 +1,82 @@
+{
+  "citation_key": "zhangCombiningMechanisticMachine2020",
+  "table": "yeast",
+  "row_name": "Zhang 2020 (combinatorial promoter library for tryptophan)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Metabolite / precursor', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "blocked",
+      "reason": "assembly_set (composed: hosts named by the paper): CEN.PK2-1C: no tier set",
+      "evidence": [
+        {
+          "value": "host background",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "zhangCombiningMechanisticMachine2020",
+            "sha256": "56c4b1ec3e1c916cb491dddfe3fd08d86d513b2d943fde82efe1186fed12b15f",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "S. cerevisiae strains were derived from CEN.PK2-1C",
+          "note": null
+        }
+      ],
+      "issue": null,
+      "blocked_kind": "provision"
+    },
+    {
+      "gate": "G3",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "unmeasured",
+      "reason": "not evaluated: G2 stopped the run",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "absent_provisionable",
+    "hosts": [
+      {
+        "name": "CEN.PK2-1C",
+        "assembly_set": null,
+        "resolvable": false,
+        "readable": false
+      }
+    ]
+  },
+  "g3": null,
+  "g4_key": null,
+  "g4_value": null,
+  "g5": null,
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+}

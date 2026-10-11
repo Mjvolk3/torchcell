@@ -132,7 +132,9 @@ def store_cells(data_root: str) -> dict[tuple[str, int], float]:
     return cells
 
 
-def compare(cells: dict[tuple[str, int], float], frame: pd.DataFrame) -> dict[str, Any]:
+def compare(
+    cells: dict[tuple[str, int], float], frame: pd.DataFrame, *, by_orf: bool
+) -> dict[str, Any]:
     """Join on (ORF, column); correlations and the equal / negated counts."""
     ours: list[float] = []
     theirs: list[float] = []
@@ -165,7 +167,11 @@ def compare(cells: dict[tuple[str, int], float], frame: pd.DataFrame) -> dict[st
         "spearman": float(a.corr(b, method="spearman")),
         "equal": int(((a - b).abs() <= tolerance).sum()),
         "negated": int(negated.sum()),
-        "not_negated_cells_by_orf": dict(sorted(not_negated.items())),
+        # only for the curated values, which are a sign flip of the release; the NPV
+        # is a rescaling, so none of its cells is a negation
+        "not_negated_cells_by_orf": dict(sorted(not_negated.items()))
+        if by_orf
+        else None,
     }
 
 
@@ -188,7 +194,11 @@ def main() -> None:
     }
     for key, (filename, sha256) in YP_FILES.items():
         frame = read_yp(args.yp_dir / filename, sha256)
-        results[key] = {"file": filename, "sha256": sha256, **compare(cells, frame)}
+        results[key] = {
+            "file": filename,
+            "sha256": sha256,
+            **compare(cells, frame, by_orf=key == "value"),
+        }
     os.makedirs(RESULTS, exist_ok=True)
     out = osp.join(RESULTS, "parsons2006_yeastphenome_crosscheck.json")
     with open(out, "w") as handle:

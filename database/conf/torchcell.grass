@@ -265,6 +265,15 @@ node.Genome {
   caption: "{strain}";
 }
 
+node.GenomeArchitecturePhenotype {
+  color: #E1D5E7;
+  border-color: #9673A6;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
 node.Genotype {
   color: #FFE6CC;
   border-color: #D79B00;

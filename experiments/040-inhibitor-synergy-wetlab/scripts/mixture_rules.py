@@ -62,6 +62,7 @@ from __future__ import annotations
 import os
 import os.path as osp
 from itertools import combinations
+from typing import Any
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -194,21 +195,44 @@ def box(ax: plt.Axes) -> None:
 
 
 def panel_letters(fig: plt.Figure, axes: list[plt.Axes] | np.ndarray) -> None:
-    """Nature panel letters: 8 pt bold lowercase at each panel's top-left, outside."""
-    fig.canvas.draw()
-    for letter, ax in zip("abcdefghijklmnop", axes, strict=False):
-        bbox = ax.get_tightbbox(fig.canvas.get_renderer()).transformed(
-            fig.transFigure.inverted()
-        )
+    """Nature panel letters: 8 pt bold lowercase, outside each panel's top-left.
+
+    THE GOTCHA THIS GUARDS. A letter placed above a panel whose title already touches
+    the canvas top lands OUTSIDE the figure, and the export (true size, no tight
+    bounding box, by design) clips it without a warning. So the top margin is
+    shrunk until every letter fits, and the extents are checked after placement:
+    a letter outside the canvas raises instead of disappearing.
+    """
+    flat = list(np.ravel(axes))
+    letter_h = (
+        8.0 / 72.0 / fig.get_figheight() * 1.4
+    )  # 8 pt plus leading, in figure units
+    boxes: list[Any] = []
+    for _ in range(8):
+        fig.canvas.draw()
+        inv = fig.transFigure.inverted()
+        boxes = [
+            ax.get_tightbbox(fig.canvas.get_renderer()).transformed(inv) for ax in flat
+        ]
+        overflow = max(b.y1 for b in boxes) + letter_h - 1.0
+        if overflow <= 0:
+            break
+        fig.subplots_adjust(top=fig.subplotpars.top - overflow - 0.005)
+    texts = [
         fig.text(
-            bbox.x0,
-            bbox.y1,
-            letter,
-            fontsize=8,
-            fontweight="bold",
-            ha="left",
-            va="bottom",
+            b.x0, b.y1, letter, fontsize=8, fontweight="bold", ha="left", va="bottom"
         )
+        for letter, b in zip("abcdefghijklmnop", boxes, strict=False)
+    ]
+    fig.canvas.draw()
+    inv = fig.transFigure.inverted()
+    for t in texts:
+        ext = t.get_window_extent(fig.canvas.get_renderer()).transformed(inv)
+        if ext.y1 > 1.0 or ext.x0 < 0.0:
+            raise RuntimeError(
+                f"panel letter {t.get_text()!r} lies outside the canvas "
+                f"(x0 {ext.x0:.3f}, y1 {ext.y1:.3f}); widen the top margin"
+            )
 
 
 def tenth_grid(ax: plt.Axes, axis: str) -> None:

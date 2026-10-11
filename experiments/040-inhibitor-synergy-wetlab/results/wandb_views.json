@@ -1,0 +1,89 @@
+{
+  "view": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab?nw=n94xqhmif86",
+  "groups": {
+    "mix_van_ex21_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L1_lh1",
+      "run_ids": [
+        "q0nho5ky",
+        "akivv1rs",
+        "1th34s39",
+        "tahoxszw",
+        "j6ler48w"
+      ]
+    },
+    "mix_van_anchors_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_anchors_film_L1_lh1",
+      "run_ids": [
+        "zmd6c0g3",
+        "tn0f82v0",
+        "ogq3goqa",
+        "rl5kisbw",
+        "udna0mtz"
+      ]
+    },
+    "mix_van_ex21_off_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_off_L1_lh1",
+      "run_ids": [
+        "0m9c9gbn",
+        "noitzjlc",
+        "2394dujn",
+        "ql3giy2p",
+        "fth0vgr6",
+        "yvi5gx0s",
+        "1ynsxxq1",
+        "dlngd5kh",
+        "c0t89ahg"
+      ]
+    },
+    "mix_van_anchors_off_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_anchors_off_L1_lh1",
+      "run_ids": [
+        "15h2zz6r",
+        "qp51ewip",
+        "0448w797",
+        "su0cx87k",
+        "492fofii"
+      ]
+    },
+    "mix_van_ft_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ft_film_L1_lh1",
+      "run_ids": [
+        "n9u11up1",
+        "atwjs3x4",
+        "u8ffi86o",
+        "gb609a9i",
+        "0q81f2en",
+        "ax90kpry",
+        "f7x2u5tc"
+      ]
+    },
+    "mix_van_ftenv_film_L1_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ftenv_film_L1_lh1",
+      "run_ids": [
+        "kh8zj3ww",
+        "khdg422q",
+        "a5yics6r",
+        "uu2gh4g0",
+        "d4y6xtxa",
+        "5ptdce7f",
+        "yoqsmnkb"
+      ]
+    },
+    "mix_van_ex21_film_L2_lh1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L2_lh1",
+      "run_ids": [
+        "rgti88pm",
+        "8mvycax2",
+        "0rp24blc",
+        "6ze206in"
+      ]
+    },
+    "mix_van_ex21_film_L1_lh0p1": {
+      "url": "https://wandb.ai/zhao-group/torchcell_040-inhibitor-synergy-wetlab/groups/mix_van_ex21_film_L1_lh0p1",
+      "run_ids": [
+        "91dogz66",
+        "pixafxli"
+      ]
+    }
+  }
+}

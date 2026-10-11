@@ -700,6 +700,13 @@ them to the best of the plot's ability (some plots legitimately deviate — say 
   the "Ontology" heading. The tool widens a grown label in proportion, but only for cells
   with no stroke and no fill, where a wider box is invisible. **Always re-render and look
   after a size change; the audit passing is not evidence the figure is intact.**
+- **Panel letters must stay inside the canvas, and the export will not tell you.** A letter
+  placed above a panel whose title already touches the top edge lands at y > 1 in figure
+  units, and the true-size export (no `bbox_inches="tight"`, by design) clips it silently.
+  Never place a letter with a bare `fig.text` above a panel: use a helper that shrinks the
+  top margin until every letter fits and raises if any text extent leaves the canvas
+  (`panel_letters` in `experiments/040-inhibitor-synergy-wetlab/scripts/mixture_rules.py`),
+  then look at the PNG's top edge before reporting.
 - **Export true-size SVG** via `torchcell.utils.savefig_true_size_svg(fig, path)` so it
   imports at true mm in draw.io (it rescales matplotlib's 72-dpi points to draw.io's
   100-units/inch). Do NOT pass `bbox_inches="tight"` on a fixed-width panel — it

@@ -61,7 +61,7 @@ and accuracy 0.810 against Loewe's 0.958 and 0.825, worst-scenario Spearman 0.67
 (RMSE 0.148 against Loewe 0.208 and Bliss 0.259). It does not replace Loewe for the
 growth boundary.
 
-![](assets/images/040-inhibitor-synergy-wetlab/rule_choice_2026-10-10-23-44-34.svg)
+![](assets/images/040-inhibitor-synergy-wetlab/rule_choice_2026-10-10-23-56-14.svg)
 
 Left: observed pair fitness (black) against Bliss (orange squares) and Loewe (blue
 triangles) from the ex21 fits, grouped by chemical class; the dotted line is tau. Right:

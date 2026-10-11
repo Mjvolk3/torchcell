@@ -77,6 +77,9 @@ def _pins_from_constants(
             m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
             m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
         },
+        "InductionTimecourseHackett2020Dataset": lambda: {
+            name: m.RAW_SHA256[name] for name in m.RAW_FILES
+        },
         "IsolateGrowthPeter2018Dataset": lambda: {
             m.PHENO_NAME: m.PHENO_SHA256,
             m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),

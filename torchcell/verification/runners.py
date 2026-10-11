@@ -41,6 +41,7 @@ import os.path as osp
 import pickle
 from collections import Counter
 from collections.abc import Callable, Mapping, Sequence
+from pathlib import Path
 from typing import Any, NamedTuple, cast
 
 import lmdb
@@ -78,6 +79,7 @@ from torchcell.verification.gene_interaction import (
     pair_key,
     verify_gene_interaction_dataset,
 )
+from torchcell.verification.induction_timecourse import verify_induction_timecourse
 from torchcell.verification.levels import l4_cross_source
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
@@ -393,6 +395,73 @@ def run_expression(data_root: str) -> bool:
             data_root, EXPRESSION_DATASETS[name]["root"], "preprocess"
         )
         out = _write_report(report, report_dir)
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
+# Induction time-course expression (Hackett 2020 IDEA, yeast wave 2): two-colour arrays
+# of a chemostat time course after one regulator is induced. Not the microarray family:
+# no deletion to orient against, a different platform gene universe, and every record
+# re-read against two releases (the IDEA site table and Dataset EV2) plus EV1 and GEO.
+# --------------------------------------------------------------------------- #
+INDUCTION_TIMECOURSE_DATASETS: dict[str, dict[str, Any]] = {
+    "induction_timecourse_hackett2020": {
+        "root": "data/torchcell/induction_timecourse_hackett2020",
+        # 217 IDEA courses x their arrays (1,693) minus the 3 courses whose strain has
+        # no Table EV1 row (21 arrays), plus the 10 validation courses (80 arrays).
+        "expected_count": 1752,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/hackettLearningCausalNetworks2020/data/"
+                "idea_tall_expression_data.zip (IDEA site bucket) and si/"
+                "MSB-16-e9174-s006.xlsx (Dataset EV2), strains from si/"
+                "MSB-16-e9174-s002.xls (Table EV1)"
+            ),
+            citation_key="hackettLearningCausalNetworks2020",
+            sha256="2fec89f98c602049f2964ca80821d540b50e579fe799d8694fd742731830accc",
+            method=(
+                "one InductionTimecourseExpressionExperiment per (time course, time "
+                "point): the cleaned log2 ratio vs the same culture at t = 0 with the "
+                "authors' noise SD, plus the channel medians and the unprocessed, "
+                "thresholded, selected and shrunken layers; genotype = the inducible "
+                "promoter insertion of Table EV1 on a typed strain background; "
+                "environment = the limited chemostat at duration_hours after 1 uM "
+                "beta-estradiol"
+            ),
+            page="Mol Syst Biol 16:e9174 (doi:10.15252/msb.20199174); Methods; Appendix",
+        ),
+    }
+}
+
+
+def verify_induction_timecourse_dataset(
+    name: str, data_root: str, abs_root: str | None = None
+) -> VerificationReport:
+    """One INDUCTION_TIMECOURSE_DATASETS entry's report (written by the caller)."""
+    spec = INDUCTION_TIMECOURSE_DATASETS[name]
+    root = abs_root or osp.join(data_root, spec["root"])
+    return verify_induction_timecourse(
+        lambda: stream_records(root),
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        raw_dir=Path(root) / "raw",
+        preprocess_dir=Path(root) / "preprocess",
+        library_root=Path(data_root) / "torchcell-library",
+        data_root=Path(data_root),
+        sgd_genes=_sgd_gene_set(data_root),
+    )
+
+
+def run_induction_timecourse(data_root: str) -> bool:
+    """Verify induction time-course expression datasets (L0-L4). True if all pass."""
+    all_passed = True
+    for name, spec in INDUCTION_TIMECOURSE_DATASETS.items():
+        report = verify_induction_timecourse_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")
         all_passed = all_passed and report.passed
@@ -4399,6 +4468,7 @@ def run_all(data_root: str) -> bool:
     """Run every dataset-family verification. True only if all pass."""
     expression_ok = run_expression(data_root)
     expression_score_ok = run_expression_score(data_root)
+    induction_ok = run_induction_timecourse(data_root)
     morphology_ok = run_morphology(data_root)
     morphology_ohnuki_ok = run_morphology_ohnuki(data_root)
     ohnuki_ok = run_ohnuki_morphology(data_root)
@@ -4424,6 +4494,7 @@ def run_all(data_root: str) -> bool:
     return (
         expression_ok
         and expression_score_ok
+        and induction_ok
         and morphology_ok
         and morphology_ohnuki_ok
         and ohnuki_ok

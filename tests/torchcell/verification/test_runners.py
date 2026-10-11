@@ -24,7 +24,7 @@ Derived expectations: LMDB iterates keys in byte order, so eleven records writte
 ``"0"``..``"10"`` come back as 0, 1, 10, 2, ..., 9. An expression L4 with reference universe
 {A, B, C} and other universe {A, B, C, D} has ``n_overlap`` 4 and one disagreement,
 ``{"entity": "D", "a": 0.0, "b": 1.0, "diff": 1.0}``. A gene containment of {A, B, D} in
-Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls twenty-four family
+Ohya's {A, B, C} is 2/3 = 0.667 against the 0.90 floor. ``run_all`` calls twenty-five family
 runners in a fixed order (``RUN_ALL_ORDER``, which is the list this module stubs) and
 evaluates every one before combining with ``and``.
 
@@ -160,6 +160,8 @@ RUN_ALL_ORDER = [
     "run_expression",
     # #1022: the error-model microarray score family, beside the log-ratio one.
     "run_expression_score",
+    # Hackett 2020 IDEA: the induction time-course family, called after expression.
+    "run_induction_timecourse",
     "run_morphology",
     "run_morphology_ohnuki",
     "run_ohnuki_morphology",
@@ -2203,6 +2205,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.NATURAL_ISOLATE_DATASETS,
         runners.PSEUDOBULK_UMI_COUNT_DATASETS,
         runners.GENOME_ARCHITECTURE_DATASETS,
+        runners.INDUCTION_TIMECOURSE_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
@@ -2228,6 +2231,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 3  # NATURAL_ISOLATE_DATASETS
         + 1  # PSEUDOBULK_UMI_COUNT_DATASETS
         + 1  # GENOME_ARCHITECTURE_DATASETS
+        + 1  # INDUCTION_TIMECOURSE_DATASETS
     )
     assert all(
         isinstance(spec["provenance"], Provenance)

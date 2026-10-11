@@ -573,6 +573,15 @@ case "$STAGE" in
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
           EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
+  # The expression arms again with the pooled readout (see the arm script): 24 tasks.
+  #   sbatch -J 019-morph1w3-exprpool -p cabbi ... --array=0-23%8 --export=ALL,W5_STAGE=morph_v24_expr_pool,...
+  morph_v24_expr_pool) JOBS=()
+          for arm in CMP_expr CMP_exprperm; do for s in 0 1 2 3 4 5 6 7 8 9 10 11; do
+            JOBS+=("${arm}_s${s}:0")
+          done; done
+          JOBS_EXPLICIT=1
+          RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24
+          EXTRA_OV="trainer.max_epochs=1200 data_module.batch_size=128 +data_module.materialize=true data_module.persistent_workers=true" ;;
   morph_v24_pool) JOBS=("M_pool_s0:0" "M_pool_s1:0" "M_pool_s2:0")
           JOBS_EXPLICIT=1
           RUNS_PER_GPU=1; STAGE_CONFIG=cgt_morph_v24

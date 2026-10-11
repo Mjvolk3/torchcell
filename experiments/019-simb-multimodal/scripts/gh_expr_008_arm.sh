@@ -743,6 +743,27 @@ case "$ARM" in
                                 "multitask.standardize_per_feature_target=[per_gene]"
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(morph-cls reveal-expression-permuted "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  # The conditioned morphology arms must read the GENE POOL: the observed-label encoder
+  # writes the revealed labels into the gene tokens after the perturbation step (model
+  # forward, step 5c), so a CLS-only global head never sees them, and CM_expr against
+  # CM_exprperm came out identical by construction (+0.0001 over twelve seeds, v24 wave 2).
+  # CMP_expr and CMP_exprperm repeat the expression arms with the pool; MP_cls, CM_prot and
+  # CM_protperm carry it from the start.
+  CMP_expr_s[0-9]|CMP_expr_s1[01])
+                     OVERRIDES=(multitask.heads.global.use_gene_pool=true
+                                "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                "cell_dataset.require_modalities=[expression_log2_ratio,calmorph]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-pool reveal-expression "split${ARM##*_s}" morphology stage-morph round-morph) ;;
+  CMP_exprperm_s[0-9]|CMP_exprperm_s1[01])
+                     OVERRIDES=(multitask.heads.global.use_gene_pool=true
+                                "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
+                                multitask.condition_permute=true
+                                "cell_dataset.require_modalities=[expression_log2_ratio,calmorph]"
+                                "multitask.standardize_per_feature_target=[per_gene]"
+                                data_module.split_seed="${ARM##*_s}")
+                     ARM_TAGS=(morph-pool reveal-expression-permuted "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   # THE PROTEOME-REVEALED MORPHOLOGY ARMS (2026-10-10), on the fig3_morph_proteome store
   # (expression panels + Messner 2023 + Ohya 2005; 4,281 genotypes carry proteome and
   # morphology). MP_cls is genotype only on exactly those strains, the paired control for
@@ -751,11 +772,13 @@ case "$ARM" in
   # abundance as S_prot does; it is input, not scored.
   MP_cls_s[0-9]|MP_cls_s1[01])
                      OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                multitask.heads.global.use_gene_pool=true
                                 "cell_dataset.require_modalities=[protein_abundance,calmorph]"
                                 data_module.split_seed="${ARM##*_s}")
                      ARM_TAGS=(morph-cls genotype-only proteome-strains "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   CM_prot_s[0-9]|CM_prot_s1[01])
                      OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                multitask.heads.global.use_gene_pool=true
                                 "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
                                 "multitask.head_phenotypes.per_gene=[protein_abundance]" multitask.head_phenotype_names.per_gene=proteome
                                 "multitask.standardize_per_feature_target=[per_gene]"
@@ -764,6 +787,7 @@ case "$ARM" in
                      ARM_TAGS=(morph-cls reveal-proteome "split${ARM##*_s}" morphology stage-morph round-morph) ;;
   CM_protperm_s[0-9]|CM_protperm_s1[01])
                      OVERRIDES=(cell_dataset.query_file=fig3_morph_proteome.cql cell_dataset.dataset_tag=fig3_morph_proteome
+                                multitask.heads.global.use_gene_pool=true
                                 "multitask.active_heads=[per_gene,global]" multitask.condition_head=per_gene
                                 multitask.condition_permute=true
                                 "multitask.head_phenotypes.per_gene=[protein_abundance]" multitask.head_phenotype_names.per_gene=proteome

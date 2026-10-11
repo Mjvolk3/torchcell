@@ -134,15 +134,6 @@
     <span class="n">morphology_assay</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.calmorph_labels</span><span class="w"> </span><span class="kn">import</span> <span class="n">CALMORPH_LABELS</span><span class="p">,</span> <span class="n">CALMORPH_STATISTICS</span>
-
-<span class="c1"># --- begin ADDITIVE (Puddu 2019 genome architecture): the WGS architecture family ---</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.genome_architecture_features</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ArchitectureAssay</span><span class="p">,</span>
-    <span class="n">ArchitectureBasis</span><span class="p">,</span>
-    <span class="n">architecture_assay</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># --- end ADDITIVE (Puddu 2019 genome architecture) ---</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.pydant</span><span class="w"> </span><span class="kn">import</span> <span class="n">ModelStrict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.verification.sourced</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProvenanceGap</span><span class="p">,</span> <span class="n">SourcedValue</span>
 
@@ -9529,217 +9520,6 @@
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1"># GENOME ARCHITECTURE BLOCK START (Puddu 2019, yeast expansion row 7)</span>
-<span class="c1"># The REALIZED genome content of one sequenced sample: repeat-array and replicon copy</span>
-<span class="c1"># numbers, per-chromosome copy number, a telomere-length proxy and a rearrangement</span>
-<span class="c1"># count, each read off whole-genome sequencing coverage.</span>
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1">#: How far a record's ``ANtot`` aggregate may differ from the sum of its own</span>
-<span class="c1">#: per-chromosome deviations before the record is refused. The aggregate is the source's</span>
-<span class="c1">#: own column and the per-chromosome values are the source's own columns, so the identity</span>
-<span class="c1">#: is a property of the RELEASE, not of this schema: measured over all 8,843 released</span>
-<span class="c1">#: Puddu 2019 colonies the largest disagreement is 3.1e-15, i.e. float noise.</span>
-<span class="n">PLOIDY_DEVIATION_ATOL</span> <span class="o">=</span> <span class="mf">1e-6</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitecturePhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One sequenced sample's genome-architecture profile, keyed by its assay's symbols.</span>
-
-<span class="sd">    The quantity is the genome content the sequencing FOUND, as distinct from the edit</span>
-<span class="sd">    the strain was designed to carry: a kanMX deletion strain of the yeast knockout</span>
-<span class="sd">    collection is designed as one absent ORF and is realized as that ORF plus whatever</span>
-<span class="sd">    repeat expansion, plasmid or mitochondrial copy-number change, aneuploidy and</span>
-<span class="sd">    chromosomal rearrangement the collection accumulated. Puddu et al. 2019 (Nature</span>
-<span class="sd">    573:416) measured exactly that for 8,843 colonies of the homozygous diploid</span>
-<span class="sd">    collection, so the designed perturbation lives in ``Genotype`` and this phenotype</span>
-<span class="sd">    carries the realized architecture.</span>
-
-<span class="sd">    Why its own class rather than a field on an existing one. ``CalMorphPhenotype`` and</span>
-<span class="sd">    ``BacterialMorphologyPhenotype`` hold the right SHAPE (named per-sample values plus a</span>
-<span class="sd">    dispersion map) and the wrong quantities: both are microscopy morphology vocabularies</span>
-<span class="sd">    and neither can express a copy number per haploid genome. Nothing already in the</span>
-<span class="sd">    schema carries a per-chromosome copy number at all, which is why the Hoepfner 2014</span>
-<span class="sd">    background records a typed gap reading "The schema has no per-chromosome copy number,</span>
-<span class="sd">    so the aneuploidy and the amplification cannot be recorded per strain". This class is</span>
-<span class="sd">    additive: no served record changes.</span>
-
-<span class="sd">    Key semantics, which is the whole point of the class:</span>
-
-<span class="sd">    - ``assay`` names an :class:`~torchcell.datamodels.genome_architecture_features.ArchitectureAssay`</span>
-<span class="sd">      in ``GENOME_ARCHITECTURE_ASSAYS``, and that assay's symbols are the only permitted</span>
-<span class="sd">      keys. Every symbol DECLARES its unit basis there, because the numbers in one record</span>
-<span class="sd">      are not in one unit: a repeat copy number is per haploid genome, mtDNA and a plasmid</span>
-<span class="sd">      are per cell, a chromosome copy number is per cell with 2.0 as the diploid baseline,</span>
-<span class="sd">      and a telomere proxy is reads per million. A consumer that averages across keys is</span>
-<span class="sd">      averaging quantities the source never claimed were comparable.</span>
-<span class="sd">    - A record carries the features its sample was MEASURED for, not necessarily the whole</span>
-<span class="sd">      vocabulary: ``required`` coverage is the loader's statement, not this class's.</span>
-<span class="sd">    - ``genome_architecture_sd`` is the dispersion of the same symbols when the stored</span>
-<span class="sd">      value is a mean over samples (the wild-type reference profile), with</span>
-<span class="sd">      ``uncertainty_type`` naming WHAT that number is and ``n_samples`` /``sample_unit``</span>
-<span class="sd">      the design behind it. It is ``None`` for a single sequenced sample, which has no</span>
-<span class="sd">      dispersion.</span>
-<span class="sd">    - ``sample_id`` and ``sample_accession`` identify the sequenced sample the numbers</span>
-<span class="sd">      came from (the colony id and its archive accession). They are part of the</span>
-<span class="sd">      measurement: two colonies of one strain are two samples, never two replicates to be</span>
-<span class="sd">      averaged, and the accession is what makes the stored number traceable to the reads.</span>
-<span class="sd">    """</span>
-
-    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"global"</span>
-    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
-    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"genome_architecture_sd"</span>
-    <span class="n">assay</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the registered genome-architecture assay whose vocabulary names "</span>
-        <span class="s2">"the keys (a key of "</span>
-        <span class="s2">"torchcell.datamodels.genome_architecture_features.GENOME_ARCHITECTURE_ASSAYS)"</span>
-    <span class="p">)</span>
-    <span class="n">genome_architecture</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"per-sample values keyed by the assay's own symbol; each symbol's "</span>
-        <span class="s2">"unit basis is declared by the assay, so keys are never pooled"</span><span class="p">,</span>
-        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">genome_architecture_sd</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"dispersion of the same symbols when the value is a mean over "</span>
-        <span class="s2">"samples; None for a single sequenced sample"</span><span class="p">,</span>
-        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">uncertainty_type</span><span class="p">:</span> <span class="n">UncertaintyType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"what the numbers in genome_architecture_sd ARE; required with them"</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">n_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"samples the stored values are taken over"</span>
-    <span class="p">)</span>
-    <span class="n">sample_unit</span><span class="p">:</span> <span class="n">SampleUnit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">"what one sample in n_samples physically is"</span>
-    <span class="p">)</span>
-    <span class="n">sample_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the source's own identifier of the sequenced sample, verbatim "</span>
-        <span class="s2">"(Puddu's colony id 'SD0863b'); None for a profile that is not one sample"</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="n">sample_accession</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-        <span class="n">description</span><span class="o">=</span><span class="s2">"the sequence-archive accession of that sample, verbatim "</span>
-        <span class="s2">"('ERS838232'); None when the source releases none"</span><span class="p">,</span>
-    <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Summary repr instead of dumping the per-feature dict."""</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"GenomeArchitecturePhenotype(assay=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="si">!r}</span><span class="s2">, "</span>
-            <span class="sa">f</span><span class="s2">"features=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">)</span><span class="si">}</span><span class="s2">, sample_id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sample_id</span><span class="si">!r}</span><span class="s2">)"</span>
-        <span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">assay_vocabulary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArchitectureAssay</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""The assay this record names, which is the authority on its keys."""</span>
-        <span class="k">return</span> <span class="n">architecture_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
-
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">validate_against_the_assay</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"GenomeArchitecturePhenotype"</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Keys belong to the named assay, values fit their basis, aggregates agree.</span>
-
-<span class="sd">        The assay lookup raises on an unregistered name, so a record can never be</span>
-<span class="sd">        written against a vocabulary this version of the schema does not hold.</span>
-<span class="sd">        """</span>
-        <span class="n">assay</span> <span class="o">=</span> <span class="n">architecture_assay</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"genome_architecture cannot be empty (assay </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">assay</span><span class="si">!r}</span><span class="s2">)"</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_keys</span><span class="p">(</span><span class="s2">"genome_architecture"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">,</span> <span class="n">assay</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">assay</span><span class="o">.</span><span class="n">validate_value</span><span class="p">(</span><span class="n">symbol</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_check_keys</span><span class="p">(</span>
-                <span class="s2">"genome_architecture_sd"</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span><span class="p">,</span> <span class="n">assay</span>
-            <span class="p">)</span>
-            <span class="k">for</span> <span class="n">symbol</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture_sd</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="sa">f</span><span class="s2">"genome_architecture_sd[</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2">] must be a finite "</span>
-                        <span class="sa">f</span><span class="s2">"non-negative dispersion, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span>
-                    <span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">"genome_architecture_sd needs uncertainty_type to say what the "</span>
-                    <span class="s2">"number is (a sample SD and a standard error convert differently)"</span>
-                <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">uncertainty_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"uncertainty_type names the kind of a dispersion this record does not "</span>
-                <span class="s2">"carry; leave it None"</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_ploidy_deviation</span><span class="p">(</span><span class="n">assay</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_keys</span><span class="p">(</span>
-        <span class="n">field</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">assay</span><span class="p">:</span> <span class="n">ArchitectureAssay</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Every key is a feature of the named assay."""</span>
-        <span class="n">permitted</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span><span class="n">assay</span><span class="o">.</span><span class="n">by_symbol</span><span class="p">)</span>
-        <span class="n">outside</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="n">permitted</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">outside</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">field</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">outside</span><span class="si">}</span><span class="s2"> are not features of assay </span><span class="si">{</span><span class="n">assay</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">; it "</span>
-                <span class="sa">f</span><span class="s2">"declares </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">permitted</span><span class="p">)</span><span class="si">}</span><span class="s2"> symbols"</span>
-            <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_check_ploidy_deviation</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">assay</span><span class="p">:</span> <span class="n">ArchitectureAssay</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""A stored ploidy-deviation aggregate equals the deviations it aggregates.</span>
-
-<span class="sd">        Only checked when the record carries BOTH the aggregate and every chromosome it</span>
-<span class="sd">        sums over: a reference profile that states the aggregate alone is stating what</span>
-<span class="sd">        the source published, not a derived sum.</span>
-<span class="sd">        """</span>
-        <span class="n">aggregates</span> <span class="o">=</span> <span class="n">assay</span><span class="o">.</span><span class="n">symbols_with_basis</span><span class="p">(</span><span class="n">ArchitectureBasis</span><span class="o">.</span><span class="n">ploidy_deviation_units</span><span class="p">)</span>
-        <span class="n">chromosomes</span> <span class="o">=</span> <span class="n">assay</span><span class="o">.</span><span class="n">symbols_with_basis</span><span class="p">(</span>
-            <span class="n">ArchitectureBasis</span><span class="o">.</span><span class="n">chromosome_copies_per_cell</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">aggregates</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">chromosomes</span> <span class="o">&lt;=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">):</span>
-            <span class="k">return</span>
-        <span class="n">expected</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
-            <span class="nb">abs</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span> <span class="o">-</span> <span class="mf">2.0</span><span class="p">)</span> <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">chromosomes</span>
-        <span class="p">)</span>
-        <span class="k">for</span> <span class="n">symbol</span> <span class="ow">in</span> <span class="n">aggregates</span> <span class="o">&amp;</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">):</span>
-            <span class="n">stored</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">genome_architecture</span><span class="p">[</span><span class="n">symbol</span><span class="p">])</span>
-            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">stored</span> <span class="o">-</span> <span class="n">expected</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">PLOIDY_DEVIATION_ATOL</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">symbol</span><span class="si">}</span><span class="s2"> is </span><span class="si">{</span><span class="n">stored</span><span class="si">}</span><span class="s2"> but the record's </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">chromosomes</span><span class="p">)</span><span class="si">}</span><span class="s2"> "</span>
-                    <span class="sa">f</span><span class="s2">"chromosome copy numbers deviate from 2.0 by </span><span class="si">{</span><span class="n">expected</span><span class="si">}</span><span class="s2"> in total"</span>
-                <span class="p">)</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitectureExperimentReference</span><span class="p">(</span><span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""Reference profile for a genome-architecture experiment.</span>
-
-<span class="sd">    ``genome_reference`` is a ``StrainReferenceGenome`` so the diploid baseline every</span>
-<span class="sd">    chromosome copy number is read against, and the background alleles the collection</span>
-<span class="sd">    carries, are stated rather than implied.</span>
-<span class="sd">    """</span>
-
-    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
-    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
-    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">GenomeArchitecturePhenotype</span>
-
-
-<span class="k">class</span><span class="w"> </span><span class="nc">GenomeArchitectureExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""One sequenced sample's realized genome architecture under a designed genotype."""</span>
-
-    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"genome_architecture"</span>
-    <span class="n">genotype</span><span class="p">:</span> <span class="n">Genotype</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="n">Genotype</span><span class="p">,]</span>  <span class="c1"># type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass</span>
-    <span class="n">phenotype</span><span class="p">:</span> <span class="n">GenomeArchitecturePhenotype</span>
-
-
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-<span class="c1"># GENOME ARCHITECTURE BLOCK END (Puddu 2019, yeast expansion row 7)</span>
-<span class="c1"># --------------------------------------------------------------------------- #</span>
-
-
 <span class="n">PhenotypeType</span> <span class="o">=</span> <span class="p">(</span>
     <span class="n">Phenotype</span>
     <span class="o">|</span> <span class="n">FitnessPhenotype</span>
@@ -9768,8 +9548,6 @@
     <span class="o">|</span> <span class="n">SingleCellExpressionPhenotype</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCyclePhenotype</span>  <span class="c1"># De Chiara 2022</span>
     <span class="o">|</span> <span class="n">PseudobulkUmiCountPhenotype</span>  <span class="c1"># jackson2020</span>
-    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
-    <span class="o">|</span> <span class="n">GenomeArchitecturePhenotype</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9814,8 +9592,6 @@
     <span class="o">|</span> <span class="n">SegregantExpressionExperiment</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperiment</span>  <span class="c1"># De Chiara 2022</span>
     <span class="o">|</span> <span class="n">PseudobulkUmiCountExperiment</span>  <span class="c1"># jackson2020</span>
-    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
-    <span class="o">|</span> <span class="n">GenomeArchitectureExperiment</span>
 <span class="p">)</span>
 
 <span class="n">ExperimentReferenceType</span> <span class="o">=</span> <span class="p">(</span>
@@ -9860,8 +9636,6 @@
     <span class="o">|</span> <span class="n">SegregantExpressionExperimentReference</span>  <span class="c1"># boocock2025</span>
     <span class="o">|</span> <span class="n">LifeCycleExperimentReference</span>  <span class="c1"># De Chiara 2022</span>
     <span class="o">|</span> <span class="n">PseudobulkUmiCountExperimentReference</span>  <span class="c1"># jackson2020</span>
-    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
-    <span class="o">|</span> <span class="n">GenomeArchitectureExperimentReference</span>
 <span class="p">)</span>
 
 
@@ -9906,8 +9680,6 @@
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperiment</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperiment</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
     <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperiment</span><span class="p">,</span>  <span class="c1"># jackson2020</span>
-    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
-    <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">GenomeArchitectureExperiment</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="n">EXPERIMENT_REFERENCE_TYPE_MAP</span> <span class="o">=</span> <span class="p">{</span>
@@ -9951,8 +9723,6 @@
     <span class="s2">"segregant_expression"</span><span class="p">:</span> <span class="n">SegregantExpressionExperimentReference</span><span class="p">,</span>  <span class="c1"># boocock2025</span>
     <span class="s2">"life_cycle"</span><span class="p">:</span> <span class="n">LifeCycleExperimentReference</span><span class="p">,</span>  <span class="c1"># De Chiara 2022</span>
     <span class="s2">"pseudobulk_umi_count"</span><span class="p">:</span> <span class="n">PseudobulkUmiCountExperimentReference</span><span class="p">,</span>  <span class="c1"># jackson2020</span>
-    <span class="c1"># ADDITIVE (Puddu 2019 genome architecture)</span>
-    <span class="s2">"genome_architecture"</span><span class="p">:</span> <span class="n">GenomeArchitectureExperimentReference</span><span class="p">,</span>
 <span class="p">}</span>
 
 

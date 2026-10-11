@@ -2054,6 +2054,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "proteome_zelezniak2018": 97,
         "proteome_messner2023": 4699,
         "proteome_muenzner2024": 794,
+        "proteome_messner2021": 70,
     }
     # The natural-isolate proteome is verified by its loader's own gate (one record per
     # isolate, a shared euploid reference, the Caudal overlap), not the ORF gate.
@@ -2062,6 +2063,13 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         for name, spec in runners.PROTEIN_DATASETS.items()
         if spec.get("natural_isolates")
     } == {"proteome_muenzner2024"}
+    # The wild-type drug screen's gate is its loader module's verify_build, which
+    # re-reads the deposited DIA-NN report and the paper's own counts.
+    assert {
+        name: spec["verify_build_module"]
+        for name, spec in runners.PROTEIN_DATASETS.items()
+        if spec.get("verify_build_module")
+    } == {"proteome_messner2021": "torchcell.datasets.scerevisiae.messner2021"}
     assert (
         runners.PROTEIN_DATASETS["proteome_messner2023"]["allow_duplicate_orfs"] is True
     )
@@ -2217,7 +2225,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         + 1  # EXPRESSION_SCORE_DATASETS
         + 1  # VISUAL_SCORE_DATASETS
         + 14  # METABOLITE_DATASETS
-        + 3  # PROTEIN_DATASETS
+        + 4  # PROTEIN_DATASETS
         + 6  # RNASEQ_DATASETS
         + 13  # ENVIRONMENT_RESPONSE_DATASETS
         + 11  # FITNESS_DATASETS

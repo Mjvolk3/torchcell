@@ -442,6 +442,21 @@ First consumer: Wang 2024 Table S2 ([[torchcell.datasets.ecoli.wang2024]]), 24,7
 
 Schema impact (`scripts/schema_impact_check.py --base origin/main`): one changed symbol, `EnvironmentResponsePhenotype` (three added optional fields plus the `_check` validator), 36 impacted dataset groups, 0 breaking. Every dataset whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
 
+## 2026.10.10 - A released t statistic and an authors' withdrawal on the environment-response phenotype
+
+`EnvironmentResponsePhenotype` gains two optional fields in their own `ADDITIVE (Wetmore 2015 own release)` block, after #863's:
+
+- `environment_response_t_statistic`: the test statistic the source released for the response, verbatim. For RB-TnSeq it is Wetmore 2015's moderated t, `t = f / sqrt(sigma^2 + max(V_e, V_n))` with sigma 0.1 (Methods (iv)). It is a function of the response and its standard error and is stored because the release states it, not recomputed; like the p-value it is a test of the number, so it never feeds `environment_response_uncertainty` or the derived SE. The validator refuses a non-finite t and a t with no numeric response.
+- `source_withdrawal: SourceWithdrawal | None`: set when the source's own authors later told readers to disregard the measurement. `SourceWithdrawal(reason, provenance)` carries the typed `SourceWithdrawalReason` (one member, `problematic_stock_solution`) and the authors' instruction as a `SourcedValue` (file, sha256, verbatim quote). The record is KEPT and flagged, never dropped, so what the release published stays queryable and a consumer filters on the reason. The field holding the `SourcedValue` is named `provenance`, the one name `test_sourced_value_fields_keep_one_name` lets a `SourcedValue` field carry.
+
+`SourceWithdrawal` sits on the ontology figure's provenance lane (`LANE_ROOTS` in `torchcell/paper/ontology_graph.py`): it is a statement about where the record stands with its source.
+
+Graph side: `environment response phenotype` declares `environment_response_t_statistic: float` and `source_withdrawal: str` (the reason's value); `CellAdapter._environment_response_properties` projects both. The property is named after the field, which `test_phenotype_classes_and_node_classes_are_in_bijection` requires.
+
+First consumer: Wetmore 2015's own release ([[torchcell.datasets.ecoli.wetmore2015]]), 319,264 records each carrying the released t, 14,512 of them (the sucrose and D-mannitol samples) carrying the withdrawal.
+
+Schema impact (`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`): `EnvironmentResponsePhenotype` modified (two added optional fields plus the `_check` validator), `SourceWithdrawal` and `SourceWithdrawalReason` added; 36 impacted dataset groups, 0 breaking. Every store whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
+
 ## 2026.10.11 - Life-cycle phenotype family, cell yield, nitrogen dose, timed pre-culture
 
 Additive, for De Chiara 2022 ([[torchcell.datasets.scerevisiae.dechiara2022]]):

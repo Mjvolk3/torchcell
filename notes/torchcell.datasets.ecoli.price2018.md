@@ -537,3 +537,7 @@ medium component is **kanamycin**, which the pinned identity table does not reso
 - **`Environment.duration_generations` on the FITNESS records is still an undeclared
   None.** The essentiality records declare both duration gaps; the fitness records do not,
   and the audit flagged that. Out of scope here, so it stays open.
+
+## 2026.10.10 - Wetmore 2015 is now loaded from its own release; this store is its cross-check
+
+Under the owner policy of 2026-10-10 (a served compendium is a processing reference and a sanity check, not the source of record), Wetmore 2015's own 1.0.0 release is loaded as `RbTnseqWetmore2015Dataset` ([[torchcell.datasets.ecoli.wetmore2015]], 2026.10.10 section). Nothing in this loader changed: it still attributes its 92 Wetmore samples to that paper through `wetmore2015.subsumption_record()`, still drops the four withdrawn samples, and its store is read read-only by the Wetmore verifier's L4 row (`compendium_cross_check_price2018`). The two datasets key a shared sample identically (`Keio:<name>`), so the 1.0.0 and 1.0.3 analyses of one sample join on it. The schema change that came with that loader (`environment_response_t_statistic`, `source_withdrawal` on `EnvironmentResponsePhenotype`) moves this store's closure, so it reads stale until the KG 4.0 rebuild; its records would serialize those fields as None.

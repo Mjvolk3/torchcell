@@ -2757,6 +2757,106 @@
 
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># begin ADDITIVE (Hackett 2020): an inducible synthetic promoter inserted upstream of a</span>
+<span class="c1"># present yeast gene. The expression axis without CRISPR: the gene stays PRESENT, its</span>
+<span class="c1"># coding sequence and copy number are unchanged, and a synthetic promoter (with its</span>
+<span class="c1"># selection marker) is INSERTED between the native promoter and the start codon, so the</span>
+<span class="c1"># native DNA is displaced rather than removed. The mechanism is therefore SO:0000667</span>
+<span class="c1"># ``insertion``, not the ``delins`` of the bacterial ``PromoterReplacementPerturbation``</span>
+<span class="c1"># (whose locus-tag validator and required ``gene_namespace`` make it bacterial-only).</span>
+<span class="c1"># A new leaf and a new member of ``GenePerturbationType``; nothing above changes.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InduciblePromoterInsertionPerturbation</span><span class="p">(</span>
+    <span class="n">ExpressionModulationPerturbation</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""A synthetic inducible promoter inserted in front of a present gene's ORF.</span>
+
+<span class="sd">    Hackett 2020 (IDEA) places each induced regulator under a beta-estradiol-responsive</span>
+<span class="sd">    synthetic promoter: a cassette of selection marker plus promoter (``KanMX-Z3EVpr``,</span>
+<span class="sd">    ``KanMX-Pgal1``, ``URA3::Z3EVpr``) inserted "directly between a target gene's first</span>
+<span class="sd">    methionine residue and its native promoter to prevent the removal of any genomic</span>
+<span class="sd">    DNA". The promoter answers a synthetic transcription factor the strain BACKGROUND</span>
+<span class="sd">    carries (``GEV``, ``ZEV``, ``4ZEV``, ``Z3EV``); that activator is an integrated</span>
+<span class="sd">    cassette of the ``StrainBackground``, named here in ``responsive_to`` so the edit</span>
+<span class="sd">    says which activator drives it. The INDUCER and its dose are not here: they are a</span>
+<span class="sd">    ``SmallMoleculePerturbation`` on the environment (one canonical encoding, as the</span>
+<span class="sd">    bacterial ``PromoterReplacementPerturbation.is_inducible`` docstring sets out).</span>
+
+<span class="sd">    ``expression_direction`` is ``"increased"``: the designed edit is induced</span>
+<span class="sd">    overexpression, which is the direction under the inducer. The uninduced level can</span>
+<span class="sd">    sit below the native one (Hackett: "86% of synthetic promoter-driven TF alleles have</span>
+<span class="sd">    lower expression than native promoter-driven TF alleles"); that is a property of</span>
+<span class="sd">    the record's environment (no inducer), not of the edit. ``crispr`` is re-declared</span>
+<span class="sd">    optional and stays ``None``: no guide or Cas effector is involved.</span>
+<span class="sd">    """</span>
+
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"Inducible synthetic promoter inserted upstream of a present gene's start codon"</span>
+    <span class="p">)</span>
+    <span class="n">perturbation_type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"inducible_promoter_insertion"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">"inducible_promoter_insertion"</span>
+    <span class="p">)</span>
+    <span class="n">mechanism_so_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"SO:0000667"</span>
+    <span class="n">mechanism_so_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"insertion"</span>
+    <span class="n">expression_direction</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"increased"</span>
+    <span class="n">promoter_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the inserted promoter part, verbatim (e.g. 'Z3EVpr', 'Pgal1', "</span>
+        <span class="s2">"'4ZEVpr')"</span>
+    <span class="p">)</span>
+    <span class="n">cassette</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the inserted cassette as the source writes it, gene included "</span>
+        <span class="s2">"(e.g. 'KanMX-Z3EVpr-OPI1', 'URA3::Z3EVpr-HMX1')"</span>
+    <span class="p">)</span>
+    <span class="n">marker</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"selection marker the cassette carries, verbatim (e.g. 'KanMX', "</span>
+        <span class="s2">"'URA3')"</span>
+    <span class="p">)</span>
+    <span class="n">responsive_to</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the synthetic transcription factor of the background that "</span>
+        <span class="s2">"activates the promoter under the inducer, verbatim (e.g. 'ZEV', 'GEV')"</span>
+    <span class="p">)</span>
+    <span class="n">native_promoter_retained</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"True when the cassette was inserted between the native promoter "</span>
+        <span class="s2">"and the start codon without removing native DNA (the native promoter is "</span>
+        <span class="s2">"displaced upstream, not deleted)"</span>
+    <span class="p">)</span>
+    <span class="n">strain_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the strain carrying the edit, as the source's strain table names it"</span>
+    <span class="p">)</span>
+    <span class="n">crispr</span><span class="p">:</span> <span class="n">CrisprConstruct</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"no guide-directed machinery is involved in a promoter insertion; "</span>
+        <span class="s2">"the field is inherited from the expression axis and stays None"</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_insertion</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"InduciblePromoterInsertionPerturbation"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""The promoter, cassette, marker and activator are named; no CRISPR payload."""</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"promoter_name"</span><span class="p">,</span>
+            <span class="s2">"cassette"</span><span class="p">,</span>
+            <span class="s2">"marker"</span><span class="p">,</span>
+            <span class="s2">"responsive_to"</span><span class="p">,</span>
+            <span class="s2">"strain_id"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> cannot be empty"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">crispr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"a promoter insertion carries no CRISPR construct"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expression_direction</span> <span class="o">!=</span> <span class="s2">"increased"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"an inducible promoter insertion is designed for induced "</span>
+                <span class="s2">"overexpression; expression_direction must be 'increased'"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end ADDITIVE (Hackett 2020)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># Bacterial perturbation leaves (plan 3a).</span>
 <span class="c1">#</span>
 <span class="c1"># Each is a subclass of the axis leaf its OUTCOME already belongs to, so every</span>
@@ -3963,6 +4063,7 @@
     <span class="o">|</span> <span class="n">EngineeredCopyNumberPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprActivationPerturbation</span>
     <span class="o">|</span> <span class="n">CrisprInterferencePerturbation</span>
+    <span class="o">|</span> <span class="n">InduciblePromoterInsertionPerturbation</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">BacterialDeletionPerturbation</span>
     <span class="o">|</span> <span class="n">TransposonInsertionPerturbation</span>
     <span class="o">|</span> <span class="n">BacterialCrisprInterferencePerturbation</span>
@@ -6254,6 +6355,214 @@
 
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># MICROARRAY EXPRESSION SCORE BLOCK END (issue #1022)</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># begin ADDITIVE (Hackett 2020): one array of an induction time course.</span>
+<span class="c1">#</span>
+<span class="c1"># A two-colour microarray time course after a transcription factor is induced in a</span>
+<span class="c1"># chemostat. Three NEW classes, siblings of the microarray family rather than</span>
+<span class="c1"># subclasses of it: the phenotype carries layers ``MicroarrayExpressionPhenotype``</span>
+<span class="c1"># has no field for, and a subclass would make the served ``microarray expression</span>
+<span class="c1"># phenotype`` node class ambiguous (its discriminating properties would also be fields</span>
+<span class="c1"># of the subclass, ``ontology_checks.phenotype_label_map``). The phenotype therefore</span>
+<span class="c1"># names its primary layer ``log2_cleaned`` and has its own graph class, ``induction</span>
+<span class="c1"># timecourse expression phenotype``. No served dataset's schema closure moves</span>
+<span class="c1"># through these classes; the new ``GenePerturbationType`` member is the only change a</span>
+<span class="c1"># served closure sees.</span>
+<span class="c1">#</span>
+<span class="c1"># - The reference narrows ``genome_reference`` to ``StrainReferenceGenome`` (the typed</span>
+<span class="c1">#   background, which carries the synthetic activator cassette) and</span>
+<span class="c1">#   ``environment_reference`` to ``CultureEnvironment`` (the chemostat), as</span>
+<span class="c1">#   ``StrainEnvironmentResponseExperimentReference`` does for #507: pydantic v2</span>
+<span class="c1">#   serializes a field by its DECLARED type, so a subclass in a base slot loses fields.</span>
+<span class="c1"># - The sampling time after induction is ``Environment.duration_hours``, the field the</span>
+<span class="c1">#   served Brunk 2016 time course already uses for "hours post-induction"; no time</span>
+<span class="c1">#   field is added.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InductionTimecourseExpressionPhenotype</span><span class="p">(</span><span class="n">Phenotype</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One array of an induction time course, with every released processing layer.</span>
+
+<span class="sd">    PRIMARY LAYER (``label_name``): ``log2_cleaned``, the cleaned log2 ratio relative</span>
+<span class="sd">    to the same culture at t = 0 (0 at t = 0 by construction), with the induction</span>
+<span class="sd">    system's common response and the prominent outliers removed by the authors. Its</span>
+<span class="sd">    statistic (``label_statistic_name``) is ``log2_noise_sd``, the authors' noise-model</span>
+<span class="sd">    standard deviation of each cleaned observation; one array per culture and time</span>
+<span class="sd">    point, so it is the standard error of the single observation. ``None`` with a typed</span>
+<span class="sd">    gap when the release carries no noise model for the array.</span>
+
+<span class="sd">    FURTHER LAYERS (all keyed by the same genes as ``log2_cleaned``):</span>
+
+<span class="sd">    - ``sample_channel_intensity`` / ``reference_channel_intensity``: the median</span>
+<span class="sd">      fluorescence of the sample and of the common reference RNA hybridized against it</span>
+<span class="sd">      on the same array (linear scale).</span>
+<span class="sd">    - ``log2_ratio_unprocessed``: log2(sample / reference channel) minus the same</span>
+<span class="sd">      gene's value at t = 0, before cleaning.</span>
+<span class="sd">    - ``log2_thresholded``, ``log2_selected``, ``log2_shrunken``: the hard-thresholded,</span>
+<span class="sd">      timecourse-selected and observation-level-shrunken layers. A timecourse the</span>
+<span class="sd">      authors' noise model does not keep is exactly 0 in them: an analysis decision,</span>
+<span class="sd">      not a measured zero. ``None`` with a typed gap when not released.</span>
+
+<span class="sd">    IDENTITY: ``timecourse_id`` is the release's key of the time course (strain, date,</span>
+<span class="sd">    limitation, induction system), ``strain_label`` the release's strain token,</span>
+<span class="sd">    ``experiment_date`` the release's date token and ``release_table`` the released</span>
+<span class="sd">    table the values were read from, all verbatim. Repeated time courses of one strain</span>
+<span class="sd">    stay distinct records through them.</span>
+<span class="sd">    """</span>
+
+    <span class="n">graph_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"node"</span>
+    <span class="n">label_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"log2_cleaned"</span>
+    <span class="n">label_statistic_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="s2">"log2_noise_sd"</span>
+
+    <span class="n">log2_cleaned</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cleaned log2 ratio per gene, relative to the same culture at t = 0"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log2_noise_sd</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"authors' noise-model standard deviation of each cleaned value; "</span>
+        <span class="s2">"None only with a typed gap"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">sample_channel_intensity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"sample-channel median fluorescence per gene (linear scale)"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">reference_channel_intensity</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"reference-channel median fluorescence per gene (linear scale)"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log2_ratio_unprocessed</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"log2(sample / reference channel) minus the gene's t = 0 value, "</span>
+        <span class="s2">"before cleaning"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log2_thresholded</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"cleaned values hard-thresholded by the noise model; None only "</span>
+        <span class="s2">"with a typed gap"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log2_selected</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"thresholded values kept only in timecourses passing the "</span>
+        <span class="s2">"biological-feasibility selection; None only with a typed gap"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">log2_shrunken</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"selected values with observation-level shrinkage toward 0; None "</span>
+        <span class="s2">"only with a typed gap"</span><span class="p">,</span>
+        <span class="nb">repr</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">timecourse_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's key of the time course this array belongs to, "</span>
+        <span class="s2">"verbatim"</span>
+    <span class="p">)</span>
+    <span class="n">strain_label</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the strain token as the release writes it (e.g. 'SMY2266a')"</span>
+    <span class="p">)</span>
+    <span class="n">experiment_date</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the release's date token for the time course, verbatim; None "</span>
+        <span class="s2">"only with a typed gap"</span>
+    <span class="p">)</span>
+    <span class="n">release_table</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">"the released table the values were read from, verbatim file name"</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Summarize instead of printing ~50,000 numbers."""</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"InductionTimecourseExpressionPhenotype(timecourse_id="</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timecourse_id</span><span class="si">!r}</span><span class="s2">, genes=</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log2_cleaned</span><span class="p">)</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="p">)</span>
+
+    <span class="nd">@field_validator</span><span class="p">(</span>
+        <span class="s2">"log2_cleaned"</span><span class="p">,</span>
+        <span class="s2">"log2_noise_sd"</span><span class="p">,</span>
+        <span class="s2">"sample_channel_intensity"</span><span class="p">,</span>
+        <span class="s2">"reference_channel_intensity"</span><span class="p">,</span>
+        <span class="s2">"log2_ratio_unprocessed"</span><span class="p">,</span>
+        <span class="s2">"log2_thresholded"</span><span class="p">,</span>
+        <span class="s2">"log2_selected"</span><span class="p">,</span>
+        <span class="s2">"log2_shrunken"</span><span class="p">,</span>
+        <span class="n">mode</span><span class="o">=</span><span class="s2">"before"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sorted_finite_layer</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>  <span class="c1"># raw pre-validation input</span>
+<span class="w">        </span><span class="sd">"""Coerce a layer to a SortedDict and refuse an empty or non-finite one."""</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">SortedDict</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">SortedDict</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"an expression layer cannot be empty"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">math</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"non-finite value for gene </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">"after"</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"InductionTimecourseExpressionPhenotype"</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""One gene set across layers; intensities and noise non-negative; set or gapped."""</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">log2_cleaned</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"log2_noise_sd"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log2_noise_sd</span><span class="p">,</span>
+            <span class="s2">"sample_channel_intensity"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample_channel_intensity</span><span class="p">,</span>
+            <span class="s2">"reference_channel_intensity"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_channel_intensity</span><span class="p">,</span>
+            <span class="s2">"log2_ratio_unprocessed"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log2_ratio_unprocessed</span><span class="p">,</span>
+            <span class="s2">"log2_thresholded"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log2_thresholded</span><span class="p">,</span>
+            <span class="s2">"log2_selected"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log2_selected</span><span class="p">,</span>
+            <span class="s2">"log2_shrunken"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">log2_shrunken</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">set</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="o">!=</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must have the genes of log2_cleaned"</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="s2">"log2_noise_sd"</span><span class="p">,</span>
+            <span class="s2">"sample_channel_intensity"</span><span class="p">,</span>
+            <span class="s2">"reference_channel_intensity"</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">layers</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+            <span class="n">negative</span> <span class="o">=</span> <span class="p">[]</span> <span class="k">if</span> <span class="n">layer</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">g</span> <span class="k">for</span> <span class="n">g</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">layer</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">v</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">negative</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> cannot be negative, got it at </span><span class="si">{</span><span class="n">negative</span><span class="p">[:</span><span class="mi">5</span><span class="p">]</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">_require_value_or_gap</span><span class="p">(</span>
+            <span class="bp">self</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="s2">"experiment_date"</span><span class="p">,</span>
+                <span class="s2">"log2_noise_sd"</span><span class="p">,</span>
+                <span class="s2">"log2_thresholded"</span><span class="p">,</span>
+                <span class="s2">"log2_selected"</span><span class="p">,</span>
+                <span class="s2">"log2_shrunken"</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"timecourse_id"</span><span class="p">,</span> <span class="s2">"strain_label"</span><span class="p">,</span> <span class="s2">"release_table"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> cannot be empty"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">InductionTimecourseExpressionExperimentReference</span><span class="p">(</span>
+    <span class="n">ExperimentReference</span><span class="p">,</span> <span class="n">ModelStrict</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The same culture at t = 0, on its typed strain background, in its chemostat."""</span>
+
+    <span class="n">experiment_reference_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"induction_timecourse_expression"</span>
+    <span class="n">genome_reference</span><span class="p">:</span> <span class="n">StrainReferenceGenome</span>
+    <span class="n">environment_reference</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="n">phenotype_reference</span><span class="p">:</span> <span class="n">InductionTimecourseExpressionPhenotype</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">InductionTimecourseExpressionExperiment</span><span class="p">(</span><span class="n">Experiment</span><span class="p">,</span> <span class="n">ModelStrict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""One array of an induction time course (genotype, chemostat at a time, layers)."""</span>
+
+    <span class="n">experiment_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"induction_timecourse_expression"</span>
+    <span class="n">environment</span><span class="p">:</span> <span class="n">CultureEnvironment</span>
+    <span class="c1"># Declared here: torchcell.data reads ``__annotations__["phenotype"]``, which holds</span>
+    <span class="c1"># only a class's OWN annotations.</span>
+    <span class="n">phenotype</span><span class="p">:</span> <span class="n">InductionTimecourseExpressionPhenotype</span>
+
+
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="c1"># end ADDITIVE (Hackett 2020)</span>
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 
 
@@ -10068,6 +10377,7 @@
     <span class="o">|</span> <span class="n">CalMorphPhenotype</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionPhenotype</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScorePhenotype</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">InductionTimecourseExpressionPhenotype</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionPhenotype</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionPhenotype</span>
     <span class="o">|</span> <span class="n">VisualScorePhenotype</span>
@@ -10101,6 +10411,7 @@
     <span class="o">|</span> <span class="n">CalMorphExperiment</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionExperiment</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScoreExperiment</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">InductionTimecourseExpressionExperiment</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionExperiment</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionExperiment</span>
     <span class="o">|</span> <span class="n">VisualScoreExperiment</span>
@@ -10149,6 +10460,7 @@
     <span class="o">|</span> <span class="n">CalMorphExperimentReference</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">MicroarrayExpressionScoreExperimentReference</span>  <span class="c1"># issue #1022</span>
+    <span class="o">|</span> <span class="n">InductionTimecourseExpressionExperimentReference</span>  <span class="c1"># Hackett 2020 (additive)</span>
     <span class="o">|</span> <span class="n">RNASeqExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">PseudobulkExpressionExperimentReference</span>
     <span class="o">|</span> <span class="n">VisualScoreExperimentReference</span>
@@ -10197,6 +10509,7 @@
     <span class="s2">"calmorph"</span><span class="p">:</span> <span class="n">CalMorphExperiment</span><span class="p">,</span>
     <span class="s2">"microarray_expression"</span><span class="p">:</span> <span class="n">MicroarrayExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"microarray_expression_score"</span><span class="p">:</span> <span class="n">MicroarrayExpressionScoreExperiment</span><span class="p">,</span>  <span class="c1"># issue #1022</span>
+    <span class="s2">"induction_timecourse_expression"</span><span class="p">:</span> <span class="n">InductionTimecourseExpressionExperiment</span><span class="p">,</span>  <span class="c1"># Hackett 2020</span>
     <span class="s2">"rnaseq_expression"</span><span class="p">:</span> <span class="n">RNASeqExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"pseudobulk_expression"</span><span class="p">:</span> <span class="n">PseudobulkExpressionExperiment</span><span class="p">,</span>
     <span class="s2">"visual_score"</span><span class="p">:</span> <span class="n">VisualScoreExperiment</span><span class="p">,</span>
@@ -10245,6 +10558,9 @@
     <span class="s2">"microarray_expression"</span><span class="p">:</span> <span class="n">MicroarrayExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"microarray_expression_score"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># issue #1022</span>
         <span class="n">MicroarrayExpressionScoreExperimentReference</span>
+    <span class="p">),</span>
+    <span class="s2">"induction_timecourse_expression"</span><span class="p">:</span> <span class="p">(</span>  <span class="c1"># Hackett 2020</span>
+        <span class="n">InductionTimecourseExpressionExperimentReference</span>
     <span class="p">),</span>
     <span class="s2">"rnaseq_expression"</span><span class="p">:</span> <span class="n">RNASeqExpressionExperimentReference</span><span class="p">,</span>
     <span class="s2">"pseudobulk_expression"</span><span class="p">:</span> <span class="n">PseudobulkExpressionExperimentReference</span><span class="p">,</span>

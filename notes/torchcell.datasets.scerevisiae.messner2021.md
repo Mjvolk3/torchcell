@@ -108,3 +108,7 @@ Ten rows added as a pure insertion (5,533 to 5,543), curated from PubChem by nam
 - 1 run (`5_plate_2_wt_101_Pemetrexed_NA`) by the paper's rule 3.
 - 1 protein (P03872, REP2) with no S288C systematic name; 39 record cells.
 - 24 DMSO runs are the reference, not records; 7 QC runs are pooled digests, not records.
+
+### Candidate verdict
+
+`candidate-gate gate` has no table row for an off-schedule key, so `experiments/database/scripts/messner2021_candidate_verdict.py` ([[experiments.database.scripts.messner2021_candidate_verdict]]) re-runs the yeast audit's composition for this one entry with the loader's inputs: the raw mirror for G3 (42 files in library + raw, all intact), the module's own DOI for G4 (no key held by another module), and the 18 compound labels plus DMSO for G5 (all resolve). Outcome `admissible`, G1 to G5 pass; `candidate-gate validate` accepts the JSON and `candidate-gate audit` re-reads every evidence quote of the store, ok 82. G4-value was not run: `overlap` reads one scalar per record, and this phenotype is a per-protein map (the L2 `values_match_report` check is the byte-level comparison). `candidate-gate ledger` refused: "torchcell.candidates.ledger.md already has '## 2026.10.11 - Candidate gate ledger'; one ledger per day", so the verdict reaches the ledger with the next day's run.

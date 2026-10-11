@@ -36,7 +36,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "2 file(s) in library, 0 worksheet row(s) counted; all intact",
+      "reason": "42 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
       "evidence": [
         {
           "value": "data availability: the yeast drug screen is deposited",
@@ -63,6 +63,32 @@
           },
           "quote": "partner repository, with the dataset identifier PXD023613",
           "note": null
+        },
+        {
+          "value": "DIA-NN 1.7.12 MaxLFQ",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Raw data processing was carried out with DIA–NN v.1.7.12 and with default settings in ‘robust LC (high accuracy)’ mode. Protein quantities were obtained using the MaxLFQ algorithm84 as implemented in either DIA–NN (yeast drug screen)",
+          "note": null
+        },
+        {
+          "value": "proteotypic, protein q <= 0.01, detected in > 50%, runs >= 80% of max ids",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "For the analysis of yeast drug screen data, proteins were considered only if detected in ${ > } 5 0 \\%$ of the samples, and samples were removed if they had ${ < } 8 0 \\%$ of the maximum identification number across samples. Only proteins identified with proteotypic (that is, specific) peptides and 0.01 protein $q$ -value were considered.",
+          "note": null
         }
       ],
       "issue": null,
@@ -80,7 +106,21 @@
       "gate": "G5",
       "outcome": "pass",
       "reason": "ProteinAbundancePhenotype exists; compounds resolve",
-      "evidence": [],
+      "evidence": [
+        {
+          "value": "reference = DMSO-treated runs",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "messnerUltrafastProteomicsScanning2021",
+            "sha256": "07756a757d7378503f2b284c3d0ad2896446a9bee94435120ebf6715484b0e20",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "The differential expression analysis (drug-treated versus DMSO-treated) for the yeast drug screen was done on the $\\log _ { 2 }$ -transformed protein quantities",
+          "note": null
+        }
+      ],
       "issue": null,
       "blocked_kind": null
     }
@@ -103,7 +143,8 @@
   "g3": {
     "citation_key": "messnerUltrafastProteomicsScanning2021",
     "trees_read": [
-      "library"
+      "library",
+      "raw"
     ],
     "files": [
       {
@@ -131,6 +172,526 @@
         "zip_ok": null,
         "leading_archive_sha256": null,
         "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/19e8601e1ddaac1749679b910ce26020eee4868674594cc87eec845521375894.jpg",
+        "role": "ocr_image",
+        "bytes": 71164,
+        "sha256_manifest": "8c46fd1d9615db247ee311e11cc19d36fddfdae4d2f8f4fd02798052c57f0634",
+        "sha256_disk": "8c46fd1d9615db247ee311e11cc19d36fddfdae4d2f8f4fd02798052c57f0634",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/1f94510054cead77dc5f2d4c48eafe336758dbc2c4119c5e536cfe1d16c5462a.jpg",
+        "role": "ocr_image",
+        "bytes": 167645,
+        "sha256_manifest": "7ffb337f1bd85303a789928c3ef7a6ec1b980f79987dcdcd031f56314629a954",
+        "sha256_disk": "7ffb337f1bd85303a789928c3ef7a6ec1b980f79987dcdcd031f56314629a954",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/24a2114aa61f8467014a4a5cbb545d941d1cf8870eeccf7cae8c07db76591900.jpg",
+        "role": "ocr_image",
+        "bytes": 34938,
+        "sha256_manifest": "171291b6777473077f147fb6d4f87416435b09b92e0ce4c5e70d606c75dacdb4",
+        "sha256_disk": "171291b6777473077f147fb6d4f87416435b09b92e0ce4c5e70d606c75dacdb4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/34310bdface71eb6914d14ecc61dfafdf11df11ccdbafd2914258f29a2d296b6.jpg",
+        "role": "ocr_image",
+        "bytes": 47361,
+        "sha256_manifest": "48fa2b26e00111b3b5c440b8f8f649e79fb0915eabdf520052776142b3419105",
+        "sha256_disk": "48fa2b26e00111b3b5c440b8f8f649e79fb0915eabdf520052776142b3419105",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/34af258b29cb6e9b5c8a0b68313315f9761b928c29363c80144fbf6b4ab41e93.jpg",
+        "role": "ocr_image",
+        "bytes": 118713,
+        "sha256_manifest": "f3a7a62bc6f85369828cef2a236ef4e6bfe8007adf4f462586fb31eca4259f26",
+        "sha256_disk": "f3a7a62bc6f85369828cef2a236ef4e6bfe8007adf4f462586fb31eca4259f26",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/351e3959e6611d67efccddf378d542734df661917f0c432f044f56c0af59d90b.jpg",
+        "role": "ocr_image",
+        "bytes": 66894,
+        "sha256_manifest": "2ac9d1028ce1576e8184aeefceaf89a2a0ea514ac17316e76a8667f56b1b6324",
+        "sha256_disk": "2ac9d1028ce1576e8184aeefceaf89a2a0ea514ac17316e76a8667f56b1b6324",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/417e50a8faef3fed188e73091ef1883e48001af102921351f60c17b3db33bf4d.jpg",
+        "role": "ocr_image",
+        "bytes": 42389,
+        "sha256_manifest": "ff8d71ad37496be4ed258d3c03db9de3798c68a180488fddaf8c412c2a42de73",
+        "sha256_disk": "ff8d71ad37496be4ed258d3c03db9de3798c68a180488fddaf8c412c2a42de73",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/4cca6eb1cc8d8023f9ff17c118d30e6d90ef2d8566d3680ca17c8bb0bcfe9e33.jpg",
+        "role": "ocr_image",
+        "bytes": 89382,
+        "sha256_manifest": "68d564586f5084d0e6a0d333505f0b7757ff3089c9ec4b6dad58bbbf99316c84",
+        "sha256_disk": "68d564586f5084d0e6a0d333505f0b7757ff3089c9ec4b6dad58bbbf99316c84",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/7681944d62fb6f6907b45bf9756ad1fa46add220e5f76b19570e480eb2841289.jpg",
+        "role": "ocr_image",
+        "bytes": 50849,
+        "sha256_manifest": "a38c43413ba125096cd28d0f623e0eaf629898523a2b55254d6ba41865e9d49e",
+        "sha256_disk": "a38c43413ba125096cd28d0f623e0eaf629898523a2b55254d6ba41865e9d49e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/77190fde6f4d32f9a60449e136d007153c4f508e06a9cbf47bdf90c1169e934a.jpg",
+        "role": "ocr_image",
+        "bytes": 120222,
+        "sha256_manifest": "d4ce89652eda0c30c226a21f8dfda65a1ac544730dda33b75f71236c5e9be722",
+        "sha256_disk": "d4ce89652eda0c30c226a21f8dfda65a1ac544730dda33b75f71236c5e9be722",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/796c9b22f49588ba827a72435381f37ce0a9dc531b2438f8bd46812217288ea2.jpg",
+        "role": "ocr_image",
+        "bytes": 61239,
+        "sha256_manifest": "3551e9ac7405e79a7b36358bcb9b828eb5508c30dfa9803094767e34c387ec2d",
+        "sha256_disk": "3551e9ac7405e79a7b36358bcb9b828eb5508c30dfa9803094767e34c387ec2d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/7c55b5d4f8eae7cfb5d21cc2146c1508be4240cbd5ae654182683dd86f07223e.jpg",
+        "role": "ocr_image",
+        "bytes": 70789,
+        "sha256_manifest": "9194ef6e4ca7ff761b10a0f24a27d6cc3a4d6880396443f5a63f379e49ce5f18",
+        "sha256_disk": "9194ef6e4ca7ff761b10a0f24a27d6cc3a4d6880396443f5a63f379e49ce5f18",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/87eec731d1dc5cac636c09e68c1e4d4d6bb9350aa86f7ada6864a0a85e127103.jpg",
+        "role": "ocr_image",
+        "bytes": 24516,
+        "sha256_manifest": "43511c0b4c13fcede60922991351a0da4a69917847aa0cb6b9c7d346ac2733c5",
+        "sha256_disk": "43511c0b4c13fcede60922991351a0da4a69917847aa0cb6b9c7d346ac2733c5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/97c11cb27599f1cae79411fb978773ed492561947777b4caf67fe0a5caa5f30c.jpg",
+        "role": "ocr_image",
+        "bytes": 104027,
+        "sha256_manifest": "b470f678ac6a5d47140a175666f8c86f5fd3dfa812392b8a68646fbdfa91f4eb",
+        "sha256_disk": "b470f678ac6a5d47140a175666f8c86f5fd3dfa812392b8a68646fbdfa91f4eb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/98092244caa24823f7e2658062e539e07f3218c72e5e97fcd06980ad1d185d5c.jpg",
+        "role": "ocr_image",
+        "bytes": 57935,
+        "sha256_manifest": "9d65d7911a2e95df724b6b6fd1220401244ae7a20fed101276b4afd9d045b67f",
+        "sha256_disk": "9d65d7911a2e95df724b6b6fd1220401244ae7a20fed101276b4afd9d045b67f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/99ecf7ae2a8e46f37d563fdc098713fd1b4762ba18d792d4d41b48fcaaab60cf.jpg",
+        "role": "ocr_image",
+        "bytes": 90107,
+        "sha256_manifest": "2aa37eaea02a2585e9f60d1b3ef5b5aedeceac919c396bfce7402789a3670bf8",
+        "sha256_disk": "2aa37eaea02a2585e9f60d1b3ef5b5aedeceac919c396bfce7402789a3670bf8",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a117274b21e0abb9f3f81f19fa10cdccab18cd2061d5c68b50891ff2d7c440ac.jpg",
+        "role": "ocr_image",
+        "bytes": 80540,
+        "sha256_manifest": "3ab935e1595f36c843329fc7f0982ba16566d70f5143d3e0e5576653a7884df6",
+        "sha256_disk": "3ab935e1595f36c843329fc7f0982ba16566d70f5143d3e0e5576653a7884df6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b2753be8b0da2494b072bc033100cb81117d95556da391ee4dfc47b966630258.jpg",
+        "role": "ocr_image",
+        "bytes": 126619,
+        "sha256_manifest": "9146a09eeb22008f3b613d4e8ed0be185761154881844efd7732ff219e31352d",
+        "sha256_disk": "9146a09eeb22008f3b613d4e8ed0be185761154881844efd7732ff219e31352d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b464b89b0af1fb9724ce4ec7591d674697d7b08e7e05292e72bec7ea54711e1f.jpg",
+        "role": "ocr_image",
+        "bytes": 205390,
+        "sha256_manifest": "eae00e111cf0ce3bfb29fbcc88e982b5731fdc03147a023fbcbdbd7520a9437a",
+        "sha256_disk": "eae00e111cf0ce3bfb29fbcc88e982b5731fdc03147a023fbcbdbd7520a9437a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b8b1cc74795221f8493ac49e2a07addc0264d5360f5015c57353319820889a86.jpg",
+        "role": "ocr_image",
+        "bytes": 71482,
+        "sha256_manifest": "751e74e5533103a7e3806d73938d8efead4f67051b645862081177d403a23668",
+        "sha256_disk": "751e74e5533103a7e3806d73938d8efead4f67051b645862081177d403a23668",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c4b14160634872471cffbbbfddb781e3d146a98549ecf196270aae19a7fffaa0.jpg",
+        "role": "ocr_image",
+        "bytes": 36584,
+        "sha256_manifest": "58971709d96ccc53816ec3bc34bc1f00647977ee40c11893e19717a29aba100c",
+        "sha256_disk": "58971709d96ccc53816ec3bc34bc1f00647977ee40c11893e19717a29aba100c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c932fb7657b4a467287b0d20a2a467df33906f3418ac18d1667bea1b06a739ca.jpg",
+        "role": "ocr_image",
+        "bytes": 57779,
+        "sha256_manifest": "809b2d9d8a91870c433a1a9ec9694fd817c83eea3722c577707d9ec4769107cc",
+        "sha256_disk": "809b2d9d8a91870c433a1a9ec9694fd817c83eea3722c577707d9ec4769107cc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/d029b464451c2487f466511a3eecaff63777d1ce4fc3fda8fa9fbc64e0802c45.jpg",
+        "role": "ocr_image",
+        "bytes": 33997,
+        "sha256_manifest": "1ffcd9adc29534606abfca930d75385b72984fb76e9f3ebf5b77415769cb584f",
+        "sha256_disk": "1ffcd9adc29534606abfca930d75385b72984fb76e9f3ebf5b77415769cb584f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/d3b1a129d7ff13a36b85f14b2ebe202ca7880d5c8a679d5bcd8cfdd4b6f03fc5.jpg",
+        "role": "ocr_image",
+        "bytes": 75263,
+        "sha256_manifest": "6122ce9766d7bd41d05f9df041a5b999d0aa6b8b7508060c83589ef71dc28c30",
+        "sha256_disk": "6122ce9766d7bd41d05f9df041a5b999d0aa6b8b7508060c83589ef71dc28c30",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/dcb634861ea966294f2e7aa19bd146e8d447b94ac704fbbef3102c78a7dec559.jpg",
+        "role": "ocr_image",
+        "bytes": 98639,
+        "sha256_manifest": "f3ae4576546eeb4d94f83003d5a1e445306f2d34c2841d44bcd4f1400d4c3ca7",
+        "sha256_disk": "f3ae4576546eeb4d94f83003d5a1e445306f2d34c2841d44bcd4f1400d4c3ca7",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/e2f701b7999529106a6c6888768a38122509d8c7f9f29cab16b3d1bbeb8cfa80.jpg",
+        "role": "ocr_image",
+        "bytes": 111527,
+        "sha256_manifest": "51b7cf4d134c44d11d00e5817c50d3f78dd4bce155f8c7e9572b56dafa51327d",
+        "sha256_disk": "51b7cf4d134c44d11d00e5817c50d3f78dd4bce155f8c7e9572b56dafa51327d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f01c843c148b41601764bf94566776e3008141203640e6b6378b02682ed8270a.jpg",
+        "role": "ocr_image",
+        "bytes": 242196,
+        "sha256_manifest": "968cdfea463ed06e4fe6da7c19f7535357148e0989d58768aa0501cff5efcbd1",
+        "sha256_disk": "968cdfea463ed06e4fe6da7c19f7535357148e0989d58768aa0501cff5efcbd1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f6e8333c177be2970f508e3430defdf1ff3b946f958feefdccd8c7803deec167.jpg",
+        "role": "ocr_image",
+        "bytes": 41896,
+        "sha256_manifest": "c1c6eaaaff82bcb37345c9b098dfe4484a5304a5058e8deff00f088ef2284c30",
+        "sha256_disk": "c1c6eaaaff82bcb37345c9b098dfe4484a5304a5058e8deff00f088ef2284c30",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f83fa3b07dbcfe943d45d373f901340cc1440fd077862276ae5da3c15cc9603e.jpg",
+        "role": "ocr_image",
+        "bytes": 47627,
+        "sha256_manifest": "aa1b9947780e05d278d150268b9ce2e8fbee3ff775a57af48cd7e062da3b8eab",
+        "sha256_disk": "aa1b9947780e05d278d150268b9ce2e8fbee3ff775a57af48cd7e062da3b8eab",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 47299,
+        "sha256_manifest": "30bb324267d8c64057cfcd629fbb6bc57b278d6ff40be8a55f7c4329ce90792d",
+        "sha256_disk": "30bb324267d8c64057cfcd629fbb6bc57b278d6ff40be8a55f7c4329ce90792d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 62133,
+        "sha256_manifest": "6c6460be3125849d2d8e38c6c1e45eb7355b8791df53ee8c47d076fd3b33a5d2",
+        "sha256_disk": "6c6460be3125849d2d8e38c6c1e45eb7355b8791df53ee8c47d076fd3b33a5d2",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 781655,
+        "sha256_manifest": "ef8369b22c8ff422c37a5e276a0bacbaa36bfa2495ddd0840030bfd03c4e11f9",
+        "sha256_disk": "ef8369b22c8ff422c37a5e276a0bacbaa36bfa2495ddd0840030bfd03c4e11f9",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1019,
+        "sha256_manifest": "c2e652fa9fe5f00bccb8d92ceafbe0de3b80e9c5436b9b02349752b9439412be",
+        "sha256_disk": "c2e652fa9fe5f00bccb8d92ceafbe0de3b80e9c5436b9b02349752b9439412be",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/837af4c3948d3ba7c6a35b2223fbcefabae3d0bfc4b03136e26357bebac678fa.jpg",
+        "role": "ocr_image",
+        "bytes": 64019,
+        "sha256_manifest": "a91cb34a54aa602497348fda190c08bd5460e1496214e057ce65b7bd2f556908",
+        "sha256_disk": "a91cb34a54aa602497348fda190c08bd5460e1496214e057ce65b7bd2f556908",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.md",
+        "role": "si_ocr",
+        "bytes": 2966,
+        "sha256_manifest": "479b6f912eae751cf2fd99ce7ecf3eda74fb5b76a7f1bde50c0465c83229c656",
+        "sha256_disk": "479b6f912eae751cf2fd99ce7ecf3eda74fb5b76a7f1bde50c0465c83229c656",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 12462,
+        "sha256_manifest": "191a4e2c4a3eda1eb407c21cb11162eeedc591588e96ffa21a1144ab3827c455",
+        "sha256_disk": "191a4e2c4a3eda1eb407c21cb11162eeedc591588e96ffa21a1144ab3827c455",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_middle.json",
+        "role": "ocr_layout",
+        "bytes": 220668,
+        "sha256_manifest": "282d37cda8dd4d9983783e21e1bb0fd2bdb607d87be8e80bd0dae7e8d7d35559",
+        "sha256_disk": "282d37cda8dd4d9983783e21e1bb0fd2bdb607d87be8e80bd0dae7e8d7d35559",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 1019,
+        "sha256_manifest": "80aa16bf59d932b73c6c16637c6c30dbe91422764d4951a329f84740e1980b6d",
+        "sha256_disk": "80aa16bf59d932b73c6c16637c6c30dbe91422764d4951a329f84740e1980b6d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/pride/20200914_sswath_yeast_drugscreen.tsv",
+        "role": "raw_data",
+        "bytes": 741477090,
+        "sha256_manifest": "0416225401808bfb17ede25471f047cd6fb17897fd8d5e29cefc8d19a00afdfe",
+        "sha256_disk": "0416225401808bfb17ede25471f047cd6fb17897fd8d5e29cefc8d19a00afdfe",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/pride/diann_outputfileinfo.txt",
+        "role": "raw_data",
+        "bytes": 1173,
+        "sha256_manifest": "008924ee01c4151eb74453731680a722cbd67101f45c862c3ae926b30b8f148f",
+        "sha256_disk": "008924ee01c4151eb74453731680a722cbd67101f45c862c3ae926b30b8f148f",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
       }
     ],
     "walls": []
@@ -141,7 +702,20 @@
     "accessions": [
       "PXD023613"
     ],
-    "hits": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41587-021-00860-4",
+        "where": "torchcell/datasets/scerevisiae/messner2021.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PXD023613",
+        "where": "torchcell/datasets/scerevisiae/messner2021.py",
+        "relation": "own"
+      }
+    ],
     "pmid_checked": false
   },
   "g4_value": null,
@@ -152,5 +726,5 @@
     "proposed_class": null
   },
   "decided_at": "2026-10-11",
-  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+  "torchcell_commit": "69c3f14110544f1870874894e2ed289be55c20ac"
 }

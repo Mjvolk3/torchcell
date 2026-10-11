@@ -229,3 +229,135 @@ listed in `si_expected` as not mirrored.
   micronutrient units as corrupt in Data Set S1.
 - **The live Fitness Browser** (`fit.genomics.lbl.gov`) answers a script with HTTP 403,
   so its post-2021 replacement sucrose and mannitol samples were not inspected.
+
+## 2026.10.10 - Loaded from its own release: RbTnseqWetmore2015Dataset (owner policy)
+
+Module: `torchcell/datasets/ecoli/wetmore2015.py` (`RbTnseqWetmore2015Dataset`, root `data/torchcell/rbtnseq_wetmore2015_ecoli`). Adapter: `torchcell/adapters/wetmore2015_adapter.py`, conf `rbtnseq_wetmore2015_ecoli_adapter.yaml`. Tests: `tests/torchcell/datasets/ecoli/test_wetmore2015.py`, `tests/torchcell/adapters/test_wetmore2015_adapter.py`. Release inventory: [[experiments.036-dataset-fixes-before-kg-build.scripts.wetmore2015_release_inventory]]. Schema: [[torchcell.datamodels.schema]] (2026.10.10, the t statistic and the withdrawal). Compendium: [[torchcell.datasets.ecoli.price2018]].
+
+### Decision: the 2026.10.07 section above is superseded
+
+Owner policy of 2026-10-10: a served compendium is a processing reference and a sanity check, not the source of record. An original study with its own per-record release is loaded from that release, attributed to itself, and cross-checked against the compendium's copy. Wetmore 2015 released its own values (statistics version 1.0.0), so the row is now LOADED, and the Price 2018 store is its L4 sanity check rather than its replacement.
+
+The 2026.10.07 measurements still hold and are still computed by the same functions (`subsumption_record`, `release_comparison`): Price 2018 carries 92 of this paper's 101 condition samples, re-analyzed at 1.0.3. What changed is the policy reading them. The duplication is now explicit and joinable: both datasets key a sample as `Keio:<name>`. The Price 2018 loader keeps its own records, its attribution of 92 samples to this paper, and its drop of the withdrawn samples; nothing in it changed.
+
+### What was built (measured 2026.10.10)
+
+| quantity | value |
+|---|---|
+| Data Set S1 condition samples / successful (`u`) / failed | 101 / 92 / 9 |
+| the paper's five rules reproduce `u` | yes, all 101 (the build refuses a disagreement) |
+| stored samples | 88 (carbon source 61, nitrogen source 26, LB 1) |
+| withdrawn samples, STORED and flagged | 4: `set1IT007`, `set1IT008` (sucrose), `set1IT043`, `set1IT044` (D-mannitol) |
+| release genes / mapped to BW25113 | 3,646 / 3,628 |
+| records (`len(dataset)`) | **319,264** = 88 x 3,628 |
+| records flagged `source_withdrawal` | 14,512 = 4 x 3,628 |
+| references | 88 (one per sample) |
+| build, LMDB size | 185 s (slurm job 3871), 1.3 GB |
+
+Every released value is accounted for (`preprocess/dropped_records.json`): 101 x 3,646 = 368,246 released values (the all-sample table) = 319,264 stored + 32,814 (the 9 failed samples) + 14,584 (the 4 MOPS Rich Defined samples) + 1,584 (18 unmapped genes x 88 stored samples).
+
+| rule | scope | kept? | items | released values |
+|---|---|---|---|---|
+| `failed_paper_quality_rules` | sample | no | `set1IT030`, `set1IT033`, `set1IT034` (gMed); `set2IT024`, `set2IT034`, `set2IT045`, `set2IT055`, `set2IT079`, `set2IT090` (cor12) | 32,814 |
+| `medium_not_in_media_library` | sample | no | `set1IT067` to `set1IT070` (`MOPS Rich Defined media_noCarbon`) | 14,584 |
+| `no_one_to_one_eck_pair` | gene | no | 18 b-numbers: 7 not in the MG1655 annotation, 6 whose ECK id BW25113 lacks, 5 not one-to-one | 1,584 |
+| `authors_withdrew_sucrose_and_mannitol_2021` | sample | **yes, flagged** | the four sucrose and D-mannitol samples | 14,512 stored |
+
+### The records
+
+- `EnvironmentResponsePhenotype(measurement_type=log2_ratio, assay_type=pooled_competitive_growth_barcode)` in `BacterialEnvironmentResponseExperiment`; value = the gene-fitness table's normalized log2 ratio ("Gene fitness is a log<SUB>2</SUB> ratio.").
+- **Standard error as the paper defines it.** The moderated t of Methods (iv) is `t = f / sqrt(sigma^2 + max(V_e, V_n))`, sigma 0.1 ("where $\sigma$ is a small constant (we use 0.1) ..."), with V_e the strain-consistency variance (the release's `se`, `fit_standard_error_obs.tab`) and V_n the naive Poisson one (`sdNaive`, `fit_standard_error_naive.tab`). The per-gene SE the paper's own statistic uses is therefore `sqrt(max(V_e, V_n)) = max(se, sdNaive)` (`PER_GENE_STANDARD_ERROR`, quoting the formula line). Measured on all 106 x 3,646 released values: the released t equals `fit / sqrt(0.1^2 + max(se, sdNaive)^2)` to 1.99e-13, while `se` alone misses by up to 30.1. `sdNaive` is the larger for 24.35% of the stored values. This refines the 2026.10.07 note's "`UncertaintyType.standard_error` from `fit_standard_error_obs.tab`", exactly as the Price 2018 loader refined it for 1.0.3.
+- **The released t** is stored on every record in `environment_response_t_statistic` (new field). The verifier's supplementary L2 row re-checks the identity on the stored values.
+- **The withdrawal.** Each record of the four sucrose and D-mannitol samples carries `source_withdrawal = SourceWithdrawal(reason=problematic_stock_solution, provenance=STOCK_SOLUTION_CORRECTION)`: the compendium page's "Please disregard any of the data from this publication regarding sucrose or D-mannitol." The reason's own quote is `WITHDRAWAL_REASON` ("our stock solutions for sucrose and D-mannitol were problematic"). The 2026.10.07 section's evidence that this paper's samples are the ones meant (the mtlA / mtlD versus manX / manY symptom in its own release, and growth on sucrose to EndOD 1.24 to 1.26) stands.
+- `n_samples` and `sample_unit`: typed gaps (`N_SAMPLES_GAP`, `SAMPLE_UNIT_GAP`); the usable strain count is released only in the R image.
+- `screen_id = Keio:<sample>`; reference = the typical gene of the same sample, response 0.
+- Genotype: `TransposonInsertionPerturbation(transposon="Tn5 transpososome", library_pool="KEIO_ML9")`, Table 1 and Table S1 verbatim; the strain is BW25113 as Table S1 states it ("wild-type strain"), so the reference is `assembly_reference("BW25113")` with no background beyond the assembly. The release's MG1655 b-number is typed on each perturbation: `identifier_mapping = DerivedIdentifierMapping(source_identifier=<b-number>, route="eck_crosswalk")`. Route histogram over the 3,628 placed ECK ids: renamed 3,493, non_gene_feature 135; perturbed_gene_name is the BW25113 symbol for 3,493 and the tag for the 135 pseudogene loci.
+- Environment, from Data Set S1's own columns: `Media` through this paper's own media-library entries (`M9_NOCARBON_WETMORE2015`, `M9_NONITROGEN_WETMORE2015`, `LB_LENNOX`, each quoting the Media tab); `Condition_1` / `Concentration_1` / `Units_1` as `EnvironmentPhysicalPerturbation(factor=carbon_source | nitrogen_source)` (`mg/mL` stored as g/L); `Temperature (°C)` (37 for 87 samples, 28 for the microplate LB sample); `Total Generations` as `duration_generations` ("Total number of population doublings of experiment (if determined)."), a typed gap for `set2IT069` where the column is blank; `duration_hours` a typed gap on every environment (the assays ran to saturation). 30 of the 41 stored `Condition_1` labels are not in the pinned compound-identity table and carry the resolver's typed `inchikey` gap (issue #726).
+
+### Duplication by content against Price 2018, and why it is admitted anyway
+
+Measured with the release tables (`release_comparison`, `all_sample_comparison`, the inventory script) and with the two dev stores (the L4 row below). 92 of this paper's 101 samples are Price 2018 Table S5 samples under the same name, condition, concentration and medium. On the 3,646 shared genes, per-sample Pearson r of Wetmore 1.0.0 against Price 1.0.3 is min 0.98895, median 0.99713 over all 92 (largest single-gene difference 2.5725 log2, `set1IT028`, `b2500`). These are two analyses of the same reads: Price 2018 "Fitness data was analysed as previously described9 ." (ref 9 is this paper) at statistics version 1.0.3. The candidate verdict records the store-level match (G4-value, below). By the copy test (a value equal to a served value within 1e-9) none is subsumed; by sample identity all are duplicated. The row is admitted anyway because the 2026-10-10 policy makes the original release the source of record and the compendium its check.
+
+**What this release carries that the compendium store does not:**
+
+- `set1IT029` (fumarate): successful here (gMed 50.0, exactly at the rule), failed at 1.0.3 (gMed 48), so the compendium carries no E. coli fumarate sample at all. 3,628 records.
+- The four withdrawn samples, kept and flagged (the compendium drops them). 14,512 records.
+- The released moderated t on every value (the compendium's records store none).
+- `duration_generations` per sample from Data Set S1 (the compendium's environments carry none).
+- The 1.0.0 statistics themselves (values, SE, t) for the 83 samples both stores hold.
+
+Not carried by either: the four MOPS Rich Defined samples (no library medium on both sides).
+
+### Verification (L0 to L4)
+
+`python -m torchcell.database.build_dataset_lmdb --dataset RbTnseqWetmore2015Dataset --io-workers 8 --retire-existing --verify` under slurm (job 3871, 48G, 8 CPUs) from `34b955460`: built in 185 s, then `verify_build` (the streaming environment-response verifier, BW25113 gene universe and resolver, four SUPPLEMENTARY rows). Report: `data/torchcell/rbtnseq_wetmore2015_ecoli/preprocess/verification_report.json`; the cross-check in full: `preprocess/compendium_cross_check.json`. The store reads fresh (`--list-stale --include-private` does not name it).
+
+| level | rows | result |
+|---|---|---|
+| L0 | structural (319,264 records validated against the `ExperimentType` union) | pass |
+| L1 | count (319,264 = 88 x 3,628), pair uniqueness, provenance gaps (3 deferred fields: inchikey, n_samples, sample_unit), canonical gene names (135 pseudogene loci resolve to themselves), stored tags are loci (supplementary), withdrawn samples flagged not dropped (supplementary: 14,512 records of the 4 samples, 0 partly flagged) | pass |
+| L2 | value fidelity, SE non-negative, interval orientation, uncertainty sanity, the t identity (supplementary: max deviation 1.99e-13 over every record) | pass |
+| L3 | single measurement type, reference = 0, every record carries an environmental edit, compound identity (30 labels with the typed gap), media compound identity, media membership (3 library media) | pass |
+| L4 | gene containment and current-genome genes on BW25113 (3,628 of 3,628), the Price 2018 cross-check (supplementary: 83 samples, min r 0.9889, median 0.9971, against 0.87) | pass |
+
+Verbatim:
+
+```
+RbTnseqWetmore2015Dataset: PASS
+  [ok] L0 structural: 319264 records validated
+  [ok] L1 count: observed 319264, expected 319264
+  [ok] L1 pair_uniqueness: 319264 unique (study, strain, condition) records, one each
+  [ok] L1 provenance_gaps: 1186356 documented provenance gaps over 319264/319264 records; 3 deferred field(s): ['inchikey', 'n_samples', 'sample_unit']; 7317676 undeclared None values over 16 carrier fields (top: Compound.inchi x2630300, Compound.chebi_id x718344, Environment.dilution_rate_per_hour x319264, EnvironmentResponsePhenotype.category x319264, EnvironmentResponsePhenotype.category_label x319264)
+  [ok] L1 canonical_gene_names: 3628 systematic names, one canonical spelling each, each current in the genome; 135 common names the resolver cannot place; 135 are pseudogene loci the genome resolves to themselves
+  [ok] L1 stored_tags_are_loci_of_the_pinned_assembly: SUPPLEMENTARY: 3628 stored tags, statuses {'current': 3493, 'non_gene_feature': 135}; 0 do not resolve to themselves
+  [ok] L1 withdrawn_samples_flagged_not_dropped: SUPPLEMENTARY: 14512 records of 4 samples flagged ['problematic_stock_solution'] (['set1IT007', 'set1IT008', 'set1IT043', 'set1IT044']); 0 samples partly flagged
+  [ok] L2 value_fidelity: 319264 values checked
+  [ok] L2 se_nonnegative: 319264 values checked
+  [ok] L2 interval_orientation: 0 of 0 stored intervals do not bracket their value, as declared
+  [ok] L2 uncertainty_sanity: 319264 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty
+  [ok] L2 t_statistic_matches_the_stored_se: SUPPLEMENTARY: max |t - fit / sqrt(0.1^2 + SE^2)| = 1.99e-13 over 319264 records (tolerance 1e-09); 0 records lack a t or an SE
+  [ok] L3 measurement_type_consistent: single measurement_type: 'log2_ratio'
+  [ok] L3 reference_zero: numeric rule: reference response == 0 for all 319264 records
+  [ok] L3 environment_perturbed: all 319264 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media="M9 minimal medium, no carbon source (Wetmore 2015 'M9 minimal media_noCarbon')")
+  [ok] L3 compound_identity: environment edits: 90700 compound references carry a structure identifier; 224936 declare a typed gap (30 distinct compounds, unencodable)
+  [ok] L3 media_compound_identity: medium components: 1897444 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable)
+  [ok] L3 media_membership: 319264 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (3 distinct media)
+  [ok] L4 gene_containment_sgd: 1.000 of 3628 measured genes are reference genes (>= 1.0)
+  [ok] L4 current_genome_genes: every one of the 3628 measured systematic names is a gene of the current genome
+  [ok] L4 compendium_cross_check_price2018: SUPPLEMENTARY: 83 of 92 shared samples compared against data/torchcell/rbtnseq_price2018_ecoli (301124 values); per-sample Pearson r min 0.9889 / median 0.9971 against the bar 0.87 (the compendium's median exact-replicate r); largest single-gene difference -2.573 log2 (set1IT028 BW25113_2500), a finding, not an error; absent here {'set1IT067': 'medium_not_in_media_library', 'set1IT068': 'medium_not_in_media_library', 'set1IT069': 'medium_not_in_media_library', 'set1IT070': 'medium_not_in_media_library', 'set2IT045': 'failed_paper_quality_rules'}, absent there {'set1IT007': 'authors_withdrew_sucrose_and_mannitol_2021', 'set1IT008': 'authors_withdrew_sucrose_and_mannitol_2021', 'set1IT043': 'authors_withdrew_sucrose_and_mannitol_2021', 'set1IT044': 'authors_withdrew_sucrose_and_mannitol_2021', 'set1IT067': 'medium_not_in_media_library', 'set1IT068': 'medium_not_in_media_library', 'set1IT069': 'medium_not_in_media_library', 'set1IT070': 'medium_not_in_media_library'}
+```
+
+The verifier's L0 costs about 10 ms a record here (validation against the `ExperimentType` union), so `--verify` takes about 55 minutes for this store.
+
+### Candidate gate
+
+`python -m torchcell.candidates gate --row "Wetmore 2015" --phenotype-class EnvironmentResponsePhenotype --issue 726 --compound <each stored Condition_1 label> --json`, then the G4-value record added and the composed verdict written with `validate --write`: `database/candidates/wetmoreRapidQuantificationMutant2015.json`, outcome **admissible_with_gaps**, `source_kind` **primary**, `torchcell_commit` `9f708b4e1` (re-gated after the rebase onto main `d88f3865c`).
+
+| gate | outcome | reason, short |
+|---|---|---|
+| G1 | pass | primary (the candidate row now records the fetched release: `accession_confirmed=True`) |
+| G2 | pass | MG1655 and BW25113 resolve and read (the row names the K-12 lineage; the records pin BW25113) |
+| G3 | pass | 68 files in library + raw, all intact |
+| G4 | pass | no key held elsewhere; values compared against the Price store (below); admitted by policy |
+| G5 | gap #726 | `EnvironmentResponsePhenotype` exists; 30 of 41 `Condition_1` labels unresolved |
+
+**G4, the duplication measurement the verdict carries** (`g4_value`, computed by reading both dev stores through `stream_records`, because `candidates overlap` refuses the Price store as built from a dirty tree): 83 released columns against the 147 Price samples on 3,628 genes. The nearest served sample by max abs difference is the column's own name for 81 of 83; `set1IT083` and `set1IT094` sit nearer their exact replicate by that statistic (margins 0.13 and 0.09), which says max abs difference over 3,628 genes is driven by single outlier genes, not that the samples are misidentified (their own-name Pearson r is above 0.98). No released column is within the copy-test tolerance (1e-9) of any served sample; the smallest best max abs difference is 0.52. So: duplicated by content (two analyses of the same reads), not a copy, and admitted under the 2026-10-10 policy, which the G4 reason states.
+
+**The Price 2018 decomposition now records this dataset.** Price 2018's verdict carries a per-source `AggregationRecord.sources` (plan decision 16, [[torchcell.candidates.aggregation-decomposition]]). Its Wetmore entry is built by `wetmore_source` in `aggregation_decomposition_audit.py`, which reads `loaded_as_own_dataset` off the registry: now yes, `RbTnseqWetmore2015Dataset`. Its cross-check moved from a pin to a test: the all-sample release, 92 samples, min r 0.98895 against the same 0.87 bound as the L4 row. Price was re-gated with `--decomposition` (admissible; loadable from own release 0, loaded 1).
+
+### Schema impact
+
+`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`: `EnvironmentResponsePhenotype` modified (two optional fields, the `_check` validator), `SourceWithdrawal` and `SourceWithdrawalReason` added; **37 impacted dataset groups (this dataset's own included), 0 breaking** (additive), measured against main `d88f3865c`. Every dev store whose closure reaches `EnvironmentResponsePhenotype` reads stale until rebuilt, including the stores array 3733 just rebuilt; this lands with the KG 4.0 full rebuild.
+
+### Raw mirror
+
+`fit_t.tab` (`fcebd1de3403898b`), `fit_standard_error_obs.tab` (`06cc6122f7a3551d`), `fit_standard_error_naive.tab` (`6b2c70e805c337f1`) and `fit_logratios.tab` (`adf240fcb677193c`) were retrieved on 2026-10-10 by the recorded route (`python -m torchcell.datasets.ecoli.wetmore2015 retrieve --dest DIR`, `torchcell.literature.retrieve.direct_url`, every file sha256-checked on write; the seven 2026-10-07 files re-fetched in the same run are byte-identical upstream) and deposited with `deposit --source-dir DIR`. `deposit_raw_mirror` now EXTENDS a manifest whose every record it repeats verbatim (the first deposit's `created_at` kept, each file with its own `retrieved_at`) and still refuses one that records anything else; a second deposit changed no file. Not mirrored: the per-strain tables and the R image.
+
+### Gaps and owner items
+
+- **MOPS Rich Defined medium.** 4 successful samples (14,584 released values) are not stored on either side. Data Set S1's Media tab prints six micronutrients in mM at 40,000 to 3,000,000 ("Ammonium Molybdate | 3000000 | mM"), so the recipe cannot be taken as printed; a `MEDIA_LIBRARY` entry would come from Price 2018 Table S18 or a curated adjudication.
+- **The failed samples are not stored.** The paper's analyses exclude them and the release's gene-fitness table omits them; their values stay deposited (`fit_logratios.tab`). Storing them flagged would need a quality-failure reason beside `problematic_stock_solution`.
+- **The candidate gate's G4 still reads "subsumed = refused".** The verdict records the copy-test tolerance and states the policy in its G4 reason; a gate rule for the policy (a primary release cross-checked against a compendium) is the owner's call.
+- **The first `--verify` refused at the L4 row** (a shell run, 2026-10-10): it required identical gene sets per sample, while the compendium holds 3,768 genes against this release's 3,628; the row now scores the shared genes, counts each side's extras, and fails only on a gene held here and not there. Its build manifest was retired (`build_manifest.json.unverified.20261011-004629`). A second shell run was stopped mid-verify on the driver's instruction that dev-store builds go through slurm on a memory-tight node; its unverified manifest was retired too (`...unverified.20261011-023512`), and the store was rebuilt under slurm (job 3871, 48G, 8 CPUs).
+- **Every array-built dev store reads `torchcell_dirty: true`** (`git status --porcelain` counts untracked files, and the primary checkout has untracked notes), so `candidates overlap` (`read_store_values`) refuses the Price store; this verdict's G4-value was computed by reading both stores through `stream_records`.
+- **Compound identities** (#726): 30 `Condition_1` labels.

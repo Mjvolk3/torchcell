@@ -455,7 +455,7 @@ Graph side: `environment response phenotype` declares `environment_response_t_st
 
 First consumer: Wetmore 2015's own release ([[torchcell.datasets.ecoli.wetmore2015]]), 319,264 records each carrying the released t, 14,512 of them (the sucrose and D-mannitol samples) carrying the withdrawal.
 
-Schema impact (`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`): `EnvironmentResponsePhenotype` modified (two added optional fields plus the `_check` validator), `SourceWithdrawal` and `SourceWithdrawalReason` added; 36 impacted dataset groups, 0 breaking. Every store whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
+Schema impact (`PYTHONPATH=<worktree> python scripts/schema_impact_check.py --base origin/main`): `EnvironmentResponsePhenotype` modified (two added optional fields plus the `_check` validator), `SourceWithdrawal` and `SourceWithdrawalReason` added; 37 impacted dataset groups (against main `d88f3865c`, the Wetmore store included), 0 breaking. Every store whose closure reaches the class is stale until rebuilt, so this lands with the KG 4.0 full rebuild, never an incremental admission.
 
 ## 2026.10.11 - Life-cycle phenotype family, cell yield, nitrogen dose, timed pre-culture
 

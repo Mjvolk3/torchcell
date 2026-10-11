@@ -641,8 +641,9 @@ def encode_posterior_blocks(
         | (level[1:] != level[:-1])
         | (chrom[1:] != chrom[:-1])
     )
-    starts = np.flatnonzero(change)
-    ends = np.append(starts[1:], len(markers)) - 1
+    # Python ints, so a Sequence index is an int for every numpy stub version.
+    starts: list[int] = np.flatnonzero(change).tolist()
+    ends = [*(s - 1 for s in starts[1:]), len(markers) - 1]
     return [
         HaplotypeBlock(
             chromosome=markers[s].chromosome,
@@ -650,7 +651,7 @@ def encode_posterior_blocks(
             end=markers[e].position,
             parent=int(parent[s]),  # type: ignore[arg-type]
             posterior=round(int(level[s]) / _LEVELS_PER_UNIT, 2),
-            n_markers=int(e - s + 1),
+            n_markers=e - s + 1,
         )
         for s, e in zip(starts, ends)
     ]

@@ -290,3 +290,35 @@ The release's `Growth Rate (1/hr)` column is now served as its own dataset
 all 354 released rate cells are `p1k_*` ids of the PRECISE-1K index, so 0 of this store's
 240 built records carry a rate. The audit's rank-11 ceiling of 354 therefore sits entirely
 on the PRECISE-1K arm.
+
+## 2026.10.11 - The public-K12 compound labels after the #726 curator pass
+
+Rebuilt by slurm array 3809 (task 38) after the #726 pass
+([[torchcell.datamodels.compound_identity]], 2026.10.11); no loader code changed. 10 of the
+14 references to curated labels carry an InChIKey on the rebuilt store (0 of 17 before).
+Name changes, each PubChem's reading: `2,2'-Dipyridyl` -> the existing `2,2'-bipyridine`
+row (CID 1474); `doxycycline` -> the existing row for CID 54671203, which Wildenhain's CID
+list named by PubChem's IUPAC Title (`4-(dimethylamino)-1,5,10,11,12a-pentahydroxy-...`), so
+these records carry that long name; `thiamin` -> `thiamine`; `Isopropanol` -> `isopropanol`
+(case). Still gapped: `ET2DA` (an abbreviation the release never expands and names no
+paper for), `Povidone-Iodine` and casamino acids (undefined preparations, terminal), and
+`Benzalkonium Chloride` (a homologue mixture: CID kept, no single key, terminal).
+
+### L0-L4 after the rebuild
+
+#### `RnaseqPublicK12Lamoureux2023Dataset`
+
+240 records; store built 2026-10-11 07:36 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 240 records validated |
+| L1 | `count` | pass | observed 240, expected 240 |
+| L1 | `replicate_groups` | pass | 240 records with distinct profiles over 52 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 1045200 values checked |
+| L2 | `count_value_fidelity` | pass | 1045200 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm_from_released_counts' |
+| L3 | `reference_finite` | pass | reference expression finite for all 1045200 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4355 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

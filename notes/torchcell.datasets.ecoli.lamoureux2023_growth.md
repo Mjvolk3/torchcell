@@ -147,3 +147,38 @@ imported FROM `lamoureux2023`.
 None. No symbol of `torchcell/datamodels/schema.py` is touched, so no served dataset is
 staled; the new class is additive and reaches the graph through its own adapter module,
 conf and `kg_bacteria.yaml` entry.
+
+## 2026.10.11 - The growth-rate arm's compounds after the #726 curator pass
+
+This arm passes the same PRECISE-1K cells through the resolver as
+[[torchcell.datasets.ecoli.lamoureux2023]], so the same rows reach it: rebuilt by slurm array
+3809 (task 17), 18 of 18 references to curated labels carry an InChIKey (0 of 24 before),
+with the same name changes (`Kanamycin` -> `kanamycin`, the unstereo amino acids -> the
+`L-` rows) and no loader code change.
+
+### L0-L4 after the rebuild
+
+#### `GrowthRateLamoureux2023Dataset`
+
+89 records; store built 2026-10-11 07:10 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 07:10 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 89 records validated |
+| L1 | `count` | pass | observed 89, expected 89 |
+| L1 | `pair_uniqueness` | pass | 89 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 89 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'growth_rate' |
+| L3 | `reference_zero` | pass | absolute rule: reference value finite and on the record's own scale for all 89 records (['growth_rate']) |
+| L3 | `environment_perturbed` | pass | all 89 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='M9 (PRECISE-1K; recipe not stated) + sauer trace element mixture') |
+| L1 | `provenance_gaps` | pass | 623 documented provenance gaps over 89/89 records; 0 deferred field(s): []; 2243 undeclared None values over 17 carrier fields (top: Compound.inchi x416, Compound.chebi_id x296, Compound.inchikey x172, Compound.pubchem_cid x172, Compound.smiles x172) |
+| L1 | `canonical_gene_names` | pass | 13 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 210 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 34 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 89 on a medium deriving from one (8 distinct media) |
+| L4 | `gene_containment_mg1655_b_numbers` | pass | 13 of 13 deleted loci are MG1655 GenBank gene rows |

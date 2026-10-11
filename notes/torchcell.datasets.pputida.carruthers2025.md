@@ -1163,3 +1163,59 @@ the tested proteins and the perturbed host genes.
 12. `Supplementary Figure 10`'s 650 values wait on a mirrored statement of their scale.
     If one is found, the sheet becomes 25 more records with no other change, since its
     strain columns are array names this release already types.
+
+## 2026.10.11 - The isoprenol product docstring follows the existing row (#726)
+
+`isoprenol_product`'s docstring still described a typed gap and a row "raised in the PR";
+the row exists (PubChem CID 12988, `CPJRRXSHAYUTGL-UHFFFAOYSA-N`, since PR #729) and the
+stores already carry it, so only the text changed. The stores were not rebuilt; the titer
+and proteome stores were re-verified at this branch by slurm array 3882.
+
+### L0-L4 at this branch
+
+#### `IsoprenolTiterCarruthers2025Dataset`
+
+502 records; store built 2026-10-10 09:15 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 502 records validated |
+| L1 | `count` | pass | observed 502, expected 502 |
+| L2 | `value_fidelity` | pass | 502 values checked |
+| L2 | `uncertainty_nonnegative` | pass | 502 values checked |
+| L2 | `se_is_the_uncertainty_over_sqrt_n` | pass | 502 pairs agree within 1e-09 (titer_se == titer_uncertainty / sqrt(n_samples)); 0 records release no uncertainty and store no titer_se |
+| L3 | `titer_unit_is_the_pinned_unit` | pass | stored units ['ug/mL']; Supplementary Data 1 and the Source Data release mg/L and ConcentrationUnit has no mg/L member; 1 mg/L == 1 ug/mL exactly, so the released number is stored verbatim under the numerically identical unit |
+| L3 | `uncertainty_is_typed_or_gapped` | pass | an uncertainty number and its type are both stored, or both named in provenance_gaps; a number without its type is unreadable |
+| L3 | `replicate_design_is_sourced_or_gapped` | pass | a replicate count and what one replicate IS are both stored, or both named in provenance_gaps |
+| L3 | `heterologous_pathway_gene_counts` | pass | per-record heterologous pathway gene counts [5]; the dataset declares [5] |
+| L3 | `product_is_the_declared_one` | pass | stored products ['isoprenol']; the dataset titers ['isoprenol'] |
+| L1 | `campaign_and_panel_records_partition` | pass | 465 Figure 4b campaign strains + 37 Source Data panel strains = 502 |
+| L1 | `strain_count_reconciles_with_the_papers_472` | pass | 465 campaign strains + 7 with six replicates = 472 (the paper's 472) |
+| L3 | `off_target_non_targeting_reference_is_stored_once` | pass | 20 records on the ΔPP_0815 background share 1 distinct non-targeting reference phenotype(s); Figure 6a and Supplementary Figure 13d export that triplicate identically, so there must be exactly one |
+| L4 | `single_guide_titer_vs_supplementary_data_1` | pass | 120 overlapping entities agree within 0.005 |
+| L4 | `ko_array_titer_vs_results_text` | pass | 2 overlapping entities agree within 1.0 |
+| L4 | `panel_titers_vs_released_sheets` | pass | 37 overlapping entities agree within 1e-09 |
+| L4 | `perturbed_gene_containment_assembly` | pass | 1.000 of 141 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+#### `ProteomeCarruthers2025Dataset`
+
+21 records; store built 2026-10-10 09:16 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 21 records validated |
+| L1 | `count` | pass | observed 21, expected 21 |
+| L1 | `orf_uniqueness` | pass | 26 ORFs, 8 with multiple strains (expected) |
+| L2 | `value_fidelity` | pass | 27062 values checked |
+| L2 | `se_nonnegative` | pass | 27062 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 27062 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'dia_nn_top3_peptide_signal_mean' |
+| L1 | `protein_key_set_sizes_are_the_panels` | pass | 21 records over key-set sizes {2: 1, 4: 1, 1424: 19} |
+| L3 | `every_sample_is_a_biological_triplicate` | pass | stored replicate counts [3]; Supplementary Fig. 13: 'All strains were cultured in triplicate (n = 3)' |
+| L4 | `stored_target_profile_vs_released_sheet` | pass | 1424 overlapping entities agree within 1e-06 |
+| L4 | `overexpression_proteome_vs_released_sheet` | pass | 6 overlapping entities agree within 1e-06 |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | pass | 1.000 of 1425 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |

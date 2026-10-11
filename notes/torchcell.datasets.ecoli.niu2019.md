@@ -234,3 +234,45 @@ what the loader did with each:
   this dataset does not store; they are #731's to carry when a release measures `YZFP`.
 - **The erratum** (doi `10.1016/j.synbio.2020.10.004`) corrects a missing
   competing-interest statement and no data, so nothing here is affected.
+
+## 2026.10.11 - Pinene measured against PubChem: it stays a recorded gap (#726, #799)
+
+The #726 curator pass queried both spellings. PubChem's name index answers
+`alpha-pinene` with CID 6654, titled (+-)-alpha-Pinene, and bare `pinene` with CID
+15837102, titled (-)-Pinene, whose connectivity `CC1=C2CC(C2(C)C)CC1` is neither alpha- nor
+beta-pinene. So the two do not collapse onto one row, which #726's comment had left as a
+hypothesis. The table now carries an `alpha-pinene` row (for a source that states it) and
+a `pinene` row with status UNRESOLVED_PUBLIC and that reason; this paper doses "0.5%
+pinene" and names alpha-pinene only as the standard its production assay is quantified
+against, so the dosed compound keeps its typed gap and no record changes. The two module
+paragraphs that called this "issue #726's work" now record the measurement. The store was
+not rebuilt (the store-reach scan reads it fresh: the gap's reason is unchanged); it was
+re-verified at this branch by slurm array 3882.
+
+### L0-L4 at this branch
+
+#### `CrisprPineneToleranceNiu2019Dataset`
+
+51 records; store built 2026-10-11 02:17 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 51 records validated |
+| L1 | `count` | pass | observed 51, expected 51 |
+| L1 | `pair_uniqueness` | pass | 51 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 51 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 51 records |
+| L3 | `environment_perturbed` | pass | all 51 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=37.0, media='LB with 200 nM anhydrotetracycline, formulation not stated (Niu 2019 tolerance assay), liquid') |
+| L1 | `provenance_gaps` | pass | 255 documented provenance gaps over 51/51 records; 1 deferred field(s): ['inchikey']; 1428 undeclared None values over 17 carrier fields (top: Compound.inchi x255, Compound.chebi_id x204, Compound.pubchem_cid x153, Compound.smiles x153, Environment.dilution_rate_per_hour x51) |
+| L1 | `canonical_gene_names` | pass | 50 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 51 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 0 compound references carry a structure identifier; 51 declare a typed gap (1 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 102 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 0 records on a shared MEDIA_LIBRARY medium, 51 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | pass | 1.000 of 50 measured genes are reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | pass | every one of the 50 measured systematic names is a gene of the current genome |

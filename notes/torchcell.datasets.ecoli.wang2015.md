@@ -271,3 +271,64 @@ records, and adding the three fitness symbols to the import above raises it to 7
 would mark that store stale for a change touching none of its 46 records. The new module
 imports the pins, the SI parsers, `resolve_strains`, `deletion_genotype`, the media object
 and `SOURCED_VALUES` from here, so there is still one copy of each.
+
+## 2026.10.11 - The isoprenol text and guard follow the existing row (#726)
+
+The module docstring still said isoprenol had no compound-identity row; it has had one
+since PR #729 (PubChem CID 12988). The COMPOUND paragraph now says so, and
+`isoprenol_compound` requires the row's InChIKey to equal `ISOPRENOL_INCHIKEY` instead of
+also admitting a gapped name, so a table that lost the row stops the build (a new assertion
+in the existing test pins that). No record changes: the store already carried the key
+(`compound_curator_726_860_store_reach.py` finds no curated label in it), so it was not
+rebuilt; it was re-verified at this branch by slurm array 3882.
+
+### L0-L4 at this branch
+
+#### `EnvChemgenWang2015Dataset`
+
+46 records; store built 2026-10-11 02:51 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 46 records validated |
+| L1 | `count` | pass | observed 46, expected 46 |
+| L1 | `pair_uniqueness` | pass | 46 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 46 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 46 records |
+| L3 | `environment_perturbed` | pass | all 46 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=30.0, media='2YT (16 g/L tryptone, 10 g/L yeast extract, 5 g/L NaCl), liquid') |
+| L1 | `provenance_gaps` | pass | 184 documented provenance gaps over 46/46 records; 0 deferred field(s): []; 1150 undeclared None values over 18 carrier fields (top: Compound.inchi x184, Compound.chebi_id x92, Compound.inchikey x92, Compound.pubchem_cid x92, Compound.smiles x92) |
+| L1 | `canonical_gene_names` | pass | 46 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 46 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 46 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 46 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 46 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_bw25113_locus_tags` | pass | 46 of 46 deleted loci are BW25113 GenBank gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in si1.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

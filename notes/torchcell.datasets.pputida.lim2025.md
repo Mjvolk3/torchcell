@@ -886,3 +886,70 @@ and its adapter test.
 
 Related: [[torchcell.datasets.pputida.carruthers2025]] (the strain-versus-strain
 precedent), [[torchcell.datamodels.bacterial-perturbation-ontology]].
+
+## 2026.10.11 - The isoprenol guard no longer admits a gap (#726)
+
+`isoprenol_compound` required the table's row to carry `ISOPRENOL_INCHIKEY` but still let
+a gapped name through ("a table without the row would return the name with an inchikey
+gap"). The row exists since PR #729, so that path is closed: a gapped name now raises
+`CompoundIdentityConflictError`, pinned by a new test. No record changes and the store was
+not rebuilt; it was re-verified at this branch by slurm array 3882.
+
+### L0-L4 at this branch
+
+#### `IsoprenolToleranceLim2025Dataset`
+
+3 records; store built 2026-10-11 03:39 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 3 records validated |
+| L1 | `count` | pass | observed 3, expected 3 |
+| L1 | `pair_uniqueness` | pass | 3 unique (study, strain, condition) records, one each |
+| L2 | `value_fidelity` | pass | 3 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L2 | `interval_orientation` | pass | 0 of 0 stored intervals do not bracket their value, as declared |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'log2_ratio' |
+| L3 | `reference_zero` | pass | numeric rule: reference response == 0 for all 3 records |
+| L3 | `environment_perturbed` | pass | all 3 experiments carry an environmental edit (perturbation, non-baseline temperature, or non-baseline media; baseline temp=None, media='M9 (NREL type: ammonium sulfate + 2000x trace elements) + 4 g/L glucose (Lim 2025)') |
+| L1 | `provenance_gaps` | pass | 12 documented provenance gaps over 3/3 records; 0 deferred field(s): []; 125 undeclared None values over 27 carrier fields (top: Compound.inchi x30, BacterialVariantCall.alternate_allele x7, BacterialVariantCall.amino_acid_change x7, BacterialVariantCall.codon_change x7, BacterialVariantCall.codon_number x7) |
+| L1 | `canonical_gene_names` | pass | 12 systematic names, one canonical spelling each, each current in the genome |
+| L2 | `uncertainty_sanity` | pass | 0 labeled uncertainties, none a zero dispersion; 2 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | pass | environment edits: 3 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | pass | medium components: 21 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | pass | 3 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `site_identifiers_deleted_loci` | pass | 0 of 0 site-keyed identifiers are 1-based positions on AE015451 |
+| L4 | `gene_containment_kt2440_locus_tags` | pass | 12 of 12 deleted loci are pputida_KT2440_ASM756v2 gene rows |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |

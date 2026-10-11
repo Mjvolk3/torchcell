@@ -803,3 +803,206 @@ probability and names no correction).
 The provenance audit grew from 22 to 27 entries: `relative_expression_basis`,
 `control_strain_is_nontarget`, `linear_scale_census`, `differential_basis_and_test` and
 `identification_fdr` are the five new `SOURCED_VALUES`, each quoting `paper.md` verbatim.
+
+## 2026.10.11 - Kanamycin resolves; the isoprenol guard no longer admits a gap (#726)
+
+The #726 curator pass added a `kanamycin` row (PubChem CID 6032,
+`SBUJHOSQTJFQJX-NOAMYHISSA-N`; [[torchcell.datamodels.compound_identity]], 2026.10.11), so
+the selection antibiotic every Yunus 2026 store carries now has its structure. The five
+stores holding it were rebuilt by slurm array 3809 (tasks 2, 4, 6, 7, 23); measured with
+`compound_curator_726_860_store_reach.py`, every kanamycin reference carries the key (for
+example 101 of 101 in the knockdown store, 0 before). `check_isoprenol_identity` now
+requires the table's isoprenol row to carry `ISOPRENOL_INCHIKEY`: the row exists since PR
+#729, so a gapped name means the table lost it and stops the check instead of passing it
+(a new test pins that path).
+
+### L0-L4 after the rebuild
+
+#### `CrispriArrayYunus2026Dataset`
+
+25 records; store built 2026-10-11 05:52 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:07 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 25 records validated |
+| L1 | `count` | pass | observed 25, expected 25 |
+| L1 | `orf_uniqueness` | pass | 12 ORFs, 8 with multiple strains (expected) |
+| L2 | `value_fidelity` | pass | 51 values checked |
+| L2 | `se_nonnegative` | pass | 51 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 51 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'dia_nn_top3_relative_to_control_strain' |
+| L4 | `gene_containment_kt2440_locus_tags` | pass | 12 of 12 perturbed and measured loci are KT2440 GenBank gene rows |
+| L3 | `scale_and_basis_are_one_contrast` | pass | all 25 records are 'linear' against one basis |
+| L3 | `p_values_are_unadjusted_probabilities` | pass | 0 stored p-values are unadjusted probabilities naming no correction |
+| L4 | `reference_is_the_ratio_denominator` | pass | all 51 reference values equal 1.0 |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+#### `CrispriDifferentialProteomeYunus2026Dataset`
+
+1 records; store built 2026-10-11 05:52 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 1 records validated |
+| L1 | `count` | pass | observed 1, expected 1 |
+| L1 | `orf_uniqueness` | pass | 1 unique knocked-out ORFs, one record each |
+| L2 | `value_fidelity` | pass | 305 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 305 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'dia_nn_top3_fold_change_relative_to_control_strain_equal_variance_t_test' |
+| L4 | `gene_containment_kt2440_locus_tags` | pass | 306 of 306 perturbed and measured loci are KT2440 GenBank gene rows |
+| L3 | `scale_and_basis_are_one_contrast` | pass | all 1 records are 'linear' against one basis |
+| L3 | `p_values_are_unadjusted_probabilities` | pass | 305 stored p-values are unadjusted probabilities naming no correction |
+| L4 | `reference_is_the_ratio_denominator` | pass | all 305 reference values equal 1.0 |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+#### `CrispriKnockdownYunus2026Dataset`
+
+102 records; store built 2026-10-11 06:13 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 102 records validated |
+| L1 | `count` | pass | observed 102, expected 102 |
+| L1 | `orf_uniqueness` | pass | 100 ORFs, 2 with multiple strains (expected) |
+| L2 | `value_fidelity` | pass | 102 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 102 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'dia_nn_top3_relative_to_control_strain' |
+| L4 | `gene_containment_kt2440_locus_tags` | pass | 100 of 100 perturbed and measured loci are KT2440 GenBank gene rows |
+| L3 | `scale_and_basis_are_one_contrast` | pass | all 102 records are 'linear' against one basis |
+| L3 | `p_values_are_unadjusted_probabilities` | pass | 0 stored p-values are unadjusted probabilities naming no correction |
+| L4 | `reference_is_the_ratio_denominator` | pass | all 102 reference values equal 1.0 |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+| L3 | `provenance_audit` | pass | value backed by verbatim quote in paper.md |
+
+#### `IsoprenolTiterYunus2026Dataset`
+
+125 records; store built 2026-10-11 07:12 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 07:12 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 125 records validated |
+| L1 | `count` | pass | observed 125, expected 125 |
+| L2 | `value_fidelity` | pass | 125 values checked |
+| L2 | `uncertainty_nonnegative` | pass | 0 values checked |
+| L2 | `se_is_the_uncertainty_over_sqrt_n` | pass | 0 pairs agree within 0.0 (titer_se == titer_uncertainty / sqrt(n_samples)); 125 records release no uncertainty and store no titer_se |
+| L3 | `titer_unit_is_the_pinned_unit` | pass | stored units ['ug/mL']; the paper releases mg/L ('The highest recorded isoprenol titer of $1 4 6 9 \mathrm { m g / L }$ (Fig. 4E) was achieved by downregulating PP_4188, a gene identified by FluxRETAP') and ConcentrationUnit has no mg/L member; 1 mg/L == 1 ug/mL exactly, so the deposited number is stored verbatim under the numerically identical unit |
+| L3 | `uncertainty_is_typed_or_gapped` | pass | an uncertainty number and its type are both stored, or both named in provenance_gaps; a number without its type is unreadable |
+| L3 | `replicate_design_is_sourced_or_gapped` | pass | a replicate count and what one replicate IS are both stored, or both named in provenance_gaps |
+| L3 | `heterologous_pathway_gene_counts` | pass | per-record heterologous pathway gene counts [0]; the dataset declares [0] |
+| L3 | `product_is_the_declared_one` | pass | stored products ['isoprenol']; the dataset titers ['isoprenol'] |
+| L3 | `titer_reference_is_one_released_control` | pass | all 125 records reference the one released control titer [845.73] |
+| L4 | `titers_are_the_deposited_column` | pass | 125 stored titers are the deposited column verbatim and the reference is the control row's 845.73 |
+| L4 | `perturbed_gene_containment_assembly` | pass | 1.000 of 121 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |
+
+#### `CrispriPanelProteomeYunus2026Dataset`
+
+125 records; store built 2026-10-11 06:13 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 06:13 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 125 records validated |
+| L1 | `count` | pass | observed 125, expected 125 |
+| L1 | `orf_uniqueness` | pass | 121 ORFs, 2 with multiple strains (expected) |
+| L2 | `value_fidelity` | pass | 25875 values checked |
+| L2 | `se_nonnegative` | pass | 0 values checked |
+| L3 | `reference_finite` | pass | reference abundance finite + key-matched for all 25875 values |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'dia_nn_top3_signal_benchling_displayed' |
+| L1 | `panel_key_set_is_shared` | pass | all 125 records carry the same 207 protein keys |
+| L3 | `panel_reference_is_a_measured_control` | pass | all 125 records reference one control profile of 188 distinct measured values |
+| L4 | `panel_profiles_are_the_deposited_columns` | pass | 125 stored profiles over 207 of 253 accessions are the deposited columns verbatim, 3703 released zeros kept |
+| L4 | `protein_and_perturbed_locus_containment_assembly` | pass | 1.000 of 317 measured genes are loci of pputida_KT2440_ASM756v2 (>= 1.0) |

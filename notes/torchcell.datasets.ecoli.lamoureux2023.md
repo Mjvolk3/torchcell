@@ -185,3 +185,45 @@ It is a SEPARATE MODULE, and the reason is measured: this module's schema closur
 symbols and equals the 61 the served `rnaseq_lamoureux2023` store records, and adding the
 environment-response symbols raises it to 72, which would stale that store for a change
 touching none of its 241 records.
+
+## 2026.10.11 - The PRECISE-1K compound labels after the #726 curator pass
+
+The #726 pass ([[torchcell.datamodels.compound_identity]], 2026.10.11) curated every
+single-substance label of this arm's `Supplement`, `Antibiotic` and carbon/nitrogen cells
+that had no row; no loader code changed and the store was rebuilt by slurm array 3809 (task
+37). Measured on the rebuilt store, 27 of the 32 references to curated labels carry an
+InChIKey (0 of 41 before; the count of held labels falls because several now carry another
+row's name). What changed in a record's compound NAME, each a PubChem reading the input
+list records:
+
+- the unstereo amino acids `arginine`, `leucine`, `methionine`, `phenylalanine`,
+  `threonine`, `tyrosine` and `glutamate` reach the `L-` rows, because PubChem's name index
+  answers each bare name with the L-enantiomer record (the loader leaves the labels unstereo
+  on purpose, so this is PubChem's reading and is flagged for review);
+- `Na-citrate` reaches the media library's `sodium citrate` row (trisodium citrate, CID
+  6224), the element-symbol spelling;
+- `Kanamycin` becomes `kanamycin` (case only).
+
+Still gapped, each with its reason in the table: `DPD` and `PQ` (abbreviations neither the
+release nor the mirrored paper expands; the originating studies are not mirrored), and
+`trimethoprim-sulfamethoxazole` (a two-drug combination, CID 358641 kept, no single key).
+The media-base and trace-mixture preparations are bare `Compound`s and untouched.
+
+### L0-L4 after the rebuild
+
+#### `RnaseqLamoureux2023Dataset`
+
+241 records; store built 2026-10-11 07:35 UTC; 1 report(s); verdict **PASS**.
+
+Report `verification_report.json` (written 2026-10-11 08:32 UTC):
+
+| level | rule | result | message |
+|---|---|---|---|
+| L0 | `structural` | pass | 241 records validated |
+| L1 | `count` | pass | observed 241, expected 241 |
+| L1 | `replicate_groups` | pass | 241 records with distinct profiles over 114 (genotype, environment) groups, each measuring one gene set |
+| L2 | `tpm_value_fidelity` | pass | 1025937 values checked |
+| L2 | `count_value_fidelity` | pass | 1025937 counts are non-negative integers |
+| L3 | `measurement_type_consistent` | pass | single measurement_type: 'rnaseq_tpm' |
+| L3 | `reference_finite` | pass | reference expression finite for all 1025937 values |
+| L4 | `gene_containment_assembly` | pass | 0.999 of 4257 measured genes are loci of ecoli_K12_MG1655_ASM584v2 (>= 0.99) |

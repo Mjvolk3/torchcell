@@ -333,7 +333,7 @@ MEDIUM_PROVENANCE: tuple[SourcedValue, ...] = (
 #: Table S1's call histogram, measured on the pinned workbook (process() requires it).
 TABLE_CALLS: dict[str, int] = {"?": 221, "E": 619, "N": 3114, "N*": 6, "X": 331}
 #: Below this fraction of distinct Blattner ids resolving to one MG1655 locus the build
-#: stops (checklist item 4); measured 4,176 of 4,218 (0.9900).
+#: stops (checklist item 4); measured 4,167 of 4,209 (0.9900).
 MIN_RESOLVED_FRACTION = 0.98
 
 PUBLICATION = Publication(

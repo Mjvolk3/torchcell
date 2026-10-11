@@ -1,0 +1,356 @@
+{
+  "panels": {
+    "Ap": {
+      "cells": 7124,
+      "transcripts": 4995,
+      "median_umi": 1513.5,
+      "libraries": {
+        "00_BYxRM_480MatA_1": 3436,
+        "00_BYxRM_480MatA_2": 3688
+      },
+      "stages": {
+        "G2/M": 1989,
+        "M/G1": 1725,
+        "G1": 1867,
+        "S": 1078,
+        "G1/S": 465
+      },
+      "markers": 2700,
+      "fraction_posterior_uncertain": 0.2465,
+      "mat_marker": "chrIII:209941",
+      "mat_mean_p_parent_2": 0.202,
+      "pooled": {
+        "lookup_segregants": 1012,
+        "lookup_markers": 42052,
+        "matched_segregants": 393,
+        "median_cells_per_segregant": 17.0,
+        "segregants_over_ten_cells": 277,
+        "match_correlation": {
+          "min": 0.3172943642239614,
+          "median": 0.8783600322104792,
+          "mean": 0.9,
+          "p90": 0.9374743929841417,
+          "max": 0.9781055415683026
+        },
+        "shared_markers": 2641,
+        "median_agreement": 0.9212,
+        "wgs_blocks_per_segregant": {
+          "min": 46.0,
+          "median": 72.0,
+          "mean": 73.0,
+          "p90": 84.0,
+          "max": 118.0
+        }
+      }
+    },
+    "A": {
+      "cells": 27744,
+      "transcripts": 5435,
+      "median_umi": 4017.0,
+      "libraries": {
+        "03_ByxRM_51-_1-2": 3595,
+        "04_ByxRM_51-": 24149
+      },
+      "stages": {
+        "S": 4815,
+        "M/G1": 5366,
+        "G1": 9379,
+        "G2/M": 4369,
+        "G1/S": 3815
+      },
+      "markers": 3268,
+      "fraction_posterior_uncertain": 0.3307,
+      "mat_marker": "chrIII:204897",
+      "mat_mean_p_parent_2": 0.2114,
+      "cardinality": {
+        "called_parent_only": {
+          "blocks": {
+            "min": 32.0,
+            "median": 82.5,
+            "mean": 83.7,
+            "p90": 104.10000000000002,
+            "max": 145.0
+          },
+          "genotype_bytes": {
+            "min": 1552.0,
+            "median": 3932.5,
+            "mean": 3982.9,
+            "p90": 4939.300000000001,
+            "max": 6843.0
+          }
+        },
+        "0.1": {
+          "blocks": {
+            "min": 243.0,
+            "median": 513.5,
+            "mean": 510.7,
+            "p90": 632.1,
+            "max": 816.0
+          },
+          "genotype_bytes": {
+            "min": 11495.0,
+            "median": 24241.0,
+            "mean": 24094.5,
+            "p90": 29802.100000000002,
+            "max": 38412.0
+          }
+        },
+        "0.05": {
+          "blocks": {
+            "min": 343.0,
+            "median": 724.5,
+            "mean": 722.2,
+            "p90": 883.4000000000001,
+            "max": 1145.0
+          },
+          "genotype_bytes": {
+            "min": 16132.0,
+            "median": 34184.5,
+            "mean": 34049.9,
+            "p90": 41719.3,
+            "max": 53914.0
+          }
+        },
+        "0.02": {
+          "blocks": {
+            "min": 433.0,
+            "median": 1037.0,
+            "mean": 1019.0,
+            "p90": 1259.3000000000002,
+            "max": 1551.0
+          },
+          "genotype_bytes": {
+            "min": 20351.0,
+            "median": 48833.0,
+            "mean": 47999.9,
+            "p90": 59430.9,
+            "max": 73303.0
+          }
+        },
+        "0.01": {
+          "blocks": {
+            "min": 522.0,
+            "median": 1269.0,
+            "mean": 1243.2,
+            "p90": 1544.1,
+            "max": 1850.0
+          },
+          "genotype_bytes": {
+            "min": 24513.0,
+            "median": 59780.5,
+            "mean": 58528.5,
+            "p90": 72755.2,
+            "max": 87333.0
+          }
+        }
+      }
+    },
+    "B": {
+      "cells": 44784,
+      "transcripts": 5556,
+      "median_umi": 2130.0,
+      "libraries": {
+        "01_2444_44_1-2": 2473,
+        "02_2444_44-": 9221,
+        "07_2444-cross-1": 12756,
+        "07_2444-cross-2": 20334
+      },
+      "stages": {
+        "S": 7525,
+        "G1": 23092,
+        "G2/M": 5205,
+        "M/G1": 3698,
+        "G1/S": 5264
+      },
+      "markers": 2824,
+      "fraction_posterior_uncertain": 0.4705,
+      "mat_marker": "chrIII:201163",
+      "mat_mean_p_parent_2": 0.6417,
+      "cardinality": {
+        "called_parent_only": {
+          "blocks": {
+            "min": 38.0,
+            "median": 76.0,
+            "mean": 77.7,
+            "p90": 100.0,
+            "max": 154.0
+          },
+          "genotype_bytes": {
+            "min": 1841.0,
+            "median": 3626.0,
+            "mean": 3706.8,
+            "p90": 4755.0,
+            "max": 7287.0
+          }
+        },
+        "0.1": {
+          "blocks": {
+            "min": 296.0,
+            "median": 493.5,
+            "mean": 494.9,
+            "p90": 583.1,
+            "max": 741.0
+          },
+          "genotype_bytes": {
+            "min": 14057.0,
+            "median": 23336.0,
+            "mean": 23386.0,
+            "p90": 27567.600000000002,
+            "max": 34891.0
+          }
+        },
+        "0.05": {
+          "blocks": {
+            "min": 416.0,
+            "median": 728.5,
+            "mean": 725.6,
+            "p90": 849.2,
+            "max": 1005.0
+          },
+          "genotype_bytes": {
+            "min": 19508.0,
+            "median": 34447.5,
+            "mean": 34263.2,
+            "p90": 40167.5,
+            "max": 47360.0
+          }
+        },
+        "0.02": {
+          "blocks": {
+            "min": 499.0,
+            "median": 1115.0,
+            "mean": 1083.5,
+            "p90": 1261.5,
+            "max": 1377.0
+          },
+          "genotype_bytes": {
+            "min": 23450.0,
+            "median": 52566.5,
+            "mean": 51121.6,
+            "p90": 59661.700000000004,
+            "max": 64975.0
+          }
+        },
+        "0.01": {
+          "blocks": {
+            "min": 586.0,
+            "median": 1421.0,
+            "mean": 1362.4,
+            "p90": 1591.1,
+            "max": 1730.0
+          },
+          "genotype_bytes": {
+            "min": 27528.0,
+            "median": 67036.5,
+            "mean": 64256.7,
+            "p90": 75067.1,
+            "max": 81560.0
+          }
+        }
+      }
+    },
+    "3004": {
+      "cells": 6595,
+      "transcripts": 4696,
+      "median_umi": 1982.0,
+      "libraries": {
+        "10_3004_cross_10k_Feb_21": 4639,
+        "11_3004_cross_5k_Feb_21": 1956
+      },
+      "stages": {
+        "G1": 1784,
+        "G2/M": 1432,
+        "M/G1": 1358,
+        "S": 1426,
+        "G1/S": 595
+      },
+      "markers": 2190,
+      "fraction_posterior_uncertain": 0.4483,
+      "mat_marker": "chrIII:204174",
+      "mat_mean_p_parent_2": 0.2526,
+      "cardinality": {
+        "called_parent_only": {
+          "blocks": {
+            "min": 29.0,
+            "median": 57.0,
+            "mean": 57.3,
+            "p90": 74.0,
+            "max": 106.0
+          },
+          "genotype_bytes": {
+            "min": 1412.0,
+            "median": 2736.0,
+            "mean": 2742.9,
+            "p90": 3523.4,
+            "max": 5035.0
+          }
+        },
+        "0.1": {
+          "blocks": {
+            "min": 138.0,
+            "median": 355.5,
+            "mean": 347.4,
+            "p90": 447.1,
+            "max": 635.0
+          },
+          "genotype_bytes": {
+            "min": 6485.0,
+            "median": 16805.5,
+            "mean": 16411.1,
+            "p90": 21110.600000000002,
+            "max": 29985.0
+          }
+        },
+        "0.05": {
+          "blocks": {
+            "min": 186.0,
+            "median": 533.0,
+            "mean": 508.4,
+            "p90": 667.1,
+            "max": 864.0
+          },
+          "genotype_bytes": {
+            "min": 8730.0,
+            "median": 25195.0,
+            "mean": 24016.0,
+            "p90": 31544.9,
+            "max": 40802.0
+          }
+        },
+        "0.02": {
+          "blocks": {
+            "min": 271.0,
+            "median": 842.5,
+            "mean": 780.4,
+            "p90": 1027.1,
+            "max": 1216.0
+          },
+          "genotype_bytes": {
+            "min": 12756.0,
+            "median": 39841.5,
+            "mean": 36878.8,
+            "p90": 48616.1,
+            "max": 57571.0
+          }
+        },
+        "0.01": {
+          "blocks": {
+            "min": 372.0,
+            "median": 1107.0,
+            "mean": 1016.1,
+            "p90": 1302.1,
+            "max": 1466.0
+          },
+          "genotype_bytes": {
+            "min": 17550.0,
+            "median": 52346.0,
+            "mean": 48022.4,
+            "p90": 61533.700000000004,
+            "max": 69358.0
+          }
+        }
+      }
+    }
+  },
+  "sample_cells_per_panel": 500
+}

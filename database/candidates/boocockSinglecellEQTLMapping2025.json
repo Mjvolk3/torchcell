@@ -1,0 +1,743 @@
+{
+  "citation_key": "boocockSinglecellEQTLMapping2025",
+  "table": "yeast",
+  "row_name": "Boocock 2025 (single-cell eQTL mapping)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Expression / single cell', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "haplotype_mosaic: S288C -> sgd_S288C_R64-4-1_20230830 resolves and reads; Peter 2018 isolates -> peter2018_1011_assemblies resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "39 file(s) in library+raw, 48726 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "SingleCellExpressionPhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "haplotype_mosaic",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "S288C",
+        "assembly_set": "sgd_S288C_R64-4-1_20230830",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "Peter 2018 isolates",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "boocockSinglecellEQTLMapping2025",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.xlsx",
+        "role": "si_data",
+        "bytes": 979712,
+        "sha256_manifest": "7a0d8104d0534eaa4250fc7ec000abaa52c0ee13ba2492a95b261cf87ee1c555",
+        "sha256_disk": "7a0d8104d0534eaa4250fc7ec000abaa52c0ee13ba2492a95b261cf87ee1c555",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS1. Yeast Strains",
+            "rows": 30
+          },
+          {
+            "sheet": "Table S2. Plasmids",
+            "rows": 10
+          },
+          {
+            "sheet": "Table S3. Primers",
+            "rows": 14
+          },
+          {
+            "sheet": "Table S4. Dataset Summary",
+            "rows": 11
+          },
+          {
+            "sheet": "Table S5. Variance Decomp",
+            "rows": 4997
+          },
+          {
+            "sheet": "Table S6. Local eQTLs",
+            "rows": 4903
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.xlsx",
+        "role": "si_data",
+        "bytes": 1215084,
+        "sha256_manifest": "2cf4cecf6302bdcc6093198f861cdd3a95e0f50981fe8e9e03b539c438a5b307",
+        "sha256_disk": "2cf4cecf6302bdcc6093198f861cdd3a95e0f50981fe8e9e03b539c438a5b307",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1 (Cross A)",
+            "rows": 4122
+          },
+          {
+            "sheet": "S2 (Cross B)",
+            "rows": 4384
+          },
+          {
+            "sheet": "S3 (Cross C)",
+            "rows": 4069
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.xlsx",
+        "role": "si_data",
+        "bytes": 352287,
+        "sha256_manifest": "31b673ff1e2c80ac76a380ba9726cab397a61c5cda184bc29dc23c51d50836d5",
+        "sha256_disk": "31b673ff1e2c80ac76a380ba9726cab397a61c5cda184bc29dc23c51d50836d5",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1 (Cross A)",
+            "rows": 1564
+          },
+          {
+            "sheet": "S2 (Cross B)",
+            "rows": 551
+          },
+          {
+            "sheet": "S3 (Cross C)",
+            "rows": 1127
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.zip",
+        "role": "si_data",
+        "bytes": 37819978,
+        "sha256_manifest": "810b23d3354126629604f74cda7a2da234930d714929b8976b3301bfb00f677f",
+        "sha256_disk": "810b23d3354126629604f74cda7a2da234930d714929b8976b3301bfb00f677f",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 1230510,
+        "sha256_manifest": "844265146b385db89d5348fc9ca846265b493a52e3309ec3b0fecb5cddf7c44c",
+        "sha256_disk": "844265146b385db89d5348fc9ca846265b493a52e3309ec3b0fecb5cddf7c44c",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1 (Cross A)",
+            "rows": 2828
+          },
+          {
+            "sheet": "S2 (Cross B)",
+            "rows": 3582
+          },
+          {
+            "sheet": "S3 (Cross C)",
+            "rows": 4994
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 192197,
+        "sha256_manifest": "ecaf5bf633f2220d662b1f28cfdad0ab8210acd219a5a599c170c7b1e4563ec9",
+        "sha256_disk": "ecaf5bf633f2220d662b1f28cfdad0ab8210acd219a5a599c170c7b1e4563ec9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1 (Cross A)",
+            "rows": 269
+          },
+          {
+            "sheet": "S2 (Cross B)",
+            "rows": 431
+          },
+          {
+            "sheet": "S3 (Cross C)",
+            "rows": 791
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 14140,
+        "sha256_manifest": "55858b59bdfb3c1b583ef8d0a73877a3c798c31e424631f95e80f9203748afdb",
+        "sha256_disk": "55858b59bdfb3c1b583ef8d0a73877a3c798c31e424631f95e80f9203748afdb",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1 (Cross A)",
+            "rows": 8
+          },
+          {
+            "sheet": "S2 (Cross B)",
+            "rows": 14
+          },
+          {
+            "sheet": "S3 (Cross C)",
+            "rows": 9
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.zip",
+        "role": "si_data",
+        "bytes": 425976,
+        "sha256_manifest": "b166a572cd32f9f46c18530c61157958c9d7b09e11d72bdb1a711db73a1a58e8",
+        "sha256_disk": "b166a572cd32f9f46c18530c61157958c9d7b09e11d72bdb1a711db73a1a58e8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 15872,
+        "sha256_manifest": "630b83744d29c55b5ae6c869997b8befae471303b60c5193cc71bad0d552a068",
+        "sha256_disk": "630b83744d29c55b5ae6c869997b8befae471303b60c5193cc71bad0d552a068",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "S1",
+            "rows": 53
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.pdf",
+        "role": "si_pdf",
+        "bytes": 607296,
+        "sha256_manifest": "5fc7f73b7c21d9a63112b28e783ad6d744a375d40b8706a5630715c45eab862e",
+        "sha256_disk": "5fc7f73b7c21d9a63112b28e783ad6d744a375d40b8706a5630715c45eab862e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/0cd49d76689434f4957c5bd0c1209cfc3f51d8e277232c6bc58a534f955decc4.jpg",
+        "role": "ocr_image",
+        "bytes": 43403,
+        "sha256_manifest": "bf72d299f1277e7414e52344604d1c1ef251101010c47d66322065687a0fc20c",
+        "sha256_disk": "bf72d299f1277e7414e52344604d1c1ef251101010c47d66322065687a0fc20c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/1329225c42fdef4aeafaee81f37e16b126bcf396e7482be1aeda1b7c17fa5191.jpg",
+        "role": "ocr_image",
+        "bytes": 85238,
+        "sha256_manifest": "7aed39338671a0a6a0c44d06ba7d870dd921bfa80398ea8a133f65ad846cfd9e",
+        "sha256_disk": "7aed39338671a0a6a0c44d06ba7d870dd921bfa80398ea8a133f65ad846cfd9e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/30504b93aad62e3a18816b03523686ec165a169c5f2761fdf01bb30bc33f3782.jpg",
+        "role": "ocr_image",
+        "bytes": 46759,
+        "sha256_manifest": "5c25dedee34932cf44669d7fd72521c8d93866f16bd053b4e85b9f9a3e93ee55",
+        "sha256_disk": "5c25dedee34932cf44669d7fd72521c8d93866f16bd053b4e85b9f9a3e93ee55",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/3e5b745a000dad18bdfc9ed726420774e37fc674f8bc5bda430cee63f9584799.jpg",
+        "role": "ocr_image",
+        "bytes": 42859,
+        "sha256_manifest": "5dfe5cdce822ba8fa85276c240f82ea5196af5036ab60d6a9168f8ae51abac9d",
+        "sha256_disk": "5dfe5cdce822ba8fa85276c240f82ea5196af5036ab60d6a9168f8ae51abac9d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/40a3b3bcc877e740bd375bce3f1954b8fff8359e242c896d5648eab603ef4454.jpg",
+        "role": "ocr_image",
+        "bytes": 99087,
+        "sha256_manifest": "78dbb2e49fce38f903cd258106194d1b3a69a71fe3ca7d91d2de725c2b12f852",
+        "sha256_disk": "78dbb2e49fce38f903cd258106194d1b3a69a71fe3ca7d91d2de725c2b12f852",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/45f0bb93bfd07140d70c6e4855c2b4b1b5cac4683c113f0ea53c4628508a9d4f.jpg",
+        "role": "ocr_image",
+        "bytes": 47780,
+        "sha256_manifest": "82b6595276f8b70acf01b4b2d804dd634f64e18622860f41f00bab3b4685debc",
+        "sha256_disk": "82b6595276f8b70acf01b4b2d804dd634f64e18622860f41f00bab3b4685debc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/4f916ce7a7302214ca7e55ca6bc20e38593ca0d5d76683590957c09030b99b4e.jpg",
+        "role": "ocr_image",
+        "bytes": 41016,
+        "sha256_manifest": "9e83ededad2c1ab80e456501df3564850e1d0b697dbaecc6b769622d8bfb627f",
+        "sha256_disk": "9e83ededad2c1ab80e456501df3564850e1d0b697dbaecc6b769622d8bfb627f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/645cb595927228ead2a4759f27a3b33fc137a30a320c3950cdb4cd3d0dfc4ad4.jpg",
+        "role": "ocr_image",
+        "bytes": 55661,
+        "sha256_manifest": "b69d97d9f5ebad768ea3762668acd441fe30c17af1f0b7961a010c7ae0587e42",
+        "sha256_disk": "b69d97d9f5ebad768ea3762668acd441fe30c17af1f0b7961a010c7ae0587e42",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/67fd4b917e395703003dd708e134aa319c64152f79e49423354afa1a3eaa7265.jpg",
+        "role": "ocr_image",
+        "bytes": 31498,
+        "sha256_manifest": "81d31e2a371e21a0eb491316709b3a2ab11450261c5b0a702cb952c1e6e3cde2",
+        "sha256_disk": "81d31e2a371e21a0eb491316709b3a2ab11450261c5b0a702cb952c1e6e3cde2",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/7da14e0b0415c396becd138af6fc33857d145106aaaa825e7ac99749a1ef0087.jpg",
+        "role": "ocr_image",
+        "bytes": 27265,
+        "sha256_manifest": "5c6722acd1f3e236098276c48e6f3f080f2a2a0c9dd91ccb96918e71f45b5743",
+        "sha256_disk": "5c6722acd1f3e236098276c48e6f3f080f2a2a0c9dd91ccb96918e71f45b5743",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/9501df61f9ccb71b25f7304af2025f4d16c53b14824eda5bb83f9dfef30d6dfa.jpg",
+        "role": "ocr_image",
+        "bytes": 44031,
+        "sha256_manifest": "e47c94b598086a02abb43f4a73fe3f9b6897c3d671235a5387d4b2fa070470b5",
+        "sha256_disk": "e47c94b598086a02abb43f4a73fe3f9b6897c3d671235a5387d4b2fa070470b5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/9c378cf88951d57937bcfa52f2eedd25f32061f932be3fd25c75a46a5e17abb8.jpg",
+        "role": "ocr_image",
+        "bytes": 63061,
+        "sha256_manifest": "c52c40b5e1b246348e880de25022204dcd976dea976a78cedebc4f12a241423e",
+        "sha256_disk": "c52c40b5e1b246348e880de25022204dcd976dea976a78cedebc4f12a241423e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/d970191277502b06c8ea020bf758730dcb643e398a8164ad670ba78c94bba77c.jpg",
+        "role": "ocr_image",
+        "bytes": 76975,
+        "sha256_manifest": "b3153031982ca0126b3c9a8bfca1c0e2387b7d5a6507b73ab29e95637ee3bfcd",
+        "sha256_disk": "b3153031982ca0126b3c9a8bfca1c0e2387b7d5a6507b73ab29e95637ee3bfcd",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/edd7dcda15ee5b35650392cc2320067dcc8a4459aaed32b057975eea148cf2fc.jpg",
+        "role": "ocr_image",
+        "bytes": 64173,
+        "sha256_manifest": "55a5230d65d28de795b08b364c3764268dc8b6c08a8a8a3b8de7bcbf875600c6",
+        "sha256_disk": "55a5230d65d28de795b08b364c3764268dc8b6c08a8a8a3b8de7bcbf875600c6",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/f4229c71bb3523ed4ce204e9563e7d1a089f5e06213f9ce36932b6027a7600fb.jpg",
+        "role": "ocr_image",
+        "bytes": 39757,
+        "sha256_manifest": "0c0a077eda7f83e5f6c50600ce8ff6017bb0453d5555bc9da9ee1a1f394b2f00",
+        "sha256_disk": "0c0a077eda7f83e5f6c50600ce8ff6017bb0453d5555bc9da9ee1a1f394b2f00",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/f549360dbd1b2007e8669c1415058933f389c97bc900cd319e3013f472269e63.jpg",
+        "role": "ocr_image",
+        "bytes": 34569,
+        "sha256_manifest": "97d054d211e8dbd156b67a5ee586883d25f30c94f9413a97176641de87493a47",
+        "sha256_disk": "97d054d211e8dbd156b67a5ee586883d25f30c94f9413a97176641de87493a47",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/f9d5fa0e7cd4960ef53a7bbf13f384a84886e9fcd8600cde0ab41cbbc64099c2.jpg",
+        "role": "ocr_image",
+        "bytes": 33667,
+        "sha256_manifest": "fa8a8b4281fffe22bea62b2c9fbe24f6e3d6c548fb28748cb6d55298c532be17",
+        "sha256_disk": "fa8a8b4281fffe22bea62b2c9fbe24f6e3d6c548fb28748cb6d55298c532be17",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si10/fe996e74d59d88d16d78472b8a728069bd0307b6a108cbda0bb377b28e76cf65.jpg",
+        "role": "ocr_image",
+        "bytes": 73668,
+        "sha256_manifest": "ae17cb357abcc190c518b0f4bc6a1fc95044e87612a968e347538411324136e4",
+        "sha256_disk": "ae17cb357abcc190c518b0f4bc6a1fc95044e87612a968e347538411324136e4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.md",
+        "role": "si_ocr",
+        "bytes": 13839,
+        "sha256_manifest": "f6ecd75f5f267d5ffaa2441a0dbce8e7587f76614daae633469a21a2dba70b3f",
+        "sha256_disk": "f6ecd75f5f267d5ffaa2441a0dbce8e7587f76614daae633469a21a2dba70b3f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 24194,
+        "sha256_manifest": "74a042fc4c0ee96c11a5cd4c47ca90c117d892166df5ee1d9923524fb1c1e3ff",
+        "sha256_disk": "74a042fc4c0ee96c11a5cd4c47ca90c117d892166df5ee1d9923524fb1c1e3ff",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10_middle.json",
+        "role": "ocr_layout",
+        "bytes": 255763,
+        "sha256_manifest": "9e93b38308f36f1f6b0536ea5eb137dad59f21a91bbc2698a6c896f296dd091f",
+        "sha256_disk": "9e93b38308f36f1f6b0536ea5eb137dad59f21a91bbc2698a6c896f296dd091f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si10_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 971,
+        "sha256_manifest": "e0f91db0ff3f3faa447e4715cf0335e92810009d15724705e9d70491cd162b57",
+        "sha256_disk": "e0f91db0ff3f3faa447e4715cf0335e92810009d15724705e9d70491cd162b57",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/zenodo/data/out/combined/Ap/segData.RDS",
+        "role": "raw_data",
+        "bytes": 150283799,
+        "sha256_manifest": "4901cbc87c9b25125d7697f50698be7f92567e1f23d0335003e770d74522e8d5",
+        "sha256_disk": "4901cbc87c9b25125d7697f50698be7f92567e1f23d0335003e770d74522e8d5",
+        "retrieval_method": "zenodo",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/zenodo/data/out/combined/A/segData.RDS",
+        "role": "raw_data",
+        "bytes": 770103195,
+        "sha256_manifest": "da7dd8ae659a281c1dc5c4868b7333a76d6f21e3f6020b42fb816318d9a0f1d3",
+        "sha256_disk": "da7dd8ae659a281c1dc5c4868b7333a76d6f21e3f6020b42fb816318d9a0f1d3",
+        "retrieval_method": "zenodo",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/zenodo/data/out/combined/B/segData.RDS",
+        "role": "raw_data",
+        "bytes": 1060929225,
+        "sha256_manifest": "b45792763e9b22fc275dee63701448a3e37ac644ca2588e2de8b87ec12a434d6",
+        "sha256_disk": "b45792763e9b22fc275dee63701448a3e37ac644ca2588e2de8b87ec12a434d6",
+        "retrieval_method": "zenodo",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/zenodo/data/out/combined/3004/segData.RDS",
+        "role": "raw_data",
+        "bytes": 117847602,
+        "sha256_manifest": "405f0c4bee8e1cfc2ff700d93ffb833bb41a5774e2a9164a1aae74b1fd9d3b74",
+        "sha256_disk": "405f0c4bee8e1cfc2ff700d93ffb833bb41a5774e2a9164a1aae74b1fd9d3b74",
+        "retrieval_method": "zenodo",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/zenodo/data/out/combined/Ap/segMatch.RDS",
+        "role": "raw_data",
+        "bytes": 140447,
+        "sha256_manifest": "c40a576d6a524386d311ead3d384b0b4308fececcb0cd691800dd3b1a04d7b26",
+        "sha256_disk": "c40a576d6a524386d311ead3d384b0b4308fececcb0cd691800dd3b1a04d7b26",
+        "retrieval_method": "zenodo",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "data/dropbox/gdata_42k.RData",
+        "role": "raw_data",
+        "bytes": 11682582,
+        "sha256_manifest": "23554b871d3a946f05534320be2ea6ea41d1ae36b4bfb4ee07377aedb0a3dedc",
+        "sha256_disk": "23554b871d3a946f05534320be2ea6ea41d1ae36b4bfb4ee07377aedb0a3dedc",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/si1.xlsx",
+        "role": "raw_data",
+        "bytes": 979712,
+        "sha256_manifest": "7a0d8104d0534eaa4250fc7ec000abaa52c0ee13ba2492a95b261cf87ee1c555",
+        "sha256_disk": "7a0d8104d0534eaa4250fc7ec000abaa52c0ee13ba2492a95b261cf87ee1c555",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "TableS1. Yeast Strains",
+            "rows": 30
+          },
+          {
+            "sheet": "Table S2. Plasmids",
+            "rows": 10
+          },
+          {
+            "sheet": "Table S3. Primers",
+            "rows": 14
+          },
+          {
+            "sheet": "Table S4. Dataset Summary",
+            "rows": 11
+          },
+          {
+            "sheet": "Table S5. Variance Decomp",
+            "rows": 4997
+          },
+          {
+            "sheet": "Table S6. Local eQTLs",
+            "rows": 4903
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.7554/eLife.95566",
+    "pmid": null,
+    "accessions": [
+      "10.5061/dryad.xgxd254qb",
+      "PRJNA1049497"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.7554/eLife.95566",
+        "where": "torchcell/datasets/scerevisiae/boocock2025.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "10.5061/dryad.xgxd254qb",
+        "where": "torchcell/datasets/scerevisiae/boocock2025.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PRJNA1049497",
+        "where": "torchcell/datasets/scerevisiae/boocock2025.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "SingleCellExpressionPhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "de58b18dc7dcb20b338d386e68ede7b56300cd0e"
+}

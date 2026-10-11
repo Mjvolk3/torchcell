@@ -9,6 +9,7 @@ from .auesukaree2009 import (
 )
 from .baryshnikova2010 import SmfBaryshnikova2010Dataset as SmfBaryshnikova2010Dataset
 from .bloom2019 import Bloom2019Dataset as Bloom2019Dataset
+from .boocock2025 import Boocock2025Dataset as Boocock2025Dataset
 from .cachera2023 import BetaxanthinCachera2023Dataset as BetaxanthinCachera2023Dataset
 from .caudal2024 import (
     CaudalPanTranscriptome2024Dataset as CaudalPanTranscriptome2024Dataset,
@@ -139,6 +140,7 @@ yeastphenome_datasets = ["YeastPhenomeDataset"]
 bloom_datasets = ["Bloom2019Dataset"]
 
 peter2018_datasets = ["IsolateGrowthPeter2018Dataset"]
+boocock_datasets = ["Boocock2025Dataset"]
 
 smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
 
@@ -176,6 +178,7 @@ __all__ = (
     + yeastphenome_datasets
     + bloom_datasets
     + peter2018_datasets
+    + boocock_datasets
     + smith2016_datasets
     + baryshnikova_datasets
 )

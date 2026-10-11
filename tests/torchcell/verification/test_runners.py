@@ -173,6 +173,8 @@ RUN_ALL_ORDER = [
     "run_segregant_growth",
     # the Peter 2018 natural-isolate growth family, called after the segregants.
     "run_natural_isolate_response",
+    # Boocock 2025: the segregant single-cell expression family, after its growth twin.
+    "run_segregant_expression",
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
@@ -2077,6 +2079,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.ENVIRONMENT_RESPONSE_DATASETS,
         runners.FITNESS_DATASETS,
         runners.SEGREGANT_GROWTH_DATASETS,
+        runners.SEGREGANT_EXPRESSION_DATASETS,
         runners.GENE_INTERACTION_DATASETS,
         runners.GENE_ESSENTIALITY_DATASETS,
         runners.SYNTHETIC_PAIR_DATASETS,
@@ -2086,7 +2089,7 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 3 + 1 + 14 + 2 + 6 + 13 + 11 + 1 + 5 + 1 + 2 + 1
+    assert len(roots) == 3 + 1 + 14 + 2 + 6 + 13 + 11 + 1 + 1 + 5 + 1 + 2 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

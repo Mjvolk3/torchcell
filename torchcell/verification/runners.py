@@ -2627,6 +2627,56 @@ def run_natural_isolate_response(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# Segregant single-cell expression datasets (haplotype-mosaic genotypes, UMI counts)
+# --------------------------------------------------------------------------- #
+SEGREGANT_EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
+    "boocock2025": {
+        "root": "data/torchcell/boocock2025",
+        # audit_sourced_value joins <library>/<citation_key>/<source_uri>
+        "library": "torchcell-library",
+        "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
+        # 393 pooled segregants + 27,744 (A) + 44,784 (B) + 6,595 (3004) cells.
+        "expected_count": 79516,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.7554/eLife.95566",
+            citation_key="boocockSinglecellEQTLMapping2025",
+            method=(
+                "one-pot 10x single-cell RNA-seq of MATa segregants of the Bloom 2019 "
+                "crosses A (BY x RM), B (YJM145 x YPS163) and 3004 (CBS2888 x YJM981); "
+                "per de novo cell, the released HMM posterior P(parent 2) at the "
+                "LD-pruned markers (segData.RDS Gsub) encoded as blocks on a 0.05 grid "
+                "and the UMI counts of the analysis transcripts (segData.RDS Yr); per "
+                "pooled BY x RM segregant (393, matched by segMatch.RDS), its cells "
+                "summed and its whole-genome hard calls (gdata_42k.RData); raw mirror "
+                "torchcell-raw/boocockSinglecellEQTLMapping2025 with manifest.json "
+                "(Zenodo 10.5281/zenodo.12695127 tar members, Dropbox lookup genotypes, "
+                "Supplementary file 1, code at joshsbloom/single_cell_eQTL 9c5f66a3)"
+            ),
+            page="eLife 2025; Methods 'Sporulation and single-cell sorting', "
+            "'Single-cell variant counting and genotype inference', 'One-pot eQTL "
+            "mapping'; Supplementary file 1 tables S1 and S4",
+            sha256="a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4",
+        ),
+    }
+}
+
+
+def run_segregant_expression(data_root: str) -> bool:
+    """Verify segregant single-cell expression datasets (L0-L4). True if all pass."""
+    from torchcell.datasets.scerevisiae import boocock2025
+
+    all_passed = True
+    for spec in SEGREGANT_EXPRESSION_DATASETS.values():
+        abs_root = osp.join(data_root, spec["root"])
+        report = boocock2025.verify_build(abs_root, data_root=data_root)
+        out = _write_report(report, osp.join(abs_root, "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # #889: gene interaction, gene essentiality and SynLethDB pair families
 #
 # These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no
@@ -3929,6 +3979,7 @@ def run_all(data_root: str) -> bool:
     synthetic_pairs_ok = run_synthetic_pairs(data_root)
     segregant_ok = run_segregant_growth(data_root)
     natural_isolate_ok = run_natural_isolate_response(data_root)
+    segregant_expression_ok = run_segregant_expression(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
@@ -3949,6 +4000,7 @@ def run_all(data_root: str) -> bool:
         and synthetic_pairs_ok
         and segregant_ok
         and natural_isolate_ok
+        and segregant_expression_ok
         and titer_ok
         and bacterial_protein_ok
         and bacterial_metabolite_ok

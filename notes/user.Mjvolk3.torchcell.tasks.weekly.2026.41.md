@@ -36,3 +36,7 @@ created: 1791256185172
 ## 2026.10.10
 
 - [x] `docs/expansion-100-full-ranking` worktree: the yeast expansion document prints the whole ranking to 200 again as a closing section, all 167 candidate rows with links and a sources table (citation, link, reason, data location) for every row rather than the sixty; published to Zotero as version 15 [[experiments.database.expansion-100]]
+
+## 2026.10.11
+
+- [x] `docs/aggregation-decomposition-policy` worktree: plan decision 16 (a served compendium is a processing reference, not the source of record) as `AggregationRecord.sources`, measured for the four served bacterial compendia from a sha256-pinned Fitness Browser snapshot, the mirrors and GEO/ENA probes. 152 source entries, 146 loadable from a scriptable own release, 0 walled, 1 loaded (Borchert 2023); the browser's `feba.db` is a scriptable per-record release where its pages answer 403. Decomposed verdicts for Price 2018, Borchert 2024, Lim 2022 and PRECISE-1K; umbrella #931 and 45 per-study issues #932 to #976 [[torchcell.candidates.aggregation-decomposition]]

@@ -1,6 +1,6 @@
-# tests/torchcell/datamodels/test_pseudobulk_umi_count.py
-# [[tests.torchcell.datamodels.test_pseudobulk_umi_count]]
-# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_pseudobulk_umi_count.py
+# tests/torchcell/datamodels/test_pseudobulk_umi_count_schema.py
+# [[tests.torchcell.datamodels.test_pseudobulk_umi_count_schema]]
+# https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datamodels/test_pseudobulk_umi_count_schema.py
 """The pseudobulk UMI-count family (Jackson 2020): what the phenotype refuses, and the
 narrowed reference and environment types of its experiment pair.
 

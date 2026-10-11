@@ -2416,12 +2416,19 @@ def test_environment_response_interval_requires_a_level_and_stays_verbatim() -> 
         _response(environment_response_lower=float("inf"), confidence_level=0.95)
 
 
-def test_absolute_measurement_types_are_exactly_the_two_unnormalized_readouts() -> None:
+def test_absolute_measurement_types_are_exactly_the_three_unnormalized_readouts() -> (
+    None
+):
     """The gate the verifier's reference relief requires. A relative readout is 0 at its
-    control by construction and is deliberately not a member.
+    control by construction and is deliberately not a member. ``cell_yield`` joined for
+    De Chiara 2022's colony cell yields, released in cells.
     """
     assert s.ABSOLUTE_MEASUREMENT_TYPES == frozenset(
-        {s.MeasurementType.growth_rate, s.MeasurementType.colony_size}
+        {
+            s.MeasurementType.growth_rate,
+            s.MeasurementType.colony_size,
+            s.MeasurementType.cell_yield,
+        }
     )
     assert s.MeasurementType.relative_growth_rate not in s.ABSOLUTE_MEASUREMENT_TYPES
     assert s.MeasurementType.log2_ratio not in s.ABSOLUTE_MEASUREMENT_TYPES

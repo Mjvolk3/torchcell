@@ -622,6 +622,23 @@ single cell expression phenotype:
         cell_cycle_stage_counts: str
         library_cell_counts: str
         measurement_type: str
+# A culture's life-cycle time course (LifeCyclePhenotype, De Chiara 2022): sporulation
+# efficiency, dyad fraction and stationary-phase viability as percentages keyed by
+# '<measurement type>@<time><h|d>'. The keyed dict serializes to a JSON string, the
+# multi-valued phenotype convention; every field is one declared property.
+life cycle phenotype:
+    is_a: phenotypic feature
+    represented_as: node
+    properties:
+        graph_level: str
+        label_name: str
+        label_statistic_name: str
+        life_cycle: str
+        assay: str
+        n_samples: int
+        sample_unit: str
+        cells_per_sample: int
+        cells_per_sample_is_minimum: bool
 # PHENOTYPES END
 
 # RELATIONSHIPS
@@ -691,6 +708,7 @@ phenotype member of:
             bacterial morphology phenotype,
             mrna number fraction phenotype,
             single cell expression phenotype,
+            life cycle phenotype,
         ]
     target: [experiment, experiment reference]
 

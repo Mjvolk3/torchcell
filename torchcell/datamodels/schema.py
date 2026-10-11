@@ -3804,6 +3804,14 @@ class ConcentrationUnit(StrEnum):
     ug_per_ml = "ug/mL"
     g_per_l = "g/L"
     ph = "pH"  # dimensionless -log10[H+]; magnitude unit for a PhysicalFactor.ph edit
+    # --- begin De Chiara 2022: a nitrogen-equivalent dose ------------------------- #
+    # Milligrams of NITROGEN per litre, not of the compound: an alternative nitrogen
+    # source dosed so every source supplies the same nitrogen (De Chiara 2022: "the
+    # alternative nitrogen source at growth yield limiting concentrations (30 mg N
+    # l-1)"). Converting it to a compound mass needs the compound's nitrogen content,
+    # which the source does not do, so the dose is stored on the basis it was set on.
+    mg_nitrogen_per_l = "mg_N/L"
+    # --- end De Chiara 2022 ------------------------------------------------------- #
 
 
 class DoseBasis(StrEnum):
@@ -6244,6 +6252,12 @@ class MeasurementType(StrEnum):
       TYPE in the same condition, and the numbers are generation times), from
       ``differential_fitness`` (a signed difference, 0 at the control) and from
       ``control_regression_residual`` (a residual with the control slope removed).
+    - ``cell_yield``: ABSOLUTE number of cells a colony population yields over its
+      growth curve, from calibrated colony images (De Chiara 2022's Scan-o-matic
+      "total cell yields (y)", released in cells). Distinct from ``colony_size``,
+      which is an end-point size on an image scale (pixels): this is a cell count, and
+      the source does not say whether it is the final population or the gain over the
+      inoculum, so it is named for what the source calls it.
     """
 
     log2_ratio = "log2_ratio"
@@ -6258,6 +6272,7 @@ class MeasurementType(StrEnum):
     colony_size = "colony_size"
     # ADDITIVE (Peter 2018 phenome): a same-strain test-over-control growth ratio.
     condition_growth_ratio = "condition_growth_ratio"
+    cell_yield = "cell_yield"  # De Chiara 2022 (additive)
 
 
 class ResponseCategory(StrEnum):
@@ -6328,9 +6343,14 @@ CATEGORICAL_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
 #: every record's type to be a member here, which is what keeps the relief from being a
 #: blanket relaxation. ``colony_size`` is here because Bloom 2019's two control-plate
 #: conditions release the raw colony radius; ``growth_rate`` because Caglar 2017 Table S5
-#: releases a doubling time in minutes.
+#: releases a doubling time in minutes; ``cell_yield`` because De Chiara 2022 releases
+#: each colony population's cell yield in cells.
 ABSOLUTE_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
-    {MeasurementType.growth_rate, MeasurementType.colony_size}
+    {
+        MeasurementType.growth_rate,
+        MeasurementType.colony_size,
+        MeasurementType.cell_yield,  # De Chiara 2022: cells per colony population
+    }
 )
 # --------------------------------------------------------------------------- #
 # end ABSOLUTE environment-response readouts (#776)
@@ -8375,6 +8395,262 @@ class MrnaNumberFractionExperiment(Experiment, ModelStrict):
 # --------------------------------------------------------------------------- #
 
 
+# --------------------------------------------------------------------------- #
+# LIFE CYCLE BLOCK START (De Chiara 2022)
+# Progression through the sexual cycle and survival in stationary phase, read as the
+# percentage of a culture's cells in a state at a time after the culture was induced
+# or entered stationary phase. A time course of one culture is one record.
+# --------------------------------------------------------------------------- #
+class LifeCycleMeasurementType(StrEnum):
+    """What one life-cycle number counts, as a percentage.
+
+    - ``sporulation_efficiency``: asci over all cells counted. De Chiara 2022:
+      "Sporulation efficiency was estimated as the number of asci divided by the total
+      cell count." A part over its whole, so it lies in [0, 100].
+    - ``dyad_fraction``: two-spore asci (dyads) over asci, so a percentage of the
+      SPORULATED cells, not of the culture. Undefined when a culture formed no ascus,
+      which is why a record carries no dyad key at a time point with no asci.
+    - ``stationary_phase_viability``: viable cells over cells at a time after the
+      culture entered stationary phase (chronological life span). A percentage
+      normalized to controls on the same plate can exceed 100 (De Chiara 2022: "data
+      were normalized to four internal controls distributed in each plate"; 37 of its
+      released values lie above 100), so it is bounded below only.
+    """
+
+    sporulation_efficiency = "sporulation_efficiency"
+    dyad_fraction = "dyad_fraction"
+    stationary_phase_viability = "stationary_phase_viability"
+
+
+#: Measurement types that are a part over its whole, so a value above 100 is refused.
+LIFE_CYCLE_BOUNDED_PERCENT: frozenset[LifeCycleMeasurementType] = frozenset(
+    {
+        LifeCycleMeasurementType.sporulation_efficiency,
+        LifeCycleMeasurementType.dyad_fraction,
+    }
+)
+
+
+class LifeCycleAssay(StrEnum):
+    """HOW a life-cycle percentage was read off a culture.
+
+    - ``microscopy_ascus_count``: asci and cells counted under an optical microscope.
+    - ``flow_cytometry_scatter``: spores told from vegetative cells by forward and side
+      scatter (cell size and granularity) on a flow cytometer, no stain.
+    - ``flow_cytometry_viability_stain``: dead cells told from living ones by uptake of
+      membrane-impermeable nucleic-acid dyes (propidium iodide, YO-PRO-1).
+    """
+
+    microscopy_ascus_count = "microscopy_ascus_count"
+    flow_cytometry_scatter = "flow_cytometry_scatter"
+    flow_cytometry_viability_stain = "flow_cytometry_viability_stain"
+
+
+#: The measurement types each assay can produce; a record mixing others is refused.
+LIFE_CYCLE_ASSAY_MEASUREMENTS: dict[
+    LifeCycleAssay, frozenset[LifeCycleMeasurementType]
+] = {
+    LifeCycleAssay.microscopy_ascus_count: frozenset(
+        {
+            LifeCycleMeasurementType.sporulation_efficiency,
+            LifeCycleMeasurementType.dyad_fraction,
+        }
+    ),
+    LifeCycleAssay.flow_cytometry_scatter: frozenset(
+        {LifeCycleMeasurementType.sporulation_efficiency}
+    ),
+    LifeCycleAssay.flow_cytometry_viability_stain: frozenset(
+        {LifeCycleMeasurementType.stationary_phase_viability}
+    ),
+}
+
+
+class LifeCycleTimeUnit(StrEnum):
+    """The unit a life-cycle time point is stated in, as the source states it."""
+
+    hour = "h"
+    day = "d"
+
+
+_LIFE_CYCLE_KEY_RE = re.compile(
+    r"^(?P<measurement>[a-z_]+)@(?P<time>\d+(?:\.\d+)?)(?P<unit>h|d)$"
+)
+
+
+def life_cycle_key(
+    measurement_type: LifeCycleMeasurementType, time: float, unit: LifeCycleTimeUnit
+) -> str:
+    """The ``life_cycle`` key of one time point: ``<measurement type>@<time><unit>``.
+
+    ``sporulation_efficiency@24h``, ``stationary_phase_viability@35d``. A whole time is
+    written without a decimal point, so one time point has one spelling.
+    """
+    if not math.isfinite(time) or time < 0:
+        raise ValueError(f"a life-cycle time point is finite and >= 0, got {time}")
+    written = str(int(time)) if float(time).is_integer() else repr(float(time))
+    return f"{LifeCycleMeasurementType(measurement_type).value}@{written}{LifeCycleTimeUnit(unit).value}"
+
+
+def parse_life_cycle_key(
+    key: str,
+) -> tuple[LifeCycleMeasurementType, float, LifeCycleTimeUnit]:
+    """Split a ``life_cycle`` key into (measurement type, time, unit); refuse others.
+
+    The key must also be the canonical spelling ``life_cycle_key`` writes, so
+    ``spo@24.0h`` and ``spo@24h`` cannot both name one time point.
+    """
+    match = _LIFE_CYCLE_KEY_RE.match(key)
+    if match is None:
+        raise ValueError(
+            f"life-cycle key {key!r} is not '<measurement type>@<time><h|d>'"
+        )
+    measurement = LifeCycleMeasurementType(match.group("measurement"))
+    time = float(match.group("time"))
+    unit = LifeCycleTimeUnit(match.group("unit"))
+    if life_cycle_key(measurement, time, unit) != key:
+        raise ValueError(
+            f"life-cycle key {key!r} is not canonical; write "
+            f"{life_cycle_key(measurement, time, unit)!r}"
+        )
+    return measurement, time, unit
+
+
+class LifeCyclePhenotype(Phenotype, ModelStrict):
+    """A culture's progression through the life cycle, as percentages over time.
+
+    One record is one culture followed over time by one assay: an isolate in
+    sporulation medium counted at 24 h and 72 h, or a stationary-phase culture stained
+    at days 7, 21 and 35. ``life_cycle`` maps ``life_cycle_key(...)`` to the released
+    percentage, so the time course stays in the record that measured it and each value
+    says what it counts and when.
+
+    Why a new leaf rather than an existing one: ``FitnessPhenotype`` is a positive
+    growth ratio that clamps non-positive values, ``EnvironmentResponsePhenotype`` is
+    one scalar response per record and has no time axis, and a sporulation efficiency
+    is neither a growth rate nor a response to an added compound. The class is
+    additive: no served record changes.
+
+    Fields beside the values:
+
+    - ``assay``: how the percentages were read; every key's measurement type must be
+      one the assay produces (``LIFE_CYCLE_ASSAY_MEASUREMENTS``).
+    - ``n_samples`` / ``sample_unit``: independent cultures behind each value, both set
+      or both ``None`` (a ``None`` the source does not state is a typed gap).
+    - ``cells_per_sample``: cells counted per culture and time point;
+      ``cells_per_sample_is_minimum`` marks a source that states a floor (">100 cells")
+      rather than a count.
+    """
+
+    graph_level: str = "global"
+    label_name: str = "life_cycle"
+    label_statistic_name: str | None = None
+
+    life_cycle: dict[str, float] = Field(
+        description=(
+            "'<measurement type>@<time><h|d>' -> percentage of cells, in sorted key "
+            "order; a time point the source did not release (or a ratio it left "
+            "undefined) is not a key"
+        )
+    )
+    assay: LifeCycleAssay = Field(description="how the percentages were read")
+    n_samples: int | None = Field(
+        default=None,
+        description="independent cultures behind each value; None when not stated",
+    )
+    sample_unit: SampleUnit | None = Field(
+        default=None, description="what one sample in n_samples is"
+    )
+    cells_per_sample: int | None = Field(
+        default=None,
+        description="cells counted per culture and time point; None when not stated",
+    )
+    cells_per_sample_is_minimum: bool = Field(
+        default=False,
+        description="True when the source states a floor ('>100 cells') rather than a "
+        "count; requires cells_per_sample",
+    )
+
+    @field_validator("life_cycle", mode="before")
+    @classmethod
+    def validate_life_cycle(cls, v: Any) -> Any:  # raw pre-validation input
+        """Sort the keys; every key canonical, every value a valid percentage."""
+        if not isinstance(v, dict):
+            raise ValueError(f"life_cycle must be a dict, got {type(v).__name__}")
+        if not v:
+            raise ValueError("life_cycle cannot be empty")
+        for key, value in v.items():
+            measurement, _, _ = parse_life_cycle_key(key)
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(f"life_cycle[{key!r}] is not a number")
+            if not math.isfinite(value) or value < 0.0:
+                raise ValueError(
+                    f"life_cycle[{key!r}] must be a finite percentage >= 0, got {value}"
+                )
+            if measurement in LIFE_CYCLE_BOUNDED_PERCENT and value > 100.0:
+                raise ValueError(
+                    f"life_cycle[{key!r}] = {value}: a {measurement.value} is a part of "
+                    "its whole and cannot exceed 100"
+                )
+        return v if isinstance(v, SortedDict) else SortedDict(v)
+
+    @model_validator(mode="after")
+    def _check_life_cycle(self) -> "LifeCyclePhenotype":
+        """The assay produces every key's measurement; counts are positive and paired."""
+        allowed = LIFE_CYCLE_ASSAY_MEASUREMENTS[self.assay]
+        for key in self.life_cycle:
+            measurement, _, _ = parse_life_cycle_key(key)
+            if measurement not in allowed:
+                raise ValueError(
+                    f"{self.assay.value} does not measure {measurement.value} "
+                    f"(key {key!r})"
+                )
+        if (self.n_samples is None) != (self.sample_unit is None):
+            raise ValueError("n_samples and sample_unit are set together or not at all")
+        if self.n_samples is not None and self.n_samples < 1:
+            raise ValueError(f"n_samples must be >= 1, got {self.n_samples}")
+        if self.cells_per_sample is not None and self.cells_per_sample < 1:
+            raise ValueError(
+                f"cells_per_sample must be >= 1, got {self.cells_per_sample}"
+            )
+        if self.cells_per_sample_is_minimum and self.cells_per_sample is None:
+            raise ValueError("cells_per_sample_is_minimum requires cells_per_sample")
+        return self
+
+    def __repr__(self) -> str:
+        """Summary repr naming the assay and the time points."""
+        return (
+            f"LifeCyclePhenotype(assay={self.assay.value}, "
+            f"keys={list(self.life_cycle)})"
+        )
+
+
+class LifeCycleExperimentReference(ExperimentReference, ModelStrict):
+    """Reference for a life-cycle experiment; its environment states the protocol."""
+
+    experiment_reference_type: str = "life_cycle"
+    environment_reference: CultureEnvironment
+    phenotype_reference: LifeCyclePhenotype
+
+
+class LifeCycleExperiment(Experiment, ModelStrict):
+    """One culture's life-cycle time course under one assay and one protocol.
+
+    ``environment`` is a ``CultureEnvironment`` because a sporulation efficiency is
+    meaningless without the protocol that induced it (pre-sporulation medium, vessel,
+    shaking, inoculum density); declared, not inherited, so pydantic serializes it.
+    """
+
+    experiment_type: str = "life_cycle"
+    genotype: Genotype | list[Genotype,]  # type: ignore[assignment]  # pydantic intentionally widens base Genotype field in subclass
+    environment: CultureEnvironment
+    phenotype: LifeCyclePhenotype
+
+
+# --------------------------------------------------------------------------- #
+# LIFE CYCLE BLOCK END (De Chiara 2022)
+# --------------------------------------------------------------------------- #
+
+
 PhenotypeType = (
     Phenotype
     | FitnessPhenotype
@@ -8401,6 +8677,7 @@ PhenotypeType = (
     | BacterialMorphologyPhenotype  # issue #774
     | MrnaNumberFractionPhenotype  # issue #854
     | SingleCellExpressionPhenotype  # boocock2025
+    | LifeCyclePhenotype  # De Chiara 2022
 )
 
 ExperimentType = (
@@ -8443,6 +8720,7 @@ ExperimentType = (
     | BacterialMorphologyExperiment  # issue #774
     | MrnaNumberFractionExperiment  # issue #854
     | SegregantExpressionExperiment  # boocock2025
+    | LifeCycleExperiment  # De Chiara 2022
 )
 
 ExperimentReferenceType = (
@@ -8485,6 +8763,7 @@ ExperimentReferenceType = (
     | BacterialMorphologyExperimentReference  # issue #774
     | MrnaNumberFractionExperimentReference  # issue #854
     | SegregantExpressionExperimentReference  # boocock2025
+    | LifeCycleExperimentReference  # De Chiara 2022
 )
 
 
@@ -8527,6 +8806,7 @@ EXPERIMENT_TYPE_MAP = {
     "bacterial_morphology": BacterialMorphologyExperiment,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperiment,  # issue #854
     "segregant_expression": SegregantExpressionExperiment,  # boocock2025
+    "life_cycle": LifeCycleExperiment,  # De Chiara 2022
 }
 
 EXPERIMENT_REFERENCE_TYPE_MAP = {
@@ -8568,6 +8848,7 @@ EXPERIMENT_REFERENCE_TYPE_MAP = {
     "bacterial_morphology": BacterialMorphologyExperimentReference,  # issue #774
     "mrna_number_fraction": MrnaNumberFractionExperimentReference,  # issue #854
     "segregant_expression": SegregantExpressionExperimentReference,  # boocock2025
+    "life_cycle": LifeCycleExperimentReference,  # De Chiara 2022
 }
 
 

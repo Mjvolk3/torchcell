@@ -166,6 +166,14 @@ EXAMPLES: dict[str, dict[str, Any]] = {
         "is_synthetic": False,
     },
     "torchcell.datamodels.schema.CalMorphPhenotype": {"calmorph": {"A101_A": 0.5}},
+    # De Chiara 2022: a life-cycle key is '<measurement type>@<time><h|d>' and the
+    # generic builder's "x" key parses as none.
+    "torchcell.datamodels.schema.LifeCyclePhenotype": {
+        "life_cycle": {"sporulation_efficiency@24h": 22.0, "dyad_fraction@24h": 0.0},
+        "assay": "microscopy_ascus_count",
+        "cells_per_sample": 100,
+        "cells_per_sample_is_minimum": True,
+    },
     # #857: the generic builder picks the first SynthesisRateUnit member, a rate per
     # generation, which must state the generation time the builder leaves out.
     "torchcell.datamodels.schema.ProteinSynthesisRatePhenotype": {

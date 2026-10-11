@@ -283,6 +283,15 @@ node.InternedConstant {
   caption: "{id}";
 }
 
+node.LifeCyclePhenotype {
+  color: #E1D5E7;
+  border-color: #9673A6;
+  border-width: 2px;
+  text-color-internal: #000000;
+  diameter: 50px;
+  caption: "{id}";
+}
+
 node.Media {
   color: #F8CECC;
   border-color: #B85450;

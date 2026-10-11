@@ -326,6 +326,12 @@ class CellAdapter:
                 "single cell expression phenotype (chunked)",
                 self._single_cell_expression_phenotype_node,
             ),
+            # --- begin De Chiara 2022: the life-cycle family ---
+            (
+                "life cycle phenotype (chunked)",
+                self._life_cycle_phenotype_node,
+            ),
+            # --- end De Chiara 2022 ---
             (
                 "fitness phenotype reference",
                 self._get_fitness_phenotype_reference_nodes,
@@ -415,6 +421,12 @@ class CellAdapter:
                 "single cell expression phenotype reference",
                 self._get_single_cell_expression_phenotype_reference_nodes,
             ),
+            # --- begin De Chiara 2022: the life-cycle family ---
+            (
+                "life cycle phenotype reference",
+                self._get_life_cycle_phenotype_reference_nodes,
+            ),
+            # --- end De Chiara 2022 ---
             ("dataset", self._get_dataset_nodes),
             ("publication (chunked)", self._publication_node),
         ]
@@ -2904,6 +2916,67 @@ class CellAdapter:
                 )
             )
         return nodes
+
+    # --- begin De Chiara 2022: the life-cycle family -------------------------- #
+    @staticmethod
+    def _life_cycle_properties(phenotype: Any) -> dict[str, Any]:
+        """Node properties of a ``LifeCyclePhenotype`` (experiment or reference).
+
+        The keyed time course serializes to a JSON string, the multi-valued phenotype
+        convention; the assay and the sample counts stay typed so a query can select
+        microscopy counts from flow-cytometry counts without parsing the dict.
+        """
+        return {
+            "graph_level": phenotype.graph_level,
+            "label_name": phenotype.label_name,
+            "label_statistic_name": phenotype.label_statistic_name,
+            "life_cycle": json.dumps(dict(phenotype.life_cycle)),
+            "assay": phenotype.assay.value,
+            "n_samples": phenotype.n_samples,
+            "sample_unit": (
+                None if phenotype.sample_unit is None else phenotype.sample_unit.value
+            ),
+            "cells_per_sample": phenotype.cells_per_sample,
+            "cells_per_sample_is_minimum": phenotype.cells_per_sample_is_minimum,
+        }
+
+    @data_chunker
+    def _life_cycle_phenotype_node(
+        self, data: dict[str, Any], method_name: str
+    ) -> BioCypherNode:
+        phenotype = data["experiment"].phenotype
+        phenotype_id = hashlib.sha256(
+            json.dumps(phenotype.model_dump()).encode("utf-8")
+        ).hexdigest()
+        return BioCypherNode(
+            node_id=phenotype_id,
+            preferred_id=f"phenotype_{phenotype_id}",
+            node_label="life cycle phenotype",
+            properties=self._life_cycle_properties(phenotype),
+        )
+
+    def _get_life_cycle_phenotype_reference_nodes(self) -> list[BioCypherNode]:
+        nodes = []
+        seen_node_ids: set[str] = set()
+        for data in tqdm(self.dataset.experiment_reference_index):
+            phenotype = data.reference.phenotype_reference
+            phenotype_id = hashlib.sha256(
+                json.dumps(phenotype.model_dump()).encode("utf-8")
+            ).hexdigest()
+            if phenotype_id in seen_node_ids:
+                continue
+            seen_node_ids.add(phenotype_id)
+            nodes.append(
+                BioCypherNode(
+                    node_id=phenotype_id,
+                    preferred_id="life cycle phenotype",
+                    node_label="life cycle phenotype",
+                    properties=self._life_cycle_properties(phenotype),
+                )
+            )
+        return nodes
+
+    # --- end De Chiara 2022 -------------------------------------------------- #
 
     def _get_dataset_nodes(self) -> list[BioCypherNode]:
         nodes = [

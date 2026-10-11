@@ -77,6 +77,12 @@ def _pins_from_constants(
             m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
             m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
         },
+        "IsolateGrowthPeter2018Dataset": lambda: {
+            m.PHENO_NAME: m.PHENO_SHA256,
+            m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
+            m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
+            m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+        },
         "AminoAcidCooper2010Dataset": lambda: {m.TABLE4_NAME: m.TABLE4_SHA256},
         "EnvChemgenCostanzo2021Dataset": lambda: {m._S1_FILENAME: m._S1_SHA256},
         "MetaboliteDaSilveira2014Dataset": lambda: {
@@ -158,6 +164,13 @@ MANIFEST_PINNED = {
 }
 
 
+#: Classes that pin some raw files to the genomes tier's manifest records.
+GENOME_TIER_PINNED = {
+    "CaudalPanTranscriptome2024Dataset",
+    "IsolateGrowthPeter2018Dataset",
+}
+
+
 def _dataset_classes(module: ModuleType) -> list[type[ExperimentDataset]]:
     """The concrete dataset classes a loader module defines, by name."""
     return sorted(
@@ -194,6 +207,9 @@ def _stub_pin_sources(
         monkeypatch.setattr(module, "_load_sgd_genes", lambda root: set())
     if cls.__name__ == "CaudalPanTranscriptome2024Dataset":
         monkeypatch.setattr(cls, "_data_root", lambda self: data_root)
+    if cls.__name__ == "IsolateGrowthPeter2018Dataset":
+        monkeypatch.setattr(module, "_data_root", lambda: data_root)
+    if cls.__name__ in GENOME_TIER_PINNED:
 
         def genome_manifest(key: str, root: str) -> SimpleNamespace:
             return SimpleNamespace(
@@ -255,7 +271,7 @@ def test_process_verifies_every_raw_file_against_its_pin_before_reading(
         assert seen == [(str(raw), expected)], cls.__name__
         assert sorted(expected) == sorted(raw_files), cls.__name__
         assert list(raw.iterdir()) == [], cls.__name__
-        if cls.__name__ not in MANIFEST_PINNED | {"CaudalPanTranscriptome2024Dataset"}:
+        if cls.__name__ not in MANIFEST_PINNED | GENOME_TIER_PINNED:
             off_hex = {k: v for k, v in expected.items() if not SHA256_HEX.fullmatch(v)}
             assert off_hex == {}, cls.__name__
 

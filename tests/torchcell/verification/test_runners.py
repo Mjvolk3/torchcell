@@ -43,6 +43,7 @@ import os
 import pickle
 from collections.abc import Callable, Iterable
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any, Literal
 
 import lmdb
@@ -170,6 +171,8 @@ RUN_ALL_ORDER = [
     "run_gene_essentiality",
     "run_synthetic_pairs",
     "run_segregant_growth",
+    # the Peter 2018 natural-isolate growth family, called after the segregants.
+    "run_natural_isolate_response",
     "run_product_titer",
     "run_bacterial_protein_abundance",
     "run_bacterial_metabolite",
@@ -1738,6 +1741,78 @@ def test_run_segregant_growth_wires_the_streaming_verifier(
     assert _names(_read_report(abs_root)) == ["count"]
 
 
+def test_run_natural_isolate_response_wires_the_streaming_verifier(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The runner streams the store, pins the tarball's sha256 from the genomes-tier
+    manifest, hands over the raw dir, raw mirror, library root, SGD universe and the
+    spec's containment floor, and writes the report into the store's preprocess dir.
+    """
+    abs_root = _root(tmp_path, "iso")
+    _write_lmdb(abs_root, [{"i": 0}, {"i": 1}])
+    sgd_calls = _stub_sgd(monkeypatch, {"YAL001C"})
+    manifest_calls: list[tuple[str, str | None]] = []
+
+    def fake_manifest(assembly_set: str, data_root: str | None = None) -> Any:
+        manifest_calls.append((assembly_set, data_root))
+        return SimpleNamespace(
+            record=lambda name: SimpleNamespace(sha256=f"pin:{name}")
+        )
+
+    monkeypatch.setattr(
+        "torchcell.sequence.genome.registry.load_genome_manifest", fake_manifest
+    )
+    captured: dict[str, Any] = {}
+
+    def fake_verify(records: Iterable[Record], **kwargs: Any) -> VerificationReport:
+        captured.update(kwargs)
+        captured["records"] = list(records)
+        report = VerificationReport(
+            dataset_name=kwargs["dataset_name"], provenance=kwargs["provenance"]
+        )
+        return report.add(
+            LevelResult(
+                level=Level.L1, name="count", passed=True, message="m", details={}
+            )
+        )
+
+    monkeypatch.setattr(
+        runners, "verify_natural_isolate_response_streaming", fake_verify
+    )
+    monkeypatch.setattr(
+        runners,
+        "NATURAL_ISOLATE_RESPONSE_DATASETS",
+        {
+            "iso": _spec(
+                "iso",
+                raw_mirror="torchcell-raw/peterTest2018",
+                tarball="genes.tar.gz",
+                expected_count=7,
+                min_s288c_containment=0.5,
+            )
+        },
+    )
+    assert runners.run_natural_isolate_response(str(tmp_path)) is True
+    assert manifest_calls == [(PETER2018_1011, str(tmp_path))]
+    assert sgd_calls == [str(tmp_path)]
+    assert captured["records"] == [{"i": 0}, {"i": 1}]
+    assert (captured["dataset_name"], captured["expected_count"]) == ("iso", 7)
+    assert captured["provenance"] is PROV
+    assert captured["raw_dir"] == str(abs_root / "raw")
+    assert captured["raw_mirror"] == str(tmp_path / "torchcell-raw" / "peterTest2018")
+    assert captured["library_root"] == str(tmp_path / "torchcell-library")
+    assert captured["tarball_sha256"] == "pin:genes.tar.gz"
+    assert captured["sgd_genes"] == {"YAL001C"}
+    assert captured["min_s288c_containment"] == 0.5
+    assert _names(_read_report(abs_root)) == ["count"]
+    other = tmp_path / "elsewhere"
+    _write_lmdb(other, [{"i": 9}])
+    report = runners.verify_natural_isolate_dataset("iso", str(tmp_path), str(other))
+    assert captured["records"] == [{"i": 9}]
+    assert captured["raw_dir"] == str(other / "raw")
+    assert report.passed is True
+
+
 # --------------------------------------------------------------------------- #
 # run_all + main
 # --------------------------------------------------------------------------- #
@@ -1979,6 +2054,9 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "syn_rescue_db_yeast": 6942,
     }
     assert _oracles(runners.SEGREGANT_GROWTH_DATASETS) == {"bloom2019": 530100}
+    assert _oracles(runners.NATURAL_ISOLATE_RESPONSE_DATASETS) == {
+        "isolate_growth_peter2018": 33985
+    }
     assert (runners.MIN_GENE_OVERLAP, runners.MIN_RNASEQ_GENE_CONTAINMENT) == (
         0.90,
         0.90,
@@ -2002,12 +2080,13 @@ def test_every_registry_root_is_the_dev_tree_path_of_its_own_name() -> None:
         runners.GENE_INTERACTION_DATASETS,
         runners.GENE_ESSENTIALITY_DATASETS,
         runners.SYNTHETIC_PAIR_DATASETS,
+        runners.NATURAL_ISOLATE_RESPONSE_DATASETS,
     ]
     roots = {
         name: spec["root"] for registry in registries for name, spec in registry.items()
     }
     assert roots == {name: f"data/torchcell/{name}" for name in roots}
-    assert len(roots) == 59  # 3 + 1 + 14 + 2 + 6 + 13 + 11 + 1 + 5 + 1 + 2
+    assert len(roots) == 3 + 1 + 14 + 2 + 6 + 13 + 11 + 1 + 5 + 1 + 2 + 1
     assert all(
         isinstance(spec["provenance"], Provenance)
         for registry in registries

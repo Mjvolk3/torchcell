@@ -580,6 +580,23 @@ def test_relative_growth_rate_is_its_own_measurement_type() -> None:
     assert s.MeasurementType.relative_growth_rate not in s.CATEGORICAL_MEASUREMENT_TYPES
 
 
+def test_condition_growth_ratio_is_a_same_strain_ratio_member() -> None:
+    """Peter 2018's growth ratio over the same isolate's control plate is its own member.
+
+    It is a RATIO (control = 1.0), so it sits in ``RATIO_MEASUREMENT_TYPES`` beside the
+    wild-type-relative rate, and in neither the categorical nor the absolute set.
+    """
+    member = s.MeasurementType.condition_growth_ratio
+    assert member.value == "condition_growth_ratio"
+    assert member in s.RATIO_MEASUREMENT_TYPES
+    assert member not in s.ABSOLUTE_MEASUREMENT_TYPES
+    assert member not in s.CATEGORICAL_MEASUREMENT_TYPES
+    phenotype = s.EnvironmentResponsePhenotype(
+        measurement_type=member, environment_response=0.0
+    )
+    assert phenotype.environment_response == 0.0
+
+
 def _microarray(**overrides: Any) -> Any:
     kwargs: dict[str, Any] = {
         "expression": {"YAL002W": 90.0, "YAL001C": 100.0},

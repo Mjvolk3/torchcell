@@ -87,6 +87,9 @@ from torchcell.verification.morphology import (
     perturbed_gene_set,
     verify_morphology_dataset,
 )
+from torchcell.verification.natural_isolate_response import (
+    verify_natural_isolate_response_streaming,
+)
 from torchcell.verification.protein import protein_gene_set, verify_protein_dataset
 from torchcell.verification.released import (
     COSTANZO2016_P_VALUE,
@@ -1063,6 +1066,10 @@ SGD_GENE_FASTAS = [
 # Empirically the Caudal measured-gene union is 0.943 contained in the SGD gene set (the
 # remainder are accessory/novel ORFs legitimately absent from S288C); 0.90 leaves headroom.
 MIN_RNASEQ_GENE_CONTAINMENT = 0.90
+#: Peter 2018: the share of sequence-variant and absence names that are current S288C
+#: genes. Measured on the 2026-10-11 build: 6,142 of 6,143 (0.9998); the one that is
+#: not, YFL057C, is in Peter's reference-gene tarball but not in R64-4-1.
+MIN_PETER_S288C_CONTAINMENT = 0.999
 
 
 def _sgd_gene_set(data_root: str) -> set[str]:
@@ -2539,6 +2546,87 @@ def run_segregant_growth(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# Natural-isolate environment response (Peter 2018 phenome, yeast wave 1): an
+# isolate's genotype is ~5,000 perturbations off S288C shared by every condition,
+# so the screened-deletion rules of the environment-response family do not hold.
+# --------------------------------------------------------------------------- #
+NATURAL_ISOLATE_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
+    "isolate_growth_peter2018": {
+        "root": "data/torchcell/isolate_growth_peter2018",
+        "raw_mirror": "torchcell-raw/peterGenomeEvolution10112018",
+        # the reference-gene tarball every SequenceVariantPerturbation points into
+        "tarball": "allReferenceGenesWithSNPsAndIndelsInferred.tar.gz",
+        # 971 phenotyped isolates x 35 released conditions; the YPD 30 C control is the
+        # ratio's denominator and is not released as a value.
+        "expected_count": 33985,
+        # measured on the 2026-10-11 build: see the dataset's dendron note
+        "min_s288c_containment": MIN_PETER_S288C_CONTAINMENT,
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/peterGenomeEvolution10112018/data/"
+                "phenoMatrix_35ConditionsNormalizedByYPD.tab.gz (raw mirror; retrieved "
+                "from http://1002genomes.u-strasbg.fr/files/, md5 equal to the host's "
+                "md5.txt)"
+            ),
+            citation_key="peterGenomeEvolution10112018",
+            sha256="7696369a6ad4ea98ed99708b2df59a2916ae34846f909648f241c1194c7347d9",
+            method=(
+                "growth ratio of 971 natural isolates on 35 solid-medium conditions over "
+                "the same isolate on YPD 30 C (end-point colony size, Gitter, 40 h); "
+                "conditions from Supplementary Table 2 (si/si3.xls sha256 b11de13b...); "
+                "genotype per isolate off S288C exactly as caudal2024 builds it from the "
+                "genomes-tier set peter2018_1011_assemblies"
+            ),
+            page=(
+                "Nature 556:339 (doi:10.1038/s41586-018-0030-5); Methods 'Phenotyping'; "
+                "Data availability; Supplementary Table 2"
+            ),
+        ),
+    }
+}
+
+
+def verify_natural_isolate_dataset(
+    name: str, data_root: str, abs_root: str | None = None
+) -> VerificationReport:
+    """One NATURAL_ISOLATE_RESPONSE_DATASETS entry's report (written by the caller).
+
+    ``abs_root`` defaults to the registry root under ``data_root``; the loader's
+    ``verify_build`` passes the store it just built.
+    """
+    from torchcell.sequence.genome.registry import load_genome_manifest
+
+    spec = NATURAL_ISOLATE_RESPONSE_DATASETS[name]
+    root = abs_root or osp.join(data_root, spec["root"])
+    return verify_natural_isolate_response_streaming(
+        stream_records(root),
+        dataset_name=name,
+        provenance=spec["provenance"],
+        expected_count=spec["expected_count"],
+        raw_dir=osp.join(root, "raw"),
+        raw_mirror=osp.join(data_root, spec["raw_mirror"]),
+        library_root=osp.join(data_root, "torchcell-library"),
+        tarball_sha256=load_genome_manifest(PETER2018_1011, data_root)
+        .record(spec["tarball"])
+        .sha256,
+        sgd_genes=_sgd_gene_set(data_root),
+        min_s288c_containment=spec["min_s288c_containment"],
+    )
+
+
+def run_natural_isolate_response(data_root: str) -> bool:
+    """Verify natural-isolate environment-response datasets (L0-L4). True if all pass."""
+    all_passed = True
+    for name, spec in NATURAL_ISOLATE_RESPONSE_DATASETS.items():
+        report = verify_natural_isolate_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # #889: gene interaction, gene essentiality and SynLethDB pair families
 #
 # These three registries hold the yeast stores the 2026.10.10 pre-build sweep found no
@@ -3840,6 +3928,7 @@ def run_all(data_root: str) -> bool:
     essentiality_ok = run_gene_essentiality(data_root)
     synthetic_pairs_ok = run_synthetic_pairs(data_root)
     segregant_ok = run_segregant_growth(data_root)
+    natural_isolate_ok = run_natural_isolate_response(data_root)
     titer_ok = run_product_titer(data_root)
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
@@ -3859,6 +3948,7 @@ def run_all(data_root: str) -> bool:
         and essentiality_ok
         and synthetic_pairs_ok
         and segregant_ok
+        and natural_isolate_ok
         and titer_ok
         and bacterial_protein_ok
         and bacterial_metabolite_ok

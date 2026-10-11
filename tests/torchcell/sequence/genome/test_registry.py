@@ -45,6 +45,7 @@ from torchcell.sequence.genome.registry import (
     GenomeManifest,
     assembly_set_dir,
     deposit_assembly_set,
+    extend_assembly_set,
     genomes_root,
     load_genome_manifest,
     resolve,
@@ -388,3 +389,52 @@ def test_absent_bacterial_set_names_the_rsync(
     with pytest.raises(FileNotFoundError) as err:
         resolve(assembly_set, filename, data_root=str(tmp_path))
     assert str(err.value) == _hint(f"{tmp_path}/torchcell-genomes", assembly_set)
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.11: extend_assembly_set (Peter 2018 loss-of-function matrices). A third file
+# ``lof.tab`` (bytes ``gene\tAAA\nYAL001C\t1\n``, 19 bytes) is appended to the
+# deposited two-file set; the two original records must come back unchanged.
+# --------------------------------------------------------------------------- #
+_LOF = b"gene\tAAA\nYAL001C\t1\n"
+
+
+def _lof_record(**update: object) -> ArtifactRecord:
+    record = ArtifactRecord(
+        path="lof.tab", role="matrix", bytes=len(_LOF), sha256=_sha(_LOF)
+    )
+    return record.model_copy(update=update)
+
+
+def test_extend_appends_and_keeps_every_existing_record(tmp_path: Path) -> None:
+    data_root, manifest = _tier(tmp_path)
+    deposit_assembly_set(manifest, data_root=data_root)
+    (Path(data_root) / "torchcell-genomes" / SET / "lof.tab").write_bytes(_LOF)
+    path = extend_assembly_set(SET, [_lof_record()], data_root=data_root)
+    assert path == osp.join(data_root, "torchcell-genomes", SET, "manifest.json")
+    loaded = load_genome_manifest(SET, data_root=data_root)
+    assert loaded.files == [*manifest.files, _lof_record()]
+    assert loaded.model_copy(update={"files": manifest.files}) == manifest
+    assert len(_LOF) == 19
+    assert resolve(SET, "lof.tab", data_root=data_root).endswith("lof.tab")
+
+
+def test_extend_refusals(tmp_path: Path) -> None:
+    data_root, manifest = _tier(tmp_path)
+    deposit_assembly_set(manifest, data_root=data_root)
+    with pytest.raises(ValueError, match="no files to add"):
+        extend_assembly_set(SET, [], data_root=data_root)
+    with pytest.raises(
+        FileExistsError, match=r"\['genome.fsa'\] already in the manifest"
+    ):
+        extend_assembly_set(SET, [manifest.files[0]], data_root=data_root)
+    with pytest.raises(FileNotFoundError, match="test_set_v1/lof.tab is not on disk"):
+        extend_assembly_set(SET, [_lof_record()], data_root=data_root)
+    (Path(data_root) / "torchcell-genomes" / SET / "lof.tab").write_bytes(_LOF)
+    with pytest.raises(GenomeIntegrityError, match="record pins 0000"):
+        extend_assembly_set(SET, [_lof_record(sha256="0" * 64)], data_root=data_root)
+    with pytest.raises(GenomeIntegrityError, match="record says 3 bytes, disk has 19"):
+        extend_assembly_set(SET, [_lof_record(bytes=3)], data_root=data_root)
+    with pytest.raises(FileNotFoundError, match="rsync -a"):
+        extend_assembly_set("absent_set", [_lof_record()], data_root=data_root)
+    assert load_genome_manifest(SET, data_root=data_root) == manifest

@@ -46,6 +46,7 @@ from .ohnuki2018 import ScmdOhnuki2018Dataset as ScmdOhnuki2018Dataset
 from .ohnuki2022 import ScmdOhnuki2022Dataset as ScmdOhnuki2022Dataset
 from .ohya2005 import ScmdOhya2005Dataset as ScmdOhya2005Dataset
 from .ozaydin2013 import CarotenoidOzaydin2013Dataset as CarotenoidOzaydin2013Dataset
+from .peter2018 import IsolateGrowthPeter2018Dataset as IsolateGrowthPeter2018Dataset
 from .sameith2015 import (
     DmMicroarraySameith2015Dataset as DmMicroarraySameith2015Dataset,
 )
@@ -137,6 +138,8 @@ yeastphenome_datasets = ["YeastPhenomeDataset"]
 
 bloom_datasets = ["Bloom2019Dataset"]
 
+peter2018_datasets = ["IsolateGrowthPeter2018Dataset"]
+
 smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
 
 baryshnikova_datasets = ["SmfBaryshnikova2010Dataset"]
@@ -172,6 +175,7 @@ __all__ = (
     + kemmeren_datasets
     + yeastphenome_datasets
     + bloom_datasets
+    + peter2018_datasets
     + smith2016_datasets
     + baryshnikova_datasets
 )

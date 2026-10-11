@@ -240,3 +240,60 @@ def deposit_assembly_set(manifest: GenomeManifest, data_root: str | None = None)
             )
     Path(path).write_text(manifest.model_dump_json(indent=2))
     return path
+
+
+# --------------------------------------------------------------------------- #
+# ADDITIVE (Peter 2018 phenome, yeast wave 1): grow a deposited set by new files.
+# ``deposit_assembly_set`` never rewrites a manifest, because rewriting could
+# change a hash a stored record already points at. Adding a file changes no
+# existing claim, so this is the one sanctioned rewrite: every existing record
+# must come back byte-identical, and the new ones are checked against the bytes
+# on disk exactly as a first deposit checks them.
+# --------------------------------------------------------------------------- #
+def extend_assembly_set(
+    assembly_set: str, new_files: list[ArtifactRecord], data_root: str | None = None
+) -> str:
+    """Append ``new_files`` to a deposited set's manifest; return the manifest path.
+
+    Refuses an empty list, a path the manifest already lists, a file that is not on
+    disk, and a record whose sha256 or byte count disagrees with the disk. Existing
+    records, ``provenance_complete`` and every top-level field are carried over
+    unchanged; only ``files`` grows. A set without a manifest is refused through
+    ``load_genome_manifest`` (with its seeding hint), since a first deposit goes
+    through ``deposit_assembly_set``.
+    """
+    if not new_files:
+        raise ValueError(f"{assembly_set}: no files to add")
+    manifest = load_genome_manifest(assembly_set, data_root)
+    listed = {rec.path for rec in manifest.files}
+    clashes = sorted(rec.path for rec in new_files if rec.path in listed)
+    if clashes:
+        raise FileExistsError(
+            f"{assembly_set}: {clashes} already in the manifest; a listed file is "
+            "never re-recorded"
+        )
+    directory = assembly_set_dir(assembly_set, data_root)
+    for rec in new_files:
+        file_path = Path(directory) / rec.path
+        if not file_path.is_file():
+            raise FileNotFoundError(f"{assembly_set}/{rec.path} is not on disk")
+        got = sha256_file(file_path)
+        if got != rec.sha256:
+            raise GenomeIntegrityError(
+                f"{assembly_set}/{rec.path}: record pins {rec.sha256}, disk has {got}"
+            )
+        size = file_path.stat().st_size
+        if size != rec.bytes:
+            raise GenomeIntegrityError(
+                f"{assembly_set}/{rec.path}: record says {rec.bytes} bytes, disk has "
+                f"{size}"
+            )
+    extended = manifest.model_copy(update={"files": [*manifest.files, *new_files]})
+    path = osp.join(directory, MANIFEST_FILENAME)
+    Path(path).write_text(extended.model_dump_json(indent=2))
+    return path
+
+
+# --------------------------------------------------------------------------- #
+# end ADDITIVE (Peter 2018 phenome)
+# --------------------------------------------------------------------------- #

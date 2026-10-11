@@ -6236,6 +6236,14 @@ class MeasurementType(StrEnum):
       the two are not comparable numbers.
     - ``colony_size``: ABSOLUTE end-point colony size (mean radius in image pixels for the
       Bloom 2019 control plates); non-negative, unnormalized, scale is the assay's own.
+    - ``condition_growth_ratio``: a strain's end-point growth on the TEST plate divided by
+      the SAME strain's growth on the control plate of the same screen (Peter 2018: the
+      "growth ratio between stress media and standard YPD medium at 30 C" of each of 971
+      natural isolates); 1.0 = grows as on the control, non-negative, 0 = no colony.
+      Distinct from ``relative_growth_rate`` (the denominator there is the run's WILD
+      TYPE in the same condition, and the numbers are generation times), from
+      ``differential_fitness`` (a signed difference, 0 at the control) and from
+      ``control_regression_residual`` (a residual with the control slope removed).
     """
 
     log2_ratio = "log2_ratio"
@@ -6248,6 +6256,8 @@ class MeasurementType(StrEnum):
     differential_fitness = "differential_fitness"
     control_regression_residual = "control_regression_residual"
     colony_size = "colony_size"
+    # ADDITIVE (Peter 2018 phenome): a same-strain test-over-control growth ratio.
+    condition_growth_ratio = "condition_growth_ratio"
 
 
 class ResponseCategory(StrEnum):
@@ -6335,16 +6345,18 @@ ABSOLUTE_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
 # --------------------------------------------------------------------------- #
 #: Measurement types whose number is a RATIO against a control measured in the same run,
 #: so an unaffected strain scores 1.0 and the record's reference states 1.0 rather than a
-#: centered 0. Only ``relative_growth_rate`` qualifies: a difference-scaled relative
-#: readout (``log2_ratio``, ``z_score``, ``differential_fitness``,
-#: ``control_regression_residual``) is 0 at its control, and an absolute quantity has no
-#: control in its units at all (``ABSOLUTE_MEASUREMENT_TYPES``). The verifier's
-#: ``reference_unit_scaled=True`` branch requires every record's type to be a member
-#: here, which is what keeps the relief from being a blanket relaxation. Hawkins 2020's
-#: mismatch-CRISPRi relative fitness (strain doublings / wild-type doublings) and the
-#: Bioscreen panels' wild-type-relative growth rate are the readouts that need it.
+#: centered 0. ``relative_growth_rate`` (the run's wild type as the denominator) and
+#: ``condition_growth_ratio`` (the same strain on the control plate as the denominator)
+#: qualify: a difference-scaled relative readout (``log2_ratio``, ``z_score``,
+#: ``differential_fitness``, ``control_regression_residual``) is 0 at its control, and an
+#: absolute quantity has no control in its units at all (``ABSOLUTE_MEASUREMENT_TYPES``).
+#: The verifier's ``reference_unit_scaled=True`` branch requires every record's type to be
+#: a member here, which is what keeps the relief from being a blanket relaxation. Hawkins
+#: 2020's mismatch-CRISPRi relative fitness (strain doublings / wild-type doublings), the
+#: Bioscreen panels' wild-type-relative growth rate and Peter 2018's growth ratios over
+#: the YPD 30 C plate are the readouts that need it.
 RATIO_MEASUREMENT_TYPES: frozenset[MeasurementType] = frozenset(
-    {MeasurementType.relative_growth_rate}
+    {MeasurementType.relative_growth_rate, MeasurementType.condition_growth_ratio}
 )
 #: What a ratio readout's control is by construction.
 RATIO_REFERENCE_VALUE: float = 1.0

@@ -1093,11 +1093,15 @@ def test_ratio_branch_refuses_a_difference_scaled_measurement_type() -> None:
     assert not _row(eager, "reference_zero")[2]
 
 
-def test_the_ratio_set_holds_only_the_same_run_control_ratio() -> None:
+def test_the_ratio_set_holds_only_the_same_run_control_ratios() -> None:
     """``RATIO_MEASUREMENT_TYPES`` and ``ABSOLUTE_MEASUREMENT_TYPES`` are disjoint, and
     no difference-scaled type is in either: that is what keeps each relief narrow.
+    The two ratios divide by the run's wild type (``relative_growth_rate``) or by the
+    same strain on the control plate (``condition_growth_ratio``, Peter 2018).
     """
-    assert RATIO_MEASUREMENT_TYPES == frozenset({MeasurementType.relative_growth_rate})
+    assert RATIO_MEASUREMENT_TYPES == frozenset(
+        {MeasurementType.relative_growth_rate, MeasurementType.condition_growth_ratio}
+    )
     assert RATIO_REFERENCE_VALUE == 1.0
     assert not RATIO_MEASUREMENT_TYPES & ABSOLUTE_MEASUREMENT_TYPES
     for member in (

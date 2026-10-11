@@ -43,13 +43,8 @@ from torchcell.data import (
     verify_sha256,
 )
 from torchcell.datamodels.schema import (
-    ComponentDefinition,
-    Compound,
     Environment,
     Genotype,
-    Media,
-    MediaComponent,
-    MediaComponentRole,
     Publication,
     ReferenceGenome,
     SgaKanMxDeletionPerturbation,
@@ -108,39 +103,71 @@ SYNLETHDB_ENTRY_FIELDS_QUOTE = (
     "relevant information about an SL entry are stored as properties of the edge"
 )
 
-SYNLETHDB_MEDIUM_NOT_CARRIED: Media = Media(
-    name="growth medium not carried by SynLethDB (stated, if at all, by each record's "
-    "primary paper)",
-    state="solid",
-    is_synthetic=False,
-    components=[
-        MediaComponent(
-            compound=Compound(
-                name="growth medium of the record's primary study (not carried by "
-                "SynLethDB)"
-            ),
-            role=MediaComponentRole.other,
-            definition=ComponentDefinition.composition_deferred,
-            note="SynLethDB aggregates gene pairs from many papers and carries no "
-            "medium; the deferral target is the record's own Publication.pubmed_id, "
-            "which differs per record, so defers_to stays empty here",
-        )
-    ],
-    provenance=[
-        SourcedValue(
-            value="growth medium not carried by the curation layer",
-            provenance=_SYNLETHDB_PAPER,
-            quote=SYNLETHDB_ENTRY_FIELDS_QUOTE,
-            note="line 49. state='solid' and is_synthetic=False are NOT sourced: the "
-            "schema requires both, and they keep the old stub's values. The loader "
-            "formerly emitted an unsourced 'YEPD' solid medium",
-        )
-    ],
+#: paper.md line 38: SynLethDB's second source is BioGRID, reference 22 (the BioGRID
+#: 2019 update, Nucleic Acids Res. 47, D529-D541, DOI 10.1093/nar/gky1079), which is
+#: not in the mirror.
+SYNLETHDB_BIOGRID_SOURCE_QUOTE = (
+    "The second source is public databases containing SL data such as GenomeRNAi (21) "
+    "and BioGRID (22)."
 )
-"""The honest medium of a SynLethDB record: a composition-deferred placeholder naming
-the absence, not a recipe. ``Media`` has no ``provenance_gaps`` and ``Environment.media``
-is required, so a typed gap on the medium itself is not expressible in the current
-schema; this object is the in-schema stand-in for one."""
+#: paper.md line 38: what SynLethDB says about its SR pairs. No SR score is defined
+#: anywhere in the paper; the confidence score it defines is for SL pairs only
+#: (``SYNLETHDB_SL_SCORE_QUOTE``).
+SYNLETHDB_SR_COLLECTION_QUOTE = (
+    "We collected 16 207 SR gene pairs and 5798 non-synthetic lethal (non-SL) gene "
+    "pairs from the above three sources"
+)
+#: paper.md line 75 (OCR drops the 'fi' ligature, kept verbatim).
+SYNLETHDB_SL_SCORE_QUOTE = (
+    "we integrated the scores of different types of sources into a normalized "
+    "confdence score for every SL pair"
+)
+
+#: Every SynLethDB 2.0 sentence this module rests on, as audited ``SourcedValue``s
+#: (each is a verbatim substring of the pinned ``paper.md``).
+SYNLETHDB_SOURCED_QUOTES: tuple[SourcedValue, ...] = (
+    SourcedValue(
+        value="an SL entry carries species, PubMed, evidence and cell line; no medium "
+        "and no temperature",
+        provenance=_SYNLETHDB_PAPER,
+        quote=SYNLETHDB_ENTRY_FIELDS_QUOTE,
+        note="line 49",
+    ),
+    SourcedValue(
+        value="BioGRID is a source, cited as reference 22",
+        provenance=_SYNLETHDB_PAPER,
+        quote=SYNLETHDB_BIOGRID_SOURCE_QUOTE,
+        note="line 38",
+    ),
+    SourcedValue(
+        value="SR pairs were collected from the same three sources; no SR score is "
+        "defined",
+        provenance=_SYNLETHDB_PAPER,
+        quote=SYNLETHDB_SR_COLLECTION_QUOTE,
+        note="line 38",
+    ),
+    SourcedValue(
+        value="the confidence score is defined for SL pairs",
+        provenance=_SYNLETHDB_PAPER,
+        quote=SYNLETHDB_SL_SCORE_QUOTE,
+        note="line 75; OCR drops the 'fi' ligature",
+    ),
+)
+
+# --- begin #902/#903: a typed gap on the medium -------------------------------- #
+SYNLETHDB_MEDIUM_GAP = ProvenanceGap(
+    field="media",
+    reason=ProvenanceGapReason.not_carried_by_curation,
+    looked_in=_SYNLETHDB_PAPER,
+    note="SynLethDB carries no growth medium: paper.md line 49 lists what an SL entry "
+    "stores ('" + SYNLETHDB_ENTRY_FIELDS_QUOTE + "') and the released CSV header is "
+    "n1.name, n1.identifier, n2.name, n2.identifier, r.cell_line, r.pubmed_id, "
+    "r.source, r.statistic_score. The medium, if stated at all, is in each record's "
+    "own Publication.pubmed_id. Replaces the #622 composition-deferred stand-in "
+    "medium, which joined no shared medium",
+)
+"""The medium of every SL and SR record: a typed absence, not a stand-in ``Media``."""
+# --- end #902/#903 ------------------------------------------------------------- #
 
 #: The temperature is absent for the same reason (``not_carried_by_curation``).
 SYNLETHDB_TEMPERATURE_GAP = ProvenanceGap(
@@ -152,11 +179,48 @@ SYNLETHDB_TEMPERATURE_GAP = ProvenanceGap(
 )
 
 SYNLETHDB_ENVIRONMENT = Environment(
-    media=SYNLETHDB_MEDIUM_NOT_CARRIED,
+    media=None,
     temperature=None,
-    provenance_gaps=[SYNLETHDB_TEMPERATURE_GAP],
+    provenance_gaps=[SYNLETHDB_MEDIUM_GAP, SYNLETHDB_TEMPERATURE_GAP],
 )
 """Every SL and SR record's environment: neither medium nor temperature is carried."""
+
+# --- begin #903: the SR file's statistic score has no sourced definition -------- #
+#: The BioGRID 2019 update, SynLethDB 2.0's reference 22 (paper.pdf reference list,
+#: "The BioGRID interaction database: update. Nucleic Acids Res., 47, D529-D541"). Not
+#: mirrored; reading it (and the row's own primary paper) is what would define the
+#: SR scores, so it is the gap's ``resolve_with``.
+BIOGRID_2019_REFERENCE = Provenance(
+    source_uri="https://doi.org/10.1093/nar/gky1079",
+    method="SynLethDB 2.0 reference 22 (Oughtred et al. 2019, The BioGRID interaction "
+    "database: 2019 update, Nucleic Acids Res. 47, D529-D541); not in the mirror",
+)
+
+
+def sr_score_gap(score: float, source: str, pubmed_id: str) -> ProvenanceGap:
+    """The typed absence stored in place of one released SR ``r.statistic_score``.
+
+    ``Yeast_SR.csv`` states a score on 74 of its 6,948 rows (all ``r.source`` BioGRID,
+    all PubMed 24470217, -1.0 to -0.2). SynLethDB 2.0 defines a normalized confidence
+    score for SL pairs only (``SYNLETHDB_SL_SCORE_QUOTE``) and says of SR pairs only
+    that they were collected (``SYNLETHDB_SR_COLLECTION_QUOTE``); the BioGRID
+    documentation it cites is not mirrored. A number with no sourced meaning is not
+    stored as SynLethDB's statistic score: the record keeps ``None`` and this gap,
+    whose note carries the released value verbatim so nothing is lost.
+    """
+    return ProvenanceGap(
+        field="synthetic_rescue_statistic_score",
+        reason=ProvenanceGapReason.deferred_pending_source_review,
+        looked_in=_SYNLETHDB_PAPER,
+        resolve_with=BIOGRID_2019_REFERENCE,
+        note=f"Yeast_SR.csv states r.statistic_score {score!r} (r.source {source}, "
+        f"r.pubmed_id {pubmed_id}); no mirrored source defines it: SynLethDB 2.0 "
+        "defines its confidence score for SL pairs only and cites BioGRID "
+        "(reference 22, not mirrored) for its database-sourced pairs",
+    )
+
+
+# --- end #903 ------------------------------------------------------------------ #
 
 #: GFF feature types whose ``Dbxref`` ``GeneID`` names a locus (``locus_tag``).
 _NCBI_LOCUS_TYPES = frozenset({"gene", "pseudogene"})
@@ -722,12 +786,19 @@ class SynthRescueYeastSynthLethDbDataset(ExperimentDataset):
 
         environment = SYNLETHDB_ENVIRONMENT
 
+        # #903: a released SR score has no sourced definition, so it is a typed gap
+        score = row["r.statistic_score"]
         phenotype = SyntheticRescuePhenotype(
             is_synthetic_rescue=True,
-            synthetic_rescue_statistic_score=(
-                float(row["r.statistic_score"])
-                if pd.notna(row["r.statistic_score"])
-                else None
+            synthetic_rescue_statistic_score=None,
+            provenance_gaps=(
+                []
+                if pd.isna(score)
+                else [
+                    sr_score_gap(
+                        float(score), str(row["r.source"]), str(row["r.pubmed_id"])
+                    )
+                ]
             ),
         )
 

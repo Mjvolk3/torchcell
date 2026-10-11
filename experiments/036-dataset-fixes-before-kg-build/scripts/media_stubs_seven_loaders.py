@@ -91,12 +91,10 @@ LOADERS: dict[str, tuple[list[str], list[Emitted], list[SourcedValue], bool]] = 
         list(ozaydin2013.SOURCED_VALUES.values()),
         True,
     ),
-    "synth_leth_db": (
-        ["synth_lethality_yeast_synth_leth_db", "synth_rescue_yeast_synth_leth_db"],
-        [synth_leth_db.SYNLETHDB_ENVIRONMENT],
-        list(synth_leth_db.SYNLETHDB_MEDIUM_NOT_CARRIED.provenance),
-        True,
-    ),
+    # synth_leth_db left this table with #902/#903 (2026.10.11): its #622 placeholder
+    # medium is now ``media=None`` with a typed gap, so it emits no Media to measure
+    # here; scripts/sgd_synlethdb_findings.py measures it. The committed
+    # results/media_stubs_seven_loaders.csv keeps the #622-era rows.
     "ohya2005": (
         ["scmd_ohya2005"],
         [ohya2005.OHYA_YPD],

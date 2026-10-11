@@ -66,6 +66,11 @@ PPUTIDA_KT2440 = "pputida_KT2440_ASM756v2"
 #: The GO Consortium release of 2026-08-05: ``go-basic.obo``, one copy that every
 #: bacterial set pins by this id instead of carrying its own.
 GO_RELEASE_20260805 = "go_release_2026-08-05"
+#: Hale et al. 2024 Supplemental Data 13: the 3S (322134S) parent's variants against
+#: S288C (SNVs and single-base indels). A VARIANT TABLE, not an assembly: no public 3S
+#: assembly exists, so this is the sequence reference the BYx3S segregant mosaics pin
+#: their second parent to (``torchcell/datasets/scerevisiae/hale2024.py``).
+HALE2024_3S_VARIANTS = "hale2024_322134S_variants"
 
 #: Roles a file in an assembly set can play (explicit per file; never inferred).
 ROLE_CONTAINER = "container"  # the archive the release was fetched as
@@ -74,6 +79,7 @@ ROLE_ANNOTATION = "annotation"  # GFF, gene associations
 ROLE_MATRIX = "matrix"  # gene-by-isolate presence or copy-number tables
 ROLE_INDEX = "index"  # member paths of a container, or a locus or replicon table
 ROLE_ONTOLOGY = "ontology"  # an ontology release (OBO), not a gene annotation
+ROLE_VARIANTS = "variants"  # a strain's variants against a reference (not an assembly)
 
 #: Stored-record sentinels that name an assembly set without a filesystem path. The
 #: Bloom 2019 BY parent stores the first string (``bloom2019.S288C_ASSEMBLY``); a

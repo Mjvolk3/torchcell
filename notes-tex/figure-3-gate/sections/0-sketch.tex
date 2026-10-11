@@ -1,0 +1,60 @@
+%% notes-tex/figure-3-gate/sections/0-sketch.tex
+%% SOURCE: figures/fig3-si-morphology-sketch.pdf is exported from
+%% notes/assets/drawio/fig3-si-morphology-sketch.drawio.svg, written by
+%% experiments/019-simb-multimodal/scripts/fig3_si_morphology_sketch_drawio.py (boxes, no data);
+%% the counts in the panel boxes are read from results/morph_v24_dataset.json and
+%% results/morph_v24_readout.json by that script's author and are repeated in
+%% tables/morph_v24_dataset.tex and tables/morph_v24.tex (generated).
+
+\section{The morphology SI figure, as a sketch to run experiments against\secstatus{todo}}
+\label{sec:sketch}
+
+\begin{keybox}
+\textbf{Measured.} Panels a, b, c and f can be drawn now from committed result files
+(\cref{tab:morph-strains,tab:morph-target,tab:morph-v24}, and the v20 readout).
+
+\textbf{Not measured.} Panel d (a measured modality revealed, paired against the permuted
+and the genotype-only controls) is in flight on \file{cabbi}; panel e (per feature) has no
+dump behind it; panel g (the 1{,}011 isolates) is planned and likely not in time.
+\end{keybox}
+
+\tcfig{figures/fig3-si-morphology-sketch.pdf}{\textbf{The morphology SI figure, sketched
+before its panels exist.} Each box names the quantity, the statistic and the sample the panel
+will show, and the result file it will be drawn from; the status mark says whether that file
+is committed. \textbf{a}, the three single-deletion panels and their overlaps (counts).
+\textbf{b}, the target: per-feature replicate reliability, the 0.5 threshold that defines the
+116 moving features, the ceiling. \textbf{c}, genotype only: the ceiling, the sequence
+baselines and the cell graph transformer read off the perturbed CLS, twelve split seeds.
+\textbf{d}, a measured modality revealed as input: the strain's own proteome (expression)
+against another strain's and against genotype only on the same strains, paired by split
+seed, beside the ridge from the same measurement. \textbf{e}, per feature: held-out Pearson
+against reliability for the best revealed arm. \textbf{f}, the conditioning triangle: the
+same contrast on the expression and proteome sides (v20). \textbf{g}, natural variation: the
+1{,}011 isolates with Caudal 2024 expression and Muenzner 2024 proteome, planned.}{fig:si-sketch}
+
+\pfstep{Every arm here is transductive in the sense the figure needs} The revealed modality
+is a gene-level measurement of the \emph{same} strain, present on every training, validation
+and test strain of the arm (\texttt{require\_modalities} keeps only genotypes carrying both
+labels, \cref{tab:morph-strains}), and it enters through the observed-label channel on
+every step with nothing masked, so the model is applied to a strain whose other modality
+is known. Morphology itself can be a target and not an input: the observed-label channel
+takes per-gene values, and CalMorph is one vector per cell population. The genotype-only
+arms (\texttt{M\_cls}, \texttt{MP\_cls}) are the inductive controls on exactly the same
+strains.
+
+\pfstep{What the sketch asks of the runs} Panel d is the figure's claim and its only open
+measurement: twelve paired differences per contrast, scored on the window rule, with the
+ridge from the same measured modality as the bar (0.280 from the proteome, 0.324 from
+expression, on the moving features). Panel c already says the genotype-only model sits at
+0.046 $\pm$ 0.015 against a ceiling of 0.847, so the SI figure's honest reading is that
+node-level measurements predict a cell-level phenotype and the genotype alone, through this
+trunk, does not.
+
+\pfstep{The 1{,}011 isolates} The same conditioning on natural variation needs the
+Muenzner 2024 proteome built beside the served Caudal 2024 transcriptomes; morphology is
+not measured on that panel, so the target there is the proteome from expression and the
+reverse. It is first in the next-build band of the expansion document and is noted here so
+the figure's slot exists; it is unlikely to be filled in this round.
+
+\input{tables/morph_v24_dataset}
+\input{tables/morph_v24}

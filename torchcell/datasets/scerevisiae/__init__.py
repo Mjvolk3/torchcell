@@ -21,6 +21,11 @@ from .costanzo2021 import EnvChemgenCostanzo2021Dataset as EnvChemgenCostanzo202
 from .dasilveira2014 import (
     MetaboliteDaSilveira2014Dataset as MetaboliteDaSilveira2014Dataset,
 )
+from .dechiara2022 import CellYieldDeChiara2022Dataset as CellYieldDeChiara2022Dataset
+from .dechiara2022 import (
+    DoublingTimeDeChiara2022Dataset as DoublingTimeDeChiara2022Dataset,
+)
+from .dechiara2022 import LifeCycleDeChiara2022Dataset as LifeCycleDeChiara2022Dataset
 from .hillenmeyer2008 import HetHillenmeyer2008Dataset as HetHillenmeyer2008Dataset
 from .hillenmeyer2008 import HomHillenmeyer2008Dataset as HomHillenmeyer2008Dataset
 from .hoepfner2014 import EnvChemgenHoepfner2014Dataset as EnvChemgenHoepfner2014Dataset
@@ -150,6 +155,12 @@ smith2016_datasets = ["CrispriChemgenSmith2016Dataset"]
 
 baryshnikova_datasets = ["SmfBaryshnikova2010Dataset"]
 
+dechiara_datasets = [
+    "LifeCycleDeChiara2022Dataset",
+    "DoublingTimeDeChiara2022Dataset",
+    "CellYieldDeChiara2022Dataset",
+]
+
 __all__ = (
     costanzo_datasets
     + kuzmin_datasets
@@ -185,4 +196,5 @@ __all__ = (
     + boocock_datasets
     + smith2016_datasets
     + baryshnikova_datasets
+    + dechiara_datasets
 )

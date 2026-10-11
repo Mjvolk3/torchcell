@@ -1,0 +1,916 @@
+{
+  "citation_key": "dechiaraDomesticationReprogrammedBudding2022",
+  "table": "yeast",
+  "row_name": "De Chiara 2022 (domestication and the life cycle)",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='Natural variation', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: Peter 2018 isolates -> peter2018_1011_assemblies resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "40 file(s) in library+raw, 578485 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "pass",
+      "reason": "LifeCyclePhenotype exists; compounds resolve",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "Peter 2018 isolates",
+        "assembly_set": "peter2018_1011_assemblies",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "dechiaraDomesticationReprogrammedBudding2022",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 483759,
+        "sha256_manifest": "4468c60c6f1b1fd26727f94f047567be99ede459f03bd233f7be53bbb9b2201b",
+        "sha256_disk": "4468c60c6f1b1fd26727f94f047567be99ede459f03bd233f7be53bbb9b2201b",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 85145,
+        "sha256_manifest": "d51bc60064c2514b3a1d1487eefdf274256423b9cd1df051863fd4d67cd11af7",
+        "sha256_disk": "d51bc60064c2514b3a1d1487eefdf274256423b9cd1df051863fd4d67cd11af7",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.pdf",
+        "role": "si_pdf",
+        "bytes": 11901344,
+        "sha256_manifest": "795c603c382aeaf450f82f139fcce37e112dc59b3bb7c5ac6f15bbc0c5b8ac64",
+        "sha256_disk": "795c603c382aeaf450f82f139fcce37e112dc59b3bb7c5ac6f15bbc0c5b8ac64",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 2696173,
+        "sha256_manifest": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+        "sha256_disk": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Supplementary Table 1",
+            "rows": 33
+          },
+          {
+            "sheet": "Supplementary Table 2",
+            "rows": 40
+          },
+          {
+            "sheet": "Supplementary Table 3",
+            "rows": 1014
+          },
+          {
+            "sheet": "Supplementary Table 4",
+            "rows": 45
+          },
+          {
+            "sheet": "Supplementary Table 5",
+            "rows": 380
+          },
+          {
+            "sheet": "Supplementary Table 6",
+            "rows": 1113
+          },
+          {
+            "sheet": "Supplementary Table 7",
+            "rows": 450
+          },
+          {
+            "sheet": "Supplementary Table 8",
+            "rows": 254
+          },
+          {
+            "sheet": "Supplementary Table 9",
+            "rows": 366
+          },
+          {
+            "sheet": "Supplementary Table 10",
+            "rows": 188
+          },
+          {
+            "sheet": "Supplementary Table 11",
+            "rows": 54
+          },
+          {
+            "sheet": "Supplementary Table 12",
+            "rows": 19
+          },
+          {
+            "sheet": "Supplementary Table 13",
+            "rows": 9
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.gz",
+        "role": "si_data",
+        "bytes": 7612335,
+        "sha256_manifest": "7989711f6782b2630176a6955d9cd65e7f308e96c7fc5bd63fe18b9e8d514b40",
+        "sha256_disk": "7989711f6782b2630176a6955d9cd65e7f308e96c7fc5bd63fe18b9e8d514b40",
+        "retrieval_method": "springer_esm",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 105215,
+        "sha256_manifest": "ef594186fe7fbb34526c67088af925a4066e472058308e6020aead5f4e61fae8",
+        "sha256_disk": "ef594186fe7fbb34526c67088af925a4066e472058308e6020aead5f4e61fae8",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 31
+          },
+          {
+            "sheet": "b",
+            "rows": 31
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 850625,
+        "sha256_manifest": "be0f2467adc4d8bac6d299ed2b1aad0b3a20125144d0125e1fc5161fb6e8e727",
+        "sha256_disk": "be0f2467adc4d8bac6d299ed2b1aad0b3a20125144d0125e1fc5161fb6e8e727",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 643
+          },
+          {
+            "sheet": "b",
+            "rows": 31
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 1310089,
+        "sha256_manifest": "71d364e4e9097a4b376f96329bc989e0229ff85c8df36de5f151a443bb7d8bdb",
+        "sha256_disk": "71d364e4e9097a4b376f96329bc989e0229ff85c8df36de5f151a443bb7d8bdb",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 558
+          },
+          {
+            "sheet": "b",
+            "rows": 31
+          },
+          {
+            "sheet": "c",
+            "rows": 33302
+          },
+          {
+            "sheet": "d",
+            "rows": 538
+          },
+          {
+            "sheet": "e",
+            "rows": 73
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 22056477,
+        "sha256_manifest": "438d13504d07f0a2b2e026143efca599f357e61b3c1b46f83dd7b4e90f19278d",
+        "sha256_disk": "438d13504d07f0a2b2e026143efca599f357e61b3c1b46f83dd7b4e90f19278d",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 101638
+          },
+          {
+            "sheet": "b",
+            "rows": 313
+          },
+          {
+            "sheet": "c",
+            "rows": 879
+          },
+          {
+            "sheet": "d",
+            "rows": 101638
+          },
+          {
+            "sheet": "e",
+            "rows": 925
+          },
+          {
+            "sheet": "f",
+            "rows": 6033
+          },
+          {
+            "sheet": "g",
+            "rows": 8
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 5782582,
+        "sha256_manifest": "6242a84da292ca28613b63bcb198c23b068f9c3bb17cb23c3aa18620d962c477",
+        "sha256_disk": "6242a84da292ca28613b63bcb198c23b068f9c3bb17cb23c3aa18620d962c477",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 643
+          },
+          {
+            "sheet": "b",
+            "rows": 31
+          },
+          {
+            "sheet": "c",
+            "rows": 879
+          },
+          {
+            "sheet": "d",
+            "rows": 101635
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 1902138,
+        "sha256_manifest": "59b309c2fbefe0508897d1997f1e4270deb4353e4138c701df1bc4571da1232e",
+        "sha256_disk": "59b309c2fbefe0508897d1997f1e4270deb4353e4138c701df1bc4571da1232e",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 101635
+          },
+          {
+            "sheet": "b",
+            "rows": 74
+          },
+          {
+            "sheet": "c",
+            "rows": 1012
+          },
+          {
+            "sheet": "d",
+            "rows": 421
+          },
+          {
+            "sheet": "e",
+            "rows": 1012
+          },
+          {
+            "sheet": "f",
+            "rows": 253
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.xlsx",
+        "role": "si_data",
+        "bytes": 1662628,
+        "sha256_manifest": "f2c1fdbf79e27691696528f185e2499471f0b59bc212a9a0d1cb7b65c8ecee53",
+        "sha256_disk": "f2c1fdbf79e27691696528f185e2499471f0b59bc212a9a0d1cb7b65c8ecee53",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 101638
+          },
+          {
+            "sheet": "b",
+            "rows": 643
+          },
+          {
+            "sheet": "c",
+            "rows": 643
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.xlsx",
+        "role": "si_data",
+        "bytes": 64263,
+        "sha256_manifest": "ac83d18b94dbf019daac5c47e23b978883611a78fe1bd43b623f2578f14c193f",
+        "sha256_disk": "ac83d18b94dbf019daac5c47e23b978883611a78fe1bd43b623f2578f14c193f",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 1012
+          },
+          {
+            "sheet": "b",
+            "rows": 363
+          },
+          {
+            "sheet": "c",
+            "rows": 85
+          },
+          {
+            "sheet": "d",
+            "rows": 85
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si14.xlsx",
+        "role": "si_data",
+        "bytes": 144347,
+        "sha256_manifest": "9ce3991473b16543a59f35491b3bdd234b1ef97f86aacbbdf2e4716e4e2744f4",
+        "sha256_disk": "9ce3991473b16543a59f35491b3bdd234b1ef97f86aacbbdf2e4716e4e2744f4",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 1143
+          },
+          {
+            "sheet": "b",
+            "rows": 1012
+          },
+          {
+            "sheet": "c",
+            "rows": 1012
+          },
+          {
+            "sheet": "d",
+            "rows": 61
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si15.xlsx",
+        "role": "si_data",
+        "bytes": 81274,
+        "sha256_manifest": "a1472e6cf1037cbbb0a43e705953e5ea6154c665c71bc5237bcc66147e920d77",
+        "sha256_disk": "a1472e6cf1037cbbb0a43e705953e5ea6154c665c71bc5237bcc66147e920d77",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 1012
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si16.xlsx",
+        "role": "si_data",
+        "bytes": 141263,
+        "sha256_manifest": "b631add43483694bdc27ab8842bd2252c028df113830ee4c0d2650c15f386959",
+        "sha256_disk": "b631add43483694bdc27ab8842bd2252c028df113830ee4c0d2650c15f386959",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 1012
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si17.xlsx",
+        "role": "si_data",
+        "bytes": 132508,
+        "sha256_manifest": "72cd7a3615c50fc7c6958336049214848f1ef93f1139058762a9b021f4b065cc",
+        "sha256_disk": "72cd7a3615c50fc7c6958336049214848f1ef93f1139058762a9b021f4b065cc",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 879
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si18.xlsx",
+        "role": "si_data",
+        "bytes": 205090,
+        "sha256_manifest": "28773c268edd1a5c33e005937d918c58222c9b9f8296487a1a15ad3d9935f668",
+        "sha256_disk": "28773c268edd1a5c33e005937d918c58222c9b9f8296487a1a15ad3d9935f668",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 1012
+          },
+          {
+            "sheet": "b",
+            "rows": 1012
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si19.xlsx",
+        "role": "si_data",
+        "bytes": 199088,
+        "sha256_manifest": "64a789d2a8190e25ddcd8655c0a2bed96ee841ffcdb263bc30acb212279441cb",
+        "sha256_disk": "64a789d2a8190e25ddcd8655c0a2bed96ee841ffcdb263bc30acb212279441cb",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "correlation_old_Jonas_phenotype",
+            "rows": 100
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si20.xlsx",
+        "role": "si_data",
+        "bytes": 123478,
+        "sha256_manifest": "72aa4feb330b7d2ce59975c11300d164d4b302e1004df5794fd30136c272c065",
+        "sha256_disk": "72aa4feb330b7d2ce59975c11300d164d4b302e1004df5794fd30136c272c065",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "a",
+            "rows": 1408
+          },
+          {
+            "sheet": "b",
+            "rows": 2156
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c048cc1619cee17cc5b354a6dd7538b78891df5f4727c68c09d92191da123038.jpg",
+        "role": "ocr_image",
+        "bytes": 112891,
+        "sha256_manifest": "fdb59f0792f3a6c406082c11fb137efc5261e776d3110e163880ec67cd48d893",
+        "sha256_disk": "fdb59f0792f3a6c406082c11fb137efc5261e776d3110e163880ec67cd48d893",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/71739ecbc76cba8a5832ffb20bd0088f674daf530f508dab0c141b5e92967b69.jpg",
+        "role": "ocr_image",
+        "bytes": 4980,
+        "sha256_manifest": "cc4ba82ffaed8f10cb29b17e8dd1551427da74a55d39e4176a4ee25a3e74b14d",
+        "sha256_disk": "cc4ba82ffaed8f10cb29b17e8dd1551427da74a55d39e4176a4ee25a3e74b14d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/9e7e522702190332f94696c98333c42829b334fdc84ebfecec975d28fb0d4213.jpg",
+        "role": "ocr_image",
+        "bytes": 150808,
+        "sha256_manifest": "776e2b586ca98c88d248f2ce92b9832bd8e17b686596892340098b2dc2ea0ecb",
+        "sha256_disk": "776e2b586ca98c88d248f2ce92b9832bd8e17b686596892340098b2dc2ea0ecb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/e58d70d35c96f1cad9e21773384bf04044892ac4baf1b09d56bbd7d4fccb8aec.jpg",
+        "role": "ocr_image",
+        "bytes": 80142,
+        "sha256_manifest": "113711215ca91835d06ed394769b67b5186785ae7698f32cac405254613ef07a",
+        "sha256_disk": "113711215ca91835d06ed394769b67b5186785ae7698f32cac405254613ef07a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/e88c6dd8f98f64cf9df9cb30700a47963c5b7944d2f3ae05c125da1be49af1ca.jpg",
+        "role": "ocr_image",
+        "bytes": 9308,
+        "sha256_manifest": "5313586144a555887321f291e5c03f112c2b49b2d1ba524f86c24c690d241199",
+        "sha256_disk": "5313586144a555887321f291e5c03f112c2b49b2d1ba524f86c24c690d241199",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si3/6bbaa5db6ee741586c889e7561735715ad170ab9f1b0ccede84a77b11e909ff0.jpg",
+        "role": "ocr_image",
+        "bytes": 16173,
+        "sha256_manifest": "40e95d15fe15ea39c81baccd0c6118ea3b327a7c5801ac57b48e541c1d1bb741",
+        "sha256_disk": "40e95d15fe15ea39c81baccd0c6118ea3b327a7c5801ac57b48e541c1d1bb741",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 7160,
+        "sha256_manifest": "8440ece01fffb1cfc2556030fa627212523cdf0ecbcb5cf0852eb8e1b878bd7b",
+        "sha256_disk": "8440ece01fffb1cfc2556030fa627212523cdf0ecbcb5cf0852eb8e1b878bd7b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 11681,
+        "sha256_manifest": "4eb243e0752351afcf17116af443e4853c12caa6ea5514c81250fbf5b86565f4",
+        "sha256_disk": "4eb243e0752351afcf17116af443e4853c12caa6ea5514c81250fbf5b86565f4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 239923,
+        "sha256_manifest": "8d1a72715fe818023381fd1c37dd73452f465d9b3b363472bb649c35effd3925",
+        "sha256_disk": "8d1a72715fe818023381fd1c37dd73452f465d9b3b363472bb649c35effd3925",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 992,
+        "sha256_manifest": "7ad9f781a14ea53c92cd6ee86ab03eb12782af5eede1f7d1d4cd732910a22e92",
+        "sha256_disk": "7ad9f781a14ea53c92cd6ee86ab03eb12782af5eede1f7d1d4cd732910a22e92",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.md",
+        "role": "si_ocr",
+        "bytes": 5252,
+        "sha256_manifest": "c9ec771eab99424091200b856e4626de88f0196f73551107485f91215998607c",
+        "sha256_disk": "c9ec771eab99424091200b856e4626de88f0196f73551107485f91215998607c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 16911,
+        "sha256_manifest": "7ae775f5e3401b5a9b6860ea2381239fbd2c6418a85c1cd06b196560e0bf42fc",
+        "sha256_disk": "7ae775f5e3401b5a9b6860ea2381239fbd2c6418a85c1cd06b196560e0bf42fc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_middle.json",
+        "role": "ocr_layout",
+        "bytes": 212031,
+        "sha256_manifest": "4b5aaa7993765b96af183fd24206632c7f3a297555f2e66c25f89446ba21ed7f",
+        "sha256_disk": "4b5aaa7993765b96af183fd24206632c7f3a297555f2e66c25f89446ba21ed7f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 992,
+        "sha256_manifest": "ddd64314be89ca5eea848820024ab039724705d55a11f1f290b1b8ead8a28720",
+        "sha256_disk": "ddd64314be89ca5eea848820024ab039724705d55a11f1f290b1b8ead8a28720",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.md",
+        "role": "si_ocr",
+        "bytes": 113974,
+        "sha256_manifest": "6ffb9b0b807b3b04958eee76041148db1281521355b7899aefeb0f50d8ed33a4",
+        "sha256_disk": "6ffb9b0b807b3b04958eee76041148db1281521355b7899aefeb0f50d8ed33a4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 191413,
+        "sha256_manifest": "06b30ee7e94aff257ed696f3caedf27e12d10e32609295d580f6ea709c02bab0",
+        "sha256_disk": "06b30ee7e94aff257ed696f3caedf27e12d10e32609295d580f6ea709c02bab0",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_middle.json",
+        "role": "ocr_layout",
+        "bytes": 3209324,
+        "sha256_manifest": "ab9aad88b578618f5097d609ef9c662095a94de5133af3db18b2e710a72192f1",
+        "sha256_disk": "ab9aad88b578618f5097d609ef9c662095a94de5133af3db18b2e710a72192f1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 992,
+        "sha256_manifest": "4852d1665462114bb94b5468c49cc29de6f9b8caa15b1f25d7ba29e063e4942b",
+        "sha256_disk": "4852d1665462114bb94b5468c49cc29de6f9b8caa15b1f25d7ba29e063e4942b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdftotext.txt",
+        "role": "si_text",
+        "bytes": 10084,
+        "sha256_manifest": "ce323f8d2b0c2e59f4fef4551794599b350eb372ef247652aea814fef5075757",
+        "sha256_disk": "ce323f8d2b0c2e59f4fef4551794599b350eb372ef247652aea814fef5075757",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/41559_2022_1671_MOESM4_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 2696173,
+        "sha256_manifest": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+        "sha256_disk": "b2eb2e28cdd2c3037ce14bb1eb8f58ee84609157dd592b3904595b24daf8c99e",
+        "retrieval_method": "springer_esm",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Supplementary Table 1",
+            "rows": 33
+          },
+          {
+            "sheet": "Supplementary Table 2",
+            "rows": 40
+          },
+          {
+            "sheet": "Supplementary Table 3",
+            "rows": 1014
+          },
+          {
+            "sheet": "Supplementary Table 4",
+            "rows": 45
+          },
+          {
+            "sheet": "Supplementary Table 5",
+            "rows": 380
+          },
+          {
+            "sheet": "Supplementary Table 6",
+            "rows": 1113
+          },
+          {
+            "sheet": "Supplementary Table 7",
+            "rows": 450
+          },
+          {
+            "sheet": "Supplementary Table 8",
+            "rows": 254
+          },
+          {
+            "sheet": "Supplementary Table 9",
+            "rows": 366
+          },
+          {
+            "sheet": "Supplementary Table 10",
+            "rows": 188
+          },
+          {
+            "sheet": "Supplementary Table 11",
+            "rows": 54
+          },
+          {
+            "sheet": "Supplementary Table 12",
+            "rows": 19
+          },
+          {
+            "sheet": "Supplementary Table 13",
+            "rows": 9
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s41559-022-01671-9",
+    "pmid": null,
+    "accessions": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41559-022-01671-9",
+        "where": "torchcell/datasets/scerevisiae/dechiara2022.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "LifeCyclePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-11",
+  "torchcell_commit": "5af868d6077e8f2ec1157e7ecb0a37ba4ef42367"
+}

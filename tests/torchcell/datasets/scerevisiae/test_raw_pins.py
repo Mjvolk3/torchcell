@@ -84,6 +84,15 @@ def _pins_from_constants(
             m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
         },
         "AminoAcidCooper2010Dataset": lambda: {m.TABLE4_NAME: m.TABLE4_SHA256},
+        **{
+            name: lambda: {
+                m.TABLES_FILENAME: m.TABLES_SHA256,
+                m.REFGENE_TAR_NAME: genome(m.REFGENE_TAR_NAME),
+                m.PRESENCE_NAME: genome(m.PRESENCE_NAME),
+                m.COPYNUMBER_NAME: genome(m.COPYNUMBER_NAME),
+            }
+            for name in DECHIARA_CLASSES
+        },
         "EnvChemgenCostanzo2021Dataset": lambda: {m._S1_FILENAME: m._S1_SHA256},
         "MetaboliteDaSilveira2014Dataset": lambda: {
             m.DATA_FILENAME: m.DATA_SHA256,
@@ -168,6 +177,13 @@ def _pins_from_constants(
     return by_class[cls.__name__]()
 
 
+#: The three De Chiara 2022 stores: one workbook pin plus the Peter genomes-tier files.
+DECHIARA_CLASSES = (
+    "LifeCycleDeChiara2022Dataset",
+    "DoublingTimeDeChiara2022Dataset",
+    "CellYieldDeChiara2022Dataset",
+)
+
 #: Classes whose pins are the raw-mirror manifest's records rather than constants.
 MANIFEST_PINNED = {
     "Bloom2019Dataset",
@@ -184,6 +200,7 @@ GENOME_TIER_PINNED = {
     "IsolateGrowthPeter2018Dataset",
     "ProteomeMuenzner2024Dataset",
     "ProteinTurnoverMuenzner2024Dataset",
+    *DECHIARA_CLASSES,
 }
 
 #: The genome-tier-pinned classes whose ``_data_root`` is a method (the rest read a
@@ -192,6 +209,7 @@ DATA_ROOT_METHOD = {
     "CaudalPanTranscriptome2024Dataset",
     "ProteomeMuenzner2024Dataset",
     "ProteinTurnoverMuenzner2024Dataset",
+    *DECHIARA_CLASSES,
 }
 
 

@@ -19,6 +19,7 @@ from .baryshnikova2010_adapter import (
     SmfBaryshnikova2010Adapter as SmfBaryshnikova2010Adapter,
 )
 from .bloom2019_adapter import Bloom2019Adapter as Bloom2019Adapter
+from .boocock2025_adapter import Boocock2025Adapter as Boocock2025Adapter
 from .borchert2023_adapter import (
     RbTnseqBorchert2023Adapter as RbTnseqBorchert2023Adapter,
 )
@@ -408,7 +409,7 @@ proteome_metabolome_adapters = [
     "AminoAcidCooper2010Adapter",
 ]
 
-segregant_adapters = ["Bloom2019Adapter"]
+segregant_adapters = ["Bloom2019Adapter", "Boocock2025Adapter"]
 
 natural_isolate_adapters = ["IsolateGrowthPeter2018Adapter"]
 

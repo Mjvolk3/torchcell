@@ -15,6 +15,7 @@ from torchcell.adapters import (
     BetaxanthinCachera2023Adapter,
     BiofuelTiterBrunk2016Adapter,
     Bloom2019Adapter,
+    Boocock2025Adapter,
     CampaignProteomeCarruthers2025Adapter,
     CarbonSourceTong2020Adapter,
     CarotenoidOzaydin2013Adapter,
@@ -289,6 +290,7 @@ from torchcell.datasets.scerevisiae.auesukaree2009 import (
 )
 from torchcell.datasets.scerevisiae.baryshnikova2010 import SmfBaryshnikova2010Dataset
 from torchcell.datasets.scerevisiae.bloom2019 import Bloom2019Dataset
+from torchcell.datasets.scerevisiae.boocock2025 import Boocock2025Dataset
 from torchcell.datasets.scerevisiae.cachera2023 import BetaxanthinCachera2023Dataset
 from torchcell.datasets.scerevisiae.caudal2024 import CaudalPanTranscriptome2024Dataset
 from torchcell.datasets.scerevisiae.cooper2010 import AminoAcidCooper2010Dataset
@@ -404,6 +406,7 @@ dataset_adapter_map: dict[type, type] = {
     NadalRibellesPerturbSeq2025Dataset: NadalRibellesPerturbSeq2025Adapter,
     Bloom2019Dataset: Bloom2019Adapter,
     IsolateGrowthPeter2018Dataset: IsolateGrowthPeter2018Adapter,
+    Boocock2025Dataset: Boocock2025Adapter,
     SmfBaryshnikova2010Dataset: SmfBaryshnikova2010Adapter,
     EnvChemgenCostanzo2021Dataset: EnvChemgenCostanzo2021Adapter,
     EnvChemgenAuesukaree2009Dataset: EnvChemgenAuesukaree2009Adapter,

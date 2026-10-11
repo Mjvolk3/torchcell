@@ -1,0 +1,52 @@
+# Boocock 2025 single-cell segregant panels: 79,516 records (393 pooled BY x RM
+# segregants and 79,123 de novo segregant cells of crosses A, B and 3004).
+# The genotype is a haplotype mosaic served as a "segregant genotype" node; there is
+# deliberately NO "perturbation (chunked)" / "perturbation to genotype (chunked)" pair,
+# because a segregant carries no gene-keyed perturbation. No environment carries a
+# perturbation (minimal YNB or 2x YNB in sheath fluid, 30 C), so no environment
+# perturbation methods either.
+cell_adapter:
+  node_methods:
+    - method_name: "experiment reference"
+    - method_name: "genome"
+    - method_name: "experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "segregant genotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment reference"
+    - method_name: "media (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media reference"
+    - method_name: "temperature (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature reference"
+    - method_name: "single cell expression phenotype (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "single cell expression phenotype reference"
+    - method_name: "dataset"
+    - method_name: "publication (chunked)"
+      memory_reduction_factor: 1.0
+
+  edge_methods:
+    - method_name: "experiment reference to dataset"
+    - method_name: "experiment to dataset (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "experiment reference to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "environment to experiment reference"
+    - method_name: "phenotype to experiment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "media to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "temperature to environment (chunked)"
+      memory_reduction_factor: 1.0
+    - method_name: "genome to experiment reference"
+    - method_name: "phenotype to experiment reference"
+    - method_name: "publication to experiment (chunked)"
+      memory_reduction_factor: 1.0

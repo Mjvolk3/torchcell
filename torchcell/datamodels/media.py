@@ -5544,6 +5544,7 @@ BACTERIAL_MEDIA_USES: dict[str, tuple[str, ...]] = {
         "2 Wetmore 2015: Data Set S1 'MOPS Rich Defined media_noCarbon' (4 Keio "
         "carbon-source experiments, set1IT067 to set1IT070)",
         "21 Price 2018: Table S18 states the recipe (the same 4 Keio experiments)",
+    ),
     "LAKE_WATER": (
         "41 Teteneva 2024: the base of the six lake water media (water samples #1 to "
         "#3, filter-sterilized or not); the paper describes the lake and the filtration "

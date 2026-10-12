@@ -801,6 +801,7 @@ BACTERIAL: list[Bacterial] = [
         "rbtnseq_fitness_browser_ecoli",
         FitnessBrowserEcoliDataset,
         RESPONSE,
+    ),
     # Teteneva 2024 (#910): one Tn5 insertion per record on a W3110 RefSeq locus; each
     # condition is its own lake water medium, so no environment perturbation.
     _case(

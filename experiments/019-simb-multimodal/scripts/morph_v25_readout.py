@@ -71,7 +71,19 @@ def read_run(run: Any) -> dict[str, Any] | None:
     in_window = [v for e, v in val if WINDOW[0] <= e <= WINDOW[1]]
     tail = [v for e, v in val if e > last - 200]
     escape = next((e for e, v in train if v > ESCAPE), None)
+    # Saturation: the validation score at the ladder epochs, the change over the last 200
+    # epochs (mean of the last 100 minus the mean of the 100 before), and the same for the
+    # training fit. A run whose last-200 change is still above the seed spread has not
+    # saturated and would score higher with a longer budget.
+    ladder = {str(k): st.mean([v for e, v in val if k - 10 < e <= k + 10]) for k in (200, 400, 600, 800, 1000, 1199) if any(k - 10 < e <= k + 10 for e, _ in val)}
+    def change(xs: list[tuple[int, float]]) -> float | None:
+        a = [v for e, v in xs if last - 200 < e <= last - 100]
+        b = [v for e, v in xs if last - 100 < e <= last]
+        return (st.mean(b) - st.mean(a)) if a and b else None
     return {
+        "ladder": ladder,
+        "val_change_last200": change(val),
+        "train_change_last200": change(train),
         "id": run.id,
         "url": run.url,
         "cell": cell,
@@ -148,8 +160,12 @@ def main() -> None:
     summary = {name: summarize(rs) for name, rs in cells.items()}
     for name in sorted(summary, key=lambda n: -(summary[n]["window_mean"] or -1)):
         c = summary[name]
+        fin = [r for r in cells[name] if r["finished"]]
+        c["val_change_last200_mean"] = st.mean([r["val_change_last200"] for r in fin if r["val_change_last200"] is not None]) if fin else None
+        c["train_change_last200_mean"] = st.mean([r["train_change_last200"] for r in fin if r["train_change_last200"] is not None]) if fin else None
         w = "partial" if c["window_mean"] is None else f"{c['window_mean']:.3f} +/- {c['window_sd'] if c['window_sd'] is not None else 0:.3f}"
-        print(f"{name:32s} n {c['n']:2d} fin {c['n_finished']:2d} window {w:18s} escape {c['n_escaped']}/{c['n']} train {c['train_last_mean'] if c['train_last_mean'] is None else round(c['train_last_mean'], 3)}")
+        dv = c["val_change_last200_mean"]; dt = c["train_change_last200_mean"]
+        print(f"{name:32s} n {c['n']:2d} fin {c['n_finished']:2d} window {w:18s} escape {c['n_escaped']}/{c['n']} train {c['train_last_mean'] if c['train_last_mean'] is None else round(c['train_last_mean'], 3)}  last200 dval {dv if dv is None else f'{dv:+.3f}'} dtrain {dt if dt is None else f'{dt:+.3f}'}")
     out = {"generated_by": "experiments/019-simb-multimodal/scripts/morph_v25_readout.py", "project": PROJECT, "window": WINDOW, "escape_threshold": ESCAPE, "cells": summary, "runs": rows}
     with open(osp.join(RESULTS, "morph_v25_readout.json"), "w") as f:
         json.dump(out, f, indent=1)

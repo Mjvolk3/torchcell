@@ -15,7 +15,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.09448828175663948,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0028151729702949498,
+   "train_change_last200_mean": 0.0029684226959943785
   },
   "M_pool_lr3e-4": {
    "n": 2,
@@ -25,7 +27,9 @@
    "escape_fraction": 1.0,
    "n_escaped": 2,
    "train_last_mean": 0.547801673412323,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.004524667821824556,
+   "train_change_last200_mean": 0.03307595551013945
   },
   "M_zs_lr3e-4": {
    "n": 2,
@@ -35,7 +39,9 @@
    "escape_fraction": 1.0,
    "n_escaped": 2,
    "train_last_mean": 0.29366715252399445,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": -0.00018821254372596713,
+   "train_change_last200_mean": 0.008856148272752759
   },
   "M_cls_lr1e-3": {
    "n": 2,
@@ -45,7 +51,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.11408666521310806,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": -0.00034948879852890816,
+   "train_change_last200_mean": 0.0032127510756254155
   },
   "M_pool_lr1e-3": {
    "n": 2,
@@ -55,7 +63,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.08592872321605682,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0007586069498211161,
+   "train_change_last200_mean": 0.0022602148354053525
   },
   "M_zs_lr1e-3": {
    "n": 2,
@@ -65,7 +75,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.08137468993663788,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0005329558067023732,
+   "train_change_last200_mean": 0.0045248843729496085
   },
   "M_xattn_lr1e-3": {
    "n": 2,
@@ -75,7 +87,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.07198797166347504,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": -0.0011760823894292113,
+   "train_change_last200_mean": 0.0010593734681606307
   },
   "M_cls_lr3e-3": {
    "n": 2,
@@ -85,7 +99,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.11772553250193596,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0034198780916631227,
+   "train_change_last200_mean": -0.00131207630038261
   },
   "M_pool_lr3e-3": {
    "n": 2,
@@ -95,7 +111,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.11111138388514519,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0005834167543798709,
+   "train_change_last200_mean": 0.012949957698583606
   },
   "M_zs_lr3e-3": {
    "n": 2,
@@ -105,7 +123,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.11072105541825294,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 0.0026249930448830096,
+   "train_change_last200_mean": 0.01171091869473457
   },
   "M_xattn_lr3e-3": {
    "n": 1,
@@ -115,7 +135,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": 0.09328315407037735,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": 3.3324565738443446e-05,
+   "train_change_last200_mean": -0.0027289107441902105
   },
   "M_pool_b64_lr3e-4": {
    "n": 3,
@@ -125,7 +147,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_zs_b128_lr3e-4": {
    "n": 6,
@@ -135,7 +159,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_zs_b32_lr3e-4": {
    "n": 3,
@@ -145,7 +171,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_pool_b32_lr3e-4": {
    "n": 3,
@@ -155,7 +183,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_pool_b128_lr3e-4": {
    "n": 6,
@@ -165,7 +195,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_zs_b64_lr3e-4": {
    "n": 3,
@@ -175,7 +207,9 @@
    "escape_fraction": 0.0,
    "n_escaped": 0,
    "train_last_mean": null,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": null,
+   "train_change_last200_mean": null
   },
   "M_xattn_lr3e-4": {
    "n": 1,
@@ -185,11 +219,23 @@
    "escape_fraction": 1.0,
    "n_escaped": 1,
    "train_last_mean": 0.6467437744140625,
-   "partial_window_mean": null
+   "partial_window_mean": null,
+   "val_change_last200_mean": -0.03256595186889172,
+   "train_change_last200_mean": 0.0504646897315979
   }
  },
  "runs": [
   {
+   "ladder": {
+    "200": 0.03462190227583051,
+    "400": 0.03793994216248393,
+    "600": 0.028864031936973334,
+    "800": 0.02855542106553912,
+    "1000": 0.033936642855405805,
+    "1199": 0.03827483206987381
+   },
+   "val_change_last200": 0.0052126691862940736,
+   "train_change_last200": 0.0005059406161308372,
    "id": "d5n9hfc0",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/d5n9hfc0",
    "cell": "M_cls_lr3e-4",
@@ -208,6 +254,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03943791138008237,
+    "400": 0.09555408619344234,
+    "600": 0.1220635361969471,
+    "800": 0.11206797622144223,
+    "1000": 0.10424695312976837,
+    "1199": 0.13484373763203622
+   },
+   "val_change_last200": 0.011776250451803208,
+   "train_change_last200": 0.03266099989414212,
    "id": "sxketfkz",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/sxketfkz",
    "cell": "M_pool_lr3e-4",
@@ -226,6 +282,16 @@
    "escape_epoch": 360
   },
   {
+   "ladder": {
+    "200": 0.07182865794748068,
+    "400": 0.07869840450584889,
+    "600": 0.03057611077092588,
+    "800": 0.03472410999238491,
+    "1000": 0.02647355794906616,
+    "1199": 0.03988011945039034
+   },
+   "val_change_last200": 0.0007585871219634999,
+   "train_change_last200": 0.0006212458014488165,
    "id": "9uf782za",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/9uf782za",
    "cell": "M_zs_lr3e-4",
@@ -244,6 +310,16 @@
    "escape_epoch": 300
   },
   {
+   "ladder": {
+    "200": 0.033893770445138215,
+    "400": 0.03304314156994224,
+    "600": 0.042825252283364534,
+    "800": 0.0338124786503613,
+    "1000": 0.0399969425983727,
+    "1199": 0.04109165072441101
+   },
+   "val_change_last200": -0.0007633014395833013,
+   "train_change_last200": -0.0001421183347702082,
    "id": "yvqzu67v",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/yvqzu67v",
    "cell": "M_cls_lr1e-3",
@@ -262,6 +338,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03408795120194554,
+    "400": 0.03664022386074066,
+    "600": 0.03762875841930509,
+    "800": 0.04430930791422725,
+    "1000": 0.03962112842127681,
+    "1199": 0.03881419114768505
+   },
+   "val_change_last200": 0.0015231092832982546,
+   "train_change_last200": 0.002241326123476023,
    "id": "aubga888",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/aubga888",
    "cell": "M_pool_lr1e-3",
@@ -280,6 +366,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03302146829664707,
+    "400": 0.0360668976791203,
+    "600": 0.03712252844125032,
+    "800": 0.03991813650354743,
+    "1000": 0.03768911873921752,
+    "1199": 0.03991297278553248
+   },
+   "val_change_last200": 0.0010635008290410045,
+   "train_change_last200": -0.0015083797276019967,
    "id": "e2v1y0ap",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/e2v1y0ap",
    "cell": "M_zs_lr1e-3",
@@ -298,6 +394,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.036660566460341215,
+    "400": 0.03577904594130814,
+    "600": 0.030137055180966855,
+    "800": 0.03137490376830101,
+    "1000": 0.033557654544711116,
+    "1199": 0.03571090009063482
+   },
+   "val_change_last200": -0.0025529899634420886,
+   "train_change_last200": -0.00243462845683097,
    "id": "lsyq6mv2",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/lsyq6mv2",
    "cell": "M_xattn_lr1e-3",
@@ -316,6 +422,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.0404543848708272,
+    "400": 0.039152299612760545,
+    "600": 0.038250445295125245,
+    "800": 0.03977850824594498,
+    "1000": 0.03973457813262939,
+    "1199": 0.03936590701341629
+   },
+   "val_change_last200": 0.006452650725841523,
+   "train_change_last200": -0.0030793167650699643,
    "id": "hrxu1n0d",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/hrxu1n0d",
    "cell": "M_cls_lr3e-3",
@@ -334,6 +450,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03516794415190816,
+    "400": 0.03961058855056763,
+    "600": 0.03838706584647298,
+    "800": 0.037209966033697126,
+    "1000": 0.04179717823863029,
+    "1199": 0.04401935562491417
+   },
+   "val_change_last200": 0.0012773975171148783,
+   "train_change_last200": 0.0051640443503856714,
    "id": "3ho7pt2i",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/3ho7pt2i",
    "cell": "M_pool_lr3e-3",
@@ -352,6 +478,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03869843212887645,
+    "400": 0.04547616206109524,
+    "600": 0.03576425081118941,
+    "800": 0.04037853535264731,
+    "1000": 0.037896849866956475,
+    "1199": 0.044872687011957166
+   },
+   "val_change_last200": 0.005201129782944916,
+   "train_change_last200": 0.005962461978197095,
    "id": "wkxhqp4t",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/wkxhqp4t",
    "cell": "M_zs_lr3e-3",
@@ -370,6 +506,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03861672300845385,
+    "400": 0.03711533499881625,
+    "600": 0.03265452752821148,
+    "800": 0.03914258144795894,
+    "1000": 0.041153534036129716,
+    "1199": 0.03613255955278873
+   },
+   "val_change_last200": 3.3324565738443446e-05,
+   "train_change_last200": -0.0027289107441902105,
    "id": "6iehpw8a",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/6iehpw8a",
    "cell": "M_xattn_lr3e-3",
@@ -388,6 +534,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.02787363072857261,
+    "400": 0.029100394528359174,
+    "600": 0.028690882958471775,
+    "800": 0.029438522551208733,
+    "1000": 0.029792929347604514,
+    "1199": 0.02991774883121252
+   },
+   "val_change_last200": 0.00041767675429582596,
+   "train_change_last200": 0.00543090477585792,
    "id": "rqntj7qs",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/rqntj7qs",
    "cell": "M_cls_lr3e-4",
@@ -406,6 +562,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03475612765178084,
+    "400": 0.18094509169459344,
+    "600": 0.12603505589067937,
+    "800": 0.10623147040605545,
+    "1000": 0.0877633661031723,
+    "1199": 0.07455839589238167
+   },
+   "val_change_last200": -0.002726914808154096,
+   "train_change_last200": 0.03349091112613678,
    "id": "rnmy125d",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/rnmy125d",
    "cell": "M_pool_lr3e-4",
@@ -424,6 +590,16 @@
    "escape_epoch": 380
   },
   {
+   "ladder": {
+    "200": 0.028822070825845002,
+    "400": 0.2005013905465603,
+    "600": 0.17382972911000252,
+    "800": 0.13420482501387596,
+    "1000": 0.1162466548383236,
+    "1199": 0.11882701143622398
+   },
+   "val_change_last200": -0.0011350122094154341,
+   "train_change_last200": 0.0170910507440567,
    "id": "vwxswdcx",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/vwxswdcx",
    "cell": "M_zs_lr3e-4",
@@ -442,6 +618,9 @@
    "escape_epoch": 410
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "4rldw0hi",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/4rldw0hi",
    "cell": "M_pool_b64_lr3e-4",
@@ -461,6 +640,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "7yfdbuiw",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/7yfdbuiw",
    "cell": "M_zs_b128_lr3e-4",
@@ -480,6 +662,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "99o5d00f",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/99o5d00f",
    "cell": "M_zs_b128_lr3e-4",
@@ -499,6 +684,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "aaq0rijc",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/aaq0rijc",
    "cell": "M_zs_b128_lr3e-4",
@@ -518,6 +706,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "bxgmmcri",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/bxgmmcri",
    "cell": "M_zs_b32_lr3e-4",
@@ -537,6 +728,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "gqygl4aq",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/gqygl4aq",
    "cell": "M_pool_b32_lr3e-4",
@@ -556,6 +750,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "jncobadh",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/jncobadh",
    "cell": "M_pool_b128_lr3e-4",
@@ -575,6 +772,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "jvxrefuy",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/jvxrefuy",
    "cell": "M_pool_b128_lr3e-4",
@@ -594,6 +794,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "s8kgjtw9",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/s8kgjtw9",
    "cell": "M_zs_b64_lr3e-4",
@@ -613,6 +816,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "t2qwbr6d",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/t2qwbr6d",
    "cell": "M_zs_b128_lr3e-4",
@@ -632,6 +838,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "zs0zrqlo",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/zs0zrqlo",
    "cell": "M_pool_b128_lr3e-4",
@@ -651,6 +860,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "1x4g1jdz",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/1x4g1jdz",
    "cell": "M_pool_b128_lr3e-4",
@@ -670,6 +882,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "2fxu4rwr",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/2fxu4rwr",
    "cell": "M_pool_b64_lr3e-4",
@@ -689,6 +904,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "619jste1",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/619jste1",
    "cell": "M_pool_b32_lr3e-4",
@@ -708,6 +926,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "7h7fftz7",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/7h7fftz7",
    "cell": "M_pool_b128_lr3e-4",
@@ -727,6 +948,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "d5ancxic",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/d5ancxic",
    "cell": "M_zs_b64_lr3e-4",
@@ -746,6 +970,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "h4id9vmo",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/h4id9vmo",
    "cell": "M_pool_b64_lr3e-4",
@@ -765,6 +992,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "i1jaf1d9",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/i1jaf1d9",
    "cell": "M_zs_b128_lr3e-4",
@@ -784,6 +1014,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "j5bt6by7",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/j5bt6by7",
    "cell": "M_zs_b64_lr3e-4",
@@ -803,6 +1036,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "js47dj43",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/js47dj43",
    "cell": "M_zs_b32_lr3e-4",
@@ -822,6 +1058,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "plk6yw8m",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/plk6yw8m",
    "cell": "M_zs_b32_lr3e-4",
@@ -841,6 +1080,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "re63a9vv",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/re63a9vv",
    "cell": "M_pool_b128_lr3e-4",
@@ -860,6 +1102,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "ur5xqwjb",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/ur5xqwjb",
    "cell": "M_pool_b32_lr3e-4",
@@ -879,6 +1124,9 @@
    "escape_epoch": null
   },
   {
+   "ladder": {},
+   "val_change_last200": null,
+   "train_change_last200": null,
    "id": "w4w26aun",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/w4w26aun",
    "cell": "M_zs_b128_lr3e-4",
@@ -898,6 +1146,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.0293840145226568,
+    "400": 0.15322653502225875,
+    "600": 0.10575927197933196,
+    "800": 0.12264657579362392,
+    "1000": 0.1430741373449564,
+    "1199": 0.08971676602959633
+   },
+   "val_change_last200": -0.03256595186889172,
+   "train_change_last200": 0.0504646897315979,
    "id": "0p2hkd3l",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/0p2hkd3l",
    "cell": "M_xattn_lr3e-4",
@@ -916,6 +1174,16 @@
    "escape_epoch": 330
   },
   {
+   "ladder": {
+    "200": 0.028485411312431097,
+    "400": 0.028899563755840064,
+    "600": 0.029932333156466484,
+    "800": 0.032124207355082035,
+    "1000": 0.032524660136550664,
+    "1199": 0.031517213024199006
+   },
+   "val_change_last200": 6.432384252548495e-05,
+   "train_change_last200": 0.006567620486021039,
    "id": "kjynf7ag",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/kjynf7ag",
    "cell": "M_cls_lr1e-3",
@@ -934,6 +1202,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.027459389716386794,
+    "400": 0.03007977968081832,
+    "600": 0.029715773835778236,
+    "800": 0.03006850918754935,
+    "1000": 0.0329640032723546,
+    "1199": 0.032559337466955184
+   },
+   "val_change_last200": -5.895383656022435e-06,
+   "train_change_last200": 0.002279103547334682,
    "id": "zo9t60bj",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/zo9t60bj",
    "cell": "M_pool_lr1e-3",
@@ -952,6 +1230,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.028255407605320214,
+    "400": 0.029000816866755486,
+    "600": 0.03085139375180006,
+    "800": 0.03160092141479254,
+    "1000": 0.033185129426419734,
+    "1199": 0.03243736866861582
+   },
+   "val_change_last200": 2.4107843637419246e-06,
+   "train_change_last200": 0.010558148473501214,
    "id": "2osvaj68",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/2osvaj68",
    "cell": "M_zs_lr1e-3",
@@ -970,6 +1258,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.024677457567304373,
+    "400": 0.0261619764380157,
+    "600": 0.024316191021353007,
+    "800": 0.026838227361440658,
+    "1000": 0.025881561823189257,
+    "1199": 0.028018550388514994
+   },
+   "val_change_last200": 0.00020082518458366602,
+   "train_change_last200": 0.004553375393152231,
    "id": "zhljnci5",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/zhljnci5",
    "cell": "M_xattn_lr1e-3",
@@ -988,6 +1286,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.03022879743948579,
+    "400": 0.03248203443363309,
+    "600": 0.03224579561501741,
+    "800": 0.03337272768840194,
+    "1000": 0.03337273048236966,
+    "1199": 0.033971166238188744
+   },
+   "val_change_last200": 0.0003871054574847224,
+   "train_change_last200": 0.0004551641643047444,
    "id": "24w4aajx",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/24w4aajx",
    "cell": "M_cls_lr3e-3",
@@ -1006,6 +1314,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.030511065479367973,
+    "400": 0.031155713275074957,
+    "600": 0.03105663536116481,
+    "800": 0.03302763514220715,
+    "1000": 0.034041990619152786,
+    "1199": 0.03232195004820824
+   },
+   "val_change_last200": -0.00011056400835513652,
+   "train_change_last200": 0.02073587104678154,
    "id": "p490gtjh",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/p490gtjh",
    "cell": "M_pool_lr3e-3",
@@ -1024,6 +1342,16 @@
    "escape_epoch": null
   },
   {
+   "ladder": {
+    "200": 0.030299591738730668,
+    "400": 0.03158690743148327,
+    "600": 0.03200800139456987,
+    "800": 0.032210474368184805,
+    "1000": 0.03305611349642277,
+    "1199": 0.033823400363326074
+   },
+   "val_change_last200": 4.8856306821103146e-05,
+   "train_change_last200": 0.017459375411272043,
    "id": "ii5kuym1",
    "url": "https://wandb.ai/zhao-group/torchcell_019_morph_v25/runs/ii5kuym1",
    "cell": "M_zs_lr3e-3",

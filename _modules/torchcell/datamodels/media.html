@@ -4730,6 +4730,430 @@
 <span class="sd">acids, the amino-acid mixture that carries every amino acid except tryptophan (row 25)."""</span>
 
 
+<span class="c1"># --- begin banerjee2024: the four media of Banerjee 2024 (row 39) --------------- #</span>
+<span class="c1"># Four, because the paper states four different recipes and never equates them: the</span>
+<span class="c1"># vendor EZ rich defined medium of the knockout and plasmid rounds (Methods 2.5), the</span>
+<span class="c1"># Supplementary Table 3 M9 of the minimal-medium characterization (Methods 2.5), and</span>
+<span class="c1"># TWO "modified M9" variants whose nitrogen differs by a factor of two -- 20 mM NH4Cl in</span>
+<span class="c1"># the 2 L bioreactor (Methods 2.7) against 50 uL of 1 M NH4Cl in 5 mL, which is 10 mM,</span>
+<span class="c1"># in the hydrolysate tubes (Methods 2.8). Collapsing the two would assert an amount</span>
+<span class="c1"># neither statement makes.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_BANERJEE2024</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"banerjeeGenomescalePathwayEngineering2024"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"6b5b9e8647721569d846af92e5c0059ef9c4bb9eca66a418e8891a7a18d5c18c"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"paper.md"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="c1">#: Supplementary Table 3 ("Minimal M9 medium recipe"), from the OCR of the deposited</span>
+<span class="c1">#: Supplementary Information PDF. The OCR drops every subscript, so the stock table</span>
+<span class="c1">#: reads "NaHPO4" and "KHPO4"; the quote keeps that, and the compounds are the</span>
+<span class="c1">#: disodium/potassium phosphates the PDF's own text layer spells with subscripts.</span>
+<span class="n">_BANERJEE2024_SI1</span> <span class="o">=</span> <span class="n">Provenance</span><span class="p">(</span>
+    <span class="n">citation_key</span><span class="o">=</span><span class="s2">"banerjeeGenomescalePathwayEngineering2024"</span><span class="p">,</span>
+    <span class="n">sha256</span><span class="o">=</span><span class="s2">"c0313af4bdbd443e7c61ad539ad3f101c88872f28993ac2ad98c154feb4d7ae0"</span><span class="p">,</span>
+    <span class="n">source_uri</span><span class="o">=</span><span class="s2">"si/si1.md"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_EZRICH</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The starter cultures were diluted in $5 ~ </span><span class="se">\\</span><span class="s2">mathrm { m L }$ EZ rich defined medium "</span>
+    <span class="s2">"(Teknova, CA, USA) containing ${ 2 0 ~ </span><span class="se">\\</span><span class="s2"> g / </span><span class="se">\\</span><span class="s2">mathrm { L } }$ D-glucose $( 2 ~ "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">%$ ,w/v), $2 5 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { g / m L }$ kanamycin in $5 0 </span><span class="se">\\</span><span class="s2">mathrm { - m L }$ "</span>
+    <span class="s2">"test tubes"</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_M9_STOCK</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"&lt;table&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;Compound&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Final "</span>
+    <span class="s2">"concentrations&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;NaHPO4&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;68 g&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;KHPO4&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;30 g&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;NaCl&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;5g&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;"</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_M9_1X</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"&lt;table&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;Compound/Stock&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Per "</span>
+    <span class="s2">"1 L&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Comments&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;10X "</span>
+    <span class="s2">"M9 Salts&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;100 mL&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Make 10x "</span>
+    <span class="s2">"stock/filter separately&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;1M MgSO4&lt;/td&gt;&lt;td "</span>
+    <span class="s2">"rowspan=1 colspan=1&gt;2 mL&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Make 1 M solution/filter "</span>
+    <span class="s2">"separately&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;1M CaCl2&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;100 μL&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Make 1 M solution/filter "</span>
+    <span class="s2">"separately&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;MQ H20&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;787.4 mL&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;Autoclaved&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td "</span>
+    <span class="s2">"rowspan=1 colspan=1&gt;20</span><span class="si">% G</span><span class="s2">lucose&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;100 ml&lt;/td&gt;&lt;td "</span>
+    <span class="s2">"rowspan=1 colspan=1&gt;Autoclaved&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;Trace "</span>
+    <span class="s2">"elements solution&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;500 μL&lt;/td&gt;&lt;td rowspan=1 "</span>
+    <span class="s2">"colspan=1&gt;Teknova&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td rowspan=1 colspan=1&gt;(NH4)2SO4&lt;/td&gt;&lt;td "</span>
+    <span class="s2">"rowspan=1 colspan=1&gt;10 ml&lt;/td&gt;&lt;td rowspan=1 colspan=1&gt;1 M stock&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;"</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_MODIFIED_M9</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The cell culture was inoculated at $</span><span class="se">\\</span><span class="s2">mathrm { O D } _ { 6 0 0 } 0 . 3$ in the 2 "</span>
+    <span class="s2">"L bioreactor (Biostat B, Sartorius, Germany) including the 1 L modified M9 minimal "</span>
+    <span class="s2">"medium, which contained $6 . 8 g /$ L ${ </span><span class="se">\\</span><span class="s2">mathrm { N a } } _ { 2 } { </span><span class="se">\\</span><span class="s2">mathrm { "</span>
+    <span class="s2">"H P O } } _ { 4 }$ $3 . 0 { </span><span class="se">\\</span><span class="s2"> g } / </span><span class="se">\\</span><span class="s2">mathrm { L }$ ${ </span><span class="se">\\</span><span class="s2">mathrm { K H } } _ { 2 "</span>
+    <span class="s2">"} { </span><span class="se">\\</span><span class="s2">mathrm { P O } } _ { 4 }$ $0 . 5 g / </span><span class="se">\\</span><span class="s2">mathrm { L }$ NaCl, 20 mM $</span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ N H } _ { 4 } </span><span class="se">\\</span><span class="s2">mathrm { C l }$ ,2 mM $</span><span class="se">\\</span><span class="s2">mathrm { M g } { </span><span class="se">\\</span><span class="s2">bf S } { </span><span class="se">\\</span><span class="s2">bf O } "</span>
+    <span class="s2">"_ { 4 }$ $0 . 1 </span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2"> m M </span><span class="se">\\</span><span class="s2"> C a C l _ { 2 } }$ and trace metal solution."</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_TRACE_STOCK</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The $1 0 0 0 </span><span class="se">\\</span><span class="s2">mathrm { X }$ trace metal solution (TEKNOVA, USA) consisted of $5 0 "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { F e C l _ { 3 } }$ $2 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { m M }$ "</span>
+    <span class="s2">"$</span><span class="se">\\</span><span class="s2">mathrm { C a C l } _ { 2 }$ $1 0 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { m M }$ $</span><span class="se">\\</span><span class="s2">mathbf { M n C l } _ { "</span>
+    <span class="s2">"2 } ,$ . $1 0 ~ </span><span class="se">\\</span><span class="s2">mathrm { m M }$ $</span><span class="se">\\</span><span class="s2">mathrm { Z n S O _ { 4 } }$ , 2 mM $</span><span class="se">\\</span><span class="s2">mathrm { "</span>
+    <span class="s2">"C o C l } _ { 2 }$ ,2 mM $</span><span class="se">\\</span><span class="s2">mathrm { C u C l } _ { 2 }$ $2 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { m M </span><span class="se">\\</span><span class="s2"> N i "</span>
+    <span class="s2">"C l _ { 2 } }$ . $2 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { m M }$ $</span><span class="se">\\</span><span class="s2">mathrm { N a _ { 2 } M o O _ { 4 } }$ , "</span>
+    <span class="s2">"2 mM $_ { </span><span class="se">\\</span><span class="s2">mathrm { N a o _ { 3 } S e } }$ , and 2 mM $</span><span class="se">\\</span><span class="s2">mathrm { B H _ { 3 } O _ "</span>
+    <span class="s2">"{ 3 } }$ ."</span>
+<span class="p">)</span>
+<span class="n">_Q_BANERJEE_TUBE_M9</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Subsequently, we added $1 0 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { L }$ of 1 M $</span><span class="se">\\</span><span class="s2">mathrm { M g } { </span><span class="se">\\</span><span class="s2">bf S "</span>
+    <span class="s2">"} { </span><span class="se">\\</span><span class="s2">bf O } _ { 4 }$ $5 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { L }$ of $1 0 0 </span><span class="se">\\</span><span class="s2">mathrm { m M C a C l _ { "</span>
+    <span class="s2">"2 } }$ , $2 . 5 </span><span class="se">\\</span><span class="s2">mu </span><span class="se">\\</span><span class="s2">mathrm { L }$ of trace metal solution, and $5 0 </span><span class="se">\\</span><span class="s2">mu "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { L }$ of 1 M $</span><span class="se">\\</span><span class="s2">mathrm { N H } _ { 4 } </span><span class="se">\\</span><span class="s2">mathrm { C l }$ to the modified "</span>
+    <span class="s2">"M9 minimal medium. And the modified M9 minimal medium volume was adjusted to $5 "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { m L }$"</span>
+<span class="p">)</span>
+
+<span class="c1">#: The dilution the recipe itself states, which is what turns its 10X stock grams into</span>
+<span class="c1">#: the 1X amounts stored here. Not an assumption: the same table's "Per 1 L" column</span>
+<span class="c1">#: gives "10X M9 Salts | 100 mL", and Methods 2.7 independently writes the three salts</span>
+<span class="c1">#: at 6.8 / 3.0 / 0.5 g/L for its own modified M9.</span>
+<span class="n">_BANERJEE_DILUTION_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"stored at the 1X amount the recipe's own '10X M9 Salts | 100 mL' per 1 L row "</span>
+    <span class="s2">"gives; Methods 2.7 states the same three salts directly as 6.8 g/L, 3.0 g/L and "</span>
+    <span class="s2">"0.5 g/L for this paper's modified M9, so the two statements agree"</span>
+<span class="p">)</span>
+<span class="n">_BANERJEE_OCR_SUBSCRIPT_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the OCR of the SI PDF drops subscripts, so the quoted stock row reads 'NaHPO4' and "</span>
+    <span class="s2">"'KHPO4'; the PDF's own text layer spells them Na2HPO4 and KH2PO4, and Methods 2.7 "</span>
+    <span class="s2">"writes them with subscripts in the article body"</span>
+<span class="p">)</span>
+<span class="n">_BANERJEE_TRACE_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"a vendor solution; the source names Teknova but no catalog number"</span>
+<span class="p">)</span>
+
+<span class="n">_BANERJEE_M9_SALTS</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="n">_stated</span><span class="p">(</span>
+        <span class="s2">"disodium hydrogen phosphate"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">6.8</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"68 g per L of 10X salts"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_STOCK</span><span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"10X M9 Salts | 100 mL"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BANERJEE_DILUTION_NOTE</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">_BANERJEE_OCR_SUBSCRIPT_NOTE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_stated</span><span class="p">(</span>
+        <span class="s2">"potassium dihydrogen phosphate"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">3.0</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"30 g per L of 10X salts"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_STOCK</span><span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"10X M9 Salts | 100 mL"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BANERJEE_DILUTION_NOTE</span><span class="si">}</span><span class="s2">. </span><span class="si">{</span><span class="n">_BANERJEE_OCR_SUBSCRIPT_NOTE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">_stated</span><span class="p">(</span>
+        <span class="s2">"sodium chloride"</span><span class="p">,</span>
+        <span class="n">_SALT</span><span class="p">,</span>
+        <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">_GL</span><span class="p">,</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"5g per L of 10X salts"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_STOCK</span><span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"10X M9 Salts | 100 mL"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_BANERJEE_DILUTION_NOTE</span><span class="p">,</span>
+    <span class="p">),</span>
+<span class="p">]</span>
+
+<span class="n">EZ_RICH_TEKNOVA</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"EZ rich defined medium (Teknova; composition not stated)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"EZ_RICH_TEKNOVA"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"EZ rich defined medium (Teknova)"</span><span class="p">,</span>
+            <span class="n">_COMPLEX</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024</span><span class="p">,</span>
+                    <span class="s2">"EZ rich defined medium (Teknova, CA, USA)"</span><span class="p">,</span>
+                    <span class="n">_Q_BANERJEE_EZRICH</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"a vendor defined medium at its working strength; the source prints no "</span>
+            <span class="s2">"per-component composition and names no catalog number, and the vendor "</span>
+            <span class="s2">"sheet is not a mirrored source. It is 'defined' in the vendor's sense and "</span>
+            <span class="s2">"carries amino acids, so a medium built on it is NOT carbon-source free in "</span>
+            <span class="s2">"the way the M9 variants are"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_BANERJEE2024</span><span class="p">,</span>
+            <span class="s2">"EZ rich defined medium (Teknova, CA, USA)"</span><span class="p">,</span>
+            <span class="n">_Q_BANERJEE_EZRICH</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""The Teknova EZ rich defined medium, composition deferred to the vendor: the base of</span>
+<span class="sd">Banerjee 2024's production medium, on the Foo 2014 ``M9_DIFCO`` pattern."""</span>
+
+<span class="n">EZ_RICH_BANERJEE2024</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"EZ rich defined medium (Teknova; composition not stated) with 25 ug/mL "</span>
+    <span class="s2">"kanamycin, no carbon source (Banerjee 2024)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"EZ_RICH_TEKNOVA"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">*</span><span class="n">EZ_RICH_TEKNOVA</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"kanamycin"</span><span class="p">,</span>
+            <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">selection_agent</span><span class="p">,</span>
+            <span class="mf">25.0</span><span class="p">,</span>
+            <span class="n">_UGML</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"25 ug/mL kanamycin"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_EZRICH</span><span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_BANERJEE2024</span><span class="p">,</span>
+            <span class="s2">"EZ rich defined medium (Teknova, CA, USA)"</span><span class="p">,</span>
+            <span class="n">_Q_BANERJEE_EZRICH</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Banerjee 2024's production medium for every knockout and plasmid round (row 39)."""</span>
+
+<span class="n">M9_BANERJEE2024</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"M9 minimal medium (Supplementary Table 3 recipe: 10 mM ammonium sulfate + "</span>
+    <span class="s2">"Teknova trace elements), no carbon source (Banerjee 2024)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"ammonium sulfate"</span><span class="p">,</span>
+            <span class="n">_NSRC</span><span class="p">,</span>
+            <span class="mf">10.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"(NH4)2SO4 | 10 ml | 1 M stock"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span>
+            <span class="p">),</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"10 mL of a 1 M stock per 1 L, which the recipe's own columns state"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="o">*</span><span class="n">_BANERJEE_M9_SALTS</span><span class="p">,</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"magnesium sulfate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">2.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"1M MgSO4 | 2 mL"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"calcium chloride"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024_SI1</span><span class="p">,</span> <span class="s2">"1M CaCl2 | 100 uL"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"trace element solution (Teknova)"</span><span class="p">,</span>
+            <span class="n">_TRACE</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">_VV</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024_SI1</span><span class="p">,</span>
+                    <span class="s2">"Trace elements solution | 500 uL: 0.05% v/v"</span><span class="p">,</span>
+                    <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_BANERJEE_TRACE_NOTE</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[</span><span class="n">_M9_AMMONIUM_CHLORIDE</span><span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_BANERJEE2024_SI1</span><span class="p">,</span>
+            <span class="s2">"Minimal M9 medium recipe"</span><span class="p">,</span>
+            <span class="n">_Q_BANERJEE_M9_1X</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the recipe's '20</span><span class="si">% G</span><span class="s2">lucose | 100 ml' row is 20 g/L D-glucose, which is "</span>
+            <span class="s2">"the carbon source every condition varies, so it is carried as "</span>
+            <span class="s2">"EnvironmentPhysicalPerturbation(carbon_source) rather than as a component "</span>
+            <span class="s2">"here. An ammonium-sulfate formulation does not contain the M9 base's "</span>
+            <span class="s2">"ammonium chloride, which is recorded as a dropout"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Banerjee 2024's Supplementary Table 3 M9: the minimal-medium characterization."""</span>
+
+<span class="n">M9_MODIFIED_FEDBATCH_BANERJEE2024</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"modified M9 minimal medium (20 mM ammonium chloride + 1000X Teknova trace "</span>
+    <span class="s2">"metals at an unstated dose), no carbon source (Banerjee 2024 fed-batch)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"ammonium chloride"</span><span class="p">,</span>
+            <span class="n">_NSRC</span><span class="p">,</span>
+            <span class="mf">20.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"20 mM NH4Cl"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"disodium hydrogen phosphate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">6.8</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"6.8 g/L Na2HPO4"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"potassium dihydrogen phosphate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">3.0</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"3.0 g/L KH2PO4"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"sodium chloride"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">_GL</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"0.5 g/L NaCl"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"magnesium sulfate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">2.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"2 mM MgSO4"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"calcium chloride"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span><span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"0.1 mM CaCl2"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"trace metal solution (Teknova, 1000X stock)"</span><span class="p">,</span>
+            <span class="n">_TRACE</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"and trace metal solution"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_MODIFIED_M9</span>
+                <span class="p">),</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024</span><span class="p">,</span>
+                    <span class="s2">"50 mM FeCl3, 20 mM CaCl2, 10 mM MnCl2, 10 mM ZnSO4, 2 mM CoCl2, "</span>
+                    <span class="s2">"2 mM CuCl2, 2 mM NiCl2, 2 mM Na2MoO4, 2 mM NaO3Se, 2 mM BH3O3 "</span>
+                    <span class="s2">"(the 1000X stock)"</span><span class="p">,</span>
+                    <span class="n">_Q_BANERJEE_TRACE_STOCK</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the amount is an OPEN GAP: the Methods name the solution and print "</span>
+            <span class="s2">"its full 1000X stock composition but never state how much of it the medium "</span>
+            <span class="s2">"receives, so no working concentration is recorded. A 1X assumption would "</span>
+            <span class="s2">"be this loader's number, not the paper's"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_BANERJEE2024</span><span class="p">,</span>
+            <span class="s2">"1 L modified M9 minimal medium"</span><span class="p">,</span>
+            <span class="n">_Q_BANERJEE_MODIFIED_M9</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the fed-batch glucose (20 g/L batch, fed to a total of 100 g/L) is "</span>
+            <span class="s2">"the carbon source and travels as "</span>
+            <span class="s2">"EnvironmentPhysicalPerturbation(carbon_source)"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Banerjee 2024's fed-batch "modified M9": 20 mM NH4Cl, in the 2 L bioreactor."""</span>
+
+<span class="n">M9_MODIFIED_TUBE_BANERJEE2024</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"modified M9 minimal medium (10 mM ammonium chloride + Teknova trace metals at "</span>
+    <span class="s2">"0.05% v/v), no carbon source (Banerjee 2024 hydrolysate tubes)"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"ammonium chloride"</span><span class="p">,</span>
+            <span class="n">_NSRC</span><span class="p">,</span>
+            <span class="mf">10.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"50 uL of 1 M NH4Cl in 5 mL: 10 mM"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_TUBE_M9</span>
+            <span class="p">),</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"HALF the fed-batch medium's 20 mM, which is why this is a second "</span>
+            <span class="s2">"medium object rather than the same one: 50 uL of a 1 M stock in the 5 mL "</span>
+            <span class="s2">"the same sentence adjusts the volume to is 10 mM"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="o">*</span><span class="p">[</span>
+            <span class="n">component</span>
+            <span class="k">for</span> <span class="n">component</span> <span class="ow">in</span> <span class="n">M9_MODIFIED_FEDBATCH_BANERJEE2024</span><span class="o">.</span><span class="n">components</span>
+            <span class="k">if</span> <span class="n">component</span><span class="o">.</span><span class="n">compound</span><span class="o">.</span><span class="n">name</span>
+            <span class="ow">in</span> <span class="p">{</span>
+                <span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"disodium hydrogen phosphate"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"potassium dihydrogen phosphate"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">resolved_compound</span><span class="p">(</span><span class="s2">"sodium chloride"</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">],</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"magnesium sulfate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">2.0</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_BANERJEE2024</span><span class="p">,</span> <span class="s2">"10 uL of 1 M MgSO4 in 5 mL: 2 mM"</span><span class="p">,</span> <span class="n">_Q_BANERJEE_TUBE_M9</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"calcium chloride"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_BANERJEE2024</span><span class="p">,</span>
+                <span class="s2">"5 uL of 100 mM CaCl2 in 5 mL: 0.1 mM"</span><span class="p">,</span>
+                <span class="n">_Q_BANERJEE_TUBE_M9</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">_mixture</span><span class="p">(</span>
+            <span class="s2">"trace metal solution (Teknova, 1000X stock)"</span><span class="p">,</span>
+            <span class="n">_TRACE</span><span class="p">,</span>
+            <span class="n">_DEFERRED</span><span class="p">,</span>
+            <span class="n">concentration</span><span class="o">=</span><span class="n">_c</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">_VV</span><span class="p">),</span>
+            <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024</span><span class="p">,</span>
+                    <span class="s2">"2.5 uL of trace metal solution in 5 mL: 0.05% v/v"</span><span class="p">,</span>
+                    <span class="n">_Q_BANERJEE_TUBE_M9</span><span class="p">,</span>
+                <span class="p">),</span>
+                <span class="n">_cite</span><span class="p">(</span>
+                    <span class="n">_BANERJEE2024</span><span class="p">,</span>
+                    <span class="s2">"50 mM FeCl3, 20 mM CaCl2, 10 mM MnCl2, 10 mM ZnSO4, 2 mM CoCl2, "</span>
+                    <span class="s2">"2 mM CuCl2, 2 mM NiCl2, 2 mM Na2MoO4, 2 mM NaO3Se, 2 mM BH3O3 "</span>
+                    <span class="s2">"(the 1000X stock)"</span><span class="p">,</span>
+                    <span class="n">_Q_BANERJEE_TRACE_STOCK</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+            <span class="n">note</span><span class="o">=</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">_BANERJEE_TRACE_NOTE</span><span class="si">}</span><span class="s2">; unlike the fed-batch medium, this one DOES "</span>
+            <span class="s2">"state the dose (2.5 uL in 5 mL)"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="p">[],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_BANERJEE2024</span><span class="p">,</span>
+            <span class="s2">"the modified M9 minimal medium volume was adjusted to 5 mL"</span><span class="p">,</span>
+            <span class="n">_Q_BANERJEE_TUBE_M9</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the 20 g/L glucose and the 0 to 35% (v/v) sorghum hydrolysate are "</span>
+            <span class="s2">"both varied per condition, so both travel as environment perturbations"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Banerjee 2024's hydrolysate-tube "modified M9": 10 mM NH4Cl, 5 mL in culture tubes."""</span>
+<span class="c1"># --- end banerjee2024 ------------------------------------------------------- #</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># RCH2 defined minimal medium, no carbon (Price 2018 Supplementary Table 18, the Fitness</span>
 <span class="c1"># Browser's own media table). Borchert 2024's compendium names it for 20 P. putida</span>
@@ -5149,6 +5573,19 @@
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'modified M9'"</span><span class="p">,),</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"18 Kang 2026: 'M9-MOPS'"</span><span class="p">,),</span>
+    <span class="s2">"EZ_RICH_TEKNOVA"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"39 Banerjee 2024: base of its production medium"</span><span class="p">,),</span>
+    <span class="s2">"EZ_RICH_BANERJEE2024"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"39 Banerjee 2024: the knockout and plasmid production rounds"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"M9_BANERJEE2024"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"39 Banerjee 2024: the minimal-medium characterization (Supplementary Table 3)"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"M9_MODIFIED_FEDBATCH_BANERJEE2024"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"39 Banerjee 2024: the 2 L bioreactor fed-batch runs"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"M9_MODIFIED_TUBE_BANERJEE2024"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"39 Banerjee 2024: the sorghum-hydrolysate culture tubes"</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="p">(</span>
         <span class="s2">"39 Banerjee 2025: the shotgun-proteomics cultures; names a modified M9 and defers its amounts to reference 21"</span><span class="p">,</span>
     <span class="p">),</span>
@@ -5657,6 +6094,11 @@
     <span class="s2">"M9_NREL_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_NREL_HIGH_N_KANG2026"</span><span class="p">:</span> <span class="n">M9_NREL_HIGH_N_KANG2026</span><span class="p">,</span>
     <span class="s2">"M9_MOPS_KANG2026"</span><span class="p">:</span> <span class="n">M9_MOPS_KANG2026</span><span class="p">,</span>
+    <span class="s2">"EZ_RICH_TEKNOVA"</span><span class="p">:</span> <span class="n">EZ_RICH_TEKNOVA</span><span class="p">,</span>
+    <span class="s2">"EZ_RICH_BANERJEE2024"</span><span class="p">:</span> <span class="n">EZ_RICH_BANERJEE2024</span><span class="p">,</span>
+    <span class="s2">"M9_BANERJEE2024"</span><span class="p">:</span> <span class="n">M9_BANERJEE2024</span><span class="p">,</span>
+    <span class="s2">"M9_MODIFIED_FEDBATCH_BANERJEE2024"</span><span class="p">:</span> <span class="n">M9_MODIFIED_FEDBATCH_BANERJEE2024</span><span class="p">,</span>
+    <span class="s2">"M9_MODIFIED_TUBE_BANERJEE2024"</span><span class="p">:</span> <span class="n">M9_MODIFIED_TUBE_BANERJEE2024</span><span class="p">,</span>
     <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="n">M9_DEFERRED_BANERJEE2025</span><span class="p">,</span>
     <span class="s2">"M9_NREL_CARRUTHERS2025"</span><span class="p">:</span> <span class="n">M9_NREL_CARRUTHERS2025</span><span class="p">,</span>
     <span class="s2">"M9_NREL_MOPS_MENASALVAS2025"</span><span class="p">:</span> <span class="n">M9_NREL_MOPS_MENASALVAS2025</span><span class="p">,</span>
@@ -5714,6 +6156,14 @@
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="s2">"the carbon source is the variable across the eleven carbon-source "</span>
     <span class="s2">"conditions"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="s2">"acetate or glucose, varied per condition"</span><span class="p">,</span>
+    <span class="s2">"EZ_RICH_TEKNOVA"</span><span class="p">:</span> <span class="s2">"base; the vendor defined medium carries its own amino acids"</span><span class="p">,</span>
+    <span class="s2">"EZ_RICH_BANERJEE2024"</span><span class="p">:</span> <span class="s2">"the vendor base carries amino acids; the stated 20 g/L "</span>
+    <span class="s2">"D-glucose is the varied addition"</span><span class="p">,</span>
+    <span class="s2">"M9_BANERJEE2024"</span><span class="p">:</span> <span class="s2">"20 g/L D-glucose, the recipe's own '20</span><span class="si">% G</span><span class="s2">lucose | 100 ml' row"</span><span class="p">,</span>
+    <span class="s2">"M9_MODIFIED_FEDBATCH_BANERJEE2024"</span><span class="p">:</span> <span class="s2">"20 g/L batch glucose, fed to a total of "</span>
+    <span class="s2">"100 g/L"</span><span class="p">,</span>
+    <span class="s2">"M9_MODIFIED_TUBE_BANERJEE2024"</span><span class="p">:</span> <span class="s2">"20 g/L glucose alone, or glucose with 5 to 35% "</span>
+    <span class="s2">"(v/v) sorghum hydrolysate, varied per condition"</span><span class="p">,</span>
     <span class="s2">"M9_DEFERRED_BANERJEE2025"</span><span class="p">:</span> <span class="s2">"p-CA alone, or p-CA with D-alanine and L-malate, "</span>
     <span class="s2">"varied per condition; the Methods hand the amounts to the figure legends"</span><span class="p">,</span>
     <span class="s2">"M9_NREL_NOCARBON_LIM2022"</span><span class="p">:</span> <span class="s2">"the aromatic project varies the carbon source "</span>

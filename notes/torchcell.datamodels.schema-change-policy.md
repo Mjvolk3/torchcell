@@ -166,3 +166,10 @@ python -m torchcell.provenance.schema_change list
 After a rebase or a further schema edit, rerun `new --refresh`; the record keeps its date. `schema-change` is the same CLI as a console script once the package is reinstalled (`pip install -e .`).
 
 Related: [[torchcell.provenance.schema-dependency-tracking]] (fingerprints and closures), [[torchcell.knowledge_graphs.incremental-admission]] (the rebuild policy), [[torchcell.provenance.schema_change]], [[scripts.check_schema_change_records]].
+
+## 2026.10.12 - The single-cell one-tag finding, closed
+
+The open finding under Rule 6 (two tags for one 10x measurement) is closed by PR #1052, record `database/schema_changes/2026-10-12-single-cell-umi-one-tag.json`: `SingleCellExpressionPhenotype.measurement_type` is `Literal["scrnaseq_umi_count"]`, and Jackson 2020's loader writes the leaf's tag. Two points it settles for later measurement-type decisions:
+
+- **A free-string tag is not an enum.** `measurement_type` on the expression leaves is a `str`, so unifying tags is no `enum_member_added` / `enum_member_removed` question. Pinning the leaf's one value is `contract_tightened`, which needs the argument and no sign-off.
+- **A loader-only unification has no record.** A docstring is outside the contract fingerprint (Rule 8) and a record names at least one changed symbol, so a decision that stays a loader convention cannot be recorded. Making the leaf hold its own tag is what puts the decision on the surface the tripwire and the enforcement test read.

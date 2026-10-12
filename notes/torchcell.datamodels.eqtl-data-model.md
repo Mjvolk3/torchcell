@@ -267,3 +267,25 @@ Requiring the summed cells on a reference makes Boocock's references large (the 
 ### Open owner decision
 
 `measurement_type` is still two tags for one assay (`scrnaseq_umi_count` on Boocock and N'Guessan, `scrnaseq_pseudobulk_umi_count` on Jackson). The class carries both verbatim; making them one is a value change for whichever dataset moves, so it was not done here.
+
+## 2026.10.12 - One measurement_type tag for the single-cell leaf
+
+The open owner decision of the 2026.10.11 section is closed. The owner deferred it to the driver session by the DAG rule (rule 6 of [[torchcell.datamodels.schema-change-policy]]), which chose `scrnaseq_umi_count` for all three releases: Boocock 2025, Jackson 2020 and N'Guessan 2025 are each 10x Chromium 3' UMI counts, the same physical measurement and the same released quantity, so rule 6 case 1 gives one leaf and one tag, and the designs diverge in the experiment classes above the leaf (`SegregantExpressionExperiment`, `PseudobulkUmiCountExperiment`). "Pseudobulk" names Jackson's analysis step, the per-strain sum, which `n_cells`, `cell_barcodes` and `cell_libraries` already record on every record.
+
+The chemistry sentences, verbatim from each key's `paper.md` in the mirror:
+
+| release | paper.md sha256 | section | quote |
+|---|---|---|---|
+| Boocock 2025 | `a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4` | Single-cell library preparation | "loaded onto the Chromium device using either the Single Cell $3 ^ { \prime }$ Solution V2 or V3 kit." |
+| Jackson 2020 | `453924f3d5ed998e99695768cf5b4067f2dbac3fb0af53dcbf8fd9017f199697` | Library preparation and sequencing | "Single cell library preparation was done using the $ 1 0 \times$ Genomics Chromium ${ \boldsymbol { 3 ^ { \prime } } }$ v2 Single Cell Gene Expression Kit" |
+| N'Guessan 2025 | `97cf5c178323798ef84fe4763f9a3d7361b6d37907fbfe320d607996feab861b` | Yeast growth and single-cell RNA-sequencing protocol | "We used the Chromium Next GEM Single-cell $3 ^ { \prime }$ Reagent Kit to prepare the sequencing libraries and sequenced on a NextSeq 500 high-output flow cell." |
+
+`measurement_type` is a free string on every expression leaf, not a `MeasurementType` member, so the change is not an enum change. On this leaf the field is now `Literal["scrnaseq_umi_count"]` with the same default, and the blank-tag check in `_check_totals` is gone because the Literal refuses a blank tag: a `contract_tightened` change under which every Boocock and N'Guessan value the old class accepted is accepted and serialized unchanged. Jackson's loader no longer passes `scrnaseq_pseudobulk_umi_count`. The class docstring states the sibling rule: a single-cell UMI platform other than 10x Chromium 3' gets a sibling leaf under `Phenotype` with its own tag, never a second tag on this leaf.
+
+| dataset | tag before | tag after |
+|---|---|---|
+| `Boocock2025Dataset` | `scrnaseq_umi_count` (leaf default) | `scrnaseq_umi_count` |
+| `TfDeletionPseudobulkJackson2020Dataset` | `scrnaseq_pseudobulk_umi_count` (loader constant) | `scrnaseq_umi_count` |
+| `Nguessan2025Dataset` | `scrnaseq_umi_count` (leaf default) | `scrnaseq_umi_count` |
+
+Record: `database/schema_changes/2026-10-12-single-cell-umi-one-tag.json` (PR #1052; four alternatives rejected: two tags, a pseudobulk sibling leaf, one tag by loader convention only, and unifying on the pseudobulk tag, which would be false for Boocock's single de novo cells). Schema impact: 1 changed symbol, 3 datasets re-staled (the three above), none served, rebuild scope dev stores. The Jackson and Boocock rebuilds and their L0 to L4 tables are in [[torchcell.datasets.scerevisiae.jackson2020]] and [[torchcell.datasets.scerevisiae.boocock2025]]; N'Guessan's store is in flight on its own branch and rebuilds with whichever lands second.

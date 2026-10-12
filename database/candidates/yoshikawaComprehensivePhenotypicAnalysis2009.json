@@ -35,9 +35,36 @@
     },
     {
       "gate": "G3",
-      "outcome": "unmeasured",
-      "reason": "the manifests in ('library',) list nothing under si/ or data/",
-      "evidence": [],
+      "outcome": "pass",
+      "reason": "2 file(s) in library+raw, 4731 worksheet row(s) counted; all intact",
+      "evidence": [
+        {
+          "value": "the per-strain values live only in Supporting Information Table S1",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": null,
+            "page": null,
+            "retrieved": null
+          },
+          "quote": "Table S1. Specific growth rates of single gene deletion strains.",
+          "note": null
+        },
+        {
+          "value": "Table S1",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and methods / Results",
+            "retrieved": null
+          },
+          "quote": "The normalized specific growth rates of all deletion strains under each condition are shown in Supporting Information, Table S1.",
+          "note": null
+        }
+      ],
       "issue": null,
       "blocked_kind": null
     },
@@ -66,6 +93,32 @@
           },
           "quote": "We simultaneously obtained 720 sets of information regarding the specific growth rates of the standard strain from the cultivation of all the deletion strains in 90 microtiter plates twice under each condition.",
           "note": null
+        },
+        {
+          "value": 2,
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and methods / Results",
+            "retrieved": null
+          },
+          "quote": "All strains were separately cultured twice under nonstress and stress conditions.",
+          "note": "the two released rates per condition are two cultures of the strain, one record each (n_samples=1, biological_replicate)"
+        },
+        {
+          "value": "sample_sd",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+            "sha256": "6552adf5b44fabc293ff1980069b67c9a6598a0d60c98e90c8ce424c5120f7fa",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Materials and methods / Results",
+            "retrieved": null
+          },
+          "quote": "Table 1 shows the average and SD of the specific growth rates of 720 growth data for the standard strain under each condition.",
+          "note": null
         }
       ],
       "issue": null,
@@ -87,12 +140,59 @@
       }
     ]
   },
-  "g3": null,
+  "g3": {
+    "citation_key": "yoshikawaComprehensivePhenotypicAnalysis2009",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "raw",
+        "path": "si/FYR_456_sm_tableS1.xls",
+        "role": "raw_data",
+        "bytes": 1399296,
+        "sha256_manifest": "1861ba647e382f28a39041b2b590276ad30e67ef334b0d8be968415f56d9f759",
+        "sha256_disk": "1861ba647e382f28a39041b2b590276ad30e67ef334b0d8be968415f56d9f759",
+        "retrieval_method": "manual_browser",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/FYR_456_sm_tableS1.xlsx",
+        "role": "si_data",
+        "bytes": 553420,
+        "sha256_manifest": "f8567d2cbfe974a87cdb8629086884bc5e3c280513b99ab944065fb53d873871",
+        "sha256_disk": "f8567d2cbfe974a87cdb8629086884bc5e3c280513b99ab944065fb53d873871",
+        "retrieval_method": "direct_url",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "data",
+            "rows": 4731
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
   "g4_key": {
     "doi": "10.1111/j.1567-1364.2008.00456.x",
     "pmid": null,
     "accessions": [],
-    "hits": [],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1111/j.1567-1364.2008.00456.x",
+        "where": "torchcell/datasets/scerevisiae/yoshikawa2009.py",
+        "relation": "own"
+      }
+    ],
     "pmid_checked": false
   },
   "g4_value": null,
@@ -102,6 +202,6 @@
     "unresolved_compounds": [],
     "proposed_class": null
   },
-  "decided_at": "2026-10-11",
-  "torchcell_commit": "e83a1e1803a87127d6b983208b050f88dccfec63"
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "771f2a41dfffac4a27d04fba268e82157e95cdb6"
 }

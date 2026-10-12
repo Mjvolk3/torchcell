@@ -266,7 +266,7 @@ Gates: ✓ pass, ✗ fail, ■ blocked, ◐ gap (issue filed), · unmeasured. Ge
 | trikkaIterativeCarotenogenicScreens2015 | yeast | Trikka 2015 (carotenogenic heterozygous screen) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
 | turcoGlobalAnalysisYeast2023 | yeast | Turco 2023 (Yeast Phenome) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-11 | `e83a1e180` |
 | vaishnavEvolutionEvolvabilityEngineering2022 | yeast | Vaishnav 2022 (regulatory DNA fitness landscape) | ✓ | ✓ | ✓ | ✓ | ◐ | **admissible_with_gaps** | #991 | 2026-10-11 | `e83a1e180` |
-| yoshikawaComprehensivePhenotypicAnalysis2009 | yeast | Yoshikawa 2009 (ethanol and salt stress growth of the deletion collection) | ✓ | ✓ | · | ✓ | ✓ | **pending** |  | 2026-10-11 | `e83a1e180` |
+| yoshikawaComprehensivePhenotypicAnalysis2009 | yeast | Yoshikawa 2009 (ethanol and salt stress growth of the deletion collection) | ✓ | ✓ | ✓ | ✓ | ✓ | **admissible** |  | 2026-10-12 | `771f2a41d` |
 | zackrissonScanomaticHighResolutionMicrobial2016 | yeast | Zackrisson 2016 (Scan-o-matic growth curves) | ✓ | ✓ | ■ | · | · | **blocked:wall** |  | 2026-10-11 | `e83a1e180` |
 | zhangCombiningMechanisticMachine2020 | yeast | Zhang 2020 (combinatorial promoter library for tryptophan) | ✓ | ■ | · | · | · | **blocked:provision** |  | 2026-10-11 | `e83a1e180` |
 

@@ -100,7 +100,7 @@ import os
 import os.path as osp
 import pickle
 import shutil
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -179,7 +179,6 @@ SCAFFOLD_5PRIME = "TGCATTTTTTTCACATC"
 SCAFFOLD_3PRIME = "GGTTACGGCTGTT"
 SCAFFOLD_NAME = "pTpA"
 VARIABLE_REGION_LENGTH = 80
-CONSTRUCT_LENGTH = len(SCAFFOLD_5PRIME) + VARIABLE_REGION_LENGTH + len(SCAFFOLD_3PRIME)
 
 REPORTER_GENE = "YFP"
 #: The reporter's identity: a CURIE in the namespace of the deposited dual-reporter
@@ -734,15 +733,6 @@ def run_verification(data_root: str | None = None) -> Any:
     )
     _write_report(report, osp.join(base, DATASET_ROOT_REL, "preprocess"))
     return report
-
-
-def stored_sequences(records: Iterable[dict[str, Any]]) -> Iterator[str]:
-    """The promoter sequence of each record's single perturbation."""
-    for record in records:
-        perturbations = record["experiment"]["genotype"]["perturbations"]
-        if len(perturbations) != 1:
-            raise RuntimeError("a record carries more than one perturbation")
-        yield str(perturbations[0]["promoter_sequence"])
 
 
 def main(argv: list[str] | None = None) -> int:

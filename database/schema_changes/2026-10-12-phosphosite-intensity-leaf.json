@@ -4,7 +4,7 @@
   "date": "2026-10-12",
   "pr": 1062,
   "author_kind": "agent",
-  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "base_commit": "232e5d17882b668d27ccfe3bdb5e97dbcafd8a04",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -52,8 +52,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "4aed17de23e781b9b0e29febf5998ae80436766acf05f6f0653ef1681953dde4",
-      "fingerprint_after": "febd72bb348a45b2296a12c230ae7b7c5e4e64f13c494f7a868302d9d9ca8890",
+      "fingerprint_before": "6328849fbe6e527f581f6aad633ebb1da11938d497ea2c7d898719f41387aa79",
+      "fingerprint_after": "7456aee12b83dcbe52c6d111750164bb58215390bf29fa97c5626087fa9a2410",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperimentReference\"]"
@@ -65,8 +65,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "1f03bad63e2bf27bdcefcb27bf82ba5456bca5193d59adc196a32b501ad0b6df",
-      "fingerprint_after": "02c0dbd291a35af67475a9f074227278da98be5dedef041eb113e79c128c0722",
+      "fingerprint_before": "b55a962ffabea8aa717febe5b1da5e9619018aced64bb5e799441c910d158ed7",
+      "fingerprint_after": "2fca3c4c7f955f61567e77d0446db683114af13347aebf33dc269e58c4b0ca85",
       "impact": "stale",
       "reasons": [
         "gained members [\"'bacterial_phosphosite_intensity': BacterialPhosphositeIntensityExperiment\"]"
@@ -78,8 +78,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "30879d544129dc3d2bcf3cd6d12da8de05bde847a8963f658b61d565f41cd588",
-      "fingerprint_after": "94e422ffc115d1a0fbadddc789d5d9b9bec3619f4a710628737fe03a3ae5273f",
+      "fingerprint_before": "f1a60c21f4bb7caddbecf5a58f4ea0fe0e86a2ee1ccc7a72f76cd1b027c5ba21",
+      "fingerprint_after": "d0a2f2c56a4a7bda227bba7b4256222417b90e90c93737dc79224edb7726b09c",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialPhosphositeIntensityExperimentReference']"
@@ -91,8 +91,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "a7044ea3512cb05556e56d95356f09cfdbd9c5828b128c17440eabf8afee9d10",
-      "fingerprint_after": "3ae5cad84798397c00853c154fa4655563d90675bb6f613bb65772cb04115554",
+      "fingerprint_before": "aecfd8a8a37c9d8efcb24084a9d2d854cc3f778e5bd6d2bc4268ace3e4887a59",
+      "fingerprint_after": "fc49ca18edb64b68945aa1c67e8c1dabd0eb6f1c67915b10ef52bda617bc1de0",
       "impact": "stale",
       "reasons": [
         "gained members ['BacterialPhosphositeIntensityExperiment']"
@@ -143,8 +143,8 @@
       "kinds": [
         "enum_member_added"
       ],
-      "fingerprint_before": "54c9d19ae5648759e45ac776b7b177a404054c325e991af3b7038e1d8db98682",
-      "fingerprint_after": "cb0a46e0358ced31c0d94e4cbe9520349285e8c68741763ac8d1fdad4fc27389",
+      "fingerprint_before": "7298b18961dec8093a260a78342ba008abc7f96975cd06c421347932974d5dfd",
+      "fingerprint_after": "4066009fb7a0d31ef5b774e4e74a48af77bd2e334c596ec2c5cf10e780950f83",
       "impact": "stale",
       "reasons": [
         "gained members ['PhosphositeIntensityPhenotype']"

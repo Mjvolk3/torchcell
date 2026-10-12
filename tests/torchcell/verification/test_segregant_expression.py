@@ -260,7 +260,16 @@ def test_the_registry_entry_names_the_dev_tree_root_and_count() -> None:
 def test_run_segregant_expression_writes_the_report_verify_build_returns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """Each entry is gated by the ``verify_build`` of the module it names."""
+    """Each entry is gated by the ``verify_build`` of the module it names.
+
+    N'Guessan 2025's held-out spec is added to the registry here so the dispatch is
+    exercised on two modules.
+    """
+    monkeypatch.setitem(
+        runners.SEGREGANT_EXPRESSION_DATASETS,
+        "nguessan2025",
+        nguessan2025.VERIFICATION_SPEC,
+    )
     seen: list[tuple[str, str, str]] = []
     reports: dict[str, VerificationReport] = {}
     for name, module in (("boocock2025", m), ("nguessan2025", nguessan2025)):
@@ -295,6 +304,11 @@ def test_run_segregant_expression_fails_when_one_store_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A failing N'Guessan report makes the family fail although Boocock passes."""
+    monkeypatch.setitem(
+        runners.SEGREGANT_EXPRESSION_DATASETS,
+        "nguessan2025",
+        nguessan2025.VERIFICATION_SPEC,
+    )
     for name, module, passed in (
         ("boocock2025", m, True),
         ("nguessan2025", nguessan2025, False),
@@ -314,10 +328,11 @@ def test_run_segregant_expression_fails_when_one_store_fails(
 
 
 def test_every_entry_names_its_own_loader_module() -> None:
+    """Boocock is registered; N'Guessan's held-out spec already names its module."""
     assert {
         name: spec["verify_build_module"]
         for name, spec in runners.SEGREGANT_EXPRESSION_DATASETS.items()
-    } == {
-        "boocock2025": "torchcell.datasets.scerevisiae.boocock2025",
-        "nguessan2025": "torchcell.datasets.scerevisiae.nguessan2025",
-    }
+    } == {"boocock2025": "torchcell.datasets.scerevisiae.boocock2025"}
+    assert nguessan2025.VERIFICATION_SPEC["verify_build_module"] == (
+        nguessan2025.__name__
+    )

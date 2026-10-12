@@ -1472,12 +1472,41 @@ def sourced_values() -> list[SourcedValue]:
     return list(SOURCED.values())
 
 
-def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
-    """L0-L4 report for a built store (``segregant_expression_reference_panel``).
+#: The verification spec, in the shape of a ``runners.SEGREGANT_EXPRESSION_DATASETS``
+#: entry. It is NOT in that registry, nor this dataset in the dataset-to-adapter map:
+#: the store builds (2,951 records, slurm job 4199) but fails L4 ``marker_reference``
+#: and ``mat_fixation``, because the deposited SNP positions are on the BB-QTL
+#: pipeline's ``BY4742_fixed.fasta``, not on the S288C reference the records name
+#: (#1050). A mapped store that fails verification would fail the KG build's
+#: freshness check, and its blocks would name S288C coordinates they do not have.
+VERIFICATION_SPEC: dict[str, Any] = {
+    "root": "data/torchcell/nguessan2025",
+    "verify_build_module": "torchcell.datasets.scerevisiae.nguessan2025",
+    "library": "torchcell-library",
+    "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
+    "expected_count": N_SEGREGANTS,
+    "provenance": Provenance(
+        source_uri=f"https://doi.org/{PAPER_DOI}",
+        citation_key=CITATION_KEY,
+        method=(
+            "one-pot 10x single-cell RNA-seq of batch 1 (4,489 strains) of the Nguyen Ba "
+            "2022 BB-QTL BY4741 x RM11-1a panel grown in YPD to log phase; per batch-1 "
+            f"strain with a significant cell match ({CODE_REPO} @ {CODE_COMMIT[:8]} "
+            "barcode-to-strain table), its cells' UMI counts summed and the panel's "
+            f"posterior P(RM) at 41,594 SNPs (Dryad {DRYAD_DOI} {GENO_NAME}, deposited "
+            f"by hand, #{DRYAD_ISSUE}) encoded as blocks on a {POSTERIOR_STEP} grid; raw "
+            f"mirror {RAW_DIR_REL} with manifest.json"
+        ),
+        page="eLife 2025; Methods 'Yeast strains and segregants', 'Yeast growth and "
+        "single-cell RNA-sequencing protocol', 'Assigning single cells to the reference "
+        "panel strains'; Table 1",
+        sha256=PAPER_MD_SHA256,
+    ),
+}
 
-    The spec (root, count, provenance, assembly index) is this dataset's entry in
-    ``runners.SEGREGANT_EXPRESSION_DATASETS``, the registry ``run_all`` reads.
-    """
+
+def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
+    """L0-L4 report for a built store (``segregant_expression_reference_panel``)."""
     import json
 
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve
@@ -1488,7 +1517,7 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     )
 
     root = data_root or _data_root()
-    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
+    spec = VERIFICATION_SPEC
     genome = SCerevisiaeGenome(
         genome_root=osp.join(root, "data/sgd/genome"),
         go_root=osp.join(root, "data/go"),

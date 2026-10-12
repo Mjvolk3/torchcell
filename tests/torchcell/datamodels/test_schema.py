@@ -3664,7 +3664,19 @@ def test_the_served_microarray_leaf_keeps_its_contract_under_the_parent() -> Non
 
 
 def test_the_two_channel_parent_is_never_a_record() -> None:
-    """It declares no field, so no ``label_name`` can name one of its own."""
+    """It declares no field, so no ``label_name`` can name one of its own.
+
+    Checked in the state CI's full run reaches: once ``ABCMeta.__annotations__`` has
+    been read, a class with no annotations of its own resolves ``__annotations__``
+    through its MRO to ``Phenotype``'s, and the parent accepted
+    ``label_name="graph_level"`` (CI, head ``5a3196648``). Its own empty
+    ``__annotations__`` keeps the lookup on it in both states.
+    """
+    import abc
+
+    assert isinstance(abc.ABCMeta.__annotations__, dict)  # the read CI's run makes
+    assert s.TwoChannelMicroarrayExpressionPhenotype.__annotations__ == {}
+    assert "__annotations__" in vars(s.TwoChannelMicroarrayExpressionPhenotype)
     with pytest.raises(ValidationError, match="must be a class attribute"):
         s.TwoChannelMicroarrayExpressionPhenotype(
             graph_level="node", label_name="graph_level"

@@ -157,7 +157,7 @@
         "additive_leaf"
       ],
       "fingerprint_before": null,
-      "fingerprint_after": "a3653341aaed3e4d204419f197098d834e3a6ab881e7535494b7d756140999b6",
+      "fingerprint_after": "908a735021267848da5b4f27db59cf6dbfba3f750ca83b5e3484cf8dff112a35",
       "impact": "stale",
       "reasons": [
         "new symbol"

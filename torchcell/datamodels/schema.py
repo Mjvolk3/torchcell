@@ -6865,8 +6865,14 @@ class TwoChannelMicroarrayExpressionPhenotype(Phenotype, ModelStrict):
 
     Never instantiated: a record is always one of the leaves, because what was released
     decides which fields exist. The parent declares no field of its own, so
-    ``Phenotype.validate_label_fields`` (which reads the concrete class's OWN
-    annotations) refuses any ``label_name`` it is given.
+    ``Phenotype.validate_label_fields`` (which reads the concrete class's
+    ``__annotations__``) refuses any ``label_name`` it is given. The empty
+    ``__annotations__`` below is what keeps that true: once any code has read
+    ``ABCMeta.__annotations__``, a class with no annotations of its own resolves the
+    attribute through its MRO to ``Phenotype``'s, and the parent would then accept
+    ``label_name="graph_level"`` (the CPython quirk ``test_ontology_coherence.py``
+    records for #640; measured here in CI's full run). Declaring the empty dict in
+    the class's own namespace pins the lookup to it.
 
     The leaves keep their own ``label_name``, because no leaf's quantity converts into
     another's without something its release does not carry: a score back to a ratio
@@ -6875,6 +6881,8 @@ class TwoChannelMicroarrayExpressionPhenotype(Phenotype, ModelStrict):
     leaf's p-value is a function of its score,
     ``MicroarrayExpressionScorePhenotype.p_value_of_score``.
     """
+
+    __annotations__ = {}  # its OWN (empty) annotations; see the class docstring
 
 
 # --------------------------------------------------------------------------- #

@@ -3119,15 +3119,12 @@ def essentiality_evidence_matches_table(
             and ev["normalized_read_density"] < threshold
         ):
             problems.append(f"coverage {held[-1]} is not under {threshold}")
-    released = [
-        (g.n_reads, g.normreads, g.n_pos_central, g.dens, g.gc)
-        for g in genes
-        if g.refseq_locus_tag is not None
-    ]
+    # Every Table S1 row is a record since #1057 (the four rows with no BW25113 locus
+    # tag are stored under their released b-number), so the comparison covers all rows.
+    released = [(g.n_reads, g.normreads, g.n_pos_central, g.dens, g.gc) for g in genes]
     if Counter(held) != Counter(released):
         problems.append(
-            f"{len(held)} record coverage tuples are not the {len(released)} placed "
-            "Table S1 rows"
+            f"{len(held)} record coverage tuples are not the {len(released)} Table S1 rows"
         )
     return LevelResult(
         level=Level.L2,

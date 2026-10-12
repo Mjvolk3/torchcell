@@ -1791,7 +1791,7 @@ def test_the_evidence_row_checks_coverage_threshold_and_statements() -> None:
     other = _essential_gene(n_reads=4)
     result = p.essentiality_evidence_matches_table([record], [other])
     assert result.passed is False
-    assert "are not the 1 placed Table S1 rows" in result.message
+    assert "are not the 1 Table S1 rows" in result.message
     high = json.loads(json.dumps(record))
     high["experiment"]["phenotype"]["evidence"]["normalized_read_density"] = 0.5
     result = p.essentiality_evidence_matches_table([high], [gene])

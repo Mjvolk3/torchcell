@@ -169,6 +169,19 @@ RUNGS = {
     "L2_hgb_lower_order": "L2 boosted trees, lower-order",
     "L3_ridge_gene_plus_lower_order": "L3 ridge, genes + lower-order",
 }
+TICKS = {
+    "N0_screen_mean": "N0 screen\nmean",
+    "N1_mult_query_double": "N1 digenic\ncontrols",
+    "N2_mult_singles": "N2 singles\nproduct",
+    "N1s_mult_strain_matched": "N1s strain-\nmatched",
+    "B1_additive_gene": "B1 additive\nridge",
+    "L1_ridge_lower_order": "L1 ridge\nlower-order",
+    "L2_hgb_lower_order": "L2 trees\nlower-order",
+    "L3_ridge_gene_plus_lower_order": "L3 ridge\ngenes + terms",
+}
+COLOR = {"R": PLOT_PALETTE[0], "Q": PLOT_PALETTE[1]}
+FILL = {"R": PLOT_PALETTE_FILL[0], "Q": PLOT_PALETTE_FILL[1]}
+BAR = {"edgecolor": "black", "linewidth": 0.5}
 PAIRED = [
     ("B1_additive_gene", "L1_ridge_lower_order"),
     ("B1_additive_gene", "L2_hgb_lower_order"),
@@ -888,73 +901,60 @@ def write_tex(ladder: pd.DataFrame, paired: pd.DataFrame, path: str) -> None:
 
 
 # ----------------------------------------------------------------------------- figure
+def style_metric_axis(ax, top: float) -> None:
+    """The 025 panels' metric axis: tenth gridlines, labels every 0.2, boxed."""
+    ax.set_ylim(0, top)
+    ax.yaxis.set_major_locator(MultipleLocator(0.2))
+    ax.yaxis.set_minor_locator(MultipleLocator(0.1))
+    ax.tick_params(which="minor", length=0)
+    ax.grid(axis="y", which="both", linewidth=0.3, color="0.85")
+    ax.set_axisbelow(True)
+    for spine in ax.spines.values():
+        spine.set_visible(True)
+        spine.set_linewidth(0.5)
+
+
 def plot_ladder(
     ladder: pd.DataFrame, refs: list[WandbReference], stem: str
 ) -> None:
+    """The 025 ladder look: one test bar per rung in the arm's light fill, the
+    transformer's validation mean in the arm's darker line color, legend above the axes."""
     apply_paper_style()
     rungs = list(RUNGS)
-    labels = [RUNGS[r] for r in rungs] + ["CGT 030, val"]
-    x = np.arange(len(labels))
-    w = 0.38
     fig, axes = plt.subplots(
-        1,
-        2,
-        figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(70.0)),
-        sharey=True,
+        1, 2, figsize=(mm_to_in(PANEL_WIDTHS_MM["full"]), mm_to_in(62.0))
     )
-    for ax, (arm, color, fill), letter in zip(
-        axes,
-        (("R", PLOT_PALETTE[0], PLOT_PALETTE_FILL[0]), ("Q", PLOT_PALETTE[1], PLOT_PALETTE_FILL[1])),
-        "ab",
-    ):
+    for ax, arm, letter in zip(axes, ARMS, "ab"):
+        color, fill = COLOR[arm], FILL[arm]
         sub = ladder[ladder["arm"] == arm].set_index(["rung", "split"])["pearson"]
-        val = [sub.loc[(r, "val")] for r in rungs]
-        test = [sub.loc[(r, "test")] for r in rungs]
-        ax.bar(x[:-1] - w / 2, val, w, color=color, edgecolor="black", linewidth=0.5)
-        ax.bar(x[:-1] + w / 2, test, w, color=fill, edgecolor="black", linewidth=0.5)
         ref = [r for r in refs if r.arm == arm]
+        cats = [TICKS[r] for r in rungs]
+        vals = [sub.loc[(r, "test")] for r in rungs]
+        x = np.arange(len(cats) + len(ref))
+        ax.bar(x[: len(rungs)], vals, 0.7, color=fill, **BAR)
         if ref:
-            ax.bar(
-                x[-1] - w / 2,
-                ref[0].val_pearson_last_window_mean,
-                w,
-                color=color,
-                edgecolor="black",
-                linewidth=0.5,
-            )
-        floor = sub.loc[("N0_screen_mean", "test")]
-        ax.axhline(floor, color="black", linewidth=0.5, linestyle=(0, (2, 2)))
+            cats.append(f"CGT 030\n(val, ep {ref[0].last_epoch - ref[0].window + 1}-{ref[0].last_epoch})")
+            ax.bar(x[-1], ref[0].val_pearson_last_window_mean, 0.7, color=color, **BAR)
         ax.set_xticks(x)
-        ax.set_xticklabels(labels, rotation=45, ha="right")
-        ax.set_ylim(0, 0.8)
-        ax.yaxis.set_major_locator(MultipleLocator(0.2))
-        ax.yaxis.set_minor_locator(MultipleLocator(0.1))
-        ax.tick_params(which="minor", length=0)
-        ax.grid(axis="y", which="both", linewidth=0.3, color="0.85")
-        ax.set_axisbelow(True)
-        for spine in ax.spines.values():
-            spine.set_visible(True)
-            spine.set_linewidth(0.5)
+        ax.set_xticklabels(cats, rotation=45, ha="right", fontsize=5)
+        ax.set_ylabel("Held-out Pearson r")
+        style_metric_axis(ax, 0.8)
+        # Nothing but data inside the axes: the legend sits above the panel and names the arm.
         handles = [
-            Patch(
-                facecolor=color,
-                edgecolor="black",
-                linewidth=0.5,
-                label=f"arm {arm}, {ARMS[arm][1]}: validation",
-            ),
-            Patch(facecolor=fill, edgecolor="black", linewidth=0.5, label="test"),
+            Patch(facecolor=fill, label=f"arm {arm}, {ARMS[arm][1]}, test score", **BAR),
+            Patch(facecolor=color, label="validation, mean of last synced epochs", **BAR),
         ]
         ax.legend(
             handles=handles,
             loc="lower left",
-            bbox_to_anchor=(0, 1.08),
+            bbox_to_anchor=(0, 1.02),
             ncol=2,
-            frameon=False,
-            handlelength=1.2,
+            handlelength=1.4,
+            borderpad=0.4,
+            columnspacing=1.0,
         )
         panel_label(ax, letter)
-    axes[0].set_ylabel("Pearson r, held-out triples")
-    fig.tight_layout(rect=(0, 0, 1, 0.96))
+    fig.tight_layout(rect=(0, 0, 1, 0.965))
     fig.savefig(stem + ".png", dpi=300)
     savefig_true_size_svg(fig, stem + ".svg")
     print(f"wrote {stem}.svg")

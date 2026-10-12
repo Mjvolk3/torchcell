@@ -36,6 +36,54 @@ all of a genotype's entries.
 Where an arithmetic term is missing the rung falls back to N0 for that row, so every
 rung is scored on identical rows, and the covered fraction is reported beside it.
 
+**What each rung is.**
+
+- **N0 screen mean.** The training mean of tau inside the triple's screen, Kuzmin 2018
+  or Kuzmin 2020, two numbers. The screens differ in mean tau (about -0.046 against
+  +0.004), so knowing only the screen gives a pooled Pearson near 0.37; within a screen
+  it is zero by construction. Every pooled number in the ladder carries this component.
+- **N1 digenic controls.** tau_hat = -(eps_ik + eps_jk). The published identity is
+  tau = f_ijk - f_ij f_k - eps_ik - eps_jk, so if the triple's fitness equals its
+  multiplicative expectation f_ij f_k, tau is exactly minus the two digenic control
+  scores. Zero parameters. Reads the two digenic records of (query gene i, array gene k)
+  and (query gene j, array gene k), selected by the policy with the triple's own year
+  promoted. It measures how much of the released score is the two terms the score
+  subtracts.
+- **N2 singles product.** tau_hat = f_i f_j f_k - f_ij f_k - eps_ik - eps_jk: the
+  triple's fitness replaced by the product of its three singles. Equal to N1 minus
+  eps_ij f_k. Reads the three singles, the query-strain double and two digenic scores.
+  On Q the held-out pair's double is masked, so it falls back to N0 on every val/test
+  row (coverage 0) and the row is the floor. On R it is worse than N1 because the query
+  pair's own digenic interaction, which Kuzmin chose query pairs to have, is dropped.
+- **N1s strain-matched.** N1 with each control score taken from the entry measured
+  against the triple's own array strain in the triple's own screen, the way the source
+  computed it (`closure_recompute_030.py` showed this closes Kuzmin 2018 to r 0.987).
+  Adds 0.003 to 0.007 over N1 here: the strain match matters for reproducing the score
+  exactly, not for predicting it.
+- **B1 additive ridge.** The 010 and 025 rung: ridge on a one-hot of the three genes,
+  one coefficient per gene, trained on the training triples' tau, alpha chosen on val.
+  It sees gene identity and no measurement. On Q a held-out query pair's joint effect
+  has no training triple to be learned from, hence 0.185.
+- **L1 ridge, lower-order.** Ridge on 35 columns: the 13 terms (f_i, f_j, f_k, the
+  query-strain f_ij, the array-screen f_ij, f_ik, f_jk, eps_ij, eps_ik, eps_jk, the
+  strain-matched eps_ik, eps_jk and f_k), four products (f_ij f_k, f_i f_j f_k,
+  eps_ij f_k, eps_ik + eps_jk), the screen indicator, and a missing indicator per
+  column; standardized on train, missing filled with the train median. The best linear
+  combination of the terms.
+- **L2 boosted trees, lower-order.** Gradient-boosted trees (600 trees, leaf count and
+  learning rate chosen on val) over the 17 raw terms and products plus the screen,
+  missing values handled natively. Nonlinear use of the same terms: for instance,
+  whether tau depends on eps_ik differently when f_k is low. The highest rung.
+- **L3 ridge, genes + lower-order.** B1's one-hot beside L1's design, one alpha for
+  both blocks. Asks whether gene identity adds anything once the terms are present:
+  0.04 over L1 on R, 0.03 on Q, and below L2 on both.
+- **F1 ridge, lower-order to f_ijk.** L1's design with the triple's fitness as the
+  target instead of tau. Not a tau rung; it reports how much of f_ijk is arithmetic in
+  the lower-order terms (0.93 on R, 0.73 on Q).
+- **CGT 030.** The composite-embedding transformer with the fitness head and the
+  dataset token, seed 0, validation only: the mean of the last ten synced epochs, since
+  no test evaluation of a 030 checkpoint exists yet.
+
 **Terms.** Resolved under the trainer's `LabelPolicy` (`kuzmin-first`, promoted to the
 triple's own year) from `closure/entries.parquet` and `closure/triple_roles.parquet`:
 singles by `select`, f_ij by `select_double` (the double-mutant query strain's own
@@ -72,7 +120,7 @@ for 376,732 triples: every single present on 98 to 100 percent of rows, the quer
 double on 99.7 percent, eps_ij on 94.5 percent, the secondary-pair terms on 100 percent.
 The targets of all 75,346 pinned triples equal the trainer's eval table.
 
-![](assets/images/030-solid-growth-multi/lower_order_baselines_030_ladder_2026-10-11-06-25-46.svg)
+![](assets/images/030-solid-growth-multi/lower_order_baselines_030_ladder_2026-10-12-04-19-24.svg)
 
 Pearson on the pinned triples, test unless marked. `results/lower_order_baselines_030.csv`.
 

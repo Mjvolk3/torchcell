@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import pytest
 
-from torchcell.data.experiment_dataset import Visibility
+from torchcell.data.experiment_dataset import Organism, Visibility
 from torchcell.knowledge_graphs.dataset_adapter_map import (
     PRIVATE_DATASET_ADAPTER_MAP,
     PrivateDatasetRefused,
@@ -25,10 +25,13 @@ from torchcell.knowledge_graphs.dataset_adapter_map import (
 
 class _PublicLoader:
     visibility = Visibility.public
+    organism = Organism.scerevisiae
 
 
 class _PrivateLoader:
     visibility = Visibility.private
+    #: the build reads the organism off every mapped class, the private map included
+    organism = Organism.scerevisiae
 
 
 class _UndeclaredLoader:

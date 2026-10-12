@@ -53,6 +53,7 @@ from typing import Any
 import pytest
 
 import torchcell.knowledge_graphs.kg_manifest as km
+from torchcell.data.experiment_dataset import Organism
 from torchcell.datasets.dataset_registry import dataset_registry
 from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 from torchcell.provenance.build_manifest import BuildManifest
@@ -128,6 +129,8 @@ LOADER_TEMPLATE = """import json
 import os
 from typing import TYPE_CHECKING
 
+from torchcell.data.experiment_dataset import Organism
+
 if TYPE_CHECKING:
     from torchcell.datamodels.schema import {imports}
 
@@ -141,6 +144,8 @@ class _Record:
 
 
 class {cls}:
+    organism = Organism.scerevisiae
+
     def __init__(self, root: str = "data/torchcell/{slug}"):
         with open(os.path.join(root, "records.json")) as handle:
             self.items = json.load(handle)
@@ -193,6 +198,8 @@ case "$1" in
 esac
 """
 SERVED_RECORDS = [{"s": 1}, {"s": 2}, {"s": 3}]
+#: The organism set the toy store was built for; every toy loader declares yeast.
+YEAST = frozenset({Organism.scerevisiae})
 TOY_RECORDS = [{"t": 1}, {"t": 2}]
 
 
@@ -350,6 +357,7 @@ def _bootstrap(toy: _Toy) -> km.KgBuildManifest:
         biocypher_version="0.5.43",
         biocypher_out=BIOCYPHER_OUT,
         built_at=BUILT_AT,
+        organisms=YEAST,
     )
 
 
@@ -424,6 +432,7 @@ def test_bootstrap_reconstructs_the_full_build_from_the_commit(toy: _Toy) -> Non
             ),
         },
         value_surface={rel: _sha(text) for rel, text in sorted(VALUE_FILES.items())},
+        organisms=["scerevisiae"],
         datasets={
             "ServedDataset": km.KgDatasetEntry(
                 dataset_class="ServedDataset",
@@ -433,6 +442,7 @@ def test_bootstrap_reconstructs_the_full_build_from_the_commit(toy: _Toy) -> Non
                     "torchcell/adapters/conf/served_adapter.yaml",
                 ],
                 closure={"Media": fp["Media"], "ModelStrict": fp["ModelStrict"]},
+                organism="scerevisiae",
                 n_experiments=2,
                 biocypher_out=BIOCYPHER_OUT,
                 import_mode="full",
@@ -545,6 +555,8 @@ def test_a_new_dataset_on_an_unchanged_tree_is_admissible(toy: _Toy) -> None:
         undeclared_phenotype_methods=[],
         served=False,
         superset=None,
+        organism="scerevisiae",
+        widens_organisms=False,
     )
     assert report.model_dump() == expected.model_dump()
     assert km.format_report(report) == "\n".join(
@@ -552,6 +564,7 @@ def test_a_new_dataset_on_an_unchanged_tree_is_admissible(toy: _Toy) -> None:
             "Admission check: ToyDataset  ->  ADMISSIBLE",
             f"  working tree {COMMIT} (dirty=False); served store built at {COMMIT}",
             f"  dev LMDB: fresh ({toy.lmdb_root('toy')})",
+            "  organism: scerevisiae",
             "  closure: 4 symbols, 2 novel (Experiment, Solvent), 2 shared with "
             "served datasets",
             "  served datasets with schema drift: 0",
@@ -916,6 +929,7 @@ def test_record_admission_adopts_the_current_surfaces_and_logs_the_event(
             "torchcell/adapters/conf/toy_adapter.yaml",
         ],
         closure=report.new_dataset_closure,
+        organism="scerevisiae",
         n_experiments=2,
         biocypher_out="2026-09-27_00-00-00",
         import_mode="incremental",
@@ -1157,9 +1171,13 @@ def test_cli_bootstrap_then_show(
         "gilahyper",
         "--neo4j-uri",
         "bolt://x:7687",
+        "--organisms",
+        "scerevisiae",
     )
     assert code == 0
-    assert capsys.readouterr().out == f"bootstrapped 1 datasets -> {path}\n"
+    assert capsys.readouterr().out == (
+        f"bootstrapped 1 datasets (organisms scerevisiae) -> {path}\n"
+    )
     assert km.load_manifest(path).model_dump() == _bootstrap(toy).model_dump()
     assert [d.auth for d in drivers] == [("reader", "secret")] * 2
 
@@ -1167,6 +1185,7 @@ def test_cli_bootstrap_then_show(
     assert capsys.readouterr().out == (
         f"torchcell on gilahyper: neo4j 5.26.28, biocypher 0.5.43, full build {COMMIT}, "
         "1 datasets, 1 events\n"
+        "  organisms: scerevisiae (recorded at the build)\n"
         f"  ServedDataset: 2 experiments (full, {BIOCYPHER_OUT})\n"
     )
 
@@ -1500,7 +1519,9 @@ def multi_class_module(
     module = _import("toy_multi_adapter", module_path, monkeypatch)
     datasets: dict[str, type] = {}
     for stem in ("First", "Second", "Confless", "TwoConf"):
-        dataset_cls = type(f"{stem}MultiDataset", (), {})
+        dataset_cls = type(
+            f"{stem}MultiDataset", (), {"organism": Organism.scerevisiae}
+        )
         datasets[dataset_cls.__name__] = dataset_cls
         monkeypatch.setitem(
             dataset_adapter_map, dataset_cls, getattr(module, f"{stem}MultiAdapter")
@@ -1605,6 +1626,131 @@ def test_a_recorded_entry_carries_the_loader_visibility(toy: _Toy) -> None:
     assert entry.visibility == "public"
 
 
+# --------------------------------------------------------- the organism set (2026.10.12)
+
+
+def test_bootstrap_records_the_organism_set_and_refuses_a_dataset_outside_it(
+    toy: _Toy,
+) -> None:
+    """The set the build was asked for is recorded; a served dataset whose loader
+    declares another organism is an error naming it, not a silently wrong record.
+    """
+    manifest = _bootstrap(toy)
+    assert manifest.organisms == ["scerevisiae"]
+    assert manifest.datasets["ServedDataset"].organism == "scerevisiae"
+    assert km.served_organisms(manifest) == ["scerevisiae"]
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            "the store serves datasets outside the stated organism set "
+            "(ecoli,pputida): ServedDataset (scerevisiae)"
+        ),
+    ):
+        km.bootstrap_manifest(
+            repo_root=toy.repo,
+            commit=COMMIT,
+            dataset_classes=["ServedDataset"],
+            n_experiments={"ServedDataset": 2},
+            database="torchcell",
+            store_host="gilahyper",
+            neo4j_version="5.26.28",
+            biocypher_version="0.5.43",
+            biocypher_out=BIOCYPHER_OUT,
+            built_at=BUILT_AT,
+            organisms=frozenset({Organism.pputida, Organism.ecoli}),
+        )
+
+
+def test_a_dataset_of_another_organism_blocks_unless_the_admission_widens_the_set(
+    toy: _Toy, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A yeast-only store does not quietly become a mixed one.
+
+    Without ``widen_organisms`` the bacterial dataset blocks with a reason naming its
+    organism, the served set and the flag; with it the report says the admission widens
+    the set, and recording it writes the widened set (in ``Organism`` order), the entry's
+    organism, and a note on the event.
+    """
+    monkeypatch.setattr(toy.classes["ToyDataset"], "organism", Organism.ecoli)
+    manifest = _bootstrap(toy)
+    blocked = _admit(toy, manifest)
+    assert blocked.verdict == "blocked"
+    assert blocked.reasons == [
+        "ToyDataset declares organism ecoli and the served store holds scerevisiae "
+        "only; admitting it widens the store's organism set, which an admission does "
+        "only when run with --widen-organisms (or rebuild with KG_ORGANISMS naming it)"
+    ]
+    assert (blocked.organism, blocked.widens_organisms) == ("ecoli", True)
+    assert (
+        "  organism: ecoli (widens the served organism set)"
+        in km.format_report(blocked).splitlines()
+    )
+
+    admitted = _admit(toy, manifest, widen_organisms=True)
+    assert admitted.verdict == "admissible", admitted.reasons
+    km.record_admission(
+        manifest,
+        admitted,
+        biocypher_out="2026-10-12_00-00-00",
+        n_experiments=2,
+        repo_root=toy.repo,
+    )
+    assert manifest.organisms == ["scerevisiae", "ecoli"]
+    assert manifest.datasets["ToyDataset"].organism == "ecoli"
+    assert (
+        manifest.events[-1].note == "organisms widened scerevisiae -> scerevisiae,ecoli"
+    )
+
+
+def test_a_same_organism_admission_neither_blocks_nor_widens(toy: _Toy) -> None:
+    """``--widen-organisms`` on a yeast dataset into a yeast store changes nothing."""
+    manifest = _bootstrap(toy)
+    report = _admit(toy, manifest, widen_organisms=True)
+    assert (report.verdict, report.widens_organisms) == ("admissible", False)
+    km.record_admission(
+        manifest, report, biocypher_out="x", n_experiments=2, repo_root=toy.repo
+    )
+    assert manifest.organisms == ["scerevisiae"]
+    assert manifest.events[-1].note is None
+
+
+def test_a_pre_switch_manifest_reads_its_organisms_off_the_served_classes(
+    toy: _Toy,
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """A manifest written before the switch records no set: the served set is the
+    organisms the served datasets' loaders declare, ``show`` says it was read that way,
+    and the first widening admission writes the set explicitly.
+    """
+    manifest = _bootstrap(toy)
+    manifest.organisms = None
+    manifest.datasets["ServedDataset"].organism = None
+    assert km.served_organisms(manifest) == ["scerevisiae"]
+    path = tmp_path / "kg_manifest.json"
+    km.save_manifest(manifest, path)
+    assert _cli(toy, path, "show") == 0
+    assert capsys.readouterr().out.splitlines()[1] == (
+        "  organisms: scerevisiae (not recorded; read off the served datasets' classes)"
+    )
+
+    monkeypatch.setattr(toy.classes["ToyDataset"], "organism", Organism.pputida)
+    assert _admit(toy, manifest).verdict == "blocked"
+    widened = _admit(toy, manifest, widen_organisms=True)
+    km.record_batch_admission(
+        manifest,
+        km.batch_report_from_members([widened]),
+        biocypher_out="x",
+        n_experiments={"ToyDataset": 2},
+        repo_root=toy.repo,
+    )
+    assert manifest.organisms == ["scerevisiae", "pputida"]
+    assert manifest.events[-1].note == (
+        "organisms widened scerevisiae -> scerevisiae,pputida"
+    )
+
+
 # --------------------------------------- drift on a multi-class module's second class
 
 MULTI_TWO_CLASS_PY = """class FirstMultiAdapter:
@@ -1678,6 +1824,7 @@ def _bootstrap_multi(toy: _Toy) -> km.KgBuildManifest:
         biocypher_version="0.5.43",
         biocypher_out=BIOCYPHER_OUT,
         built_at=BUILT_AT,
+        organisms=YEAST,
     )
 
 

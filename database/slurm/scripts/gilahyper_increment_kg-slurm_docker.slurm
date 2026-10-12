@@ -85,6 +85,11 @@
 #   NEO4J_DATABASE     database to grow (default torchcell)
 #   NEO4J_BOLT_URI     host-side bolt URI of that container (default bolt://localhost:7687)
 #   ACK_ADAPTER_DRIFT  written reason passed to --ack-adapter-drift (default: none)
+#   WIDEN_ORGANISMS    1 passes --widen-organisms to the admission check, admitting a
+#                      dataset whose organism is outside the served organism set (the
+#                      manifest's `organisms`, e.g. a bacterial dataset into a store built
+#                      with KG_ORGANISMS=scerevisiae) and adding that organism to the set
+#                      on record; 0 (the default) blocks such a dataset by name
 #   ARCHIVE_ROOT       CSV archive (default /bulk/biocypher-out)
 #   DATABASE_ENV_FILE  the container .env (untracked secrets; default: the primary
 #                      checkout's database/database.env, which a worktree lacks)
@@ -129,6 +134,12 @@ case "$INCLUDE_PRIVATE" in
     1) PRIVATE_ARGS=(--include-private) ;;
     0) PRIVATE_ARGS=() ;;
     *) echo "INCLUDE_PRIVATE must be 0 or 1, got '$INCLUDE_PRIVATE'"; exit 1 ;;
+esac
+WIDEN_ORGANISMS="${WIDEN_ORGANISMS:-0}"
+case "$WIDEN_ORGANISMS" in
+    1) WIDEN_ARGS=(--widen-organisms) ;;
+    0) WIDEN_ARGS=() ;;
+    *) echo "WIDEN_ORGANISMS must be 0 or 1, got '$WIDEN_ORGANISMS'"; exit 1 ;;
 esac
 NEO4J_CONTAINER="${NEO4J_CONTAINER:-tc-neo4j-readonly}"
 NEO4J_DATABASE="${NEO4J_DATABASE:-torchcell}"
@@ -177,7 +188,7 @@ DATASET_ARGS=()
 for NAME in "${DATASET_ARRAY[@]}"; do DATASET_ARGS+=(--dataset "$NAME"); done
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     admit "${DATASET_ARGS[@]}" --data-root "$DEV_DATA_ROOT" --report "$REPORT" "${ACK_ARGS[@]}" \
-    --neo4j-uri "$NEO4J_BOLT_URI" --database "$NEO4J_DATABASE" "${PRIVATE_ARGS[@]}"
+    --neo4j-uri "$NEO4J_BOLT_URI" --database "$NEO4J_DATABASE" "${PRIVATE_ARGS[@]}" "${WIDEN_ARGS[@]}"
 
 echo "---------------- 2 STAGE dev LMDBs -> build tree (as uid 7474)"
 TS=$(date +%Y-%m-%d_%H-%M-%S)

@@ -1,7 +1,7 @@
 # tests/torchcell/database/test_live_rebuild_slurm.py
 # [[tests.torchcell.database.test_live_rebuild_slurm]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/database/test_live_rebuild_slurm.py
-"""``gilahyper_live_rebuild-slurm_docker.slurm``: the private-data switch of a FULL build.
+"""``gilahyper_live_rebuild-slurm_docker.slurm``: the private-data and organism switches.
 
 The rest of the script runs docker, slurm and neo4j-admin against the served store, so
 the hermetic part is the ``INCLUDE_PRIVATE`` dispatch: which flag it hands the generator,
@@ -99,3 +99,152 @@ def test_the_preflight_is_the_same_function_list_stale_prints_from() -> None:
     assert "bad = [s.describe() for s in statuses if s.needs_rebuild]" in TEXT
     # the superseded re-statement of the check is gone from the script
     assert "check_manifest(BuildManifest.model_validate_json" not in TEXT
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.12: the organism switch, KG_ORGANISMS.
+# --------------------------------------------------------------------------- #
+ORGANISMS_FIRST = 'KG_ORGANISMS="${KG_ORGANISMS:-scerevisiae,ecoli,pputida}"'
+ORGANISMS_LAST = 'KG_ORGANISMS="$ORGANISMS_CANONICAL"'
+RESUME_FIRST = "    PREV_ORGANISMS=$(grep -oE '; organisms [a-z,]+' \"$PREV_OUT\" | head -1 | cut -d' ' -f3 || true)"
+
+
+def _organisms_dispatch() -> str:
+    """The ``KG_ORGANISMS`` default, validation and canonical ordering, verbatim."""
+    lines = TEXT.splitlines()
+    start = lines.index(ORGANISMS_FIRST)
+    end = lines.index(ORGANISMS_LAST, start)
+    return "\n".join(lines[start : end + 1])
+
+
+def _run_organisms(value: str | None) -> subprocess.CompletedProcess[str]:
+    env = {"PATH": "/usr/bin:/bin"}
+    if value is not None:
+        env["KG_ORGANISMS"] = value
+    return subprocess.run(
+        [
+            "bash",
+            "-c",
+            f'set -euo pipefail\n{_organisms_dispatch()}\necho "organisms=[$KG_ORGANISMS]"',
+        ],
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+
+
+def test_a_full_rebuild_serves_every_organism_by_default() -> None:
+    """Unset (or empty) is all three, in Organism order."""
+    for value in (None, ""):
+        result = _run_organisms(value)
+        assert result.returncode == 0
+        assert result.stdout.strip() == "organisms=[scerevisiae,ecoli,pputida]"
+
+
+def test_kg_organisms_is_put_in_enum_order_so_every_log_spells_it_one_way() -> None:
+    """The set, not the typing order, reaches the preflight, the generator and the
+    manifest; a repeated name collapses into the set.
+    """
+    expected = {
+        "scerevisiae": "scerevisiae",
+        "pputida,scerevisiae": "scerevisiae,pputida",
+        "pputida,ecoli": "ecoli,pputida",
+        "ecoli,ecoli": "ecoli",
+    }
+    for value, canonical in expected.items():
+        result = _run_organisms(value)
+        assert (result.returncode, result.stdout.strip()) == (
+            0,
+            f"organisms=[{canonical}]",
+        ), value
+
+
+def test_an_unknown_or_malformed_organism_set_stops_the_job() -> None:
+    """Never a narrower or a default build: the job ends with the value it refused."""
+    for value in ("yeast", "scerevisiae,", "scerevisiae ecoli", ",ecoli", "Ecoli"):
+        result = _run_organisms(value)
+        assert result.returncode == 1, value
+        assert result.stdout.strip() == (
+            "KG_ORGANISMS must be a comma-separated subset of "
+            f"scerevisiae,ecoli,pputida, got '{value}'"
+        )
+
+
+def test_the_script_spells_the_organism_enum_in_its_order() -> None:
+    """The bash validation and ordering name exactly the Organism members, in order,
+    so a new organism added to the enum fails here until the script learns it.
+    """
+    from torchcell.data.experiment_dataset import Organism
+
+    members = [o.value for o in Organism]
+    dispatch = _organisms_dispatch()
+    assert f"for ORGANISM in {' '.join(members)}; do" in dispatch
+    alternation = "|".join(members)
+    assert f"^({alternation})(,({alternation}))*$" in dispatch
+    assert ORGANISMS_FIRST.endswith(f'{",".join(members)}}}"')
+
+
+def test_the_preflight_the_fence_the_generator_and_the_manifest_read_kg_organisms() -> (
+    None
+):
+    """One organism set narrows every walk of the map and is recorded.
+
+    The freshness preflight and the dev fence both parse ``sys.argv[3]`` into the map
+    they walk (so a yeast-only build neither blocks on a stale bacterial store nor
+    counts a bacterial dataset), the generator gets ``--organisms``, and the manifest
+    bootstrap records the set.
+    """
+    assert TEXT.count("organisms=parse_organisms(sys.argv[3])") == 2
+    assert TEXT.count('"$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS"') == 3
+    assert (
+        "python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG "
+        "--organisms $KG_ORGANISMS" in TEXT
+    )
+    assert '    --organisms "$KG_ORGANISMS"\n' in TEXT
+    assert 'include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS"' in TEXT
+
+
+def _resume_check() -> str:
+    """The resume's organism comparison: the grep and its guard, verbatim."""
+    lines = TEXT.splitlines()
+    start = lines.index(RESUME_FIRST)
+    return "\n".join(lines[start : start + 3])
+
+
+def _run_resume(tmp_path: Path, log: str, kg_organisms: str) -> str:
+    prev = tmp_path / "prev.out"
+    prev.write_text(log, encoding="utf-8")
+    result = subprocess.run(
+        ["bash", "-c", f"set -euo pipefail\n{_resume_check()}\necho resumed"],
+        capture_output=True,
+        text=True,
+        env={
+            "PATH": "/usr/bin:/bin",
+            "PREV_OUT": str(prev),
+            "KG_ORGANISMS": kg_organisms,
+            "RESUME_JOB": "4242",
+        },
+    )
+    return f"{result.returncode}:{result.stdout.strip()}"
+
+
+def test_a_resume_must_name_the_organism_set_the_resumed_job_generated(
+    tmp_path: Path,
+) -> None:
+    """The CSVs being resumed were generated for one set; the manifest must record it."""
+    log = (
+        "config kg_uncapped; commit abc; dev tree /d; serve /s; next /n; "
+        "include private 1; organisms scerevisiae\n"
+    )
+    assert _run_resume(tmp_path, log, "scerevisiae") == "0:resumed"
+    assert _run_resume(tmp_path, log, "scerevisiae,ecoli,pputida") == (
+        "1:job 4242 generated organisms 'scerevisiae'; resubmit the resume with "
+        "KG_ORGANISMS=scerevisiae, not scerevisiae,ecoli,pputida"
+    )
+    # a job from before the switch logged no set: the resume says so instead of dying
+    # silently on the empty grep under pipefail
+    pre_switch = "config kg_uncapped; commit abc; include private 1\n"
+    assert _run_resume(tmp_path, pre_switch, "scerevisiae") == (
+        "1:job 4242 generated organisms '(not logged)'; resubmit the resume with "
+        "KG_ORGANISMS=<that set>, not scerevisiae"
+    )

@@ -58,8 +58,11 @@ from tests.torchcell.knowledge_graphs._kg_build_fakes import (
     module_dir,
     reset_instances,
 )
-from torchcell.data.experiment_dataset import Visibility
-from torchcell.knowledge_graphs.dataset_adapter_map import PrivateDatasetRefused
+from torchcell.data.experiment_dataset import Organism, Visibility
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    OrganismRefused,
+    PrivateDatasetRefused,
+)
 from torchcell.knowledge_graphs.head_ontology import (
     BIOLINK_SOURCE_URL,
     REPO_ONTOLOGY_PATH,
@@ -924,4 +927,50 @@ def test_without_the_flag_a_private_dataset_has_no_adapter_to_build_with(
     monkeypatch.setattr(ks, "INCLUDE_PRIVATE", False)
     with pytest.raises(KeyError, match="dataset_adapter_map"):
         ks.main(_cfg({**FULL_CFG, "datasets": ["FakePrivate"]}))
+    assert FakeBioCypher.instances[0].calls == []
+
+
+# 2026.10.12: the organism switch (--organisms, KG_ORGANISMS in the live rebuild).
+def test_an_organism_set_narrows_the_full_build_and_the_log_names_it(
+    build: SimpleNamespace,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """``datasets: null`` builds only the mapped loaders of the asked organisms.
+
+    ``FakeBeta`` is declared E. coli for this test. A yeast-only build never
+    instantiates it, and an E. coli build instantiates nothing else; the membership
+    line the generation log carries names the set and the mapped count.
+    """
+    monkeypatch.setattr(FakeBeta, "organism", Organism.ecoli)
+    monkeypatch.setattr(ks, "ORGANISMS", frozenset({Organism.scerevisiae}))
+    ks.main(_cfg(FULL_CFG))
+    assert (len(FakeAlpha.instances), FakeBeta.instances) == (1, [])
+    assert (
+        "Build membership: ALL (include_private=False, organisms=scerevisiae, "
+        "2 mapped datasets)"
+    ) in capsys.readouterr().out.splitlines()
+
+    reset_instances(FakeAlpha, FakeBeta, FakeGamma, FakeAdapterA, FakeAdapterB)
+    monkeypatch.setattr(ks, "ORGANISMS", frozenset({Organism.ecoli}))
+    ks.main(_cfg(FULL_CFG))
+    assert (FakeAlpha.instances, len(FakeBeta.instances)) == ([], 1)
+    assert (
+        "Build membership: ALL (include_private=False, organisms=ecoli, "
+        "1 mapped datasets)"
+    ) in capsys.readouterr().out.splitlines()
+
+
+def test_a_named_dataset_outside_the_organism_set_is_refused_by_name(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """An increment naming a yeast loader in a bacteria-only build stops before any
+    dataset is built or any CSV written.
+    """
+    monkeypatch.setattr(ks, "ORGANISMS", frozenset({Organism.ecoli, Organism.pputida}))
+    with pytest.raises(
+        OrganismRefused, match=r"\(ecoli,pputida\): FakeAlpha \(scerevisiae\)"
+    ):
+        ks.main(_cfg(INCREMENT_CFG))
+    assert FakeAlpha.instances == []
     assert FakeBioCypher.instances[0].calls == []

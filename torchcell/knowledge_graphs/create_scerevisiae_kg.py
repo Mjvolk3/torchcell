@@ -10,7 +10,9 @@ instantiated, unless the build is run with ``--include-private``
 (``create_kg.take_include_private_flag`` removes the flag from ``sys.argv`` first,
 because hydra parses the same argv). This build's dataset list is hardcoded below rather
 than read from a config, so the gate here guards against a private loader being added to
-that list, which is the way one would reach this entry point.
+that list, which is the way one would reach this entry point. ``--organisms`` is read
+the same way (``take_organisms_flag``) and a listed dataset outside it is refused by
+name (``refuse_organism_mismatch``).
 """
 
 import hashlib
@@ -41,6 +43,7 @@ from torchcell.adapters import (
     SmfKuzmin2018Adapter,
     TmfKuzmin2018Adapter,
 )
+from torchcell.data.experiment_dataset import ALL_ORGANISMS, Organism
 from torchcell.datasets.scerevisiae.costanzo2016 import (
     DmfCostanzo2016Dataset,
     SmfCostanzo2016Dataset,
@@ -51,7 +54,11 @@ from torchcell.datasets.scerevisiae.kuzmin2018 import (
     TmfKuzmin2018Dataset,
 )
 from torchcell.knowledge_graphs.create_kg import take_include_private_flag
-from torchcell.knowledge_graphs.dataset_adapter_map import refuse_private_datasets
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    refuse_organism_mismatch,
+    refuse_private_datasets,
+    take_organisms_flag,
+)
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, filename="biocypher_warnings.log")
@@ -62,6 +69,9 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 
 #: ``--include-private`` was passed on the command line (set in ``__main__`` below).
 INCLUDE_PRIVATE = False
+
+#: The organism set ``--organisms`` named (set in ``__main__`` below); all otherwise.
+ORGANISMS: frozenset[Organism] = ALL_ORGANISMS
 
 
 def get_num_workers() -> int:
@@ -160,9 +170,12 @@ def main(cfg: DictConfig) -> None:
         }
     ]
 
-    # Visibility gate, before anything is instantiated.
+    # Visibility and organism gates, before anything is instantiated.
     refuse_private_datasets(
         [cast(type, config["class"]) for config in dataset_configs], INCLUDE_PRIVATE
+    )
+    refuse_organism_mismatch(
+        [cast(type, config["class"]) for config in dataset_configs], ORGANISMS
     )
 
     # Instantiate datasets
@@ -234,6 +247,7 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
+    ORGANISMS = take_organisms_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

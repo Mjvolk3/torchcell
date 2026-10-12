@@ -62,6 +62,22 @@
 # in the preflight. INCLUDE_PRIVATE=0 builds the public datasets alone. A tc-data
 # release refuses a private dataset either way (scripts/package_dataset_lmdb.py).
 #
+# ORGANISMS. KG_ORGANISMS (default scerevisiae,ecoli,pputida) is the organism set the
+# store serves: a comma-separated subset of the Organism enum
+# (torchcell/data/experiment_dataset.py), validated and put in enum order before
+# anything runs. It narrows ONE map everywhere: the preflight's freshness walk and
+# dataset count, the dev fence, and the generator (--organisms), so a yeast-only build
+#
+#   sbatch --export=ALL,KG_ORGANISMS=scerevisiae database/slurm/scripts/gilahyper_live_rebuild-slurm_docker.slurm
+#
+# neither blocks on a stale bacterial store nor expects a bacterial Dataset node. The
+# set is written into kg_manifest.json (bootstrap --organisms), and from there into the
+# release snapshot and the KgRelease node, so the store says it is yeast-only. A RESUME
+# must name the same set the resumed job generated (its log line "organisms ..."). The
+# set is one word of the sbatch --export list only when it has one member: sbatch splits
+# that list on commas, so a set of two or more is exported from the caller's
+# environment (KG_ORGANISMS=scerevisiae,ecoli sbatch --export=ALL ...).
+#
 # RESOURCES. 64 CPUs, 256 G, 12 h, measured. SLURM_CPUS_PER_TASK sets the adapter worker
 # count (get_num_workers in create_scerevisiae_kg_small), so it is a build parameter and
 # not just a reservation; MaxMemPerCPU=4100 makes 256 G a 64-CPU floor in any case
@@ -125,6 +141,16 @@ case "$INCLUDE_PRIVATE" in
     0) PRIVATE_FLAG="" ;;
     *) echo "INCLUDE_PRIVATE must be 0 or 1, got '$INCLUDE_PRIVATE'"; exit 1 ;;
 esac
+KG_ORGANISMS="${KG_ORGANISMS:-scerevisiae,ecoli,pputida}"
+[[ "$KG_ORGANISMS" =~ ^(scerevisiae|ecoli|pputida)(,(scerevisiae|ecoli|pputida))*$ ]] \
+    || { echo "KG_ORGANISMS must be a comma-separated subset of scerevisiae,ecoli,pputida, got '$KG_ORGANISMS'"; exit 1; }
+ORGANISMS_CANONICAL=""
+for ORGANISM in scerevisiae ecoli pputida; do
+    if [[ ",$KG_ORGANISMS," == *",$ORGANISM,"* ]]; then
+        ORGANISMS_CANONICAL="${ORGANISMS_CANONICAL:+$ORGANISMS_CANONICAL,}$ORGANISM"
+    fi
+done
+KG_ORGANISMS="$ORGANISMS_CANONICAL"
 SERVE_CPUS="${SERVE_CPUS:-16}"
 SERVE_MEM="${SERVE_MEM:-200g}"
 MIN_FREE_GB="${MIN_FREE_GB:-1500}"
@@ -143,6 +169,11 @@ if [ -n "$RESUME_JOB" ]; then
     GEN_LOG="$OUTDIR/${RESUME_JOB}_generate.log"
     for f in "$PREV_OUT" "$GEN_LOG"; do [ -f "$f" ] || { echo "job $RESUME_JOB left no $f"; exit 1; }; done
     BUILD_COMMIT="${BUILD_COMMIT:-$(grep -oE '; commit [0-9a-f]{40}' "$PREV_OUT" | head -1 | grep -oE '[0-9a-f]{40}')}"
+    # `|| true`: under set -e + pipefail a log with no organisms line (a job that predates
+    # KG_ORGANISMS) would otherwise end the job here without the message below
+    PREV_ORGANISMS=$(grep -oE '; organisms [a-z,]+' "$PREV_OUT" | head -1 | cut -d' ' -f3 || true)
+    [ "$PREV_ORGANISMS" = "$KG_ORGANISMS" ] \
+        || { echo "job $RESUME_JOB generated organisms '${PREV_ORGANISMS:-(not logged)}'; resubmit the resume with KG_ORGANISMS=${PREV_ORGANISMS:-<that set>}, not $KG_ORGANISMS"; exit 1; }
 else
     BUILD_COMMIT="${BUILD_COMMIT:-$(git -C "$TORCHCELL_SRC" rev-parse origin/main)}"
 fi
@@ -160,7 +191,7 @@ PACKAGE_TAG=$(git -C "$TORCHCELL_SRC" describe --tags --exact-match --match 'v[0
 echo "package tag $PACKAGE_TAG at $BUILD_COMMIT: the release will be paired with it"
 
 echo "Running on $(hostname) at $(date); job $JOB${RESUME_JOB:+ (resuming job $RESUME_JOB)}"
-echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT; include private $INCLUDE_PRIVATE"
+echo "config $KG_CONFIG; commit $BUILD_COMMIT; dev tree $DEV_DATA_ROOT; serve $SERVE_ROOT; next $NEXT_ROOT; include private $INCLUDE_PRIVATE; organisms $KG_ORGANISMS"
 echo "SLURM_CPUS_PER_TASK=$SLURM_CPUS_PER_TASK SLURM_MEM_PER_NODE=$SLURM_MEM_PER_NODE"
 cd "$TORCHCELL_SRC"
 export PYTHONPATH="$TORCHCELL_SRC"
@@ -204,18 +235,21 @@ fi
 # disagree (issue #833). It ends in a bounded read of each store's first record: a
 # record pickled under a class this commit's schema no longer DEFINES is in no closure,
 # so the fingerprints compare equal and only the read catches it -- 5 bacterial stores
-# were in that state on 2026-10-09 while --list-stale named 1.
-N_DATASETS=$(python - "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" <<'EOF'
+# were in that state on 2026-10-09 while --list-stale named 1. The walk is the map of
+# KG_ORGANISMS, so a yeast-only build counts and checks the yeast stores alone
+# (build_dataset_lmdb --list-stale --organisms <set> prints the same list).
+N_DATASETS=$(python - "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" <<'EOF'
 import sys
+from torchcell.data.experiment_dataset import parse_organisms
 from torchcell.database.build_dataset_lmdb import mapped_store_status
-statuses = mapped_store_status(sys.argv[1], include_private=sys.argv[2] == "1")
+statuses = mapped_store_status(sys.argv[1], include_private=sys.argv[2] == "1", organisms=parse_organisms(sys.argv[3]))
 bad = [s.describe() for s in statuses if s.needs_rebuild]
 if bad:
     print("\n".join(bad), file=sys.stderr); sys.exit(1)
 print(len(statuses))
 EOF
 )
-echo "$N_DATASETS mapped datasets, every dev store fresh"
+echo "$N_DATASETS mapped datasets ($KG_ORGANISMS), every dev store fresh"
 # The freshness check above is point-in-time, and generation then reads the dev tree for
 # hours. Nothing stops a HOST process from rebuilding a store underneath it: the
 # container's mounts are read-only, but `build_dataset_lmdb --retire-existing` renames
@@ -230,16 +264,17 @@ echo "$N_DATASETS mapped datasets, every dev store fresh"
 DEV_FENCE_PY="$OUTDIR/${JOB}_dev_fence.py"
 cat > "$DEV_FENCE_PY" <<'EOF'
 import hashlib, os, sys
+from torchcell.data.experiment_dataset import parse_organisms
 from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
 from torchcell.database.build_dataset_lmdb import dataset_default_root
 dev = sys.argv[1]
-for cls in sorted(build_adapter_map(include_private=sys.argv[2] == "1"), key=lambda c: c.__name__):
+for cls in sorted(build_adapter_map(include_private=sys.argv[2] == "1", organisms=parse_organisms(sys.argv[3])), key=lambda c: c.__name__):
     mp = os.path.join(dev, dataset_default_root(cls), "preprocess", "build_manifest.json")
     with open(mp, "rb") as handle:
         print(f"{cls.__name__} {hashlib.sha256(handle.read()).hexdigest()}")
 EOF
 DEV_FENCE="$OUTDIR/${JOB}_dev_fence.txt"
-python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" > "$DEV_FENCE"
+python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" > "$DEV_FENCE"
 echo "dev fence: $(wc -l < "$DEV_FENCE") build manifests digested into $DEV_FENCE"
 docker run --rm --entrypoint bash -v "$NEXT_PARENT":/parent "$IMAGE" -c \
     "mkdir -p /parent/$NEXT_NAME/data /parent/$NEXT_NAME/logs /parent/$NEXT_NAME/metrics \
@@ -290,7 +325,7 @@ docker run --rm --entrypoint bash --name "$GEN_CONTAINER" \
             || { echo '${KG_CONFIG}.yaml is not in the installed torchcell'; exit 1; }
         set -a; source /.env; set +a
         wandb login \$WANDB_API_KEY >/dev/null
-        python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG
+        python -m $KG_MODULE --config-name $KG_CONFIG $PRIVATE_FLAG --organisms $KG_ORGANISMS
         CALL=\$(cat biocypher_file_name.txt)
         OUT_DIR=\$(dirname \$CALL)
         chown -R 7474:7474 /var/lib/neo4j/\$OUT_DIR && chmod -R a+rX /var/lib/neo4j/\$OUT_DIR
@@ -304,7 +339,7 @@ N_ADAPTERS=$(grep -oE 'across [0-9]+ adapters' "$GEN_LOG" | tail -1 | grep -oE '
 # by the job that generated.
 if [ -z "$RESUME_JOB" ]; then
     DEV_FENCE_AFTER="$OUTDIR/${JOB}_dev_fence_after.txt"
-    python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" > "$DEV_FENCE_AFTER"
+    python "$DEV_FENCE_PY" "$DEV_DATA_ROOT" "$INCLUDE_PRIVATE" "$KG_ORGANISMS" > "$DEV_FENCE_AFTER"
     if diff "$DEV_FENCE" "$DEV_FENCE_AFTER"; then
         echo "dev fence intact: all $N_DATASETS build manifests unchanged across generation"
     else
@@ -497,7 +532,8 @@ fi
 BUILT_AT=$(date -Iseconds)
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" \
     bootstrap --commit "$BUILD_COMMIT" --biocypher-out "$OUT_TS" --built-at "$BUILT_AT" \
-    --biocypher-version 0.15.2 --database "$NEO4J_DATABASE" --neo4j-uri bolt://localhost:7687
+    --biocypher-version 0.15.2 --database "$NEO4J_DATABASE" --neo4j-uri bolt://localhost:7687 \
+    --organisms "$KG_ORGANISMS"
 python -m torchcell.knowledge_graphs.kg_manifest --manifest "$KG_MANIFEST" --repo "$TORCHCELL_SRC" show
 # Release: a full build bumps the MAJOR version of the store it replaces (the superseded
 # manifest's version; none for the first stamped store), takes <build date>-<commit> as
@@ -533,4 +569,4 @@ python -m torchcell.knowledge_graphs.releases --repo "$TORCHCELL_SRC" status --l
 docker run --rm --entrypoint bash --user 7474:7474 -v "$SERVE_ROOT/biocypher-out":/src:ro -v "$ARCHIVE_ROOT":/dst "$IMAGE" \
     -c "cp -a /src/$OUT_TS /dst/ && ls -ld /dst/$OUT_TS"
 df -h /db /scratch /bulk
-echo "DONE at $(date): $SERVED nodes, $N_DATASETS datasets served from $SERVE_ROOT/data; CSVs $OUT_HOST (archived to $ARCHIVE_ROOT/$OUT_TS); validation $VALIDATION"
+echo "DONE at $(date): $SERVED nodes, $N_DATASETS datasets ($KG_ORGANISMS) served from $SERVE_ROOT/data; CSVs $OUT_HOST (archived to $ARCHIVE_ROOT/$OUT_TS); validation $VALIDATION"

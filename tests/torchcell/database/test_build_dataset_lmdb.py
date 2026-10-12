@@ -83,7 +83,12 @@ from tests.torchcell.datasets._genome_injection_fakes import (
     install_bacterial_fakes,
 )
 from tests.torchcell.sequence.genome._bacterial_fixtures import forbid_network
-from torchcell.data.experiment_dataset import ExperimentDataset, post_process
+from torchcell.data.experiment_dataset import (
+    ALL_ORGANISMS,
+    ExperimentDataset,
+    Organism,
+    post_process,
+)
 from torchcell.database.build_dataset_lmdb import (
     build_dataset,
     dataset_default_root,
@@ -634,10 +639,12 @@ def test_list_stale_names_every_mapped_store_that_is_not_fresh(
         def __init__(self, root: str = "data/torchcell/toy_unbuilt", **kw: Any) -> None:
             super().__init__(root=root, **kw)
 
-    calls: list[bool] = []
+    calls: list[tuple[bool, frozenset[Organism]]] = []
 
-    def build_adapter_map(include_private: bool = False) -> dict[type, type]:
-        calls.append(include_private)
+    def build_adapter_map(
+        include_private: bool = False, organisms: frozenset[Organism] = ALL_ORGANISMS
+    ) -> dict[type, type]:
+        calls.append((include_private, organisms))
         return {
             ToyBuildDataset: object,
             ToyNoManifestDataset: object,
@@ -654,7 +661,8 @@ def test_list_stale_names_every_mapped_store_that_is_not_fresh(
         m.main(["--list-stale", "--include-private", "--data-root", str(tmp_path)]) == 0
     )
     assert capsys.readouterr().out == "ToyNoManifestDataset\nToyUnbuiltDataset\n"
-    assert calls == [True]
+    # no --organisms: the walk is every organism's map, as the build's default is
+    assert calls == [(True, ALL_ORGANISMS)]
     statuses = m.mapped_store_status(str(tmp_path), include_private=False)
     assert [(s.dataset_class, s.state, s.drift) for s in statuses] == [
         ("ToyBuildDataset", "fresh", []),
@@ -675,7 +683,9 @@ def test_list_stale_reports_a_store_whose_closure_drifted(
     monkeypatch.setattr(
         adapter_map,
         "build_adapter_map",
-        lambda include_private=False: {ToyBuildDataset: object},
+        lambda include_private=False, organisms=ALL_ORGANISMS: {
+            ToyBuildDataset: object
+        },
     )
     assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
     manifest = (
@@ -692,6 +702,52 @@ def test_list_stale_reports_a_store_whose_closure_drifted(
     manifest.write_text(_json.dumps(doc))
     (status,) = m.mapped_store_status(str(tmp_path), include_private=False)
     assert (status.state, status.drift) == ("stale", [symbol])
+
+
+def test_list_stale_organisms_hands_the_parsed_set_to_the_map(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """``--organisms`` reaches ``build_adapter_map`` as the parsed set, in any order."""
+    import torchcell.knowledge_graphs.dataset_adapter_map as adapter_map
+
+    calls: list[tuple[bool, frozenset[Organism]]] = []
+
+    def build_adapter_map(
+        include_private: bool = False, organisms: frozenset[Organism] = ALL_ORGANISMS
+    ) -> dict[type, type]:
+        calls.append((include_private, organisms))
+        return {}
+
+    monkeypatch.setattr(adapter_map, "build_adapter_map", build_adapter_map)
+    argv = ["--list-stale", "--organisms", "pputida,scerevisiae"]
+    assert m.main([*argv, "--data-root", str(tmp_path)]) == 0
+    assert capsys.readouterr().out == ""
+    assert calls == [(False, frozenset({Organism.scerevisiae, Organism.pputida}))]
+    with pytest.raises(ValueError, match=r"^unknown organism\(s\) yeast in 'yeast'"):
+        m.main(["--list-stale", "--organisms", "yeast", "--data-root", str(tmp_path)])
+
+
+def test_an_organism_walk_lists_that_organisms_stores_and_no_other(
+    tmp_path: Path,
+) -> None:
+    """Against the REAL map with no store built: each organism's walk names exactly the
+    classes that declare it, and the three walks together are the unfiltered walk, so
+    a yeast-only preflight neither misses a yeast store nor checks a bacterial one.
+    """
+    from torchcell.knowledge_graphs.dataset_adapter_map import build_adapter_map
+
+    full = m.mapped_store_status(str(tmp_path), include_private=True)
+    assert {s.state for s in full} == {"no_lmdb"}
+    walked: list[str] = []
+    for organism in Organism:
+        statuses = m.mapped_store_status(
+            str(tmp_path), include_private=True, organisms=frozenset({organism})
+        )
+        assert [s.dataset_class for s in statuses] == [
+            cls.__name__ for cls in build_adapter_map(True, frozenset({organism}))
+        ]
+        walked.extend(s.dataset_class for s in statuses)
+    assert sorted(walked) == sorted(s.dataset_class for s in full)
 
 
 # --------------------------------------------------------------------------- #
@@ -776,7 +832,9 @@ def test_list_stale_names_an_unreadable_store_and_prints_its_reason_on_stderr(
     monkeypatch.setattr(
         adapter_map,
         "build_adapter_map",
-        lambda include_private=False: {ToyBuildDataset: object},
+        lambda include_private=False, organisms=ALL_ORGANISMS: {
+            ToyBuildDataset: object
+        },
     )
     assert m.main(["--dataset", "ToyBuildDataset", "--data-root", str(tmp_path)]) == 0
     capsys.readouterr()
@@ -901,7 +959,9 @@ def test_verify_retires_the_manifest_when_the_verification_raises(
         run_verification=run_verification,
     )
     monkeypatch.setattr(
-        adapter_map, "build_adapter_map", lambda include_private=False: {toy: object}
+        adapter_map,
+        "build_adapter_map",
+        lambda include_private=False, organisms=ALL_ORGANISMS: {toy: object},
     )
     assert (
         m.main(["--dataset", toy.__name__, "--data-root", str(tmp_path), "--verify"])

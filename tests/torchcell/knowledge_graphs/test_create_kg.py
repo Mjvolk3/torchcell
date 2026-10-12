@@ -424,6 +424,32 @@ def test_a_private_dataset_is_refused_before_any_dataset_is_instantiated(
     assert FakeBioCypher.instances[0].calls == []
 
 
+def test_a_dataset_outside_the_organism_set_is_refused_before_any_is_instantiated(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``--organisms`` gates the configured list the way ``--include-private`` does.
+
+    ``FakeBeta`` is declared E. coli; a yeast-only build names it with its organism and
+    builds nothing, and the same config passes once E. coli is in the set.
+    """
+    from torchcell.data.experiment_dataset import Organism
+    from torchcell.knowledge_graphs.dataset_adapter_map import OrganismRefused
+
+    monkeypatch.setattr(FakeBeta, "organism", Organism.ecoli)
+    monkeypatch.setattr(create_kg, "ORGANISMS", frozenset({Organism.scerevisiae}))
+    with pytest.raises(OrganismRefused, match=r"\(scerevisiae\): FakeBeta \(ecoli\)"):
+        create_kg.main(_cfg(CFG))
+    assert (FakeAlpha.instances, FakeBeta.instances) == ([], [])
+    assert FakeBioCypher.instances[0].calls == []
+
+    reset_instances(FakeBioCypher)
+    monkeypatch.setattr(
+        create_kg, "ORGANISMS", frozenset({Organism.scerevisiae, Organism.ecoli})
+    )
+    create_kg.main(_cfg(CFG))
+    assert (len(FakeAlpha.instances), len(FakeBeta.instances)) == (1, 1)
+
+
 def test_include_private_lets_the_build_through_and_unions_the_private_map(
     build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
 ) -> None:

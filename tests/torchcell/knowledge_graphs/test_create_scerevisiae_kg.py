@@ -171,3 +171,19 @@ def test_main_builds_the_costanzo_dmf_dataset_and_writes_the_graph(
     assert (build.tmp_path / "biocypher_file_name.txt").read_text() == (
         f"biocypher-out/{TIME_STR}/neo4j-admin-import-call.sh"
     )
+
+
+def test_a_bacteria_only_organism_set_refuses_the_hardcoded_yeast_list(
+    build: SimpleNamespace, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The hardcoded Costanzo dmf loader is yeast; ``--organisms ecoli`` names it and
+    stops before it is instantiated or anything is written.
+    """
+    from torchcell.data.experiment_dataset import Organism
+    from torchcell.knowledge_graphs.dataset_adapter_map import OrganismRefused
+
+    monkeypatch.setattr(kg, "ORGANISMS", frozenset({Organism.ecoli}))
+    with pytest.raises(OrganismRefused, match=r"\(ecoli\): FakeDmf \(scerevisiae\)"):
+        kg.main(_cfg(CFG))
+    assert FakeDmf.instances == []
+    assert FakeBioCypher.instances[0].calls == []

@@ -45,6 +45,12 @@ artifact-refs`` before the stamp, None on a release that predates the recording)
 listed with the sha256 the pointer pins, printing one ``STATE<TAB>CODE<TAB>DETAIL`` line
 for ``scripts/ops.sh``.
 
+**The organisms a release serves.** A build serves the datasets of one organism set
+(``--organisms``; ``KgBuildManifest.organisms``). The release node, its ``release.json``
+and the snapshot carry that set as ``organisms`` (None for a release whose manifest
+predates the switch), and the ``status`` table prints it beside the dataset count, so a
+yeast-only store is never read as "every mapped dataset".
+
     python -m torchcell.knowledge_graphs.releases status --label gilahyper
     python -m torchcell.knowledge_graphs.releases datasets --version latest
     python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest
@@ -71,6 +77,7 @@ from pydantic import BaseModel, Field
 from torchcell.knowledge_graphs.kg_manifest import (
     ArtifactPointer,
     KgBuildManifest,
+    OrganismName,
     checkout_package_version,
     manifest_artifact_refs,
     surface_in_worktree,
@@ -120,6 +127,9 @@ class KgRelease(BaseModel):
     # dataset -> the file-level artifact pointers its records carry; None on a node
     # written before pointer recording, or from a manifest with an unrecorded entry
     artifact_refs: dict[str, list[ArtifactPointer]] | None = None
+    # The organism set the store serves (``KgBuildManifest.organisms``); None on a node
+    # whose manifest predates the organism switch (2026.10.12).
+    organisms: list[OrganismName] | None = None
 
     @property
     def n_datasets(self) -> int:
@@ -155,6 +165,7 @@ class KgRelease(BaseModel):
                     separators=(",", ":"),
                 )
             ),
+            "organisms": self.organisms,
         }
 
     @classmethod
@@ -186,6 +197,7 @@ class KgRelease(BaseModel):
             datasets=datasets,
             closures=json.loads(props.get("closures_json") or "{}"),
             artifact_refs=artifact_refs,
+            organisms=props.get("organisms"),
         )
 
 
@@ -404,6 +416,7 @@ def release_from_manifest(
             name: dict(entry.closure) for name, entry in manifest.datasets.items()
         },
         artifact_refs=manifest_artifact_refs(manifest),
+        organisms=manifest.organisms,
     )
 
 
@@ -789,10 +802,19 @@ def package_label(release: KgRelease | None) -> str:
     return release.torchcell_tag
 
 
+def organisms_label(release: KgRelease | None) -> str:
+    """The ORGANISMS cell: the release's organism set, ``unrecorded`` before the switch."""
+    if release is None:
+        return "-"
+    if release.organisms is None:
+        return "unrecorded"
+    return ",".join(release.organisms)
+
+
 def status_rows(
     label: str, served: list[ServedDatabase], repo_root: Path | None
 ) -> list[list[str]]:
-    """Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS."""
+    """Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS ORGANISMS NODES ALIASES STATUS."""
     rows: list[list[str]] = []
     for db in served:
         release = db.release
@@ -812,6 +834,7 @@ def status_rows(
                 commit_index(repo_root, commit) if (repo_root and commit) else "-",
                 commit_date(repo_root, commit) if (repo_root and commit) else "-",
                 str(db.n_datasets) if db.n_datasets is not None else "-",
+                organisms_label(release),
                 f"{db.n_nodes:,}" if db.n_nodes is not None else "-",
                 ",".join(db.aliases) or "-",
                 status,
@@ -824,7 +847,7 @@ def format_table(rows: list[list[str]]) -> str:
     """Fixed-width table with the header row."""
     header = [
         "HOST", "DATABASE", "VERSION", "RELEASE", "PKG", "COMMIT#", "DATE",
-        "DATASETS", "NODES", "ALIASES", "STATUS",
+        "DATASETS", "ORGANISMS", "NODES", "ALIASES", "STATUS",
     ]  # fmt: skip
     table = [header, *rows]
     widths = [max(len(r[i]) for r in table) for i in range(len(header))]

@@ -31,7 +31,10 @@ A full knowledge-graph rebuild needs EVERY mapped dev store fresh under the curr
 ``Publication`` makes all of them stale at once. ``--list-stale`` prints, one class per
 line, every mapped dataset whose store is stale, missing, without a manifest, or
 UNREADABLE (the same :func:`torchcell.provenance.build_manifest.check_store` the live
-rebuild's preflight runs; ``--include-private`` adds the private map), and
+rebuild's preflight runs; ``--include-private`` adds the private map, and
+``--organisms scerevisiae`` narrows the walk to the datasets whose declared organism is
+in the comma-separated set, the same set the build's ``--organisms`` takes, so a
+yeast-only rebuild is not held up by a stale bacterial store), and
 ``--retire-existing`` moves an existing ``processed/`` and ``preprocess/`` aside as
 ``<name>.superseded.<timestamp>`` siblings before the build instead of refusing, which is
 what ``database/slurm/scripts/gilahyper_build_dataset_lmdbs_array.slurm`` runs per array
@@ -63,6 +66,12 @@ from typing import Any
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict
 
+from torchcell.data.experiment_dataset import (
+    ALL_ORGANISMS,
+    Organism,
+    format_organisms,
+    parse_organisms,
+)
 from torchcell.provenance.build_manifest import StoreFreshness, StoreState
 
 
@@ -114,8 +123,15 @@ class StoreStatus(BaseModel):
         )
 
 
-def mapped_store_status(data_root: str, include_private: bool) -> list[StoreStatus]:
+def mapped_store_status(
+    data_root: str,
+    include_private: bool,
+    organisms: frozenset[Organism] = ALL_ORGANISMS,
+) -> list[StoreStatus]:
     """The state of every mapped dataset's dev store, in adapter-map order.
+
+    The walk is ``build_adapter_map(include_private, organisms)``, the map the build
+    itself selects, so the list is exactly the stores a build of that organism set reads.
 
     One call to :func:`torchcell.provenance.build_manifest.check_store` per mapped
     dataset, which is also what the live rebuild's preflight and the
@@ -131,7 +147,7 @@ def mapped_store_status(data_root: str, include_private: bool) -> list[StoreStat
 
     surface = load_default_surface()
     statuses: list[StoreStatus] = []
-    for cls in build_adapter_map(include_private=include_private):
+    for cls in build_adapter_map(include_private=include_private, organisms=organisms):
         root = osp.join(data_root, dataset_default_root(cls))
         freshness = check_store(root, surface)
         statuses.append(
@@ -398,6 +414,13 @@ def main(argv: list[str] | None = None) -> int:
         help="with --list-stale: include PRIVATE_DATASET_ADAPTER_MAP",
     )
     parser.add_argument(
+        "--organisms",
+        default=format_organisms(ALL_ORGANISMS),
+        help="with --list-stale: walk only the mapped datasets whose declared organism "
+        "is in this comma-separated set (default: every organism, "
+        f"{format_organisms(ALL_ORGANISMS)})",
+    )
+    parser.add_argument(
         "--retire-existing",
         action="store_true",
         help="move an existing processed/ and preprocess/ aside as "
@@ -417,7 +440,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.list_stale:
         # stdout is the class list an array job reads line by line; the reason a store
         # is unreadable goes to stderr so it is visible without corrupting that list.
-        for status in mapped_store_status(data_root, args.include_private):
+        organisms = parse_organisms(args.organisms)
+        for status in mapped_store_status(data_root, args.include_private, organisms):
             if status.needs_rebuild:
                 print(status.dataset_class)
             if status.state == "unreadable":

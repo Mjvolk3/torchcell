@@ -62,6 +62,7 @@ from torchcell.knowledge_graphs.releases import (
     main,
     main_build,
     next_version,
+    organisms_label,
     package_label,
     read_release,
     release_from_manifest,
@@ -339,9 +340,11 @@ def test_status_rows_report_faults_and_missing_release_nodes() -> None:
         "2026.09.17-7715ee35",
         "-",
     ]
-    assert rows[0][8] == "99,723,455" and rows[0][9] == "latest,pinned"
-    assert rows[1][10].startswith("faulting (java.io.IOException")
-    assert rows[2][10] == "online (no release node)"
+    # ORGANISMS (column 8): this release node predates the switch; no node at all is "-"
+    assert [row[8] for row in rows] == ["unrecorded", "-", "-"]
+    assert rows[0][9] == "99,723,455" and rows[0][10] == "latest,pinned"
+    assert rows[1][11].startswith("faulting (java.io.IOException")
+    assert rows[2][11] == "online (no release node)"
     text = format_table(rows)
     assert text.splitlines()[0].startswith("HOST")
     assert json.dumps(rows)  # plain strings only
@@ -376,7 +379,7 @@ def test_pkg_column_is_the_tag_or_the_version_marked_untagged() -> None:
     ]
     assert format_table(status_rows("gh", served, None)).splitlines()[0] == (
         "HOST  DATABASE   VERSION  RELEASE              PKG               COMMIT#  "
-        "DATE  DATASETS  NODES  ALIASES  STATUS"
+        "DATE  DATASETS  ORGANISMS   NODES  ALIASES  STATUS"
     )
 
 
@@ -433,6 +436,7 @@ def test_to_properties_flattens_the_maps_to_compact_sorted_json() -> None:
         ),
         "closures_json": '{"DsA":{"Experiment":"aa"}}',
         "artifact_refs_json": None,
+        "organisms": None,
     }
 
 
@@ -1125,6 +1129,7 @@ def test_status_rows_fill_the_git_columns_when_a_repo_root_is_given(
             "1200",
             "2026.09.17",
             "2",
+            "unrecorded",
             "7",
             "latest",
             "online",
@@ -1135,10 +1140,10 @@ def test_status_rows_fill_the_git_columns_when_a_repo_root_is_given(
 # --------------------------------------------------------------------------- CLI
 
 STATUS_TABLE = [
-    "HOST  DATABASE             VERSION  RELEASE              PKG  COMMIT#  DATE  DATASETS  NODES  ALIASES        STATUS",
-    "gh    torchcell [default]  1.0      2026.09.17-7715ee35  -    -        -     2         7      latest,pinned  online",
-    "gh    neo4j                -        -                    -    -        -     -         7      -              faulting (java.io.IOException: Input/output error)",
-    "gh    old                  -        -                    -    -        -     -         -      -              offline",
+    "HOST  DATABASE             VERSION  RELEASE              PKG  COMMIT#  DATE  DATASETS  ORGANISMS   NODES  ALIASES        STATUS",
+    "gh    torchcell [default]  1.0      2026.09.17-7715ee35  -    -        -     2         unrecorded  7      latest,pinned  online",
+    "gh    neo4j                -        -                    -    -        -     -         -           7      -              faulting (java.io.IOException: Input/output error)",
+    "gh    old                  -        -                    -    -        -     -         -           -      -              offline",
 ]
 
 
@@ -1851,3 +1856,41 @@ def test_cli_artifacts_fails_when_the_host_does_not_answer_or_the_read_raises(
     assert capsys.readouterr().out == (
         "fail\tn/a\trelease read failed: Couldn't connect to x:7687\n"
     )
+
+
+# --------------------------------------------------------------------------- organisms
+
+
+def test_the_release_node_carries_the_organism_set_of_its_manifest() -> None:
+    """A yeast-only build's node says ``organisms: [scerevisiae]`` and round-trips it;
+    the ORGANISMS cell prints it, ``unrecorded`` for a node that predates the switch,
+    and ``-`` where there is no node.
+    """
+    manifest = _manifest({"DsA": 10})
+    manifest.organisms = ["scerevisiae"]
+    stamp_manifest(
+        manifest,
+        kind="full",
+        built_at="2026-10-12T00:00:00-05:00",
+        content_hashes={"DsA": "a" * 64},
+        previous_version="3.0",
+        torchcell_version="1.8.0",
+        torchcell_tag="v1.8.0",
+    )
+    release = release_from_manifest(
+        manifest,
+        built_at="2026-10-12T00:00:00-05:00",
+        content_hashes={"DsA": "a" * 64},
+        n_nodes=1,
+    )
+    assert release.organisms == ["scerevisiae"]
+    props = release.to_properties()
+    assert props["organisms"] == ["scerevisiae"]
+    assert KgRelease.from_properties(props) == release
+    assert organisms_label(release) == "scerevisiae"
+    assert organisms_label(release.model_copy(update={"organisms": None})) == (
+        "unrecorded"
+    )
+    assert organisms_label(None) == "-"
+    widened = release.model_copy(update={"organisms": ["scerevisiae", "ecoli"]})
+    assert organisms_label(widened) == "scerevisiae,ecoli"

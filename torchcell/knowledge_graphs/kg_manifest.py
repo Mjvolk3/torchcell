@@ -75,6 +75,15 @@ graph (Caudal's ``sequence_ref``, Bloom's ``assembly_ref``, a ``CrisprConstruct`
 ``KgDatasetEntry.artifact_refs``; the release node and the snapshot carry the set from
 there, and ``releases artifacts`` checks it against tc-data.
 
+**The organism set.** A full build is asked for a set of organisms (``--organisms``,
+``KG_ORGANISMS`` in the live rebuild) and serves only the mapped datasets whose loader
+declares one of them. ``bootstrap --organisms`` records that set as
+``KgBuildManifest.organisms`` and each entry's ``organism``, so a yeast-only store says
+so. An admission of a dataset whose organism is outside the served set blocks unless it
+is run with ``--widen-organisms``; the recorded admission then adds the organism to the
+set. A manifest written before the switch records no set, and the served set is read
+off the served datasets' own classes (:func:`served_organisms`).
+
 The manifest lives beside the store (a machine-local file under the build tree), never
 in git: it describes one physical database.
 """
@@ -94,7 +103,7 @@ import sys
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import TYPE_CHECKING, Any, Literal, cast, get_args
 
 import yaml
 from pydantic import BaseModel, Field
@@ -113,8 +122,15 @@ from torchcell.provenance.schema_deps import (
     loader_closure_from_source,
 )
 
+if TYPE_CHECKING:
+    from torchcell.data.experiment_dataset import Organism
+
 __all__ = [
     "KG_MANIFEST_SCHEMA_VERSION",
+    "OrganismName",
+    "dataset_organism_name",
+    "organism_names",
+    "served_organisms",
     "GraphSchemaEntry",
     "KgDatasetEntry",
     "KgEvent",
@@ -193,6 +209,11 @@ VALUE_SURFACE_RELPATHS = (
 )
 #: The closure key that marks a dataset whose records can carry artifact pointers.
 ARTIFACT_REF_SYMBOL = "ArtifactRef"
+
+#: An ``Organism`` value as the manifest records it: a string, so the JSON reads without
+#: importing torchcell, with the enum (``torchcell.data.experiment_dataset.Organism``)
+#: the authority; a test holds the two to the same members in the same order.
+OrganismName = Literal["scerevisiae", "ecoli", "pputida"]
 
 
 class ArtifactPointer(BaseModel):
@@ -276,6 +297,10 @@ class KgDatasetEntry(BaseModel):
     # plainly whether it holds in-house data; "public" for an entry written before this
     # field existed, which is correct, since a private dataset could never be served.
     visibility: Literal["public", "private"] = "public"
+    # The host organism the loader declares (``ExperimentDataset.organism``), read off the
+    # class when the entry is written. None for an entry written before the organism
+    # switch (2026.10.12); ``served_organisms`` then reads the class.
+    organism: OrganismName | None = None
     n_experiments: int | None = None
     biocypher_out: str  # the biocypher-out/<timestamp> that produced its CSVs
     import_mode: Literal["full", "incremental"]
@@ -342,6 +367,12 @@ class KgBuildManifest(BaseModel):
     # the value surface was recorded: the check then reports "value surface not recorded"
     # instead of blocking, since there is no baseline to compare against.
     value_surface: dict[str, str] = Field(default_factory=dict)
+    # The organism set the full build was asked for (``bootstrap --organisms``, in
+    # ``Organism`` order), widened by an admission run with ``--widen-organisms``. None for
+    # a manifest written before the organism switch (2026.10.12): every build before it
+    # took the whole adapter map, and ``served_organisms`` reads the set off the served
+    # datasets' classes.
+    organisms: list[OrganismName] | None = None
     datasets: dict[str, KgDatasetEntry]
     events: list[KgEvent]
     created_at: str
@@ -432,6 +463,12 @@ class AdmissionReport(BaseModel):
     # could not be run, which is itself a blocker).
     served: bool = False
     superset: SupersetCheck | None = None
+    # The dataset's declared organism and whether admitting it adds that organism to the
+    # served set (allowed only with ``--widen-organisms``; recorded into
+    # ``KgBuildManifest.organisms`` by ``record``). None / False on a report written
+    # before the organism switch.
+    organism: OrganismName | None = None
+    widens_organisms: bool = False
 
 
 class BatchAdmissionReport(BaseModel):
@@ -891,6 +928,39 @@ def dataset_visibility(dataset_class: type) -> Literal["public", "private"]:
     return "private" if value is Visibility.private else "public"
 
 
+def dataset_organism_name(dataset_class: type) -> OrganismName:
+    """The organism a loader class declares, as the manifest records it.
+
+    ``dataset_organism`` raises for a class that declares none; the manifest never files
+    a dataset under an organism its loader did not state.
+    """
+    from torchcell.data.experiment_dataset import dataset_organism
+
+    return dataset_organism(dataset_class).value
+
+
+def organism_names(organisms: Iterable[Organism]) -> list[OrganismName]:
+    """An organism set as the manifest records it: values, in ``Organism`` order."""
+    from torchcell.data.experiment_dataset import ordered_organisms
+
+    return [organism.value for organism in ordered_organisms(organisms)]
+
+
+def served_organisms(manifest: KgBuildManifest) -> list[OrganismName]:
+    """The organism set the served store holds, in ``Organism`` order.
+
+    ``manifest.organisms`` when the manifest records it. A manifest written before the
+    organism switch records none; every build then took the whole adapter map, so the set
+    is read off the classes of the datasets the store actually serves.
+    """
+    if manifest.organisms is not None:
+        return list(manifest.organisms)
+    present = {
+        dataset_organism_name(_dataset_class(name)) for name in manifest.datasets
+    }
+    return [name for name in get_args(OrganismName) if name in present]
+
+
 # --------------------------------------------------------------------------- manifest
 
 
@@ -918,6 +988,7 @@ def bootstrap_manifest(
     biocypher_version: str,
     biocypher_out: str,
     built_at: str,
+    organisms: frozenset[Organism],
 ) -> KgBuildManifest:
     """Reconstruct the manifest of a store built by a FULL build at ``commit``.
 
@@ -925,7 +996,25 @@ def bootstrap_manifest(
     manifest describes what was serialized into the store, not the working tree. The
     adapter files of each dataset are resolved through the working tree's
     ``dataset_adapter_map`` and then hashed at the commit.
+
+    ``organisms`` is the set the build was asked for (``--organisms``). A served dataset
+    whose loader declares an organism outside it raises: the store would then hold data
+    the recorded set says it does not.
     """
+    stated = organism_names(organisms)
+    declared = {
+        name: dataset_organism_name(_dataset_class(name)) for name in dataset_classes
+    }
+    outside = sorted(
+        f"{name} ({organism})"
+        for name, organism in declared.items()
+        if organism not in stated
+    )
+    if outside:
+        raise ValueError(
+            "the store serves datasets outside the stated organism set "
+            f"({','.join(stated)}): {', '.join(outside)}"
+        )
     surface = surface_at_ref(repo_root, commit)
     datasets: dict[str, KgDatasetEntry] = {}
     for name in sorted(dataset_classes):
@@ -937,6 +1026,7 @@ def bootstrap_manifest(
             adapter_files=dataset_adapter_files(cls, repo_root),
             closure=closure_at_ref(repo_root, commit, rel, surface),
             visibility=dataset_visibility(cls),
+            organism=dataset_organism_name(cls),
             n_experiments=n_experiments.get(name),
             biocypher_out=biocypher_out,
             import_mode="full",
@@ -968,6 +1058,7 @@ def bootstrap_manifest(
         cell_adapter_table=table,
         adapter_files=adapter_files,
         value_surface=value_surface_at_ref(repo_root, commit),
+        organisms=stated,
         datasets=datasets,
         events=[
             KgEvent(
@@ -1285,8 +1376,14 @@ def check_admission(
     served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
     served_source: str = "live store",
     include_private: bool = False,
+    widen_organisms: bool = False,
 ) -> AdmissionReport:
     """Decide whether ``dataset_class_name`` can be added to the store incrementally.
+
+    A dataset whose declared organism is outside the served organism set
+    (:func:`served_organisms`) blocks unless ``widen_organisms`` (``admit
+    --widen-organisms``): a yeast-only store does not quietly become a mixed one. With the
+    flag the report says the admission widens the set, and ``record`` writes it.
 
     ``served_experiment_ids`` reads the experiment ids the live store holds under a
     Dataset node (``live_experiment_ids`` bound to a connection in production, named by
@@ -1368,6 +1465,16 @@ def check_admission(
             f"{dataset_class_name} is PRIVATE (visibility=private): in-house data is "
             "admitted only to an in-house store, by an admission run with "
             "--include-private"
+        )
+    organism = dataset_organism_name(dataset_class)
+    served_set = served_organisms(manifest)
+    widens = organism not in served_set
+    if widens and not widen_organisms:
+        reasons.append(
+            f"{dataset_class_name} declares organism {organism} and the served "
+            f"store holds {','.join(served_set) or 'no organism'} only; admitting it "
+            "widens the store's organism set, which an admission does only when run "
+            "with --widen-organisms (or rebuild with KG_ORGANISMS naming it)"
         )
     in_map = dataset_class in build_adapter_map(include_private)
     if not in_map:
@@ -1463,6 +1570,8 @@ def check_admission(
         undeclared_phenotype_methods=undeclared,
         served=served,
         superset=superset,
+        organism=organism,
+        widens_organisms=widens,
     )
 
 
@@ -1529,6 +1638,7 @@ def check_batch_admission(
     served_experiment_ids: Callable[[str], Iterable[str]] | None = None,
     served_source: str = "live store",
     include_private: bool = False,
+    widen_organisms: bool = False,
 ) -> BatchAdmissionReport:
     """Decide whether every named dataset can be added in ONE incremental import."""
     return batch_report_from_members(
@@ -1543,6 +1653,7 @@ def check_batch_admission(
                 served_experiment_ids,
                 served_source,
                 include_private,
+                widen_organisms,
             )
             for name in dataset_class_names
         ]
@@ -1589,6 +1700,7 @@ def _dataset_entry(
         adapter_files=dataset_adapter_files(dataset_class, repo_root),
         closure=report.new_dataset_closure,
         visibility=dataset_visibility(dataset_class),
+        organism=dataset_organism_name(dataset_class),
         n_experiments=n_experiments,
         biocypher_out=biocypher_out,
         import_mode="incremental",
@@ -1638,6 +1750,37 @@ def _adopt_current_surfaces(manifest: KgBuildManifest, repo_root: Path) -> None:
     manifest.value_surface = value_surface_in_worktree(repo_root)
 
 
+def _widen_organisms(
+    manifest: KgBuildManifest, members: list[AdmissionReport]
+) -> str | None:
+    """Add every widening member's organism to the served set; the event's note on it.
+
+    Only a member whose report says it widens the set (``admit --widen-organisms``)
+    adds one, and the set it adds to is :func:`served_organisms`, so a manifest that
+    predates the switch records an explicit set from here on.
+    """
+    added = {
+        member.organism
+        for member in members
+        if member.widens_organisms and member.organism is not None
+    }
+    if not added:
+        return None
+    before = served_organisms(manifest)
+    present = set(before) | added
+    manifest.organisms = [name for name in get_args(OrganismName) if name in present]
+    return (
+        f"organisms widened {','.join(before) or '(none)'} -> "
+        f"{','.join(manifest.organisms)}"
+    )
+
+
+def _joined_note(*notes: str | None) -> str | None:
+    """The non-empty notes joined with "; ", or None when there are none."""
+    present = [note for note in notes if note]
+    return "; ".join(present) if present else None
+
+
 def _acknowledged_drift(report: AdmissionReport) -> list[str]:
     if not report.adapter_drift_acknowledged:
         return []
@@ -1668,6 +1811,9 @@ def record_admission(
     if report.verdict != "admissible":
         raise ValueError(f"cannot record a blocked admission: {report.reasons}")
     now = _now()
+    # before the entry is added: a manifest that predates the switch reads its served
+    # set off the served datasets, and the new one is not served yet
+    organisms_note = _widen_organisms(manifest, [report])
     manifest.datasets[report.dataset_class] = _dataset_entry(
         report,
         biocypher_out=biocypher_out,
@@ -1685,7 +1831,7 @@ def record_admission(
             torchcell_version=report.torchcell_version,
             datasets=[report.dataset_class],
             biocypher_out=biocypher_out,
-            note=_superset_note([report]),
+            note=_joined_note(_superset_note([report]), organisms_note),
             acknowledged_adapter_drift=_acknowledged_drift(report),
             acknowledged_value_drift=_acknowledged_value_drift(report),
         )
@@ -1718,6 +1864,7 @@ def record_batch_admission(
             f"experiment counts for datasets not in the batch: {unexpected}"
         )
     now = _now()
+    organisms_note = _widen_organisms(manifest, report.members)
     for member in report.members:
         manifest.datasets[member.dataset_class] = _dataset_entry(
             member,
@@ -1749,7 +1896,7 @@ def record_batch_admission(
             torchcell_version=report.torchcell_version,
             datasets=list(report.dataset_classes),
             biocypher_out=biocypher_out,
-            note=_superset_note(report.members),
+            note=_joined_note(_superset_note(report.members), organisms_note),
             acknowledged_adapter_drift=acknowledged,
             acknowledged_value_drift=acknowledged_values,
         )
@@ -1820,6 +1967,8 @@ def format_report(report: AdmissionReport) -> str:
         f"  working tree {report.torchcell_commit} (dirty={report.torchcell_dirty}); "
         f"served store built at {report.served_commit}",
         f"  dev LMDB: {report.dev_lmdb_status} ({report.dev_lmdb_root})",
+        f"  organism: {report.organism or 'not recorded'}"
+        + (" (widens the served organism set)" if report.widens_organisms else ""),
         f"  closure: {len(report.new_dataset_closure)} symbols, "
         f"{len(report.novel_symbols)} novel ({', '.join(report.novel_symbols) or '-'}), "
         f"{len(report.shared_symbols)} shared with served datasets",
@@ -2006,6 +2155,13 @@ def main(argv: list[str] | None = None) -> int:
     p_boot.add_argument(
         "--neo4j-uri", default=None, help="query datasets + counts live"
     )
+    p_boot.add_argument(
+        "--organisms",
+        required=True,
+        help="the comma-separated organism set the build was asked for (its "
+        "--organisms, KG_ORGANISMS in the live rebuild), e.g. scerevisiae or "
+        "scerevisiae,ecoli,pputida; a served dataset outside it is an error",
+    )
 
     p_admit = sub.add_parser("admit", help="check whether a dataset can be added")
     p_admit.add_argument(
@@ -2037,6 +2193,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="admit a PRIVATE dataset (visibility=private) into an in-house store; "
         "without it a private dataset blocks",
+    )
+    p_admit.add_argument(
+        "--widen-organisms",
+        action="store_true",
+        help="admit a dataset whose organism is outside the served organism set and add "
+        "that organism to the set on record; without it such a dataset blocks",
     )
 
     p_rec = sub.add_parser("record", help="record a completed incremental admission")
@@ -2078,6 +2240,7 @@ def main(argv: list[str] | None = None) -> int:
     manifest_path = Path(args.manifest)
 
     if args.command == "bootstrap":
+        from torchcell.data.experiment_dataset import parse_organisms
         from torchcell.database.connection import neo4j_connection_settings
 
         settings = neo4j_connection_settings()
@@ -2096,9 +2259,13 @@ def main(argv: list[str] | None = None) -> int:
             biocypher_version=args.biocypher_version,
             biocypher_out=args.biocypher_out,
             built_at=args.built_at,
+            organisms=parse_organisms(args.organisms),
         )
         save_manifest(manifest, manifest_path)
-        print(f"bootstrapped {len(manifest.datasets)} datasets -> {manifest_path}")
+        print(
+            f"bootstrapped {len(manifest.datasets)} datasets "
+            f"(organisms {','.join(served_organisms(manifest))}) -> {manifest_path}"
+        )
         return 0
 
     manifest = load_manifest(manifest_path)
@@ -2125,6 +2292,15 @@ def main(argv: list[str] | None = None) -> int:
             f"{manifest.database} on {manifest.store_host}: neo4j {manifest.neo4j_version}, "
             f"biocypher {manifest.biocypher_version}, full build {manifest.torchcell_commit}, "
             f"{len(manifest.datasets)} datasets, {len(manifest.events)} events"
+        )
+        organisms = ",".join(served_organisms(manifest))
+        print(
+            f"  organisms: {organisms} ("
+            + (
+                "recorded at the build)"
+                if manifest.organisms is not None
+                else "not recorded; read off the served datasets' classes)"
+            )
         )
         for name, entry in sorted(manifest.datasets.items()):
             print(
@@ -2155,6 +2331,7 @@ def main(argv: list[str] | None = None) -> int:
                 served_ids,
                 uri,
                 args.include_private,
+                args.widen_organisms,
             )
             print(format_report(report))
             if args.report:
@@ -2172,6 +2349,7 @@ def main(argv: list[str] | None = None) -> int:
             served_ids,
             uri,
             args.include_private,
+            args.widen_organisms,
         )
         print(format_batch_report(batch))
         if args.report:

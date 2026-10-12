@@ -10,6 +10,11 @@ instantiated, unless the build is run with ``--include-private``. The flag is re
 ``sys.argv`` by :func:`take_include_private_flag` and REMOVED there, because hydra parses
 the same argv and rejects an option it does not know. Reading it from the class rather
 than from the yaml is what makes the gate unbypassable by editing a config.
+
+``--organisms scerevisiae,ecoli,pputida`` (every organism when absent) is taken off
+``sys.argv`` the same way, by :func:`take_organisms_flag`, and a configured dataset whose
+class declares an organism outside the set is refused by name
+(``refuse_organism_mismatch``) before anything is instantiated.
 """
 
 import hashlib
@@ -33,6 +38,7 @@ from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
+from torchcell.data.experiment_dataset import ALL_ORGANISMS, Organism
 from torchcell.datasets import dataset_registry
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.graph import SCerevisiaeGraph
@@ -42,10 +48,14 @@ from torchcell.knowledge_graphs.dataset_adapter_map import (
 from torchcell.knowledge_graphs.dataset_adapter_map import (
     PRIVATE_DATASET_ADAPTER_MAP,
     dataset_adapter_map,
+    refuse_organism_mismatch,
     refuse_private_datasets,
 )
 from torchcell.knowledge_graphs.dataset_adapter_map import (
     take_include_private_flag as take_include_private_flag,
+)
+from torchcell.knowledge_graphs.dataset_adapter_map import (
+    take_organisms_flag as take_organisms_flag,
 )
 from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
@@ -68,6 +78,10 @@ BIOCYPHER_OUT_PATH = cast(str, os.getenv("BIOCYPHER_OUT_PATH"))
 #: :func:`take_include_private_flag` before hydra parses argv; False in every other
 #: entry (a test calling ``main`` directly, an import).
 INCLUDE_PRIVATE = False
+
+#: The organism set ``--organisms`` named. Set once by :func:`take_organisms_flag`
+#: before hydra parses argv; every organism in any other entry.
+ORGANISMS: frozenset[Organism] = ALL_ORGANISMS
 
 
 def get_num_workers() -> int:
@@ -179,6 +193,9 @@ def main(cfg: DictConfig) -> None:
     refuse_private_datasets(
         [cast(type, config["class"]) for config in dataset_configs], INCLUDE_PRIVATE
     )
+    refuse_organism_mismatch(
+        [cast(type, config["class"]) for config in dataset_configs], ORGANISMS
+    )
     adapter_map = (
         {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
         if INCLUDE_PRIVATE
@@ -247,6 +264,7 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
+    ORGANISMS = take_organisms_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

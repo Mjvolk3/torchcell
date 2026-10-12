@@ -28,7 +28,9 @@ import os.path as osp
 from collections.abc import Iterator
 from datetime import datetime
 from types import ModuleType, SimpleNamespace
-from typing import Any
+from typing import Any, ClassVar
+
+from torchcell.data.experiment_dataset import Organism
 
 FIXED_NOW = datetime(2026, 9, 27, 8, 30, 5)
 TIME_STR = "2026-09-27_08-30-05"
@@ -131,8 +133,14 @@ class TickingTime:
 
 
 class FakeDataset:
-    """A loader stand-in: records its kwargs, has a fixed length, indexes to a view."""
+    """A loader stand-in: records its kwargs, has a fixed length, indexes to a view.
 
+    Declares ``organism`` like a real loader, since every build entry point reads it
+    off the class (the organism switch); a test that needs a bacterial stand-in
+    overrides it on its subclass.
+    """
+
+    organism: ClassVar[Organism] = Organism.scerevisiae
     n_records: int = 3
     instances: list[FakeDataset] = []
 

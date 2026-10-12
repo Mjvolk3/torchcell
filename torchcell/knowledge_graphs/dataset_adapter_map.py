@@ -7,7 +7,17 @@ public map by default and only unions the private one when run with
 ``--include-private``, so a private dataset cannot be served by being listed in a
 config: the class's own ``visibility`` decides, and the gate lives in
 ``build_adapter_map`` below.
+
+The ORGANISM switch works the same way. Every mapped class declares
+``organism: ClassVar[Organism]``; a build is asked for an organism set
+(``--organisms scerevisiae,ecoli,pputida``, read off ``sys.argv`` by
+``take_organisms_flag``, all three when absent), ``build_adapter_map`` keeps the classes
+whose declared organism is in it, and ``refuse_organism_mismatch`` names a configured
+class outside it instead of dropping it, so a yeast-only build is a build of exactly the
+yeast datasets and says so.
 """
+
+from collections.abc import Mapping
 
 from torchcell.adapters import (
     AminoAcidCooper2010Adapter,
@@ -171,7 +181,14 @@ from torchcell.adapters.ohya2005_adapter import ScmdOhya2005Adapter
 from torchcell.adapters.volk2021_inhibitor_bioscreen_adapter import (
     InhibitorBioscreenVolk2021Adapter,
 )
-from torchcell.data.experiment_dataset import Visibility
+from torchcell.data.experiment_dataset import (
+    ALL_ORGANISMS,
+    Organism,
+    Visibility,
+    dataset_organism,
+    format_organisms,
+    parse_organisms,
+)
 from torchcell.datasets.ecoli.baba2006 import GeneEssentialityBaba2006Dataset
 from torchcell.datasets.ecoli.babu2014 import GeneInteractionBabu2014Dataset
 from torchcell.datasets.ecoli.balakrishnan2022 import (
@@ -604,19 +621,105 @@ def take_include_private_flag(argv: list[str]) -> bool:
     return True
 
 
+ORGANISMS_FLAG = "--organisms"
+
+
+def take_organisms_flag(argv: list[str]) -> frozenset[Organism]:
+    """Remove ``--organisms <names>`` from ``argv`` and return the organism set it names.
+
+    ``<names>`` is comma-separated (``scerevisiae,ecoli``); ``--organisms=<names>`` is
+    taken too. Absent, the set is every organism, which is what a build was before the
+    switch existed. Like ``--include-private`` it has to leave ``argv`` before hydra
+    parses it. A flag without a value, a flag given twice, and an unknown organism
+    name all raise ``ValueError``: each would otherwise build a graph other than the one
+    asked for.
+    """
+    values: list[str] = []
+    index = 0
+    while index < len(argv):
+        token = argv[index]
+        if token == ORGANISMS_FLAG:
+            if index + 1 == len(argv):
+                raise ValueError(f"{ORGANISMS_FLAG} needs a value, e.g. scerevisiae")
+            values.append(argv[index + 1])
+            del argv[index : index + 2]
+        elif token.startswith(ORGANISMS_FLAG + "="):
+            values.append(token[len(ORGANISMS_FLAG) + 1 :])
+            del argv[index]
+        else:
+            index += 1
+    if not values:
+        return ALL_ORGANISMS
+    if len(values) > 1:
+        raise ValueError(
+            f"{ORGANISMS_FLAG} given {len(values)} times ({', '.join(values)}); "
+            "pass one comma-separated list"
+        )
+    return parse_organisms(values[0])
+
+
+def select_organisms(
+    adapter_map: Mapping[type, type], organisms: frozenset[Organism]
+) -> dict[type, type]:
+    """The entries of ``adapter_map`` whose dataset class declares an organism in the set.
+
+    Reads each class's ``organism`` through ``dataset_organism``, so a mapped class that
+    declares none raises ``OrganismUndeclared`` here, for every organism set including
+    the full one, rather than being kept or dropped by default.
+    """
+    return {
+        dataset_class: adapter_class
+        for dataset_class, adapter_class in adapter_map.items()
+        if dataset_organism(dataset_class) in organisms
+    }
+
+
+class OrganismRefused(RuntimeError):
+    """A dataset was asked for in a build whose organism set does not contain its host."""
+
+
+def refuse_organism_mismatch(
+    dataset_classes: list[type], organisms: frozenset[Organism] = ALL_ORGANISMS
+) -> None:
+    """Raise unless every class's declared ``organism`` is in ``organisms``.
+
+    The organism twin of :func:`refuse_private_datasets`: a dataset a config names
+    explicitly is refused by name, with its organism and the flag that would admit it,
+    never silently left out of a build whose organism set excludes it.
+    """
+    outside = sorted(
+        f"{cls.__name__} ({dataset_organism(cls).value})"
+        for cls in dataset_classes
+        if dataset_organism(cls) not in organisms
+    )
+    if outside:
+        raise OrganismRefused(
+            "these datasets are outside the build's organism set "
+            f"({format_organisms(organisms)}): {', '.join(outside)}. Add their organism "
+            f"to {ORGANISMS_FLAG} (KG_ORGANISMS in the slurm builds), or leave them out "
+            "of the config."
+        )
+
+
 class PrivateDatasetRefused(RuntimeError):
     """A private dataset was asked for in a build that did not opt into private data."""
 
 
-def build_adapter_map(include_private: bool = False) -> dict[type, type]:
+def build_adapter_map(
+    include_private: bool = False, organisms: frozenset[Organism] = ALL_ORGANISMS
+) -> dict[type, type]:
     """The dataset -> adapter map a build may use.
 
     Without ``include_private`` this is the public map alone. With it, the private map
-    is unioned in, which is the ONLY way a private dataset reaches an adapter.
+    is unioned in, which is the ONLY way a private dataset reaches an adapter. Either
+    way only the classes whose declared ``organism`` is in ``organisms`` are kept
+    (:func:`select_organisms`); the default is every organism, the map as it stands.
     """
     if not include_private:
-        return dict(dataset_adapter_map)
-    return {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
+        return select_organisms(dataset_adapter_map, organisms)
+    return select_organisms(
+        {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}, organisms
+    )
 
 
 def refuse_private_datasets(

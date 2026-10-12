@@ -10,6 +10,13 @@ The full and incremental builds both run this module. Membership is
 ``--include-private`` (``take_include_private_flag`` removes it from
 ``sys.argv`` before hydra parses it). A private dataset named in ``datasets`` without the
 flag is refused by name (``refuse_private_datasets``), never silently dropped.
+
+The ORGANISM switch narrows membership the same way: ``--organisms scerevisiae`` (comma-
+separated; every organism when absent, removed from ``sys.argv`` by
+``take_organisms_flag``) keeps only the mapped classes whose declared ``organism`` is in
+the set, and a dataset named in ``datasets`` outside it is refused by name
+(``refuse_organism_mismatch``). The membership line printed before any dataset is built
+names the organism set, so the generation log says which graph it wrote.
 """
 
 import hashlib
@@ -36,14 +43,18 @@ from omegaconf import DictConfig, OmegaConf
 import torchcell
 from biocypher import BioCypher  # type: ignore[attr-defined]  # untyped re-export
 from torchcell.build_telemetry import BuildPhase, ResourceSampler
+from torchcell.data.experiment_dataset import ALL_ORGANISMS, Organism, format_organisms
 from torchcell.datasets.bacteria_common import BacterialGenomeInjector
 from torchcell.fast_csv import FastCsvSink, build_row_specs
 from torchcell.graph import SCerevisiaeGraph
 from torchcell.knowledge_graphs.dataset_adapter_map import (
     PRIVATE_DATASET_ADAPTER_MAP,
     dataset_adapter_map,
+    refuse_organism_mismatch,
     refuse_private_datasets,
+    select_organisms,
     take_include_private_flag,
+    take_organisms_flag,
 )
 from torchcell.knowledge_graphs.head_ontology import verify_head_ontology
 from torchcell.knowledge_graphs.incremental_import import (
@@ -66,6 +77,10 @@ os.environ["SSL_CERT_FILE"] = certifi.where()
 #: ``--include-private`` was passed on the command line (set in ``__main__`` below,
 #: before hydra parses argv); False for any other entry.
 INCLUDE_PRIVATE = False
+
+#: The organism set ``--organisms`` named (set in ``__main__`` below, before hydra
+#: parses argv); every organism for any other entry.
+ORGANISMS: frozenset[Organism] = ALL_ORGANISMS
 
 
 def get_num_workers() -> int:
@@ -293,11 +308,18 @@ def main(cfg: DictConfig) -> None:
             [c for c in PRIVATE_DATASET_ADAPTER_MAP if c.__name__ in selected_names],
             INCLUDE_PRIVATE,
         )
-    adapter_map = (
+    visible_map = (
         {**dataset_adapter_map, **PRIVATE_DATASET_ADAPTER_MAP}
         if INCLUDE_PRIVATE
         else dict(dataset_adapter_map)
     )
+    # Organism gate: a dataset named outside --organisms is refused by name; with
+    # `datasets: null` the map is narrowed to the organism set.
+    if selected_names is not None:
+        refuse_organism_mismatch(
+            [c for c in visible_map if c.__name__ in selected_names], ORGANISMS
+        )
+    adapter_map = select_organisms(visible_map, ORGANISMS)
     known_names = {cls.__name__ for cls in adapter_map}
     if selected_names is not None:
         unknown = sorted(set(selected_names) - known_names)
@@ -313,11 +335,13 @@ def main(cfg: DictConfig) -> None:
         for dataset_class, adapter_class in adapter_map.items()
         if selected_names is None or dataset_class.__name__ in selected_names
     ]
-    log.info(
-        "Build membership: %s (include_private=%s)",
-        "ALL" if selected_names is None else selected_names,
-        INCLUDE_PRIVATE,
+    membership = (
+        f"Build membership: {'ALL' if selected_names is None else selected_names} "
+        f"(include_private={INCLUDE_PRIVATE}, organisms={format_organisms(ORGANISMS)}, "
+        f"{len(build_items)} mapped datasets)"
     )
+    print(membership)
+    log.info(membership)
 
     # Build every selected dataset (subset), each paired with its adapter.
     # A dataset's root is its loader's default; genome/graph are injected when the
@@ -505,6 +529,7 @@ def main(cfg: DictConfig) -> None:
 
 if __name__ == "__main__":
     INCLUDE_PRIVATE = take_include_private_flag(sys.argv)
+    ORGANISMS = take_organisms_flag(sys.argv)
     main()
 
     # Read the logged file name from the file

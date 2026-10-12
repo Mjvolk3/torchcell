@@ -20,6 +20,11 @@ applies to experiment ids): two releases with equal composites serve byte-identi
 experiment records for the same dataset set. Output is byte-stable: keys sorted,
 ``indent=2``, one trailing newline, so a second write of the same input is identical.
 
+``organisms`` is the organism set the release serves (``KgBuildManifest.organisms``) and
+each dataset carries its ``organism``, so a reader of a yeast-only release, or the
+served-counts page generated from it, sees which organisms it covers. Both are None on a
+snapshot whose manifest predates the organism switch (2026.10.12).
+
     python -m torchcell.knowledge_graphs.releases snapshot --manifest kg_manifest.json
         --n-nodes 99724909 --built-at 2026-09-21T20:25:23+00:00 --repo-root .
 """
@@ -38,6 +43,7 @@ from torchcell.knowledge_graphs.kg_manifest import (
     ArtifactPointer,
     GraphSchemaEntry,
     KgBuildManifest,
+    OrganismName,
     manifest_artifact_refs,
 )
 from torchcell.knowledge_graphs.releases import closure_compatibility, content_sha256
@@ -70,6 +76,8 @@ class SnapshotDataset(BaseModel):
     content_sha256: str
     import_mode: Literal["full", "incremental"]
     admitted_at: str
+    # the loader's declared organism (``KgDatasetEntry.organism``); None before the switch
+    organism: OrganismName | None = None
 
 
 class SnapshotEvent(BaseModel):
@@ -104,6 +112,9 @@ class KgReleaseSnapshot(BaseModel):
     # dataset -> the file-level artifact pointers its records carry; None for a release
     # whose manifest predates pointer recording (or has an unrecorded entry)
     artifact_refs: dict[str, list[ArtifactPointer]] | None = None
+    # the organism set the release serves (``KgBuildManifest.organisms``); None for a
+    # release whose manifest predates the organism switch
+    organisms: list[OrganismName] | None = None
 
 
 def composite_sha256(datasets: Mapping[str, SnapshotDataset]) -> str:
@@ -139,6 +150,7 @@ def snapshot_from_manifest(
             content_sha256=entry.content_sha256,
             import_mode=entry.import_mode,
             admitted_at=entry.admitted_at,
+            organism=entry.organism,
         )
     if built_at is None:
         built_at = manifest.events[-1].at
@@ -170,6 +182,7 @@ def snapshot_from_manifest(
         ],
         composite_sha256=composite_sha256(datasets),
         artifact_refs=manifest_artifact_refs(manifest),
+        organisms=manifest.organisms,
     )
 
 

@@ -433,3 +433,37 @@ def test_a_private_dataset_is_snapshotted_like_a_public_one() -> None:
         snapshot.datasets["DsA"] == snapshot_from_manifest(_manifest()).datasets["DsA"]
     )
     assert snapshot.composite_sha256 == COMPOSITE
+
+
+# --------------------------------------------------------------------------- #
+# 2026.10.12 - the organism set a release serves
+# --------------------------------------------------------------------------- #
+def test_the_snapshot_carries_the_organism_set_and_each_datasets_organism(
+    tmp_path: Path,
+) -> None:
+    """A yeast-only build's snapshot says so, through write and load; the organisms do
+    not enter the composite hash, which is over content alone.
+    """
+    manifest = _manifest()
+    manifest.organisms = ["scerevisiae"]
+    for entry in manifest.datasets.values():
+        entry.organism = "scerevisiae"
+    snapshot = snapshot_from_manifest(manifest)
+    assert snapshot.organisms == ["scerevisiae"]
+    assert {n: d.organism for n, d in snapshot.datasets.items()} == {
+        "DsA": "scerevisiae",
+        "DsB": "scerevisiae",
+    }
+    assert snapshot.composite_sha256 == COMPOSITE
+    path, _ = write_snapshot(
+        snapshot, {name: {} for name in snapshot.datasets}, tmp_path
+    )
+    assert load_snapshot(path) == snapshot
+    assert '"organisms": [\n    "scerevisiae"\n  ]' in path.read_text(encoding="utf-8")
+
+
+def test_a_pre_switch_manifest_snapshots_with_no_organism_set() -> None:
+    """None, not a guessed set: the release did not record one."""
+    snapshot = snapshot_from_manifest(_manifest())
+    assert snapshot.organisms is None
+    assert {d.organism for d in snapshot.datasets.values()} == {None}

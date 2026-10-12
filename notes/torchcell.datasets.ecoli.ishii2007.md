@@ -502,3 +502,91 @@ here**, both belong to another PR.
   recovered records get four environment nodes in the graph rather than collapsing onto
   one. Nothing in the dataset build reads that projection, so the dev stores did not
   need a second rebuild for it.
+
+## 2026.10.12 - The SOM is deposited and OCR'd: the medium, 37 C and the flux fit are sourced (#699)
+
+The owner downloaded the Science supporting online material in a browser (science.org
+answers scripts with a Cloudflare challenge; the DOI has no PMCID), and it is deposited
+as `$DATA_ROOT/torchcell-raw/ishiiMultipleHighThroughputAnalyses2007/si/ishii_som.pdf`
+(96 pages, 3,782,393 B, sha256 `cb6183c5...`, arrived 2026-10-12 03:41 CDT; `SOM_DEPOSIT`,
+`manual_browser`, `DEPOSIT.md` and `SHA256SUMS.txt` beside it).
+
+**OCR.** `torchcell.literature.ocr.ocr_pdf`, the function `lit_capture_si --ocr-recorded`
+and `reocr_si` call, ran under slurm (job 4156, CPU mode because every GPU card was held,
+21 min 50 s): MinerU 2.7.6, pipeline backend, 200 DPI. It wrote `si/ishii_som.md`
+(395,165 B, sha256 `d9ffefad...`), its processing record `si/ishii_som_ocr_provenance.json`
+(input sha256 = the PDF's), the two layout JSONs and 103 figures under
+`si/images/ishii_som/`; `record_som_deposit` adds all of them to the manifest (110
+records now).
+
+**The three gaps, replaced by quotes from the OCR** (Materials and Methods):
+
+| was | now | quote (OCR, abridged here) |
+|---|---|---|
+| `MEDIUM`: one `composition_deferred` component deferring to the unmirrored SOM | the SOM's synthetic medium, 14 components at their stated amounts | "Glucose-limited chemostat cultures were grown using a synthetic medium ..." ("Strains and culture") |
+| `temperature`: `None` with a `not_reported_by_primary` gap | `Temperature(37.0)` | "Cultures were grown aerobically at $3 7 ~ ^ { \mathrm { { o } } } \mathrm { { C } }$ in a total working volume of 1 l" |
+| the flux-fitting procedure: named in `FLUX_INTERVAL_GAP`'s note as unmirrored | `SOURCED_VALUES["flux_fitting_procedure"]` | "In the present study, a two-step optimization was implemented: the first step is a global search using a genetic algorithm (26) whereas the second step is a local search using sequential quadratic programming method (27)." |
+
+The medium, as the SOM states it (the PDF's own text layer reads "48 mM Na2HPO4, 22 mM
+KH2PO4, 10 mM NaCl, 45 mM (NH4)2SO4, 4 g/l glucose), supplemented with 1 mM MgSO4, 1 mg/l
+thiamin·HCl, 5.6 mg/l CaCl2, 8 mg/l FeCl3, 1 mg/l MnCl2·4H2O, 1.7 mg/l ZnCl2, 0.43 mg/l
+CuCl2·2H2O, 0.6 mg/l CoCl2·2H2O and 0.6 mg/l Na2MoO4·2H2O"; the OCR reads the litre's
+"l" as "1" in several amounts and splits "22 mM" across a math span, which the sourced
+value's note records):
+
+| component | role | amount |
+|---|---|---|
+| disodium hydrogen phosphate | bulk salt | 48 mM |
+| potassium dihydrogen phosphate | bulk salt | 22 mM |
+| sodium chloride | bulk salt | 10 mM |
+| ammonium sulfate | nitrogen source | 45 mM |
+| D-glucose | carbon source | 4 g/L (the feed) |
+| magnesium sulfate | bulk salt | 1 mM |
+| thiamine hydrochloride | vitamin | 1 ug/mL (1 mg/l) |
+| calcium chloride | bulk salt | 5.6 ug/mL |
+| iron(III) chloride | trace element | 8 ug/mL |
+| manganese(II) chloride tetrahydrate | trace element | 1 ug/mL |
+| zinc chloride | trace element | 1.7 ug/mL |
+| copper(II) chloride dihydrate | trace element | 0.43 ug/mL |
+| cobalt(II) chloride dihydrate | trace element | 0.6 ug/mL (no compound-table row: a typed InChIKey gap) |
+| sodium molybdate dihydrate | trace element | 0.6 ug/mL |
+
+`aerobicity="aerobic"` is now quoted from the same SOM sentence instead of read off the
+paper's discussion; the build still asserts it against the positive oxygen uptake rates.
+`build_accounting.json` lists no unpinned environment value (it listed `media` and
+`temperature`) and records the three SOM-sourced ones.
+
+**What stays a gap, and why.** `FLUX_INTERVAL_GAP` (`confidence_level`) stays: the SOM
+computes 90% confidence boundaries for the REFERENCE sample only ("based on the average
+and standard deviation of the four samples (RF03, RF04, RF05 and RF06, see Table S2)
+(Table S5B)"), and no disruptant or dilution-rate fit, nor the project web site's
+workbook, carries an interval. Table S5B is printed in the SOM and could bound the
+reference phenotype; it is not loaded here. The 13C feeds are quoted
+(`labeling_feed`): 0.4 + 0.4 + 3.2 g/l ([1-13C], [U-13C], natural) for the disruptants
+and 0.8 + 0.8 + 2.4 g/l for the dilution-rate cultures, 4 g/l in total either way, so a
+flux record's chemical environment is `MEDIUM` and the tracer is the method.
+
+Builds: slurm jobs 4176 (metabolome), 4177 (proteome), 4178 (flux),
+`--retire-existing --verify`; 28 records each, unchanged. The build CLI has no
+per-dataset entry point for these arms, so the L0-L4 below is
+`ishii2007.run_verification` on each rebuilt store.
+
+### L0-L4 after the rebuild
+
+| store | L0 | L1 | L2 | L3 | L4 | quote audits |
+|---|---|---|---|---|---|---|
+| `metabolome_ishii2007` | PASS, 28 | PASS, 28 of 28; 28 unique (strain, environment) | PASS, 4,040 values | PASS, reference finite (3,297), one measurement type | PASS, 24 of 24 BW25113 loci | 29 of 29 (6 in `ishii_som.md`) |
+| `proteome_ishii2007` | PASS, 28 | PASS, 28 of 28; 24 unique ORFs | PASS, 1,574 values, 1,513 SEs | PASS, reference finite, one measurement type | PASS, 65 of 65 BW25113 loci | 29 of 29 |
+| `flux_ishii2007` | PASS, 28 | PASS, 28 of 28 | PASS, 1,172 values | PASS, one measurement type, 0 half-stated intervals | PASS, 24 of 24 BW25113 loci | 29 of 29 |
+
+Generated tables: `experiments/036-dataset-fixes-before-kg-build/results/manual_deposits_2026_10_12_verification_tables.txt`.
+
+### Candidate gate
+
+`python -m torchcell.candidates gate --citation-key ishiiMultipleHighThroughputAnalyses2007
+--phenotype-class MetabolitePhenotype --proposed-class MetabolomeIshii2007Dataset
+--write` wrote `database/candidates/ishiiMultipleHighThroughputAnalyses2007.json`, the
+key's first verdict: **admissible**, G1 to G5 pass; G3 reads 110 files across the
+library and raw mirrors, all intact (it counts worksheet rows only in `.xlsx` files, so
+the two `.xls` workbooks contribute none). One verdict per citation key, so G5 is run on
+the metabolome arm's class.

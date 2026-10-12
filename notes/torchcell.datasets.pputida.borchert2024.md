@@ -418,3 +418,30 @@ after the rebase the row's canonical spelling is lowercase
 ([[torchcell.datamodels.compound_identity]], 2026.10.11) and the next build renames these
 references, case only; the InChIKey (`SCVFZCLFOSHCOH-UHFFFAOYSA-M`) and CID (517044) do
 not change.
+
+## 2026.10.12 - Thompson 2020's correction read: it rescopes 0 of the 46 samples (#986)
+
+The open item of the 2026.10.07 "Advisory check" is closed by measurement, and nothing
+in this loader changed. The owner deposited the correction (PMC8091123; the bytes are
+ASM's PDF of DOI 10.1128/AEM.00177-21) under
+`$DATA_ROOT/torchcell-raw/thompsonFattyAcidAlcohol2020/si/thompson2021_correction_PMC8091123.pdf`
+(sha256 `2c7e387f...`, `manual_browser`). Its one substantive paragraph, verbatim from
+the layout text (line breaks folded; the text layer prints "ﬁrst"):
+
+> Readers should note that when the authors created the deletion mutant of PP_2675,
+> they deleted the entire region between the gene’s start and stop codons. However, this
+> also deleted the DNA that codes for the first 14 amino acids of the overlapping ORF
+> PP_2676.
+
+and it replaces the paper's JBEI registry link (folder 456) with folder 641. It touches
+the targeted `ΔPP_2675` strain of Thompson 2020's Figs. 7 and 9, and a URL.
+
+Measured against this release (`borchert2024.attribute_sample` over the metadata
+sheet, `manual_deposits_2026_10_12.py --measure`): Thompson 2020 is the source of 46
+samples (set15 24, set16 12, set12 10), 217,672 records at 4,732 loci, all mutant
+library `Putida_ML5_JBEI`, all experiment group `carbon source`, and none names
+PP_2675, PP_2676, pedF, a deletion or a knockout. They are pooled RB-TnSeq assays of the
+library in wild-type KT2440, so the correction rescopes **0 samples and 0 values** here.
+Whether to record the correction on these records anyway is the owner's decision (#986);
+this note gives the facts only. Details in
+[[experiments.036-dataset-fixes-before-kg-build.scripts.manual_deposits_2026_10_12]].

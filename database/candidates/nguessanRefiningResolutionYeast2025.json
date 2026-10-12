@@ -22,7 +22,7 @@
     {
       "gate": "G3",
       "outcome": "pass",
-      "reason": "37 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
+      "reason": "38 file(s) in library+raw, 0 worksheet row(s) counted; all intact",
       "evidence": [],
       "issue": null,
       "blocked_kind": null
@@ -542,6 +542,19 @@
       },
       {
         "tree": "raw",
+        "path": "data/bbqtl/BY4742_fixed.fasta",
+        "role": "raw_data",
+        "bytes": 12349796,
+        "sha256_manifest": "c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e",
+        "sha256_disk": "c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e",
+        "retrieval_method": "direct_url",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
         "path": "data/dryad/doi_10_5061_dryad_1rn8pk0vd__v20220520 (1).zip",
         "role": "raw_data",
         "bytes": 5085724902,
@@ -593,5 +606,5 @@
     "proposed_class": null
   },
   "decided_at": "2026-10-12",
-  "torchcell_commit": "60b06aa2d589f56f504da5d7b03af70c7504bc0d"
+  "torchcell_commit": "1d395d4aac4c6ce5cc348f70138de640930b96a1"
 }

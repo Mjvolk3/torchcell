@@ -112,3 +112,11 @@ Ten rows added as a pure insertion (5,533 to 5,543), curated from PubChem by nam
 ### Candidate verdict
 
 `candidate-gate gate` has no table row for an off-schedule key, so `experiments/database/scripts/messner2021_candidate_verdict.py` ([[experiments.database.scripts.messner2021_candidate_verdict]]) re-runs the yeast audit's composition for this one entry with the loader's inputs: the raw mirror for G3 (42 files in library + raw, all intact), the module's own DOI for G4 (no key held by another module), and the 18 compound labels plus DMSO for G5 (all resolve). Outcome `admissible`, G1 to G5 pass; `candidate-gate validate` accepts the JSON and `candidate-gate audit` re-reads every evidence quote of the store, ok 82. G4-value was not run: `overlap` reads one scalar per record, and this phenotype is a per-protein map (the L2 `values_match_report` check is the byte-level comparison). `candidate-gate ledger` refused: "torchcell.candidates.ledger.md already has '## 2026.10.11 - Candidate gate ledger'; one ledger per day", so the verdict reaches the ledger with the next day's run.
+
+## 2026.10.12 - P03872 (REP2) stored under its released accession
+
+Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.genome-gating-sweep.2026.10.12]], row 259) on branch `fix/genome-gate-reversals-yeast-2`.
+
+- `REFUSED_ACCESSIONS` is replaced by `ACCESSIONS_WITHOUT_ORF`: P03872, the 2-micron plasmid protein REP2 that no feature of the S288C R64 GFF names, is a key of every record and reference that quantified it, under the accession itself. Any other kept accession the GFF carries no ORF for is keyed the same way instead of stopping the build; the ledger field `refused_accessions` becomes `accessions_stored_as_released` (accession to reason). Every other accession keeps its ORF key from the GFF cross-references.
+- Records: 70, unchanged; the kept protein count becomes 2,200 keys (was 2,199 ORFs). The L4 `gene_containment_sgd` row reports P03872 outside S288C; under PR #1069 that rule is a finding, not a gate, and the synthetic verify test asserts exactly that row.
+- The dev store is rebuilt under slurm with `--retire-existing --verify` from a frozen snapshot of the branch cherry-picked onto PR #1069; the L0-L4 table is appended below when the job finishes.

@@ -450,3 +450,11 @@ All 12 rows pass (`preprocess/verification_report.json`):
 | L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 943 isolates: {'nonsense_or_sift': 223947, 'homozygous_frameshift': 137677} |
 
 Caudal 2024 had no `verify_build` before this change; `build_dataset_lmdb --verify` now runs the RNA-seq family rules (`runners.verify_rnaseq_store`) plus the shared audit. The family's L0 validates each record against its own experiment class (`levels.validate_by_type_tag`), because the `ExperimentType` union costs 28.8 to 33.6 s per Caudal record (about 8 h for the store) against 0.76 to 0.85 s.
+
+## 2026.10.12 - Bad-annotation rows served under their pangenome ids
+
+Owner rule of 2026-10-12, applied through the genome-gating sweep ([[database.genome-gating-sweep.2026.10.12]], row 39) on branch `fix/genome-gate-reversals-yeast-2`.
+
+- `BLANK_ROW_RULES[bad_annotation]` and `[unannotated]` are now `served` with the pangenome-id rule the present accessory ORFs use (`X<n>-<name>`), and each keeps its typed `ProvenanceGap` on the class definition (no mirrored source defines the class). The 16,031 `bad annotation` rows of the 943 built isolates carry 17 pangenome ids (X142-augustus_masked.1731.ATP_4 in 944 rows, ...); 10,809 of the 16,048 released rows of that class have a TPM of 0, stored as the released 0. `unannotated` has 0 rows in the built isolates. `absent` rows (443,200) stay dropped as the paper does.
+- Record count unchanged: 943. The phenotypes gain the 17 keys in the isolates that carry them, so the store is rebuilt under slurm with `--retire-existing --verify` from a frozen snapshot of the branch cherry-picked onto PR #1069; the L0-L4 table is appended below when the job finishes. `test_the_released_table_ledger_matches_issue_598` (the real table) passes with 12 + 17 pangenome ids over 461 + 16,031 rows.
+- Still open, deferred to PR #1058: the 25 `XTRA_*` isolates and `FY4-6` (26 isolates, 169,442 released gene rows) have no Peter 2018 genome. Storing them needs a genotype that can state "no sequence-level genotype released" as a typed gap; `Genotype` on `main` has no gap slot, and #1058 adds `HashableProvenanceGapMixin` to it, so the 26 are served once that lands.

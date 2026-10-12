@@ -378,3 +378,62 @@ L0-L4 of the stores before the rebuild below, read-only (`kg4_pre_build_verifica
 | L3 | `media_membership` | PASS | 91111 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
 | L4 | `gene_containment_sgd` | PASS | 1.000 of 1400 measured genes are S288C reference genes (>= 0.9) |
 | L4 | `current_genome_genes` | PASS | every one of the 1400 measured systematic names is a gene of the current genome |
+
+## 2026.10.12 - Query-strain SDs from Additional Data S4; Data S1 pinned
+
+"If uncertainty exists we cannot be missing it!" (owner, 2026-10-12): Additional Data S4 ("This file contains the fitness standard for single and double mutant query strains.", `si/si1.md` line 462) releases `Fitness` and `St.dev.` for the 546 query strains, and no loader read it. Smf and Dmf now do.
+
+- **Deposit.** `deposit_raw_mirror()` copied the library mirror's `si/si_data/Data File S4_Fitness standard for single and double mutant query strains.xlsx` (sha256 `2c9ee77dc6f0a08900158f23cecbcad41db6dc4a2555fbc7100fbca455869d51`) into `$DATA_ROOT/torchcell-raw/kuzminSystematicAnalysisComplex2018/data/` and wrote its `manifest.json`: a `local_archive` retrieval record naming the library copy (the library manifest records no upstream retrieval for it) and, as `si_data_sources`, the two locations the SI names (the Boone-lab supplement page and DRYAD doi:10.5061/dryad.tt367). `download()` links it into `raw/`; `process()` verifies it.
+- **Statistic.** si1.md line 59: "bootstrapped means, instead of medians, across replicates were used in variance estimation and final fitness values ... resulting in a total of between 12 and 24 colony measurements for each fitness estimate." So the SD is stored as `bootstrap_se` (used as-is), `n_samples` 12 (the conservative end of the range), `colony`, as `kuzmin2020.py` stores its Table S5.
+- **Join.** S4 keys a strain by its bare tm number. Every Smf query allele (358) and Dmf query strain (172) finds its S4 row; an S4 fitness and Data S1's 4-decimal value agree within rounding for all 504 that state one (largest difference 5.0e-05), and a missing row or a larger difference is refused. Fitness values are unchanged.
+- **Blank S4 rows.** 19 Smf and 7 Dmf strains are listed with a blank Fitness and St.dev.: the release states no uncertainty for them, so they carry a typed `ProvenanceGap(field="fitness_uncertainty", reason=not_reported_by_primary)` looked for in S4 (`S4_BLANK_GAP`).
+- **Pins.** Every Kuzmin 2018 class now verifies Data S1 (`RAW_TABLE_SHA256` `c82b60f9...`, the same bytes in all five dev raw dirs and in the library mirror) before reading it, and Smf and Dmf verify S4; `raw_file_names` is a list in all five. kuzmin2018 left the raw-pin debt list (`tests/torchcell/datasets/scerevisiae/test_raw_pins.py`).
+
+Rebuilt under slurm job 4331 (`gh_keep_records_887_sd_zero_rebuild.slurm`, [[experiments.036-dataset-fixes-before-kg-build.scripts.gh_keep_records_887_sd_zero_rebuild]], head `aac3e1f4f`, `--retire-existing --verify`), censused by `keep_records_887_sd_zero_inventory.py --after` (`results/keep_records_887_sd_zero_stores_after.json`):
+
+| Store | Records before | Records after | `bootstrap_se` (S4) | S4-blank gaps | `sample_sd` | Released 0s |
+|---|---:|---:|---:|---:|---:|---:|
+| `smf_kuzmin2018` | 1,539 | 1,539 | 339 | 19 | 0 | 0 |
+| `dmf_kuzmin2018` | 410,571 | 410,571 | 165 | 7 | 410,399 | 4 |
+
+The 1,181 array single-mutant fitnesses still carry no SD: no file of this release states one. `tmf_kuzmin2018` is unchanged (it reads no S4) and not rebuilt.
+
+L0-L4, read-only (`kg4_pre_build_verification_sweep.py`, slurm job 4334). `smf_kuzmin2018` passes all 14 rules (`uncertainty_sanity` now checks 339 labeled uncertainties); `dmf_kuzmin2018` fails only `uncertainty_sanity`, on the 4 released zeros above:
+
+`smf_kuzmin2018`: **PASS**, 14 rules, 0 failing (report written 2026-10-12T09:46:23)
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 1539 records validated |
+| L1 | `count` | PASS | observed 1539, expected 1539 |
+| L1 | `pair_uniqueness` | PASS | 1539 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | PASS | 1539 values checked |
+| L2 | `se_nonnegative` | PASS | 339 values checked |
+| L3 | `reference_one` | PASS | reference fitness == 1.0 for all 1539 records |
+| L1 | `provenance_gaps` | PASS | 1558 documented provenance gaps over 1539/1539 records; 0 deferred field(s): []; 57968 undeclared None values over 15 carrier fields (top: Compound.inchi x20007, Compound.chebi_id x13851, Compound.smiles x4617, Compou... |
+| L1 | `canonical_gene_names` | PASS | 1399 systematic names, one canonical spelling each, each current in the genome; 1170 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | PASS | 339 labeled uncertainties, none a zero dispersion; 0 records report n_samples >= 2 with no uncertainty |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | PASS | medium components: 10773 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | PASS | 1539 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | PASS | 1.000 of 1399 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | PASS | every one of the 1399 measured systematic names is a gene of the current genome |
+
+`dmf_kuzmin2018`: **FAIL**, 14 rules, 1 failing (report written 2026-10-12T09:51:03)
+
+| Level | Rule | Verdict | Message |
+|---|---|---|---|
+| L0 | `structural` | PASS | 410571 records validated |
+| L1 | `count` | PASS | observed 410571, expected 410571 |
+| L1 | `pair_uniqueness` | PASS | 410571 unique (strain, environment) records, one each |
+| L2 | `value_fidelity` | PASS | 410571 values checked |
+| L2 | `se_nonnegative` | PASS | 410564 values checked |
+| L3 | `reference_one` | PASS | reference fitness == 1.0 for all 410571 records |
+| L1 | `provenance_gaps` | PASS | 410578 documented provenance gaps over 410571/410571 records; 0 deferred field(s): []; 13548878 undeclared None values over 14 carrier fields (top: Compound.inchi x5337423, Compound.chebi_id x3695139, Compound.smiles ... |
+| L1 | `canonical_gene_names` | PASS | 1400 systematic names, one canonical spelling each, each current in the genome; 1171 common names the resolver cannot place |
+| L2 | `uncertainty_sanity` | **FAIL** | 4/410564 labeled uncertainties are a sample dispersion of exactly 0 (a pseudocount artifact, not perfect precision) |
+| L3 | `compound_identity` | PASS | environment edits: 0 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_compound_identity` | PASS | medium components: 2873997 compound references carry a structure identifier; 0 declare a typed gap (0 distinct compounds, unencodable) |
+| L3 | `media_membership` | PASS | 410571 records on a shared MEDIA_LIBRARY medium, 0 on a medium deriving from one (1 distinct media) |
+| L4 | `gene_containment_sgd` | PASS | 1.000 of 1400 measured genes are S288C reference genes (>= 0.9) |
+| L4 | `current_genome_genes` | PASS | every one of the 1400 measured systematic names is a gene of the current genome |

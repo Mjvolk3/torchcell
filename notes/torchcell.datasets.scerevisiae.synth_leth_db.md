@@ -294,3 +294,5 @@ Built from `86c7ae573` with `--retire-existing --verify` (the main-code builds o
 | L4 | `current_genome_genes` | PASS | every one of the 2980 measured systematic names is a gene of the current genome |
 
 The gap counts check by hand: four gaps per record (three on the medium, one on the temperature), so 13,996 x 4 = 55,984 for SL and 6,942 x 4 = 27,768 plus the 74 SR score gaps = 27,842 for SR. Both #902 and #903 failures pass now: `media_membership` on both stores, and `score_defined_by_source` on SR (the 74 released scores are gaps, not stored values).
+
+**Rebuilt once more at `8d1e8f423` (slurm 4246, verified by 4247).** The schema-change record commit declared `Media.name` and `state` without their documentation-only `Field` wrapper, which moved `Media`'s contract fingerprint (not its dump), so the stores above read stale until rebuilt. The rebuild gives the same counts (1,287 SGD, 13,996 SL, 6,942 SR) and the sweep the same verdict and the same message on every rule as job 4194 (compared row by row, timestamps and HEAD aside); `--list-stale --include-private` names none of the three.

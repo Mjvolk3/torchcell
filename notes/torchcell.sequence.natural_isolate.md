@@ -1,0 +1,42 @@
+---
+id: cljz5kturlsnt8neeib5r3k
+title: Natural_isolate
+desc: ''
+updated: 1791808458110
+created: 1791808458110
+---
+
+## 2026.10.12 - One genotype per isolate of the Peter 2018 panel (#988, #987, #1001)
+
+`torchcell/sequence/natural_isolate.py` builds the genotype of every natural isolate of the Peter 2018 1,011-genome panel, for every loader whose records are such isolates: Caudal 2024 (`caudal2024.py`), Peter 2018 (`peter2018.py`), Muenzner 2024 (`muenzner2024.py`, both stores) and De Chiara 2022 (`dechiara2022.py`, all three stores). Before this module the construction lived in the Caudal loader, and the other three imported its private helpers (`_parse_fasta`, `_reference_slice`, `_isolate_and_symbol`, `_demangle_orf`, `_orf_to_s288c`, ...) and called its static methods (`_content_perturbations`, `_sequence_perturbations`, and on Muenzner `_sequence_variants` with its own dataset cast to Caudal's). Peter and De Chiara each re-implemented the tarball diff. Issues #988 and #1002 asked for one module.
+
+### Where it lives, and why not `peter2018_genotype.py`
+
+The issue named two paths. The loaders' notes point at the first one through #1002 (`torchcell/datasets/scerevisiae/peter2018_genotype.py`), and that path is refused by the raw-pin gate: part B of `tests/torchcell/datasets/scerevisiae/test_raw_pins.py` (issue #561) refuses any module in `torchcell/datasets/scerevisiae/` that carries a sha256-named identifier or a 64-hex constant without calling `verify_raw_files` in a `process()`, and a shared builder has no `process()`. Weakening that gate to make room was not an option. The second path, `torchcell/sequence/natural_isolate.py`, sits beside the genomes-tier registry the six input files come from. One import is local to a function: `torchcell.datasets.gene_alias_resolution`, because `torchcell.datasets` imports every loader on first import and the loaders import this module.
+
+### What a genotype carries
+
+| element | source | class |
+|---|---|---|
+| allele differs from the S288C R64 slice | `allReferenceGenesWithSNPsAndIndelsInferred.tar.gz` | `SequenceVariantPerturbation` |
+| non-reference ORF present (copy number) | `genesMatrix_PresenceAbsence.tab.gz`, `genesMatrix_CopyNumber.tab.gz` | `NaturalGenePresencePerturbation` |
+| reference ORF absent | presence matrix | `NaturalGeneAbsencePerturbation` |
+| HO deleted (#988) | Supplementary Table 1, 'HO deletion' = yes | `DeletionPerturbation` of YDL227C |
+| a released loss-of-function call (#987) | `1011LossOfFunction.xls.gz`, `genesMatrix_Frameshift.tab.gz` | `NaturalLossOfFunctionPerturbation` |
+| ploidy, zygosity, aneuploidy, manipulation (#1001) | Supplementary Table 1 | `Genotype.natural_isolate` (`NaturalIsolateDescriptor`) |
+
+The Supplementary Tables workbook (`41586_2018_30_MOESM3_ESM.xls`, sha256 `b11de13b50bcf91bb2a40cdbd0f2f35372bdef6fc9a018d7538cf5e5eea7f273`, the library mirror's `si/si3.xls`) was registered into the genomes-tier set `peter2018_1011_assemblies` on 2026-10-12 by `register_supplementary_tables`, with the `pmc_cloud` retrieval record the library manifest holds (`https://pmc-oa-opendata.s3.amazonaws.com/PMC6784862.1/41586_2018_30_MOESM3_ESM.xls`). Every loader therefore reads all six genotype files (`GENOTYPE_FILES`) from one tier, each verified against its manifest.
+
+### Decisions
+
+- **HO deletion.** Paper.md line 174 (sha256 `21c49934d546f162b43025c85254bcd1cedcb80ab9a691935301b5962a6a12da`): "However, among the 918 selected isolates, 124 were non-natural haploid with the $H O$ gene deleted and the 93 external isolates were genetically manipulated and made homozygous before sequencing." Line 36: "As 217 strains were genetically manipulated and no longer in their natural ploidy states, we assigned a relative ploidy state to the other 794 isolates (Methods)". Table S1's 'HO deletion' column reads yes for 124 isolates (122 of the 971 phenotyped). The deletion is stored as the parent `DeletionPerturbation`, because every child class asserts a cassette (KanMX, NatMX, a named marker) that neither the table nor the paper names; it was an abstract parent and is now a union member, fields unchanged. Where the presence matrix marks HO absent in a deleted isolate (49 of 124; 47 of the 122 phenotyped), the natural absence those genotypes carried is replaced, since the absence is the engineered deletion.
+- **The other 93 manipulated isolates.** Table S1 does not mark which isolates are the 93 external ones. Measured, not used: exactly 93 Table S1 rows carry a `SACE_` standardized name, all cite Table S1 references 2, 6 or 17 (Strope 2015, Bergström 2014, Skelly 2013, the paper's refs 8, 7 and 6) and all are 2n homozygous. Because that identification is an inference from naming, every isolate whose 'HO deletion' reads no carries a typed gap on `genetic_manipulation` quoting the paper, rather than a value.
+- **Loss-of-function cause.** One member per release matrix. `nonsense_sift_or_frameshift` is the 1011LossOfFunction bit. The paper defines its class (paper.md line 202): "Non-synonymous SNPs predicted as deleterious by SIFT $( \mathrm { v } . 5 . 2 . 2 ) ^ { 1 7 }$ as well as nonsense mutations were considered as deleterious for protein function." Measured over the 1,011 isolates: of the 138,304 homozygous frameshift calls on the 6,031 genes both matrices code, every one is also a 1 in the loss-of-function matrix, so the bit is not nonsense-or-SIFT only. The brief named the member `nonsense_or_sift`; it is named for what the bit is measured to contain. `homozygous_frameshift` is the frameshift matrix (Data availability, paper.md line 290).
+- **Calls are kept, and each disagreement is named.** `allele_status` says what the inferred-allele release says about the same allele: `sequence_variant` (the genotype also carries its `SequenceVariantPerturbation`, and the call points at the same tarball member), `allele_equals_reference` (the two releases disagree), `no_inferred_allele` (no gene file). `gene_present_in_isolate` is the presence matrix cell for the row's ORF: 11,376 nonsense/SIFT/frameshift calls of the 971 phenotyped isolates sit on an ORF the matrix marks absent.
+- **The 533 frameshift rows without a pangenome code.** They are keyed by gene name and R64-1-1 coordinates as the release keys them (`release_gene_name`, `release_span`), and named through `gene_alias_resolution` against the R64-4-1 GFF: 414 by a live systematic name, 116 by a name with one candidate ORF, and SLM6 (the standard name of YBR266C and an alias of YPR164W) by an `SGD_STANDARD_NAME` pin re-checked on every build. The resolved ORF must overlap the row's span; 530 spans are identical, LTO1 (YNL260C) ends at 157347 in R64-4-1 against 157455 in the release. Two rows are refused, counted in the ledger: AAD16 (YFL057C in R64-1-1, now an alias of the YFL056C pseudogene; no R64-4-1 locus carries the name) and DDI3 (its row is chrXIV:11452-12129, YNL335W, whose R64-4-1 standard name is DDI2, while DDI3 now names YFL061W on chrVI; no rule `gene_alias_resolution` admits picks an ORF by coordinates).
+- **One spelling per gene.** Calls and the HO deletion name their gene by the systematic name in `perturbed_gene_name`, as the natural absences always have: two isolates lack HO naturally, and an `HO` deletion beside their `YDL227C` absences split the gene's spelling under the shared `canonical_gene_names` rule (found by the Peter synthetic verifier test). The release's own name stays in `release_gene_name`.
+- **The variant cache** (`preprocess/sequence_variants.parquet`) now has a sidecar (`sequence_variants.index.json`) naming the tarball's sha256, the isolates diffed and the tarball's genes; it is reused for any subset of those isolates at that sha256, so a verifier re-derives the stored isolates from the build's own cache.
+
+### Verification shared by the four loaders
+
+`torchcell/verification/natural_isolate_genotype.py` (`IsolateGenotypeAudit`): every distinct stored genotype is fed once; L1 `isolate_genotype_identity`, L2 `isolate_genotype_round_trip` (dump equality with the builder's re-derivation), L4 `isolate_descriptor_matches_table_s1` (re-read from the library mirror's `si/si3.xls`, not the tier copy) and L4 `loss_of_function_calls_match_release` (the stored calls per isolate and cause against the matrices' 1s, re-read with pandas). Caudal gained a `verify_build` so `build_dataset_lmdb --verify` covers it (`runners.verify_rnaseq_store`, the RNA-seq family rules plus the audit).

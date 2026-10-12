@@ -2203,7 +2203,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "env_chemgen_hillenmeyer2008_het": 2712677,
         "env_chemgen_hillenmeyer2008_hom": 1063034,
         "env_chemgen_parsons2006": 291673,
-        "env_chemgen_yoshikawa2009": 28140,
+        # #1045: every released cell, the 5% ethanol columns included (4,729 x 4 x 2)
+        "env_chemgen_yoshikawa2009": 37832,
         "crispri_chemgen_smith2016": 7053,
     }
     assert {

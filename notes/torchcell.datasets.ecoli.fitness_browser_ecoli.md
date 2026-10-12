@@ -57,3 +57,31 @@ Built with `build_dataset_lmdb --dataset FitnessBrowserEcoliDataset --retire-exi
 | L4 | own_release_cross_check_wetmore2015 | pass: 83 shared samples, 301,124 values, pooled Pearson r 0.997034, smallest per-sample r 0.988897 (bar 0.87), largest single-gene difference 2.57 |
 
 The L4 rows measure the browser's copy of the 151 Keio samples the served Price 2018 store keeps (the store was rebuilt at 05:56 by array 4011 and now keeps 151, not the 147 of the 2026.10.11 audit) against that store, and of the 83 samples Wetmore 2015's store keeps against its own 1.0.0 release: the Price copy is identical to the float, so storing it again would duplicate it (G4), and the Wetmore agreement reproduces the audit's minimum 0.98890.
+
+## 2026.10.12 - Revision: every gene under the deposit's own locus tag
+
+Owner rule, 2026-10-12: "the data is the data ... the genome is separate.. it doesn't gate anything". The build above placed each browser locus on a BW25113 tag through the ECK crosswalk and left out the 21 that do not place; that is a genome lookup deciding what is stored, so it is gone.
+
+- Every gene is stored under the locus tag the deposit gives it, `Gene.sysName`, an MG1655 b-number (namespace `ecoli_k12_mg1655_bnumber`, no `identifier_mapping`), with `Gene.gene` as its common name (the tag when the deposit has none: 105 of 3,789). `fitness_browser.released_genes` refuses only a change in the deposit's shape (a locus with values and no `Gene` row or no `sysName`, or a repeated `sysName`). No genome is injected or read to build; the reference genome still states the library strain, BW25113 (`Organism.strain`).
+- Records: 6 samples x 3,789 loci = **22,734** (was 22,608; the 21 loci the crosswalk could not place are now stored).
+- The verifier's gene rules use the deposit's own Keio `Gene.sysName` set as the universe, with no resolver.
+- The L4 rows still align the deposit to the served Price 2018 and Wetmore 2015 stores through `price2018.map_genes`, because those stores key a gene by the BW25113 tag their own loaders placed it on. It is a measurement of samples this loader does not store (G4) and decides nothing stored.
+
+### Build and L0-L4 (slurm job 4332, `--retire-existing --verify`)
+
+22,734 records in 23 s, gene set 3,789, 6 references; verification PASSED. Report: `$DATA_ROOT/data/torchcell/rbtnseq_fitness_browser_ecoli/preprocess/verification_report.json`.
+
+| level | rule | result |
+|---|---|---|
+| L0 | structural | pass: 22,734 records validated |
+| L1 | count | pass: 22,734 observed, 22,734 expected |
+| L1 | pair_uniqueness | pass: 22,734 unique records |
+| L1 | provenance_gaps | pass: 136,404 documented gaps; deferred field `inchikey` (D-mannitol) |
+| L1 | canonical_gene_names | pass: 3,789 systematic names, one spelling each (no resolver supplied) |
+| L1 | records_carry_their_browser_publication | pass: 6 of 6 samples name Price21b's DOI |
+| L2 | value_fidelity, se_nonnegative, interval_orientation, uncertainty_sanity | pass |
+| L3 | measurement_type_consistent, reference_zero, environment_perturbed | pass |
+| L3 | compound_identity, media_compound_identity, media_membership | pass: 1 medium, `RCH2_DEFINED_NOCARBON_PRICE2018` |
+| L4 | gene_containment_sgd, current_genome_genes | pass: 1.000 of 3,789 genes are in the deposit's Keio `Gene.sysName` set |
+| L4 | compendium_cross_check_price2018 | pass: 151 samples, 568,968 values, pooled r 1.000000, smallest per-sample r 1.000000 (bar 0.999999), largest difference 8.88e-16 |
+| L4 | own_release_cross_check_wetmore2015 | pass: 83 samples, 301,124 values, pooled r 0.997034, smallest per-sample r 0.988897 (bar 0.87), largest difference 2.57 |

@@ -25,6 +25,8 @@ from pydantic import BaseModel
 
 
 class CountRow(BaseModel):
+    """One dataset's served count, dev-store count and how the dev store was found."""
+
     dataset: str
     served: int
     dev: int | None
@@ -32,10 +34,12 @@ class CountRow(BaseModel):
 
     @property
     def delta(self) -> int | None:
+        """Dev minus served, or None when there is no dev store."""
         return None if self.dev is None else self.dev - self.served
 
 
 def read_served_counts(path: str) -> dict[str, int]:
+    """Parse the committed served-counts markdown table into {class name: count}."""
     served: dict[str, int] = {}
     with open(path) as fh:
         for line in fh:
@@ -46,6 +50,7 @@ def read_served_counts(path: str) -> dict[str, int]:
 
 
 def dev_count(root: str) -> int | None:
+    """Entry count of the dev store under ``root``, read-only, or None if absent."""
     lmdb_dir = os.path.join(root, "processed", "lmdb")
     if not os.path.isdir(lmdb_dir):
         return None
@@ -58,6 +63,7 @@ def dev_count(root: str) -> int | None:
 
 
 def collect(served_md: str, data_root: str) -> list[CountRow]:
+    """One row per served dataset, sorted by the size of the change."""
     from torchcell.database.build_dataset_lmdb import dataset_default_root
     from torchcell.knowledge_graphs.dataset_adapter_map import dataset_adapter_map
 
@@ -66,13 +72,17 @@ def collect(served_md: str, data_root: str) -> list[CountRow]:
     for name, served in read_served_counts(served_md).items():
         cls = by_name.get(name)
         if cls is None:
-            rows.append(CountRow(dataset=name, served=served, dev=None, note="not mapped"))
+            rows.append(
+                CountRow(dataset=name, served=served, dev=None, note="not mapped")
+            )
             continue
         root = dataset_default_root(cls)
         root = root if os.path.isabs(root) else os.path.join(data_root, root)
         dev = dev_count(root)
         if dev is None:
-            rows.append(CountRow(dataset=name, served=served, dev=None, note="no dev store"))
+            rows.append(
+                CountRow(dataset=name, served=served, dev=None, note="no dev store")
+            )
             continue
         manifest = os.path.exists(os.path.join(root, "build_manifest.json"))
         rows.append(
@@ -88,6 +98,7 @@ def collect(served_md: str, data_root: str) -> list[CountRow]:
 
 
 def main() -> int:
+    """Print the table; exit 1 when any served dataset decreased."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument(
         "--served-md",

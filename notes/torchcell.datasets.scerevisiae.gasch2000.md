@@ -85,3 +85,12 @@ The issue's "every release carries log2 ratios against the same culture at time 
 - **Keys, under the owner rule of 2026-10-12** (the data is the data; no released row dropped on genome or annotation grounds; no resolution status): every one of the 6,152 rows is keyed by its released `UID`, verbatim, with no resolution against R64. The rule covers rows and genes; whether it also lifts the G2 host gate (storing `DBY7286` as released, with no typed background) is an owner question, not taken here.
 
 No store exists, so there is no L0-L4 table.
+
+### What unblocks it (owner decision, relayed 2026-10-12)
+
+Gasch 2000 stays blocked at G2: the host strain's background is unstated and the one source that would state it is walled. The pooled-reference design waits with it. Two things unblock the loader:
+
+1. **The host background.** A manual-once deposit of Ferea et al. 1999, PNAS 96:9721, https://www.pnas.org/doi/pdf/10.1073/pnas.96.17.9721 (PMC22277; the script gets 403 at pnas.org and PMC withholds the XML), if it states DBY7286's background.
+2. **The 35 pool-referenced arrays** (hs-2 7, dtt-2 7, car-1 6, car-2 7, ct-2 8; 212,118 values), which need a typed pooled-reference representation before they can be stored.
+
+Nothing is refused on a count, because nothing is loaded yet. The parent placement (no graph class for `TwoChannelMicroarrayExpressionPhenotype`) and Hackett 2020's leaf under it are owner-approved; Hackett's and Kemmeren's load-time re-keying belongs to the yeast group-3 reversal branch (#1076).

@@ -221,18 +221,41 @@ def _validate_by_type_tag(experiment: dict[str, Any]) -> object:
     return cls.model_validate(experiment)
 
 
+def natural_isolate_of(rec: Record) -> str | None:
+    """The isolate a natural-isolate record measures.
+
+    The one ``strain_id`` its perturbations share; for an S288C-derived laboratory
+    strain stored with no perturbation off S288C (Muenzner 2024's FY4, #1045), the
+    background its own reference genome names. None when neither says.
+    """
+    perturbations = rec["experiment"]["genotype"]["perturbations"]
+    if perturbations:
+        strain = perturbations[0].get("strain_id")
+        return None if strain is None else str(strain)
+    background = str(rec["reference"]["genome_reference"]["strain"])
+    return None if background == "S288C" else background
+
+
 def _l1_genotype_strain_consistency(records: Sequence[Record]) -> LevelResult:
     """L1: every perturbation of a record names the same isolate (one ``strain_id``).
 
     A natural isolate is ONE perturbation set off S288C; a record mixing two isolates'
     perturbations is a join error that the one-strain-per-record rule cannot see, since
-    that rule reads only the first perturbation.
+    that rule reads only the first perturbation. A record with no perturbation passes
+    only when its reference genome names an S288C-derived background (FY4), and is
+    counted apart.
     """
     mixed = []
+    n_background = 0
     for i, rec in enumerate(records):
-        strains = {
-            p.get("strain_id") for p in rec["experiment"]["genotype"]["perturbations"]
-        }
+        perturbations = rec["experiment"]["genotype"]["perturbations"]
+        if not perturbations:
+            if natural_isolate_of(rec) is None:
+                mixed.append(i)
+            else:
+                n_background += 1
+            continue
+        strains = {p.get("strain_id") for p in perturbations}
         if len(strains) != 1 or None in strains:
             mixed.append(i)
     return LevelResult(
@@ -241,10 +264,21 @@ def _l1_genotype_strain_consistency(records: Sequence[Record]) -> LevelResult:
         passed=not mixed,
         message=(
             f"all {len(records)} genotypes name one isolate each"
+            + (
+                f" ({n_background} S288C-derived records carry no perturbation off "
+                "S288C and name their background on the reference)"
+                if n_background
+                else ""
+            )
             if not mixed
             else f"{len(mixed)} records mix isolates or carry none"
         ),
-        details={"n_records": len(records), "n_mixed": len(mixed), "first": mixed[:5]},
+        details={
+            "n_records": len(records),
+            "n_mixed": len(mixed),
+            "first": mixed[:5],
+            "n_s288c_derived": n_background,
+        },
     )
 
 
@@ -326,12 +360,9 @@ def _measured_keys(records: Sequence[Record], label_key: str) -> set[str]:
 
 
 def _strains(records: Sequence[Record]) -> set[str]:
-    out: set[str] = set()
-    for rec in records:
-        for p in rec["experiment"]["genotype"]["perturbations"]:
-            out.add(str(p["strain_id"]))
-            break
-    return out
+    return {
+        strain for rec in records if (strain := natural_isolate_of(rec)) is not None
+    }
 
 
 def _l4_caudal_genotype_agreement(
@@ -402,7 +433,7 @@ def verify_natural_isolate_proteome(
         l0_structural((rec["experiment"] for rec in records), _validate_by_type_tag)
     )
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_strain_uniqueness(records))
+    report.add(_l1_strain_uniqueness(records, strain_of=natural_isolate_of))
     report.add(_l1_genotype_strain_consistency(records))
     levels = [
         float(v)
@@ -485,7 +516,7 @@ def verify_natural_isolate_turnover(
         l0_structural((rec["experiment"] for rec in records), _validate_by_type_tag)
     )
     report.add(l1_count(len(records), expected_count))
-    report.add(_l1_strain_uniqueness(records))
+    report.add(_l1_strain_uniqueness(records, strain_of=natural_isolate_of))
     report.add(_l1_genotype_strain_consistency(records))
     rates = [
         float(v)

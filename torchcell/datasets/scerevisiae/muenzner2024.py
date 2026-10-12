@@ -26,8 +26,20 @@ Peter's reference-gene tarball, natural presence of non-reference pangenome ORFs
 natural absence of reference ORFs from Peter's matrices. The release spells the 93
 ``SACE_`` codes of the Peter panel with a dot (``SACE.YAB``); ``peter_code`` maps them
 back, and every one of the 67 such proteome isolates carries the same alternative strain
-name in SI Table 1 as in Peter's Table S1 (checked in the dendron note). An isolate with no
-Peter genome is refused and counted in the ledger (``Reference`` = FY4, and ``XTRA.DGU``).
+name in SI Table 1 as in Peter's Table S1 (checked in the dendron note). One isolate with
+no Peter genome is still refused and counted in the ledger: ``XTRA.DGU`` (KS11, SI Table 1
+ploidy 3). Stored the way FY4 is, it would need its own reference genome, and
+``ReferenceGenome.ploidy`` admits only haploid and diploid, so a triploid has no honest
+carrier without a schema change (an owner decision, #1045).
+
+FY4 (2026.10.12, #1045 row 18). The release's ``Reference`` column (SI Table 1: FY4,
+ploidy 1) is the S288C-derived laboratory strain, resolved the way the other S288C-derived
+backgrounds are (BY4741/BY4742 in the deletion loaders): its record's reference names the
+strain (``ReferenceGenome(strain="FY4")``) on the S288C R64 coordinate system, and its
+genotype carries no perturbation off S288C. The release names the column ``Reference``
+and its Methods infer every strain "on the basis of the reference genome of the S288c
+strain" and take "the proteome for the reference strain S288c" from UniProt. That FY4
+descends from S288C (Winston 1995) is not mirrored; the ledger says so.
 Whole-chromosome aneuploidy and basal ploidy (SI Table 1) are genomic content the schema
 cannot carry: every perturbation is gene-keyed, and ``ReferenceGenome.ploidy`` is
 haploid/diploid only. Each isolate's karyotype is written to the ledger instead, and the
@@ -164,6 +176,10 @@ TURNOVER_MEASUREMENT_TYPE = "dynamic_silac_lys8_kdp_per_hour_no_dilution_correct
 
 #: The release's spelling of the S288C-derived control column (SI Table 1: FY4).
 FY4_RELEASE_CODE = "Reference"
+#: SI Table 1's alternative strain name of that column, checked at build.
+FY4_STRAIN = "FY4"
+#: Release codes of S288C-derived laboratory strains -> their SI Table 1 name.
+S288C_DERIVED: dict[str, str] = {FY4_RELEASE_CODE: FY4_STRAIN}
 EUPLOID = "euploid"
 
 
@@ -246,6 +262,13 @@ BATCH_CORRECTION_QUOTE = (
     "Subsequently, batch correction was performed at the precursor level by bringing "
     "median precursor quantities of each batch to the same value."
 )
+S288C_GENOME_QUOTE = (
+    "Protein-wise fasta files were created by inferring single-nucleotide polymorphisms "
+    "for each strain on the basis of the reference genome of the S288c strain."
+)
+REFERENCE_STRAIN_QUOTE = (
+    "The proteome for the reference strain S288c was obtained from UniProt"
+)
 REPLICATION_QUOTE = (
     "The proteomic dataset for the small strain library (disomic lab-engineered "
     "strains) was acquired in triplicates, while the large dataset (> 1000 isolates) "
@@ -277,6 +300,18 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     ),
     "turnover_reference": _paper_sv(
         "per-protein median over euploid isolates", TURNOVER_REFERENCE_QUOTE
+    ),
+    "s288c_genome": _paper_sv(
+        "every strain's genome is written against the S288c reference",
+        S288C_GENOME_QUOTE,
+    ),
+    "reference_strain": _paper_sv(
+        "the release's 'Reference' column (SI Table 1: FY4) is the S288C-derived "
+        "laboratory reference",
+        REFERENCE_STRAIN_QUOTE,
+        note="SI Table 1 names the column 'Reference' with alternative_strain_name "
+        "'FY4' (checked at build); FY4's descent from S288C (Winston 1995) is not "
+        "mirrored",
     ),
     "imputation": _paper_sv(
         "the paper imputed (<4%) by KNN; SI Table 3 is the non-imputed matrix",
@@ -623,20 +658,57 @@ class RefusedIsolate(BaseModel):
     reason: str
 
 
+class S288cDerivedIsolate(BaseModel):
+    """A release column that is an S288C-derived laboratory strain, built on S288C."""
+
+    release_code: str
+    strain: str = Field(description="SI Table 1 alternative_strain_name, as released")
+    ploidy: str = Field(description="SI Table 1 'Ploidy', as released")
+    aneuploidies: str = Field(description="SI Table 1 'Aneuploidies', as released")
+    basis: str = Field(description="How the strain is resolved, and what is unsourced")
+
+
+def s288c_derived_isolate(code: str, annotations: pd.DataFrame) -> S288cDerivedIsolate:
+    """The SI Table 1 row of an S288C-derived column, which must name its strain."""
+    row = annotations.set_index("Standardized_name").loc[code]
+    strain = str(row["alternative_strain_name"])
+    if strain != S288C_DERIVED[code]:
+        raise ValueError(
+            f"SI Table 1 names {code!r} {strain!r}, not {S288C_DERIVED[code]!r}"
+        )
+    if str(row["Ploidy"]) != "1":
+        raise ValueError(f"SI Table 1 gives {strain} ploidy {row['Ploidy']}, not 1")
+    return S288cDerivedIsolate(
+        release_code=code,
+        strain=strain,
+        ploidy=str(row["Ploidy"]),
+        aneuploidies=str(row["Aneuploidies"]),
+        basis=f"the release's {code!r} column, {strain}: an S288C-derived laboratory "
+        "strain stored with no perturbation off S288C and its own reference genome "
+        f"ReferenceGenome(strain={strain!r}, haploid); its descent from S288C "
+        "(Winston 1995) is not mirrored",
+    )
+
+
 def match_isolates(
     release_codes: list[str], peter_isolates: set[str], annotations: pd.DataFrame
-) -> tuple[dict[str, str], list[RefusedIsolate]]:
-    """``{release code: Peter code}`` for the codes with a Peter genome, plus refusals.
+) -> tuple[dict[str, str], list[S288cDerivedIsolate], list[RefusedIsolate]]:
+    """``{release code: Peter code}``, the S288C-derived columns, and the refusals.
 
-    ``annotations`` is SI Table 1; every release code must be one of its rows.
+    ``annotations`` is SI Table 1; every release code must be one of its rows. An
+    S288C-derived column (``S288C_DERIVED``) is built on S288C, not refused (#1045).
     """
     names = annotations.set_index("Standardized_name")["alternative_strain_name"]
     missing = sorted(set(release_codes) - set(names.index))
     if missing:
         raise ValueError(f"release isolates absent from SI Table 1: {missing}")
     matched: dict[str, str] = {}
+    s288c: list[S288cDerivedIsolate] = []
     refused: list[RefusedIsolate] = []
     for code in release_codes:
+        if code in S288C_DERIVED:
+            s288c.append(s288c_derived_isolate(code, annotations))
+            continue
         peter = peter_code(code)
         if peter in peter_isolates:
             matched[code] = peter
@@ -654,7 +726,24 @@ def match_isolates(
         )
     if len(set(matched.values())) != len(matched):
         raise ValueError("two release codes map to one Peter isolate")
-    return matched, refused
+    return matched, s288c, refused
+
+
+def s288c_derived_reference(
+    reference: ExperimentReference, isolate: S288cDerivedIsolate
+) -> ExperimentReference:
+    """The shared reference with the strain's own genome: the S288C-derived background
+    on the S288C R64 coordinate system, as the deletion loaders state BY4741.
+    """
+    return reference.model_copy(
+        update={
+            "genome_reference": ReferenceGenome(
+                species="Saccharomyces cerevisiae",
+                strain=isolate.strain,
+                ploidy="haploid",
+            )
+        }
+    )
 
 
 def karyotypes(
@@ -748,6 +837,9 @@ class ProteomeLedger(BaseModel):
     n_release_isolates: int
     n_release_proteins: int
     refused: list[RefusedIsolate]
+    s288c_derived: list[S288cDerivedIsolate] = Field(
+        description="release columns built on S288C with no perturbation (FY4)"
+    )
     n_built: int
     n_cells_built: int
     n_measured_built: int
@@ -1043,7 +1135,7 @@ def median_reference(
 
 @register_dataset
 class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
-    """796 natural-isolate SWATH-MS proteomes (SI Table 3), 794 with a Peter genome."""
+    """796 SWATH-MS proteomes (SI Table 3): 794 isolates with a Peter genome and FY4."""
 
     organism = Organism.scerevisiae
 
@@ -1080,7 +1172,7 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         values = proteome_matrix(tables[T3.name])
         release_codes = [str(c) for c in values.columns]
         genotypes = PeterIsolateGenotypes(self.raw_dir)
-        matched, refused = match_isolates(
+        matched, s288c, refused = match_isolates(
             release_codes, genotypes.isolates, tables[T1.name]
         )
         integrated, table5, table6 = _flags(tables)
@@ -1094,18 +1186,23 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         ref_abundance, ref_n = median_reference(values, reference_codes)
         if set(ref_abundance) != set(values.index):
             raise ValueError("a protein has no euploid measurement in SI Table 7")
-        built = values[list(matched)]
+        built_name = {
+            **matched,
+            **{isolate.release_code: isolate.strain for isolate in s288c},
+        }
+        built = values[list(built_name)]
         missing = built.isna().sum(axis=0)
         ledger = ProteomeLedger(
             n_release_isolates=len(release_codes),
             n_release_proteins=len(values.index),
             refused=refused,
-            n_built=len(matched),
+            s288c_derived=s288c,
+            n_built=len(built_name),
             n_cells_built=int(built.size),
             n_measured_built=int(built.notna().to_numpy().sum()),
             n_missing_built=int(missing.sum()),
             missing_by_isolate={
-                matched[str(c)]: int(n) for c, n in missing.items() if n
+                built_name[str(c)]: int(n) for c, n in missing.items() if n
             },
             reference_isolates=[matched[c] for c in reference_codes],
             karyotypes=karyotypes(matched, tables[T1.name], integrated, table5, table6),
@@ -1113,11 +1210,13 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         with open(osp.join(self.preprocess_dir, "muenzner2024_ledger.json"), "w") as f:
             f.write(ledger.model_dump_json(indent=2))
         log.info(
-            "SI Table 3: %d isolates, %d refused (%s), %d built; %d missing cells",
+            "SI Table 3: %d isolates, %d refused (%s), %d built (%d S288C-derived); "
+            "%d missing cells",
             len(release_codes),
             len(refused),
             [r.release_code for r in refused],
-            len(matched),
+            ledger.n_built,
+            len(s288c),
             ledger.n_missing_built,
         )
 
@@ -1137,14 +1236,22 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
         strains = sorted(by_peter)
         variants = self._variants(data_root, set(strains))
         tarball = refgene_tarball_ref(data_root)
-        pd.DataFrame({"strain_id": strains}).to_csv(
-            osp.join(self.preprocess_dir, "data.csv"), index=False
-        )
+        pd.DataFrame(
+            {"strain_id": [*strains, *(isolate.strain for isolate in s288c)]}
+        ).to_csv(osp.join(self.preprocess_dir, "data.csv"), index=False)
+
+        def phenotype_of(code: str) -> ProteinAbundancePhenotype:
+            column = values[code].dropna()
+            abundance = {str(k): float(v) for k, v in column.items()}
+            return ProteinAbundancePhenotype(
+                protein_abundance=abundance,
+                protein_abundance_se=None,
+                n_replicates={k: 1 for k in abundance},
+                measurement_type=PROTEOME_MEASUREMENT_TYPE,
+            )
 
         def records() -> Iterator[tuple[Experiment, ExperimentReference]]:
             for strain in strains:
-                column = values[by_peter[strain]].dropna()
-                abundance = {str(k): float(v) for k, v in column.items()}
                 experiment = ProteinAbundanceExperiment(
                     dataset_name=self.name,
                     genotype=Genotype(
@@ -1153,16 +1260,22 @@ class ProteomeMuenzner2024Dataset(_MuenznerIsolateDataset):
                         )
                     ),
                     environment=environment,
-                    phenotype=ProteinAbundancePhenotype(
-                        protein_abundance=abundance,
-                        protein_abundance_se=None,
-                        n_replicates={k: 1 for k in abundance},
-                        measurement_type=PROTEOME_MEASUREMENT_TYPE,
-                    ),
+                    phenotype=phenotype_of(by_peter[strain]),
                 )
                 yield experiment, reference
+            # An S288C-derived column (FY4): no perturbation off S288C, its own genome.
+            for isolate in s288c:
+                experiment = ProteinAbundanceExperiment(
+                    dataset_name=self.name,
+                    genotype=Genotype(perturbations=[]),
+                    environment=environment,
+                    phenotype=phenotype_of(isolate.release_code),
+                )
+                yield experiment, s288c_derived_reference(reference, isolate)
 
-        n = self._write_records(records(), len(strains), "proteome isolates")
+        n = self._write_records(
+            records(), len(strains) + len(s288c), "proteome isolates"
+        )
         log.info("Wrote %d proteome records", n)
 
 
@@ -1251,9 +1364,15 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
         check_annotation_agreement(frame, annotations)
         release_codes = sorted(frame["strain"].unique())
         genotypes = PeterIsolateGenotypes(self.raw_dir)
-        matched, refused = match_isolates(
+        matched, s288c, refused = match_isolates(
             release_codes, genotypes.isolates, annotations
         )
+        if s288c:
+            raise RuntimeError(
+                f"SI Table 17 lists the S288C-derived column(s) "
+                f"{[i.release_code for i in s288c]}; the released Table 17 has none, "
+                "and this loader has no record path for one"
+            )
         built = frame[frame["strain"].isin(set(matched))]
         aneu = annotations.set_index("Standardized_name")["Aneuploidies"]
         reference_codes = sorted(c for c in matched if str(aneu[c]) == EUPLOID)
@@ -1346,8 +1465,9 @@ class ProteinTurnoverMuenzner2024Dataset(_MuenznerIsolateDataset):
 # --------------------------------------------------------------------------- #
 # Verification (``build_dataset_lmdb --verify`` calls ``verify_build``)
 # --------------------------------------------------------------------------- #
-#: Records each built store must hold (measured from the release; see the ledger).
-EXPECTED_PROTEOME_RECORDS = 794
+#: Records each built store must hold (measured from the release; see the ledger):
+#: 794 isolates with a Peter genome plus the S288C-derived FY4 column (#1045).
+EXPECTED_PROTEOME_RECORDS = 795
 EXPECTED_TURNOVER_RECORDS = 55
 #: Isolates of the built Caudal 2024 store that also carry a proteome (measured).
 EXPECTED_CAUDAL_OVERLAP = 759
@@ -1357,6 +1477,7 @@ CAUDAL_ROOT = "data/torchcell/caudal_pantranscriptome2024"
 def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     """Run the L0-L4 gate for whichever Muenzner store ``dataset_root`` is."""
     from torchcell.verification.protein import (
+        natural_isolate_of,
         verify_natural_isolate_proteome,
         verify_natural_isolate_turnover,
     )
@@ -1383,8 +1504,7 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     if name == "proteome_muenzner2024":
         caudal_order = caudal_strain_order(data_root)
         built = {
-            str(r["experiment"]["genotype"]["perturbations"][0]["strain_id"])
-            for r in records
+            strain for r in records if (strain := natural_isolate_of(r)) is not None
         }
         return verify_natural_isolate_proteome(
             records,

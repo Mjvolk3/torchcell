@@ -73,18 +73,22 @@ def _record_strain(experiment: dict[str, Any]) -> str | None:
     return None
 
 
-def _l1_strain_uniqueness(records: Sequence[Record]) -> LevelResult:
+def _l1_strain_uniqueness(
+    records: Sequence[Record], strain_of: Callable[[Record], str | None] | None = None
+) -> LevelResult:
     """L1: one record per (strain, environment) and every record carries a strain id.
 
     Keyed on (strain_id, environment) so a strain profiled in two conditions (Nadal-Ribelles
     control vs NaCl) is two legitimate records, while a genome-scale single-condition survey
-    (Caudal, one environment) still reduces to one record per strain.
+    (Caudal, one environment) still reduces to one record per strain. ``strain_of`` reads
+    a record's strain when the perturbations alone cannot (a natural-isolate store's
+    S288C-derived column has none); by default the shared ``strain_id``.
     """
     seen: dict[tuple[str, str], int] = {}
     n_missing = 0
     for rec in records:
         exp = rec["experiment"]
-        strain = _record_strain(exp)
+        strain = _record_strain(exp) if strain_of is None else strain_of(rec)
         if strain is None:
             n_missing += 1
             continue

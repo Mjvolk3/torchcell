@@ -8,7 +8,8 @@ The genotype half reuses the Caudal 2024 synthetic Peter tier
 the four-member reference-gene tarball and the two matrices. The Muenzner workbook is
 written here with the release's own captions and header rows. Release isolates: AAA,
 SACE.YAU (the release's dotted spelling of SACE_YAU), ZZZ, QQQ (no Peter genome) and
-Reference (FY4, no Peter genome), so three build and two are refused.
+Reference (FY4, the S288C-derived column), so four build (FY4 last, on its own
+reference genome with no perturbation, #1045) and QQQ is refused.
 
 SI Table 3 (linear MaxLFQ, ``NA`` = missing)::
 
@@ -258,7 +259,7 @@ def test_proteome_builds_three_isolates_with_caudal_genotypes(
     proteome: m.ProteomeMuenzner2024Dataset,
 ) -> None:
     """AAA, SACE_YAU and ZZZ build in Peter-code order; blanks are key-absent."""
-    assert len(proteome) == 3
+    assert len(proteome) == 4
     expected = [
         _abundance("AAA", {"YAL001C": 10.0, "Q0010": 2.0}),
         _abundance("SACE_YAU", {"YAL001C": 30.0, "YBR001W": 4.0}),
@@ -282,25 +283,82 @@ def test_proteome_builds_three_isolates_with_caudal_genotypes(
     assert m.PUBLICATION.pubmed_url == "https://pubmed.ncbi.nlm.nih.gov/38778096/"
 
 
+def test_fy4_is_built_on_s288c_with_no_perturbation_and_its_own_genome(
+    proteome: m.ProteomeMuenzner2024Dataset,
+) -> None:
+    """The release's Reference column (SI Table 1: FY4) is record 3 (#1045 row 18): no
+    perturbation off S288C, its SI Table 3 column, and the shared euploid reference
+    whose genome names FY4 (haploid) instead of S288C.
+    """
+    fy4 = ProteinAbundanceExperiment(
+        dataset_name="ProteomeMuenzner2024Dataset",
+        genotype=Genotype(perturbations=[]),
+        environment=_PROTEOME_ENV,
+        phenotype=ProteinAbundancePhenotype(
+            protein_abundance={"YAL001C": 7.0, "YBR001W": 8.0, "Q0010": 1.0},
+            protein_abundance_se=None,
+            n_replicates={"YAL001C": 1, "YBR001W": 1, "Q0010": 1},
+            measurement_type=m.PROTEOME_MEASUREMENT_TYPE,
+        ),
+    )
+    assert proteome[3]["experiment"] == fy4.model_dump()
+    reference = proteome[3]["reference"]
+    assert reference["genome_reference"] == {
+        "species": "Saccharomyces cerevisiae",
+        "strain": "FY4",
+        "ploidy": "haploid",
+    }
+    assert (
+        reference["phenotype_reference"]
+        == proteome[0]["reference"]["phenotype_reference"]
+    )
+    assert (
+        reference["environment_reference"]
+        == proteome[0]["reference"]["environment_reference"]
+    )
+
+
+def test_an_s288c_derived_column_must_be_named_fy4_and_haploid() -> None:
+    """SI Table 1 must name the Reference column FY4 at ploidy 1, else the build stops."""
+    rows = [list(row) for row in _T1_ROWS]
+    frame = pd.DataFrame([row[1:] for row in rows], columns=list(m.T1.header or ())[1:])
+    assert m.s288c_derived_isolate("Reference", frame).strain == "FY4"
+    renamed = frame.copy()
+    renamed.loc[
+        renamed["Standardized_name"] == "Reference", "alternative_strain_name"
+    ] = "BY4741"
+    with pytest.raises(ValueError, match="names 'Reference' 'BY4741', not 'FY4'"):
+        m.s288c_derived_isolate("Reference", renamed)
+    diploid = frame.copy()
+    diploid.loc[diploid["Standardized_name"] == "Reference", "Ploidy"] = 2
+    with pytest.raises(ValueError, match="gives FY4 ploidy 2, not 1"):
+        m.s288c_derived_isolate("Reference", diploid)
+
+
 def test_proteome_ledger_accounts_for_every_column_and_cell(
     proteome: m.ProteomeMuenzner2024Dataset,
 ) -> None:
-    """Two refusals with their reasons, 3 of 9 built cells missing, karyotype flags."""
+    """One refusal with its reason, FY4 built on S288C, 3 of 12 built cells missing,
+    karyotype flags.
+    """
     preprocess = Path(proteome.root) / "preprocess"
     ledger = m.ProteomeLedger.model_validate_json(
         (preprocess / "muenzner2024_ledger.json").read_text()
     )
     assert [(r.release_code, r.alternative_strain_name) for r in ledger.refused] == [
-        ("QQQ", "Q1"),
-        ("Reference", "FY4"),
+        ("QQQ", "Q1")
     ]
-    assert ledger.refused[1].reason == (
-        "no Peter 2018 genome: 'Reference' is not an isolate of "
+    assert ledger.refused[0].reason == (
+        "no Peter 2018 genome: 'QQQ' is not an isolate of "
         "genesMatrix_PresenceAbsence.tab.gz, so no genotype can be written"
     )
+    assert [
+        (i.release_code, i.strain, i.ploidy, i.aneuploidies)
+        for i in ledger.s288c_derived
+    ] == [("Reference", "FY4", "1", "NA")]
     assert (ledger.n_release_isolates, ledger.n_release_proteins) == (5, 3)
-    assert (ledger.n_built, ledger.n_cells_built) == (3, 9)
-    assert (ledger.n_measured_built, ledger.n_missing_built) == (6, 3)
+    assert (ledger.n_built, ledger.n_cells_built) == (4, 12)
+    assert (ledger.n_measured_built, ledger.n_missing_built) == (9, 3)
     assert ledger.missing_by_isolate == {"AAA": 1, "SACE_YAU": 1, "ZZZ": 1}
     assert ledger.reference_isolates == ["AAA", "ZZZ"]
     assert [
@@ -321,7 +379,9 @@ def test_proteome_ledger_accounts_for_every_column_and_cell(
     assert ledger.karyotypes[1].copy_changes == [
         m.ChromosomeCopyChange(chromosome=1, change=1)
     ]
-    assert (preprocess / "data.csv").read_text() == "strain_id\nAAA\nSACE_YAU\nZZZ\n"
+    assert (preprocess / "data.csv").read_text() == (
+        "strain_id\nAAA\nSACE_YAU\nZZZ\nFY4\n"
+    )
 
 
 def test_turnover_builds_three_isolates_and_a_partial_euploid_reference(
@@ -363,6 +423,26 @@ def test_turnover_builds_three_isolates_and_a_partial_euploid_reference(
         "SACE_YAU": 130.0,
         "ZZZ": 150.0,
     }
+
+
+def test_turnover_stops_on_an_s288c_derived_column_it_has_no_path_for(
+    data_root: Path, tmp_path: Path
+) -> None:
+    """The released Table 17 has no FY4 rows; one appearing stops the build by name."""
+    sheets = _release_sheets()
+    sheets[m.T17.name] = _sheet_rows(
+        m.T17,
+        [
+            *_T17_ROWS,
+            ["Reference", 1, "NA", "P1", "YAL001C", "TFC3", 0.5, 1e9, _hl(0.5)],
+        ],
+    )
+    root = tmp_path / "turnover_fy4"
+    _write_raw(root / "raw", sheets)
+    with pytest.raises(
+        RuntimeError, match=r"S288C-derived column\(s\) \['Reference'\]"
+    ):
+        m.ProteinTurnoverMuenzner2024Dataset(root=str(root))
 
 
 def test_both_builds_verify_their_four_raw_files_before_reading(
@@ -650,7 +730,7 @@ def test_proteome_gate_passes_the_synthetic_store(
         records,
         dataset_name="proteome_muenzner2024",
         provenance=PROV,
-        expected_count=3,
+        expected_count=4,
         sgd_genes={"YAL001C", "YBR001W", "Q0010"},
         caudal_isolates={"AAA", "ZZZ", "OTHER"},
         expected_caudal_overlap=2,
@@ -676,6 +756,9 @@ def test_proteome_gate_passes_the_synthetic_store(
         "caudal_genotype_agreement",
     ]
     assert [r.name for r in report.results if not r.passed] == []
+    consistency = report.results[3]
+    assert consistency.details["n_s288c_derived"] == 1
+    assert report.results[2].details["n_strains"] == 4
     agreement = report.results[-1]
     assert agreement.message == (
         "1 isolates compared with the Caudal 2024 store: 1 identical genotypes"
@@ -690,7 +773,7 @@ def test_proteome_gate_fails_a_changed_genotype_and_a_wrong_overlap(
         records,
         dataset_name="proteome_muenzner2024",
         provenance=PROV,
-        expected_count=3,
+        expected_count=4,
         sgd_genes={"YAL001C"},
         caudal_isolates={"AAA"},
         expected_caudal_overlap=2,
@@ -769,7 +852,7 @@ def test_verify_build_dispatches_by_store_and_reads_the_caudal_store(
     monkeypatch.setattr(
         m, "_sgd_genes", lambda root: {"YAL001C", "YBR001W", "Q0010", "R0040C"}
     )
-    monkeypatch.setattr(m, "EXPECTED_PROTEOME_RECORDS", 3)
+    monkeypatch.setattr(m, "EXPECTED_PROTEOME_RECORDS", 4)
     monkeypatch.setattr(m, "EXPECTED_CAUDAL_OVERLAP", 2)
     monkeypatch.setattr(m, "EXPECTED_TURNOVER_RECORDS", 3)
     for dataset, name in (

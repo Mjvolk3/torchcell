@@ -25,13 +25,6 @@ owner does not repeat it in its own ``Alias`` list.
 :func:`check_ambiguous_aliases` is the build-time check: given the (source name, stored
 systematic name) pairs a loader is about to write, it refuses the build when any pair's
 source name is ambiguous and the stored ORF is not the one its pin records.
-
-Released SYSTEMATIC names that R64 no longer carries are the other half of the problem
-(#893, #897): a former ORF name has exactly one candidate, so first-match would resolve it
-whether SGD renamed the ORF or merged it into a longer one. Those names go through
-:mod:`torchcell.datasets.systematic_name_currency` instead, which maps a name only by a
-pin whose rule is ``SGD_SYSTEMATIC_RENAME`` (checked here by :func:`check_pin`) and
-refuses every retired or merged ORF with a typed reason.
 """
 
 from collections.abc import Iterable, Mapping
@@ -70,11 +63,6 @@ class AliasResolutionRule(StrEnum):
     SGD_STANDARD_NAME = "sgd_standard_name"
     #: The paper's own released gene list pairs this name with the chosen ORF.
     PAPER_GENE_LIST = "paper_gene_list"
-    #: The name is a former systematic name of the chosen ORF: SGD's locus history of
-    #: that ORF records the change as a nomenclature correction (same locus, new name),
-    #: the R64 GFF lists the name as an Alias of that ORF and of no other gene, and the
-    #: name is not itself a live gene (``systematic_name_currency``).
-    SGD_SYSTEMATIC_RENAME = "sgd_systematic_rename"
 
 
 class GeneNameRefusalReason(StrEnum):
@@ -90,14 +78,6 @@ class GeneNameRefusalReason(StrEnum):
     PIN_RULE_CONTRADICTED = "pin_rule_contradicted"
     #: A stored ORF differs from the ORF the source name's pin records.
     STORED_ORF_DIFFERS_FROM_PIN = "stored_orf_differs_from_pin"
-    #: A released systematic name R64 carries as no locus id, standard name or alias.
-    RETIRED_SYSTEMATIC_NAME = "retired_systematic_name"
-    #: A released ORF that R64 keeps only as an alias of the longer locus it was merged
-    #: into; the released strain deleted part of that locus, not the locus.
-    MERGED_INTO_LOCUS = "merged_into_locus"
-    #: A released systematic name that is not a live R64 locus and that the loader
-    #: neither maps by a rename pin nor refuses by a pinned refusal.
-    NOT_CURRENT_UNPINNED = "not_current_unpinned"
 
 
 class GeneNameRefusal(BaseModel):
@@ -190,21 +170,6 @@ def _check_pin(
                 detail=f"pinned ORF {pin.systematic_name} is not a candidate",
             )
         )
-    if pin.rule is AliasResolutionRule.SGD_SYSTEMATIC_RENAME:
-        if candidates != [pin.systematic_name] or pin.alias in genome.gene_set:
-            raise GeneNameRefused(
-                GeneNameRefusal(
-                    name=pin.alias,
-                    reason=GeneNameRefusalReason.PIN_RULE_CONTRADICTED,
-                    candidates=candidates,
-                    detail=(
-                        f"rule {pin.rule.value}: the genome must list the name as an "
-                        f"alias of {pin.systematic_name} alone and carry no live gene "
-                        f"of that name (live: {pin.alias in genome.gene_set})"
-                    ),
-                )
-            )
-        return
     if pin.rule is AliasResolutionRule.SGD_STANDARD_NAME:
         owners = sorted(
             orf
@@ -237,21 +202,6 @@ def _check_pin(
                 ),
             )
         )
-
-
-def check_pin(
-    genome: GenomeNameIndex,
-    pin: PinnedAliasResolution,
-    paper_gene_list: Mapping[str, str] | None = None,
-) -> str:
-    """The pinned ORF, once ``pin`` is shown to hold against ``genome``.
-
-    The pinned ORF must be a candidate of the pinned name, and the pin's stated rule must
-    hold for the injected genome (or the paper's gene list, for ``PAPER_GENE_LIST``);
-    otherwise :class:`GeneNameRefused` is raised.
-    """
-    _check_pin(genome, pin, candidate_orfs(genome, pin.alias), paper_gene_list)
-    return pin.systematic_name
 
 
 def resolve_gene_name_strict(

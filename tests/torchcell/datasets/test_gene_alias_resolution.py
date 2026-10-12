@@ -33,7 +33,6 @@ from torchcell.datasets.gene_alias_resolution import (
     PinnedAliasResolution,
     candidate_orfs,
     check_ambiguous_aliases,
-    check_pin,
     pin_table,
     resolve_gene_name_strict,
 )
@@ -143,37 +142,6 @@ def test_a_paper_gene_list_pin_needs_the_list_to_agree() -> None:
         assert info.value.refusal.reason is (
             GeneNameRefusalReason.PIN_RULE_CONTRADICTED
         )
-
-
-def test_a_systematic_rename_pin_needs_a_sole_alias_owner_and_no_live_gene() -> None:
-    """``SGD_SYSTEMATIC_RENAME``: ONLY1 is an alias of YAL001C alone, so a pin of it to
-    YAL001C holds; TFC7 has two candidates and YAL001C is itself a live gene, so pins of
-    either are contradicted with the rule's own detail.
-    """
-    g = _Genome()
-    rename = AliasResolutionRule.SGD_SYSTEMATIC_RENAME
-    assert check_pin(g, _pin(alias="ONLY1", orf="YAL001C", rule=rename)) == "YAL001C"
-    with pytest.raises(GeneNameRefused) as info:
-        check_pin(g, _pin(alias="TFC7", orf="YOR110W", rule=rename))
-    assert info.value.refusal.model_dump() == {
-        "name": "TFC7",
-        "reason": GeneNameRefusalReason.PIN_RULE_CONTRADICTED,
-        "candidates": ["YNL039W", "YOR110W"],
-        "detail": (
-            "rule sgd_systematic_rename: the genome must list the name as an alias of "
-            "YOR110W alone and carry no live gene of that name (live: False)"
-        ),
-    }
-
-    class _LiveAlias(_Genome):
-        alias_to_systematic = {"YAL001C": ["YBR001C"]}
-
-    with pytest.raises(GeneNameRefused) as info:
-        check_pin(_LiveAlias(), _pin(alias="YAL001C", orf="YBR001C", rule=rename))
-    assert info.value.refusal.detail.endswith("(live: True)")
-    with pytest.raises(GeneNameRefused) as info:
-        check_pin(g, _pin(alias="ONLY1", orf="YBR001C", rule=rename))
-    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_NOT_A_CANDIDATE
 
 
 def test_pin_validation_and_duplicate_aliases() -> None:

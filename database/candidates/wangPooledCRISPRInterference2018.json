@@ -1,0 +1,1658 @@
+{
+  "citation_key": "wangPooledCRISPRInterference2018",
+  "table": "bacteria",
+  "row_name": "Wang 2018",
+  "gates": [
+    {
+      "gate": "G1",
+      "outcome": "pass",
+      "reason": "primary: status='candidate', klass='CRISPR library screen', no aggregation marker",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G2",
+      "outcome": "pass",
+      "reason": "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; BW25113 -> ecoli_K12_BW25113_ASM75055v1 resolves and reads",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G3",
+      "outcome": "pass",
+      "reason": "96 file(s) in library+raw, 855761 worksheet row(s) counted; all intact",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G4",
+      "outcome": "pass",
+      "reason": "no key held by another module (0 mention(s)); no PMID check; values not compared (no dev store named)",
+      "evidence": [],
+      "issue": null,
+      "blocked_kind": null
+    },
+    {
+      "gate": "G5",
+      "outcome": "gap",
+      "reason": "1 compound(s) unresolved: ampicillin",
+      "evidence": [
+        {
+          "value": "median sgRNA fitness of the selected subset",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "wangPooledCRISPRInterference2018",
+            "sha256": "9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods, NGS data processing (gene fitness and hit calling)",
+            "retrieved": null
+          },
+          "quote": "The fitness of this gene for the studied phenotype was then the median of fitness of all sgRNAs belonging to the selected subset",
+          "note": "the 'gene fitness' column; the subset is the 5'-most M guides whose FPR is smallest ('The sgRNA subset with the smallest FPR value was selected as the sgRNA set to determine all metrics for this gene'), so it is a median of log2 ratios and log2_ratio is its measurement type"
+        },
+        {
+          "value": "environment_response_p_value",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "wangPooledCRISPRInterference2018",
+            "sha256": "9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods, NGS data processing (gene fitness and hit calling)",
+            "retrieved": null
+          },
+          "quote": "We then took the classical Storey-Tibshirani approach70 to convert the FPR values (a particular type of $P$ value) to $\\mathrm { Q }$ values, which were used as the threshold for hit-gene calling",
+          "note": "the 'FPRvalue' column is the empirical p-value of the gene's score against the 15 quasi-gene null sets (equations 5-7), stored as the unadjusted p-value"
+        },
+        {
+          "value": "storey_tibshirani_q_value",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "wangPooledCRISPRInterference2018",
+            "sha256": "9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods, NGS data processing (gene fitness and hit calling)",
+            "retrieved": null
+          },
+          "quote": "We then took the classical Storey-Tibshirani approach70 to convert the FPR values (a particular type of $P$ value) to $\\mathrm { Q }$ values, which were used as the threshold for hit-gene calling",
+          "note": "the 'FDRvalue' column is that Q value, stored as the adjusted p-value with p_value_adjustment_method = storey_tibshirani_q_value"
+        },
+        {
+          "value": "fitness / sigma(non-targeting fitness)",
+          "provenance": {
+            "source_uri": "paper.md",
+            "citation_key": "wangPooledCRISPRInterference2018",
+            "sha256": "9980415d606835ab1ae3a1ad92a64784c822aad1ca01b514662d2fb21d1a3a55",
+            "method": "MinerU OCR of the publisher PDF (torchcell-library mirror)",
+            "page": "Methods, NGS data processing",
+            "retrieved": null
+          },
+          "quote": "we first fit the fitness for all negative control sgRNAs to a normal distribution, giving rise to the standard deviation $( \\sigma )$ . The $Z$ score for each sgRNA was then calculated by dividing the sgRNA fitness by the $\\sigma$ value (equation 4)",
+          "note": "equation (4). sigma is one constant per screen, so the released Z score is a deterministic rescaling of the fitness; it is stored as released on environment_response_z_score (#879), and the back-solved value per screen is Screen.nc_sigma"
+        }
+      ],
+      "issue": 1063,
+      "blocked_kind": null
+    }
+  ],
+  "zotero_item": "present",
+  "source_kind": "primary",
+  "aggregation": null,
+  "g2": {
+    "branch": "assembly_set",
+    "outcome": "resolvable_readable",
+    "hosts": [
+      {
+        "name": "MG1655",
+        "assembly_set": "ecoli_K12_MG1655_ASM584v2",
+        "resolvable": true,
+        "readable": true
+      },
+      {
+        "name": "BW25113",
+        "assembly_set": "ecoli_K12_BW25113_ASM75055v1",
+        "resolvable": true,
+        "readable": true
+      }
+    ]
+  },
+  "g3": {
+    "citation_key": "wangPooledCRISPRInterference2018",
+    "trees_read": [
+      "library",
+      "raw"
+    ],
+    "files": [
+      {
+        "tree": "library",
+        "path": "si/si1.pdf",
+        "role": "si_pdf",
+        "bytes": 16778920,
+        "sha256_manifest": "6113cce2c6f7ccd34a4a5b57eebc88a9d370249369a1a79639625ab1a722dd35",
+        "sha256_disk": "6113cce2c6f7ccd34a4a5b57eebc88a9d370249369a1a79639625ab1a722dd35",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.pdf",
+        "role": "si_pdf",
+        "bytes": 2820645,
+        "sha256_manifest": "7de6549047dbdfdd88e12bb24e8cc98bfaf593a73f1fbfc7562d007b3838068a",
+        "sha256_disk": "7de6549047dbdfdd88e12bb24e8cc98bfaf593a73f1fbfc7562d007b3838068a",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.pdf",
+        "role": "si_pdf",
+        "bytes": 177576,
+        "sha256_manifest": "74ef7371c29f3e5ef282aae57ff8f127baaa44689595ded608be45d03a121b57",
+        "sha256_disk": "74ef7371c29f3e5ef282aae57ff8f127baaa44689595ded608be45d03a121b57",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si4.xlsx",
+        "role": "si_data",
+        "bytes": 116696,
+        "sha256_manifest": "b937c3fcb17a60bfde243ece28462d382ead5016f79859ff7c75f86598b16f90",
+        "sha256_disk": "b937c3fcb17a60bfde243ece28462d382ead5016f79859ff7c75f86598b16f90",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 2283
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si5.xlsx",
+        "role": "si_data",
+        "bytes": 123127,
+        "sha256_manifest": "8bb51873557bed15067f947053f84a9428883bc3acf771a6edf67a0a8740cdeb",
+        "sha256_disk": "8bb51873557bed15067f947053f84a9428883bc3acf771a6edf67a0a8740cdeb",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "protein-coding genes",
+            "rows": 4091
+          },
+          {
+            "sheet": "ncRNA-coding genes",
+            "rows": 116
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si6.xlsx",
+        "role": "si_data",
+        "bytes": 1723119,
+        "sha256_manifest": "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62",
+        "sha256_disk": "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "sheet1",
+            "rows": 56072
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si7.xlsx",
+        "role": "si_data",
+        "bytes": 127948,
+        "sha256_manifest": "f87f9d1d311cf9470c912e521ab5a1b0b0583637b5fcb506f40a154330a30d46",
+        "sha256_disk": "f87f9d1d311cf9470c912e521ab5a1b0b0583637b5fcb506f40a154330a30d46",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 4206
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si8.xlsx",
+        "role": "si_data",
+        "bytes": 1597937,
+        "sha256_manifest": "528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503",
+        "sha256_disk": "528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "essential genes",
+            "rows": 4143
+          },
+          {
+            "sheet": "auxotrophy in MOPS media",
+            "rows": 4005
+          },
+          {
+            "sheet": "amino acid addition",
+            "rows": 4005
+          },
+          {
+            "sheet": "furfural tolerance",
+            "rows": 4005
+          },
+          {
+            "sheet": "isobutanol tolerance",
+            "rows": 4005
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si9.xlsx",
+        "role": "si_data",
+        "bytes": 3498341,
+        "sha256_manifest": "6500e9105fc6c7482794a558a6c69325196067dc89e295b8eda056ff7e284d48",
+        "sha256_disk": "6500e9105fc6c7482794a558a6c69325196067dc89e295b8eda056ff7e284d48",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "essential genes",
+            "rows": 54117
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si10.xlsx",
+        "role": "si_data",
+        "bytes": 3082270,
+        "sha256_manifest": "3de9fd0aa6e14f543ae35703278558c10085ad63ee2e5f8be214dfc22b996a6e",
+        "sha256_disk": "3de9fd0aa6e14f543ae35703278558c10085ad63ee2e5f8be214dfc22b996a6e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "auxotrophy in MOPS media",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si11.xlsx",
+        "role": "si_data",
+        "bytes": 3111675,
+        "sha256_manifest": "4a322c70ac984e31cf7f931cec6a3f5af9bfcb3166d73e47f904306e1a4c2ae1",
+        "sha256_disk": "4a322c70ac984e31cf7f931cec6a3f5af9bfcb3166d73e47f904306e1a4c2ae1",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "amino acid addition",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si12.xlsx",
+        "role": "si_data",
+        "bytes": 3110921,
+        "sha256_manifest": "b40c08b07d74b07f992929f866c6aa2f7cbff4e4059148597bf7d36e989df2a9",
+        "sha256_disk": "b40c08b07d74b07f992929f866c6aa2f7cbff4e4059148597bf7d36e989df2a9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "furfural tolerance",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si13.xlsx",
+        "role": "si_data",
+        "bytes": 3127601,
+        "sha256_manifest": "29658ef0c45af0b2ac43c33d0858741938a2939ec34c150f77d01bfebc10ba74",
+        "sha256_disk": "29658ef0c45af0b2ac43c33d0858741938a2939ec34c150f77d01bfebc10ba74",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "isobutanol tolerance",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si14.xlsx",
+        "role": "si_data",
+        "bytes": 34163,
+        "sha256_manifest": "9bf8f5e3fef4343f66e41bfe9c2622ddf1a2277cf6db5e4b29db1dc8ad1df6c8",
+        "sha256_disk": "9bf8f5e3fef4343f66e41bfe9c2622ddf1a2277cf6db5e4b29db1dc8ad1df6c8",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 314
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si15.xlsx",
+        "role": "si_data",
+        "bytes": 4522735,
+        "sha256_manifest": "fe7bd18fd49035008f36c9131e4bb410ccb0cc574a611c7ac0ddda9eb5d988a1",
+        "sha256_disk": "fe7bd18fd49035008f36c9131e4bb410ccb0cc574a611c7ac0ddda9eb5d988a1",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "README",
+            "rows": 7
+          },
+          {
+            "sheet": "Bacteroides_protein",
+            "rows": 36446
+          },
+          {
+            "sheet": "Bacteroides_ncRNA",
+            "rows": 442
+          },
+          {
+            "sheet": "Bacillus_protein",
+            "rows": 30402
+          },
+          {
+            "sheet": "Bacillus_ncRNA",
+            "rows": 653
+          },
+          {
+            "sheet": "Corynebacterium_protein",
+            "rows": 27767
+          },
+          {
+            "sheet": "Corynebacterium_ncRNA",
+            "rows": 486
+          },
+          {
+            "sheet": "Mycobacterium_protein",
+            "rows": 29604
+          },
+          {
+            "sheet": "Mycobacterium_ncRNA",
+            "rows": 454
+          },
+          {
+            "sheet": "Listeria_protein",
+            "rows": 20193
+          },
+          {
+            "sheet": "Listeria_ncRNA",
+            "rows": 798
+          },
+          {
+            "sheet": "Pseudomonas_protein",
+            "rows": 16636
+          },
+          {
+            "sheet": "Pseudomonas_ncRNA",
+            "rows": 557
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si16.xlsx",
+        "role": "si_data",
+        "bytes": 475889,
+        "sha256_manifest": "6665dc88d17659c77c804377166754f0025066a364cc70c8d1a32b345d70325c",
+        "sha256_disk": "6665dc88d17659c77c804377166754f0025066a364cc70c8d1a32b345d70325c",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "README",
+            "rows": 7
+          },
+          {
+            "sheet": "Bacteroides_protein",
+            "rows": 4725
+          },
+          {
+            "sheet": "Bacteroides_ncRNA",
+            "rows": 49
+          },
+          {
+            "sheet": "Bacillus_protein",
+            "rows": 4176
+          },
+          {
+            "sheet": "Bacillus_ncRNA",
+            "rows": 103
+          },
+          {
+            "sheet": "Corynebacterium_protein",
+            "rows": 2940
+          },
+          {
+            "sheet": "Corynebacterium_ncRNA",
+            "rows": 50
+          },
+          {
+            "sheet": "Mycobacterium_protein",
+            "rows": 3987
+          },
+          {
+            "sheet": "Mycobacterium_ncRNA",
+            "rows": 49
+          },
+          {
+            "sheet": "Listeria_protein",
+            "rows": 2864
+          },
+          {
+            "sheet": "Listeria_ncRNA",
+            "rows": 137
+          },
+          {
+            "sheet": "Pseudomonas_protein",
+            "rows": 5553
+          },
+          {
+            "sheet": "Pseudomonas_ncRNA",
+            "rows": 77
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/si17.xlsx",
+        "role": "si_data",
+        "bytes": 129896,
+        "sha256_manifest": "58da083920153939d33f7bbf30dd031849f46e771ed98a0e5d9a0ba34223cf2b",
+        "sha256_disk": "58da083920153939d33f7bbf30dd031849f46e771ed98a0e5d9a0ba34223cf2b",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "Sheet1",
+            "rows": 4206
+          }
+        ]
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/00fe98f90287f1c8cf1f1a7ed6576bef6fc322c8f7f3f47f12c3d76990ddf231.jpg",
+        "role": "ocr_image",
+        "bytes": 90780,
+        "sha256_manifest": "35ab2e1576573b0486732ad7db85917bc6ea3388d01418cbd37a035b3c7605ff",
+        "sha256_disk": "35ab2e1576573b0486732ad7db85917bc6ea3388d01418cbd37a035b3c7605ff",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/0e7bcbf5afb57dc1eec0e73ce848eb5af2130aa9c32f2539d08f2de47f4213bd.jpg",
+        "role": "ocr_image",
+        "bytes": 383963,
+        "sha256_manifest": "bf8c95d7c011671247e5b71a437ae7c93a858f8f4195e446282201d80f97fa33",
+        "sha256_disk": "bf8c95d7c011671247e5b71a437ae7c93a858f8f4195e446282201d80f97fa33",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/130688c7ed25efe5f8187091d8c43a7f622ab284aa452b706c9290fab17349ec.jpg",
+        "role": "ocr_image",
+        "bytes": 29691,
+        "sha256_manifest": "0241e2a6082cd2e9d2170b566bf5cec35d036078a0c01aea606260c0611f3c9f",
+        "sha256_disk": "0241e2a6082cd2e9d2170b566bf5cec35d036078a0c01aea606260c0611f3c9f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/14b6586103aa43bff0c8be307a8ac870577586343476ee72ac3f8a5f7fed2e59.jpg",
+        "role": "ocr_image",
+        "bytes": 93891,
+        "sha256_manifest": "56871fe118241053945682fef5c69ea53cf8f9e2599b3f02f4e9b79cef79c889",
+        "sha256_disk": "56871fe118241053945682fef5c69ea53cf8f9e2599b3f02f4e9b79cef79c889",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/1954966c42b79ecc94f7614eb47c51218016ec57c9f0ef5acc9ea7a0eb23b0a6.jpg",
+        "role": "ocr_image",
+        "bytes": 64402,
+        "sha256_manifest": "fbbad4651d47954ae7bf6d3e6c070baf6117ea16985b96eee92ad8688ab85806",
+        "sha256_disk": "fbbad4651d47954ae7bf6d3e6c070baf6117ea16985b96eee92ad8688ab85806",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/207c5dbee4f78b0c99e7f10a90ff18068bdfbd1b3480b9c2e22350e903410558.jpg",
+        "role": "ocr_image",
+        "bytes": 218588,
+        "sha256_manifest": "c2bda22bd7a3caf620fad6eda8a21a9f377af7140619c2a35b19f58192b579b0",
+        "sha256_disk": "c2bda22bd7a3caf620fad6eda8a21a9f377af7140619c2a35b19f58192b579b0",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/2d750f8e3aad1e11bf7bc7ac9598e8855c6a98c397c07bec395e4558ced4fd38.jpg",
+        "role": "ocr_image",
+        "bytes": 56901,
+        "sha256_manifest": "2a0096628e8fc9603c9a170b2a7d86b7af8f96187d3312bf5b0c23384c3ffe77",
+        "sha256_disk": "2a0096628e8fc9603c9a170b2a7d86b7af8f96187d3312bf5b0c23384c3ffe77",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/3329b9e6e5894d5dfebccae9f71dd71f590e0e56ce33a4cda9d156c688705d33.jpg",
+        "role": "ocr_image",
+        "bytes": 192179,
+        "sha256_manifest": "d9338b677322d366ebb2eb0ca46599a998fee829a89b3a207b20eeddb290b55d",
+        "sha256_disk": "d9338b677322d366ebb2eb0ca46599a998fee829a89b3a207b20eeddb290b55d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/337cceb8e32c0c377d723a103f11d3deb97309e410cbc2128e3edad494d4ea83.jpg",
+        "role": "ocr_image",
+        "bytes": 96306,
+        "sha256_manifest": "d3c15ac14c362088576259821571878354dbdd061688fd10ecb625069c23accd",
+        "sha256_disk": "d3c15ac14c362088576259821571878354dbdd061688fd10ecb625069c23accd",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/34e604800300c22d5bfc2625d8d6253224be4b7590ff8e504837a4104a6418af.jpg",
+        "role": "ocr_image",
+        "bytes": 103408,
+        "sha256_manifest": "9217456a792f080f44e4fa59e27af10292e69b01183b520fb3694ccd6e862aa4",
+        "sha256_disk": "9217456a792f080f44e4fa59e27af10292e69b01183b520fb3694ccd6e862aa4",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/4427aa62573ab304a12b88d9248641325b0314b30c6a33f7701b2742a1d5e6f1.jpg",
+        "role": "ocr_image",
+        "bytes": 163071,
+        "sha256_manifest": "664bfd7151ef94f7a103193d303385d2eb782554714731cb5c80bfbac8663b32",
+        "sha256_disk": "664bfd7151ef94f7a103193d303385d2eb782554714731cb5c80bfbac8663b32",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/55ce294ef62f7f3b15bb4aece3eeb6dcfab7308b462597d028b4f11276351264.jpg",
+        "role": "ocr_image",
+        "bytes": 345766,
+        "sha256_manifest": "6b6d16ea7f2e322478590ae4194bb194952af1304ad65ad5c43c8613c785d6cb",
+        "sha256_disk": "6b6d16ea7f2e322478590ae4194bb194952af1304ad65ad5c43c8613c785d6cb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/5ef1a6dc58be21d17149a0671a1d3c1ddd3fe79a1b880b63ea1387ccc3831028.jpg",
+        "role": "ocr_image",
+        "bytes": 115791,
+        "sha256_manifest": "5f85cbdfa7060094ad63883e963405877ea2a5456b079c0fc2db3430cc591abe",
+        "sha256_disk": "5f85cbdfa7060094ad63883e963405877ea2a5456b079c0fc2db3430cc591abe",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/5f834cae54af8cfd90906582552d3ea4f420f644c0179a6b42e847b0503bd728.jpg",
+        "role": "ocr_image",
+        "bytes": 65199,
+        "sha256_manifest": "e81d7a218aa03eb797efed5d93676d82f0d6cd0009fe81a7a298abed40666e51",
+        "sha256_disk": "e81d7a218aa03eb797efed5d93676d82f0d6cd0009fe81a7a298abed40666e51",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/66240dec0f1fec303fbd016aed157174f2bb8983a4712d1a825f0b3c38b33fa0.jpg",
+        "role": "ocr_image",
+        "bytes": 40682,
+        "sha256_manifest": "ed8a13e34761235a4c62e71f11130deb619443b2c74295fca83dabac9706dbcc",
+        "sha256_disk": "ed8a13e34761235a4c62e71f11130deb619443b2c74295fca83dabac9706dbcc",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/6a5278250f3b59c2546e3bfb1ff5fb3a6f6ef93d01accace72bed3df7d234e95.jpg",
+        "role": "ocr_image",
+        "bytes": 332774,
+        "sha256_manifest": "a59ebeab1970aa52f131490b94db97d27e6fefbf38d595b85cc922aa964b8f26",
+        "sha256_disk": "a59ebeab1970aa52f131490b94db97d27e6fefbf38d595b85cc922aa964b8f26",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/6dd120426b3d49df152b8274d91c69286807a4575a32449b41bcdd85cd471397.jpg",
+        "role": "ocr_image",
+        "bytes": 65018,
+        "sha256_manifest": "5155b236496355d86de396a8dfe8595d48ebeecb4954726c8d11e3b87d38e2a7",
+        "sha256_disk": "5155b236496355d86de396a8dfe8595d48ebeecb4954726c8d11e3b87d38e2a7",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/81aa0c433d3ea494e8ba62eb72f33b325c8a986685b0f3bd076904a816e4e268.jpg",
+        "role": "ocr_image",
+        "bytes": 44957,
+        "sha256_manifest": "89d171253ca20f8590610ac414a8bfa363a54fbd19d41696d1a49a728d6379a2",
+        "sha256_disk": "89d171253ca20f8590610ac414a8bfa363a54fbd19d41696d1a49a728d6379a2",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/9146400ee7f4b9d118c24d776a0aad2ebf0000c84821aea372c271795df82ba7.jpg",
+        "role": "ocr_image",
+        "bytes": 95847,
+        "sha256_manifest": "f1de33e767b0a77998f418fc4c0ccb6956677fb2e56fcbe331e942d126f5a84b",
+        "sha256_disk": "f1de33e767b0a77998f418fc4c0ccb6956677fb2e56fcbe331e942d126f5a84b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/9581cf87e1c9896e987cc8543f1d945e1f8f4cf56192f4af4a8a9d7d8a7a0dda.jpg",
+        "role": "ocr_image",
+        "bytes": 105132,
+        "sha256_manifest": "7f3b20a491a3ff2caeb8f5a10568263a46300509c46b644ac64a82c6e676ede1",
+        "sha256_disk": "7f3b20a491a3ff2caeb8f5a10568263a46300509c46b644ac64a82c6e676ede1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/98165029f3a745d31673650deaa40495b3a51f5157c0036d09e6003939b2aa0e.jpg",
+        "role": "ocr_image",
+        "bytes": 179985,
+        "sha256_manifest": "97c496b3fbd977bfd66060602316449a476cec657ff728df9fec53dc73f728be",
+        "sha256_disk": "97c496b3fbd977bfd66060602316449a476cec657ff728df9fec53dc73f728be",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/989242940c363fee564d63facf7f49e02c813862ffa0a4f76cbfa301a90bcbee.jpg",
+        "role": "ocr_image",
+        "bytes": 48519,
+        "sha256_manifest": "b1de9b63617daa0ebfd833fed5f69937e2d0e0593f546dffa7791b9b19302e29",
+        "sha256_disk": "b1de9b63617daa0ebfd833fed5f69937e2d0e0593f546dffa7791b9b19302e29",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a0ca036805b1bcd20a466de9e64d9990118add4b5437993deb1685e6a8b7c1de.jpg",
+        "role": "ocr_image",
+        "bytes": 46713,
+        "sha256_manifest": "4ac409e607bac6e522364c1d8b9e2ea882f07c449ad3c44627c761f3dad5d461",
+        "sha256_disk": "4ac409e607bac6e522364c1d8b9e2ea882f07c449ad3c44627c761f3dad5d461",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a6845a801d4a8daca700f7ba4f5884039c8d54845025168041c238067589eef6.jpg",
+        "role": "ocr_image",
+        "bytes": 55889,
+        "sha256_manifest": "fd4431708858f5a02ba1421719612ca701f750185d26f3e0546fd9ca5f078262",
+        "sha256_disk": "fd4431708858f5a02ba1421719612ca701f750185d26f3e0546fd9ca5f078262",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/a686f630234d459fd380fddc295f67124d5f339cd201c99921b508c4dd51f458.jpg",
+        "role": "ocr_image",
+        "bytes": 81033,
+        "sha256_manifest": "556ce0d2f97159d1ec66fed162474a9ce1e93f52b17b1b9d0db69a584ce3174f",
+        "sha256_disk": "556ce0d2f97159d1ec66fed162474a9ce1e93f52b17b1b9d0db69a584ce3174f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/ade6e725a08559a673c8b26980a17fe82c5a789d9e864b547578638dd012e8d8.jpg",
+        "role": "ocr_image",
+        "bytes": 53400,
+        "sha256_manifest": "bae72dfa6fd31590d1448cdf3b9d0f82462bd310d46097b257027ddd3b6930ec",
+        "sha256_disk": "bae72dfa6fd31590d1448cdf3b9d0f82462bd310d46097b257027ddd3b6930ec",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b2cb5a491a1db6fb8cdf864ed66bd610e666f832c6808cff22cacc8865c13371.jpg",
+        "role": "ocr_image",
+        "bytes": 80629,
+        "sha256_manifest": "2eeffd54ff546e91c4a612a1e0b8bfcc8410e5cc0c88dc455a12534eeb461666",
+        "sha256_disk": "2eeffd54ff546e91c4a612a1e0b8bfcc8410e5cc0c88dc455a12534eeb461666",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b3d4d149fbf672ba1b3c0a1ffb2cd1021bf03f0579b467e6e79c4ea796d3096b.jpg",
+        "role": "ocr_image",
+        "bytes": 67567,
+        "sha256_manifest": "da52908593b1b281d0f172fba80608da301dab0bfd6542801c5c9c8dc85945ad",
+        "sha256_disk": "da52908593b1b281d0f172fba80608da301dab0bfd6542801c5c9c8dc85945ad",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/b5f0286207b2932b0ab8f5a0077a074b8292cca0a867392eb3cbe3af45702ce1.jpg",
+        "role": "ocr_image",
+        "bytes": 52764,
+        "sha256_manifest": "6b255619545d6d21764df0f7f9eea5428cc6aeb0f98d783c6149cfeec609b193",
+        "sha256_disk": "6b255619545d6d21764df0f7f9eea5428cc6aeb0f98d783c6149cfeec609b193",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/ba82665c532e898c8b84d8f5b2a47aaa45c3a093ff9f50a0a4a2396fa0aa83d7.jpg",
+        "role": "ocr_image",
+        "bytes": 41822,
+        "sha256_manifest": "1b2a9f632da69949a79c9483fa04a8f6c523f4cef854d58b46e774f3ea8435bb",
+        "sha256_disk": "1b2a9f632da69949a79c9483fa04a8f6c523f4cef854d58b46e774f3ea8435bb",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/bdc2e988fcf352d27d83862d1a5d11219f2c906a61e7fa2c98c3de70e447e847.jpg",
+        "role": "ocr_image",
+        "bytes": 70196,
+        "sha256_manifest": "c8872913aac9b413309c6acededdbe32bcad886d0c0e82794bd3eb1c26bef736",
+        "sha256_disk": "c8872913aac9b413309c6acededdbe32bcad886d0c0e82794bd3eb1c26bef736",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/be88164087a009c9a54131542ffbdf5dc701ff91b4181a1ca3972b8bbcd52374.jpg",
+        "role": "ocr_image",
+        "bytes": 78418,
+        "sha256_manifest": "154538091a030ab7ec263ba798640bd52fb8a63e321227b475197432337d7ff3",
+        "sha256_disk": "154538091a030ab7ec263ba798640bd52fb8a63e321227b475197432337d7ff3",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c64b6f04f87b1b97b9e7627178ae200016da51633acf0c9fef08366352a4a2c2.jpg",
+        "role": "ocr_image",
+        "bytes": 54186,
+        "sha256_manifest": "17d18975aa2fb3c4421f68e4bfe9e7f7b8ee862068a952efe40eb7fe8c45b342",
+        "sha256_disk": "17d18975aa2fb3c4421f68e4bfe9e7f7b8ee862068a952efe40eb7fe8c45b342",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/c736ce03e048cd05a9f49d9616b8055ab0c8f47da9df8c2d181ac859fbbfb938.jpg",
+        "role": "ocr_image",
+        "bytes": 112241,
+        "sha256_manifest": "0722a22d29c8bdd6e1fd4e921e90925c8ae980add146d5ffe3f3ccb364098841",
+        "sha256_disk": "0722a22d29c8bdd6e1fd4e921e90925c8ae980add146d5ffe3f3ccb364098841",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/cb99605665e2aa1cc64ca47c2002342b4caec0a0430b0a52bfa51dfae8e1b462.jpg",
+        "role": "ocr_image",
+        "bytes": 164213,
+        "sha256_manifest": "fd907e5ad66d930a91de7c4a71df0287875fec9522d059cba68bc7c28daad377",
+        "sha256_disk": "fd907e5ad66d930a91de7c4a71df0287875fec9522d059cba68bc7c28daad377",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/cd248f18307bc4f4123c6544d1706cee86e433e060112940cc35bebd3cd0e271.jpg",
+        "role": "ocr_image",
+        "bytes": 52413,
+        "sha256_manifest": "ff531b872b70b48cf6cecbe1cff20cc8add86b5678af1ac07aed51a5472d606c",
+        "sha256_disk": "ff531b872b70b48cf6cecbe1cff20cc8add86b5678af1ac07aed51a5472d606c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/cf6b71a6110fa164de4daa84636c3fef660af39b13be417978a46021fae44319.jpg",
+        "role": "ocr_image",
+        "bytes": 83892,
+        "sha256_manifest": "83f0dacd3435ff3effbc7dbf100fdb728fcccaf37f6241fa028a0cae37e0ab2f",
+        "sha256_disk": "83f0dacd3435ff3effbc7dbf100fdb728fcccaf37f6241fa028a0cae37e0ab2f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/d3c61ae02dd8c1861dd888625b43d771afcf4d99177f2311b393a6f8e296972a.jpg",
+        "role": "ocr_image",
+        "bytes": 78060,
+        "sha256_manifest": "6fe86c30de6349e14c31f2843f5ce43d26d1a385dff2a41069ce5278051be320",
+        "sha256_disk": "6fe86c30de6349e14c31f2843f5ce43d26d1a385dff2a41069ce5278051be320",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/e5121a01e127000cee2ec94cff4cce83d4a7ba894d154ba0ac3f3f4121fa8373.jpg",
+        "role": "ocr_image",
+        "bytes": 93021,
+        "sha256_manifest": "05b2f1c0af68eaf8d89c2406b2690d038ec3d70c6cd311f65218e3d5269ede7e",
+        "sha256_disk": "05b2f1c0af68eaf8d89c2406b2690d038ec3d70c6cd311f65218e3d5269ede7e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/e9b1b06f7ed2ed653b6945b904d5d182e599883b748d8124848097576abe6ec8.jpg",
+        "role": "ocr_image",
+        "bytes": 231046,
+        "sha256_manifest": "080b7cbdcf492fc8705f21a3e3889516da6b71858f06c5710973eb5525e22da0",
+        "sha256_disk": "080b7cbdcf492fc8705f21a3e3889516da6b71858f06c5710973eb5525e22da0",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si1/f4ca740322cf521816efd2a47620ce7c0c2be3bd3b8ec85955ba8dc695170796.jpg",
+        "role": "ocr_image",
+        "bytes": 53379,
+        "sha256_manifest": "360363e364e004447db64819d0928b7ec8f668a6fb97f3a8bf8df05e5536c1e3",
+        "sha256_disk": "360363e364e004447db64819d0928b7ec8f668a6fb97f3a8bf8df05e5536c1e3",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/07314e38abc5127976161060b8fef65abc7f1a272615d258f288dbed53efab25.jpg",
+        "role": "ocr_image",
+        "bytes": 63396,
+        "sha256_manifest": "15742c098a2593a2369c6fd23313f1360278acf2593250d63bb73e513a4a9466",
+        "sha256_disk": "15742c098a2593a2369c6fd23313f1360278acf2593250d63bb73e513a4a9466",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/0fe09586499384beba274458131c4cdcdf427b5ccae966837b2ffaff9ec602ff.jpg",
+        "role": "ocr_image",
+        "bytes": 19754,
+        "sha256_manifest": "6d8f0458c83ed1f49a68e1a04911b08cfb38daf9473c196caf2b50693bca9282",
+        "sha256_disk": "6d8f0458c83ed1f49a68e1a04911b08cfb38daf9473c196caf2b50693bca9282",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/191dc190c44e1941089a3e825d51df460dea71b02652e8700b0365826cd3add3.jpg",
+        "role": "ocr_image",
+        "bytes": 38158,
+        "sha256_manifest": "5d8ad6ce4f5acb613cefba995f947b4349485d84a3b1a92d2fde83bd4eb4ba17",
+        "sha256_disk": "5d8ad6ce4f5acb613cefba995f947b4349485d84a3b1a92d2fde83bd4eb4ba17",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/24b14edf69c081f115cd272f46b079bc516cab3ee401b1062ad8f15182473980.jpg",
+        "role": "ocr_image",
+        "bytes": 83466,
+        "sha256_manifest": "eafb323a47ef63b40f8555561143b3327d65d3ad1f170e39268f522efef3acb5",
+        "sha256_disk": "eafb323a47ef63b40f8555561143b3327d65d3ad1f170e39268f522efef3acb5",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/33302ed178ab16400a900f16b979fe11b87901ed8d8cb2f16d63e2c9c8031561.jpg",
+        "role": "ocr_image",
+        "bytes": 105692,
+        "sha256_manifest": "38944de07c9681e486836644023448f826411adabe67f35227bcbe9151007234",
+        "sha256_disk": "38944de07c9681e486836644023448f826411adabe67f35227bcbe9151007234",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/3544bd9fc77a57eb947b34a362f0fa024c8ae726eced586c9ebc1174b029dab7.jpg",
+        "role": "ocr_image",
+        "bytes": 35692,
+        "sha256_manifest": "e5d53b3d9dc6b08871703c9492e0fe539ede6a48c97e39b06e347e8e8c2fe892",
+        "sha256_disk": "e5d53b3d9dc6b08871703c9492e0fe539ede6a48c97e39b06e347e8e8c2fe892",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/4e3e5272c03e963b10ce2a200f8bfc5456301b68112d9f0e7f96c33283408775.jpg",
+        "role": "ocr_image",
+        "bytes": 40289,
+        "sha256_manifest": "94ca454c7c0a6058db9fead2d20d53ee53a0474828618d5dcbd3f76e2c884d2c",
+        "sha256_disk": "94ca454c7c0a6058db9fead2d20d53ee53a0474828618d5dcbd3f76e2c884d2c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/53a4ccf09efc758c07b4bba4d193de772c0b938092fdd49b21b37c7c14e9fa76.jpg",
+        "role": "ocr_image",
+        "bytes": 39451,
+        "sha256_manifest": "169f041201ae877e9bf56a8763fe788847840b1bb598b08e15a5bdbbce2abac2",
+        "sha256_disk": "169f041201ae877e9bf56a8763fe788847840b1bb598b08e15a5bdbbce2abac2",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/6790989d931a4b7ed1c44d5228474928068d728a84e8123f0e0387e203211071.jpg",
+        "role": "ocr_image",
+        "bytes": 63765,
+        "sha256_manifest": "d0034d5293bae10ad71b0e3c8fbc0507961e87df07f9eaff2067365c471dc165",
+        "sha256_disk": "d0034d5293bae10ad71b0e3c8fbc0507961e87df07f9eaff2067365c471dc165",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/6d35ce76d0748a152f7018994ee685d16e9ec4d6481269f885ab874f98741678.jpg",
+        "role": "ocr_image",
+        "bytes": 20006,
+        "sha256_manifest": "ff2d66898ea1244977049b0392e6bd5c48d3bd641190f64f37bd4210dbf41b7b",
+        "sha256_disk": "ff2d66898ea1244977049b0392e6bd5c48d3bd641190f64f37bd4210dbf41b7b",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/71f425ff1f5ed924dca3291024cc24f0cb683dbcbf14f54bf5607fbc82f663ee.jpg",
+        "role": "ocr_image",
+        "bytes": 29306,
+        "sha256_manifest": "a2809ce6f4b49dc19f530ca2376d47ceddd4645c3acacd271db2eebf60fb9a39",
+        "sha256_disk": "a2809ce6f4b49dc19f530ca2376d47ceddd4645c3acacd271db2eebf60fb9a39",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/d6e1791d8cdf291850015939c279772fee7a3de0a317d43cc91e3df5cb36d61c.jpg",
+        "role": "ocr_image",
+        "bytes": 51381,
+        "sha256_manifest": "4fa91a852a443c2f4b276770796578a7e629881f1e93a870de8ef06455cb4e8a",
+        "sha256_disk": "4fa91a852a443c2f4b276770796578a7e629881f1e93a870de8ef06455cb4e8a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/d9c976eb45627ef46a5978c8cb2d2709f6c0a39c393be813b4c3fae2f47f992a.jpg",
+        "role": "ocr_image",
+        "bytes": 32719,
+        "sha256_manifest": "5e98c416492a1dfa1dad49516017ee3c4591b4525d46846d578feb1ba873020d",
+        "sha256_disk": "5e98c416492a1dfa1dad49516017ee3c4591b4525d46846d578feb1ba873020d",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/dbf2e1cb8f1cc3f83f7cf9d4b233d9db2a7f24d309a1bf0a5110b6fb90f0bb88.jpg",
+        "role": "ocr_image",
+        "bytes": 50790,
+        "sha256_manifest": "9b15107eed5d4c2c350193bd4080da41dfb4c0de8289c74b2109d77a9ad47c1f",
+        "sha256_disk": "9b15107eed5d4c2c350193bd4080da41dfb4c0de8289c74b2109d77a9ad47c1f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/e3e729b28f4f379e20cebb2ff2defcdf4da7aceb7bc1e2a20691e3f0ba8001d9.jpg",
+        "role": "ocr_image",
+        "bytes": 15110,
+        "sha256_manifest": "10a7c52cb56d9bf5661ecfafef2ed145dae98b46119f1920d54aa9f6a4f0643c",
+        "sha256_disk": "10a7c52cb56d9bf5661ecfafef2ed145dae98b46119f1920d54aa9f6a4f0643c",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/f5ab95d6b4e83bd806d1f6ea39453eb6d9886846369ba4001ad9c0bec465a532.jpg",
+        "role": "ocr_image",
+        "bytes": 31453,
+        "sha256_manifest": "58c70f94ecfeddd141f333fdbff7227cfe95448f2af7dc7dc9481e0a2a744246",
+        "sha256_disk": "58c70f94ecfeddd141f333fdbff7227cfe95448f2af7dc7dc9481e0a2a744246",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/fd51bfeb45f24ac316c419b925b800f4fafe24d313a870c59d7ce79f8774bbc7.jpg",
+        "role": "ocr_image",
+        "bytes": 18044,
+        "sha256_manifest": "0e9151556f9a3de2e44a74e729d4ca45fe935808d4dd18ce8ea1c0d915ce7b49",
+        "sha256_disk": "0e9151556f9a3de2e44a74e729d4ca45fe935808d4dd18ce8ea1c0d915ce7b49",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/images/si2/fd7cc5d3c5dd203fa0fd6fe4b83fdcf95096a95d8f6cca11f54a1f7c4003100c.jpg",
+        "role": "ocr_image",
+        "bytes": 51111,
+        "sha256_manifest": "e110f84d7f32326c454f02b3f8c753524fb886a129a40c7b44730c885467b170",
+        "sha256_disk": "e110f84d7f32326c454f02b3f8c753524fb886a129a40c7b44730c885467b170",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1.md",
+        "role": "si_ocr",
+        "bytes": 62441,
+        "sha256_manifest": "7699bd938cb8791029440f5056e43fdace22de186879b1777ce4a687f4d6431e",
+        "sha256_disk": "7699bd938cb8791029440f5056e43fdace22de186879b1777ce4a687f4d6431e",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 109150,
+        "sha256_manifest": "5d099929475f7310d273de8f7411bcbc9e89475570943db56800cd966bf1db1f",
+        "sha256_disk": "5d099929475f7310d273de8f7411bcbc9e89475570943db56800cd966bf1db1f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_middle.json",
+        "role": "ocr_layout",
+        "bytes": 2000822,
+        "sha256_manifest": "bfd525d3c478a041c259e9ec35cd0b48b666ca85db381a5f55ba86417eaaa738",
+        "sha256_disk": "bfd525d3c478a041c259e9ec35cd0b48b666ca85db381a5f55ba86417eaaa738",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si1_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 968,
+        "sha256_manifest": "535e255bea2b07169781bc51517ab1498167790c342dd1e6369a5aa0c0d3c301",
+        "sha256_disk": "535e255bea2b07169781bc51517ab1498167790c342dd1e6369a5aa0c0d3c301",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2.md",
+        "role": "si_ocr",
+        "bytes": 166390,
+        "sha256_manifest": "c05c6da63c0f98d8b791de44a5f10935ae0c1a73526d155fcd7fc5c3963a4824",
+        "sha256_disk": "c05c6da63c0f98d8b791de44a5f10935ae0c1a73526d155fcd7fc5c3963a4824",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 245750,
+        "sha256_manifest": "173920eb67f2d13e74ecf249cd561745f44e48e3726e776f5636d255e0d754c0",
+        "sha256_disk": "173920eb67f2d13e74ecf249cd561745f44e48e3726e776f5636d255e0d754c0",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_middle.json",
+        "role": "ocr_layout",
+        "bytes": 5002017,
+        "sha256_manifest": "a8da8b7487823383f3bb51a524263bbbd95ae3067eee13bbcf6c8281ccfa9587",
+        "sha256_disk": "a8da8b7487823383f3bb51a524263bbbd95ae3067eee13bbcf6c8281ccfa9587",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si2_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 968,
+        "sha256_manifest": "f2e3f5b53fcaaa3c0987f3246182eb6130c8595030018feb4d85b38e61620725",
+        "sha256_disk": "f2e3f5b53fcaaa3c0987f3246182eb6130c8595030018feb4d85b38e61620725",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3.md",
+        "role": "si_ocr",
+        "bytes": 1383,
+        "sha256_manifest": "c77677f3a8afa7af35245cd9334e3e37701de8382e6d9635977a0c103400c748",
+        "sha256_disk": "c77677f3a8afa7af35245cd9334e3e37701de8382e6d9635977a0c103400c748",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_content_list.json",
+        "role": "ocr_layout",
+        "bytes": 4019,
+        "sha256_manifest": "2c682393df1686b1eb038955c1d8374eee59e8d3606d0f971eb16fc78d2e78c1",
+        "sha256_disk": "2c682393df1686b1eb038955c1d8374eee59e8d3606d0f971eb16fc78d2e78c1",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_middle.json",
+        "role": "ocr_layout",
+        "bytes": 65105,
+        "sha256_manifest": "22946716a453227ab8523270cd6f59445f251e4281ae2067edec7d44ddc88e8a",
+        "sha256_disk": "22946716a453227ab8523270cd6f59445f251e4281ae2067edec7d44ddc88e8a",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "library",
+        "path": "si/si3_ocr_provenance.json",
+        "role": "ocr_provenance",
+        "bytes": 968,
+        "sha256_manifest": "d9749d1fb3b522b9a1cd302aef7e02604b1b80a5b345dbfc2ecc4fb975a5f33f",
+        "sha256_disk": "d9749d1fb3b522b9a1cd302aef7e02604b1b80a5b345dbfc2ecc4fb975a5f33f",
+        "retrieval_method": null,
+        "is_zip": false,
+        "zip_ok": null,
+        "leading_archive_sha256": null,
+        "sheets": []
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM5_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 123127,
+        "sha256_manifest": "8bb51873557bed15067f947053f84a9428883bc3acf771a6edf67a0a8740cdeb",
+        "sha256_disk": "8bb51873557bed15067f947053f84a9428883bc3acf771a6edf67a0a8740cdeb",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "protein-coding genes",
+            "rows": 4091
+          },
+          {
+            "sheet": "ncRNA-coding genes",
+            "rows": 116
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM6_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 1723119,
+        "sha256_manifest": "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62",
+        "sha256_disk": "78a05c25da94df158065c18a316d0d29869587e4c839ad3365c911503900ef62",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "sheet1",
+            "rows": 56072
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM9_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3498341,
+        "sha256_manifest": "6500e9105fc6c7482794a558a6c69325196067dc89e295b8eda056ff7e284d48",
+        "sha256_disk": "6500e9105fc6c7482794a558a6c69325196067dc89e295b8eda056ff7e284d48",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "essential genes",
+            "rows": 54117
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM10_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3082270,
+        "sha256_manifest": "3de9fd0aa6e14f543ae35703278558c10085ad63ee2e5f8be214dfc22b996a6e",
+        "sha256_disk": "3de9fd0aa6e14f543ae35703278558c10085ad63ee2e5f8be214dfc22b996a6e",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "auxotrophy in MOPS media",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM11_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3111675,
+        "sha256_manifest": "4a322c70ac984e31cf7f931cec6a3f5af9bfcb3166d73e47f904306e1a4c2ae1",
+        "sha256_disk": "4a322c70ac984e31cf7f931cec6a3f5af9bfcb3166d73e47f904306e1a4c2ae1",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "amino acid addition",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM12_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3110921,
+        "sha256_manifest": "b40c08b07d74b07f992929f866c6aa2f7cbff4e4059148597bf7d36e989df2a9",
+        "sha256_disk": "b40c08b07d74b07f992929f866c6aa2f7cbff4e4059148597bf7d36e989df2a9",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "furfural tolerance",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM13_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 3127601,
+        "sha256_manifest": "29658ef0c45af0b2ac43c33d0858741938a2939ec34c150f77d01bfebc10ba74",
+        "sha256_disk": "29658ef0c45af0b2ac43c33d0858741938a2939ec34c150f77d01bfebc10ba74",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "isobutanol tolerance",
+            "rows": 48309
+          }
+        ]
+      },
+      {
+        "tree": "raw",
+        "path": "si/si_data/41467_2018_4899_MOESM8_ESM.xlsx",
+        "role": "si_data",
+        "bytes": 1597937,
+        "sha256_manifest": "528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503",
+        "sha256_disk": "528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503",
+        "retrieval_method": "pmc_cloud",
+        "is_zip": true,
+        "zip_ok": true,
+        "leading_archive_sha256": null,
+        "sheets": [
+          {
+            "sheet": "essential genes",
+            "rows": 4143
+          },
+          {
+            "sheet": "auxotrophy in MOPS media",
+            "rows": 4005
+          },
+          {
+            "sheet": "amino acid addition",
+            "rows": 4005
+          },
+          {
+            "sheet": "furfural tolerance",
+            "rows": 4005
+          },
+          {
+            "sheet": "isobutanol tolerance",
+            "rows": 4005
+          }
+        ]
+      }
+    ],
+    "walls": []
+  },
+  "g4_key": {
+    "doi": "10.1038/s41467-018-04899-x",
+    "pmid": null,
+    "accessions": [
+      "PRJNA450392"
+    ],
+    "hits": [
+      {
+        "key_kind": "doi",
+        "key": "10.1038/s41467-018-04899-x",
+        "where": "torchcell/datasets/ecoli/wang2018.py",
+        "relation": "own"
+      },
+      {
+        "key_kind": "accession",
+        "key": "PRJNA450392",
+        "where": "torchcell/datasets/ecoli/wang2018.py",
+        "relation": "own"
+      }
+    ],
+    "pmid_checked": false
+  },
+  "g4_value": null,
+  "g5": {
+    "phenotype_class": "EnvironmentResponsePhenotype",
+    "class_exists": true,
+    "unresolved_compounds": [
+      "ampicillin"
+    ],
+    "proposed_class": null
+  },
+  "decided_at": "2026-10-12",
+  "torchcell_commit": "1d80108d9b779cdaed820b56f3bc415ab4014a16"
+}

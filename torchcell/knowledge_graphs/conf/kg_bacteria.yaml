@@ -110,6 +110,7 @@ datasets:
   - EnvChemgenWang2015Dataset
   - GrowthWang2015Dataset
   - CrispriGuideFitnessWang2018Dataset
+  - CrispriGeneFitnessWang2018Dataset
   - PromoterReporterMohiuddin2022Dataset
   - EnvChemgenWang2024Dataset
   - RbTnseqWetmore2015Dataset

@@ -116,7 +116,9 @@ sourcing layer.
   CRISPRi-FACS free-fatty-acid enrichment screen over the SAME 55,671-guide library
   ``wang2018`` serves, 15,708 records.
 - ``wang2018`` -- ``CrispriGuideFitnessWang2018Dataset``: the genome-scale pooled CRISPRi
-  library, one signed log2 fitness per (guide, screen) over five screens.
+  library, one signed log2 fitness per (guide, screen) over five screens; and
+  ``CrispriGeneFitnessWang2018Dataset``, Supplementary Data 5's gene-level call (gene
+  fitness, Z score, FPR, FDR) per (gene, screen), 20,158 records (#879).
 - ``wang2015`` -- ``EnvChemgenWang2015Dataset``: Keio transporter deletions scored for
   isoprenol tolerance.
 - ``wang2015_growth`` -- ``GrowthWang2015Dataset``: the SAME Table S3's other column,
@@ -360,6 +362,9 @@ from .teteneva2024 import RbTnseqTeteneva2024Dataset as RbTnseqTeteneva2024Datas
 from .tong2020 import CarbonSourceTong2020Dataset as CarbonSourceTong2020Dataset
 from .wang2015 import EnvChemgenWang2015Dataset as EnvChemgenWang2015Dataset
 from .wang2015_growth import GrowthWang2015Dataset as GrowthWang2015Dataset
+from .wang2018 import (
+    CrispriGeneFitnessWang2018Dataset as CrispriGeneFitnessWang2018Dataset,
+)
 from .wang2018 import (
     CrispriGuideFitnessWang2018Dataset as CrispriGuideFitnessWang2018Dataset,
 )

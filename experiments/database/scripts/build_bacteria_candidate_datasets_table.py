@@ -112,7 +112,11 @@ PIN_PRECURSOR = TRANCHE_2
 # The two row groups Sec. 1.2 of the document compares: rows that connect an
 # engineering intervention to a production phenotype, and the functional-genomics
 # screens that outrank them on measurements.
-ENGINEERING_CLASSES = ("Production campaign", "Combinatorial design", "Tolerance / robustness")
+ENGINEERING_CLASSES = (
+    "Production campaign",
+    "Combinatorial design",
+    "Tolerance / robustness",
+)
 SCREEN_CLASSES = ("Transposon fitness", "Fitness / chemical genomics")
 
 # ---------------------------------------------------------------------------
@@ -777,10 +781,12 @@ CANDIDATES: list[Candidate] = [
         "RNA-coding genes. The five screened phenotypes are essentiality in "
         "LB, auxotrophy in MOPS versus LB, L-tryptophan biosynthesis, "
         "furfural tolerance and isobutanol tolerance. Processed per-gene and "
-        "per-sgRNA fitness are released as supplementary data; no "
-        "raw-sequencing accession could be confirmed.",
-        accession="Supplementary Data 05 to 10 of https://www.nature.com/articles/s41467-018-04899-x ; code at https://github.com/zhangchonglab/CRISPRi-functional-genomics-in-prokaryotes ; library at Addgene (Chong Zhang E. coli Genome-wide Inhibition Library)",
-        accession_confirmed=False,
+        "per-sgRNA fitness are released as supplementary data. Confirmed "
+        "2026-10-12 (#879): Supplementary Data 2, 3 and 5 to 10 are deposited "
+        "in the raw mirror by pmc_cloud and sha256-pinned, and the Data "
+        "availability statement names the reads' BioProject PRJNA450392.",
+        accession="Supplementary Data 05 to 10 of https://www.nature.com/articles/s41467-018-04899-x ; code at https://github.com/zhangchonglab/CRISPRi-functional-genomics-in-prokaryotes ; library at Addgene (Chong Zhang E. coli Genome-wide Inhibition Library) ; reads NCBI BioProject PRJNA450392",
+        accession_confirmed=True,
         status="candidate",
         confidence="sourced",
         analog=Analog(
@@ -5997,9 +6003,7 @@ def ranked() -> tuple[list[Candidate], list[tuple[str, str, int, int]]]:
         "isoprenol",
         moves,
     )
-    _lift(
-        rows, PIN_PRECURSOR, lambda c: c.isoprenol == "precursor", "precursor", moves
-    )
+    _lift(rows, PIN_PRECURSOR, lambda c: c.isoprenol == "precursor", "precursor", moves)
 
     # Tranche 1 by the global rule alone, then corrected to the floor. A host whose
     # screens are all smaller would otherwise not appear in the first tranche at
@@ -6585,9 +6589,7 @@ The fifty name """
     return head + "\n".join(lines) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
 
 
-def render_pins(
-    rows: list[Candidate], moves: list[tuple[str, str, int, int]]
-) -> str:
+def render_pins(rows: list[Candidate], moves: list[tuple[str, str, int, int]]) -> str:
     """Every row on the isoprenol axis, and every lift the pin performed.
 
     Printed in full rather than counted, because the pin overrides the ordering rule
@@ -6712,7 +6714,10 @@ def main() -> None:
     # prose traces to this script: rule rank is the pure measurement order, final
     # rank is the printed order after the pins.
     rule = sorted(rows, key=lambda c: c.sort_key)
-    for label, classes in (("engineering", ENGINEERING_CLASSES), ("screens", SCREEN_CLASSES)):
+    for label, classes in (
+        ("engineering", ENGINEERING_CLASSES),
+        ("screens", SCREEN_CLASSES),
+    ):
         group = [c for c in rows if c.klass in classes]
         print(
             f"{label}: {len(group)} rows, "

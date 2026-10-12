@@ -7,9 +7,10 @@ r"""Wang 2018 pooled CRISPRi screening in E. coli K-12 MG1655.
 Wang et al. 2018 (Nat Commun 9, 2475; doi:10.1038/s41467-018-04899-x) designed a
 genome-scale sgRNA library of 55,671 guides plus 400 non-targeting controls against
 ``NC_000913.3`` and ran it through five pooled CRISPRi screens. This module serves the
-per-guide readout the paper releases: :class:`CrispriGuideFitnessWang2018Dataset`, one
+per-guide readout the paper releases, :class:`CrispriGuideFitnessWang2018Dataset`, one
 ``BacterialEnvironmentResponseExperiment`` per (guide, screen) row of Supplementary
-Data 6-10.
+Data 6-10, and the per-gene call, :class:`CrispriGeneFitnessWang2018Dataset`, one
+record per (gene, screen) row of Supplementary Data 5 (#879).
 
 THE RECORD IS A SIGNED LOG2 RATIO, WHICH IS WHY IT IS NOT A ``FitnessPhenotype``. The
 released statistic is the paper's ``sgRNA fitness``: equation (2) takes
@@ -22,16 +23,15 @@ So the record is an ``EnvironmentResponsePhenotype`` with
 molecular barcode is the guide's own N20 spacer, amplified from the extracted plasmids
 and counted by NGS), and the reference's response is 0.0 by that normalization.
 
-THE ``Z score`` COLUMN CARRIES NO INFORMATION THE FITNESS DOES NOT, AND THE BUILD PROVES
-IT. Equation (4) is ``Z = Fitness / sigma``, where sigma is the standard deviation of a
-normal fitted to the 400 control guides' fitness, so sigma is one constant per screen.
-Measured on the released bytes: ``fitness / Z`` is constant to 2.1e-12 across every row
-of every screen (:data:`SCREENS` carries the five values, and
-:func:`back_solved_sigma` recomputes them at build time and refuses a screen whose ratio
-drifts). The Z score is therefore a deterministic rescaling and is not stored twice;
-sigma is recorded in ``preprocess/build_accounting.json`` as the screen's null-dispersion
-scale. It is NOT a per-record uncertainty: it is the spread of the NULL distribution, so
-``environment_response_uncertainty`` stays a typed ``ProvenanceGap``.
+THE ``Z score`` COLUMN IS STORED AS RELEASED (#879). Equation (4) is
+``Z = Fitness / sigma``, where sigma is the standard deviation of a normal fitted to the
+400 control guides' fitness, so sigma is one constant per screen. Measured on the
+released bytes: ``fitness / Z`` is constant to 2.1e-12 across every row of every screen
+(:data:`SCREENS` carries the five values, and :func:`back_solved_sigma` recomputes them
+at build time). The released Z score goes on ``environment_response_z_score`` verbatim;
+sigma is recorded in ``preprocess/build_accounting.json`` as the screen's
+null-dispersion scale. It is NOT a per-record uncertainty: it is the spread of the NULL
+distribution, so ``environment_response_uncertainty`` stays a typed ``ProvenanceGap``.
 
 WHAT ONE ROW IS, AND WHY A GUIDE CAN REPRESS SEVERAL GENES. The library's "cluster"
 strategy groups genes whose sequences BLASTN-match into one unit and designs guides
@@ -102,17 +102,12 @@ so the 4,218 measured genes hold no pseudogene; that is a property of the librar
 off-target and GC filters, not of this loader, and
 ``preprocess/build_accounting.json`` records the empty set rather than omitting it.
 
-WHAT IS NOT LOADED, AND THE SCHEMA FINDING BEHIND IT. Supplementary Data 5 is the paper's
-GENE-level call: per cluster per screen, the median fitness of a position-selected guide
-subset with a Mann-Whitney ``Z score``, an ``FDRvalue`` and an ``FPRvalue`` (4,142 +
-4,004 x 4 = 20,158 rows). Those three statistics are the whole point of that table and
-``EnvironmentResponsePhenotype`` has no significance field: only
-``GeneInteractionPhenotype`` carries a p-value anywhere in the schema. Storing the gene
-rows without them would keep a median and silently drop the hit call, so this module
-loads the guide level only and the gap is a written finding in the PR rather than a
-schema edit. Supplementary Data 4 (guides per gene) is not deposited either: it is
-exactly the per-cluster count of Supplementary Data 3, verified identical for all 4,205
-clusters.
+THE GENE LEVEL (#879). Supplementary Data 5 is the paper's GENE-level call: per cluster
+per screen, "the median of fitness of all sgRNAs belonging to the selected subset" with
+its ``Z score``, ``FDRvalue`` and ``FPRvalue`` (4,142 + 4,004 x 4 = 20,158 rows), served
+by :class:`CrispriGeneFitnessWang2018Dataset`; see that class for every column's
+carrier. Supplementary Data 4 (guides per gene) is not deposited: it is exactly the
+per-cluster count of Supplementary Data 3, verified identical for all 4,205 clusters.
 """
 
 from __future__ import annotations
@@ -388,12 +383,30 @@ SCREENS: tuple[Screen, ...] = (
     ),
 )
 
-#: Every file the loader reads, clusters and library first.
+#: Every file the guide-level loader reads, clusters and library first.
 RAW_FILES: tuple[RawFile, ...] = (
     CLUSTERS_FILE,
     LIBRARY_FILE,
     *(screen.raw for screen in SCREENS),
 )
+
+#: Supplementary Data 5 (#879): the gene-level fitness, Z score, FDR and FPR of every
+#: screen, one sheet per screen under the same sheet names Supplementary Data 6-10 use.
+GENE_FITNESS_FILE = RawFile(
+    moesm=8,
+    data_number=5,
+    description="Gene fitness scores for genome-wide library screenings",
+    sha256="528d16763dc7ae88a9b530243c63851bd4350d432407ab333c0a472b8cff7503",
+)
+#: Every file the gene-level loader reads: the clusters and library resolve a released
+#: gene symbol to its cluster's members, and Supplementary Data 5 is the measurement.
+GENE_RAW_FILES: tuple[RawFile, ...] = (CLUSTERS_FILE, LIBRARY_FILE, GENE_FITNESS_FILE)
+#: Every file deposited in the raw mirror (#879 added Supplementary Data 5, which the
+#: paper's own SI lists; retrieved by the same recorded pmc_cloud route).
+MIRROR_FILES: tuple[RawFile, ...] = (*RAW_FILES, GENE_FITNESS_FILE)
+#: The day the pmc_cloud retrieval of Supplementary Data 5 was run and matched its pin
+#: (the same bytes as the torchcell-library mirror's ``si/si8.xlsx``).
+GENE_FITNESS_RETRIEVED_AT = "2026-10-12"
 
 # --------------------------------------------------------------------------- #
 # Assembly, namespace and parsing
@@ -687,8 +700,9 @@ Z_SCALE = _paper(
     _Q_ZSCORE,
     page=_PAGE_METHODS_NGS,
     note="equation (4). sigma is one constant per screen, so the released Z score is a "
-    "deterministic rescaling of the stored fitness and is not stored again; the "
-    "back-solved value per screen is Screen.nc_sigma",
+    "deterministic rescaling of the fitness; it is stored as released on "
+    "environment_response_z_score (#879), and the back-solved value per screen is "
+    "Screen.nc_sigma",
 )
 QUALITY_RULE = _paper(
     "control-condition read count >= 20",
@@ -914,14 +928,16 @@ def _retrieval(raw: RawFile) -> RetrievalRecord:
         retriever="torchcell.literature.retrieve.pmc_cloud_object",
         params={"key": raw.cloud_key},
         sha256=raw.sha256,
-        retrieved_at=RAW_RETRIEVED_AT,
+        retrieved_at=(
+            GENE_FITNESS_RETRIEVED_AT if raw == GENE_FITNESS_FILE else RAW_RETRIEVED_AT
+        ),
     )
 
 
 def deposit_raw_mirror(
     sources: Mapping[str, str | Path] | None = None, *, data_root: str | None = None
 ) -> Path:
-    """Deposit the seven consumed supplementary files and write ``manifest.json``.
+    """Deposit the eight consumed supplementary files and write ``manifest.json``.
 
     With ``sources=None`` the recorded retrieval runs for each file (``pmc_cloud_object``
     on the PMC Article Datasets bucket, which reproduced every pin on
@@ -934,7 +950,7 @@ def deposit_raw_mirror(
 
     root = raw_mirror_dir(data_root)
     staged: dict[str, Path] = {}
-    for raw in RAW_FILES:
+    for raw in MIRROR_FILES:
         if sources is not None:
             source = Path(sources[raw.relpath])
             digest = sha256_file(source)
@@ -956,7 +972,7 @@ def deposit_raw_mirror(
         staged[raw.relpath] = incoming
 
     files: list[ArtifactRecord] = []
-    for raw in RAW_FILES:
+    for raw in MIRROR_FILES:
         dest = root / raw.relpath
         dest.parent.mkdir(parents=True, exist_ok=True)
         if dest.exists():
@@ -986,16 +1002,12 @@ def deposit_raw_mirror(
         si_data_sources=[f"https://pmc-oa-opendata.s3.amazonaws.com/{PMC_PREFIX}/"],
         si_expected=[
             f"Supplementary Data {raw.data_number} ({raw.filename}): {raw.description}"
-            for raw in RAW_FILES
+            for raw in MIRROR_FILES
         ]
         + [
             "Supplementary Data 4 (MOESM7, sgRNAs per gene) is NOT deposited: it is the "
             "per-cluster count of Supplementary Data 3, verified identical for all "
             f"{N_CLUSTERS} clusters, so it is derivable from a deposited file",
-            "Supplementary Data 5 (MOESM8, gene fitness) is NOT deposited: it is the "
-            "GENE-level call, whose FDRvalue and FPRvalue EnvironmentResponsePhenotype "
-            "has no field for. Loading it would keep a median and drop the hit call, so "
-            "the missing significance field is a written finding instead",
             "Supplementary Data 1, 11-14 (MOESM4, 14-17) are NOT deposited: the tiling "
             "library, the Keio essential-gene set, the other-microbe library designs and "
             "the sublibrary composition; no record reads them",
@@ -1257,6 +1269,7 @@ def read_screen(path: str | Path, screen: Screen) -> ScreenRows:
             "guide_id": ids[~is_control & ~is_bad].to_numpy(),
             "token": parsed.loc[~is_control & ~is_bad, "token"].to_numpy(),
             "fitness": fitness[~is_control & ~is_bad].to_numpy(),
+            "z_score": z_score[~is_control & ~is_bad].to_numpy(),
         }
     )
     return ScreenRows(
@@ -1416,12 +1429,15 @@ _UNITS_REFERENCE = (
 )
 
 
-def guide_phenotype(screen: Screen, fitness: float) -> EnvironmentResponsePhenotype:
-    """One guide's released fitness in one screen."""
+def guide_phenotype(
+    screen: Screen, fitness: float, z_score: float
+) -> EnvironmentResponsePhenotype:
+    """One guide's released fitness and Z score in one screen."""
     return EnvironmentResponsePhenotype(
         measurement_type=MeasurementType.log2_ratio,
         assay_type=AssayType.pooled_competitive_growth_barcode,
         environment_response=fitness,
+        environment_response_z_score=z_score,
         n_samples=int(N_REPLICATES.value),
         sample_unit=SampleUnit(str(SAMPLE_UNIT.value)),
         units=_UNITS,
@@ -1747,11 +1763,12 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
                 ref_ptr = self._pointer(reference, reference.dataset_name, itxn)
                 pub_ptr = self._pointer(pub, "publication", itxn)
                 first = True
-                for guide_id, token, fitness in tqdm(
+                for guide_id, token, fitness, z_score in tqdm(
                     zip(
                         rows.candidates["guide_id"],
                         rows.candidates["token"],
                         rows.candidates["fitness"],
+                        rows.candidates["z_score"],
                         strict=True,
                     ),
                     total=len(rows.candidates),
@@ -1767,7 +1784,7 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
                             target, spacers[key]
                         ).model_dump()
                     genotype = genotypes[key]
-                    phenotype = guide_phenotype(screen, float(fitness))
+                    phenotype = guide_phenotype(screen, float(fitness), float(z_score))
                     record = {
                         "experiment": {
                             "experiment_type": "bacterial_environment_response",
@@ -1937,12 +1954,12 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
                 "five screens are kept apart by phenotype.screen_id",
                 "a guide targeting a multi-member BLASTN cluster carries one knockdown "
                 "perturbation per member, which is why perturbations exceed records",
-                "the released Z score is fitness / nc_sigma with nc_sigma constant per "
-                "screen, so it is not stored twice; the back-solved value is on each "
-                "screen here and the build refuses a ratio that is not flat",
-                "Supplementary Data 5's gene-level FDR and FPR have no field on "
-                "EnvironmentResponsePhenotype, so the gene level is not loaded and the "
-                "missing significance field is a written finding",
+                "the released Z score is stored as released on "
+                "environment_response_z_score (#879); it is fitness / nc_sigma with "
+                "nc_sigma constant per screen, and the back-solved value is on each "
+                "screen here",
+                "Supplementary Data 5's gene-level rows are CrispriGeneFitnessWang2018"
+                "Dataset's records (#879)",
                 "the host MCm's chloramphenicol cassette in smf is constant in every "
                 "record and carries no locus tag, so it is not a perturbation and the "
                 "assembly reference asserts no background",
@@ -1962,6 +1979,422 @@ class CrispriGuideFitnessWang2018Dataset(ExperimentDataset):
         """Experiment construction is handled inline in process() for this dataset."""
         raise NotImplementedError(
             "CrispriGuideFitnessWang2018Dataset builds records in process()"
+        )
+
+
+# --------------------------------------------------------------------------- #
+# The gene level: Supplementary Data 5 (#879)
+# --------------------------------------------------------------------------- #
+#: Columns of every Supplementary Data 5 sheet, in order.
+GENE_FITNESS_COLUMNS: tuple[str, ...] = (
+    "gene",
+    "sgRNA number used to calculate the metrics",
+    "gene fitness",
+    "Z score",
+    "FDRvalue",
+    "FPRvalue",
+)
+#: Rows per screen, measured on the pinned bytes: the essentiality sheet holds 4,142
+#: genes and each of the other four holds 4,004, because the Methods exclude the
+#: CRISPRi-essential genes from every screen but essentiality.
+GENE_ROWS_BY_SCREEN: dict[str, int] = {
+    "essentiality": 4142,
+    "auxotrophy": 4004,
+    "trp_biosynthesis": 4004,
+    "furfural_tolerance": 4004,
+    "isobutanol_tolerance": 4004,
+}
+#: Records the gene-level build writes: every released row (no drop rule).
+EXPECTED_GENE_RECORDS = sum(GENE_ROWS_BY_SCREEN.values())
+#: The adjustment behind ``FDRvalue``, named the way ``p_value_adjustment_method`` names
+#: a correction (``benjamini_hochberg`` elsewhere).
+GENE_P_VALUE_ADJUSTMENT = "storey_tibshirani_q_value"
+
+_PAGE_METHODS_GENE = "Methods, NGS data processing (gene fitness and hit calling)"
+GENE_FITNESS_STATISTIC = _paper(
+    "median sgRNA fitness of the selected subset",
+    "The fitness of this gene for the studied phenotype was then the median of fitness "
+    "of all sgRNAs belonging to the selected subset",
+    page=_PAGE_METHODS_GENE,
+    note="the 'gene fitness' column; the subset is the 5'-most M guides whose FPR is "
+    "smallest ('The sgRNA subset with the smallest FPR value was selected as the sgRNA "
+    "set to determine all metrics for this gene'), so it is a median of log2 ratios "
+    "and log2_ratio is its measurement type",
+)
+GENE_SUBSET_COUNT = _paper(
+    "sgRNA number used to calculate the metrics",
+    "The sgRNA subset with the smallest FPR value was selected as the sgRNA set to "
+    "determine all metrics for this gene",
+    page=_PAGE_METHODS_GENE,
+    note="the released subset size M is stored on CrisprConstruct.n_guides verbatim, "
+    "including the 99 rows that release 0 (each with gene fitness 0, Z 0, FDR 1, FPR 1)",
+)
+GENE_FPR_IS_A_P_VALUE = _paper(
+    "environment_response_p_value",
+    "We then took the classical Storey-Tibshirani approach70 to convert the FPR values "
+    "(a particular type of $P$ value) to $\\mathrm { Q }$ values, which were used as the "
+    "threshold for hit-gene calling",
+    page=_PAGE_METHODS_GENE,
+    note="the 'FPRvalue' column is the empirical p-value of the gene's score against "
+    "the 15 quasi-gene null sets (equations 5-7), stored as the unadjusted p-value",
+)
+GENE_FDR_IS_A_Q_VALUE = _paper(
+    GENE_P_VALUE_ADJUSTMENT,
+    "We then took the classical Storey-Tibshirani approach70 to convert the FPR values "
+    "(a particular type of $P$ value) to $\\mathrm { Q }$ values, which were used as the "
+    "threshold for hit-gene calling",
+    page=_PAGE_METHODS_GENE,
+    note="the 'FDRvalue' column is that Q value, stored as the adjusted p-value with "
+    "p_value_adjustment_method = storey_tibshirani_q_value",
+)
+GENE_ESSENTIAL_EXCLUSION = _paper(
+    "4,142 essentiality rows, 4,004 in each other screen",
+    "For other screening experiments of genome-wide sgRNA library except for gene "
+    "essentiality, essential genes of $E$ . coli identified by CRISPRi (fitness $\\leq "
+    "- 4$ , $\\mathrm { F D R } \\leq 0 . 0 1$ ) were excluded",
+    page=_PAGE_METHODS_GENE,
+    note="why the four non-essentiality sheets are shorter; a gene absent from a sheet "
+    "was not called by the authors in that screen, so no record exists for it",
+)
+
+_GENE_UNITS = (
+    "median sgRNA fitness of the position-selected sgRNA subset of the gene's cluster "
+    "(Methods, gene fitness; each sgRNA fitness is equation 3's log2(selective / "
+    "control reads) minus the non-targeting median); negative = the knockdown is "
+    "depleted under selection. environment_response_z_score is the released Z score "
+    "(gene fitness / the screen's non-targeting sigma, equation 4), "
+    "environment_response_p_value the released FPRvalue and "
+    "environment_response_p_value_adjusted the released FDRvalue (its Storey-Tibshirani "
+    "Q value)"
+)
+
+
+def gene_phenotype(
+    screen: Screen, fitness: float, z_score: float, fdr: float, fpr: float
+) -> EnvironmentResponsePhenotype:
+    """One gene's released call in one screen: fitness, Z, FPR and FDR, verbatim."""
+    return EnvironmentResponsePhenotype(
+        measurement_type=MeasurementType.log2_ratio,
+        assay_type=AssayType.pooled_competitive_growth_barcode,
+        environment_response=fitness,
+        environment_response_z_score=z_score,
+        environment_response_p_value=fpr,
+        environment_response_p_value_adjusted=fdr,
+        p_value_adjustment_method=GENE_P_VALUE_ADJUSTMENT,
+        n_samples=int(N_REPLICATES.value),
+        sample_unit=SampleUnit(str(SAMPLE_UNIT.value)),
+        units=_GENE_UNITS,
+        screen_id=screen.screen_id,
+        provenance_gaps=_uncertainty_gaps(),
+    )
+
+
+def build_gene_genotype(cluster: GeneCluster, n_guides: int) -> Genotype:
+    """Every member of one cluster repressed by the cluster's selected guide subset.
+
+    Identifiers are the source's own: the b-number and symbol of each Supplementary
+    Data 2 member token, with no genome lookup. No spacer is stored, because the gene
+    row is a summary over a subset of guides whose membership the release does not list.
+    """
+    return Genotype(
+        perturbations=[
+            BacterialCrisprInterferencePerturbation(
+                systematic_gene_name=member.bnumber,
+                perturbed_gene_name=member.symbol,
+                gene_namespace=MG1655_NAMESPACE,
+                identifier_mapping=None,
+                crispr=CrisprConstruct(
+                    effector=str(EFFECTOR.value),
+                    guide_sequence=None,
+                    n_guides=n_guides,
+                    library_pool=None,
+                ),
+            )
+            for member in cluster.members
+        ]
+    )
+
+
+def clusters_by_released_symbol(
+    clusters: Mapping[str, GeneCluster], spacers: Mapping[str, str]
+) -> dict[str, GeneCluster]:
+    """``gene`` cell of Supplementary Data 5 -> the cluster it names.
+
+    The release names a gene by its cluster representative's bare symbol. Only clusters
+    that carry at least one guide in Supplementary Data 3 can have a gene call, and among
+    those every representative symbol is unique (``insA`` names two clusters, and only
+    ``insAb4294`` carries guides). A symbol that still names two such clusters raises,
+    because no released byte would say which one was measured.
+    """
+    guided = {
+        str(match.group("token"))
+        for guide_id in spacers
+        if (match := GUIDE_ID_RE.match(guide_id)) is not None
+    }
+    by_symbol: dict[str, GeneCluster] = {}
+    for token in sorted(guided):
+        cluster = clusters[token]
+        symbol = cluster.members[0].symbol
+        if symbol in by_symbol:
+            raise ValueError(
+                f"symbol {symbol!r} names two guided clusters, "
+                f"{by_symbol[symbol].token!r} and {token!r}"
+            )
+        by_symbol[symbol] = cluster
+    return by_symbol
+
+
+class GeneScreenRows(BaseModel):
+    """One Supplementary Data 5 sheet, typed, with its Z scale re-checked."""
+
+    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
+
+    screen_id: str
+    sigma: float
+    rows: pd.DataFrame
+
+
+def read_gene_screen(path: str | Path, screen: Screen) -> GeneScreenRows:
+    """One screen's gene-level sheet, every row kept, numbers checked as numbers.
+
+    The sheet carries the guide sheet's name; ``gene fitness / Z score`` must be the
+    screen's recorded sigma (equation 4 at the gene level), which ties the sheet to its
+    screen from the released bytes alone.
+    """
+    frame = pd.read_excel(path, sheet_name=screen.sheet)
+    if tuple(frame.columns) != GENE_FITNESS_COLUMNS:
+        raise ValueError(
+            f"{osp.basename(str(path))}[{screen.sheet!r}] has columns "
+            f"{tuple(frame.columns)}, expected {GENE_FITNESS_COLUMNS}"
+        )
+    numeric = frame[list(GENE_FITNESS_COLUMNS[1:])].apply(pd.to_numeric)
+    if numeric.isna().any().any() or frame["gene"].isna().any():
+        raise ValueError(f"{screen.screen_id}: a gene-level cell is blank")
+    if frame["gene"].astype(str).duplicated().any():
+        raise ValueError(f"{screen.screen_id}: a gene appears twice in one sheet")
+    sigma = back_solved_sigma(numeric["gene fitness"], numeric["Z score"])
+    if abs(sigma - screen.nc_sigma) > SIGMA_RELATIVE_TOLERANCE * abs(screen.nc_sigma):
+        raise ValueError(
+            f"{screen.screen_id}: gene-level sigma {sigma!r} is not the recorded "
+            f"{screen.nc_sigma!r}"
+        )
+    rows = pd.DataFrame(
+        {
+            "gene": frame["gene"].astype(str).to_numpy(),
+            "n_guides": numeric["sgRNA number used to calculate the metrics"]
+            .astype(int)
+            .to_numpy(),
+            "fitness": numeric["gene fitness"].to_numpy(),
+            "z_score": numeric["Z score"].to_numpy(),
+            "fdr": numeric["FDRvalue"].to_numpy(),
+            "fpr": numeric["FPRvalue"].to_numpy(),
+        }
+    )
+    return GeneScreenRows(screen_id=screen.screen_id, sigma=sigma, rows=rows)
+
+
+class GeneBuildAccounting(BaseModel):
+    """The gene-level build's arithmetic: every released row is one record."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    dataset: str
+    source_rows_by_screen: dict[str, int]
+    kept_records: int
+    perturbations: int
+    distinct_genes: int
+    zero_guide_rows: int
+    sigma_by_screen: dict[str, float]
+    notes: list[str]
+
+    def check(self) -> None:
+        """No drop rule: the records are the released rows."""
+        if sum(self.source_rows_by_screen.values()) != self.kept_records:
+            raise ValueError(
+                f"{self.kept_records} records for "
+                f"{sum(self.source_rows_by_screen.values())} released rows"
+            )
+
+
+@register_dataset
+class CrispriGeneFitnessWang2018Dataset(ExperimentDataset):
+    """Wang 2018 gene-level CRISPRi calls (Supplementary Data 5) across five screens.
+
+    One ``BacterialEnvironmentResponseExperiment`` per (gene, screen) row, 20,158 in
+    all, every released row stored. The record carries the released ``gene fitness`` as
+    the response, the ``Z score`` on ``environment_response_z_score``, the ``FPRvalue``
+    (a p-value, by the paper's own words) on ``environment_response_p_value`` and the
+    ``FDRvalue`` (its Storey-Tibshirani Q value) on the adjusted p-value. The genotype
+    is every member of the gene's BLASTN cluster, keyed by the b-numbers Supplementary
+    Data 2 releases, with the released subset size on ``n_guides`` and no spacer. The
+    environment and the non-targeting reference are the guide-level dataset's.
+    """
+
+    organism = Organism.ecoli
+
+    REFERENCE_STRAIN: ClassVar[Literal["MG1655"]] = "MG1655"
+
+    def __init__(
+        self,
+        root: str = "data/torchcell/crispri_gene_fitness_wang2018",
+        io_workers: int = 0,
+        transform: Any | None = None,
+        pre_transform: Any | None = None,
+        **kwargs: Any,
+    ) -> None:
+        """Initialize; no genome is read, the identifiers are the release's own."""
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
+
+    @property
+    def experiment_class(self) -> type[Experiment]:
+        """Experiment schema class produced by this dataset."""
+        return BacterialEnvironmentResponseExperiment
+
+    @property
+    def reference_class(self) -> type[ExperimentReference]:
+        """Experiment-reference schema class produced by this dataset."""
+        return BacterialEnvironmentResponseExperimentReference
+
+    @property
+    def raw_file_names(self) -> list[str]:
+        """The three pinned supplementary files this dataset reads."""
+        return [raw.filename for raw in GENE_RAW_FILES]
+
+    def download(self) -> None:
+        """Link the mirror's files into ``raw/`` after verifying each against the manifest."""
+        data_root = _data_root()
+        manifest = load_manifest(data_root)
+        root = raw_mirror_dir(data_root)
+        os.makedirs(self.raw_dir, exist_ok=True)
+        for raw in GENE_RAW_FILES:
+            recorded = manifest_sha256(manifest, raw.relpath)
+            check_manifest_pin(raw.relpath, recorded, raw.sha256)
+            source = root / raw.relpath
+            if not source.exists():
+                raise RuntimeError(
+                    f"required raw artifact missing from mirror: {source}"
+                )
+            link_verified(source, osp.join(self.raw_dir, raw.filename), recorded)
+
+    @post_process
+    def process(self) -> None:
+        """Build one record per (gene, screen) row of Supplementary Data 5; write LMDB."""
+        verify_raw_files(
+            self.raw_dir, {raw.filename: raw.sha256 for raw in GENE_RAW_FILES}
+        )
+        clusters = read_clusters(
+            osp.join(self.raw_dir, CLUSTERS_FILE.filename),
+            n_clusters=N_CLUSTERS,
+            n_members=N_CLUSTER_MEMBERS,
+        )
+        spacers = read_library(
+            osp.join(self.raw_dir, LIBRARY_FILE.filename),
+            clusters,
+            n_targeting=N_TARGETING_GUIDES,
+            n_non_targeting=N_CONTROL_GUIDES,
+        )
+        by_symbol = clusters_by_released_symbol(clusters, spacers)
+        genome_reference = host_reference()
+        pub = publication()
+
+        os.makedirs(self.preprocess_dir, exist_ok=True)
+        os.makedirs(self.processed_dir, exist_ok=True)
+        env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
+        source_rows: dict[str, int] = {}
+        sigmas: dict[str, float] = {}
+        genes: set[str] = set()
+        perturbations = 0
+        zero_guides = 0
+        idx = 0
+        path = osp.join(self.raw_dir, GENE_FITNESS_FILE.filename)
+        with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
+            for screen in SCREENS:
+                sheet = read_gene_screen(path, screen)
+                if len(sheet.rows) != GENE_ROWS_BY_SCREEN[screen.screen_id]:
+                    raise RuntimeError(
+                        f"{screen.screen_id}: {len(sheet.rows)} gene rows, the pinned "
+                        f"bytes give {GENE_ROWS_BY_SCREEN[screen.screen_id]}"
+                    )
+                unknown = sorted(set(sheet.rows["gene"]) - set(by_symbol))
+                if unknown:
+                    raise RuntimeError(
+                        f"{screen.screen_id}: genes {unknown[:5]} name no guided "
+                        "cluster of Supplementary Data 2"
+                    )
+                environment = selective_environment(screen)
+                reference = build_reference(self.name, screen, genome_reference)
+                table = sheet.rows
+                for gene, n_guides, fitness, z_score, fdr, fpr in zip(
+                    table["gene"].astype(str).tolist(),
+                    table["n_guides"].astype(int).tolist(),
+                    table["fitness"].astype(float).tolist(),
+                    table["z_score"].astype(float).tolist(),
+                    table["fdr"].astype(float).tolist(),
+                    table["fpr"].astype(float).tolist(),
+                    strict=True,
+                ):
+                    cluster = by_symbol[gene]
+                    experiment = BacterialEnvironmentResponseExperiment(
+                        dataset_name=self.name,
+                        genotype=build_gene_genotype(cluster, n_guides),
+                        environment=environment,
+                        phenotype=gene_phenotype(screen, fitness, z_score, fdr, fpr),
+                    )
+                    txn.put(
+                        f"{idx}".encode(),
+                        self._intern_record(experiment, reference, pub, itxn),
+                    )
+                    idx += 1
+                    perturbations += len(cluster.members)
+                    genes.update(m.bnumber for m in cluster.members)
+                    zero_guides += int(n_guides == 0)
+                source_rows[screen.screen_id] = len(sheet.rows)
+                sigmas[screen.screen_id] = sheet.sigma
+        env.close()
+        interned_env.close()
+        if idx != EXPECTED_GENE_RECORDS:
+            raise RuntimeError(
+                f"{self.name}: wrote {idx} records, the pinned bytes give "
+                f"{EXPECTED_GENE_RECORDS}"
+            )
+        accounting = GeneBuildAccounting(
+            dataset=self.name,
+            source_rows_by_screen=source_rows,
+            kept_records=idx,
+            perturbations=perturbations,
+            distinct_genes=len(genes),
+            zero_guide_rows=zero_guides,
+            sigma_by_screen=sigmas,
+            notes=[
+                "one record per released (gene, screen) row of Supplementary Data 5; "
+                "no row is dropped",
+                "identifiers are Supplementary Data 2's own member tokens (b-number and "
+                "symbol); no genome lookup is made, so a released b-number the pinned "
+                "annotation retired is stored as released",
+                "the 'gene' cell names a cluster by its representative's symbol among "
+                "the clusters Supplementary Data 3 designs guides for",
+                f"FPRvalue -> environment_response_p_value, FDRvalue -> "
+                f"environment_response_p_value_adjusted with "
+                f"{GENE_P_VALUE_ADJUSTMENT!r}, Z score -> environment_response_z_score",
+                "rows releasing 0 guides are stored with n_guides 0 and their released "
+                "values (fitness 0, Z 0, FDR 1, FPR 1)",
+            ],
+        )
+        accounting.check()
+        with open(
+            osp.join(self.preprocess_dir, "build_accounting.json"), "w"
+        ) as handle:
+            json.dump(accounting.model_dump(mode="json"), handle, indent=2)
+        log.info("Wrote %d %s records over %d genes", idx, self.name, len(genes))
+
+    def preprocess_raw(self, df: Any, preprocess: dict[str, Any] | None = None) -> Any:
+        """Preprocessing is handled inside process() for this dataset."""
+        return df
+
+    def create_experiment(self) -> None:
+        """Experiment construction is handled inline in process() for this dataset."""
+        raise NotImplementedError(
+            "CrispriGeneFitnessWang2018Dataset builds records in process()"
         )
 
 
@@ -2066,7 +2499,102 @@ class SupplementaryRows:
         return [self.screen_coverage(), self.guide_spacers(), self.assembly_pin()]
 
 
+#: Store-root basenames of the two datasets this module builds.
+GUIDE_STORE = "crispri_guide_fitness_wang2018"
+GENE_STORE = "crispri_gene_fitness_wang2018"
+
+
 def verify_build(
+    dataset_root: str,
+    *,
+    genome: EcoliK12Genome | None = None,
+    data_root: str | None = None,
+    expected_count: int | None = None,
+) -> VerificationReport:
+    """Verify one of this module's two stores, picked by the store root's basename.
+
+    ``build_dataset_lmdb --verify`` resolves a verifier by MODULE, so the guide and the
+    gene store both reach this function; a root that is neither is refused.
+    """
+    store = osp.basename(osp.normpath(dataset_root))
+    if store == GUIDE_STORE:
+        return verify_guide_build(
+            dataset_root,
+            genome=genome,
+            data_root=data_root,
+            expected_count=EXPECTED_RECORDS
+            if expected_count is None
+            else expected_count,
+        )
+    if store == GENE_STORE:
+        return verify_gene_build(
+            dataset_root,
+            genome=genome,
+            data_root=data_root,
+            expected_count=(
+                EXPECTED_GENE_RECORDS if expected_count is None else expected_count
+            ),
+        )
+    raise ValueError(f"{dataset_root} is neither {GUIDE_STORE} nor {GENE_STORE}")
+
+
+def verify_gene_build(
+    dataset_root: str,
+    *,
+    genome: EcoliK12Genome | None = None,
+    data_root: str | None = None,
+    expected_count: int = EXPECTED_GENE_RECORDS,
+) -> VerificationReport:
+    """The gene store's L0-L4 gate, streamed, with its report written.
+
+    The L4 gene universe is every GenBank locus of the pinned MG1655 assembly, and its
+    containment rule reports the released b-numbers it holds; no name resolver is
+    passed, because the gene-level loader stores the release's identifiers without a
+    genome lookup (owner rule, 2026-10-12: the genome does not gate a store).
+    """
+    from torchcell.verification.environment_response import (
+        verify_environment_response_dataset_streaming,
+    )
+    from torchcell.verification.runners import stream_records
+
+    if genome is None:
+        genome = bacterial_genome("ecoli", MG1655_STRAIN, data_root)
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
+        dataset_name=osp.basename(osp.normpath(dataset_root)),
+        provenance=Provenance(
+            source_uri=f"$DATA_ROOT/{RAW_DIR_REL}/{GENE_FITNESS_FILE.relpath}",
+            citation_key=CITATION_KEY,
+            sha256=GENE_FITNESS_FILE.sha256,
+            method=(
+                "Supplementary Data 5 (MOESM8, one sheet per screen): one "
+                "BacterialEnvironmentResponseExperiment per released (gene, screen) "
+                "row, 20,158, none dropped. environment_response = 'gene fitness' "
+                "(median sgRNA fitness of the selected subset, log2_ratio); "
+                "environment_response_z_score = 'Z score'; environment_response_p_value "
+                "= 'FPRvalue'; environment_response_p_value_adjusted = 'FDRvalue' "
+                "(storey_tibshirani_q_value). Genotype = one "
+                "BacterialCrisprInterferencePerturbation per Supplementary Data 2 "
+                "member of the gene's cluster, n_guides = the released subset size, no "
+                "spacer. Reference = the non-targeting baseline of the screen, 0.0"
+            ),
+            page=(
+                "Nat Commun 2018 9:2475; Methods 'NGS data processing'; "
+                f"Supplementary Data 2, 3 and 5; paper.md sha256={PAPER_MD_SHA256}"
+            ),
+            retrieved=GENE_FITNESS_RETRIEVED_AT,
+        ),
+        expected_count=expected_count,
+        sgd_genes=set(genome.genbank.loci),
+    )
+    preprocess = osp.join(dataset_root, "preprocess")
+    os.makedirs(preprocess, exist_ok=True)
+    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
+    return report
+
+
+def verify_guide_build(
     dataset_root: str,
     *,
     genome: EcoliK12Genome | None = None,

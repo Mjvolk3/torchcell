@@ -109,7 +109,7 @@ import lmdb
 import pandas as pd
 from tqdm import tqdm
 
-from torchcell.data import ExperimentDataset, post_process, verify_raw_files
+from torchcell.data import ExperimentDataset, Organism, post_process, verify_raw_files
 from torchcell.datamodels.media import SC_URA
 from torchcell.datamodels.schema import (
     Environment,
@@ -586,6 +586,8 @@ def phenotype(
 @register_dataset
 class PooledPromoterExpressionVaishnav2022Dataset(ExperimentDataset):
     """Vaishnav 2022 GPRA sort-seq expression of 71,054 promoter sequences in SC-Ura."""
+
+    organism = Organism.scerevisiae
 
     def __init__(
         self,

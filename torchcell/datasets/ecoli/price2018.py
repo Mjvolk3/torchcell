@@ -51,14 +51,13 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   median, 12.
 * Genotype: one ``TransposonInsertionPerturbation`` per gene (gene-level, so barcode and
   insertion site are ``None``), ``transposon="Tn5"``, ``library_pool="KEIO_ML9"``.
-  The release names MG1655 b-numbers for this BW25113 library; each is mapped to a
-  ``BW25113_`` locus tag through its one-to-one ECK pair (``eck_crosswalk``), and the
-  leaf's ``description`` says on every record that the tag is DERIVED that way. 3,768 of
-  the release's 3,789 genes map (one pair, b0018 to BW25113_4412, has numbers that
-  differ). The 21 without a one-to-one pair are stored too since #1057 (the owner rule
-  of 2026-10-12: the data is the data, and the genome does not gate a released row), as
-  the released MG1655 b-number in the MG1655 namespace, the ``description`` saying AS
-  RELEASED; the list is in ``identifier_mapping.json``.
+  The release names each gene by its ``sysName``, an MG1655 b-number, for this BW25113
+  library, and every record stores that b-number verbatim in the MG1655 namespace, with
+  the b-number as its name (``fit_logratios_good.tab`` carries no gene symbol). Since
+  #1057 (the owner rule of 2026-10-12: the stored key is the released identifier) no
+  annotation is consulted: the ECK crosswalk to ``BW25113_`` locus tags that used to key
+  3,768 of the 3,789 genes is a derived artifact (:func:`map_genes`, the ``report`` CLI),
+  outside the record.
 * Reference: per sample, the typical gene of that sample (fitness 0 by the
   normalization), in the sample's own environment.
 * Environment: Table S5's medium through the media library (``LB`` is ``LB_LENNOX``, the
@@ -78,12 +77,14 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   and Benzalkonium Chloride are homologue mixtures (a PubChem CID, no single-molecule
   key) and casamino acids is an undefined hydrolysate.
 
-DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): the four sucrose and
-D-mannitol samples the authors' own 2021 note withdraws (``wetmore.AUTHOR_WITHDRAWAL``,
+DROPPED SAMPLES (counted in ``preprocess/dropped_records.json``): only the four sucrose
+and D-mannitol samples the authors' own 2021 note withdraws (``wetmore.AUTHOR_WITHDRAWAL``,
 the typed refusal reason Wetmore 2015's own loader refuses the same four samples under:
-author-withdrawn data is bad data, so it is refused by both, never stored and flagged);
-the seven soft-agar motility samples (no media-library entry for 0.3% LB Lennox agar, and
-the readout is a spatial cut, not growth in a condition). The four ``MOPS Rich Defined
+an author withdrawal is the one drop). The seven soft-agar motility samples
+(``set6IT068`` to ``set6IT075``) were dropped until #1057; they are stored as Table S5
+releases them: ``LB`` with its Condition_1 ``Agar`` at 3 g/L as an added
+``SmallMoleculePerturbation``, at 30 C, each sample its own ``screen_id`` (the ``short``
+label says whether it is the outer or the inner cut of the plate). The four ``MOPS Rich Defined
 media_noCarbon`` samples (``set1IT067`` to ``set1IT070``) were refused under
 ``medium_not_in_media_library`` until #1045 row 16 added Table S18's recipe to the
 library (``MOPS_RICH_DEFINED_NOCARBON_PRICE2018``); they are stored now.
@@ -114,14 +115,12 @@ ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Tab
   computed from, not a phenotype: they are on each record's evidence (#924) with their
   definitions (``ESSENTIAL_COVERAGE_COLUMNS``) and kept in
   ``preprocess/essential_genes.csv``.
-* All 324 rows become records. Four of them are araA, araB, rhaA and rhaB (``b0062``,
-  ``b0063``, ``b3903``, ``b3904``), whose ECK ids no BW25113 locus carries: BW25113
-  DELETES araBAD and rhaBAD, so a library built in it can have no insertion there and
-  the release's own rule calls them essential. Table S1 corroborates this by leaving
-  their ``locus_tag`` (its only BW25113 identifier) empty, and they are the only four
-  Keio rows without one. They were dropped until #1057; they are now stored as the
-  released MG1655 b-number, the call stated as the release states it and the lesion
-  recorded in ``dropped_records.json``.
+* All 324 rows become records, each under its released ``sysName`` (an MG1655
+  b-number) and Table S1's own ``name``. Four of them are araA, araB, rhaA and rhaB
+  (``b0062``, ``b0063``, ``b3903``, ``b3904``), which Table S1 leaves without a
+  ``locus_tag`` (its only BW25113 identifier): BW25113 deletes araBAD and rhaBAD, so a
+  library built in it can have no insertion there and the release's own rule calls them
+  essential. That is recorded in ``dropped_records.json`` as a finding, not a gate.
 * Reference: the unperturbed BW25113 parent on the same selection plates, viable
   (``is_essential=False``) -- the library was built in it and selected there.
 * Environment: a medium DERIVED from ``LB_LENNOX`` (``base_medium`` ``LB``, so it joins
@@ -185,7 +184,6 @@ from torchcell.datamodels.media import (
     MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 )
 from torchcell.datamodels.schema import (
-    BW25113_BACKGROUND_GENOTYPE,
     BW25113_BACKGROUND_LESIONS,
     AssayType,
     AssemblyReferenceGenome,
@@ -1289,7 +1287,6 @@ PUBLICATIONS: dict[SampleSource, Publication] = {
 
 #: The authors' own withdrawal, the same typed reason Wetmore 2015's loader refuses on.
 DROP_DISREGARDED = wetmore.AUTHOR_WITHDRAWAL.rule
-DROP_MOTILITY = "motility_soft_agar_assay"
 
 DROP_RULES: dict[str, str] = {
     DROP_DISREGARDED: "the source's own authors told readers to disregard it: the "
@@ -1297,21 +1294,10 @@ DROP_RULES: dict[str, str] = {
     f"after they found that {wetmore.AUTHOR_WITHDRAWAL.cause.quote!r} The condition is "
     "sucrose or D-mannitol (wetmore2015.AUTHOR_WITHDRAWAL.conditions), so the measured "
     "response is not a response to the named compound and no record of these samples "
-    "is stored, by this loader or by Wetmore 2015's own",
-    DROP_MOTILITY: "an LB 0.3% soft-agar plate cut into 'outer' or 'inner' regions: no "
-    "MEDIA_LIBRARY entry for LB Lennox soft agar (LB_LENNOX is liquid, LB_AGAR is Miller "
-    "at 2%), and the readout is a spatial selection, not growth in a condition",
+    "is stored, by this loader or by Wetmore 2015's own"
 }
-#: What a gene the ECK route cannot place IS since #1057 (the owner rule of 2026-10-12:
-#: the data is the data, and the genome does not gate a released row).
-NO_ECK_PAIR_STATUS = (
-    "a release gene no one-to-one ECK pair places on a BW25113 locus is stored under "
-    "the release's own MG1655 b-number, in the MG1655 namespace; the route's own "
-    "diagnostics per gene are in identifier_mapping.json"
-)
-#: The source's own statement a rule rests on, verbatim with its sha256. Only the
-#: withdrawal is the source's own; the other two rules are this loader's typing (the
-#: motility readout, the ECK crosswalk), so they carry None.
+#: The source's own statement a rule rests on, verbatim with its sha256: the withdrawal,
+#: the only rule left (#1057).
 DROP_RULE_SOURCES: dict[str, SourcedValue] = {
     DROP_DISREGARDED: wetmore.AUTHOR_WITHDRAWAL.instruction
 }
@@ -1325,13 +1311,14 @@ MEDIA_BY_LABEL: dict[str, Media] = {
     "MOPS Rich Defined media_noCarbon": MOPS_RICH_DEFINED_NOCARBON_PRICE2018,
 }
 
-GroupKind = Literal["carbon_source", "nitrogen_source", "stress", "plain"]
+GroupKind = Literal["carbon_source", "nitrogen_source", "stress", "plain", "motility"]
 #: Table S5 ``Group`` -> how its Condition_1 enters the environment.
 GROUP_KINDS: dict[str, GroupKind] = {
     "carbon source": "carbon_source",
     "nitrogen source": "nitrogen_source",
     "stress": "stress",
     "lb": "plain",
+    "motility": "motility",
 }
 #: The media a group may name; a pairing outside this is refused.
 GROUP_MEDIA: dict[GroupKind, frozenset[str]] = {
@@ -1345,6 +1332,7 @@ GROUP_MEDIA: dict[GroupKind, frozenset[str]] = {
     "nitrogen_source": frozenset({"M9 minimal media_noNitrogen"}),
     "stress": frozenset({"LB"}),
     "plain": frozenset({"LB"}),
+    "motility": frozenset({"LB"}),
 }
 #: Table S5 ``Units_1`` -> the typed unit. ``mg/ml`` IS g/L (1 mg/mL = 1 g/L), so the
 #: value is kept as printed.
@@ -1357,6 +1345,12 @@ UNITS_BY_LABEL: dict[str, ConcentrationUnit] = {
 #: What every stress record says about the vehicle it stores (SOLVENT_COLUMN,
 #: SOLVENT_IS_THE_PRESCREEN_STOCK): the solvent is Table S4's, recorded for the
 #: wild-type IC50 prescreen, and the release never ties it to the fitness assays.
+#: What every motility record says about its Condition_1 (#1057).
+MOTILITY_DESCRIPTION = (
+    "Agar added to LB as Table S5 releases it (Condition_1 'Agar', 3 g/L): the LB "
+    "soft-agar motility plate, cut into an outer or an inner region before the barcodes "
+    "were counted (the sample's 'short' label says which)"
+)
 STRESS_DESCRIPTION = (
     "Stress compound added to LB. Vehicle DERIVED: Supplementary Table 4's Solvent for "
     "this compound, which is the solvent of the stock used for the wild-type IC50 "
@@ -1425,9 +1419,8 @@ def classify_samples(
     """Every Keio row of Table S5 as a :class:`SampleSpec`, in table order.
 
     ``carried`` names the samples Wetmore 2015 first reported. Each row is aerobic (else
-    refused) and either kept or dropped by exactly one rule, checked in this order: the
-    2021 withdrawal, a medium outside the library, the motility assay. A kept row must
-    name a library medium and a known group that the medium fits.
+    refused) and either kept or dropped by the one rule left, the 2021 withdrawal. A kept
+    row must name a library medium and a known group that the medium fits.
     """
     names = [str(n) for n in table_s5["name"]]
     if len(set(names)) != len(names):
@@ -1447,8 +1440,6 @@ def classify_samples(
         drop: str | None = None
         if condition in wetmore.AUTHOR_WITHDRAWAL.conditions:
             drop = DROP_DISREGARDED
-        elif group == "motility":
-            drop = DROP_MOTILITY
         else:
             if media_label not in MEDIA_BY_LABEL:
                 raise ValueError(f"{row['name']}: unknown medium {media_label!r}")
@@ -1514,8 +1505,9 @@ def build_environment(spec: SampleSpec, solvents: Mapping[str, str]) -> Environm
     A carbon or nitrogen source is the varied factor of a medium that leaves it out
     (``CARBON_FREE_MEDIA``), so it is an ``EnvironmentPhysicalPerturbation`` with the
     compound as ``agent``; a stress compound is an added ``SmallMoleculePerturbation``
-    carrying ``solvents``'s vehicle for it (:func:`stress_solvent`); the plain LB samples
-    carry no perturbation.
+    carrying ``solvents``'s vehicle for it (:func:`stress_solvent`); a motility sample's
+    ``Agar`` at 3 g/L is an added ``SmallMoleculePerturbation`` as Table S5 releases it
+    (#1057); the plain LB samples carry no perturbation.
     """
     if spec.drop_rule is not None:
         raise ValueError(f"{spec.name} is dropped ({spec.drop_rule})")
@@ -1527,6 +1519,14 @@ def build_environment(spec: SampleSpec, solvents: Mapping[str, str]) -> Environm
         perturbations = []
     elif spec.condition is None:
         raise ValueError(f"{spec.name}: a {spec.group} sample names no condition")
+    elif kind == "motility":
+        perturbations = [
+            SmallMoleculePerturbation(
+                description=MOTILITY_DESCRIPTION,
+                compound=resolved_compound(spec.condition),
+                concentration=_dose(spec),
+            )
+        ]
     elif kind == "stress":
         perturbations = [
             SmallMoleculePerturbation(
@@ -1831,36 +1831,53 @@ UNITS = (
 UNITS_REFERENCE = "the typical gene of this sample (gene fitness is normalized to 0)"
 DESCRIPTION = (
     "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
-    "insertion strains (no per-strain barcode or mapped site). Locus tag DERIVED: the "
-    "release names an MG1655 b-number, mapped to this BW25113 locus through its "
-    "one-to-one ECK pair (eck_crosswalk)"
-)
-#: The description of a gene no ECK pair places: what is stored, no more.
-DESCRIPTION_AS_RELEASED = (
-    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
     "insertion strains (no per-strain barcode or mapped site). Locus tag AS RELEASED: "
-    "the release's MG1655 b-number, in the MG1655 namespace"
+    "the release's sysName, an MG1655 b-number, in the MG1655 namespace; the library "
+    "strain is BW25113"
 )
 
 
-def gene_description(mapping: GeneMapping, base: str, as_released: str) -> str:
-    """``base`` for an ECK-placed gene, else ``as_released``."""
-    if mapping.gene_namespace == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]:
-        return base
-    return as_released
+class StoredGene(BaseModel):
+    """One release gene exactly as the release gives it (#1057).
+
+    ``b_number`` is the ``sysName`` (an MG1655 b-number); ``name`` is the release's own
+    gene name where the table carries one, else the b-number. No annotation is read.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    b_number: str
+    name: str
 
 
-def build_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of KEIO_ML9, the derived mapping in its description."""
+def released_genes(
+    b_numbers: Sequence[str], names: Mapping[str, str] | None = None
+) -> dict[str, StoredGene]:
+    """Each released sysName as a :class:`StoredGene`, in release order.
+
+    A sysName that is not an MG1655 b-number in form is refused: the release's column
+    changed shape, and no transposon leaf could hold it as released.
+    """
+    out: dict[str, StoredGene] = {}
+    for b in b_numbers:
+        if RELEASED_PATTERN.match(b) is None:
+            raise ValueError(f"{b!r} is not an MG1655 b-number in form")
+        if b in out:
+            raise ValueError(f"the release names {b} twice")
+        name = b if names is None else names[b]
+        out[b] = StoredGene(b_number=b, name=name.strip() or b)
+    return out
+
+
+def build_genotype(gene: StoredGene, description: str = DESCRIPTION) -> Genotype:
+    """A Tn5 insertion in one gene of KEIO_ML9, under the released b-number."""
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
-                systematic_gene_name=mapping.locus_tag,
-                perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=mapping.gene_namespace,
-                description=gene_description(
-                    mapping, DESCRIPTION, DESCRIPTION_AS_RELEASED
-                ),
+                systematic_gene_name=gene.b_number,
+                perturbed_gene_name=gene.name,
+                gene_namespace=RELEASED_NAMESPACE,
+                description=description,
                 transposon=TRANSPOSON,
                 library_pool=MUTANT_LIBRARY,
             )
@@ -1950,7 +1967,7 @@ def iter_records(
     dataset_name: str,
     samples: Sequence[SampleRecords],
     release: ReleaseTables,
-    mapping: Mapping[str, GeneMapping],
+    genes: Mapping[str, StoredGene],
 ) -> Iterator[
     tuple[
         BacterialEnvironmentResponseExperiment,
@@ -1959,11 +1976,7 @@ def iter_records(
     ]
 ]:
     """Every record, sample by sample then gene by gene in release order."""
-    rows = [
-        (i, build_genotype(mapping[b]))
-        for i, b in enumerate(release.b_numbers)
-        if b in mapping
-    ]
+    rows = [(i, build_genotype(genes[b])) for i, b in enumerate(release.b_numbers)]
     for sample in samples:
         j = sample.column
         for i, genotype in rows:
@@ -1984,11 +1997,10 @@ def iter_records(
             )
 
 
-#: Records the build writes: 151 kept samples x all 3,789 released genes (147 samples
-#: measured 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps; 3,768 genes on a
-#: BW25113 locus through their ECK pair, plus the 21 no pair places, stored as the
-#: released MG1655 b-number since #1057).
-EXPECTED_SAMPLES = 151
+#: Records the build writes: 158 kept samples x all 3,789 released genes (147 samples
+#: measured 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps and the 7
+#: motility samples #1057 keeps; every gene under its released b-number).
+EXPECTED_SAMPLES = 158
 EXPECTED_GENES = 3789
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
 
@@ -2007,9 +2019,8 @@ class DropRuleCount(BaseModel):
     source: SourcedValue | None = Field(
         default=None,
         description="the source's own statement the rule rests on, verbatim and bound "
-        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES). None for a "
-        "rule that rests on this loader's typing rather than on a statement of the "
-        "source: the media library, the motility readout, the ECK crosswalk",
+        "to the sha256-pinned file it was read from (DROP_RULE_SOURCES). The author "
+        "withdrawal is the only rule left (#1057)",
     )
     items: tuple[str, ...]
     n_records: int
@@ -2043,9 +2054,7 @@ class Inventory(BaseModel):
 
 
 def inventory(
-    specs: Sequence[SampleSpec],
-    identifiers: IdentifierReport,
-    solvents: Mapping[str, str],
+    specs: Sequence[SampleSpec], n_genes: int, solvents: Mapping[str, str]
 ) -> Inventory:
     """Count samples, genes and records kept and dropped, by rule and by source."""
     kept = [s for s in specs if s.drop_rule is None]
@@ -2055,7 +2064,7 @@ def inventory(
         solvents[c.strip().lower()]
         for c in {s.condition for s in stress if s.condition is not None}
     )
-    genes = identifiers.n_source_genes
+    genes = n_genes
     drops = [
         DropRuleCount(
             rule=rule,
@@ -2063,10 +2072,9 @@ def inventory(
             description=DROP_RULES[rule],
             source=DROP_RULE_SOURCES.get(rule),
             items=tuple(s.name for s in specs if s.drop_rule == rule),
-            n_records=sum(1 for s in specs if s.drop_rule == rule)
-            * identifiers.n_source_genes,
+            n_records=sum(1 for s in specs if s.drop_rule == rule) * n_genes,
         )
-        for rule in (DROP_DISREGARDED, DROP_MOTILITY)
+        for rule in (DROP_DISREGARDED,)
     ]
     unidentified = Counter(
         s.condition
@@ -2080,9 +2088,9 @@ def inventory(
         kept_samples_by_source=dict(Counter(s.source.value for s in kept)),
         kept_samples_by_group=dict(Counter(s.group for s in kept)),
         kept_samples_by_medium=dict(Counter(s.media_label for s in kept)),
-        source_genes=identifiers.n_source_genes,
+        source_genes=n_genes,
         kept_genes=genes,
-        source_records=len(specs) * identifiers.n_source_genes,
+        source_records=len(specs) * n_genes,
         kept_records=len(kept) * genes,
         drops=tuple(drops),
         unidentified_compounds=dict(sorted(unidentified.items())),
@@ -2151,7 +2159,7 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one record per (mapped gene, kept sample) and the preprocess reports."""
+        """Build one record per (released gene, kept sample) and the preprocess reports."""
         data_root = _data_root()
         verify_raw_files(
             self.raw_dir, {name: pin for name, (_, _, pin) in RAW_FILE_NAMES.items()}
@@ -2166,17 +2174,12 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
                 f"{sorted(subsumption.disregarded)}"
             )
         release = read_release(self.raw_dir, [s.name for s in specs])
-        mg1655 = bacterial_genome("ecoli", "MG1655", data_root)
-        if not isinstance(mg1655, EcoliK12MG1655Genome):
-            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
-        mapping, identifiers = map_genes(
-            release.b_numbers, mg1655, self._bw25113(), label=self.name
-        )
+        genes = released_genes(release.b_numbers)
         solvents = read_solvents(osp.join(self.raw_dir, "si3.xlsx"))
         samples = sample_records(
             self.name, specs, release, assembly_reference(REFERENCE_STRAIN), solvents
         )
-        counts = inventory(specs, identifiers, solvents)
+        counts = inventory(specs, len(genes), solvents)
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
@@ -2186,7 +2189,7 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
         txn = env.begin(write=True)
         itxn = interned_env.begin(write=True)
         for experiment, reference, publication in tqdm(
-            iter_records(self.name, samples, release, mapping),
+            iter_records(self.name, samples, release, genes),
             total=counts.kept_records,
             desc="Price 2018 Keio",
         ):
@@ -2208,22 +2211,18 @@ class RbTnseqPrice2018EcoliDataset(ExperimentDataset):
             raise RuntimeError(
                 f"wrote {idx} records, inventory says {counts.kept_records}"
             )
-        self._write_reports(specs, release, identifiers, counts)
+        self._write_reports(specs, release, counts)
         log.info("Wrote %d Price 2018 Keio records", idx)
 
     def _write_reports(
-        self,
-        specs: Sequence[SampleSpec],
-        release: ReleaseTables,
-        identifiers: IdentifierReport,
-        counts: Inventory,
+        self, specs: Sequence[SampleSpec], release: ReleaseTables, counts: Inventory
     ) -> None:
-        """``dropped_records.json``, ``identifier_mapping.json``, ``samples.json`` and
-        ``standard_error.json`` in ``preprocess/``.
+        """``dropped_records.json``, ``samples.json`` and ``standard_error.json`` in
+        ``preprocess/``. The ECK crosswalk is not part of the build (#1057); the
+        ``report`` CLI derives it on demand.
         """
         payloads: dict[str, Any] = {
             "dropped_records.json": counts.model_dump(mode="json"),
-            "identifier_mapping.json": identifiers.model_dump(mode="json"),
             "samples.json": [s.model_dump(mode="json") for s in specs],
             "standard_error.json": {
                 "rule": STANDARD_ERROR.quote,
@@ -2305,10 +2304,9 @@ def stored_tags_are_loci(
 def verify(data_root: str | None = None) -> Any:
     """Run the environment-response verifier on the dev build; write its report.
 
-    The gene universe and resolver are BW25113's (every GenBank locus, pseudogenes
-    included), selected by the records' own assembly pin. The report is
-    ``preprocess/verification_report.json`` with one SUPPLEMENTARY row
-    (:func:`stored_tags_are_loci`).
+    The gene universe and resolver are MG1655's, the namespace the released b-numbers
+    are stored in (#1057); its genome-reference rows report and never gate. The report
+    is ``preprocess/verification_report.json``.
     """
     from torchcell.verification.environment_response import (
         verify_environment_response_dataset_streaming,
@@ -2317,7 +2315,7 @@ def verify(data_root: str | None = None) -> Any:
 
     root = _data_root(data_root)
     abs_root = osp.join(root, "data/torchcell/rbtnseq_price2018_ecoli")
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
+    genome = bacterial_genome("ecoli", "MG1655", root)
     report = verify_environment_response_dataset_streaming(
         stream_records(abs_root),
         dataset_name=RbTnseqPrice2018EcoliDataset.__name__,
@@ -2327,13 +2325,6 @@ def verify(data_root: str | None = None) -> Any:
         min_containment=1.0,
         resolve_gene_name=genome.resolve_gene_name,
     )
-    tags = {
-        str(p["systematic_gene_name"])
-        for record in stream_records(abs_root)
-        for p in record["experiment"]["genotype"]["perturbations"]
-        if p["gene_namespace"] == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
-    }
-    report.add(stored_tags_are_loci(tags, genome.resolve_gene_name))
     out = osp.join(abs_root, "preprocess", "verification_report.json")
     with open(out, "w") as handle:
         handle.write(report.model_dump_json(indent=2))
@@ -2367,8 +2358,10 @@ def report(data_root: str | None = None) -> dict[str, Any]:
         raise TypeError("the K-12 genomes resolved to the wrong classes")
     _, identifiers = map_genes(release.b_numbers, mg1655, bw25113, label="report")
     return {
-        "inventory": inventory(specs, identifiers, solvents).model_dump(mode="json"),
-        "identifiers": identifiers.model_dump(mode="json"),
+        "inventory": inventory(specs, len(release.b_numbers), solvents).model_dump(
+            mode="json"
+        ),
+        "eck_crosswalk_derived_artifact": identifiers.model_dump(mode="json"),
         "standard_error": {
             "n_values": release.n_values,
             "n_naive_larger": release.n_naive_larger,
@@ -2384,8 +2377,7 @@ def report(data_root: str | None = None) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 ESSENTIAL_DATASET_ROOT_REL = "data/torchcell/gene_essentiality_price2018_ecoli"
 #: Table S1's ``orgId == "Keio"`` rows, and the records they become (measured
-#: 2026-10-07): 324 released rows, 320 of them on a BW25113 locus and, since #1057, the
-#: other 4 (araA, araB, rhaA, rhaB) as the released MG1655 b-number.
+#: 2026-10-07): 324 released rows, every one under its released MG1655 b-number (#1057).
 ESSENTIAL_SOURCE_GENES = 324
 ESSENTIAL_EXPECTED_RECORDS = 324
 #: The ECK route must place at least this fraction of Table S1's Keio genes. It places
@@ -2411,9 +2403,8 @@ ESSENTIAL_DESCRIPTION = (
     "important for growth (nearly essential)' in the library-isolation condition (LB "
     "plates at 37 C), and its own false-discovery rate for the E. coli list is 6% to "
     "16% (ESSENTIAL_LABEL, ESSENTIAL_CONDITION, ESSENTIAL_FDR). The barcodes are not "
-    "used in this analysis, so no strain is identified. Locus tag DERIVED: the release "
-    "names an MG1655 b-number, mapped to this BW25113 locus through its one-to-one ECK "
-    "pair (eck_crosswalk)"
+    "used in this analysis, so no strain is identified. Locus tag AS RELEASED: Table "
+    "S1's sysName, an MG1655 b-number, in the MG1655 namespace, with Table S1's own name"
 )
 
 
@@ -2557,24 +2548,18 @@ class EssentialityInventory(BaseModel):
 
     source_genes: int
     kept_genes: int
-    released_as_genes: tuple[str, ...] = Field(
-        description="genes no ECK pair places, stored as the released MG1655 b-number "
-        "with a status since #1057 (they were dropped before)"
-    )
-    released_as_gene_names: tuple[str, ...] = Field(
-        description="Table S1's own `name` for each of them (araA, araB, rhaA, rhaB)"
-    )
-    released_as_description: str
     gene_class_histogram: dict[str, int]
     rows_without_a_refseq_locus_tag: tuple[str, ...] = Field(
         description="Keio rows whose Table S1 locus_tag is empty: the release's own "
-        "corroboration that BW25113 carries no locus for them"
+        "statement that BW25113 carries no locus for them"
     )
-    released_as_genes_explained_by_background: dict[str, str] = Field(
-        description="each released-as gene's Table S1 name -> the BW25113 background "
-        "lesion "
-        "(BW25113_BACKGROUND_LESIONS, verbatim from the pinned assembly's source "
-        "feature) that accounts for the locus being absent"
+    rows_without_a_refseq_locus_tag_names: tuple[str, ...] = Field(
+        description="Table S1's own `name` for each of them (araA, araB, rhaA, rhaB)"
+    )
+    background_lesions_for_rows_without_a_tag: dict[str, str] = Field(
+        description="FINDING, not a gate (#1057): each such row's Table S1 name -> the "
+        "BW25113 background lesion (BW25113_BACKGROUND_LESIONS, verbatim from the pinned "
+        "assembly's source feature) whose name contains it"
     )
     fitness_genes: int = Field(description="genes of fit_logratios_good.tab")
     shared_with_fitness: tuple[str, ...] = Field(
@@ -2589,9 +2574,7 @@ class EssentialityInventory(BaseModel):
 
 
 def essentiality_inventory(
-    genes: Sequence[EssentialGene],
-    identifiers: IdentifierReport,
-    fitness_b_numbers: Sequence[str],
+    genes: Sequence[EssentialGene], fitness_b_numbers: Sequence[str]
 ) -> EssentialityInventory:
     """Count the released rows and the records, and prove the two gene sets disjoint.
 
@@ -2600,9 +2583,9 @@ def essentiality_inventory(
     (``ESSENTIAL_RULE``), and that analysis covers "non-essential protein-coding genes"
     only (``FITNESS_GENES_ARE_NON_ESSENTIAL``). An overlap means the two files
     disagree, so the build refuses rather than storing one gene under two contradicting
-    phenotypes. The genes the ECK route cannot place must likewise be exactly the rows
-    Table S1 leaves without a BW25113 ``locus_tag``; a difference means the route lost a
-    gene the release does place, which is a mapping bug, not a deleted operon.
+    phenotypes. The rows Table S1 leaves without a BW25113 ``locus_tag`` are listed with
+    the background lesion that names them, as a finding (#1057: the genome gates
+    nothing).
     """
     essential = {gene.b_number for gene in genes}
     shared = tuple(sorted(essential & set(fitness_b_numbers)))
@@ -2611,35 +2594,20 @@ def essentiality_inventory(
             f"{len(shared)} genes are both likely-essential and valued by the fitness "
             f"release: {shared[:10]}"
         )
-    unmapped = tuple(u.b_number for u in identifiers.unmapped)
-    without_tag = tuple(g.b_number for g in genes if g.refseq_locus_tag is None)
-    if set(unmapped) != set(without_tag):
-        raise ValueError(
-            f"the genes the ECK route cannot place {sorted(unmapped)} are not the rows "
-            f"Table S1 leaves without a locus_tag {sorted(without_tag)}"
-        )
-    names = {gene.b_number: gene.name for gene in genes}
-    explained = {
-        names[b]: lesion
-        for b in unmapped
+    without_tag = [g for g in genes if g.refseq_locus_tag is None]
+    lesions = {
+        gene.name: lesion
+        for gene in without_tag
         for lesion in BW25113_BACKGROUND_LESIONS
-        if names[b][:3].lower() in lesion.lower()
+        if gene.name[:3].lower() in lesion.lower()
     }
-    unexplained = sorted(set(names[b] for b in unmapped) - set(explained))
-    if unexplained:
-        raise ValueError(
-            f"{unexplained} are absent from BW25113 for a reason its background "
-            f"genotype does not state ({BW25113_BACKGROUND_GENOTYPE})"
-        )
     return EssentialityInventory(
         source_genes=len(genes),
         kept_genes=len(genes),
-        released_as_genes=unmapped,
-        released_as_gene_names=tuple(names[b] for b in unmapped),
-        released_as_description=NO_ECK_PAIR_STATUS,
         gene_class_histogram=dict(sorted(Counter(g.gene_class for g in genes).items())),
-        rows_without_a_refseq_locus_tag=without_tag,
-        released_as_genes_explained_by_background=explained,
+        rows_without_a_refseq_locus_tag=tuple(g.b_number for g in without_tag),
+        rows_without_a_refseq_locus_tag_names=tuple(g.name for g in without_tag),
+        background_lesions_for_rows_without_a_tag=lesions,
         fitness_genes=len(set(fitness_b_numbers)),
         shared_with_fitness=shared,
         unencodable_quantities={
@@ -2655,25 +2623,11 @@ def essentiality_inventory(
     )
 
 
-def build_essentiality_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of KEIO_ML9, the call's caveat in its description.
-
-    A gene no ECK pair places (the operons BW25113 deletes) is stored as the released
-    MG1655 b-number, under the same caveat (#1057).
-    """
-    return Genotype(
-        perturbations=[
-            TransposonInsertionPerturbation(
-                systematic_gene_name=mapping.locus_tag,
-                perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=mapping.gene_namespace,
-                description=gene_description(
-                    mapping, ESSENTIAL_DESCRIPTION, ESSENTIAL_DESCRIPTION
-                ),
-                transposon=TRANSPOSON,
-                library_pool=MUTANT_LIBRARY,
-            )
-        ]
+def build_essentiality_genotype(gene: EssentialGene) -> Genotype:
+    """A Tn5 insertion in one gene of KEIO_ML9 under Table S1's sysName and name."""
+    return build_genotype(
+        StoredGene(b_number=gene.b_number, name=gene.name.strip() or gene.b_number),
+        ESSENTIAL_DESCRIPTION,
     )
 
 
@@ -2738,19 +2692,14 @@ def essentiality_evidence(
 
 
 def build_essentiality_experiment(
-    dataset_name: str,
-    mapping: GeneMapping,
-    environment: Environment,
-    gene: EssentialGene,
+    dataset_name: str, gene: EssentialGene, environment: Environment
 ) -> BacterialGeneEssentialityExperiment:
     """One likely-essential gene: ``is_essential=True``, with the label's caveat and the
     gene's Table S1 coverage as evidence.
     """
-    if gene.b_number != mapping.b_number:
-        raise ValueError(f"{gene.b_number} is not the mapped {mapping.b_number}")
     return BacterialGeneEssentialityExperiment(
         dataset_name=dataset_name,
-        genotype=build_essentiality_genotype(mapping),
+        genotype=build_essentiality_genotype(gene),
         environment=environment,
         phenotype=GeneEssentialityPhenotype(
             is_essential=True, evidence=essentiality_evidence(gene)
@@ -2837,8 +2786,7 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
 
     @post_process
     def process(self) -> None:
-        """Build one record per mapped Table S1 Keio gene and the preprocess reports."""
-        data_root = _data_root()
+        """Build one record per Table S1 Keio gene and the preprocess reports."""
         verify_raw_files(
             self.raw_dir,
             {name: RAW_FILE_NAMES[name][2] for name in self.raw_file_names},
@@ -2849,19 +2797,7 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
             sep="\t",
             usecols=["sysName"],
         )
-        mg1655 = bacterial_genome("ecoli", "MG1655", data_root)
-        if not isinstance(mg1655, EcoliK12MG1655Genome):
-            raise TypeError(f"expected the MG1655 genome, got {type(mg1655).__name__}")
-        mapping, identifiers = map_genes(
-            [gene.b_number for gene in genes],
-            mg1655,
-            self._bw25113(),
-            label=self.name,
-            min_fraction=MIN_ESSENTIAL_ECK_ROUTE_FRACTION,
-        )
-        counts = essentiality_inventory(
-            genes, identifiers, [str(v) for v in fitness["sysName"]]
-        )
+        counts = essentiality_inventory(genes, [str(v) for v in fitness["sysName"]])
 
         environment = essentiality_environment()
         reference = build_essentiality_reference(
@@ -2874,13 +2810,10 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for gene in tqdm(genes, desc="Price 2018 Table S1"):
-                placed = mapping[gene.b_number]
                 txn.put(
                     f"{idx}".encode(),
                     self._intern_record(
-                        build_essentiality_experiment(
-                            self.name, placed, environment, gene
-                        ),
+                        build_essentiality_experiment(self.name, gene, environment),
                         reference,
                         publication,
                         itxn,
@@ -2893,18 +2826,14 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
             raise RuntimeError(
                 f"wrote {idx} records, inventory says {counts.kept_genes}"
             )
-        self._write_essentiality_reports(genes, mapping, identifiers, counts)
+        self._write_essentiality_reports(genes, counts)
         log.info("Wrote %d Price 2018 likely-essential gene records", idx)
 
     def _write_essentiality_reports(
-        self,
-        genes: Sequence[EssentialGene],
-        mapping: Mapping[str, GeneMapping],
-        identifiers: IdentifierReport,
-        counts: EssentialityInventory,
+        self, genes: Sequence[EssentialGene], counts: EssentialityInventory
     ) -> None:
-        """``dropped_records.json``, ``identifier_mapping.json``,
-        ``essentiality_label.json`` and the per-row ``essential_genes.csv``.
+        """``dropped_records.json``, ``essentiality_label.json`` and the per-row
+        ``essential_genes.csv``.
 
         ``essentiality_label.json`` is where the label's caveat lives in full: the
         verbatim label, condition and FDR quotes with their source and sha256, so a
@@ -2912,9 +2841,6 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
         """
         out = Path(self.preprocess_dir)
         (out / "dropped_records.json").write_text(counts.model_dump_json(indent=2))
-        (out / "identifier_mapping.json").write_text(
-            identifiers.model_dump_json(indent=2)
-        )
         (out / "essentiality_label.json").write_text(
             json.dumps(
                 {
@@ -2926,14 +2852,11 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
         )
         rows: list[dict[str, Any]] = []
         for record, gene in enumerate(genes):
-            placed = mapping[gene.b_number]
             rows.append(
                 {
                     **gene.model_dump(mode="json"),
-                    "locus_tag": placed.locus_tag,
-                    "gene_namespace": placed.gene_namespace,
-                    "eck": placed.eck,
-                    "perturbed_gene_name": placed.perturbed_gene_name,
+                    "stored_tag": gene.b_number,
+                    "gene_namespace": RELEASED_NAMESPACE,
                     "record": record,
                 }
             )
@@ -3171,24 +3094,17 @@ def verify_essentiality_records(
         records,
         resolve_gene_name=resolve_gene_name,
         sgd_genes=universe,
-        gene_universe_label="BW25113",
+        gene_universe_label="MG1655 (the namespace of the released b-numbers)",
         min_containment=1.0,
     ):
         report.add(result)
-    tags = {
-        str(p["systematic_gene_name"])
-        for r in records
-        for p in r["experiment"]["genotype"]["perturbations"]
-        if p["gene_namespace"] == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
-    }
-    report.add(stored_tags_are_loci(tags, resolve_gene_name))
     return report
 
 
 def verify_essentiality(data_root: str | None = None) -> VerificationReport:
     """Verify the built essentiality LMDB (L0 to L4) and write its report.
 
-    The gene universe and resolver are BW25113's, as for the fitness dataset. Table S1
+    The gene universe and resolver are MG1655's, as for the fitness dataset. Table S1
     and the fitness table are re-read from this dataset's own ``raw/``, so the L2 and L3
     rows check the records against the pinned files rather than against the build.
     """
@@ -3202,7 +3118,7 @@ def verify_essentiality(data_root: str | None = None) -> VerificationReport:
         sep="\t",
         usecols=["sysName"],
     )
-    genome = bacterial_genome("ecoli", REFERENCE_STRAIN, root)
+    genome = bacterial_genome("ecoli", "MG1655", root)
     report = verify_essentiality_records(
         load_records(abs_root),
         genes=genes,
@@ -3275,9 +3191,7 @@ def essentiality_report(data_root: str | None = None) -> dict[str, Any]:
         label="essentiality report",
         min_fraction=MIN_ESSENTIAL_ECK_ROUTE_FRACTION,
     )
-    counts = essentiality_inventory(
-        genes, identifiers, [str(v) for v in fitness["sysName"]]
-    )
+    counts = essentiality_inventory(genes, [str(v) for v in fitness["sysName"]])
     return {
         "inventory": counts.model_dump(mode="json"),
         "identifiers": identifiers.model_dump(mode="json"),

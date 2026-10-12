@@ -266,9 +266,8 @@ def test_process_stores_only_the_unloaded_attributed_samples(
         fb, "FEBA", fb.FEBA.model_copy(update={"sha256": file_sha256(path)})
     )
     monkeypatch.setattr(fe, "assembly_reference", lambda strain: _reference())
-    monkeypatch.setattr(
-        fe, "bacterial_genome", lambda *a, **k: pytest.fail("a genome was read")
-    )
+    # no genome is read anywhere in the loader since #1057: it imports no genome reader
+    assert not hasattr(fe, "bacterial_genome")
 
     dataset = fe.FitnessBrowserEcoliDataset(root=str(root))
     # every released locus of every stored sample, the one without a symbol included

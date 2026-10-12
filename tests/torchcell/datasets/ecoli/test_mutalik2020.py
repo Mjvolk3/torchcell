@@ -1652,15 +1652,16 @@ def test_the_declared_controls_are_the_planktonic_buffer_controls() -> None:
     assert axis.counts["no_phage_control"] == 10
     kept, dropped = mut.kept_assays(axis, released)
     assert (len(kept), dropped) == (78, [])
+    # every measured gene of the set since #1057 (the ECK-unplaced ones as released)
     assert mut.records_per_experiment(kept) == {
-        "Keio_ML9_set16_set19": 3667,
-        "Keio_ML9_set28_set29": 3695,
-        "Keio_ML9_set30": 3673,
+        "Keio_ML9_set16_set19": 3686,
+        "Keio_ML9_set28_set29": 3714,
+        "Keio_ML9_set30": 3691,
     }
     declared = mut.declared_unperturbed_records(axis, released)
-    assert declared == 6 * 3667 + 2 * 3695 == 29392
+    assert declared == 6 * 3686 + 2 * 3714 == 29544
     # the two undeclared controls are what the gate reads as a medium edit
-    assert mut.EXPECTED_KIND_CENSUS["no_phage_control"] - declared == 3667 + 3673
+    assert mut.EXPECTED_KIND_CENSUS["no_phage_control"] - declared == 3686 + 3691
     assert mut.UNPERTURBED_CONTROL_MEDIA_LABEL == "LB_plus_SM_buffer"
 
 
@@ -1763,19 +1764,34 @@ SYNTHETIC_MAPPED = {
     "b0003": "BW25113_4412",
     "b0004": "BW25113_0004",
 }
+#: #1057: the three no ECK pair places, stored as the released MG1655 b-number.
+SYNTHETIC_AS_RELEASED = ("b0005", "b0006", "b0007")
 
 
 def test_the_eck_route_places_the_genes_it_can_and_names_the_rest(
     k12: tuple[EcoliK12MG1655Genome, EcoliK12BW25113Genome],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Four of seven place; the three without a one-to-one pair are named, not guessed."""
+    """Four of seven place; the three without a one-to-one pair are named, not guessed,
+    and stored as the released b-number with a status (#1057).
+    """
     mg1655, bw25113 = k12
     monkeypatch.setattr(mut, "MIN_ECK_ROUTE_FRACTION", 0.5)
     mapping, report = mut.map_measured_genes(
         SYNTHETIC_GENES, mg1655, bw25113, label="synthetic"
     )
-    assert {b: m.locus_tag for b, m in mapping.items()} == SYNTHETIC_MAPPED
+    assert {b: m.locus_tag for b, m in mapping.items()} == {
+        **SYNTHETIC_MAPPED,
+        **{b: b for b in SYNTHETIC_AS_RELEASED},
+    }
+    assert {b: m.gene_namespace for b, m in mapping.items() if m.status} == {
+        b: "ecoli_k12_mg1655_bnumber" for b in SYNTHETIC_AS_RELEASED
+    }
+    assert [s.released for s in report.released_as] == list(SYNTHETIC_AS_RELEASED)
+    leaf = mut.build_genotype(mapping["b0005"]).perturbations[0]
+    assert isinstance(leaf, TransposonInsertionPerturbation)
+    assert leaf.identifier_mapping is None
+    assert leaf.description.startswith(mut.PERTURBATION_DESCRIPTION_AS_RELEASED)
     assert (report.n_measured_genes, report.n_mapped) == (7, 4)
     assert report.mapped_fraction == pytest.approx(4 / 7)
     assert report.unmapped == ("b0005", "b0006", "b0007")
@@ -2116,11 +2132,13 @@ class TestSyntheticRelease:
     def test_the_loader_builds_the_synthetic_release_end_to_end(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Six record-bearing experiments x four mapped genes, with the start sample out."""
+        """Six record-bearing experiments x all seven genes, with the start sample out."""
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
-        assert len(dataset) == 24
-        assert sorted(dataset.gene_set) == sorted(SYNTHETIC_MAPPED.values())
+        assert len(dataset) == 42
+        assert sorted(dataset.gene_set) == sorted(
+            [*SYNTHETIC_MAPPED.values(), *SYNTHETIC_AS_RELEASED]
+        )
         references = dataset.experiment_reference_index
         assert references is not None
         assert len(references) == 6
@@ -2129,12 +2147,12 @@ class TestSyntheticRelease:
             screen = dataset[index]["experiment"]["phenotype"]["screen_id"]
             census[screen] = census.get(screen, 0) + 1
         assert census == {
-            "Keio:set16IT007": 4,
-            "Keio:set16IT008": 4,
-            "Keio:set16IT019": 4,
-            "Keio:set19IT073": 4,
-            "Keio:set28IT004": 4,
-            "Keio:set30IT064": 4,
+            "Keio:set16IT007": 7,
+            "Keio:set16IT008": 7,
+            "Keio:set16IT019": 7,
+            "Keio:set19IT073": 7,
+            "Keio:set28IT004": 7,
+            "Keio:set30IT064": 7,
         }
         assert "Keio:set16IT001" not in census
         assert (root / "preprocess" / "build_manifest.json").is_file()
@@ -2209,7 +2227,7 @@ class TestSyntheticRelease:
     def test_the_build_accounts_for_every_dropped_synthetic_record(
         self, tmp_path: Path, release_mirror: str
     ) -> None:
-        """Seven genes x six experiments in, 24 out, the 18 drops named by rule."""
+        """Seven genes x six experiments in, all 42 out since #1057."""
         import json as _json
 
         root = tmp_path / "dataset"
@@ -2219,13 +2237,10 @@ class TestSyntheticRelease:
             drops["source_records"],
             drops["kept_records"],
             drops["dropped_records"],
-        ) == (42, 24, 18)
+        ) == (42, 42, 0)
         assert {
             rule["rule"]: (rule["n_records"], rule["items"]) for rule in drops["rules"]
-        } == {
-            mut.DROP_MEDIUM_NOT_IN_LIBRARY: (0, []),
-            mut.DROP_NO_ECK_PAIR: (18, ["b0005", "b0006", "b0007"]),
-        }
+        } == {mut.DROP_MEDIUM_NOT_IN_LIBRARY: (0, [])}
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
         assert (
             ledger["used_experiments"],
@@ -2257,12 +2272,12 @@ class TestSyntheticRelease:
         monkeypatch.delitem(mut.MEDIA_BY_LABEL, "LB_agar")
         root = tmp_path / "dataset"
         dataset = mut.PhageRbTnseqMutalik2020Dataset(root=str(root))
-        assert len(dataset) == 20
+        assert len(dataset) == 35
         drops = _json.loads((root / "preprocess" / "dropped_records.json").read_text())
         by_rule = {rule["rule"]: rule for rule in drops["rules"]}
         assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["n_records"] == 7
         assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["items"] == ["set30IT064"]
-        assert drops["source_records"] == 42 and drops["kept_records"] == 20
+        assert drops["source_records"] == 42 and drops["kept_records"] == 35
         ledger = _json.loads((root / "preprocess" / "assay_ledger.json").read_text())
         assert ledger["dropped_for_medium"] == ["set30IT064"]
         assert ledger["record_bearing"] == 5
@@ -2301,8 +2316,9 @@ def test_the_oracles_are_internally_consistent() -> None:
     assert sum(mut.EXPECTED_SET_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_KIND_CENSUS.values()) == mut.EXPECTED_RECORDS
     assert sum(mut.EXPECTED_FORMAT_CENSUS.values()) == mut.EXPECTED_RECORDS
-    assert mut.EXPECTED_RECORDS == 286344
-    assert mut.EXPECTED_GENES == 3697
+    # 286,344 and 3,697 before #1057 stored the 19 ECK-unplaced genes (1,471 records)
+    assert mut.EXPECTED_RECORDS == 287815 == 286344 + 1471
+    assert mut.EXPECTED_GENES == 3716 == 3697 + 19
     # every solid-agar assay is in set30 and set30 holds nothing else
     assert (
         mut.EXPECTED_FORMAT_CENSUS["solid"] == mut.EXPECTED_SET_CENSUS["Keio_ML9_set30"]
@@ -2330,16 +2346,16 @@ class TestDevStore:
         drops = _json.loads(Path(preprocess, "dropped_records.json").read_text())
         assert drops["kept_records"] == mut.EXPECTED_RECORDS
         assert drops["source_records"] == 287815
-        assert drops["dropped_records"] == 1471
+        assert drops["dropped_records"] == 0
         by_rule = {rule["rule"]: rule for rule in drops["rules"]}
         assert by_rule[mut.DROP_MEDIUM_NOT_IN_LIBRARY]["n_records"] == 0
-        assert by_rule[mut.DROP_NO_ECK_PAIR]["n_records"] == 1471
-        assert len(by_rule[mut.DROP_NO_ECK_PAIR]["items"]) == 19
+        assert mut.DROP_NO_ECK_PAIR not in by_rule
         identifiers = _json.loads(
             Path(preprocess, "identifier_mapping.json").read_text()
         )
-        assert identifiers["n_mapped"] == mut.EXPECTED_GENES
-        assert identifiers["n_measured_genes"] == 3716
+        assert identifiers["n_mapped"] == 3697
+        assert len(identifiers["released_as"]) == 19
+        assert identifiers["n_measured_genes"] == mut.EXPECTED_GENES == 3716
         assert identifiers["numeric_disagreements"] == [
             ["b0018", "BW25113_4412", "ECK0018"]
         ]
@@ -2364,8 +2380,8 @@ class TestDevStore:
         assert ledger["release_quality_flag"] == {"True": 10, "False": 68}
 
     def test_the_declared_controls_come_from_the_tree_s_own_release_files(self) -> None:
-        """#888: the raw experiment list declares 29,392 unedited control records."""
-        assert mut.read_declared_unperturbed(DEV_ROOT) == 29392
+        """#888: the raw experiment list declares 29,544 unedited control records."""
+        assert mut.read_declared_unperturbed(DEV_ROOT) == 29544
 
     def test_the_report_passes_environment_perturbed_on_the_declared_controls(
         self,
@@ -2378,8 +2394,8 @@ class TestDevStore:
         )
         (row,) = [r for r in report["results"] if r["name"] == "environment_perturbed"]
         assert row["passed"]
-        assert row["details"]["n_missing"] == 29392
-        assert row["details"]["expected_unperturbed"] == 29392
+        assert row["details"]["n_missing"] == 29544
+        assert row["details"]["expected_unperturbed"] == 29544
 
     def test_the_store_serves_phage_challenges_and_phage_free_controls(self) -> None:
         """The LMDB's own length, gene set, reference count and first record."""

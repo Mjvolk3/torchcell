@@ -55,7 +55,11 @@ across records and ``screen_id`` = ``Keio:<sample name>`` keeps them distinct.
   ``BW25113_`` locus tag through its one-to-one ECK pair (``eck_crosswalk``), and the
   leaf's ``description`` says on every record that the tag is DERIVED that way. 3,768 of
   the release's 3,789 genes map (one pair, b0018 to BW25113_4412, has numbers that
-  differ); the 21 without a one-to-one pair are dropped and listed.
+  differ). The 21 without a one-to-one pair are stored too since #1057 (the owner rule
+  of 2026-10-12: the genome does not gate a released row), as the released MG1655
+  b-number in the MG1655 namespace, the ``description`` saying AS RELEASED and naming
+  the status (``no_one_to_one_eck_pair`` or ``not_in_annotation``); the list is in
+  ``identifier_mapping.json``.
 * Reference: per sample, the typical gene of that sample (fitness 0 by the
   normalization), in the sample's own environment.
 * Environment: Table S5's medium through the media library (``LB`` is ``LB_LENNOX``, the
@@ -106,13 +110,14 @@ ESSENTIALITY (:class:`GeneEssentialityPrice2018EcoliDataset`). Supplementary Tab
   normalized read density were under 0.2". Table S1's coverage columns (``GC``,
   ``nReads``, ``normreads``, ``nPosCentral``, ``dens``) are the evidence the call is
   computed from, not a phenotype, and are kept in ``preprocess/essential_genes.csv``.
-* 320 of the 324 rows become records. The four dropped are araA, araB, rhaA and rhaB
-  (``b0062``, ``b0063``, ``b3903``, ``b3904``), whose ECK ids no BW25113 locus carries:
-  BW25113 DELETES araBAD and rhaBAD, so a library built in it can have no insertion
-  there and the release's own rule calls them essential. Table S1 corroborates this by
-  leaving their ``locus_tag`` (its only BW25113 identifier) empty, and they are the only
-  four Keio rows without one. The drop rule is the fitness loader's
-  ``no_one_to_one_eck_pair``.
+* All 324 rows become records. Four of them are araA, araB, rhaA and rhaB (``b0062``,
+  ``b0063``, ``b3903``, ``b3904``), whose ECK ids no BW25113 locus carries: BW25113
+  DELETES araBAD and rhaBAD, so a library built in it can have no insertion there and
+  the release's own rule calls them essential. Table S1 corroborates this by leaving
+  their ``locus_tag`` (its only BW25113 identifier) empty, and they are the only four
+  Keio rows without one. They were dropped until #1057; they are now stored as the
+  released MG1655 b-number with the ``no_one_to_one_eck_pair`` status, the call stated
+  as the release states it and the lesion recorded in ``dropped_records.json``.
 * Reference: the unperturbed BW25113 parent on the same selection plates, viable
   (``is_essential=False``) -- the library was built in it and selected there.
 * Environment: a medium DERIVED from ``LB_LENNOX`` (``base_medium`` ``LB``, so it joins
@@ -184,6 +189,7 @@ from torchcell.datamodels.schema import (
     BacterialEnvironmentResponseExperimentReference,
     BacterialGeneEssentialityExperiment,
     BacterialGeneEssentialityExperimentReference,
+    BacterialGeneNamespace,
     Concentration,
     ConcentrationUnit,
     Environment,
@@ -211,10 +217,13 @@ from torchcell.datasets.bacteria_common import (
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
     LocusTagResolutionError,
+    ReleasedIdentifierResolution,
+    ReleasedIdentifierStatus,
     assembly_reference,
     bacterial_genome,
     eck_crosswalk,
     reconcile_locus_tags,
+    status_description,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1262,6 +1271,7 @@ PUBLICATIONS: dict[SampleSource, Publication] = {
 #: The authors' own withdrawal, the same typed reason Wetmore 2015's loader refuses on.
 DROP_DISREGARDED = wetmore.AUTHOR_WITHDRAWAL.rule
 DROP_MOTILITY = "motility_soft_agar_assay"
+#: Not a drop rule since #1057: the status a gene the ECK route cannot place carries.
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 
 DROP_RULES: dict[str, str] = {
@@ -1274,10 +1284,16 @@ DROP_RULES: dict[str, str] = {
     DROP_MOTILITY: "an LB 0.3% soft-agar plate cut into 'outer' or 'inner' regions: no "
     "MEDIA_LIBRARY entry for LB Lennox soft agar (LB_LENNOX is liquid, LB_AGAR is Miller "
     "at 2%), and the readout is a spatial selection, not growth in a condition",
-    DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
-    "BW25113 locus (absent from the MG1655 annotation, no ECK synonym, or an ECK id "
-    "BW25113 lacks or carries on several loci); per gene in identifier_mapping.json",
 }
+#: What a gene the ECK route cannot place IS since #1057 (the owner rule of 2026-10-12:
+#: the genome does not gate a released row): stored under the release's own MG1655
+#: b-number, in the MG1655 namespace, with this status.
+NO_ECK_PAIR_STATUS = (
+    "the release's MG1655 b-number has no one-to-one ECK pair with a BW25113 locus "
+    "(absent from the MG1655 annotation, no ECK synonym, or an ECK id BW25113 lacks or "
+    "carries on several loci), so it is stored as released in the MG1655 namespace; "
+    "per gene in identifier_mapping.json"
+)
 #: The source's own statement a rule rests on, verbatim with its sha256. Only the
 #: withdrawal is the source's own; the other two rules are this loader's typing (the
 #: motility readout, the ECK crosswalk), so they carry None.
@@ -1540,8 +1556,15 @@ UnmappedReason = Literal[
 ]
 
 
+#: The namespace a gene the ECK route cannot place is stored in: the release's own.
+RELEASED_NAMESPACE = STRAIN_GENE_NAMESPACES["MG1655"]
+RELEASED_PATTERN = LOCUS_TAG_PATTERNS[RELEASED_NAMESPACE]
+
+
 class GeneMapping(BaseModel):
-    """One release gene placed on its BW25113 locus through a one-to-one ECK pair."""
+    """One release gene: placed on its BW25113 locus through a one-to-one ECK pair, or,
+    when no pair places it, stored as the released MG1655 b-number with a status (#1057).
+    """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
@@ -1550,6 +1573,8 @@ class GeneMapping(BaseModel):
     locus_tag: str
     perturbed_gene_name: str
     numerics_agree: bool
+    gene_namespace: BacterialGeneNamespace = STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
+    status: ReleasedIdentifierStatus | None = None
 
 
 class UnmappedGene(BaseModel):
@@ -1585,6 +1610,11 @@ class IdentifierReport(BaseModel):
     )
     n_tag_names: int = Field(
         description="perturbed_gene_name is the locus tag (symbol absent or not unique)"
+    )
+    released_as: tuple[ReleasedIdentifierStatus, ...] = Field(
+        default=(),
+        description="the genes the ECK route cannot place, stored as the released "
+        "MG1655 b-number with this status (#1057)",
     )
 
 
@@ -1651,6 +1681,7 @@ def assemble_mapping(
     mg1655_ecks: Mapping[str, tuple[str, ...]],
     reconcile: Reconcile,
     name_of: Callable[[str], str],
+    released_name_of: Callable[[str], str],
     *,
     label: str,
     min_fraction: float | None = None,
@@ -1659,8 +1690,11 @@ def assemble_mapping(
 
     ``reconcile`` runs the placed genes' ECK ids through ``reconcile_locus_tags`` on
     BW25113 and must return the crosswalk's tag for every one; ``name_of`` gives a
-    tag's stored common name. The route must place at least ``min_fraction`` of the
-    genes, else the build stops (checklist item 4) rather than dropping more. The
+    tag's stored common name. A gene no one-to-one pair places is NOT dropped (#1057):
+    it is stored as the released MG1655 b-number in the MG1655 namespace, named by
+    ``released_name_of``, with a typed status. The route must still place at least
+    ``min_fraction`` of the genes, else the build stops (checklist item 4): a route
+    that suddenly places fewer is a crosswalk fault, not a release fact. The
     essentiality table has its own, lower floor
     (``MIN_ESSENTIAL_ECK_ROUTE_FRACTION``): four of its 324 genes are the operons
     BW25113 deletes. ``min_fraction`` defaults to ``MIN_ECK_ROUTE_FRACTION`` READ AT
@@ -1692,9 +1726,33 @@ def assemble_mapping(
         for b in order
     }
     n_symbol = sum(1 for m in mapping.values() if m.perturbed_gene_name != m.locus_tag)
+    for gene in unplaced:
+        if RELEASED_PATTERN.match(gene.b_number) is None:
+            raise ValueError(
+                f"{label}: {gene.b_number!r} is not an MG1655 b-number in form, so no "
+                "leaf can hold it as released"
+            )
+        status = ReleasedIdentifierStatus(
+            released=gene.b_number,
+            stored_as=gene.b_number,
+            gene_namespace=RELEASED_NAMESPACE,
+            resolution=ReleasedIdentifierResolution.not_in_annotation
+            if gene.reason == "b_number_not_in_mg1655_annotation"
+            else ReleasedIdentifierResolution.no_one_to_one_eck_pair,
+            note=gene.reason + (f" ({', '.join(gene.eck)})" if gene.eck else ""),
+        )
+        mapping[gene.b_number] = GeneMapping(
+            b_number=gene.b_number,
+            eck=",".join(gene.eck),
+            locus_tag=gene.b_number,
+            perturbed_gene_name=released_name_of(gene.b_number),
+            numerics_agree=True,
+            gene_namespace=RELEASED_NAMESPACE,
+            status=status,
+        )
     report = IdentifierReport(
         n_source_genes=len(b_numbers),
-        n_mapped=len(mapping),
+        n_mapped=len(order),
         mapped_fraction=fraction,
         min_fraction=minimum,
         numeric_disagreements=tuple(
@@ -1709,7 +1767,10 @@ def assemble_mapping(
         },
         reconcile_layer_histogram=dict(reconciliation.layer_histogram),
         n_symbol_names=n_symbol,
-        n_tag_names=len(mapping) - n_symbol,
+        n_tag_names=len(placed) - n_symbol,
+        released_as=tuple(
+            gene.status for gene in mapping.values() if gene.status is not None
+        ),
     )
     return mapping, report
 
@@ -1732,12 +1793,23 @@ def map_genes(
     def reconcile(ecks: pd.Series) -> tuple[pd.Series, LocusTagReconciliation]:
         return reconcile_locus_tags(bw25113, ecks, label=f"{label} ECK ids")
 
+    mg1655_loci = mg1655.genbank.loci
+
+    def released_name(b_number: str) -> str:
+        """The MG1655 symbol of a released b-number, else the b-number itself."""
+        if b_number not in mg1655_loci:
+            return b_number
+        return gene_symbol(
+            mg1655_loci[b_number].symbol, b_number, mg1655.resolve_gene_name
+        )
+
     return assemble_mapping(
         b_numbers,
         eck_crosswalk(mg1655, bw25113),
         mg1655_ecks,
         reconcile,
         lambda tag: gene_symbol(loci[tag].symbol, tag, bw25113.resolve_gene_name),
+        released_name,
         label=label,
         min_fraction=min_fraction,
     )
@@ -1761,6 +1833,20 @@ DESCRIPTION = (
     "release names an MG1655 b-number, mapped to this BW25113 locus through its "
     "one-to-one ECK pair (eck_crosswalk)"
 )
+#: The description of a gene no ECK pair places, which its status sentence extends.
+DESCRIPTION_AS_RELEASED = (
+    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's usable "
+    "insertion strains (no per-strain barcode or mapped site). Locus tag AS RELEASED: "
+    "the release's MG1655 b-number, in the MG1655 namespace, because no one-to-one ECK "
+    "pair places it on a BW25113 locus"
+)
+
+
+def gene_description(mapping: GeneMapping, base: str, as_released: str) -> str:
+    """``base`` for an ECK-placed gene, else ``as_released`` plus the gene's status."""
+    if mapping.status is None:
+        return base
+    return status_description(as_released, mapping.status)
 
 
 def build_genotype(mapping: GeneMapping) -> Genotype:
@@ -1770,8 +1856,10 @@ def build_genotype(mapping: GeneMapping) -> Genotype:
             TransposonInsertionPerturbation(
                 systematic_gene_name=mapping.locus_tag,
                 perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
-                description=DESCRIPTION,
+                gene_namespace=mapping.gene_namespace,
+                description=gene_description(
+                    mapping, DESCRIPTION, DESCRIPTION_AS_RELEASED
+                ),
                 transposon=TRANSPOSON,
                 library_pool=MUTANT_LIBRARY,
             )
@@ -1895,10 +1983,12 @@ def iter_records(
             )
 
 
-#: Records the build writes: 151 kept samples x 3,768 mapped genes (147 measured
-#: 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps).
+#: Records the build writes: 151 kept samples x all 3,789 released genes (147 samples
+#: measured 2026-10-07, plus the 4 MOPS rich samples #1045 row 16 keeps; 3,768 genes on a
+#: BW25113 locus through their ECK pair, plus the 21 no pair places, stored as the
+#: released MG1655 b-number with a status since #1057).
 EXPECTED_SAMPLES = 151
-EXPECTED_GENES = 3768
+EXPECTED_GENES = 3789
 EXPECTED_RECORDS = EXPECTED_SAMPLES * EXPECTED_GENES
 
 
@@ -1964,7 +2054,7 @@ def inventory(
         solvents[c.strip().lower()]
         for c in {s.condition for s in stress if s.condition is not None}
     )
-    genes = identifiers.n_mapped
+    genes = identifiers.n_source_genes
     drops = [
         DropRuleCount(
             rule=rule,
@@ -1977,16 +2067,6 @@ def inventory(
         )
         for rule in (DROP_DISREGARDED, DROP_MOTILITY)
     ]
-    drops.append(
-        DropRuleCount(
-            rule=DROP_NO_ECK_PAIR,
-            scope="gene",
-            description=DROP_RULES[DROP_NO_ECK_PAIR],
-            source=DROP_RULE_SOURCES.get(DROP_NO_ECK_PAIR),
-            items=tuple(u.b_number for u in identifiers.unmapped),
-            n_records=len(identifiers.unmapped) * len(kept),
-        )
-    )
     unidentified = Counter(
         s.condition
         for s in kept
@@ -2187,7 +2267,10 @@ VERIFY_PROVENANCE = Provenance(
 def stored_tags_are_loci(
     tags: set[str], resolve_gene_name: Callable[[str], GeneNameResolution]
 ) -> LevelResult:
-    """SUPPLEMENTARY L1: every stored tag resolves to itself as a locus of BW25113.
+    """SUPPLEMENTARY L1: every stored BW25113 tag resolves to itself as a locus of BW25113.
+
+    The callers pass the BW25113-namespace tags only: a gene no ECK pair places is
+    stored as the released MG1655 b-number (#1057) and is not a BW25113 tag to check.
 
     The shared ``canonical_gene_names`` row used to require status ``current``, which a
     pseudogene locus never has (the bacterial resolver answers ``non_gene_feature``,
@@ -2247,6 +2330,7 @@ def verify(data_root: str | None = None) -> Any:
         str(p["systematic_gene_name"])
         for record in stream_records(abs_root)
         for p in record["experiment"]["genotype"]["perturbations"]
+        if p["gene_namespace"] == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
     }
     report.add(stored_tags_are_loci(tags, genome.resolve_gene_name))
     out = osp.join(abs_root, "preprocess", "verification_report.json")
@@ -2299,9 +2383,10 @@ def report(data_root: str | None = None) -> dict[str, Any]:
 # --------------------------------------------------------------------------- #
 ESSENTIAL_DATASET_ROOT_REL = "data/torchcell/gene_essentiality_price2018_ecoli"
 #: Table S1's ``orgId == "Keio"`` rows, and the records they become (measured
-#: 2026-10-07): 324 released rows, 320 of them on a BW25113 locus.
+#: 2026-10-07): 324 released rows, 320 of them on a BW25113 locus and, since #1057, the
+#: other 4 (araA, araB, rhaA, rhaB) as the released MG1655 b-number with a status.
 ESSENTIAL_SOURCE_GENES = 324
-ESSENTIAL_EXPECTED_RECORDS = 320
+ESSENTIAL_EXPECTED_RECORDS = 324
 #: The ECK route must place at least this fraction of Table S1's Keio genes. It places
 #: 320 of 324 (0.9877), BELOW the fitness tables' 0.99: the four it cannot place are
 #: araA, araB, rhaA and rhaB, whose operons BW25113 deletes, so they can carry no
@@ -2471,19 +2556,23 @@ class EssentialityInventory(BaseModel):
 
     source_genes: int
     kept_genes: int
-    dropped_genes: tuple[str, ...]
-    dropped_gene_names: tuple[str, ...] = Field(
-        description="Table S1's own `name` for each dropped gene (araA, araB, rhaA, rhaB)"
+    released_as_genes: tuple[str, ...] = Field(
+        description="genes no ECK pair places, stored as the released MG1655 b-number "
+        "with a status since #1057 (they were dropped before)"
     )
-    drop_rule: str
-    drop_description: str
+    released_as_gene_names: tuple[str, ...] = Field(
+        description="Table S1's own `name` for each of them (araA, araB, rhaA, rhaB)"
+    )
+    released_as_status: str
+    released_as_description: str
     gene_class_histogram: dict[str, int]
     rows_without_a_refseq_locus_tag: tuple[str, ...] = Field(
         description="Keio rows whose Table S1 locus_tag is empty: the release's own "
         "corroboration that BW25113 carries no locus for them"
     )
-    dropped_genes_explained_by_background: dict[str, str] = Field(
-        description="each dropped gene's Table S1 name -> the BW25113 background lesion "
+    released_as_genes_explained_by_background: dict[str, str] = Field(
+        description="each released-as gene's Table S1 name -> the BW25113 background "
+        "lesion "
         "(BW25113_BACKGROUND_LESIONS, verbatim from the pinned assembly's source "
         "feature) that accounts for the locus being absent"
     )
@@ -2543,14 +2632,14 @@ def essentiality_inventory(
         )
     return EssentialityInventory(
         source_genes=len(genes),
-        kept_genes=identifiers.n_mapped,
-        dropped_genes=unmapped,
-        dropped_gene_names=tuple(names[b] for b in unmapped),
-        drop_rule=DROP_NO_ECK_PAIR,
-        drop_description=DROP_RULES[DROP_NO_ECK_PAIR],
+        kept_genes=len(genes),
+        released_as_genes=unmapped,
+        released_as_gene_names=tuple(names[b] for b in unmapped),
+        released_as_status=DROP_NO_ECK_PAIR,
+        released_as_description=NO_ECK_PAIR_STATUS,
         gene_class_histogram=dict(sorted(Counter(g.gene_class for g in genes).items())),
         rows_without_a_refseq_locus_tag=without_tag,
-        dropped_genes_explained_by_background=explained,
+        released_as_genes_explained_by_background=explained,
         fitness_genes=len(set(fitness_b_numbers)),
         shared_with_fitness=shared,
         unencodable_quantities={
@@ -2567,14 +2656,20 @@ def essentiality_inventory(
 
 
 def build_essentiality_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of KEIO_ML9, the call's caveat in its description."""
+    """A Tn5 insertion in one gene of KEIO_ML9, the call's caveat in its description.
+
+    A gene no ECK pair places (the operons BW25113 deletes) is stored as the released
+    MG1655 b-number, its status appended to the caveat (#1057).
+    """
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
                 systematic_gene_name=mapping.locus_tag,
                 perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
-                description=ESSENTIAL_DESCRIPTION,
+                gene_namespace=mapping.gene_namespace,
+                description=gene_description(
+                    mapping, ESSENTIAL_DESCRIPTION, ESSENTIAL_DESCRIPTION
+                ),
                 transposon=TRANSPOSON,
                 library_pool=MUTANT_LIBRARY,
             )
@@ -2708,9 +2803,7 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
         idx = 0
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for gene in tqdm(genes, desc="Price 2018 Table S1"):
-                placed = mapping.get(gene.b_number)
-                if placed is None:
-                    continue
+                placed = mapping[gene.b_number]
                 txn.put(
                     f"{idx}".encode(),
                     self._intern_record(
@@ -2759,23 +2852,21 @@ class GeneEssentialityPrice2018EcoliDataset(ExperimentDataset):
             )
         )
         rows: list[dict[str, Any]] = []
-        record = 0
-        for gene in genes:
-            placed = mapping.get(gene.b_number)
+        for record, gene in enumerate(genes):
+            placed = mapping[gene.b_number]
             rows.append(
                 {
                     **gene.model_dump(mode="json"),
-                    "locus_tag": None if placed is None else placed.locus_tag,
-                    "eck": None if placed is None else placed.eck,
-                    "perturbed_gene_name": (
-                        None if placed is None else placed.perturbed_gene_name
-                    ),
-                    "drop_rule": None if placed is not None else DROP_NO_ECK_PAIR,
-                    "record": None if placed is None else record,
+                    "locus_tag": placed.locus_tag,
+                    "gene_namespace": placed.gene_namespace,
+                    "eck": placed.eck,
+                    "perturbed_gene_name": placed.perturbed_gene_name,
+                    "status": None
+                    if placed.status is None
+                    else placed.status.resolution.value,
+                    "record": record,
                 }
             )
-            if placed is not None:
-                record += 1
         pd.DataFrame(rows).astype({"record": "Int64"}).to_csv(
             out / "essential_genes.csv", index=False
         )
@@ -2904,7 +2995,7 @@ def essentiality_label_is_qualified(
         1
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
-        if p["description"] != ESSENTIAL_DESCRIPTION
+        if not str(p["description"]).startswith(ESSENTIAL_DESCRIPTION)
     )
     return LevelResult(
         level=Level.L3,
@@ -2958,6 +3049,7 @@ def verify_essentiality_records(
         str(p["systematic_gene_name"])
         for r in records
         for p in r["experiment"]["genotype"]["perturbations"]
+        if p["gene_namespace"] == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
     }
     report.add(stored_tags_are_loci(tags, resolve_gene_name))
     return report

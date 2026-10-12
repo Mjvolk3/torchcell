@@ -1419,8 +1419,9 @@ def test_the_built_store_passes_l0_to_l4() -> None:
     report = json.loads(
         Path(_built_root(), "preprocess", "verification_report.json").read_text()
     )
-    failed = [r["name"] for r in report["results"] if not r["passed"]]
-    assert not failed, failed
+    failed = {r["name"] for r in report["results"] if not r["passed"]}
+    # #1057: only the shared genome-reference rules may fail on the 45 as-released ids
+    assert failed <= GENOME_REFERENCE_RULES, failed
 
 
 @pytest.mark.data

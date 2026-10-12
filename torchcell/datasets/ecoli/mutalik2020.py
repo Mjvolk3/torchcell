@@ -90,9 +90,11 @@ three routes: the ECK join resolves 3,697 of the 3,716 genes that carry a value
 route that would misstate the strain) and the FEBA gene symbols resolve against BW25113
 at 0.961 (the weakest). Every record says so on its own perturbation:
 ``identifier_mapping=DerivedIdentifierMapping(source_identifier=<b-number>,
-route="eck_crosswalk")``. A gene with no one-to-one ECK pair has no storable BW25113
-identifier, so it is DROPPED and counted (``DROP_NO_ECK_PAIR``, 19 genes / 1,471 cells),
-the same rule the Price 2018 loader applies to the same release.
+route="eck_crosswalk")``. A gene with no one-to-one ECK pair has no BW25113 identifier;
+it was dropped (19 genes / 1,471 cells) until #1057 (the owner rule of 2026-10-12: the
+genome does not gate a released row) and is now stored as the released MG1655 b-number
+in the MG1655 namespace, its ``description`` saying AS RELEASED and naming the status,
+as the Price 2018 loader stores the same release's genes.
 """
 
 from __future__ import annotations
@@ -130,6 +132,7 @@ from torchcell.datamodels.schema import (
     AssayType,
     BacterialEnvironmentResponseExperiment,
     BacterialEnvironmentResponseExperimentReference,
+    BacterialGeneNamespace,
     BacterialReferenceStrain,
     ComponentDefinition,
     Compound,
@@ -153,12 +156,16 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.bacteria_common import (
+    LOCUS_TAG_PATTERNS,
     STRAIN_GENE_NAMESPACES,
     LocusTagReconciliation,
+    ReleasedIdentifierResolution,
+    ReleasedIdentifierStatus,
     assembly_reference,
     bacterial_genome,
     eck_crosswalk,
     reconcile_locus_tags,
+    status_description,
 )
 from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.literature.manifest import (
@@ -1735,10 +1742,22 @@ PERTURBATION_DESCRIPTION = (
     "DERIVED: the release names an MG1655 b-number, mapped to this BW25113 locus "
     "through its one-to-one ECK pair (eck_crosswalk)"
 )
+#: The description of a gene no ECK pair places, which its status sentence extends.
+PERTURBATION_DESCRIPTION_AS_RELEASED = (
+    "Tn5 transposon insertion disrupting a gene; gene-level call over the gene's "
+    "insertion strains (no per-strain barcode or mapped site released). Locus tag AS "
+    "RELEASED: the release's MG1655 b-number, in the MG1655 namespace, because no "
+    "one-to-one ECK pair places it on a BW25113 locus"
+)
+#: The namespace a gene the ECK route cannot place is stored in: the release's own.
+RELEASED_NAMESPACE = STRAIN_GENE_NAMESPACES["MG1655"]
+RELEASED_PATTERN = LOCUS_TAG_PATTERNS[RELEASED_NAMESPACE]
 
 
 class GeneMapping(BaseModel):
-    """One released b-number placed on its BW25113 locus through a one-to-one ECK pair."""
+    """One released b-number: placed on its BW25113 locus through a one-to-one ECK pair,
+    or, when no pair places it, stored as released with a status (#1057).
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1747,6 +1766,8 @@ class GeneMapping(BaseModel):
     locus_tag: str
     perturbed_gene_name: str
     numerics_agree: bool
+    gene_namespace: BacterialGeneNamespace = STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
+    status: ReleasedIdentifierStatus | None = None
 
 
 class MappingReport(BaseModel):
@@ -1770,6 +1791,11 @@ class MappingReport(BaseModel):
     )
     reconcile_status_histogram: dict[str, int]
     reconcile_layer_histogram: dict[str, int]
+    released_as: tuple[ReleasedIdentifierStatus, ...] = Field(
+        default=(),
+        description="the genes the ECK route cannot place, stored as the released "
+        "MG1655 b-number with this status (#1057)",
+    )
 
 
 def stored_gene_name(
@@ -1800,9 +1826,10 @@ def map_measured_genes(
     """Place the measured b-numbers on BW25113 locus tags and report what happened.
 
     The route is the one-to-one ECK synonym join the two deposited GenBank annotations
-    share (:func:`eck_mapping`). A b-number the join does not place has no storable
-    BW25113 identifier, so it is left out and named in the report; the build stops if the
-    route places less than :data:`MIN_ECK_ROUTE_FRACTION` of the genes. The placed genes'
+    share (:func:`eck_mapping`). A b-number the join does not place has no BW25113
+    identifier, so it is stored as the released MG1655 b-number with a status (#1057) and
+    named in the report; the build stops if the route places less than
+    :data:`MIN_ECK_ROUTE_FRACTION` of the genes (a crosswalk fault). The placed genes'
     ECK ids are then run through ``reconcile_locus_tags`` on BW25113, which must return
     the crosswalk's tag for every one.
     """
@@ -1845,9 +1872,44 @@ def map_measured_genes(
         for name in placed
     }
     n_symbol = sum(1 for m in mapping.values() if m.perturbed_gene_name != m.locus_tag)
+    mg1655_loci = mg1655.genbank.loci
+    for name in requested:
+        if name in by_b:
+            continue
+        if RELEASED_PATTERN.match(name) is None:
+            raise ValueError(
+                f"{label}: {name!r} is not an MG1655 b-number in form, so no leaf can "
+                "hold it as released"
+            )
+        ecks = (
+            tuple(s for s in mg1655_loci[name].synonyms if s.startswith("ECK"))
+            if name in mg1655_loci
+            else ()
+        )
+        mapping[name] = GeneMapping(
+            b_number=name,
+            eck=",".join(ecks),
+            locus_tag=name,
+            perturbed_gene_name=stored_gene_name(
+                mg1655_loci[name].symbol, name, mg1655.resolve_gene_name
+            )
+            if name in mg1655_loci
+            else name,
+            numerics_agree=True,
+            gene_namespace=RELEASED_NAMESPACE,
+            status=ReleasedIdentifierStatus(
+                released=name,
+                stored_as=name,
+                gene_namespace=RELEASED_NAMESPACE,
+                resolution=ReleasedIdentifierResolution.no_one_to_one_eck_pair
+                if name in mg1655_loci
+                else ReleasedIdentifierResolution.not_in_annotation,
+                note=f"MG1655 ECK {', '.join(ecks)}" if ecks else "",
+            ),
+        )
     report = MappingReport(
         n_measured_genes=len(requested),
-        n_mapped=len(mapping),
+        n_mapped=len(placed),
         mapped_fraction=fraction,
         min_fraction=MIN_ECK_ROUTE_FRACTION,
         unmapped=tuple(name for name in requested if name not in by_b),
@@ -1857,11 +1919,14 @@ def map_measured_genes(
             if not m.numerics_agree
         ),
         n_symbol_names=n_symbol,
-        n_tag_names=len(mapping) - n_symbol,
+        n_tag_names=len(placed) - n_symbol,
         reconcile_status_histogram={
             status.value: n for status, n in reconciliation.status_histogram.items()
         },
         reconcile_layer_histogram=dict(reconciliation.layer_histogram),
+        released_as=tuple(
+            gene.status for gene in mapping.values() if gene.status is not None
+        ),
     )
     return mapping, report
 
@@ -1929,17 +1994,27 @@ UNITS_REFERENCE = (
 
 
 def build_genotype(mapping: GeneMapping) -> Genotype:
-    """A Tn5 insertion in one gene of ``Keio_ML9a``, with its derived mapping typed."""
+    """A Tn5 insertion in one gene of ``Keio_ML9a``, with its derived mapping typed.
+
+    A gene no ECK pair places carries no mapping (it is stored as released) and its
+    status in the description instead (#1057).
+    """
     return Genotype(
         perturbations=[
             TransposonInsertionPerturbation(
                 systematic_gene_name=mapping.locus_tag,
                 perturbed_gene_name=mapping.perturbed_gene_name,
-                gene_namespace=STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN],
-                identifier_mapping=DerivedIdentifierMapping(
+                gene_namespace=mapping.gene_namespace,
+                identifier_mapping=None
+                if mapping.status is not None
+                else DerivedIdentifierMapping(
                     source_identifier=mapping.b_number, route="eck_crosswalk"
                 ),
-                description=PERTURBATION_DESCRIPTION,
+                description=PERTURBATION_DESCRIPTION
+                if mapping.status is None
+                else status_description(
+                    PERTURBATION_DESCRIPTION_AS_RELEASED, mapping.status
+                ),
                 transposon=str(TRANSPOSON.value),
                 library_pool=MUTANT_LIBRARY,
             )
@@ -2064,6 +2139,7 @@ def build_reference(
 # Retention: every rule, with its arithmetic
 # --------------------------------------------------------------------------- #
 DROP_MEDIUM_NOT_IN_LIBRARY = "medium_has_no_media_library_base"
+#: Not a drop rule since #1057: the status a gene the ECK route cannot place carries.
 DROP_NO_ECK_PAIR = "no_one_to_one_eck_pair"
 
 DROP_RULES: dict[str, str] = {
@@ -2071,10 +2147,7 @@ DROP_RULES: dict[str, str] = {
     "MEDIA_BY_LABEL, so the assay's medium has no MEDIA_LIBRARY base to join on and a "
     "free-text medium joins nothing. The release names exactly LB, LB_plus_SM_buffer "
     "and LB_agar, so this rule drops nothing today; it is the refusal that keeps a new "
-    "label from being given an invented recipe",
-    DROP_NO_ECK_PAIR: "the release's MG1655 b-number has no one-to-one ECK pair with a "
-    "BW25113 locus, so the record has no storable identifier in the namespace its "
-    "assembly pin declares. Per gene in identifier_mapping.json",
+    "label from being given an invented recipe"
 }
 
 
@@ -2418,7 +2491,6 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        dropped_by_gene: Counter[str] = Counter()
         t_checks: list[TStatisticCheck] = []
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
             for analysis_set in analysis_sets:
@@ -2446,10 +2518,7 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                     for b_number, value, standard_error, t_value in zip(
                         genes, values, standard_errors, t_values, strict=True
                     ):
-                        genotype = genotypes.get(b_number)
-                        if genotype is None:
-                            dropped_by_gene[b_number] += 1
-                            continue
+                        genotype = genotypes[b_number]
                         experiment = BacterialEnvironmentResponseExperiment(
                             dataset_name=self.name,
                             genotype=genotype,
@@ -2479,7 +2548,6 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
             dropped_for_medium=dropped_for_medium,
             tables=tables,
             identifiers=identifiers,
-            dropped_by_gene=dropped_by_gene,
             kept_records=idx,
         )
         n_values = sum(check.n_values for check in t_checks)
@@ -2513,7 +2581,6 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
         dropped_for_medium: Sequence[str],
         tables: Mapping[str, tuple[Any, Any]],
         identifiers: MappingReport,
-        dropped_by_gene: Mapping[str, int],
         kept_records: int,
     ) -> None:
         """Write the retention ledger, the assay ledger and the identifier report."""
@@ -2536,13 +2603,6 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
                 description=DROP_RULES[DROP_MEDIUM_NOT_IN_LIBRARY],
                 n_records=sum(cells(name) for name in dropped_for_medium),
                 items=tuple(dropped_for_medium),
-            ),
-            DropRule(
-                rule=DROP_NO_ECK_PAIR,
-                scope="gene",
-                description=DROP_RULES[DROP_NO_ECK_PAIR],
-                n_records=sum(dropped_by_gene.values()),
-                items=tuple(sorted(dropped_by_gene)),
             ),
         )
         drop_log = DropLog(
@@ -2608,23 +2668,26 @@ class PhageRbTnseqMutalik2020Dataset(ExperimentDataset):
 # --------------------------------------------------------------------------- #
 # Verification (L0-L4) of a built tree
 # --------------------------------------------------------------------------- #
-#: The frozen record-count oracle, measured 2026-10-07 on the deposited release: the
-#: mapped genes of each analysis set times its record-bearing used experiments.
+#: The frozen record-count oracle, measured 2026-10-07 on the deposited release and again
+#: 2026-10-12 for #1057: every measured gene of each analysis set (the 19 no ECK pair
+#: places stored as released since #1057, 1,471 cells more) times its record-bearing used
+#: experiments.
 EXPECTED_SET_CENSUS: dict[str, int] = {
-    "Keio_ML9_set16_set19": 212686,
-    "Keio_ML9_set28_set29": 33255,
-    "Keio_ML9_set30": 40403,
+    "Keio_ML9_set16_set19": 213788,
+    "Keio_ML9_set28_set29": 33426,
+    "Keio_ML9_set30": 40601,
 }
 EXPECTED_RECORDS = sum(EXPECTED_SET_CENSUS.values())
 
-#: The frozen gene-set oracle: distinct BW25113 locus tags over the kept records.
-EXPECTED_GENES = 3697
+#: The frozen gene-set oracle: distinct stored genes over the kept records, 3,697 BW25113
+#: locus tags plus the 19 released MG1655 b-numbers no ECK pair places (#1057).
+EXPECTED_GENES = 3716
 
 #: Records per kind of experiment: 68 phage challenges and 10 no-phage controls.
-EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 249612, "no_phage_control": 36732}
+EXPECTED_KIND_CENSUS: dict[str, int] = {"phage": 250894, "no_phage_control": 36921}
 
 #: Records per assay format, the split the 68 challenges must not collapse across.
-EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 245941, "solid": 40403}
+EXPECTED_FORMAT_CENSUS: dict[str, int] = {"liquid": 247214, "solid": 40601}
 
 #: The released medium label of the no-phage controls that ARE the planktonic assay
 #: culture with the phage left out (``NO_PHAGE_CONTROL``). Their records carry no
@@ -2842,12 +2905,23 @@ def verify_build(
     )
     for row in experiment_census(stream_records(dataset_root)):
         report.add(row)
-    tags = {
-        str(perturbation["systematic_gene_name"])
+    stored = {
+        (str(perturbation["systematic_gene_name"]), str(perturbation["gene_namespace"]))
         for record in stream_records(dataset_root)
         for perturbation in record["experiment"]["genotype"]["perturbations"]
     }
-    report.add(stored_tags_are_loci(tags, genome.resolve_gene_name))
+    tags = {tag for tag, _ in stored}
+    # a gene no ECK pair places is the released MG1655 b-number, no BW25113 tag (#1057)
+    report.add(
+        stored_tags_are_loci(
+            {
+                tag
+                for tag, namespace in stored
+                if namespace == STRAIN_GENE_NAMESPACES[REFERENCE_STRAIN]
+            },
+            genome.resolve_gene_name,
+        )
+    )
     if len(tags) != EXPECTED_GENES:
         report.add(
             LevelResult(
@@ -2864,7 +2938,7 @@ def verify_build(
                 level=Level.L1,
                 name="gene_set_size",
                 passed=True,
-                message=f"SUPPLEMENTARY: {EXPECTED_GENES} distinct BW25113 locus tags",
+                message=f"SUPPLEMENTARY: {EXPECTED_GENES} distinct stored genes",
                 details={"observed": len(tags), "expected": EXPECTED_GENES},
             )
         )

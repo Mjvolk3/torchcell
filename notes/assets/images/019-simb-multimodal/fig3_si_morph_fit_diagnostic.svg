@@ -394,6 +394,11 @@ z
      <use xlink:href="#m6f043c55d8" x="122.200091" y="53.547923" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
      <use xlink:href="#m6f043c55d8" x="64.922606" y="71.112452" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
      <use xlink:href="#m6f043c55d8" x="142.740202" y="63.403823" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m6f043c55d8" x="66.273977" y="62.701578" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m6f043c55d8" x="106.146568" y="59.142951" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m6f043c55d8" x="62.678223" y="71.373815" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m6f043c55d8" x="109.023419" y="54.968027" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m6f043c55d8" x="66.181437" y="76.302667" style="fill: #d6b656; stroke: #000000; stroke-width: 0.4"/>
     </g>
    </g>
    <g id="PathCollection_6">
@@ -436,6 +441,15 @@ z
     </defs>
     <g clip-path="url(#p5cf5cbe542)">
      <use xlink:href="#m11f423a8aa" x="41.41938" y="89.616952" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="41.506761" y="90.746576" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="38.79827" y="90.360977" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="37.358567" y="90.781098" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="35.275922" y="92.529538" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="40.772575" y="89.613182" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="41.046004" y="94.876597" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="38.864568" y="86.32427" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="36.563242" y="92.105792" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
+     <use xlink:href="#m11f423a8aa" x="37.296608" y="92.643068" style="fill: #666666; stroke: #000000; stroke-width: 0.4"/>
     </g>
    </g>
    <g id="legend_1">
@@ -485,7 +499,7 @@ z
      </g>
     </g>
     <g id="text_16">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="51.093462" transform="rotate(-0 51.691654 51.093462)">own proteome as input (n = 7)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="51.093462" transform="rotate(-0 51.691654 51.093462)">own proteome as input (n = 12)</text>
     </g>
     <g id="PathCollection_13">
      <g>
@@ -501,7 +515,7 @@ z
      </g>
     </g>
     <g id="text_18">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="68.354712" transform="rotate(-0 51.691654 68.354712)">another strain's proteome (n = 1)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="68.354712" transform="rotate(-0 51.691654 68.354712)">another strain's proteome (n = 10)</text>
     </g>
    </g>
   </g>

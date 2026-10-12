@@ -328,7 +328,7 @@ z
      <g id="text_10">
       <text style="font-size: 6px; font-family: 'Arial'" transform="translate(150.654678 111.981302)">own</text>
       <text style="font-size: 6px; font-family: 'Arial'" transform="translate(143.485147 118.327427)">proteome</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(147.404366 124.761302)">(n = 7)</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(145.736085 124.761302)">(n = 12)</text>
      </g>
     </g>
     <g id="xtick_4">
@@ -340,7 +340,7 @@ z
      <g id="text_11">
       <text style="font-size: 6px; font-family: 'Arial'" transform="translate(181.518073 111.981302)">another</text>
       <text style="font-size: 6px; font-family: 'Arial'" transform="translate(168.777448 118.327427)">strain's proteome</text>
-      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(182.938386 124.761302)">(n = 1)</text>
+      <text style="font-size: 6px; font-family: 'Arial'" transform="translate(181.270104 124.761302)">(n = 10)</text>
      </g>
     </g>
     <g id="xtick_5">
@@ -453,16 +453,16 @@ L 244.459843 50.683465
    <g id="patch_10">
     <path d="M 143.720896 100.686614 
 L 168.59471 100.686614 
-L 168.59471 80.488294 
-L 143.720896 80.488294 
+L 168.59471 79.930608 
+L 143.720896 79.930608 
 z
 " clip-path="url(#pbf82922940)" style="fill: #d6b656; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
    <g id="patch_11">
     <path d="M 179.254916 100.686614 
 L 204.12873 100.686614 
-L 204.12873 91.262228 
-L 179.254916 91.262228 
+L 204.12873 91.920226 
+L 179.254916 91.920226 
 z
 " clip-path="url(#pbf82922940)" style="fill: #666666; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter"/>
    </g>
@@ -505,31 +505,46 @@ L 244.459843 43.540157
 " style="fill: none; stroke: #000000; stroke-width: 0.5; stroke-linejoin: miter; stroke-linecap: square"/>
    </g>
    <g id="LineCollection_3">
-    <path d="M 156.157803 84.948696 
-L 156.157803 76.027892 
+    <path d="M 156.157803 84.180522 
+L 156.157803 75.680694 
 " clip-path="url(#pbf82922940)" style="fill: none; stroke: #000000; stroke-width: 0.5"/>
    </g>
    <g id="line2d_49">
     <g clip-path="url(#pbf82922940)">
-     <use xlink:href="#mde76ae39eb" x="156.157803" y="84.948696" style="fill: #1f77b4; stroke: #000000"/>
+     <use xlink:href="#mde76ae39eb" x="156.157803" y="84.180522" style="fill: #1f77b4; stroke: #000000"/>
     </g>
    </g>
    <g id="line2d_50">
     <g clip-path="url(#pbf82922940)">
-     <use xlink:href="#mde76ae39eb" x="156.157803" y="76.027892" style="fill: #1f77b4; stroke: #000000"/>
+     <use xlink:href="#mde76ae39eb" x="156.157803" y="75.680694" style="fill: #1f77b4; stroke: #000000"/>
     </g>
    </g>
    <g id="LineCollection_4">
-    <path d="M 227.225843 94.928066 
-L 227.225843 86.538705 
+    <path d="M 191.691823 93.045838 
+L 191.691823 90.794614 
 " clip-path="url(#pbf82922940)" style="fill: none; stroke: #000000; stroke-width: 0.5"/>
    </g>
    <g id="line2d_51">
     <g clip-path="url(#pbf82922940)">
-     <use xlink:href="#mde76ae39eb" x="227.225843" y="94.928066" style="fill: #1f77b4; stroke: #000000"/>
+     <use xlink:href="#mde76ae39eb" x="191.691823" y="93.045838" style="fill: #1f77b4; stroke: #000000"/>
     </g>
    </g>
    <g id="line2d_52">
+    <g clip-path="url(#pbf82922940)">
+     <use xlink:href="#mde76ae39eb" x="191.691823" y="90.794614" style="fill: #1f77b4; stroke: #000000"/>
+    </g>
+   </g>
+   <g id="LineCollection_5">
+    <path d="M 227.225843 94.928066 
+L 227.225843 86.538705 
+" clip-path="url(#pbf82922940)" style="fill: none; stroke: #000000; stroke-width: 0.5"/>
+   </g>
+   <g id="line2d_53">
+    <g clip-path="url(#pbf82922940)">
+     <use xlink:href="#mde76ae39eb" x="227.225843" y="94.928066" style="fill: #1f77b4; stroke: #000000"/>
+    </g>
+   </g>
+   <g id="line2d_54">
     <g clip-path="url(#pbf82922940)">
      <use xlink:href="#mde76ae39eb" x="227.225843" y="86.538705" style="fill: #1f77b4; stroke: #000000"/>
     </g>
@@ -546,11 +561,25 @@ L 227.225843 86.538705
      <use xlink:href="#m3be36b343b" x="160.610504" y="73.588403"/>
      <use xlink:href="#m3be36b343b" x="162.024549" y="82.195023"/>
      <use xlink:href="#m3be36b343b" x="157.673482" y="78.417794"/>
+     <use xlink:href="#m3be36b343b" x="159.419777" y="78.073694"/>
+     <use xlink:href="#m3be36b343b" x="156.777872" y="76.329967"/>
+     <use xlink:href="#m3be36b343b" x="162.341752" y="82.323091"/>
+     <use xlink:href="#m3be36b343b" x="160.647222" y="74.284255"/>
+     <use xlink:href="#m3be36b343b" x="149.089923" y="84.738228"/>
     </g>
    </g>
    <g id="PathCollection_4">
     <g clip-path="url(#pbf82922940)">
      <use xlink:href="#m3be36b343b" x="193.638543" y="91.262228"/>
+     <use xlink:href="#m3be36b343b" x="188.419662" y="91.815744"/>
+     <use xlink:href="#m3be36b343b" x="185.167401" y="91.6268"/>
+     <use xlink:href="#m3be36b343b" x="184.819937" y="91.832659"/>
+     <use xlink:href="#m3be36b343b" x="196.144523" y="92.689395"/>
+     <use xlink:href="#m3be36b343b" x="197.558569" y="91.260381"/>
+     <use xlink:href="#m3be36b343b" x="193.207502" y="93.839454"/>
+     <use xlink:href="#m3be36b343b" x="194.953797" y="89.648814"/>
+     <use xlink:href="#m3be36b343b" x="192.311892" y="92.48176"/>
+     <use xlink:href="#m3be36b343b" x="197.875772" y="92.745025"/>
     </g>
    </g>
    <g id="PathCollection_5">
@@ -612,7 +641,7 @@ z
    <g id="text_16">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="29.421382" y="26.955938" transform="rotate(-0 29.421382 26.955938)">genotype only, same strains</text>
    </g>
-   <g id="line2d_53">
+   <g id="line2d_55">
     <path d="M 153.274507 7.667813 
 L 159.274507 7.667813 
 L 165.274507 7.667813 
@@ -621,7 +650,7 @@ L 165.274507 7.667813
    <g id="text_17">
     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="168.274507" y="9.767813" transform="rotate(-0 168.274507 9.767813)">ridge from the same measurement</text>
    </g>
-   <g id="line2d_54">
+   <g id="line2d_56">
     <path d="M 153.274507 16.225313 
 L 159.274507 16.225313 
 L 165.274507 16.225313 

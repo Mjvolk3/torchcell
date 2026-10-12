@@ -255,20 +255,20 @@ z
     </g>
    </g>
    <g id="line2d_20">
-    <path d="M 35.449563 33.301876 
-L 59.305058 27.801723 
-L 83.160553 36.11735 
-L 107.016048 30.170585 
-L 130.871542 38.036519 
-L 154.607759 36.616694 
+    <path d="M 35.449563 35.720114 
+L 59.305058 31.928997 
+L 83.160553 30.549671 
+L 107.016048 30.349482 
+L 130.871542 35.204513 
+L 154.607759 34.96648 
 " clip-path="url(#p4ab42ad04a)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #d6b656; stroke-width: 0.9"/>
     <g clip-path="url(#p4ab42ad04a)">
-     <use xlink:href="#m5c8a7e0e5b" x="35.449563" y="33.301876" style="fill: #d6b656; stroke: #d6b656"/>
-     <use xlink:href="#m5c8a7e0e5b" x="59.305058" y="27.801723" style="fill: #d6b656; stroke: #d6b656"/>
-     <use xlink:href="#m5c8a7e0e5b" x="83.160553" y="36.11735" style="fill: #d6b656; stroke: #d6b656"/>
-     <use xlink:href="#m5c8a7e0e5b" x="107.016048" y="30.170585" style="fill: #d6b656; stroke: #d6b656"/>
-     <use xlink:href="#m5c8a7e0e5b" x="130.871542" y="38.036519" style="fill: #d6b656; stroke: #d6b656"/>
-     <use xlink:href="#m5c8a7e0e5b" x="154.607759" y="36.616694" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="35.449563" y="35.720114" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="59.305058" y="31.928997" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="83.160553" y="30.549671" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="107.016048" y="30.349482" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="130.871542" y="35.204513" style="fill: #d6b656; stroke: #d6b656"/>
+     <use xlink:href="#m5c8a7e0e5b" x="154.607759" y="34.96648" style="fill: #d6b656; stroke: #d6b656"/>
     </g>
    </g>
    <g id="line2d_21">
@@ -302,20 +302,20 @@ z
     </g>
    </g>
    <g id="line2d_22">
-    <path d="M 35.449563 78.008237 
-L 59.305058 75.176659 
-L 83.160553 68.984252 
-L 107.016048 53.41293 
-L 130.871542 74.074339 
-L 154.607759 74.039962 
+    <path d="M 35.449563 78.959193 
+L 59.305058 78.215402 
+L 83.160553 77.10072 
+L 107.016048 75.820063 
+L 130.871542 77.436409 
+L 154.607759 78.045097 
 " clip-path="url(#p4ab42ad04a)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #666666; stroke-width: 0.9"/>
     <g clip-path="url(#p4ab42ad04a)">
-     <use xlink:href="#mca886bdfac" x="35.449563" y="78.008237" style="fill: #666666; stroke: #666666"/>
-     <use xlink:href="#mca886bdfac" x="59.305058" y="75.176659" style="fill: #666666; stroke: #666666"/>
-     <use xlink:href="#mca886bdfac" x="83.160553" y="68.984252" style="fill: #666666; stroke: #666666"/>
-     <use xlink:href="#mca886bdfac" x="107.016048" y="53.41293" style="fill: #666666; stroke: #666666"/>
-     <use xlink:href="#mca886bdfac" x="130.871542" y="74.074339" style="fill: #666666; stroke: #666666"/>
-     <use xlink:href="#mca886bdfac" x="154.607759" y="74.039962" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="35.449563" y="78.959193" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="59.305058" y="78.215402" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="83.160553" y="77.10072" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="107.016048" y="75.820063" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="130.871542" y="77.436409" style="fill: #666666; stroke: #666666"/>
+     <use xlink:href="#mca886bdfac" x="154.607759" y="78.045097" style="fill: #666666; stroke: #666666"/>
     </g>
    </g>
    <g id="patch_3">
@@ -393,7 +393,7 @@ L 46.891654 40.362837
      </g>
     </g>
     <g id="text_15">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="42.462837" transform="rotate(-0 51.691654 42.462837)">own proteome as input (n = 7)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="42.462837" transform="rotate(-0 51.691654 42.462837)">own proteome as input (n = 12)</text>
     </g>
     <g id="line2d_27">
      <path d="M 34.891654 48.993462 
@@ -417,7 +417,7 @@ L 46.891654 57.624087
      </g>
     </g>
     <g id="text_17">
-     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="59.724087" transform="rotate(-0 51.691654 59.724087)">another strain's proteome (n = 1)</text>
+     <text style="font-size: 6px; font-family: 'Arial'; text-anchor: start" x="51.691654" y="59.724087" transform="rotate(-0 51.691654 59.724087)">another strain's proteome (n = 10)</text>
     </g>
    </g>
   </g>

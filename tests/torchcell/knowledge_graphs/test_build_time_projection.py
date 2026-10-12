@@ -608,7 +608,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Parsons 2006 chemical-genetic log2 ratios)
     # + 1 (Wetmore 2015's own RB-TnSeq release, owner policy 2026-10-10)
     # + 1 (Piotrowski 2017 chemical-genetic z-scores)
-    # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates).
+    # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates)
+    # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -629,6 +630,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 2
         + 3
+        + 1
         + 1
         + 1
         + 1
@@ -669,6 +671,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         "LifeCycleDeChiara2022Dataset",
         "MicroarrayScoreHu2007Dataset",
         "NadalRibellesPerturbSeq2025Dataset",
+        "Nguessan2025Dataset",
         "ProteomeMessner2021Dataset",
         "ProteomeMessner2023Dataset",
         "ProteomeMuenzner2024Dataset",

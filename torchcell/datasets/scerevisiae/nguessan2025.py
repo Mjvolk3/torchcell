@@ -91,7 +91,8 @@ import os.path as osp
 import re
 import shutil
 import tarfile
-from collections.abc import Iterator, Sequence
+import zipfile
+from collections.abc import Iterator, Mapping, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -122,6 +123,7 @@ from torchcell.datamodels.schema import (
     SegregantParent,
     SingleCellExpressionPhenotype,
 )
+from torchcell.datasets.dataset_registry import register_dataset
 from torchcell.datasets.scerevisiae.bloom2019 import (
     PARENT_PETER_ID,
     Marker,
@@ -242,13 +244,35 @@ DRYAD_FILES: dict[str, DryadFile] = {
     )
 }
 DRYAD_ISSUE = 1014
+#: The by-hand deposit of the four files (#1014), as ``data/dryad/DEPOSIT.md`` in the
+#: raw mirror records it: the owner downloaded the four-file selection in a browser.
+DRYAD_RETRIEVED_AT = "2026-10-12"
+DRYAD_RETRIEVED_BY = (
+    "the owner (mjvolk3), browser download; the zip pushed to GilaHyper by rsync"
+)
+#: The zip Dryad returned for the selection, kept unchanged under the name it arrived
+#: with (the browser's " (1)" suffix included) beside its four members, which it holds
+#: stored, uncompressed. Dryad lists no digest for an assembled selection, so its
+#: sha256 is our measurement at the deposit (slurm job 4195, 2026-10-12).
+DRYAD_ARCHIVE_NAME = "doi_10_5061_dryad_1rn8pk0vd__v20220520 (1).zip"
+DRYAD_ARCHIVE_BYTES = 5085724902
+DRYAD_ARCHIVE_SHA256 = (
+    "2fcaf5bc37bdf895846ecafd971902200956905cf297de6d04c8ffc5c286af0e"
+)
+#: Our own records beside the deposited bytes, named in each deposit record's params.
+DRYAD_DEPOSIT_RECORD = "DEPOSIT.md"
+DRYAD_CHECKSUMS = "SHA256SUMS.txt"
 DRYAD_RECIPE = (
     f"manual browser download (owner only; issue #{DRYAD_ISSUE}): datadryad.org answers "
     "HTTP 401 'Unauthorized, must have current bearer token' on /api/v2/files/<id>/"
     "download and HTTP 403 on /downloads/file_stream/<id> (measured 2026-10-11), so: "
-    f"open https://doi.org/{DRYAD_DOI} in a browser, download this file on its own "
-    "(not the 24.7 GB dataset), place it under data/dryad/ with its Dryad name, and "
-    "check its sha256 against this record"
+    f"open https://doi.org/{DRYAD_DOI} in a browser, select the four files "
+    f"{README_NAME}, {SNP_LIST_NAME}, {SEGREGANT_INFO_NAME} and {GENO_NAME} (not the "
+    "24.7 GB dataset) and download the selection, which Dryad returns as one zip "
+    "(doi_10_5061_dryad_1rn8pk0vd__v20220520.zip); put the zip unchanged under "
+    "data/dryad/, unzip its four members beside it under their Dryad names, and check "
+    "each member's sha256 against this record (Dryad's own digest, files API version "
+    f"{DRYAD_VERSION_ID})"
 )
 
 #: Grid levels per unit posterior (20 for a step of 0.05); levels run 10..20.
@@ -892,6 +916,24 @@ def raw_relpaths() -> dict[str, str]:
     return rel
 
 
+def check_dryad_archive(path: str | Path, files: Mapping[str, DryadFile]) -> None:
+    """The arrival zip holds exactly ``files``, each at its listed size, stored.
+
+    Reads the zip's central directory only (its four members' bytes are verified by
+    their own sha256 records). A missing, extra, resized or compressed member raises.
+    """
+    with zipfile.ZipFile(path) as archive:
+        members = {
+            info.filename: (info.file_size, info.compress_size)
+            for info in archive.infolist()
+        }
+    expected = {name: (f.bytes, f.bytes) for name, f in files.items()}
+    if members != expected:
+        raise ValueError(
+            f"{path}: members {members} are not the stored deposit {expected}"
+        )
+
+
 def deposit_raw_mirror(
     *,
     release_dir: str | Path,
@@ -902,11 +944,14 @@ def deposit_raw_mirror(
 ) -> Path:
     """Copy the retrieved files into the raw mirror and write its ``manifest.json``.
 
-    Run once by hand after the retrievals in the module docstring; idempotent by sha256
-    (a present file with the recorded hash is left alone, a differing one raises). The
-    four walled Dryad files are written as ``manual_browser`` records pinned to Dryad's
-    listed sha256 whether or not their bytes are on disk yet; a present one must hash to
-    its pin.
+    Run by hand after the retrievals in the module docstring; idempotent by sha256 (a
+    present file with the recorded hash is left alone, a differing one raises).
+    ``retrieved_at`` dates the GitHub and Dryad-metadata retrievals. The four walled
+    Dryad files and the zip they arrived in are the owner's by-hand deposit
+    (``DRYAD_RETRIEVED_AT``): ``manual_browser`` records pinned to Dryad's listed
+    sha256 (the zip to ours), written whether or not their bytes are on disk, so a
+    rebuild names what to deposit; a present one must hash to its pin, and a present
+    zip must hold exactly the four members (:func:`check_dryad_archive`).
     """
     root = raw_mirror_dir(data_root)
     rel = raw_relpaths()
@@ -917,6 +962,7 @@ def deposit_raw_mirror(
         source_url: str,
         retriever: str,
         sha: str,
+        when: str = retrieved_at,
         **params: Any,
     ) -> RetrievalRecord:
         return RetrievalRecord(
@@ -925,8 +971,17 @@ def deposit_raw_mirror(
             retriever=retriever,
             params=params,
             sha256=sha,
-            retrieved_at=retrieved_at,
+            retrieved_at=when,
         )
+
+    deposit_params: dict[str, Any] = {
+        "retrieval_command": DRYAD_RECIPE,
+        "retrieved_by": DRYAD_RETRIEVED_BY,
+        "dryad_version_id": DRYAD_VERSION_ID,
+        "received_in": f"data/dryad/{DRYAD_ARCHIVE_NAME}",
+        "deposit_record": f"data/dryad/{DRYAD_DEPOSIT_RECORD}",
+        "checksums": f"data/dryad/{DRYAD_CHECKSUMS}",
+    }
 
     for name in RELEASE_FILES:
         src = Path(release_dir) / name
@@ -986,12 +1041,27 @@ def deposit_raw_mirror(
                 f"https://doi.org/{DRYAD_DOI}",
                 "manual",
                 dryad.sha256,
-                retrieval_command=DRYAD_RECIPE,
+                DRYAD_RETRIEVED_AT,
+                **deposit_params,
                 dryad_file_id=dryad.file_id,
                 dryad_download_url=dryad.download_url,
             ),
             dryad.bytes,
         )
+    archive_rel = f"data/dryad/{DRYAD_ARCHIVE_NAME}"
+    sources[archive_rel] = (
+        None,
+        record(
+            RetrievalMethod.manual_browser,
+            f"https://doi.org/{DRYAD_DOI}",
+            "manual",
+            DRYAD_ARCHIVE_SHA256,
+            DRYAD_RETRIEVED_AT,
+            **{k: v for k, v in deposit_params.items() if k != "received_in"},
+            members=list(DRYAD_FILES),
+        ),
+        DRYAD_ARCHIVE_BYTES,
+    )
     files: list[ArtifactRecord] = []
     for relpath, (source, retrieval, size) in sources.items():
         dest = root / relpath
@@ -1001,6 +1071,8 @@ def deposit_raw_mirror(
                 raise RuntimeError(f"{dest} exists with a different sha256; refusing")
         elif source is not None:
             shutil.copy2(source, dest)
+        if relpath == archive_rel and dest.exists():
+            check_dryad_archive(dest, DRYAD_FILES)
         files.append(
             ArtifactRecord(
                 path=relpath,
@@ -1030,8 +1102,9 @@ def deposit_raw_mirror(
             f"Dryad {DRYAD_DOI} (Nguyen Ba 2022 reference panel): {README_NAME}, "
             f"{SNP_LIST_NAME}, {SEGREGANT_INFO_NAME}, {GENO_NAME}; walled (HTTP 401 on "
             "/api/v2/files/<id>/download, 403 on /downloads/file_stream/<id>, "
-            f"2026-10-11), deposited by hand per issue #{DRYAD_ISSUE}. Every record "
-            "depends on them.",
+            f"2026-10-11), deposited by hand {DRYAD_RETRIEVED_AT} per issue "
+            f"#{DRYAD_ISSUE} with the zip they arrived in ({DRYAD_ARCHIVE_NAME}). Every "
+            "record depends on them.",
             f"SRA {SRA_BIOPROJECT}: raw reads, not deposited (no loader reads reads)",
         ],
         provenance_complete=all((root / relpath).exists() for relpath in sources),
@@ -1138,11 +1211,7 @@ def pseudobulk(
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
-# Deliberately NOT ``@register_dataset``: a registered class needs a passing candidate
-# verdict (``tests/torchcell/datasets/test_candidate_verdicts.py``), and this row's
-# verdict is blocked at G3 on the walled Dryad deposit (#1014). Registration, the
-# runner entry (``VERIFICATION_SPEC``) and the dataset-to-adapter map entry follow the
-# deposit, the build and a passing re-gate.
+@register_dataset
 class Nguessan2025Dataset(ExperimentDataset):
     """N'Guessan 2025: 2,951 BB-QTL batch-1 segregants, their cells summed."""
 
@@ -1403,38 +1472,12 @@ def sourced_values() -> list[SourcedValue]:
     return list(SOURCED.values())
 
 
-#: The verification spec, in the shape of a ``runners.SEGREGANT_EXPRESSION_DATASETS``
-#: entry. It is NOT registered there (nor this dataset in the dataset-to-adapter map)
-#: until the walled Dryad files are deposited (#1014) and the store builds: a registered
-#: store that cannot be built would fail ``run_all`` and the KG build's freshness check.
-VERIFICATION_SPEC: dict[str, Any] = {
-    "root": "data/torchcell/nguessan2025",
-    "module": "torchcell.datasets.scerevisiae.nguessan2025",
-    "library": "torchcell-library",
-    "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
-    "expected_count": N_SEGREGANTS,
-    "provenance": Provenance(
-        source_uri=f"https://doi.org/{PAPER_DOI}",
-        citation_key=CITATION_KEY,
-        method=(
-            "one-pot 10x single-cell RNA-seq of batch 1 (4,489 strains) of the Nguyen Ba "
-            "2022 BB-QTL BY4741 x RM11-1a panel grown in YPD to log phase; per batch-1 "
-            f"strain with a significant cell match ({CODE_REPO} @ {CODE_COMMIT[:8]} "
-            "barcode-to-strain table), its cells' UMI counts summed and the panel's "
-            f"posterior P(RM) at 41,594 SNPs (Dryad {DRYAD_DOI} {GENO_NAME}, deposited "
-            f"by hand, #{DRYAD_ISSUE}) encoded as blocks on a {POSTERIOR_STEP} grid; raw "
-            f"mirror {RAW_DIR_REL} with manifest.json"
-        ),
-        page="eLife 2025; Methods 'Yeast strains and segregants', 'Yeast growth and "
-        "single-cell RNA-sequencing protocol', 'Assigning single cells to the reference "
-        "panel strains'; Table 1",
-        sha256=PAPER_MD_SHA256,
-    ),
-}
-
-
 def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
-    """L0-L4 report for a built store (``segregant_expression_reference_panel``)."""
+    """L0-L4 report for a built store (``segregant_expression_reference_panel``).
+
+    The spec (root, count, provenance, assembly index) is this dataset's entry in
+    ``runners.SEGREGANT_EXPRESSION_DATASETS``, the registry ``run_all`` reads.
+    """
     import json
 
     from torchcell.sequence.genome.registry import PETER2018_1011, resolve
@@ -1445,7 +1488,7 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     )
 
     root = data_root or _data_root()
-    spec = VERIFICATION_SPEC
+    spec = runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]
     genome = SCerevisiaeGenome(
         genome_root=osp.join(root, "data/sgd/genome"),
         go_root=osp.join(root, "data/go"),

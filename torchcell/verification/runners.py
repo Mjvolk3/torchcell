@@ -2994,9 +2994,14 @@ def run_natural_isolate_response(data_root: str) -> bool:
 # --------------------------------------------------------------------------- #
 # Segregant single-cell expression datasets (haplotype-mosaic genotypes, UMI counts)
 # --------------------------------------------------------------------------- #
+#: Each entry names the loader module whose ``verify_build`` gates its store
+#: (``verify_build_module``): Boocock 2025's de novo cells and pooled panel
+#: (``segregant_expression``), N'Guessan 2025's reference-panel pseudobulk
+#: (``segregant_expression_reference_panel``).
 SEGREGANT_EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
     "boocock2025": {
         "root": "data/torchcell/boocock2025",
+        "verify_build_module": "torchcell.datasets.scerevisiae.boocock2025",
         # audit_sourced_value joins <library>/<citation_key>/<source_uri>
         "library": "torchcell-library",
         "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
@@ -3022,18 +3027,47 @@ SEGREGANT_EXPRESSION_DATASETS: dict[str, dict[str, Any]] = {
             "mapping'; Supplementary file 1 tables S1 and S4",
             sha256="a2920750e12fb9977f36a687bb9f73aa0382527de84270b44609a3338bbeafe4",
         ),
-    }
+    },
+    "nguessan2025": {
+        "root": "data/torchcell/nguessan2025",
+        "verify_build_module": "torchcell.datasets.scerevisiae.nguessan2025",
+        "library": "torchcell-library",
+        "assembly_index": "1011Assemblies.tar.gz.member_index.tsv",
+        # one record per batch-1 strain with a significant cell match: 14,263 assigned
+        # cells over 2,951 strains (the release inventory; the loader refuses others)
+        "expected_count": 2951,
+        "provenance": Provenance(
+            source_uri="https://doi.org/10.7554/eLife.93906",
+            citation_key="nguessanRefiningResolutionYeast2025",
+            method=(
+                "one-pot 10x single-cell RNA-seq of batch 1 (4,489 strains) of the "
+                "Nguyen Ba 2022 BB-QTL BY4741 x RM11-1a panel grown in YPD to log "
+                "phase; per batch-1 strain with a significant cell match "
+                "(arnaud00013/sc-eQTL @ 1e0e2109 barcode-to-strain table), its cells' "
+                "UMI counts summed and the panel's posterior P(RM) at 41,594 SNPs "
+                "(Dryad 10.5061/dryad.1rn8pk0vd geno_data_1.txt.gz, deposited by hand, "
+                "#1014) encoded as blocks on a 0.05 grid; raw mirror "
+                "torchcell-raw/nguessanRefiningResolutionYeast2025 with manifest.json"
+            ),
+            page="eLife 2025; Methods 'Yeast strains and segregants', 'Yeast growth "
+            "and single-cell RNA-sequencing protocol', 'Assigning single cells to the "
+            "reference panel strains'; Table 1",
+            sha256="97cf5c178323798ef84fe4763f9a3d7361b6d37907fbfe320d607996feab861b",
+        ),
+    },
 }
 
 
 def run_segregant_expression(data_root: str) -> bool:
-    """Verify segregant single-cell expression datasets (L0-L4). True if all pass."""
-    from torchcell.datasets.scerevisiae import boocock2025
+    """Verify segregant single-cell expression datasets (L0-L4). True if all pass.
 
+    Each store is gated by the ``verify_build`` of the module its entry names.
+    """
     all_passed = True
     for spec in SEGREGANT_EXPRESSION_DATASETS.values():
         abs_root = osp.join(data_root, spec["root"])
-        report = boocock2025.verify_build(abs_root, data_root=data_root)
+        module = importlib.import_module(spec["verify_build_module"])
+        report = module.verify_build(abs_root, data_root=data_root)
         out = _write_report(report, osp.join(abs_root, "preprocess"))
         print(report.summary())
         print(f"  -> wrote {out}\n")

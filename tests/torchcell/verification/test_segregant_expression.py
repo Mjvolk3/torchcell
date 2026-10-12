@@ -25,6 +25,7 @@ from tests.torchcell.datasets.scerevisiae._boocock2025_release import (
     _genome,
 )
 from torchcell.datasets.scerevisiae import boocock2025 as m
+from torchcell.datasets.scerevisiae import nguessan2025
 from torchcell.verification import runners
 from torchcell.verification.report import (
     Level,
@@ -259,20 +260,64 @@ def test_the_registry_entry_names_the_dev_tree_root_and_count() -> None:
 def test_run_segregant_expression_writes_the_report_verify_build_returns(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    seen: list[tuple[str, str]] = []
-    report = VerificationReport(dataset_name="boocock2025", provenance=_PROVENANCE)
-    report.add(
-        LevelResult(level=Level.L0, name="structural", passed=True, message="ok")
-    )
+    """Each entry is gated by the ``verify_build`` of the module it names."""
+    seen: list[tuple[str, str, str]] = []
+    reports: dict[str, VerificationReport] = {}
+    for name, module in (("boocock2025", m), ("nguessan2025", nguessan2025)):
+        report = VerificationReport(dataset_name=name, provenance=_PROVENANCE)
+        report.add(
+            LevelResult(level=Level.L0, name="structural", passed=True, message="ok")
+        )
+        reports[name] = report
 
-    def fake_verify_build(dataset_root: str, *, data_root: str) -> VerificationReport:
-        seen.append((dataset_root, data_root))
-        return report
+        def fake_verify_build(
+            dataset_root: str, *, data_root: str, name: str = name
+        ) -> VerificationReport:
+            seen.append((name, dataset_root, data_root))
+            return reports[name]
 
-    monkeypatch.setattr(m, "verify_build", fake_verify_build)
+        monkeypatch.setattr(module, "verify_build", fake_verify_build)
     assert runners.run_segregant_expression(str(tmp_path)) is True
-    root = tmp_path / "data" / "torchcell" / "boocock2025"
-    assert seen == [(str(root), str(tmp_path))]
-    written = root / "preprocess" / "verification_report.json"
-    assert VerificationReport.model_validate_json(written.read_text()) == report
-    assert "boocock2025: PASS" in capsys.readouterr().out
+    roots = {n: tmp_path / "data" / "torchcell" / n for n in reports}
+    assert seen == [(n, str(roots[n]), str(tmp_path)) for n in reports]
+    for name, root in roots.items():
+        written = root / "preprocess" / "verification_report.json"
+        assert (
+            VerificationReport.model_validate_json(written.read_text())
+            == (reports[name])
+        )
+    out = capsys.readouterr().out
+    assert "boocock2025: PASS" in out
+    assert "nguessan2025: PASS" in out
+
+
+def test_run_segregant_expression_fails_when_one_store_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A failing N'Guessan report makes the family fail although Boocock passes."""
+    for name, module, passed in (
+        ("boocock2025", m, True),
+        ("nguessan2025", nguessan2025, False),
+    ):
+        report = VerificationReport(dataset_name=name, provenance=_PROVENANCE)
+        report.add(
+            LevelResult(
+                level=Level.L0, name="structural", passed=passed, message="synthetic"
+            )
+        )
+        monkeypatch.setattr(
+            module,
+            "verify_build",
+            lambda dataset_root, *, data_root, report=report: report,
+        )
+    assert runners.run_segregant_expression(str(tmp_path)) is False
+
+
+def test_every_entry_names_its_own_loader_module() -> None:
+    assert {
+        name: spec["verify_build_module"]
+        for name, spec in runners.SEGREGANT_EXPRESSION_DATASETS.items()
+    } == {
+        "boocock2025": "torchcell.datasets.scerevisiae.boocock2025",
+        "nguessan2025": "torchcell.datasets.scerevisiae.nguessan2025",
+    }

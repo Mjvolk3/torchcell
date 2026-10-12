@@ -117,6 +117,7 @@ from torchcell.adapters import (
     MorphologyCampos2018Adapter,
     MrnaFractionBalakrishnan2022Adapter,
     NadalRibellesPerturbSeq2025Adapter,
+    Nguessan2025Adapter,
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
     PromoterReporterMohiuddin2022Adapter,
@@ -386,6 +387,7 @@ from torchcell.datasets.scerevisiae.mulleder2016 import AminoAcidMulleder2016Dat
 from torchcell.datasets.scerevisiae.nadal_ribelles2025 import (
     NadalRibellesPerturbSeq2025Dataset,
 )
+from torchcell.datasets.scerevisiae.nguessan2025 import Nguessan2025Dataset
 from torchcell.datasets.scerevisiae.oduibhir2014 import SmfODuibhir2014Dataset
 from torchcell.datasets.scerevisiae.ohnuki2018 import ScmdOhnuki2018Dataset
 from torchcell.datasets.scerevisiae.ohnuki2022 import ScmdOhnuki2022Dataset
@@ -473,6 +475,8 @@ dataset_adapter_map: dict[type, type] = {
     Bloom2019Dataset: Bloom2019Adapter,
     IsolateGrowthPeter2018Dataset: IsolateGrowthPeter2018Adapter,
     Boocock2025Dataset: Boocock2025Adapter,
+    # N'Guessan 2025: the Nguyen Ba 2022 batch-1 panel, each strain's cells summed
+    Nguessan2025Dataset: Nguessan2025Adapter,
     TfDeletionPseudobulkJackson2020Dataset: TfDeletionPseudobulkJackson2020Adapter,
     GenomeArchitecturePuddu2019Dataset: GenomeArchitecturePuddu2019Adapter,
     CrispriSegregantHale2024Dataset: Hale2024Adapter,

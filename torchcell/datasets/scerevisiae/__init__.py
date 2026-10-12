@@ -60,6 +60,7 @@ from .mulleder2016 import AminoAcidMulleder2016Dataset as AminoAcidMulleder2016D
 from .nadal_ribelles2025 import (
     NadalRibellesPerturbSeq2025Dataset as NadalRibellesPerturbSeq2025Dataset,
 )
+from .nguessan2025 import Nguessan2025Dataset as Nguessan2025Dataset
 from .oduibhir2014 import SmfODuibhir2014Dataset as SmfODuibhir2014Dataset
 from .ohnuki2018 import ScmdOhnuki2018Dataset as ScmdOhnuki2018Dataset
 from .ohnuki2022 import ScmdOhnuki2022Dataset as ScmdOhnuki2022Dataset
@@ -176,6 +177,8 @@ bloom_datasets = ["Bloom2019Dataset"]
 peter2018_datasets = ["IsolateGrowthPeter2018Dataset"]
 boocock_datasets = ["Boocock2025Dataset"]
 
+nguessan_datasets = ["Nguessan2025Dataset"]
+
 jackson2020_datasets = ["TfDeletionPseudobulkJackson2020Dataset"]
 
 puddu2019_datasets = ["GenomeArchitecturePuddu2019Dataset"]
@@ -232,6 +235,7 @@ __all__ = (
     + bloom_datasets
     + peter2018_datasets
     + boocock_datasets
+    + nguessan_datasets
     + jackson2020_datasets
     + puddu2019_datasets
     + piotrowski2017_datasets

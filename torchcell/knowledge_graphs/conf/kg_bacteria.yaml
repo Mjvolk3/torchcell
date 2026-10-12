@@ -108,9 +108,11 @@ datasets:
   - PromoterReporterMohiuddin2022Dataset
   - EnvChemgenWang2024Dataset
   - RbTnseqWetmore2015Dataset
+  - FitnessBrowserEcoliDataset
   - RbTnseqBorchert2023Dataset
   - ProteomeBanerjee2025Dataset
   - RbTnseqBorchert2024Dataset
+  - FitnessBrowserPutidaDataset
   - IsoprenolTiterCarruthers2025Dataset
   - ProteomeCarruthers2025Dataset
   - CampaignProteomeCarruthers2025Dataset

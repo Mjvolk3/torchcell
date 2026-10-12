@@ -147,6 +147,8 @@ from torchcell.adapters import (
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Adapter,
+    RbTnseqFitnessBrowserEcoliAdapter,
+    RbTnseqFitnessBrowserPutidaAdapter,
     RbTnseqPrice2018EcoliAdapter,
     RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
@@ -222,6 +224,7 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
+from torchcell.datasets.ecoli.fitness_browser_ecoli import FitnessBrowserEcoliDataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
@@ -292,6 +295,9 @@ from torchcell.datasets.pputida.desiqueira2025 import (
     ProteomeDeSiqueira2025Dataset,
     ProteomeLog10PercentDeSiqueira2025Dataset,
     ProteomePercentDeSiqueira2025Dataset,
+)
+from torchcell.datasets.pputida.fitness_browser_putida import (
+    FitnessBrowserPutidaDataset,
 )
 from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dataset
 from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
@@ -540,6 +546,7 @@ dataset_adapter_map: dict[type, type] = {
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,
     GeneEssentialityPrice2018EcoliDataset: GeneEssentialityPrice2018EcoliAdapter,
     RbTnseqWetmore2015Dataset: RbTnseqWetmore2015Adapter,
+    FitnessBrowserEcoliDataset: RbTnseqFitnessBrowserEcoliAdapter,
     CrispriCrossRachwalski2024Dataset: CrispriCrossRachwalski2024Adapter,
     MetabolomeRapp2026Dataset: MetabolomeRapp2026Adapter,
     GrowthAucRapp2026Dataset: GrowthAucRapp2026Adapter,
@@ -563,6 +570,7 @@ dataset_adapter_map: dict[type, type] = {
     ProteomeBanerjee2025Dataset: ProteomeBanerjee2025Adapter,
     RbTnseqBorchert2023Dataset: RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Dataset: RbTnseqBorchert2024Adapter,
+    FitnessBrowserPutidaDataset: RbTnseqFitnessBrowserPutidaAdapter,
     IsoprenolTiterCarruthers2025Dataset: IsoprenolTiterCarruthers2025Adapter,
     ProteomeCarruthers2025Dataset: ProteomeCarruthers2025Adapter,
     CampaignProteomeCarruthers2025Dataset: CampaignProteomeCarruthers2025Adapter,

@@ -136,6 +136,8 @@ from torchcell.adapters import (
     PutidaPrecise321Lim2022Adapter,
     RbTnseqBorchert2023Adapter,
     RbTnseqBorchert2024Adapter,
+    RbTnseqFitnessBrowserEcoliAdapter,
+    RbTnseqFitnessBrowserPutidaAdapter,
     RbTnseqPrice2018EcoliAdapter,
     RbTnseqWetmore2015Adapter,
     RnaseqCaglar2017Adapter,
@@ -179,6 +181,7 @@ from torchcell.datasets.ecoli.choe2019_growth_rate import (
 from torchcell.datasets.ecoli.choe2025 import CrispriChemgenChoe2025Dataset
 from torchcell.datasets.ecoli.cui2018 import CrispriKnockdownCui2018Dataset
 from torchcell.datasets.ecoli.fang2025 import CrispriGuideFfaEnrichmentFang2025Dataset
+from torchcell.datasets.ecoli.fitness_browser_ecoli import FitnessBrowserEcoliDataset
 from torchcell.datasets.ecoli.foo2014 import IsopentenolTiterFoo2014Dataset
 from torchcell.datasets.ecoli.fuhrer2017 import MetabolomeFuhrer2017Dataset
 from torchcell.datasets.ecoli.gerdes2003 import GeneEssentialityGerdes2003Dataset
@@ -249,6 +252,9 @@ from torchcell.datasets.pputida.desiqueira2025 import (
     ProteomeDeSiqueira2025Dataset,
     ProteomeLog10PercentDeSiqueira2025Dataset,
     ProteomePercentDeSiqueira2025Dataset,
+)
+from torchcell.datasets.pputida.fitness_browser_putida import (
+    FitnessBrowserPutidaDataset,
 )
 from torchcell.datasets.pputida.kang2026 import IsoprenylAcetateTiterKang2026Dataset
 from torchcell.datasets.pputida.lim2022 import PutidaPrecise321Lim2022Dataset
@@ -779,6 +785,15 @@ BACTERIAL: list[Bacterial] = [
         RbTnseqWetmore2015Dataset,
         RESPONSE,
     ),
+    # The Fitness Browser's own Keio experiments keyed by publication (#931): one Tn5
+    # insertion per record, each sample's carbon source an environment perturbation.
+    _case(
+        RbTnseqFitnessBrowserEcoliAdapter,
+        "fitness_browser_ecoli",
+        "rbtnseq_fitness_browser_ecoli",
+        FitnessBrowserEcoliDataset,
+        RESPONSE,
+    ),
     _case(
         RbTnseqBorchert2023Adapter,
         "borchert2023",
@@ -798,6 +813,15 @@ BACTERIAL: list[Bacterial] = [
         "borchert2024",
         "rbtnseq_borchert2024",
         RbTnseqBorchert2024Dataset,
+        RESPONSE,
+    ),
+    # The Fitness Browser's own KT2440 experiments keyed by publication (#931, #932 to
+    # #940): the Borchert 2024 compendium's sources at full precision, same environment.
+    _case(
+        RbTnseqFitnessBrowserPutidaAdapter,
+        "fitness_browser_putida",
+        "rbtnseq_fitness_browser_putida",
+        FitnessBrowserPutidaDataset,
         RESPONSE,
     ),
     _case(

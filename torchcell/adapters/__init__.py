@@ -124,6 +124,12 @@ from .desiqueira2025_titer_adapter import (
 from .fang2025_adapter import (
     CrispriGuideFfaEnrichmentFang2025Adapter as CrispriGuideFfaEnrichmentFang2025Adapter,
 )
+from .fitness_browser_ecoli_adapter import (
+    RbTnseqFitnessBrowserEcoliAdapter as RbTnseqFitnessBrowserEcoliAdapter,
+)
+from .fitness_browser_putida_adapter import (
+    RbTnseqFitnessBrowserPutidaAdapter as RbTnseqFitnessBrowserPutidaAdapter,
+)
 from .foo2014_adapter import (
     IsopentenolTiterFoo2014Adapter as IsopentenolTiterFoo2014Adapter,
 )
@@ -533,6 +539,7 @@ ecoli_adapters = [
     "CrisprPineneToleranceNiu2019Adapter",
     "RbTnseqPrice2018EcoliAdapter",
     "RbTnseqWetmore2015Adapter",
+    "RbTnseqFitnessBrowserEcoliAdapter",
     "CrispriCrossRachwalski2024Adapter",
     "MetabolomeRapp2026Adapter",
     "GrowthAucRapp2026Adapter",
@@ -556,6 +563,7 @@ pputida_adapters = [
     "ProteomeBanerjee2025Adapter",
     "RbTnseqBorchert2023Adapter",
     "RbTnseqBorchert2024Adapter",
+    "RbTnseqFitnessBrowserPutidaAdapter",
     "CampaignProteomeCarruthers2025Adapter",
     "IsoprenolTiterCarruthers2025Adapter",
     "ProteomeCarruthers2025Adapter",

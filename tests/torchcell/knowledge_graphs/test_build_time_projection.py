@@ -500,6 +500,8 @@ BACTERIAL_DATASETS = {
     "EnvChemgenWang2015Dataset",
     "EnvChemgenWang2024Dataset",
     "EnvMetalTnseqRoyet2025Dataset",
+    "FitnessBrowserEcoliDataset",
+    "FitnessBrowserPutidaDataset",
     "FluxIshii2007Dataset",
     "MetabolomeBrunk2016Dataset",
     "ProteomeBrunk2016Dataset",
@@ -611,7 +613,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (Piotrowski 2017 chemical-genetic z-scores)
     # + 1 (Yoshikawa 2009 ethanol and NaCl growth rates)
     # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk)
-    # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores).
+    # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores)
+    # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, by publication).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -644,6 +647,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 1
+        + 2
     )
     served = {d.__name__ for d in dataset_adapter_map}
     assert served - set(ADAPTER_TO_DATASET.values()) == BACTERIAL_DATASETS | {

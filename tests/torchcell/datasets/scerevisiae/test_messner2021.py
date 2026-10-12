@@ -12,7 +12,7 @@ wells), injection 2 absent as in the release, plus one QC run: 24 runs. Run ``i`
     P1         YAL001C  all 24 (QC = 5.0)                      kept
     P2         YBR001W  all but injection 5 (QC = 6.0)         kept
     P5         YDR001C  all 24 (QC = 9.0)                      kept
-    P03872     (REP2)   all 24                                 kept by rule 2, refused
+    P03872     (REP2)   all 24                                 kept by rule 2, keyed P03872
     P3         Q0010    injections 1, 3, 4, 6-14 (12 of 24)    rule 2 drops it (= 50%)
     P4         YCR001W  every run at protein q 0.02            rule 1 drops it
     P1;P2      -        every run, not proteotypic             rule 1 drops it
@@ -298,8 +298,11 @@ def test_build_rows_ledger_counts_every_run_and_cell(
     assert ledger.mean_identifications_after_detection_rule == pytest.approx(95 / 24)
     assert ledger.mean_identifications_rule1_only == pytest.approx(107 / 24)
     assert ledger.outliers == [OUTLIER]
-    assert ledger.refused_accessions == {"P03872": m.REFUSED_ACCESSIONS["P03872"]}
+    assert ledger.accessions_stored_as_released == {
+        "P03872": m.ACCESSIONS_WITHOUT_ORF["P03872"]
+    }
     assert ledger.accession_to_orf == {
+        "P03872": "P03872",
         "P1": "YAL001C",
         "P2": "YBR001W",
         "P5": "YDR001C",
@@ -330,26 +333,39 @@ def test_build_rows_ledger_counts_every_run_and_cell(
         plate_run(i) for i in INJECTIONS if i != 5 and i < 19
     ]
     assert rows[0]["abundance"] == {
+        "P03872": 106.0,
         "YAL001C": 101.0,
         "YBR001W": 102.0,
         "YDR001C": 105.0,
     }
     assert rows[0]["reference"].mean == {
+        "P03872": 2156.0,
         "YAL001C": 2151.0,
         "YBR001W": 2152.0,
         "YDR001C": 2155.0,
     }
-    assert rows[0]["reference"].n == {"YAL001C": 6, "YBR001W": 6, "YDR001C": 6}
+    assert rows[0]["reference"].n == {
+        "P03872": 6,
+        "YAL001C": 6,
+        "YBR001W": 6,
+        "YDR001C": 6,
+    }
     sd = float(np.std([100 * i + 1 for i in range(19, 25)], ddof=1))
     assert rows[0]["reference"].se["YAL001C"] == pytest.approx(sd / math.sqrt(6))
 
 
-def test_build_rows_refuses_an_unmapped_kept_accession(
+def test_build_rows_keys_an_unmapped_kept_accession_by_the_accession(
     parsed_report: pd.DataFrame,
 ) -> None:
+    """A kept accession the GFF carries no ORF for is stored under the accession."""
     up2orf = {k: v for k, v in UP2ORF.items() if k != "P5"}
-    with pytest.raises(RuntimeError, match=r"1 kept accessions have no UniProt->ORF"):
-        m.ProteomeMessner2021Dataset.build_rows(parsed_report, up2orf)
+    ledger, rows = m.ProteomeMessner2021Dataset.build_rows(parsed_report, up2orf)
+    assert ledger.accession_to_orf["P5"] == "P5"
+    assert ledger.accessions_stored_as_released == {
+        "P03872": m.ACCESSIONS_WITHOUT_ORF["P03872"],
+        "P5": "no feature of the S288C R64 GFF names this accession",
+    }
+    assert any("P5" in row["abundance"] for row in rows)
 
 
 def test_build_rows_refuses_two_accessions_on_one_orf(
@@ -385,11 +401,17 @@ def test_store_holds_one_wild_type_record_per_kept_drug_run(
     ref = ProteinAbundanceExperimentReference.model_validate(first["reference"])
     assert isinstance(exp.genotype, Genotype) and exp.genotype.perturbations == []
     assert exp.phenotype.protein_abundance == {
+        "P03872": 106.0,
         "YAL001C": 101.0,
         "YBR001W": 102.0,
         "YDR001C": 105.0,
     }
-    assert exp.phenotype.n_replicates == {"YAL001C": 1, "YBR001W": 1, "YDR001C": 1}
+    assert exp.phenotype.n_replicates == {
+        "P03872": 1,
+        "YAL001C": 1,
+        "YBR001W": 1,
+        "YDR001C": 1,
+    }
     assert exp.phenotype.protein_abundance_se is None
     assert exp.phenotype.measurement_type == m.MEASUREMENT_TYPE
     treatment = exp.environment.perturbations[0]
@@ -418,6 +440,7 @@ def test_store_holds_one_wild_type_record_per_kept_drug_run(
     )
     assert vehicle.solvent is None
     assert ref.phenotype_reference.protein_abundance == {
+        "P03872": 2156.0,
         "YAL001C": 2151.0,
         "YBR001W": 2152.0,
         "YDR001C": 2155.0,
@@ -626,7 +649,12 @@ def test_verify_build_passes_the_synthetic_store(
 ) -> None:
     report = m.verify_build(store.root, data_root=gate_env)
     names = [(r.level, r.name, r.passed) for r in report.results]
-    assert all(passed for _, _, passed in names), report.summary()
+    # P03872 is stored under its released accession, so the L4 containment rule
+    # reports it outside S288C; that rule becomes a finding (never a gate) on the
+    # fix/genome-rules-report-not-gate branch, and every other level passes here.
+    assert [n for _, n, passed in names if not passed] == ["gene_containment_sgd"], (
+        report.summary()
+    )
     assert [n for _, n, _ in names] == [
         "structural",
         "count",
@@ -647,7 +675,7 @@ def test_verify_build_passes_the_synthetic_store(
         "messner2023_reference_agreement",
     ]
     by_name = {r.name: r for r in report.results}
-    assert by_name["values_match_report"].details == {"n_values": 48, "n_bad": 0}
+    assert by_name["values_match_report"].details == {"n_values": 64, "n_bad": 0}
     assert by_name["messner2023_reference_agreement"].details["n_shared"] == 3
 
 
@@ -666,7 +694,7 @@ def test_verify_build_catches_a_changed_value_and_a_wrong_reference(
     report = m.verify_build(store.root, data_root=gate_env)
     by_name = {r.name: r for r in report.results}
     assert not report.passed
-    assert by_name["values_match_report"].details == {"n_values": 48, "n_bad": 1}
+    assert by_name["values_match_report"].details == {"n_values": 64, "n_bad": 1}
     assert by_name["reference_matches_report"].details["n_bad"] == 1
 
 

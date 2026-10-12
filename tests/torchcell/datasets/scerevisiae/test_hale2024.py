@@ -156,6 +156,7 @@ def test_build_writes_one_record_per_gene_targeting_lineage_per_assay(
     assert [b.n_markers for b in genotype.background.blocks] == [1, 2, 1, 1]
     (pert,) = genotype.perturbations
     assert isinstance(pert, CrisprInterferencePerturbation)
+    # The released gene_orf and gene_name cells, verbatim; no genome is read.
     assert (pert.systematic_gene_name, pert.perturbed_gene_name) == ("YAL001C", "AAA1")
     assert pert.crispr.guide_sequence == "gA"
     assert pert.crispr.effector == "dCas9-Mxi1"
@@ -179,6 +180,7 @@ def test_build_writes_one_record_per_gene_targeting_lineage_per_assay(
 
     by = _typed(dataset, 4)["experiment"].genotype
     assert (by.background.segregant_id, by.background_role) == ("x_BY_BYx", "parent_1")
+    # gB's released gene_name cell is NA, so the ORF stands in for it.
     assert by.perturbations[0].perturbed_gene_name == "YBL001C"
     atc2 = _typed(dataset, 7)["experiment"].phenotype
     assert (atc2.screen_id, atc2.replicate_id) == ("ATC2", "GB1_b4")
@@ -198,14 +200,13 @@ def test_build_writes_the_ledger_summary_index_and_gene_set(
 ) -> None:
     dataset, _ = built
     pre = Path(dataset.preprocess_dir)
-    control, unresolved = syn.read_json(pre / "dropped_records.json")
+    (control,) = syn.read_json(pre / "dropped_records.json")
     assert control["rule"] == "control_guide_targets_no_gene"
     assert (control["n_records"], control["per_assay"]) == (
         9,
         {"ATC1": 3, "ATC2": 3, "CON": 3},
     )
     assert control["items"] == ["c1", "c2", "c3"]
-    assert unresolved["n_records"] == 0
     summary = syn.read_json(pre / "summary.json")
     assert summary["member_ranges"] == {"ATC1": [0, 5], "ATC2": [5, 9], "CON": [9, 14]}
     assert summary["lineages_per_assay"] == {"ATC1": 5, "ATC2": 4, "CON": 5}

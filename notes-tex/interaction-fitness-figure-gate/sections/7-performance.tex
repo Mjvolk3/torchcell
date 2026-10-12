@@ -1,0 +1,35 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/7-performance.tex
+%% SOURCE: tables/gate_ladder_rows.tex, written by
+%% experiments/030-solid-growth-multi/scripts/figure2_gate_numbers.py from
+%% experiments/030-solid-growth-multi/results/lower_order_baselines_030.csv. Every row is a
+%% committed result file.
+
+\clearpage
+\section{Every rung, with its regime\secstatus{todo}}
+\label{sec:performance}
+
+Every rung of the lower-order ladder on both arms: validation and test Pearson, the test
+Pearson within screen (both series centered by screen, which removes the floor), the test
+Spearman, and the fraction of test rows the rung's own term covered (a missing term falls
+back to the screen mean for that row). The fitness rung scores $f_{ijk}$, not $\tau$, and
+is not on the same scale as the others. The transformer is not a row: it has one seed and
+no test score, and its validation reads are in \ref{sec:models}.
+
+{\scriptsize
+\setlength{\tabcolsep}{3pt}
+\begin{longtable}{@{}l>{\raggedright\arraybackslash}p{46mm}>{\raggedright\arraybackslash}p{22mm}rrrrr@{}}
+  \caption[]{The lower-order ladder on arms R and Q, test unless the column says
+  validation. Rows written by \texttt{figure2\_gate\_numbers.py}.}
+  \label{tab:performance}\\
+  \toprule
+  arm & rung & regime & val $r$ & test $r$ & within-screen & Spearman & coverage \\
+  \midrule
+  \endfirsthead
+  \toprule
+  arm & rung & regime & val $r$ & test $r$ & within-screen & Spearman & coverage \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+  \input{tables/gate_ladder_rows}
+\end{longtable}}

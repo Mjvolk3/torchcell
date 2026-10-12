@@ -1,0 +1,25 @@
+[
+  {
+    "arm": "R",
+    "run_ids": [
+      "u28pgzde",
+      "xy3xnpau",
+      "xy3xnpau-cont2421912"
+    ],
+    "n_epochs_logged": 92,
+    "last_epoch": 164,
+    "val_fitness_order3_last_window_mean": 0.9488180935382843,
+    "window": 10
+  },
+  {
+    "arm": "Q",
+    "run_ids": [
+      "53qqijnu",
+      "rkwyav5i"
+    ],
+    "n_epochs_logged": 44,
+    "last_epoch": 44,
+    "val_fitness_order3_last_window_mean": 0.7220688700675965,
+    "window": 10
+  }
+]

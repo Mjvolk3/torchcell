@@ -1,0 +1,95 @@
+%% notes-tex/interaction-fitness-figure-gate/sections/2-mockups.tex
+%% SOURCE: the ladder sheet is written by experiments/030-solid-growth-multi/scripts/
+%% lower_order_baselines_030.py and the fitness panel by figure2_gate_numbers.py; every
+%% number in a caption is a macro of tables/gate_numbers.tex written by the latter.
+
+\section{The mockups\secstatus{todo}}
+\label{sec:mockups}
+
+Result files are under \file{experiments/030-solid-growth-multi/results/} unless a path
+is given. Each caption gives, per panel, what is plotted, the statistic, the sample size
+and the status. The statistic is the Pearson correlation on the pinned test triples of the
+arm unless the caption says otherwise; a transformer row is a validation number, the mean
+over the last ten epochs synced to the run registry, because no 030 checkpoint has a test
+evaluation yet. \regimekey{}
+
+\pfstep{The sheet proposed for the main text} Seven panels in three rows, in the order
+the work happens: the setup, the measured data, what a model reads. Panels a and b are
+compositions with no data behind them yet; c to e are on file; f and g wait on runs.
+
+\begin{description}
+  \item[a] What a trigenic interaction is: the identity of \ref{sec:decision} drawn as the
+    three singles, the three doubles and the triple of one Kuzmin query pair, with the
+    terms that are training records marked and the one that is not. \fstat{idea}
+  \item[b] What a record is on the 030 build and how the two arms split it: a genotype
+    with its entries from every screen, the closure pool S3 (singles, closure doubles,
+    triples), arm R pinned over triples, arm Q pinned over query pairs with the held-out
+    pairs' doubles removed. \fstat{idea}
+  \item[c, d] The interaction ladder on arm R and arm Q, Figure~\ref{fig:ladder}. \fstat{file}
+  \item[e] The fitness side, Figure~\ref{fig:fitness}. \fstat{file}
+  \item[f] The transformer with the lower-order terms as inputs, beside the one that reads
+    identity only, three seeds each, test: the regime comparison. \fstat{idea}
+  \item[g] Accuracy against $|\tau|$ and the scaling readout of \file{030-scaling-study}.
+    \fstat{idea}
+\end{description}
+
+\clearpage
+\tcfig{\figLadder}{\textbf{The interaction ladder on both arms: what the lower-order
+terms explain, and where the transformer sits.} \textbf{a}, arm R, the 010 random split
+over triples; \textbf{b}, arm Q, the query-pair-disjoint split. One bar per rung, test
+Pearson on \gnRTest{} (a) and \gnQTest{} (b) held-out triples in the arm's light fill;
+the last bar is the 030 transformer's validation mean over its last ten synced epochs in
+the arm's darker color (a: epochs \gcgtRFirstEpoch{} to \gcgtRLastEpoch{} of seed
+\gcgtRSeed{}; b: epochs \gcgtQFirstEpoch{} to \gcgtQLastEpoch{}). Rungs, left to right:
+the screen mean (\gloRNZeroscreenmeantest{}, \gloQNZeroscreenmeantest{}), the
+zero-parameter digenic-controls null (\gloRNOnemultquerydoubletest{},
+\gloQNOnemultquerydoubletest{}), the singles-product null (\gloRNTwomultsinglestest{};
+masked on Q, where it falls to the floor), the strain-matched controls
+(\gloRNOnesmultstrainmatchedtest{}, \gloQNOnesmultstrainmatchedtest{}), the additive
+gene ridge (\gloRBOneadditivegenetest{}, \gloQBOneadditivegenetest{}), ridge over the
+lower-order terms (\gloRLOneridgelowerordertest{}, \gloQLOneridgelowerordertest{}),
+boosted trees over the terms (\gloRLTwohgblowerordertest{},
+\gloQLTwohgblowerordertest{}), ridge over genes and terms
+(\gloRLThreeridgegenepluslowerordertest{}, \gloQLThreeridgegenepluslowerordertest{}),
+and the transformer (\gcgtRValWindow{}, \gcgtQValWindow{}). Written by
+\texttt{lower\_order\_baselines\_030.py}, GilaHyper job 3902. \fstat{file}}{fig:ladder}
+
+\noindent\textbf{What each rung of Figure~\ref{fig:ladder} reads.} The screen mean reads
+the training mean of $\tau$ in the triple's screen, Kuzmin 2018 or 2020, and is the
+floor every pooled Pearson carries. The digenic-controls null predicts
+$-(\varepsilon_{ik} + \varepsilon_{jk})$, which equation~\ref{eq:identity} gives when the
+triple's fitness equals its multiplicative expectation $f_{ij} f_k$; it has no parameters
+and reads two training records. The singles-product null replaces $f_{ijk}$ by
+$f_i f_j f_k$, equal to the first null minus $\varepsilon_{ij} f_k$, and on arm Q it has
+no $f_{ij}$ to read. The strain-matched rung takes each control score from the entry
+measured against the triple's own array strain in its own screen, as the source computed
+it. The additive gene ridge is the 010 rung, one coefficient per gene. The ridge over
+the lower-order terms uses thirteen terms, four products, a screen indicator and a
+missing indicator per column; the boosted trees use the same terms with missing values
+handled natively, 600 trees, leaf count and learning rate chosen on validation; the last
+ridge stacks the gene one-hot beside the terms. Where a term is missing a null falls
+back to the screen mean for that row, so every rung is scored on identical rows, and
+the performance table carries the covered fraction.
+
+\tcfig{\figFitness}{\textbf{The fitness side is arithmetic.} Pearson on the held-out
+triples' own fitness $f_{ijk}$: a ridge over the lower-order terms (test, light fill;
+\gloRFOneridgelowerorderfitnesstest{} on arm R over \gnRTest{} triples,
+\gloQFOneridgelowerorderfitnesstest{} on arm Q over \gnQTest{}) beside the 030
+transformer's fitness head on the same triples (validation, darker; \gfitRCgtValWindow{}
+on R over epochs \gfitRCgtFirstEpoch{} to \gfitRCgtLastEpoch{}, \gfitQCgtValWindow{} on
+Q over epochs \gfitQCgtFirstEpoch{} to \gfitQCgtLastEpoch{}). Written by
+\texttt{figure2\_gate\_numbers.py} from the ladder file and the run registry.
+\fstat{file}}{fig:fitness}
+
+\pfstep{The supplement} Three sheets are proposed, none drawn yet. First, how the query
+decides the number: the same model family on the 010 build (triples only), the 025 S3
+closure pool (merged labels) and the 030 per-entry pool (every entry, a dataset token),
+one bar per build per arm, with the gene-identity ladder of \file{025-additive-baselines}
+beside it; what is on file is one seed per build and the ladders. \fstat{partial} Second,
+the screen-offset floor: per-screen and within-screen Pearson of every rung and the
+transformer, the per-screen mean $\tau$ that makes the floor, and the Kuzmin 2018 against
+2020 difference in what the arithmetic explains (the controls null reads
+\gloRNOnemultquerydoubletestKzTwoZeroOneEight{} on 2018 rows and
+\gloRNOnemultquerydoubletestKzTwoZeroTwoZero{} on 2020 rows of arm R test). \fstat{file}
+Third, the comparators of the earlier draft on the same data: DCell, DANGO and Yeast9 FBA
+refit or rescored on the 030 pinned triples of both arms. \fstat{idea}

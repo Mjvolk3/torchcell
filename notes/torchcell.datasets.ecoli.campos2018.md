@@ -558,3 +558,87 @@ generators and every open issue. Two findings:
   median under `mean` is the misstatement the `statistic` field exists to prevent. Not
   added here, because the enum's own rule is to add members as datasets need them and no
   dataset needs it yet.
+
+## 2026.10.12 - The morphology store was verified with the fitness gate
+
+### Finding
+
+Dev-store rebuild array 4011, task 53 (`/scratch/projects/torchcell/database/slurm/output/4011_53_build_dataset_lmdbs.out`)
+built `MorphologyCampos2018Dataset` (3,664 records over 26 features, 93,570 determined
+values), then `--verify` printed `verifying MorphologyCampos2018Dataset with
+torchcell.datasets.ecoli.campos2018.verify_build` and raised `KeyError: 'fitness'`. The
+build manifest was renamed to
+`preprocess/build_manifest.json.unverified.20261012-044022`, so the store reads
+`no_manifest`. Task 52 verified `GrowthRateCampos2018Dataset` with the same entry point
+and passed.
+
+### Root cause
+
+`torchcell.database.build_dataset_lmdb.resolve_verifier` resolves its rule 3 by MODULE:
+the loader module's `verify_build`. This module builds two stores, and its `verify_build`
+was the fitness gate, which ignored the root it was handed and read
+`phenotype["fitness"]` off records that carry `morphology`. The morphology gate,
+`verify_morphology_build`, existed and passed on 2026-10-09
+([[database.kg-4-pre-build-verification]]), but only the module's own
+`verify-morphology` subcommand called it, so the array's `--verify` never reached it.
+The records and the morphology verifier were both correct; the mapping was not.
+
+The two other modules whose `verify_build` serves several mapped stores, `dechiara2022`
+(3 stores) and `muenzner2024` (2), already pick the gate from the store root's basename,
+and their array tasks 3, 4, 13 and 14 passed.
+
+### Fix
+
+`verify_build` now dispatches on the store root's basename, the convention those two
+modules use: `ecoli_growth_rate_campos2018` runs `verify_fitness_build` (the former
+`verify_build` body, unchanged) and `ecoli_morphology_campos2018` runs
+`verify_morphology_build` (unchanged). Any other basename is refused with `ValueError`
+before a genome is built or a record is read. The `verify` subcommand calls
+`verify_fitness_build` directly. No rule of either gate changed.
+
+Tests:
+
+- `tests/torchcell/datasets/ecoli/test_campos2018.py`: `verify_build` on a synthetic
+  morphology store named `ecoli_morphology_campos2018` returns exactly the 16 rules of
+  `verify_morphology_build` and no `reference_one`; on the fitness store it returns the
+  fitness rules and no `assay_coverage`; a third basename is refused. Against the
+  `origin/main` module the morphology test fails with `KeyError: 'fitness'`, the array's
+  error.
+- `tests/torchcell/database/test_build_dataset_lmdb.py`: over the real adapter map
+  (private included), the `verify_build` entry points shared by more than one mapped
+  store are pinned (`campos2018`: 2, `dechiara2022`: 3, `muenzner2024`: 2), and each
+  must refuse a root that is none of its stores with `ValueError`, with the network
+  refused. A new multi-store module fails the pin until its dispatch is checked.
+- The registry-root count in `tests/torchcell/verification/test_runners.py` is
+  unchanged: no Campos store is in a `torchcell.verification.runners` registry, and the
+  19 registry sizes re-derived from the module (3, 1, 1, 14, 4, 6, 15, 11, 1, 1, 1, 5, 1,
+  2, 1, 3, 1, 1, 1; total 73) equal the addends there.
+
+### L0 to L4 on the existing dev store, rerun through the array's resolution
+
+`resolve_verifier(MorphologyCampos2018Dataset)` with this branch's code, run on the store
+task 53 built (no rebuild), resolves to `torchcell.datasets.ecoli.campos2018.verify_build`
+and passes. It rewrote `preprocess/verification_report.json`; it does not restore the
+build manifest, which stays `no_manifest` until the store is rebuilt with `--verify`.
+
+| level | check | result |
+| --- | --- | --- |
+| L0 | structural | 3,664 records validated |
+| L1 | count | observed 3,664, expected 3,664 |
+| L1 | pair_uniqueness | 3,664 unique (strain, environment) records, one each |
+| L1 | assay_coverage | all 3,664 carry the 19 required features of assay campos2018 and nothing outside its 26 |
+| L1 | provenance_gaps | 3,664 documented gaps over 3,664/3,664 records, 0 deferred |
+| L1 | canonical_gene_names | 3,664 systematic names, one canonical spelling each, each current; 91 common names are pseudogene loci the genome resolves to themselves |
+| L2 | value_fidelity | 93,570 values over 26 features finite and inside the bound of their declared statistic |
+| L2 | cv_nonnegative | all 40,062 coefficients of variation non-negative |
+| L2 | uncertainty_sanity | 0 labeled uncertainties, none a zero dispersion |
+| L3 | vocabulary_parity | 15 value symbols + 11 CV symbols == 26 features, disjoint, exhaustive, distinct |
+| L3 | reference_populated | the reference profile carries the 19 required features in all 3,664 records |
+| L3 | compound_identity | 0 environment-edit compound references |
+| L3 | media_compound_identity | 18,320 component references carry a structure identifier, 0 unencodable |
+| L3 | media_membership | 3,664 records on a medium deriving from a shared library base (1 distinct medium) |
+| L4 | gene_containment_sgd | 1.000 of 3,664 measured genes are BW25113 (`ecoli_K12_BW25113_ASM75055v1`) genes |
+| L4 | current_genome_genes | every one of the 3,664 names is a gene of the current genome |
+
+The fitness store, rerun the same way, also passes its 14 rules (3,664 records,
+`reference_one` 1.0 on all 3,664) and still reads `fresh`.

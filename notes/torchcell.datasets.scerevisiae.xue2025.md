@@ -74,13 +74,13 @@ L0-L4 on the rebuilt store (`run_metabolite` from `torchcell/verification/runner
 
 L4 still fails, as the issue predicted, now for one cause only: the three genes missing from Ohya are `YLR071C` (RGR1), `YOR110W` (TFC7) and `YOR174W` (MED4), the essential genes stored as full deletions in a haploid chassis (#887, an owner decision, not touched here). Before the fix the missing set was `YLR071C`, `YNL039W`, `YOR174W`.
 
-## 2026.10.12 - #887: the 112 records stay as the release states them; the flag has no carrier
+## 2026.10.12 - #887: the 176 records are stored as the spreadsheet reports them
 
-Owner decision of 2026-10-12 on #887: "this is saying to drop all records basically that is crazy on this one!". A released record is never dropped as a remedy; a conflict travels on the record as a typed flag. The issue's own "drop with a logged reason" option is withdrawn.
+Owner decision of 2026-10-12 on #887: "they must be inviable under certain conditions... again... the data is the data! read the excel spreadsheet. if these are the genes reported then that is what they are... leave a note in the ffa paper to look into this and check under which conditions they are essential." No record is dropped and no record carries a flag. The follow-up for the lab is in [[Strains reported as RGR1, MED4 and TFC7 deletions|experiments.008-xue-ffa.results.002-interaction-models-report#20261012---strains-reported-as-rgr1-med4-and-tfc7-deletions-check-the-conditions-of-essentiality-with-the-strain-builders]].
 
 Measured by [[experiments.036-dataset-fixes-before-kg-build.scripts.keep_records_887_sd_zero_inventory]] (results `experiments/036-dataset-fixes-before-kg-build/results/keep_records_887_sd_zero_inventory.json`, slurm job 4201) off the pinned workbook (sha256 `023de80ec51a4d0d1ccd6fc3506e42a44fcea6d3c3101ee7a83a005e49bbc779`) and the cached SGD locus records.
 
-**The release states deletions and no allele.** The mirror holds this one file for `xue2025`. Its statement for the three genes is the `Abbreviations` pair (`RGR1` / `R` in A6:B6, `MED4` / `M` in A3:B3, `TFC7` / `T` in A10:B10) and the single-TF strains `R 4Δ` (titer sheet A72), `M 4Δ` (A11) and `T 4Δ` (A33), a deletion count. Every cell of both sheets (2,803) was searched for RGR1, MED4, TFC7, truncation, DAmP, degron, conditional, hypomorph and partial: the only hits are the three gene names on the `Abbreviations` sheet. No allele is stated anywhere, so none is captured.
+**What the spreadsheet reports.** The mirror holds this one file for `xue2025`. It names the three genes on the `Abbreviations` sheet (`RGR1` / `R` in A6:B6, `MED4` / `M` in A3:B3, `TFC7` / `T` in A10:B10) and the single-TF strains as deletion counts: `R 4Δ` (titer sheet A72), `M 4Δ` (A11), `T 4Δ` (A33). Every cell of both sheets (2,803) was searched for RGR1, MED4, TFC7, truncation, DAmP, degron, conditional, hypomorph and partial: the only hits are the three gene names on the `Abbreviations` sheet. No other allele is stated.
 
 | Gene | ORF | Records | SGD null `inviable` entry | `gene_essentiality_sgd` | In Ohya 2005 |
 |---|---|---:|---|---|---|
@@ -88,15 +88,11 @@ Measured by [[experiments.036-dataset-fixes-before-kg-build.scripts.keep_records
 | MED4 | `YOR174W` | 46 | S288C, systematic mutation set, Giaever 2002 (PMID 12140549) | record 1123 | no |
 | TFC7 | `YOR110W` | 46 | strain "Other", classical genetics, Manaud 1998 (PMID 9584160); none in S288C | none | no |
 
-112 of 176 records carry at least one of the three; 83 carry RGR1 or MED4, the two SGD records as inviable nulls in S288C. The other 29 carry only TFC7, whose inviable null SGD records outside S288C. (The issue's "three essential genes in S288C" was written while TFC7 was stored as `YNL039W`, BDP1, which is in the essentiality store; #886 fixed that.)
+112 of 176 records carry at least one of the three; 83 carry RGR1 or MED4, which SGD records as inviable nulls in S288C. The other 29 carry only TFC7, whose inviable null SGD records in another background. (The issue's "three essential genes in S288C" was written while TFC7 was stored as `YNL039W`, BDP1, which is in the essentiality store; #886 fixed that.)
 
-**Stored records: unchanged, 176 before and after.** The 138 perturbations of the three genes are each a `kanmx_deletion` with `state = "absent"`. No record changes, so the store (array 4011 task 21, `1475b8cf1`) is not rebuilt.
+**Stored records: unchanged, 176 before and after,** the 138 perturbations of the three genes each a `kanmx_deletion` with `state = "absent"`, as reported. No loader change to records, so the store (array 4011 task 21, `1475b8cf1`) is not rebuilt. Tests: `test_essential_gene_strains_are_kept_as_the_release_states_them` (hermetic) and `test_the_released_workbook_keeps_all_176_records_and_the_112` (`--data`, the pinned workbook) in `tests/torchcell/datasets/scerevisiae/test_xue2025.py`.
 
-**The typed flag has no carrier, so that part stopped.** The `qc_flags` precedent is now `VisualScorePhenotype.comment_annotations`, a `dict[str, bool]` parsed from a source's Comment column and declared on that class only. `MetabolitePhenotype`, `Genotype`, `KanMxDeletionPerturbation` and `MetaboliteExperiment` carry no flag field, and a `ProvenanceGap` requires its field to be `None`. The carrier options and their re-stale counts are the owner question of PR #1054.
-
-Tests: `test_essential_gene_strains_are_kept_as_the_release_states_them` (hermetic) and `test_the_released_workbook_keeps_all_176_records_and_the_112` (`--data`, the pinned workbook) in `tests/torchcell/datasets/scerevisiae/test_xue2025.py`.
-
-L0-L4 on the dev store, read-only (`kg4_pre_build_verification_sweep.py --dataset FattyAcidXue2025Dataset`, job 4201; table by `no_verifier_store_report_tables.py`). L4 fails for the three genes, as it should while they are stated as deletions:
+L0-L4 on the dev store, read-only (`kg4_pre_build_verification_sweep.py --dataset FattyAcidXue2025Dataset`, job 4201; table by `no_verifier_store_report_tables.py`). L4 `gene_containment_scmd_ohya2005` fails for the three genes, as it must while the strains are reported as deletions of genes the viable haploid collection lacks; the rule is not loosened, and the open question is the lab's (#887 stays open):
 
 `ffa_xue2025`: **FAIL**, 8 rules, 1 failing (report written 2026-10-12T07:15:08)
 

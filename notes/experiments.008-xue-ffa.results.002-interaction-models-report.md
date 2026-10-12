@@ -844,7 +844,6 @@ Below we present all 83 statistically enriched network overlays across four mode
 ![Multiplicative Total Titer - STRING Experimental (Connected, Enriched)](assets/images/008-xue-ffa/ffa_multigraph_overlays/multiplicative/Total_Titer/multiplicative_Total_Titer_ffa_multigraph_STRING_12_0_Experimental_connected_enriched.png)
 ![Multiplicative Total Titer - TFLink (Enriched)](assets/images/008-xue-ffa/ffa_multigraph_overlays/multiplicative/Total_Titer/multiplicative_Total_Titer_ffa_multigraph_TFLink_enriched.png)
 
-
 #### Additive Model Overlays
 
 ##### All FFAs Combined
@@ -1000,3 +999,15 @@ Each subdirectory contains complete sets for all FFAs, network types, and enrich
 3. **Mechanistic studies** on capacity vs composition regulatory pathways
 4. **Extend to higher orders** (4-way, 5-way) using GLM framework
 5. **Integrate with pathway models** to predict optimal strain designs
+
+## 2026.10.12 - Strains reported as RGR1, MED4 and TFC7 deletions: check the conditions of essentiality with the strain builders
+
+The FFA titer spreadsheet (`Supplementary Data 1_Raw titers.xlsx`, sha256 `023de80ec51a4d0d1ccd6fc3506e42a44fcea6d3c3101ee7a83a005e49bbc779`) reports full deletions of RGR1 (`YLR071C`), MED4 (`YOR174W`) and TFC7 (`YOR110W`) in 112 of its 176 strains (46 strains each; `R 4Δ`, `M 4Δ` and `T 4Δ` are the single-TF strains), on the haploid BY4741 FFA chassis. SGD records the null mutants of RGR1 and MED4 as inviable in S288C (Giaever 2002, the systematic deletion set) and the null of TFC7 as inviable in another background (strain "Other", Manaud 1998). The spreadsheet names no other allele for any of the three.
+
+The records are stored as reported ([[torchcell.datasets.scerevisiae.xue2025]], owner decision 2026-10-12: "the data is the data!"). TO CHECK with the strain builders:
+
+- under which conditions (medium, temperature, background, suppressors) these three genes are essential, given that the strains grew and were assayed;
+- what allele each strain actually carries at RGR1, MED4 and TFC7 (a full deletion, a partial deletion or truncation, a DAmP or other hypomorph, a promoter replacement), and which marker;
+- whether the 112 strains, and the interaction terms fitted on them in this report, need an annotation once the answer is known.
+
+Tracked on issue #887, left open as an owner-lab follow-up.

@@ -74,11 +74,13 @@ and of MED4 as inviable in S288C (Giaever 2002; the two ``gene_essentiality_sgd`
 records), and the null of TFC7 as inviable only in a non-S288C background (Manaud 1998,
 strain "Other"). The release states no allele: its one file names each strain by a
 deletion count, and no cell of either sheet names a truncation, DAmP, degron,
-conditional, hypomorph or partial allele. Under the owner decision of 2026-10-12 every
-record is kept as the release states it; the conflict belongs on the record as a typed
-flag, for which the schema has no carrier yet. Measured by
-``experiments/036-dataset-fixes-before-kg-build/scripts/
-keep_records_887_sd_zero_inventory.py``.
+conditional, hypomorph or partial allele. Owner decision of 2026-10-12: "the data is
+the data! ... if these are the genes reported then that is what they are", so every
+record is stored as the spreadsheet reports it, with no flag; under which conditions
+these genes are essential, and what allele the strains carry, is a follow-up for the
+strain builders (issue #887; experiments.008-xue-ffa.results.002-interaction-models-
+report, 2026.10.12). Measured by ``experiments/036-dataset-fixes-before-kg-build/
+scripts/keep_records_887_sd_zero_inventory.py``.
 
 ENVIRONMENT (in-house-assumed, FLAGGED): the media name and temperature are NOT in this data
 file (in-house engineering data). We use ``Media(name="SC (FFA production)", state="liquid")``

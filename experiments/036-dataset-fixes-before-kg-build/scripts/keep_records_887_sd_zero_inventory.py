@@ -26,7 +26,9 @@ Released SDs of exactly 0 (#894, #895, #897, #930)
     with ``--costanzo-store`` (20.7 M records; another branch rebuilds it).
 
 Writes ``experiments/036-dataset-fixes-before-kg-build/results/
-keep_records_887_sd_zero_inventory.json``. Run from the repo root (under slurm: the
+keep_records_887_sd_zero_inventory.json``; ``--after`` instead censuses the two dev
+stores PR #1054 rebuilds (records, typed gaps by field, uncertainty labels, released
+zeros) into ``keep_records_887_sd_zero_stores_after.json``. Run from the repo root (under slurm: the
 Costanzo tables are 2 GB)::
 
     python experiments/036-dataset-fixes-before-kg-build/scripts/keep_records_887_sd_zero_inventory.py
@@ -193,6 +195,18 @@ class SiEvidence(Frozen):
     term_lines: dict[str, list[int]]
     paper: FileRef
     paper_term_lines: dict[str, list[int]]
+
+
+class StoreCensus(Frozen):
+    """A rebuilt dev store: its count, typed gaps and uncertainty labels (``--after``)."""
+
+    slug: str
+    built_at: str
+    torchcell_commit: str
+    records: int
+    gaps_by_field: dict[str, int]
+    uncertainty_types: dict[str, int]
+    zero_uncertainty_records: int
 
 
 class Inventory(Frozen):
@@ -545,6 +559,40 @@ def si_evidence(data_root: str) -> list[SiEvidence]:
     return out
 
 
+#: The dev stores PR #1054 rebuilds (Additional Data S4), censused with ``--after``.
+REBUILT_STORES = ["smf_kuzmin2018", "dmf_kuzmin2018"]
+AFTER_NAME = "keep_records_887_sd_zero_stores_after.json"
+
+
+def store_census(data_root: str, slug: str) -> StoreCensus:
+    """Count the records, gaps and uncertainty labels of one rebuilt dev store."""
+    root = osp.join(data_root, "data/torchcell", slug)
+    with open(
+        osp.join(root, "preprocess", "build_manifest.json"), encoding="utf-8"
+    ) as h:
+        manifest = json.load(h)
+    records = 0
+    zero = 0
+    gaps: Counter[str] = Counter()
+    types: Counter[str] = Counter()
+    for item in lmdb_records(root):
+        records += 1
+        phenotype = item["experiment"]["phenotype"]
+        for gap in phenotype.get("provenance_gaps") or []:
+            gaps[str(gap["field"])] += 1
+        types[str(phenotype.get("fitness_uncertainty_type"))] += 1
+        zero += phenotype.get("fitness_uncertainty") == 0
+    return StoreCensus(
+        slug=slug,
+        built_at=str(manifest["built_at"]),
+        torchcell_commit=str(manifest["torchcell_commit"]),
+        records=records,
+        gaps_by_field=dict(gaps),
+        uncertainty_types=dict(types),
+        zero_uncertainty_records=zero,
+    )
+
+
 def main() -> None:
     """Measure, then write the results JSON."""
     parser = argparse.ArgumentParser(description=__doc__)
@@ -553,9 +601,26 @@ def main() -> None:
         action="store_true",
         help="also read the 20.7 M-record dmf_costanzo2016 dev store",
     )
+    parser.add_argument(
+        "--after",
+        action="store_true",
+        help=f"census the stores PR #1054 rebuilds ({', '.join(REBUILT_STORES)}) "
+        f"into {AFTER_NAME} instead of measuring the releases",
+    )
     args = parser.parse_args()
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
+    if args.after:
+        os.makedirs(RESULTS, exist_ok=True)
+        out = osp.join(RESULTS, AFTER_NAME)
+        census = [store_census(data_root, slug) for slug in REBUILT_STORES]
+        with open(out, "w", encoding="utf-8") as handle:
+            handle.write(
+                json.dumps([c.model_dump() for c in census], indent=2, sort_keys=True)
+            )
+            handle.write("\n")
+        print(f"wrote {out}")
+        return
     slugs = ["dmf_kuzmin2018", "tmf_kuzmin2018", "dmf_kuzmin2020"]
     if args.costanzo_store:
         slugs.append("dmf_costanzo2016")

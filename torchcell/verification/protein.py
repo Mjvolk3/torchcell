@@ -24,7 +24,12 @@ import math
 from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
-from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.levels import (
+    l0_structural,
+    l1_count,
+    l2_value_fidelity,
+    validate_by_type_tag,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -202,26 +207,6 @@ def protein_gene_set(records: Sequence[Record]) -> set[str]:
 #: Relative tolerance of the half-life identity HL = ln 2 / kdp (exact in the release to
 #: 5.7e-15; anything near this bound is a transcription, not a rounding).
 HALF_LIFE_IDENTITY_RTOL = 1e-9
-
-
-def _validate_by_type_tag(experiment: dict[str, Any]) -> object:
-    """Validate an experiment dump against the class its own ``experiment_type`` names.
-
-    The natural-isolate verifiers use this instead of the ``ExperimentType`` union: a
-    record carries ~5,000 perturbations, and the undiscriminated union tries every
-    experiment class and every perturbation leaf (bacterial ones included) in turn,
-    measured at 21.8 s for one Muenzner proteome record against 0.67 s for its own class.
-    The tag is also the reconstruction key (``EXPERIMENT_TYPE_MAP``), so this is the
-    stricter check: a record that validates only as some other union member fails here.
-    """
-    from torchcell.datamodels.schema import EXPERIMENT_TYPE_MAP, Experiment
-
-    cls = EXPERIMENT_TYPE_MAP.get(str(experiment.get("experiment_type")))
-    if not (isinstance(cls, type) and issubclass(cls, Experiment)):
-        raise ValueError(
-            f"unknown experiment_type {experiment.get('experiment_type')!r}"
-        )
-    return cls.model_validate(experiment)
 
 
 def natural_isolate_of(rec: Record) -> str | None:
@@ -454,7 +439,7 @@ def verify_natural_isolate_proteome(
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
-        l0_structural((rec["experiment"] for rec in records), _validate_by_type_tag)
+        l0_structural((rec["experiment"] for rec in records), validate_by_type_tag)
     )
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_strain_uniqueness(records, strain_of=natural_isolate_of))
@@ -540,7 +525,7 @@ def verify_natural_isolate_turnover(
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(
-        l0_structural((rec["experiment"] for rec in records), _validate_by_type_tag)
+        l0_structural((rec["experiment"] for rec in records), validate_by_type_tag)
     )
     report.add(l1_count(len(records), expected_count))
     report.add(_l1_strain_uniqueness(records, strain_of=natural_isolate_of))

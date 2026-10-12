@@ -112,6 +112,30 @@ def test_l0_structural_reports_bad_records():
     assert result.details["n_failures"] == 1
 
 
+def test_validate_by_type_tag_builds_the_class_the_record_names() -> None:
+    from torchcell.datamodels.schema import EXPERIMENT_TYPE_MAP
+    from torchcell.verification.levels import validate_by_type_tag
+
+    record = _fitness_record()
+    assert type(validate_by_type_tag(record)) is EXPERIMENT_TYPE_MAP["fitness"]
+    assert l0_structural([record], validate_by_type_tag).passed
+
+
+def test_validate_by_type_tag_refuses_an_unknown_tag_and_an_invalid_record() -> None:
+    from torchcell.verification.levels import validate_by_type_tag
+
+    bad = _fitness_record()
+    bad["phenotype"]["fitness"] = float("nan")
+    unknown = {**_fitness_record(), "experiment_type": "no_such_type"}
+    result = l0_structural([bad, unknown], validate_by_type_tag)
+    assert result.details["n_failures"] == 2
+    assert [f["index"] for f in result.details["failures"]] == [0, 1]
+    assert (
+        "unknown experiment_type 'no_such_type'"
+        in (result.details["failures"][1]["error"])
+    )
+
+
 # --------------------------------------------------------------------------- #
 # L1 completeness / count
 # --------------------------------------------------------------------------- #

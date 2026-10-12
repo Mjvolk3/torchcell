@@ -29,10 +29,15 @@ from __future__ import annotations
 import json
 import math
 from collections import Counter
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from typing import Any
 
-from torchcell.verification.levels import l0_structural, l1_count, l2_value_fidelity
+from torchcell.verification.levels import (
+    Validator,
+    l0_structural,
+    l1_count,
+    l2_value_fidelity,
+)
 from torchcell.verification.report import (
     Level,
     LevelResult,
@@ -263,6 +268,7 @@ def verify_rnaseq_dataset(
     provenance: Provenance,
     expected_count: int,
     replicate_aware: bool = False,
+    l0_validator: Validator | None = None,
 ) -> VerificationReport:
     """Run the L0-L3 record-level gate for an RNA-seq expression dataset.
 
@@ -273,6 +279,11 @@ def verify_rnaseq_dataset(
     a condition legitimately share a genotype and an environment and carry no strain id;
     the group rule (:func:`_l1_replicate_groups`) is what those records can get wrong.
 
+    ``l0_validator`` is the L0 validator; ``None`` validates against the
+    ``ExperimentType`` union. A natural-isolate store passes
+    :func:`~torchcell.verification.levels.validate_by_type_tag`, because the union costs
+    about 30 s for each of its ~5,000-perturbation records.
+
     L4 (containment in the gene universe of the genome a record is written against) is
     asserted by the caller.
     """
@@ -280,7 +291,11 @@ def verify_rnaseq_dataset(
 
     from torchcell.datamodels.schema import ExperimentType
 
-    validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
+    validate: Validator = (
+        TypeAdapter(ExperimentType).validate_python
+        if l0_validator is None
+        else l0_validator
+    )
 
     report = VerificationReport(dataset_name=dataset_name, provenance=provenance)
     report.add(l0_structural((rec["experiment"] for rec in records), validate))

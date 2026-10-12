@@ -88,7 +88,7 @@ from torchcell.verification.gene_interaction import (
     verify_gene_interaction_dataset,
 )
 from torchcell.verification.induction_timecourse import verify_induction_timecourse
-from torchcell.verification.levels import l4_cross_source
+from torchcell.verification.levels import l4_cross_source, validate_by_type_tag
 from torchcell.verification.metabolite import (
     metabolite_gene_set,
     verify_metabolite_dataset,
@@ -1679,6 +1679,7 @@ def verify_rnaseq_store(
         provenance=spec["provenance"],
         expected_count=spec.get("expected_count", len(records)),
         replicate_aware=spec.get("replicate_aware", False),
+        l0_validator=(validate_by_type_tag if spec.get("natural_isolates") else None),
     )
     assembly_sets = _dataset_assembly_sets(records)
     if assembly_sets != (SGD_S288C_R64,):

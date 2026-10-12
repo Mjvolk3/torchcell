@@ -55,6 +55,28 @@ def l0_structural(records: Iterable[Any], validator: Validator) -> LevelResult:
     )
 
 
+def validate_by_type_tag(experiment: dict[str, Any]) -> object:
+    """Validate an experiment dump against the class its own ``experiment_type`` names.
+
+    The natural-isolate verifiers use this instead of the ``ExperimentType`` union: a
+    record carries ~5,000 perturbations, and the undiscriminated union tries every
+    experiment class and every perturbation leaf (bacterial ones included) in turn,
+    measured at 21.8 s for one Muenzner proteome record against 0.67 s for its own class,
+    and at 28.8 to 33.6 s for a Caudal 2024 RNA-seq record against 0.76 to 0.85 s
+    (2026-10-12, three records), which puts the 943-record store at about 8 h. The tag
+    is also the reconstruction key (``EXPERIMENT_TYPE_MAP``), so this is the stricter
+    check: a record that validates only as some other union member fails here.
+    """
+    from torchcell.datamodels.schema import EXPERIMENT_TYPE_MAP, Experiment
+
+    cls = EXPERIMENT_TYPE_MAP.get(str(experiment.get("experiment_type")))
+    if not (isinstance(cls, type) and issubclass(cls, Experiment)):
+        raise ValueError(
+            f"unknown experiment_type {experiment.get('experiment_type')!r}"
+        )
+    return cls.model_validate(experiment)
+
+
 def l1_completeness(
     observed: Collection[Hashable],
     expected: Collection[Hashable],

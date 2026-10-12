@@ -221,6 +221,35 @@ def test_tpm_dataset_emits_seven_results_in_order_and_passes() -> None:
     )
 
 
+def test_l0_validator_replaces_the_union_for_the_structural_level() -> None:
+    from torchcell.verification.levels import validate_by_type_tag
+
+    tags: list[str] = []
+
+    def refuse(experiment: Any) -> object:
+        tags.append(experiment["experiment_type"])
+        raise ValueError("refused by the caller's validator")
+
+    refused = verify_rnaseq_dataset(
+        _tpm_records(),
+        dataset_name="rna",
+        provenance=PROV,
+        expected_count=2,
+        l0_validator=refuse,
+    )
+    assert _result(refused, "structural").details["n_failures"] == 2
+    assert len(tags) == 2
+    by_tag = verify_rnaseq_dataset(
+        _tpm_records(),
+        dataset_name="rna",
+        provenance=PROV,
+        expected_count=2,
+        l0_validator=validate_by_type_tag,
+    )
+    assert [r.name for r in by_tag.results] == TPM_NAMES
+    assert by_tag.passed is True
+
+
 def test_pseudobulk_dataset_skips_the_count_check_and_allows_negatives() -> None:
     report = _verify(_log2_records())
     assert [r.name for r in report.results] == LOG2_NAMES

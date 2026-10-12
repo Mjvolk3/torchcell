@@ -44,13 +44,3 @@ Pins declared on 2026.10.10:
 | `sameith2015` | GAT1 | YFL021W, YKR067W | YFL021W | `sgd_standard_name` | `ID=YFL021W;Name=YFL021W;gene=GAT1;` |
 
 GFF quotes are substrings of `saccharomyces_cerevisiae_R64-4-1_20230830.gff` (sha256 `64f61e3153083a8ef6d853721c9e83e4469cdc120883ec281e51a0df4ba390fa`, the `R64_GFF` provenance in `torchcell/datamodels/strain_background.py`); the Table S4 quotes are the `Systematic Name | Standard Name` cells of `TableS4_complete_dataset_all_lipids.xlsx` (sha256 `91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894`). `test_every_loader_pin_matches_its_source_bytes` re-reads both files when `DATA_ROOT` holds them and checks every quote and hash.
-
-## 2026.10.11 - Rule `sgd_systematic_rename` and the retired / merged refusal reasons (#893, #897)
-
-A released SYSTEMATIC name that R64 no longer carries has exactly one candidate, so first-match would resolve it whether SGD renamed the ORF or merged it into a longer one. [[torchcell.datasets.systematic_name_currency]] therefore maps such a name only through a pin of the new rule:
-
-- `AliasResolutionRule.SGD_SYSTEMATIC_RENAME`: SGD's locus history of the pinned ORF records the name as its former systematic name, changed for nomenclature. The build re-checks the genome half (`check_pin`): the name's only candidate is the pinned ORF and the name is not a live gene. The history half is checked against the cached locus JSON bytes by the data-gated test.
-- `check_pin(genome, pin, paper_gene_list=None)` is the public form of the existing pin check; it returns the pinned ORF.
-- New refusal reasons: `retired_systematic_name`, `merged_into_locus` (both pinned and counted by the currency check), and `not_current_unpinned` (a non-current name with neither table entry, which stops the build).
-
-No existing pin or resolution changes.

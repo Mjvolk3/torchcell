@@ -75,6 +75,10 @@ from torchcell.sequence.genome.ecoli.k12 import (
 )
 from torchcell.sequence.genome.ecoli.k12 import eck_crosswalk as _annotation_crosswalk
 from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome, EcoliBStrainName
+from torchcell.sequence.genome.ecoli.w3110 import (
+    EcoliK12W3110Genome,
+    EcoliW3110StrainName,
+)
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.registry import load_genome_manifest, resolve
 
@@ -121,20 +125,23 @@ BacterialHost = Literal["ecoli", "pputida"]
 """A bacterial host; each names the loader parameter its genome is injected through."""
 
 #: The reference strains of each host. Several for E. coli, never one: a ``BW25113_``
-#: number is not an MG1655 b-number and an ``ECB_`` tag is neither (REL606 is an E. coli
-#: B strain), so an E. coli loader states which strain it is written against (plan D5).
+#: number is not an MG1655 b-number, an ``ECB_`` tag is neither (REL606 is an E. coli
+#: B strain) and a ``Y75_RS`` tag is W3110's own RefSeq locus (#910), so an E. coli
+#: loader states which strain it is written against (plan D5).
 HOST_STRAINS: dict[BacterialHost, tuple[BacterialReferenceStrain, ...]] = {
-    "ecoli": ("MG1655", "BW25113", "REL606"),
+    "ecoli": ("MG1655", "BW25113", "REL606", "W3110"),
     "pputida": ("KT2440",),
 }
 
-#: The identifier namespace of each strain's GenBank locus tags. Values are typed by the
-#: schema's ``BacterialGeneNamespace`` Literal, so a value outside it fails type checking.
+#: The identifier namespace of each strain's locus tags (GenBank, except W3110's RefSeq
+#: tags, #910). Values are typed by the schema's ``BacterialGeneNamespace`` Literal, so a
+#: value outside it fails type checking.
 STRAIN_GENE_NAMESPACES: dict[BacterialReferenceStrain, BacterialGeneNamespace] = {
     "MG1655": "ecoli_k12_mg1655_bnumber",
     "BW25113": "ecoli_k12_bw25113_locus_tag",
     "KT2440": "pputida_kt2440_locus_tag",
     "REL606": "ecoli_b_rel606_locus_tag",
+    "W3110": "ecoli_k12_w3110_refseq_locus_tag",
 }
 
 #: The schema's per-namespace locus-tag patterns (``BACTERIAL_LOCUS_TAG_PATTERNS``),
@@ -145,17 +152,23 @@ LOCUS_TAG_PATTERNS: dict[str, re.Pattern[str]] = {
 }
 
 #: A genome of one reference strain, as :func:`bacterial_genome` returns it.
-BacterialStrainGenome = EcoliK12Genome | EcoliBREL606Genome | PPutidaKT2440Genome
+BacterialStrainGenome = (
+    EcoliK12Genome | EcoliBREL606Genome | EcoliK12W3110Genome | PPutidaKT2440Genome
+)
 
 #: The genome class of each reference strain.
 BACTERIAL_GENOME_CLASSES: dict[
     BacterialReferenceStrain,
-    type[EcoliK12Genome] | type[EcoliBREL606Genome] | type[PPutidaKT2440Genome],
+    type[EcoliK12Genome]
+    | type[EcoliBREL606Genome]
+    | type[EcoliK12W3110Genome]
+    | type[PPutidaKT2440Genome],
 ] = {
     "MG1655": EcoliK12MG1655Genome,
     "BW25113": EcoliK12BW25113Genome,
     "KT2440": PPutidaKT2440Genome,
     "REL606": EcoliBREL606Genome,
+    "W3110": EcoliK12W3110Genome,
 }
 
 _STRAIN: TypeAdapter[BacterialReferenceStrain] = TypeAdapter(BacterialReferenceStrain)
@@ -203,6 +216,12 @@ def bacterial_genome(
 
 @overload
 def bacterial_genome(
+    host: Literal["ecoli"], strain: EcoliW3110StrainName, data_root: str | None = None
+) -> EcoliK12W3110Genome: ...
+
+
+@overload
+def bacterial_genome(
     host: Literal["pputida"], strain: Literal["KT2440"], data_root: str | None = None
 ) -> PPutidaKT2440Genome: ...
 
@@ -220,7 +239,8 @@ def bacterial_genome(
 
     The cache root is ``<data_root>/<ASSEMBLY.default_genome_root>``
     (``data/ecoli/mg1655/genome``, ``data/ecoli/bw25113/genome``,
-    ``data/ecoli/rel606/genome``, ``data/pputida/kt2440/genome``) with ``data_root``
+    ``data/ecoli/rel606/genome``, ``data/ecoli/w3110/genome``,
+    ``data/pputida/kt2440/genome``) with ``data_root``
     defaulting to ``$DATA_ROOT``, and
     the genome is opened with ``overwrite=False``: an existing ``data.db`` is reopened,
     never rebuilt in place. The sequence and annotation files come from the genomes tier
@@ -264,16 +284,18 @@ def _assembly(strain: BacterialReferenceStrain) -> BacterialAssembly:
 def read_assembly_report(
     strain: BacterialReferenceStrain, data_root: str | None = None
 ) -> AssemblyReport:
-    """Read the deposited GenBank assembly report of ``strain``'s assembly set.
+    """Read the deposited assembly report of ``strain``'s assembly set.
 
-    The member is ``<GenBank assembly>_assembly_report.txt``, resolved (sha256-verified)
-    from the tier. The header runs to the first bare ``#`` line; each ``# key: value``
+    The member is ``<annotation assembly>_assembly_report.txt``, resolved
+    (sha256-verified) from the tier: the GenBank report, except for a RefSeq-primary
+    assembly (W3110), whose GCA report still names the 2006 RefSeq release and whose GCF
+    report is the one that pairs the deposited files. The header runs to the first bare ``#`` line; each ``# key: value``
     line in it is read once (a repeated key is refused). The accessions must name the
     assembly the genome class reads, and the pair must be the schema's
     ``ASSEMBLY_SET_ACCESSIONS`` entry for the set.
     """
     assembly = _assembly(strain)
-    member = f"{assembly.genbank_assembly}_assembly_report.txt"
+    member = assembly.assembly_report_member
     path = Path(resolve(assembly.assembly_set, member, data_root=data_root))
     header: dict[str, str] = {}
     for line in path.read_text().splitlines():
@@ -323,10 +345,11 @@ def assembly_reference(
     """The ``AssemblyReferenceGenome`` a record written against ``strain`` stores.
 
     ``species`` is the genome class's organism, ``assembly_set`` the strain's set, and
-    ``assembly_accession`` the GenBank (``GCA_``) accession read from the deposited
-    assembly report: the records' identifiers are GenBank locus tags (plan D1), which
-    RefSeq retags for BW25113, REL606 and KT2440, so the GenBank assembly is the one
-    they mean.
+    ``assembly_accession`` the accession read from the deposited assembly report whose
+    annotation the records' identifiers come from: the GenBank (``GCA_``) one for a
+    GenBank-primary set, whose locus tags (plan D1) RefSeq retags for BW25113, REL606 and
+    KT2440; the RefSeq (``GCF_``) one for W3110, whose ``Y75_RS`` tags are RefSeq's
+    (#910).
     ``strain`` is the reference strain, or the background's ``name`` when a background
     is given (the schema requires the two to agree); the background must be an edit of
     ``strain``'s assembly.
@@ -341,7 +364,11 @@ def assembly_reference(
         species=_assembly(strain).organism,
         strain=strain if background is None else background.name,
         assembly_set=report.assembly_set,
-        assembly_accession=report.genbank_accession,
+        assembly_accession=(
+            report.refseq_accession
+            if _assembly(strain).annotation_source == "refseq"
+            else report.genbank_accession
+        ),
         background=background,
     )
 

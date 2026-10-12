@@ -499,8 +499,8 @@ HOSTS: Final[tuple[HostToken, ...]] = (
 K12_LINEAGE: Final = re.compile(r"\bK-12\b")
 K12_READABLE_HOSTS: Final = ("MG1655", "BW25113")
 
-#: Sets a genome class already reads: the schema's bacterial vocabulary (W3110 is
-#: deliberately outside it, registry.py) plus the two yeast sets the loaders resolve.
+#: Sets a genome class already reads: the schema's bacterial vocabulary (W3110 joined it
+#: on 2026-10-12, read RefSeq first, #910) plus the two yeast sets the loaders resolve.
 READABLE_ASSEMBLY_SETS: Final[frozenset[str]] = frozenset(
     (
         *get_args(schema.BacterialAssemblySet),

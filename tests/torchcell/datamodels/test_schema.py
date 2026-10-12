@@ -1477,6 +1477,48 @@ def test_the_rel606_namespace_owns_its_tags_and_no_other_namespace_does() -> Non
         )
 
 
+def test_the_w3110_namespace_owns_its_refseq_tags_and_no_other_namespace_does() -> None:
+    """W3110's ``Y75_RS`` tags (#910) match only its namespace, no other namespace's tag
+    or a yeast name matches it, and a pre-2010 ``Y75_p`` tag is not one of them.
+    """
+    pattern = s.BACTERIAL_LOCUS_TAG_PATTERNS["ecoli_k12_w3110_refseq_locus_tag"]
+    assert pattern == r"^Y75_RS\d{5}$"
+    for tag in ("Y75_RS00005", "Y75_RS25635"):
+        matching = {
+            namespace
+            for namespace, other in s.BACTERIAL_LOCUS_TAG_PATTERNS.items()
+            if re.match(other, tag)
+        }
+        assert matching == {"ecoli_k12_w3110_refseq_locus_tag"}, tag
+    for tag in (
+        "b0001",
+        "BW25113_0001",
+        "PP_0001",
+        "ECB_00001",
+        "YAL001C",
+        "Y75_p0001",
+    ):
+        assert not re.match(pattern, tag), tag
+
+
+def test_a_w3110_reference_names_the_refseq_accession_of_its_set() -> None:
+    """The W3110 set's pair is GCA_000010245.1 / GCF_000010245.2; another is refused."""
+    reference = s.AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain="W3110",
+        assembly_set="ecoli_K12_W3110_ASM1024v1",
+        assembly_accession="GCF_000010245.2",
+    )
+    assert reference.assembly_accession == "GCF_000010245.2"
+    with pytest.raises(ValidationError, match="is not an accession of"):
+        s.AssemblyReferenceGenome(
+            species="Escherichia coli",
+            strain="W3110",
+            assembly_set="ecoli_K12_W3110_ASM1024v1",
+            assembly_accession="GCF_000010245.1",
+        )
+
+
 def test_a_kt2440_structural_rna_tag_is_admitted() -> None:
     """KT2440's named RNA tags are real genes, so the pattern must not be digits-only.
 
@@ -1648,12 +1690,14 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
         registry.ECOLI_K12_BW25113,
         registry.PPUTIDA_KT2440,
         registry.ECOLI_B_REL606,
+        registry.ECOLI_K12_W3110,
     }
     assert s.BACTERIAL_ASSEMBLY_SETS == {
         "MG1655": registry.ECOLI_K12_MG1655,
         "BW25113": registry.ECOLI_K12_BW25113,
         "KT2440": registry.PPUTIDA_KT2440,
         "REL606": registry.ECOLI_B_REL606,
+        "W3110": registry.ECOLI_K12_W3110,
     }
     # every strain of the background vocabulary has a set, and every set an accession pair
     assert set(typing.get_args(s.BacterialReferenceStrain)) == set(
@@ -1662,9 +1706,15 @@ def test_the_assembly_set_vocabulary_equals_the_registry_ids() -> None:
     assert set(s.ASSEMBLY_SET_ACCESSIONS) == set(
         typing.get_args(s.BacterialAssemblySet)
     )
+    # The two accessions share the assembly number; the versions can differ (W3110 pairs
+    # GCA_000010245.1 with GCF_000010245.2, read off its GCF assembly report, #910).
     for genbank, refseq in s.ASSEMBLY_SET_ACCESSIONS.values():
         assert genbank.startswith("GCA_") and refseq.startswith("GCF_")
-        assert genbank.split("_")[1] == refseq.split("_")[1]
+        assert genbank.split("_")[1].split(".")[0] == refseq.split("_")[1].split(".")[0]
+    assert s.ASSEMBLY_SET_ACCESSIONS["ecoli_K12_W3110_ASM1024v1"] == (
+        "GCA_000010245.1",
+        "GCF_000010245.2",
+    )
 
 
 def test_the_namespace_vocabulary_covers_every_assembly_set() -> None:

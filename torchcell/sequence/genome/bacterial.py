@@ -43,6 +43,14 @@ downloaded at construction, including GO.
 A host subclass names its :class:`BacterialAssembly` (assembly set, GenBank and RefSeq
 assembly names, replicon, locus-tag pattern, GO source, default cache root) and its gene
 class (the replicons a GFF seqid may name).
+
+**RefSeq first, for a set whose GenBank annotation carries no locus tag.** A
+:class:`RefSeqPrimaryAssembly` (E. coli K-12 W3110, #910) swaps the annotation: the GCF
+flat file and GFF3 are the locus universe and ``data.db``, the GCF ``Ontology_term`` rows
+are GO keyed by their own locus tag (``refseq_gff_ontology_term_primary``), and the
+proteins are the flat file's own ``/translation`` values. The DNA is still the set's one
+GenBank FASTA, read under its GenBank accession, required to be byte-identical to the GCF
+flat file's sequence, and keyed by the RefSeq accession the GFF seqids name.
 """
 
 import gzip
@@ -56,6 +64,7 @@ from urllib.parse import unquote
 import pandas as pd
 from attrs import define, field
 from Bio import SeqIO
+from Bio.Seq import Seq
 from Bio.SeqFeature import CompoundLocation, SeqFeature, SimpleLocation
 from Bio.SeqRecord import SeqRecord
 from gffutils.feature import Feature
@@ -358,6 +367,83 @@ def read_protein_fasta(
     return proteins
 
 
+def read_genbank_translations(
+    path: str, annotation: GenBankAnnotation
+) -> tuple[dict[str, SeqRecord], dict[str, Seq]]:
+    """The ``/translation`` of each coding locus's product CDS, keyed by locus tag, and
+    the sequence of each replicon, keyed by accession, from one flat file.
+
+    The protein source of a :class:`RefSeqPrimaryAssembly`, whose set holds no protein
+    FASTA keyed to its RefSeq protein ids. The annotation's ``protein_id`` of a coding
+    locus is read off that locus's own product CDS (:func:`read_genbank`), so every one
+    is met here; a CDS that carries no single ``/translation`` is refused by name.
+    """
+    wanted = {
+        locus.protein_id: tag
+        for tag, locus in annotation.loci.items()
+        if locus.protein_id is not None
+    }
+    proteins: dict[str, SeqRecord] = {}
+    sequences: dict[str, Seq] = {}
+    with _open_text(path) as handle:
+        for record in SeqIO.parse(handle, "genbank"):  # type: ignore[no-untyped-call]  # Bio.SeqIO is untyped
+            sequences[record.id] = record.seq
+            for feature in record.features:
+                if feature.type != "CDS" or "pseudo" in feature.qualifiers:
+                    continue
+                ids = _qualifier(feature, "protein_id")
+                if len(ids) != 1 or ids[0] not in wanted:
+                    continue
+                tag = wanted[ids[0]]
+                if _qualifier(feature, "locus_tag") != [tag]:
+                    continue
+                translation = _single(
+                    feature, "translation", f"{annotation.member} {tag}"
+                )
+                if translation is None:
+                    raise GenomeAnnotationMismatchError(
+                        f"{annotation.member}: the CDS {ids[0]} of {tag} carries no "
+                        "/translation"
+                    )
+                proteins[tag] = SeqRecord(
+                    Seq(translation), id=tag, name=tag, description=ids[0]
+                )
+    return proteins, sequences
+
+
+def rekeyed_replicon_fasta(
+    fasta: dict[str, SeqRecord], assembly: "RefSeqPrimaryAssembly", annotated: Seq
+) -> dict[str, SeqRecord]:
+    """The GenBank replicon FASTA keyed by the RefSeq accession, once proven identical.
+
+    ``fasta`` must hold exactly ``assembly.sequence_replicon`` and its sequence must equal
+    ``annotated``, the RefSeq flat file's sequence of ``assembly.replicon``; anything else
+    is refused by name, so a re-key never joins two different molecules.
+    """
+    if set(fasta) != {assembly.sequence_replicon}:
+        raise GenomeAnnotationMismatchError(
+            f"{assembly.dna_fasta_member} holds {sorted(fasta)}, not the one record "
+            f"{assembly.sequence_replicon}"
+        )
+    record = fasta[assembly.sequence_replicon]
+    if str(record.seq) != str(annotated):
+        raise GenomeAnnotationMismatchError(
+            f"{assembly.dna_fasta_member} {assembly.sequence_replicon} and "
+            f"{assembly.annotation_member} {assembly.replicon} are not byte-identical"
+        )
+    return {
+        assembly.replicon: SeqRecord(
+            record.seq,
+            id=assembly.replicon,
+            name=assembly.replicon,
+            description=(
+                f"{assembly.sequence_replicon} of {assembly.dna_fasta_member}, "
+                f"byte-identical to {assembly.replicon} of {assembly.annotation_member}"
+            ),
+        )
+    }
+
+
 def _gff_attributes(column: str) -> dict[str, list[str]]:
     """GFF3 column 9 as ``{key: [values]}``: values split on ``,`` and percent-decoded."""
     attributes: dict[str, list[str]] = {}
@@ -513,7 +599,29 @@ def refseq_inline_go(
     return ({k: tuple(sorted(v)) for k, v in sorted(annotations.items())}, without)
 
 
-GoRoute = Literal["gaf_synonym_column", "refseq_gff_ontology_term"]
+def refseq_primary_go(
+    refseq: RefSeqGffAnnotation,
+) -> tuple[dict[str, tuple[str, ...]], int]:
+    """GO ids per RefSeq locus tag from the RefSeq ``Ontology_term`` rows, each row keyed
+    by its OWN ``locus_tag``: the route of a :class:`RefSeqPrimaryAssembly`, whose loci
+    are the RefSeq tags, so no ``old_locus_tag`` crosswalk is taken. Every row reaches a
+    tag, so the second value (rows reaching none) is always 0; a row naming a tag with no
+    gene or pseudogene row is refused.
+    """
+    annotations: dict[str, set[str]] = {}
+    for refseq_tag, terms in refseq.ontology_term_rows:
+        if refseq_tag not in refseq.old_locus_tags:
+            raise ValueError(
+                f"{refseq.member}: an Ontology_term row names {refseq_tag}, which has "
+                "no gene or pseudogene row"
+            )
+        annotations.setdefault(refseq_tag, set()).update(terms)
+    return ({k: tuple(sorted(v)) for k, v in sorted(annotations.items())}, 0)
+
+
+GoRoute = Literal[
+    "gaf_synonym_column", "refseq_gff_ontology_term", "refseq_gff_ontology_term_primary"
+]
 
 
 class GoSourceSpec(BaseModel):
@@ -548,6 +656,8 @@ class GoSourceSpec(BaseModel):
                 "GAF column 11 (DB Object Synonym), values split on '|' and '/', "
                 f"tokens fully matching {self.identifier_pattern}"
             )
+        if self.route == "refseq_gff_ontology_term_primary":
+            return "RefSeq GFF Ontology_term row's own locus_tag"
         return (
             "RefSeq GFF Ontology_term row's locus_tag, through its gene row's "
             "old_locus_tag"
@@ -596,14 +706,34 @@ class BacterialAssembly(BaseModel):
     )
 
     @property
+    def annotation_source(self) -> Literal["genbank", "refseq"]:
+        """Which NCBI annotation's locus tags this assembly reads: GenBank."""
+        return "genbank"
+
+    @property
+    def annotation_assembly(self) -> str:
+        """The assembly whose flat file and GFF3 are the locus universe: GenBank."""
+        return self.genbank_assembly
+
+    @property
     def genbank_member(self) -> str:
-        """The GenBank flat file, the primary ingest."""
+        """The GenBank flat file."""
         return f"{self.genbank_assembly}_genomic.gbff.gz"
 
     @property
+    def annotation_member(self) -> str:
+        """The flat file the loci are read from (the GenBank one, here)."""
+        return f"{self.annotation_assembly}_genomic.gbff.gz"
+
+    @property
     def gff_member(self) -> str:
-        """The GenBank GFF3 that ``data.db`` is built from."""
-        return f"{self.genbank_assembly}_genomic.gff.gz"
+        """The annotation's GFF3 that ``data.db`` is built from."""
+        return f"{self.annotation_assembly}_genomic.gff.gz"
+
+    @property
+    def assembly_report_member(self) -> str:
+        """The assembly report whose accession pair the schema pins."""
+        return f"{self.annotation_assembly}_assembly_report.txt"
 
     @property
     def dna_fasta_member(self) -> str:
@@ -619,6 +749,37 @@ class BacterialAssembly(BaseModel):
     def refseq_gff_member(self) -> str:
         """The RefSeq GFF3: the old_locus_tag crosswalk and the inline GO."""
         return f"{self.refseq_assembly}_genomic.gff.gz"
+
+
+class RefSeqPrimaryAssembly(BacterialAssembly):
+    """An assembly read RefSeq first, because its GenBank annotation has no locus tags.
+
+    ``replicon`` is the RefSeq accession the GCF flat file and GFF3 name;
+    ``sequence_replicon`` is the GenBank accession of the same molecule in the set's one
+    DNA FASTA (the GCA ``_genomic.fna.gz``), which :class:`BacterialGenome` requires to be
+    byte-identical to the flat file's sequence before keying it by ``replicon``. The
+    proteins are the flat file's ``/translation`` values, so the protein member is the
+    flat file itself. The GenBank flat file stays in the set and is not read here.
+    """
+
+    sequence_replicon: str = Field(
+        description="GenBank accession of the replicon record in the GCA DNA FASTA."
+    )
+
+    @property
+    def annotation_source(self) -> Literal["genbank", "refseq"]:
+        """RefSeq: the GCF annotation's locus tags are the loci."""
+        return "refseq"
+
+    @property
+    def annotation_assembly(self) -> str:
+        """The RefSeq assembly."""
+        return self.refseq_assembly
+
+    @property
+    def protein_fasta_member(self) -> str:
+        """The GCF flat file, whose CDS features carry ``/translation``."""
+        return self.annotation_member
 
 
 @define(repr=False)
@@ -713,8 +874,10 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
 
     @classmethod
     def release_files(cls) -> GenomeReleaseFiles:
-        """The GenBank GFF, replicon FASTA and protein FASTA; no CDS FASTA (the CDS
-        sequences come from the flat file's CDS features).
+        """The annotation's GFF, the replicon FASTA and the protein FASTA; no CDS FASTA
+        (the CDS sequences come from the flat file's CDS features). For a
+        :class:`RefSeqPrimaryAssembly` the GFF is the RefSeq one and the protein member is
+        the RefSeq flat file, whose ``/translation`` values are the proteins.
         """
         return GenomeReleaseFiles(
             dna_fasta=cls.ASSEMBLY.dna_fasta_member,
@@ -738,11 +901,16 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
         return resolve(GO_RELEASE_20260805, GO_BASIC_OBO)
 
     def _read_sequences(self) -> None:
-        """The GenBank flat file (loci and CDS), the replicon FASTA and the protein
+        """The annotation flat file (loci and CDS), the replicon FASTA and the protein
         FASTA re-keyed to locus tags. Refuses a flat file whose replicons are not the
         assembly's one replicon or whose locus tags leave the assembly's pattern.
+
+        A :class:`RefSeqPrimaryAssembly` reads the GCF flat file; its replicon FASTA is
+        the GenBank one, refused unless its one record is ``sequence_replicon`` and its
+        sequence equals the flat file's, then keyed by ``replicon``; its proteins are the
+        flat file's ``/translation`` values (:func:`read_genbank_translations`).
         """
-        member = self.ASSEMBLY.genbank_member
+        member = self.ASSEMBLY.annotation_member
         self._genbank_path = resolve(self.ASSEMBLY_SET, member)
         self.genbank, self.fasta_cds = read_genbank(self._genbank_path, member)
         accessions = [r.accession for r in self.genbank.replicons]
@@ -758,6 +926,17 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
                 f"{member}: {len(outside)} locus tags do not match "
                 f"{self.ASSEMBLY.locus_tag_pattern}: {outside[:10]}"
             )
+        if isinstance(self.ASSEMBLY, RefSeqPrimaryAssembly):
+            translations, sequences = read_genbank_translations(
+                self._genbank_path, self.genbank
+            )
+            self.fasta_dna = rekeyed_replicon_fasta(
+                read_fasta(self._dna_fasta_path),
+                self.ASSEMBLY,
+                sequences[self.ASSEMBLY.replicon],
+            )
+            self.fasta_protein = translations
+            return
         self.fasta_dna = read_fasta(self._dna_fasta_path)
         self.fasta_protein = read_protein_fasta(self._protein_fasta_path, self.genbank)
 
@@ -796,7 +975,7 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
         genbank_pseudogenes = set(self.genbank.pseudogene_tags)
         if db_genes != genbank_genes or db_pseudogenes != genbank_pseudogenes:
             raise GenomeAnnotationMismatchError(
-                f"{self.ASSEMBLY.gff_member} and {self.ASSEMBLY.genbank_member} "
+                f"{self.ASSEMBLY.gff_member} and {self.ASSEMBLY.annotation_member} "
                 "disagree: genes only in the GFF "
                 f"{sorted(db_genes - genbank_genes)[:10]}, only in the GenBank file "
                 f"{sorted(genbank_genes - db_genes)[:10]}; pseudogenes only in the GFF "
@@ -829,6 +1008,19 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
                         f"{spec.assembly_set}/{spec.member}"
                     )
                 raw, without = refseq_inline_go(self.refseq)
+                rows, not_rows = len(self.refseq.ontology_term_rows), 0
+            case "refseq_gff_ontology_term_primary":
+                if not isinstance(self.ASSEMBLY, RefSeqPrimaryAssembly) or (
+                    spec.assembly_set,
+                    spec.member,
+                ) != (self.ASSEMBLY_SET, self.ASSEMBLY.refseq_gff_member):
+                    raise ValueError(
+                        f"{type(self).__name__}: the RefSeq-primary GO route reads a "
+                        "RefSeq-primary assembly's own "
+                        f"{self.ASSEMBLY.refseq_gff_member}, not "
+                        f"{spec.assembly_set}/{spec.member}"
+                    )
+                raw, without = refseq_primary_go(self.refseq)
                 rows, not_rows = len(self.refseq.ontology_term_rows), 0
         loci = self.genbank.loci
         stored = {tag: SortedSet(terms) for tag, terms in raw.items() if tag in loci}
@@ -869,7 +1061,7 @@ class BacterialGenome[GeneT: BacterialGene](AnnotatedGenome[GeneT]):
         if locus.segments > 1:
             raise ValueError(
                 f"{item} is a joined {'pseudogene' if locus.pseudo else 'locus'} "
-                f"({locus.segments} segments in {self.ASSEMBLY.genbank_member}); a "
+                f"({locus.segments} segments in {self.ASSEMBLY.annotation_member}); a "
                 "gene with one start/end interval cannot represent it"
             )
         return self.gene_class()(

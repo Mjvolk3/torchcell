@@ -1,4 +1,4 @@
-"""E. coli genome implementations (K-12 MG1655 and BW25113, B REL606)."""
+"""E. coli genome implementations (K-12 MG1655, BW25113 and W3110, B REL606)."""
 
 from .k12 import (
     BW25113_ASSEMBLY,
@@ -13,11 +13,13 @@ from .k12 import (
     eck_crosswalk,
 )
 from .rel606 import REL606_ASSEMBLY, EcoliBREL606Gene, EcoliBREL606Genome
+from .w3110 import W3110_ASSEMBLY, EcoliK12W3110Gene, EcoliK12W3110Genome
 
 __all__ = [
     "BW25113_ASSEMBLY",
     "MG1655_ASSEMBLY",
     "REL606_ASSEMBLY",
+    "W3110_ASSEMBLY",
     "DerivedGoAnnotation",
     "EckCrosswalk",
     "EckPair",
@@ -27,5 +29,7 @@ __all__ = [
     "EcoliK12Gene",
     "EcoliK12Genome",
     "EcoliK12MG1655Genome",
+    "EcoliK12W3110Gene",
+    "EcoliK12W3110Genome",
     "eck_crosswalk",
 ]

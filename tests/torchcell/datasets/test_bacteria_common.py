@@ -76,11 +76,13 @@ from torchcell.sequence.genome.ecoli.k12 import (
     EcoliK12MG1655Genome,
 )
 from torchcell.sequence.genome.ecoli.rel606 import EcoliBREL606Genome
+from torchcell.sequence.genome.ecoli.w3110 import EcoliK12W3110Genome
 from torchcell.sequence.genome.pputida.kt2440 import PPutidaKT2440Genome
 from torchcell.sequence.genome.registry import (
     ECOLI_B_REL606,
     ECOLI_K12_BW25113,
     ECOLI_K12_MG1655,
+    ECOLI_K12_W3110,
     GO_RELEASE_20260805,
     PPUTIDA_KT2440,
 )
@@ -104,18 +106,19 @@ def test_the_namespace_vocabulary_is_the_schema_s_own_objects() -> None:
 
 
 def test_each_strain_has_its_own_namespace_host_and_genome_class() -> None:
-    """Four strains, four namespaces, two hosts; each genome class reads its set."""
+    """Five strains, five namespaces, two hosts; each genome class reads its set."""
     assert bc.STRAIN_GENE_NAMESPACES == {
         "MG1655": "ecoli_k12_mg1655_bnumber",
         "BW25113": "ecoli_k12_bw25113_locus_tag",
         "KT2440": "pputida_kt2440_locus_tag",
         "REL606": "ecoli_b_rel606_locus_tag",
+        "W3110": "ecoli_k12_w3110_refseq_locus_tag",
     }
     assert set(bc.STRAIN_GENE_NAMESPACES.values()) == set(
         schema.BACTERIAL_LOCUS_TAG_PATTERNS
     )
     assert bc.HOST_STRAINS == {
-        "ecoli": ("MG1655", "BW25113", "REL606"),
+        "ecoli": ("MG1655", "BW25113", "REL606", "W3110"),
         "pputida": ("KT2440",),
     }
     assert {s: bc.host_of_strain(s) for s in bc.STRAIN_GENE_NAMESPACES} == {
@@ -123,6 +126,7 @@ def test_each_strain_has_its_own_namespace_host_and_genome_class() -> None:
         "BW25113": "ecoli",
         "KT2440": "pputida",
         "REL606": "ecoli",
+        "W3110": "ecoli",
     }
     assert {
         strain: cls.ASSEMBLY.assembly_set
@@ -132,12 +136,14 @@ def test_each_strain_has_its_own_namespace_host_and_genome_class() -> None:
         "BW25113": ECOLI_K12_BW25113,
         "KT2440": PPUTIDA_KT2440,
         "REL606": ECOLI_B_REL606,
+        "W3110": ECOLI_K12_W3110,
     }
     assert bc.BACTERIAL_GENOME_CLASSES == {
         "MG1655": EcoliK12MG1655Genome,
         "BW25113": EcoliK12BW25113Genome,
         "KT2440": PPutidaKT2440Genome,
         "REL606": EcoliBREL606Genome,
+        "W3110": EcoliK12W3110Genome,
     }
 
 
@@ -148,6 +154,7 @@ def test_each_compiled_pattern_matches_its_own_strain_s_tags_only() -> None:
         "ecoli_k12_bw25113_locus_tag": "BW25113_0002",
         "pputida_kt2440_locus_tag": "PP_16SA",
         "ecoli_b_rel606_locus_tag": "ECB_t00001",
+        "ecoli_k12_w3110_refseq_locus_tag": "Y75_RS00005",
     }
     for owner, tag in samples.items():
         assert {ns for ns, p in bc.LOCUS_TAG_PATTERNS.items() if p.match(tag)} == {
@@ -160,6 +167,7 @@ def test_strain_of_assembly_set_inverts_the_schema_map_and_refuses_others() -> N
     assert bc.strain_of_assembly_set(ECOLI_K12_BW25113) == "BW25113"
     assert bc.strain_of_assembly_set(PPUTIDA_KT2440) == "KT2440"
     assert bc.strain_of_assembly_set(ECOLI_B_REL606) == "REL606"
+    assert bc.strain_of_assembly_set(ECOLI_K12_W3110) == "W3110"
     with pytest.raises(
         KeyError, match="'sgd_S288C_R64-4-1_20230830' is not a bacterial"
     ):
@@ -625,7 +633,7 @@ class _UnknownStrain:
         (
             _UnknownStrain,
             ValidationError,
-            "Input should be 'MG1655', 'BW25113', 'KT2440' or 'REL606'",
+            "Input should be 'MG1655', 'BW25113', 'KT2440', 'REL606' or 'W3110'",
         ),
     ],
     ids=[

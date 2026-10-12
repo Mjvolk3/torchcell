@@ -103,7 +103,7 @@ def test_the_gate_is_open_now_that_the_tier_holds_rel606() -> None:
     finding = c.require_pinnable_strain()
     assert finding.strain == "REL606"
     assert finding.lineage == "E. coli B"
-    assert finding.tier_strains == ("MG1655", "BW25113", "KT2440", "REL606")
+    assert finding.tier_strains == ("MG1655", "BW25113", "KT2440", "REL606", "W3110")
     assert finding.pinnable is True
     assert (finding.gap, finding.tier_addition) == (None, None)
 
@@ -875,6 +875,7 @@ def test_identifier_coverage_counts_each_route_exactly(
             "ecoli_k12_bw25113_locus_tag": 0,
             "pputida_kt2440_locus_tag": 0,
             "ecoli_b_rel606_locus_tag": 2,
+            "ecoli_k12_w3110_refseq_locus_tag": 0,
         },
         "rel606_pattern_matches": 2,
     }

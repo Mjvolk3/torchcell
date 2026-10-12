@@ -334,6 +334,9 @@ BacterialGeneNamespace = Literal[
     "ecoli_k12_bw25113_locus_tag",
     "pputida_kt2440_locus_tag",
     "ecoli_b_rel606_locus_tag",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "ecoli_k12_w3110_refseq_locus_tag",
+    # --- end #910 ---------------------------------------------------------------- #
 ]
 """The identifier namespace a bacterial locus tag belongs to.
 
@@ -351,6 +354,9 @@ BACTERIAL_LOCUS_TAG_PATTERNS: dict[str, str] = {
         r"^PP_(?:\d{4}|(?:5|16|23)S[A-G]|t\d{2}|tm\d{2}|mr\d{2}|r\d{2})$"
     ),
     "ecoli_b_rel606_locus_tag": r"^ECB_[rt]?\d{5}$",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "ecoli_k12_w3110_refseq_locus_tag": r"^Y75_RS\d{5}$",
+    # --- end #910 ---------------------------------------------------------------- #
 }
 """Locus-tag pattern of each namespace, measured from the deposited GenBank files.
 
@@ -360,7 +366,11 @@ rRNA operons (``PP_16SA``-``PP_16SG``, ``PP_23SA``-``PP_23SG``, ``PP_5SA``-``PP_
 75 tRNA tags (``PP_t01``-``PP_t75``), 67 ``PP_mr`` tags, ``PP_tm01`` and ``PP_r01``.
 Admitting only four-digit tags would silently reject 165 real KT2440 genes. E. coli B
 REL606 (GCA_000017985.1) is five-digit: 4,276 ``ECB_NNNNN``, 85 tRNA ``ECB_tNNNNN`` and
-22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features.
+22 rRNA ``ECB_rNNNNN`` of its 4,383 gene features. E. coli K-12 W3110 (GCF_000010245.2) is
+the one namespace read off a RefSeq file, because its GenBank annotation
+(GCA_000010245.1, the 2006 DDBJ/NIG submission) carries 4,444 gene features and not one
+``locus_tag``: all 4,531 gene and pseudogene features of the RefSeq flat file are
+``Y75_RSNNNNN`` (owner route #910, 2026-10-12; measured in ``teteneva2024``).
 """
 
 BACTERIAL_LOCUS_TAG_PATTERN = (
@@ -1028,7 +1038,15 @@ class StrainReferenceGenome(ReferenceGenome):
 # new classes below move none. The duplication is the measured price of that, and
 # unifying the two families later is a rebuild whose purpose is the unification.
 # --------------------------------------------------------------------------- #
-BacterialReferenceStrain = Literal["MG1655", "BW25113", "KT2440", "REL606"]
+BacterialReferenceStrain = Literal[
+    "MG1655",
+    "BW25113",
+    "KT2440",
+    "REL606",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "W3110",
+    # --- end #910 ---------------------------------------------------------------- #
+]
 """The sequenced strain a bacterial background's alleles are edits against.
 
 One member per deposited assembly set, for the same reason ``BacterialGeneNamespace``
@@ -1047,6 +1065,9 @@ BACTERIAL_ASSEMBLY_SETS: dict[str, str] = {
     "BW25113": "ecoli_K12_BW25113_ASM75055v1",
     "KT2440": "pputida_KT2440_ASM756v2",
     "REL606": "ecoli_B_REL606_ASM1798v1",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "W3110": "ecoli_K12_W3110_ASM1024v1",
+    # --- end #910 ---------------------------------------------------------------- #
 }
 
 BacterialAssemblySet = Literal[
@@ -1054,6 +1075,9 @@ BacterialAssemblySet = Literal[
     "ecoli_K12_BW25113_ASM75055v1",
     "pputida_KT2440_ASM756v2",
     "ecoli_B_REL606_ASM1798v1",
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    "ecoli_K12_W3110_ASM1024v1",
+    # --- end #910 ---------------------------------------------------------------- #
 ]
 """A deposited bacterial assembly set id, as a closed vocabulary.
 
@@ -1071,6 +1095,11 @@ ASSEMBLY_SET_ACCESSIONS: dict[str, tuple[str, str]] = {
     "ecoli_K12_BW25113_ASM75055v1": ("GCA_000750555.1", "GCF_000750555.1"),
     "pputida_KT2440_ASM756v2": ("GCA_000007565.2", "GCF_000007565.2"),
     "ecoli_B_REL606_ASM1798v1": ("GCA_000017985.1", "GCF_000017985.1"),
+    # --- begin #910: E. coli K-12 W3110, read RefSeq-primary --------------------- #
+    # Read off the GCF report: the GCA report of this set still names the 2006 RefSeq
+    # release GCF_000010245.1 (AC_000091.1), whose files are not in the set.
+    "ecoli_K12_W3110_ASM1024v1": ("GCA_000010245.1", "GCF_000010245.2"),
+    # --- end #910 ---------------------------------------------------------------- #
 }
 
 ASSEMBLY_ACCESSION_PATTERN = r"^GC[AF]_\d{9}\.\d+$"

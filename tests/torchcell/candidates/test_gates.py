@@ -3,9 +3,10 @@
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/candidates/test_gates.py
 """The deterministic gates on fixture rows, a fixture genomes tier, mirrors and a store.
 
-G2 covers the plan's four outcomes on MG1655 (readable), W3110 (resolvable, not
-ingestible), a named host with no set (BL21, provisionable), an unnamed host, and a Bloom
-2019-shaped mosaic. G3 reads a concatenated-archive fixture. G4-value runs on a
+G2 covers the plan's four outcomes on MG1655 and W3110 (readable; W3110 since #910), a
+set no genome class reads (resolvable, not ingestible: W3110 with its genome class taken
+out of the readable sets), a named host with no set (BL21, provisionable), an unnamed
+host, and a Bloom 2019-shaped mosaic. G3 reads a concatenated-archive fixture. G4-value runs on a
 Thompson-shaped fixture (one released column, the right sample and a wrong one).
 """
 
@@ -264,7 +265,7 @@ def tier(tmp_path: Path) -> Path:
     ("why", "outcome", "kind", "g2"),
     [
         ("MG1655 screen", "pass", None, "resolvable_readable"),
-        ("W3110 screen", "blocked", "ingest", "resolvable_not_ingestible"),
+        ("W3110 screen", "pass", None, "resolvable_readable"),
         ("BL21 production", "blocked", "provision", "absent_provisionable"),
         ("REL606 lines", "blocked", "provision", "absent_provisionable"),
         ("no strain at all", "fail", None, "absent_unnamed"),
@@ -284,6 +285,27 @@ def test_g2_reason_names_each_host(tier: Path) -> None:
     """The reason states what the tier said about every host."""
     row = bacteria_row(why="MG1655 and W3110", seq_basis="reference-only", citation="c")
     run = gates.evaluate_g2(row, str(tier), source_kind="primary")
+    assert run.result.reason == (
+        "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; "
+        "W3110 -> ecoli_K12_W3110_ASM1024v1 resolves and reads"
+    )
+
+
+def test_g2_a_set_no_genome_class_reads_is_not_ingestible(
+    tier: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A deposited set outside the readable sets is blocked on ingest, not refused
+    (W3110 was this case until its genome class landed in #910).
+    """
+    monkeypatch.setattr(
+        gates,
+        "READABLE_ASSEMBLY_SETS",
+        gates.READABLE_ASSEMBLY_SETS - {ECOLI_K12_W3110},
+    )
+    row = bacteria_row(why="MG1655 and W3110", seq_basis="reference-only", citation="c")
+    run = gates.evaluate_g2(row, str(tier), source_kind="primary")
+    assert (run.result.outcome, run.result.blocked_kind) == ("blocked", "ingest")
+    assert run.record.outcome == "resolvable_not_ingestible"
     assert run.result.reason == (
         "assembly_set: MG1655 -> ecoli_K12_MG1655_ASM584v2 resolves and reads; "
         "W3110 -> ecoli_K12_W3110_ASM1024v1 resolves but no genome class reads it"

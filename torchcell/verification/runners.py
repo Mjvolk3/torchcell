@@ -28,7 +28,8 @@ written against. The yeast runners use S288C (:func:`_sgd_gene_set`, :func:`_gen
 a bacterial runner selects both from each record's own ``genome_reference``
 (:func:`_gene_set_for_reference`, :func:`_genome_for_reference`), whose
 ``assembly_set`` names the strain: :func:`_ecoli_k12_gene_set` for MG1655 or BW25113,
-:func:`_ecoli_rel606_gene_set` for E. coli B REL606, :func:`_pputida_gene_set` for KT2440.
+:func:`_ecoli_rel606_gene_set` for E. coli B REL606, :func:`_pputida_gene_set` for KT2440,
+and W3110's RefSeq loci (:func:`_refseq_primary_gene_set`, #910).
 """
 
 from __future__ import annotations
@@ -49,13 +50,19 @@ import lmdb
 
 from torchcell.data.experiment_dataset import resolve_interned
 from torchcell.datamodels.schema import BACTERIAL_ASSEMBLY_SETS
-from torchcell.sequence.genome.bacterial import BacterialAssembly
+from torchcell.sequence.genome.bacterial import (
+    BacterialAssembly,
+    RefSeqPrimaryAssembly,
+    read_genbank,
+    read_refseq_gff,
+)
 from torchcell.sequence.genome.ecoli.k12 import (
     BW25113_ASSEMBLY,
     MG1655_ASSEMBLY,
     EcoliK12StrainName,
 )
 from torchcell.sequence.genome.ecoli.rel606 import REL606_ASSEMBLY
+from torchcell.sequence.genome.ecoli.w3110 import W3110_ASSEMBLY
 from torchcell.sequence.genome.pputida.kt2440 import KT2440_ASSEMBLY
 from torchcell.sequence.genome.registry import PETER2018_1011, SGD_S288C_R64, resolve
 from torchcell.verification.environment_response import (
@@ -1291,6 +1298,7 @@ BACTERIAL_GENE_ASSEMBLIES: dict[str, BacterialAssembly] = {
         BW25113_ASSEMBLY,
         KT2440_ASSEMBLY,
         REL606_ASSEMBLY,
+        W3110_ASSEMBLY,
     )
 }
 #: The species a reference without an ``assembly_set`` must name (a yeast record).
@@ -1306,7 +1314,11 @@ def _bacterial_gene_set(assembly: BacterialAssembly, data_root: str) -> set[str]
     ``_protein.faa.gz``: every protein accession must be the product of a ``CDS`` row
     whose locus tag is one of those genes. A disagreement between the two members is
     refused, never unioned. Both members are resolved (sha256-verified) from the tier.
+    A RefSeq-primary assembly has neither member for its RefSeq tags and is read by
+    :func:`_refseq_primary_gene_set`.
     """
+    if isinstance(assembly, RefSeqPrimaryAssembly):
+        return _refseq_primary_gene_set(assembly, data_root)
     table = resolve(
         assembly.assembly_set,
         f"{assembly.genbank_assembly}_feature_table.txt.gz",
@@ -1341,6 +1353,34 @@ def _bacterial_gene_set(assembly: BacterialAssembly, data_root: str) -> set[str]
             f"{assembly.assembly_set}: {len(no_cds)} proteins have no CDS row in the "
             f"feature table {no_cds[:10]}; {len(off_gene)} CDS locus tags are no gene "
             f"row {off_gene[:10]}"
+        )
+    return genes
+
+
+def _refseq_primary_gene_set(
+    assembly: RefSeqPrimaryAssembly, data_root: str
+) -> set[str]:
+    """The locus-tag universe of a RefSeq-primary assembly (W3110's ``Y75_RS`` tags).
+
+    The sibling of :func:`_bacterial_gene_set` for a set whose GenBank annotation carries
+    no locus tag and which deposits no RefSeq feature table or protein FASTA: the locus
+    tag of every gene and pseudogene row of the RefSeq GFF3, cross-checked against the
+    RefSeq flat file's gene features. A disagreement between the two members is refused,
+    never unioned. Both are resolved (sha256-verified) from the tier.
+    """
+    gff = resolve(assembly.assembly_set, assembly.gff_member, data_root=data_root)
+    flat = resolve(
+        assembly.assembly_set, assembly.annotation_member, data_root=data_root
+    )
+    genes = set(read_refseq_gff(gff, assembly.gff_member).old_locus_tags)
+    annotation, _ = read_genbank(flat, assembly.annotation_member)
+    loci = set(annotation.loci)
+    if genes != loci:
+        raise ValueError(
+            f"{assembly.assembly_set}: {assembly.gff_member} and "
+            f"{assembly.annotation_member} disagree: only in the GFF "
+            f"{sorted(genes - loci)[:10]}, only in the flat file "
+            f"{sorted(loci - genes)[:10]}"
         )
     return genes
 

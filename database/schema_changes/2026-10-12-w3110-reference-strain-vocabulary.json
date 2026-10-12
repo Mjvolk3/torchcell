@@ -1,0 +1,1106 @@
+{
+  "record_version": 1,
+  "slug": "w3110-reference-strain-vocabulary",
+  "date": "2026-10-12",
+  "pr": 1062,
+  "author_kind": "agent",
+  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
+  "python_version": "3.13.0",
+  "symbols": [
+    {
+      "symbol": "ASSEMBLY_SET_ACCESSIONS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "e3b6e1b7c5ebb57b24d8fa71621c8420f35aef35ead5b3c6cd4613ba19df6400",
+      "fingerprint_after": "47bca819d9c4918134c5ac9edcf9beefbc37f7886386a20e55b7e0e58a58f50c",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'ecoli_K12_W3110_ASM1024v1': ('GCA_000010245.1', 'GCF_000010245.2')\"]"
+      ]
+    },
+    {
+      "symbol": "BACTERIAL_ASSEMBLY_SETS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "9304d76f288ff29dc292601bc1c930372d6d124ae3690477e257ff82acdcb640",
+      "fingerprint_after": "d4f775513143bee89da57c98db5eb9c99559a3c1d184aa4170a5372d4978c348",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'W3110': 'ecoli_K12_W3110_ASM1024v1'\"]"
+      ]
+    },
+    {
+      "symbol": "BACTERIAL_LOCUS_TAG_PATTERNS",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "9ee903e6bfe1b28b99a64826e2dec14920193a538d78ca426c0c4586c5630923",
+      "fingerprint_after": "a589dbd6f6d9c2e00e34fb3758641451446a9477c22cad4e4852a927b5b58f6a",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'ecoli_k12_w3110_refseq_locus_tag': '^Y75_RS\\\\\\\\d{5}$'\"]"
+      ]
+    },
+    {
+      "symbol": "BacterialAssemblySet",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "b6c1e9a3c730990c06d293e11c173271658a4507d039aeae9cd7701c8e348051",
+      "fingerprint_after": "7fddf8737bc8e1b6648fbaa74e26d67f368f18ca944d0b99cdc48d9e393f78e3",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'ecoli_K12_W3110_ASM1024v1'\"]"
+      ]
+    },
+    {
+      "symbol": "BacterialGeneNamespace",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "4a7ac47470f152266bb53c2710bc7eb1b4a66a508a143bf70e6acf0f92873ba4",
+      "fingerprint_after": "4f214e978c50382d3972bcc8811ba86c8334864044e17d12c01c69a8da1b5f86",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'ecoli_k12_w3110_refseq_locus_tag'\"]"
+      ]
+    },
+    {
+      "symbol": "BacterialReferenceStrain",
+      "status": "modified",
+      "kinds": [
+        "enum_member_added"
+      ],
+      "fingerprint_before": "251adfc9cff3594a8815ab7e16bea6aa598dd3bb3d25d2af95dbac4dbf56b726",
+      "fingerprint_after": "5f724b82613c8e2d0700d47d6464638cc54d2833a612875a479f1ee0bf47e687",
+      "impact": "stale",
+      "reasons": [
+        "gained members [\"'W3110'\"]"
+      ]
+    }
+  ],
+  "correctness_argument": "E. coli K-12 W3110 is the host of the Teteneva 2024 lake-water RB-TnSeq screen (#910), a K-12 derivative distinct from MG1655 and BW25113, and its assembly set ecoli_K12_W3110_ASM1024v1 was deposited in the genomes tier on 2026-10-09 (ten members, every md5 matched against NCBI's md5checksums.txt). A record written against W3110 must pin that set, so W3110 joins BacterialReferenceStrain and BACTERIAL_ASSEMBLY_SETS, the set id joins BacterialAssemblySet, and the accession pair joins ASSEMBLY_SET_ACCESSIONS as read off the deposited GCF assembly report (GCA_000010245.1 / GCF_000010245.2; the GCA report still names the 2006 RefSeq release GCF_000010245.1, whose files are not in the set). The authors mapped reads to the RefSeq replicon NC_007779.1 (quote below), so a W3110 record names the RefSeq accession. W3110's GenBank annotation (GCA_000010245.1) carries 4,444 gene features and not one locus_tag, so its only locus-tag namespace is the RefSeq one: ecoli_k12_w3110_refseq_locus_tag, pattern ^Y75_RS\\d{5}$, which every one of the 4,531 gene and pseudogene features of the deposited GCF flat file matches and which is disjoint from the four existing patterns and from yeast names (test_schema). A record keyed by a released symbol names this namespace for its host, as a heterologous symbol does. Each member is added, nothing is removed or renamed, and every existing record serializes as before; the change re-stales the bacterial dev stores that import these vocabularies (schema_impact: 58 classes, 0 breaking), none of them served in the newest release snapshot. A second W3110 release lands this vocabulary first: Potel 2018's phosphoproteome (#921) grew 'E. coli strain W3110' (the first author's dissertation, Chapter V, which reprints that paper), so its records pin the same set. This record and its symbols are carried into PR #1062 from the Teteneva branch commit b24d494b4 unchanged, without that commit's TransposonInsertionPerturbation.identifier_kind change, which awaits the owner's sign-off on #910 and is not part of this record.",
+  "measurement_type_decision": false,
+  "source_quotes": [
+    {
+      "value": "NC_007779.1",
+      "provenance": {
+        "source_uri": "paper/PMC11188689.1.txt",
+        "citation_key": "tetenevaGenomewideScreenGenetic2024",
+        "sha256": "422bd7926fbeebfd6877e15f213e18914291b1f259a7086d66d66d0249353b2f",
+        "method": "the article's full text as the PMC Article Datasets bucket serves it (PMC11188689.1/PMC11188689.1.txt), mirrored verbatim in torchcell-raw",
+        "page": "Materials and methods, 'Construction and characterization of the transposon mutant library'",
+        "retrieved": null
+      },
+      "quote": "The reads containing the confirmed barcodes were then aligned to the E. coli K-12\u00a0W3110 reference genome (NCBI reference sequence: NC_007779.1)",
+      "note": "the RefSeq replicon of GCF_000010245.2"
+    }
+  ],
+  "alternatives_rejected": [
+    {
+      "alternative": "Pin W3110 records to the MG1655 assembly (b-numbers through the GenBank ECK:JW:b notes)",
+      "why_rejected": "a W3110 record would claim another strain's genome; plan D9 refuses cross-strain inference, and the authors mapped to W3110's own NC_007779.1"
+    },
+    {
+      "alternative": "Name the namespace after the GenBank annotation",
+      "why_rejected": "the GenBank annotation carries no locus_tag at all (4,444 gene features, 0 tagged), so it defines no locus-tag namespace"
+    }
+  ],
+  "served_release": "2026.10.06-4b293d34",
+  "affected_loaders": [
+    {
+      "loader": "torchcell/datasets/bacteria_common.py",
+      "dataset_classes": [],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/baba2006.py",
+      "dataset_classes": [
+        "GeneEssentialityBaba2006Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/babu2014.py",
+      "dataset_classes": [
+        "GeneInteractionBabu2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/balakrishnan2022.py",
+      "dataset_classes": [
+        "MrnaFractionBalakrishnan2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/brunk2016.py",
+      "dataset_classes": [
+        "_MetaboliteBrunk2016Dataset",
+        "MetabolomeBrunk2016Dataset",
+        "ExometaboliteBrunk2016Dataset",
+        "ProteomeBrunk2016Dataset",
+        "BiofuelTiterBrunk2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/butland2008.py",
+      "dataset_classes": [
+        "GeneInteractionButland2008Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017.py",
+      "dataset_classes": [
+        "RnaseqCaglar2017Dataset",
+        "ProteomeCaglar2017Dataset",
+        "ProteinFoldChangeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/caglar2017_doubling_time.py",
+      "dataset_classes": [
+        "DoublingTimeCaglar2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/campos2018.py",
+      "dataset_classes": [
+        "GrowthRateCampos2018Dataset",
+        "MorphologyCampos2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2019_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateChoe2019Dataset",
+        "TranscriptionFactorKnockoutChoe2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/choe2025.py",
+      "dataset_classes": [
+        "CrispriChemgenChoe2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/cui2018.py",
+      "dataset_classes": [
+        "CrispriKnockdownCui2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fang2025.py",
+      "dataset_classes": [
+        "CrispriGuideFfaEnrichmentFang2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/foo2014.py",
+      "dataset_classes": [
+        "IsopentenolTiterFoo2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/fuhrer2017.py",
+      "dataset_classes": [
+        "MetabolomeFuhrer2017Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gerdes2003.py",
+      "dataset_classes": [
+        "GeneEssentialityGerdes2003Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/girgis2009.py",
+      "dataset_classes": [
+        "EnvChemgenGirgis2009Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/goodall2018.py",
+      "dataset_classes": [
+        "GeneEssentialityGoodall2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/gupta2024.py",
+      "dataset_classes": [
+        "ProteinTurnoverGupta2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/hawkins2020.py",
+      "dataset_classes": [
+        "MismatchCrispriFitnessHawkins2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/ishii2007.py",
+      "dataset_classes": [
+        "_Ishii2007Dataset",
+        "MetabolomeIshii2007Dataset",
+        "ProteomeIshii2007Dataset",
+        "FluxIshii2007Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023.py",
+      "dataset_classes": [
+        "RnaseqLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_growth.py",
+      "dataset_classes": [
+        "GrowthRateLamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/lamoureux2023_public_k12.py",
+      "dataset_classes": [
+        "RnaseqPublicK12Lamoureux2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/li2014.py",
+      "dataset_classes": [
+        "ProteinSynthesisRateLi2014Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mohiuddin2022.py",
+      "dataset_classes": [
+        "PromoterReporterMohiuddin2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mori2021.py",
+      "dataset_classes": [
+        "ProteomeMori2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/mutalik2020.py",
+      "dataset_classes": [
+        "PhageRbTnseqMutalik2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/nichols2011.py",
+      "dataset_classes": [
+        "EnvChemgenNichols2011Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/niu2019.py",
+      "dataset_classes": [
+        "CrisprPineneToleranceNiu2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/price2018.py",
+      "dataset_classes": [
+        "RbTnseqPrice2018EcoliDataset",
+        "GeneEssentialityPrice2018EcoliDataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rachwalski2024.py",
+      "dataset_classes": [
+        "CrispriCrossRachwalski2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026.py",
+      "dataset_classes": [
+        "MetabolomeRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rapp2026_platforms.py",
+      "dataset_classes": [
+        "_Rapp2026Dataset",
+        "GrowthAucRapp2026Dataset",
+        "_AccumulationDataset",
+        "TargetedMetabolomeRapp2026Dataset",
+        "MetaboliteIntensityRapp2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/rousset2018.py",
+      "dataset_classes": [
+        "CrispriScreenRousset2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schastnaya2021.py",
+      "dataset_classes": [
+        "MetabolomeSchastnaya2021Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016.py",
+      "dataset_classes": [
+        "ProteomeSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateSchmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_s23_growth_rate.py",
+      "dataset_classes": [
+        "GrowthRateS23Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/schmidt2016_srm.py",
+      "dataset_classes": [
+        "_SrmSchmidt2016Dataset",
+        "ProteomeSrmSet1Schmidt2016Dataset",
+        "ProteomeSrmSet2Schmidt2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/shiver2016.py",
+      "dataset_classes": [
+        "EnvChemgenShiver2016Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/tong2020.py",
+      "dataset_classes": [
+        "CarbonSourceTong2020Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015.py",
+      "dataset_classes": [
+        "EnvChemgenWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2015_growth.py",
+      "dataset_classes": [
+        "GrowthWang2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2018.py",
+      "dataset_classes": [
+        "CrispriGuideFitnessWang2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wang2024.py",
+      "dataset_classes": [
+        "EnvChemgenWang2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/wetmore2015.py",
+      "dataset_classes": [
+        "RbTnseqWetmore2015Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/banerjee2025.py",
+      "dataset_classes": [
+        "ProteomeBanerjee2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2023.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2023Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/borchert2024.py",
+      "dataset_classes": [
+        "RbTnseqBorchert2024Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/carruthers2025.py",
+      "dataset_classes": [
+        "IsoprenolTiterCarruthers2025Dataset",
+        "ProteomeCarruthers2025Dataset",
+        "CampaignProteomeCarruthers2025Dataset",
+        "ProteomeFoldChangeCarruthers2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/desiqueira2025.py",
+      "dataset_classes": [
+        "ProteomeDeSiqueira2025Dataset",
+        "ProteomePercentDeSiqueira2025Dataset",
+        "ProteomeLog10PercentDeSiqueira2025Dataset",
+        "IsoprenolTiterDeSiqueira2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/kang2026.py",
+      "dataset_classes": [
+        "IsoprenylAcetateTiterKang2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2022.py",
+      "dataset_classes": [
+        "PutidaPrecise321Lim2022Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/lim2025.py",
+      "dataset_classes": [
+        "IsoprenolToleranceLim2025Dataset",
+        "ProteomeLim2025Dataset",
+        "ProteomeFoldChangeLim2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/menasalvas2025.py",
+      "dataset_classes": [
+        "IsoprenolSelectionMenasalvas2025Dataset",
+        "ProteomeMenasalvas2025Dataset",
+        "_MetabolitePhaseDataset",
+        "MetaboliteGrowthPhaseMenasalvas2025Dataset",
+        "MetaboliteProductionPhaseMenasalvas2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/royet2025.py",
+      "dataset_classes": [
+        "EnvMetalTnseqRoyet2025Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/thompson2019_valerolactam.py",
+      "dataset_classes": [
+        "_Thompson2019Dataset",
+        "ValerolactamTiterThompson2019Dataset",
+        "LactamGrowthRateThompson2019Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/pputida/yunus2026.py",
+      "dataset_classes": [
+        "_Yunus2026Dataset",
+        "_Yunus2026BenchlingDataset",
+        "CrispriKnockdownYunus2026Dataset",
+        "CrispriArrayYunus2026Dataset",
+        "CrispriDifferentialProteomeYunus2026Dataset",
+        "IsoprenolTiterYunus2026Dataset",
+        "CrispriPanelProteomeYunus2026Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    }
+  ],
+  "served_datasets": [],
+  "rebuild_scope": "dev_stores",
+  "owner_sign_off": {
+    "signed": false,
+    "quote": null,
+    "url": null
+  }
+}

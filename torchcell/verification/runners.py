@@ -3515,7 +3515,6 @@ def verify_segregant_perturbation_dataset(
         library_root=osp.join(data_root, "torchcell-library"),
         raw_root=osp.join(data_root, "torchcell-raw"),
         resolve_gene_name=genome.resolve_gene_name,
-        resolve_orf=hale2024.orf_resolver(genome),
         sgd_genes=_sgd_gene_set(data_root),
     )
     _write_report(report, osp.join(abs_root, "preprocess"))

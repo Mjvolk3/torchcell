@@ -11,6 +11,7 @@ from typing import Any
 
 import pytest
 
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import (
     HILLENMEYER_DROPOUT_MEDIA,
     HILLENMEYER_PARTIAL_DROPOUT_LEVELS,
@@ -26,6 +27,7 @@ from torchcell.datamodels.schema import (
     HeterozygousDeletionPerturbation,
     OrfHistoryRelation,
     PhysicalFactor,
+    PreCulture,
     PreCultureSource,
     SmallMoleculePerturbation,
     heterozygous_deletion_functional_copies,
@@ -34,10 +36,7 @@ from torchcell.datamodels.strain_background import BRACHMANN_1998
 from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     CITATION_KEY,
     DROP_HEAT_SHOCK_CYCLE,
-    DROP_KEY_HEADER_COMPOUND_CONFLICT,
-    DROP_UNIDENTIFIABLE,
     DROP_UNNAMED_MEDIA_AGENT,
-    DROP_ZERO_GENERATIONS,
     MATRICES,
     SOURCED_VALUES,
     SUSPICIOUS_BATCHES,
@@ -56,6 +55,7 @@ from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
     raw_relpaths,
     read_control_set_map,
     read_key_conditions,
+    read_matrix_rows,
     strain_perturbation,
     wayback_url,
 )
@@ -214,15 +214,28 @@ def test_heat_shock_cycle_is_dropped_rather_than_stored_as_a_steady_temperature(
         "ptp2",
     ],
 )
-def test_a_compound_with_no_structure_identifier_drops_its_records(label: str) -> None:
+def test_a_compound_with_no_structure_identifier_is_stored_with_the_inchikey_gap(
+    label: str,
+) -> None:
+    """The released label is kept as the compound name; the absence is typed."""
     parse = _parse(label, "100", "um")
-    assert parse.drop_reason == DROP_UNIDENTIFIABLE
-    assert parse.drop_detail is not None and label in parse.drop_detail
+    assert (parse.drop_reason, parse.drop_detail) == (None, None)
+    (drug,) = parse.perturbations
+    assert isinstance(drug, SmallMoleculePerturbation)
+    assert drug.compound == resolved_compound(label)
+    assert drug.compound.name == label
+    assert drug.compound.inchikey is None
+    assert "inchikey" in drug.compound.gapped_fields()
 
 
-def test_an_unidentifiable_second_compound_also_drops_the_column() -> None:
+def test_an_unidentified_second_compound_is_stored_beside_the_first() -> None:
     parse = _parse("fluconazole", "50", "um", "amphotericin", "10", "um")
-    assert parse.drop_reason == DROP_UNIDENTIFIABLE
+    assert parse.drop_reason is None
+    first, second = parse.perturbations
+    assert isinstance(first, SmallMoleculePerturbation)
+    assert isinstance(second, SmallMoleculePerturbation)
+    assert first.compound.inchikey is not None
+    assert (second.compound.name, second.compound.inchikey) == ("amphotericin", None)
 
 
 def test_a_dose_on_a_media_swap_with_no_named_agent_drops() -> None:
@@ -260,10 +273,29 @@ def test_generation_sign_is_a_protocol_flag_so_duration_stores_the_magnitude() -
         grown.pre_culture.source_label,
     ) == (10.0, 2.0, "5gen")
     assert frozen.model_dump() != grown.model_dump()
-    with pytest.raises(ValueError, match="states no pre-culture"):
-        build_environment(parse, "0gen")
     with pytest.raises(ValueError, match="no generations field"):
         build_environment(parse, "")
+
+
+def test_a_zero_generation_count_stores_duration_zero_and_gaps_the_pre_culture() -> (
+    None
+):
+    """``0gen`` carries no sign, so no pre-culture is stated; the gap says so."""
+    environment = build_environment(_parse("benomyl", "6.9", "um"), "0gen")
+    assert (environment.duration_generations, environment.pre_culture) == (0.0, None)
+    assert environment.gapped_fields() == {
+        "temperature",
+        "culture_format",
+        "pre_culture",
+    }
+    gap = next(g for g in environment.provenance_gaps if g.field == "pre_culture")
+    assert gap.reason.value == "not_reported_by_primary"
+    assert gap.looked_in is not None and gap.looked_in.citation_key == CITATION_KEY
+    assert gap.note is not None and "carries no sign" in gap.note
+    assert isinstance(
+        build_environment(_parse("benomyl", "6.9", "um"), "5gen").pre_culture,
+        PreCulture,
+    )
 
 
 def test_an_unstated_temperature_is_a_typed_gap_not_a_defaulted_thirty() -> None:
@@ -466,19 +498,29 @@ def test_minimal_media_called_sc_for_by4743_in_the_key_is_served_on_sc() -> None
         ("ptp2", "phosphatase inhibitor"),
     ],
 )
-def test_a_compound_name_conflict_drops_the_array_with_both_strings(
+def test_a_compound_name_conflict_is_served_under_the_header_compound(
     header_cond: str, key_cond: str
 ) -> None:
+    """The SOM gives no tie-breaker; the values are released under the header."""
     column = _one_column(header_cond, key_cond)
-    assert column.key_check.rule is KeyHeaderRule.drop_compound_conflict
-    assert column.drop_reason == DROP_KEY_HEADER_COMPOUND_CONFLICT
-    assert column.drop_detail == f"header {header_cond!r} vs key file {key_cond!r}"
+    assert column.key_check.rule is KeyHeaderRule.header_served_key_disagrees
+    assert (column.key_check.header_condition, column.key_check.key_condition) == (
+        header_cond,
+        key_cond,
+    )
+    assert (column.drop_reason, column.drop_detail) == (None, None)
+    (drug,) = column.environment.perturbations
+    assert isinstance(drug, SmallMoleculePerturbation)
+    assert drug.compound == resolved_compound(header_cond)
 
 
-def test_a_zero_generation_array_is_dropped_with_no_environment() -> None:
+def test_a_zero_generation_array_is_stored_with_duration_zero() -> None:
     column = _one_column("minimal media", "synthetic complete for BY4743", "0gen")
-    assert column.drop_reason == DROP_ZERO_GENERATIONS
-    assert column.environment is None
+    assert column.drop_reason is None
+    assert column.environment.media == SC
+    assert column.environment.duration_generations == 0.0
+    assert column.environment.pre_culture is None
+    assert "pre_culture" in column.environment.gapped_fields()
 
 
 # --------------------------------------------------------------------------- #
@@ -511,14 +553,8 @@ def test_background_is_by4743_named_by_the_key_file_with_every_allele_pending() 
     assert [background.functional_copies(g) for g in ("YOR202W", "YBR115C")] == [0, 1]
 
 
-def _row(orf: str, source: str | None = None, batch: str = "chr1_1") -> StrainRow:
-    return StrainRow(
-        row_id=f"{source or orf}:{batch}",
-        source_orf=source or orf,
-        orf=orf,
-        batch=batch,
-        values=[None, 1.0],
-    )
+def _row(orf: str, batch: str = "chr1_1") -> StrainRow:
+    return StrainRow(row_id=f"{orf}:{batch}", orf=orf, batch=batch, values=[None, 1.0])
 
 
 def test_het_strain_is_a_kanmx4_allele_replacement_whose_dose_respects_the_background() -> (
@@ -529,7 +565,7 @@ def test_het_strain_is_a_kanmx4_allele_replacement_whose_dose_respects_the_backg
     """
     background = hillenmeyer_background()
     markers = marker_loci(background)
-    ordinary = strain_perturbation("het", _row("YAL001C"), "het_04_01_2", None, markers)
+    ordinary = strain_perturbation("het", _row("YAL001C"), "het_04_01_2", markers)
     assert isinstance(ordinary, HeterozygousDeletionPerturbation)
     assert (ordinary.cassette, ordinary.collection) == ("kanMX4", "het_04_01_2")
     assert ordinary.construction is not None and ordinary.construction.batch == "chr1_1"
@@ -537,7 +573,7 @@ def test_het_strain_is_a_kanmx4_allele_replacement_whose_dose_respects_the_backg
     assert heterozygous_deletion_functional_copies(background, ordinary) == 1
     doses = {}
     for orf in ("YOR202W", "YBR115C", "YLR303W"):
-        pert = strain_perturbation("het", _row(orf), "het_04_01_2", None, markers)
+        pert = strain_perturbation("het", _row(orf), "het_04_01_2", markers)
         assert isinstance(pert, HeterozygousDeletionPerturbation)
         assert "replaced_allele" in pert.gapped_fields()
         doses[orf] = heterozygous_deletion_functional_copies(background, pert)
@@ -546,32 +582,74 @@ def test_het_strain_is_a_kanmx4_allele_replacement_whose_dose_respects_the_backg
 
 def test_hom_strain_is_a_barcoded_kanmx4_deletion_gapped_at_marker_loci() -> None:
     markers = marker_loci(hillenmeyer_background())
-    hom = strain_perturbation("hom", _row("YAL001C"), "hom_09_02", None, markers)
+    hom = strain_perturbation("hom", _row("YAL001C"), "hom_09_02", markers)
     assert isinstance(hom, BarcodedKanMxDeletionPerturbation)
     assert (hom.cassette, hom.collection) == ("kanMX4", "hom_09_02")
-    marker = strain_perturbation("hom", _row("YLR303W"), "hom_09_02", None, markers)
+    marker = strain_perturbation("hom", _row("YLR303W"), "hom_09_02", markers)
     assert marker.constructed_orf is None
     assert marker.gapped_fields() == {"barcode", "downtag_barcode", "constructed_orf"}
 
 
-def test_two_source_orfs_on_one_gene_are_merged_a_lone_rename_is_gapped() -> None:
-    """G3: YAR044W built against its own ORF is a different strain from YAR042W."""
+def test_a_strain_is_keyed_on_its_released_orf_with_no_constructed_orf() -> None:
+    """YAR044W (merged into YAR042W by a later SGD release) stays YAR044W: the loader
+    consults no genome, and the two rows are two strains under two released names.
+    """
+    markers = marker_loci(hillenmeyer_background())
+    for arm in ("het", "hom"):
+        a = strain_perturbation(arm, _row("YAR042W"), "pool", markers)
+        b = strain_perturbation(arm, _row("YAR044W"), "pool", markers)
+        assert (a.systematic_gene_name, b.systematic_gene_name) == (
+            "YAR042W",
+            "YAR044W",
+        )
+        assert b.perturbed_gene_name == "YAR044W"
+        assert a.constructed_orf is None and b.constructed_orf is None
+
+
+def test_constructed_orf_shim_kept_for_parsons2006() -> None:
+    """Hillenmeyer no longer calls it; parsons2006.py imports it until #1053 lands."""
     merged = constructed_orf("YAR044W", "YAR042W", 2)
     assert (merged.source_systematic_name, merged.relation) == (
         "YAR044W",
         OrfHistoryRelation.merged,
     )
     assert merged.gapped_fields() == {"deleted_span"}
-    lone = constructed_orf("YOLD01W", "YBR002W", 1)
+    lone = constructed_orf("YAL004W", "YBR002W", 1)
     assert lone.relation is None
     assert lone.gapped_fields() == {"deleted_span", "relation"}
-    markers = marker_loci(hillenmeyer_background())
-    a = strain_perturbation("hom", _row("YAR042W"), "hom_09_02", None, markers)
-    b = strain_perturbation(
-        "hom", _row("YAR042W", source="YAR044W"), "hom_09_02", merged, markers
+
+
+def test_read_matrix_rows_stores_every_row_but_the_author_withdrawal(
+    tmp_path: Any,
+) -> None:
+    """A retired ORF, a merged ORF and a ``ctrl_`` row are stored verbatim; only the
+    homozygous PDR5 row (YOR153W) is kept out, and only in the hom arm.
+    """
+    matrix = tmp_path / "m.pub"
+    matrix.write_text(
+        "Orf\tA1\n"
+        "YAR044W:chr1_4\t1.0\n"
+        "YPL999W:chr16_1\t2.0\n"
+        "YDL227C:ctrl_3\tNA\n"
+        "YOR153W:chr15_2\t3.0\n"
     )
-    assert a.systematic_gene_name == b.systematic_gene_name == "YAR042W"
-    assert a != b
+    het = read_matrix_rows(matrix, 2, "het")
+    assert [(r.row_id, r.orf, r.batch, r.values) for r in het.rows] == [
+        ("YAR044W:chr1_4", "YAR044W", "chr1_4", [None, 1.0]),
+        ("YPL999W:chr16_1", "YPL999W", "chr16_1", [None, 2.0]),
+        ("YDL227C:ctrl_3", "YDL227C", "ctrl_3", [None, None]),
+        ("YOR153W:chr15_2", "YOR153W", "chr15_2", [None, 3.0]),
+    ]
+    assert het.dropped_strains == []
+    hom = read_matrix_rows(matrix, 2, "hom")
+    assert [r.row_id for r in hom.rows] == [
+        "YAR044W:chr1_4",
+        "YPL999W:chr16_1",
+        "YDL227C:ctrl_3",
+    ]
+    assert [(s.row_id, s.rule) for s in hom.dropped_strains] == [
+        ("YOR153W:chr15_2", "som_wrong_gene_deleted")
+    ]
 
 
 def test_every_sourced_value_quote_is_verbatim_in_its_pinned_file() -> None:
@@ -626,18 +704,18 @@ def test_the_release_disagrees_with_itself_on_exactly_33_arrays() -> None:
             )
             assert ph8.drop_reason is None
     assert rules == {
-        "het": Counter({"drop_compound_conflict": 4}),
+        "het": Counter({"header_served_key_disagrees": 4}),
         "hom": Counter(
             {
                 "key_wins_strain_medium": 18,
-                "drop_compound_conflict": 7,
+                "header_served_key_disagrees": 7,
                 "header_wins_table_s1": 4,
             }
         ),
     }
 
 
-# Phase 24: the key-wins drop detail and the kept-column environment guard
+# Phase 24: the key-wins drop detail
 
 
 def test_a_key_wins_column_that_drops_names_header_and_key_in_its_detail() -> None:
@@ -653,34 +731,4 @@ def test_a_key_wins_column_that_drops_names_header_and_key_in_its_detail() -> No
     assert column.drop_detail == (
         "synthetic complete: 400 um (header 'minimal media', key file "
         "'synthetic complete for BY4743')"
-    )
-
-
-def test_iter_records_refuses_a_kept_group_whose_head_has_no_environment() -> None:
-    """A zero-generation column (environment None) forced into the KEPT groups with a
-    strain row that has a value at its index (``[None, 1.0]``, index 1): the generator
-    raises naming the column header instead of yielding an environment-less record.
-    """
-    from torchcell.datasets.scerevisiae.hillenmeyer2008 import (
-        MATRICES,
-        MatrixRows,
-        iter_records,
-    )
-
-    column = _one_column("minimal media", "synthetic complete for BY4743", "0gen")
-    matrix = MatrixRows(
-        rows=[_row("YAL001C")], dropped_strains=[], dropped_genes={}, constructed={}
-    )
-    records = iter_records(
-        "HomHillenmeyer2008Dataset",
-        MATRICES["hom"],
-        matrix,
-        {"g": [column]},
-        hillenmeyer_background(),
-    )
-    with pytest.raises(ValueError) as err:
-        next(records)
-    assert str(err.value) == (
-        "kept column 'x1:minimal media::::::0gen:hom_09_02:new scanner' has no "
-        "environment"
     )

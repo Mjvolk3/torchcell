@@ -41,10 +41,11 @@ fa369c18a3..., retrieved from the PMC Article Datasets bucket as
 - Table 6: 8,831 colonies with the barcodes actually detected in them plus the
   barcode-CONFIRMED deletion as a systematic name.
 
-RECORD. One ``GenomeArchitectureExperiment`` per sequenced knockout colony: 8,826
-records over 4,453 deletion strains and 4,408 genes. The 8,835 knockout colonies split
-by strain into 258 strains with 1 colony, 4,097 with 2, 30 with 3, 72 with 4 and 1 with
-5, which is the Extended Data Fig. 1c legend exactly; 9 of them are refused below.
+RECORD. One ``GenomeArchitectureExperiment`` per sequenced knockout colony: 8,835
+records over 4,458 deletion strains and 4,437 released deletion names. The 8,835
+knockout colonies split by strain into 258 strains with 1 colony, 4,097 with 2, 30 with
+3, 72 with 4 and 1 with 5, which is the Extended Data Fig. 1c legend exactly, and every
+one of them is stored.
 Colonies are NOT averaged into strains: two colonies of one knockout are two
 independently isolated samples whose architectures differ, which is the paper's own unit
 of analysis.
@@ -70,19 +71,18 @@ deletions (15 strain ids resolve to two genes), so the gene is read per colony, 
 per strain.
 
 ORF HISTORY. The release names each deletion as the collection annotated it around
-2000. Measured against R64-4-1 through ``resolve_gene_name``: 4,397 of the 4,437 released
-names are current and resolve to themselves, 11 are features the annotation answers with
-their own id (a blocked reading frame or pseudogene, which IS the deleted locus), 24 have
-been renamed or absorbed into a neighbour, and 5 are retired. A renamed or absorbed name
-is stored under the gene R64 carries now with a ``ConstructedOrf`` naming what was
-physically deleted, and since every one of those 24 lands on a gene the release ALSO
-screened separately, each relation is ``merged`` (the deleted interval is a typed gap:
-no coordinates are released). The map is in ``preprocess/constructed_orfs.json``.
-
-REFUSED, with the measurement that refuses it. The 9 colonies (5 strains) whose released
-deletion names one of the 5 retired ORFs (YAR037W, YAR040C, YAR043C, YCL013W, YCL026C)
-are not served: a record keyed to a name the current genome does not carry joins nothing.
-They are in ``preprocess/release_ledger.json`` under ``refused``, never dropped silently.
+2000, and the loader stores that name verbatim as ``systematic_gene_name``, with no
+genome lookup: the colony's Table 6 ``Confirmed_deletion``, or, for the 7 colonies with
+no Table 6 row, the systematic name Table 4 pairs with the strain label.
+``perturbed_gene_name`` is the common name Table 4 pairs with that systematic name (a
+release-internal pairing; 933 Table 4 rows pair a name with itself), or the systematic
+name again when Table 4 has no row for it (1 name, YKL075C). Measured on 2026-10-11
+against R64-4-1, 24 of the 4,437 released names have since been renamed or absorbed into
+a neighbor and 5 are retired (YAR037W, YAR040C, YAR043C, YCL013W, YCL026C, 9 colonies
+over 5 strains). Those 9 colonies are stored under the names the authors released, like
+every other colony: the genome is a separate layer that meets these records downstream
+through the gene set, so a released name the current annotation no longer carries simply
+has no gene edge, and no ``ConstructedOrf`` is built at load time.
 
 SNVs and indels have no released table:
 Figure 4 analyses them and the Methods state the calling pipeline, but none of the six
@@ -115,7 +115,6 @@ import os
 import os.path as osp
 import re
 import shutil
-from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -139,7 +138,6 @@ from torchcell.datamodels.genome_architecture_features import (
 from torchcell.datamodels.media import YPAD
 from torchcell.datamodels.schema import (
     BarcodedKanMxDeletionPerturbation,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     Experiment,
@@ -149,7 +147,6 @@ from torchcell.datamodels.schema import (
     GenomeArchitecturePhenotype,
     Genotype,
     Media,
-    OrfHistoryRelation,
     Publication,
     SampleUnit,
     StrainBackground,
@@ -161,7 +158,6 @@ from torchcell.datamodels.schema import (
 from torchcell.datamodels.strain_background import (
     BRACHMANN_1998,
     KANMX4_CASSETTE,
-    pending_source_review,
     standard_background,
 )
 from torchcell.datasets.dataset_registry import register_dataset
@@ -232,19 +228,16 @@ N_ACCESSION_ROWS = 9014
 N_ACCESSION_STRAY_ROWS = 1
 N_COLONIES_RELEASED = 8843
 N_WILD_TYPE_COLONIES = 8
-#: Served records: the 8,835 knockout colonies minus the 9 whose released deletion names
-#: an ORF the current R64 annotation retired (5 strains; see ``resolve_released_genes``).
-N_SERVED_RECORDS = 8826
+#: Served records: every one of the 8,835 knockout colonies, under its released name.
+N_SERVED_RECORDS = 8835
 N_KNOCKOUT_COLONIES = 8835
-N_RETIRED_ORF_COLONIES = 9
 N_GENE_ROWS = 4436
 N_BARCODE_ROWS = 8831
 #: Colonies per deletion strain, as the Extended Data Fig. 1c legend states them for the
 #: knockout strains. MEASURED on the 8,835 knockout colonies: exactly these five strata,
 #: 4,458 strains in all. Table 3's 4,462 strain ids are these plus the four wild-type
-#: strain ids, which carry two colonies each and are the reference. The SERVED strata
-#: are 257 / 4,093 / 30 / 72 / 1 (4,453 strains), the difference being the 5 strains on
-#: retired ORFs; both are in the ledger.
+#: strain ids, which carry two colonies each and are the reference. The served strata
+#: are these same five, since every knockout colony is stored.
 COLONIES_PER_STRAIN_LEGEND = {1: 258, 2: 4097, 3: 30, 4: 72, 5: 1}
 N_KNOCKOUT_STRAINS = 4458
 
@@ -1056,120 +1049,24 @@ def _tags(cell: object) -> str | None:
     return text
 
 
-class ResolvedGenes(BaseModel):
-    """What the current R64 annotation says about each released deletion name.
-
-    ``current`` maps a released systematic name onto the gene it is now; ``constructed``
-    holds the ``ConstructedOrf`` a strain built against a since-renamed ORF carries;
-    ``refused`` is the released name -> status of a name the current annotation cannot
-    place, whose colonies are not served.
-    """
-
-    model_config = ConfigDict(extra="forbid", arbitrary_types_allowed=True)
-
-    current: dict[str, str]
-    constructed: dict[str, ConstructedOrf]
-    refused: dict[str, str]
-
-
-_SGD_HISTORY = Provenance(
-    source_uri="https://www.yeastgenome.org (locus history)",
-    method="not mirrored; the SGD locus-history record of the source ORF",
-)
-
-
-def _sgd_history_gap(field: str, note: str) -> ProvenanceGap:
-    """A gap on a ``ConstructedOrf`` field only the SGD ORF history would close."""
-    return pending_source_review(field, _SGD_HISTORY, note)
-
-
-def constructed_orf(source_orf: str, current: str, n_sources: int) -> ConstructedOrf:
-    """What a strain built against a since-renamed ORF physically deleted.
-
-    The same rule the Hillenmeyer loader applies to the same collection: two or more
-    released ORFs resolving onto one current gene means two features annotated
-    separately when the strains were made are one gene now, which is a merge by
-    definition; one alone could be an alias or a reannotation, which the resolver cannot
-    tell apart, so the relation is a gap. The deleted interval is always a gap, since no
-    coordinates are released.
-    """
-    relation = OrfHistoryRelation.merged if n_sources >= 2 else None
-    gaps = [
-        _sgd_history_gap(
-            "deleted_span",
-            f"the strain deleted {source_orf} as annotated when the collection was "
-            "made; that interval is not released",
-        )
-    ]
-    if relation is None:
-        gaps.append(
-            _sgd_history_gap(
-                "relation",
-                f"resolve_gene_name maps {source_orf} onto {current} through the R64 "
-                "alias layer, which does not say whether it is an alias, a "
-                "reannotation or a merge",
-            )
-        )
-    return ConstructedOrf(
-        source_systematic_name=source_orf,
-        relation=relation,
-        deleted_span=None,
-        provenance_gaps=gaps,
-    )
-
-
-def resolve_released_genes(
-    names: Iterable[str], resolve: Callable[[str], Any]
-) -> ResolvedGenes:
-    """Map every released deletion name onto the gene the current annotation carries.
-
-    The release names the ORFs as the collection annotated them around 2000, so a name
-    can since have been renamed, merged into a neighbour, or retired altogether.
-    Measured on the 4,437 released names against R64-4-1: 4,397 are current and resolve
-    to themselves, 22 are renamed, 11 are features the annotation answers with their own
-    id (a blocked reading frame or pseudogene, which IS the deleted locus), 2 are
-    features now part of a neighbouring one, and 5 are retired with nothing to resolve
-    to. A renamed or absorbed name is stored under its current gene with a
-    ``ConstructedOrf`` naming what was physically deleted; a retired name is refused,
-    because a record keyed to a name the genome does not carry joins nothing.
-    """
-    current: dict[str, str] = {}
-    refused: dict[str, str] = {}
-    for name in sorted(set(names)):
-        resolution = resolve(name)
-        status = str(getattr(resolution.status, "value", resolution.status))
-        target = resolution.systematic_name
-        if status == "retired" or target is None:
-            refused[name] = status
-            continue
-        current[name] = str(target)
-    sources_by_target: dict[str, set[str]] = {}
-    for source, target in current.items():
-        sources_by_target.setdefault(target, set()).add(source)
-    constructed = {
-        source: constructed_orf(source, target, len(sources_by_target[target]))
-        for source, target in current.items()
-        if source != target
-    }
-    return ResolvedGenes(current=current, constructed=constructed, refused=refused)
-
-
 def deletion_perturbation(
     *,
     systematic_gene_name: str,
+    perturbed_gene_name: str,
     strain_id: str,
     uptag: str | None,
     dntag: str | None,
     has_barcode_row: bool,
-    constructed: ConstructedOrf | None,
 ) -> BarcodedKanMxDeletionPerturbation:
     """The colony's designed edit: a homozygous kanMX deletion with its detected tags.
 
-    ``perturbed_gene_name`` is the systematic name, not the release's strain label: the
-    label is a strain designation and in 2 colonies it names a different gene than the
-    barcodes confirmed, while 23 of the labels resolve to another R64 gene than the
-    deletion they label. The label itself is kept verbatim in
-    ``construction.strain_accession`` and in ``preprocess/data.csv``.
+    ``systematic_gene_name`` is the released deletion name verbatim, and
+    ``perturbed_gene_name`` is the common name Table 4 pairs with it (the systematic name
+    again when Table 4 pairs none). Neither is the strain label: the label is a strain
+    designation and in 2 colonies it names a different gene than the barcodes
+    confirmed. The label itself is kept verbatim in ``construction.strain_accession``
+    and in ``preprocess/data.csv``. No ``ConstructedOrf`` is attached: what the release
+    names is what is stored, and the genome meets it downstream.
     """
     gaps: list[ProvenanceGap] = []
     note = _NO_ROW_NOTE if not has_barcode_row else _NO_TAG_NOTE
@@ -1184,13 +1081,13 @@ def deletion_perturbation(
             )
     return BarcodedKanMxDeletionPerturbation(
         systematic_gene_name=systematic_gene_name,
-        perturbed_gene_name=systematic_gene_name,
+        perturbed_gene_name=perturbed_gene_name,
         barcode=uptag,
         downtag_barcode=dntag,
         collection="homozygous diploid YKOC (EUROSCARF, acquired 2001)",
         cassette=str(KANMX4_CASSETTE.value),
         construction=StrainConstruction(strain_accession=strain_id),
-        constructed_orf=constructed,
+        constructed_orf=None,
         provenance_gaps=gaps,
     )
 
@@ -1210,15 +1107,12 @@ class ReleaseLedger(BaseModel):
     n_wild_type_colonies: int
     n_barcode_rows: int
     n_gene_rows: int
-    refused: dict[str, int]
-    n_released_orfs_renamed: int
-    n_released_orfs_refused: int
-    released_orfs_refused: dict[str, str]
     n_strains_served: int
     colonies_per_strain: dict[str, int]
     n_colonies_without_barcode_row: int
     n_colonies_gene_from_table4: int
     n_colonies_label_disagrees_with_barcode: int
+    n_genes_without_table4_row: int
     uptag_notes: dict[str, int]
     n_rho0_colonies: int
     paper_rho0_colonies: int
@@ -1233,12 +1127,10 @@ class ReleaseLedger(BaseModel):
     @model_validator(mode="after")
     def _accounted(self) -> ReleaseLedger:
         if (
-            self.n_colonies_served
-            + self.n_wild_type_colonies
-            + sum(self.refused.values())
+            self.n_colonies_served + self.n_wild_type_colonies
             != self.n_colonies_released
         ):
-            raise ValueError("served + wild type + refused must equal released")
+            raise ValueError("served + wild type must equal released")
         return self
 
 
@@ -1247,7 +1139,7 @@ class ReleaseLedger(BaseModel):
 # --------------------------------------------------------------------------- #
 @register_dataset
 class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
-    """Puddu 2019: one record per sequenced knockout colony, 8,826 records."""
+    """Puddu 2019: one record per sequenced knockout colony, 8,835 records."""
 
     organism = Organism.scerevisiae
 
@@ -1255,35 +1147,12 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/genome_architecture_puddu2019",
         io_workers: int = 0,
-        genome: Any | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Build or load the store under ``root``.
-
-        ``genome`` supplies ``resolve_gene_name``, which maps the release's 2000-era ORF
-        names onto the genes R64 carries now; when it is omitted ``process`` opens the
-        S288C genome read-only from ``DATA_ROOT``.
-        """
-        self.genome = genome
+        """Build or load the store under ``root``. No genome is consulted."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
-
-    def _resolver(self) -> Callable[[str], Any]:
-        """``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""
-        if self.genome is None:
-            from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-            data_root = _data_root()
-            # overwrite=False is mandatory: a rebuild here would race any other process
-            # holding the same gffutils database.
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        resolver: Callable[[str], Any] = self.genome.resolve_gene_name
-        return resolver
 
     @property
     def experiment_class(self) -> type[Experiment]:
@@ -1390,11 +1259,12 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
             )
 
         released_genes = self._released_gene_of_colony(served, barcodes, gene_of_common)
-        resolved = resolve_released_genes(released_genes.values(), self._resolver())
+        common_of_gene = {
+            systematic: common for common, systematic in gene_of_common.items()
+        }
         gene_from_table4 = 0
         label_disagrees = 0
         without_row = 0
-        refused: dict[str, int] = {}
         gene_names: set[str] = set()
         rows: list[dict[str, Any]] = []
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
@@ -1424,22 +1294,20 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
                     gene_from_table4 += 1
                     uptag = None
                     dntag = None
-                if gene in resolved.refused:
-                    refused[f"released_orf_{resolved.refused[gene]}_in_r64"] = (
-                        refused.get(f"released_orf_{resolved.refused[gene]}_in_r64", 0)
-                        + 1
+                if released_genes[colony] != gene:
+                    raise ReleaseShapeError(
+                        f"colony {colony}: released deletion {gene!r} differs from "
+                        f"{released_genes[colony]!r}"
                     )
-                    continue
-                current_gene = resolved.current[gene]
                 perturbation = deletion_perturbation(
-                    systematic_gene_name=current_gene,
+                    systematic_gene_name=gene,
+                    perturbed_gene_name=common_of_gene.get(gene, gene),
                     strain_id=strain_id,
                     uptag=uptag,
                     dntag=dntag,
                     has_barcode_row=has_row,
-                    constructed=resolved.constructed.get(gene),
                 )
-                gene_names.add(current_gene)
+                gene_names.add(gene)
                 phenotype = GenomeArchitecturePhenotype(
                     assay=ASSAY,
                     genome_architecture={
@@ -1464,8 +1332,8 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
                     {
                         "colony_id": colony,
                         "strain_id": strain_id,
-                        "systematic_gene_name": current_gene,
-                        "released_systematic_gene_name": gene,
+                        "systematic_gene_name": gene,
+                        "perturbed_gene_name": common_of_gene.get(gene, gene),
                         "strain_label": label,
                         "ena_sample_accession": str(row["ERSno"]),
                         "barcode_row": has_row,
@@ -1476,11 +1344,6 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         interned_env.close()
         if idx != N_SERVED_RECORDS:
             raise ReleaseShapeError(f"wrote {idx} records, expected {N_SERVED_RECORDS}")
-        if sum(refused.values()) != N_RETIRED_ORF_COLONIES:
-            raise ReleaseShapeError(
-                f"refused {sum(refused.values())} colonies on a retired ORF, expected "
-                f"{N_RETIRED_ORF_COLONIES}"
-            )
         self._gene_names = gene_names
         pd.DataFrame(rows).to_csv(
             osp.join(self.preprocess_dir, "data.csv"), index=False
@@ -1498,28 +1361,9 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
             without_row=without_row,
             gene_from_table4=gene_from_table4,
             label_disagrees=label_disagrees,
-            refused=refused,
-            resolved=resolved,
+            n_genes_without_table4_row=len(gene_names - set(common_of_gene)),
             served_rows=rows,
         )
-        with open(
-            osp.join(self.preprocess_dir, "constructed_orfs.json"), "w"
-        ) as handle:
-            json.dump(
-                {
-                    "description": "released ORF -> what the strain physically deleted, "
-                    "for every released deletion name the current R64 annotation has "
-                    "renamed or absorbed; 'merged' when two or more released names "
-                    "resolve onto one gene",
-                    "constructed": {
-                        source: orf.model_dump(mode="json")
-                        for source, orf in sorted(resolved.constructed.items())
-                    },
-                    "refused": resolved.refused,
-                },
-                handle,
-                indent=2,
-            )
         log.info(
             "Wrote %d Puddu 2019 colony records over %d genes", idx, len(gene_names)
         )
@@ -1574,8 +1418,7 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
         without_row: int,
         gene_from_table4: int,
         label_disagrees: int,
-        refused: dict[str, int],
-        resolved: ResolvedGenes,
+        n_genes_without_table4_row: int,
         served_rows: list[dict[str, Any]],
     ) -> None:
         """Account for every released row, and re-derive the paper's own statistics."""
@@ -1619,15 +1462,12 @@ class GenomeArchitecturePuddu2019Dataset(ExperimentDataset):
             n_wild_type_colonies=len(wild_type),
             n_barcode_rows=len(barcodes),
             n_gene_rows=N_GENE_ROWS,
-            refused=dict(refused),
-            n_released_orfs_renamed=len(resolved.constructed),
-            n_released_orfs_refused=len(resolved.refused),
-            released_orfs_refused=dict(sorted(resolved.refused.items())),
             n_strains_served=int(per_strain.size),
             colonies_per_strain={str(k): int(v) for k, v in sorted(histogram.items())},
             n_colonies_without_barcode_row=without_row,
             n_colonies_gene_from_table4=gene_from_table4,
             n_colonies_label_disagrees_with_barcode=label_disagrees,
+            n_genes_without_table4_row=n_genes_without_table4_row,
             uptag_notes={str(k): int(v) for k, v in notes.items()},
             n_rho0_colonies=int((colonies["mitochondria"] < 1.0).sum()),
             paper_rho0_colonies=PAPER_RHO0_COLONIES,

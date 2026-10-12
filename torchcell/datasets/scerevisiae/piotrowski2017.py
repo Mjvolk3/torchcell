@@ -37,7 +37,7 @@ ledger instead.
 
 RECORDS. One ``StrainEnvironmentResponseExperiment`` per numeric cell of a kept strain
 and a kept condition. The genotype is the ONE screened ``BarcodedKanMxDeletionPerturbation``
-(barcode and ORF from Data Set 2); the constant drug-sensitized background is the same
+(barcode, ORF and common name from Data Set 2, verbatim); the constant drug-sensitized background is the same
 typed ``StrainBackground`` Vanacloig 2022 serves (``vanacloig2022.library_background``,
 whose construction quotes are this paper's own Online Methods), so the two datasets share
 one background entity. The environment is liquid YP + 2% galactose
@@ -74,15 +74,25 @@ lower ones when growth collapsed. ``ng/ml`` cells are stored in ug/mL (x 1e-3, e
 two MMS cells are numbers carrying an Excel percent format (``4e-05`` shown as ``0.004%``)
 and are stored as 0.004 in the basis-free ``ConcentrationUnit.percent`` (#764). A cell that
 states a RANGE (``10-100-ug/ml``) names no single dose, so its condition is dropped under
-``dose_is_a_released_range``; the schema has no interval dose (owner decision in the note).
+``dose_is_a_released_range`` (8 conditions, 2,312 records). That drop needs a schema
+change, not a loader one: ``SmallMoleculePerturbation.concentration`` is a required
+``Concentration``, so it cannot be ``None`` and therefore cannot carry a typed gap, and
+``Concentration`` itself is not a gap carrier; a ``Concentration`` with ``basis=fixed`` and
+no value would build, but it would hold an unstated dose silently with the released range
+nowhere on the record. The schema has no interval dose.
 
-RECORDS DROPPED (rules + counts in ``preprocess/dropped_records.json``; every numeric cell is
-counted once, in rule order): the one released column Data Set 4 marks
-``In_final_dataset = False`` (the Data Set 5 title also counts 11,983, not 11,984); the
-range-dose conditions; and strains whose ORF is not a current R64 gene or is a locus the
-SGA selections fix in every strain. ``NA`` cells are not records and are counted beside
-the ledger. A RENAMED pool ORF (``YAL058C-A``, R64 alias of ``YAL056C-A``) is kept under
-the current gene with a typed ``ConstructedOrf``.
+STRAINS, AS RELEASED. Each Data Set 5 row label names one Data Set 2 pool row (by its common
+name, or by its ORF where the row's common name is the ORF itself). The record stores that
+row's ORF verbatim as ``systematic_gene_name`` and its common name verbatim as
+``perturbed_gene_name``; no genome is consulted, so ``YAL058C-A`` is stored as
+``YAL058C-A`` and every one of the 289 strains Data Set 5 carries is stored.
+
+RECORDS NOT STORED (rules + counts in ``preprocess/dropped_records.json``; every numeric
+cell is counted once, in rule order): ``condition_not_in_the_final_dataset``, the one
+released column Data Set 4 marks ``In_final_dataset = False`` (Cond-008510, 289 cells; the
+Data Set 5 title also counts 11,983, not 11,984). That exclusion is the release's own
+metadata, not a filter of ours. Then the range-dose conditions above. ``NA`` cells are not
+values and are counted beside the ledger (``not_scored_cells``), not as drops.
 
 REPLICATES. Each released profile is the mean of the condition's technical (PCR)
 replicates that survived the Note's batch-effect filter and correlation-graph collapsing:
@@ -137,7 +147,6 @@ from torchcell.datamodels.schema import (
     Compound,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     DoseBasis,
@@ -161,14 +170,10 @@ from torchcell.datamodels.schema import (
     StrainReferenceGenome,
     Temperature,
 )
-from torchcell.datamodels.strain_background import pending_source_review
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
 from torchcell.datasets.scerevisiae.vanacloig2022 import (
     ARRAY_KANMX,
     LIBRARY_STRAIN,
-    SELECTED_BACKGROUND_LOCI,
-    SGD_ORF_HISTORY,
     library_background,
 )
 from torchcell.literature.manifest import (
@@ -178,7 +183,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import (
     DerivationMethod,
     Provenance,
@@ -590,9 +594,6 @@ RIKEN_COLLECTION = "RIKEN NPDepo"
 #: The cell value the release writes for a strain not scored in a condition.
 NOT_SCORED = "NA"
 
-#: Where an SGD locus history would settle a renamed ORF (the vanacloig record).
-_LOCUS_HISTORY = SGD_ORF_HISTORY
-
 #: Hoepfner and Wildenhain's convention for the three uncertainty fields.
 _UNCERTAINTY_FIELDS = (
     "environment_response_se",
@@ -909,102 +910,43 @@ def read_matrix(path: str | Path) -> ReleasedMatrix:
 
 
 # --------------------------------------------------------------------------- #
-# Strains: the pool row each Data Set 5 label names, and its current gene
+# Strains: the pool row each Data Set 5 label names, stored as released
 # --------------------------------------------------------------------------- #
 class ResolvedStrain(BaseModel):
-    """One Data Set 5 strain row resolved onto its pool entry and its R64 gene."""
+    """One Data Set 5 strain row matched to its Data Set 2 pool row, as released."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
     label: str
     pool: PoolStrain
-    systematic_name: str | None
-    perturbed_gene_name: str | None
-    drop_rule: str | None = None
+    systematic_name: str
+    perturbed_gene_name: str
 
 
-def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
-    """``systematic name -> the genome's own standard name`` (one spelling per gene)."""
-    canonical: dict[str, str] = {}
-    for standard in genome.feature_index["standard_to_ids"]:
-        resolution = genome.resolve_gene_name(standard)
-        if resolution.is_current_gene and resolution.systematic_name is not None:
-            canonical.setdefault(resolution.systematic_name, standard)
-    return canonical
+def resolve_strains(labels: list[str], pool: list[PoolStrain]) -> list[ResolvedStrain]:
+    """Match each Data Set 5 label to its pool row; names are the release's, verbatim.
 
-
-def resolve_strains(
-    labels: list[str], pool: list[PoolStrain], genome: SCerevisiaeGenome
-) -> list[ResolvedStrain]:
-    """Map each Data Set 5 label onto its pool row and its current R64 gene.
-
-    The label is the pool row's common name (or its ORF, for the rows that have none).
-    The pool ORF goes through the shared resolver: a CURRENT gene is kept under the
-    genome's own spelling; a RENAMED alias is kept under the current gene with the
-    source ORF as ``perturbed_gene_name`` (and a ``ConstructedOrf`` on the record),
-    unless the pool also holds the current gene, when it is dropped as a legacy
-    duplicate; anything else, and a locus the SGA selections fix in every strain, is
-    dropped with its rule.
+    The label is the pool row's common name (or its ORF, for the rows whose common name
+    is the ORF). ``systematic_name`` is the pool row's ORF and ``perturbed_gene_name`` its
+    common name (the ORF when the row gives none). No genome is consulted.
     """
     by_name = {entry.common_name: entry for entry in pool}
     by_orf = {entry.orf: entry for entry in pool}
     if len(by_name) != len(pool) or len(by_orf) != len(pool):
         raise ValueError("Data Set 2 repeats a common name or an ORF")
-    gene_set = {gene.upper() for gene in genome.gene_set}
-    canonical = _canonical_common_names(genome)
-    pool_orfs = set(by_orf)
     resolved: list[ResolvedStrain] = []
     for label in labels:
         entry = by_name.get(label) or by_orf.get(label)
         if entry is None:
             raise ValueError(f"Data Set 5 strain {label!r} is not a pool v2.0 member")
-        resolution = genome.resolve_gene_name(entry.orf)
-        current = resolution.systematic_name
-        if entry.orf in SELECTED_BACKGROUND_LOCI:
-            resolved.append(
-                ResolvedStrain(
-                    label=label,
-                    pool=entry,
-                    systematic_name=None,
-                    perturbed_gene_name=None,
-                    drop_rule="orf_is_a_selected_background_locus",
-                )
+        resolved.append(
+            ResolvedStrain(
+                label=label,
+                pool=entry,
+                systematic_name=entry.orf,
+                perturbed_gene_name=entry.common_name or entry.orf,
             )
-        elif not (
-            resolution.is_current_gene and current is not None and current in gene_set
-        ):
-            resolved.append(
-                ResolvedStrain(
-                    label=label,
-                    pool=entry,
-                    systematic_name=None,
-                    perturbed_gene_name=None,
-                    drop_rule="orf_is_not_a_current_genome_gene",
-                )
-            )
-        elif current != entry.orf and current in pool_orfs:
-            resolved.append(
-                ResolvedStrain(
-                    label=label,
-                    pool=entry,
-                    systematic_name=None,
-                    perturbed_gene_name=None,
-                    drop_rule="orf_is_a_legacy_spelling_of_another_pool_orf",
-                )
-            )
-        else:
-            resolved.append(
-                ResolvedStrain(
-                    label=label,
-                    pool=entry,
-                    systematic_name=current,
-                    perturbed_gene_name=(
-                        canonical.get(current, current)
-                        if current == entry.orf
-                        else entry.orf
-                    ),
-                )
-            )
+        )
     return resolved
 
 
@@ -1033,26 +975,6 @@ def strains_labelled_twice(
             )
         twice[orf] = [strains[i].label for i in rows]
     return twice
-
-
-def constructed_orf(strain: ResolvedStrain) -> ConstructedOrf | None:
-    """The ORF a RENAMED pool strain was built against; ``None`` for a current gene."""
-    if strain.systematic_name is None or strain.systematic_name == strain.pool.orf:
-        return None
-    note = (
-        f"R64-4-1 lists {strain.pool.orf} as an alias of {strain.systematic_name}; "
-        "whether it was merged, reannotated or renamed, and its deleted interval, need "
-        "the SGD locus history"
-    )
-    return ConstructedOrf(
-        source_systematic_name=strain.pool.orf,
-        relation=None,
-        deleted_span=None,
-        provenance_gaps=[
-            pending_source_review("relation", _LOCUS_HISTORY, note),
-            pending_source_review("deleted_span", _LOCUS_HISTORY, note),
-        ],
-    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1114,7 +1036,7 @@ class DropRule(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     rule: str
-    scope: Literal["condition", "strain"]
+    scope: Literal["condition"]
     description: str
     n_records: int
     items: list[str] = []
@@ -1165,7 +1087,6 @@ class ConditionLedger(BaseModel):
     released_key_disagreements: int
     released_key_comparisons: int
     absent_pool_strains: list[str]
-    renamed_strains: dict[str, str]
     strains_labelled_twice: dict[str, list[str]]
 
 
@@ -1298,7 +1219,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset (the genome is loaded lazily inside ``process``)."""
+        """Initialize the dataset; no genome is consulted."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1502,8 +1423,6 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
     @staticmethod
     def _genotype(strain: ResolvedStrain) -> Genotype:
         """The ONE screened deletion; the constant background is on the reference."""
-        if strain.systematic_name is None or strain.perturbed_gene_name is None:
-            raise ValueError(f"{strain.label} was dropped ({strain.drop_rule})")
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
@@ -1512,7 +1431,6 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                     barcode=strain.pool.barcode,
                     collection=POOL_COLLECTION.value,
                     cassette=ARRAY_KANMX.value,
-                    constructed_orf=constructed_orf(strain),
                 )
             ]
         )
@@ -1538,7 +1456,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
         matrix = read_matrix(self._raw(MATRIX))
         conditions = read_conditions(self._raw(CONDITIONS))
         pool = read_pool(self._raw(POOL))
-        strains = resolve_strains(matrix.strains, pool, default_genome())
+        strains = resolve_strains(matrix.strains, pool)
         labelled_twice = strains_labelled_twice(matrix, strains)
         validate: Callable[[Any], object] = TypeAdapter(ExperimentType).validate_python
 
@@ -1561,7 +1479,7 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
             else:
                 condition_rule.append(None)
         kept_columns = [j for j, rule in enumerate(condition_rule) if rule is None]
-        kept_rows = [i for i, strain in enumerate(strains) if strain.drop_rule is None]
+        kept_rows = list(range(len(strains)))
         column_scored = scored.sum(axis=0)
 
         rules: list[DropRule] = []
@@ -1570,13 +1488,14 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                 "condition_not_in_the_final_dataset",
                 "Data Set 4 marks the condition In_final_dataset = False and the Data "
                 "Set 5 title counts 11,983 profiles, so the release's own metadata "
-                "excludes the column Data Set 5 still carries",
+                "(not a filter of ours) excludes the column Data Set 5 still carries",
             ),
             (
                 "dose_is_a_released_range",
                 "the Data Set 4 dose cell is a range (e.g. '10-100-ug/ml'), the pilot "
-                "dosing the Methods describe; a range names no single dose and the "
-                "schema has no interval dose",
+                "dosing the Methods describe; a range names no single dose, the "
+                "schema has no interval dose, and the required concentration cannot "
+                "carry a typed gap (needs schema)",
             ),
         ):
             columns = [j for j, r in enumerate(condition_rule) if r == rule]
@@ -1592,33 +1511,6 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                     ],
                 )
             )
-        kept_scored = scored[:, kept_columns]
-        for rule, description in (
-            (
-                "orf_is_a_selected_background_locus",
-                "the pool ORF is a locus whose allele the SGA selections fix in every "
-                "strain (pdr1, pdr3, snq2, can1, lyp1)",
-            ),
-            (
-                "orf_is_not_a_current_genome_gene",
-                "the pool ORF resolves to no gene of the current R64 annotation",
-            ),
-            (
-                "orf_is_a_legacy_spelling_of_another_pool_orf",
-                "the pool ORF is an R64 alias of another ORF the pool also carries",
-            ),
-        ):
-            hit = [i for i, s in enumerate(strains) if s.drop_rule == rule]
-            rules.append(
-                DropRule(
-                    rule=rule,
-                    scope="strain",
-                    description=description,
-                    n_records=int(kept_scored[hit].sum()) if hit else 0,
-                    items=[f"{strains[i].label} ({strains[i].pool.orf})" for i in hit],
-                )
-            )
-
         # --- interned constants ------------------------------------------------ #
         publication = Publication(doi=PAPER_DOI, doi_url=f"https://doi.org/{PAPER_DOI}")
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -1719,7 +1611,6 @@ class EnvChemgenPiotrowski2017Dataset(ExperimentDataset):
                 doses,
                 condition_rule,
                 ledger_compounds,
-                strains,
                 pool,
                 labelled_twice,
             ),
@@ -1762,7 +1653,6 @@ def _condition_ledger(
     doses: list[ParsedDose],
     condition_rule: list[str | None],
     compounds: dict[int, CompoundLedgerEntry],
-    strains: list[ResolvedStrain],
     pool: list[PoolStrain],
     labelled_twice: dict[str, list[str]],
 ) -> ConditionLedger:
@@ -1817,11 +1707,6 @@ def _condition_ledger(
             for entry in pool
             if entry.common_name not in labels and entry.orf not in labels
         ),
-        renamed_strains={
-            s.pool.orf: s.systematic_name
-            for s in strains
-            if s.systematic_name is not None and s.systematic_name != s.pool.orf
-        },
         strains_labelled_twice=labelled_twice,
     )
 

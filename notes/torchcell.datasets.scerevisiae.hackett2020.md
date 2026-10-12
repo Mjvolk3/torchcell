@@ -100,3 +100,15 @@ No genomes-tier deposit: the genotypes are written against S288C R64 (`sgd_S288C
 ### Gate
 
 Candidate verdict `database/candidates/hackettLearningCausalNetworks2020.json`: G1 pass (primary), G2 pass (S288C), G3 pass (68 files), G4 pass, G5 pass, admissible. G3 first refused the deposit: `leading_archive` took the first `PK\x05\x06` in the 368 MB zip, which sits inside its deflate stream at byte 164,465,128; fixed in `torchcell/candidates/gates.py` (an EOCD candidate must agree with the central directory it names). The candidate ledger was not appended: `ledger` refuses a second 2026.10.11 section ("one ledger per day").
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+Owner rule of 2026.10.12 ("the data is the data"; the genome is a separate layer that never gates storage). The loader consults no genome any more.
+
+- Expression keys. Every layer of every array is keyed by the release's own `GeneName` token verbatim (6,175 keys). Until today the build re-keyed 5,082 of them to R64 systematic names through `SCerevisiaeGenome.resolve_gene_name` (5,079 renamed, 4 non-gene features, 1 retired: `AAD16`, which stayed as released). `GeneKey`, `resolve_gene_keys`, `default_resolver` and the dataset's `gene_resolver()` are gone; `preprocess/gene_keys.json` now states the rule and lists the pinned TF table. The `OCT1` restoration stays: Excel turned that cell into a date in both SI workbooks, which is a corruption of the release file, not a genome lookup.
+- Induced gene. The release names each strain's induced gene only by a common-name token (Table EV1's genotype string, the tall table's `TF`; `ACE1` in Table EV1 is `CUP2` in the release, `YGR066c` is Table EV1's spelling of the release's `YGR066C`), and `InduciblePromoterInsertionPerturbation.systematic_gene_name` must be an ORF. `RELEASE_TF_TOKENS_WITHOUT_AN_ORF` (213 tokens) is the one remaining crosswalk: the token -> ORF pairs the 2026.10.11 build served, derived once from that build's `gene_keys.json`; the loader makes no genome call. It is pending group 1's released-gene-name leaf (a GenePerturbation child carrying the released symbol with `systematic_gene_name` as a typed gap), after which the token is stored verbatim and the table goes. `perturbed_gene_name` stays the release's TF token.
+- Refusal kept. The three time courses on SMY10, SMY19 and SMY22 (21 arrays) have no Table EV1 row; the reference genome needs the strain's background, which has no typed gap, so the refusal stays with its count in `release_ledger.json` (`strain_not_in_table_ev1`). Needs a carrier or an owner call.
+- Ledger fields `gene_key_status` and `gene_keys_renamed` are replaced by `n_gene_keys_as_released` (6,175) and `n_tf_tokens_pinned` (213). The verifier (`torchcell/verification/induction_timecourse.py`) reads the release's gene names directly and checks the insertion through the pinned table.
+- Record count: unchanged at 1,752 (not served in KG 3.0). Reconciling a release name to the current annotation is a downstream step at adapter or modeling time.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

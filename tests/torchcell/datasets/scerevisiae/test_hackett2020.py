@@ -26,6 +26,7 @@ import gzip
 import hashlib
 import io
 import json
+import re
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -231,10 +232,6 @@ def _sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def _resolve(name: str) -> tuple[str, str]:
-    return SYSTEMATIC[name.upper()], "renamed"
-
-
 @pytest.fixture
 def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     root = tmp_path / "data_root"
@@ -265,9 +262,7 @@ def data_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
             h.VALIDATION_NAME: _sha(VALIDATION),
         },
     )
-    monkeypatch.setattr(
-        h.InductionTimecourseHackett2020Dataset, "gene_resolver", lambda self: _resolve
-    )
+    monkeypatch.setattr(h, "RELEASE_TF_TOKENS_WITHOUT_AN_ORF", SYSTEMATIC)
     library = root / "torchcell-library" / h.CITATION_KEY
     (library / "si").mkdir(parents=True)
     files = []
@@ -499,16 +494,19 @@ def test_backgrounds_carry_their_alleles_and_activator() -> None:
     ].elements == ["ACT1pr", "4ZEV", "NatMX"]
 
 
-def test_check_tf_matches_refuses_a_disagreement() -> None:
+def test_check_tf_matches_refuses_a_disagreement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(h, "RELEASE_TF_TOKENS_WITHOUT_AN_ORF", SYSTEMATIC)
     zev = h.parse_strain(_row("SMY2049", STRAIN_ROWS[0][1]))
-    h._check_tf_matches(zev, "ACA1", "ZEV", _resolve)
+    h._check_tf_matches(zev, "ACA1", "ZEV")
     with pytest.raises(h.StrainTableError, match="release system GEV"):
-        h._check_tf_matches(zev, "ACA1", "GEV", _resolve)
+        h._check_tf_matches(zev, "ACA1", "GEV")
     with pytest.raises(h.StrainTableError, match="release induces HMX1"):
-        h._check_tf_matches(zev, "HMX1", "ZEV", _resolve)
+        h._check_tf_matches(zev, "HMX1", "ZEV")
     control = h.parse_strain(_row("SMY254", ZEV_TAIL, "Control"))
     with pytest.raises(h.StrainTableError, match="control row induced as ACA1"):
-        h._check_tf_matches(control, "ACA1", "ZEV", _resolve)
+        h._check_tf_matches(control, "ACA1", "ZEV")
 
 
 # --------------------------------------------------------------------------- #
@@ -527,15 +525,26 @@ def test_read_validation_restores_oct1_and_refuses_other_corruption(
         h.read_validation(path, ["AAC1", "ACA1", "HMX1", "PHO5"])
 
 
-def test_resolve_gene_keys_refuses_two_names_on_one_key() -> None:
-    keys = h.resolve_gene_keys(["ACA1"], _resolve)
-    assert keys["ACA1"].model_dump() == {
-        "release_name": "ACA1",
-        "stored_key": "YER045C",
-        "status": "renamed",
-    }
-    with pytest.raises(ValueError, match="resolve to one systematic name"):
-        h.resolve_gene_keys(["ACA1", "aca1"], _resolve)
+def test_induced_orf_is_the_pinned_table_and_refuses_an_unpinned_token(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The induced gene's ORF comes from the pinned token table, never a genome; the
+    release's own names are the expression keys (no table is consulted for them).
+    """
+    monkeypatch.setattr(h, "RELEASE_TF_TOKENS_WITHOUT_AN_ORF", SYSTEMATIC)
+    assert h.induced_orf("ACA1") == "YER045C"
+    with pytest.raises(h.StrainTableError, match="pinned table does not carry"):
+        h.induced_orf("aca1")
+    assert h.RELEASE_TF_TOKENS_WITHOUT_AN_ORF is SYSTEMATIC
+
+
+def test_pinned_tf_table_is_release_tokens_to_orfs() -> None:
+    """Every pinned value is an ORF and the two Table EV1 spellings are present."""
+    table = h.RELEASE_TF_TOKENS_WITHOUT_AN_ORF
+    assert len(table) == 213
+    assert (table["CUP2"], table["ACE1"]) == ("YGL166W", "YGL166W")
+    assert table["YGR066c"] == "YGR066C"
+    assert all(re.match(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$", v) for v in table.values())
 
 
 def test_environment_has_the_inducer_only_after_t0() -> None:
@@ -617,7 +626,7 @@ def test_build_stores_every_layer_exactly(
     phen = InductionTimecourseExpressionPhenotype.model_validate(
         records[1]["experiment"]["phenotype"]
     )
-    by_key = {SYSTEMATIC[g]: i for i, g in enumerate(GENES)}
+    by_key = {g: i for i, g in enumerate(GENES)}  # the release's own names
     assert dict(phen.log2_cleaned) == {k: _cleaned(i, 5.0) for k, i in by_key.items()}
     assert dict(phen.sample_channel_intensity) == {
         k: 205.0 + i for k, i in by_key.items()
@@ -659,7 +668,7 @@ def test_validation_arrays_gap_what_ev2_does_not_release(
         "log2_shrunken",
         "log2_thresholded",
     ]
-    assert phen["log2_cleaned"]["YKL134C"] == _cleaned(3, 5.0)  # the restored OCT1
+    assert phen["log2_cleaned"]["OCT1"] == _cleaned(3, 5.0)  # the restored OCT1
     assert (phen["strain_label"], phen["release_table"]) == (
         "SMY2605",
         h.VALIDATION_NAME,
@@ -682,7 +691,10 @@ def test_ledger_accounts_for_the_refused_course(
     ]
     assert (ledger["n_records"], ledger["n_refused_arrays"]) == (6, 3)
     assert ledger["strains_per_background"] == {"SMY254": 1, "SMY69": 1, "Z3EV_HAP1": 1}
-    assert ledger["gene_key_status"] == {"renamed": 4}
+    assert (ledger["n_gene_keys_as_released"], ledger["n_tf_tokens_pinned"]) == (
+        4,
+        len(SYSTEMATIC),
+    )
     assert sorted(dataset.gene_set) == ["YER045C", "YLR205C"]
 
 
@@ -702,8 +714,8 @@ def test_ledger_refuses_an_unaccounted_array() -> None:
             refused=[],
             n_refused_arrays=0,
             excel_date_gene_restored="OCT1",
-            gene_key_status={},
-            gene_keys_renamed=0,
+            n_gene_keys_as_released=4,
+            n_tf_tokens_pinned=0,
             arrays_per_timecourse={},
             strains_per_background={},
             yrsm_identified={},

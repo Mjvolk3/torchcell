@@ -5,11 +5,12 @@
 
 Each root's ``raw/`` holds ``GSE42536_family.soft.gz`` (placeholder bytes, never
 opened), the supplementary workbook ``12915_2015_222_MOESM1_ESM.xlsx`` (openpyxl, sheets
-``Single mutants - info`` and ``Double mutants - info``) and ``GSE42536.pkl``, a pickled
+``List of 215 GSTFs``, ``Single mutants - info`` and ``Double mutants - info``) and ``GSE42536.pkl``, a pickled
 REAL ``GEOparse.GEOTypes.GSE`` built in memory, so ``process()`` loads the pickle and the
-``GEOparse.get_GEO`` network branch is never reached. The genome is a stub carrying the
-``gene_set`` / ``alias_to_systematic`` / ``feature_index`` lookups the refusing resolver
-reads (#886).
+``GEOparse.get_GEO`` network branch is never reached. No genome is involved: a title
+token resolves only through the workbook's own (systematic name, gene symbol) pairs, read
+from all three sheets (``List of 215 GSTFs`` too), or as an ORF-shaped token, and
+``perturbed_gene_name`` is the workbook's symbol for the ORF (else the ORF).
 
 Platform probes: 1 YAL001C, 2 YBR001C, 3 YCR001W. The mutant channel is Cy5 unless
 ``source_name_ch1`` names the refpool, then Cy3; log2 ratio = log2(mutant / refpool),
@@ -19,10 +20,11 @@ Single-mutant GSE (title: Cy5 / Cy3, source):
 
     S1 "yal001c-del-a"            2 4 8 / 1 4 2             -> log2 1 0 2
     S2 "yal001c-del-b"            2 2 2 / 8 2 2, refpool    -> mutant 8 2 2, log2 2 0 0
-    S3 "nth2-del" (NTH2 -> YBR001C, its one candidate ORF)
+    S3 "nth2-del" (NTH2 -> YBR001C, the workbook's pair "ybr001c | Nth2")
                                   4 1 1 / 2 2 1             -> log2 1 -1 0
     S4 "wt-a"                     wildtype
-    S5 "swt1-del-a"               wildtype by substring (Finding)
+    S5 "swt1-del-a"               wildtype by substring (Finding; SWT1 -> YOR166C
+                                  through "List of 215 GSTFs" only)
     S6 "ycr001w-del+ydr001c-del"  double-deletion title: dropped (#479)
     S7 "ycr001w-del+zzz9-del"     "+" with an unresolved partner: dropped (#479)
     S8 "yzz999w-del"              no gene name: ignored
@@ -48,7 +50,7 @@ import pickle
 import re
 import urllib.request
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import GEOparse
 import lmdb
@@ -71,12 +73,7 @@ from torchcell.datamodels.schema import (
     SgaNatMxDeletionPerturbation,
     Temperature,
 )
-from torchcell.datasets.gene_alias_resolution import (
-    GeneNameRefusalReason,
-    GeneNameRefused,
-)
 from torchcell.datasets.scerevisiae import sameith2015 as m
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 _SM = "SmMicroarraySameith2015Dataset"
 _DM = "DmMicroarraySameith2015Dataset"
@@ -86,34 +83,6 @@ _SD_HALF = math.sqrt(0.5)
 _SD_TWO = math.sqrt(2.0)
 _GENES = ("YAL001C", "YBR001C", "YCR001W")
 _GAP = " " * 11
-
-
-class _StubGenome:
-    """The three lookups the refusing resolver reads (#886). ``SUT2`` is shaped as in
-    R64: the standard name of YPR009W and an alias of YMR080C, listed first. ``ALIAS9``
-    is an alias of two genes with no pin.
-    """
-
-    gene_set = {"YBR001C", "YOR166C", "YGL999W", "YHR999W", "YHR998W", "YMR080C"}
-    gene_set |= {"YPR009W"}
-    alias_to_systematic: dict[str, list[str]] = {
-        "NTH2": ["YBR001C"],
-        "SWT1": ["YOR166C"],
-        "OLDNAME": ["YGL999W"],
-        "ALIAS9": ["YHR999W", "YHR998W"],
-        "SUT2": ["YMR080C", "YPR009W"],
-    }
-    feature_index: dict[str, Any] = {
-        "standard_to_ids": {
-            "NTH2": ["YBR001C"],
-            "SWT1": ["YOR166C"],
-            "SUT2": ["YPR009W"],
-        }
-    }
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _describe(table: pd.DataFrame) -> pd.DataFrame:
@@ -169,12 +138,22 @@ _DOUBLE_GSMS = [
 
 
 def _write_workbook(path: Path) -> None:
+    """The release's three sheets, spelled as the release spells them (``Ybr001C``,
+    ``Nth2``). YCR001W carries the symbol ``Ccr1`` in the GSTF list and itself
+    (``Ycr001W``) in the double sheet, as the real workbook does for YML081W / Tda9, so
+    its symbol is CCR1. SWT1 is listed only in ``List of 215 GSTFs``.
+    """
     workbook = openpyxl.Workbook()
-    single = workbook.active
-    single.title = "Single mutants - info"
+    gstfs = workbook.active
+    gstfs.title = "List of 215 GSTFs"
+    gstfs.append(["systematic name", "gene symbol"])
+    gstfs.append(["Yor166C", "Swt1"])
+    gstfs.append(["Ycr001W", "Ccr1"])
+    gstfs.append([None, None])
+    single = workbook.create_sheet("Single mutants - info")
     single.append(["systematic name", "gene symbol"])
-    single.append(["YAL001C", "TFC3"])
-    single.append([" ybr001c ", "NTH2"])
+    single.append(["YAL001C", "Tfc3"])
+    single.append([" ybr001c ", "Nth2"])
     single.append([None, "blank"])
     double = workbook.create_sheet("Double mutants - info")
     double.append(
@@ -188,12 +167,16 @@ def _write_workbook(path: Path) -> None:
             "comments",
         ]
     )
-    double.append(["YCR001W", "ydr001c ", "A", "B", "sel1", "passed", "MATa strain"])
-    double.append(["YBR001C", "YAL001C", "NTH2", "TFC3", "sel2", "passed", "matA"])
-    double.append(["YEL001C", "YFL001W", "E", "F", "sel3", "failed", "MATa"])
-    double.append(["YGL001C", "YHL001W", "G", "H", "sel4", "passed", None])
-    double.append(["YIL001W", "YJL001W", "I", "J", "sel5", "passed", "MATα"])
-    double.append(["YKL001C", "YLL001W", "K", "L", "sel6", "passed", "other note"])
+    double.append(
+        ["YCR001W", "ydr001c ", "Ycr001W", "Dsy1", "sel1", "passed", "MATa strain"]
+    )
+    double.append(["YBR001C", "YAL001C", "Nth2", "Tfc3", "sel2", "passed", "matA"])
+    double.append(["YEL001C", "YFL001W", "Eaa1", "Ffa1", "sel3", "failed", "MATa"])
+    double.append(["YGL001C", "YHL001W", "Gga1", "Hha1", "sel4", "passed", None])
+    double.append(["YIL001W", "YJL001W", "Iia1", "Jja1", "sel5", "passed", "MATα"])
+    double.append(
+        ["YKL001C", "YLL001W", "Kka1", "Lla1", "sel6", "passed", "other note"]
+    )
     workbook.save(path)
 
 
@@ -209,14 +192,14 @@ def _write_raw(raw: Path, gsms: list[GSM]) -> None:
 def single(tmp_path: Path) -> m.SmMicroarraySameith2015Dataset:
     root = tmp_path / "sm"
     _write_raw(root / "raw", _SINGLE_GSMS)
-    return m.SmMicroarraySameith2015Dataset(root=str(root), genome=_genome())
+    return m.SmMicroarraySameith2015Dataset(root=str(root))
 
 
 @pytest.fixture
 def double(tmp_path: Path) -> m.DmMicroarraySameith2015Dataset:
     root = tmp_path / "dm"
     _write_raw(root / "raw", _DOUBLE_GSMS)
-    return m.DmMicroarraySameith2015Dataset(root=str(root), genome=_genome())
+    return m.DmMicroarraySameith2015Dataset(root=str(root))
 
 
 def _nan_safe(value: Any) -> Any:
@@ -288,15 +271,15 @@ def _record(
     return _nan_safe(experiment.model_dump()), reference.model_dump()
 
 
-def _kan(orf: str) -> SgaKanMxDeletionPerturbation:
+def _kan(orf: str, name: str) -> SgaKanMxDeletionPerturbation:
     return SgaKanMxDeletionPerturbation(
-        systematic_gene_name=orf, perturbed_gene_name=orf, strain_id=f"KanMX_{orf}"
+        systematic_gene_name=orf, perturbed_gene_name=name, strain_id=f"KanMX_{orf}"
     )
 
 
-def _nat(orf: str) -> SgaNatMxDeletionPerturbation:
+def _nat(orf: str, name: str) -> SgaNatMxDeletionPerturbation:
     return SgaNatMxDeletionPerturbation(
-        systematic_gene_name=orf, perturbed_gene_name=orf, strain_id=f"NatMX_{orf}"
+        systematic_gene_name=orf, perturbed_gene_name=name, strain_id=f"NatMX_{orf}"
     )
 
 
@@ -308,7 +291,7 @@ _SINGLE_EXPECTED = [
     _record(
         _SM,
         "BY4742",
-        [_kan("YAL001C")],
+        [_kan("YAL001C", "TFC3")],
         _three(5.0, 3.0, 5.0),
         _three(1.5, 3.0, 2.0),
         _three(1.5, 0.0, 1.0),
@@ -320,7 +303,7 @@ _SINGLE_EXPECTED = [
     _record(
         _SM,
         "BY4742",
-        [_kan("YBR001C")],
+        [_kan("YBR001C", "NTH2")],
         _three(4.0, 1.0, 1.0),
         _three(2.0, 2.0, 1.0),
         _three(1.0, -1.0, 0.0),
@@ -332,7 +315,7 @@ _SINGLE_EXPECTED = [
     _record(
         _SM,
         "BY4742",
-        [_kan("YER001W")],
+        [_kan("YER001W", "YER001W")],
         _three(1.0, 1.0, 1.0),
         _three(1.0, 1.0, 1.0),
         _three(0.0, 0.0, 0.0),
@@ -470,78 +453,75 @@ def test_single_side_files_and_wildtype_reference(
     assert single._load_authoritative_single_mutants() == {
         "YAL001C": {
             "systematic_name": "YAL001C",
-            "gene_symbol": "TFC3",
+            "gene_symbol": "Tfc3",
             "strain": "BY4742",
         },
         "YBR001C": {
             "systematic_name": "YBR001C",
-            "gene_symbol": "NTH2",
+            "gene_symbol": "Nth2",
             "strain": "BY4742",
         },
     }
 
 
-def test_convert_to_systematic_refuses_an_unpinned_ambiguous_token(
+def test_title_tokens_resolve_only_through_the_release_workbook(
     single: m.SmMicroarraySameith2015Dataset,
 ) -> None:
-    """#886: a systematic-shaped token passes through, a token with one candidate
-    resolves, a token with none is not a gene name (None), ``SUT2`` resolves through its
-    pin to YPR009W (not the alias table's first candidate YMR080C), and ``ALIAS9``, an
-    alias of two genes with no pin, raises a typed refusal instead of taking the first.
+    """A systematic-shaped token is taken verbatim (upper-cased; GEO titles are lower
+    case); any other token resolves only through the workbook's symbol map, read from
+    all three sheets (SWT1 is only in ``List of 215 GSTFs``); a token in neither is not a
+    gene token (None). The ORF -> symbol inverse drops ORF-as-symbol entries, so
+    YCR001W's symbol is CCR1 although the double sheet writes ``Ycr001W``.
     """
     convert = single._convert_to_systematic
     assert [
-        convert(name) for name in ("", "yal001c", "nth2", "oldname", "none9", "sut2")
-    ] == [None, "YAL001C", "YBR001C", "YGL999W", None, "YPR009W"]
-    with pytest.raises(GeneNameRefused) as info:
-        convert("alias9")
-    assert info.value.refusal.reason is GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED
-    assert info.value.refusal.candidates == ["YHR998W", "YHR999W"]
-    assert ("SUT2", "YPR009W") in single.title_resolutions
-
-
-def test_title_check_refuses_a_pin_the_genome_contradicts(
-    single: m.SmMicroarraySameith2015Dataset,
-) -> None:
-    """The build-time check re-reads each ambiguous token's pin against the genome:
-    once the stub's standard-name owner of SUT2 is YMR080C, the recorded YPR009W
-    resolution is refused, and an ambiguous token with no pin is refused outright.
-    """
-    single.title_resolutions = {("SUT2", "YPR009W")}
-    single._check_title_resolutions()
-    single.title_resolutions = {("ALIAS9", "YHR999W")}
-    with pytest.raises(GeneNameRefused) as unpinned:
-        single._check_title_resolutions()
-    assert (
-        unpinned.value.refusal.reason is GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED
-    )
-
-    class _Contradicting(_StubGenome):
-        feature_index: dict[str, Any] = {"standard_to_ids": {"SUT2": ["YMR080C"]}}
-
-    single.genome = cast(SCerevisiaeGenome, _Contradicting())
-    single.title_resolutions = {("SUT2", "YPR009W")}
-    with pytest.raises(GeneNameRefused) as info:
-        single._check_title_resolutions()
-    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
-
-
-def test_the_two_pins_quote_the_r64_gff_standard_names() -> None:
-    """SUT2 and GAT1 are the ambiguous tokens of GSE42536's titles (2026-10-10)."""
-    assert {
-        alias: (pin.systematic_name, pin.rule.value, pin.quote)
-        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
-    } == {
-        "SUT2": ("YPR009W", "sgd_standard_name", "ID=YPR009W;Name=YPR009W;gene=SUT2;"),
-        "GAT1": ("YFL021W", "sgd_standard_name", "ID=YFL021W;Name=YFL021W;gene=GAT1;"),
+        convert(name)
+        for name in ("", "yal001c", "ybr089c-a", "nth2", "swt1", "del", "mata", "x9")
+    ] == [None, "YAL001C", "YBR089C-A", "YBR001C", "YOR166C", None, None, None]
+    assert single.symbol_map == {
+        "SWT1": "YOR166C",
+        "CCR1": "YCR001W",
+        "TFC3": "YAL001C",
+        "NTH2": "YBR001C",
+        "YCR001W": "YCR001W",
+        "DSY1": "YDR001C",
+        "EAA1": "YEL001C",
+        "FFA1": "YFL001W",
+        "GGA1": "YGL001C",
+        "HHA1": "YHL001W",
+        "IIA1": "YIL001W",
+        "JJA1": "YJL001W",
+        "KKA1": "YKL001C",
+        "LLA1": "YLL001W",
     }
+    assert single.gene_symbols == {
+        orf: symbol for symbol, orf in single.symbol_map.items() if symbol != orf
+    }
+
+
+def test_release_symbol_map_refuses_a_symbol_paired_with_two_orfs(
+    tmp_path: Path,
+) -> None:
+    """A symbol the workbook pairs with two different ORFs across sheets raises: the
+    release would not say which gene a title means. Two different non-ORF symbols for
+    one ORF also raise in the inverse.
+    """
+    path = tmp_path / "book.xlsx"
+    _write_workbook(path)
+    workbook = openpyxl.load_workbook(path)
+    workbook["List of 215 GSTFs"].append(["Yzz001W", "Nth2"])
+    workbook.save(path)
+    with pytest.raises(ValueError, match="pairs the symbol NTH2 with both"):
+        m.release_symbol_map(str(path))
+    with pytest.raises(ValueError, match="names YAL001C both"):
+        m.release_gene_symbols({"TFC3": "YAL001C", "TFC9": "YAL001C"})
 
 
 _DOUBLE_EXPECTED = [
     _record(
         _DM,
         "BY4741",
-        [_kan("YCR001W"), _nat("YDR001C")],
+        [_kan("YCR001W", "CCR1"), _nat("YDR001C", "DSY1")],
         _three(3.0, 3.0, 3.0),
         _three(1.0, 1.0, 1.0),
         _three(1.5, 1.5, 1.5),
@@ -553,7 +533,7 @@ _DOUBLE_EXPECTED = [
     _record(
         _DM,
         "BY4741",
-        [_kan("YAL001C"), _nat("YBR001C")],
+        [_kan("YAL001C", "TFC3"), _nat("YBR001C", "NTH2")],
         _three(1.0, 2.0, 4.0),
         _three(1.0, 1.0, 1.0),
         _three(0.0, 1.0, 2.0),
@@ -609,8 +589,8 @@ def test_gstf_pairs_map_mating_comments_onto_strains(
     } == {
         "gstf1_systematic": "YCR001W",
         "gstf2_systematic": "YDR001C",
-        "gstf1_symbol": "A",
-        "gstf2_symbol": "B",
+        "gstf1_symbol": "Ycr001W",
+        "gstf2_symbol": "Dsy1",
         "selection": "sel1",
         "comments": "MATa strain",
     }
@@ -649,7 +629,7 @@ def test_double_parallel_build_writes_the_same_records(tmp_path: Path) -> None:
     root = tmp_path / "dm_parallel"
     _write_raw(root / "raw", _DOUBLE_GSMS)
     dataset = m.DmMicroarraySameith2015Dataset(
-        root=str(root), genome=_genome(), process_workers=1, batch_size=1
+        root=str(root), process_workers=1, batch_size=1
     )
     assert len(dataset) == 2
     for i, (experiment, reference) in enumerate(_DOUBLE_EXPECTED):
@@ -669,7 +649,7 @@ def test_a_zero_signal_probe_fails_phenotype_validation(tmp_path: Path) -> None:
     with pytest.raises(
         ValueError, match="n_replicates must have the same keys as expression"
     ):
-        m.SmMicroarraySameith2015Dataset(root=str(root), genome=_genome())
+        m.SmMicroarraySameith2015Dataset(root=str(root))
 
 
 def _two_probe_gsm(name: str, title: str, source: str) -> GSM:
@@ -701,7 +681,7 @@ def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
             _two_probe_gsm("M2", "yal001c-del-b", "refpool"),
         ],
     )
-    single = m.SmMicroarraySameith2015Dataset(root=str(single_root), genome=_genome())
+    single = m.SmMicroarraySameith2015Dataset(root=str(single_root))
     assert len(single) == 1
     reference = single[0]["reference"]["phenotype_reference"]
     assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
@@ -720,7 +700,7 @@ def test_reference_n_replicates_counts_the_arrays_in_each_refpool_mean(
             _two_probe_gsm("N2", "ycr001w-del+ydr001c-del-b", "refpool"),
         ],
     )
-    double = m.DmMicroarraySameith2015Dataset(root=str(double_root), genome=_genome())
+    double = m.DmMicroarraySameith2015Dataset(root=str(double_root))
     assert len(double) == 1
     reference = double[0]["reference"]["phenotype_reference"]
     assert reference["expression"] == {"YAL001C": 1.5, "YBR001C": 4.0, "YCR001W": 2.0}
@@ -897,7 +877,7 @@ def test_process_refetches_the_geo_object_when_the_pickle_is_missing(
     (root / "raw" / "GSE42536.pkl").unlink()
     geo = _GeoRecorder(result=_gse(gsms))
     monkeypatch.setattr(GEOparse, "get_GEO", geo)
-    dataset = cls(root=str(root), genome=_genome())
+    dataset = cls(root=str(root))
     assert geo.calls == [
         {"geo": "GSE42536", "destdir": str(root / "raw"), "silent": False}
     ]
@@ -949,7 +929,7 @@ _BATCH_EXPECTED = [
     _record(
         _DM,
         "BY4742",
-        [_kan("YFL001W"), _nat("YEL001C")],
+        [_kan("YFL001W", "FFA1"), _nat("YEL001C", "EAA1")],
         _three(1.0, 1.0, 1.0),
         _three(1.0, 1.0, 1.0),
         _three(0.0, 0.0, 0.0),
@@ -974,7 +954,7 @@ def test_double_process_batch_matches_process_sequential_record_by_record(
     (log2 0, n 1, NaN SE).
     """
     batch = m.DmMicroarraySameith2015Dataset._process_batch(
-        _BATCH_GROUPS, _PROBES, _DM, double.gstf_pairs
+        _BATCH_GROUPS, _PROBES, _DM, double.gstf_pairs, double.gene_symbols
     )
     batch_records = [pickle.loads(blob) for blob in batch]
     assert len(batch_records) == 3
@@ -1005,7 +985,9 @@ def test_double_process_batch_takes_strain_from_the_sorted_upper_pair() -> None:
     """
     pairs = {("YAL001C", "YBR001C"): {"strain": "BY4741"}}
     group = [[_info("D3", ["YBR001C", "YAL001C"], _D3)]]
-    [blob] = m.DmMicroarraySameith2015Dataset._process_batch(group, _PROBES, _DM, pairs)
+    [blob] = m.DmMicroarraySameith2015Dataset._process_batch(
+        group, _PROBES, _DM, pairs, {}
+    )
     record = pickle.loads(blob)
     assert record["reference"]["genome_reference"]["strain"] == "BY4741"
     assert [
@@ -1170,16 +1152,15 @@ def test_probe_mapping_branches(fixture: str, request: pytest.FixtureRequest) ->
 def test_double_convert_to_systematic_and_name_validation(
     double: m.DmMicroarraySameith2015Dataset, single: m.SmMicroarraySameith2015Dataset
 ) -> None:
-    """The double-mutant ``_convert_to_systematic`` resolves as the single one does
-    (#886): an ambiguous token without a pin raises. ``_is_valid_systematic_name``
-    rejects the empty string and accepts a ``-A`` suffix, in both classes.
+    """The double-mutant ``_convert_to_systematic`` resolves through the same workbook
+    map as the single one. ``_is_valid_systematic_name`` rejects the empty string and
+    accepts a ``-A`` suffix, in both classes.
     """
     convert = double._convert_to_systematic
     assert [
-        convert(name) for name in ("", "yal001c", "nth2", "oldname", "none9", "sut2")
-    ] == [None, "YAL001C", "YBR001C", "YGL999W", None, "YPR009W"]
-    with pytest.raises(GeneNameRefused):
-        convert("alias9")
+        convert(name) for name in ("", "yal001c", "nth2", "swt1", "ccr1", "none9")
+    ] == [None, "YAL001C", "YBR001C", "YOR166C", "YCR001W", None]
+    assert double.gene_symbols == single.gene_symbols
     for dataset in (single, double):
         assert [
             dataset._is_valid_systematic_name(name)

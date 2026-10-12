@@ -208,22 +208,6 @@ def test_environment_response_properties_project_the_typed_axes() -> None:
 # --------------------------------------------------------------------------- #
 # #500 / #501: the strain-resolved family through the node builders, end to end
 # --------------------------------------------------------------------------- #
-class _Gene:
-    """The slice of a genome resolution the loader's gene-name policy reads."""
-
-    def __init__(self, systematic: str) -> None:
-        self.systematic_name = systematic
-        self.is_current_gene = True
-
-
-class _TinyGenome:
-    gene_set = {"YAL001C", "YAL002W"}
-    feature_index = {"standard_to_ids": {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"]}}
-
-    def resolve_gene_name(self, name: str) -> _Gene:
-        return _Gene({"TFC3": "YAL001C", "VPS8": "YAL002W"}.get(name, name))
-
-
 def _tiny_matrix() -> Any:
     import pandas as pd
 
@@ -245,7 +229,6 @@ def tiny(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
     import gzip
     import os
 
-    monkeypatch.setattr(loader, "default_genome", lambda: _TinyGenome())
     monkeypatch.setattr(
         loader.EnvChemgenVanacloig2022Dataset, "download", lambda self: None
     )

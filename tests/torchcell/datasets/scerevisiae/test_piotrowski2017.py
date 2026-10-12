@@ -1,11 +1,11 @@
 # tests/torchcell/datasets/scerevisiae/test_piotrowski2017.py
 # [[tests.torchcell.datasets.scerevisiae.test_piotrowski2017]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_piotrowski2017.py
-"""Piotrowski 2017 loader: release readers, dose parsing, strain rules, the build.
+"""Piotrowski 2017 loader: release readers, dose parsing, strain matching, the build.
 
 Everything but the two mirror tests runs on synthetic workbooks written with openpyxl in
-the three released layouts (Data Set 5 matrix, Data Set 4 conditions, Data Set 2 pool)
-and on a fake genome, so no build tree and no network are needed. The mirror tests bind
+the three released layouts (Data Set 5 matrix, Data Set 4 conditions, Data Set 2 pool),
+so no build tree and no network are needed. The loader consults no genome. The mirror tests bind
 every module-level ``SourcedValue`` to its verbatim quote and the release pins to the
 literature mirror's manifest, and skip when the mirror is not mounted.
 
@@ -13,19 +13,18 @@ The fixture (``_write_release``): seven strain rows x eight condition columns, v
 ``v(i, j) = -(10 i + j) / 4`` for row ``i`` and column ``j`` except four ``NA`` cells
 (TFC3 in NPD0002's column, VPS8 in the three non-RIKEN columns).
 
-- Strains: TFC3 (YAL001C, current), VPS8 (YAL002W, current), OLD1 (YAL003W, an alias
-  of YAL002W, which the pool also carries: legacy duplicate), GONE1 (YPL999C, retired),
-  SNQ2 (YDR011W, a selected background locus), YAL058C-A (an alias of YAL056C-A, which
-  the pool does not carry: kept with a ConstructedOrf), YBR001C (labelled by its ORF;
-  the genome spells it NTH2).
+- Strains: TFC3 (YAL001C), VPS8 (YAL002W), OLD1 (YAL003W, an R64 alias of YAL002W),
+  GONE1 (YPL999C, not an R64 gene), SNQ2 (YDR011W, a locus the SGA selections fix),
+  YAL058C-A (an R64 alias of YAL056C-A) and YBR001C (labelled by its ORF, whose pool
+  common name is the ORF). Every one is stored under its released ORF and common name.
 - Conditions: Benomyl 10-ug/ml (a curated table row), NPD0001 100-uM (an InChI and no
   table row), NPD0002 50-ng/ml (no structure: gapped), Ouabain 10-100-ug/ml (a range:
   dropped), NPE0003 (In_final_dataset False: dropped), MMS 4e-05 under a percent
   format (POSCON, so the NCI/NIH/GSK screen), and NSC0001 at 100-uM twice (two NCI
   libraries, one compound, one dose).
 
-Counts: 56 cells, 4 NA, so 52 source records; the two dropped columns hold 7 each; the
-three dropped strains hold 6 each over the six kept columns; 52 - 14 - 18 = 20 kept.
+Counts: 56 cells, 4 NA, so 52 source records; the two dropped columns hold 7 each, so
+52 - 14 = 38 kept.
 """
 
 from __future__ import annotations
@@ -47,42 +46,6 @@ from torchcell.datasets.scerevisiae import piotrowski2017 as p
 from torchcell.datasets.scerevisiae.vanacloig2022 import LIBRARY_STRAIN
 from torchcell.verification.report import Provenance, StatDerivation, VerificationReport
 from torchcell.verification.sourced import SourcedValue
-
-# --------------------------------------------------------------------------- #
-# Fake genome
-# --------------------------------------------------------------------------- #
-_GENES = {"YAL001C", "YAL002W", "YBR001C", "YAL056C-A", "YDR011W"}
-_STANDARD = {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"], "NTH2": ["YBR001C"]}
-_RENAMED = {"YAL003W": "YAL002W", "YAL058C-A": "YAL056C-A"}
-
-
-class _Resolution:
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the strain rules read."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.upper()
-        if upper in _GENES:
-            return _Resolution("current", upper)
-        if upper in _RENAMED:
-            return _Resolution("renamed", _RENAMED[upper])
-        for standard, ids in _STANDARD.items():
-            if upper == standard:
-                return _Resolution("current", ids[0])
-        return _Resolution("retired", None)
-
 
 # --------------------------------------------------------------------------- #
 # Synthetic release
@@ -269,7 +232,6 @@ def _write_release(raw: Path) -> None:
 @pytest.fixture()
 def built(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     """Build the synthetic dataset end to end into a temporary root."""
-    monkeypatch.setattr(p, "default_genome", lambda: _FakeGenome())
     monkeypatch.setattr(
         p.EnvChemgenPiotrowski2017Dataset, "download", lambda self: None
     )
@@ -342,35 +304,28 @@ def test_parse_dose_refuses_a_cell_it_was_not_taught(
 
 
 # --------------------------------------------------------------------------- #
-# Strain rules
+# Strains, as released
 # --------------------------------------------------------------------------- #
-def test_resolve_strains_applies_every_rule_and_keeps_the_rename() -> None:
+def test_resolve_strains_stores_every_pool_row_as_released() -> None:
+    """No genome: the ORF and common name are Data Set 2's, YAL058C-A included."""
     pool = [
         p.PoolStrain(orf=orf, common_name=label, barcode=bc)
         for label, orf, bc in _STRAINS
     ]
-    strains = p.resolve_strains(
-        [s[0] for s in _STRAINS],
-        pool,
-        _FakeGenome(),  # type: ignore[arg-type]  # the slice of the genome API used
-    )
-    assert [
-        (s.label, s.systematic_name, s.perturbed_gene_name, s.drop_rule)
-        for s in strains
-    ] == [
-        ("TFC3", "YAL001C", "TFC3", None),
-        ("VPS8", "YAL002W", "VPS8", None),
-        ("OLD1", None, None, "orf_is_a_legacy_spelling_of_another_pool_orf"),
-        ("GONE1", None, None, "orf_is_not_a_current_genome_gene"),
-        ("SNQ2", None, None, "orf_is_a_selected_background_locus"),
-        ("YAL058C-A", "YAL056C-A", "YAL058C-A", None),
-        ("YBR001C", "YBR001C", "NTH2", None),
+    strains = p.resolve_strains([s[0] for s in _STRAINS], pool)
+    assert [(s.label, s.systematic_name, s.perturbed_gene_name) for s in strains] == [
+        ("TFC3", "YAL001C", "TFC3"),
+        ("VPS8", "YAL002W", "VPS8"),
+        ("OLD1", "YAL003W", "OLD1"),
+        ("GONE1", "YPL999C", "GONE1"),
+        ("SNQ2", "YDR011W", "SNQ2"),
+        ("YAL058C-A", "YAL058C-A", "YAL058C-A"),
+        ("YBR001C", "YBR001C", "YBR001C"),
     ]
-    renamed = p.constructed_orf(strains[5])
-    assert renamed is not None
-    assert renamed.source_systematic_name == "YAL058C-A"
-    assert [g.field for g in renamed.provenance_gaps] == ["relation", "deleted_span"]
-    assert p.constructed_orf(strains[0]) is None
+    assert "drop_rule" not in p.ResolvedStrain.model_fields
+    assert not hasattr(p, "constructed_orf")
+    assert not hasattr(p, "_canonical_common_names")
+    assert not hasattr(p, "default_genome")
 
 
 def _twins(
@@ -384,11 +339,7 @@ def _twins(
         condition_labels=["A", "B"],
         values=np.asarray(values, dtype=np.float64),
     )
-    strains = p.resolve_strains(
-        matrix.strains,
-        [entry, other],
-        _FakeGenome(),  # type: ignore[arg-type]  # the slice of the genome API used
-    )
+    strains = p.resolve_strains(matrix.strains, [entry, other])
     return matrix, strains
 
 
@@ -408,7 +359,7 @@ def test_two_labels_scored_in_one_condition_are_refused_as_a_duplicate() -> None
 def test_resolve_strains_refuses_a_label_outside_the_pool() -> None:
     pool = [p.PoolStrain(orf="YAL001C", common_name="TFC3", barcode="A" * 20)]
     with pytest.raises(ValueError, match="not a pool v2.0 member"):
-        p.resolve_strains(["NOPE"], pool, _FakeGenome())  # type: ignore[arg-type]
+        p.resolve_strains(["NOPE"], pool)
 
 
 def test_read_pool_refuses_a_pool_that_is_not_310_strains(tmp_path: Path) -> None:
@@ -437,7 +388,11 @@ def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
     log = _drop_log(built)
     rules = {rule.rule: rule for rule in log.rules}
     assert (log.released_cells, log.not_scored_cells) == (56, 4)
-    assert (log.source_records, log.kept_records, log.dropped_records) == (52, 20, 32)
+    assert (log.source_records, log.kept_records, log.dropped_records) == (52, 38, 14)
+    assert [rule.rule for rule in log.rules] == [
+        "condition_not_in_the_final_dataset",
+        "dose_is_a_released_range",
+    ]
     assert rules["condition_not_in_the_final_dataset"].n_records == 7
     assert rules["condition_not_in_the_final_dataset"].items == [
         "Cond-000005 NPE0003 (10-ug/ml)"
@@ -446,12 +401,6 @@ def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
     assert rules["dose_is_a_released_range"].items == [
         "Cond-000004 Ouabain (10-100-ug/ml)"
     ]
-    for rule, item in (
-        ("orf_is_a_selected_background_locus", "SNQ2 (YDR011W)"),
-        ("orf_is_not_a_current_genome_gene", "GONE1 (YPL999C)"),
-        ("orf_is_a_legacy_spelling_of_another_pool_orf", "OLD1 (YAL003W)"),
-    ):
-        assert (rules[rule].n_records, rules[rule].items) == (6, [item])
     assert log.not_scored_strains_by_screen == {
         "RIKEN": {"TFC3": 1},
         "NCI/NIH/GSK": {"VPS8": 3},
@@ -460,12 +409,12 @@ def test_drop_log_accounts_for_every_numeric_cell(built: Any) -> None:
 
 
 def test_records_are_condition_major_with_the_released_scores(built: Any) -> None:
-    kept_rows = [0, 1, 5, 6]
+    kept_rows = list(range(len(_STRAINS)))
     kept_columns = [0, 1, 2, 5, 6, 7]
     expected = [
         (j, i) for j in kept_columns for i in kept_rows if (i, j) not in _NA_CELLS
     ]
-    assert len(expected) == len(built) == 20
+    assert len(expected) == len(built) == 38
     for idx, (j, i) in enumerate(expected):
         phenotype = built[idx]["experiment"]["phenotype"]
         assert phenotype["environment_response"] == _value(i, j)
@@ -483,12 +432,20 @@ def test_genotype_is_the_one_barcoded_pool_deletion(built: Any) -> None:
     assert deletion["collection"] == p.POOL_COLLECTION.value
     assert deletion["cassette"] == "kanMX"
     assert deletion["constructed_orf"] is None
-    (renamed,) = built[2]["experiment"]["genotype"]["perturbations"]
-    assert renamed["systematic_gene_name"] == "YAL056C-A"
-    assert renamed["perturbed_gene_name"] == "YAL058C-A"
-    assert renamed["constructed_orf"]["source_systematic_name"] == "YAL058C-A"
-    (by_orf,) = built[3]["experiment"]["genotype"]["perturbations"]
-    assert by_orf["perturbed_gene_name"] == "NTH2"  # the genome's spelling
+    # Column 0 holds every strain row, so records 0..6 are the seven strains in order.
+    stored = [
+        (
+            perturbation["systematic_gene_name"],
+            perturbation["perturbed_gene_name"],
+            perturbation["constructed_orf"],
+        )
+        for idx in range(len(_STRAINS))
+        for perturbation in built[idx]["experiment"]["genotype"]["perturbations"]
+    ]
+    assert stored == [(orf, label, None) for label, orf, _ in _STRAINS]
+    (released,) = built[5]["experiment"]["genotype"]["perturbations"]
+    assert released["systematic_gene_name"] == "YAL058C-A"  # stored as released
+    assert released["perturbed_gene_name"] == "YAL058C-A"
 
 
 def test_environment_is_ypgal_liquid_at_30c_for_48h_in_dmso(built: Any) -> None:
@@ -524,9 +481,9 @@ def test_doses_keep_the_released_number_and_unit(built: Any) -> None:
         return (c["value"], c["unit"], c["basis"])
 
     assert dose(0) == (10.0, "ug/mL", "fixed")  # Benomyl 10-ug/ml
-    assert dose(4) == (100.0, "uM", "fixed")  # NPD0001 100-uM
-    assert dose(8) == (0.05, "ug/mL", "fixed")  # NPD0002 50-ng/ml
-    assert dose(11) == (0.004, "percent", "fixed")  # MMS 4e-05 under 0.000%
+    assert dose(7) == (100.0, "uM", "fixed")  # NPD0001 100-uM
+    assert dose(14) == (0.05, "ug/mL", "fixed")  # NPD0002 50-ng/ml
+    assert dose(20) == (0.004, "percent", "fixed")  # MMS 4e-05 under 0.000%
 
 
 def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) -> None:
@@ -539,10 +496,10 @@ def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) 
     assert benomyl["name"] == resolve_compound_identity(name="Benomyl").name
     assert benomyl["inchikey"] == resolve_compound_identity(name="Benomyl").inchikey
     assert benomyl["smiles"] == _BENOMYL_SMILES  # the released SMILES rides along
-    released = compound(4)
+    released = compound(7)
     assert (released["name"], released["inchikey"]) == ("NPD0001", _ETHANOL_KEY)
     assert released["inchi"] == _ETHANOL_INCHI
-    gapped = compound(8)
+    gapped = compound(14)
     assert (gapped["name"], gapped["inchikey"], gapped["smiles"]) == (
         "NPD0002",
         None,
@@ -554,13 +511,13 @@ def test_compound_takes_the_table_the_released_inchi_or_a_typed_gap(built: Any) 
 
 
 def test_screen_and_replicate_ids_and_the_per_screen_reference(built: Any) -> None:
-    riken, nci = built[0], built[11]
+    riken, nci = built[0], built[20]
     assert riken["experiment"]["phenotype"]["screen_id"] == "RIKEN"
     assert nci["experiment"]["phenotype"]["screen_id"] == "NCI/NIH/GSK"
     assert riken["reference"]["phenotype_reference"]["screen_id"] == "RIKEN"
     assert nci["reference"]["phenotype_reference"]["screen_id"] == "NCI/NIH/GSK"
     # the same compound at the same dose in two NCI libraries stays two conditions
-    first, second = built[14], built[17]
+    first, second = built[26], built[32]
     assert first["experiment"]["environment"] == second["experiment"]["environment"]
     assert first["experiment"]["phenotype"]["replicate_id"] == "Cond-000007"
     assert second["experiment"]["phenotype"]["replicate_id"] == "Cond-000008"
@@ -607,7 +564,7 @@ def test_phenotype_states_the_conservative_replicate_count(built: Any) -> None:
     assert derivation.method.value == "conservative_low"
 
 
-def test_condition_ledger_lists_routes_pool_census_and_renames(built: Any) -> None:
+def test_condition_ledger_lists_routes_and_the_pool_census(built: Any) -> None:
     ledger = _condition_ledger(built)
     assert [row.condition_id for row in ledger.conditions] == [
         c[0] for c in _CONDITIONS
@@ -619,7 +576,7 @@ def test_condition_ledger_lists_routes_pool_census_and_renames(built: Any) -> No
     assert by_id["Cond-000006"].screen == "NCI/NIH/GSK"
     assert by_id["Cond-000001"].in_high_confidence_set is True
     assert by_id["Cond-000002"].n_scored_strains == 7
-    assert ledger.renamed_strains == {"YAL058C-A": "YAL056C-A"}
+    assert "renamed_strains" not in p.ConditionLedger.model_fields
     assert ledger.strains_labelled_twice == {}
     assert len(ledger.absent_pool_strains) == p.POOL_V2.value - len(_STRAINS)
     assert ledger.released_key_comparisons == 3

@@ -425,3 +425,45 @@ Measured on the raw het matrix, rows whose batch is one of the ten SOM batches: 
 - Schema cannot express: an unsourced `aerobicity` (the field is not optional, so it keeps the `aerobic` default with only the `culture_format` gap's note), a `Solvent.percent` gap, a percent-of-standard unit for the partial drop-outs, and a `replaced_allele` on the hom leaf.
 - Decisions the user may reverse: the three compound conflicts where Table S1's OCR names only the header compound (colchicine, sodium arsenite; bathophenanthroline disulfonate and "bisphenol" both appear) are dropped as instructed rather than served on the header; `merged` is deduced from two source ORFs resolving to one gene; DMSO is not asserted as the vehicle.
 - The dev stores must be rebuilt under slurm; after that run the script with `--dev-lmdb` for the served counts.
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+Owner rule (2026-10-12): the data is the data; nothing is dropped unless the authors withdrew it, and the genome gates nothing. What changed in `hillenmeyer2008.py`:
+
+- **ORF rows, no genome.** `read_matrix_rows` no longer calls `resolve_gene_name`, reads no SGD FASTA universe (`_load_sgd_genes` is gone) and builds no `ConstructedOrf`. `StrainRow` keeps the row id's ORF and batch verbatim (`source_orf` is gone; `orf` is the released spelling). The `genome=` constructor argument and `_resolver` are removed. The `constructed_orfs.json` and `dropped_genes.json` artifacts are no longer written. The 24 het / 22 hom ORFs the old gate dropped as retired or non-gene are stored like every other row, and the 52 het / 46 hom renamed ORFs keep their released names. `constructed_orf()` stays in the module only because `parsons2006.py` imports it until #1053 lands; Hillenmeyer does not call it.
+- **`YDL227C:ctrl_<n>` rows (11 per arm).** Stored as released: a deletion of YDL227C with `StrainConstruction(batch="ctrl_<n>")` verbatim, distinct from the `YDL227C:chr4_3` strain. The SOM defines no `ctrl_` batch. Hypothesis (untested): these are HO-locus control strains with distinct tags (Pierce 2006/2007, not mirrored). `DROP_HO_CONTROL_STRAIN` is removed.
+- **Unidentified compounds.** `DROP_UNIDENTIFIABLE` is removed. A label the curated compound table does not identify is stored under the released label with the typed `inchikey` gap `resolved_compound` attaches, and listed per arm in the new `preprocess/compound_identity_gaps.json` (label, environments, arrays, records).
+- **Header vs key-file compound.** `DROP_KEY_HEADER_COMPOUND_CONFLICT` is removed and `KeyHeaderRule.drop_compound_conflict` is renamed `header_served_key_disagrees` (same five pairs). The array is served under the matrix HEADER's compound, the column its values are released under; the key file disagrees and the SOM gives no tie-breaker, so both strings stay in `key_header_checks.json`.
+- **`0gen` arrays.** `DROP_ZERO_GENERATIONS` is removed. The array is stored with `duration_generations=0.0` and `pre_culture=None` plus a `ProvenanceGap(field="pre_culture", reason=not_reported_by_primary)`: a count of 0 carries no sign, so it states no pre-culture. The same gap is on a 0gen control set's reference environment. `pre_culture()` returns `None` for 0 instead of raising; `CultureEnvironment` accepts both values (no validator refuses them).
+- **Kept: the author withdrawal.** The homozygous PDR5 row (`YOR153W`, `som_wrong_gene_deleted`) stays out with its two SOM quotes; `dropped_strains.json` now holds only that rule.
+- **Kept, needs schema.** `heat_shock_cycle_not_representable` (`37c, 45c`, 1 het array) and `unnamed_agent_dosed_into_a_media_swap` (2 hom arrays) have no honest typed carrier (`PhysicalFactor` has no heat-shock member; a `SmallMoleculePerturbation` needs a compound name). Their rules stay in `dropped_records.json`.
+- **Cell accounting.** `dropped_records.json` gains `cell_accounting`: every released value cell is split into stored, dropped-array (per rule) and withdrawn-strain cells, and the build raises if the split does not sum to the independently counted total.
+- The `build_phenotype` SD-of-zero gap is unchanged.
+
+### Measured record counts (raw files, in-process, read-only)
+
+Measured with the module's own `parse_columns`, `group_columns`, `read_matrix_rows` and `count_records` on `$DATA_ROOT/data/torchcell/env_chemgen_hillenmeyer2008_{het,hom}/raw/`. Emulating the old gates on the same functions reproduces the current stores exactly (2,712,677 and 1,063,034), which checks the method. Restored counts are attributed sequentially in the order of the table (rows first, then array rules), because a restored row in a restored array would otherwise count twice and an array served under the header can join an existing group.
+
+| | het | hom |
+|---|---|---|
+| current store (old gate) | 2,712,677 | 1,063,034 |
+| + retired / non-gene ORF rows (24 het, 22 hom rows) | 11,019 | 5,478 |
+| + `YDL227C:ctrl_<n>` rows (11 per arm) | 2,043 | 1,186 |
+| + unidentified-compound arrays (66 het, 32 hom) | 319,317 | 115,464 |
+| + header/key compound arrays (4 het, 7 hom) | 23,188 | 24,924 |
+| + `0gen` arrays (4 het, 9 hom) | 5,888 | 18,590 |
+| **expected after rebuild** | **3,074,132** | **1,228,676** |
+| kept arrays / environment groups | 725 / 530 | 416 / 286 |
+| not stored: heat shock (needs schema) | 1 array, 5,839 records | 0 |
+| not stored: unnamed media agent (needs schema) | 0 | 2 arrays, 8,740 records |
+| not stored: PDR5 withdrawal | 0 | 1 row, 3 records (8 cells) |
+| value cells: total = stored + dropped arrays + withdrawn | 4,210,387 = 4,204,548 + 5,839 + 0 | 1,804,800 = 1,796,052 + 8,740 + 8 |
+| compound labels stored with the `inchikey` gap / their records | 35 / 348,506 | 20 / 127,944 |
+
+The hom tenth 0gen array (latrunculin) is counted under the unidentified-compound line, where the old gate dropped it first. The heat-shock and unnamed-agent record counts are higher than the old ledger's 5,813 and 8,692 because they are now counted over the restored rows too. The compound gap ledger also lists labels that were already stored with the gap (for example tunicamycin, helenine), so its record total exceeds the restored unidentified-array count.
+
+Observation, follow-up: four het labels carry the hybridization-volume suffix in the compound name (`alverine citrate, 30ul total up/dn`, `..., 60ul ...`, and the two `methotrexate` ones). The key-file check strips the suffix, the compound label does not, so these are stored with the `inchikey` gap under the released string; a curated synonym row would identify them without a loader change.
+
+`torchcell/verification/runners.py` still carries the old oracles (2,712,677 / 1,063,034) and `experiments/036-dataset-fixes-before-kg-build/scripts/hillenmeyer2008_inputs.py` still calls `_load_sgd_genes` and the old `read_matrix_rows` signature; neither file is in this change.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

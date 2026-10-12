@@ -49,8 +49,26 @@ course uses for hours post-induction. The t = 0 array was taken BEFORE the addit
 GSE142864 treatment protocol), so its environment carries no estradiol; every later
 array carries ``SmallMoleculePerturbation(estradiol, 1 uM)``.
 
+GENE KEYS (2026.10.12, the data is the data). Every expression layer is keyed by the
+release's own ``GeneName`` token verbatim (6,175 keys: ``AAC1``, ``YIL082W-A``, ...);
+no genome is consulted at build time and no name is rewritten to an R64 systematic name
+(until 2026.10.12 the loader re-keyed 5,082 of them through the annotation). The one
+release-level correction kept is ``OCT1``, which Excel turned into a date in both SI
+workbooks (``EXCEL_DATE_GENE``). Reconciling a release name to the current annotation is
+a downstream step at adapter or modeling time.
+
+The induced gene of each strain is named by the release only by a common-name token
+(Table EV1's genotype string, the tall table's ``TF`` column); no released file carries
+its ORF, and ``InduciblePromoterInsertionPerturbation.systematic_gene_name`` must be an
+ORF. ``RELEASE_TF_TOKENS_WITHOUT_AN_ORF`` is the one remaining crosswalk: the token -> ORF
+pairs the KG build served (derived from that build's ledger, not from a genome call at
+build time), pending group 1's released-gene-name leaf, after which the token is stored
+verbatim and the ORF becomes a typed gap.
+
 REFUSED. Three time courses whose strain (SMY10, SMY19, SMY22) has no Table EV1 row: 21
-arrays. Their genotypes are stated only in McIsaac 2011/2012, which are not mirrored.
+arrays. Their genotypes are stated only in McIsaac 2011/2012, which are not mirrored, and
+the record's reference genome needs the strain's background, which has no typed gap, so
+the refusal stays until a carrier exists.
 """
 
 from __future__ import annotations
@@ -65,7 +83,7 @@ import pickle
 import re
 import shutil
 import zipfile
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Iterable, Mapping
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -1156,47 +1174,239 @@ def validation_timecourse_id(tf: str, restriction: str, mechanism: str) -> str:
 # --------------------------------------------------------------------------- #
 # Gene keys
 # --------------------------------------------------------------------------- #
-class GeneKey(BaseModel):
-    """How one release gene name became the stored key."""
+#: The induced gene's released token -> the ORF the KG build served it under. The
+#: release names the induced gene only by a common-name token (Table EV1's genotype
+#: string, the tall table's ``TF``; ``ACE1`` in Table EV1 is ``CUP2`` in the release,
+#: ``YGR066c`` is Table EV1's spelling of the release's ``YGR066C``) and the insertion
+#: leaf requires an ORF. This table was derived from the 2026.10.11 build's
+#: ``gene_keys.json`` once; the loader makes no genome call. It is the one remaining
+#: crosswalk, pending group 1's released-gene-name leaf (a GenePerturbation child that
+#: carries the released symbol with ``systematic_gene_name`` as a typed gap), after which
+#: the token is stored verbatim and this table goes.
+RELEASE_TF_TOKENS_WITHOUT_AN_ORF: dict[str, str] = {
+    "ACA1": "YER045C",
+    "ACE1": "YGL166W",
+    "ACE2": "YLR131C",
+    "ADA2": "YDR448W",
+    "ADR1": "YDR216W",
+    "AFT1": "YGL071W",
+    "AFT2": "YPL202C",
+    "ANB1": "YJR047C",
+    "ARG80": "YMR042W",
+    "ARG81": "YML099C",
+    "ARN2": "YHL047C",
+    "ARO80": "YDR421W",
+    "ARR1": "YPR199C",
+    "ASH1": "YKL185W",
+    "AZF1": "YOR113W",
+    "BAS1": "YKR099W",
+    "BDF2": "YDL070W",
+    "BMH1": "YER177W",
+    "CAD1": "YDR423C",
+    "CAM1": "YPL048W",
+    "CAT8": "YMR280C",
+    "CBF1": "YJR060W",
+    "CDC73": "YLR418C",
+    "CHA4": "YLR098C",
+    "CIN5": "YOR028C",
+    "CRF1": "YDR223W",
+    "CRZ1": "YNL027W",
+    "CSE2": "YNR010W",
+    "CST6": "YIL036W",
+    "CTI6": "YPL181W",
+    "CTR9": "YOL145C",
+    "CUP2": "YGL166W",
+    "CUP9": "YPL177C",
+    "DAL80": "YKR034W",
+    "DAL81": "YIR023W",
+    "DAL82": "YNL314W",
+    "DIG1": "YPL049C",
+    "DIG2": "YDR480W",
+    "DST1": "YGL043W",
+    "ECM22": "YLR228C",
+    "ERT1": "YBR239C",
+    "FAP1": "YNL023C",
+    "FHL1": "YPR104C",
+    "FKH1": "YIL131C",
+    "FKH2": "YNL068C",
+    "FLO8": "YER109C",
+    "FMP48": "YGR052W",
+    "FZF1": "YGL254W",
+    "GAL11": "YOL051W",
+    "GAL4": "YPL248C",
+    "GAL80": "YML051W",
+    "GAT2": "YMR136W",
+    "GAT3": "YLR013W",
+    "GAT4": "YIR013C",
+    "GCN4": "YEL009C",
+    "GCN5": "YGR252W",
+    "GCR1": "YPL075W",
+    "GCR2": "YNL199C",
+    "GIS1": "YDR096W",
+    "GLN3": "YER040W",
+    "GRX3": "YDR098C",
+    "GRX4": "YER174C",
+    "GSM1": "YJL103C",
+    "GTS1": "YGL181W",
+    "GZF3": "YJL110C",
+    "HAA1": "YPR008W",
+    "HAC1": "YFL031W",
+    "HAP1": "YLR256W",
+    "HAP2": "YGL237C",
+    "HAP3": "YBL021C",
+    "HAP4": "YKL109W",
+    "HAP5": "YOR358W",
+    "HCM1": "YCR065W",
+    "HFI1": "YPL254W",
+    "HIR1": "YBL008W",
+    "HIR2": "YOR038C",
+    "HIR3": "YJR140C",
+    "HMRA1": "YCR097W",
+    "HMS1": "YOR032C",
+    "HMX1": "YLR205C",
+    "HOT1": "YMR172W",
+    "IME1": "YJR094C",
+    "INO4": "YOL108C",
+    "KAR4": "YCL055W",
+    "KSS1": "YGR040W",
+    "LEO1": "YOR123C",
+    "LEU3": "YLR451W",
+    "LOT6": "YLR011W",
+    "LYS14": "YDR034C",
+    "MAC1": "YMR021C",
+    "MBP1": "YDL056W",
+    "MED2": "YDL005C",
+    "MET28": "YIR017C",
+    "MET31": "YPL038W",
+    "MET32": "YDR253C",
+    "MET4": "YNL103W",
+    "MGA1": "YGR249W",
+    "MIG1": "YGL035C",
+    "MIG2": "YGL209W",
+    "MIG3": "YER028C",
+    "MOT3": "YMR070W",
+    "MSN2": "YMR037C",
+    "MSN4": "YKL062W",
+    "MSS11": "YMR164C",
+    "MTF1": "YMR228W",
+    "NDT80": "YHR124W",
+    "NRG1": "YDR043C",
+    "NRM1": "YNR009W",
+    "OAF1": "YAL051W",
+    "OAF3": "YKR064W",
+    "OPI1": "YHL020C",
+    "PAF1": "YBR279W",
+    "PDR1": "YGL013C",
+    "PDR3": "YBL005W",
+    "PDR8": "YLR266C",
+    "PGD1": "YGL025C",
+    "PHD1": "YKL043W",
+    "PHM6": "YDR281C",
+    "PHO11": "YAR071W",
+    "PHO2": "YDL106C",
+    "PHO4": "YFR034C",
+    "PHO5": "YBR093C",
+    "PIP2": "YOR363C",
+    "PPR1": "YLR014C",
+    "RDR1": "YOR380W",
+    "RDS2": "YPL133C",
+    "RFX1": "YLR176C",
+    "RGM1": "YMR182C",
+    "RGR1": "YLR071C",
+    "RGT1": "YKL038W",
+    "RIM101": "YHL027W",
+    "RLM1": "YPL089C",
+    "RME1": "YGR044C",
+    "ROX1": "YPR065W",
+    "ROX3": "YBL093C",
+    "RPD3": "YNL330C",
+    "RPH1": "YER169W",
+    "RPN4": "YDL020C",
+    "RRN10": "YBL025W",
+    "RSF2": "YJR127C",
+    "RTF1": "YGL244W",
+    "RTG1": "YOL067C",
+    "RTG2": "YGL252C",
+    "RTG3": "YBL103C",
+    "SFL1": "YOR140W",
+    "SFP1": "YLR403W",
+    "SGF29": "YCL010C",
+    "SIN3": "YOL004W",
+    "SIN4": "YNL236W",
+    "SIP3": "YNL257C",
+    "SIP4": "YJL089W",
+    "SIR2": "YDL042C",
+    "SKN7": "YHR206W",
+    "SKO1": "YNL167C",
+    "SMP1": "YBR182C",
+    "SNF2": "YOR290C",
+    "SNF5": "YBR289W",
+    "SOK2": "YMR016C",
+    "SPT20": "YOL148C",
+    "SPT3": "YDR392W",
+    "SPT4": "YGR063C",
+    "SPT8": "YLR055C",
+    "SRB2": "YHR041C",
+    "SRB5": "YGR104C",
+    "SRB8": "YCR081W",
+    "SSN2": "YDR443C",
+    "STB1": "YNL309W",
+    "STB5": "YHR178W",
+    "STE12": "YHR084W",
+    "STP1": "YDR463W",
+    "STP2": "YHR006W",
+    "STP4": "YDL048C",
+    "SUB1": "YMR039C",
+    "SUM1": "YDR310C",
+    "SUT1": "YGL162W",
+    "SUT2": "YPR009W",
+    "SWI1": "YPL016W",
+    "SWI5": "YDR146C",
+    "SWI6": "YLR182W",
+    "TAF2": "YCR042C",
+    "TEA1": "YOR337W",
+    "TEC1": "YBR083W",
+    "TFB5": "YDR079C-A",
+    "THI3": "YDL080C",
+    "TOG1": "YER184C",
+    "TYE7": "YOR344C",
+    "UAF30": "YOR295W",
+    "UGA3": "YDL170W",
+    "UME1": "YPL139C",
+    "UME6": "YDR207C",
+    "UPC2": "YDR213W",
+    "URE2": "YNL229C",
+    "USV1": "YPL230W",
+    "VHR1": "YIL056W",
+    "WAR1": "YML076C",
+    "WHI5": "YOR083W",
+    "WTM1": "YOR230W",
+    "WTM2": "YOR229W",
+    "XBP1": "YIL101C",
+    "YAP1": "YML007W",
+    "YAP3": "YHL009C",
+    "YAP5": "YIR018W",
+    "YAP6": "YDR259C",
+    "YGL117W": "YGL117W",
+    "YGR066C": "YGR066C",
+    "YGR066c": "YGR066C",
+    "YHP1": "YDR451C",
+    "YLL054C": "YLL054C",
+    "YOX1": "YML027W",
+    "YRM1": "YOR172W",
+    "YRR1": "YOR162C",
+    "ZAP1": "YJL056C",
+    "ZNF1": "YFL052W",
+}
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
 
-    release_name: str
-    stored_key: str
-    status: str
-
-
-def resolve_gene_keys(
-    names: Iterable[str], resolve: Callable[[str], tuple[str, str]]
-) -> dict[str, GeneKey]:
-    """Release gene name -> stored key (the R64 systematic name where it resolves).
-
-    ``resolve`` returns ``(systematic_name, status)`` (the genome's layered resolver).
-    Two release names landing on one key is refused: the arrays would lose a gene.
-    """
-    out: dict[str, GeneKey] = {}
-    for name in names:
-        systematic, status = resolve(name)
-        out[name] = GeneKey(release_name=name, stored_key=systematic, status=status)
-    keys = [g.stored_key for g in out.values()]
-    if len(set(keys)) != len(keys):
-        raise ValueError("two release gene names resolve to one systematic name")
-    return out
-
-
-def default_resolver() -> Callable[[str], tuple[str, str]]:
-    """The R64-4-1 layered gene-name resolver over ``$DATA_ROOT/data/sgd/genome``."""
-    from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
-
-    genome = default_genome()
-
-    def resolve(name: str) -> tuple[str, str]:
-        result = genome.resolve_gene_name(name)
-        if result.systematic_name is None:
-            raise ValueError(f"{name}: ambiguous gene name {result.candidates}")
-        return result.systematic_name, result.status.value
-
-    return resolve
+def induced_orf(token: str) -> str:
+    """The ORF the pinned table pairs with a released induced-gene token."""
+    if token not in RELEASE_TF_TOKENS_WITHOUT_AN_ORF:
+        raise StrainTableError(
+            f"{token!r}: an induced-gene token the pinned table does not carry"
+        )
+    return RELEASE_TF_TOKENS_WITHOUT_AN_ORF[token]
 
 
 # --------------------------------------------------------------------------- #
@@ -1314,8 +1524,8 @@ class ReleaseLedger(BaseModel):
     refused: list[RefusedTimecourse]
     n_refused_arrays: int
     excel_date_gene_restored: str
-    gene_key_status: dict[str, int]
-    gene_keys_renamed: int
+    n_gene_keys_as_released: int
+    n_tf_tokens_pinned: int
     arrays_per_timecourse: dict[str, int]
     strains_per_background: dict[str, int]
     yrsm_identified: dict[str, str]
@@ -1564,10 +1774,6 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
             "Hackett 2020 raw files linked into %s (sha256 verified)", self.raw_dir
         )
 
-    def gene_resolver(self) -> Callable[[str], tuple[str, str]]:
-        """The gene-name resolver the build keys arrays with (tests replace it)."""
-        return default_resolver()
-
     # ---- build ---------------------------------------------------------------
     @post_process
     def process(self) -> None:
@@ -1581,9 +1787,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         if len(genes) != N_GENES:
             raise ReleaseShapeError(f"{len(genes)} genes, expected {N_GENES}")
         validation = read_validation(osp.join(self.raw_dir, VALIDATION_NAME), genes)
-        resolve = self.gene_resolver()
-        gene_keys = resolve_gene_keys(genes, resolve)
-        standard_of = self._standard_names(tall, validation, gene_keys)
+        standard_of = self._standard_names(tall, validation)
 
         backgrounds = {
             key: build_background(key, strains[row])
@@ -1592,7 +1796,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         references_of_bg = {k: genome_reference(b) for k, b in backgrounds.items()}
         pub = publication()
 
-        tall_courses, refused = self._tall_timecourses(tall, specs, resolve)
+        tall_courses, refused = self._tall_timecourses(tall, specs)
         valid_courses = self._validation_timecourses(validation, specs)
         groups = {
             TALL_ZIP_NAME: tall.groupby(
@@ -1612,12 +1816,11 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
             pub_pointer = self._intern(pub, PAPER_DOI, itxn)
             for course in [*tall_courses, *valid_courses]:
                 spec = specs[course.table_strain]
-                genotype = self._genotype(spec, resolve, standard_of)
+                genotype = self._genotype(spec, standard_of)
                 gene_names.update(genotype.systematic_gene_names)
                 arrays = self._arrays(
                     groups[course.release_table].get_group(tuple(course.group_key)),
                     course,
-                    gene_keys,
                 )
                 reference = InductionTimecourseExpressionExperimentReference(
                     dataset_name=self.name,
@@ -1653,7 +1856,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         interned_env.close()
         self._gene_names = gene_names
         self._write_ledger(
-            idx, tall_courses, valid_courses, refused, gene_keys, specs, n_by_course
+            idx, tall_courses, valid_courses, refused, genes, specs, n_by_course
         )
         pd.DataFrame(
             [
@@ -1681,36 +1884,30 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         return {"$ref": digest, "name": str(hint)}
 
     @staticmethod
-    def _standard_names(
-        tall: pd.DataFrame, validation: pd.DataFrame, gene_keys: Mapping[str, GeneKey]
-    ) -> dict[str, str]:
-        """Each induced gene's systematic name -> the release's TF token for it.
+    def _standard_names(tall: pd.DataFrame, validation: pd.DataFrame) -> dict[str, str]:
+        """Each induced gene's pinned ORF -> the release's TF token for it.
 
         The table and the release must name the same gene (``ACE1`` in Table EV1 and
-        ``CUP2`` in the release both resolve to YGL166W); the release's token is the
+        ``CUP2`` in the release are pinned to YGL166W); the release's token is the
         stored standard name, since it is what the arrays are keyed under.
         """
         out: dict[str, str] = {}
         for tf in [*tall["TF"].unique(), *validation["TF"].unique()]:
-            if str(tf) in gene_keys:
-                out[gene_keys[str(tf)].stored_key] = str(tf)
+            if str(tf) in RELEASE_TF_TOKENS_WITHOUT_AN_ORF:
+                out[induced_orf(str(tf))] = str(tf)
         return out
 
     @staticmethod
-    def _genotype(
-        spec: StrainSpec,
-        resolve: Callable[[str], tuple[str, str]],
-        standard_of: Mapping[str, str],
-    ) -> Genotype:
+    def _genotype(spec: StrainSpec, standard_of: Mapping[str, str]) -> Genotype:
         """The strain's designed edit (none for a control strain).
 
-        The induced gene is the table token resolved on R64; its stored standard name
-        is the release's TF token for that gene (``CUP2`` where Table EV1 writes
-        ``ACE1``), since the release names the arrays' genes that way.
+        The induced gene is the table token's pinned ORF; its stored standard name is
+        the release's TF token for that gene (``CUP2`` where Table EV1 writes ``ACE1``),
+        since the release names the arrays' genes that way.
         """
         if spec.insertion is None:
             return Genotype(perturbations=[])
-        systematic = resolve(spec.insertion.gene_token)[0]
+        systematic = induced_orf(spec.insertion.gene_token)
         standard = standard_of[systematic]
         return Genotype(
             perturbations=[insertion_perturbation(spec, systematic, standard)]
@@ -1718,9 +1915,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
 
     @staticmethod
     def _tall_timecourses(
-        tall: pd.DataFrame,
-        specs: Mapping[str, StrainSpec],
-        resolve: Callable[[str], tuple[str, str]],
+        tall: pd.DataFrame, specs: Mapping[str, StrainSpec]
     ) -> tuple[list[Timecourse], list[RefusedTimecourse]]:
         """The tall table's time courses in release order, refusals split out."""
         key = list(TALL_COLUMNS[:5])
@@ -1749,7 +1944,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
                 continue
             if ordered[0] != 0.0:
                 raise ReleaseShapeError(f"{tc} has no t = 0 array")
-            _check_tf_matches(specs[table_strain], tf, mechanism, resolve)
+            _check_tf_matches(specs[table_strain], tf, mechanism)
             courses.append(
                 Timecourse(
                     timecourse_id=tc,
@@ -1807,9 +2002,12 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
 
     @staticmethod
     def _arrays(
-        sub: pd.DataFrame, course: Timecourse, gene_keys: Mapping[str, GeneKey]
+        sub: pd.DataFrame, course: Timecourse
     ) -> dict[float, InductionTimecourseExpressionPhenotype]:
-        """Every array of one time course (its release rows), keyed by minutes."""
+        """Every array of one time course (its release rows), keyed by minutes.
+
+        Each layer is keyed by the release's ``GeneName`` token verbatim.
+        """
         layers_of = (
             TALL_LAYERS if course.release_table == TALL_ZIP_NAME else VALIDATION_LAYERS
         )
@@ -1819,7 +2017,7 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
                 raise ReleaseShapeError(
                     f"{course.timecourse_id} t={minutes}: {len(block)} gene rows"
                 )
-            keys = [gene_keys[str(g)].stored_key for g in block["GeneName"]]
+            keys = [str(g) for g in block["GeneName"]]
             layers = {
                 field: dict(
                     zip(keys, block[column].astype(float).tolist(), strict=True)
@@ -1841,13 +2039,10 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         tall_courses: list[Timecourse],
         valid_courses: list[Timecourse],
         refused: list[RefusedTimecourse],
-        gene_keys: Mapping[str, GeneKey],
+        genes: list[str],
         specs: Mapping[str, StrainSpec],
         n_by_course: Mapping[str, int],
     ) -> None:
-        status: dict[str, int] = {}
-        for key in gene_keys.values():
-            status[key.status] = status.get(key.status, 0) + 1
         used = {c.table_strain for c in [*tall_courses, *valid_courses]}
         per_bg: dict[str, int] = {}
         for strain in used:
@@ -1867,10 +2062,8 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
             refused=refused,
             n_refused_arrays=sum(r.n_arrays for r in refused),
             excel_date_gene_restored=EXCEL_DATE_GENE,
-            gene_key_status=dict(sorted(status.items())),
-            gene_keys_renamed=sum(
-                1 for k in gene_keys.values() if k.stored_key != k.release_name
-            ),
+            n_gene_keys_as_released=len(genes),
+            n_tf_tokens_pinned=len(RELEASE_TF_TOKENS_WITHOUT_AN_ORF),
             arrays_per_timecourse=dict(n_by_course),
             strains_per_background=dict(sorted(per_bg.items())),
             yrsm_identified={
@@ -1883,7 +2076,16 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
             handle.write(ledger.model_dump_json(indent=2))
         with open(osp.join(self.preprocess_dir, "gene_keys.json"), "w") as handle:
             json.dump(
-                {name: key.model_dump() for name, key in sorted(gene_keys.items())},
+                {
+                    "rule": "every expression layer is keyed by the release's "
+                    "GeneName token verbatim; the induced gene's ORF comes from "
+                    "RELEASE_TF_TOKENS_WITHOUT_AN_ORF, pending group 1's "
+                    "released-gene-name leaf",
+                    "n_gene_keys_as_released": len(genes),
+                    "tf_tokens_pinned": dict(
+                        sorted(RELEASE_TF_TOKENS_WITHOUT_AN_ORF.items())
+                    ),
+                },
                 handle,
                 indent=1,
             )
@@ -1917,13 +2119,11 @@ class InductionTimecourseHackett2020Dataset(ExperimentDataset):
         )
 
 
-def _check_tf_matches(
-    spec: StrainSpec, tf: str, mechanism: str, resolve: Callable[[str], tuple[str, str]]
-) -> None:
+def _check_tf_matches(spec: StrainSpec, tf: str, mechanism: str) -> None:
     """The release's induced gene and system agree with the strain's Table EV1 row.
 
     A control row has no insertion and the release names its activator (``GEV``,
-    ``Z3EV``) as the TF. Otherwise both names must resolve to ONE R64 gene (``CUP2`` in
+    ``Z3EV``) as the TF. Otherwise both tokens must be pinned to ONE ORF (``CUP2`` in
     the release and ``ACE1`` in Table EV1 are YGL166W), and the release's system must
     be the promoter's family (Pgal1 answers GEV; Z3EVpr and 4ZEVpr answer ZEV-family
     activators, which the release writes ``ZEV``).
@@ -1938,7 +2138,7 @@ def _check_tf_matches(
             f"{spec.row.strain}: release system {mechanism}, table promoter "
             f"{spec.insertion.promoter_name}"
         )
-    if resolve(tf)[0] != resolve(spec.insertion.gene_token)[0]:
+    if induced_orf(tf) != induced_orf(spec.insertion.gene_token):
         raise StrainTableError(
             f"{spec.row.strain}: release induces {tf}, table names "
             f"{spec.insertion.gene_token}"

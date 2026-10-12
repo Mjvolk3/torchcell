@@ -413,3 +413,81 @@ The new `ConcentrationUnit.percent` member makes 109 of 130 dev stores read STAL
 `ConcentrationUnit` under `build_manifest`, and the served KG carries the pre-#807
 Vanacloig records until the next FULL rebuild. Both are rebuild scheduling, not dose
 decisions, so #764 closes on the measurement above.
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+Owner rule: the data is the data; the genome is a separate layer and gates nothing. The
+loader no longer reads a genome (`default_genome`, `resolve_library_rows`,
+`_canonical_common_names`, `LegacyOrfStrain`, `legacy_orf_strain` and the ledger's
+`legacy_orf_strains` are gone). Every library row whose gene column names a systematic ORF
+is stored under that ORF verbatim (`systematic_gene_name`), with `perturbed_gene_name`
+the release's own `std_name` for that row (the ORF when the cell is empty). The release
+has no row with an empty `std_name`, no row without a barcode, and no two rows with the
+same ORF and barcode (a repeat would raise rather than collapse).
+
+### Rules removed, and what they held
+
+Counts below were measured in process from the sha256-pinned raw matrix
+(`GSE186866_ChemGenomics_Raw_Counts_matrix.txt.gz`, 3,651 rows x 45 condition tokens =
+164,295 cells), read only; per-rule numbers on the 34 Fig 1B conditions match the served
+ledger exactly.
+
+| Removed rule | Served ledger | Now stored, 45 conditions |
+|---|---:|---:|
+| `orf_is_not_a_current_genome_gene` (22 ORFs) | 748 | 990 |
+| `orf_is_a_legacy_spelling_of_another_library_orf` (17 ORFs) | 578 | 765 |
+| `orf_is_a_selected_background_locus` (YBL005W, YDR011W, YEL063C, YNL268W) | 136 | 180 |
+| `barcodeless_row_of_an_orf_another_row_carries_with_a_barcode` | 0 | 0 |
+| `all_three_replicate_counts_are_zero` | 3,942 | 5,202 cells (3,942 on the previously served rows and conditions, 29 on the restored rows, 1,231 in the 11 Table S1 conditions) |
+| `compound_without_a_structure_identifier` | 0 | 0 dropped; QUADRIS1 and QUADRIS2 stored with the `inchikey` gap |
+| `compound_not_reported_by_the_paper` (11 tokens) | 40,161 | 40,139 (11 x 3,649; the other 22 cells are the two all-NaN rows) |
+
+The retired and legacy-spelling rows are stored under their released names, for example
+YAR037W (std_name YAR037W), YCL074W (TY5A), YBR075W next to YBR074W (PFF1), and YFR024C
+next to YFR024C-A (LSB3): each is its own barcoded strain.
+
+The 11 tokens the old rule called "not reported by the paper" are in Table S1 with an IC30
+cell each, so they are stored at their sourced dose, not with a dose gap: caffeic acid 7.5
+mM, 2,4-dimethylimidazole 6 mM, levulinic acid 10 mM, "Mycobutanil" (myclobutanil) 13
+ug/mL, sodium acetate 150 mM, sodium butyrate 0.19 mM, sodium glyoxylate 0.19 mM,
+2-methylimidazole 3.8 mM and 4(5)-methylimidazole 3.3 mM (IC30; caffeic acid and the two
+methylimidazoles in the 1% DMSO vehicle), and QUADRIS-1 0.08% and QUADRIS-2 0.04% under the
+fixed basis, because the Methods say "two concentrations were arbitrarily selected"
+(`QUADRIS_ARBITRARY_DOSE`). The Methods also name QUADRIS unpaired ("except with MMS and
+QUADRIS compounds, which were unpaired"), so both QUADRIS doses take the pooled 16-column
+control, as MMS does. QUADRIS is a commercial formulation; its curated identity row
+resolves no structure, so its compound carries the `inchikey` gap and is listed in the
+ledger's new `compound_identity_gaps` section.
+
+An all-zero cell is stored with the method's own value, the log2 of the CPM prior ratio,
+and its sample SD, which is exactly 0 and stored as 0.0. `EnvironmentResponsePhenotype`
+accepts an SD of 0 under `sample_sd`.
+
+### Background-locus contradiction, stored as released
+
+The release carries kanMX deletion rows at four loci the SGA background also replaced:
+YBL005W (PDR3, `pdr3Δ::KlURA3`), YDR011W (SNQ2, `snq2Δ::KlLEU2`), YEL063C (CAN1,
+`can1Δ::STE2pr-Sp_his5`) and YNL268W (LYP1, `lyp1Δ`). A kanMX deletion of a locus the
+background already deleted contradicts the strain's own construction. The rows are stored
+as released; the contradiction is noted here and not resolved. `SELECTED_BACKGROUND_LOCI`
+and `SGD_ORF_HISTORY` are no longer used by this loader and stay only because
+`piotrowski2017.py` imports them.
+
+### Ledger after the change
+
+`dropped_records.json` accounts for every released cell: source = stored + not a value +
+dropped.
+
+- `not_a_value`, `every_count_of_the_row_is_missing`: 2 rows (YBR208C DUR1, YGL234W ADE5)
+  x 45 = 90 cells. These were the whole of the old 68 under
+  `row_is_not_a_barcoded_orf_or_carries_no_counts` (2 x 34); the release has no
+  non-ORF-shaped gene column.
+- Rule `gene_column_is_not_a_systematic_orf`: 0 in GSE186866. A non-ORF row would need
+  group 1's released-gene-name leaf, so it stays a counted rule.
+- Rule `a_count_the_cell_uses_is_missing` (a source NaN): 0 in GSE186866.
+
+Expected stored records after rebuild: 3,649 rows x 45 conditions = 164,205 (served
+118,662). Check: 118,662 + 40,139 + 748 + 578 + 136 + 3,942 = 164,205, and 164,295 -
+164,205 = 90 not-a-value cells.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

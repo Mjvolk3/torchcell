@@ -120,3 +120,17 @@ Slurm job 3925 (`gilahyper_build_dataset_lmdbs_array.slurm`: `build_dataset_lmdb
 | L4 | current_genome_genes | every one of the 289 names is a current gene |
 
 The compound rule counts a released SMILES as an identifier (`ontology_checks.IDENTITY_FIELDS`), so of the 33 conditions with an `inchikey` gap the 26 with no structure at all are the verifier's 26 gapped compounds (7,500 references); the 7 with a SMILES and no InChI read as identified. The references are twice the records because the DMSO vehicle is a compound too.
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+The loader no longer consults a genome. `resolve_strains(labels, pool)` matches each Data Set 5 label to its Data Set 2 pool row and stores that row's ORF verbatim as `systematic_gene_name` and its common name verbatim as `perturbed_gene_name` (the ORF where the row's common name is the ORF; 5 of the 310 pool rows). Removed: `_canonical_common_names`, `default_genome`, the `SCerevisiaeGenome` import, `constructed_orf` and every `ConstructedOrf`, `drop_rule` on `ResolvedStrain`, the `SELECTED_BACKGROUND_LOCI` and `SGD_ORF_HISTORY` imports, `renamed_strains` in `conditions.json`, and the three strain rules `orf_is_a_selected_background_locus`, `orf_is_not_a_current_genome_gene` and `orf_is_a_legacy_spelling_of_another_pool_orf` (0 records each in the served build). `DropRule.scope` is now condition-only.
+
+- **YAL058C-A is stored as YAL058C-A**, not as YAL056C-A with a `ConstructedOrf`. Its record count does not change.
+- **`perturbed_gene_name` is the release's own common name** on every record, no longer the genome's standard spelling. How many of the 289 strains change spelling is measured at build.
+- **Kept, unchanged:** `strains_labelled_twice` (TCD1/YHR003C and TCD2/YKL027W, two labels for one pool strain scored in disjoint screens, which raises only on a double score); `absent_pool_strains` (21 pool strains Data Set 5 does not carry, read from the release alone); the compound identity route (curated table, then released InChI, then the typed `inchikey` gap); and the accounting assertion.
+- **`condition_not_in_the_final_dataset` (1 condition, 289 records) stays.** It is the release's own metadata (Data Set 4 `In_final_dataset = False`, and the Data Set 5 title counts 11,983 profiles), not a filter of ours. The docstring and the rule description now say so.
+- **`dose_is_a_released_range` (8 conditions, 2,312 records) stays; it needs schema.** `SmallMoleculePerturbation.concentration` is a required `Concentration`, so it cannot be `None` and cannot carry a typed gap, and `Concentration` is not a gap carrier. `Concentration(basis=fixed)` with no value does validate, but it would hold an unstated dose silently with the released range string nowhere on the record. Storing these needs an interval dose or a gap route on the concentration.
+- **NA cells** (48,923) are not values and stay counted as `not_scored_cells`.
+- **Expected count:** 3,438,421 released z-scores minus 289 minus 2,312 = 3,435,820, the served count; the strain rules removed here held 0 records.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

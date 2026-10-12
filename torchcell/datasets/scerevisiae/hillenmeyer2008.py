@@ -59,14 +59,24 @@ each row is a different physical strain.
 - HOM: ``BarcodedKanMxDeletionPerturbation`` with the same cassette and construction
   fields; at the BY marker loci what was physically deleted is a typed gap on
   ``constructed_orf``.
-- Both: ``construction=StrainConstruction(batch=<chrX_Y>)`` from the row id, ``collection``
-  = the deletion pool named in the control-set id (``het_04_01_2`` ...), barcodes ``None``
-  with a gap (the tag sequences are in the SGDP tables, not in the release).
-- A source ORF that the current genome renames is kept under the current gene with a
-  ``ConstructedOrf`` naming the source ORF (#505 G3). When two source ORFs of one release
-  resolve onto ONE current gene the relation is ``merged`` (two features annotated
-  separately at construction time are one gene now); a lone rename is gapped, since the
-  resolver cannot tell an alias from a reannotation. Two strains therefore never average.
+- Both: ``construction=StrainConstruction(batch=<batch>)`` from the row id verbatim,
+  ``collection`` = the deletion pool named in the control-set id (``het_04_01_2`` ...),
+  barcodes ``None`` with a gap (the tag sequences are in the SGDP tables, not in the
+  release).
+
+ORF. ``systematic_gene_name`` and ``perturbed_gene_name`` are the row id's ORF exactly as
+the release spells it (the release carries no gene symbol). The loader consults no
+genome: no name resolution, no gene universe, no ``ConstructedOrf``. An ORF that a later
+SGD release renamed, merged or retired (24 het and 22 hom row ORFs under R64-4-1, among
+them non-gene features) is stored under its released spelling like every other row;
+relating a released ORF to the current annotation is a modeling-time join, not a loader
+decision.
+
+``YDL227C:ctrl_<n>`` (11 rows per arm). The SOM defines no ``ctrl_`` batch; these rows are
+stored as the release labels them, a deletion of YDL227C with
+``StrainConstruction(batch="ctrl_<n>")`` verbatim, so they stay distinct strains from the
+``YDL227C:chr4_3`` row. Hypothesis (untested): they are HO-locus control strains with
+distinct tags (Pierce 2006/2007, not mirrored).
 
 ENVIRONMENT -- parsed from each column header
 ``filename:cond1:conc1:unit1:cond2:conc2:unit2:generations:pool:scanner`` and CROSS-CHECKED
@@ -86,27 +96,39 @@ SOM Table S1 and cond2, when present, ALWAYS adds a second small molecule:
   the conflict table); ``synthetic complete`` -> ``SC``; ``YP glycerol`` ->
   ``YP_GLYCEROL_LIQUID``.
 - everything else -> ``SmallMoleculePerturbation(resolved_compound(label), dose)`` with
-  ``solvent=None`` and a typed gap (no vehicle is stated per compound).
+  ``solvent=None`` and a typed gap (no vehicle is stated per compound). A label the
+  curated compound table does not identify keeps the released label as
+  ``Compound.name`` and carries the typed ``inchikey`` gap ``resolved_compound`` attaches;
+  it is stored, and listed with its record count in
+  ``preprocess/compound_identity_gaps.json``.
+
+HEADER VS KEY FILE COMPOUND. On five header/key pairs the key file names a different
+compound from the matrix header and the SOM gives no tie-breaker. The array is served
+under the HEADER's compound, the column the values are released under
+(``KeyHeaderRule.header_served_key_disagrees``); both strings stay in
+``preprocess/key_header_checks.json``.
 
 The environment is a ``CultureEnvironment``: the SIGN of the generation count becomes
 ``pre_culture`` (negative: ``frozen_stock``; positive: a YPD log-phase pre-culture to
 OD600 2.0, ~10 generations, both quoted from the SOM), ``duration_generations`` keeps the
 magnitude, and ``culture_format`` is gapped (vessel and aeration are deferred to Pierce
-2006). TEMPERATURE IS NOT DEFAULTED: a typed gap naming Pierce 2006.
+2006). A ``0gen`` array is stored with ``duration_generations=0.0`` and
+``pre_culture=None`` with a typed ``not_reported_by_primary`` gap: a count of 0 carries no
+sign, so it states no pre-culture. TEMPERATURE IS NOT DEFAULTED: a typed gap naming
+Pierce 2006.
 
 DOSES are canonicalized within the molar family before they become part of the
 environment identity (``1.5 m`` and ``1.5e+06 um`` are one dose).
 
-DROPPED (counted per rule in ``preprocess/dropped_records.json`` and
-``preprocess/dropped_strains.json``):
+NOT STORED (counted per rule in ``preprocess/dropped_records.json`` and
+``preprocess/dropped_strains.json``, with a per-cell accounting that must sum):
 
-- ARRAYS: a compound with no structure identifier; the ``37c, 45c`` heat-shock cycle; a
-  dose on a media swap with no named agent; a compound-name conflict between the header
-  and the key file (no tie-breaker in the SOM); a ``0gen`` array (zero generations in the
-  condition by the SOM's own definition of the field, so no exposure happened).
-- STRAINS: the homozygous PDR5 strain (the SOM: it "did not have the correct gene
-  deleted"); the eleven ``YDL227C:ctrl_*`` rows, control strains of unknown construction
-  that are not a YDL227C deletion; retired or non-gene ORFs (``dropped_genes.json``).
+- STRAIN, author withdrawal: the homozygous PDR5 row (``YOR153W``), which the SOM says
+  "did not have the correct gene deleted".
+- ARRAYS, no typed carrier in the schema (needs schema): the ``37c, 45c`` heat-shock cycle
+  (``PhysicalFactor`` has no heat-shock member, and a steady 45 C would be false), and a
+  dose on a media swap whose agent is named nowhere (a ``SmallMoleculePerturbation``
+  needs a compound name).
 
 REPLICATE AGGREGATION. Within one (strain row, environment, control set) group each array
 contributes ONE value and the record's value is the mean over arrays with the sample SD
@@ -154,10 +176,7 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
-from torchcell.datamodels.compound_identity import (
-    resolve_compound_identity,
-    resolved_compound,
-)
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import (
     HILLENMEYER_DROPOUT_MEDIA,
     HILLENMEYER_PARTIAL_DROPOUT_LEVELS,
@@ -213,7 +232,6 @@ from torchcell.literature.manifest import (
     RetrievalRecord,
     SourceCheck,
 )
-from torchcell.sequence.genome.registry import SGD_S288C_R64, resolve
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -453,7 +471,8 @@ SOURCED_VALUES: dict[str, SourcedValue] = {
     "generations_definition": _som_sv(
         "generations in the condition",
         QUOTE_GENERATIONS_DEFINITION,
-        note="a 0gen array therefore spent no generations in the condition",
+        note="a 0gen array is stored with duration_generations 0.0; its count carries "
+        "no sign, so its pre-culture is a typed gap",
     ),
     "pdr5_wrong_strain": _som_sv(
         "YOR153W (hom)", QUOTE_PDR5, note=f"preceded by: {QUOTE_WRONG_GENE!r}"
@@ -534,13 +553,6 @@ MATRICES: dict[str, _MatrixSpec] = {
 #: The strain name every record's reference genome states (``SOURCED_VALUES``).
 BACKGROUND_STRAIN = "BY4743"
 
-# S288C R64 gene universe (systematic ORF + RNA-coding names). A resolved name must also
-# be in this universe, which is the same set the L4 containment rule is scored against.
-_SGD_GENE_FASTAS = (
-    "orf_coding_all_R64-4-1_20230830.fasta",
-    "rna_coding_R64-4-1_20230830.fasta",
-)
-
 _MOLAR_FAMILY: tuple[tuple[str, ConcentrationUnit, Decimal], ...] = (
     ("m", ConcentrationUnit.molar, Decimal(1)),
     ("mm", ConcentrationUnit.millimolar, Decimal("1e-3")),
@@ -568,48 +580,33 @@ _MEDIA_SWAPS: dict[str, Media] = {
 # Missing-value tokens in the score matrices (upper-cased) -- skipped when aggregating.
 _MISSING = {"", "NA", "NAN", "NULL"}
 
-DROP_UNIDENTIFIABLE = "unidentifiable_agent"
+#: Array (column) rules: a released array with no typed carrier in the schema. Both
+#: need a schema change to be stored (no new member or leaf is added here).
 DROP_HEAT_SHOCK_CYCLE = "heat_shock_cycle_not_representable"
 DROP_UNNAMED_MEDIA_AGENT = "unnamed_agent_dosed_into_a_media_swap"
-DROP_KEY_HEADER_COMPOUND_CONFLICT = "key_header_compound_conflict_no_tie_breaker"
-DROP_ZERO_GENERATIONS = "zero_generations_no_exposure"
 
-#: Strain (row) drop rules, written to ``preprocess/dropped_strains.json``.
+#: Strain (row) rule, written to ``preprocess/dropped_strains.json``: the one author
+#: withdrawal in the release.
 DROP_WRONG_GENE_DELETED = "som_wrong_gene_deleted"
-DROP_HO_CONTROL_STRAIN = "ho_control_strain_unknown_construction"
 
 DROP_RULES: dict[str, str] = {
-    DROP_UNIDENTIFIABLE: "the condition names a compound the pinned compound-identity "
-    "table resolves to no InChIKey, ChEBI id or PubChem CID; the per-name audit trail is "
-    "that row's unresolved_reason",
-    DROP_HEAT_SHOCK_CYCLE: "'37c, 45c' is a heat-shock cycle; PhysicalFactor has no "
-    "heat_shock member (adding one changes a served class) and a steady 45 C would be "
-    "false",
-    DROP_UNNAMED_MEDIA_AGENT: "a dose is given but the agent is named nowhere in the SOM "
-    "or the release",
-    DROP_KEY_HEADER_COMPOUND_CONFLICT: "the matrix header and the key file name different "
-    "compounds for the same array and the SOM gives no tie-breaker (both strings are in "
-    "preprocess/key_header_checks.json)",
-    DROP_ZERO_GENERATIONS: f"the generations field is 0, and the SOM defines it as "
-    f"{QUOTE_GENERATIONS_DEFINITION!r}: the cells spent no generations in the condition, "
-    "so a record would assert an exposure that did not happen",
+    DROP_HEAT_SHOCK_CYCLE: "needs schema: '37c, 45c' is a heat-shock cycle; "
+    "PhysicalFactor has no heat_shock member (adding one changes a served class) and a "
+    "steady 45 C would be false",
+    DROP_UNNAMED_MEDIA_AGENT: "needs schema: a dose is given but the agent is named "
+    "nowhere in the SOM or the release, and a SmallMoleculePerturbation needs a "
+    "compound name",
 }
 STRAIN_DROP_RULES: dict[str, str] = {
-    DROP_WRONG_GENE_DELETED: f"the SOM (paper.md:332): {QUOTE_WRONG_GENE!r} "
-    f"{QUOTE_PDR5!r}; the homozygous PDR5 row would assert a pdr5/pdr5 genotype the "
-    "authors say the strain does not have",
-    DROP_HO_CONTROL_STRAIN: "row ids 'YDL227C:ctrl_<n>' carry a 'ctrl_' batch token that "
-    "no SOM sentence defines; they are control strains, not the YDL227C (HO) deletion "
-    "made in batch chr4_3, and their construction is unknown. Hypothesis (untested): "
-    "HO-locus reference strains with distinct tags (Pierce 2006/2007, not mirrored)",
+    DROP_WRONG_GENE_DELETED: f"author withdrawal, the SOM (paper.md:332): "
+    f"{QUOTE_WRONG_GENE!r} {QUOTE_PDR5!r}; the homozygous PDR5 row would assert a "
+    "pdr5/pdr5 genotype the authors say the strain does not have"
 }
-#: arm -> source ORF -> strain drop rule (whole-ORF exclusions named by the SOM).
+#: arm -> released ORF -> strain drop rule (whole-ORF exclusions named by the SOM).
 EXCLUDED_SOURCE_ORFS: dict[str, dict[str, str]] = {
     "het": {},
     "hom": {"YOR153W": DROP_WRONG_GENE_DELETED},
 }
-_HO_CONTROL_ORF = "YDL227C"
-_HO_CONTROL_BATCH_PREFIX = "ctrl_"
 
 
 # --------------------------------------------------------------------------- #
@@ -631,13 +628,15 @@ class KeyHeaderRule(StrEnum):
     - ``key_wins_strain_medium``: the header says ``minimal media``, the key file
       "synthetic complete for BY4743"; the key names a medium specific to the strain
       (the only in-release mention of it), so the array is served on ``SC``.
-    - ``drop_compound_conflict``: the two name different compounds and the SOM gives no
-      tie-breaker; the array is dropped (``DROP_KEY_HEADER_COMPOUND_CONFLICT``).
+    - ``header_served_key_disagrees``: the two name different compounds and the SOM
+      gives no tie-breaker; the array is served under the HEADER's compound, the column
+      the values are released under, and the key file's string is kept beside it in
+      ``preprocess/key_header_checks.json``.
     """
 
     header_wins_table_s1 = "header_wins_table_s1"
     key_wins_strain_medium = "key_wins_strain_medium"
-    drop_compound_conflict = "drop_compound_conflict"
+    header_served_key_disagrees = "header_served_key_disagrees"
 
 
 #: (key-file condition, header cond1), both lower-cased: one compound or condition
@@ -654,8 +653,8 @@ KEY_HEADER_SPELLING_VARIANTS: frozenset[tuple[str, str]] = frozenset(
         ("olic acid drop-out", "folic acid drop-out"),
         ("no drug minimal media", "minimal media"),
         ("synthetic complete for by4743", "synthetic complete"),
-        # the key names the congener, the header the compound family; both are
-        # unidentifiable in the compound table, so the array drops either way
+        # the key names the congener, the header the compound family; the header's
+        # label is served (with the inchikey gap if the compound table lacks it)
         ("dihydromotuporamine c", "motuporamine"),
     }
 )
@@ -667,12 +666,14 @@ KEY_HEADER_CONFLICTS: dict[tuple[str, str], KeyHeaderRule] = {
         KeyHeaderRule.key_wins_strain_medium
     ),
     ("bisphenol s", "bathophenanthroline disulfonate"): (
-        KeyHeaderRule.drop_compound_conflict
+        KeyHeaderRule.header_served_key_disagrees
     ),
-    ("sodium sulfate", "sodium arsenite"): KeyHeaderRule.drop_compound_conflict,
-    ("colchiceine", "colchicine"): KeyHeaderRule.drop_compound_conflict,
-    ("tyrphostin", "chemical diversity labs 14a"): KeyHeaderRule.drop_compound_conflict,
-    ("phosphatase inhibitor", "ptp2"): KeyHeaderRule.drop_compound_conflict,
+    ("sodium sulfate", "sodium arsenite"): KeyHeaderRule.header_served_key_disagrees,
+    ("colchiceine", "colchicine"): KeyHeaderRule.header_served_key_disagrees,
+    ("tyrphostin", "chemical diversity labs 14a"): (
+        KeyHeaderRule.header_served_key_disagrees
+    ),
+    ("phosphatase inhibitor", "ptp2"): KeyHeaderRule.header_served_key_disagrees,
 }
 _VOLUME_SUFFIX_RE = re.compile(r",\s*\d+ul total up/dn$")
 _CHEMDIV_RE = re.compile(r"^chemdiv (\S+)$")
@@ -971,7 +972,8 @@ def parse_condition(
     cond1 selects the branch; cond2, when present, ALWAYS appends a second small molecule
     (the double-drug arms). Splitting the two is what keeps ``pH7.5 + FK506`` from being
     stored as a plain pH stress and ``<compound> irradiated`` from being stored as bare
-    radiation.
+    radiation. A compound the curated table does not identify is kept under its released
+    label with the typed ``inchikey`` gap ``resolved_compound`` attaches.
     """
     label = cond1.strip()
     low = label.lower()
@@ -1021,19 +1023,6 @@ def parse_condition(
     if cond2.strip():
         perturbations.append(_small_molecule(cond2.strip(), conc2, unit2))
 
-    if drop_reason is None:
-        unidentified = [
-            perturbation.compound.name
-            for perturbation in perturbations
-            if isinstance(perturbation, SmallMoleculePerturbation)
-            and not resolve_compound_identity(
-                name=perturbation.compound.name
-            ).identified
-        ]
-        if unidentified:
-            drop_reason = DROP_UNIDENTIFIABLE
-            drop_detail = ", ".join(unidentified)
-
     return ConditionParse(
         media=media,
         temperature_c=temperature_c,
@@ -1045,11 +1034,7 @@ def parse_condition(
 
 
 class ColumnSpec(BaseModel):
-    """One matrix data column: its index, its environment and its grouping key.
-
-    ``environment`` is ``None`` only for a dropped column whose environment could not
-    be built (a 0gen array has no exposure to describe).
-    """
+    """One matrix data column: its index, its environment and its grouping key."""
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -1058,7 +1043,7 @@ class ColumnSpec(BaseModel):
     header: str
     control_set: str
     pool: str
-    environment: CultureEnvironment | None
+    environment: CultureEnvironment
     group_key: str
     key_check: KeyHeaderCheck
     drop_reason: str | None = None
@@ -1114,12 +1099,24 @@ def signed_generations(generations: str) -> float:
     return float(token.replace("gen", ""))
 
 
-def pre_culture(signed: float, label: str) -> PreCulture:
+def _zero_generation_pre_culture_gap(label: str) -> ProvenanceGap:
+    """The typed absence of the pre-culture of a ``0gen`` array or control set."""
+    return ProvenanceGap(
+        field="pre_culture",
+        reason=ProvenanceGapReason.not_reported_by_primary,
+        looked_in=_SOM_PROVENANCE,
+        note=f"the generation count is {label!r}; the SOM states the pre-culture only "
+        "through the count's sign (negative: from the freezer; no sign: a YPD log-phase "
+        "pre-culture), and a count of 0 carries no sign, so it states no pre-culture",
+    )
+
+
+def pre_culture(signed: float, label: str) -> PreCulture | None:
     """What the SIGN of a generation count says about the culture before treatment.
 
     Negative: straight from the freezer. Positive: a YPD log-phase pre-culture to OD600
-    2.0, about 10 generations. Zero carries no sign and is never built (0gen arrays are
-    dropped and their control sets are then unused).
+    2.0, about 10 generations. Zero carries no sign and so states nothing: ``None``, and
+    the caller attaches ``_zero_generation_pre_culture_gap``.
     """
     if signed < 0:
         return PreCulture(
@@ -1136,7 +1133,7 @@ def pre_culture(signed: float, label: str) -> PreCulture:
             source_label=label,
             provenance=[_PRE_CULTURE_LOG_PHASE],
         )
-    raise ValueError(f"a 0-generation count ({label!r}) states no pre-culture")
+    return None
 
 
 def build_environment(parse: ConditionParse, generations: str) -> CultureEnvironment:
@@ -1149,6 +1146,8 @@ def build_environment(parse: ConditionParse, generations: str) -> CultureEnviron
         gaps.append(_temperature_gap())
     if parse.unsupplemented_minimal:
         gaps.append(_supplement_gap())
+    if signed == 0:
+        gaps.append(_zero_generation_pre_culture_gap(generations.strip()))
     return CultureEnvironment(
         media=parse.media,
         temperature=(
@@ -1221,9 +1220,9 @@ def parse_columns(
     """Parse every data column into its environment, control set and grouping key.
 
     Each array's header is cross-checked against its key-file condition first
-    (``check_key_header``): a compound conflict drops the array, a strain-medium
-    conflict serves the key's medium, a pH conflict serves the header. A 0gen array is
-    dropped before its environment is built.
+    (``check_key_header``): a compound conflict and a pH conflict serve the header, a
+    strain-medium conflict serves the key's medium. A 0gen array is stored with
+    duration 0 and a typed pre-culture gap.
     """
     specs: list[ColumnSpec] = []
     for index, raw in enumerate(header):
@@ -1252,29 +1251,12 @@ def parse_columns(
                 f"{drop_detail} (header {key_check.header_condition!r}, key file "
                 f"{key_check.key_condition!r})"
             )
-        if key_check.rule is KeyHeaderRule.drop_compound_conflict:
-            drop_reason = DROP_KEY_HEADER_COMPOUND_CONFLICT
-            drop_detail = (
-                f"header {key_check.header_condition!r} vs key file "
-                f"{key_check.key_condition!r}"
-            )
-        elif drop_reason is None and signed_generations(generations) == 0:
-            drop_reason, drop_detail = DROP_ZERO_GENERATIONS, f"{c1}: {generations}"
-        environment = (
-            None
-            if signed_generations(generations) == 0
-            else build_environment(parse, generations)
-        )
+        environment = build_environment(parse, generations)
         # Group replicate arrays by the CANONICAL environment plus the control set the
         # score was computed against: two arrays of one condition normalized against
         # different control sets are different measurements.
         group_key = json.dumps(
-            [
-                environment.model_dump() if environment is not None else raw.strip(),
-                control_set,
-            ],
-            sort_keys=True,
-            default=str,
+            [environment.model_dump(), control_set], sort_keys=True, default=str
         )
         specs.append(
             ColumnSpec(
@@ -1293,29 +1275,16 @@ def parse_columns(
     return specs
 
 
-def _load_sgd_genes(data_root: str) -> set[str]:
-    """S288C R64 systematic-name universe from the ORF + RNA-coding FASTA headers."""
-    genes: set[str] = set()
-    for name in _SGD_GENE_FASTAS:
-        with open(resolve(SGD_S288C_R64, name, data_root=data_root)) as handle:
-            for line in handle:
-                if line.startswith(">"):
-                    genes.add(line[1:].split()[0])
-    return genes
-
-
 # --------------------------------------------------------------------------- #
 # Strain rows (one physical construction each)
 # --------------------------------------------------------------------------- #
 class StrainRow(BaseModel):
     """One matrix row: a constructed strain ``ORF:batch`` and its per-array values.
 
-    ``orf`` is the CURRENT systematic name the record is keyed on; ``source_orf`` is the
-    name the strain was built against, verbatim from the row id.
+    ``orf`` and ``batch`` are the two halves of the row id, verbatim.
     """
 
     row_id: str
-    source_orf: str
     orf: str
     batch: str
     values: list[float | None]
@@ -1330,25 +1299,14 @@ class DroppedStrain(BaseModel):
 
 
 class MatrixRows(BaseModel):
-    """Every row of one matrix after name resolution and the strain rules.
-
-    ``constructed`` maps a renamed source ORF to the ``ConstructedOrf`` its records
-    carry; ``dropped_genes`` is the per-source-ORF resolver ledger.
-    """
-
-    model_config = {"arbitrary_types_allowed": True}
+    """Every row of one matrix: the stored strains and the author-withdrawn ones."""
 
     rows: list[StrainRow]
     dropped_strains: list[DroppedStrain]
-    dropped_genes: dict[str, dict[str, str]]
-    constructed: dict[str, ConstructedOrf]
 
 
-def _status(resolution: Any) -> str:
-    """A resolution's status as its plain string value."""
-    return str(getattr(resolution.status, "value", resolution.status))
-
-
+# Kept only for parsons2006.py's import until #1053 lands; Hillenmeyer stores every ORF
+# as released and calls neither function below.
 def _sgd_history_gap(field: str, note: str) -> ProvenanceGap:
     """A gap on a ``ConstructedOrf`` field that only the SGD ORF history would close."""
     return pending_source_review(
@@ -1364,11 +1322,9 @@ def _sgd_history_gap(field: str, note: str) -> ProvenanceGap:
 def constructed_orf(source_orf: str, current: str, n_sources: int) -> ConstructedOrf:
     """What a strain built against a since-renamed ORF physically deleted.
 
-    ``n_sources`` is how many distinct source ORFs of this release resolve onto
-    ``current``. Two or more means two features annotated separately when the strains
-    were made are one gene now, which is a merge by definition; one alone could be an
-    alias or a reannotation, which the resolver cannot tell apart, so the relation is
-    a gap. The deleted interval is always a gap (coordinates are not released).
+    Kept only for parsons2006.py's import until #1053 lands; Hillenmeyer stores every
+    ORF as released. ``n_sources`` >= 2 is ``merged``; a lone rename gaps the relation.
+    The deleted interval is always a gap.
     """
     relation = OrfHistoryRelation.merged if n_sources >= 2 else None
     gaps = [
@@ -1395,22 +1351,13 @@ def constructed_orf(source_orf: str, current: str, n_sources: int) -> Constructe
     )
 
 
-def read_matrix_rows(
-    path: str | Path,
-    n_columns: int,
-    sgd_genes: set[str],
-    resolve_name: Callable[[str], Any],
-    arm: str,
-) -> MatrixRows:
-    """Stream the matrix into one ``StrainRow`` per kept row id ``ORF:batch``.
+def read_matrix_rows(path: str | Path, n_columns: int, arm: str) -> MatrixRows:
+    """Stream the matrix into one ``StrainRow`` per row id ``ORF:batch``, verbatim.
 
-    The ORF goes through ``resolve_gene_name``: a renamed strain is kept under the
-    current systematic name with a ``ConstructedOrf`` naming the source, a retired id or
-    a non-gene locus is dropped with its reason. The arm's SOM-named exclusions and the
-    ``YDL227C:ctrl_*`` control rows are kept out under their strain rules.
+    No genome is consulted: the ORF is stored as the release spells it, whatever a
+    later annotation calls it. Only the arm's SOM-named withdrawal
+    (``EXCLUDED_SOURCE_ORFS``) is kept out, under its strain rule.
     """
-    resolved: dict[str, str | None] = {}
-    dropped_genes: dict[str, dict[str, str]] = {}
     rows: list[StrainRow] = []
     dropped_strains: list[DroppedStrain] = []
     excluded = EXCLUDED_SOURCE_ORFS[arm]
@@ -1419,74 +1366,19 @@ def read_matrix_rows(
         for line in handle:
             cells = line.rstrip("\n").split("\t")
             row_id = cells[0].strip().strip('"')
-            source_orf, _, batch = row_id.partition(":")
+            orf, _, batch = row_id.partition(":")
             values: list[float | None] = [None] * n_columns
             for index in range(1, min(n_columns, len(cells))):
                 cell = cells[index].strip()
                 if cell.upper() not in _MISSING:
                     values[index] = float(cell)
-            if source_orf in excluded:
+            if orf in excluded:
                 dropped_strains.append(
-                    DroppedStrain(
-                        row_id=row_id, rule=excluded[source_orf], values=values
-                    )
+                    DroppedStrain(row_id=row_id, rule=excluded[orf], values=values)
                 )
                 continue
-            if source_orf == _HO_CONTROL_ORF and batch.startswith(
-                _HO_CONTROL_BATCH_PREFIX
-            ):
-                dropped_strains.append(
-                    DroppedStrain(
-                        row_id=row_id, rule=DROP_HO_CONTROL_STRAIN, values=values
-                    )
-                )
-                continue
-            if source_orf not in resolved:
-                resolution = resolve_name(source_orf)
-                status = _status(resolution)
-                name = resolution.systematic_name
-                if (status == "current" and name in sgd_genes) or (
-                    status == "renamed"
-                    and name is not None
-                    and name in sgd_genes
-                    and _status(resolve_name(name)) == "current"
-                ):
-                    resolved[source_orf] = name
-                else:
-                    resolved[source_orf] = None
-                    dropped_genes[source_orf] = {
-                        "status": status,
-                        "resolved_to": str(name),
-                        "in_sgd_fasta": str(name in sgd_genes),
-                    }
-            orf = resolved[source_orf]
-            if orf is None:
-                continue
-            rows.append(
-                StrainRow(
-                    row_id=row_id,
-                    source_orf=source_orf,
-                    orf=orf,
-                    batch=batch,
-                    values=values,
-                )
-            )
-    sources_by_gene: dict[str, set[str]] = {}
-    for row in rows:
-        sources_by_gene.setdefault(row.orf, set()).add(row.source_orf)
-    constructed = {
-        row.source_orf: constructed_orf(
-            row.source_orf, row.orf, len(sources_by_gene[row.orf])
-        )
-        for row in rows
-        if row.source_orf != row.orf
-    }
-    return MatrixRows(
-        rows=rows,
-        dropped_strains=dropped_strains,
-        dropped_genes=dropped_genes,
-        constructed=constructed,
-    )
+            rows.append(StrainRow(row_id=row_id, orf=orf, batch=batch, values=values))
+    return MatrixRows(rows=rows, dropped_strains=dropped_strains)
 
 
 # --------------------------------------------------------------------------- #
@@ -1560,18 +1452,15 @@ def _barcode_gaps() -> list[ProvenanceGap]:
 
 
 def strain_perturbation(
-    arm: str,
-    row: StrainRow,
-    pool: str,
-    constructed: ConstructedOrf | None,
-    markers: frozenset[str],
+    arm: str, row: StrainRow, pool: str, markers: frozenset[str]
 ) -> HeterozygousDeletionPerturbation | BarcodedKanMxDeletionPerturbation:
     """The screened edit of one constructed strain in one deletion pool.
 
-    HET: a heterozygous kanMX4 allele replacement; at a BY marker locus which allele the
+    The gene is the released ORF verbatim and ``constructed_orf`` is ``None``. HET: a
+    heterozygous kanMX4 allele replacement; at a BY marker locus which allele the
     cassette replaced is a typed gap (it decides the functional dose at LYS2 / MET15).
     HOM: a barcoded kanMX4 deletion; at a marker locus what was physically deleted is a
-    typed gap on ``constructed_orf``.
+    typed gap on ``constructed_orf`` (keyed on the released ORF).
     """
     construction = StrainConstruction(batch=row.batch)
     gaps = _barcode_gaps()
@@ -1592,7 +1481,7 @@ def strain_perturbation(
             cassette=KANMX4_CASSETTE.value,
             collection=pool,
             construction=construction,
-            constructed_orf=constructed,
+            constructed_orf=None,
             replaced_allele=None,
             barcode=None,
             downtag_barcode=None,
@@ -1608,14 +1497,13 @@ def strain_perturbation(
                 "stated in a mirrored source",
             )
         )
-        constructed = None
     return BarcodedKanMxDeletionPerturbation(
         systematic_gene_name=row.orf,
         perturbed_gene_name=row.orf,
         cassette=KANMX4_CASSETTE.value,
         collection=pool,
         construction=construction,
-        constructed_orf=constructed,
+        constructed_orf=None,
         barcode=None,
         downtag_barcode=None,
         provenance_gaps=gaps,
@@ -1638,6 +1526,9 @@ def build_reference(
     """
     generations = control_set_generations(control_set)
     signed = signed_generations(generations)
+    gaps = [_culture_format_gap(), _temperature_gap()]
+    if signed == 0:
+        gaps.append(_zero_generation_pre_culture_gap(generations))
     environment = CultureEnvironment(
         media=YPD_LIQUID,
         temperature=None,
@@ -1647,7 +1538,7 @@ def build_reference(
         pre_culture=pre_culture(signed, generations),
         culture_format=None,
         auxotroph_supplements=None,
-        provenance_gaps=[_culture_format_gap(), _temperature_gap()],
+        provenance_gaps=gaps,
     )
     return StrainEnvironmentResponseExperimentReference(
         dataset_name=dataset_name,
@@ -1758,7 +1649,6 @@ def iter_records(
     markers = marker_loci(background)
     group_list = [(members[0], members) for members in groups.values()]
     for row in matrix.rows:
-        constructed = matrix.constructed.get(row.source_orf)
         genotypes: dict[str, Genotype] = {}
         for head, members in group_list:
             values = array_values(row.values, members)
@@ -1767,13 +1657,9 @@ def iter_records(
             if head.pool not in genotypes:
                 genotypes[head.pool] = Genotype(
                     perturbations=[
-                        strain_perturbation(
-                            spec.key, row, head.pool, constructed, markers
-                        )
+                        strain_perturbation(spec.key, row, head.pool, markers)
                     ]
                 )
-            if head.environment is None:
-                raise ValueError(f"kept column {head.header!r} has no environment")
             yield (
                 StrainEnvironmentResponseExperiment(
                     dataset_name=dataset_name,
@@ -1797,6 +1683,89 @@ def count_records(
     )
 
 
+class CellAccounting(BaseModel):
+    """Every released value cell of one matrix, by where it went.
+
+    ``n_value_cells`` is counted independently of the split (every non-missing cell of
+    every row in the matrix's data columns); the split must sum to it.
+    """
+
+    n_value_cells: int
+    n_in_stored_records: int
+    n_in_dropped_arrays: dict[str, int]
+    n_in_withdrawn_strains: dict[str, int]
+
+
+def cell_accounting(
+    matrix: MatrixRows,
+    kept: dict[str, list[ColumnSpec]],
+    dropped: dict[str, list[ColumnSpec]],
+) -> CellAccounting:
+    """Split every value cell into stored, dropped-array (per rule) and withdrawn."""
+    cells: list[list[float | None]] = [row.values for row in matrix.rows]
+    cells += [strain.values for strain in matrix.dropped_strains]
+    total = sum(1 for values in cells for value in values if value is not None)
+    stored = sum(
+        len(array_values(row.values, members))
+        for row in matrix.rows
+        for members in kept.values()
+    )
+    by_rule: dict[str, int] = {}
+    for members in dropped.values():
+        rule = str(members[0].drop_reason)
+        by_rule[rule] = by_rule.get(rule, 0) + sum(
+            len(array_values(row.values, members)) for row in matrix.rows
+        )
+    withdrawn: dict[str, int] = {}
+    for strain in matrix.dropped_strains:
+        withdrawn[strain.rule] = withdrawn.get(strain.rule, 0) + sum(
+            1 for value in strain.values if value is not None
+        )
+    accounting = CellAccounting(
+        n_value_cells=total,
+        n_in_stored_records=stored,
+        n_in_dropped_arrays=by_rule,
+        n_in_withdrawn_strains=withdrawn,
+    )
+    split = stored + sum(by_rule.values()) + sum(withdrawn.values())
+    if split != total:
+        raise ValueError(
+            f"cell accounting does not sum: {split} split vs {total} value cells"
+        )
+    return accounting
+
+
+def compound_identity_gaps(
+    rows: list[StrainRow], kept: dict[str, list[ColumnSpec]]
+) -> dict[str, dict[str, int]]:
+    """Stored compound labels carrying the typed ``inchikey`` gap, with their counts.
+
+    Keyed by ``Compound.name`` (the released label, since no curated row matched);
+    ``n_records`` counts the records whose environment doses that compound.
+    """
+    gaps: dict[str, dict[str, int]] = {}
+    for key, members in kept.items():
+        names = sorted(
+            {
+                perturbation.compound.name
+                for perturbation in members[0].environment.perturbations
+                if isinstance(perturbation, SmallMoleculePerturbation)
+                and "inchikey" in perturbation.compound.gapped_fields()
+            }
+        )
+        if not names:
+            continue
+        n_records = count_records(rows, {key: members})
+        for name in names:
+            bucket = gaps.setdefault(
+                name, {"n_environments": 0, "n_arrays": 0, "n_records": 0}
+            )
+            bucket["n_environments"] += 1
+            bucket["n_arrays"] += len(members)
+            bucket["n_records"] += n_records
+    return dict(sorted(gaps.items()))
+
+
 # --------------------------------------------------------------------------- #
 # Dataset
 # --------------------------------------------------------------------------- #
@@ -1811,15 +1780,11 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         self,
         root: str,
         io_workers: int = 0,
-        genome: Any | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset. ``genome`` supplies ``resolve_gene_name``; when it is
-        omitted ``process`` opens the S288C genome read-only from ``DATA_ROOT``.
-        """
-        self.genome = genome
+        """Initialize the dataset (no genome: the loader stores what was released)."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1863,30 +1828,12 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             self.raw_dir,
         )
 
-    # ---- matrix reading -------------------------------------------------------
-    def _resolver(self) -> Callable[[str], Any]:
-        """``resolve_gene_name`` from the supplied genome, or a read-only S288C genome."""
-        if self.genome is None:
-            from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
-
-            data_root = _data_root()
-            # overwrite=False is mandatory: a rebuild here would race any other process
-            # holding the same gffutils database.
-            self.genome = SCerevisiaeGenome(
-                genome_root=osp.join(data_root, "data/sgd/genome"),
-                go_root=osp.join(data_root, "data/go"),
-                overwrite=False,
-            )
-        resolver: Callable[[str], Any] = self.genome.resolve_gene_name
-        return resolver
-
     # ---- build ----------------------------------------------------------------
     @post_process
     def process(self) -> None:
         """Build one record per (strain row, environment, control set)."""
         spec = self.spec
         data_root = _data_root()
-        sgd_genes = _load_sgd_genes(data_root)
         manifest = load_manifest(data_root)
         rel = raw_relpaths()
         verify_raw_files(
@@ -1917,9 +1864,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             len(dropped_groups),
             sum(len(m) for m in dropped_groups.values()),
         )
-        matrix = read_matrix_rows(
-            matrix_path, len(header), sgd_genes, self._resolver(), spec.key
-        )
+        matrix = read_matrix_rows(matrix_path, len(header), spec.key)
         background = hillenmeyer_background()
         references = {
             members[0].control_set: build_reference(
@@ -1961,7 +1906,8 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         env.close()
         interned_env.close()
 
-        self._write_drop_report(dropped_groups, matrix, idx)
+        self._write_drop_report(dropped_groups, groups, matrix, idx)
+        self._write_compound_gap_report(groups, matrix)
         self._write_strain_reports(matrix, groups)
         self._write_key_header_report(columns)
         self._write_batch_report(matrix)
@@ -1974,14 +1920,16 @@ class _Hillenmeyer2008Base(ExperimentDataset):
     def _write_drop_report(
         self,
         dropped_groups: dict[str, list[ColumnSpec]],
+        groups: dict[str, list[ColumnSpec]],
         matrix: MatrixRows,
         kept_records: int,
     ) -> None:
-        """Write ``dropped_records.json`` / ``dropped_genes.json``: the rules and counts.
+        """Write ``dropped_records.json``: the array rules, counts and cell accounting.
 
-        A dropped environment's records-not-written count is over the KEPT strain rows,
-        keyed by the GROUP: one compound is dropped at several doses and control sets,
-        and a per-rule key would count its records once per environment sharing the rule.
+        A dropped environment's records-not-written count is over the stored strain
+        rows, keyed by the GROUP, so one condition dropped at several control sets is
+        counted once per group. ``cell_accounting`` splits every released value cell into
+        stored, dropped-array and withdrawn-strain cells and raises if they do not sum.
         """
         environments: list[dict[str, Any]] = []
         by_rule: dict[str, dict[str, int]] = {}
@@ -2010,20 +1958,33 @@ class _Hillenmeyer2008Base(ExperimentDataset):
             "kept_records": kept_records,
             "rules": DROP_RULES,
             "by_rule": by_rule,
+            "cell_accounting": cell_accounting(
+                matrix, groups, dropped_groups
+            ).model_dump(),
             "environments": sorted(
                 environments, key=lambda e: (str(e["rule"]), str(e["detail"]))
             ),
         }
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             json.dump(payload, handle, indent=2)
-        with open(osp.join(self.preprocess_dir, "dropped_genes.json"), "w") as handle:
+
+    def _write_compound_gap_report(
+        self, groups: dict[str, list[ColumnSpec]], matrix: MatrixRows
+    ) -> None:
+        """Write ``compound_identity_gaps.json``: stored compounds with no InChIKey."""
+        gaps = compound_identity_gaps(matrix.rows, groups)
+        with open(
+            osp.join(self.preprocess_dir, "compound_identity_gaps.json"), "w"
+        ) as handle:
             json.dump(
                 {
-                    "rule": "a row id is kept only when resolve_gene_name reports it "
-                    "CURRENT (or RENAMED onto a current name) and the resolved name is "
-                    "in the SGD R64 ORF/RNA FASTA universe",
-                    "n_dropped": len(matrix.dropped_genes),
-                    "dropped": dict(sorted(matrix.dropped_genes.items())),
+                    "dataset": self.name,
+                    "rule": "a compound label the curated compound table does not "
+                    "identify is stored under the released label with the typed "
+                    "inchikey gap resolved_compound attaches; it is never dropped",
+                    "n_compounds": len(gaps),
+                    "n_records": sum(g["n_records"] for g in gaps.values()),
+                    "compounds": gaps,
                 },
                 handle,
                 indent=2,
@@ -2032,7 +1993,7 @@ class _Hillenmeyer2008Base(ExperimentDataset):
     def _write_strain_reports(
         self, matrix: MatrixRows, groups: dict[str, list[ColumnSpec]]
     ) -> None:
-        """Write ``dropped_strains.json`` and ``constructed_orfs.json``."""
+        """Write ``dropped_strains.json``: the author-withdrawn rows and their counts."""
         by_rule: dict[str, dict[str, Any]] = {}
         for strain in matrix.dropped_strains:
             bucket = by_rule.setdefault(
@@ -2043,37 +2004,6 @@ class _Hillenmeyer2008Base(ExperimentDataset):
         with open(osp.join(self.preprocess_dir, "dropped_strains.json"), "w") as handle:
             json.dump(
                 {"dataset": self.name, "rules": STRAIN_DROP_RULES, "by_rule": by_rule},
-                handle,
-                indent=2,
-            )
-        by_gene: dict[str, list[dict[str, Any]]] = {}
-        for row in matrix.rows:
-            if row.source_orf in matrix.constructed:
-                by_gene.setdefault(row.orf, []).append(
-                    {
-                        "row_id": row.row_id,
-                        **matrix.constructed[row.source_orf].model_dump(
-                            mode="json", include={"source_systematic_name", "relation"}
-                        ),
-                    }
-                )
-        with open(
-            osp.join(self.preprocess_dir, "constructed_orfs.json"), "w"
-        ) as handle:
-            json.dump(
-                {
-                    "rule": "a renamed source ORF keeps its own records under the "
-                    "current gene with a ConstructedOrf; 'merged' when two or more "
-                    "source ORFs of this release resolve onto that gene, else the "
-                    "relation is a gap",
-                    "n_renamed_source_orfs": len(matrix.constructed),
-                    "n_merged_source_orfs": sum(
-                        1
-                        for c in matrix.constructed.values()
-                        if c.relation is OrfHistoryRelation.merged
-                    ),
-                    "by_current_gene": dict(sorted(by_gene.items())),
-                },
                 handle,
                 indent=2,
             )
@@ -2097,9 +2027,10 @@ class _Hillenmeyer2008Base(ExperimentDataset):
                         f"{QUOTE_TABLE_S1_PH!r}; the header is served",
                         KeyHeaderRule.key_wins_strain_medium.value: "the key names the "
                         f"strain's medium {QUOTE_KEY_BY4743!r}; served on SC",
-                        KeyHeaderRule.drop_compound_conflict.value: DROP_RULES[
-                            DROP_KEY_HEADER_COMPOUND_CONFLICT
-                        ],
+                        KeyHeaderRule.header_served_key_disagrees.value: "the "
+                        "header and the key file name different compounds and the SOM "
+                        "gives no tie-breaker; the array is served under the header's "
+                        "compound, the column the values are released under",
                     },
                     "disagreements": [
                         c.model_dump(mode="json")
@@ -2196,13 +2127,12 @@ class HetHillenmeyer2008Dataset(_Hillenmeyer2008Base):
         self,
         root: str = "data/torchcell/env_chemgen_hillenmeyer2008_het",
         io_workers: int = 0,
-        genome: Any | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the HET (HIP) dataset."""
-        super().__init__(root, io_workers, genome, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
 
 @register_dataset
@@ -2217,13 +2147,12 @@ class HomHillenmeyer2008Dataset(_Hillenmeyer2008Base):
         self,
         root: str = "data/torchcell/env_chemgen_hillenmeyer2008_hom",
         io_workers: int = 0,
-        genome: Any | None = None,
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
         """Initialize the HOM (HOP) dataset."""
-        super().__init__(root, io_workers, genome, transform, pre_transform, **kwargs)
+        super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
 
 def main() -> None:

@@ -10,8 +10,9 @@ objects built in memory (``GSM``/``GPL`` with a ``description`` column frame) at
 ``<accession>.pkl`` paths ``process()`` checks first. The two deletion GSEs both have
 one, so ``GEOparse.get_GEO`` (the network branch) is never reached. The four wildtype
 series have pickles too (GSE42215 excepted) but ``process()`` no longer opens them
-(#484); a test removes them and gets the same records. The genome is a stub with the
-three attributes ``resolve_gene_name_comprehensive`` reads.
+(#484); a test removes them and gets the same records. No genome is involved: a title
+token resolves only through Table S1 (``gene`` -> ``orf name``, or a token that is an
+``orf name``) or through the module's pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF``.
 
 Channels follow GEO's own metadata, as on the real series: ``label_ch1`` is Cy5 and
 ``label_ch2`` Cy3 on every array, and ``source_name_ch1`` / ``source_name_ch2`` say
@@ -19,8 +20,9 @@ which channel holds the reference pool ("refpool", or "ref1" on GSE42217). The t
 suffix is not consulted.
 
 Platform probes: 1 YAL001C, 2 YBR001C, 3 Q0010, 4 NaN (unmapped). Table S1: YPL177C
-CUP9 MATa, YHR127W HSN1 MATalpha, TLC1 (-> YNCB0010W) MATa, CMS1 (-> YLR003C) MATa,
-YXX001W with mating type ``diploid`` (skipped).
+CUP9 MATa, YHR127W HSN1 MATalpha, TLC1 and CMS1 (``orf name`` cells that are common
+names, kept as released) MATa, YXX001W with mating type ``diploid`` (skipped), YPL042C
+SSN3 MATalpha.
 
 Deletion samples (responsive GSE42527 then non-responsive GSE42526), signals listed
 as YAL001C, YBR001C, Q0010:
@@ -30,9 +32,10 @@ as YAL001C, YBR001C, Q0010:
     GSM3 "Sample X"              deletion Cy5 3, 6, 1  refpool Cy3 3, 3, 2; the gene is
                                  named only in ``characteristics_ch1``
     GSM4 "wt control"            wildtype, ignored
-    GSM5 "cdk8-del-a"            resolves through the shared reconciler to YPL042C,
-                                 which has no Table S1 strain: not written
-    GSM6 "zzz9-del-a"            retired name: unresolved
+    GSM5 "cdk8-del-a"            CDK8 is in RELEASE_TITLE_NAMES_WITHOUT_AN_ORF ->
+                                 YPL042C, whose Table S1 row gives MATalpha (BY4742);
+                                 stored with perturbed_gene_name CDK8, all-ones signals
+                                 (log2 0, n 1, linear and refpool 1)
 
 CUP9 -> YPL177C (BY4741): the log2 ratio is taken within each array, log2(deletion /
 refpool). YAL001C 2/4 -> -1 and 8/4 -> +1, mean 0, sample SD sqrt(2), SE sqrt(2)/sqrt(2)
@@ -41,7 +44,8 @@ same statistics; Q0010 drops the array with the 0 signal and keeps 4/1 -> +2 alo
 1, SE and variance NaN). The linear ``expression`` is the mean deletion signal over the
 kept arrays, 5, 5, 4, and the reference ``expression`` the mean refpool signal over the
 same arrays, 4, 4, 1. HSN1 -> YHR127W (BY4742): 3/3 -> 0, 6/3 -> +1, 1/2 -> -1, all n
-= 1, linear 3, 6, 1, refpool 3, 3, 2.
+= 1, linear 3, 6, 1, refpool 3, 3, 2. ``perturbed_gene_name`` is the release's own
+name: CUP9, HSN1, CDK8.
 
 The reference ``n_replicates`` of a gene is the number of arrays whose refpool value
 entered its reference ``expression`` mean, the same arrays as the mutant's count (#484):
@@ -80,36 +84,10 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.scerevisiae import kemmeren2014 as m
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameResolution
 
 _DATASET = "MicroarrayKemmeren2014Dataset"
 _NAN = "NaN"
 _PROBES = {"1": "YAL001C", "2": "YBR001C", "3": "Q0010"}
-
-
-class _StubGenome:
-    """The three attributes ``resolve_gene_name_comprehensive`` reads."""
-
-    gene_attribute_table = pd.DataFrame(
-        {"ID": ["YPL177C"], "gene": ["CUP9"], "Alias": ["NONE1"]}
-    )
-    alias_to_systematic: dict[str, list[str]] = {"CDK8": ["YPL042C"]}
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        if name.upper() == "CDK8":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.CURRENT,
-                systematic_name="YPL042C",
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.RETIRED, systematic_name=name
-        )
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _describe(table: pd.DataFrame) -> pd.DataFrame:
@@ -181,6 +159,7 @@ def _write_table_s1(path: Path) -> None:
     sheet.append(["TLC1", "TLC1", "MATa"])
     sheet.append(["CMS1", None, "MATa"])
     sheet.append(["YXX001W", "XXX1", "diploid"])
+    sheet.append(["YPL042C", "SSN3", "MATalpha"])
     workbook.save(path)
 
 
@@ -248,14 +227,6 @@ def _write_raw(raw: Path) -> None:
                     refpool_in="Cy5",
                     test="cdk8-del",
                 ),
-                _gsm(
-                    "GSM6",
-                    "zzz9-del-a",
-                    [1.0, 1.0, 1.0],
-                    [1.0, 1.0, 1.0],
-                    refpool_in="Cy5",
-                    test="zzz9-del",
-                ),
             ],
             with_platform=False,
         ),
@@ -317,7 +288,7 @@ def _write_raw(raw: Path) -> None:
 def dataset(tmp_path: Path) -> m.MicroarrayKemmeren2014Dataset:
     root = tmp_path / "kemmeren"
     _write_raw(root / "raw")
-    return m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
+    return m.MicroarrayKemmeren2014Dataset(root=str(root))
 
 
 def _nan_safe(value: Any) -> Any:
@@ -345,6 +316,7 @@ _PUBLICATION = Publication(
 
 def _experiment(
     orf: str,
+    name: str,
     log2: dict[str, float],
     se: dict[str, float],
     var: dict[str, float],
@@ -356,7 +328,7 @@ def _experiment(
         genotype=Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name=orf, perturbed_gene_name=orf
+                    systematic_gene_name=orf, perturbed_gene_name=name
                 )
             ]
         ),
@@ -394,6 +366,7 @@ _NANF = float("nan")
 _SD2 = math.sqrt(2.0)
 _CUP9 = _experiment(
     "YPL177C",
+    "CUP9",
     {"Q0010": 2.0, "YAL001C": 0.0, "YBR001C": 0.0},
     {"Q0010": _NANF, "YAL001C": 1.0, "YBR001C": 1.0},
     {"Q0010": _NANF, "YAL001C": _SD2**2, "YBR001C": _SD2**2},
@@ -402,6 +375,7 @@ _CUP9 = _experiment(
 )
 _HSN1 = _experiment(
     "YHR127W",
+    "HSN1",
     {"Q0010": -1.0, "YAL001C": 0.0, "YBR001C": 1.0},
     dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
     dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
@@ -418,56 +392,82 @@ _REF_HSN1 = _reference(
     {"Q0010": 2.0, "YAL001C": 3.0, "YBR001C": 3.0},
     {"Q0010": 1, "YAL001C": 1, "YBR001C": 1},
 )
+_ONES = dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1)
+_CDK8 = _experiment(
+    "YPL042C",
+    "CDK8",
+    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 0.0),
+    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
+    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), _NANF),
+    _ONES,
+    dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1.0),
+)
+_REF_CDK8 = _reference(
+    "BY4742", dict.fromkeys(("Q0010", "YAL001C", "YBR001C"), 1.0), _ONES
+)
 
 
 def test_two_deletions_build_with_within_array_log2_statistics(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
     """Record 0 is CUP9 (two dye-swapped arrays, MATa), record 1 HSN1 (one array,
-    MATalpha, named only in ``characteristics_ch1``); CDK8 resolves but has no Table S1
-    strain and ZZZ9 does not resolve, so neither is written. The deleted gene is not
-    on the platform, so the ratios are the docstring's within-array values.
+    MATalpha, named only in ``characteristics_ch1``), record 2 CDK8 (the pinned
+    release title name -> YPL042C, MATalpha through YPL042C's Table S1 row). The deleted
+    gene is not on the platform, so the ratios are the docstring's within-array values.
     """
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     assert _nan_safe(dataset[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
     assert _nan_safe(dataset[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
+    assert _nan_safe(dataset[2]["experiment"]) == _nan_safe(_CDK8.model_dump())
     assert dataset[0]["reference"] == _REF_CUP9.model_dump()
     assert dataset[1]["reference"] == _REF_HSN1.model_dump()
+    assert dataset[2]["reference"] == _REF_CDK8.model_dump()
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
+    assert (
+        dataset.resolved_by_table_s1_gene,
+        dataset.resolved_by_table_s1_orf,
+        dataset.resolved_by_release_title_names,
+    ) == (2, 0, 2)
+    assert dataset.released_gene_names == {
+        "YPL177C": "CUP9",
+        "YHR127W": "HSN1",
+        "YPL042C": "CDK8",
+    }
 
 
 def test_side_files_gene_set_reference_index_and_sample_table(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """One reference per strain; ``data.csv`` lists all six deletion-GSE samples with
-    the resolved ORF (empty for the wildtype and the unresolved title).
+    """One reference per record; ``data.csv`` lists all five deletion-GSE samples with
+    the resolved ORF (empty for the wildtype).
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YHR127W",
+        "YPL042C",
         "YPL177C",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0], [1], [2]]
     assert [entry["reference"] for entry in index] == [
         _REF_CUP9.model_dump(),
         _REF_HSN1.model_dump(),
+        _REF_CDK8.model_dump(),
     ]
     samples = pd.read_csv(preprocess / "data.csv", keep_default_na=False)
     assert samples.to_dict(orient="list") == {
-        "geo_accession": ["GSM1", "GSM2", "GSM3", "GSM4", "GSM5", "GSM6"],
+        "geo_accession": ["GSM1", "GSM2", "GSM3", "GSM4", "GSM5"],
         "title": [
             "[HS1991] cup9-del-a",
             "cup9-del-b",
             "Sample X",
             "wt control",
             "cdk8-del-a",
-            "zzz9-del-a",
         ],
-        "systematic_gene_name": ["YPL177C", "YPL177C", "YHR127W", "", "YPL042C", ""],
-        "is_deletion": [True, True, True, False, True, True],
-        "is_wildtype": [False, False, False, True, False, False],
-        "is_responsive_mutant": [True, True, False, False, False, False],
+        "systematic_gene_name": ["YPL177C", "YPL177C", "YHR127W", "", "YPL042C"],
+        "is_deletion": [True, True, True, False, True],
+        "is_wildtype": [False, False, False, True, False],
+        "is_responsive_mutant": [True, True, False, False, False],
     }
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "kemmeren"
@@ -478,20 +478,22 @@ def test_side_files_gene_set_reference_index_and_sample_table(
     assert dataset.preprocess_raw(frame) is frame
 
 
-def test_mating_type_map_reads_table_s1_and_rewrites_common_names(
+def test_mating_type_map_reads_table_s1_as_released(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """TLC1 and CMS1 in the orf column become YNCB0010W and YLR003C; ``diploid`` is
-    neither mating type and is skipped.
+    """TLC1 and CMS1 in the orf column stay as released (no genome rewrite); a row
+    with a blank ``gene`` (CMS1) adds no common name; ``diploid`` is neither mating type
+    and is skipped.
     """
     assert dataset._load_mating_type_map() == (
         {
             "YPL177C": "BY4741",
             "YHR127W": "BY4742",
-            "YNCB0010W": "BY4741",
-            "YLR003C": "BY4741",
+            "TLC1": "BY4741",
+            "CMS1": "BY4741",
+            "YPL042C": "BY4742",
         },
-        {"CUP9": "YPL177C", "HSN1": "YHR127W", "TLC1": "YNCB0010W", "CMS1": "YLR003C"},
+        {"CUP9": "YPL177C", "HSN1": "YHR127W", "TLC1": "TLC1", "SSN3": "YPL042C"},
     )
 
 
@@ -623,9 +625,9 @@ def test_reference_n_replicates_count_the_arrays_in_the_refpool_mean(
     _write_raw(root / "raw")
     for accession in ("GSE42241", "GSE42240", "GSE42217"):
         (root / "raw" / f"{accession}.pkl").unlink()
-    dataset = m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
-    assert len(dataset) == 2
-    for i in range(2):
+    dataset = m.MicroarrayKemmeren2014Dataset(root=str(root))
+    assert len(dataset) == 3
+    for i in range(3):
         experiment_n = dataset[i]["experiment"]["phenotype"]["n_replicates"]
         reference = dataset[i]["reference"]["phenotype_reference"]
         assert reference["n_replicates"] == experiment_n
@@ -639,32 +641,81 @@ def test_reference_n_replicates_count_the_arrays_in_the_refpool_mean(
     assert dataset[1]["reference"] == _REF_HSN1.model_dump()
 
 
-def test_resolution_passes_in_priority_order(
+def test_resolution_routes_are_release_only(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """Special map (LUG1 -> YCR087C-A even without a strain), Table S1 common name,
-    the gene-attribute table's ``ID`` and ``Alias`` columns, a direct Table S1 key, the
-    shared reconciler, and ``None`` for a retired name.
+    """The pinned residue first (LUG1 -> YCR087C-A; TLC1 -> YNCB0010W, whose strain is
+    joined from the TLC1 row of Table S1), then a Table S1 ``gene``, then a token that
+    is a Table S1 ``orf name`` (its released name is that row's ``gene``, else the ORF).
+    Each route is counted, and the release's name is recorded per ORF.
     """
-    strains = {"YPL177C": "BY4741", "YXX009W": "BY4742"}
+    strains = {"YPL177C": "BY4741", "YXX009W": "BY4742", "TLC1": "BY4741"}
+    common = {"CUP9": "YPL177C"}
     resolve = dataset.resolve_gene_name_comprehensive
-    dataset.resolved_by_alias = dataset.resolved_by_excel = 0
-    dataset.resolved_by_gene_table = dataset.resolved_by_shared_reconciler = 0
-    dataset.unresolved_genes = 0
-    assert resolve("lug1", {}, strains) == "YCR087C-A"
-    assert resolve("cup9", {"CUP9": "YPL177C"}, strains) == "YPL177C"
-    assert resolve("YPL177C", {}, strains) == "YPL177C"
-    assert resolve("none1", {}, strains) == "YPL177C"
-    assert resolve("yxx009w", {}, strains) == "YXX009W"
-    assert resolve("cdk8", {}, strains) == "YPL042C"
-    assert resolve("zzz9", {}, strains) is None
+    dataset.resolved_by_table_s1_gene = dataset.resolved_by_table_s1_orf = 0
+    dataset.resolved_by_release_title_names = 0
+    dataset.released_gene_names = {}
+    assert resolve("lug1", common, strains) == "YCR087C-A"
+    assert resolve("tlc1", common, strains) == "YNCB0010W"
+    assert resolve("cup9", common, strains) == "YPL177C"
+    assert resolve("YPL177C", common, strains) == "YPL177C"
+    assert resolve("yxx009w", common, strains) == "YXX009W"
     assert (
-        dataset.resolved_by_alias,
-        dataset.resolved_by_excel,
-        dataset.resolved_by_gene_table,
-        dataset.resolved_by_shared_reconciler,
-        dataset.unresolved_genes,
-    ) == (1, 2, 2, 1, 1)
+        dataset.resolved_by_release_title_names,
+        dataset.resolved_by_table_s1_gene,
+        dataset.resolved_by_table_s1_orf,
+    ) == (2, 1, 2)
+    assert strains["YNCB0010W"] == "BY4741"
+    assert "YCR087C-A" not in strains
+    assert dataset.released_gene_names == {
+        "YCR087C-A": "LUG1",
+        "YNCB0010W": "TLC1",
+        "YPL177C": "CUP9",
+        "YXX009W": "YXX009W",
+    }
+
+
+def test_an_unknown_title_token_raises_instead_of_being_skipped(
+    dataset: m.MicroarrayKemmeren2014Dataset, tmp_path: Path
+) -> None:
+    """A token that is neither a Table S1 gene, a Table S1 orf name, nor in
+    ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF`` raises ``ValueError``: a deletion array the
+    release ships is never dropped silently. A build whose series carries such an array
+    fails at that array. One ORF given two different released names also raises.
+    """
+    resolve = dataset.resolve_gene_name_comprehensive
+    with pytest.raises(ValueError, match="title token 'zzz9' is neither"):
+        resolve("zzz9", {"CUP9": "YPL177C"}, {"YPL177C": "BY4741"})
+    with pytest.raises(ValueError, match="YPL177C is named both CUP9 and OTHER1"):
+        resolve("other1", {"OTHER1": "YPL177C"}, {})
+    assert "ZZZ9" not in m.RELEASE_TITLE_NAMES_WITHOUT_AN_ORF
+
+    root = tmp_path / "unknown"
+    _write_raw(root / "raw")
+    with open(root / "raw" / "GSE42526.pkl", "rb") as handle:
+        gse = pickle.load(handle)
+    zzz9 = _gsm("GSM6", "zzz9-del-a", [1.0] * 3, [1.0] * 3, "Cy5", "zzz9-del")
+    gse.gsms["GSM6"] = zzz9
+    with open(root / "raw" / "GSE42526.pkl", "wb") as handle:
+        pickle.dump(gse, handle)
+    with pytest.raises(ValueError, match="title token 'ZZZ9' is neither"):
+        m.MicroarrayKemmeren2014Dataset(root=str(root))
+
+
+def test_release_title_names_without_an_orf_is_the_pinned_kg_3_residue() -> None:
+    """The 36 GEO names Table S1 spells differently plus TLC1 and CMS1, each mapped to
+    the ORF the KG 3.0 build served it under (measured 2026-10-12 from that build's
+    preprocess/data.csv).
+    """
+    table = m.RELEASE_TITLE_NAMES_WITHOUT_AN_ORF
+    assert len(table) == 38
+    assert (table["ABC1"], table["LUG1"], table["TLC1"], table["CMS1"]) == (
+        "YGL119W",
+        "YCR087C-A",
+        "YNCB0010W",
+        "YLR003C",
+    )
+    assert len(set(table.values())) == 38
 
 
 def test_create_expression_experiment_from_pairs() -> None:
@@ -679,7 +730,11 @@ def test_create_expression_experiment_from_pairs() -> None:
         match=re.escape("Strain (BY4741 or BY4742) must be specified in sample_info"),
     ):
         build("d", {"systematic_gene_name": "YAL001C"}, {})
-    info = {"systematic_gene_name": "YAL001C", "strain": "BY4741"}
+    info = {
+        "systematic_gene_name": "YAL001C",
+        "perturbed_gene_name": "TFC3",
+        "strain": "BY4741",
+    }
     assert build("d", info, {}) == (None, None, None)
     assert build("d", info, {"YAL001C": [(0.0, 1.0), (1.0, 0.0)]}) == (None, None, None)
     experiment, reference, publication = build(
@@ -713,19 +768,21 @@ def test_create_expression_experiment_from_pairs() -> None:
 
 def test_parallel_build_writes_the_same_records(tmp_path: Path) -> None:
     """``process_workers=1`` routes through ``_process_parallel`` and the static batch
-    helpers (one worker process, batches of one gene); the two stored records, both
+    helpers (one worker process, batches of one gene); the three stored records, their
     references and the publication equal the sequential build's.
     """
     root = tmp_path / "kemmeren"
     _write_raw(root / "raw")
     dataset = m.MicroarrayKemmeren2014Dataset(
-        root=str(root), genome=_genome(), process_workers=1, batch_size=1
+        root=str(root), process_workers=1, batch_size=1
     )
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     assert _nan_safe(dataset[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
     assert _nan_safe(dataset[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
+    assert _nan_safe(dataset[2]["experiment"]) == _nan_safe(_CDK8.model_dump())
     assert dataset[0]["reference"] == _REF_CUP9.model_dump()
     assert dataset[1]["reference"] == _REF_HSN1.model_dump()
+    assert dataset[2]["reference"] == _REF_CDK8.model_dump()
     assert dataset[0]["publication"] == _PUBLICATION.model_dump()
 
 
@@ -931,7 +988,7 @@ def test_process_refetches_a_missing_deletion_pickle(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Without ``GSE42526.pkl``, ``process`` calls ``get_GEO(geo="GSE42526",
-    destdir=<raw_dir>, silent=False)`` once (line 315) and builds the same two records
+    destdir=<raw_dir>, silent=False)`` once and builds the same three records
     from the object it returns.
     """
     root = tmp_path / "kemmeren"
@@ -946,9 +1003,9 @@ def test_process_refetches_a_missing_deletion_pickle(
         return gse
 
     monkeypatch.setattr(GEOparse, "get_GEO", get_geo)
-    rebuilt = m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
+    rebuilt = m.MicroarrayKemmeren2014Dataset(root=str(root))
     assert calls == [{"geo": "GSE42526", "destdir": str(root / "raw"), "silent": False}]
-    assert len(rebuilt) == 2
+    assert len(rebuilt) == 3
     assert _nan_safe(rebuilt[0]["experiment"]) == _nan_safe(_CUP9.model_dump())
     assert _nan_safe(rebuilt[1]["experiment"]) == _nan_safe(_HSN1.model_dump())
 
@@ -964,12 +1021,13 @@ def _raw_gsms(dataset: m.MicroarrayKemmeren2014Dataset) -> dict[str, GSM]:
 def test_process_batch_matches_process_sequential_record_by_record(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
-    """Five genes in order: YPL177C (GSM1 + GSM2) -> ``_CUP9``; YPL042C (GSM5) has no
-    Table S1 strain and is skipped; YAL001C with no arrays has no pairs and is
-    skipped; YHR127W (GSM3) -> ``_HSN1``; YNCB0010W on one array whose deletion
-    channel is all 0 has only non-positive pairs, so ``create_expression_experiment``
-    returns the skip triple. The static batch path (lines 716-769, only ever run in
-    worker processes) and the sequential path write the same two records in order.
+    """Five genes in order: YPL177C (GSM1 + GSM2) -> ``_CUP9``; YPL042C (GSM5) ->
+    ``_CDK8``; YAL001C with no arrays has no pairs and is skipped; YHR127W (GSM3) ->
+    ``_HSN1``; YNCB0010W has no key of its own in the Table S1 strain map (only the
+    TLC1 row does; the join is made by ``resolve_gene_name_comprehensive``, not run
+    here) and is skipped by the kept "not in Table S1" path. The static batch path
+    (only ever run in worker processes) and the sequential path write the same three
+    records in order.
     """
     gsms = _raw_gsms(dataset)
     zero = _gsm("Z", "tlc1-del-a", [1.0, 1.0, 1.0], [0.0, 0.0, 0.0], "Cy5", "tlc1-del")
@@ -982,14 +1040,15 @@ def test_process_batch_matches_process_sequential_record_by_record(
     }
     strains, _ = dataset._load_mating_type_map()
     batch = m.MicroarrayKemmeren2014Dataset._process_batch(
-        list(groups.items()), _PROBES, strains, _DATASET
+        list(groups.items()), _PROBES, strains, _DATASET, dataset.released_gene_names
     )
     records = [pickle.loads(blob) for blob in batch]
     expected = [
         (_CUP9.model_dump(), _REF_CUP9.model_dump()),
+        (_CDK8.model_dump(), _REF_CDK8.model_dump()),
         (_HSN1.model_dump(), _REF_HSN1.model_dump()),
     ]
-    assert len(records) == 2
+    assert len(records) == 3
     for record, (experiment, reference) in zip(records, expected, strict=True):
         assert _nan_safe(record["experiment"]) == _nan_safe(experiment)
         assert record["reference"] == reference
@@ -1079,28 +1138,25 @@ def test_mating_type_map_without_gene_or_mating_column(
     tmp_path: Path,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    """Without a ``gene`` column the common-name map holds only the TLC1 and CMS1
-    entries the loader adds itself.
+    """Without a ``gene`` column the common-name map is empty and TLC1 stays the
+    released ``orf name`` cell.
 
     Finding: without a mating-type column (kemmeren2014.py lines 1108-1114) the
     function only logs an error and returns two empty maps, and a missing ``orf name``
     column raises ``ValueError`` at line 1007 only to be swallowed by the broad
-    ``except Exception`` at line 1116 (logged, then ``({}, {})``). The build does not
-    end quietly, though: with no strain map every gene is skipped, the LMDB holds 0
-    entries, and ``post_process`` then refuses the empty gene set with ``ValueError
-    ("Cannot set an empty gene_set: every record of a dataset with
-    has_gene_perturbations=True carries gene perturbations, so an empty set is a
-    broken build")`` (experiment_dataset.py line 850), a message that does not name
-    Table S1. Pinned until a Table S1 missing a
-    required column raises at load time naming the column.
+    ``except Exception`` (logged, then ``({}, {})``). The build does not end quietly,
+    though: with both maps empty the first deletion title's token (CUP9) is on no
+    release route, so ``resolve_gene_name_comprehensive`` raises naming that token, a
+    message that does not name Table S1. Pinned until a Table S1 missing a required
+    column raises at load time naming the column.
     """
     table = Path(dataset.raw_dir) / "kemmeren2014_table_s1.xlsx"
     _write_sheet(
         table, [["orf name", "mating type"], ["TLC1", "MATa"], ["YAL001C", "MATa"]]
     )
     assert dataset._load_mating_type_map() == (
-        {"YNCB0010W": "BY4741", "YAL001C": "BY4741"},
-        {"TLC1": "YNCB0010W"},
+        {"TLC1": "BY4741", "YAL001C": "BY4741"},
+        {},
     )
     _write_sheet(table, [["orf name", "gene"], ["YAL001C", "ONE1"]])
     assert dataset._load_mating_type_map() == ({}, {})
@@ -1119,187 +1175,25 @@ def test_mating_type_map_without_gene_or_mating_column(
         root / "raw" / "kemmeren2014_table_s1.xlsx",
         [["orf name", "gene"], ["YPL177C", "CUP9"], ["YHR127W", "HSN1"]],
     )
-    with pytest.raises(
-        ValueError,
-        match=(
-            r"^Cannot set an empty gene_set: every record of a dataset with "
-            r"has_gene_perturbations=True carries gene perturbations, so an empty "
-            r"set is a broken build$"
-        ),
-    ):
-        m.MicroarrayKemmeren2014Dataset(root=str(root), genome=_genome())
-
-
-class _ResolveGenome:
-    """Gene table, alias map and reconciler for every resolution pass."""
-
-    gene_attribute_table = pd.DataFrame(
-        {
-            "ID": ["YAA001W", "YBB001W", "YCC001W", "YDD001W"],
-            "gene": ["GENEA", "GENEB", "GENEC", None],
-            "Alias": [None, "ALIASB", None, "ALIASD"],
-        }
-    )
-    alias_to_systematic: dict[str, list[str]] = {
-        "ONEHIT": ["YEE001W", "YZZ999W"],
-        "TWOHIT": ["YGG001W", "YFF001W"],
-        "CycC": ["YHH001W"],
-        "CycD": ["YII001W", "YJJ001W"],
-    }
-
-    def __init__(self) -> None:
-        self.reconciled: list[str] = []
-
-    def resolve_gene_name(self, name: str) -> GeneNameResolution:
-        self.reconciled.append(name)
-        if name.upper() == "RENAMED1":
-            return GeneNameResolution(
-                input_name=name,
-                status=GeneNameStatus.RENAMED,
-                systematic_name="YKK001W",
-            )
-        return GeneNameResolution(
-            input_name=name, status=GeneNameStatus.AMBIGUOUS, systematic_name="YLL001W"
-        )
-
-
-_STRAINS = dict.fromkeys(
-    [
-        "YAA001W",
-        "YBB001W",
-        "YDD001W",
-        "YEE001W",
-        "YFF001W",
-        "YGG001W",
-        "YHH001W",
-        "YII001W",
-        "YJJ001W",
-    ],
-    "BY4741",
-)
-
-
-def test_resolution_covers_every_pass_with_exact_counters(
-    dataset: m.MicroarrayKemmeren2014Dataset, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Each name and the pass that resolves it:
-
-    - ``tlc1``: special map, YNCB0010W (not a strain key, returned anyway, alias +1).
-    - ``yaa001w``: table ``ID`` and a strain key (gene table +1).
-    - ``YCC001W``: in the table ``ID`` but no strain, then no other hit; reconciler is
-      ``AMBIGUOUS``, so ``None`` (unresolved +1).
-    - ``geneb``: table ``gene`` -> YBB001W (gene table +1); ``genec`` -> YCC001W has no
-      strain and falls through to the reconciler (``AMBIGUOUS``, unresolved +1).
-    - ``aliasd``: table ``Alias`` -> YDD001W (gene table +1).
-    - ``onehit``: alias map, one candidate with a strain -> YEE001W (alias +1).
-    - ``twohit``: two candidates with strains -> the sorted first, YFF001W (alias +1).
-    - ``cycc`` / ``cycd``: no upper-case key; the case-insensitive pass finds ``CycC``
-      (one candidate, YHH001W) and ``CycD`` (two, sorted first YII001W), alias +2.
-    - ``renamed1``: the reconciler's ``RENAMED`` -> YKK001W (reconciler +1).
-
-    Totals: excel 0, gene table 3, alias 5, reconciler 1, unresolved 2. The reconciler
-    is called with the name as given, not upper-cased.
-    """
-    genome = _ResolveGenome()
-    monkeypatch.setattr(dataset, "genome", genome)
-    dataset.resolved_by_alias = dataset.resolved_by_excel = 0
-    dataset.resolved_by_gene_table = dataset.resolved_by_shared_reconciler = 0
-    dataset.unresolved_genes = 0
-    resolve = dataset.resolve_gene_name_comprehensive
-    names = [
-        "tlc1",
-        "yaa001w",
-        "YCC001W",
-        "geneb",
-        "genec",
-        "aliasd",
-        "onehit",
-        "twohit",
-        "cycc",
-        "cycd",
-        "renamed1",
-    ]
-    assert [resolve(name, {}, _STRAINS) for name in names] == [
-        "YNCB0010W",
-        "YAA001W",
-        None,
-        "YBB001W",
-        None,
-        "YDD001W",
-        "YEE001W",
-        "YFF001W",
-        "YHH001W",
-        "YII001W",
-        "YKK001W",
-    ]
-    assert (
-        dataset.resolved_by_excel,
-        dataset.resolved_by_gene_table,
-        dataset.resolved_by_alias,
-        dataset.resolved_by_shared_reconciler,
-        dataset.unresolved_genes,
-    ) == (0, 3, 5, 1, 2)
-    assert genome.reconciled == ["YCC001W", "genec", "renamed1"]
-
-
-def test_resolution_with_a_genome_that_has_no_tables(
-    dataset: m.MicroarrayKemmeren2014Dataset, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With a genome object carrying none of the three attributes, only the special
-    map, the Excel common-name map and a direct strain key resolve; anything else is
-    ``None`` without calling any reconciler.
-    """
-    monkeypatch.setattr(dataset, "genome", object())
-    dataset.resolved_by_alias = dataset.resolved_by_excel = 0
-    dataset.resolved_by_gene_table = dataset.resolved_by_shared_reconciler = 0
-    dataset.unresolved_genes = 0
-    resolve = dataset.resolve_gene_name_comprehensive
-    assert resolve("cms1", {}, {}) == "YLR003C"
-    assert resolve("cup9", {"CUP9": "YPL177C"}, {}) == "YPL177C"
-    assert resolve("yaa001w", {}, {"YAA001W": "BY4741"}) == "YAA001W"
-    assert resolve("geneb", {}, {}) is None
-    assert (
-        dataset.resolved_by_alias,
-        dataset.resolved_by_excel,
-        dataset.unresolved_genes,
-    ) == (1, 2, 1)
+    with pytest.raises(ValueError, match="title token 'CUP9' is neither"):
+        m.MicroarrayKemmeren2014Dataset(root=str(root))
 
 
 def test_already_assigned_is_accepted_and_ignored(
     dataset: m.MicroarrayKemmeren2014Dataset,
 ) -> None:
     """Finding: ``resolve_gene_name_comprehensive`` takes ``already_assigned`` and
-    ``process`` passes the set of ORFs it has grouped so far (lines 344, 379, 409, 439),
-    but the function never reads it past defaulting it (lines 1139-1140): an ORF already in the
-    set is returned again, so two differently named titles that resolve to one ORF are
-    pooled into one record without any check. Pinned until the set is either used or
-    removed.
+    ``process`` passes the set of ORFs it has grouped so far, but the function never
+    reads it: an ORF already in the set is returned again. Two titles that resolve to
+    one ORF under DIFFERENT released names now raise (``released_gene_names``, see
+    ``test_an_unknown_title_token_raises_instead_of_being_skipped``); the same name
+    resolves again freely. Pinned until the set is either used or removed.
     """
     resolve = dataset.resolve_gene_name_comprehensive
     common = {"CUP9": "YPL177C"}
     assert resolve("cup9", common, {}, {"YPL177C"}) == "YPL177C"
     assert resolve("cup9", common, {}, set()) == "YPL177C"
     assert resolve("cup9", common, {}, None) == "YPL177C"
-
-
-def test_convert_gene_name_branches(
-    dataset: m.MicroarrayKemmeren2014Dataset, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """Finding: ``convert_gene_name`` (lines 1266-1295) has no caller in ``torchcell``
-    (its docstring says it is "Used for probe-to-gene mappings"; the probe map is built
-    by ``_extract_probe_to_gene_mapping`` without it). Its contract: the Excel map,
-    then the table ``gene`` column, then the ``Alias`` column, else the input
-    UNCHANGED (case kept: ``mixedCase`` stays ``mixedCase``). Pinned until it is called
-    or removed.
-    """
-    monkeypatch.setattr(dataset, "genome", _ResolveGenome())
-    convert = dataset.convert_gene_name
-    assert convert("cup9", {"CUP9": "YPL177C"}) == "YPL177C"
-    assert convert("genea", {}) == "YAA001W"
-    assert convert("aliasb", {}) == "YBB001W"
-    assert convert("mixedCase", {}) == "mixedCase"
-    monkeypatch.setattr(dataset, "genome", object())
-    assert convert("genea", {}) == "genea"
 
 
 def test_processing_summary_cannot_report_duplicate_deletions(
@@ -1324,14 +1218,14 @@ def test_processing_summary_cannot_report_duplicate_deletions(
     ]
 
 
-def test_process_reads_genes_from_characteristics_and_skips_unresolved(
+def test_process_reads_genes_from_characteristics_and_refuses_unknown_ones(
     tmp_path: Path,
 ) -> None:
     """A build whose Table S1 matches the resolved ORFs exactly: four arrays titled
     ``Sample A..D`` name CUP9 only as ``genotype/variation: [HS1991] cup9-del`` (the
-    ``[HS1991]`` prefix is stripped, line 403); ``hsn1-del-a`` resolves through the
-    special map; ``Sample Z`` names ``zzz9-del`` in its characteristics, which does
-    not resolve, so it is a deletion with no ORF and makes no record.
+    ``[HS1991]`` prefix is stripped); ``hsn1-del-a`` resolves through the pinned
+    release title names. A ``Sample Z`` naming ``zzz9-del`` in its characteristics is on
+    no release route, so the build raises instead of storing nothing for it.
 
     CUP9: four identical arrays, deletion 2 and refpool 1 -> log2 1, sample SD 0, so
     SE 0 and variance 0, n 4, linear 2, refpool 1. HSN1: deletion 4, refpool 1 -> log2
@@ -1374,10 +1268,15 @@ def test_process_reads_genes_from_characteristics_and_skips_unresolved(
     for accession, gsms in (("GSE42527", [*cup9, hsn1]), ("GSE42526", [unresolved])):
         with open(raw / f"{accession}.pkl", "wb") as handle:
             pickle.dump(_gse(accession, gsms), handle)
-    built = m.MicroarrayKemmeren2014Dataset(root=str(raw.parent), genome=_genome())
+    with pytest.raises(ValueError, match="title token 'ZZZ9' is neither"):
+        m.MicroarrayKemmeren2014Dataset(root=str(raw.parent))
+    with open(raw / "GSE42526.pkl", "wb") as handle:
+        pickle.dump(_gse("GSE42526", []), handle)
+    built = m.MicroarrayKemmeren2014Dataset(root=str(raw.parent))
     genes = ("Q0010", "YAL001C", "YBR001C")
     cup9_expected = _experiment(
         "YPL177C",
+        "CUP9",
         dict.fromkeys(genes, 1.0),
         dict.fromkeys(genes, 0.0),
         dict.fromkeys(genes, 0.0),
@@ -1386,6 +1285,7 @@ def test_process_reads_genes_from_characteristics_and_skips_unresolved(
     )
     hsn1_expected = _experiment(
         "YHR127W",
+        "HSN1",
         dict.fromkeys(genes, 2.0),
         dict.fromkeys(genes, _NANF),
         dict.fromkeys(genes, _NANF),
@@ -1405,10 +1305,10 @@ def test_process_reads_genes_from_characteristics_and_skips_unresolved(
     assert samples[
         ["geo_accession", "systematic_gene_name", "is_deletion", "is_wildtype"]
     ].to_dict(orient="list") == {
-        "geo_accession": ["C0", "C1", "C2", "C3", "H1", "Z1"],
-        "systematic_gene_name": ["YPL177C"] * 4 + ["YHR127W", ""],
-        "is_deletion": [True] * 6,
-        "is_wildtype": [False] * 6,
+        "geo_accession": ["C0", "C1", "C2", "C3", "H1"],
+        "systematic_gene_name": ["YPL177C"] * 4 + ["YHR127W"],
+        "is_deletion": [True] * 5,
+        "is_wildtype": [False] * 5,
     }
 
 
@@ -1418,9 +1318,9 @@ def test_parallel_path_logs_written_records_as_attempted_genes(
     """Finding: ``_process_batch`` drops a skipped gene instead of returning ``None``
     for it, so in ``_process_parallel`` (lines 693-713) every result is bytes: the
     ``skipped_genes`` branch can never run and "Total gene deletions attempted" logs
-    the WRITTEN count. Five genes go in (the five-group set of the batch test), two
-    records are written, and the log says 2 attempted with no skip warning, where
-    ``_process_sequential`` says 5 attempted and warns of 3 skipped. Reach: the served
+    the WRITTEN count. Five genes go in (the five-group set of the batch test), three
+    records are written, and the log says 3 attempted with no skip warning, where
+    ``_process_sequential`` says 5 attempted and warns of 2 skipped. Reach: the served
     build takes the sequential path (``build_dataset_lmdb`` passes no
     ``process_workers``); only ``experiments/012-sameith-kemmeren/scripts/
     kemmeren_volcano.py`` (``process_workers=10``) reaches this log line, and no record
@@ -1455,13 +1355,13 @@ def test_parallel_path_logs_written_records_as_attempted_genes(
         ]
 
     assert messages(dataset._process_parallel) == [
-        "Wrote 2 experiments to LMDB",
-        "Total gene deletions attempted: 2",
+        "Wrote 3 experiments to LMDB",
+        "Total gene deletions attempted: 3",
     ]
     assert messages(dataset._process_sequential) == [
-        "Wrote 2 experiments to LMDB",
+        "Wrote 3 experiments to LMDB",
         "Total gene deletions attempted: 5",
-        "Skipped 3 genes (could not calculate log2 ratios)",
+        "Skipped 2 genes (could not calculate log2 ratios)",
     ]
 
 
@@ -1523,7 +1423,9 @@ def test_parallel_writer_packs_written_records_and_logs_the_skipped_indices(
     monkeypatch.setattr(m, "ProcessPoolExecutor", _InlineExecutor)
     calls: list[tuple[list[str], str]] = []
 
-    def batch(items: list[Any], probes: Any, strains: Any, name: str) -> list[Any]:
+    def batch(
+        items: list[Any], probes: Any, strains: Any, name: str, names: Any
+    ) -> list[Any]:
         calls.append(([gene for gene, _ in items], name))
         return [
             f"r{int(gene[1:])}".encode() if gene in ("g0", "g2") else None
@@ -1536,6 +1438,7 @@ def test_parallel_writer_packs_written_records_and_logs_the_skipped_indices(
         _process_batch=batch,
         processed_dir=str(tmp_path),
         name="MicroarrayKemmeren2014Dataset",
+        released_gene_names={},
     )
     genes: dict[str, list[Any]] = {f"g{i}": [] for i in range(4)}
     with caplog.at_level(logging.INFO, logger=m.__name__):

@@ -2224,7 +2224,7 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
     }
     assert _oracles(runners.ENVIRONMENT_RESPONSE_DATASETS) == {
         "yeastphenome": 296777,
-        "env_chemgen_vanacloig2022": 118662,
+        "env_chemgen_vanacloig2022": 164205,
         "env_chemgen_piotrowski2017": 3435820,
         "env_chemgen_mota2024": 1270,
         "env_chemgen_hoepfner2014": 3083827,
@@ -2234,8 +2234,8 @@ def test_registry_count_oracles_and_flags_are_pinned() -> None:
         "crispr_magic_lian2019": 266304,
         "crispri_mormino2022": 12,
         "env_chemgen_costanzo2021": 61430,
-        "env_chemgen_hillenmeyer2008_het": 2712677,
-        "env_chemgen_hillenmeyer2008_hom": 1063034,
+        "env_chemgen_hillenmeyer2008_het": 3074132,
+        "env_chemgen_hillenmeyer2008_hom": 1228676,
         # #1045: every released ratio (Table S7's non-blank cells), the nine name-only
         # compounds and the 14 ORFs the annotation does not call genes included
         "env_chemgen_parsons2006": 329254,

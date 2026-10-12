@@ -194,6 +194,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
     <span class="n">copy_verified</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
@@ -421,6 +422,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">IsobutanolScreenLopez2024Dataset</span><span class="p">(</span><span class="n">_IsobutanolLopez2024Base</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Montaño López 2024 FIRST genome-wide isobutanol-biosensor YKO screen (Table S2, n=1)."""</span>
 
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/isobutanol_screen_lopez2024"</span><span class="p">,</span>
@@ -525,6 +528,8 @@
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">IsobutanolValidatedLopez2024Dataset</span><span class="p">(</span><span class="n">_IsobutanolLopez2024Base</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Montaño López 2024 VALIDATED isobutanol-biosensor re-screen (Table S3, triplicate)."""</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

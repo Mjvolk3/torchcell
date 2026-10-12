@@ -159,6 +159,12 @@
 <span class="sd">listed with the sha256 the pointer pins, printing one ``STATE&lt;TAB&gt;CODE&lt;TAB&gt;DETAIL`` line</span>
 <span class="sd">for ``scripts/ops.sh``.</span>
 
+<span class="sd">**The organisms a release serves.** A build serves the datasets of one organism set</span>
+<span class="sd">(``--organisms``; ``KgBuildManifest.organisms``). The release node, its ``release.json``</span>
+<span class="sd">and the snapshot carry that set as ``organisms`` (None for a release whose manifest</span>
+<span class="sd">predates the switch), and the ``status`` table prints it beside the dataset count, so a</span>
+<span class="sd">yeast-only store is never read as "every mapped dataset".</span>
+
 <span class="sd">    python -m torchcell.knowledge_graphs.releases status --label gilahyper</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases datasets --version latest</span>
 <span class="sd">    python -m torchcell.knowledge_graphs.releases diff 2026.09.17-7715ee35 latest</span>
@@ -185,6 +191,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.kg_manifest</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ArtifactPointer</span><span class="p">,</span>
     <span class="n">KgBuildManifest</span><span class="p">,</span>
+    <span class="n">OrganismName</span><span class="p">,</span>
     <span class="n">checkout_package_version</span><span class="p">,</span>
     <span class="n">manifest_artifact_refs</span><span class="p">,</span>
     <span class="n">surface_in_worktree</span><span class="p">,</span>
@@ -239,6 +246,9 @@
     <span class="c1"># dataset -&gt; the file-level artifact pointers its records carry; None on a node</span>
     <span class="c1"># written before pointer recording, or from a manifest with an unrecorded entry</span>
     <span class="n">artifact_refs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">ArtifactPointer</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The organism set the store serves (``KgBuildManifest.organisms``); None on a node</span>
+    <span class="c1"># whose manifest predates the organism switch (2026.10.12).</span>
+    <span class="n">organisms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrganismName</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">n_datasets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -276,6 +286,7 @@
                     <span class="n">separators</span><span class="o">=</span><span class="p">(</span><span class="s2">","</span><span class="p">,</span> <span class="s2">":"</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">),</span>
+            <span class="s2">"organisms"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">organisms</span><span class="p">,</span>
         <span class="p">}</span></div>
 
 
@@ -310,6 +321,7 @@
             <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
             <span class="n">closures</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"closures_json"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">"</span><span class="p">),</span>
             <span class="n">artifact_refs</span><span class="o">=</span><span class="n">artifact_refs</span><span class="p">,</span>
+            <span class="n">organisms</span><span class="o">=</span><span class="n">props</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"organisms"</span><span class="p">),</span>
         <span class="p">)</span></div>
 </div>
 
@@ -568,6 +580,7 @@
             <span class="n">name</span><span class="p">:</span> <span class="nb">dict</span><span class="p">(</span><span class="n">entry</span><span class="o">.</span><span class="n">closure</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="p">},</span>
         <span class="n">artifact_refs</span><span class="o">=</span><span class="n">manifest_artifact_refs</span><span class="p">(</span><span class="n">manifest</span><span class="p">),</span>
+        <span class="n">organisms</span><span class="o">=</span><span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -999,12 +1012,21 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">organisms_label</span><span class="p">(</span><span class="n">release</span><span class="p">:</span> <span class="n">KgRelease</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The ORGANISMS cell: the release's organism set, ``unrecorded`` before the switch."""</span>
+    <span class="k">if</span> <span class="n">release</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"-"</span>
+    <span class="k">if</span> <span class="n">release</span><span class="o">.</span><span class="n">organisms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">"unrecorded"</span>
+    <span class="k">return</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">release</span><span class="o">.</span><span class="n">organisms</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="status_rows">
 <a class="viewcode-back" href="../../../generated/torchcell.knowledge_graphs.releases.status_rows.html#torchcell.knowledge_graphs.releases.status_rows">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">status_rows</span><span class="p">(</span>
     <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">served</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ServedDatabase</span><span class="p">],</span> <span class="n">repo_root</span><span class="p">:</span> <span class="n">Path</span> <span class="o">|</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">"""Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS NODES ALIASES STATUS."""</span>
+<span class="w">    </span><span class="sd">"""Table rows for one host: HOST DATABASE VERSION RELEASE PKG COMMIT# DATE DATASETS ORGANISMS NODES ALIASES STATUS."""</span>
     <span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">db</span> <span class="ow">in</span> <span class="n">served</span><span class="p">:</span>
         <span class="n">release</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">release</span>
@@ -1024,6 +1046,7 @@
                 <span class="n">commit_index</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">repo_root</span> <span class="ow">and</span> <span class="n">commit</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
                 <span class="n">commit_date</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span> <span class="k">if</span> <span class="p">(</span><span class="n">repo_root</span> <span class="ow">and</span> <span class="n">commit</span><span class="p">)</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
                 <span class="nb">str</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">n_datasets</span><span class="p">)</span> <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">n_datasets</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
+                <span class="n">organisms_label</span><span class="p">(</span><span class="n">release</span><span class="p">),</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">db</span><span class="o">.</span><span class="n">n_nodes</span><span class="si">:</span><span class="s2">,</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="n">db</span><span class="o">.</span><span class="n">n_nodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">"-"</span><span class="p">,</span>
                 <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">db</span><span class="o">.</span><span class="n">aliases</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"-"</span><span class="p">,</span>
                 <span class="n">status</span><span class="p">,</span>
@@ -1039,7 +1062,7 @@
 <span class="w">    </span><span class="sd">"""Fixed-width table with the header row."""</span>
     <span class="n">header</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">"HOST"</span><span class="p">,</span> <span class="s2">"DATABASE"</span><span class="p">,</span> <span class="s2">"VERSION"</span><span class="p">,</span> <span class="s2">"RELEASE"</span><span class="p">,</span> <span class="s2">"PKG"</span><span class="p">,</span> <span class="s2">"COMMIT#"</span><span class="p">,</span> <span class="s2">"DATE"</span><span class="p">,</span>
-        <span class="s2">"DATASETS"</span><span class="p">,</span> <span class="s2">"NODES"</span><span class="p">,</span> <span class="s2">"ALIASES"</span><span class="p">,</span> <span class="s2">"STATUS"</span><span class="p">,</span>
+        <span class="s2">"DATASETS"</span><span class="p">,</span> <span class="s2">"ORGANISMS"</span><span class="p">,</span> <span class="s2">"NODES"</span><span class="p">,</span> <span class="s2">"ALIASES"</span><span class="p">,</span> <span class="s2">"STATUS"</span><span class="p">,</span>
     <span class="p">]</span>  <span class="c1"># fmt: skip</span>
     <span class="n">table</span> <span class="o">=</span> <span class="p">[</span><span class="n">header</span><span class="p">,</span> <span class="o">*</span><span class="n">rows</span><span class="p">]</span>
     <span class="n">widths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">max</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">table</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">header</span><span class="p">))]</span>

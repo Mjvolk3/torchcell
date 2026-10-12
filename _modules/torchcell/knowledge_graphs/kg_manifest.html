@@ -189,6 +189,15 @@
 <span class="sd">``KgDatasetEntry.artifact_refs``; the release node and the snapshot carry the set from</span>
 <span class="sd">there, and ``releases artifacts`` checks it against tc-data.</span>
 
+<span class="sd">**The organism set.** A full build is asked for a set of organisms (``--organisms``,</span>
+<span class="sd">``KG_ORGANISMS`` in the live rebuild) and serves only the mapped datasets whose loader</span>
+<span class="sd">declares one of them. ``bootstrap --organisms`` records that set as</span>
+<span class="sd">``KgBuildManifest.organisms`` and each entry's ``organism``, so a yeast-only store says</span>
+<span class="sd">so. An admission of a dataset whose organism is outside the served set blocks unless it</span>
+<span class="sd">is run with ``--widen-organisms``; the recorded admission then adds the organism to the</span>
+<span class="sd">set. A manifest written before the switch records no set, and the served set is read</span>
+<span class="sd">off the served datasets' own classes (:func:`served_organisms`).</span>
+
 <span class="sd">The manifest lives beside the store (a machine-local file under the build tree), never</span>
 <span class="sd">in git: it describes one physical database.</span>
 <span class="sd">"""</span>
@@ -208,7 +217,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">TYPE_CHECKING</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">cast</span><span class="p">,</span> <span class="n">get_args</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">yaml</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">pydantic</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
@@ -227,8 +236,15 @@
     <span class="n">loader_closure_from_source</span><span class="p">,</span>
 <span class="p">)</span>
 
+<span class="k">if</span> <span class="n">TYPE_CHECKING</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">Organism</span>
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"KG_MANIFEST_SCHEMA_VERSION"</span><span class="p">,</span>
+    <span class="s2">"OrganismName"</span><span class="p">,</span>
+    <span class="s2">"dataset_organism_name"</span><span class="p">,</span>
+    <span class="s2">"organism_names"</span><span class="p">,</span>
+    <span class="s2">"served_organisms"</span><span class="p">,</span>
     <span class="s2">"GraphSchemaEntry"</span><span class="p">,</span>
     <span class="s2">"KgDatasetEntry"</span><span class="p">,</span>
     <span class="s2">"KgEvent"</span><span class="p">,</span>
@@ -307,6 +323,11 @@
 <span class="p">)</span>
 <span class="c1">#: The closure key that marks a dataset whose records can carry artifact pointers.</span>
 <span class="n">ARTIFACT_REF_SYMBOL</span> <span class="o">=</span> <span class="s2">"ArtifactRef"</span>
+
+<span class="c1">#: An ``Organism`` value as the manifest records it: a string, so the JSON reads without</span>
+<span class="c1">#: importing torchcell, with the enum (``torchcell.data.experiment_dataset.Organism``)</span>
+<span class="c1">#: the authority; a test holds the two to the same members in the same order.</span>
+<span class="n">OrganismName</span> <span class="o">=</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"scerevisiae"</span><span class="p">,</span> <span class="s2">"ecoli"</span><span class="p">,</span> <span class="s2">"pputida"</span><span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">ArtifactPointer</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
@@ -401,6 +422,10 @@
     <span class="c1"># plainly whether it holds in-house data; "public" for an entry written before this</span>
     <span class="c1"># field existed, which is correct, since a private dataset could never be served.</span>
     <span class="n">visibility</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"public"</span><span class="p">,</span> <span class="s2">"private"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"public"</span>
+    <span class="c1"># The host organism the loader declares (``ExperimentDataset.organism``), read off the</span>
+    <span class="c1"># class when the entry is written. None for an entry written before the organism</span>
+    <span class="c1"># switch (2026.10.12); ``served_organisms`` then reads the class.</span>
+    <span class="n">organism</span><span class="p">:</span> <span class="n">OrganismName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">n_experiments</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">biocypher_out</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># the biocypher-out/&lt;timestamp&gt; that produced its CSVs</span>
     <span class="n">import_mode</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"full"</span><span class="p">,</span> <span class="s2">"incremental"</span><span class="p">]</span>
@@ -473,6 +498,12 @@
     <span class="c1"># the value surface was recorded: the check then reports "value surface not recorded"</span>
     <span class="c1"># instead of blocking, since there is no baseline to compare against.</span>
     <span class="n">value_surface</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">dict</span><span class="p">)</span>
+    <span class="c1"># The organism set the full build was asked for (``bootstrap --organisms``, in</span>
+    <span class="c1"># ``Organism`` order), widened by an admission run with ``--widen-organisms``. None for</span>
+    <span class="c1"># a manifest written before the organism switch (2026.10.12): every build before it</span>
+    <span class="c1"># took the whole adapter map, and ``served_organisms`` reads the set off the served</span>
+    <span class="c1"># datasets' classes.</span>
+    <span class="n">organisms</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrganismName</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">KgDatasetEntry</span><span class="p">]</span>
     <span class="n">events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">KgEvent</span><span class="p">]</span>
     <span class="n">created_at</span><span class="p">:</span> <span class="nb">str</span>
@@ -577,7 +608,13 @@
     <span class="c1"># superset re-admission and ``superset`` carries the proof (None when the proof</span>
     <span class="c1"># could not be run, which is itself a blocker).</span>
     <span class="n">served</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
-    <span class="n">superset</span><span class="p">:</span> <span class="n">SupersetCheck</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">superset</span><span class="p">:</span> <span class="n">SupersetCheck</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># The dataset's declared organism and whether admitting it adds that organism to the</span>
+    <span class="c1"># served set (allowed only with ``--widen-organisms``; recorded into</span>
+    <span class="c1"># ``KgBuildManifest.organisms`` by ``record``). None / False on a report written</span>
+    <span class="c1"># before the organism switch.</span>
+    <span class="n">organism</span><span class="p">:</span> <span class="n">OrganismName</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">widens_organisms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 
 
@@ -1095,6 +1132,39 @@
     <span class="k">return</span> <span class="s2">"private"</span> <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="n">Visibility</span><span class="o">.</span><span class="n">private</span> <span class="k">else</span> <span class="s2">"public"</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">dataset_organism_name</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OrganismName</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The organism a loader class declares, as the manifest records it.</span>
+
+<span class="sd">    ``dataset_organism`` raises for a class that declares none; the manifest never files</span>
+<span class="sd">    a dataset under an organism its loader did not state.</span>
+<span class="sd">    """</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataset_organism</span>
+
+    <span class="k">return</span> <span class="n">dataset_organism</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span><span class="o">.</span><span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">organism_names</span><span class="p">(</span><span class="n">organisms</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Organism</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrganismName</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""An organism set as the manifest records it: values, in ``Organism`` order."""</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">ordered_organisms</span>
+
+    <span class="k">return</span> <span class="p">[</span><span class="n">organism</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">organism</span> <span class="ow">in</span> <span class="n">ordered_organisms</span><span class="p">(</span><span class="n">organisms</span><span class="p">)]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">served_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">OrganismName</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""The organism set the served store holds, in ``Organism`` order.</span>
+
+<span class="sd">    ``manifest.organisms`` when the manifest records it. A manifest written before the</span>
+<span class="sd">    organism switch records none; every build then took the whole adapter map, so the set</span>
+<span class="sd">    is read off the classes of the datasets the store actually serves.</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span><span class="p">)</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">dataset_organism_name</span><span class="p">(</span><span class="n">_dataset_class</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">OrganismName</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">present</span><span class="p">]</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- manifest</span>
 
 
@@ -1130,6 +1200,7 @@
     <span class="n">biocypher_version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">biocypher_out</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">built_at</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">organisms</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Organism</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">KgBuildManifest</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Reconstruct the manifest of a store built by a FULL build at ``commit``.</span>
 
@@ -1137,7 +1208,25 @@
 <span class="sd">    manifest describes what was serialized into the store, not the working tree. The</span>
 <span class="sd">    adapter files of each dataset are resolved through the working tree's</span>
 <span class="sd">    ``dataset_adapter_map`` and then hashed at the commit.</span>
+
+<span class="sd">    ``organisms`` is the set the build was asked for (``--organisms``). A served dataset</span>
+<span class="sd">    whose loader declares an organism outside it raises: the store would then hold data</span>
+<span class="sd">    the recorded set says it does not.</span>
 <span class="sd">    """</span>
+    <span class="n">stated</span> <span class="o">=</span> <span class="n">organism_names</span><span class="p">(</span><span class="n">organisms</span><span class="p">)</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">name</span><span class="p">:</span> <span class="n">dataset_organism_name</span><span class="p">(</span><span class="n">_dataset_class</span><span class="p">(</span><span class="n">name</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset_classes</span>
+    <span class="p">}</span>
+    <span class="n">outside</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">organism</span><span class="si">}</span><span class="s2">)"</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">organism</span> <span class="ow">in</span> <span class="n">declared</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">organism</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stated</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">outside</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"the store serves datasets outside the stated organism set "</span>
+            <span class="sa">f</span><span class="s2">"(</span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">stated</span><span class="p">)</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outside</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
     <span class="n">surface</span> <span class="o">=</span> <span class="n">surface_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">)</span>
     <span class="n">datasets</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">KgDatasetEntry</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">dataset_classes</span><span class="p">):</span>
@@ -1149,6 +1238,7 @@
             <span class="n">adapter_files</span><span class="o">=</span><span class="n">dataset_adapter_files</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
             <span class="n">closure</span><span class="o">=</span><span class="n">closure_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">,</span> <span class="n">rel</span><span class="p">,</span> <span class="n">surface</span><span class="p">),</span>
             <span class="n">visibility</span><span class="o">=</span><span class="n">dataset_visibility</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
+            <span class="n">organism</span><span class="o">=</span><span class="n">dataset_organism_name</span><span class="p">(</span><span class="bp">cls</span><span class="p">),</span>
             <span class="n">n_experiments</span><span class="o">=</span><span class="n">n_experiments</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
             <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
             <span class="n">import_mode</span><span class="o">=</span><span class="s2">"full"</span><span class="p">,</span>
@@ -1180,6 +1270,7 @@
         <span class="n">cell_adapter_table</span><span class="o">=</span><span class="n">table</span><span class="p">,</span>
         <span class="n">adapter_files</span><span class="o">=</span><span class="n">adapter_files</span><span class="p">,</span>
         <span class="n">value_surface</span><span class="o">=</span><span class="n">value_surface_at_ref</span><span class="p">(</span><span class="n">repo_root</span><span class="p">,</span> <span class="n">commit</span><span class="p">),</span>
+        <span class="n">organisms</span><span class="o">=</span><span class="n">stated</span><span class="p">,</span>
         <span class="n">datasets</span><span class="o">=</span><span class="n">datasets</span><span class="p">,</span>
         <span class="n">events</span><span class="o">=</span><span class="p">[</span>
             <span class="n">KgEvent</span><span class="p">(</span>
@@ -1515,8 +1606,14 @@
     <span class="n">served_experiment_ids</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"live store"</span><span class="p">,</span>
     <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">widen_organisms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdmissionReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Decide whether ``dataset_class_name`` can be added to the store incrementally.</span>
+
+<span class="sd">    A dataset whose declared organism is outside the served organism set</span>
+<span class="sd">    (:func:`served_organisms`) blocks unless ``widen_organisms`` (``admit</span>
+<span class="sd">    --widen-organisms``): a yeast-only store does not quietly become a mixed one. With the</span>
+<span class="sd">    flag the report says the admission widens the set, and ``record`` writes it.</span>
 
 <span class="sd">    ``served_experiment_ids`` reads the experiment ids the live store holds under a</span>
 <span class="sd">    Dataset node (``live_experiment_ids`` bound to a connection in production, named by</span>
@@ -1598,6 +1695,16 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> is PRIVATE (visibility=private): in-house data is "</span>
             <span class="s2">"admitted only to an in-house store, by an admission run with "</span>
             <span class="s2">"--include-private"</span>
+        <span class="p">)</span>
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">dataset_organism_name</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">)</span>
+    <span class="n">served_set</span> <span class="o">=</span> <span class="n">served_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
+    <span class="n">widens</span> <span class="o">=</span> <span class="n">organism</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">served_set</span>
+    <span class="k">if</span> <span class="n">widens</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">widen_organisms</span><span class="p">:</span>
+        <span class="n">reasons</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">dataset_class_name</span><span class="si">}</span><span class="s2"> declares organism </span><span class="si">{</span><span class="n">organism</span><span class="si">}</span><span class="s2"> and the served "</span>
+            <span class="sa">f</span><span class="s2">"store holds </span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">served_set</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'no organism'</span><span class="si">}</span><span class="s2"> only; admitting it "</span>
+            <span class="s2">"widens the store's organism set, which an admission does only when run "</span>
+            <span class="s2">"with --widen-organisms (or rebuild with KG_ORGANISMS naming it)"</span>
         <span class="p">)</span>
     <span class="n">in_map</span> <span class="o">=</span> <span class="n">dataset_class</span> <span class="ow">in</span> <span class="n">build_adapter_map</span><span class="p">(</span><span class="n">include_private</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">in_map</span><span class="p">:</span>
@@ -1693,6 +1800,8 @@
         <span class="n">undeclared_phenotype_methods</span><span class="o">=</span><span class="n">undeclared</span><span class="p">,</span>
         <span class="n">served</span><span class="o">=</span><span class="n">served</span><span class="p">,</span>
         <span class="n">superset</span><span class="o">=</span><span class="n">superset</span><span class="p">,</span>
+        <span class="n">organism</span><span class="o">=</span><span class="n">organism</span><span class="p">,</span>
+        <span class="n">widens_organisms</span><span class="o">=</span><span class="n">widens</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -1765,6 +1874,7 @@
     <span class="n">served_experiment_ids</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">served_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"live store"</span><span class="p">,</span>
     <span class="n">include_private</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">widen_organisms</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchAdmissionReport</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""Decide whether every named dataset can be added in ONE incremental import."""</span>
     <span class="k">return</span> <span class="n">batch_report_from_members</span><span class="p">(</span>
@@ -1779,6 +1889,7 @@
                 <span class="n">served_experiment_ids</span><span class="p">,</span>
                 <span class="n">served_source</span><span class="p">,</span>
                 <span class="n">include_private</span><span class="p">,</span>
+                <span class="n">widen_organisms</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">dataset_class_names</span>
         <span class="p">]</span>
@@ -1826,6 +1937,7 @@
         <span class="n">adapter_files</span><span class="o">=</span><span class="n">dataset_adapter_files</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">,</span> <span class="n">repo_root</span><span class="p">),</span>
         <span class="n">closure</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">new_dataset_closure</span><span class="p">,</span>
         <span class="n">visibility</span><span class="o">=</span><span class="n">dataset_visibility</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">),</span>
+        <span class="n">organism</span><span class="o">=</span><span class="n">dataset_organism_name</span><span class="p">(</span><span class="n">dataset_class</span><span class="p">),</span>
         <span class="n">n_experiments</span><span class="o">=</span><span class="n">n_experiments</span><span class="p">,</span>
         <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
         <span class="n">import_mode</span><span class="o">=</span><span class="s2">"incremental"</span><span class="p">,</span>
@@ -1875,6 +1987,37 @@
     <span class="n">manifest</span><span class="o">.</span><span class="n">value_surface</span> <span class="o">=</span> <span class="n">value_surface_in_worktree</span><span class="p">(</span><span class="n">repo_root</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_widen_organisms</span><span class="p">(</span>
+    <span class="n">manifest</span><span class="p">:</span> <span class="n">KgBuildManifest</span><span class="p">,</span> <span class="n">members</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AdmissionReport</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""Add every widening member's organism to the served set; the event's note on it.</span>
+
+<span class="sd">    Only a member whose report says it widens the set (``admit --widen-organisms``)</span>
+<span class="sd">    adds one, and the set it adds to is :func:`served_organisms`, so a manifest that</span>
+<span class="sd">    predates the switch records an explicit set from here on.</span>
+<span class="sd">    """</span>
+    <span class="n">added</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">member</span><span class="o">.</span><span class="n">organism</span>
+        <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">members</span>
+        <span class="k">if</span> <span class="n">member</span><span class="o">.</span><span class="n">widens_organisms</span> <span class="ow">and</span> <span class="n">member</span><span class="o">.</span><span class="n">organism</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">added</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">before</span> <span class="o">=</span> <span class="n">served_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">)</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">before</span><span class="p">)</span> <span class="o">|</span> <span class="n">added</span>
+    <span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">get_args</span><span class="p">(</span><span class="n">OrganismName</span><span class="p">)</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">present</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"organisms widened </span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">before</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'(none)'</span><span class="si">}</span><span class="s2"> -&gt; "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_joined_note</span><span class="p">(</span><span class="o">*</span><span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""The non-empty notes joined with "; ", or None when there are none."""</span>
+    <span class="n">present</span> <span class="o">=</span> <span class="p">[</span><span class="n">note</span> <span class="k">for</span> <span class="n">note</span> <span class="ow">in</span> <span class="n">notes</span> <span class="k">if</span> <span class="n">note</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">"; "</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">present</span><span class="p">)</span> <span class="k">if</span> <span class="n">present</span> <span class="k">else</span> <span class="kc">None</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_acknowledged_drift</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="n">AdmissionReport</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">report</span><span class="o">.</span><span class="n">adapter_drift_acknowledged</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[]</span>
@@ -1907,6 +2050,9 @@
     <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">verdict</span> <span class="o">!=</span> <span class="s2">"admissible"</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"cannot record a blocked admission: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">reasons</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">now</span> <span class="o">=</span> <span class="n">_now</span><span class="p">()</span>
+    <span class="c1"># before the entry is added: a manifest that predates the switch reads its served</span>
+    <span class="c1"># set off the served datasets, and the new one is not served yet</span>
+    <span class="n">organisms_note</span> <span class="o">=</span> <span class="n">_widen_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="p">[</span><span class="n">report</span><span class="p">])</span>
     <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">report</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dataset_entry</span><span class="p">(</span>
         <span class="n">report</span><span class="p">,</span>
         <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
@@ -1924,7 +2070,7 @@
             <span class="n">torchcell_version</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
             <span class="n">datasets</span><span class="o">=</span><span class="p">[</span><span class="n">report</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">],</span>
             <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="n">_superset_note</span><span class="p">([</span><span class="n">report</span><span class="p">]),</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_joined_note</span><span class="p">(</span><span class="n">_superset_note</span><span class="p">([</span><span class="n">report</span><span class="p">]),</span> <span class="n">organisms_note</span><span class="p">),</span>
             <span class="n">acknowledged_adapter_drift</span><span class="o">=</span><span class="n">_acknowledged_drift</span><span class="p">(</span><span class="n">report</span><span class="p">),</span>
             <span class="n">acknowledged_value_drift</span><span class="o">=</span><span class="n">_acknowledged_value_drift</span><span class="p">(</span><span class="n">report</span><span class="p">),</span>
         <span class="p">)</span>
@@ -1960,6 +2106,7 @@
             <span class="sa">f</span><span class="s2">"experiment counts for datasets not in the batch: </span><span class="si">{</span><span class="n">unexpected</span><span class="si">}</span><span class="s2">"</span>
         <span class="p">)</span>
     <span class="n">now</span> <span class="o">=</span> <span class="n">_now</span><span class="p">()</span>
+    <span class="n">organisms_note</span> <span class="o">=</span> <span class="n">_widen_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">report</span><span class="o">.</span><span class="n">members</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">member</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">members</span><span class="p">:</span>
         <span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">[</span><span class="n">member</span><span class="o">.</span><span class="n">dataset_class</span><span class="p">]</span> <span class="o">=</span> <span class="n">_dataset_entry</span><span class="p">(</span>
             <span class="n">member</span><span class="p">,</span>
@@ -1991,7 +2138,7 @@
             <span class="n">torchcell_version</span><span class="o">=</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_version</span><span class="p">,</span>
             <span class="n">datasets</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">dataset_classes</span><span class="p">),</span>
             <span class="n">biocypher_out</span><span class="o">=</span><span class="n">biocypher_out</span><span class="p">,</span>
-            <span class="n">note</span><span class="o">=</span><span class="n">_superset_note</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">members</span><span class="p">),</span>
+            <span class="n">note</span><span class="o">=</span><span class="n">_joined_note</span><span class="p">(</span><span class="n">_superset_note</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">members</span><span class="p">),</span> <span class="n">organisms_note</span><span class="p">),</span>
             <span class="n">acknowledged_adapter_drift</span><span class="o">=</span><span class="n">acknowledged</span><span class="p">,</span>
             <span class="n">acknowledged_value_drift</span><span class="o">=</span><span class="n">acknowledged_values</span><span class="p">,</span>
         <span class="p">)</span>
@@ -2071,6 +2218,8 @@
         <span class="sa">f</span><span class="s2">"  working tree </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="si">}</span><span class="s2"> (dirty=</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">torchcell_dirty</span><span class="si">}</span><span class="s2">); "</span>
         <span class="sa">f</span><span class="s2">"served store built at </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">served_commit</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
         <span class="sa">f</span><span class="s2">"  dev LMDB: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">dev_lmdb_status</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">dev_lmdb_root</span><span class="si">}</span><span class="s2">)"</span><span class="p">,</span>
+        <span class="sa">f</span><span class="s2">"  organism: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">organism</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'not recorded'</span><span class="si">}</span><span class="s2">"</span>
+        <span class="o">+</span> <span class="p">(</span><span class="s2">" (widens the served organism set)"</span> <span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">widens_organisms</span> <span class="k">else</span> <span class="s2">""</span><span class="p">),</span>
         <span class="sa">f</span><span class="s2">"  closure: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">new_dataset_closure</span><span class="p">)</span><span class="si">}</span><span class="s2"> symbols, "</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">novel_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2"> novel (</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">novel_symbols</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'-'</span><span class="si">}</span><span class="s2">), "</span>
         <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">shared_symbols</span><span class="p">)</span><span class="si">}</span><span class="s2"> shared with served datasets"</span><span class="p">,</span>
@@ -2270,6 +2419,13 @@
     <span class="n">p_boot</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s2">"--neo4j-uri"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"query datasets + counts live"</span>
     <span class="p">)</span>
+    <span class="n">p_boot</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--organisms"</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"the comma-separated organism set the build was asked for (its "</span>
+        <span class="s2">"--organisms, KG_ORGANISMS in the live rebuild), e.g. scerevisiae or "</span>
+        <span class="s2">"scerevisiae,ecoli,pputida; a served dataset outside it is an error"</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="n">p_admit</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"admit"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"check whether a dataset can be added"</span><span class="p">)</span>
     <span class="n">p_admit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
@@ -2301,6 +2457,12 @@
         <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s2">"admit a PRIVATE dataset (visibility=private) into an in-house store; "</span>
         <span class="s2">"without it a private dataset blocks"</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_admit</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s2">"--widen-organisms"</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s2">"store_true"</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s2">"admit a dataset whose organism is outside the served organism set and add "</span>
+        <span class="s2">"that organism to the set on record; without it such a dataset blocks"</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="n">p_rec</span> <span class="o">=</span> <span class="n">sub</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s2">"record"</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s2">"record a completed incremental admission"</span><span class="p">)</span>
@@ -2342,6 +2504,7 @@
     <span class="n">manifest_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">manifest</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">command</span> <span class="o">==</span> <span class="s2">"bootstrap"</span><span class="p">:</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_organisms</span>
         <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.database.connection</span><span class="w"> </span><span class="kn">import</span> <span class="n">neo4j_connection_settings</span>
 
         <span class="n">settings</span> <span class="o">=</span> <span class="n">neo4j_connection_settings</span><span class="p">()</span>
@@ -2360,9 +2523,13 @@
             <span class="n">biocypher_version</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">biocypher_version</span><span class="p">,</span>
             <span class="n">biocypher_out</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">biocypher_out</span><span class="p">,</span>
             <span class="n">built_at</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">built_at</span><span class="p">,</span>
+            <span class="n">organisms</span><span class="o">=</span><span class="n">parse_organisms</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">organisms</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="n">save_manifest</span><span class="p">(</span><span class="n">manifest</span><span class="p">,</span> <span class="n">manifest_path</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"bootstrapped </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2"> datasets -&gt; </span><span class="si">{</span><span class="n">manifest_path</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"bootstrapped </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2"> datasets "</span>
+            <span class="sa">f</span><span class="s2">"(organisms </span><span class="si">{</span><span class="s1">','</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">served_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">))</span><span class="si">}</span><span class="s2">) -&gt; </span><span class="si">{</span><span class="n">manifest_path</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
         <span class="k">return</span> <span class="mi">0</span>
 
     <span class="n">manifest</span> <span class="o">=</span> <span class="n">load_manifest</span><span class="p">(</span><span class="n">manifest_path</span><span class="p">)</span>
@@ -2389,6 +2556,15 @@
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">database</span><span class="si">}</span><span class="s2"> on </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">store_host</span><span class="si">}</span><span class="s2">: neo4j </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">neo4j_version</span><span class="si">}</span><span class="s2">, "</span>
             <span class="sa">f</span><span class="s2">"biocypher </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">biocypher_version</span><span class="si">}</span><span class="s2">, full build </span><span class="si">{</span><span class="n">manifest</span><span class="o">.</span><span class="n">torchcell_commit</span><span class="si">}</span><span class="s2">, "</span>
             <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="p">)</span><span class="si">}</span><span class="s2"> datasets, </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">events</span><span class="p">)</span><span class="si">}</span><span class="s2"> events"</span>
+        <span class="p">)</span>
+        <span class="n">organisms</span> <span class="o">=</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">served_organisms</span><span class="p">(</span><span class="n">manifest</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"  organisms: </span><span class="si">{</span><span class="n">organisms</span><span class="si">}</span><span class="s2"> ("</span>
+            <span class="o">+</span> <span class="p">(</span>
+                <span class="s2">"recorded at the build)"</span>
+                <span class="k">if</span> <span class="n">manifest</span><span class="o">.</span><span class="n">organisms</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="s2">"not recorded; read off the served datasets' classes)"</span>
+            <span class="p">)</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">entry</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">manifest</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
             <span class="nb">print</span><span class="p">(</span>
@@ -2419,6 +2595,7 @@
                 <span class="n">served_ids</span><span class="p">,</span>
                 <span class="n">uri</span><span class="p">,</span>
                 <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">,</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">widen_organisms</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="nb">print</span><span class="p">(</span><span class="n">format_report</span><span class="p">(</span><span class="n">report</span><span class="p">))</span>
             <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">:</span>
@@ -2436,6 +2613,7 @@
             <span class="n">served_ids</span><span class="p">,</span>
             <span class="n">uri</span><span class="p">,</span>
             <span class="n">args</span><span class="o">.</span><span class="n">include_private</span><span class="p">,</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">widen_organisms</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="n">format_batch_report</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
         <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">report</span><span class="p">:</span>

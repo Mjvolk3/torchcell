@@ -135,6 +135,20 @@ the build and release gates read it off the class without instantiating it.</p>
 </dd></dl>
 
 <dl class="py attribute">
+<dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.organism">
+<span class="sig-name descname"><span class="pre">organism</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Organism</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.organism" title="Link to this definition"></a></dt>
+<dd><p>each
+loader declares its own, the build’s organism switch reads it off the class
+(<code class="docutils literal notranslate"><span class="pre">dataset_organism</span></code>), and a loader that forgot it is refused by name instead of
+inheriting an organism it may not have.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The host organism every record describes. Annotated here WITHOUT a value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
 <dt class="sig sig-object py" id="torchcell.data.ExperimentDataset.has_gene_perturbations">
 <span class="sig-name descname"><span class="pre">has_gene_perturbations</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.ClassVar" title="(in Python v3.15)"><span class="pre">ClassVar</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/builtins/functions.html#bool" title="(in Python v3.15)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">True</span></em><a class="headerlink" href="#torchcell.data.ExperimentDataset.has_gene_perturbations" title="Link to this definition"></a></dt>
 <dd><p>Whether the records carry gene-keyed perturbations. True for every screen of

@@ -129,7 +129,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">torch_geometric.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">download_url</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">post_process</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.media</span><span class="w"> </span><span class="kn">import</span> <span class="n">SGA_TM_SELECTION</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
@@ -487,6 +487,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">SmfKuzmin2020Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Single-mutant fitness experiments from Kuzmin et al. 2020."""</span>
 
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
+
     <span class="c1"># original that doesn't work. Think Science blocks.</span>
     <span class="c1"># url = https://www.science.org/doi/suppl/10.1126/science.aaz5667/suppl_file/aaz5667-tables_s1_to_s13.zip</span>
     <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"</span>
@@ -656,6 +658,8 @@
 <span class="sd">    double-mutant QUERY strains of the trigenic screens, whose own fitness and SD</span>
 <span class="sd">    Table S5 reports, one record per distinct strain.</span>
 <span class="sd">    """</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"</span>
 
@@ -970,6 +974,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">TmfKuzmin2020Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Triple-mutant fitness experiments from Kuzmin et al. 2020."""</span>
 
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
+
     <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1234,6 +1240,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">DmiKuzmin2020Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Digenic interaction experiments from Kuzmin et al. 2020."""</span>
 
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
+
     <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1478,6 +1486,8 @@
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">TmiKuzmin2020Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Trigenic interaction experiments from Kuzmin et al. 2020."""</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="n">url</span> <span class="o">=</span> <span class="s2">"https://uofi.box.com/shared/static/464ogx5kpafav7i3zv7gesb9lcn0dm94.zip"</span>
 

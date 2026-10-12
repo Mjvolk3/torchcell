@@ -133,7 +133,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">Bio</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entrez</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">post_process</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">GeneEssentialityExperiment</span><span class="p">,</span>
@@ -227,6 +227,8 @@
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">GeneEssentialitySgdDataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Gene essentiality experiments built from SGD inviable null phenotypes."""</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

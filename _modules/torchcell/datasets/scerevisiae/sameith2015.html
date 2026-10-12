@@ -135,7 +135,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">sortedcontainers</span><span class="w"> </span><span class="kn">import</span> <span class="n">SortedDict</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">post_process</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExperimentDataset</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">post_process</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datamodels.schema</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Environment</span><span class="p">,</span>
     <span class="n">Experiment</span><span class="p">,</span>
@@ -286,6 +286,8 @@
 <span class="sd">    Paper: Sameith et al. (2015) BMC Biology</span>
 <span class="sd">    DOI: 10.1186/s12915-015-0222-5</span>
 <span class="sd">    """</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="n">geo_accession</span> <span class="o">=</span> <span class="s2">"GSE42536"</span>
 
@@ -1073,6 +1075,8 @@
 <span class="sd">    Paper: Sameith et al. (2015) BMC Biology</span>
 <span class="sd">    DOI: 10.1186/s12915-015-0222-5</span>
 <span class="sd">    """</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="c1"># GEO accession for double mutant microarray expression dataset</span>
     <span class="n">geo_accession</span> <span class="o">=</span> <span class="s2">"GSE42536"</span>

@@ -177,7 +177,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">pickle</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">urllib.request</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">lmdb</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -185,6 +185,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">write_verified</span><span class="p">,</span>
@@ -354,6 +355,8 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">AminoAcidMulleder2016Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Genome-wide intracellular amino-acid metabolome of the yeast deletion collection."""</span>
 
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
+
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">root</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"data/torchcell/amino_acid_mulleder2016"</span><span class="p">,</span>
@@ -463,7 +466,10 @@
         <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s2">"Mulleder: data_raw rows per released ORF </span><span class="si">%s</span><span class="s2">; reference n_replicates </span><span class="si">%d</span><span class="s2"> "</span>
             <span class="s2">"(strains the robust mean summarizes)"</span><span class="p">,</span>
-            <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">n_rows</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()},</span>
+            <span class="p">{</span>
+                <span class="nb">int</span><span class="p">(</span><span class="n">cast</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">k</span><span class="p">)):</span> <span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">n_rows</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span><span class="o">.</span><span class="n">sort_index</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_n_reference_strains</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>

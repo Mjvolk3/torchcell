@@ -124,6 +124,13 @@
 <span class="sd">``--include-private`` (``take_include_private_flag`` removes it from</span>
 <span class="sd">``sys.argv`` before hydra parses it). A private dataset named in ``datasets`` without the</span>
 <span class="sd">flag is refused by name (``refuse_private_datasets``), never silently dropped.</span>
+
+<span class="sd">The ORGANISM switch narrows membership the same way: ``--organisms scerevisiae`` (comma-</span>
+<span class="sd">separated; every organism when absent, removed from ``sys.argv`` by</span>
+<span class="sd">``take_organisms_flag``) keeps only the mapped classes whose declared ``organism`` is in</span>
+<span class="sd">the set, and a dataset named in ``datasets`` outside it is refused by name</span>
+<span class="sd">(``refuse_organism_mismatch``). The membership line printed before any dataset is built</span>
+<span class="sd">names the organism set, so the generation log says which graph it wrote.</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -150,14 +157,18 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchcell</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">biocypher</span><span class="w"> </span><span class="kn">import</span> <span class="n">BioCypher</span>  <span class="c1"># type: ignore[attr-defined]  # untyped re-export</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.build_telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="n">BuildPhase</span><span class="p">,</span> <span class="n">ResourceSampler</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">ALL_ORGANISMS</span><span class="p">,</span> <span class="n">Organism</span><span class="p">,</span> <span class="n">format_organisms</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.bacteria_common</span><span class="w"> </span><span class="kn">import</span> <span class="n">BacterialGenomeInjector</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.fast_csv</span><span class="w"> </span><span class="kn">import</span> <span class="n">FastCsvSink</span><span class="p">,</span> <span class="n">build_row_specs</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.graph</span><span class="w"> </span><span class="kn">import</span> <span class="n">SCerevisiaeGraph</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">,</span>
     <span class="n">dataset_adapter_map</span><span class="p">,</span>
+    <span class="n">refuse_organism_mismatch</span><span class="p">,</span>
     <span class="n">refuse_private_datasets</span><span class="p">,</span>
+    <span class="n">select_organisms</span><span class="p">,</span>
     <span class="n">take_include_private_flag</span><span class="p">,</span>
+    <span class="n">take_organisms_flag</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.head_ontology</span><span class="w"> </span><span class="kn">import</span> <span class="n">verify_head_ontology</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.incremental_import</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -180,6 +191,10 @@
 <span class="c1">#: ``--include-private`` was passed on the command line (set in ``__main__`` below,</span>
 <span class="c1">#: before hydra parses argv); False for any other entry.</span>
 <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1">#: The organism set ``--organisms`` named (set in ``__main__`` below, before hydra</span>
+<span class="c1">#: parses argv); every organism for any other entry.</span>
+<span class="n">ORGANISMS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Organism</span><span class="p">]</span> <span class="o">=</span> <span class="n">ALL_ORGANISMS</span>
 
 
 <div class="viewcode-block" id="get_num_workers">
@@ -410,11 +425,18 @@
             <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">PRIVATE_DATASET_ADAPTER_MAP</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">selected_names</span><span class="p">],</span>
             <span class="n">INCLUDE_PRIVATE</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="n">adapter_map</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">visible_map</span> <span class="o">=</span> <span class="p">(</span>
         <span class="p">{</span><span class="o">**</span><span class="n">dataset_adapter_map</span><span class="p">,</span> <span class="o">**</span><span class="n">PRIVATE_DATASET_ADAPTER_MAP</span><span class="p">}</span>
         <span class="k">if</span> <span class="n">INCLUDE_PRIVATE</span>
         <span class="k">else</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dataset_adapter_map</span><span class="p">)</span>
     <span class="p">)</span>
+    <span class="c1"># Organism gate: a dataset named outside --organisms is refused by name; with</span>
+    <span class="c1"># `datasets: null` the map is narrowed to the organism set.</span>
+    <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">refuse_organism_mismatch</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">visible_map</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">selected_names</span><span class="p">],</span> <span class="n">ORGANISMS</span>
+        <span class="p">)</span>
+    <span class="n">adapter_map</span> <span class="o">=</span> <span class="n">select_organisms</span><span class="p">(</span><span class="n">visible_map</span><span class="p">,</span> <span class="n">ORGANISMS</span><span class="p">)</span>
     <span class="n">known_names</span> <span class="o">=</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="bp">cls</span> <span class="ow">in</span> <span class="n">adapter_map</span><span class="p">}</span>
     <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">unknown</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">selected_names</span><span class="p">)</span> <span class="o">-</span> <span class="n">known_names</span><span class="p">)</span>
@@ -430,11 +452,13 @@
         <span class="k">for</span> <span class="n">dataset_class</span><span class="p">,</span> <span class="n">adapter_class</span> <span class="ow">in</span> <span class="n">adapter_map</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">dataset_class</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">selected_names</span>
     <span class="p">]</span>
-    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s2">"Build membership: </span><span class="si">%s</span><span class="s2"> (include_private=</span><span class="si">%s</span><span class="s2">)"</span><span class="p">,</span>
-        <span class="s2">"ALL"</span> <span class="k">if</span> <span class="n">selected_names</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">selected_names</span><span class="p">,</span>
-        <span class="n">INCLUDE_PRIVATE</span><span class="p">,</span>
+    <span class="n">membership</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"Build membership: </span><span class="si">{</span><span class="s1">'ALL'</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">selected_names</span><span class="w"> </span><span class="ow">is</span><span class="w"> </span><span class="kc">None</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">selected_names</span><span class="si">}</span><span class="s2"> "</span>
+        <span class="sa">f</span><span class="s2">"(include_private=</span><span class="si">{</span><span class="n">INCLUDE_PRIVATE</span><span class="si">}</span><span class="s2">, organisms=</span><span class="si">{</span><span class="n">format_organisms</span><span class="p">(</span><span class="n">ORGANISMS</span><span class="p">)</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">build_items</span><span class="p">)</span><span class="si">}</span><span class="s2"> mapped datasets)"</span>
     <span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">membership</span><span class="p">)</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">membership</span><span class="p">)</span>
 
     <span class="c1"># Build every selected dataset (subset), each paired with its adapter.</span>
     <span class="c1"># A dataset's root is its loader's default; genome/graph are injected when the</span>
@@ -622,6 +646,7 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="n">take_include_private_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">ORGANISMS</span> <span class="o">=</span> <span class="n">take_organisms_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">main</span><span class="p">()</span>
 
     <span class="c1"># Read the logged file name from the file</span>

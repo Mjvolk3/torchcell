@@ -124,7 +124,9 @@
 <span class="sd">(``create_kg.take_include_private_flag`` removes the flag from ``sys.argv`` first,</span>
 <span class="sd">because hydra parses the same argv). This build's dataset list is hardcoded below rather</span>
 <span class="sd">than read from a config, so the gate here guards against a private loader being added to</span>
-<span class="sd">that list, which is the way one would reach this entry point.</span>
+<span class="sd">that list, which is the way one would reach this entry point. ``--organisms`` is read</span>
+<span class="sd">the same way (``take_organisms_flag``) and a listed dataset outside it is refused by</span>
+<span class="sd">name (``refuse_organism_mismatch``).</span>
 <span class="sd">"""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
@@ -155,6 +157,7 @@
     <span class="n">SmfKuzmin2018Adapter</span><span class="p">,</span>
     <span class="n">TmfKuzmin2018Adapter</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data.experiment_dataset</span><span class="w"> </span><span class="kn">import</span> <span class="n">ALL_ORGANISMS</span><span class="p">,</span> <span class="n">Organism</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.datasets.scerevisiae.costanzo2016</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">DmfCostanzo2016Dataset</span><span class="p">,</span>
     <span class="n">SmfCostanzo2016Dataset</span><span class="p">,</span>
@@ -165,7 +168,11 @@
     <span class="n">TmfKuzmin2018Dataset</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.create_kg</span><span class="w"> </span><span class="kn">import</span> <span class="n">take_include_private_flag</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="n">refuse_private_datasets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.knowledge_graphs.dataset_adapter_map</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">refuse_organism_mismatch</span><span class="p">,</span>
+    <span class="n">refuse_private_datasets</span><span class="p">,</span>
+    <span class="n">take_organisms_flag</span><span class="p">,</span>
+<span class="p">)</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">basicConfig</span><span class="p">(</span><span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">INFO</span><span class="p">,</span> <span class="n">filename</span><span class="o">=</span><span class="s2">"biocypher_warnings.log"</span><span class="p">)</span>
@@ -176,6 +183,9 @@
 
 <span class="c1">#: ``--include-private`` was passed on the command line (set in ``__main__`` below).</span>
 <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="c1">#: The organism set ``--organisms`` named (set in ``__main__`` below); all otherwise.</span>
+<span class="n">ORGANISMS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="n">Organism</span><span class="p">]</span> <span class="o">=</span> <span class="n">ALL_ORGANISMS</span>
 
 
 <div class="viewcode-block" id="get_num_workers">
@@ -277,9 +287,12 @@
         <span class="p">}</span>
     <span class="p">]</span>
 
-    <span class="c1"># Visibility gate, before anything is instantiated.</span>
+    <span class="c1"># Visibility and organism gates, before anything is instantiated.</span>
     <span class="n">refuse_private_datasets</span><span class="p">(</span>
         <span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"class"</span><span class="p">])</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">],</span> <span class="n">INCLUDE_PRIVATE</span>
+    <span class="p">)</span>
+    <span class="n">refuse_organism_mismatch</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">cast</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">config</span><span class="p">[</span><span class="s2">"class"</span><span class="p">])</span> <span class="k">for</span> <span class="n">config</span> <span class="ow">in</span> <span class="n">dataset_configs</span><span class="p">],</span> <span class="n">ORGANISMS</span>
     <span class="p">)</span>
 
     <span class="c1"># Instantiate datasets</span>
@@ -351,6 +364,7 @@
 
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
     <span class="n">INCLUDE_PRIVATE</span> <span class="o">=</span> <span class="n">take_include_private_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
+    <span class="n">ORGANISMS</span> <span class="o">=</span> <span class="n">take_organisms_flag</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">argv</span><span class="p">)</span>
     <span class="n">main</span><span class="p">()</span>
 
     <span class="c1"># Read the logged file name from the file</span>

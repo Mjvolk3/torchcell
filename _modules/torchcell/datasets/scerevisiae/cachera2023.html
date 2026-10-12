@@ -159,6 +159,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
     <span class="n">write_verified</span><span class="p">,</span>
@@ -380,6 +381,8 @@
 <span class="nd">@register_dataset</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">BetaxanthinCachera2023Dataset</span><span class="p">(</span><span class="n">ExperimentDataset</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Genome-wide betaxanthin CRI-SPA product-proxy screen of the YKO collection."""</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

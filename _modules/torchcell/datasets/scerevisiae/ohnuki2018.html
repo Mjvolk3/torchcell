@@ -177,6 +177,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
     <span class="n">copy_verified</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
@@ -285,6 +286,8 @@
 <span class="sd">    genes, phenotyped in liquid YPD at 25 C; the diploid essential-gene counterpart of the</span>
 <span class="sd">    haploid Ohya 2005 full-deletion CalMorph screen.</span>
 <span class="sd">    """</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

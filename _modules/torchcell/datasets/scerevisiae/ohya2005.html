@@ -188,6 +188,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">torchcell.data</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">ExperimentDataset</span><span class="p">,</span>
+    <span class="n">Organism</span><span class="p">,</span>
     <span class="n">copy_verified</span><span class="p">,</span>
     <span class="n">post_process</span><span class="p">,</span>
     <span class="n">verify_raw_files</span><span class="p">,</span>
@@ -306,6 +307,8 @@
 <span class="sd">    SCMD CalMorph family (Ohnuki 2018 = diploid essential-gene heterozygotes; Ohnuki 2022 =</span>
 <span class="sd">    drug-hypersensitive quadruple deletions).</span>
 <span class="sd">    """</span>
+
+    <span class="n">organism</span> <span class="o">=</span> <span class="n">Organism</span><span class="o">.</span><span class="n">scerevisiae</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

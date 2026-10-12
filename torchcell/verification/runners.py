@@ -657,9 +657,13 @@ METABOLITE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "amino_acid_cooper2010": {
         "root": "data/torchcell/amino_acid_cooper2010",
-        # 4382 Table 4 rows - 22 resolver drops (non-gene / retired) - 47 duplicate
-        # identifier rows (ledgered, not averaged) = 4313 kept records.
-        "expected_count": 4313,
+        # Every one of the 4,382 Table 4 rows is a record (owner rule 2026-10-12: the
+        # 22 rows whose released ORF R64 no longer carries as a gene and the 47 replicate
+        # rows of a duplicated identifier are stored as released).
+        "expected_count": 4382,
+        # 46 identifiers head two rows and one heads three, with no released key that
+        # tells the replicate strains apart: the L1 collisions are a finding.
+        "allow_duplicate_strains": True,
         # linear ratio to the plate mean, reference 1.0 per key; NOT centered on 0
         "reference_centered": False,
         "provenance": Provenance(
@@ -960,6 +964,7 @@ def run_metabolite(data_root: str) -> bool:
             reference_centered=spec.get("reference_centered", True),
             protocol_measurement_types=spec.get("protocol_measurement_types"),
             environment_keyed=spec.get("environment_keyed", False),
+            allow_duplicate_strains=spec.get("allow_duplicate_strains", False),
         )
         assembly_sets = _dataset_assembly_sets(records)
         if assembly_sets != (SGD_S288C_R64,):

@@ -230,7 +230,7 @@ def test_failure_messages_for_duplicate_nonzero_reference_and_mixed_type() -> No
     records = _good_records() + [_record("YMR056C", 2.0)]
     dup = _result(records, "genotype_uniqueness")
     assert dup.message == "1 deletion sets appear in multiple records"
-    assert dup.details == {"n_strains": 3, "n_duplicated": 1}
+    assert dup.details == {"n_strains": 3, "n_duplicated": 1, "n_duplicate_records": 1}
 
     records = _good_records() + [_record("YDR001C", 1.0, ref_level=-0.7)]
     ref = _result(records, "reference_zero")
@@ -404,12 +404,20 @@ def test_environment_keyed_uniqueness_separates_one_strain_across_environments()
     )
     assert unique.passed is True
     assert unique.message == "3 unique (strain, environment) pairs, one record each"
-    assert unique.details == {"n_strains": 3, "n_duplicated": 0}
+    assert unique.details == {
+        "n_strains": 3,
+        "n_duplicated": 0,
+        "n_duplicate_records": 0,
+    }
     # Keyed on the strain alone the same three records are one duplicated key.
     strain_only = _result(records, "genotype_uniqueness", reference_centered=False)
     assert strain_only.passed is False
     assert strain_only.message == "1 deletion sets appear in multiple records"
-    assert strain_only.details == {"n_strains": 1, "n_duplicated": 1}
+    assert strain_only.details == {
+        "n_strains": 1,
+        "n_duplicated": 1,
+        "n_duplicate_records": 2,
+    }
 
 
 def test_environment_keyed_uniqueness_still_fails_a_repeated_environment() -> None:
@@ -421,7 +429,7 @@ def test_environment_keyed_uniqueness_still_fails_a_repeated_environment() -> No
     )
     assert dup.passed is False
     assert dup.message == "1 (strain, environment) pairs appear in multiple records"
-    assert dup.details == {"n_strains": 3, "n_duplicated": 1}
+    assert dup.details == {"n_strains": 3, "n_duplicated": 1, "n_duplicate_records": 1}
 
 
 def test_environment_keyed_uniqueness_does_not_change_a_fixed_environment() -> None:
@@ -430,5 +438,32 @@ def test_environment_keyed_uniqueness_does_not_change_a_fixed_environment() -> N
     plain = _result(records, "genotype_uniqueness")
     keyed = _result(records, "genotype_uniqueness", environment_keyed=True)
     assert (plain.passed, keyed.passed) == (True, True)
-    assert plain.details == keyed.details == {"n_strains": 3, "n_duplicated": 0}
+    assert (
+        plain.details
+        == keyed.details
+        == {"n_strains": 3, "n_duplicated": 0, "n_duplicate_records": 0}
+    )
     assert keyed.message == "3 unique (strain, environment) pairs, one record each"
+
+
+def test_allow_duplicate_strains_reports_the_collisions_as_a_finding() -> None:
+    """Cooper 2010's replicate rows: two records of one strain, L1 passes with the count."""
+    from torchcell.verification.metabolite import _l1_orf_uniqueness
+
+    records = [
+        _record("YAL001C", 1.0),
+        _record("YAL001C", 2.0),
+        _record("YAL002W", 3.0),
+    ]
+    refused = _l1_orf_uniqueness(records)
+    finding = _l1_orf_uniqueness(records, allow_duplicate_strains=True)
+    assert refused.passed is False
+    assert finding.passed is True
+    assert finding.details == {
+        "n_strains": 2,
+        "n_duplicated": 1,
+        "n_duplicate_records": 1,
+    }
+    assert finding.message.endswith(
+        "(released replicate rows with no strain key; reported, not refused)"
+    )

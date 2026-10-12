@@ -5,34 +5,33 @@
 
 The loader's surface is how it turns one deposited Table 4 row into a typed metabolite
 record, so these tests drive ``read_table4`` / ``retain_rows`` / ``create_experiment`` on
-a synthetic Table 4 plus a fake resolver. What is pinned: the header is checked exactly,
-missing cells drop the key rather than becoming NaN, the medium is a typed dropout of the
-library SC (joinable at ``base_medium``), temperature is a typed gap, the reference is 1.0
-per present key, replicate counts are the conservative 1, identifiers are normalized and
-recorded, a duplicate identifier keeps its first row and ledgers the second, a RENAMED row
-is a distinct strain of the current gene, non-gene and retired rows are dropped with their
-status, and every sourced quote is still verbatim in the sha256-pinned mirror.
+a synthetic Table 4. No genome, resolver or other store is read (owner rule 2026-10-12:
+the data is the data). What is pinned: the header is checked exactly, missing cells drop
+the key rather than becoming NaN, the medium is a typed dropout of the library SC
+(joinable at ``base_medium``), temperature is a typed gap, the reference is 1.0 per
+present key, replicate counts are the conservative 1, identifiers are normalized and
+recorded, every row of a duplicated identifier is its own record, a released name R64
+renamed, retired or carries as a non-gene feature is stored verbatim like any other, and
+every sourced quote is still verbatim in the sha256-pinned mirror.
 
-The second half ("End-to-end build") runs ``process()`` for real under ``tmp_path``:
-``DATA_ROOT`` points at ``tmp_path/data_root``, which holds a two-record fake
-``gene_essentiality_sgd`` LMDB (YGL180W essential, YBR208C not), and the dataset root's
-``raw/`` holds a synthetic eight-row Table 4 (``_E2E_ROWS``). Row ``r`` carries
-``base_r + j + 0.5`` in peak column ``j`` (0 to 16, file order), so every value is exact in
-binary and a swapped header -> key mapping changes a value:
+The second half ("End-to-end build") runs ``process()`` for real under ``tmp_path``: the
+dataset root's ``raw/`` holds a synthetic eight-row Table 4 (``_E2E_ROWS``). Row ``r``
+carries ``base_r + j + 0.5`` in peak column ``j`` (0 to 16, file order), so every value is
+exact in binary and a swapped header -> key mapping changes a value:
 
     row  Sysname     NAME        base  rule
     0    YBR208C     DUR1,2      0     kept (idx 0)
     1    YBR020W     GAL1        100   kept (idx 1); RPS19 "-", gshbiotin "0", Asp "-"
-    2    ybr020w     GAL1        200   normalized to YBR020W -> duplicate of row 1
-    3    YML048WA-   GSF2        300   normalized to YML048W-A, kept (idx 2)
-    4    YAL035C-A   YAL035C-A   400   RENAMED -> YAL034C-B, kept (idx 3)
-    5    YCL074W     YCL074W     500   NON_GENE_FEATURE (pseudogene), dropped
-    6    BY4742      BY4742      600   parent strain, excluded before the resolver
-    7    YGL180W     ATG1        700   kept (idx 4), essentiality-flagged
+    2    ybr020w     GAL1        200   normalized to YBR020W, kept (idx 2): second GAL1 row
+    3    YML048WA-   GSF2        300   normalized to YML048W-A, kept (idx 3)
+    4    YAL035C-A   YAL035C-A   400   kept (idx 4) under the released name (R64 renamed it)
+    5    YCL074W     YCL074W     500   kept (idx 5) under the released name (R64 pseudogene)
+    6    BY4742      BY4742      600   parent strain, excluded
+    7    YGL180W     ATG1        700   kept (idx 6)
 
-Kept values: 17 + 15 + 17 + 17 + 17 = 83. The four full rows share one reference (17 keys
-at 1.0) and the ragged row has its own (15 keys), so the reference index is
-[[0, 2, 3, 4], [1]].
+Kept values: 17 + 15 + 17 + 17 + 17 + 17 + 17 = 117. The six full rows share one
+reference (17 keys at 1.0) and the ragged row has its own (15 keys), so the reference
+index is [[0, 2, 3, 4, 5, 6], [1]].
 """
 
 from __future__ import annotations
@@ -41,11 +40,9 @@ import hashlib
 import json
 import os
 import os.path as osp
-import pickle
 from pathlib import Path
 from typing import Any
 
-import lmdb
 import pytest
 
 from torchcell.data import RawSha256MismatchError
@@ -74,30 +71,7 @@ from torchcell.datasets.scerevisiae.cooper2010 import (
     read_table4,
     retain_rows,
 )
-from torchcell.sequence.genome.scerevisiae.s288c import GeneNameStatus
 from torchcell.verification.sourced import ProvenanceGap, ProvenanceGapReason
-
-
-class _Resolution:
-    """The three fields of ``GeneNameResolution`` the loader reads."""
-
-    def __init__(self, status: GeneNameStatus, name: str | None, feature: str | None):
-        self.status = status
-        self.systematic_name = name
-        self.feature_type = feature
-
-
-_RESOLVER: dict[str, _Resolution] = {
-    "YBR208C": _Resolution(GeneNameStatus.CURRENT, "YBR208C", None),
-    "YBR020W": _Resolution(GeneNameStatus.CURRENT, "YBR020W", None),
-    "YML048W-A": _Resolution(GeneNameStatus.CURRENT, "YML048W-A", None),
-    "YLR228C": _Resolution(GeneNameStatus.CURRENT, "YLR228C", None),
-    "YAL034C-B": _Resolution(GeneNameStatus.CURRENT, "YAL034C-B", None),
-    "YAL035C-A": _Resolution(GeneNameStatus.RENAMED, "YAL034C-B", None),
-    "YCL074W": _Resolution(GeneNameStatus.NON_GENE_FEATURE, "YCL074W", "pseudogene"),
-    "R0010W": _Resolution(GeneNameStatus.RETIRED, "R0010W", None),
-    "YGL180W": _Resolution(GeneNameStatus.CURRENT, "YGL180W", None),
-}
 
 _HEADER = "\t".join(EXPECTED_HEADER)
 
@@ -112,8 +86,8 @@ def _full(seed: float) -> list[str]:
 
 
 def _table(tmp_path: Path) -> str:
-    """A Table 4 with one row per rule: full, ragged, duplicate, malformed, renamed,
-    non-gene, retired, and an essentiality-store hit.
+    """A Table 4 with one row per rule: full, ragged, duplicate, malformed, a name R64
+    renamed, a pseudogene, a retired name, and an SGD-essential gene; all are records.
     """
     ragged = _full(0.5)
     ragged[0] = "-"  # RPS19 missing
@@ -126,11 +100,11 @@ def _table(tmp_path: Path) -> str:
         _row("YBR020W", "GAL1", _full(2.0)),  # duplicate identifier, second row
         _row("YML048WA-", "GSF2", _full(3.0)),  # misplaced suffix
         _row("YLR228 C", "", _full(4.0)),  # internal whitespace, empty NAME
-        _row("YAL035C-A", "YAL035C-A", _full(5.0)),  # RENAMED onto YAL034C-B
+        _row("YAL035C-A", "YAL035C-A", _full(5.0)),  # R64 renamed it YAL034C-B
         _row("YAL034C-B", "YAL034C-B", _full(6.0)),  # the current gene's own row
-        _row("YCL074W", "YCL074W", _full(7.0)),  # pseudogene
-        _row("R0010W", "R0010W", _full(8.0)),  # retired
-        _row("YGL180W", "ATG1", _full(9.0)),  # in the essentiality store, kept
+        _row("YCL074W", "YCL074W", _full(7.0)),  # pseudogene in R64
+        _row("R0010W", "R0010W", _full(8.0)),  # retired in R64
+        _row("YGL180W", "ATG1", _full(9.0)),  # SGD-essential (ATG1), a released row
     ]
     path = tmp_path / "SupplementalTable4.txt"
     path.write_text("\n".join(rows) + "\n")
@@ -146,12 +120,7 @@ def _dataset() -> AminoAcidCooper2010Dataset:
 
 def _retained(tmp_path: Path) -> tuple[list[Any], Any]:
     rows = read_table4(_table(tmp_path))
-    return retain_rows(
-        rows,
-        lambda name: _RESOLVER[name],
-        frozenset({"YGL180W"}),
-        dataset_name="AminoAcidCooper2010Dataset",
-    )
+    return retain_rows(rows, dataset_name="AminoAcidCooper2010Dataset")
 
 
 # ---- parsing --------------------------------------------------------------------- #
@@ -183,54 +152,36 @@ def test_identifier_normalization_is_recorded_verbatim(tmp_path: Path) -> None:
 
 
 # ---- retention ------------------------------------------------------------------- #
-def test_non_gene_and_retired_rows_are_dropped_with_their_status(
-    tmp_path: Path,
-) -> None:
+def test_every_released_name_is_a_record_whatever_r64_says(tmp_path: Path) -> None:
+    """A pseudogene, a retired name and a name R64 renamed are stored as released."""
     kept, ledger = _retained(tmp_path)
-    assert {row.systematic_gene_name for row in kept} == {
+    assert [row.systematic_gene_name for row in kept] == [
         "YBR208C",
+        "YBR020W",
         "YBR020W",
         "YML048W-A",
         "YLR228C",
+        "YAL035C-A",
         "YAL034C-B",
+        "YCL074W",
+        "R0010W",
         "YGL180W",
-    }
-    dropped = {d.source_name: d for d in ledger.dropped_orfs}
-    assert set(dropped) == {"YCL074W", "R0010W"}
-    assert (dropped["YCL074W"].status, dropped["YCL074W"].feature_type) == (
-        "non_gene_feature",
-        "pseudogene",
-    )
-    assert dropped["R0010W"].status == "retired"
-    assert dropped["R0010W"].n_values == len(PEAK_KEYS)
+    ]
+    assert all(row.perturbed_gene_name == row.systematic_gene_name for row in kept)
+    assert ledger.n_kept == 10 and ledger.n_source_rows == 10
+    assert ledger.identifier_rule == module.IDENTIFIER_RULE
 
 
-def test_renamed_row_is_a_distinct_strain_of_the_current_gene(tmp_path: Path) -> None:
-    kept, ledger = _retained(tmp_path)
-    assert ledger.renamed_orfs == {"YAL035C-A": "YAL034C-B"}
-    by_source = {row.perturbed_gene_name: row.systematic_gene_name for row in kept}
-    assert by_source["YAL035C-A"] == "YAL034C-B"
-    assert by_source["YAL034C-B"] == "YAL034C-B"
-
-
-def test_duplicate_identifier_keeps_the_first_row_and_ledgers_the_second(
-    tmp_path: Path,
-) -> None:
+def test_duplicate_identifier_keeps_every_row_as_its_own_record(tmp_path: Path) -> None:
     kept, ledger = _retained(tmp_path)
     gal1 = [row for row in kept if row.systematic_gene_name == "YBR020W"]
-    assert len(gal1) == 1 and gal1[0].row_index == 1
-    assert len(ledger.duplicate_strain_rows) == 1
-    duplicate = ledger.duplicate_strain_rows[0]
-    assert (duplicate.row_index, duplicate.kept_row_index) == (2, 1)
-    assert duplicate.levels["arginine"] == 2.1  # never averaged into the kept row
-    assert ledger.n_duplicate_rows == 1
-
-
-def test_essentiality_hit_is_flagged_and_kept(tmp_path: Path) -> None:
-    kept, ledger = _retained(tmp_path)
-    assert "YGL180W" in {row.systematic_gene_name for row in kept}
-    assert [f.systematic_gene_name for f in ledger.essentiality_flagged] == ["YGL180W"]
-    assert ledger.n_excluded_non_deletion == 0
+    assert [row.row_index for row in gal1] == [1, 2]
+    assert gal1[1].levels["arginine"] == 2.1  # never averaged into the first row
+    assert ledger.n_duplicate_identifiers == 1 and ledger.n_duplicate_rows == 1
+    (duplicate,) = ledger.duplicate_identifiers
+    assert duplicate.normalized_name == "YBR020W"
+    assert duplicate.row_indices == [1, 2]
+    assert duplicate.name_cells == ["GAL1", "GAL1"]
 
 
 def test_parent_strain_row_is_excluded(tmp_path: Path) -> None:
@@ -238,9 +189,7 @@ def test_parent_strain_row_is_excluded(tmp_path: Path) -> None:
     path.write_text(
         "\n".join([_HEADER, _row("BY4742", "wild type", _full(1.0))]) + "\n"
     )
-    kept, ledger = retain_rows(
-        read_table4(path), lambda name: _RESOLVER[name], frozenset(), dataset_name="x"
-    )
+    kept, ledger = retain_rows(read_table4(path), dataset_name="x")
     assert kept == []
     assert ledger.excluded_non_deletion[0].reason.startswith("parent-strain")
 
@@ -248,13 +197,8 @@ def test_parent_strain_row_is_excluded(tmp_path: Path) -> None:
 def test_ledger_counts_add_up(tmp_path: Path) -> None:
     _, ledger = _retained(tmp_path)
     assert ledger.n_source_rows == 10
-    assert (
-        ledger.n_kept
-        + ledger.n_dropped_orfs
-        + ledger.n_duplicate_rows
-        + ledger.n_excluded_non_deletion
-        == ledger.n_source_rows
-    )
+    assert ledger.n_kept + ledger.n_excluded_non_deletion == ledger.n_source_rows
+    assert ledger.n_values_kept == 10 * len(PEAK_KEYS) - 2
 
 
 # ---- record ---------------------------------------------------------------------- #
@@ -291,9 +235,10 @@ def test_phenotype_declares_its_typed_absences(tmp_path: Path) -> None:
     assert "gshbiotin" not in str(gaps["target_metabolite_ids"].note)
 
 
-def test_genotype_is_a_kanmx_deletion_keyed_on_the_normalized_source(
+def test_genotype_is_a_kanmx_deletion_keyed_on_the_released_name(
     tmp_path: Path,
 ) -> None:
+    """A name R64 has since renamed is stored exactly as the release spells it."""
     kept, _ = _retained(tmp_path)
     renamed = next(row for row in kept if row.perturbed_gene_name == "YAL035C-A")
     experiment, _, _ = _dataset().create_experiment(renamed)
@@ -301,7 +246,7 @@ def test_genotype_is_a_kanmx_deletion_keyed_on_the_normalized_source(
     assert isinstance(genotype, Genotype)
     perturbation = genotype.perturbations[0]
     assert perturbation.perturbation_type == "kanmx_deletion"
-    assert perturbation.systematic_gene_name == "YAL034C-B"
+    assert perturbation.systematic_gene_name == "YAL035C-A"
     assert perturbation.perturbed_gene_name == "YAL035C-A"
 
 
@@ -440,53 +385,12 @@ def _e2e_table_text() -> str:
     return "\n".join(lines) + "\n"
 
 
-class _Genome:
-    """The one method the loader calls; an unknown name is a test bug, so it raises."""
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        return _RESOLVER[name]
-
-
-def _put_lmdb(path: Path, items: dict[bytes, Any]) -> None:
-    path.mkdir(parents=True)
-    env = lmdb.open(str(path), map_size=1 << 22)
-    with env.begin(write=True) as txn:
-        for key, value in items.items():
-            txn.put(key, pickle.dumps(value))
-    env.close()
-
-
-def _essentiality_record(orf: str, essential: bool) -> dict[str, Any]:
-    return {
-        "experiment": {
-            "phenotype": {"is_essential": essential},
-            "genotype": {"perturbations": [{"systematic_gene_name": orf}]},
-        }
-    }
-
-
-def _write_essentiality_store(data_root: Path) -> None:
-    store = data_root / "data" / "torchcell" / "gene_essentiality_sgd" / "processed"
-    _put_lmdb(
-        store / "lmdb",
-        {
-            b"0": _essentiality_record("YGL180W", True),
-            b"1": _essentiality_record("YBR208C", False),
-        },
-    )
-
-
 @pytest.fixture
-def built(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> AminoAcidCooper2010Dataset:
-    data_root = tmp_path / "data_root"
-    _write_essentiality_store(data_root)
-    monkeypatch.setenv("DATA_ROOT", str(data_root))
+def built(tmp_path: Path) -> AminoAcidCooper2010Dataset:
     root = tmp_path / "amino_acid_cooper2010"
     (root / "raw").mkdir(parents=True)
     (root / "raw" / module.TABLE4_NAME).write_text(_e2e_table_text())
-    return AminoAcidCooper2010Dataset(root=str(root), genome=_Genome())
+    return AminoAcidCooper2010Dataset(root=str(root))
 
 
 _ENVIRONMENT = Environment(
@@ -557,15 +461,16 @@ def _expected(
     return experiment.model_dump(), reference.model_dump()
 
 
-def test_build_stores_five_records_in_kept_row_order(
+def test_build_stores_seven_records_in_row_order(
     built: AminoAcidCooper2010Dataset,
 ) -> None:
-    """Rows 0, 1, 3, 4, 7 become LMDB records 0 to 4, keyed on (current ORF, normalized
-    source name); the duplicate, the pseudogene and the parent row are not records.
+    """Every row but the parent strain is a record, in file order, keyed on its
+    normalized released name: the second GAL1 row, the name R64 renamed and the
+    pseudogene are records like any other.
     """
-    assert len(built) == 5
+    assert len(built) == 7
     pairs = []
-    for i in range(5):
+    for i in range(7):
         (perturbation,) = built[i]["experiment"]["genotype"]["perturbations"]
         pairs.append(
             (perturbation["systematic_gene_name"], perturbation["perturbed_gene_name"])
@@ -573,10 +478,13 @@ def test_build_stores_five_records_in_kept_row_order(
     assert pairs == [
         ("YBR208C", "YBR208C"),
         ("YBR020W", "YBR020W"),
+        ("YBR020W", "YBR020W"),
         ("YML048W-A", "YML048W-A"),
-        ("YAL034C-B", "YAL035C-A"),
+        ("YAL035C-A", "YAL035C-A"),
+        ("YCL074W", "YCL074W"),
         ("YGL180W", "YGL180W"),
     ]
+    assert built[2]["experiment"]["phenotype"]["metabolite_level"]["arginine"] == 201.5
 
 
 def test_full_row_record_maps_every_header_to_its_key(
@@ -609,7 +517,8 @@ def test_ragged_row_record_carries_only_its_present_keys(
 ) -> None:
     """Record 1 (row 1, base 100): 15 keys, no ``lysine_related_peak1`` or ``aspartate``,
     ``gshbiotin`` an exact 0.0 (a released zero, not missing); its reference is 1.0 on the
-    same 15 keys, and it keeps the FIRST GAL1 row's values (arginine 101.5, not 201.5).
+    same 15 keys, and it holds the FIRST GAL1 row's values (arginine 101.5; the second
+    GAL1 row is record 2 with 201.5).
     """
     experiment, reference = _expected("YBR020W", "YBR020W", _ragged_levels())
     assert built[1]["experiment"] == experiment
@@ -623,11 +532,9 @@ def test_ragged_row_record_carries_only_its_present_keys(
 def test_ledger_json_records_every_rule_exactly(
     built: AminoAcidCooper2010Dataset,
 ) -> None:
-    """``preprocess/dropped_records.json``: 8 source rows, 5 kept (83 values), the
-    pseudogene dropped with its 17 values, the lowercase GAL1 row ledgered as a duplicate
-    of row 1 with its own values, two normalizations (rows 2 and 3), YAL035C-A renamed,
-    BY4742 excluded before the resolver, YGL180W flagged and kept (YBR208C is in the store
-    but not essential, so not flagged).
+    """``preprocess/dropped_records.json``: 8 source rows, 7 kept (117 values), two
+    normalizations (rows 2 and 3), GAL1 heading rows 1 and 2 (both kept), BY4742
+    excluded; no genome, resolver or essentiality store is consulted.
     """
     ledger = json.loads(
         (Path(built.root) / "preprocess" / "dropped_records.json").read_text()
@@ -636,22 +543,19 @@ def test_ledger_json_records_every_rule_exactly(
     assert created_at.endswith("+00:00")
     assert ledger == {
         "dataset": "AminoAcidCooper2010Dataset",
-        "orf_rule": module.ORF_RULE,
+        "identifier_rule": module.IDENTIFIER_RULE,
         "normalization_rule": module.NORMALIZATION_RULE,
         "duplicate_rule": module.DUPLICATE_RULE,
         "exclusion_rule": module.EXCLUSION_RULE,
-        "essentiality_rule": module.ESSENTIALITY_RULE,
         "replicate_rule": module.REPLICATE_RULE,
         "legend_contradiction": module.LEGEND_CONTRADICTION,
         "n_source_rows": 8,
-        "n_kept": 5,
-        "n_dropped_orfs": 1,
-        "n_renamed": 1,
+        "n_kept": 7,
         "n_normalized": 2,
+        "n_duplicate_identifiers": 1,
         "n_duplicate_rows": 1,
         "n_excluded_non_deletion": 1,
-        "n_essentiality_flagged": 1,
-        "n_values_kept": 83,
+        "n_values_kept": 117,
         "normalizations": [
             {"row_index": 2, "source_name": "ybr020w", "normalized_name": "YBR020W"},
             {
@@ -660,27 +564,11 @@ def test_ledger_json_records_every_rule_exactly(
                 "normalized_name": "YML048W-A",
             },
         ],
-        "dropped_orfs": [
+        "duplicate_identifiers": [
             {
-                "row_index": 5,
-                "source_name": "YCL074W",
-                "normalized_name": "YCL074W",
-                "status": "non_gene_feature",
-                "resolved_to": "YCL074W",
-                "feature_type": "pseudogene",
-                "n_values": 17,
-            }
-        ],
-        "renamed_orfs": {"YAL035C-A": "YAL034C-B"},
-        "duplicate_strain_rows": [
-            {
-                "row_index": 2,
-                "source_name": "ybr020w",
                 "normalized_name": "YBR020W",
-                "systematic_gene_name": "YBR020W",
-                "name_cell": "GAL1",
-                "kept_row_index": 1,
-                "levels": _levels(200),
+                "row_indices": [1, 2],
+                "name_cells": ["GAL1", "GAL1"],
             }
         ],
         "excluded_non_deletion": [
@@ -691,9 +579,6 @@ def test_ledger_json_records_every_rule_exactly(
                 "reason": "parent-strain row, not a deletion",
                 "levels": _levels(600),
             }
-        ],
-        "essentiality_flagged": [
-            {"row_index": 7, "systematic_gene_name": "YGL180W", "name_cell": "ATG1"}
         ],
     }
 
@@ -729,8 +614,10 @@ def test_data_csv_lists_kept_rows_with_empty_cells_for_missing_peaks(
     assert lines[1:] == [
         line("YBR208C", "YBR208C", "YBR208C", '"DUR1,2"', 0, full(0)),
         line("YBR020W", "YBR020W", "YBR020W", "GAL1", 1, ragged),
+        line("YBR020W", "YBR020W", "ybr020w", "GAL1", 2, full(200)),
         line("YML048W-A", "YML048W-A", "YML048WA-", "GSF2", 3, full(300)),
-        line("YAL034C-B", "YAL035C-A", "YAL035C-A", "YAL035C-A", 4, full(400)),
+        line("YAL035C-A", "YAL035C-A", "YAL035C-A", "YAL035C-A", 4, full(400)),
+        line("YCL074W", "YCL074W", "YCL074W", "YCL074W", 5, full(500)),
         line("YGL180W", "YGL180W", "YGL180W", "ATG1", 7, full(700)),
     ]
 
@@ -738,21 +625,23 @@ def test_data_csv_lists_kept_rows_with_empty_cells_for_missing_peaks(
 def test_side_files_gene_set_reference_index_and_sourced_values(
     built: AminoAcidCooper2010Dataset,
 ) -> None:
-    """``gene_set.json`` is the five current ORFs sorted; the reference index groups the
-    four 17-key records apart from the 15-key record; ``sourced_values.json`` holds the
-    SOURCED_VALUES and legend keys sorted, then ``peak_notes``, with the n_samples value
-    4382 and the legend's sha256 pin.
+    """``gene_set.json`` is the six released names sorted (the renamed name and the
+    pseudogene included, as released); the reference index groups the six 17-key records
+    apart from the 15-key record; ``sourced_values.json`` holds the SOURCED_VALUES and
+    legend keys sorted, then ``peak_notes``, with the n_samples value 4382 and the
+    legend's sha256 pin.
     """
     preprocess = Path(built.root) / "preprocess"
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
-        "YAL034C-B",
+        "YAL035C-A",
         "YBR020W",
         "YBR208C",
+        "YCL074W",
         "YGL180W",
         "YML048W-A",
     ]
     index = json.loads((preprocess / "experiment_reference_index.json").read_text())
-    assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 2, 3, 4, 5, 6], [1]]
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert list(sourced) == [
         *sorted([*module.SOURCED_VALUES, "table4_legend"]),
@@ -776,7 +665,7 @@ def test_a_raw_file_placed_in_raw_dir_is_refused_at_build_time(
     staged = off_pin_raw(module, [module.TABLE4_NAME])
     raw = staged.root / "raw" / module.TABLE4_NAME
     with pytest.raises(RawSha256MismatchError) as excinfo:
-        AminoAcidCooper2010Dataset(root=str(staged.root), genome=_Genome())
+        AminoAcidCooper2010Dataset(root=str(staged.root))
     assert str(excinfo.value) == (
         f"sha256 mismatch for {raw}: expected "
         "3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb, "
@@ -810,7 +699,7 @@ def test_download_without_a_mirror_raises_with_the_recipe(
         / "SupplementalTable4.txt"
     )
     with pytest.raises(FileNotFoundError) as excinfo:
-        AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"), genome=_Genome())
+        AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"))
     assert str(excinfo.value) == (
         f"raw mirror file {source} is absent and the source is not scriptable; "
         f"deposit it with deposit_raw_mirror(). Recipe: {module.MANUAL_RECIPE}"
@@ -828,7 +717,7 @@ def test_download_refuses_a_mirror_file_with_the_wrong_sha256(
     source = _mirror_table(data_root)
     digest = hashlib.sha256(source.read_bytes()).hexdigest()
     with pytest.raises(RawSha256MismatchError) as excinfo:
-        AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"), genome=_Genome())
+        AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"))
     assert str(excinfo.value) == (
         f"sha256 mismatch for {source}: expected "
         f"3c56cd492b4cab51249358e90c7e9731982960eb619e45b8850093e616a471fb, "
@@ -842,57 +731,20 @@ def test_download_links_a_verified_mirror_file_and_builds_from_it(
 ) -> None:
     """With the pin set to the synthetic table's sha256, ``download()`` symlinks the
     mirror file into ``raw/`` and the build, with the real build-time check, reads it:
-    five records.
+    seven records.
     """
     monkeypatch.setattr(module, "verify_raw_files", verify_raw_files)
     data_root = tmp_path / "data_root"
-    _write_essentiality_store(data_root)
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     source = _mirror_table(data_root)
     monkeypatch.setattr(
         module, "TABLE4_SHA256", hashlib.sha256(source.read_bytes()).hexdigest()
     )
-    dataset = AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"), genome=_Genome())
+    dataset = AminoAcidCooper2010Dataset(root=str(tmp_path / "ds"))
     link = tmp_path / "ds" / "raw" / module.TABLE4_NAME
     assert link.is_symlink()
     assert os.readlink(link) == str(source)
-    assert len(dataset) == 5
-
-
-def test_essential_gene_store_resolves_interned_records(tmp_path: Path) -> None:
-    """``load_sgd_essential_genes`` keeps only ``is_essential is True`` records, splicing
-    an interned ``$ref`` experiment back in: YAL001C (inline, True) and YBR001C (interned,
-    True) are returned; YCR001W (False) is not.
-    """
-    processed = tmp_path / "data" / "torchcell" / "gene_essentiality_sgd" / "processed"
-    _put_lmdb(
-        processed / "interned",
-        {b"exp-ybr001c": _essentiality_record("YBR001C", True)["experiment"]},
-    )
-    _put_lmdb(
-        processed / "lmdb",
-        {
-            b"0": _essentiality_record("YAL001C", True),
-            b"1": {"experiment": {"$ref": "exp-ybr001c"}},
-            b"2": _essentiality_record("YCR001W", False),
-        },
-    )
-    assert module.load_sgd_essential_genes(str(tmp_path)) == frozenset(
-        {"YAL001C", "YBR001C"}
-    )
-
-
-def test_essential_gene_store_must_exist(tmp_path: Path) -> None:
-    """An absent store raises rather than flagging nothing."""
-    lmdb_dir = osp.join(
-        str(tmp_path), "data/torchcell/gene_essentiality_sgd", "processed", "lmdb"
-    )
-    with pytest.raises(FileNotFoundError) as excinfo:
-        module.load_sgd_essential_genes(str(tmp_path))
-    assert str(excinfo.value) == (
-        f"{lmdb_dir} is absent; build GeneEssentialitySgdDataset first, the "
-        "essentiality flag is measured against it"
-    )
+    assert len(dataset) == 7
 
 
 def test_read_table4_refuses_a_short_row_and_a_reordered_header(tmp_path: Path) -> None:
@@ -914,32 +766,6 @@ def test_read_table4_refuses_a_short_row_and_a_reordered_header(tmp_path: Path) 
         f"{reordered} header is not the expected Table 4 header; unmapped columns [], "
         f"missing columns [], order {swapped}"
     )
-
-
-def test_resolver_current_without_a_systematic_name_is_dropped(tmp_path: Path) -> None:
-    """A kept status with ``systematic_name`` None still drops the row (line 957), with
-    the status recorded as ``current`` and ``resolved_to`` None.
-    """
-    path = tmp_path / "t.txt"
-    path.write_text("\n".join([_HEADER, _row("YBR208C", "DUR1,2", _full(1.0))]) + "\n")
-    kept, ledger = retain_rows(
-        read_table4(path),
-        lambda name: _Resolution(GeneNameStatus.CURRENT, None, None),
-        frozenset(),
-        dataset_name="x",
-    )
-    assert kept == []
-    assert [d.model_dump() for d in ledger.dropped_orfs] == [
-        {
-            "row_index": 0,
-            "source_name": "YBR208C",
-            "normalized_name": "YBR208C",
-            "status": "current",
-            "resolved_to": None,
-            "feature_type": None,
-            "n_values": 17,
-        }
-    ]
 
 
 def test_read_sha256sums_skips_blank_lines_and_keeps_spaced_names(
@@ -1050,47 +876,7 @@ def test_deposit_refuses_a_sha256sums_listing_that_disagrees_with_the_pin(
     assert not (tmp_path / "data_root").exists()
 
 
-# ---- 2026.10.06 (Phase 21): default resolver, early-return download, class surface #
-def test_resolver_without_a_genome_opens_a_read_only_s288c_genome(
-    built: AminoAcidCooper2010Dataset, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    """With ``genome=None``, ``_resolver`` loads ``.env`` (stubbed here), reads
-    ``DATA_ROOT`` and builds ``SCerevisiaeGenome(genome_root=<DATA_ROOT>/data/sgd/genome,
-    go_root=<DATA_ROOT>/data/go, overwrite=False)`` once, then returns its
-    ``resolve_gene_name``; a second call reuses the stored genome.
-    """
-    import dotenv
-
-    import torchcell.sequence.genome.scerevisiae as scerevisiae
-
-    built_with: list[dict[str, Any]] = []
-    dotenv_calls: list[tuple[Any, ...]] = []
-
-    class _Genome:
-        def __init__(self, **kwargs: Any) -> None:
-            built_with.append(kwargs)
-
-        def resolve_gene_name(self, name: str) -> str:
-            return f"resolved:{name}"
-
-    monkeypatch.setattr(dotenv, "load_dotenv", lambda *a, **k: dotenv_calls.append(a))
-    monkeypatch.setattr(scerevisiae, "SCerevisiaeGenome", _Genome)
-    data_root = str(tmp_path / "data_root")
-    built.genome = None
-    resolver = built._resolver()
-    assert built_with == [
-        {
-            "genome_root": osp.join(data_root, "data/sgd/genome"),
-            "go_root": osp.join(data_root, "data/go"),
-            "overwrite": False,
-        }
-    ]
-    assert dotenv_calls == [()]
-    assert resolver("YAL001C") == "resolved:YAL001C"
-    built._resolver()
-    assert len(built_with) == 1
-
-
+# ---- 2026.10.06 (Phase 21): early-return download, class surface ------------- #
 def test_download_keeps_a_raw_file_already_in_place(
     built: AminoAcidCooper2010Dataset,
 ) -> None:

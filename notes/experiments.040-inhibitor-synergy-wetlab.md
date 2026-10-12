@@ -1057,3 +1057,38 @@ Job 4047 finished at 05:05: gene-centered Spearman over the held-out strains 0.0
 0.061, mean over three folds at one seed, against 0.019 and 0.047 for the one- and
 two-source arms. Every gene-cold reading is within noise of zero; the cell graph alone does
 not carry a deletion strain's inhibitor profile, with or without the public screens.
+
+## 2026.10.12 - The four-by-three is populated, and the host head is flat in dose
+
+Every panel of the main sheet now draws from a result file, and the bottom row carries
+the model for the first time, read from the per-well host predictions every run writes
+([[experiments.040-inhibitor-synergy-wetlab.scripts.r3_host_predictions]]). What the
+model panels show is one fact three ways:
+
+- **j, the titrations.** The host head trained on the public anchors alone predicts the
+  anchors' assumed fitness, 0.70, for every inhibitor at every dose (Spearman 0.03 against
+  the 54 observed single-agent conditions). The head trained on those wells sits near
+  0.5, Spearman 0.45, and is still nearly flat in dose.
+- **k, the grown combinations.** The model predicts the same fitness, 0.65, at one, two
+  and three inhibitors. Growth AUROC 0.583, fitness Spearman 0.153. The head does not
+  compose.
+- **l, the isobole grids.** The model's monotone front sits at the grid's edge on all
+  three runs, because a head that predicts the same fitness everywhere calls every cell
+  alive; the closure drops 81 cells on the furfural grid.
+
+So the round-1 observation that dose FiLM hurts has a simpler reading now: the host head
+hardly uses dose at all, with or without the channel, and the wet-lab readouts are
+measuring a near-constant. The hypothesis from 2026.10.10 that the head composes
+near-additively was too generous; it composes not at all. The public side of the sheet
+also filled in: the environment encoder's learning curve (0.127, 0.226, 0.295 at 8, 16,
+24 compounds, below ridge at every count and closing), the transformer's held-out
+profile for furfural (0.287 over 62 runs) and 5-HMF (0.369 over 56), and the mixture
+trainer's single-source ensemble beside the 038 heads. Supplements five (convergence)
+and six (every arm) are in the document; the build and its check are clean.
+
+What the flat head says to do next (hypotheses, untested): the host readout is the mean
+over genes of a representation shaped by the gene-level loss, with 180 titration wells
+against a hundred thousand gene cells, so the dose channel has almost nothing to fit on
+the host side; a host head with its own dose-response form (a Hill curve whose IC50 and
+slope the model predicts per compound) would make the single-agent curve the thing the
+model outputs rather than something it has to discover from 180 points.

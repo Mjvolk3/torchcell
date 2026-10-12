@@ -54,6 +54,7 @@ import glob
 import json
 import os
 import os.path as osp
+import sys
 from typing import Any
 
 import matplotlib
@@ -67,6 +68,10 @@ from matplotlib.colors import LinearSegmentedColormap, Normalize  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 from matplotlib.patches import FancyArrowPatch, FancyBboxPatch, Patch  # noqa: E402
 from matplotlib.ticker import MultipleLocator  # noqa: E402
+from sklearn.metrics import roc_auc_score  # noqa: E402
+
+sys.path.insert(0, osp.dirname(osp.abspath(__file__)))
+from mixture_rules import monotone_alive  # noqa: E402
 
 from torchcell.timestamp import timestamp  # noqa: E402
 from torchcell.utils import (  # noqa: E402
@@ -141,6 +146,11 @@ SRC_LABEL = {
     "control": "gene-mean or permutation control, and chance",
 }
 SRC_ORDER = ["measured", "bliss", "loewe", "hsa", "mean", "ridge", "cgt", "control"]
+#: the arm drawn as THE model on the wet-lab panels (single source, held-out protocol,
+#: host head trained on the anchors and the ex21 titration) and its zero-shot twin
+#: (anchors only, so its ex21 curve is a prediction of singles it never saw)
+MODEL_ARM = "r3_van_e150"
+ZERO_SHOT_ARM = "r3w2_van_e150_anchors"
 #: HATCH: the software growth call, where a panel draws both calls. Plain is served.
 SOFTWARE_HATCH = "////"
 
@@ -176,6 +186,14 @@ INHIB_NAME = {
     "FF": "furfural",
     "AA": "acetic acid",
     "HMF": "5-HMF",
+    "FA": "formic acid",
+    "LVA": "levulinic acid",
+    "LA": "lactic acid",
+}
+INHIB_LONG = {
+    "FF": "furfural",
+    "AA": "acetic acid",
+    "HMF": "5-(hydroxymethyl)furfural",
     "FA": "formic acid",
     "LVA": "levulinic acid",
     "LA": "lactic acid",
@@ -299,6 +317,51 @@ class Reads:
         }
         self.rounds = self.round_scores()
         self.basis = self.csv(osp.join(R040, "source_basis.csv"))
+        #: every arm's host-head prediction on every Bioscreen medium
+        #: (r3_host_predictions.py); the single-source held-out-protocol arm is the
+        #: model drawn on the wet-lab panels, the anchors-only arm its zero-shot twin
+        self.host_pred = self.csv(osp.join(R040, "host_predictions.csv"))
+        #: 038 round 17, the environment encoder's learning curve in fitted compounds
+        self.curve_enc = self.folds(osp.join(R038, "factorized", "r17_curve"))
+        self.cgt_compounds = self.compound_scores()
+        self.convergence = self.csv(osp.join(R040, "r3_convergence_arms.csv"))
+
+    def compound_scores(self) -> pd.DataFrame:
+        """Every held-out compound's score from every round-3 and round-4 run."""
+        frames = []
+        for machine, sub in (("gilahyper", "mixture"), ("delta", "mixture-delta")):
+            for path in sorted(
+                glob.glob(osp.join(R040, sub, "r[34]*", "*_vanacloig_compounds.csv"))
+            ):
+                if "smoke" in path:
+                    continue
+                frames.append(self.csv(path).assign(machine=machine))
+        out = pd.concat(frames, ignore_index=True)
+        return out[out.member.str.startswith("seed")]
+
+    def host_mean(self, sweep: str) -> pd.DataFrame:
+        """One arm's host prediction per medium, mean over its folds."""
+        d = self.host_pred[self.host_pred.sweep == sweep].copy()
+        assert len(d), f"no host predictions for {sweep}"
+        # the control medium has no compounds, which the CSV holds as an empty cell
+        for column in ("compounds", "mM", "g_per_l", "wells"):
+            d[column] = d[column].fillna("").astype(str)
+        keep = [
+            "split",
+            "run",
+            "compounds",
+            "n_compounds",
+            "mM",
+            "g_per_l",
+            "observed",
+            "observed_grown",
+            "grew",
+            "trained_on",
+        ]
+        out = d.groupby("key").agg(
+            {**{k: "first" for k in keep}, "predicted": "mean", "fold": "nunique"}
+        )
+        return out.rename(columns={"fold": "folds"})
 
     def round_scores(self) -> pd.DataFrame:
         """Every round-3 and round-4 score row, on this machine and pulled from Delta.
@@ -1207,6 +1270,30 @@ def draw_cgt_vs_ridge(ax: Any, R: Reads) -> None:
         num(f"{key}Evaluations", int(len(ens)))
         num(f"{key}Median", float(ens.spearman.median()))
         num(f"{key}Compounds", int(cen.compound.nunique()))
+    # The mixture trainer's single-source arm (experiment 040), on its own basis: 28
+    # compounds with a molar dose, the held-out protocol, folds 0 to 2 of fold seed 0,
+    # the three-seed ensemble per fold; not the 96-evaluation basis of the rows above.
+    mix = R.rounds[
+        (R.rounds.arm == "mix_van_e150")
+        & (R.rounds.machine == "gilahyper")
+        & (R.rounds.fold_seed == 0)
+        & (R.rounds.task == "vanacloig")
+        & (R.rounds.subset == "test_compounds")
+        & (R.rounds.metric == "centered_spearman_median")
+    ]
+    ens = mix[(mix.member == "ensemble") & (mix.fold <= 2)]
+    if len(ens):
+        num("mixVanEnsemble", float(ens.value.median()))
+        num("mixVanEnsembleFolds", int(ens.fold.nunique()))
+        data.append(
+            (
+                "mixture trainer, one source, 3-seed ensemble (28 compounds, 3 folds)",
+                float(ens.value.median()),
+                None,
+                "cgt",
+                False,
+            )
+        )
     # The paired read, which is the panel's actual claim: the encoder against its own
     # control on the same compound and fold.
     key_cols = ["compound", "fold", "fold_seed"]
@@ -1290,6 +1377,23 @@ def draw_curve(ax: Any, R: Reads, both_targets: bool = False) -> None:
             )
         )
     else:
+        e = R.curve_enc
+        e = e[(e.target == "centered") & e.member.str.startswith("seed")].copy()
+        e["size"] = e.name.str.extract(r"_n(\d+)_")[0].astype(int)
+        enc = e.groupby("size").spearman.median()
+        ax.plot(
+            enc.index.to_numpy(),
+            enc.to_numpy(),
+            color=SRC_COLOR["cgt"],
+            linewidth=0.8,
+            linestyle=":",
+            marker="o",
+            markersize=2.0,
+            zorder=3,
+        )
+        for size, value in enc.items():
+            num(f"curveEnc{macro_name(str(size))}", float(value))
+        num("curveEncEvaluations", int(e.groupby("size").size().max()))
         handles.append(
             Line2D(
                 [],
@@ -1297,7 +1401,9 @@ def draw_curve(ax: Any, R: Reads, both_targets: bool = False) -> None:
                 color=SRC_COLOR["cgt"],
                 linewidth=0.8,
                 linestyle=":",
-                label="the encoder arm, not rerun",
+                marker="o",
+                markersize=2.0,
+                label="the environment encoder (038 round 17)",
             )
         )
     n = panel_legend(ax, handles, ncol=1)
@@ -1459,9 +1565,21 @@ def draw_profiles(ax: Any, R: Reads) -> None:
         num(f"prof{key}Ridge", float(row.spearman))
         num(f"prof{key}Reliability", float(row.measured_reliability))
         num(f"prof{key}Folds", float(row.spearman_038_folds_mean))
-    data.append(
-        ("the cell graph transformer (running)", float("nan"), None, "cgt", False)
-    )
+    for name, key in (("furfural", "Ff"), ("5-(hydroxymethyl)furfural", "Hmf")):
+        c = R.cgt_compounds
+        c = c[(c.compound == name) & (c.target == "centered")]
+        short = INHIB_NAME[LONG_TO_ABBR[name]]
+        num(f"prof{key}Cgt", float(c.spearman.mean()))
+        num(f"prof{key}CgtRuns", int(len(c)))
+        data.append(
+            (
+                f"{short}: cell graph transformer, held out ({len(c)} runs)",
+                float(c.spearman.mean()),
+                float(c.spearman.std(ddof=1)),
+                "cgt",
+                False,
+            )
+        )
     num("profMedianLoco", float(loco.spearman.median()))
     num("profLocoCompounds", int(loco.compound.nunique()))
     # The GO count is for the two compounds this panel draws, not the maximum over
@@ -1478,12 +1596,12 @@ def draw_profiles(ax: Any, R: Reads) -> None:
     ax.tick_params(axis="y", labelsize=4.4)
     ax.text(
         0.98,
-        0.06,
+        0.5,
         "GO terms shared by the measured\nand the predicted profile, "
         f"either compound: {shared}",
         transform=ax.transAxes,
         ha="right",
-        va="bottom",
+        va="center",
         fontsize=4.2,
         zorder=5,
     )
@@ -1519,6 +1637,34 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
             alpha=0.85,
             zorder=2,
         )
+    for sweep, style in ((ZERO_SHOT_ARM, ":"), (MODEL_ARM, "--")):
+        h = R.host_mean(sweep)
+        h = h[(h.run == "ex21") & (h.n_compounds == 1)]
+        for ab in INHIB:
+            name = INHIB_LONG[ab]
+            sub = h[h.compounds == name].copy()
+            if sub.empty:
+                continue
+            fit = R.fit("ex21", ab)
+            sub["x"] = sub.g_per_l.astype(float) / float(fit.ic50_g_per_l)
+            sub = sub.sort_values("x")
+            ax.plot(
+                sub.x.to_numpy(),
+                sub.predicted.to_numpy(),
+                color=SRC_COLOR["cgt"],
+                linewidth=0.5,
+                linestyle=style,
+                zorder=2,
+            )
+        singles = h[h.n_compounds == 1]
+        rho = float(
+            pd.Series(singles.predicted.to_numpy()).corr(
+                pd.Series(singles.observed.to_numpy()), method="spearman"
+            )
+        )
+        tag = "ZeroShot" if sweep == ZERO_SHOT_ARM else "Fitted"
+        num(f"ex21{tag}Spearman", rho)
+        num(f"ex21{tag}Conditions", int(len(singles)))
     num("nEx21Fits", int((R.fits.source == "ex21").sum()))
     num("nBootstrapDraws", int(R.boot.draw.max()) + 1)
     num("hillMax", float(R.fits[R.fits.source == "ex21"].h.max()))
@@ -1545,7 +1691,15 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
                 color=SRC_COLOR["cgt"],
                 linewidth=0.5,
                 linestyle=":",
-                label="the model's predicted curve, not run",
+                label="model, anchors only (never saw a single)",
+            ),
+            Line2D(
+                [],
+                [],
+                color=SRC_COLOR["cgt"],
+                linewidth=0.5,
+                linestyle="--",
+                label="model trained on these singles (a fit)",
             ),
         ],
         ncol=1,
@@ -1555,19 +1709,43 @@ def draw_single_agents(ax: Any, R: Reads) -> None:
 
 def draw_combinations(ax: Any, R: Reads) -> None:
     """Panel k: the combinations observed against Bliss and Loewe, by size."""
-    comb = R.mix_comb[(R.mix_comb.call == "served") & (R.mix_comb.grew)]
+    comb = R.mix_comb[(R.mix_comb.call == "served") & (R.mix_comb.grew)].copy()
+    # the model's prediction per combination, joined on the set of compounds
+    h = R.host_mean(MODEL_ARM)
+    h = h[h.run == "ex23"]
+    by_set = {
+        frozenset(c.split("|")): float(v) for c, v in zip(h.compounds, h.predicted)
+    }
+    comb["model"] = [
+        by_set.get(frozenset(c.split("|")), float("nan")) for c in comb.combination
+    ]
     sizes = sorted(comb.n_compounds.unique())
-    width = 0.26
+    width = 0.2
     x = np.arange(len(sizes))
     series = [
         ("observed_grown_mean", "measured"),
         ("bliss_ex23", "bliss"),
         ("loewe_ex21", "loewe"),
+        ("model", "cgt"),
     ]
+    all_ex23 = h[h.n_compounds >= 1]
+    num(
+        "modelAuroc",
+        float(roc_auc_score(all_ex23.grew.astype(bool), all_ex23.predicted)),
+    )
+    num(
+        "modelGrownSpearman",
+        float(
+            pd.Series(comb.model.to_numpy()).corr(
+                pd.Series(comb.observed_grown_mean.to_numpy()), method="spearman"
+            )
+        ),
+    )
+    num("modelFolds", int(h.folds.iloc[0]))
     for j, (col, src) in enumerate(series):
         means = [float(comb[comb.n_compounds == s][col].mean()) for s in sizes]
         ax.bar(
-            x + (j - 1) * width,
+            x + (j - 1.5) * width,
             means,
             width=width,
             color=SRC_COLOR[src],
@@ -1592,20 +1770,22 @@ def draw_combinations(ax: Any, R: Reads) -> None:
     ax.set_xticklabels([str(int(s)) for s in sizes])
     ax.set_xlabel("inhibitors in the combination")
     ax.set_ylabel("fitness over the combinations that grew")
-    ax.set_ylim(0, 1.0)
+    ax.set_ylim(0, 1.18)
     vgrid(ax, 0.2)
     ax.text(
         0.98,
         0.95,
-        f"growth AUROC: Loewe {loewe.auroc:.3f}, Bliss {bliss.auroc:.3f}\n"
-        f"fitness Spearman: Bliss {bliss.spearman:.3f}, Loewe {loewe.spearman:.3f}",
+        f"growth AUROC: Loewe {loewe.auroc:.3f}, Bliss {bliss.auroc:.3f}, "
+        f"model {NUM['modelAuroc']:.3f}\n"
+        f"fitness Spearman: Bliss {bliss.spearman:.3f}, Loewe {loewe.spearman:.3f}, "
+        f"model {NUM['modelGrownSpearman']:.3f}",
         transform=ax.transAxes,
         ha="right",
         va="top",
         fontsize=4.2,
         zorder=5,
     )
-    title(ax, "the combinations that grew, against the two rules")
+    title(ax, "grown combinations: the two rules and the model")
 
 
 def draw_isoboles(ax: Any, R: Reads) -> None:
@@ -1658,6 +1838,42 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
             ys = [doses_y.index(v) + 0.5 for v in edge.index.to_numpy()]
             ax.plot(xs, ys, color=SRC_COLOR["loewe"], linewidth=0.8, zorder=5)
         srow = R.isobole_sum[R.isobole_sum.run == run].iloc[0]
+        # The model's front: its predicted fitness per cell against the same growth
+        # threshold, then the monotone closure (growth never returns as either dose
+        # rises), so the front is read on the rules' own axis; the cells the closure
+        # drops are the predicted surface's growth islands.
+        tau = float(srow.tau)
+        hp = R.host_mean(MODEL_ARM)
+        hp = hp[hp.run == run]
+        grid = np.full((len(doses_y), len(doses_x)), np.nan)
+        inhibitor = [p for p in srow["pair"].split("|") if p != "acetic acid"][0]
+        for _, r in hp.iterrows():
+            names = [n for n in r.compounds.split("|") if n]
+            gl = [float(v) for v in r.g_per_l.split("|") if v]
+            dose = dict(zip(names, gl, strict=True))
+            xi, yi = dose.get(inhibitor, 0.0), dose.get("acetic acid", 0.0)
+            if xi in doses_x and yi in doses_y:
+                grid[doses_y.index(yi), doses_x.index(xi)] = r.predicted
+        alive = np.where(np.isnan(grid), False, grid >= tau)
+        closed = monotone_alive(alive)
+        num(
+            f"isobole{macro_name(run.capitalize())}ModelIslands",
+            int(alive.sum() - closed.sum()),
+        )
+        num(
+            f"isobole{macro_name(run.capitalize())}ModelCells",
+            int(np.isfinite(grid).sum()),
+        )
+        mx = [
+            x0 + int(np.max(np.where(closed[j])[0])) + 1.0
+            for j in range(len(doses_y))
+            if closed[j].any()
+        ]
+        my = [j + 0.5 for j in range(len(doses_y)) if closed[j].any()]
+        if mx:
+            ax.plot(
+                mx, my, color=SRC_COLOR["cgt"], linewidth=0.8, linestyle=":", zorder=5
+            )
         parts = [LONG_TO_ABBR.get(p, p) for p in srow["pair"].split("|")]
         label = " x ".join(INHIB_NAME.get(p, p) for p in reversed(parts))
         flag = "\n(flagged)" if isinstance(srow["flag"], str) and srow["flag"] else ""
@@ -1693,11 +1909,15 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
         ax,
         [
             Line2D(
+                [], [], color=SRC_COLOR["loewe"], linewidth=0.8, label="Loewe front"
+            ),
+            Line2D(
                 [],
                 [],
-                color=SRC_COLOR["loewe"],
+                color=SRC_COLOR["cgt"],
                 linewidth=0.8,
-                label="the Loewe additivity front",
+                linestyle=":",
+                label="model front (monotone closure)",
             ),
             Line2D(
                 [],
@@ -1706,7 +1926,7 @@ def draw_isoboles(ax: Any, R: Reads) -> None:
                 marker="o",
                 markersize=1.6,
                 linestyle="none",
-                label="a cell that grew on some plate",
+                label="a cell that grew",
             ),
         ],
         ncol=2,
@@ -1751,13 +1971,13 @@ def fig_main(R: Reads) -> dict[str, str]:
             "todo",
             "ready",
             "ready",
-            "partial",
             "ready",
             "ready",
-            "partial",
-            "partial",
-            "partial",
-            "partial",
+            "ready",
+            "ready",
+            "ready",
+            "ready",
+            "ready",
         ],
     )
     status_key(fig)
@@ -2933,6 +3153,21 @@ def main() -> None:
     }
     boundary_numbers(R)
     figures["si4"] = fig_si4(R)
+    figures["si5"] = newest_svg("r3_convergence")
+    figures["si6"] = newest_svg("r3_arms_overview")
+    conv = R.convergence.set_index(["arm", "source"])
+    for arm, source, tag in (
+        ("mix_van_e150", "vanacloig", "Van"),
+        ("mix_vanhop_e150", "hoepfner_hop", "Hop"),
+        ("mix_vanhophet_e150", "hillenmeyer_het", "Het"),
+        ("mix_vanwil_e150", "wildenhain", "Wil"),
+    ):
+        row = conv.loc[(arm, source)]
+        num(f"conv{tag}TrainEarly", float(row.train_early))
+        num(f"conv{tag}TrainEnd", float(row.train_end))
+        num(f"conv{tag}Removed", float(row.heldout_removed_from_first))
+        num(f"conv{tag}MinEpoch", float(row.heldout_min_epoch))
+        num(f"conv{tag}Rise", float(row.heldout_rise_after_min))
     figures["boundary"] = newest_svg("mixture_rules_isoboles")
     figures["rulechoice"] = newest_svg("rule_choice")
     internal = {k: v for k, v in R.paths.items() if not k.startswith("/")}

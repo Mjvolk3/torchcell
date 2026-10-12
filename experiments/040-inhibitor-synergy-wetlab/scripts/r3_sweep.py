@@ -449,6 +449,20 @@ def round5b_arms() -> list[dict[str, object]]:
     return out
 
 
+def round6_arms() -> list[dict[str, object]]:
+    """Round 6, GilaHyper: the graph regularization the model config carries but no
+    round has switched on. ``cgt_lambda`` scales the KL between the nine regularized
+    heads' attention on layer 1 and the nine graph priors (``cgt_model.yaml``); it has
+    been 0.0 in every arm of this experiment, so the priors have shaped only the layer-0
+    attention bias. The single-source arm at three seeds, with the penalty at 0.1 and
+    at 1.0 (the 010 value).
+    """
+    return [
+        arm("van_e150_cgt0p1", "van", 150, seeds=[0, 1, 2], cgt_lambda=0.1),
+        arm("van_e150_cgt1", "van", 150, seeds=[0, 1, 2], cgt_lambda=1.0),
+    ]
+
+
 def configs(spec: dict[str, object], folds: list[int]) -> list[dict[str, object]]:
     """One config per fold of ``spec``."""
     out = []
@@ -511,7 +525,7 @@ def main() -> None:
         "--wave",
         type=int,
         default=1,
-        choices=(1, 2, 3, 4, 5),
+        choices=(1, 2, 3, 4, 5, 6),
         help=(
             "1 writes the r3_* screen, 2 the r3w2_* second wave, 3 the r4_* seed"
             " ensemble, 4 the r5_* Delta round, 5 the r5b_* convergence follow-up"
@@ -520,8 +534,15 @@ def main() -> None:
     args = parser.parse_args()
     os.makedirs(args.out_dir, exist_ok=True)
     os.makedirs(RESULTS, exist_ok=True)
-    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b"}[args.wave]
-    waves = {1: arms, 2: wave2_arms, 3: round4_arms, 4: round5_arms, 5: round5b_arms}
+    prefix = {1: "r3", 2: "r3w2", 3: "r4", 4: "r5", 5: "r5b", 6: "r6"}[args.wave]
+    waves = {
+        1: arms,
+        2: wave2_arms,
+        3: round4_arms,
+        4: round5_arms,
+        5: round5b_arms,
+        6: round6_arms,
+    }
     specs = waves[args.wave]()
     label = {
         1: "ROUND 3 WAVE 1",
@@ -529,6 +550,7 @@ def main() -> None:
         3: "ROUND 4",
         4: "ROUND 5",
         5: "ROUND 5B",
+        6: "ROUND 6",
     }[args.wave]
 
     rows, lines = [], []

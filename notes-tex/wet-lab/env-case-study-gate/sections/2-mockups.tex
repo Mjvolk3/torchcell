@@ -59,7 +59,7 @@ block is marked idea even though its counts are on file. \\
 \end{tabular}}
 
 \clearpage
-\tcfigfit[0.80]{\figMain}{\textbf{The sheet proposed for the main text, the
+\tcfigfit[0.66]{\figMain}{\textbf{The sheet proposed for the main text, the
 four-by-three of the experiment note.}
 \textbf{a}, The task as one strip; a draw.io composition replaces it.
 \status{todo}\,\fstat{idea}
@@ -78,11 +78,16 @@ complete: over \hydbilinearEvaluations{} compound-evaluations, \hydenvencCompoun
 compounds on each of three fold seeds, the three-seed ensemble of the bilinear control
 reads \hydbilinearMedian{} and of the environment encoder \hydenvencMedian{}, both below
 nested ridge at \hydladderRidge{}. Paired on compound and fold, the encoder minus its
-control is \hydpairedMedian{} with \hydpairedUp{} of \hydpairedEvaluations{} up.
+control is \hydpairedMedian{} with \hydpairedUp{} of \hydpairedEvaluations{} up. The
+last bar is the mixture trainer's single-source arm on its own basis (28 compounds with
+a molar dose, folds 0 to 2, the three-seed ensemble): \hydmixVanEnsemble{}.
 \status{todo}\,\fstat{file}
-\textbf{f}, The learning curve in fitted compounds, \hydcurveEight{} at eight to
-\hydcurvePool{} on the pool, about \hydcurvePerDoubling{} per doubling.
-\status{todo}\,\fstat{partial} Partial: the encoder arm is not rerun.
+\textbf{f}, The learning curve in fitted compounds. Ridge: \hydcurveEight{} at eight to
+\hydcurvePool{} on the pool, about \hydcurvePerDoubling{} per doubling. The environment
+encoder (038 round 17, \hydcurveEncEvaluations{} compound-evaluations per point):
+\hydcurveEncEight{}, \hydcurveEncOneSix{} and \hydcurveEncTwoFour{} at eight, sixteen
+and twenty-four, below ridge at every count and closing on it.
+\status{todo}\,\fstat{file}
 \textbf{g}, Dose, the host's potency against the screen's: furfural
 \hydicThirtyFf{} millimolar against \hydvanacloigFf{}, ratio \hydratioFf{}; 5-HMF
 \hydicThirtyHmf{} against \hydvanacloigHmf{}, ratio \hydratioHmf{}; the other four are in
@@ -94,20 +99,32 @@ pairs: the mean is best in \hydhetMeanWins{}, median R-squared \hydhetrTwomean{}
 \textbf{i}, The predicted profile against the measured one. Furfural: the screen repeats
 itself at \hydprofFfReliability{}, ridge reads \hydprofFfRidge{}; 5-HMF:
 \hydprofHmfReliability{}, which is noise, against \hydprofHmfRidge{}. The two profiles
-share \hydgoSharedTermsStore{} significant terms. \status{todo}\,\fstat{partial} Partial:
-the transformer's profiles are running.
+share \hydgoSharedTermsStore{} significant terms. The cell graph transformer, every
+round-3 and round-4 run on both machines in which the compound was held out: furfural
+\hydprofFfCgt{} over \hydprofFfCgtRuns{} runs, 5-HMF \hydprofHmfCgt{} over
+\hydprofHmfCgtRuns{}, with the run spread as the whisker. \status{todo}\,\fstat{file}
 \textbf{j}, The six titrations with their Hill fits, dose in units of each compound's own
-half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}.
-\status{todo}\,\fstat{partial} Partial: no predicted curves.
+half-maximal dose; slopes run \hydhillMin{} to \hydhillMax{}. Dotted, the model whose
+host head trained on the public anchors alone: a flat line at the anchors' assumed
+fitness for every inhibitor at every dose, Spearman \hydexTwoOneZeroShotSpearman{}
+against the \hydexTwoOneZeroShotConditions{} observed single-agent conditions. Dashed,
+the model trained on these wells: a fit, Spearman \hydexTwoOneFittedSpearman{}, and
+still nearly flat in dose. \status{todo}\,\fstat{file}
 \textbf{k}, The combinations that grew, observed against the two rules, by number of
 inhibitors. Growth AUROC: Loewe \hydloeweAuroc{}, Bliss \hydblissAuroc{}. Fitness
-Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}.
-\status{todo}\,\fstat{partial} Partial: no model arm.
+Spearman: Bliss \hydblissSpearman{}, Loewe \hydloeweSpearman{}. The fourth bar is the
+model (single source, trained on the anchors and the titration, mean over
+\hydmodelFolds{} folds): the same predicted fitness at one, two and three inhibitors,
+growth AUROC \hydmodelAuroc{}, fitness Spearman \hydmodelGrownSpearman{}. The host
+head does not compose. \status{todo}\,\fstat{file}
 \textbf{l}, The \hydnIsoboles{} isobole grids as observed minus Bliss, the Loewe front
 drawn and the cells that grew marked. Mean excess: \hydisoboleExTwoSixExcess{},
 \hydisoboleExTwoSevenExcess{} and \hydisoboleExTwoEightExcess{}, the last a single run
-with growth islands and flagged. \status{todo}\,\fstat{partial} Partial: no model
-front.}{fig:main}
+with growth islands and flagged. Dotted, the model's front after the monotone closure:
+it sits at the grid's edge on every run, because a head that predicts the same fitness
+at every dose calls every cell alive; the closure drops
+\hydisoboleExTwoSixModelIslands{} cells on the furfural grid and none on the other two.
+\status{todo}\,\fstat{file}}{fig:main}
 
 %% The float is flushed before its source table is set: a deferred float
 %% otherwise lands on the page AFTER the table that describes it.
@@ -126,23 +143,26 @@ layout. Status: idea. \\
 d & \file{038/ladder/ladder_r2_summary.csv}, centered target, full compound count.
 Status: on file. \\
 e & \file{038/ladder/ladder_r2_summary.csv}; \file{038/factorized/r9_control/*_scores.csv};
-\file{038/factorized/r10_envenc/*_scores.csv}. Two folds per arm were on disk when the
-sheet was drawn; the round was still running. Status: partial. \\
-f & \file{035/learning_curve/ridge_curve.csv}, centered target. The encoder arm of the
-curve has no file. Status: partial. \\
+\file{038/factorized/r10_envenc/*_scores.csv}; \file{results/mixture/r3_van_e150/*_scores.csv}
+for the mixture-trainer bar. Status: on file. \\
+f & \file{035/learning_curve/ridge_curve.csv}, centered target;
+\file{038/factorized/r17_curve/*_scores.csv} for the encoder. Status: on file. \\
 g & \file{single_agent_fits.csv} (the host, with bootstrap intervals from
 \file{single_agent_bootstrap.csv}); \file{vanacloig_ic30.csv} (the screen). Status: on
 file. \\
 h & \file{het_rule_fit.csv}, \file{het_summary.json}. Status: on file. \\
 i & \file{profile_predicted_vs_measured.csv} (\texttt{loco\_32}, centered);
-\file{go_overlap_measured_vs_predicted.csv}. The transformer column has no file.
-Status: partial. \\
+\file{go_overlap_measured_vs_predicted.csv}; every
+\file{results/mixture*/r[34]*/*_vanacloig_compounds.csv} on both machines for the
+transformer. Status: on file. \\
 j & \file{wetlab_wells.csv}, \file{single_agent_fits.csv},
-\file{single_agent_bootstrap.csv}. No model curve exists. Status: partial. \\
-k & \file{mixture_combinations.csv}, \file{mixture_scores.csv}, served call. No model
-arm exists. Status: partial. \\
-l & \file{isobole_cells.csv}, \file{isobole_summary.csv}. No model front exists.
-Status: partial. \\
+\file{single_agent_bootstrap.csv}; \file{results/host_predictions.csv}
+(\file{scripts/r3_host_predictions.py}) for the two model curves. Status: on file. \\
+k & \file{mixture_combinations.csv}, \file{mixture_scores.csv}, served call;
+\file{results/host_predictions.csv} for the model bar. Status: on file. \\
+l & \file{isobole_cells.csv}, \file{isobole_summary.csv};
+\file{results/host_predictions.csv} and \file{mixture_rules.monotone_alive} for the
+model front. Status: on file. \\
 \bottomrule
 \end{tabular}}
 
@@ -325,5 +345,61 @@ e & the same files, every config and fold scored on both machines at seed 0. Sta
 file. \\
 f & the same files, the \file{_fs1} and \file{_fs2} arms. Status: partial, the
 three-source arm on fold seeds 1 and 2 is running. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiFive}{\textbf{Supplement five: is the trainer converged, per
+source.} Mean curves over every round-3 and round-4 run on both machines of the
+one-, two- and three-source arms and two three-source variants; the learning rate is zero
+at epoch 150 on every arm. \textbf{a}, The training loss per source, one step per
+evaluation, smoothed. The target's falls \hydconvVanTrainEarly{} to
+\hydconvVanTrainEnd{}; Hoepfner's \hydconvHopTrainEarly{} to \hydconvHopTrainEnd{};
+Hillenmeyer's RISES, \hydconvHetTrainEarly{} to \hydconvHetTrainEnd{}.
+\status{todo}\,\fstat{file}
+\textbf{b}, The held-out loss per source. The target's removes \hydconvVanRemoved{} of its
+first value, bottoms near epoch \hydconvVanMinEpoch{} and rises \hydconvVanRise{} by the
+end; Hoepfner's removes \hydconvHopRemoved{}; Hillenmeyer's \hydconvHetRemoved{};
+Wildenhain's \hydconvWilRemoved{}, bottoming near epoch \hydconvWilMinEpoch{} and still
+falling at 150. \status{todo}\,\fstat{file}
+\textbf{c}, The held-out and validation centered Spearman by epoch: the held-out score
+plateaus near epoch 60 to 75 while the held-out loss has already turned, so the ranking
+holds as the scale drifts. \status{todo}\,\fstat{file}}{fig:sifive}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sifive}}} \\
+\midrule
+a to c & every \file{results/mixture/r3*/*_history.csv} and \file{r4*} on GilaHyper and
+\file{results/mixture-delta/r3*/*_history.csv} from Delta, read by
+\file{scripts/r3_convergence.py} into \file{results/r3_convergence_runs.csv} and
+\file{r3_convergence_arms.csv}. Status: on file. \\
+\bottomrule
+\end{tabular}}
+
+\clearpage
+\tcfigfit[0.98]{\figSiSix}{\textbf{Supplement six: every scored arm of rounds one to
+four, both machines.} One row per arm, every run a point (one seed on one fold on one
+machine) and the arm's mean a bar, sorted by the public score; rounds one and two
+(pool-and-last, 50 epochs) sit on the same axis as rounds three and four (the held-out
+protocol, 150 epochs). \textbf{a}, The compound-cold centered Spearman on Vanacloig
+against nested ridge at \hydladderRidge{}. \textbf{b}, The growth call over the 63
+combinations against Loewe at \hydloeweAuroc{}. The spread of the points within an arm
+against the range of the arm means is the noise floor: no arm clears ridge and none
+approaches Loewe. \status{todo}\,\fstat{file}}{fig:sisix}
+
+\clearpage
+
+{\footnotesize\noindent
+\begin{tabular}{@{}p{8mm}p{168mm}@{}}
+\toprule
+\multicolumn{2}{@{}l}{\textbf{Sources for \cref{fig:sisix}}} \\
+\midrule
+a, b & every \file{*_scores.csv} under \file{results/mixture/} and
+\file{results/mixture-delta/}, drawn by \file{scripts/r3_plots.py}; the reference values
+from \file{results/figure_gate_numbers.json}. Status: on file. \\
 \bottomrule
 \end{tabular}}

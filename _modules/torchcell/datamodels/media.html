@@ -3488,6 +3488,113 @@
 <span class="sd">"""Schmidt 2016's M9 base for the proteome map's minimal-medium conditions (row 32)."""</span>
 
 
+<span class="c1"># --- begin #1045 row 17: Schmidt 2016's glycerol + amino acid medium ------------ #</span>
+<span class="c1"># The 'Glycerol + AA' condition of the proteome map: M9_SCHMIDT2016 plus twenty amino</span>
+<span class="c1"># acids, adenine and uracil, each at the mg/L the Methods state (the parenthesized mM</span>
+<span class="c1"># corroborate it; the OCR garbles a few, so the mg/L is the stored value). The glycerol</span>
+<span class="c1"># (2.2 g/L) is the condition's carbon factor, exactly as in the plain 'Glycerol' arm, so</span>
+<span class="c1"># the two arms differ by the supplement alone. The source names the amino acids without a</span>
+<span class="c1"># stereodescriptor; they are recorded as the proteinogenic L-amino acids, the reading the</span>
+<span class="c1"># identity table already gives 'arginine', 'leucine', 'methionine', 'phenylalanine',</span>
+<span class="c1"># 'threonine', 'tyrosine' and 'glutamate'. mg/L is stored as ug/mL (1 mg/L = 1 ug/mL).</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_Q_SCHMIDT16_GLYCEROL_AA</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"The glycerol $^ +$ amino acid medium was made by supplementing the media with "</span>
+    <span class="s2">"glycerol to a concentration of $2 . 2 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { g / L }$ individual amino acids: "</span>
+    <span class="s2">"alanine, asparagine, cysteine, glutamate, glycine, proline and serine to final "</span>
+    <span class="s2">"concentrations of alanine $1 . 0 </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ ${ 0 . 0 } </span><span class="se">\\</span><span class="s2">mathrm { m M } )$ "</span>
+    <span class="s2">", adenine $1 0 . 2 </span><span class="se">\\</span><span class="s2">mathrm { m g / L ( 0 . 1 m M ) }$ , arginine $5 1 . 1 </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ m g / L } </span><span class="se">\\</span><span class="s2">left( 0 . 3 </span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2">right)$ , asparagine $</span><span class="se">\\</span><span class="s2">mathrm { 1 . 6 m "</span>
+    <span class="s2">"g / L ( 0 . 0 1 m M ) }$ , aspartic acid $8 1 . 8 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $</span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ { 0 . 6 ~ m M } }$ , cysteine $1 . 2 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $( 0 . 0 1 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ m M } )$ , glutamate $1 5 . 2 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $0 . 1 </span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2"> m M }$ , "</span>
+    <span class="s2">"glutamine $1 3 . 9 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $</span><span class="se">\\</span><span class="s2">mathrm { { ( 0 . 1 ~ m M } }$ , glycine "</span>
+    <span class="s2">"$0 . 4 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $</span><span class="se">\\</span><span class="s2">mathrm { { ( 0 . 0 1 m M ) } }$ , histidine $2 0 . "</span>
+    <span class="s2">"5 </span><span class="se">\\</span><span class="s2">mathrm { m g / L ( 0 . 1 m M ) }$ , isoleucine $5 1 . 1 </span><span class="se">\\</span><span class="s2">mathrm { m g / L } "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">left( 0 . 4 </span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2">right)$ leucine $1 0 2 . 3 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $( "</span>
+    <span class="s2">"0 . 8 </span><span class="se">\\</span><span class="s2"> </span><span class="se">\\</span><span class="s2">mathrm { m M } )$ , lysine $5 1 . 1 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $</span><span class="se">\\</span><span class="s2">mathrm { 0 . "</span>
+    <span class="s2">"4 ~ m M }$ , methionine $2 0 . 5 ~ </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $( 0 . 1 4 </span><span class="se">\\</span><span class="s2">mathrm { m M } "</span>
+    <span class="s2">")$ , phenylalanine $5 1 . 1 </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $0 . 3 </span><span class="se">\\</span><span class="s2">mathrm { m M }$ , proline "</span>
+    <span class="s2">"$5 . 2 </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $( 0 . 0 5 </span><span class="se">\\</span><span class="s2">mathrm { m M } )$ , serine $9 . 2 ~ "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $( 0 . 1 </span><span class="se">\\</span><span class="s2">mathrm { </span><span class="se">\\</span><span class="s2"> m M }$ , threonine $1 0 2 . 3 ~ </span><span class="se">\\</span><span class="s2">mathrm "</span>
+    <span class="s2">"{ m g / L }$ $</span><span class="se">\\</span><span class="s2">langle 0 . 9 </span><span class="se">\\</span><span class="s2">mathrm { ~ m M } </span><span class="se">\\</span><span class="s2">rangle$ , tryptophan $5 1 . 1 "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ (0.3 mM), tyrosine $5 1 . 1 </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ $</span><span class="se">\\</span><span class="s2">left( 0 . "</span>
+    <span class="s2">"3 </span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2">right)$ , valine $1 4 3 . 2 </span><span class="se">\\</span><span class="s2">mathrm { m g / L } </span><span class="se">\\</span><span class="s2">left( 1 . 2 "</span>
+    <span class="s2">"</span><span class="se">\\</span><span class="s2">mathrm { m M } </span><span class="se">\\</span><span class="s2">right)$ and uracil $2 0 . 5 </span><span class="se">\\</span><span class="s2">mathrm { m g / L }$ (0.2 mM)."</span>
+<span class="p">)</span>
+<span class="n">_MG_PER_L_NOTE</span> <span class="o">=</span> <span class="s2">"the source states mg/L, stored as ug/mL (1 mg/L = 1 ug/mL)"</span>
+<span class="n">_SOURCE_NAME_NOTE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"the source writes '</span><span class="si">{label}</span><span class="s2">' without a stereodescriptor; recorded as the "</span>
+    <span class="s2">"proteinogenic L form"</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_schmidt_aa</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">label</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">mg_per_l</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span> <span class="o">=</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One Glycerol + AA supplement at its stated mg/L."""</span>
+    <span class="n">stereo</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"L-"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_stated</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">role</span><span class="p">,</span>
+        <span class="n">mg_per_l</span><span class="p">,</span>
+        <span class="n">_UGML</span><span class="p">,</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_SCHMIDT2016</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">label</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">mg_per_l</span><span class="si">}</span><span class="s2"> mg/L"</span><span class="p">,</span> <span class="n">_Q_SCHMIDT16_GLYCEROL_AA</span><span class="p">),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">_MG_PER_L_NOTE</span>
+        <span class="o">+</span> <span class="p">(</span><span class="s2">"; "</span> <span class="o">+</span> <span class="n">_SOURCE_NAME_NOTE</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="n">stereo</span> <span class="k">else</span> <span class="s2">""</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="n">M9_AA_SCHMIDT2016</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"M9 minimal medium with twenty amino acids, adenine and uracil, no carbon "</span>
+    <span class="s2">"source (Schmidt 2016 'Glycerol + AA')"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"M9"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="o">*</span><span class="n">M9_SCHMIDT2016</span><span class="o">.</span><span class="n">components</span><span class="p">,</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-alanine"</span><span class="p">,</span> <span class="s2">"alanine"</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"adenine"</span><span class="p">,</span> <span class="s2">"adenine"</span><span class="p">,</span> <span class="mf">10.2</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-arginine"</span><span class="p">,</span> <span class="s2">"arginine"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-asparagine"</span><span class="p">,</span> <span class="s2">"asparagine"</span><span class="p">,</span> <span class="mf">1.6</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-aspartic acid"</span><span class="p">,</span> <span class="s2">"aspartic acid"</span><span class="p">,</span> <span class="mf">81.8</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-cysteine"</span><span class="p">,</span> <span class="s2">"cysteine"</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-glutamic acid"</span><span class="p">,</span> <span class="s2">"glutamate"</span><span class="p">,</span> <span class="mf">15.2</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-glutamine"</span><span class="p">,</span> <span class="s2">"glutamine"</span><span class="p">,</span> <span class="mf">13.9</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"glycine"</span><span class="p">,</span> <span class="s2">"glycine"</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-histidine"</span><span class="p">,</span> <span class="s2">"histidine"</span><span class="p">,</span> <span class="mf">20.5</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-isoleucine"</span><span class="p">,</span> <span class="s2">"isoleucine"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-leucine"</span><span class="p">,</span> <span class="s2">"leucine"</span><span class="p">,</span> <span class="mf">102.3</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-lysine"</span><span class="p">,</span> <span class="s2">"lysine"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-methionine"</span><span class="p">,</span> <span class="s2">"methionine"</span><span class="p">,</span> <span class="mf">20.5</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-phenylalanine"</span><span class="p">,</span> <span class="s2">"phenylalanine"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-proline"</span><span class="p">,</span> <span class="s2">"proline"</span><span class="p">,</span> <span class="mf">5.2</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-serine"</span><span class="p">,</span> <span class="s2">"serine"</span><span class="p">,</span> <span class="mf">9.2</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-threonine"</span><span class="p">,</span> <span class="s2">"threonine"</span><span class="p">,</span> <span class="mf">102.3</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-tryptophan"</span><span class="p">,</span> <span class="s2">"tryptophan"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-tyrosine"</span><span class="p">,</span> <span class="s2">"tyrosine"</span><span class="p">,</span> <span class="mf">51.1</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"L-valine"</span><span class="p">,</span> <span class="s2">"valine"</span><span class="p">,</span> <span class="mf">143.2</span><span class="p">),</span>
+        <span class="n">_schmidt_aa</span><span class="p">(</span><span class="s2">"uracil"</span><span class="p">,</span> <span class="s2">"uracil"</span><span class="p">,</span> <span class="mf">20.5</span><span class="p">,</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span><span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">dropouts</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">M9_SCHMIDT2016</span><span class="o">.</span><span class="n">dropouts</span><span class="p">),</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_SCHMIDT2016</span><span class="p">,</span>
+            <span class="s2">"glycerol + amino acid medium"</span><span class="p">,</span>
+            <span class="n">_Q_SCHMIDT16_GLYCEROL_AA</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"M9_SCHMIDT2016 (the same carbon-free M9 every minimal condition uses) "</span>
+            <span class="s2">"plus 22 supplements; the 2.2 g/L glycerol the same sentence states is the "</span>
+            <span class="s2">"condition's carbon factor, as in the Glycerol arm"</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Schmidt 2016's 'Glycerol + AA' medium, carbon-free like its base (row 32)."""</span>
+<span class="c1"># --- end #1045 row 17 ------------------------------------------------------------ #</span>
+
+
 <span class="c1"># --------------------------------------------------------------------------- #</span>
 <span class="c1"># The P. putida "M9" of the JBEI / NREL isoprenol campaigns: ammonium sulfate as the</span>
 <span class="c1"># nitrogen salt and a commercial trace-metal solution. Menasalvas 2025 names it ("NREL M9"</span>
@@ -4728,6 +4835,260 @@
 <span class="sd">20 RCH2 samples, ten of them Rand 2017's own assays (row 8)."""</span>
 
 
+<span class="c1"># --- begin #1045 row 16: Price 2018's MOPS rich defined medium ------------------ #</span>
+<span class="c1"># MOPS rich defined medium, no carbon (Price 2018 Supplementary Table 18, rows 302-350 of</span>
+<span class="c1"># 'TableS18_Medias'). Wetmore 2015 (4 Keio samples, set1IT067 to set1IT070) and Price 2018</span>
+<span class="c1"># (the same 4 samples, re-released) both name 'MOPS Rich Defined media_noCarbon'; the</span>
+<span class="c1"># loaders refused them under `medium_not_in_media_library` until this entry (#1045 row</span>
+<span class="c1"># 16). The fifteen MOPS base rows are, value for value, the rows of the same table's 'MOPS</span>
+<span class="c1"># minimal media_noCarbon' (MOPS_MINIMAL), so the base is MOPS_MINIMAL and the 0.276 mM</span>
+<span class="c1"># sulfate row takes MOPS_MINIMAL's adjudication (Price names an alum, Wetmore's own row</span>
+<span class="c1"># for this medium names potassium sulfate). Everything else is Price's row as printed:</span>
+<span class="c1"># 1.5 mM potassium hydroxide, four nucleobases, twenty amino acids and five vitamins and</span>
+<span class="c1"># benzoates, each a single reagent at a stated amount. Wetmore's Data Set S1 row for the</span>
+<span class="c1"># same label agrees on every macro row and prints its six micronutrients in mM at 40,000</span>
+<span class="c1"># to 3,000,000, which no medium contains, so its amounts are not used.</span>
+<span class="c1"># --------------------------------------------------------------------------- #</span>
+<span class="n">_Q_PRICE_MOPS_RICH_BASE</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Media | MOPS Rich Defined media_noCarbon / Description | MOPS rich media with no "</span>
+    <span class="s2">"carbon source / Minimal | =TRUE() / Controlled vocabulary | Concentration | Units "</span>
+    <span class="s2">"/ 3-(N-morpholino)propanesulfonic acid | 40 | mM / Tricine | 4 | mM / Iron (II) "</span>
+    <span class="s2">"sulfate heptahydrate | 0.01 | mM / Ammonium chloride | 9.5 | mM / Aluminum "</span>
+    <span class="s2">"potassium sulfate dodecahydrate | 0.276 | mM / Calcium chloride | 0.0005 | mM / "</span>
+    <span class="s2">"Magnesium chloride hexahydrate | 0.525 | mM / Sodium Chloride | 50 | mM / Ammonium "</span>
+    <span class="s2">"heptamolybdate tetrahydrate | 3e-09 | M / Boric Acid | 4e-07 | M / Cobalt chloride "</span>
+    <span class="s2">"hexahydrate | 3e-08 | M / Copper (II) sulfate pentahydrate | 1e-08 | M / Manganese "</span>
+    <span class="s2">"(II) chloride tetrahydrate | 8e-08 | M / Zinc sulfate heptahydrate | 1e-08 | M / "</span>
+    <span class="s2">"Potassium phosphate dibasic | 1.32 | mM / Potassium hydroxide | 1.5 | mM"</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_MOPS_RICH_NUCLEOBASES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Adenine hydrochloride hydrate | 0.2 | mM / Cytosine | 0.2 | mM / Uracil | 0.2 | "</span>
+    <span class="s2">"mM / Guanine | 0.2 | mM"</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_MOPS_RICH_AMINO_ACIDS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"L-Alanine | 0.8 | mM / L-Arginine | 5.2 | mM / L-Asparagine | 0.4 | mM / "</span>
+    <span class="s2">"L-Aspartic acid potassium salt | 0.4 | mM / L-Glutamic acid monopotassium salt "</span>
+    <span class="s2">"monohydrate | 0.66 | mM / L-Glutamine | 0.6 | mM / Glycine | 0.8 | mM / "</span>
+    <span class="s2">"L-Histidine | 0.2 | mM / L-Isoleucine | 0.4 | mM / L-Proline | 0.4 | mM / "</span>
+    <span class="s2">"L-Serine | 10 | mM / L-Threonine | 0.4 | mM / L-Tryptophan | 0.1 | mM / L-Valine "</span>
+    <span class="s2">"| 0.6 | mM / L-Leucine | 0.8 | mM / L-Lysine | 0.4 | mM / L-Methionine | 0.2 | mM "</span>
+    <span class="s2">"/ L-Phenylalanine | 0.4 | mM / L-Cysteine hydrochloride monohydrate | 0.1 | mM / "</span>
+    <span class="s2">"L-tyrosine | 0.2 | mM"</span>
+<span class="p">)</span>
+<span class="n">_Q_PRICE_MOPS_RICH_VITAMINS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Thiamine HCl | 0.01 | mM / calcium pantothenate | 0.01 | mM / 4-Aminobenzoic acid "</span>
+    <span class="s2">"| 0.01 | mM / 4-Hydroxybenzoic Acid | 0.01 | mM / 2,3-dihydroxybenzoic acid | 0.01 "</span>
+    <span class="s2">"| mM"</span>
+<span class="p">)</span>
+<span class="n">_Q_WETMORE_MOPS_RICH_MICRONUTRIENTS</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s2">"Sodium Chloride | 50 | mM / Ammonium Molybdate</span><span class="se">\xa0</span><span class="s2"> | 3000000 | mM / Boric Acid | "</span>
+    <span class="s2">"40000 | mM / Cobalt Chloride | 300000 | mM / Cupric Sulfate | 100000 | mM / "</span>
+    <span class="s2">"Manganese Chloride | 800000 | mM / Zinc Sulfate | 100000 | mM / Potassium "</span>
+    <span class="s2">"Phosphate Dibasic | 1.32 | mM / Potassium Hydroxide | 1.5 | mM"</span>
+<span class="p">)</span>
+<span class="c1">#: The four row groups of the Table S18 recipe, keyed for the component helper.</span>
+<span class="n">_MOPS_RICH_QUOTES</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">"base"</span><span class="p">:</span> <span class="n">_Q_PRICE_MOPS_RICH_BASE</span><span class="p">,</span>
+    <span class="s2">"nucleobase"</span><span class="p">:</span> <span class="n">_Q_PRICE_MOPS_RICH_NUCLEOBASES</span><span class="p">,</span>
+    <span class="s2">"amino_acid"</span><span class="p">:</span> <span class="n">_Q_PRICE_MOPS_RICH_AMINO_ACIDS</span><span class="p">,</span>
+    <span class="s2">"vitamin"</span><span class="p">:</span> <span class="n">_Q_PRICE_MOPS_RICH_VITAMINS</span><span class="p">,</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_mops_rich</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">role</span><span class="p">:</span> <span class="n">MediaComponentRole</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">unit</span><span class="p">:</span> <span class="n">ConcentrationUnit</span><span class="p">,</span>
+    <span class="n">read</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">group</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">note</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MediaComponent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""One Table S18 row of the MOPS rich recipe, cited to its row group."""</span>
+    <span class="k">return</span> <span class="n">_stated</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">,</span>
+        <span class="n">role</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">,</span>
+        <span class="n">unit</span><span class="p">,</span>
+        <span class="n">_cite</span><span class="p">(</span><span class="n">_PRICE2018_S3</span><span class="p">,</span> <span class="n">read</span><span class="p">,</span> <span class="n">_MOPS_RICH_QUOTES</span><span class="p">[</span><span class="n">group</span><span class="p">]),</span>
+        <span class="n">note</span><span class="o">=</span><span class="n">note</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="n">_AMINO</span> <span class="o">=</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">amino_acid</span>
+<span class="n">_NUCLEOBASE</span> <span class="o">=</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">nucleobase</span>
+<span class="n">_OTHER</span> <span class="o">=</span> <span class="n">MediaComponentRole</span><span class="o">.</span><span class="n">other</span>
+
+<span class="n">MOPS_RICH_DEFINED_NOCARBON_PRICE2018</span> <span class="o">=</span> <span class="n">Media</span><span class="p">(</span>
+    <span class="n">name</span><span class="o">=</span><span class="s2">"MOPS rich defined medium, no carbon source (Price 2018 'MOPS Rich Defined "</span>
+    <span class="s2">"media_noCarbon')"</span><span class="p">,</span>
+    <span class="n">state</span><span class="o">=</span><span class="s2">"liquid"</span><span class="p">,</span>
+    <span class="n">is_synthetic</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">base_medium</span><span class="o">=</span><span class="s2">"MOPS_MINIMAL"</span><span class="p">,</span>
+    <span class="n">components</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"3-(N-morpholino)propanesulfonic acid"</span><span class="p">,</span> <span class="n">_BUFFER</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"40 mM"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"tricine"</span><span class="p">,</span> <span class="n">_BUFFER</span><span class="p">,</span> <span class="mf">4.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"4 mM"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"iron(II) sulfate heptahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.01 mM"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"ammonium chloride"</span><span class="p">,</span> <span class="n">_NSRC</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"9.5 mM"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_stated</span><span class="p">(</span>
+            <span class="s2">"potassium sulfate"</span><span class="p">,</span>
+            <span class="n">_SALT</span><span class="p">,</span>
+            <span class="mf">0.276</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_PRICE2018_S3</span><span class="p">,</span>
+                <span class="s2">"0.276 mM (the row names 'Aluminum potassium sulfate dodecahydrate')"</span><span class="p">,</span>
+                <span class="n">_Q_PRICE_MOPS_RICH_BASE</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">_cite</span><span class="p">(</span>
+                <span class="n">_WETMORE2015_DS1</span><span class="p">,</span>
+                <span class="s2">"0.276 mM potassium sulfate"</span><span class="p">,</span>
+                <span class="n">_Q_WETMORE_MOPS_K2SO4</span><span class="p">,</span>
+                <span class="n">note</span><span class="o">=</span><span class="s2">"Wetmore 2015's own row for this same medium label names "</span>
+                <span class="s2">"potassium sulfate at the same amount"</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"ADJUDICATED as in MOPS_MINIMAL: Price 2018's row names an alum, "</span>
+            <span class="s2">"Wetmore 2015's row for the same medium names potassium sulfate at the same "</span>
+            <span class="s2">"0.276 mM; recorded as potassium sulfate"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"calcium chloride"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">0.0005</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.0005 mM"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"magnesium chloride hexahydrate"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">0.525</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.525 mM"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"sodium chloride"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">50.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"50 mM"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"ammonium heptamolybdate tetrahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">3e-09</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"3e-09 M"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"boric acid"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">4e-07</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"4e-07 M"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"cobalt(II) chloride hexahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">3e-08</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"3e-08 M"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"copper(II) sulfate pentahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">1e-08</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"1e-08 M"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"manganese(II) chloride tetrahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">8e-08</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"8e-08 M"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"zinc sulfate heptahydrate"</span><span class="p">,</span> <span class="n">_TRACE</span><span class="p">,</span> <span class="mf">1e-08</span><span class="p">,</span> <span class="n">_M</span><span class="p">,</span> <span class="s2">"1e-08 M"</span><span class="p">,</span> <span class="s2">"base"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"dipotassium hydrogen phosphate"</span><span class="p">,</span> <span class="n">_SALT</span><span class="p">,</span> <span class="mf">1.32</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"1.32 mM"</span><span class="p">,</span> <span class="s2">"base"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"potassium hydroxide"</span><span class="p">,</span>
+            <span class="n">_OTHER</span><span class="p">,</span>
+            <span class="mf">1.5</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"1.5 mM"</span><span class="p">,</span>
+            <span class="s2">"base"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"a base; the table states its amount and no role"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"Adenine hydrochloride hydrate"</span><span class="p">,</span>
+            <span class="n">_NUCLEOBASE</span><span class="p">,</span>
+            <span class="mf">0.2</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.2 mM"</span><span class="p">,</span>
+            <span class="s2">"nucleobase"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"cytosine"</span><span class="p">,</span> <span class="n">_NUCLEOBASE</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"nucleobase"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"uracil"</span><span class="p">,</span> <span class="n">_NUCLEOBASE</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"nucleobase"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"guanine"</span><span class="p">,</span> <span class="n">_NUCLEOBASE</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"nucleobase"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-alanine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.8 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-arginine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">5.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"5.2 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-asparagine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"L-aspartic acid potassium salt"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"L-Glutamic acid monopotassium salt monohydrate"</span><span class="p">,</span>
+            <span class="n">_AMINO</span><span class="p">,</span>
+            <span class="mf">0.66</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.66 mM"</span><span class="p">,</span>
+            <span class="s2">"amino_acid"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-glutamine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.6 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"glycine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.8 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-histidine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-isoleucine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-proline"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-serine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">10.0</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"10 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-threonine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-tryptophan"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.1 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-valine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.6 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-leucine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.8 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-lysine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-methionine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-phenylalanine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.4 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"L-cysteine hydrochloride monohydrate"</span><span class="p">,</span>
+            <span class="n">_AMINO</span><span class="p">,</span>
+            <span class="mf">0.1</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.1 mM"</span><span class="p">,</span>
+            <span class="s2">"amino_acid"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"L-tyrosine"</span><span class="p">,</span> <span class="n">_AMINO</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.2 mM"</span><span class="p">,</span> <span class="s2">"amino_acid"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"thiamine hydrochloride"</span><span class="p">,</span>
+            <span class="n">_VITAMIN</span><span class="p">,</span>
+            <span class="mf">0.01</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.01 mM ('Thiamine HCl')"</span><span class="p">,</span>
+            <span class="s2">"vitamin"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"calcium pantothenate"</span><span class="p">,</span> <span class="n">_VITAMIN</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.01 mM"</span><span class="p">,</span> <span class="s2">"vitamin"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span><span class="s2">"4-aminobenzoic acid"</span><span class="p">,</span> <span class="n">_VITAMIN</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">,</span> <span class="n">_MM</span><span class="p">,</span> <span class="s2">"0.01 mM"</span><span class="p">,</span> <span class="s2">"vitamin"</span><span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"4-hydroxybenzoic acid"</span><span class="p">,</span>
+            <span class="n">_OTHER</span><span class="p">,</span>
+            <span class="mf">0.01</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.01 mM"</span><span class="p">,</span>
+            <span class="s2">"vitamin"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"listed with the vitamins; the table states its amount and no role"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_mops_rich</span><span class="p">(</span>
+            <span class="s2">"2,3-dihydroxybenzoic acid"</span><span class="p">,</span>
+            <span class="n">_OTHER</span><span class="p">,</span>
+            <span class="mf">0.01</span><span class="p">,</span>
+            <span class="n">_MM</span><span class="p">,</span>
+            <span class="s2">"0.01 mM"</span><span class="p">,</span>
+            <span class="s2">"vitamin"</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"listed with the vitamins; the table states its amount and no role"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+    <span class="n">provenance</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_PRICE2018_S3</span><span class="p">,</span>
+            <span class="s2">"MOPS Rich Defined media_noCarbon"</span><span class="p">,</span>
+            <span class="n">_Q_PRICE_MOPS_RICH_BASE</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"the medium of Wetmore 2015's and Price 2018's 4 Keio carbon-source "</span>
+            <span class="s2">"samples set1IT067 to set1IT070; the carbon source is each sample's "</span>
+            <span class="s2">"Condition_1, carried as EnvironmentPhysicalPerturbation(factor="</span>
+            <span class="s2">"carbon_source)"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">_cite</span><span class="p">(</span>
+            <span class="n">_WETMORE2015_DS1</span><span class="p">,</span>
+            <span class="s2">"the same label in the same lab's earlier release; its micronutrient "</span>
+            <span class="s2">"amounts are not used"</span><span class="p">,</span>
+            <span class="n">_Q_WETMORE_MOPS_RICH_MICRONUTRIENTS</span><span class="p">,</span>
+            <span class="n">note</span><span class="o">=</span><span class="s2">"Data Set S1 prints the six micronutrients in mM at 40,000 to "</span>
+            <span class="s2">"3,000,000, which no medium contains; Price 2018's table states them in M "</span>
+            <span class="s2">"at the MOPS_MINIMAL amounts, and every macro row of the two tables agrees"</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+<span class="sd">"""Price 2018's MOPS rich defined medium without carbon: the medium of the 4 Keio</span>
+<span class="sd">carbon-source samples Wetmore 2015 and Price 2018 both release (rows 2 and 21)."""</span>
+<span class="c1"># --- end #1045 row 16 ------------------------------------------------------------ #</span>
+
+
 <span class="c1">#: Which of the fifty bacterial rows (rank in [[plan.bacteria-ontology-genome]]'s table,</span>
 <span class="c1">#: first author, year) use each bacterial entry, and how the paper states it. "names" means</span>
 <span class="c1">#: the paper names the formulation without printing amounts; every other use is a stated</span>
@@ -4771,6 +5132,10 @@
     <span class="s2">"M9_NONITROGEN_PRICE2018"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"21 Price 2018: 32 Keio nitrogen-source experiments"</span><span class="p">,),</span>
     <span class="s2">"M9_GLUCOSE_CASEIN_FUHRER2017"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"1 Fuhrer 2017: the metabolome screen"</span><span class="p">,),</span>
     <span class="s2">"M9_SCHMIDT2016"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"32 Schmidt 2016: the minimal-medium proteome conditions"</span><span class="p">,),</span>
+    <span class="s2">"M9_AA_SCHMIDT2016"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"32 Schmidt 2016: the 'Glycerol + AA' condition of the proteome map, the SRM "</span>
+        <span class="s2">"data set 2 arm and the growth-rate tables"</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="s2">"M9_NREL_DESIQUEIRA2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"14 de Siqueira 2025: tolerization and phenotyping"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_LIM2025"</span><span class="p">:</span> <span class="p">(</span><span class="s2">"16 Lim 2025: growth and TALE cultures"</span><span class="p">,),</span>
     <span class="s2">"M9_NREL_LIM2022"</span><span class="p">:</span> <span class="p">(</span>
@@ -4814,6 +5179,11 @@
         <span class="s2">"8 Borchert 2024: the 20 compendium samples on 'RCH2_defined_noCarbon' (sets 1 "</span>
         <span class="s2">"and 5 of the Putida_ML5 library), ten of them Rand 2017's own assays; the "</span>
         <span class="s2">"release names the medium and Price 2018 Table S18 states it"</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">"MOPS_RICH_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">"2 Wetmore 2015: Data Set S1 'MOPS Rich Defined media_noCarbon' (4 Keio "</span>
+        <span class="s2">"carbon-source experiments, set1IT067 to set1IT070)"</span><span class="p">,</span>
+        <span class="s2">"21 Price 2018: Table S18 states the recipe (the same 4 Keio experiments)"</span><span class="p">,</span>
     <span class="p">),</span>
 <span class="p">}</span>
 <span class="sd">"""Use map for the bacterial entries; the keys are exactly the bacterial media."""</span>
@@ -5300,6 +5670,8 @@
     <span class="s2">"M9_MODIFIED_FANG2025"</span><span class="p">:</span> <span class="n">M9_MODIFIED_FANG2025</span><span class="p">,</span>
     <span class="o">**</span><span class="n">JACKSON2020_MEDIA</span><span class="p">,</span>  <span class="c1"># jackson2020: Supplementary file 1, Table 4</span>
     <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="n">RCH2_DEFINED_NOCARBON_PRICE2018</span><span class="p">,</span>
+    <span class="s2">"MOPS_RICH_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="n">MOPS_RICH_DEFINED_NOCARBON_PRICE2018</span><span class="p">,</span>
+    <span class="s2">"M9_AA_SCHMIDT2016"</span><span class="p">:</span> <span class="n">M9_AA_SCHMIDT2016</span><span class="p">,</span>
 <span class="p">}</span> <span class="o">|</span> <span class="p">{</span>
     <span class="n">_hm_key</span><span class="p">(</span><span class="n">compound</span><span class="p">,</span> <span class="n">partial</span><span class="p">):</span> <span class="n">HILLENMEYER_DROPOUT_MEDIA</span><span class="p">[</span><span class="n">label</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">label</span><span class="p">,</span> <span class="n">compound</span><span class="p">,</span> <span class="n">partial</span> <span class="ow">in</span> <span class="n">_HILLENMEYER_DROPOUTS</span>
@@ -5366,6 +5738,13 @@
     <span class="s2">"RCH2_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="s2">"the carbon source is the variable of the "</span>
     <span class="s2">"RB-TnSeq carbon-source experiments (Borchert 2024: glucose, potassium acetate, "</span>
     <span class="s2">"levulinic acid, 4-hydroxyvalerate, vanillin or p-coumaric acid)"</span><span class="p">,</span>
+    <span class="s2">"M9_AA_SCHMIDT2016"</span><span class="p">:</span> <span class="s2">"the 2.2 g/L glycerol of the 'Glycerol + AA' condition is its "</span>
+    <span class="s2">"carbon factor, as in the Glycerol arm; the amino acids and nucleobases are "</span>
+    <span class="s2">"supplements the Methods state"</span><span class="p">,</span>
+    <span class="s2">"MOPS_RICH_DEFINED_NOCARBON_PRICE2018"</span><span class="p">:</span> <span class="s2">"no component is the carbon source: the "</span>
+    <span class="s2">"carbon source is each sample's Condition_1 (D-galacturonic acid or D-glucose), "</span>
+    <span class="s2">"carried as a carbon_source factor; the amino acids and nucleobases are "</span>
+    <span class="s2">"supplements the table states"</span><span class="p">,</span>
 <span class="p">}</span>
 
 

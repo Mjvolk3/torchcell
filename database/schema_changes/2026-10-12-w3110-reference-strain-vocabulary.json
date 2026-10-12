@@ -605,6 +605,22 @@
       ]
     },
     {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "ASSEMBLY_SET_ACCESSIONS",
+        "BACTERIAL_ASSEMBLY_SETS",
+        "BACTERIAL_LOCUS_TAG_PATTERNS",
+        "BacterialAssemblySet",
+        "BacterialGeneNamespace",
+        "BacterialReferenceStrain"
+      ]
+    },
+    {
       "loader": "torchcell/datasets/ecoli/price2018.py",
       "dataset_classes": [
         "RbTnseqPrice2018EcoliDataset",

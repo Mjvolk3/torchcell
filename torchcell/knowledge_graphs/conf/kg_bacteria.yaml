@@ -144,3 +144,4 @@ datasets:
   - ProteomeBrunk2016Dataset
   - BiofuelTiterBrunk2016Dataset
   - EnvChemgenNichols2011Dataset
+  - PhosphositeIntensityPotel2018Dataset

@@ -538,6 +538,7 @@ BACTERIAL_DATASETS = {
     "MorphologyCampos2018Dataset",
     "CrisprPineneToleranceNiu2019Dataset",
     "PhageRbTnseqMutalik2020Dataset",
+    "PhosphositeIntensityPotel2018Dataset",
     "PromoterReporterMohiuddin2022Dataset",
     "ProteinFoldChangeCaglar2017Dataset",
     "ProteinSynthesisRateLi2014Dataset",
@@ -615,7 +616,8 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
     # + 1 (#1014, N'Guessan 2025 reference-panel segregant pseudobulk)
     # + 1 (#691, Nichols 2011 chemical-genomic re-scaled S-scores)
     # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, by publication)
-    # + 1 (#991, Vaishnav 2022 pooled sort-seq promoter expression).
+    # + 1 (#991, Vaishnav 2022 pooled sort-seq promoter expression)
+    # + 1 (#921, Potel 2018 phosphosite intensities).
     assert (
         len(dataset_adapter_map)
         == 110
@@ -649,6 +651,7 @@ def test_adapter_to_dataset_is_the_inverse_of_the_served_adapter_map() -> None:
         + 1
         + 1
         + 2
+        + 1
         + 1
     )
     served = {d.__name__ for d in dataset_adapter_map}

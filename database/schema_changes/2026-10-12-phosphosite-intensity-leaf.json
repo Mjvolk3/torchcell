@@ -2,9 +2,9 @@
   "record_version": 1,
   "slug": "phosphosite-intensity-leaf",
   "date": "2026-10-12",
-  "pr": null,
+  "pr": 1062,
   "author_kind": "agent",
-  "base_commit": "007cd23b0631e18574606da9164c9d78dbc01577",
+  "base_commit": "464c5cfc3d83fc6212e8b6a3d91da89e847d4b34",
   "python_version": "3.13.0",
   "symbols": [
     {
@@ -382,6 +382,27 @@
       "impact": "stale",
       "via": [
         "ExperimentType"
+      ]
+    },
+    {
+      "loader": "torchcell/datasets/ecoli/potel2018.py",
+      "dataset_classes": [
+        "PhosphositeIntensityPotel2018Dataset"
+      ],
+      "served_classes": [],
+      "impact": "stale",
+      "via": [
+        "BacterialPhosphositeIntensityExperiment",
+        "BacterialPhosphositeIntensityExperimentReference",
+        "CultureGrowthPhase",
+        "PHOSPHOSITE_KEY_SEPARATOR",
+        "PHOSPHOSITE_LIST_SEPARATOR",
+        "PROTEIN_ID_PATTERNS",
+        "PhosphoResidue",
+        "Phosphosite",
+        "PhosphositeIntensityPhenotype",
+        "PhosphositeQuantification",
+        "ProteinIdNamespace"
       ]
     },
     {

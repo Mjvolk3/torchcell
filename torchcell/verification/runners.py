@@ -4786,6 +4786,60 @@ def run_bacterial_protein_fold_change(data_root: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
+# Phosphosite intensities (#921): one record per released sample, each carrying the
+# release's whole site list keyed by its released proteins, residue and positions. No
+# locus key exists to contain in an assembly (the sites are stored as released, never
+# resolved), so the bacterial families' L4 does not apply; the family gate is
+# ``torchcell.verification.phosphosite`` and each loader's ``verify_build`` adds its
+# release's own pins and its cross-table L4.
+# --------------------------------------------------------------------------- #
+PHOSPHOSITE_INTENSITY_DATASETS: dict[str, dict[str, Any]] = {
+    "phosphosite_intensity_potel2018": {
+        "root": "data/torchcell/phosphosite_intensity_potel2018",
+        "verify_build_module": "torchcell.datasets.ecoli.potel2018",
+        "provenance": Provenance(
+            source_uri=(
+                "$DATA_ROOT/torchcell-raw/potelWidespreadBacterialProtein2018/data/"
+                "41592_2018_BFnmeth4580_MOESM4_ESM.xlsx"
+            ),
+            citation_key="potelWidespreadBacterialProtein2018",
+            sha256="f69ca61a0f0dba3987b26bcdf4bd9b0c8fcf8744495233bad678a23cf5682481",
+            method=(
+                "Fe3+-IMAC LC-MS/MS, MaxQuant 1.5.5.1 summed XIC per sample; one "
+                "BacterialPhosphositeIntensityExperiment per released sample column, "
+                "every site as released, a released 0 as not_quantified"
+            ),
+            page="Nat Methods 15:187; Supplementary Table 2",
+        ),
+    }
+}
+
+
+def verify_phosphosite_intensity_dataset(
+    name: str, data_root: str
+) -> VerificationReport:
+    """One PHOSPHOSITE_INTENSITY_DATASETS entry's report, from its loader's gate."""
+    spec = PHOSPHOSITE_INTENSITY_DATASETS[name]
+    module = importlib.import_module(spec["verify_build_module"])
+    return cast(
+        "VerificationReport",
+        module.verify_build(osp.join(data_root, spec["root"]), data_root=data_root),
+    )
+
+
+def run_phosphosite_intensity(data_root: str) -> bool:
+    """Verify phosphosite-intensity datasets (L0-L4) and write reports. True if all pass."""
+    all_passed = True
+    for name, spec in PHOSPHOSITE_INTENSITY_DATASETS.items():
+        report = verify_phosphosite_intensity_dataset(name, data_root)
+        out = _write_report(report, osp.join(data_root, spec["root"], "preprocess"))
+        print(report.summary())
+        print(f"  -> wrote {out}\n")
+        all_passed = all_passed and report.passed
+    return all_passed
+
+
+# --------------------------------------------------------------------------- #
 # Natural-isolate panels (De Chiara 2022): each record's genotype is one of the
 # 1,011 Peter 2018 isolates as a perturbation set off S288C, interned once per isolate
 # and shared by its records. The loader's own ``verify_build`` is the gate: it validates
@@ -4904,6 +4958,7 @@ def run_all(data_root: str) -> bool:
     bacterial_protein_ok = run_bacterial_protein_abundance(data_root)
     bacterial_metabolite_ok = run_bacterial_metabolite(data_root)
     bacterial_fold_change_ok = run_bacterial_protein_fold_change(data_root)
+    phosphosite_ok = run_phosphosite_intensity(data_root)
     natural_isolate_panel_ok = run_natural_isolate(data_root)
     pooled_sort_seq_ok = run_pooled_sort_seq(data_root)
     return (
@@ -4931,6 +4986,7 @@ def run_all(data_root: str) -> bool:
         and bacterial_protein_ok
         and bacterial_metabolite_ok
         and bacterial_fold_change_ok
+        and phosphosite_ok
         and natural_isolate_panel_ok
         and pooled_sort_seq_ok
     )

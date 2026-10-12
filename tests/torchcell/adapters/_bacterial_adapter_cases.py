@@ -113,6 +113,7 @@ from torchcell.adapters import (
     MorphologyCampos2018Adapter,
     MrnaFractionBalakrishnan2022Adapter,
     PhageRbTnseqMutalik2020Adapter,
+    PhosphositeIntensityPotel2018Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
     ProteinSynthesisRateLi2014Adapter,
@@ -207,6 +208,7 @@ from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.nichols2011 import EnvChemgenNichols2011Dataset
 from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
+from torchcell.datasets.ecoli.potel2018 import PhosphositeIntensityPotel2018Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
@@ -346,6 +348,8 @@ PROMOTER_ACTIVITY = "promoter activity phenotype"
 METABOLITE = "metabolite phenotype"
 # #854: the count-less transcriptome.
 MRNA_FRACTION = "mrna number fraction phenotype"
+# #921: a site-level proteome measurement, the sibling of protein abundance.
+PHOSPHOSITE = "phosphosite intensity phenotype"
 
 # The shape of each dataset's records, measured on its dev-tree LMDB on 2026-10-07 (and,
 # for the two RB-TnSeq stores rebuilding at the time, read off `build_genotype` /
@@ -1061,6 +1065,18 @@ BACTERIAL: list[Bacterial] = [
         "ecoli_env_chemgen_nichols2011",
         EnvChemgenNichols2011Dataset,
         RESPONSE,
+    ),
+    # Potel 2018 (#921): twelve wild-type W3110 records, one per released sample; the
+    # two media differ by their carbon-source component, so no environment
+    # perturbation is carried.
+    _case(
+        PhosphositeIntensityPotel2018Adapter,
+        "potel2018",
+        "phosphosite_intensity_potel2018",
+        PhosphositeIntensityPotel2018Dataset,
+        PHOSPHOSITE,
+        perturbation=False,
+        env_perturbation=False,
     ),
 ]
 IDS = [b.case.adapter_cls.__name__ for b in BACTERIAL]

@@ -39,11 +39,12 @@ def test_every_registered_bacterial_dataset_is_mapped_to_its_adapter() -> None:
     # outcomes, Gerdes 2003 genetic footprinting) + 1 (Wetmore 2015's own RB-TnSeq
     # release, owner policy 2026-10-10) + 1 (Nichols 2011 chemical genomics, #691)
     # + 2 (#931: the Fitness Browser's own Keio and KT2440 experiments, one loader per
-    # organism keyed by publication), re-derived from the merged conf and map.
+    # organism keyed by publication) + 1 (#921, Potel 2018 phosphosite intensities),
+    # re-derived from the merged conf and map.
     assert (
         len(expected)
         == len(BACTERIAL)
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1
     )
     assert registered_bacterial_classes() == set(expected)
     mapped = {
@@ -59,7 +60,7 @@ def test_each_adapter_has_its_own_module() -> None:
     modules = [b.case.adapter_cls.__module__ for b in BACTERIAL]
     assert (
         len(set(modules))
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1
     )
     assert modules == [f"torchcell.adapters.{b.module}" for b in BACTERIAL]
 
@@ -78,7 +79,7 @@ def test_kg_bacteria_names_exactly_the_registered_bacterial_datasets() -> None:
     assert (
         len(names)
         == len(set(names))
-        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2
+        == 59 + 1 + 6 + 2 + 3 + 1 + 1 + 1 + 2 + 1 + 4 + 1 + 1 + 2 + 1 + 1 + 2 + 1
     )
     classes = [dataset_registry[name] for name in names]
     assert all(cls in dataset_adapter_map for cls in classes)

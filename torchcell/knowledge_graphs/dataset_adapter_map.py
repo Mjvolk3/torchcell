@@ -121,6 +121,7 @@ from torchcell.adapters import (
     Nguessan2025Adapter,
     OrganicAcidYoshida2012Adapter,
     PhageRbTnseqMutalik2020Adapter,
+    PhosphositeIntensityPotel2018Adapter,
     PooledPromoterExpressionVaishnav2022Adapter,
     PromoterReporterMohiuddin2022Adapter,
     ProteinFoldChangeCaglar2017Adapter,
@@ -251,6 +252,7 @@ from torchcell.datasets.ecoli.mori2021 import ProteomeMori2021Dataset
 from torchcell.datasets.ecoli.mutalik2020 import PhageRbTnseqMutalik2020Dataset
 from torchcell.datasets.ecoli.nichols2011 import EnvChemgenNichols2011Dataset
 from torchcell.datasets.ecoli.niu2019 import CrisprPineneToleranceNiu2019Dataset
+from torchcell.datasets.ecoli.potel2018 import PhosphositeIntensityPotel2018Dataset
 from torchcell.datasets.ecoli.price2018 import (
     GeneEssentialityPrice2018EcoliDataset,
     RbTnseqPrice2018EcoliDataset,
@@ -548,6 +550,7 @@ dataset_adapter_map: dict[type, type] = {
     RnaseqPublicK12Lamoureux2023Dataset: RnaseqPublicK12Lamoureux2023Adapter,
     PromoterReporterMohiuddin2022Dataset: (PromoterReporterMohiuddin2022Adapter),
     ProteomeMori2021Dataset: ProteomeMori2021Adapter,
+    PhosphositeIntensityPotel2018Dataset: PhosphositeIntensityPotel2018Adapter,
     PhageRbTnseqMutalik2020Dataset: PhageRbTnseqMutalik2020Adapter,
     CrisprPineneToleranceNiu2019Dataset: CrisprPineneToleranceNiu2019Adapter,
     RbTnseqPrice2018EcoliDataset: RbTnseqPrice2018EcoliAdapter,

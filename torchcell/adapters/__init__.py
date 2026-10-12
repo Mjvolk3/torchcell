@@ -282,6 +282,9 @@ from .peter2018_adapter import (
 from .piotrowski2017_adapter import (
     EnvChemgenPiotrowski2017Adapter as EnvChemgenPiotrowski2017Adapter,
 )
+from .potel2018_adapter import (
+    PhosphositeIntensityPotel2018Adapter as PhosphositeIntensityPotel2018Adapter,
+)
 from .price2018_ecoli_adapter import (
     RbTnseqPrice2018EcoliAdapter as RbTnseqPrice2018EcoliAdapter,
 )
@@ -539,6 +542,7 @@ ecoli_adapters = [
     "GrowthRateLamoureux2023Adapter",
     "PromoterReporterMohiuddin2022Adapter",
     "ProteomeMori2021Adapter",
+    "PhosphositeIntensityPotel2018Adapter",
     "PhageRbTnseqMutalik2020Adapter",
     "CrisprPineneToleranceNiu2019Adapter",
     "RbTnseqPrice2018EcoliAdapter",

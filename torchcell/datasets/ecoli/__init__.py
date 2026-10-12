@@ -190,6 +190,11 @@ sourcing layer.
   ``MEDIA_LIBRARY`` states. Its values are an independent measurement of Schmidt 2016's
   quantity, not a re-release: zero of the 1,812 proteins their nearest conditions share
   agree to 1e-6, at Pearson r 0.796 on log10 mass fraction.
+- ``potel2018`` -- ``PhosphositeIntensityPotel2018Dataset``: the W3110 phosphoproteome,
+  one record per released sample (glucose or glycerol, exponential or stationary,
+  three replicates) with all 2,129 Supplementary Table 2 sites as released and a
+  released 0 as ``not_quantified``; the first consumer of
+  ``PhosphositeIntensityPhenotype`` (#921).
 - ``mutalik2020`` -- ``PhageRbTnseqMutalik2020Dataset``: the phage-resistance RB-TnSeq
   screen, one record per (gene, experiment) over 68 phage challenges and 10 no-phage
   controls, each challenge's environment carrying a ``PhagePerturbation`` at the MOI
@@ -303,6 +308,9 @@ from .mutalik2020 import (
 from .nichols2011 import EnvChemgenNichols2011Dataset as EnvChemgenNichols2011Dataset
 from .niu2019 import (
     CrisprPineneToleranceNiu2019Dataset as CrisprPineneToleranceNiu2019Dataset,
+)
+from .potel2018 import (
+    PhosphositeIntensityPotel2018Dataset as PhosphositeIntensityPotel2018Dataset,
 )
 from .price2018 import (
     GeneEssentialityPrice2018EcoliDataset as GeneEssentialityPrice2018EcoliDataset,

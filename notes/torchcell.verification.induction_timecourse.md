@@ -31,3 +31,7 @@ Not the microarray family: `verify_expression_dataset` orients a deletion screen
 | L4 | induced_gene_containment | the induced genes are S288C genes |
 
 The audit caches a source by (path, pinned sha256), so two quotes pinning the same file to different digests are each checked against their own pin. Result on the dev store: every rule passes; the table is in the dataset note. Run time 3.5 min, 5.9 GB peak (the tall table re-read dominates).
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`induced_gene_containment` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

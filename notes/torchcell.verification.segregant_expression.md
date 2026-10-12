@@ -25,3 +25,7 @@ One streaming pass over the LMDB re-reads each panel's release from `raw/` (`seg
 | L4 | `parents_pinned`, `mat_orientation`, `marker_reference`, `gene_containment_sgd` | Peter ids in the member index; the MATa parent carries the MAT locus; sampled marker refs are S288C bases; analysis transcripts and the gene set are S288C genes |
 
 `check_paper_numbers=False` skips the two printed-number rules for a synthetic release (`tests/torchcell/verification/test_segregant_expression.py`).
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`marker_reference`, `mat_orientation`, `parents_pinned`, `gene_containment_sgd` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

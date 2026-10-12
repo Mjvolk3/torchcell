@@ -19,3 +19,7 @@ One streaming pass over the LMDB records and one pass over the raw files:
 - L4 the 15 Peter ids resolve in the 1011 assembly member index; xls parent pairs equal the README pairs and per-cross counts equal the xls; a marker sample's ref allele equals the S288C base at that position (settles the coordinate system empirically); the derived gene set is a subset of the SGD gene universe.
 
 Tests: `tests/torchcell/verification/test_segregant_growth.py` builds a synthetic 17-segregant release in `tmp_path` and checks that a tampered value, a tampered block, and a duplicated record each fail the right level.
+
+## 2026.10.12 - Genome-reference rows report, never gate
+
+`marker_reference`, `parents_pinned`, `gene_containment_sgd` compare the data with OUR genome reference (an allele, a position or an id against the R64 annotation or a genomes-tier assembly), so they are `report`-class rules ([[torchcell.verification.report]], owner 2026-10-12: "the genome is separate.. it doesn't gate anything"). Their computation is unchanged; the report lists them under the verdict with their statistic and the store's verdict reads only its gate rows.

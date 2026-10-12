@@ -5,14 +5,16 @@
 
 The synthetic tests write the three-file layout the loader consumes: a Table S3
 workbook whose description sheet is the 29 declared samples and whose fractions sheet
-carries the 29 released headers (``a4_1`` twice) over six rows, one per row rule; the
-paper text carrying the paper quotes; and a minimal Mori 2021 Appendix ``.docx``
-carrying the strain quotes. The genome and the assembly pin are in-test objects, so
-nothing reads ``$DATA_ROOT``.
+carries the 29 released headers (``a4_1`` twice) over six rows (a current gene, a
+pseudogene locus, a split-fragment synonym, a retired b-number and a locus-``0`` row,
+every one stored under its released identifier); the paper text carrying the paper
+quotes; and a minimal Mori 2021 Appendix ``.docx`` carrying the strain quotes. The
+loader reads no genome; the verifier's L4 containment reads an in-test one, and the
+assembly pin is an in-test object, so nothing reads ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real raw mirror and the dev-tree LMDB and pin
-the numbers the dendron note states: 28 records, 4,176 keys, 148 refused b-numbers
-(74 + 69 + 5), 18 locus-0 rows, two references.
+the numbers the dendron note states: 28 records, 4,342 keys, 18 of them the locus-0
+rows keyed by their released gene cell, two references.
 """
 
 from __future__ import annotations
@@ -43,7 +45,7 @@ from torchcell.literature.manifest import RetrievalMethod
 from torchcell.literature.manual_deposit import extend_manifest, verify_deposit
 from torchcell.sequence.genome.base import GeneNameStatus
 
-#: ``(gene, locus)`` per synthetic row, one per row rule.
+#: ``(gene, locus)`` per synthetic row; every row is a stored key.
 ROWS: tuple[tuple[str, Any], ...] = (
     ("keepA", "b0001"),
     ("keepB", "b0002"),
@@ -52,6 +54,8 @@ ROWS: tuple[tuple[str, Any], ...] = (
     ("gone", "b3036"),
     ("insJK", 0),
 )
+#: The keys the six rows are stored under: the b-number, or the gene cell for locus 0.
+KEYS = ("b0001", "b0002", "b0003", "b0004", "b3036", "insJK")
 GENE_SET = {"b0001", "b0002", "b1101", "b3212"}
 LOCI = {*GENE_SET, "b0003"}
 RETIRED = {"b3036"}
@@ -59,22 +63,17 @@ UNIQUE = list(dict.fromkeys(bk.RELEASED_HEADERS))
 
 
 class FakeGenome:
-    """The kept b-numbers as its genes, one pseudogene locus, one retired name."""
+    """The verifier's genome: two of the six keys are its genes, one a pseudogene."""
 
     ASSEMBLY_SET = bk.ASSEMBLY_SET
 
-    def __init__(self, ptsg: str = "b1101") -> None:
-        """``ptsg`` is what the ptsG symbol resolves to, to test a moved pin."""
+    def __init__(self) -> None:
+        """Two stored keys as genes, one pseudogene locus, one retired name."""
         self.gene_set = GENE_SET
         self.genbank = SimpleNamespace(loci=LOCI)
-        self._symbols = {"ptsG": ptsg, "gltB": "b3212", "gdhA": "b1761"}
 
     def resolve_gene_name(self, name: str) -> Any:
-        """The two promoter targets by symbol; any other name as itself."""
-        if name in self._symbols:
-            return SimpleNamespace(
-                systematic_name=self._symbols[name], status=GeneNameStatus.RENAMED
-            )
+        """Any name as itself, retired or current."""
         status = GeneNameStatus.RETIRED if name in RETIRED else GeneNameStatus.CURRENT
         return SimpleNamespace(systematic_name=name, status=status)
 
@@ -186,11 +185,17 @@ def test_strain_genotypes_type_the_table_s1_edits() -> None:
         bk.strain_genotype("MG1655")
 
 
-def test_gene_symbols_must_resolve_to_the_declared_b_numbers() -> None:
-    bk.check_gene_symbols(FakeGenome())  # type: ignore[arg-type]
-    assert bk.GDHA == ("gdhA", "b1761")
-    with pytest.raises(RuntimeError, match="ptsG resolves to b9999"):
-        bk.check_gene_symbols(FakeGenome(ptsg="b9999"))  # type: ignore[arg-type]
+def test_the_loader_reads_no_genome() -> None:
+    import inspect
+
+    assert (
+        "ecoli_genome"
+        not in inspect.signature(
+            bk.MrnaFractionBalakrishnan2022Dataset.__init__
+        ).parameters
+    )
+    assert not hasattr(bk, "select_genes")
+    assert not hasattr(bk, "check_gene_symbols")
 
 
 def test_environment_carries_glucose_the_supplement_and_37_c() -> None:
@@ -312,25 +317,23 @@ def test_read_fractions_refuses_a_changed_sheet(
         bk.read_fractions(str(path))
 
 
-def test_select_genes_applies_one_rule_per_refused_row(release: dict[str, str]) -> None:
+def test_gene_keys_store_every_row_under_its_released_identifier(
+    release: dict[str, str],
+) -> None:
     rows, _ = bk.read_fractions(release[bk.TABLE_S3])
-    kept, refused = bk.select_genes(rows, FakeGenome())  # type: ignore[arg-type]
-    assert [r.locus for r in kept] == ["b0001", "b0002"]
-    assert [(r.locus, r.rule) for r in refused] == [
-        ("b0003", bk.REFUSE_NON_GENE_LOCUS),
-        ("b0004", bk.REFUSE_FRAGMENT_SYNONYM),
-        ("b3036", bk.REFUSE_RETIRED),
-        ("0", bk.REFUSE_ZERO_LOCUS),
-    ]
-    with pytest.raises(RuntimeError, match="share one b-number"):
-        bk.select_genes([rows[0], rows[0]], FakeGenome())  # type: ignore[arg-type]
+    keyed = bk.gene_keys(rows)
+    assert [item.key for item in keyed] == list(KEYS)
+    assert [item.keyed_by_gene for item in keyed] == [False] * 5 + [True]
+    assert keyed[-1].row.locus == bk.ZERO_LOCUS == "0"
+    with pytest.raises(RuntimeError, match="share the key 'b0001'"):
+        bk.gene_keys([rows[0], rows[0]])
 
 
 def test_phenotypes_store_the_column_and_the_reference_mean(
     release: dict[str, str],
 ) -> None:
     rows, _ = bk.read_fractions(release[bk.TABLE_S3])
-    kept = rows[:2]
+    kept = bk.gene_keys(rows[:2])
     phenotype = bk.build_phenotype(kept, "c5")
     assert phenotype.n_libraries == 1
     assert phenotype.mrna_number_fraction["b0001"] == rows[0].values["c5"]
@@ -456,17 +459,13 @@ def test_process_builds_twenty_eight_records_and_verifies(
     paths = write_release(root / "raw")
     _patch_pins(monkeypatch, paths)
     monkeypatch.setattr(bk, "EXPECTED_SOURCE_ROWS", len(ROWS))
-    monkeypatch.setattr(bk, "EXPECTED_GENE_KEYS", 2)
+    monkeypatch.setattr(bk, "EXPECTED_GENE_KEYS", len(ROWS))
     monkeypatch.setattr(bk, "EXPECTED_ZERO_LOCUS_ROWS", 1)
-    monkeypatch.setattr(bk, "EXPECTED_REFUSED_B_NUMBERS", 3)
     monkeypatch.setattr(bk, "assembly_reference", _reference_genome)
 
-    dataset = bk.MrnaFractionBalakrishnan2022Dataset(
-        root=str(root),
-        ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
-    )
+    dataset = bk.MrnaFractionBalakrishnan2022Dataset(root=str(root))
     assert len(dataset) == 28
-    assert dataset.gene_set == {"b0001", "b0002"}
+    assert dataset.gene_set == set(KEYS)
     items = [dataset.transform_item(dataset[i]) for i in range(len(dataset))]
     assert {i["reference"].genome_reference.strain for i in items} == {"NCM3722"}
     assert {i["reference"].phenotype_reference.n_libraries for i in items} == {2}
@@ -477,13 +476,10 @@ def test_process_builds_twenty_eight_records_and_verifies(
 
     preprocess = Path(dataset.preprocess_dir)
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert (ledger["records"], ledger["stored_gene_keys"]) == (28, 2)
-    assert {k: v["n"] for k, v in ledger["refused_rows"].items()} == {
-        bk.REFUSE_NON_GENE_LOCUS: 1,
-        bk.REFUSE_FRAGMENT_SYNONYM: 1,
-        bk.REFUSE_RETIRED: 1,
-        bk.REFUSE_ZERO_LOCUS: 1,
-    }
+    assert (ledger["records"], ledger["stored_gene_keys"]) == (28, len(ROWS))
+    assert ledger["keyed_by_released_gene_cell"]["n"] == 1
+    assert ledger["keyed_by_released_gene_cell"]["items"] == ["insJK"]
+    assert "refused_rows" not in ledger
     samples = pd.read_csv(preprocess / "samples.csv")
     assert list(samples["sample"]) == [s.sample for s in bk.LOADED]
     assert (
@@ -492,10 +488,16 @@ def test_process_builds_twenty_eight_records_and_verifies(
         ]
         == "11.34 mM (NH4)2SO7"
     )
-    assert len(pd.read_csv(preprocess / "refused_rows.csv")) == 4
+    keys = pd.read_csv(preprocess / "gene_keys.csv")
+    assert list(keys["key"]) == list(KEYS)
+    assert list(keys["keyed_by_gene"]) == [False] * 5 + [True]
 
     report = bk.verify_build(str(root), genome=FakeGenome())  # type: ignore[arg-type]
-    assert [(r.level, r.name) for r in report.results if not r.passed] == []
+    # the L4 containment reads the in-test genome, which holds two of the six keys:
+    # a genome-reference finding under the verdict, never a gate
+    failed = [r for r in report.results if not r.passed]
+    assert [r.name for r in failed if r.finding_class.value != "report"] == []
+    assert report.passed
 
 
 def test_process_refuses_a_count_that_moved(
@@ -505,11 +507,8 @@ def test_process_refuses_a_count_that_moved(
     paths = write_release(root / "raw")
     _patch_pins(monkeypatch, paths)
     monkeypatch.setattr(bk, "EXPECTED_SOURCE_ROWS", len(ROWS))
-    with pytest.raises(RuntimeError, match="kept"):
-        bk.MrnaFractionBalakrishnan2022Dataset(
-            root=str(root),
-            ecoli_genome=FakeGenome(),  # type: ignore[arg-type]
-        )
+    with pytest.raises(RuntimeError, match="keys"):
+        bk.MrnaFractionBalakrishnan2022Dataset(root=str(root))
 
 
 # --------------------------------------------------------------------------- #
@@ -565,13 +564,9 @@ def test_built_lmdb_numbers() -> None:
     assert (ledger["records"], ledger["released_rows"], ledger["stored_gene_keys"]) == (
         28,
         4342,
-        4176,
+        4342,
     )
-    assert {k: v["n"] for k, v in ledger["refused_rows"].items()} == {
-        bk.REFUSE_NON_GENE_LOCUS: 74,
-        bk.REFUSE_FRAGMENT_SYNONYM: 69,
-        bk.REFUSE_ZERO_LOCUS: 18,
-        bk.REFUSE_RETIRED: 5,
-    }
+    assert ledger["keyed_by_released_gene_cell"]["n"] == 18
+    assert ledger["keyed_by_released_gene_cell"]["items"][:2] == ["insAB-1", "insAB-2"]
     samples = pd.read_csv(Path(root, "preprocess", "samples.csv"))
-    assert set(samples["n_gene_keys"]) == {4176}
+    assert set(samples["n_gene_keys"]) == {4342}

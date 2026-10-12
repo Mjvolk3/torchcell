@@ -49,10 +49,12 @@ cells are quantities, applied in its order and reproduced from the bytes:
    here, the 16 Table S4 drugs keep 62 runs, the "n=62 for biological samples" of
    Supplementary Fig. 4b.
 
-One protein is refused by name: P03872 (REP2), a 2-micron plasmid protein that no feature of
-the S288C R64 GFF names, so it has no systematic ORF key (counted in the ledger). Every
-other accession maps to an ORF through the SGD GFF cross-references (the Messner 2023
-mapper), and an unmapped one raises.
+No protein is refused. P03872 (REP2), a 2-micron plasmid protein that no feature of the
+S288C R64 GFF names, is stored under its released UniProt accession (the ledger lists it
+under ``accessions_stored_as_released``); the data is the data, and a key the genome layer
+cannot join is a modeling-time fact, not a reason to drop the measurement. Every other
+accession is keyed by the ORF the SGD GFF cross-references give it (the Messner 2023
+mapper); an accession the GFF does not carry is likewise stored under the accession.
 
 THE REFERENCE. The paper's contrast is "drug-treated versus DMSO-treated", so the
 reference is the 24 DMSO runs: per protein the mean, its standard error (SD / sqrt(n)) and
@@ -204,10 +206,12 @@ PLATE_RUN_RE = re.compile(
 )
 QC_RUN_RE = re.compile(r"^NA_NA_NA_QC_(?P<qc>\d+)_QC_NA$")
 
-#: Accessions refused by name, with the reason (every other unmapped accession raises).
-REFUSED_ACCESSIONS: dict[str, str] = {
+#: Accessions the S288C R64 GFF names no feature for, with the reason they have no ORF
+#: key; they are stored under the accession itself. Any other unmapped accession is
+#: stored the same way and listed in the ledger beside these.
+ACCESSIONS_WITHOUT_ORF: dict[str, str] = {
     "P03872": "REP2, a 2-micron plasmid protein: no feature of the S288C R64 GFF names "
-    "it, so it has no systematic ORF key"
+    "it, so the record keys it by its released UniProt accession"
 }
 
 #: Measured from the release (2026-10-11); the build and ``verify_build`` assert them.
@@ -548,7 +552,10 @@ class BuildLedger(BaseModel):
     mean_identifications_after_detection_rule: float
     mean_identifications_rule1_only: float
     outliers: list[str]
-    refused_accessions: dict[str, str]
+    accessions_stored_as_released: dict[str, str] = Field(
+        description="kept accessions with no ORF in the SGD GFF, keyed by the "
+        "accession itself, each with the reason"
+    )
     n_records: int
     n_reference_runs: int
     n_table_s4_records: int
@@ -906,16 +913,17 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
         ids_kept = kept.notna().sum()
         threshold, outliers = identification_rule(ids_kept)
 
-        unmapped = sorted(
-            a for a in kept.index if a not in up2orf and a not in REFUSED_ACCESSIONS
-        )
-        if unmapped:
-            raise RuntimeError(
-                f"{len(unmapped)} kept accessions have no UniProt->ORF mapping "
-                f"(e.g. {unmapped[:5]}); refusing to drop them silently"
+        # A kept accession the GFF carries no ORF for keeps its released accession as
+        # its key: nothing is dropped on the genome's account.
+        stored_as_released = {
+            a: ACCESSIONS_WITHOUT_ORF.get(
+                a, "no feature of the S288C R64 GFF names this accession"
             )
-        served = [a for a in kept.index if a not in REFUSED_ACCESSIONS]
-        accession_to_orf = {a: up2orf[a] for a in served}
+            for a in kept.index
+            if a not in up2orf
+        }
+        served = list(kept.index)
+        accession_to_orf = {a: up2orf.get(a, a) for a in served}
         orf_counts = Counter(accession_to_orf.values())
         shared = sorted(o for o, c in orf_counts.items() if c > 1)
         if shared:
@@ -1014,9 +1022,7 @@ class ProteomeMessner2021Dataset(ExperimentDataset):
             mean_identifications_after_detection_rule=float(ids_kept.mean()),
             mean_identifications_rule1_only=float(ids_rule1.mean()),
             outliers=outliers,
-            refused_accessions={
-                a: REFUSED_ACCESSIONS[a] for a in kept.index if a in REFUSED_ACCESSIONS
-            },
+            accessions_stored_as_released=stored_as_released,
             n_records=len(rows),
             n_reference_runs=len(dmso_runs),
             n_table_s4_records=sum(1 for r in rows if r["agent"].drug_class),

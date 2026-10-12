@@ -38,10 +38,11 @@ every SNV and deletion ref base equal to R64-4-1, measured) in the genomes-tier 
 ``hale2024_322134S_variants``. That ref is a variant panel, not an assembly; it is the most
 the release offers and the gap is an open owner decision in the dendron note.
 
-Perturbation = one ``CrisprInterferencePerturbation`` per lineage: the target ORF (the
-lineage table's ``gene_orf``, resolved to a current R64 gene through the shared
-resolver), the genome's own standard name, and a ``CrisprConstruct`` with the
-``dCas9-Mxi1`` effector and the 20-nt guide. Control gRNAs ("Control gRNAs show 'NA' under
+Perturbation = one ``CrisprInterferencePerturbation`` per lineage: the target ORF as the
+lineage table releases it (``gene_orf``, verbatim; no genome is consulted, the data is
+the data), the released ``gene_name`` (or the ORF again for the 162,753 gene rows whose
+``gene_name`` cell is ``NA``), and a ``CrisprConstruct`` with the ``dCas9-Mxi1``
+effector and the 20-nt guide. Control gRNAs ("Control gRNAs show 'NA' under
 the ORF column", 83 guides) perturb no gene, so they are never a record (the Hawkins 2020
 and Cui 2018 precedent); they are the normalization reference and are counted in the
 dropped-record ledger. Guides that bind near a BY/3S polymorphism are SERVED: the paper
@@ -96,7 +97,7 @@ import os.path as osp
 import pickle
 import shutil
 import zipfile
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Literal
@@ -147,7 +148,6 @@ from torchcell.datamodels.schema import (
     UncertaintyType,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.smith2006 import canonical_common_names
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -343,6 +343,7 @@ LINEAGE_COLUMNS = [
     "genotype",
     "guide_seq",
     "gene_orf",
+    "gene_name",
     "guide_category",
 ]
 
@@ -731,7 +732,12 @@ def read_lineage_table(zip_path: str | Path, member: str) -> pd.DataFrame:
         return pd.read_csv(
             handle,
             usecols=LINEAGE_COLUMNS,
-            dtype={"gene_orf": str, "genotype": str, "guide_seq": str},
+            dtype={
+                "gene_orf": str,
+                "gene_name": str,
+                "genotype": str,
+                "guide_seq": str,
+            },
             float_precision="round_trip",
         )
 
@@ -1049,19 +1055,6 @@ def build_parents(
     return by, three_s
 
 
-def orf_resolver(genome: SCerevisiaeGenome) -> Callable[[str], str | None]:
-    """Released ORF -> current R64 systematic name through the SHARED resolver."""
-    gene_set = {gene.upper() for gene in genome.gene_set}
-
-    def resolve(name: str) -> str | None:
-        resolution = genome.resolve_gene_name(str(name).strip())
-        if resolution.is_current_gene and resolution.systematic_name in gene_set:
-            return str(resolution.systematic_name)
-        return None
-
-    return resolve
-
-
 def run_verification(data_root: str | None = None) -> Any:
     """L0-L4 for the built store; writes ``preprocess/verification_report.json``."""
     from torchcell.verification.runners import verify_segregant_perturbation_dataset
@@ -1100,7 +1093,9 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """A genome is REQUIRED (target ORFs resolve through its shared resolver)."""
+        """``genome`` is kept for ``verify_build``'s L4 containment row; the build itself
+        reads none (every target is stored as the lineage table releases it).
+        """
         self.genome = genome
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -1225,19 +1220,11 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
             )
         return out
 
-    def _resolvers(self) -> tuple[Callable[[str], str | None], dict[str, str]]:
-        if self.genome is None:
-            raise RuntimeError(
-                "CrispriSegregantHale2024Dataset requires a genome; inject "
-                "SCerevisiaeGenome(..., overwrite=False)"
-            )
-        return orf_resolver(self.genome), canonical_common_names(self.genome)
-
     @staticmethod
     def perturbation_for(
         orf: str, gene_name: str, guide_seq: str
     ) -> CrisprInterferencePerturbation:
-        """The designed knockdown: target ORF + dCas9-Mxi1 with this 20-nt guide."""
+        """The designed knockdown: released ORF and gene name + dCas9-Mxi1 with this guide."""
         return CrisprInterferencePerturbation(
             systematic_gene_name=orf,
             perturbed_gene_name=gene_name,
@@ -1267,7 +1254,9 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
         return {"$ref": digest, "name": hint}
 
     def iter_assay_rows(self, spec: AssaySpec) -> Iterator[tuple[Any, ...]]:
-        """(geno_bc, guide_bc, fitness, error, genotype, guide_seq, gene_orf) per row."""
+        """(geno_bc, guide_bc, fitness, error, genotype, guide_seq, gene_orf, gene_name)
+        per row; the two gene cells are the release's strings, ``NA`` read as missing.
+        """
         frame = read_lineage_table(
             osp.join(self.raw_dir, spec.released_file), spec.zip_member
         )
@@ -1287,6 +1276,7 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
             frame["genotype"].astype(str),
             frame["guide_seq"].astype(str),
             frame["gene_orf"],
+            frame["gene_name"],
             strict=True,
         )
 
@@ -1301,7 +1291,6 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
             {name: RELEASED_FILES[name].sha256 for name in self.raw_file_names},
         )
         data_root = _data_root()
-        resolve, canonical = self._resolvers()
         os.makedirs(self.preprocess_dir, exist_ok=True)
         os.makedirs(self.processed_dir, exist_ok=True)
 
@@ -1347,15 +1336,13 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
         idx = 0
         member_ranges: dict[str, tuple[int, int]] = {}
         dropped_control: dict[str, int] = {}
-        dropped_unresolved: dict[str, int] = {}
         control_guides: set[str] = set()
-        unresolved_orfs: set[str] = set()
         target_genes: set[str] = set()
         seen_lineages: dict[str, set[str]] = {}
         checked: set[tuple[str, str]] = set()
         for spec in ASSAYS:
             start = idx
-            n_control = n_unresolved = 0
+            n_control = 0
             lineages: set[str] = set()
             induced = spec.induced
             rows = tqdm(
@@ -1377,6 +1364,7 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
                         genotype,
                         guide_seq,
                         orf,
+                        gene_name,
                     ) in chunk:
                         if seg_to_genotype.get(geno_bc) != genotype:
                             raise ValueError(
@@ -1388,23 +1376,19 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
                             control_guides.add(guide_seq)
                             continue
                         key = (orf, guide_seq)
-                        if key not in perturbations and orf not in unresolved_orfs:
-                            systematic = resolve(orf)
-                            if systematic is None:
-                                unresolved_orfs.add(orf)
-                            else:
-                                perturbations[key] = self.perturbation_for(
-                                    systematic,
-                                    canonical.get(systematic, systematic),
-                                    guide_seq,
-                                )
-                                pert_ptr[key] = self._interned_pointer(
-                                    perturbations[key], systematic, itxn
-                                )
-                                target_genes.add(systematic)
                         if key not in perturbations:
-                            n_unresolved += 1
-                            continue
+                            # The released gene name, or the ORF again when the cell
+                            # is NA (the release names no gene for 162,753 gene rows).
+                            released_name = (
+                                gene_name if isinstance(gene_name, str) else orf
+                            )
+                            perturbations[key] = self.perturbation_for(
+                                orf, released_name, guide_seq
+                            )
+                            pert_ptr[key] = self._interned_pointer(
+                                perturbations[key], orf, itxn
+                            )
+                            target_genes.add(orf)
                         replicate_id = f"{geno_bc}_{guide_bc}"
                         if replicate_id in lineages:
                             raise ValueError(
@@ -1457,7 +1441,6 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
                         idx += 1
             member_ranges[spec.screen_id] = (start, idx)
             dropped_control[spec.screen_id] = n_control
-            dropped_unresolved[spec.screen_id] = n_unresolved
             seen_lineages[spec.screen_id] = lineages
             if idx - start != spec.gene_rows:
                 raise ValueError(
@@ -1487,18 +1470,7 @@ class CrispriSegregantHale2024Dataset(ExperimentDataset):
                     n_records=sum(dropped_control.values()),
                     per_assay=dropped_control,
                     items=sorted(control_guides),
-                ),
-                DropRule(
-                    rule="target_orf_is_not_a_current_genome_gene",
-                    scope="row",
-                    description=(
-                        "the lineage table's gene_orf does not resolve to a current R64 "
-                        "gene through the shared resolver"
-                    ),
-                    n_records=sum(dropped_unresolved.values()),
-                    per_assay=dropped_unresolved,
-                    items=sorted(unresolved_orfs),
-                ),
+                )
             ],
         )
         log.info("Wrote %d Hale 2024 records", idx)

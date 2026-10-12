@@ -100,7 +100,7 @@ def summarize(runs: list[dict[str, Any]]) -> dict[str, Any]:
         "window_sd": st.stdev(w) if len(w) > 1 else None,
         "escape_fraction": sum(esc) / len(esc) if esc else None,
         "n_escaped": sum(esc),
-        "train_last_mean": st.mean([r["train_last"] for r in runs if r["train_last"] is not None]) if runs else None,
+        "train_last_mean": st.mean(tl) if (tl := [r["train_last"] for r in runs if r["train_last"] is not None]) else None,
         "partial_window_mean": st.mean([r["partial_window"] for r in runs if r["partial_window"] is not None]) if any(r["partial_window"] is not None for r in runs) else None,
     }
 

@@ -9,17 +9,24 @@
     \toprule
     cell & runs (n) & finished (n) & window mean val Pearson per feature (s.d.) & escape fraction & train Pearson per feature, last epoch (mean) \\
     \midrule
-    \texttt{M\_pool\_lr3e-4} & 2 & 2 & \textbf{0.102 (0.028)} & 2 of 2 & 0.55 \\
+    \texttt{M\_xattn\_lr3e-4} & 1 & 1 & \textbf{0.121} & 1 of 1 & 0.65 \\
+    \texttt{M\_pool\_lr3e-4} & 2 & 2 & 0.102 (0.028) & 2 of 2 & 0.55 \\
     \texttt{M\_zs\_lr3e-4} & 2 & 2 & 0.075 (0.057) & 2 of 2 & 0.29 \\
-    \texttt{M\_cls\_lr3e-3} & 1 & 1 & 0.044 & 0 of 1 & 0.10 \\
-    \texttt{M\_pool\_lr3e-3} & 1 & 1 & 0.040 & 0 of 1 & 0.09 \\
-    \texttt{M\_zs\_lr1e-3} & 1 & 1 & 0.039 & 0 of 1 & 0.07 \\
-    \texttt{M\_cls\_lr1e-3} & 1 & 1 & 0.039 & 0 of 1 & 0.08 \\
-    \texttt{M\_zs\_lr3e-3} & 1 & 1 & 0.039 & 0 of 1 & 0.10 \\
-    \texttt{M\_pool\_lr1e-3} & 1 & 1 & 0.038 & 0 of 1 & 0.08 \\
+    \texttt{M\_cls\_lr3e-3} & 2 & 2 & 0.039 (0.007) & 0 of 2 & 0.12 \\
     \texttt{M\_xattn\_lr3e-3} & 1 & 1 & 0.037 & 0 of 1 & 0.09 \\
-    \texttt{M\_xattn\_lr1e-3} & 1 & 1 & 0.034 & 0 of 1 & 0.08 \\
+    \texttt{M\_pool\_lr3e-3} & 2 & 2 & 0.037 (0.005) & 0 of 2 & 0.11 \\
+    \texttt{M\_zs\_lr3e-3} & 2 & 2 & 0.036 (0.004) & 0 of 2 & 0.11 \\
+    \texttt{M\_zs\_lr1e-3} & 2 & 2 & 0.036 (0.005) & 0 of 2 & 0.08 \\
+    \texttt{M\_cls\_lr1e-3} & 2 & 2 & 0.036 (0.005) & 0 of 2 & 0.11 \\
+    \texttt{M\_pool\_lr1e-3} & 2 & 2 & 0.035 (0.004) & 0 of 2 & 0.09 \\
     \texttt{M\_cls\_lr3e-4} & 2 & 2 & 0.032 (0.003) & 0 of 2 & 0.09 \\
+    \texttt{M\_xattn\_lr1e-3} & 2 & 2 & 0.031 (0.004) & 0 of 2 & 0.07 \\
+    \texttt{M\_pool\_b64\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
+    \texttt{M\_zs\_b128\_lr3e-4} & 6 & 0 & partial & 0 of 6 &  \\
+    \texttt{M\_zs\_b32\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
+    \texttt{M\_pool\_b32\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
+    \texttt{M\_pool\_b128\_lr3e-4} & 6 & 0 & partial & 0 of 6 &  \\
+    \texttt{M\_zs\_b64\_lr3e-4} & 3 & 0 & partial & 0 of 3 &  \\
     \bottomrule
   \end{tabular}
 \end{table}

@@ -799,23 +799,15 @@ def verify_build(
     from torchcell.verification.runners import stream_records
 
     root = fb.data_root(data_root)
-    genome = bacterial_genome("pputida", REFERENCE_STRAIN, root)
-    report = verify_environment_response_dataset_streaming(
-        stream_records(dataset_root),
-        dataset_name=FitnessBrowserPutidaDataset.__name__,
-        provenance=fb.FEBA_PROVENANCE,
-        expected_count=expected_count,
-        sgd_genes=set(genome.genbank.loci),
-        resolve_gene_name=genome.resolve_gene_name,
-    )
-    with open(osp.join(dataset_root, "preprocess", "samples.json")) as handle:
-        samples = json.load(handle)
-    report.add(stored_publications_match(stream_records(dataset_root), samples))
+    # The L4 row first: it reads the served compendium store, which a parallel rebuild
+    # may retire, so it is read in the first minute rather than after the long pass.
     store = osp.join(root, BORCHERT_STORE_REL)
     if not osp.isdir(osp.join(store, "processed", "lmdb")):
         raise FileNotFoundError(f"{store}: the store the L4 row reads is absent")
-    own = fb.stored_fitness(stream_records(dataset_root), ORG_ID)
     served = fb.stored_fitness(stream_records(store), ORG_ID)
+    with open(osp.join(dataset_root, "preprocess", "samples.json")) as handle:
+        samples = json.load(handle)
+    own = fb.stored_fitness(stream_records(dataset_root), ORG_ID)
     pub_of = {r["exp_name"]: r["pub_id"] for r in samples}
     check = fb.compendium_check(
         own,
@@ -828,12 +820,22 @@ def verify_build(
         against=BORCHERT_STORE_REL,
         min_pearson_r=BORCHERT_MIN_PEARSON_R,
     )
-    report.add(fb.compendium_check_result(check, "compendium_cross_check_borchert2024"))
     preprocess = osp.join(dataset_root, "preprocess")
-    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
-        handle.write(report.model_dump_json(indent=2))
     with open(osp.join(preprocess, "compendium_cross_check.json"), "w") as handle:
         handle.write(check.model_dump_json(indent=2))
+    genome = bacterial_genome("pputida", REFERENCE_STRAIN, root)
+    report = verify_environment_response_dataset_streaming(
+        stream_records(dataset_root),
+        dataset_name=FitnessBrowserPutidaDataset.__name__,
+        provenance=fb.FEBA_PROVENANCE,
+        expected_count=expected_count,
+        sgd_genes=set(genome.genbank.loci),
+        resolve_gene_name=genome.resolve_gene_name,
+    )
+    report.add(stored_publications_match(stream_records(dataset_root), samples))
+    report.add(fb.compendium_check_result(check, "compendium_cross_check_borchert2024"))
+    with open(osp.join(preprocess, "verification_report.json"), "w") as handle:
+        handle.write(report.model_dump_json(indent=2))
     return report
 
 

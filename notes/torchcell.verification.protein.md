@@ -22,3 +22,7 @@ This verifier exists because `ProteinAbundancePhenotype` datasets (WS9 Zelezniak
 - L4: protein keys against the S288C R64 ORF + RNA set, the isolate overlap with the built Caudal 2024 store (an exact expected count), and `caudal_genotype_agreement` (sampled shared isolates must carry identical perturbation lists in both stores).
 - L0 validates against `EXPERIMENT_TYPE_MAP[experiment_type]`, not the `ExperimentType` union: the undiscriminated union tries every experiment class and every perturbation leaf, measured 21.8 s against 0.67 s for one 4,768-perturbation record.
 - Entry point: `torchcell.datasets.scerevisiae.muenzner2024.verify_build`, also what `build_dataset_lmdb --verify` and the `natural_isolates` entry of [[torchcell.verification.runners]] `PROTEIN_DATASETS` call. Results: [[torchcell.datasets.scerevisiae.muenzner2024]].
+
+## 2026.10.12 - An S288C-derived column in a natural-isolate store (#1045 row 18)
+
+`natural_isolate_of(record)`: the shared `strain_id` of the perturbations, or, for a record with no perturbation off S288C, the background its own reference genome names (Muenzner 2024's FY4); None when neither says. `strain_uniqueness` (through `rnaseq._l1_strain_uniqueness(strain_of=...)`), `genotype_strain_consistency` (which counts such records as `n_s288c_derived`) and the Caudal overlap read isolates through it. A record with no perturbation on the S288C reference still fails.

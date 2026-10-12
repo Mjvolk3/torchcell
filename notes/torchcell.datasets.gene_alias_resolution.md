@@ -44,3 +44,7 @@ Pins declared on 2026.10.10:
 | `sameith2015` | GAT1 | YFL021W, YKR067W | YFL021W | `sgd_standard_name` | `ID=YFL021W;Name=YFL021W;gene=GAT1;` |
 
 GFF quotes are substrings of `saccharomyces_cerevisiae_R64-4-1_20230830.gff` (sha256 `64f61e3153083a8ef6d853721c9e83e4469cdc120883ec281e51a0df4ba390fa`, the `R64_GFF` provenance in `torchcell/datamodels/strain_background.py`); the Table S4 quotes are the `Systematic Name | Standard Name` cells of `TableS4_complete_dataset_all_lipids.xlsx` (sha256 `91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894`). `test_every_loader_pin_matches_its_source_bytes` re-reads both files when `DATA_ROOT` holds them and checks every quote and hash.
+
+## 2026.10.12 - The #983 rule and refusal reasons are reverted (#1045)
+
+`git revert 07c0caf1b` removes the `SGD_SYSTEMATIC_RENAME` rule, `check_pin` and the `retired_systematic_name` / `merged_into_locus` / `not_current_unpinned` refusal reasons with `torchcell/datasets/systematic_name_currency.py`. Owner, 2026-10-12: "costanzo and kuzmin etc should be reversions"; "the data is the data ... the genome is separate.. it doesn't gate anything". Their only users were #983's loaders, its measurement script and Yoshikawa 2009, which now stores every strain as released. The ambiguous-alias rule of #886 (pinned, sourced resolutions for Xue 2025, da Silveira 2014 and Sameith 2015) is unchanged. History: 07c0caf1b, and the reverted section of this note at 901e00104.

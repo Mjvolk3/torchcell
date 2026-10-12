@@ -217,3 +217,14 @@ All 20 rows pass (`preprocess/verification_report.json`):
 | L4 | isolate_descriptor_matches_table_s1 | 905 descriptors and 48 HO deletions equal Supplementary Table 1 re-read from si3.xls |
 | L4 | loss_of_function_calls_match_release | stored loss-of-function calls are the release's 1s, row for row by the matrix's own key, over 905 isolates: {'nonsense_or_sift': 217011, 'homozygous_frameshift': 131254} |
 | L4 | sequence_variant_genes_are_s288c_genes | 1.000 of 5977 sequence-variant genes are SGD R64-4-1 genes (>= 0.9) |
+
+## 2026.10.12 - Genome-gating sweep: what the three stores leave out, and why nothing changes here
+
+Reviewed against the owner rule of 2026.10.12 (store what the authors released; the genome never gates storage). The three loaders drop no released cell on a genome, identity or field ground:
+
+- The 36,295 + 36,286 control-normalized growth cells are the absolute cells re-expressed (misaligned by one isolate name on 519 of 1,011 rows); the absolute block is stored, so no measurement is lost (a true duplicate, #1006).
+- The `isolates_without_peter_genome` ledger field reads 0: every one of the 1,011 isolates has its Peter 2018 genome, so the field is accounting, not a live drop. The isolate genotype itself is derived from the genomes tier (the variant, presence and absence calls against S288C), which is how a natural isolate's perturbation set is represented (#1002); that derivation is not a gate on a released phenotype value.
+- The 757 engineered validation-strain rows (IME1, WHI2, HPF1-like edits on isolate backgrounds) need a genotype leaf that does not exist (#1007); they are counted and not loaded, which stays an owner decision on the schema, not a loader rule.
+- NA cells (7,178 / 7,187 / 3,163) are the release's own blanks.
+
+No loader code changes in `fix/genome-gate-reversals-yeast-3`; the stores are not rebuilt.

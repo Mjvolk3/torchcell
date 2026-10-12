@@ -4,7 +4,8 @@
 """Puddu 2019 loader: its pure builders, and its readers against the mirrored workbook.
 
 The pure half runs anywhere (the environment, the background, the perturbation builder,
-the ORF reconciliation against a fake resolver, the n-denominator SD). The ``data``-marked
+the n-denominator SD). The loader consults no genome: every colony is stored under the
+deletion name the release gives it. The ``data``-marked
 half reads the real Supplementary Tables workbook out of the raw mirror and asserts the
 counts the module docstring states, so a re-released workbook fails here rather than
 silently changing the store.
@@ -15,12 +16,11 @@ from __future__ import annotations
 import os
 import os.path as osp
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from torchcell.datamodels.genome_architecture_features import PUDDU2019_WGS_COVERAGE
-from torchcell.datamodels.schema import OrfHistoryRelation, Zygosity
+from torchcell.datamodels.schema import Zygosity
 from torchcell.datasets.scerevisiae import puddu2019 as p
 
 
@@ -34,22 +34,6 @@ def _data_root() -> str:
 _RAW = osp.join(_data_root(), p.RAW_DIR_REL)
 _WORKBOOK = osp.join(_RAW, p.SI_TABLES_XLSX)
 _LIBRARY = osp.join(_data_root(), "torchcell-library")
-
-
-class _Resolution:
-    """What the genome's ``resolve_gene_name`` returns, for the fake resolver."""
-
-    def __init__(self, status: str, systematic_name: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic_name
-
-
-def _fake_resolver(table: dict[str, tuple[str, str | None]]) -> Any:
-    def resolve(name: str) -> _Resolution:
-        status, target = table.get(name, ("current", name))
-        return _Resolution(status, target)
-
-    return resolve
 
 
 # --------------------------------------------------------------------------- #
@@ -108,14 +92,16 @@ def test_a_detected_tag_is_kept_verbatim_and_an_absent_one_is_a_typed_gap() -> N
     assert p._tags("  ") is None
     both = p.deletion_perturbation(
         systematic_gene_name="YBR273C",
+        perturbed_gene_name="UBX7",
         strain_id="Del5_UBX7",
         uptag="ATTTGTGTCCCTGCGCCTG",
         dntag="GGCGATATCCAGCCTAG",
         has_barcode_row=True,
-        constructed=None,
     )
     assert both.barcode == "ATTTGTGTCCCTGCGCCTG"
-    assert both.perturbed_gene_name == "YBR273C"
+    assert both.systematic_gene_name == "YBR273C"
+    assert both.perturbed_gene_name == "UBX7"
+    assert both.constructed_orf is None
     assert both.cassette == "kanMX4"
     assert both.construction is not None
     assert both.construction.strain_accession == "Del5_UBX7"
@@ -125,11 +111,11 @@ def test_a_detected_tag_is_kept_verbatim_and_an_absent_one_is_a_typed_gap() -> N
 
     none = p.deletion_perturbation(
         systematic_gene_name="YCR082W",
+        perturbed_gene_name="AHC2",
         strain_id="Del55_AHC2",
         uptag=None,
         dntag="AATTGCCGCTGAGCTGATGT",
         has_barcode_row=True,
-        constructed=None,
     )
     assert [gap.field for gap in none.provenance_gaps] == ["barcode"]
     assert none.provenance_gaps[0].note is not None
@@ -137,11 +123,11 @@ def test_a_detected_tag_is_kept_verbatim_and_an_absent_one_is_a_typed_gap() -> N
 
     no_row = p.deletion_perturbation(
         systematic_gene_name="YDR140W",
+        perturbed_gene_name="MTQ2",
         strain_id="Del1821_MTQ2",
         uptag=None,
         dntag=None,
         has_barcode_row=False,
-        constructed=None,
     )
     assert [gap.field for gap in no_row.provenance_gaps] == [
         "barcode",
@@ -151,45 +137,32 @@ def test_a_detected_tag_is_kept_verbatim_and_an_absent_one_is_a_typed_gap() -> N
     assert "carries no row for this colony" in no_row.provenance_gaps[0].note
 
 
-def test_a_renamed_orf_is_stored_under_its_current_gene_and_a_retired_one_refused() -> (
-    None
-):
-    resolve = _fake_resolver(
-        {
-            "YAR044W": ("renamed", "YAR042W"),
-            "YAR037W": ("retired", "YAR037W"),
-            "YIL168W": ("non_gene_feature", "YIL167W"),
-            "YIL167W": ("non_gene_feature", "YIL167W"),
-            "YCL074W": ("non_gene_feature", "YCL074W"),
-        }
+def test_a_retired_orf_is_stored_under_its_released_name() -> None:
+    """YAR037W is retired in R64; the release names it, so it is stored as released."""
+    retired = p.deletion_perturbation(
+        systematic_gene_name="YAR037W",
+        perturbed_gene_name="YAR037W",
+        strain_id="Del2_YAR037W",
+        uptag="ACGT",
+        dntag="TTTT",
+        has_barcode_row=True,
     )
-    resolved = p.resolve_released_genes(
-        ["YAL001C", "YAR044W", "YAR042W", "YAR037W", "YIL168W", "YIL167W", "YCL074W"],
-        resolve,
-    )
-    assert resolved.refused == {"YAR037W": "retired"}
-    assert resolved.current["YAR044W"] == "YAR042W"
-    assert resolved.current["YIL168W"] == "YIL167W"
-    assert resolved.current["YCL074W"] == "YCL074W"
-    assert sorted(resolved.constructed) == ["YAR044W", "YIL168W"]
-    merged = resolved.constructed["YAR044W"]
-    assert merged.source_systematic_name == "YAR044W"
-    assert merged.relation is OrfHistoryRelation.merged
-    assert merged.deleted_span is None
-    assert [gap.field for gap in merged.provenance_gaps] == ["deleted_span"]
+    assert retired.systematic_gene_name == "YAR037W"
+    assert retired.perturbed_gene_name == "YAR037W"
+    assert retired.constructed_orf is None
 
 
-def test_a_single_source_rename_leaves_the_relation_a_typed_gap() -> None:
-    resolve = _fake_resolver({"YFL043C": ("renamed", "YFL042C")})
-    resolved = p.resolve_released_genes(["YFL043C"], resolve)
-    orf = resolved.constructed["YFL043C"]
-    assert orf.relation is None
-    assert sorted(gap.field for gap in orf.provenance_gaps) == [
-        "deleted_span",
-        "relation",
-    ]
-    assert orf.provenance_gaps[1].resolve_with is not None
-    assert "yeastgenome.org" in str(orf.provenance_gaps[1].resolve_with.source_uri)
+def test_the_loader_takes_no_genome_and_the_ledger_has_no_refusal() -> None:
+    import inspect
+
+    params = inspect.signature(p.GenomeArchitecturePuddu2019Dataset.__init__).parameters
+    assert "genome" not in params
+    assert not hasattr(p, "resolve_released_genes")
+    assert not hasattr(p, "constructed_orf")
+    assert not hasattr(p, "ResolvedGenes")
+    assert not hasattr(p, "N_RETIRED_ORF_COLONIES")
+    assert p.N_SERVED_RECORDS == p.N_KNOCKOUT_COLONIES == 8835
+    assert "refused" not in p.ReleaseLedger.model_fields
 
 
 def test_the_published_wild_type_sd_is_an_n_denominator_sd() -> None:
@@ -296,6 +269,35 @@ def test_the_other_tables_have_the_released_shapes_and_agree_with_table_3() -> N
     assert len(genes) == p.N_GENE_ROWS == 4436
     assert genes["UBX7"] == "YBR273C"
     assert genes["MTQ2"] == "YDR140W"
+
+
+@pytest.mark.data
+@pytest.mark.skipif(
+    not osp.isfile(_WORKBOOK), reason="Puddu 2019 raw mirror not on disk"
+)
+def test_every_knockout_colony_has_a_released_deletion_name_the_retired_included() -> (
+    None
+):
+    """8,835 colonies, 4,437 released names, the 9 on the 5 retired ORFs among them."""
+    colonies = p.read_colonies(_WORKBOOK)
+    served = colonies[~colonies["Deletion"].str.match(p.WILD_TYPE_LABEL)].reset_index(
+        drop=True
+    )
+    barcodes = p.read_confirmed_deletions(_WORKBOOK).set_index("SDname")
+    genes = p.read_gene_names(_WORKBOOK)
+    dataset = p.GenomeArchitecturePuddu2019Dataset.__new__(
+        p.GenomeArchitecturePuddu2019Dataset
+    )
+    released = dataset._released_gene_of_colony(served, barcodes, genes)
+    assert len(released) == p.N_SERVED_RECORDS == 8835
+    assert len(set(released.values())) == 4437
+    retired = {"YAR037W", "YAR040C", "YAR043C", "YCL013W", "YCL026C"}
+    on_retired = sorted(c for c, g in released.items() if g in retired)
+    assert len(on_retired) == 9
+    assert {released[c] for c in on_retired} == retired
+    common_of_gene = {systematic: common for common, systematic in genes.items()}
+    assert set(released.values()) - set(common_of_gene) == {"YKL075C"}
+    assert common_of_gene["YBR273C"] == "UBX7"
 
 
 @pytest.mark.data

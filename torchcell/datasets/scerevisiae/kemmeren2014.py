@@ -38,7 +38,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.sequence.genome.scerevisiae import GeneNameStatus, SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -109,6 +108,71 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 # process() no longer reads them; they stay in raw_file_names as the paper's named
 # comparison pools.
 
+# ============================================================================
+# Gene names in GEO titles: the release's own crosswalk, plus one pinned residue
+# ============================================================================
+# A deletion array's GEO title names the deleted gene by a common name ("bck1-del-1-a",
+# "[HS1991] cup9-del-a"). The release's own crosswalk is Table S1
+# (kemmeren2014_table_s1.xlsx: 1,484 rows, columns ``gene``, ``orf name``, ``mating
+# type``), and a title token is resolved ONLY through it: a token that is a Table S1
+# ``gene`` takes that row's ``orf name``, and a token that IS a Table S1 ``orf name``
+# is taken verbatim. No genome, alias table or reconciler is consulted (the genome is a
+# separate layer and gates nothing).
+#
+# The residue below is the one remaining crosswalk. Measured 2026-10-12 over the 2,633
+# deletion arrays of GSE42527 + GSE42526, 73 arrays carry a title token the release
+# pairs with no ORF: 69 arrays of 36 names that Table S1 spells differently (GEO
+# ``abc1-del``, Table S1 ``COQ8`` / YGL119W; GEO's sample characteristics carry only the
+# same ``-del`` token, and only 12 of the 69 can be joined to Table S1 through a slide
+# number in the supplementary-file name), and 4 arrays of TLC1 and CMS1, whose Table S1
+# ``orf name`` cell is the common name itself. Each maps to the ORF the KG 3.0 build
+# served it under, read from that build's preprocess/data.csv (``title``,
+# ``systematic_gene_name``), never from the genome. Every ORF is a Table S1 ``orf name``
+# (so the mating-type row joins) except YNCB0010W and YLR003C, which join through the
+# TLC1 and CMS1 rows. This table is pending group 1's released-gene-name leaf (a
+# GenePerturbation child carrying the released symbol with ``systematic_gene_name`` as
+# a typed gap); once it lands, these 38 names are stored verbatim and the table goes.
+RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: dict[str, str] = {
+    "ABC1": "YGL119W",
+    "ATG24": "YJL036W",
+    "ATG31": "YDR022C",
+    "ATG6": "YPL120W",
+    "CAC1": "YPR018W",
+    "CAF17": "YJR122W",
+    "CAP": "YNL138W",
+    "CDK8": "YPL042C",
+    "CHF1": "YHR115C",
+    "CHF2": "YNL116W",
+    "CMS1": "YLR003C",
+    "CSN12": "YJR084W",
+    "CTH2": "YLR136C",
+    "CYCC": "YNL025C",
+    "FMP38": "YOR205C",
+    "HPA1": "YPL086C",
+    "HPR5": "YJL092W",
+    "HSN1": "YHR127W",
+    "KEM1": "YGL173C",
+    "KRH1": "YAL056W",
+    "KRH2": "YOR371C",
+    "LUG1": "YCR087C-A",
+    "MED12": "YCR081W",
+    "MED13": "YDR443C",
+    "MED15": "YOL051W",
+    "MED16": "YNL236W",
+    "MED18": "YGR104C",
+    "MED20": "YHR041C",
+    "MED3": "YGL025C",
+    "MED31": "YGL127C",
+    "MED5": "YGL151W",
+    "MED9": "YNR010W",
+    "NOT4": "YER068W",
+    "RIS1": "YOR191W",
+    "SET7": "YDR257C",
+    "SHA3": "YPL026C",
+    "SSN6": "YBR112C",
+    "TLC1": "YNCB0010W",
+}
+
 
 @register_dataset
 class MicroarrayKemmeren2014Dataset(ExperimentDataset):
@@ -119,6 +183,10 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     responsive and non-responsive mutant GEO series. The four wildtype series
     (BY4741 MATa, BY4742 MATalpha) are downloaded as the paper's named WT pools but
     no stored value is computed from them (#484).
+
+    Each deletion is keyed by the ORF the release pairs with its GEO title token
+    (Table S1, or the pinned ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF`` residue), and
+    ``perturbed_gene_name`` is the release's own name for it; no genome is consulted.
 
     Data source: GEO accessions GSE42527, GSE42526, and wildtype references.
     Paper: Kemmeren et al. (2014) Cell.
@@ -140,44 +208,19 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         "GSE42215"  # MATalpha, Erlenmeyer flask, 200 replicates
     )
 
-    # Special gene name mappings that are not in standard databases
-    # HSN1: The name was reserved for YHR127W but subsequently withdrawn (SGD note 2003-02-07)
-    # See: https://www.yeastgenome.org/locus/YHR127W
-    # TLC1: Telomerase RNA component (systematic name YNCB0010W) - non-coding RNA gene
-    # Note: TLC1 is not in the standard gene set because it's a telomerase_RNA_gene feature type,
-    # not a protein-coding gene. The genome.gene_set only includes features of type "gene" (6607 protein-coding).
-    # Other non-coding RNA genes (tRNA_gene, rRNA_gene, snoRNA_gene, snRNA_gene, ncRNA_gene)
-    # are stored as separate feature types and require special handling.
-    # CMS1: Maps to YLR003C (current SGD gene as of 2025.09.11; YNL307C is already in Excel as SKN7)
-    # LUG1: Historical nomenclature issue - LUG1 was reserved for YCR087C-A but never published (SGD note 2012-05-22)
-    # LUG1 later became the standard name for YLR352W. The Kemmeren 2014 dataset uses the historical meaning.
-    # See: https://www.yeastgenome.org/locus/YCR087C-A#history
-    # This mapping ensures we capture expression data for YCR087C-A from the "lug1-del" GEO samples.
-    SPECIAL_GENE_MAPPINGS = {
-        "HSN1": "YHR127W",  # Historical alias retained by SGD
-        "TLC1": "YNCB0010W",  # Telomerase RNA component
-        "CMS1": "YLR003C",  # Current SGD gene as of 2025.09.11 (YNL307C is already mapped as SKN7)
-        "LUG1": "YCR087C-A",  # Historical reserved name, now maps to YLR352W but dataset uses old meaning
-    }
-
     def __init__(
         self,
         root: str = "data/torchcell/microarray_kemmeren2014",
         io_workers: int = 0,
         process_workers: int = 0,  # For parallel processing of experiments
         batch_size: int = 10,  # Batch size for parallel processing
-        genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset, optionally injecting a genome for gene mapping."""
+        """Initialize the dataset; gene names come from the release's Table S1."""
         self.process_workers = process_workers
         self.batch_size = batch_size
-
-        # Genome for gene name mapping (optional, injected)
-        # If None, gene resolution methods will have limited functionality
-        self.genome = genome
 
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -289,12 +332,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse GEO expression data into experiments and write the LMDB store."""
-        # Initialize resolution statistics
-        self.resolved_by_excel = 0
-        self.resolved_by_gene_table = 0
-        self.resolved_by_alias = 0
-        self.resolved_by_shared_reconciler = 0
-        self.unresolved_genes = 0
+        # Resolution census: every deletion array resolves through exactly one route
+        self.resolved_by_table_s1_gene = 0
+        self.resolved_by_table_s1_orf = 0
+        self.resolved_by_release_title_names = 0
+        # ORF -> the release's own name for the deleted gene (perturbed_gene_name)
+        self.released_gene_names: dict[str, str] = {}
 
         # Load mating type information from supplementary table
         systematic_to_strain, common_to_systematic = self._load_mating_type_map()
@@ -381,8 +424,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     already_assigned,
                 )
                 gene_resolved_from_title = True  # Mark that we attempted resolution
-                if not systematic_gene_name:
-                    log.debug(f"Skipping {common_name} from title - cannot resolve")
 
             # Check the channel characteristics for confirmation. The deletion is in
             # ch2 on the "-a" arrays and in ch1 on the "-b" arrays (the dye swap), so
@@ -410,10 +451,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                             systematic_to_strain,
                             already_assigned,
                         )
-                        if not systematic_gene_name:
-                            log.debug(
-                                f"Skipping {common_name} from characteristics - cannot resolve"
-                            )
 
             # Final check: Only mark as wildtype if no deletion was found
             # Most samples should be deletion mutants (with or without dye-swap)
@@ -476,21 +513,12 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         # Log gene resolution summary
         log.info("=== Gene Resolution Summary ===")
-        log.info(f"Resolved by Excel mapping: {self.resolved_by_excel}")
-        log.info(f"Resolved by gene_attribute_table: {self.resolved_by_gene_table}")
-        log.info(f"Resolved by alias_to_systematic: {self.resolved_by_alias}")
+        log.info(f"Resolved by Table S1 gene: {self.resolved_by_table_s1_gene}")
+        log.info(f"Resolved by Table S1 orf name: {self.resolved_by_table_s1_orf}")
         log.info(
-            f"Resolved by shared R64 reconciler: {self.resolved_by_shared_reconciler}"
+            "Resolved by RELEASE_TITLE_NAMES_WITHOUT_AN_ORF: "
+            f"{self.resolved_by_release_title_names}"
         )
-        log.info(f"Could not resolve: {self.unresolved_genes}")
-        total_attempts = (
-            self.resolved_by_excel
-            + self.resolved_by_gene_table
-            + self.resolved_by_alias
-            + self.resolved_by_shared_reconciler
-            + self.unresolved_genes
-        )
-        log.info(f"Total resolution attempts: {total_attempts}")
 
         # Check for one-to-one mapping with Excel ORF names
         excel_orf_names = set(systematic_to_strain.keys())
@@ -615,6 +643,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                 # Create sample info for this gene deletion
                 sample_info = {
                     "systematic_gene_name": gene_name,
+                    "perturbed_gene_name": self.released_gene_names[gene_name],
                     "num_replicates": len(gsm_list),
                     "strain": strain,
                 }
@@ -679,6 +708,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     probe_to_gene_map,
                     systematic_to_strain,
                     self.name,
+                    self.released_gene_names,
                 )
                 futures.append(future)
 
@@ -720,6 +750,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         probe_to_gene_map: dict[str, str],
         systematic_to_strain: dict[str, str],
         dataset_name: str,
+        released_gene_names: dict[str, str],
     ) -> list[bytes]:
         """Process a batch of gene deletions. Static method for multiprocessing."""
         results = []
@@ -744,6 +775,7 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
             # Create sample info for this gene deletion
             sample_info = {
                 "systematic_gene_name": gene_name,
+                "perturbed_gene_name": released_gene_names[gene_name],
                 "num_replicates": len(gsm_list),
                 "strain": strain,
             }
@@ -954,8 +986,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
 
         Returns:
             Tuple of:
-            - Dictionary mapping systematic gene names to strains (BY4741 or BY4742)
-            - Dictionary mapping common gene names to systematic names
+            - Dictionary mapping each ``orf name`` cell as released (upper-cased; TLC1
+              and CMS1 are common names and stay so) to its strain (BY4741 or BY4742)
+            - Dictionary mapping each Table S1 ``gene`` to that row's ``orf name``
         """
         systematic_to_strain = {}
         common_to_systematic = {}
@@ -1028,23 +1061,9 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                     common_name = row[gene_col] if gene_col else None
 
                     if pd.notna(systematic_name) and pd.notna(mating_type):
-                        # Convert to uppercase
+                        # The orf name cell as released (upper-cased; two cells,
+                        # TLC1 and CMS1, are common names and stay as released)
                         systematic_name = str(systematic_name).upper()
-
-                        # Handle special cases where orf name is actually a common name
-                        # TLC1 and CMS1 appear in orf name column but are common names, not systematic
-                        if systematic_name == "TLC1":
-                            systematic_name = "YNCB0010W"  # Telomerase RNA component
-                            log.info(
-                                "Converted TLC1 -> YNCB0010W in Excel orf name column"
-                            )
-                        elif systematic_name == "CMS1":
-                            systematic_name = (
-                                "YLR003C"  # Current SGD gene as of 2025.09.11
-                            )
-                            log.info(
-                                "Converted CMS1 -> YLR003C in Excel orf name column"
-                            )
                         excel_genes_original.append(systematic_name)
                         excel_genes_converted.append(systematic_name)
 
@@ -1080,12 +1099,6 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
                         if common_name and pd.notna(common_name):
                             common_name_upper = str(common_name).upper()
                             common_to_systematic[common_name_upper] = systematic_name
-
-                        # For TLC1 and CMS1, also add mapping from common name since they appear in GEO
-                        if systematic_name == "YNCB0010W":  # TLC1
-                            common_to_systematic["TLC1"] = "YNCB0010W"
-                        elif systematic_name == "YLR003C":  # CMS1
-                            common_to_systematic["CMS1"] = "YLR003C"
 
                 # Summary output only
                 # Count strains
@@ -1126,175 +1139,56 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         common_to_systematic: dict[str, str],
         systematic_to_strain: dict[str, str],
         already_assigned: set[str] | None = None,
-    ) -> str | None:
-        """Comprehensive gene name resolution with multiple fallback strategies.
-
-        Priority:
-        1. Special hardcoded mappings
-        2. Excel mapping (experiment-specific)
-        3. gene_attribute_table (one-to-one)
-        4. alias_to_systematic (one-to-many with filtering)
-        5. Case-insensitive alias_to_systematic
-        6. Direct check in systematic_to_strain
-        7. Return None if cannot resolve
-        """
-        if already_assigned is None:
-            already_assigned = set()
-
-        genome = cast(SCerevisiaeGenome, self.genome)
-        gene_upper = gene_name.upper()
-
-        # Pass 1: Check special mappings first
-        # Note: For non-coding RNA genes like TLC1, return the systematic name even if not in Excel
-        if gene_upper in self.SPECIAL_GENE_MAPPINGS:
-            systematic = self.SPECIAL_GENE_MAPPINGS[gene_upper]
-            # First check if the systematic name is in the Excel (most cases)
-            if systematic in systematic_to_strain:
-                self.resolved_by_alias += 1
-                return systematic
-            # For non-coding RNA genes, we still return the systematic name
-            # even if not in Excel, to avoid returning the invalid common name
-            else:
-                log.info(
-                    f"Special mapping {gene_upper} -> {systematic} (non-coding RNA gene not in Excel)"
-                )
-                self.resolved_by_alias += 1
-                return systematic
-
-        # Pass 2: Direct Excel mapping
-        if gene_upper in common_to_systematic:
-            self.resolved_by_excel += 1
-            return common_to_systematic[gene_upper]
-
-        # Pass 3: Gene attribute table (one-to-one)
-        if hasattr(genome, "gene_attribute_table"):
-            df = genome.gene_attribute_table
-
-            # Check if it's already systematic in the table
-            if gene_upper in df["ID"].values:
-                if gene_upper in systematic_to_strain:
-                    self.resolved_by_gene_table += 1
-                    return gene_upper
-
-            # Check gene column
-            matches = df[df["gene"] == gene_upper]
-            if not matches.empty:
-                systematic = matches.iloc[0]["ID"]
-                if systematic in systematic_to_strain:
-                    self.resolved_by_gene_table += 1
-                    return cast(str, systematic)
-
-            # Check Alias column
-            matches = df[df["Alias"] == gene_upper]
-            if not matches.empty:
-                systematic = matches.iloc[0]["ID"]
-                if systematic in systematic_to_strain:
-                    self.resolved_by_gene_table += 1
-                    return cast(str, systematic)
-
-        # Pass 4: Alias to systematic (handle one-to-many)
-        if hasattr(genome, "alias_to_systematic"):
-            candidates = genome.alias_to_systematic.get(gene_upper, [])
-
-            if candidates:
-                # Filter for Excel existence only (multiple aliases can map to same systematic)
-                valid = [c for c in candidates if c in systematic_to_strain]
-
-                if len(valid) == 1:
-                    log.debug(f"Resolved {gene_name} → {valid[0]} via alias matching")
-                    self.resolved_by_alias += 1
-                    return valid[0]
-                elif len(valid) > 1:
-                    # Pick first alphabetically for consistency
-                    chosen = sorted(valid)[0]
-                    log.warning(
-                        f"Multiple candidates for {gene_name}: {valid}, chose {chosen}"
-                    )
-                    self.resolved_by_alias += 1
-                    return chosen
-
-        # Pass 5: Case-insensitive alias to systematic (for cases like CYCC vs CycC)
-        if hasattr(genome, "alias_to_systematic"):
-            # Try case-insensitive matching
-            for alias, systematics in genome.alias_to_systematic.items():
-                if alias.upper() == gene_upper:
-                    # Filter for Excel existence
-                    valid = [c for c in systematics if c in systematic_to_strain]
-                    if len(valid) == 1:
-                        log.debug(
-                            f"Resolved {gene_name} → {valid[0]} via case-insensitive alias matching"
-                        )
-                        self.resolved_by_alias += 1
-                        return valid[0]
-                    elif len(valid) > 1:
-                        chosen = sorted(valid)[0]
-                        log.debug(
-                            f"Multiple candidates for {gene_name} (case-insensitive): {valid}, chose {chosen}"
-                        )
-                        self.resolved_by_alias += 1
-                        return chosen
-
-        # Pass 6: Check if the gene itself exists in Excel (might be non-standard name)
-        if gene_upper in systematic_to_strain:
-            log.info(f"Using {gene_upper} directly (found in Excel)")
-            self.resolved_by_excel += 1
-            return gene_upper
-
-        # Pass 7: Shared R64 reconciler (SCerevisiaeGenome.resolve_gene_name, PR #98).
-        # The passes above filter alias hits by Excel membership (systematic_to_strain),
-        # which drops valid one-to-one aliases whose systematic id is not an Excel strain
-        # key (e.g. CDK8 -> YPL042C, the Mediator/CDK-module common names). The shared
-        # reconciler is the ONE source->R64 resolver designed to RETAIN such records; we
-        # accept only a definite live gene (CURRENT / RENAMED) so ambiguous / retired names
-        # still fall through to review rather than being silently invented.
-        if hasattr(genome, "resolve_gene_name"):
-            res = genome.resolve_gene_name(gene_name)
-            if (
-                res.status in (GeneNameStatus.CURRENT, GeneNameStatus.RENAMED)
-                and res.systematic_name is not None
-            ):
-                log.info(
-                    f"Resolved {gene_name} -> {res.systematic_name} via shared R64 "
-                    f"reconciler ({res.status})"
-                )
-                self.resolved_by_shared_reconciler += 1
-                return res.systematic_name
-
-        # Final: Cannot resolve
-        log.info(f"Cannot resolve {gene_name} - not in genome annotations or Excel")
-        self.unresolved_genes += 1
-        return None
-
-    def convert_gene_name(
-        self, gene_name: str, common_to_systematic: dict[str, str]
     ) -> str:
-        """Simple conversion for expression data - keep as-is if no mapping.
+        """The ORF a GEO title token names, through the release only.
 
-        Used for probe-to-gene mappings where we want to keep all genes.
+        Routes, in order, each counted:
+
+        1. ``RELEASE_TITLE_NAMES_WITHOUT_AN_ORF``, the pinned residue of 38 tokens the
+           release pairs with no ORF (see the module comment). When the ORF has no
+           Table S1 row of its own but the token does (TLC1, CMS1, whose ``orf name``
+           cell is the common name), the token's mating-type row is joined to the ORF
+           in ``systematic_to_strain``.
+        2. A Table S1 ``gene`` -> that row's ``orf name``.
+        3. A token that IS a Table S1 ``orf name``, taken verbatim.
+
+        The release's own name for the deleted gene (the title token for routes 1 and
+        2, the row's Table S1 ``gene`` for route 3, else the ORF) is recorded in
+        ``released_gene_names`` and becomes ``perturbed_gene_name``. A token on none of
+        the routes raises ``ValueError``: a deletion array the release ships is never
+        skipped silently. ``already_assigned`` is accepted and not read.
         """
-        genome = cast(SCerevisiaeGenome, self.genome)
         gene_upper = gene_name.upper()
-
-        # Check Excel mapping
-        if gene_upper in common_to_systematic:
-            return common_to_systematic[gene_upper]
-
-        # Try gene_attribute_table
-        if hasattr(genome, "gene_attribute_table"):
-            df = genome.gene_attribute_table
-
-            # Check gene column
-            matches = df[df["gene"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-            # Check Alias column
-            matches = df[df["Alias"] == gene_upper]
-            if not matches.empty:
-                return cast(str, matches.iloc[0]["ID"])
-
-        # Return as-is
-        return gene_name
+        released_name: str
+        if gene_upper in RELEASE_TITLE_NAMES_WITHOUT_AN_ORF:
+            systematic = RELEASE_TITLE_NAMES_WITHOUT_AN_ORF[gene_upper]
+            if (
+                systematic not in systematic_to_strain
+                and gene_upper in systematic_to_strain
+            ):
+                systematic_to_strain[systematic] = systematic_to_strain[gene_upper]
+            self.resolved_by_release_title_names += 1
+            released_name = gene_upper
+        elif gene_upper in common_to_systematic:
+            systematic = common_to_systematic[gene_upper]
+            self.resolved_by_table_s1_gene += 1
+            released_name = gene_upper
+        elif gene_upper in systematic_to_strain:
+            systematic = gene_upper
+            self.resolved_by_table_s1_orf += 1
+            row_genes = [g for g, o in common_to_systematic.items() if o == systematic]
+            released_name = row_genes[0] if row_genes else systematic
+        else:
+            raise ValueError(
+                f"Kemmeren 2014 title token {gene_name!r} is neither a Table S1 gene, "
+                "a Table S1 orf name, nor in RELEASE_TITLE_NAMES_WITHOUT_AN_ORF"
+            )
+        recorded = self.released_gene_names.setdefault(systematic, released_name)
+        if recorded != released_name:
+            raise ValueError(
+                f"{systematic} is named both {recorded} and {released_name} by the release"
+            )
+        return systematic
 
     def preprocess_raw(
         self, df: pd.DataFrame, preprocess: dict[str, Any] | None = None
@@ -1425,12 +1319,13 @@ class MicroarrayKemmeren2014Dataset(ExperimentDataset):
         )
 
         # Create genotype for deletion mutant
-        systematic_name = sample_info["systematic_gene_name"]
+        # ``perturbed_gene_name`` is the release's own name for the deleted gene
+        # (``resolve_gene_name_comprehensive``)
         genotype = Genotype(
             perturbations=[
                 KanMxDeletionPerturbation(
-                    systematic_gene_name=systematic_name,
-                    perturbed_gene_name=systematic_name,  # Use same name
+                    systematic_gene_name=sample_info["systematic_gene_name"],
+                    perturbed_gene_name=sample_info["perturbed_gene_name"],
                 )
             ]
         )
@@ -1537,16 +1432,8 @@ if __name__ == "__main__":
     load_dotenv()
     DATA_ROOT = os.getenv("DATA_ROOT")
 
-    # Initialize genome for gene name mapping
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(cast(str, DATA_ROOT), "data/sgd/genome"),
-        go_root=osp.join(cast(str, DATA_ROOT), "data/go"),
-        overwrite=False,
-    )
-
     dataset = MicroarrayKemmeren2014Dataset(
         root=osp.join(cast(str, DATA_ROOT), "data/torchcell/microarray_kemmeren2014"),
-        genome=genome,
         io_workers=10,
         process_workers=10,
     )

@@ -38,7 +38,6 @@ from __future__ import annotations
 
 import csv
 import gzip
-import json
 import math
 import re
 from collections import Counter
@@ -337,13 +336,8 @@ def verify_induction_timecourse(
     ledger = h.ReleaseLedger.model_validate_json(
         (preprocess_dir / "release_ledger.json").read_text()
     )
-    gene_keys = {
-        name: h.GeneKey.model_validate(value)
-        for name, value in json.loads(
-            (preprocess_dir / "gene_keys.json").read_text()
-        ).items()
-    }
-    key_of = {name: key.stored_key for name, key in gene_keys.items()}
+    # Every layer is keyed by the release's GeneName token verbatim (2026.10.12).
+    key_of = {name: name for name in release.genes}
     shared = SharedRecordRules()
 
     n = 0
@@ -451,13 +445,14 @@ def verify_induction_timecourse(
         elif (
             len(perts) != 1
             or perts[0]["perturbation_type"] != "inducible_promoter_insertion"
-            or perts[0]["systematic_gene_name"] != key_of.get(tf)
+            or perts[0]["systematic_gene_name"] != h.induced_orf(tf)
         ):
             genotype_bad.append({"tc": tc, "problem": "insertion does not name the TF"})
         else:
             gene = perts[0]["systematic_gene_name"]
             induced_genes.add(gene)
-            value = phen["log2_ratio_unprocessed"][gene]
+            # the layers are keyed by the release's own token (the TF column)
+            value = phen["log2_ratio_unprocessed"][tf]
             if tc not in last_unprocessed or minutes > last_unprocessed[tc][0]:
                 last_unprocessed[tc] = (minutes, value, gene)
         # reference

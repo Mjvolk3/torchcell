@@ -9,7 +9,10 @@ the '3DeltaAlpha' drug-sensitized barcoded yeast deletion library ANAEROBICALLY 
 34 conditions (Fig 1B: 33 inhibitors, mostly plant-hydrolysate toxins, and DMSO), in
 independent biological triplicate, alongside matched inhibitor-free controls on the same
 plates. The readout is log2(inhibitor/control) barcode abundance, a per-deletion fitness
-response.
+response. The GEO count matrix releases 45 condition tokens: the 34 Fig 1B conditions and
+11 more that Table S1 lists with their IC30 dose but no figure shows (two imidazoles and
+4(5)-methylimidazole, caffeic acid, levulinic acid, myclobutanil, the two QUADRIS doses,
+and the three sodium salts). All 45 are stored as released.
 
 READOUT PROVENANCE / RIGOR. The paper's published values are edgeR glmQLFit PAIRED
 logFCs on TMM-normalized counts ("using TMM normalization and glmQLFit comparing paired
@@ -37,8 +40,10 @@ not be treated as such; nothing mirrored carries the published numbers.
 CONTROL PAIRING. Each replicate is paired with the control columns of its OWN ``CG00n``
 batch, because the paper's design is paired and its comparison is "to the paired SynBase
 medium control"; MMS is the one served condition the paper analyzed UNPAIRED, so its
-control is the mean of all 16 control columns (its ``units`` string records that). DMSO
-is served as a condition paired the same way, at its Table S1 dose (below).
+control is the mean of all 16 control columns (its ``units`` string records that).
+The same Methods sentence names the QUADRIS compounds unpaired too, so QUADRIS1 and
+QUADRIS2 take the pooled control. DMSO is served as a condition paired the same way as
+the inhibitors, at its Table S1 dose (below).
 
 DOSES AND VEHICLES (Table S1). Table S1 is the ``Table_S1.pdf`` member of the OUP
 supplement zip (PMC Article Datasets copy, ``si/si1.zip`` of the paper's mirror key),
@@ -52,8 +57,10 @@ consumer computing a log10 molar dose leaves them None. DMSO's own condition is 
 S1's "2.50%" as ``percent_v_v`` under the IC30 basis: the paper's only DMSO fraction
 statement that names a basis ("the final concentration of DMSO in SynBase medium was 1%
 (v/v)") fixes v/v as its convention for DMSO. Benomyl keeps Piotrowski 2017's 34.4 uM
-(fixed). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is the DMSO vehicle at
-that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).
+(fixed). The two QUADRIS doses are Table S1's 0.08% and 0.04% under the fixed basis,
+because the Methods say they "were arbitrarily selected" rather than set to an IC30
+(``QUADRIS_ARBITRARY_DOSE``). The "Dissolved in DMSO?" column sets ``solvent``: "Yes" is
+the DMSO vehicle at that sentence's final 1% v/v, "No" is ``None`` (dissolved directly).
 
 STRAIN BACKGROUND (#500). The screened strains are the MATa meiotic progeny of the SGA
 cross of query Y13206 (MATalpha pdr1::natMX pdr3::KlURA3 snq2::KlLEU2 can1::STE2pr-
@@ -61,26 +68,40 @@ Sp_his5 lyp1) to a MATa xxx::kanMX array (Piotrowski 2017, the library deferral)
 constant genome content rides on the reference's ``StrainReferenceGenome`` background;
 each record's ``Genotype`` holds the ONE screened deletion.
 
-RECORDS DROPPED (rule + count written to ``preprocess/dropped_records.json``): the 11
-matrix tokens Fig 1B does not list (the paper never reports them); compounds with no
-resolvable structure identifier; library rows whose gene column is not a systematic ORF
-or whose EVERY count column is missing, whose ORF is a locus the SGA selections fix in
-every strain, is not a current R64 gene, or is the legacy spelling of an ORF already in
-the pool (those carry a typed ``ConstructedOrf`` in the ledger), or that carry no barcode
-while another row of the release carries the same ORF with one; cells one of whose
-counts (a replicate or a paired control) is missing; and cells whose three replicate
-counts are ALL zero.
+RECORDS STORED AS RELEASED (the genome is a separate layer and gates nothing). Every
+library row whose gene column names a systematic ORF is stored under that ORF exactly as
+the release spells it (``systematic_gene_name``), with ``perturbed_gene_name`` the
+release's own ``std_name`` for that row (the ORF again when the cell is empty). No
+annotation lookup renames, merges or refuses a row: the 22 ORFs a current R64 annotation
+no longer lists as genes and the 17 ORFs it folds into another library ORF are stored
+under their released names, each its own barcoded strain. Every (row, condition) cell is
+stored with the method's value; a cell whose three replicate counts are all 0 is stored
+as the log2 of the CPM prior ratio with its sample SD, exactly 0, stored as 0.0. A
+compound whose curated identity row resolves no structure (the QUADRIS formulation) is
+stored with the ``inchikey`` gap ``resolved_compound`` attaches and is counted in the
+ledger's ``compound_identity_gaps``.
+
+BACKGROUND-LOCUS CONTRADICTION, STORED AS RELEASED. The release carries kanMX deletion
+rows at four loci the SGA background also replaced (YBL005W PDR3, YDR011W SNQ2, YEL063C
+CAN1, YNL268W LYP1; ``library_background``). A kanMX deletion of a locus the background
+already deleted contradicts the strain's own construction. The rows are stored as
+released, the contradiction is written in the dataset note, and it is not resolved here.
+
+LEDGER (``preprocess/dropped_records.json``). Source cells = released rows x released
+condition tokens = stored + not-a-value + dropped. ``not_a_value``: a row whose EVERY
+count column is missing (2 rows of GSE186866) has no value in any condition and is not a
+record. Rules: a row whose gene column is not ORF-shaped would need the released
+gene-name leaf (none in GSE186866); a cell one of whose counts (a replicate or a paired
+control) is a source NaN has no value the method defines (none in GSE186866).
 
 MISSING COUNTS AND BARCODES (#524). A missing count removes only the cells that use it,
 never the strain's row: the paper's per-compound edgeR fit permits no NA count and its
 design is three replicates against the paired controls, so a cell with a missing member
 count has no value the method defines, while the strain's other cells are untouched. TMM
 for a condition runs over the rows complete in that condition's own columns. A row whose
-gene column carries no ``_<barcode>`` suffix is served only when no other row names its
-ORF (the matrix is the release's only barcode source, so the barcode is absent from the
-release): ``barcode=None`` with a typed ``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never
-an empty string. GSE186866 itself has no row with a partly missing count and no row
-without a barcode (2 rows miss every count), so neither rule changes the served build.
+gene column carries no ``_<barcode>`` suffix is stored with ``barcode=None`` and a typed
+``ProvenanceGap`` (``BARCODE_ABSENT_GAP``), never an empty string. GSE186866 itself has
+no row with a partly missing count and no row without a barcode.
 """
 
 from __future__ import annotations
@@ -113,17 +134,13 @@ from torchcell.data import (
     post_process,
     verify_raw_files,
 )
-from torchcell.datamodels.compound_identity import (
-    resolve_compound_identity,
-    resolved_compound,
-)
+from torchcell.datamodels.compound_identity import resolved_compound
 from torchcell.datamodels.media import SYNBASE
 from torchcell.datamodels.schema import (
     AssayType,
     BarcodedKanMxDeletionPerturbation,
     Concentration,
     ConcentrationUnit,
-    ConstructedOrf,
     CultureEnvironment,
     CultureFormat,
     DoseBasis,
@@ -154,7 +171,6 @@ from torchcell.datamodels.strain_background import (
     standard_allele,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.scerevisiae.gene_name_reconcile import default_genome
 from torchcell.literature.manifest import (
     ROLE_RAW_DATA,
     ArtifactRecord,
@@ -162,7 +178,6 @@ from torchcell.literature.manifest import (
     RetrievalMethod,
     RetrievalRecord,
 )
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import (
     ProvenanceGap,
@@ -215,7 +230,7 @@ SI2_MD_SHA256 = "bad5b060bda2f50470e6a72c4005d48a9ecad8a9fa837a5bd2008307cc35e5d
 #: A float64 count / library-size array.
 FloatArray = npt.NDArray[np.float64]
 
-CPM_PRIOR = 1.0  # CPM pseudocount (PSEUDOCOUNT_GAP); all-zero cells are dropped
+CPM_PRIOR = 1.0  # CPM pseudocount (PSEUDOCOUNT_GAP); an all-zero cell is stored
 
 # edgeR 3.26.8 calcNormFactors(method="TMM") defaults, the version the paper names.
 TMM_LOGRATIO_TRIM = 0.3
@@ -412,8 +427,8 @@ PAIRED_CONTROL = _paper(
     "All 24-well plates contained control samples with SynBase or SynBase $+ ~ 1 \\%$ "
     "DMSO lacking any inhibitor for paired analysis (see below).",
     note="each replicate is paired with the ControlN columns of its own CG00n batch; "
-    "MMS keeps the pooled 16-column control because the paper analyzed it unpaired: "
-    + UNPAIRED_COMPOUNDS_QUOTE,
+    "MMS and the two QUADRIS doses keep the pooled 16-column control because the paper "
+    "analyzed them unpaired: " + UNPAIRED_COMPOUNDS_QUOTE,
 )
 PAIRED_SYNBASE_CONTROL = _paper(
     "SynBase",
@@ -459,6 +474,16 @@ FIG_1B_CONDITIONS = _paper(
     "Acid, Coumaroyl Amide, Feruloyl Amide, Syringic Acid, MBO, Acetovanillone, EMIM-Cl, "
     "Ferulic Acid, Acetosyringone, NAO, 2,6-Dimethylpyrazine, GVL, CV, EtOH. The matrix "
     "token of each is FIG_1B_TOKENS",
+)
+QUADRIS_ARBITRARY_DOSE = _paper(
+    DoseBasis.fixed,
+    "QUADRIS is a suspension and was highly insoluble in SynBase, making $\\mathrm "
+    "{ O D } _ { 6 0 0 }$ reads inaccurate; thus, two concentrations were arbitrarily "
+    "selected.",
+    note="the two QUADRIS doses (Table S1 'QUADRIS-1' 0.08% and 'QUADRIS-2' 0.04%, "
+    "matrix tokens QUADRIS1 and QUADRIS2) were not set to an IC30, so their basis is "
+    "'fixed'; the percent states no v/v or w/v and is stored in the basis-free "
+    "ConcentrationUnit.percent (#764)",
 )
 READOUT = _paper(
     MeasurementType.log2_ratio,
@@ -537,7 +562,8 @@ ZHANG_2019 = Provenance(
     method="not mirrored; the amino acids and supplements SynH3- carries",
 )
 
-#: SGD's locus history (merges and reannotations), not mirrored.
+#: SGD's locus history (merges and reannotations), not mirrored. This loader no longer
+#: uses it (no ORF is re-keyed); it stays because piotrowski2017 imports it.
 SGD_ORF_HISTORY = Provenance(
     source_uri="https://www.yeastgenome.org (locus history of the source ORF)",
     method="not mirrored; SGD locus-history notes record ORF merges and reannotations",
@@ -569,9 +595,9 @@ BARCODE_ABSENT_GAP = ProvenanceGap(
         sha256=DATA_SHA256,
         page="gene column ('<ORF>_<barcode>')",
     ),
-    note="this row's gene column names the ORF with no '_<barcode>' suffix, no other "
-    "row names the ORF, and the count matrix is the only file the release carries "
-    "barcodes in, so the strain's UPTAG is absent from the release",
+    note="this row's gene column names the ORF with no '_<barcode>' suffix, and the "
+    "count matrix is the only file the release carries barcodes in, so this row's "
+    "UPTAG is absent from the release",
 )
 
 
@@ -676,15 +702,16 @@ def library_background() -> StrainBackground:
 
 
 #: Loci whose allele the SGA selections fix in every library strain (the three
-#: sensitizing deletions and the two reporters). A library row screening one of them
-#: would put a kanMX deletion on a locus the background already replaced, so it is
-#: dropped (rule ``orf_is_a_selected_background_locus``).
+#: sensitizing deletions and the two reporters). This loader stores the release's kanMX
+#: rows at four of them as released (module docstring, BACKGROUND-LOCUS CONTRADICTION)
+#: and does not use this set; it stays because piotrowski2017 imports it.
 SELECTED_BACKGROUND_LOCI = frozenset(
     {"YGL013C", "YBL005W", "YDR011W", "YEL063C", "YNL268W"}
 )
 
-#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). Every other matrix
-#: token is a condition the paper never reported.
+#: The 34 Fig 1B conditions as matrix tokens (FIG_1B_CONDITIONS). The release's other
+#: 11 tokens are Table S1 conditions no figure shows (TABLE_S1_ONLY_TOKENS); every token
+#: is stored as released, so this set describes the figure and gates nothing.
 FIG_1B_TOKENS = frozenset(
     {
         "Benomyl",
@@ -730,8 +757,12 @@ _SYSTEMATIC_RE = re.compile(
 _SAMPLE_RE = re.compile(r"^(?P<compound>.+)_CG(?P<batch>\d+)_rep(?P<rep>\d+)$")
 _CONTROL_RE = re.compile(r"^Control\d+_CG(?P<batch>\d+)$")
 
-#: The one served condition the paper analyzed UNPAIRED, so it keeps the pooled control.
-UNPAIRED_COMPOUND_TOKENS = frozenset({"MMS"})
+#: The conditions the paper analyzed UNPAIRED (UNPAIRED_COMPOUNDS_QUOTE: "MMS and QUADRIS
+#: compounds"), so they keep the pooled control.
+UNPAIRED_COMPOUND_TOKENS = frozenset({"MMS", "QUADRIS1", "QUADRIS2"})
+
+#: The two QUADRIS doses, set arbitrarily rather than to an IC30 (QUADRIS_ARBITRARY_DOSE).
+QUADRIS_TOKENS = frozenset({"QUADRIS1", "QUADRIS2"})
 
 #: The vehicle, also served as its own condition (Table S1's 2.50% v/v).
 DMSO_TOKEN = "DMSO"
@@ -793,7 +824,7 @@ def _row(quote: str, *, note: str | None = None) -> SourcedValue:
     return _table_s1(row, quote, note=note)
 
 
-#: Each served condition's Table S1 row, keyed by matrix token (FIG_1B_TOKENS). The
+#: Each matrix token's Table S1 row (all 45 release tokens). The
 #: quotes are the rows exactly as MinerU wrote them into si/si2.md; the dose and the
 #: "Dissolved in DMSO?" flag are parsed from those quotes, never typed separately.
 TABLE_S1_DOSES: dict[str, SourcedValue] = {
@@ -921,7 +952,50 @@ TABLE_S1_DOSES: dict[str, SourcedValue] = {
     "26Dimethylpyrazine": _row(
         "<tr><td>2,6-Dimethylpyrazine</td><td>38 mM</td><td>No</td><td>108-50-9</td><td>Sigma-Aldrich</td><td>W327301</td></tr>"
     ),
+    # The 11 tokens Table S1 doses and no figure shows (TABLE_S1_ONLY_TOKENS).
+    "CaffeicAcid": _row(
+        "<tr><td>Caffeic Acid</td><td>7.5 mM</td><td>Yes</td><td>331-39-5</td><td>Sigma-Aldrich</td><td>C0625</td></tr>"
+    ),
+    "24Dimethylimidazole": _row(
+        "<tr><td>2,4-Dimethylimidazole</td><td>6 mM</td><td>No</td><td>930-62-1</td><td>Alfa Aesar</td><td>A11949</td></tr>"
+    ),
+    "LevulinicAcid": _row(
+        "<tr><td>Levulinic Acid</td><td>10 mM</td><td>No</td><td>123-76-2</td><td>Alfa Aesar</td><td>A10813</td></tr>"
+    ),
+    "Mycobutanil": _row(
+        "<tr><td>Mycobutanil</td><td>13 ug/mL</td><td>No</td><td>88671-89-0</td><td>Sigma-Aldrich</td><td>34360</td></tr>",
+        note="Table S1 and the matrix token both spell 'Mycobutanil'; the CAS number "
+        "88671-89-0 is myclobutanil, the curated identity row's query",
+    ),
+    "QUADRIS1": _row(
+        "<tr><td>QUADRIS-1</td><td>0.08%</td><td>No</td><td>119446-68-3</td><td>Syngenta</td><td></td></tr>",
+        note="IC30 column '0.08%', a dose the Methods say was arbitrarily selected "
+        "(QUADRIS_ARBITRARY_DOSE), stored under the fixed basis. " + _PERCENT_NOTE,
+    ),
+    "QUADRIS2": _row(
+        "<tr><td>QUADRIS-2</td><td>0.04%</td><td>No</td><td>119446-68-3</td><td>Syngenta</td><td></td></tr>",
+        note="IC30 column '0.04%', a dose the Methods say was arbitrarily selected "
+        "(QUADRIS_ARBITRARY_DOSE), stored under the fixed basis. " + _PERCENT_NOTE,
+    ),
+    "SodiumAcetate": _row(
+        "<tr><td>Sodium Acetate</td><td>150 mM</td><td>No</td><td>127-09-3</td><td>Fisher Scientific</td><td>S8750</td></tr>"
+    ),
+    "SodiumButyrate": _row(
+        "<tr><td>Sodium Butyrate</td><td>0.19 mM</td><td>No</td><td>156-54-7</td><td>Fisher Scientific</td><td>S1999</td></tr>"
+    ),
+    "SodiumGlyoxylate": _row(
+        "<tr><td>Sodium Glyoxylate</td><td>0.19 mM</td><td>No</td><td>918149-31-2</td><td>Sigma-Aldrich</td><td>G4502</td></tr>"
+    ),
+    "2Methylimidazole": _row(
+        "<tr><td>2-Methylimidazole</td><td>3.8 mM</td><td>Yes</td><td>693-98-1</td><td>Sigma-Aldrich</td><td>M50850</td></tr>"
+    ),
+    "45Methylimidazole": _row(
+        "<tr><td>4(5)-Methylimidazole</td><td>3.3 mM</td><td>Yes</td><td>822-36-6</td><td>Sigma-Aldrich</td><td>199885</td></tr>"
+    ),
 }
+
+#: The release tokens Table S1 doses that no figure of the paper shows.
+TABLE_S1_ONLY_TOKENS = frozenset(TABLE_S1_DOSES) - FIG_1B_TOKENS
 _SECTION_ROW = re.compile(r"<tr><td>(?P<header>[A-Z ]+)</td><td>(?P<ic30>[^<]*)</td>")
 
 
@@ -1228,144 +1302,100 @@ class DropRule(BaseModel):
     items: list[str] = []
 
 
-class LegacyOrfStrain(BaseModel):
-    """A dropped library strain built against an ORF the current genome merged away.
+class NotAValue(BaseModel):
+    """Released cells that hold no value: counted, never records and never drops."""
 
-    ``constructed_orf`` is the typed record of what the strain physically deleted; its
-    relation to the current gene and its deleted interval are gaps naming SGD's locus
-    history. Kept in the ledger so the drop is a typed record, not a silent loss.
-    """
+    rule: str
+    description: str
+    n_cells: int
+    items: list[str] = []
 
-    source_orf: str
-    current_orf: str
-    barcode: str | None
-    constructed_orf: ConstructedOrf
+
+class CompoundIdentityGap(BaseModel):
+    """A stored condition whose compound carries the typed ``inchikey`` gap."""
+
+    token: str
+    compound_name: str
+    n_records: int
 
 
 class DropLog(BaseModel):
-    """Every retention rule applied to a build, in the order they were applied."""
+    """Every released cell of a build: stored, not a value, or dropped by a rule.
+
+    ``source_records`` = ``kept_records`` + the ``not_a_value`` cells +
+    ``dropped_records``, and ``dropped_records`` is the sum of the rules.
+    """
 
     dataset: str
     source_records: int
     kept_records: int
     dropped_records: int
     rules: list[DropRule]
-    legacy_orf_strains: list[LegacyOrfStrain] = []
+    not_a_value: list[NotAValue] = []
+    compound_identity_gaps: list[CompoundIdentityGap] = []
 
 
 class LibraryRows(BaseModel):
-    """The library rows a build keeps, after the gene-name policy."""
+    """The library rows as released: each stored row's ORF, released name and barcode.
+
+    ``systematic`` is the ORF before the ``_<barcode>`` suffix, verbatim;
+    ``perturbed`` is the row's own ``std_name`` (the ORF when that cell is empty);
+    ``barcode`` is the suffix, or None when the row carries none.
+    """
 
     keep_mask: list[bool]
     systematic: list[str]
-    common: list[str]
+    perturbed: list[str]
     barcode: list[str | None]
-    dropped_retired: list[str]
-    dropped_legacy_duplicate: list[str]
-    legacy_target: dict[str, str] = {}
+    every_count_missing: list[str]
+    not_an_orf: list[str]
 
 
-def _canonical_common_names(genome: SCerevisiaeGenome) -> dict[str, str]:
-    """``systematic name -> the genome's own standard (common) name``.
+def released_library_rows(df: pd.DataFrame, sample_cols: list[str]) -> LibraryRows:
+    """Split the matrix's rows into stored rows and rows that hold no record.
 
-    One spelling per gene is what keeps a perturbation from splitting into two graph
-    nodes, and taking it from the genome rather than from the source is what makes the
-    spelling identical across datasets. Only a standard name that resolves BACK to the
-    gene is used, so the stored pair always round-trips through the resolver.
+    A row whose EVERY count column is missing holds no value in any condition. A row
+    whose gene column is not ORF-shaped would need a released-gene-name leaf the schema
+    does not have yet, so it is counted under its own rule. Every other row is stored
+    under its released ORF and ``std_name``. Two stored rows releasing the same ORF and
+    the same barcode would produce identical records, so the build refuses rather than
+    collapse them.
     """
-    canonical: dict[str, str] = {}
-    for standard in genome.feature_index["standard_to_ids"]:
-        resolution = genome.resolve_gene_name(standard)
-        if resolution.is_current_gene and resolution.systematic_name is not None:
-            canonical.setdefault(resolution.systematic_name, standard)
-    return canonical
-
-
-def resolve_library_rows(
-    orfs: pd.Series, barcodes: pd.Series, genome: SCerevisiaeGenome
-) -> LibraryRows:
-    """Map every library row onto a current R64 gene, or drop it with a typed reason.
-
-    Two rules, both of which the L1 canonical-name and L4 current-genome gates enforce
-    downstream. A row whose ORF no longer names a gene of the current genome (a retired
-    2005-era ORF, or a feature that is not a gene) is dropped: it cannot be keyed to a
-    gene entity. A row whose ORF is the LEGACY spelling of an ORF the same library also
-    carries under its current name is dropped too, because remapping it would merge two
-    physically distinct barcoded strains into one record key; ``legacy_target`` keeps
-    the current ORF each legacy spelling resolves to.
-    """
-    gene_set = {gene.upper() for gene in genome.gene_set}
-    resolutions = {orf: genome.resolve_gene_name(orf) for orf in orfs.unique()}
-    target: dict[str, str] = {}
-    retired: list[str] = []
-    for orf, resolution in resolutions.items():
-        mapped = resolution.systematic_name
-        if resolution.is_current_gene and mapped is not None and mapped in gene_set:
-            target[orf] = mapped
-        else:
-            retired.append(orf)
-    claimed = {orf for orf in target if orf in gene_set}
-    legacy = sorted(
-        orf for orf, mapped in target.items() if orf != mapped and mapped in claimed
+    genes = df["gene"].astype(str)
+    split = genes.str.split("_", n=1)
+    orfs = split.str[0]
+    # No suffix, or an empty one, is a barcode the release does not carry: None.
+    barcodes = split.str[1].map(
+        lambda tag: tag if isinstance(tag, str) and tag != "" else None
     )
-    canonical = _canonical_common_names(genome)
-    keep_mask: list[bool] = []
-    systematic: list[str] = []
-    common: list[str] = []
-    kept_barcodes: list[str | None] = []
-    legacy_set = set(legacy)
-    for orf, barcode in zip(orfs, barcodes, strict=True):
-        mapped = target.get(orf)
-        keep = mapped is not None and orf not in legacy_set
-        keep_mask.append(keep)
-        if not keep:
-            continue
-        assert mapped is not None
-        systematic.append(mapped)
-        common.append(canonical.get(mapped, mapped))
-        kept_barcodes.append(barcode)
-    if len(set(systematic)) != len(systematic):
+    is_orf = orfs.map(lambda gene: bool(_SYSTEMATIC_RE.match(gene)))
+    has_counts = ~df[sample_cols].isna().all(axis=1)
+    keep = is_orf & has_counts
+    std_names = df["std_name"].map(
+        lambda name: name if isinstance(name, str) and name.strip() != "" else None
+    )
+    systematic = [str(orf) for orf in orfs[keep]]
+    perturbed = [
+        str(std) if std is not None else str(orf)
+        for orf, std in zip(orfs[keep], std_names[keep], strict=True)
+    ]
+    kept_barcodes: list[str | None] = list(barcodes[keep])
+    keys = list(zip(systematic, kept_barcodes, strict=True))
+    if len(set(keys)) != len(keys):
+        repeated = sorted(
+            {f"{orf}_{tag}" for orf, tag in keys if keys.count((orf, tag)) > 1}
+        )
         raise RuntimeError(
-            "two retained library rows resolve to the same systematic gene; the "
-            "legacy-duplicate rule did not separate them"
+            "two library rows release the same ORF and barcode, so their records "
+            f"would be identical: {repeated}"
         )
     return LibraryRows(
-        keep_mask=keep_mask,
+        keep_mask=[bool(k) for k in keep],
         systematic=systematic,
-        common=common,
+        perturbed=perturbed,
         barcode=kept_barcodes,
-        dropped_retired=sorted(retired),
-        dropped_legacy_duplicate=legacy,
-        legacy_target={orf: target[orf] for orf in legacy},
-    )
-
-
-def legacy_orf_strain(
-    source_orf: str, current_orf: str, barcode: str | None
-) -> LegacyOrfStrain:
-    """The typed ledger entry for a dropped legacy-spelling strain."""
-    return LegacyOrfStrain(
-        source_orf=source_orf,
-        current_orf=current_orf,
-        barcode=barcode,
-        constructed_orf=ConstructedOrf(
-            source_systematic_name=source_orf,
-            relation=None,
-            deleted_span=None,
-            provenance_gaps=[
-                pending_source_review(
-                    "relation",
-                    SGD_ORF_HISTORY,
-                    f"{source_orf} resolves to {current_orf} in R64-4-1; whether it "
-                    "was merged into it or reannotated is SGD locus history",
-                ),
-                pending_source_review(
-                    "deleted_span",
-                    SGD_ORF_HISTORY,
-                    f"the interval the {source_orf} cassette replaced",
-                ),
-            ],
-        ),
+        every_count_missing=sorted(genes[~has_counts]),
+        not_an_orf=sorted(genes[has_counts & ~is_orf]),
     )
 
 
@@ -1383,7 +1413,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset (the genome is loaded lazily inside ``process``)."""
+        """Initialize the dataset."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -1432,8 +1462,9 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         """The dose as the paper SET it: an IC30 target, or a published fixed dose.
 
         Every value is the one Table S1 reports (#764), except Benomyl, whose fixed
-        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. DMSO's percent
-        is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).
+        dose is Piotrowski 2017's molar statement of the same 10 ug/mL. MMS and the two
+        QUADRIS doses are fixed (published, or arbitrarily selected), not IC30. DMSO's
+        percent is v/v by the paper's own DMSO convention (TABLE_S1_DOSES['DMSO'] note).
         """
         if compound == "Benomyl":
             return Concentration(
@@ -1441,7 +1472,7 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 unit=ConcentrationUnit.micromolar,
                 basis=DoseBasis.fixed,
             )
-        if compound == "MMS":
+        if compound == "MMS" or compound in QUADRIS_TOKENS:
             return table_s1_ic30(compound, basis=DoseBasis.fixed)
         if compound == DMSO_TOKEN:
             return Concentration(
@@ -1561,17 +1592,20 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
             units=self._units(compound),
         )
 
-    def _genotype(self, systematic: str, common: str, barcode: str | None) -> Genotype:
+    def _genotype(
+        self, systematic: str, perturbed: str, barcode: str | None
+    ) -> Genotype:
         """The ONE screened deletion; the constant background is on the reference.
 
-        ``barcode`` None is a row the release carries no barcode for; it is served with
-        ``BARCODE_ABSENT_GAP`` so the absence is typed.
+        ``systematic`` and ``perturbed`` are the release's ORF and ``std_name``,
+        verbatim. ``barcode`` None is a row the release carries no barcode for; it is
+        stored with ``BARCODE_ABSENT_GAP`` so the absence is typed.
         """
         return Genotype(
             perturbations=[
                 BarcodedKanMxDeletionPerturbation(
                     systematic_gene_name=systematic,
-                    perturbed_gene_name=common,
+                    perturbed_gene_name=perturbed,
                     barcode=barcode,
                     collection=LIBRARY_COLLECTION.value,
                     cassette=ARRAY_KANMX.value,
@@ -1603,177 +1637,56 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         controls = [c for cols in control_by_batch.values() for c in cols]
 
         source_records = len(df) * len(compound_cols)
-        rules: list[DropRule] = []
-
-        # --- compound-level retention ----------------------------------------- #
-        unreported = sorted(set(compound_cols) - FIG_1B_TOKENS)
-        unidentified = sorted(
-            token
-            for token in set(compound_cols) & FIG_1B_TOKENS
-            if not resolve_compound_identity(name=token).identified
-        )
-        kept_compounds = sorted(
-            set(compound_cols) - set(unreported) - set(unidentified)
-        )
-
-        # --- library-row retention --------------------------------------------- #
-        split = df["gene"].astype(str).str.split("_", n=1)
-        orfs = split.str[0]
-        # No suffix, or an empty one, is a barcode the release does not carry: None.
-        barcodes = split.str[1].map(
-            lambda tag: tag if isinstance(tag, str) and tag != "" else None
-        )
-        is_orf = orfs.map(lambda gene: bool(_SYSTEMATIC_RE.match(gene)))
-        # A row is dropped whole only when EVERY count is missing; a partly missing row
-        # loses just the cells that use a missing count (the cell rule below).
-        has_counts = ~df[sample_cols].isna().all(axis=1)
-        not_background = ~orfs.isin(SELECTED_BACKGROUND_LOCI)
-        candidate = is_orf & has_counts & not_background
-        barcoded_orfs = set(orfs[candidate & barcodes.notna()])
-        shadowed = candidate & barcodes.isna() & orfs.isin(barcoded_orfs)
-        prefilter = candidate & ~shadowed
-        n_non_orf = int((~is_orf).sum())
-        n_all_nan = int((is_orf & ~has_counts).sum())
-        background_rows = sorted(orfs[is_orf & has_counts & ~not_background])
-        shadowed_rows = sorted(orfs[shadowed])
-        n_barcodeless_served = int((prefilter & barcodes.isna()).sum())
-
-        genome = default_genome()
-        library = resolve_library_rows(
-            orfs[prefilter].reset_index(drop=True),
-            barcodes[prefilter].reset_index(drop=True),
-            genome,
-        )
-        row_keep = pd.Series(library.keep_mask, index=df.index[prefilter])
-        keep = pd.Series(False, index=df.index)
-        keep.loc[row_keep.index] = row_keep.to_numpy()
+        compounds = sorted(compound_cols)
+        undosed = sorted(set(compounds) - set(TABLE_S1_DOSES))
+        if undosed:
+            raise RuntimeError(f"matrix tokens with no Table S1 row: {undosed}")
+        library = released_library_rows(df, sample_cols)
+        keep = pd.Series(library.keep_mask, index=df.index)
         n_rows = int(keep.sum())
-        n_kept_compounds = len(kept_compounds)
-        prefiltered_barcode = dict(
-            zip(orfs[prefilter], barcodes[prefilter], strict=True)
-        )
-
-        rules.append(
+        rules: list[DropRule] = [
             DropRule(
-                rule="compound_not_reported_by_the_paper",
-                scope="compound",
-                description=(
-                    "the matrix token is not one of the 34 conditions Fig 1B lists ("
-                    + FIG_1B_CONDITIONS.quote
-                    + " Bar labels read from "
-                    + FIG_1B_IMAGE
-                    + ", sha256 "
-                    + FIG_1B_IMAGE_SHA256
-                    + "); the paper never reports these conditions or says why"
-                ),
-                n_records=len(unreported) * len(df),
-                items=unreported,
-            )
-        )
-        rules.append(
-            DropRule(
-                rule="compound_without_a_structure_identifier",
-                scope="compound",
-                description=(
-                    "no InChIKey / PubChem CID / ChEBI id resolves for the source label, "
-                    "so the compound entity cannot be encoded or joined; see the per-"
-                    "token reason in compound_identity_inputs/vanacloig2022.txt"
-                ),
-                n_records=len(unidentified) * len(df),
-                items=unidentified,
-            )
-        )
-        rules.append(
-            DropRule(
-                rule="row_is_not_a_barcoded_orf_or_carries_no_counts",
+                rule="gene_column_is_not_a_systematic_orf",
                 scope="library_row",
                 description=(
-                    "the gene column does not name a systematic ORF (before any "
-                    "'_<barcode>' suffix), or every count column is missing (a "
-                    "QC-dropped barcode); a row missing only some counts is kept and "
-                    "loses just the cells that use them "
-                    "(a_count_the_cell_uses_is_missing)"
+                    "the gene column (before any '_<barcode>' suffix) is not a "
+                    "systematic ORF; storing it needs the released-gene-name "
+                    "perturbation leaf (a released identifier verbatim with "
+                    "systematic_gene_name a typed gap), which the schema does not have "
+                    "yet. Items are the gene column as released"
                 ),
-                n_records=(n_non_orf + n_all_nan) * n_kept_compounds,
-                items=[],
+                n_records=len(library.not_an_orf) * len(compounds),
+                items=library.not_an_orf,
             )
-        )
-        rules.append(
-            DropRule(
-                rule="orf_is_a_selected_background_locus",
-                scope="library_row",
+        ]
+        not_a_value = [
+            NotAValue(
+                rule="every_count_of_the_row_is_missing",
                 description=(
-                    "the screened ORF is a locus whose allele the SGA selections fix in "
-                    "every library strain (pdr1Δ::natMX, pdr3Δ::KlURA3, snq2Δ::KlLEU2, "
-                    "can1Δ::STE2pr-Sp_his5, lyp1Δ; Piotrowski 2017), so a kanMX "
-                    "deletion of it contradicts the strain's own background"
+                    "every count column of this library row is missing (NaN) in the "
+                    "release, so the row holds no value in any condition; it is counted "
+                    "here and is not a record. Items are the gene column as released"
                 ),
-                n_records=len(background_rows) * n_kept_compounds,
-                items=background_rows,
+                n_cells=len(library.every_count_missing) * len(compounds),
+                items=library.every_count_missing,
             )
-        )
-        rules.append(
-            DropRule(
-                rule="barcodeless_row_of_an_orf_another_row_carries_with_a_barcode",
-                scope="library_row",
-                description=(
-                    "the gene column names the ORF with no '_<barcode>' suffix while "
-                    "another row of the release carries the same ORF with a barcode, so "
-                    "the barcode is not absent from the release and this row cannot be "
-                    "told apart from that strain; a barcodeless row whose ORF no other "
-                    "row names is served with barcode None and BARCODE_ABSENT_GAP"
-                ),
-                n_records=len(shadowed_rows) * n_kept_compounds,
-                items=shadowed_rows,
-            )
-        )
-        rules.append(
-            DropRule(
-                rule="orf_is_not_a_current_genome_gene",
-                scope="library_row",
-                description=(
-                    "the barcoded ORF does not resolve to a gene of the current R64 "
-                    "annotation (retired ORF, or a non-gene feature), so no gene entity "
-                    "exists to key the record to"
-                ),
-                n_records=len(library.dropped_retired) * n_kept_compounds,
-                items=library.dropped_retired,
-            )
-        )
-        rules.append(
-            DropRule(
-                rule="orf_is_a_legacy_spelling_of_another_library_orf",
-                scope="library_row",
-                description=(
-                    "the ORF resolves to an ORF the SAME library also carries under its "
-                    "current name; remapping would merge two physically distinct "
-                    "barcoded strains into one record key, so the legacy row is dropped "
-                    "and recorded as a typed ConstructedOrf in legacy_orf_strains"
-                ),
-                n_records=len(library.dropped_legacy_duplicate) * n_kept_compounds,
-                items=library.dropped_legacy_duplicate,
-            )
-        )
-        legacy_strains = [
-            legacy_orf_strain(orf, library.legacy_target[orf], prefiltered_barcode[orf])
-            for orf in library.dropped_legacy_duplicate
+        ]
+        compound_identity_gaps = [
+            CompoundIdentityGap(token=token, compound_name=compound.name, n_records=0)
+            for token in compounds
+            for compound in [resolved_compound(token)]
+            if any(gap.field == "inchikey" for gap in compound.provenance_gaps)
         ]
         log.info(
-            "Vanacloig: %d conditions kept (%d unreported, %d unidentified dropped); "
-            "%d library rows kept, %d of them without a barcode (%d non-ORF, %d "
-            "all-NaN, %d background loci, %d barcodeless duplicates, %d retired, %d "
-            "legacy duplicates dropped)",
-            n_kept_compounds,
-            len(unreported),
-            len(unidentified),
+            "Vanacloig: %d conditions (%d of them Table S1 only); %d library rows "
+            "stored, %d without a barcode; %d rows with every count missing, %d "
+            "non-ORF rows",
+            len(compounds),
+            len(set(compounds) & TABLE_S1_ONLY_TOKENS),
             n_rows,
-            n_barcodeless_served,
-            n_non_orf,
-            n_all_nan,
-            len(background_rows),
-            len(shadowed_rows),
-            len(library.dropped_retired),
-            len(library.dropped_legacy_duplicate),
+            sum(barcode is None for barcode in library.barcode),
+            len(library.every_count_missing),
+            len(library.not_an_orf),
         )
 
         # --- normalization ----------------------------------------------------- #
@@ -1791,11 +1704,11 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
         os.makedirs(self.processed_dir, exist_ok=True)
         env, interned_env = self._open_write_lmdb(osp.join(self.processed_dir, "lmdb"))
         idx = 0
-        n_all_zero_cells = 0
         missing_cells: list[str] = []
+        stored_by_token: dict[str, int] = {}
         normalization: dict[str, TmmFactors] = {}
         with env.begin(write=True) as txn, interned_env.begin(write=True) as itxn:
-            for compound in tqdm(kept_compounds, desc="Vanacloig conditions"):
+            for compound in tqdm(compounds, desc="Vanacloig conditions"):
                 cols = compound_cols[compound]
                 if len(cols) != N_REPLICATES.value:
                     raise RuntimeError(
@@ -1837,27 +1750,26 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 )
                 response = log_rep.mean(axis=1)
                 sd = log_rep.std(axis=1, ddof=1)
-                # A cell with a missing replicate or paired-control count has no value
-                # the method defines; it is dropped first, so each cell counts once.
+                # A cell with a missing (source NaN) replicate or paired-control count
+                # has no value the method defines. A cell whose three replicate counts
+                # are all 0 is stored: its value is the log2 of the CPM prior ratio and
+                # its sample SD is exactly 0.
                 missing = np.isnan(kept_counts[:, member_idx]).any(axis=1)
                 missing_cells.extend(
                     f"{library.systematic[row]}:{compound}"
                     for row in np.flatnonzero(missing)
                 )
-                all_zero = (kept_counts[:, [col_idx[c] for c in cols]] == 0).all(
-                    axis=1
-                ) & ~missing
-                n_all_zero_cells += int(all_zero.sum())
+                stored_by_token[compound] = int((~missing).sum())
                 environment = self._environment(compound)
                 reference = self._reference(compound)
                 for row in range(n_rows):
-                    if missing[row] or all_zero[row]:
+                    if missing[row]:
                         continue
                     experiment = StrainEnvironmentResponseExperiment(
                         dataset_name=self.name,
                         genotype=self._genotype(
                             library.systematic[row],
-                            library.common[row],
+                            library.perturbed[row],
                             library.barcode[row],
                         ),
                         environment=environment,
@@ -1879,37 +1791,28 @@ class EnvChemgenVanacloig2022Dataset(ExperimentDataset):
                 scope="cell",
                 description=(
                     "one of the counts this (strain, compound) cell is computed from, a "
-                    "replicate or one of its paired controls, is missing (NaN) in the "
+                    "replicate or one of its paired controls, is a source NaN in the "
                     "release; the paper's per-compound edgeR fit permits no NA count and "
                     "its design is three replicates against the paired controls, so the "
-                    "cell has no value the method defines and is dropped, while the "
-                    "strain's other cells are kept. Items are '<ORF>:<token>'"
+                    "cell has no value the method defines, while the strain's other "
+                    "cells are stored. Items are '<ORF>:<token>'"
                 ),
                 n_records=len(missing_cells),
                 items=missing_cells,
             )
         )
-        rules.append(
-            DropRule(
-                rule="all_three_replicate_counts_are_zero",
-                scope="cell",
-                description=(
-                    "every replicate of this (strain, compound) cell has a raw count of "
-                    "0, so no abundance was measured; the CPM pseudocount would turn a "
-                    "below-detection observation into a finite log2 value whose sample "
-                    "SD is exactly 0, i.e. fabricated infinite precision"
-                ),
-                n_records=n_all_zero_cells,
-                items=[],
-            )
-        )
+        n_not_a_value = sum(entry.n_cells for entry in not_a_value)
         drop_log = DropLog(
             dataset=self.name,
             source_records=source_records,
             kept_records=idx,
-            dropped_records=source_records - idx,
+            dropped_records=source_records - idx - n_not_a_value,
             rules=rules,
-            legacy_orf_strains=legacy_strains,
+            not_a_value=not_a_value,
+            compound_identity_gaps=[
+                gap.model_copy(update={"n_records": stored_by_token[gap.token]})
+                for gap in compound_identity_gaps
+            ],
         )
         with open(osp.join(self.preprocess_dir, "dropped_records.json"), "w") as handle:
             handle.write(drop_log.model_dump_json(indent=2))

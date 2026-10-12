@@ -1775,10 +1775,10 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_vanacloig2022": {
         "root": "data/torchcell/env_chemgen_vanacloig2022",
-        # 3606 retained library rows x 34 Fig 1B conditions (45 matrix tokens minus the
-        # 11 the paper never reports) minus the 3942 all-three-replicates-zero cells.
-        # Rules + counts: preprocess/dropped_records.json (issue #501).
-        "expected_count": 118662,
+        # 3,649 library rows x 45 matrix tokens = 164,295 cells minus the 90 cells of
+        # the two all-missing rows; every row and every condition stored as released
+        # (2026.10.12). Rules + counts: preprocess/dropped_records.json.
+        "expected_count": 164205,
         # The sensitizing and reporter alleles ride on the reference's
         # StrainReferenceGenome background (#500), so the genotype holds only the
         # screened deletion and no background gene needs excluding.
@@ -1826,7 +1826,7 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
         # conditions = 3,487,344 cells, 48,923 of them NA, so 3,438,421 released z-scores;
         # minus the one column Data Set 4 marks In_final_dataset = False (Cond-008510,
         # 289 cells) and the 8 conditions whose dose cell is a range (2,312 cells). Every
-        # pool strain is kept (YAL058C-A as YAL056C-A with a ConstructedOrf). Rules +
+        # pool strain is kept under its released ORF (YAL058C-A as YAL058C-A). Rules +
         # counts: preprocess/dropped_records.json; per-condition fates and the pool
         # census: preprocess/conditions.json.
         "expected_count": 3435820,
@@ -2322,11 +2322,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_hillenmeyer2008_het": {
         "root": "data/torchcell/env_chemgen_hillenmeyer2008_het",
-        # one record per (strain row, environment, control set) after the array
-        # and strain drop rules (#505); counted by
-        # experiments/036-dataset-fixes-before-kg-build/scripts/hillenmeyer2008_inputs.py
-        # through the loader's own functions; rules + counts in preprocess/.
-        "expected_count": 2712677,
+        # one record per (strain row, environment, control set); every ORF row stored
+        # as released (2026.10.12); the one array rule left is the '37c, 45c' heat-shock
+        # cycle (needs schema); counted through the loader's own functions
+        # (parse_columns, read_matrix_rows, count_records); rules + counts in preprocess/.
+        "expected_count": 3074132,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2337,7 +2337,7 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
             citation_key="hillenmeyerChemicalGenomicPortrait2008",
             sha256="c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44",
-            method="genome-scale HIP fitness-defect log2_ratio = log2(mean control intensity / treatment intensity), up+down tag mean; positive = fitness defect. HET = HeterozygousDeletionPerturbation (kanMX4, Giaever 2014; construction batch, pool, barcodes gapped; replaced_allele gapped at the BY marker loci), incl. essential genes. One record per (constructed STRAIN = matrix row ORF:batch, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples; rows of one ORF are different constructions and are never averaged. Reference genome StrainReferenceGenome BY4743 (named by the hom.txt key file; alleles, mating type and parents pending Brachmann 1998 / Giaever 2002). Renamed source ORFs keep their own records under the current gene with a ConstructedOrf ('merged' when two source ORFs land on one gene, else a gap). Every array's header is cross-checked against its key file: pH conflicts serve the header (Table S1 lists only pH7.5/8), the 18 hom 'minimal media' arrays the key calls 'synthetic complete for BY4743' are served on SC, compound-name conflicts are dropped. Conditions per SOM Table S1: temperature on Environment.temperature; pH; nutrient drop-outs as DERIVED SC media (partial levels checked against the release); minimal media as SD with a typed auxotroph-supplement gap; '<compound> irradiated' as compound + radiation; cond2 appended in every branch; base medium YPD_LIQUID; compounds carry a typed vehicle gap. CultureEnvironment: duration_generations = magnitude, pre_culture from the SIGN (negative frozen_stock, positive YPD log phase to OD600 2.0, ~10 generations), culture_format and temperature gapped (Pierce 2006). Molar doses canonicalized exactly (Decimal). DROPPED: 64 environments / 75 arrays -- 66 arrays naming a compound with no structure identifier, the '37c, 45c' heat-shock cycle, 4 header/key compound conflicts, 4 0gen arrays; strains: the 11 YDL227C:ctrl_* HO control rows (preprocess/dropped_strains.json). ORFs go through resolve_gene_name (renamed kept, retired/non-gene dropped to preprocess/dropped_genes.json)",
+            method="genome-scale HIP fitness-defect log2_ratio = log2(mean control intensity / treatment intensity), up+down tag mean; positive = fitness defect. HET = HeterozygousDeletionPerturbation (kanMX4, Giaever 2014; construction batch, pool, barcodes gapped; replaced_allele gapped at the BY marker loci), incl. essential genes. One record per (constructed STRAIN = matrix row ORF:batch, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples; rows of one ORF are different constructions and are never averaged. Reference genome StrainReferenceGenome BY4743 (named by the hom.txt key file; alleles, mating type and parents pending Brachmann 1998 / Giaever 2002). Every source ORF is stored as the release spells it (2026.10.12; no genome lookup, no ConstructedOrf). Every array's header is cross-checked against its key file: pH conflicts serve the header (Table S1 lists only pH7.5/8), the 18 hom 'minimal media' arrays the key calls 'synthetic complete for BY4743' are served on SC, compound-name conflicts are served under the header (both strings in key_header_checks.json). Conditions per SOM Table S1: temperature on Environment.temperature; pH; nutrient drop-outs as DERIVED SC media (partial levels checked against the release); minimal media as SD with a typed auxotroph-supplement gap; '<compound> irradiated' as compound + radiation; cond2 appended in every branch; base medium YPD_LIQUID; compounds carry a typed vehicle gap. CultureEnvironment: duration_generations = magnitude, pre_culture from the SIGN (negative frozen_stock, positive YPD log phase to OD600 2.0, ~10 generations), culture_format and temperature gapped (Pierce 2006). Molar doses canonicalized exactly (Decimal). STORED AS RELEASED (2026.10.12): compounds with no structure identifier carry the typed inchikey gap, 0gen arrays carry duration 0 with a pre_culture gap, the YDL227C:ctrl_* rows are stored with their batch token, retired and non-gene ORFs are stored verbatim. DROPPED: the one '37c, 45c' heat-shock array (needs schema)",
             page=(
                 "Science 2008 320:362 (doi:10.1126/science.1150021); SOM Table S1; raw mirror "
                 "manifest.json pinning every file; het.ratio_result_nm.pub sha256=c0ddefaeb44c9760481dc443d1c2e82570bad4eb1a5458acd74b169bec47cb44"
@@ -2346,11 +2346,11 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
     },
     "env_chemgen_hillenmeyer2008_hom": {
         "root": "data/torchcell/env_chemgen_hillenmeyer2008_hom",
-        # one record per (strain row, environment, control set) after the array
-        # and strain drop rules (#505); counted by
-        # experiments/036-dataset-fixes-before-kg-build/scripts/hillenmeyer2008_inputs.py
-        # through the loader's own functions; rules + counts in preprocess/.
-        "expected_count": 1063034,
+        # one record per (strain row, environment, control set); every ORF row stored
+        # as released (2026.10.12) except the SOM-withdrawn homozygous PDR5 row; the
+        # two unnamed-agent arrays need schema; counted through the loader's own
+        # functions; rules + counts in preprocess/.
+        "expected_count": 1228676,
         "background_genes": frozenset(),
         "stream": True,
         "provenance": Provenance(
@@ -2361,7 +2361,7 @@ ENVIRONMENT_RESPONSE_DATASETS: dict[str, dict[str, Any]] = {
             ),
             citation_key="hillenmeyerChemicalGenomicPortrait2008",
             sha256="0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71",
-            method="genome-scale HOP fitness-defect z_score = (mean control - treatment)/SD control; positive = fitness defect. HOM = BarcodedKanMxDeletionPerturbation (kanMX4; construction batch, pool; barcodes gapped; constructed_orf gapped at the BY marker loci). One record per (constructed STRAIN = matrix row ORF:batch, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples; rows of one ORF are different constructions and are never averaged. Reference genome StrainReferenceGenome BY4743 (named by the hom.txt key file; alleles, mating type and parents pending Brachmann 1998 / Giaever 2002). Renamed source ORFs keep their own records under the current gene with a ConstructedOrf ('merged' when two source ORFs land on one gene, else a gap). Every array's header is cross-checked against its key file: pH conflicts serve the header (Table S1 lists only pH7.5/8), the 18 hom 'minimal media' arrays the key calls 'synthetic complete for BY4743' are served on SC, compound-name conflicts are dropped. Conditions per SOM Table S1: temperature on Environment.temperature; pH; nutrient drop-outs as DERIVED SC media (partial levels checked against the release); minimal media as SD with a typed auxotroph-supplement gap; '<compound> irradiated' as compound + radiation; cond2 appended in every branch; base medium YPD_LIQUID; compounds carry a typed vehicle gap. CultureEnvironment: duration_generations = magnitude, pre_culture from the SIGN (negative frozen_stock, positive YPD log phase to OD600 2.0, ~10 generations), culture_format and temperature gapped (Pierce 2006). Molar doses canonicalized exactly (Decimal). DROPPED: 44 environments / 50 arrays -- 32 arrays naming a compound with no structure identifier, the two 'minimal media:400:um' arrays whose agent is named nowhere, 7 header/key compound conflicts, 9 0gen arrays; strains: hom PDR5 YOR153W:chr15_2 (the SOM: wrong gene deleted) and the 11 YDL227C:ctrl_* rows. ORFs go through resolve_gene_name (renamed kept, retired/non-gene dropped to preprocess/dropped_genes.json)",
+            method="genome-scale HOP fitness-defect z_score = (mean control - treatment)/SD control; positive = fitness defect. HOM = BarcodedKanMxDeletionPerturbation (kanMX4; construction batch, pool; barcodes gapped; constructed_orf gapped at the BY marker loci). One record per (constructed STRAIN = matrix row ORF:batch, environment, CONTROL SET): the SOM defines the score against a matched no-drug control set (same pool, generation count and scanner), so the control-set id is stored on phenotype.screen_id and one reference is emitted per control set with that set's control-array count as n_samples; rows of one ORF are different constructions and are never averaged. Reference genome StrainReferenceGenome BY4743 (named by the hom.txt key file; alleles, mating type and parents pending Brachmann 1998 / Giaever 2002). Every source ORF is stored as the release spells it (2026.10.12; no genome lookup, no ConstructedOrf). Every array's header is cross-checked against its key file: pH conflicts serve the header (Table S1 lists only pH7.5/8), the 18 hom 'minimal media' arrays the key calls 'synthetic complete for BY4743' are served on SC, compound-name conflicts are served under the header (both strings in key_header_checks.json). Conditions per SOM Table S1: temperature on Environment.temperature; pH; nutrient drop-outs as DERIVED SC media (partial levels checked against the release); minimal media as SD with a typed auxotroph-supplement gap; '<compound> irradiated' as compound + radiation; cond2 appended in every branch; base medium YPD_LIQUID; compounds carry a typed vehicle gap. CultureEnvironment: duration_generations = magnitude, pre_culture from the SIGN (negative frozen_stock, positive YPD log phase to OD600 2.0, ~10 generations), culture_format and temperature gapped (Pierce 2006). Molar doses canonicalized exactly (Decimal). STORED AS RELEASED (2026.10.12): compounds with no structure identifier carry the typed inchikey gap, 0gen arrays carry duration 0 with a pre_culture gap, the YDL227C:ctrl_* rows are stored with their batch token, retired and non-gene ORFs are stored verbatim. DROPPED: hom PDR5 YOR153W:chr15_2 (the SOM: wrong gene deleted, an author withdrawal) and the two 'minimal media:400:um' arrays whose agent is named nowhere (needs schema)",
             page=(
                 "Science 2008 320:362 (doi:10.1126/science.1150021); SOM Table S1; raw mirror "
                 "manifest.json pinning every file; hom.z_result_nm.pub sha256=0b7d5e4dad0e5b4336b1dac97fb32ef14d7d0bf9f5d1b0d5ddb382c393362b71"
@@ -3258,9 +3258,9 @@ GENOME_ARCHITECTURE_DATASETS: dict[str, dict[str, Any]] = {
         "root": "data/torchcell/genome_architecture_puddu2019",
         "raw_mirror": "torchcell-raw/pudduGenomeArchitectureStability2019",
         # 8,843 released colonies minus the 8 wild-type BY4743 colonies (the reference
-        # rather than perturbation records) minus the 9 colonies whose released deletion
-        # names one of 5 ORFs the current R64 annotation retired.
-        "expected_count": 8826,
+        # rather than perturbation records); every knockout colony is stored under its
+        # released deletion name, the 9 on ORFs R64 has since retired included.
+        "expected_count": 8835,
         "provenance": Provenance(
             source_uri=(
                 "$DATA_ROOT/torchcell-raw/pudduGenomeArchitectureStability2019/"

@@ -569,3 +569,17 @@ L0-L4 on the dev stores (`run_expression`; reports under `data/torchcell/{sm,dm}
 | dm | L3 | `deletion_downregulates` | PASS | median deleted-gene log2=-1.985; frac_neg=0.979 over 143 deleted genes (1 absent from the platform map) |
 
 The double-mutant runner declares no L4 rule; the single-mutant store's L4 compares the two Sameith universes. The `deletion_downregulates` messages are shortened (the report adds "(<0 => correct orientation)").
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+GEO sample titles of GSE42536 name the deleted genes by lower-case tokens (`dot6-del-1-a`, `rpn4-del+ydr026c-del`). Until today a token that was not ORF-shaped went through `gene_alias_resolution.resolve_gene_name_strict` against the injected `SCerevisiaeGenome`, with two pins (SUT2, GAT1) for names that are ambiguous in R64. That route is removed: the genome is a separate layer and gates nothing.
+
+- **Removed:** `convert_title_token`, `AMBIGUOUS_ALIAS_PINS`, the `resolve_gene_name_strict` / `candidate_orfs` / `check_ambiguous_aliases` imports, `_check_title_resolutions`, `title_resolutions`, the `GeneNameRefused` path, the `genome=` constructor argument of both loaders and the `SCerevisiaeGenome` import. The dead `resolved_by_*` / `unresolved_genes` counters went with them.
+- **Added:** `release_symbol_map(path)` reads every (`systematic name`, `gene symbol`) pair of the release's own Additional file 1 (`12915_2015_222_MOESM1_ESM.xlsx`, sheets "List of 215 GSTFs", "Single mutants - info", "Double mutants - info"; both sides upper-cased, since the workbook writes `Yil130W` / `Asg1`) and raises if one symbol is paired with two ORFs. `release_gene_symbols` inverts it (an ORF-as-symbol entry is not a symbol, so YML081W, written `Tda9` in two sheets and `Yml081W` in the double sheet, is TDA9). `title_token_to_systematic` takes an ORF-shaped token verbatim (upper-cased, the titles are lower case) and any other token through the workbook; a token in neither (`DEL`, `MATA`, `REP`) is not a gene token.
+- **Census, measured read-only on 2026-10-12** over the 287 titles of `GSE42536_family.soft.gz` (143 with "+", 144 without, none wildtype): the workbook map holds 216 symbols over 199 named ORFs; title tokens resolved 396 times through a workbook symbol and 34 times as an ORF-shaped token; every one of the 144 single and 143 double rows of the KG 3.0 build's `preprocess/data.csv` (`gene_names`) is reproduced exactly, in order, for both the sm and dm roots. SUT2 -> YPR009W and GAT1 -> YFL021W come from the workbook. Every single-mutant title gene is in "Single mutants - info"; a gene found only in the other sheets would still be stored.
+- **Record content change:** `perturbed_gene_name` is now the workbook's symbol for the ORF (upper-cased), else the ORF. It used to be the ORF. Of the 82 ORFs stored across both loaders, 75 take a symbol and 7 keep the ORF (YDR026C, YDR266C, YER184C, YFL052W, YGR067C, YPR015C, YPR196W). `systematic_gene_name` and every measurement are unchanged.
+- **Record counts:** unchanged, 82 single-mutant and 72 double-mutant records (no rule dropped or restored a record). The `double_deletion_title` routing of the single loader (143 arrays) and the authoritative-pair grouping of the double loader stay; both are release-internal.
+- **Needs schema:** nothing.
+- `torchcell/scratch/sameith2015_demo.py` no longer builds a genome, since the constructors no longer take one.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

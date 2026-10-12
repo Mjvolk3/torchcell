@@ -38,17 +38,7 @@ from torchcell.datamodels.schema import (
     SgaNatMxDeletionPerturbation,
     Temperature,
 )
-from torchcell.datamodels.strain_background import R64_GFF
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.gene_alias_resolution import (
-    AliasResolutionRule,
-    PinnedAliasResolution,
-    candidate_orfs,
-    check_ambiguous_aliases,
-    pin_table,
-    resolve_gene_name_strict,
-)
-from torchcell.sequence.genome.scerevisiae import SCerevisiaeGenome
 
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
@@ -109,53 +99,102 @@ N_EXPECTED_MAX_REPLICATES_DELETION = 4  # 2 biological × 2 dye-swap measurement
 SAMEITH2015_PUBMED_ID = "26700642"
 
 # ============================================================================
-# Gene names in GEO sample titles (#886)
+# Gene names in GEO sample titles: the release's own symbol table
 # ============================================================================
-# A title token that is not systematic-shaped is resolved by
-# ``gene_alias_resolution.resolve_gene_name_strict``: a token with no candidate ORF is
-# not a gene name and is skipped, a token with one candidate resolves to it, and an
-# ambiguous token resolves only through its pin below, whose rule (the SGD standard name
-# in the R64 GFF) the build re-checks against the injected genome. Two tokens of
-# GSE42536 are ambiguous in R64 (measured 2026-10-10 over every title of the series):
-# SUT2 (YMR080C, YPR009W) in 4 arrays and GAT1 (YFL021W, YKR067W) in 6. The paper's own
-# list (Additional file 1, sheet "List of 215 GSTFs": "Ypr009W | Sut2", "Yfl021W |
-# Gat1") names the same ORFs. Before the fix both resolved through the gene table's
-# standard-name column to these ORFs, so no stored record changes. Each quote is the
-# verbatim start of the ORF's gene row in the R64-4-1 GFF.
-AMBIGUOUS_ALIAS_PINS = pin_table(
-    [
-        PinnedAliasResolution(
-            alias="SUT2",
-            systematic_name="YPR009W",
-            rule=AliasResolutionRule.SGD_STANDARD_NAME,
-            provenance=R64_GFF,
-            quote="ID=YPR009W;Name=YPR009W;gene=SUT2;",
-        ),
-        PinnedAliasResolution(
-            alias="GAT1",
-            systematic_name="YFL021W",
-            rule=AliasResolutionRule.SGD_STANDARD_NAME,
-            provenance=R64_GFF,
-            quote="ID=YFL021W;Name=YFL021W;gene=GAT1;",
-        ),
-    ]
+# A GEO sample title names a deleted gene by a lower-case token ("dot6-del-1-a",
+# "rpn4-del+ydr026c-del"). The release itself pairs every gene symbol it uses with a
+# systematic name: Additional file 1 (``12915_2015_222_MOESM1_ESM.xlsx``, in the raw
+# dir) lists them in three sheets, "List of 215 GSTFs" (``systematic name``,
+# ``gene symbol``), "Single mutants - info" (the same two columns) and "Double mutants -
+# info" (``GSTF1,           systematic name`` / ``GSTF1,           gene symbol`` and the
+# GSTF2 pair, with that spacing). The workbook writes systematic names as ``Yil130W``
+# and symbols as ``Asg1``, so both sides are upper-cased. That table is the ONLY route
+# from a title token to an ORF: no genome, alias table or pin is consulted (the genome
+# is a separate layer and gates nothing). Measured 2026-10-12 over all 287 titles of
+# GSE42536 (143 with "+", 144 without, none wildtype): every title resolves through the
+# workbook (396 symbol tokens) or as an ORF-shaped token (34) to exactly the gene set the
+# KG 3.0 build stored, including SUT2 -> YPR009W and GAT1 -> YFL021W, the two tokens that
+# are ambiguous in R64 and that the workbook names directly ("Ypr009W | Sut2",
+# "Yfl021W | Gat1"). The other title tokens (DEL, MATA, REP) are not genes.
+WORKBOOK_FILE_NAME = "12915_2015_222_MOESM1_ESM.xlsx"
+_WORKBOOK_NAME_COLUMNS: tuple[tuple[str, str, str], ...] = (
+    ("List of 215 GSTFs", "systematic name", "gene symbol"),
+    ("Single mutants - info", "systematic name", "gene symbol"),
+    (
+        "Double mutants - info",
+        "GSTF1,           systematic name",
+        "GSTF1,           gene symbol",
+    ),
+    (
+        "Double mutants - info",
+        "GSTF2,           systematic name",
+        "GSTF2,           gene symbol",
+    ),
 )
-_SYSTEMATIC_PREFIX_RE = re.compile(r"Y[A-P][LR]\d{3}[WC](-[A-Z])?")
+_SYSTEMATIC_RE = re.compile(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$")
 
 
-def convert_title_token(genome: SCerevisiaeGenome, token: str) -> str | None:
-    """Resolve one title token to a systematic name, or None when it names no gene.
+def release_symbol_map(path: str) -> dict[str, str]:
+    """Upper-cased gene symbol -> upper-cased systematic name, from Additional file 1.
 
-    A systematic-shaped token is returned upper-cased; a token with no candidate ORF is
-    not a gene name (None); anything else goes through the refusing resolver, so an
-    ambiguous token without a pin raises ``GeneNameRefused`` (#886).
+    Reads every (systematic name, gene symbol) pair of the three sheets of the
+    release's own workbook; a row with either cell blank names no pair. A symbol the
+    workbook pairs with two different ORFs raises ``ValueError``, since the release
+    would then not say which gene a title means. A symbol equal to its ORF (the workbook
+    writes ``Ypr015C | Ypr015C`` for a gene with no symbol) maps to itself.
     """
-    gene_upper = token.upper()
-    if _SYSTEMATIC_PREFIX_RE.match(gene_upper):
-        return gene_upper
-    if not candidate_orfs(genome, gene_upper):
-        return None
-    return resolve_gene_name_strict(genome, gene_upper, AMBIGUOUS_ALIAS_PINS)
+    symbol_map: dict[str, str] = {}
+    for sheet, orf_column, symbol_column in _WORKBOOK_NAME_COLUMNS:
+        table = pd.read_excel(path, sheet_name=sheet)
+        for orf_cell, symbol_cell in zip(
+            table[orf_column], table[symbol_column], strict=True
+        ):
+            if pd.isna(orf_cell) or pd.isna(symbol_cell):
+                continue
+            orf = str(orf_cell).strip().upper()
+            symbol = str(symbol_cell).strip().upper()
+            if symbol in symbol_map and symbol_map[symbol] != orf:
+                raise ValueError(
+                    f"{WORKBOOK_FILE_NAME} pairs the symbol {symbol} with both "
+                    f"{symbol_map[symbol]} and {orf} (sheet {sheet!r})"
+                )
+            symbol_map[symbol] = orf
+    return symbol_map
+
+
+def release_gene_symbols(symbol_map: dict[str, str]) -> dict[str, str]:
+    """Systematic name -> the release's gene symbol for it, from ``release_symbol_map``.
+
+    An ORF whose only workbook symbol is the ORF itself has no symbol and is absent.
+    The workbook names YML081W ``Tda9`` in "List of 215 GSTFs" and "Single mutants -
+    info" but ``Yml081W`` in "Double mutants - info"; the ORF-as-symbol entry is not a
+    symbol, so YML081W -> TDA9. Two different non-ORF symbols for one ORF raise
+    ``ValueError``.
+    """
+    symbols: dict[str, str] = {}
+    for symbol, orf in sorted(symbol_map.items()):
+        if symbol == orf:
+            continue
+        if orf in symbols and symbols[orf] != symbol:
+            raise ValueError(
+                f"{WORKBOOK_FILE_NAME} names {orf} both {symbols[orf]} and {symbol}"
+            )
+        symbols[orf] = symbol
+    return symbols
+
+
+def title_token_to_systematic(symbol_map: dict[str, str], token: str) -> str | None:
+    """The ORF a title token names through the release, or None when it names no gene.
+
+    GEO titles are lower case, so the token is upper-cased first. A systematic-shaped
+    token is taken verbatim (upper-cased); otherwise the token is looked up in the
+    workbook's symbol map. A token that is neither (``DEL``, ``MATA``, a replicate
+    suffix) is not a gene token.
+    """
+    upper = token.upper()
+    if _SYSTEMATIC_RE.match(upper):
+        return upper
+    return symbol_map.get(upper)
 
 
 @register_dataset
@@ -164,7 +203,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
     Microarray gene expression data for 82 single mutant yeast strains with
     deletions in general stress transcription factors (GSTFs). All single mutants
-    are from the yeast deletion library (BY4742, MATalpha, KanMX marker).
+    are from the yeast deletion library (BY4742, MATalpha, KanMX marker). Title tokens
+    resolve to ORFs only through the release's Additional file 1
+    (``release_symbol_map``), and ``perturbed_gene_name`` is the workbook's symbol.
 
     Data source: GEO accession GSE42536
     Paper: Sameith et al. (2015) BMC Biology
@@ -181,18 +222,13 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         process_workers: int = 0,
         batch_size: int = 10,
-        genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ):
-        """Initialize the dataset, optionally injecting a genome for gene mapping."""
+        """Initialize the dataset; gene names come from the release's own workbook."""
         self.process_workers = process_workers
         self.batch_size = batch_size
-
-        # Genome for gene name mapping (optional, injected)
-        # If None, gene resolution methods will have limited functionality
-        self.genome = genome
 
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -265,14 +301,8 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse GEO expression data into single-mutant experiments and write LMDB."""
-        # Title-token resolution (#886): every (token, systematic) resolution is
-        # recorded for the build-time check.
-        self.title_resolutions: set[tuple[str, str]] = set()
-        # Initialize resolution statistics
-        self.resolved_by_excel = 0
-        self.resolved_by_gene_table = 0
-        self.resolved_by_alias = 0
-        self.unresolved_genes = 0
+        # Title tokens resolve through the release's own workbook only.
+        self._load_release_names()
 
         # Load the GEO object
         geo_pkl_path = osp.join(self.raw_dir, f"{self.geo_accession}.pkl")
@@ -340,7 +370,6 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
-        self._check_title_resolutions()
         log.info(f"Found {len(single_mutant_samples)} unique single mutant genes")
         log.info(f"Found {len(wt_samples)} wildtype samples")
         self.dropped_double_deletion_titles = multi_gene_titles
@@ -474,6 +503,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
                         log2_var,
                         log2_n,
                         refpool_n_replicates=refpool_n,
+                        gene_symbols=self.gene_symbols,
                     )
                 )
 
@@ -539,7 +569,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
-        """Every gene a sample title names: systematic names, then resolved common names.
+        """Every gene a sample title names: systematic names, then workbook symbols.
 
         The list is not truncated. GSE42536 holds single- and double-deletion arrays in
         one series, and a double-deletion title joins two genes with ``+``
@@ -577,22 +607,11 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return gene_names
 
-    def _check_title_resolutions(self) -> None:
-        """Build-time check (#886): no title token's ORF came from an unpinned ambiguity.
-
-        Runs over every (token, systematic) resolution of the series' titles, a superset
-        of the names the store holds, before any record is written.
-        """
-        audit = check_ambiguous_aliases(
-            cast(SCerevisiaeGenome, self.genome),
-            sorted(self.title_resolutions),
-            AMBIGUOUS_ALIAS_PINS,
-        )
-        log.info(
-            "Sameith2015 ambiguous-name check: %d title resolutions, pinned names %s",
-            audit.n_pairs,
-            audit.ambiguous,
-        )
+    def _load_release_names(self) -> None:
+        """Read the workbook's symbol -> ORF map and its ORF -> symbol inverse."""
+        path = osp.join(self.raw_dir, WORKBOOK_FILE_NAME)
+        self.symbol_map = release_symbol_map(path)
+        self.gene_symbols = release_gene_symbols(self.symbol_map)
 
     def _is_valid_systematic_name(self, name: str) -> bool:
         """Validate that a systematic name matches the expected format."""
@@ -602,15 +621,10 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         return bool(re.match(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$", name.upper()))
 
     def _convert_to_systematic(self, gene_name: str) -> str | None:
-        """Resolve a title token to a systematic name, recording the resolution (#886)."""
+        """The ORF a title token names through the release's workbook, else None."""
         if not gene_name:
             return None
-        systematic = convert_title_token(
-            cast(SCerevisiaeGenome, self.genome), gene_name
-        )
-        if systematic is not None:
-            self.title_resolutions.add((gene_name.upper(), systematic))
-        return systematic
+        return title_token_to_systematic(self.symbol_map, gene_name)
 
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
@@ -823,6 +837,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
         n_replicates: SortedDict | None = None,
         *,
         refpool_n_replicates: SortedDict,
+        gene_symbols: dict[str, str],
     ) -> tuple[Any, Any, Any]:
         """Create experiment for single deletion mutant.
 
@@ -844,6 +859,9 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             n_replicates: Number of replicates per gene (optional)
             refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
                 ``refpool_data``
+            gene_symbols: The workbook's ORF -> gene symbol map
+                (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or
+                the ORF when the workbook gives the ORF no symbol
         """
         # BY4742 (MATalpha) for every single mutant. Paper: "All single mutants and
         # most double mutants carry the mating type matα and are in the genetic
@@ -861,7 +879,7 @@ class SmMicroarraySameith2015Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=gene_names[0],
-                    perturbed_gene_name=gene_names[0],
+                    perturbed_gene_name=gene_symbols.get(gene_names[0], gene_names[0]),
                     strain_id=f"KanMX_{gene_names[0]}",
                 )
             )
@@ -935,7 +953,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     Microarray gene expression data for double-deletion yeast strains pairing
     general stress transcription factors (GSTFs), profiled against a common
     wildtype reference pool. Authoritative GSTF pairs and per-sample strain are
-    read from the paper's supplementary table.
+    read from the paper's supplementary table. Title tokens resolve to ORFs only
+    through the release's Additional file 1 (``release_symbol_map``), and
+    ``perturbed_gene_name`` is the workbook's symbol.
 
     Data source: GEO accession GSE42536
     Paper: Sameith et al. (2015) BMC Biology
@@ -953,18 +973,13 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         io_workers: int = 0,
         process_workers: int = 0,
         batch_size: int = 10,
-        genome: SCerevisiaeGenome | None = None,  # Optional dependency injection
         transform: Callable[..., Any] | None = None,
         pre_transform: Callable[..., Any] | None = None,
         **kwargs: Any,
     ):
-        """Initialize the dataset, optionally injecting a genome for gene mapping."""
+        """Initialize the dataset; gene names come from the release's own workbook."""
         self.process_workers = process_workers
         self.batch_size = batch_size
-
-        # Genome for gene name mapping (optional, injected)
-        # If None, gene resolution methods will have limited functionality
-        self.genome = genome
 
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
@@ -1087,14 +1102,8 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
     @post_process
     def process(self) -> None:
         """Parse GEO expression data into double-mutant experiments and write LMDB."""
-        # Title-token resolution (#886): every (token, systematic) resolution is
-        # recorded for the build-time check.
-        self.title_resolutions: set[tuple[str, str]] = set()
-        # Initialize resolution statistics
-        self.resolved_by_excel = 0
-        self.resolved_by_gene_table = 0
-        self.resolved_by_alias = 0
-        self.unresolved_genes = 0
+        # Title tokens resolve through the release's own workbook only.
+        self._load_release_names()
 
         # Load the GEO object
         geo_pkl_path = osp.join(self.raw_dir, f"{self.geo_accession}.pkl")
@@ -1157,7 +1166,6 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
             samples_data.append(sample_info)
 
-        self._check_title_resolutions()
         log.info(f"Found {len(single_mutant_samples)} unique single mutant genes")
         log.info(f"Found {len(double_mutant_samples)} double mutant samples")
         log.info(f"Found {len(wt_samples)} wildtype samples")
@@ -1322,6 +1330,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                         log2_n,
                         strain=strain,  # NEW: Pass per-sample strain
                         refpool_n_replicates=refpool_n,
+                        gene_symbols=self.gene_symbols,
                     )
                 )
 
@@ -1409,6 +1418,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     probe_to_gene_map,
                     self.name,
                     self.gstf_pairs,  # NEW: Pass gstf_pairs for strain extraction
+                    self.gene_symbols,
                 )
                 futures.append(future)
 
@@ -1436,6 +1446,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         probe_to_gene_map: dict[str, str],
         dataset_name: str,
         gstf_pairs: dict[tuple[str, str], dict[str, Any]],  # NEW: strain extraction
+        gene_symbols: dict[str, str],
     ) -> list[bytes]:
         """Process a batch of replicate groups. Static method for multiprocessing."""
         results = []
@@ -1506,6 +1517,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
                     log2_n,
                     strain=strain,  # NEW: Pass per-sample strain
                     refpool_n_replicates=refpool_n,
+                    gene_symbols=gene_symbols,
                 )
             )
 
@@ -1559,7 +1571,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return mean_dict, se_dict, variance_dict, n_replicates_dict
 
     def _extract_gene_names_from_title(self, title: str) -> list[str]:
-        """Extract systematic gene names from sample title."""
+        """Up to two genes a sample title names: systematic names, then workbook symbols."""
         gene_names = []
 
         # Look for systematic names (e.g., YAL001C or YBR089C-A)
@@ -1602,22 +1614,11 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
 
         return gene_names[:2]  # Return at most 2 genes for double mutants
 
-    def _check_title_resolutions(self) -> None:
-        """Build-time check (#886): no title token's ORF came from an unpinned ambiguity.
-
-        Runs over every (token, systematic) resolution of the series' titles, a superset
-        of the names the store holds, before any record is written.
-        """
-        audit = check_ambiguous_aliases(
-            cast(SCerevisiaeGenome, self.genome),
-            sorted(self.title_resolutions),
-            AMBIGUOUS_ALIAS_PINS,
-        )
-        log.info(
-            "Sameith2015 ambiguous-name check: %d title resolutions, pinned names %s",
-            audit.n_pairs,
-            audit.ambiguous,
-        )
+    def _load_release_names(self) -> None:
+        """Read the workbook's symbol -> ORF map and its ORF -> symbol inverse."""
+        path = osp.join(self.raw_dir, WORKBOOK_FILE_NAME)
+        self.symbol_map = release_symbol_map(path)
+        self.gene_symbols = release_gene_symbols(self.symbol_map)
 
     def _is_valid_systematic_name(self, name: str) -> bool:
         """Validate that a systematic name matches the expected format."""
@@ -1627,15 +1628,10 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         return bool(re.match(r"^Y[A-P][LR]\d{3}[WC](-[A-Z])?$", name.upper()))
 
     def _convert_to_systematic(self, gene_name: str) -> str | None:
-        """Resolve a title token to a systematic name, recording the resolution (#886)."""
+        """The ORF a title token names through the release's workbook, else None."""
         if not gene_name:
             return None
-        systematic = convert_title_token(
-            cast(SCerevisiaeGenome, self.genome), gene_name
-        )
-        if systematic is not None:
-            self.title_resolutions.add((gene_name.upper(), systematic))
-        return systematic
+        return title_token_to_systematic(self.symbol_map, gene_name)
 
     def _extract_probe_to_gene_mapping(self, gse: Any) -> dict[str, str]:
         """Extract probe ID to gene name mapping from GEO platform annotation."""
@@ -1920,6 +1916,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
         strain: str = "BY4742",  # NEW: Accept per-sample strain parameter
         *,
         refpool_n_replicates: SortedDict,
+        gene_symbols: dict[str, str],
     ) -> tuple[Any, Any, Any]:
         """Create experiment for double deletion mutant with PER-SAMPLE strain.
 
@@ -1942,6 +1939,9 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             strain: Strain background (BY4742 or BY4741), extracted from Excel comments
             refpool_n_replicates: Arrays in each gene's refpool mean, same keys as
                 ``refpool_data``
+            gene_symbols: The workbook's ORF -> gene symbol map
+                (``release_gene_symbols``); ``perturbed_gene_name`` is that symbol, or
+                the ORF when the workbook gives the ORF no symbol
         """
         # Per-pair strain from the SI comments column: "MATa" -> BY4741, otherwise
         # BY4742 (see _load_authoritative_gstf_pairs).
@@ -1958,7 +1958,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             perturbations.append(
                 SgaKanMxDeletionPerturbation(
                     systematic_gene_name=gene_names[0],
-                    perturbed_gene_name=gene_names[0],
+                    perturbed_gene_name=gene_symbols.get(gene_names[0], gene_names[0]),
                     strain_id=f"KanMX_{gene_names[0]}",
                 )
             )
@@ -1968,7 +1968,7 @@ class DmMicroarraySameith2015Dataset(ExperimentDataset):
             perturbations.append(
                 SgaNatMxDeletionPerturbation(
                     systematic_gene_name=gene_names[1],
-                    perturbed_gene_name=gene_names[1],
+                    perturbed_gene_name=gene_symbols.get(gene_names[1], gene_names[1]),
                     strain_id=f"NatMX_{gene_names[1]}",
                 )
             )

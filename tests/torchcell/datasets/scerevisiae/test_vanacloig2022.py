@@ -1,10 +1,10 @@
 # tests/torchcell/datasets/scerevisiae/test_vanacloig2022.py
 # [[tests.torchcell.datasets.scerevisiae.test_vanacloig2022]]
 # https://github.com/Mjvolk3/torchcell/tree/main/tests/torchcell/datasets/scerevisiae/test_vanacloig2022.py
-"""Vanacloig-Pedros 2022 loader: TMM ratio, Fig 1B ledger, DMSO, background, MBO.
+"""Vanacloig-Pedros 2022 loader: TMM ratio, stored-as-released ledger, DMSO, MBO.
 
-Everything but the mirror audit runs on synthetic count matrices and a fake genome, so
-no build tree and no network are needed. The audit test binds each module-level
+Everything but the mirror audit runs on synthetic count matrices, so no build tree, no
+genome and no network are needed. The audit test binds each module-level
 ``SourcedValue`` to its verbatim quote in the sha256-pinned mirror and skips when the
 mirror is not mounted.
 
@@ -13,11 +13,11 @@ The GEO-layout fixture (``_geo_matrix``): a gzipped TSV in the GSE186866 layout 
 count columns) read by the real ``_load_matrix``. Two batches with two controls each;
 six tokens (Furfural, MMS, SodiumGlyoxylate, DMSO, MBO, QUADRIS1) with three replicate
 columns each (batches 001, 002, 001, except MMS 001, 002, 002). Seven library rows:
-YAL001C, YAL002W, YAL003W (legacy spelling of YAL002W), YPL999C (retired), YGL013C (a
-selected background locus), YBR001C (one NaN count, in Control1_CG001), YBR002C (no
-barcode, and no other row names YBR002C); 60 non-ORF
-``Const`` rows holding 1,000 reads in every column; and a non-ORF ``Filler`` row whose
-counts bring EVERY column total to 1,000,000.
+YAL001C, YAL002W, YAL003W (an ORF a later annotation folds into YAL002W), YPL999C (an
+ORF no annotation lists, released std_name ``NOPE``), YGL013C (PDR1, a locus the SGA
+background also deleted), YBR001C (one NaN count, in Control1_CG001), YBR002C (no
+barcode); 60 non-ORF ``Const`` rows holding 1,000 reads in every column; and a non-ORF
+``Filler`` row whose counts bring EVERY column total to 1,000,000.
 
 Why the closed forms survive TMM: every column has the same library size, so a
 ``Const`` row's log ratio against any reference is exactly 0. Those 60 tied rows sit in
@@ -32,36 +32,36 @@ Expected values, with ``L(x) = log2(x + 1)``:
   response 3.0, sample SD 1.0, SE 1/sqrt(3).
 - YAL001C / MMS (pooled over all four controls, mean 5 -> log2 6): replicates 11, 23,
   47 -> 1, 2, 3; response 2.0, SD 1.0.
-- DMSO and MBO hold 5 reads in every replicate of every library row: YAL001C ->
-  L(5) - (2, 3, 2), response log2(6) - 7/3, SD sqrt(1/3); YAL002W (controls 0) ->
-  log2(6), SD 0; YBR002C (controls 1) -> log2(6) - 1, SD 0.
-- YAL002W: Furfural 0, 1, 3 -> 0, 1, 2; response 1.0, SD 1.0. MMS is an all-zero cell.
-- YBR002C: every other count 1, so every Furfural / MMS ratio is 0.
+- DMSO, MBO and QUADRIS1 hold 5 reads in every replicate of every library row: YAL001C
+  -> paired DMSO and MBO L(5) - (2, 3, 2), response log2(6) - 7/3, SD sqrt(1/3);
+  QUADRIS1 is pooled (mean 5), response 0, SD 0. YAL002W (controls 0) -> log2(6), SD 0;
+  the three rows at 2 reads -> log2(6) - log2(3) = 1, SD 0; YBR002C (controls 1) ->
+  log2(6) - 1, SD 0.
+- YAL002W: Furfural 0, 1, 3 -> 0, 1, 2; response 1.0, SD 1.0. MMS and SodiumGlyoxylate
+  are all-zero cells against zero controls: response L(0) - L(0) = 0.0, SD exactly 0,
+  STORED.
+- Every other Furfural / MMS / SodiumGlyoxylate cell has replicates equal to its
+  controls: response 0.0, SD 0.
 
-Records, condition-major over the kept conditions sorted (DMSO, Furfural, MBO, MMS),
-then kept rows (YAL001C, YAL002W, YBR001C, YBR002C): 0-2 DMSO, 3-5 Furfural, 6-8 MBO, 9
-YAL001C / MMS, 10 YBR002C / MMS. YBR001C is a kept library row, but its one missing count
-is a paired control of every kept condition (batch CG001 pairs Furfural, DMSO and MBO;
-MMS pools all four controls), so all four of its cells are dropped. Ledger: source 68
-rows x 6 tokens = 408; SodiumGlyoxylate and QUADRIS1 are not Fig 1B conditions, 2 x 68 =
-136; 61 non-ORF rows x 4 = 244; background locus YGL013C 4; no barcodeless duplicate 0;
-retired YPL999C 4; legacy YAL003W 4; YBR001C's four cells with a missing count 4;
-all-zero 1; so 397 dropped and 11 kept.
+Records, condition-major over every released token sorted (DMSO, Furfural, MBO, MMS,
+QUADRIS1, SodiumGlyoxylate), then the stored rows in matrix order (YAL001C, YAL002W,
+YAL003W, YPL999C, YGL013C, YBR002C): six records per condition, 36 in all. YBR001C is a
+stored library row, but its one missing count is a paired or pooled control of every
+condition, so all six of its cells are dropped under ``a_count_the_cell_uses_is_missing``.
+Ledger: source 68 rows x 6 tokens = 408; 61 non-ORF rows x 6 = 366 under
+``gene_column_is_not_a_systematic_orf``; YBR001C's six cells; so 372 dropped and 36
+stored; QUADRIS1 is the one ``compound_identity_gaps`` entry.
 
-Issue #501 pins: TMM factors equal edgeR's ``calcNormFactors`` (finding 1, and a
-compositional takeover leaves no TMM offset); the nine unreported tokens are dropped
-under the Fig 1B rule (finding 2); DMSO is a served condition (finding 3), dosed at
-Table S1's 2.50% read as v/v under the IC30 basis (#764, which replaced the 1% v/v
-vehicle fraction #501 first served); the
-background is the SGA MATa progeny with ONE perturbation per genotype (finding 4, #500);
-MBO is 2-methyl-3-buten-2-ol, CID 8257 (finding 5); the legacy-spelling strains are
-typed ``ConstructedOrf`` ledger entries (finding 6); ammonium sulfate is a SynBase
-dropout (finding 7). Issue #524, resolved here: a missing count drops only the cells
-that use it (rule ``a_count_the_cell_uses_is_missing``), never the strain's row; a row
-with no barcode is served with ``barcode None`` and ``BARCODE_ABSENT_GAP`` when no other
-row names its ORF, and dropped under
-``barcodeless_row_of_an_orf_another_row_carries_with_a_barcode`` when one does. Still
-pinned as-is (#524): equal nonzero replicate counts keep SD exactly 0.
+The genome-gate reversal (2026-10-12): no annotation renames, merges or refuses a row,
+so the renamed, retired and background-locus rows are stored under their released ORF
+and ``std_name``; an all-zero cell is stored with SD 0.0; the 11 Table-S1-only tokens are
+stored at their Table S1 doses. Issue #501 pins kept: TMM equals edgeR's
+``calcNormFactors`` (and a compositional takeover leaves no TMM offset); DMSO is a
+served condition dosed at Table S1's 2.50% v/v (#764); the background is the SGA MATa
+progeny with ONE perturbation per genotype (#500); MBO is 2-methyl-3-buten-2-ol, CID
+8257; ammonium sulfate is a SynBase dropout. Issue #524: a missing count drops only the
+cells that use it; a row with no barcode is stored with ``barcode None`` and
+``BARCODE_ABSENT_GAP``.
 """
 
 from __future__ import annotations
@@ -115,48 +115,14 @@ from torchcell.verification.sourced import (
     audit_sourced_value,
 )
 
-# The synthetic library: two current genes, one retired ORF, one legacy spelling of a
-# gene the library ALSO carries under its current name.
-_GENES = {"YAL001C", "YAL002W", "YBR001C"}
-_STANDARD = {"TFC3": ["YAL001C"], "VPS8": ["YAL002W"], "SPO23": ["YBR001C"]}
-_RENAMED = {"YAL003W": "YAL002W"}  # legacy spelling of a gene already in the pool
-
-
-class _Resolution:
-    def __init__(self, status: str, systematic: str | None) -> None:
-        self.status = status
-        self.systematic_name = systematic
-
-    @property
-    def is_current_gene(self) -> bool:
-        return self.status in ("current", "renamed")
-
-
-class _FakeGenome:
-    """The slice of ``SCerevisiaeGenome`` the loader's gene-name policy reads."""
-
-    gene_set = _GENES
-    feature_index = {"standard_to_ids": _STANDARD}
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        upper = name.upper()
-        if upper in _GENES:
-            return _Resolution("current", upper)
-        if upper in _RENAMED:
-            return _Resolution("renamed", _RENAMED[upper])
-        for standard, ids in _STANDARD.items():
-            if upper == standard:
-                return _Resolution("renamed", ids[0])
-        return _Resolution("retired", upper)
-
 
 def _matrix() -> pd.DataFrame:
     """Four library rows x (2 controls per batch + 3 conditions x 3 reps)."""
     rows = [
         ("YAL001C_AAAACCCCGGGGTTTTACGT", "TFC3"),
         ("YAL002W_CCCCGGGGTTTTAAAACGTA", "VPS8"),
-        ("YAL003W_GGGGTTTTAAAACCCCGTAC", "YAL003W"),  # legacy duplicate -> dropped
-        ("YPL999C_TTTTAAAACCCCGGGGTACG", "NOPE"),  # retired -> dropped
+        ("YAL003W_GGGGTTTTAAAACCCCGTAC", "YAL003W"),  # renamed later: stored as is
+        ("YPL999C_TTTTAAAACCCCGGGGTACG", "NOPE"),  # in no annotation: stored as is
     ]
     data: dict[str, Any] = {
         "gene": [r[0] for r in rows],
@@ -184,7 +150,6 @@ def _matrix() -> pd.DataFrame:
 @pytest.fixture()
 def built(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
     """Build the synthetic dataset end to end into a temporary root."""
-    monkeypatch.setattr(v, "default_genome", lambda: _FakeGenome())
     monkeypatch.setattr(v.EnvChemgenVanacloig2022Dataset, "download", lambda self: None)
     monkeypatch.setattr(
         v.EnvChemgenVanacloig2022Dataset, "_load_matrix", lambda self: _matrix()
@@ -196,22 +161,40 @@ def built(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> Any:
     return v.EnvChemgenVanacloig2022Dataset(root=root)
 
 
-def test_drop_rules_account_for_every_source_record(built: Any) -> None:
+def test_every_source_record_is_stored(built: Any) -> None:
+    """Four rows x three conditions, the renamed, the unannotated and the all-zero
+    Benomyl cell included: nothing is dropped and both rules are at 0.
+    """
     log = v.DropLog.model_validate_json(
         open(osp.join(built.root, "preprocess", "dropped_records.json")).read()
     )
-    rules = {rule.rule: rule for rule in log.rules}
-    # Benomyl, DMSO and MBO are all Fig 1B conditions, and MBO now resolves
-    assert rules["compound_not_reported_by_the_paper"].items == []
-    assert rules["compound_without_a_structure_identifier"].items == []
-    assert rules["orf_is_not_a_current_genome_gene"].items == ["YPL999C"]
-    assert rules["orf_is_a_legacy_spelling_of_another_library_orf"].items == ["YAL003W"]
-    # three conditions x two kept rows, minus the Benomyl all-zero cell
-    assert rules["all_three_replicate_counts_are_zero"].n_records == 1
-    assert log.source_records == 4 * 3
-    assert log.kept_records == 5
-    assert log.dropped_records == sum(rule.n_records for rule in log.rules)
+    assert [(r.rule, r.n_records) for r in log.rules] == [
+        ("gene_column_is_not_a_systematic_orf", 0),
+        ("a_count_the_cell_uses_is_missing", 0),
+    ]
+    assert [(n.rule, n.n_cells) for n in log.not_a_value] == [
+        ("every_count_of_the_row_is_missing", 0)
+    ]
+    assert log.compound_identity_gaps == []
+    assert (log.source_records, log.kept_records, log.dropped_records) == (12, 12, 0)
     assert len(built) == log.kept_records
+    stored = {
+        (
+            built[i]["experiment"]["genotype"]["perturbations"][0][
+                "systematic_gene_name"
+            ],
+            built[i]["experiment"]["genotype"]["perturbations"][0][
+                "perturbed_gene_name"
+            ],
+        )
+        for i in range(len(built))
+    }
+    assert stored == {
+        ("YAL001C", "TFC3"),
+        ("YAL002W", "VPS8"),
+        ("YAL003W", "YAL003W"),
+        ("YPL999C", "NOPE"),
+    }
 
 
 def test_record_carries_one_screened_deletion_and_the_shared_medium(built: Any) -> None:
@@ -222,7 +205,7 @@ def test_record_carries_one_screened_deletion_and_the_shared_medium(built: Any) 
     (deletion,) = experiment["genotype"]["perturbations"]
     assert deletion["perturbation_type"] == "barcoded_kanmx_deletion"
     assert deletion["systematic_gene_name"] == "YAL001C"
-    assert deletion["perturbed_gene_name"] == "TFC3"  # the genome's spelling
+    assert deletion["perturbed_gene_name"] == "TFC3"  # the release's std_name
     assert deletion["barcode"] == "AAAACCCCGGGGTTTTACGT"
     assert deletion["collection"] == v.LIBRARY_COLLECTION.value
     assert deletion["cassette"] == "kanMX"  # Piotrowski: 'MATa xxxΔ::kanMX'
@@ -294,18 +277,31 @@ def test_unpaired_compound_keeps_the_pooled_control_in_its_units() -> None:
     )
 
 
-def test_resolve_library_rows_separates_retired_from_legacy_duplicates() -> None:
-    rows = v.resolve_library_rows(
-        pd.Series(["YAL001C", "YAL002W", "YAL003W", "YPL999C"]),
-        pd.Series(["AAAA", "TTTT", "CCCC", "GGGG"]),
-        _FakeGenome(),  # type: ignore[arg-type]  # the slice of the genome API used
+def test_released_library_rows_store_every_orf_verbatim() -> None:
+    """The ORF and std_name as released; no annotation is read."""
+    frame = pd.DataFrame(
+        {
+            "gene": [
+                "YAL003W_CCCC",  # an ORF a later annotation folds into another
+                "YPL999C_GGGG",  # an ORF no annotation lists
+                "YEL063C_AAAA",  # CAN1, a locus the SGA background also deleted
+                "YBR002C",  # no barcode
+                "YBR003W_TTTT",  # every count missing
+                "Filler_row",  # not ORF-shaped
+            ],
+            "std_name": ["YAL003W", "NOPE", "CAN1", "", "COQ1", "none"],
+            "a_CG001_rep1": [1.0, 2.0, 3.0, 4.0, float("nan"), 5.0],
+        }
     )
-    assert rows.keep_mask == [True, True, False, False]
-    assert rows.systematic == ["YAL001C", "YAL002W"]
-    assert rows.common == ["TFC3", "VPS8"]
-    assert rows.dropped_retired == ["YPL999C"]
-    assert rows.dropped_legacy_duplicate == ["YAL003W"]
-    assert rows.legacy_target == {"YAL003W": "YAL002W"}
+    rows = v.released_library_rows(frame, ["a_CG001_rep1"])
+    assert rows == v.LibraryRows(
+        keep_mask=[True, True, True, True, False, False],
+        systematic=["YAL003W", "YPL999C", "YEL063C", "YBR002C"],
+        perturbed=["YAL003W", "NOPE", "CAN1", "YBR002C"],
+        barcode=["CCCC", "GGGG", "AAAA", None],
+        every_count_missing=["YBR003W_TTTT"],
+        not_an_orf=["Filler_row"],
+    )
 
 
 def test_every_sourced_value_is_backed_by_a_verbatim_quote_in_the_mirror() -> None:
@@ -418,7 +414,7 @@ def test_a_compositional_takeover_leaves_no_tmm_offset() -> None:
 # --------------------------------------------------------------------------- #
 # #501 findings 2, 4, 5, 7: the condition list, the background, MBO, the medium
 # --------------------------------------------------------------------------- #
-#: The 11 matrix tokens Fig 1B does not list (#501 finding 2).
+#: The 11 matrix tokens Fig 1B does not list; Table S1 doses each of them.
 _UNREPORTED = {
     "QUADRIS1",
     "QUADRIS2",
@@ -438,8 +434,8 @@ def test_fig_1b_lists_34_conditions_including_dmso_and_mbo() -> None:
     assert len(v.FIG_1B_TOKENS) == v.FIG_1B_CONDITIONS.value == 34
     assert {"DMSO", "MBO", "MMS", "Benomyl"} <= v.FIG_1B_TOKENS
     assert not _UNREPORTED & v.FIG_1B_TOKENS
-    # every Fig 1B token resolves to a structure (MBO included), so the
-    # unidentified-compound rule removes nothing from the real matrix
+    assert v.TABLE_S1_ONLY_TOKENS == _UNREPORTED
+    # every Fig 1B token resolves to a structure (MBO included)
     assert all(resolve_compound_identity(name=t).identified for t in v.FIG_1B_TOKENS)
 
 
@@ -541,8 +537,9 @@ def _dataset_shell() -> Any:
     return dataset
 
 
-def test_table_s1_covers_exactly_the_fig_1b_conditions() -> None:
-    assert set(v.TABLE_S1_DOSES) == v.FIG_1B_TOKENS
+def test_table_s1_covers_every_matrix_token() -> None:
+    assert set(v.TABLE_S1_DOSES) == v.FIG_1B_TOKENS | _UNREPORTED
+    assert len(v.TABLE_S1_DOSES) == 45
     assert v.TABLE_S1_DOSES["Furfural"].quote == (
         "<tr><td>Furfural</td><td>8 mM</td><td>No</td><td>98-01-1</td>"
         "<td>Fisher Scientific</td><td>F94-500</td></tr>"
@@ -552,6 +549,54 @@ def test_table_s1_covers_exactly_the_fig_1b_conditions() -> None:
     )
     assert v.TABLE_S1.source_uri == "si/si2.md"
     assert v.TABLE_S1.sha256 == v.SI2_MD_SHA256
+
+
+def test_table_s1_only_conditions_are_stored_at_their_table_s1_doses() -> None:
+    """The 11 tokens no figure shows carry Table S1's dose and vehicle."""
+    dataset = _dataset_shell()
+    got = {
+        token: (c.value, c.unit, c.basis)
+        for token in sorted(_UNREPORTED)
+        for c in [dataset._concentration(token)]
+    }
+    mm, ug, pct = (
+        ConcentrationUnit.millimolar,
+        ConcentrationUnit.ug_per_ml,
+        ConcentrationUnit.percent,
+    )
+    assert got == {
+        "24Dimethylimidazole": (6.0, mm, DoseBasis.IC30),
+        "2Methylimidazole": (3.8, mm, DoseBasis.IC30),
+        "45Methylimidazole": (3.3, mm, DoseBasis.IC30),
+        "CaffeicAcid": (7.5, mm, DoseBasis.IC30),
+        "LevulinicAcid": (10.0, mm, DoseBasis.IC30),
+        "Mycobutanil": (13.0, ug, DoseBasis.IC30),
+        "QUADRIS1": (0.08, pct, DoseBasis.fixed),
+        "QUADRIS2": (0.04, pct, DoseBasis.fixed),
+        "SodiumAcetate": (150.0, mm, DoseBasis.IC30),
+        "SodiumButyrate": (0.19, mm, DoseBasis.IC30),
+        "SodiumGlyoxylate": (0.19, mm, DoseBasis.IC30),
+    }
+    dmso_dissolved = {
+        token for token in _UNREPORTED if v.table_s1_solvent(token) is not None
+    }
+    assert dmso_dissolved == {"CaffeicAcid", "2Methylimidazole", "45Methylimidazole"}
+    assert v.QUADRIS_ARBITRARY_DOSE.value is DoseBasis.fixed
+    assert "arbitrarily selected" in v.QUADRIS_ARBITRARY_DOSE.quote
+
+
+def test_quadris_is_pooled_and_carries_the_inchikey_gap() -> None:
+    """The Methods analyzed QUADRIS unpaired; its curated identity row resolves no
+    structure, so the compound is stored with the typed ``inchikey`` gap.
+    """
+    dataset = _dataset_shell()
+    assert dataset._units("QUADRIS1") == v._POOLED_UNITS
+    assert dataset._units("QUADRIS2") == v._POOLED_UNITS
+    quadris = dataset._compound("QUADRIS1")
+    assert quadris.compound.name == "QUADRIS1"
+    assert quadris.compound.inchikey is None
+    assert [g.field for g in quadris.compound.provenance_gaps] == ["inchikey"]
+    assert quadris.solvent is None
 
 
 def test_dmso_dissolved_inhibitor_carries_the_one_percent_dmso_vehicle() -> None:
@@ -756,20 +801,6 @@ def _geo_matrix() -> pd.DataFrame:
     return matrix
 
 
-_GEO_GENES = {"YAL001C", "YAL002W", "YBR001C", "YBR002C"}
-
-
-class _GeoGenome(_FakeGenome):
-    """``_FakeGenome`` with YBR002C, a current gene with no standard name."""
-
-    gene_set = _GEO_GENES
-
-    def resolve_gene_name(self, name: str) -> _Resolution:
-        if name == "YBR002C":
-            return _Resolution("current", name)
-        return super().resolve_gene_name(name)
-
-
 def _write_matrix(path: str, frame: pd.DataFrame) -> None:
     with gzip.open(path, "wt") as handle:
         frame.to_csv(handle, sep="\t", index=False)
@@ -777,7 +808,6 @@ def _write_matrix(path: str, frame: pd.DataFrame) -> None:
 
 def _build(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, frame: pd.DataFrame) -> Any:
     monkeypatch.delenv("TC_DATA_URL", raising=False)
-    monkeypatch.setattr(v, "default_genome", lambda: _GeoGenome())
     root = tmp_path / "env_chemgen_vanacloig2022"
     (root / "raw").mkdir(parents=True)
     _write_matrix(str(root / "raw" / v.DATA_FILENAME), frame)
@@ -824,18 +854,26 @@ def test_geo_fixture_tmm_factors_are_exactly_one(geo_built: Any) -> None:
     factors = json.loads(
         (Path(geo_built.preprocess_dir) / "normalization_factors.json").read_text()
     )
-    assert sorted(factors) == ["DMSO", "Furfural", "MBO", "MMS"]
+    assert sorted(factors) == [
+        "DMSO",
+        "Furfural",
+        "MBO",
+        "MMS",
+        "QUADRIS1",
+        "SodiumGlyoxylate",
+    ]
     for entry in factors.values():
         assert set(entry["factors"]) == {1.0}
         assert set(entry["library_sizes"]) == {1_000_000.0}
     assert factors["MMS"]["columns"] == sorted(_CONTROLS) + _replicates("MMS")
+    assert factors["QUADRIS1"]["columns"] == sorted(_CONTROLS) + _replicates("QUADRIS1")
     assert factors["Furfural"]["columns"] == sorted(_CONTROLS) + _replicates("Furfural")
 
 
 def test_records_are_condition_major_with_the_closed_form_responses(
     geo_built: Any,
 ) -> None:
-    """(screened ORF, condition, response, SD) for all eleven records, in LMDB order."""
+    """(screened ORF, condition, response, SD) for all 36 records, in LMDB order."""
     got = []
     for i in range(len(geo_built)):
         experiment = geo_built[i]["experiment"]
@@ -850,18 +888,29 @@ def test_records_are_condition_major_with_the_closed_form_responses(
             )
         )
     l6 = math.log2(6)
+    rows = ["YAL001C", "YAL002W", "YAL003W", "YPL999C", "YGL013C", "YBR002C"]
+    filled_paired = [l6 - 7 / 3, l6, 1.0, 1.0, 1.0, l6 - 1]
+    filled_pooled = [0.0, l6, 1.0, 1.0, 1.0, l6 - 1]
+    by_condition = {
+        "dimethyl sulfoxide": filled_paired,
+        "furfural": [3.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+        "2-methyl-3-buten-2-ol": filled_paired,
+        "methyl methanesulfonate": [2.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        "QUADRIS1": filled_pooled,
+        "sodium glyoxylate": [0.0] * 6,
+    }
+    sds = {
+        "dimethyl sulfoxide": [math.sqrt(1 / 3)] + [0.0] * 5,
+        "furfural": [1.0, 1.0] + [0.0] * 4,
+        "2-methyl-3-buten-2-ol": [math.sqrt(1 / 3)] + [0.0] * 5,
+        "methyl methanesulfonate": [1.0] + [0.0] * 5,
+        "QUADRIS1": [0.0] * 6,
+        "sodium glyoxylate": [0.0] * 6,
+    }
     expected = [
-        ("YAL001C", "dimethyl sulfoxide", l6 - 7 / 3, math.sqrt(1 / 3)),
-        ("YAL002W", "dimethyl sulfoxide", l6, 0.0),
-        ("YBR002C", "dimethyl sulfoxide", l6 - 1, 0.0),
-        ("YAL001C", "furfural", 3.0, 1.0),
-        ("YAL002W", "furfural", 1.0, 1.0),
-        ("YBR002C", "furfural", 0.0, 0.0),
-        ("YAL001C", "2-methyl-3-buten-2-ol", l6 - 7 / 3, math.sqrt(1 / 3)),
-        ("YAL002W", "2-methyl-3-buten-2-ol", l6, 0.0),
-        ("YBR002C", "2-methyl-3-buten-2-ol", l6 - 1, 0.0),
-        ("YAL001C", "methyl methanesulfonate", 2.0, 1.0),
-        ("YBR002C", "methyl methanesulfonate", 0.0, 0.0),
+        (row, name, by_condition[name][i], sds[name][i])
+        for name in by_condition
+        for i, row in enumerate(rows)
     ]
     assert [g[:2] for g in got] == [e[:2] for e in expected]
     for (_, _, response, sd), (_, _, want_response, want_sd) in zip(
@@ -872,8 +921,8 @@ def test_records_are_condition_major_with_the_closed_form_responses(
 
 
 def test_full_paired_record_equals_the_hand_built_experiment(geo_built: Any) -> None:
-    """Record 3, YAL001C / Furfural: TMM log2 ratio against its OWN batch's controls."""
-    record = geo_built[3]
+    """Record 6, YAL001C / Furfural: TMM log2 ratio against its OWN batch's controls."""
+    record = geo_built[6]
     experiment = record["experiment"]
     assert experiment["experiment_type"] == "strain_environment_response"
     assert (
@@ -923,23 +972,22 @@ def test_dmso_record_is_served_at_the_table_s1_percent(geo_built: Any) -> None:
 
 
 def test_pooled_mms_edge_record(geo_built: Any) -> None:
-    """Record 9, YAL001C / MMS: the pooled control and the fixed, basis-free percent."""
-    experiment = geo_built[9]["experiment"]
+    """Record 18, YAL001C / MMS: the pooled control and the fixed, basis-free percent."""
+    experiment = geo_built[18]["experiment"]
     assert experiment["phenotype"] == _phenotype(2.0, 1.0, v._POOLED_UNITS).model_dump()
     mms = experiment["environment"]["perturbations"][0]
     assert mms["compound"]["name"] == "methyl methanesulfonate"
     assert mms["concentration"] == {"value": 0.01, "unit": "percent", "basis": "fixed"}
-    assert geo_built[9]["reference"]["phenotype_reference"]["units"] == v._POOLED_UNITS
+    assert geo_built[18]["reference"]["phenotype_reference"]["units"] == v._POOLED_UNITS
 
 
 def test_a_row_without_a_barcode_is_served_with_a_typed_absence(geo_built: Any) -> None:
-    """#524: ``YBR002C`` has no ``_<barcode>`` suffix and no other row names it, so the
-    barcode is absent from the release: ``barcode None`` with ``BARCODE_ABSENT_GAP``,
-    never an empty string. With no standard name the genome's canonical-name map falls
-    back to the systematic name. Its equal nonzero counts give SD exactly 0, which the
-    all-zero rule does not catch (still pinned, #524).
+    """#524: ``YBR002C`` has no ``_<barcode>`` suffix, so the barcode is absent from the
+    release: ``barcode None`` with ``BARCODE_ABSENT_GAP``, never an empty string. Its
+    released std_name is the ORF itself. Record 11 is YBR002C / Furfural, whose equal
+    nonzero counts give SD exactly 0.
     """
-    experiment = geo_built[5]["experiment"]
+    experiment = geo_built[11]["experiment"]
     expected = _genotype("YBR002C", "YBR002C", None)
     (deletion,) = expected.perturbations
     assert isinstance(deletion, BarcodedKanMxDeletionPerturbation)
@@ -959,15 +1007,13 @@ def test_a_row_without_a_barcode_is_served_with_a_typed_absence(geo_built: Any) 
     )
     assert experiment["phenotype"] == _phenotype(0.0, 0.0, v._PAIRED_UNITS).model_dump()
     # a barcoded record carries no gap
-    (barcoded,) = geo_built[3]["experiment"]["genotype"]["perturbations"]
+    (barcoded,) = geo_built[6]["experiment"]["genotype"]["perturbations"]
     assert barcoded["barcode"] == "AAAACCCC" and barcoded["provenance_gaps"] == []
 
 
 def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
-    """#501 finding 2: SodiumGlyoxylate and QUADRIS1 are not Fig 1B conditions.
-    #524: YBR001C's ONE NaN count (Control1_CG001, a paired control of every kept
-    condition) drops its four cells under the cell rule, not its row under the
-    library-row rule, whose description now matches its ``all`` filter.
+    """Every released cell accounted for: 36 stored, 366 non-ORF row cells, YBR001C's six
+    cells with a missing control count, and no row with every count missing.
     """
     log = json.loads(
         (Path(geo_built.preprocess_dir) / "dropped_records.json").read_text()
@@ -976,56 +1022,107 @@ def test_drop_ledger_is_written_exactly(geo_built: Any) -> None:
     assert (log["dataset"], log["source_records"], log["kept_records"]) == (
         "EnvChemgenVanacloig2022Dataset",
         68 * 6,
-        11,
+        36,
     )
-    assert log["dropped_records"] == 397
+    assert log["dropped_records"] == 372
+    non_orf = sorted([f"Const{i}_row" for i in range(_N_CONST)] + ["Filler_row"])
     assert rules == [
-        (
-            "compound_not_reported_by_the_paper",
-            "compound",
-            136,
-            ["QUADRIS1", "SodiumGlyoxylate"],
-        ),
-        ("compound_without_a_structure_identifier", "compound", 0, []),
-        ("row_is_not_a_barcoded_orf_or_carries_no_counts", "library_row", 244, []),
-        ("orf_is_a_selected_background_locus", "library_row", 4, ["YGL013C"]),
-        (
-            "barcodeless_row_of_an_orf_another_row_carries_with_a_barcode",
-            "library_row",
-            0,
-            [],
-        ),
-        ("orf_is_not_a_current_genome_gene", "library_row", 4, ["YPL999C"]),
-        (
-            "orf_is_a_legacy_spelling_of_another_library_orf",
-            "library_row",
-            4,
-            ["YAL003W"],
-        ),
+        ("gene_column_is_not_a_systematic_orf", "library_row", 366, non_orf),
         (
             "a_count_the_cell_uses_is_missing",
             "cell",
-            4,
-            ["YBR001C:DMSO", "YBR001C:Furfural", "YBR001C:MBO", "YBR001C:MMS"],
+            6,
+            [
+                "YBR001C:DMSO",
+                "YBR001C:Furfural",
+                "YBR001C:MBO",
+                "YBR001C:MMS",
+                "YBR001C:QUADRIS1",
+                "YBR001C:SodiumGlyoxylate",
+            ],
         ),
-        ("all_three_replicate_counts_are_zero", "cell", 1, []),
     ]
-    assert v.FIG_1B_IMAGE_SHA256 in log["rules"][0]["description"]
-    assert log["rules"][2]["description"].startswith(
-        "the gene column does not name a systematic ORF (before any '_<barcode>' "
-        "suffix), or every count column is missing (a QC-dropped barcode)"
-    )
-    assert log["rules"][7]["description"].startswith(
+    assert [(n["rule"], n["n_cells"], n["items"]) for n in log["not_a_value"]] == [
+        ("every_count_of_the_row_is_missing", 0, [])
+    ]
+    assert log["compound_identity_gaps"] == [
+        {"token": "QUADRIS1", "compound_name": "QUADRIS1", "n_records": 6}
+    ]
+    assert "released-gene-name" in log["rules"][0]["description"]
+    assert log["rules"][1]["description"].startswith(
         "one of the counts this (strain, compound) cell is computed from, a replicate "
-        "or one of its paired controls, is missing (NaN) in the release"
+        "or one of its paired controls, is a source NaN in the release"
     )
+    assert log["source_records"] == (
+        log["kept_records"]
+        + log["dropped_records"]
+        + sum(n["n_cells"] for n in log["not_a_value"])
+    )
+
+
+def _records_of(built: Any, orf: str) -> list[dict[str, Any]]:
+    return [
+        built[i]["experiment"]
+        for i in range(len(built))
+        if built[i]["experiment"]["genotype"]["perturbations"][0][
+            "systematic_gene_name"
+        ]
+        == orf
+    ]
+
+
+def test_annotation_renamed_and_unannotated_orfs_are_stored_as_released(
+    geo_built: Any,
+) -> None:
+    """YAL003W (folded into YAL002W by a later annotation) and YPL999C (in no
+    annotation) are stored under their released ORF and std_name, one record per
+    condition, with no ConstructedOrf anywhere.
+    """
+    for orf, name, barcode in (
+        ("YAL003W", "YAL003W", "GGGGTTTT"),
+        ("YPL999C", "NOPE", "TTTTAAAA"),
+    ):
+        records = _records_of(geo_built, orf)
+        assert len(records) == 6
+        for experiment in records:
+            assert experiment["genotype"] == _genotype(orf, name, barcode).model_dump()
+    assert not hasattr(v, "LegacyOrfStrain")
+    assert not hasattr(v, "resolve_library_rows")
+
+
+def test_a_background_locus_row_is_stored_as_released(geo_built: Any) -> None:
+    """YGL013C is PDR1, which the SGA background deleted (pdr1Δ::natMX); the release
+    carries a kanMX row for it, and that row is stored, the contradiction noted, not
+    resolved.
+    """
+    assert v.library_background().functional_copies("YGL013C") == 0
+    records = _records_of(geo_built, "YGL013C")
+    assert len(records) == 6
+    assert (
+        records[0]["genotype"] == _genotype("YGL013C", "PDR1", "ACGTACGT").model_dump()
+    )
+
+
+def test_an_all_zero_cell_is_stored_with_sd_zero(geo_built: Any) -> None:
+    """Record 19, YAL002W / MMS: three replicate counts of 0 against zero controls.
+    The value is L(0) - L(0) = 0.0 and the sample SD is exactly 0, stored as 0.0.
+    """
+    experiment = geo_built[19]["experiment"]
+    assert experiment["genotype"]["perturbations"][0]["systematic_gene_name"] == (
+        "YAL002W"
+    )
+    assert experiment["environment"]["perturbations"][0]["compound"]["name"] == (
+        "methyl methanesulfonate"
+    )
+    assert experiment["phenotype"] == _phenotype(0.0, 0.0, v._POOLED_UNITS).model_dump()
+    assert experiment["phenotype"]["environment_response_uncertainty"] == 0.0
 
 
 def test_a_missing_replicate_count_drops_only_that_cell(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """#524: YBR001C's NaN moved from a control to one Furfural replicate drops ONLY its
-    Furfural cell; its DMSO, MBO and MMS cells are served with all three replicates.
+    Furfural cell; its other five cells are stored with all three replicates.
     """
     frame = _geo_matrix()
     ybr001c = frame.index[frame["gene"] == "YBR001C_TTAATTAA"][0]
@@ -1040,8 +1137,8 @@ def test_a_missing_replicate_count_drops_only_that_cell(
     )
     rules = {rule.rule: rule for rule in log.rules}
     assert rules["a_count_the_cell_uses_is_missing"].items == ["YBR001C:Furfural"]
-    assert rules["row_is_not_a_barcoded_orf_or_carries_no_counts"].n_records == 244
-    assert (log.kept_records, log.dropped_records) == (14, 394)
+    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 366
+    assert (log.kept_records, log.dropped_records) == (41, 367)
     served = []
     for i in range(len(built)):
         experiment = built[i]["experiment"]
@@ -1053,13 +1150,15 @@ def test_a_missing_replicate_count_drops_only_that_cell(
         ("dimethyl sulfoxide", 3),
         ("2-methyl-3-buten-2-ol", 3),
         ("methyl methanesulfonate", 3),
+        ("QUADRIS1", 3),
+        ("sodium glyoxylate", 3),
     ]
 
 
-def test_a_row_with_every_count_missing_is_dropped_whole(
+def test_a_row_with_every_count_missing_is_not_a_value(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The library-row rule fires only when EVERY count column is missing."""
+    """A row whose EVERY count is missing holds no value: counted, not a record."""
     frame = _geo_matrix()
     ybr001c = frame.index[frame["gene"] == "YBR001C_TTAATTAA"][0]
     frame.loc[ybr001c, _COLUMNS] = float("nan")
@@ -1068,17 +1167,18 @@ def test_a_row_with_every_count_missing_is_dropped_whole(
         (Path(built.preprocess_dir) / "dropped_records.json").read_text()
     )
     rules = {rule.rule: rule for rule in log.rules}
-    assert rules["row_is_not_a_barcoded_orf_or_carries_no_counts"].n_records == 248
+    assert rules["gene_column_is_not_a_systematic_orf"].n_records == 366
     assert rules["a_count_the_cell_uses_is_missing"].n_records == 0
-    assert (log.kept_records, log.dropped_records) == (11, 397)
+    (not_a_value,) = log.not_a_value
+    assert (not_a_value.n_cells, not_a_value.items) == (6, ["YBR001C_TTAATTAA"])
+    assert (log.kept_records, log.dropped_records) == (36, 366)
 
 
-def test_a_barcodeless_row_of_a_barcoded_orf_is_dropped_with_its_rule(
+def test_a_barcodeless_row_and_a_barcoded_row_of_one_orf_are_both_stored(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """#524: when another row carries YBR002C WITH a barcode, the barcodeless YBR002C
-    row is not a genuine absence; it is dropped under its own ledger rule and the
-    barcoded row is served.
+    """Two released rows, two strains: the barcodeless YBR002C row keeps ``barcode
+    None`` with its gap, the barcoded copy keeps its barcode.
     """
     frame = _geo_matrix()
     barcoded = frame[frame["gene"] == "YBR002C"].copy()
@@ -1091,58 +1191,31 @@ def test_a_barcodeless_row_of_a_barcoded_orf_is_dropped_with_its_rule(
     log = v.DropLog.model_validate_json(
         (Path(built.preprocess_dir) / "dropped_records.json").read_text()
     )
-    rules = {rule.rule: rule for rule in log.rules}
-    rule = rules["barcodeless_row_of_an_orf_another_row_carries_with_a_barcode"]
-    assert (rule.n_records, rule.items) == (4, ["YBR002C"])
-    assert log.source_records == 69 * 6 and log.kept_records == 11
-    barcodes = {
-        built[i]["experiment"]["genotype"]["perturbations"][0]["barcode"]
-        for i in range(len(built))
-        if built[i]["experiment"]["genotype"]["perturbations"][0][
-            "systematic_gene_name"
-        ]
-        == "YBR002C"
-    }
-    assert barcodes == {"GGGGAAAA"}
-
-
-def test_legacy_strain_is_a_typed_constructed_orf_in_the_ledger(geo_built: Any) -> None:
-    """#501 finding 6: the dropped legacy-spelling strain is a typed record."""
-    log = v.DropLog.model_validate_json(
-        (Path(geo_built.preprocess_dir) / "dropped_records.json").read_text()
-    )
-    (strain,) = log.legacy_orf_strains
-    assert (strain.source_orf, strain.current_orf, strain.barcode) == (
-        "YAL003W",
-        "YAL002W",
-        "GGGGTTTT",
-    )
-    orf = strain.constructed_orf
-    assert orf.source_systematic_name == "YAL003W"
-    assert orf.relation is None and orf.deleted_span is None
-    assert [(g.field, g.resolve_with) for g in orf.provenance_gaps] == [
-        ("relation", v.SGD_ORF_HISTORY),
-        ("deleted_span", v.SGD_ORF_HISTORY),
+    assert log.source_records == 69 * 6 and log.kept_records == 42
+    barcodes = [
+        experiment["genotype"]["perturbations"][0]["barcode"]
+        for experiment in _records_of(built, "YBR002C")
     ]
+    assert sorted(barcodes, key=str) == ["GGGGAAAA"] * 6 + [None] * 6
 
 
 def test_reference_index_splits_paired_from_pooled_and_the_gene_set(
     geo_built: Any,
 ) -> None:
     """The inhibitor-free reference is shared across paired conditions; MMS differs
-    only in its units string. The gene set is the screened genes only: the background
-    loci ride on the reference, not on the genotype.
+    and QUADRIS1 differ only in their units string. The gene set is the screened genes
+    only: the background loci ride on the reference, not on the genotype.
     """
     index = geo_built.experiment_reference_index
     assert index is not None
     by_units = {e.reference.phenotype_reference.units: e.member_indices for e in index}
     assert by_units == {
-        v._PAIRED_UNITS: [0, 1, 2, 3, 4, 5, 6, 7, 8],
-        v._POOLED_UNITS: [9, 10],
+        v._PAIRED_UNITS: list(range(18)) + list(range(30, 36)),
+        v._POOLED_UNITS: list(range(18, 30)),
     }
     assert json.loads(
         (Path(geo_built.preprocess_dir) / "gene_set.json").read_text()
-    ) == ["YAL001C", "YAL002W", "YBR002C"]
+    ) == ["YAL001C", "YAL002W", "YAL003W", "YBR002C", "YGL013C", "YPL999C"]
 
 
 def _with_columns(extra: dict[str, float], drop: list[str]) -> pd.DataFrame:
@@ -1182,38 +1255,46 @@ def test_a_kept_compound_with_two_replicates_refuses(
         _build(tmp_path, monkeypatch, frame)
 
 
-def test_two_barcodes_of_one_orf_refuse_as_a_merged_key(
+def test_two_barcodes_of_one_orf_are_two_stored_strains(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The duplicate identifier: a second barcode of YAL001C would merge two strains."""
+    """A second barcode of YAL001C is a second released strain: both are stored."""
     frame = _geo_matrix()
     duplicate = frame.iloc[[0]].copy()
     duplicate["gene"] = "YAL001C_TTTTGGGG"
     frame = pd.concat([duplicate, frame], ignore_index=True)
+    built = _build(tmp_path, monkeypatch, frame)
+    barcodes = {
+        experiment["genotype"]["perturbations"][0]["barcode"]
+        for experiment in _records_of(built, "YAL001C")
+    }
+    assert barcodes == {"AAAACCCC", "TTTTGGGG"}
+
+
+def test_one_orf_and_barcode_released_twice_refuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Two rows with the same ORF and barcode would store identical records; the build
+    refuses and names them rather than collapse them.
+    """
+    frame = _geo_matrix()
+    frame = pd.concat([frame.iloc[[0]].copy(), frame], ignore_index=True)
     with pytest.raises(RuntimeError) as err:
         _build(tmp_path, monkeypatch, frame)
     assert str(err.value) == (
-        "two retained library rows resolve to the same systematic gene; the "
-        "legacy-duplicate rule did not separate them"
+        "two library rows release the same ORF and barcode, so their records would be "
+        "identical: ['YAL001C_AAAACCCC']"
     )
 
 
-def test_canonical_common_names_keep_the_first_standard_name_that_resolves() -> None:
-    """Only names resolving back to a current gene count; the first one wins."""
-
-    class _Aliases(_FakeGenome):
-        feature_index = {
-            "standard_to_ids": {"TFC3": ["YAL001C"], "ALT3": ["YAL001C"], "GONE": []}
-        }
-
-        def resolve_gene_name(self, name: str) -> _Resolution:
-            if name == "ALT3":
-                return _Resolution("renamed", "YAL001C")
-            if name == "GONE":
-                return _Resolution("retired", "GONE")
-            return super().resolve_gene_name(name)
-
-    assert v._canonical_common_names(_Aliases()) == {"YAL001C": "TFC3"}  # type: ignore[arg-type]  # the slice of the genome API used
+def test_a_matrix_token_with_no_table_s1_row_refuses(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    frame = _with_columns({"Newtoken_CG001_rep1": 1.0, "Newtoken_CG002_rep2": 1.0}, [])
+    with pytest.raises(
+        RuntimeError, match="^matrix tokens with no Table S1 row: \\['Newtoken'\\]$"
+    ):
+        _build(tmp_path, monkeypatch, frame)
 
 
 def _mirror(data_root: Path, payload: bytes, digest: str | None) -> Path:
@@ -1490,9 +1571,9 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
 ) -> None:
     """The ``built`` fixture's setup with ``DropLog`` reporting one extra dropped record.
 
-    That fixture drops 12 - 5 = 7 records and its rules total 7
-    (``test_drop_rules_account_for_every_source_record``); the log says 8, so the build
-    raises the exact mismatch message after the tampered log is on disk.
+    That fixture drops 0 records and its rules total 0
+    (``test_every_source_record_is_stored``); the log says 1, so the build raises the
+    exact mismatch message after the tampered log is on disk.
     """
     real = v.DropLog
 
@@ -1501,7 +1582,6 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
         return real(**kwargs)
 
     monkeypatch.setattr(v, "DropLog", inflated)
-    monkeypatch.setattr(v, "default_genome", lambda: _FakeGenome())
     monkeypatch.setattr(v.EnvChemgenVanacloig2022Dataset, "download", lambda self: None)
     monkeypatch.setattr(
         v.EnvChemgenVanacloig2022Dataset, "_load_matrix", lambda self: _matrix()
@@ -1513,10 +1593,10 @@ def test_a_drop_log_that_disagrees_with_its_rules_refuses_after_writing_it(
     with pytest.raises(RuntimeError) as err:
         v.EnvChemgenVanacloig2022Dataset(root=str(root))
     assert str(err.value) == (
-        "drop accounting mismatch: rules total 7, 8 records missing from the build"
+        "drop accounting mismatch: rules total 0, 1 records missing from the build"
     )
     log = json.loads((root / "preprocess" / "dropped_records.json").read_text())
-    assert log["dropped_records"] == 8
+    assert log["dropped_records"] == 1
 
 
 def test_tmm_reference_falls_back_to_the_largest_sqrt_sum_when_fractions_vanish() -> (

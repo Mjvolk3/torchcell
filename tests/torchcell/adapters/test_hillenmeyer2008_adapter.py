@@ -135,15 +135,12 @@ def _hillenmeyer_record() -> tuple[Any, Any]:
         rows=[
             h.StrainRow(
                 row_id="YBR115C:chr2_3",
-                source_orf="YBR115C",
                 orf="YBR115C",
                 batch="chr2_3",
                 values=[None, 0.7],
             )
         ],
         dropped_strains=[],
-        dropped_genes={},
-        constructed={},
     )
     ((experiment, control_set),) = list(
         h.iter_records("HetHillenmeyer2008Dataset", spec, rows, groups, background)

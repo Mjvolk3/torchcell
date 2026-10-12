@@ -276,8 +276,6 @@ def _stub_pin_sources(
             "manifest_sha256",
             lambda manifest, rel: MANIFEST_PIN.format(root=manifest.root, rel=rel),
         )
-    if cls.__name__.endswith("Hillenmeyer2008Dataset"):
-        monkeypatch.setattr(module, "_load_sgd_genes", lambda root: set())
     if cls.__name__ in DATA_ROOT_METHOD:
         monkeypatch.setattr(cls, "_data_root", lambda self: data_root)
     if cls.__name__ == "IsolateGrowthPeter2018Dataset":

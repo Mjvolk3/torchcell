@@ -164,3 +164,15 @@ The L4 rule is the paper's own arithmetic reproduced from the store: `mitochondr
 - An `EndpointRule` member for a culture grown to its own saturation (this release, and any batch culture read at saturation).
 - A chromosome-level realized-genotype entity, if the graph should answer "which strains are aneuploid" from the GENOTYPE side rather than from this phenotype. Today the measured architecture is where that lives, and it is queryable per gene through the perturbation.
 - The Hoepfner 2014 background's gap note can now point at this store for the per-chromosome copy number it says the schema cannot hold.
+
+## 2026.10.12 - Stored as released: the genome gate is reversed
+
+The loader no longer consults a genome. Removed: `resolve_released_genes`, `constructed_orf`, `_sgd_history_gap`, `ResolvedGenes`, the `genome=` constructor argument and `_resolver`, the `SCerevisiaeGenome` import, and the `preprocess/constructed_orfs.json` map.
+
+- **Every knockout colony is stored.** `N_SERVED_RECORDS` goes from 8,826 to 8,835. The 9 colonies (5 strains) whose released deletion names an ORF R64 has since retired (YAR037W, YAR040C, YAR043C, YCL013W, YCL026C) are restored under those released names. Measured on the pinned workbook: 8,835 knockout colonies, 4,437 distinct released deletion names, 9 colonies on the 5 retired ORFs. The strata are the Extended Data Fig. 1c legend exactly (258 / 4,097 / 30 / 72 / 1 over 4,458 strains).
+- **`systematic_gene_name` is the released name, verbatim**: the colony's Table 6 `Confirmed_deletion`, or for the 7 colonies with no Table 6 row the systematic name Table 4 pairs with the strain label. The 24 released names R64 has renamed or absorbed are stored as released too, with `constructed_orf=None`; the old rewrite touched 49 records over 24 ORFs.
+- **`perturbed_gene_name` is Table 4's common name** for that systematic name (release-internal; 933 Table 4 rows pair a name with itself), or the systematic name when Table 4 has no row for it (1 name, YKL075C). Before this change it was the systematic name on every record.
+- **Ledger.** `ReleaseLedger` drops `refused`, `n_released_orfs_renamed`, `n_released_orfs_refused` and `released_orfs_refused`, and gains `n_genes_without_table4_row`. The accounting validator is now served + wild type = released (8,835 + 8 = 8,843). `data.csv` carries one systematic-name column (the released one) plus `perturbed_gene_name`.
+- **Verifier spec.** `runners.GENOME_ARCHITECTURE_DATASETS["genome_architecture_puddu2019"]["expected_count"]` goes from 8,826 to 8,835. The L1 `canonical_gene_names` and L4 `current_genome_genes` rules still read the genome; on the restored names they report findings (5 retired, 24 renamed), which gate the manifest only until the genome rules become report-only.
+
+L0-L4 after rebuild: (orchestrator fills in after the slurm build)

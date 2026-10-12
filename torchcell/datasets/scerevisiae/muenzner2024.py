@@ -99,6 +99,7 @@ from torchcell.datamodels.schema import (
     Environment,
     Experiment,
     ExperimentReference,
+    Genotype,
     Media,
     MediaComponent,
     MediaComponentRole,
@@ -1461,12 +1462,6 @@ def verify_build(dataset_root: str, *, data_root: str | None = None) -> Any:
     )
 
 
-def store_isolates(dataset_root: str) -> list[str]:
-    """The isolates a built Muenzner store holds (its ``preprocess/data.csv``)."""
-    path = osp.join(dataset_root, "preprocess", "data.csv")
-    return pd.read_csv(path)["strain_id"].astype(str).tolist()
-
-
 def caudal_strain_order(data_root: str) -> list[str]:
     """The built Caudal 2024 store's isolates in LMDB order (its ``preprocess/data.csv``).
 
@@ -1478,7 +1473,7 @@ def caudal_strain_order(data_root: str) -> list[str]:
 
 
 def caudal_genotype_sample(
-    data_root: str, order: list[str], overlap: set[str | None]
+    data_root: str, order: list[str], overlap: set[str]
 ) -> dict[str, dict[str, Any]]:
     """Genotype dumps of a fixed sample of shared isolates, read from Caudal's LMDB.
 
@@ -1486,7 +1481,7 @@ def caudal_genotype_sample(
     ``SACE_`` one (the spelling the release changes), so the dot-to-underscore mapping is
     always among the compared genotypes.
     """
-    ordered = sorted(s for s in overlap if s is not None)
+    ordered = sorted(overlap)
     sace = [s for s in ordered if s.startswith("SACE_")]
     picks = sorted({ordered[0], ordered[len(ordered) // 2], ordered[-1], *sace[:1]})
     env = lmdb.open(

@@ -191,7 +191,7 @@ def test_every_rule_carries_a_reason_except_the_two_kept_ones() -> None:
 @pytest.mark.parametrize(
     "cells,rule",
     [
-        ({L.COL_MEDIA: "MOPS"}, E.medium_not_in_library),
+        ({L.COL_MEDIA: "NM3"}, E.medium_not_in_library),
         ({L.COL_MEDIA: ""}, E.medium_not_in_library),
         ({L.COL_CULTURE: "bioreactor"}, E.culture_not_batch),
         ({L.COL_CULTURE: ""}, E.culture_not_batch),
@@ -200,11 +200,6 @@ def test_every_rule_carries_a_reason_except_the_two_kept_ones() -> None:
         ({P.COL_AEROBICITY: "transition"}, E.oxygen_regime_transition),
         ({P.COL_AEROBICITY: "aerobic(30% DO)"}, E.oxygen_setpoint_not_expressible),
         ({L.COL_TEMPERATURE: ""}, E.temperature_not_stated),
-        ({L.COL_PH: ""}, E.ph_not_stated),
-        (
-            {L.COL_MEDIA: "M9", L.COL_CARBON: "glucose(2)", L.COL_NITROGEN: ""},
-            E.minimal_medium_source_not_stated,
-        ),
     ],
 )
 def test_every_environment_rule_drops_its_own_cells(
@@ -213,6 +208,43 @@ def test_every_environment_rule_drops_its_own_cells(
     verdict = P.settle_public_environment(_row(**cells))
     assert verdict.rule is rule
     assert verdict.spec is None
+
+
+def test_a_blank_ph_or_minimal_source_is_a_gap_and_mops_derives_from_its_key() -> None:
+    """#1045 row 24: the cells that used to drop a sample are typed gaps now.
+
+    A blank pH keeps the pH factor with its magnitude gapped; a blank source cell of an
+    M9 row keeps that source factor with its compound and amount gapped; and 'MOPS'
+    names a library medium, so it derives from ``MOPS_MINIMAL`` with its recipe
+    deferred, as 'M9' and 'LB' always did.
+    """
+    ph = P.settle_public_environment(_row(**{L.COL_PH: ""})).spec
+    assert ph is not None and ph.ph is None
+    environment = P.build_public_environment(ph)
+    (factor,) = [
+        p
+        for p in environment.perturbations
+        if isinstance(p, EnvironmentPhysicalPerturbation)
+        and p.factor is PhysicalFactor.ph
+    ]
+    assert factor.magnitude is None
+    assert "magnitude" in {gap.field for gap in factor.provenance_gaps}
+    minimal = P.settle_public_environment(
+        _row(**{L.COL_MEDIA: "M9", L.COL_CARBON: "glucose(2)", L.COL_NITROGEN: ""})
+    ).spec
+    assert minimal is not None
+    assert minimal.unstated_sources == (PhysicalFactor.nitrogen_source,)
+    neither = P.settle_public_environment(
+        _row(**{L.COL_MEDIA: "M9", L.COL_CARBON: "", L.COL_NITROGEN: ""})
+    ).spec
+    assert neither is not None
+    assert neither.unstated_sources == (
+        PhysicalFactor.carbon_source,
+        PhysicalFactor.nitrogen_source,
+    )
+    mops = P.settle_public_environment(_row(**{L.COL_MEDIA: "MOPS"})).spec
+    assert mops is not None
+    assert P.build_public_environment(mops).media.base_medium == "MOPS_MINIMAL"
 
 
 def test_an_unlisted_aerobicity_cell_raises() -> None:
@@ -476,15 +508,25 @@ def _public_rows() -> dict[str, dict[str, str]]:
         "SRX000012": row("SRX000012", 12, **{L.COL_DESCRIPTION: "MG1655 crp_ar1_ar2"}),
         "SRX000013": row("SRX000013", 13, **{L.COL_DESCRIPTION: "MG1655 Z1 del_thrA"}),
         "SRX000014": row("SRX000014", 14, **{L.COL_DESCRIPTION: "MG1655 del_ihf"}),
-        "SRX000015": row("SRX000015", 15, **{L.COL_MEDIA: "MOPS"}),
+        "SRX000015": row(
+            "SRX000015", 15, **{L.COL_MEDIA: "NM3", L.COL_FULL_NAME: "nm3:wt"}
+        ),
         "SRX000016": row("SRX000016", 16, **{L.COL_CULTURE: "bioreactor"}),
         "SRX000017": row("SRX000017", 17, **{P.COL_AEROBICITY: ""}),
         "SRX000018": row("SRX000018", 18, **{P.COL_AEROBICITY: "transition"}),
         "SRX000019": row("SRX000019", 19, **{P.COL_AEROBICITY: "aerobic(30% DO)"}),
         "SRX000020": row("SRX000020", 20, **{L.COL_TEMPERATURE: ""}),
-        "SRX000021": row("SRX000021", 21, **{L.COL_PH: ""}),
+        # #1045 row 24: kept, with the blank pH a gapped factor
+        "SRX000021": row("SRX000021", 21, **{L.COL_PH: "", L.COL_FULL_NAME: "noph:wt"}),
+        # #1045 row 24: kept, with the blank nitrogen source a gapped factor
         "SRX000022": row(
-            "SRX000022", 22, **{L.COL_MEDIA: "M9", L.COL_CARBON: "glucose(2)"}
+            "SRX000022",
+            22,
+            **{
+                L.COL_MEDIA: "M9",
+                L.COL_CARBON: "glucose(2)",
+                L.COL_FULL_NAME: "m9:no_nitrogen",
+            },
         ),
     }
     for key, value in _p1k_rows().items():
@@ -718,17 +760,21 @@ def _json(dataset: P.RnaseqPublicK12Lamoureux2023Dataset, name: str) -> Any:
 def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
     built: P.RnaseqPublicK12Lamoureux2023Dataset,
 ) -> None:
-    assert len(built) == 4
+    # SRX000021 (blank pH) and SRX000022 (blank nitrogen source on M9) are kept since
+    # #1045 row 24, each with a gapped factor
+    assert len(built) == 6
     assert _json(built, "record_samples.json") == [
         "SRX000001",
         "SRX000002",
         "SRX000003",
         "SRX000004",
+        "SRX000021",
+        "SRX000022",
     ]
     drops = _json(built, "dropped_records.json")
     assert drops["source_records"] == 22
-    assert drops["kept_records"] == 4
-    assert drops["dropped_records"] == 18
+    assert drops["kept_records"] == 6
+    assert drops["dropped_records"] == 16
     assert {r["rule"]: r["n_records"] for r in drops["rules"]} == {
         "strain_not_mg1655": 1,
         "plasmid_borne_construct": 1,
@@ -746,16 +792,14 @@ def test_the_build_keeps_wild_type_and_deletions_and_counts_every_drop(
         "oxygen_regime_transition": 1,
         "oxygen_setpoint_not_expressible": 1,
         "temperature_not_stated": 1,
-        "ph_not_stated": 1,
-        "minimal_medium_source_not_stated": 1,
     }
     assert {r["stage"] for r in drops["rules"]} == {"genotype", "environment"}
     assert drops["kept_by_genotype_class"] == {
         "deletion_1": 1,
         "deletion_2": 1,
-        "wild_type": 2,
+        "wild_type": 4,
     }
-    assert drops["kept_by_base_media"] == {"LB": 3, "M9": 1}
+    assert drops["kept_by_base_media"] == {"LB": 4, "M9": 2}
 
 
 def test_the_accession_ledger_is_the_deduplication_evidence(
@@ -779,6 +823,8 @@ def test_the_accession_ledger_is_the_deduplication_evidence(
         "SRX000002",
         "SRX000003",
         "SRX000004",
+        "SRX000021",
+        "SRX000022",
     ]
     assert ledger["records"][2] == {
         "experiment_accession": "SRX000003",
@@ -874,6 +920,8 @@ def test_the_replicate_groups_pin_the_conditions_and_their_accessions(
 ) -> None:
     groups = _json(built, "replicate_groups.json")
     assert [g["full_name"] for g in groups] == [
+        "m9:no_nitrogen",
+        "noph:wt",
         "pro:double",
         "rpoB:wt",
         "thrA:del_thrA",

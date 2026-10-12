@@ -194,7 +194,7 @@ UNIPROT_ROWS: tuple[tuple[str, str], ...] = (
 )
 PROTEIN_HOURS: tuple[float, ...] = (0.0, 4.0)
 #: The released peptides per protein. FRDA's occurs in frdA only, so the peptide route
-#: keys it; HYCG's occurs in hycG and, read with I = L, in hyfI, so it stays refused.
+#: keys it; HYCG's occurs in hycG and, read with I = L, in hyfI, so it carries no locus and is stored under its released key.
 PEPTIDES: dict[str, tuple[str, ...]] = {
     "ENO": ("AGQEK",),
     "MDH": ("LFGVR", "TTLDR"),
@@ -453,12 +453,12 @@ def test_the_two_released_routes_key_a_protein_and_the_third_shape_is_refused(
     assert keys["MDH"].route == brunk.ROUTE_SINGLE_GENE_GPR
     assert keys["MDH"].gene_name == "b3236"
     assert keys["FRDA"].gene_name is None
-    assert keys["FRDA"].reason == brunk.REFUSAL_MULTI_GENE_GPR
+    assert keys["FRDA"].reason == brunk.NO_LOCUS_MULTI_GENE_GPR
     assert {key.organism for key in read if key.protein == "HMGS"} == {
         "Saccharomyces cerevisiae",
         "Staphylococcus aureus",
     }
-    assert keys["AmpR"].reason == brunk.REFUSAL_NO_MAPPING
+    assert keys["AmpR"].reason == brunk.NO_LOCUS_NO_MAPPING
 
 
 #: A three-protein assembly for the peptide route: FRDA's subunits and an isobaric
@@ -471,21 +471,21 @@ PROTEOME: dict[str, str] = {
 }
 
 
-def _refused(protein: str, organism: str | None = brunk.HOST_SPECIES) -> Any:
+def _unkeyed(protein: str, organism: str | None = brunk.HOST_SPECIES) -> Any:
     """A key the released routes left without a gene."""
     return brunk.ProteinKey(
         protein=protein,
         organism=organism,
         gene_name=None,
         route=None,
-        reason=brunk.REFUSAL_MULTI_GENE_GPR,
+        reason=brunk.NO_LOCUS_MULTI_GENE_GPR,
     )
 
 
 def test_a_protein_whose_every_peptide_is_in_one_protein_is_keyed_by_peptide() -> None:
     """Two peptides, both only in frdB, key FRDB to b4153 and record the evidence."""
     (key,) = brunk.resolve_by_peptides(
-        [_refused("FRDB")], {"FRDB": ("DFLIATLKPR", "VEALANFPIER")}, PROTEOME
+        [_unkeyed("FRDB")], {"FRDB": ("DFLIATLKPR", "VEALANFPIER")}, PROTEOME
     )
     assert (key.gene_name, key.route, key.reason) == (
         "b4153",
@@ -499,9 +499,9 @@ def test_a_protein_whose_every_peptide_is_in_one_protein_is_keyed_by_peptide() -
     ("peptides", "reason", "evidence"),
     [
         # FLIDSR occurs in b4151 as written and in b3876 as FLLDSR, the same mass.
-        (("LGSNSLAELVK", "FLIDSR"), brunk.REFUSAL_SHARED_PEPTIDE, "FLIDSR:b3876"),
-        (("LGSNSLAELVK", "NOWHERE"), brunk.REFUSAL_UNMATCHED_PEPTIDE, "NOWHERE:"),
-        (("LGSNSLAELVK", "AANIIVK"), brunk.REFUSAL_PEPTIDES_DISAGREE, "AANIIVK:b4152"),
+        (("LGSNSLAELVK", "FLIDSR"), brunk.NO_LOCUS_SHARED_PEPTIDE, "FLIDSR:b3876"),
+        (("LGSNSLAELVK", "NOWHERE"), brunk.NO_LOCUS_UNMATCHED_PEPTIDE, "NOWHERE:"),
+        (("LGSNSLAELVK", "AANIIVK"), brunk.NO_LOCUS_PEPTIDES_DISAGREE, "AANIIVK:b4152"),
     ],
 )
 def test_a_peptide_that_does_not_name_one_protein_keeps_the_protein_refused(
@@ -509,7 +509,7 @@ def test_a_peptide_that_does_not_name_one_protein_keeps_the_protein_refused(
 ) -> None:
     """Shared (with I = L), unmatched and split peptides each refuse, by name."""
     proteome = {**PROTEOME, "b4151": "MKSFLIDSRV"}
-    (key,) = brunk.resolve_by_peptides([_refused("FRDA")], {"FRDA": peptides}, proteome)
+    (key,) = brunk.resolve_by_peptides([_unkeyed("FRDA")], {"FRDA": peptides}, proteome)
     assert (key.gene_name, key.route, key.reason) == (None, None, reason)
     assert evidence in str(key.peptide_matches)
 
@@ -530,7 +530,7 @@ def test_a_released_key_is_kept_and_a_non_host_key_is_not_searched() -> None:
         gene_name="frdA",
         route=brunk.ROUTE_UNIPROT,
     )
-    foreign = _refused("HMGS", "Saccharomyces cerevisiae")
+    foreign = _unkeyed("HMGS", "Saccharomyces cerevisiae")
     out = brunk.resolve_by_peptides(
         [named, foreign], {"FRDA": ("LGSNSLAELVK",)}, PROTEOME
     )
@@ -542,7 +542,7 @@ def test_a_released_key_is_kept_and_a_non_host_key_is_not_searched() -> None:
 
 def test_a_host_protein_with_no_released_peptide_stops_the_search() -> None:
     with pytest.raises(RuntimeError, match="FRDA has no released peptide"):
-        brunk.resolve_by_peptides([_refused("FRDA")], {}, PROTEOME)
+        brunk.resolve_by_peptides([_unkeyed("FRDA")], {}, PROTEOME)
 
 
 def test_a_named_key_whose_peptide_is_not_in_its_locus_stops_the_build() -> None:
@@ -1103,6 +1103,7 @@ def built_stores(
         ("EXPECTED_HOST_PROTEINS", 5),
         ("EXPECTED_TITER_RECORDS", 8 * len(HOURS)),
         ("EXPECTED_PROTEIN_KEYS", 4),
+        ("EXPECTED_RELEASED_KEYS", 1),
     ):
         monkeypatch.setattr(brunk, attribute, value)
     monkeypatch.setattr(
@@ -1154,19 +1155,33 @@ def test_every_arm_builds_one_record_per_released_sample(
     }
 
 
-def test_the_proteome_build_drops_the_unexplained_hour_and_the_unkeyed_protein(
+def test_the_proteome_build_stores_the_unkeyed_protein_under_its_released_key(
     built_stores: dict[str, str],
 ) -> None:
-    """The ``72C`` samples get no hour and ``HYCG`` gets no locus, each with a count."""
+    """``HYCG`` has no locus and is stored under ``HYCG`` (#904); no drop rule names it.
+
+    The ``72C`` samples still get no hour, with their count.
+    """
+    from torchcell.verification.runners import load_records
+
     accounting = json.loads(
         Path(
             built_stores["proteome"], "preprocess", "build_accounting.json"
         ).read_text()
     )
     rules = {rule["rule"]: rule for rule in accounting["rules"]}
+    assert set(rules) == {
+        "sample_hour_label_is_not_a_stated_time",
+        "protein_is_not_a_host_protein",
+    }
     assert rules["sample_hour_label_is_not_a_stated_time"]["n_items"] == 8
-    assert rules["protein_key_is_not_resolvable_to_one_host_locus"]["items"] == ["HYCG"]
     assert rules["protein_is_not_a_host_protein"]["items"] == ["AmpR", "HMGS", "HMGS"]
+    assert accounting["distinct_targets"] == 5
+    records = load_records(built_stores["proteome"])
+    for record in records:
+        abundance = record["experiment"]["phenotype"]["protein_abundance"]
+        assert "HYCG" in abundance
+        assert len(abundance) == 5
     keys = pd.read_csv(Path(built_stores["proteome"], "preprocess", "protein_keys.csv"))
     assert set(keys["protein"]) == {p for p, _, _ in PROTEIN_ROWS}
 
@@ -1296,7 +1311,10 @@ def test_the_released_protein_keys_split_as_the_module_counts_them() -> None:
 
 @requires_mirror
 def test_the_released_peptides_key_21_of_the_24_unnamed_host_proteins() -> None:
-    """Issue #872: 44 named + 21 by peptide = 65; DHSB, HYCG and PFLB stay refused."""
+    """Issue #872: 44 named + 21 by peptide = 65; DHSB, HYCG and PFLB carry no locus.
+
+    #904: those three are stored under their released keys, which the build pins.
+    """
     from torchcell.datasets.bacteria_common import bacterial_genome
 
     workbook = brunk.raw_mirror_dir() / brunk.PROTEOMICS_REL
@@ -1312,11 +1330,12 @@ def test_the_released_peptides_key_21_of_the_24_unnamed_host_proteins() -> None:
     assert len(by_peptide) == 21
     assert by_peptide["FRDA"] == "b4154"
     assert by_peptide["FRDD"] == "b4151"
-    refused = {k.protein: k.reason for k in host if k.gene_name is None}
-    assert refused == dict.fromkeys(
-        ("DHSB", "HYCG", "PFLB"), brunk.REFUSAL_SHARED_PEPTIDE
+    no_locus = {k.protein: k.reason for k in host if k.gene_name is None}
+    assert no_locus == dict.fromkeys(
+        ("DHSB", "HYCG", "PFLB"), brunk.NO_LOCUS_SHARED_PEPTIDE
     )
-    assert len(host) - len(refused) == brunk.EXPECTED_PROTEIN_KEYS
+    assert len(no_locus) == brunk.EXPECTED_RELEASED_KEYS
+    assert len(host) - len(no_locus) == brunk.EXPECTED_PROTEIN_KEYS
 
 
 @requires_stores

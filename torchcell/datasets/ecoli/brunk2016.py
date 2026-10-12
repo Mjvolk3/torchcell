@@ -17,7 +17,7 @@ dataset and these are four scales:
 - :class:`ExometaboliteBrunk2016Dataset` -- the six HPLC columns the workbook labels
   ``g/L`` (glucose and five organic acids), a ``MetabolitePhenotype`` in g/L. 126
   records.
-- :class:`ProteomeBrunk2016Dataset` -- the SRM peak areas of the host proteins, a
+- :class:`ProteomeBrunk2016Dataset` -- the SRM peak areas of all 68 host proteins, a
   ``ProteinAbundancePhenotype``. 81 records.
 - :class:`BiofuelTiterBrunk2016Dataset` -- the three fuel titers in g/L, a
   ``ProductTiterExperiment``. 72 records.
@@ -99,20 +99,23 @@ WHAT IS MEASURED AND NOT STORED, WITH THE COUNTS.
    nM to uM for the LC-MS run as a whole but no column note anywhere in the mirror
    gives these columns a unit, so storing them beside the 51 ``(uM)`` columns would
    assume one. They stay in ``preprocess/unitless_columns.csv``.
-2. 3 of the 68 host SRM proteins, whose released key is a JBEI internal id. Two
-   released mappings key such an id to ONE gene: the UniProt accession plus ``GN=`` in
-   the triplicate sheet (33 of them) and a single-gene GPR in the identifier sheet (20),
-   44 distinct between them. The other 24 have only a multi-gene GPR
-   (``FRD2`` is ``b4151 and b4152 and b4153 and b4154``), which does not say which
-   subunit the measured peptide belongs to. A third route reads the released
-   ``Peptide`` column instead: a protein whose every peptide occurs in exactly one
-   MG1655 protein, the same one for all its peptides, is keyed to that locus. Leucine
-   and isoleucine are one residue for this search, because an SRM transition cannot
-   tell them apart by mass. That keys 21 of the 24. The other 3 (DHSB, HYCG, PFLB) each
-   have a peptide that also occurs in a second MG1655 protein, and the released
-   ``ProteinArea`` is the mean of the protein's peptide areas, so the area is not one
-   gene's; they carry no locus and are refused. Every route, every peptide's matches and
-   every refusal are in ``preprocess/protein_keys.csv``.
+2. (Stored since #904, listed here for the arithmetic.) All 68 host SRM proteins are
+   stored. A released key is a JBEI internal id. Two released mappings key such an id
+   to ONE gene: the UniProt accession plus ``GN=`` in the triplicate sheet (33 of them)
+   and a single-gene GPR in the identifier sheet (20), 44 distinct between them. The
+   other 24 have only a multi-gene GPR (``FRD2`` is ``b4151 and b4152 and b4153 and
+   b4154``), which does not say which subunit the measured peptide belongs to. A third
+   route reads the released ``Peptide`` column instead: a protein whose every peptide
+   occurs in exactly one MG1655 protein, the same one for all its peptides, is keyed to
+   that locus. Leucine and isoleucine are one residue for this search, because an SRM
+   transition cannot tell them apart by mass. That keys 21 of the 24. The other 3
+   (DHSB, HYCG, PFLB) each have a peptide that also occurs in a second MG1655 protein,
+   so no locus is asserted for them and each is stored under the key the authors
+   released, verbatim (``DHSB``, ``HYCG``, ``PFLB``; the owner's ruling on #904: "the
+   data is the data"). The explanation (DHSB's ``FLIDSR`` is an isobaric non-tryptic
+   hit in b3876, and a cut-site rule would key it to b0724; FUMA and TKT1 share a
+   peptide with fumB and tktB) is in the dataset note, not on the record. Every route
+   and every peptide's matches are in ``preprocess/protein_keys.csv``.
 3. The 13 non-host proteins of the same sheet (the heterologous pathway enzymes and the
    AmpR/Cam/BSA normalization standards). They are not loci of the host assembly, so
    they cannot be protein keys; the pathway ones are on the GENOTYPE of every record.
@@ -330,7 +333,10 @@ EXPECTED_TITER_RECORDS = 72
 #: The host SRM proteins keyed to one locus: 44 by the released UniProt and GPR routes
 #: plus 21 by their released peptides (issue #872), measured 2026-10-10.
 EXPECTED_PROTEIN_KEYS = 65
-#: Every host SRM protein, resolvable or not.
+#: The host SRM proteins stored under the key the authors released because no locus is
+#: asserted for them (DHSB, HYCG, PFLB; #904), measured 2026-10-12.
+EXPECTED_RELEASED_KEYS = 3
+#: Every host SRM protein; every one is stored (#904).
 EXPECTED_HOST_PROTEINS = 68
 #: The ``(uM)`` columns of the metabolomics sheet.
 EXPECTED_UM_COLUMNS = 51
@@ -1297,7 +1303,11 @@ def read_metabolite_samples(path: str | Path) -> pd.DataFrame:
 
 
 class ProteinKey(BaseModel):
-    """One SRM protein, and the released mapping (if any) that keys it to a locus."""
+    """One SRM protein, and the released mapping (if any) that keys it to a locus.
+
+    ``reason`` says why no locus is asserted when ``gene_name`` is ``None``; such a host
+    protein is stored under its released ``protein`` key (#904), never dropped.
+    """
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
@@ -1314,26 +1324,26 @@ class ProteinKey(BaseModel):
 #: The two mapping routes, named in the ledger so a key's origin is recoverable.
 ROUTE_UNIPROT = "uniprot_gene_name_in_the_triplicate_sheet"
 ROUTE_SINGLE_GENE_GPR = "single_gene_gpr_in_the_identifier_sheet"
-REFUSAL_MULTI_GENE_GPR = (
+NO_LOCUS_MULTI_GENE_GPR = (
     "the identifier sheet's GPR names several genes for this protein's reaction, so "
     "which gene the measured peptide belongs to is not stated"
 )
-REFUSAL_NO_MAPPING = (
+NO_LOCUS_NO_MAPPING = (
     "no UniProt accession and no GPR anywhere in the mirror names a gene for this "
     "protein (the identifier sheet writes 'not in model/not found', or carries no row)"
 )
 #: The third route (issue #872): every released peptide of the protein occurs in one
 #: MG1655 protein, the same one for all of them.
 ROUTE_PEPTIDE = "every_released_peptide_occurs_in_only_this_mg1655_protein"
-REFUSAL_SHARED_PEPTIDE = (
+NO_LOCUS_SHARED_PEPTIDE = (
     "a released peptide of this protein also occurs in another MG1655 protein (leucine "
-    "and isoleucine read as one residue), and the released ProteinArea is the mean of "
-    "the protein's peptide areas, so the area is not one gene's"
+    "and isoleucine read as one residue), so no single locus is asserted; the protein "
+    "is stored under its released key"
 )
-REFUSAL_UNMATCHED_PEPTIDE = (
+NO_LOCUS_UNMATCHED_PEPTIDE = (
     "a released peptide of this protein occurs in no MG1655 protein"
 )
-REFUSAL_PEPTIDES_DISAGREE = (
+NO_LOCUS_PEPTIDES_DISAGREE = (
     "the released peptides of this protein each occur in one MG1655 protein, but not "
     "in the same one"
 )
@@ -1346,8 +1356,8 @@ def read_protein_keys(path: str | Path) -> list[ProteinKey]:
     """Every protein of the proteomics sheet, with the route that keys it to a gene.
 
     Route 1 is the UniProt accession plus ``GN=`` the triplicate sheet carries; route 2
-    is a GPR that names exactly one gene. A protein with neither carries no locus and
-    is refused with the reason, never with a guessed subunit.
+    is a GPR that names exactly one gene. A protein with neither carries no locus, with
+    the reason, never a guessed subunit; a host one is stored under its released key.
     """
     raw = pd.read_excel(path, sheet_name=SHEET_PROTEOMICS)
     ids = pd.read_excel(path, sheet_name=SHEET_PROTEIN_IDS, index_col=0)
@@ -1409,7 +1419,9 @@ def read_protein_keys(path: str | Path) -> list[ProteinKey]:
                 organism=species,
                 gene_name=None,
                 route=None,
-                reason=REFUSAL_MULTI_GENE_GPR if names_any_gene else REFUSAL_NO_MAPPING,
+                reason=(
+                    NO_LOCUS_MULTI_GENE_GPR if names_any_gene else NO_LOCUS_NO_MAPPING
+                ),
             )
         )
     return sorted(keys, key=lambda key: key.protein)
@@ -1483,13 +1495,14 @@ def resolve_by_peptides(
     peptides: Mapping[str, tuple[str, ...]],
     proteome: Mapping[str, str],
 ) -> list[ProteinKey]:
-    """Key each refused host protein through its released peptides, or refuse it again.
+    """Key each unkeyed host protein through its released peptides, where they agree.
 
     A host protein the released routes left unkeyed is keyed to locus ``L`` only when
     EVERY one of its peptides occurs in ``L`` and in no other MG1655 protein. A peptide
-    that occurs in two proteins, or in none, refuses the protein with that reason; the
-    released ``ProteinArea`` is the mean over all of a protein's peptides, so one shared
-    peptide is enough to make the area not one gene's. Keys the released routes already
+    that occurs in two proteins, or in none, leaves the protein without a locus, with
+    that reason; it is then stored under its released key (#904), because the released
+    ``ProteinArea`` is the mean over all of its peptides and no single gene owns it.
+    Keys the released routes already
     carry are returned with their peptide matches attached and are otherwise unchanged;
     :func:`check_peptides_agree` cross-checks them once their loci are resolved.
     """
@@ -1508,11 +1521,11 @@ def resolve_by_peptides(
         hit_counts = {len(loci) for loci in matches.values()}
         loci = {locus for found in matches.values() for locus in found}
         if 0 in hit_counts:
-            reason: str | None = REFUSAL_UNMATCHED_PEPTIDE
+            reason: str | None = NO_LOCUS_UNMATCHED_PEPTIDE
         elif hit_counts != {1}:
-            reason = REFUSAL_SHARED_PEPTIDE
+            reason = NO_LOCUS_SHARED_PEPTIDE
         elif len(loci) != 1:
-            reason = REFUSAL_PEPTIDES_DISAGREE
+            reason = NO_LOCUS_PEPTIDES_DISAGREE
         else:
             reason = None
         resolved.append(
@@ -2249,7 +2262,11 @@ class ExometaboliteBrunk2016Dataset(_MetaboliteBrunk2016Dataset):
 # --------------------------------------------------------------------------- #
 @register_dataset
 class ProteomeBrunk2016Dataset(ExperimentDataset):
-    """Brunk 2016 SRM peak areas: nine strains at nine hours, host proteins only."""
+    """Brunk 2016 SRM peak areas: nine strains at nine hours, all 68 host proteins.
+
+    65 proteins are keyed by their MG1655 locus; DHSB, HYCG and PFLB, for which no
+    single locus is asserted, are keyed by the protein id the authors released (#904).
+    """
 
     organism = Organism.ecoli
 
@@ -2351,6 +2368,22 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 f"{len(mapped)}/{len(host)} host proteins keyed to a locus, below the "
                 f"{self.MIN_RESOLVED_FRACTION:.3f} floor"
             )
+        # #904: a host protein with no asserted locus is stored under the key the
+        # authors released, verbatim; nothing measured is dropped for want of a locus.
+        released_keys = [key for key in host if key.gene_name is None]
+        if len(released_keys) != EXPECTED_RELEASED_KEYS:
+            raise RuntimeError(
+                f"{len(released_keys)} host proteins without a locus, not the measured "
+                f"{EXPECTED_RELEASED_KEYS}"
+            )
+        key_of = dict(locus_of)
+        for key in released_keys:
+            if key.protein in key_of or key.protein in key_of.values():
+                raise RuntimeError(
+                    f"{self.name}: released key {key.protein!r} collides with a key "
+                    "already stored"
+                )
+            key_of[key.protein] = key.protein
 
         areas = read_protein_areas(workbook)
         reference_genome = host_reference()
@@ -2366,9 +2399,8 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 & (areas["Organism"] == HOST_SPECIES)
             ]
             return {
-                locus_of[str(row["Protein"])]: float(row["ProteinArea"])
+                key_of[str(row["Protein"])]: float(row["ProteinArea"])
                 for _, row in block.iterrows()
-                if str(row["Protein"]) in locus_of
             }
 
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -2383,7 +2415,7 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                     measured = profile(strain, label)
                     if not measured:
                         raise RuntimeError(
-                            f"{self.name}: {strain} at {label} h measures no keyed "
+                            f"{self.name}: {strain} at {label} h measures no host "
                             "protein, which the released grid says cannot happen"
                         )
                     control = profile(WILD_TYPE, label)
@@ -2436,7 +2468,6 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 f"{EXPECTED_PROTEOME_RECORDS}"
             )
         released_samples = int(areas.groupby(["Strain", "Hour"]).ngroups)
-        refused = [key for key in host if key.gene_name is None]
         non_host = [key for key in keys if key.organism != HOST_SPECIES]
         _write_accounting(
             BuildAccounting(
@@ -2444,7 +2475,7 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                 source_rows=released_samples,
                 kept_records=idx,
                 dropped_records=released_samples - idx,
-                distinct_targets=len(set(locus_of.values())),
+                distinct_targets=len(set(key_of.values())),
                 quotes_checked=context.quotes_checked,
                 rules=[
                     DropRule(
@@ -2459,16 +2490,6 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                             for strain in STRAINS
                             if strain != WILD_TYPE
                         ],
-                    ),
-                    DropRule(
-                        rule="protein_key_is_not_resolvable_to_one_host_locus",
-                        scope="protein",
-                        description="no released mapping names one gene for these "
-                        "and a released peptide of each also occurs in another MG1655 "
-                        "protein (or in none); each protein's own reason and peptide "
-                        "matches are in protein_keys.csv",
-                        n_items=len(refused),
-                        items=[key.protein for key in refused],
                     ),
                     DropRule(
                         rule="protein_is_not_a_host_protein",
@@ -2491,6 +2512,10 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
                     "through a single-gene GPR and "
                     f"{sum(1 for k in mapped if k.route == ROUTE_PEPTIDE)} through "
                     "released peptides that occur in that one MG1655 protein only",
+                    f"{len(released_keys)} host proteins carry no asserted locus and "
+                    "are stored under the key the authors released, verbatim (#904): "
+                    f"{', '.join(k.protein for k in released_keys)}; each one's reason "
+                    "and peptide matches are in protein_keys.csv",
                     f"{peptides_checked} keyed proteins carry every released peptide "
                     "in the protein sequence of their locus",
                     f"{organisms_checked} pathway-gene organisms were re-read from the "
@@ -2501,8 +2526,9 @@ class ProteomeBrunk2016Dataset(ExperimentDataset):
             self.preprocess_dir,
         )
         log.info(
-            "Brunk2016 proteome: %d records over %d loci",
+            "Brunk2016 proteome: %d records over %d protein keys (%d loci)",
             idx,
+            len(set(key_of.values())),
             len(set(locus_of.values())),
         )
 
@@ -2946,9 +2972,11 @@ def proteome_report(
         provenance=_provenance(
             PROTEOMICS_REL,
             PROTEOMICS_SHA256,
-            f"{QUANTIFICATION_PROTEIN.value}; the released ProteinArea of each host "
-            f"protein the release keys to one locus by name or by peptide ({EXPECTED_PROTEIN_KEYS} of "
-            f"{EXPECTED_HOST_PROTEINS}), one number per strain-hour sample, "
+            f"{QUANTIFICATION_PROTEIN.value}; the released ProteinArea of every host "
+            f"protein ({EXPECTED_HOST_PROTEINS}): {EXPECTED_PROTEIN_KEYS} keyed to one "
+            "locus by name or by peptide and "
+            f"{EXPECTED_RELEASED_KEYS} under the protein id the authors released, one "
+            "number per strain-hour sample, "
             f"measurement_type {MEASUREMENT_TYPE_PROTEIN!r}; reference = the "
             f"{WILD_TYPE} sample of the same hour",
             SHEET_PROTEOMICS,
@@ -2974,23 +3002,14 @@ def _l4_protein_values_against_the_workbook(
     """L4: every stored peak area re-read from the pinned proteomics workbook."""
     workbook = Path(dataset_root) / "raw" / PROTEOMICS_FILE
     areas = read_protein_areas(workbook)
-    # Which proteins carry a key is the build's decision (the peptide route needs the
-    # assembly), so the keyed set is read from the build's own ledger; every area is
-    # re-read from the pinned workbook.
-    ledger = pd.read_csv(Path(dataset_root) / "preprocess" / "protein_keys.csv")
-    keys = {
-        str(protein)
-        for protein, organism, gene in zip(
-            ledger["protein"], ledger["organism"], ledger["gene_name"], strict=True
-        )
-        if organism == HOST_SPECIES and not pd.isna(gene)
-    }
+    # Every host protein is stored (#904), keyed by locus or by its released id, so
+    # every host area of every stored sample is re-read from the pinned workbook.
     released: dict[tuple[str, float], dict[str, float]] = {}
     for _, row in areas.iterrows():
         if str(row["Hour"]) == UNEXPLAINED_HOUR_LABEL:
             continue
         protein = str(row["Protein"])
-        if protein not in keys or str(row["Organism"]) != HOST_SPECIES:
+        if str(row["Organism"]) != HOST_SPECIES:
             continue
         released.setdefault((str(row["Strain"]), float(row["Hour"])), {})[protein] = (
             float(row["ProteinArea"])

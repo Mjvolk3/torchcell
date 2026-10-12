@@ -90,6 +90,10 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
     phenotype's ``screen_id`` joins the signature when the dataset carries one (Hoepfner
     has 45 such same-compound, same-dose column pairs). ``.get`` keeps the signature
     identical for every dataset that does not carry the field.
+
+    A chemostat arm is its dilution rate (#1045 row 21, #1057): four Schmidt 2016 arms on
+    one glucose feed differ only in ``dilution_rate_per_hour``, so it joins the
+    signature; a batch environment leaves it None and keys exactly as before.
     """
     env = experiment["environment"]
     perts: list[tuple[str, ...]] = []
@@ -115,6 +119,7 @@ def _condition_signature(experiment: dict[str, Any]) -> tuple[Any, ...]:
         media,
         env.get("duration_hours"),
         env.get("duration_generations"),
+        env.get("dilution_rate_per_hour"),
         experiment["phenotype"].get("screen_id"),
     )
 
@@ -254,12 +259,29 @@ def _l1_pair_uniqueness(
     )
 
 
+def _strain_background_name(record: Record) -> str | None:
+    """The named strain background the record's reference genome carries, or None.
+
+    #1057: a source that measures several wild-type strains under one condition (Schmidt
+    2016 Table S23: BW25113, MG1665 and NCM3722 on LB and on glucose) stores records
+    whose genotypes are all empty; what tells the strains apart is the background the
+    reference genome names. A record without a background keys exactly as before.
+    """
+    background = record["reference"]["genome_reference"].get("background")
+    return None if background is None else str(background["name"])
+
+
 def _pair_key(record: Record, background: frozenset[str]) -> tuple[Any, ...]:
-    """The L1 uniqueness key: (study, strain signature, condition signature)."""
+    """The L1 uniqueness key: (study, strain signature, condition signature).
+
+    The strain signature is the screened genotype plus the named strain background of
+    the reference genome, when there is one (#1057), which only splits groups.
+    """
     experiment = record["experiment"]
     return (
         _study_key(record),
         _genotype_signature(experiment, background),
+        _strain_background_name(record),
         _condition_signature(experiment),
     )
 

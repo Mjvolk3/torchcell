@@ -13,9 +13,10 @@ partition, the environment builder, the phenotype builder and a full ``process()
 ``tmp_path``; the genome pin is an in-test object, so nothing reads ``$DATA_ROOT``.
 
 The ``@pytest.mark.data`` tests read the real mirror and pin the numbers the dendron note
-states: 26 released rows over the three released strain spellings (22 / 2 / 2), 16
-records after the three drop rules (15 before #1045 row 17 kept Glycerol + AA), the two negative stationary-phase rates, the four
-chemostat rows whose ``Stdev`` is exactly 0, and the Glucose reference at 0.58 h^-1.
+states: 26 released rows over the three released strain spellings (22 / 2 / 2), 24
+records after the one drop rule (16 before #1057 stored the MG1665 / NCM3722 rows and
+the chemostat rows), the two negative stationary-phase rates, the four chemostat rows
+whose ``Stdev`` is exactly 0, and the Glucose reference at 0.58 h^-1.
 """
 
 from __future__ import annotations
@@ -38,6 +39,7 @@ from torchcell.datamodels.schema import (
     AssayType,
     AssemblyReferenceGenome,
     BacterialAssemblySet,
+    BacterialStrainBackground,
     MeasurementType,
     SampleUnit,
     UncertaintyType,
@@ -78,25 +80,21 @@ RELEASED: tuple[tuple[str, str, float, float], ...] = (
     ("chemostat µ=0.35", "BW25113", 0.35, 0.0),
     ("chemostat µ=0.5", "BW25113", 0.5, 0.0),
 )
-#: The 16 released condition labels that become records, in sheet order.
-KEPT_CONDITIONS: tuple[str, ...] = (
-    "LB",
-    "Glycerol + AA",
-    "Acetate",
-    "Fumarate",
-    "Galactose ",
-    "Glucose",
-    "Glucosamine",
-    "Glycerol",
-    "Pyruvate",
-    "Succinate",
-    "Fructose",
-    "Mannose",
-    "Xylose",
-    "Osmotic-stress glucose3",
-    "42°C glucose",
-    "pH6 glucose",
+#: The stationary-phase rows, the only ones the module drops.
+STATIONARY: tuple[str, ...] = ("Stationary phase 1 day", "Stationary phase 3 days")
+
+#: The 24 released (condition, strain) rows that become records, in sheet order.
+KEPT_ROWS: tuple[tuple[str, str], ...] = tuple(
+    (condition, strain)
+    for condition, strain, _, _ in RELEASED
+    if condition not in STATIONARY
 )
+
+#: The 20 released condition labels the kept rows carry (LB and Glucose thrice).
+KEPT_CONDITIONS: tuple[str, ...] = tuple(dict.fromkeys(c for c, _ in KEPT_ROWS))
+
+MG1655_SET: BacterialAssemblySet = "ecoli_K12_MG1655_ASM584v2"
+MG1655_ACCESSION = "GCA_000005845.2"
 
 
 def write_workbook(path: Path, rows: tuple[tuple[Any, ...], ...] = RELEASED) -> Path:
@@ -130,16 +128,34 @@ def _reference_genome() -> AssemblyReferenceGenome:
     )
 
 
+def _pinned(
+    strain: str,
+    *,
+    background: BacterialStrainBackground | None = None,
+    data_root: str | None = None,
+) -> AssemblyReferenceGenome:
+    """``assembly_reference`` without the genomes tier: BW25113's or MG1655's pin."""
+    if strain == "BW25113":
+        return _reference_genome()
+    return AssemblyReferenceGenome(
+        species="Escherichia coli",
+        strain=strain if background is None else background.name,
+        assembly_set=MG1655_SET,
+        assembly_accession=MG1655_ACCESSION,
+        background=background,
+    )
+
+
 # --------------------------------------------------------------------------- #
 # The declared module constants
 # --------------------------------------------------------------------------- #
-def test_declared_shape_is_26_released_rows_and_16_records() -> None:
+def test_declared_shape_is_26_released_rows_and_24_records() -> None:
     assert s23.EXPECTED_SOURCE_ROWS == 26
     assert sum(s23.EXPECTED_STRAIN_ROWS.values()) == s23.EXPECTED_SOURCE_ROWS
     assert s23.EXPECTED_STRAIN_ROWS == {"BW25113": 22, "MG1665": 2, "NCM3722": 2}
-    assert s23.EXPECTED_RECORDS == 16
+    assert s23.EXPECTED_RECORDS == 24
     assert s23.EXPECTED_UNPERTURBED == 0
-    assert s23.EXPECTED_MEDIA_ONLY_EDIT == ("LB",)
+    assert s23.EXPECTED_MEDIA_ONLY_EDIT == ("LB", "LB", "LB")
     assert s23.N_SAMPLES == 3
     assert s23.REFERENCE_CONDITION == "Glucose"
 
@@ -251,33 +267,22 @@ def test_read_table_s23_refuses_a_changed_per_strain_count(tmp_path: Path) -> No
 # --------------------------------------------------------------------------- #
 # The partition, the environments and the phenotype
 # --------------------------------------------------------------------------- #
-def test_partition_keeps_16_rows_and_names_every_drop_rule(workbook: Path) -> None:
+def test_partition_keeps_24_rows_and_drops_only_the_stationary_phase(
+    workbook: Path,
+) -> None:
     kept, ledger = s23.partition(s23.read_table_s23(workbook))
-    assert [row.condition for row in kept] == list(KEPT_CONDITIONS)
+    assert [(row.condition, row.strain) for row in kept] == list(KEPT_ROWS)
     assert ledger.source_rows == 26
-    assert ledger.kept_records == 16
-    assert ledger.dropped_rows == 10
+    assert ledger.kept_records == 24
+    assert ledger.dropped_rows == 2
+    # #1057: the MG1665 / NCM3722 rows and the chemostat rows are records now
     assert ledger.dropped == {
-        s23.DROP_STRAIN_RULE: [
-            "LB/MG1665",
-            "LB/NCM3722",
-            "Glucose/MG1665",
-            "Glucose/NCM3722",
-        ],
         "growth_phase_not_representable": [
             "Stationary phase 1 day/BW25113",
             "Stationary phase 3 days/BW25113",
-        ],
-        # #1045 row 21: the chemostat environments are distinct now, but the rate this
-        # table releases for them is their dilution rate, with a Stdev of 0
-        s23.DROP_SET_POINT_RULE: [
-            "chemostat µ=0.12/BW25113",
-            "chemostat µ=0.20/BW25113",
-            "chemostat µ=0.35/BW25113",
-            "chemostat µ=0.5/BW25113",
-        ],
+        ]
     }
-    assert all(row.strain == "BW25113" for row in kept)
+    assert {row.strain for row in kept} == {"BW25113", "MG1665", "NCM3722"}
 
 
 def test_build_environments_are_distinct_and_only_lb_has_no_perturbation(
@@ -285,8 +290,8 @@ def test_build_environments_are_distinct_and_only_lb_has_no_perturbation(
 ) -> None:
     kept, _ = s23.partition(s23.read_table_s23(workbook))
     environments = s23.build_environments(kept)
-    assert len(environments) == 16
-    assert len({env.model_dump_json() for env in environments.values()}) == 16
+    assert tuple(environments) == KEPT_CONDITIONS
+    assert len({env.model_dump_json() for env in environments.values()}) == 20
     assert tuple(
         label for label, env in environments.items() if not env.perturbations
     ) == ("LB",)
@@ -312,6 +317,57 @@ def test_phenotype_stores_the_released_rate_and_the_conservative_replicate_count
     assert [gap.field for gap in phenotype.provenance_gaps] == ["replicate_id"]
     # the schema derives the SE from the released dispersion and the resolved n
     assert phenotype.environment_response_se == pytest.approx(0.01 / 3**0.5)
+
+
+def test_chemostat_phenotype_stores_the_set_point_rate_and_gaps_the_zero_stdev(
+    workbook: Path,
+) -> None:
+    kept, _ = s23.partition(s23.read_table_s23(workbook))
+    row = next(row for row in kept if row.condition == "chemostat µ=0.35")
+    phenotype = s23.phenotype(row)
+    assert phenotype.environment_response == 0.35
+    assert phenotype.environment_response_uncertainty is None
+    assert phenotype.environment_response_uncertainty_type is None
+    assert phenotype.n_samples is None
+    assert [gap.field for gap in phenotype.provenance_gaps] == [
+        "replicate_id",
+        "environment_response_uncertainty",
+    ]
+    assert "Stdev 0" in str(phenotype.provenance_gaps[1].note)
+
+
+def test_chemostat_phenotype_refuses_a_nonzero_released_stdev(workbook: Path) -> None:
+    kept, _ = s23.partition(s23.read_table_s23(workbook))
+    row = next(row for row in kept if row.condition == "chemostat µ=0.5")
+    with pytest.raises(ValueError, match="releases Stdev 0.1, not the set point's 0"):
+        s23.phenotype(row.model_copy(update={"stdev": 0.1}))
+
+
+def test_reference_row_is_each_strains_own_glucose_row(workbook: Path) -> None:
+    kept, _ = s23.partition(s23.read_table_s23(workbook))
+    rates = {
+        strain: s23.reference_row(kept, strain).growth_rate
+        for strain in ("BW25113", "MG1665", "NCM3722")
+    }
+    assert rates == {"BW25113": 0.58, "MG1665": 0.67, "NCM3722": 1.03}
+
+
+def test_strain_genome_names_the_released_strain_with_the_papers_genotype(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(s23, "assembly_reference", _pinned)
+    bw = s23.strain_genome("BW25113")
+    assert (bw.strain, bw.background) == ("BW25113", None)
+    mg = s23.strain_genome("MG1665")
+    assert (mg.strain, mg.assembly_set) == ("MG1665", MG1655_SET)
+    assert mg.background is not None
+    assert mg.background.reference_strain == "MG1655"
+    assert mg.background.genotype_statement == "F-, λ, rph-1"
+    ncm = s23.strain_genome("NCM3722")
+    assert ncm.background is not None
+    assert ncm.background.genotype_statement == "F+"
+    assert ncm.background.provenance is not None
+    assert [v.value for v in ncm.background.provenance] == ["NCM3722", "F+"]
 
 
 def test_reference_row_refuses_a_kept_set_without_exactly_one_glucose_row(
@@ -356,51 +412,43 @@ def test_download_links_the_mirror(
 def built(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> s23.GrowthRateS23Schmidt2016Dataset:
-    """The 16-record store, built from the synthetic workbook into ``tmp_path``."""
+    """The 24-record store, built from the synthetic workbook into ``tmp_path``."""
     root = tmp_path / "growth_rate_s23_schmidt2016"
     raw = root / "raw"
     raw.mkdir(parents=True)
     path = write_workbook(raw / sm.SI2)
     monkeypatch.setattr(sm, "DATA_SHA256", {sm.SI2: file_sha256(path)})
-    monkeypatch.setattr(
-        s23, "assembly_reference", lambda strain, **_: _reference_genome()
-    )
+    monkeypatch.setattr(s23, "assembly_reference", _pinned)
     return s23.GrowthRateS23Schmidt2016Dataset(root=str(root))
 
 
-def test_process_builds_16_records_against_the_glucose_reference(
+def test_process_builds_24_records_each_against_its_strains_glucose_row(
     built: s23.GrowthRateS23Schmidt2016Dataset,
 ) -> None:
     assert len(built) == s23.EXPECTED_RECORDS
     items = [built.transform_item(built[i]) for i in range(len(built))]
     assert {len(i["experiment"].genotype.perturbations) for i in items} == {0}
     assert {i["publication"].doi for i in items} == {sm.PAPER_DOI}
-    assert {i["reference"].phenotype_reference.environment_response for i in items} == {
-        0.58
+    reference_by_strain = {
+        i["reference"].genome_reference.strain: (
+            i["reference"].phenotype_reference.environment_response,
+            i["reference"].genome_reference.assembly_accession,
+        )
+        for i in items
     }
-    assert {i["reference"].genome_reference.assembly_accession for i in items} == {
-        ACCESSION
+    assert reference_by_strain == {
+        "BW25113": (0.58, ACCESSION),
+        "MG1665": (0.67, MG1655_ACCESSION),
+        "NCM3722": (1.03, MG1655_ACCESSION),
     }
-    assert sorted(i["experiment"].phenotype.environment_response for i in items) == [
-        0.26,
-        0.3,
-        0.4,
-        0.42,
-        0.44,
-        0.46,
-        0.47,
-        0.47,
-        0.55,
-        0.55,
-        0.58,
-        0.63,
-        0.65,
-        0.66,
-        1.27,
-        1.9,
-    ]
-    # every kept condition has its own environment, so no two records collide
-    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 16
+    assert sorted(i["experiment"].phenotype.environment_response for i in items) == (
+        sorted(
+            rate for condition, _, rate, _ in RELEASED if condition not in STATIONARY
+        )
+    )
+    # 20 conditions; LB and Glucose are shared by the three strains, told apart by
+    # the reference's strain
+    assert len({i["experiment"].environment.model_dump_json() for i in items}) == 20
     built.close_lmdb()
 
 
@@ -410,13 +458,11 @@ def test_process_writes_the_three_declared_ledgers(
     preprocess = Path(built.preprocess_dir)
     built.close_lmdb()
     ledger = json.loads((preprocess / "dropped_records.json").read_text())
-    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 16)
-    assert ledger["dropped_records"] == 10
-    assert {rule["rule"] for rule in ledger["rules"]} == {
-        s23.DROP_STRAIN_RULE,
-        "growth_phase_not_representable",
-        s23.DROP_SET_POINT_RULE,
-    }
+    assert (ledger["source_rows"], ledger["kept_records"]) == (26, 24)
+    assert ledger["dropped_records"] == 2
+    assert [rule["rule"] for rule in ledger["rules"]] == [
+        "growth_phase_not_representable"
+    ]
     assert any("Table S28" in note for note in ledger["notes"])
     not_stored = json.loads((preprocess / "not_stored.json").read_text())
     assert not_stored["issue"] == 826
@@ -426,10 +472,12 @@ def test_process_writes_the_three_declared_ledgers(
     sourced = json.loads((preprocess / "sourced_values.json").read_text())
     assert sourced["n_samples"]["value"] == 3
     frame = pd.read_csv(preprocess / "growth_rates.csv")
-    assert len(frame) == 16
-    assert frame["is_reference"].sum() == 1
-    assert set(frame["strain"]) == {"BW25113"}
-    assert set(frame["n_samples"]) == {3}
+    assert len(frame) == 24
+    assert frame["is_reference"].sum() == 3
+    assert set(frame["strain"]) == {"BW25113", "MG1665", "NCM3722"}
+    # the four chemostat rows carry no replicate count: their Stdev is a typed gap
+    assert set(frame["n_samples"].dropna()) == {3}
+    assert int(frame["n_samples"].isna().sum()) == 4
     assert (preprocess / "build_manifest.json").exists()
 
 
@@ -454,22 +502,21 @@ def test_verify_build_passes_every_level_on_the_absolute_branch(
 def test_l4_assembly_pin_refuses_a_record_pinning_another_assembly(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setattr(
-        s23, "assembly_reference", lambda strain, **_: _reference_genome()
-    )
+    monkeypatch.setattr(s23, "assembly_reference", _pinned)
     records = [
         {
             "reference": {
                 "genome_reference": {
-                    "assembly_set": "ecoli_K12_MG1655_ASM584v2",
-                    "assembly_accession": "GCA_000005845.2",
+                    "strain": "BW25113",
+                    "assembly_set": MG1655_SET,
+                    "assembly_accession": MG1655_ACCESSION,
                 }
             }
         }
     ]
     result = s23.l4_assembly_pin(records)
     assert result.passed is False
-    assert "the deposited assembly report names" in result.message
+    assert "the deposited assembly reports name" in result.message
 
 
 # --------------------------------------------------------------------------- #
@@ -496,15 +543,15 @@ def test_real_table_s23_releases_the_26_rows_the_module_declares() -> None:
 
 
 @pytest.mark.data
-def test_real_partition_keeps_the_16_conditions_and_drops_10_rows() -> None:
+def test_real_partition_keeps_24_rows_and_drops_the_2_stationary_rows() -> None:
     kept, ledger = s23.partition(s23.read_table_s23(_real_workbook()))
-    assert [row.condition for row in kept] == list(KEPT_CONDITIONS)
-    assert (ledger.kept_records, ledger.dropped_rows) == (16, 10)
+    assert [(row.condition, row.strain) for row in kept] == list(KEPT_ROWS)
+    assert (ledger.kept_records, ledger.dropped_rows) == (24, 2)
     assert s23.reference_row(kept).growth_rate == 0.58
 
 
 @pytest.mark.data
-def test_real_dev_store_holds_16_records_and_its_declared_ledger() -> None:
+def test_real_dev_store_holds_24_records_and_its_declared_ledger() -> None:
     data_root = os.environ.get("DATA_ROOT")
     if data_root is None:
         pytest.skip("DATA_ROOT is not set")
@@ -514,4 +561,4 @@ def test_real_dev_store_holds_16_records_and_its_declared_ledger() -> None:
         pytest.skip(f"{root} is not built")
     ledger = json.loads(ledger_path.read_text())
     assert ledger["kept_records"] == s23.EXPECTED_RECORDS
-    assert ledger["dropped_records"] == 10
+    assert ledger["dropped_records"] == 2

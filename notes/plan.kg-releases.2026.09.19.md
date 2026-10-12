@@ -95,3 +95,7 @@ store. So:
 - Shell and Python content hashes agree: `CrisprMagicLian2019Dataset`, 266,304
   experiment ids, `8e2d5b91aa13...` from both `kg_content_hashes.sh` and
   `content_sha256` over a driver stream (2026-09-19).
+
+## 2026.10.12 - Radiant serves 3.0 from the NFS volume
+
+The block volume never arrived, and on 2026.10.12 the user chose to deploy onto the Taiga volume anyway. Release 3.0 was restored by hand into `kg-2026-10-06-4b293d34` on Radiant, aliased as `torchcell`, `latest` and `pinned`, made the default and read-only, with the page cache raised to 24 G; the July store was dropped from the catalog (its files and two dumps remain). Steps and measurements in [[scripts.kg_release]]. `ops.sh sync` reads in sync. The NFS caveat stands: the first cold read answered, and the earlier I/O faults were seen on the July store with a 512 M page cache, so whether the larger cache changes that is not measured yet. The block-volume request remains the fix if faults return.

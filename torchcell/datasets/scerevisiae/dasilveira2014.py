@@ -70,16 +70,19 @@ not Yeast9 ``s_NNNN``, so target ids are left ``None`` here and the ChEBI mappin
 deferred to a follow-up (as Mulleder deferred its amino-acid -> ``s_NNNN`` ids); the
 lipid-name -> ChEBI table is emitted to ``preprocess/lipid_chebi.csv`` for that follow-up.
 
-Gene names (#886): a mutant row's ORF is its ``Systematic Name`` cell, resolved through
-``gene_alias_resolution.resolve_gene_name_strict`` (a live ORF stays itself, a name with
-one candidate ORF resolves to it, an ambiguous name without a pin is refused and the
-build stops, and a name R64 does not know is counted unresolved and dropped). The
-stored ``perturbed_gene_name`` is the row's ``Standard Name``. Two of those names are
-ambiguous in R64 (``YPK1``: YJL093C, YKL126W, YNL307C; ``SLT2``: YAL014C, YHR030C); the
-table's own row pairs each with its ORF, so ``AMBIGUOUS_ALIAS_PINS`` records that pairing
-(rule ``paper_gene_list``) and the build-time check refuses any other. Before this fix the
-resolver took the first alias candidate, but every one of the 127 mutant rows carries a
-live R64 ORF, so that branch never ran and no stored record changes.
+Gene names (owner, 2026-10-12: "the data is the data!!!! it is what they reported"): a
+mutant row is stored under the names the release gives it, its ``Systematic Name`` cell
+(stripped) as ``systematic_gene_name`` and its ``Standard Name`` cell as
+``perturbed_gene_name`` (the systematic name when the cell is blank). No name is
+resolved against the genome at load time and no row is dropped or refused for its name:
+comparing a released name with the R64 annotation is a downstream step
+(``gene_alias_resolution``, adapter or modeling time) and a reported verification
+finding (``canonical_gene_names``, ``current_genome_genes``), never a load-time gate.
+Measured 2026-10-12 on the built store: its 127 (systematic, standard) pairs are exactly
+the 127 released (``Systematic Name``, ``Standard Name``) pairs, so removing the
+resolver changes no stored record. The table's own rows already pair the two names R64
+holds as ambiguous (``YKL126W | YPK1``, ``YHR030C | SLT2``), which is the released
+pairing the record now carries without a pin.
 
 Counting note: the paper prose reports 129 screened mutants; the released ``Quant`` matrix
 has 127 mutant rows (+ 3 WT controls). We keep all 127 released mutant rows and flag the
@@ -91,7 +94,7 @@ import os
 import os.path as osp
 import pickle
 import re
-from typing import Any, cast
+from typing import Any
 
 import lmdb
 import pandas as pd
@@ -126,15 +129,6 @@ from torchcell.datamodels.schema import (
     Temperature,
 )
 from torchcell.datasets.dataset_registry import register_dataset
-from torchcell.datasets.gene_alias_resolution import (
-    AliasResolutionRule,
-    PinnedAliasResolution,
-    candidate_orfs,
-    check_ambiguous_aliases,
-    pin_table,
-    resolve_gene_name_strict,
-)
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 from torchcell.verification.report import Provenance
 from torchcell.verification.sourced import SourcedValue
 
@@ -162,33 +156,6 @@ DATA_SHA256 = "91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894"
 # TableS10 -- per-lipid LipidX/ChEBI ids (copied for provenance; ChEBI mapping deferred).
 CHEBI_FILENAME = "TableS10_lipidX_chebi_ids.xlsx"
 CHEBI_SHA256 = "29a7ed0a11af4700fa051b99717e4686e0399a59c7a7b9be130ae674ed5d58f9"
-
-# Ambiguous standard names in the Quant sheet, each pinned to the ORF its own row gives
-# (#886). Quote format: ``<Systematic Name> | <Standard Name>`` cells of that row.
-_QUANT_ROWS = Provenance(
-    source_uri=f"data/{DATA_FILENAME}",
-    citation_key=_LIBRARY_CITATION_KEY,
-    sha256=DATA_SHA256,
-    page="sheet 'Quant', columns 'Systematic Name' | 'Standard Name'",
-)
-AMBIGUOUS_ALIAS_PINS = pin_table(
-    [
-        PinnedAliasResolution(
-            alias="YPK1",
-            systematic_name="YKL126W",
-            rule=AliasResolutionRule.PAPER_GENE_LIST,
-            provenance=_QUANT_ROWS,
-            quote="YKL126W | YPK1",
-        ),
-        PinnedAliasResolution(
-            alias="SLT2",
-            systematic_name="YHR030C",
-            rule=AliasResolutionRule.PAPER_GENE_LIST,
-            provenance=_QUANT_ROWS,
-            quote="YHR030C | SLT2",
-        ),
-    ]
-)
 
 # --------------------------------------------------------------------------- #
 # Growth medium (issue #622). The Methods print their OWN "YPD" recipe, which is not
@@ -329,13 +296,11 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         self,
         root: str = "data/torchcell/metabolite_dasilveira2014",
         io_workers: int = 0,
-        genome: SCerevisiaeGenome | None = None,
         transform: Any | None = None,
         pre_transform: Any | None = None,
         **kwargs: Any,
     ) -> None:
-        """Initialize the dataset; a genome resolves/validates ORFs against R64."""
-        self.genome = genome
+        """Initialize the dataset; names are stored as released, so no genome is read."""
         super().__init__(root, io_workers, transform, pre_transform, **kwargs)
 
     @property
@@ -375,23 +340,6 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         self._copy_pinned(DATA_FILENAME, DATA_SHA256)
         self._copy_pinned(CHEBI_FILENAME, CHEBI_SHA256)
 
-    def _resolve_systematic(
-        self, name: str, paper_gene_list: dict[str, str] | None = None
-    ) -> str | None:
-        """Resolve a source ORF cell to one live R64 ORF (#886).
-
-        None when R64 has no gene, alias or standard name for the cell (the row is
-        counted as unresolved and dropped, as before); an ambiguous name resolves only
-        through its pin and otherwise raises ``GeneNameRefused``.
-        """
-        genome = cast(SCerevisiaeGenome, self.genome)
-        n = name.strip().upper()
-        if n not in genome.gene_set and not candidate_orfs(genome, n):
-            return None
-        return resolve_gene_name_strict(
-            genome, n, AMBIGUOUS_ALIAS_PINS, paper_gene_list
-        )
-
     def _lipid_chebi_map(self) -> dict[str, str]:
         """Lipid Name -> ChEBI id from Table S10 (header on the 3rd row)."""
         s10 = pd.read_excel(osp.join(self.raw_dir, CHEBI_FILENAME), header=2)
@@ -417,19 +365,13 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         ``data.csv`` or the store is written, so a refused matrix writes nothing under
         ``preprocess/`` or ``processed/``. Refusals (each 0 in the pinned Table S4,
         2026.10.01: 147 lipids, 127 mutant rows): a lipid that no WT control row
-        measured (it would have no reference value), two mutant rows resolving to one
-        ORF, and a mutant row with every lipid blank. Gene-name refusals (#886, 0 on
-        2026.10.10): an ORF cell that is an ambiguous name without a pin, and an
-        ambiguous Standard Name stored with an ORF other than its pin's.
+        measured (it would have no reference value), two mutant rows naming one ORF, and
+        a mutant row with every lipid blank. No row is refused or dropped for its gene
+        name: each is stored under the names the release gives it.
         """
         verify_raw_files(
             self.raw_dir, {DATA_FILENAME: DATA_SHA256, CHEBI_FILENAME: CHEBI_SHA256}
         )
-        if self.genome is None:
-            raise RuntimeError(
-                "MetaboliteDaSilveira2014Dataset requires an injected SCerevisiaeGenome "
-                "to validate systematic ORF ids against R64."
-            )
         path = osp.join(self.raw_dir, DATA_FILENAME)
         df = pd.read_excel(path, sheet_name=_QUANT_SHEET)
         lipid_cols = [c for c in df.columns if c not in (_SYS_COL, _STD_COL)]
@@ -465,56 +407,27 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
         )
 
         mut_df = df[~df[_SYS_COL].isin(_WT_ROW_IDS)]
-        # The table's own name -> ORF pairing, the source of the paper_gene_list pins.
-        paper_gene_list = {
-            str(r[_STD_COL]).strip().upper(): str(r[_SYS_COL]).strip().upper()
-            for _, r in mut_df.iterrows()
-            if pd.notna(r[_STD_COL])
-        }
-        n_unresolved = 0
-        unresolved: list[str] = []
-        source_by_orf: dict[str, str] = {}
+        seen: set[str] = set()
         rows: list[dict[str, Any]] = []
         for _, row in mut_df.iterrows():
-            source_orf = str(row[_SYS_COL]).strip()
-            orf = self._resolve_systematic(source_orf, paper_gene_list)
-            if orf is None:
-                n_unresolved += 1
-                unresolved.append(source_orf)
-                continue
-            if orf in source_by_orf:
-                raise RuntimeError(
-                    f"da Silveira: mutant rows {source_by_orf[orf]!r} and "
-                    f"{source_orf!r} both resolve to {orf}"
-                )
-            source_by_orf[orf] = source_orf
+            orf = str(row[_SYS_COL]).strip().upper()
+            if orf in seen:
+                raise RuntimeError(f"da Silveira: two mutant rows name {orf!r}")
+            seen.add(orf)
             std = row[_STD_COL]
             gene_name = str(std).strip() if pd.notna(std) else orf
             level = {c: float(row[c]) for c in lipid_cols if pd.notna(row[c])}
             if not level:
                 raise RuntimeError(
-                    f"da Silveira: mutant row {source_orf!r} has every lipid blank"
+                    f"da Silveira: mutant row {orf!r} has every lipid blank"
                 )
             rows.append({"orf": orf, "gene": gene_name, "level": level})
-        audit = check_ambiguous_aliases(
-            self.genome,
-            ((r["gene"], r["orf"]) for r in rows),
-            AMBIGUOUS_ALIAS_PINS,
-            paper_gene_list,
-        )
         log.info(
             "da Silveira: %d mutant records, %d WT control rows -> measured reference "
-            "(%d lipids), %d unresolved ORFs%s",
+            "(%d lipids)",
             len(rows),
             len(wt_df),
             len(self._wt_level),
-            n_unresolved,
-            f" ({unresolved})" if unresolved else "",
-        )
-        log.info(
-            "da Silveira ambiguous-name check: %d (name, ORF) pairs, pinned names %s",
-            audit.n_pairs,
-            audit.ambiguous,
         )
         records = [self.create_experiment(record_row) for record_row in rows]
         os.makedirs(self.preprocess_dir, exist_ok=True)
@@ -615,21 +528,16 @@ class MetaboliteDaSilveira2014Dataset(ExperimentDataset):
 def main() -> None:
     """Build/load the dataset for interactive debugging.
 
-    A genome is REQUIRED (ORFs are validated against R64). Loads the existing LMDB if
-    already built; to step through ``process()``/``create_experiment`` under a debugger,
-    delete ``<root>/processed`` first so the build re-runs.
+    Loads the existing LMDB if already built; to step through
+    ``process()``/``create_experiment`` under a debugger, retire ``<root>/processed``
+    first so the build re-runs.
     """
     from dotenv import load_dotenv
 
     load_dotenv()
     data_root = os.environ["DATA_ROOT"]
-    genome = SCerevisiaeGenome(
-        genome_root=osp.join(data_root, "data/sgd/genome"),
-        go_root=osp.join(data_root, "data/go"),
-        overwrite=False,
-    )
     root = osp.join(data_root, "data/torchcell/metabolite_dasilveira2014")
-    dataset = MetaboliteDaSilveira2014Dataset(root=root, genome=genome)
+    dataset = MetaboliteDaSilveira2014Dataset(root=root)
     print(f"len = {len(dataset)}")
     print(dataset[0])
 

@@ -4,8 +4,8 @@
 """Hermetic build of the da Silveira dos Santos 2014 lipidome loader on synthetic tables.
 
 Both workbooks are written with openpyxl into ``<root>/raw/`` so PyG never calls
-``download()``. The genome stub carries the two attributes the loader reads: ``gene_set``
-(YAL001C, YBR001C) and ``alias_to_systematic`` (YBR002C -> YBR001C, YAL003W -> YAL001C).
+``download()``. Since 2026-10-12 the loader reads no genome: every mutant row is stored
+under the names the release gives it (see the last section of this docstring).
 
 Table S4 ``Quant`` sheet (Systematic Name, Standard Name, PC 32:1, PE 34:2, Erg):
 
@@ -55,16 +55,25 @@ pinned Table S4 has 0 of each (147 lipids, 127 mutant rows, every name uppercase
 than keeping the first with a warning (0 such pairs in the pinned Table S4), so the
 default matrix no longer carries the YAL003W row; ``lipid_chebi.csv`` is written only
 after every record is built, and a failure inside ``create_experiment`` leaves nothing.
+
+2026.10.12 (owner: "the data is the data!!!! it is what they reported"): no name is
+resolved or refused at load time. ``YBR002C`` (an alias of YBR001C in a genome) and
+``YPL999W`` (in no annotation; it replaces the ``YZZ999W`` row, which is not a
+systematic-name shape and so fails the perturbation schema) are stored under their
+released names, so the default matrix gives three records; an ambiguous standard name is
+stored with the ORF its own row gives; two rows naming one ORF are still refused.
 """
 
 from __future__ import annotations
 
+import ast
 import hashlib
+import inspect
 import json
 import logging
 import re
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 
 import openpyxl
 import pandas as pd
@@ -82,12 +91,7 @@ from torchcell.datamodels.schema import (
     ReferenceGenome,
     Temperature,
 )
-from torchcell.datasets.gene_alias_resolution import (
-    GeneNameRefusalReason,
-    GeneNameRefused,
-)
 from torchcell.datasets.scerevisiae import dasilveira2014 as m
-from torchcell.sequence.genome.scerevisiae.s288c import SCerevisiaeGenome
 
 
 @pytest.fixture(autouse=True)
@@ -105,7 +109,7 @@ _QUANT_ROWS: list[list[Any]] = [
     ["BY4741", "WT3", 14, 22, 7],
     ["YAL001C", "TFC3", 1.5, 2.5, 3.5],
     ["YBR002C", None, 4.0, None, 6.0],
-    ["YZZ999W", "GHOST", 1, 1, 1],
+    ["YPL999W", "GHOST", 1, 1, 1],
 ]
 _S10_ROWS: list[list[Any]] = [
     ["Table S10. LipidX identifiers"],
@@ -115,26 +119,6 @@ _S10_ROWS: list[list[Any]] = [
     ["LX2", "PE 34:2", "C39H74NO8P", None],
     ["LX3", None, "C28H44O", "CHEBI:16933"],
 ]
-
-
-class _StubGenome:
-    """Two genes, two legacy names, and YPK1 shaped as in R64 (#886): the standard name
-    of YKL126W and a secondary alias of YJL093C. ``AMB1`` is an alias of both stub genes
-    and no pin covers it.
-    """
-
-    gene_set = {"YAL001C", "YBR001C", "YKL126W", "YJL093C"}
-    alias_to_systematic: dict[str, list[str]] = {
-        "YBR002C": ["YBR001C"],
-        "YAL003W": ["YAL001C"],
-        "YPK1": ["YJL093C", "YKL126W"],
-        "AMB1": ["YAL001C", "YBR001C"],
-    }
-    feature_index: dict[str, Any] = {"standard_to_ids": {"YPK1": ["YKL126W"]}}
-
-
-def _genome() -> SCerevisiaeGenome:
-    return cast(SCerevisiaeGenome, _StubGenome())
 
 
 def _write_raw(raw: Path, quant_rows: list[list[Any]] = _QUANT_ROWS) -> None:
@@ -161,9 +145,7 @@ def _root(tmp_path: Path, quant_rows: list[list[Any]] = _QUANT_ROWS) -> Path:
 
 @pytest.fixture
 def dataset(tmp_path: Path) -> m.MetaboliteDaSilveira2014Dataset:
-    return m.MetaboliteDaSilveira2014Dataset(
-        root=str(_root(tmp_path)), genome=_genome()
-    )
+    return m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)))
 
 
 _ENVIRONMENT = Environment(media=m.DA_SILVEIRA_YPD, temperature=Temperature(value=30))
@@ -214,12 +196,14 @@ def _reference(level: dict[str, float], n: dict[str, int]) -> dict[str, Any]:
 def test_two_mutant_records_with_wt_reference_restricted_per_record(
     dataset: m.MetaboliteDaSilveira2014Dataset,
 ) -> None:
-    """Six Quant rows give two records. Record 0 (YAL001C/TFC3) measures all three
-    lipids, n = 2 each, SE None; its reference is the three WT means with n 3/2/2.
-    Record 1 (YBR002C -> YBR001C, blank standard name -> the ORF) measured PC 32:1 and
-    Erg only, so its reference drops PE 34:2. The index has one entry per reference.
+    """Six Quant rows give three records, each under its released names. Record 0
+    (YAL001C/TFC3) measures all three lipids, n = 2 each, SE None; its reference is the
+    three WT means with n 3/2/2. Record 1 (YBR002C, blank standard name -> the ORF)
+    measured PC 32:1 and Erg only, so its reference drops PE 34:2. Record 2 is YPL999W,
+    which no annotation carries, stored as released. The index has one entry per
+    reference.
     """
-    assert len(dataset) == 2
+    assert len(dataset) == 3
     assert dataset[0]["experiment"] == _experiment(
         "YAL001C", "TFC3", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
     )
@@ -228,34 +212,38 @@ def test_two_mutant_records_with_wt_reference_restricted_per_record(
         {"PC 32:1": 3, "PE 34:2": 2, "Erg": 2},
     )
     assert dataset[1]["experiment"] == _experiment(
-        "YBR001C", "YBR001C", {"PC 32:1": 4.0, "Erg": 6.0}
+        "YBR002C", "YBR002C", {"PC 32:1": 4.0, "Erg": 6.0}
     )
     assert dataset[1]["reference"] == _reference(
         {"PC 32:1": 12.0, "Erg": 6.0}, {"PC 32:1": 3, "Erg": 2}
     )
     assert dataset[1]["publication"] == _PUBLICATION.model_dump()
+    assert dataset[2]["experiment"] == _experiment(
+        "YPL999W", "GHOST", {"PC 32:1": 1.0, "PE 34:2": 1.0, "Erg": 1.0}
+    )
     index = json.loads(
         (
             Path(dataset.root) / "preprocess" / "experiment_reference_index.json"
         ).read_text()
     )
-    assert [entry["member_indices"] for entry in index] == [[0], [1]]
+    assert [entry["member_indices"] for entry in index] == [[0, 2], [1]]
 
 
 def test_side_files(dataset: m.MetaboliteDaSilveira2014Dataset) -> None:
     """``lipid_chebi.csv`` lists every Quant lipid with the Table S10 ChEBI id or blank;
-    ``data.csv`` has the resolved ORF, the stored gene name and the measured-lipid count.
+    ``data.csv`` has the released ORF, the stored gene name and the measured-lipid count.
     """
     preprocess = Path(dataset.root) / "preprocess"
     assert (preprocess / "lipid_chebi.csv").read_text() == (
         "lipid,chebi\nPC 32:1,CHEBI:64998\nPE 34:2,\nErg,\n"
     )
     assert (preprocess / "data.csv").read_text() == (
-        "orf,gene,n_lipids\nYAL001C,TFC3,3\nYBR001C,YBR001C,2\n"
+        "orf,gene,n_lipids\nYAL001C,TFC3,3\nYBR002C,YBR002C,2\nYPL999W,GHOST,3\n"
     )
     assert json.loads((preprocess / "gene_set.json").read_text()) == [
         "YAL001C",
-        "YBR001C",
+        "YBR002C",
+        "YPL999W",
     ]
     manifest = json.loads((preprocess / "build_manifest.json").read_text())
     assert manifest["dataset_name"] == "metabolite_dasilveira2014"
@@ -267,18 +255,29 @@ def test_wrong_wt_row_count_raises(tmp_path: Path) -> None:
     """Dropping the BY4741 control row leaves two of the three expected WT ids."""
     rows = [row for row in _QUANT_ROWS if row[0] != "BY4741"]
     with pytest.raises(RuntimeError, match="expected 3 WT control rows, found 2"):
-        m.MetaboliteDaSilveira2014Dataset(
-            root=str(_root(tmp_path, rows)), genome=_genome()
-        )
+        m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path, rows)))
 
 
-def test_requires_an_injected_genome(tmp_path: Path) -> None:
-    with pytest.raises(
-        RuntimeError,
-        match="MetaboliteDaSilveira2014Dataset requires an injected SCerevisiaeGenome "
-        "to validate systematic ORF ids against R64",
-    ):
-        m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)), genome=None)
+def test_the_loader_reads_no_genome(tmp_path: Path) -> None:
+    """Contract (owner, 2026-10-12): names are stored as released, so the constructor
+    takes no ``genome`` (the KG builder injects one only to a loader that names it) and
+    the module imports nothing from ``gene_alias_resolution``.
+    """
+    params = inspect.signature(m.MetaboliteDaSilveira2014Dataset.__init__).parameters
+    assert list(params) == [
+        "self",
+        "root",
+        "io_workers",
+        "transform",
+        "pre_transform",
+        "kwargs",
+    ]
+    imported = {
+        node.module
+        for node in ast.walk(ast.parse(Path(m.__file__).read_text()))
+        if isinstance(node, ast.ImportFrom)
+    }
+    assert "torchcell.datasets.gene_alias_resolution" not in imported
 
 
 def test_a_raw_file_off_the_pin_is_refused_at_build_time(
@@ -293,7 +292,7 @@ def test_a_raw_file_off_the_pin_is_refused_at_build_time(
     staged = off_pin_raw(m, [m.DATA_FILENAME, m.CHEBI_FILENAME])
     raw = staged.root / "raw" / m.DATA_FILENAME
     with pytest.raises(RawSha256MismatchError) as err:
-        m.MetaboliteDaSilveira2014Dataset(root=str(staged.root), genome=_genome())
+        m.MetaboliteDaSilveira2014Dataset(root=str(staged.root))
     assert str(err.value) == (
         f"sha256 mismatch for {raw}: expected "
         "91409229756c132823e6e7a8dbe552d4d7451833b2ff902740f24a29bced3894, "
@@ -313,9 +312,7 @@ def test_download_leaves_present_files_to_the_build_check_and_needs_the_mirror(
     names that path when it is absent.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path / "data_root"))
-    dataset = m.MetaboliteDaSilveira2014Dataset(
-        root=str(_root(tmp_path)), genome=_genome()
-    )
+    dataset = m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)))
     dest = Path(dataset.root) / "raw" / m.DATA_FILENAME
     before = dest.read_bytes()
     dataset.download()
@@ -335,9 +332,7 @@ def test_download_leaves_present_files_to_the_build_check_and_needs_the_mirror(
             f"sha256-pinned {m.DATA_FILENAME} in the torchcell-library mirror."
         ),
     ):
-        m.MetaboliteDaSilveira2014Dataset(
-            root=str(tmp_path / "empty"), genome=_genome()
-        )
+        m.MetaboliteDaSilveira2014Dataset(root=str(tmp_path / "empty"))
 
 
 def test_items_retype_through_the_metabolite_classes(
@@ -347,7 +342,7 @@ def test_items_retype_through_the_metabolite_classes(
     155 to 163), dumping back to exactly the stored dictionaries; ``preprocess_raw``
     returns its frame unchanged.
     """
-    for index in range(2):
+    for index in range(3):
         item = dataset[index]
         typed = dataset.transform_item(item)
         assert type(typed["experiment"]) is MetaboliteExperiment
@@ -361,26 +356,22 @@ def test_items_retype_through_the_metabolite_classes(
     assert returned.to_dict("list") == {m._SYS_COL: ["YAL001C"]}
 
 
-def test_ledger_logs_chebi_coverage_and_the_unresolved_orf(
+def test_ledger_logs_chebi_coverage_and_the_record_count(
     tmp_path: Path, caplog: pytest.LogCaptureFixture
 ) -> None:
-    """One of three lipids has a ChEBI id; YZZ999W is the one unresolved ORF."""
+    """One of three lipids has a ChEBI id; all three mutant rows become records."""
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)), genome=_genome())
+        m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path)))
     assert [
         (r.levelname, r.getMessage()) for r in caplog.records if r.name == m.log.name
     ] == [
         ("INFO", "da Silveira: 1/3 lipids have a Table S10 ChEBI id (2 missing)"),
         (
             "INFO",
-            "da Silveira: 2 mutant records, 3 WT control rows -> measured reference "
-            "(3 lipids), 1 unresolved ORFs (['YZZ999W'])",
+            "da Silveira: 3 mutant records, 3 WT control rows -> measured reference "
+            "(3 lipids)",
         ),
-        (
-            "INFO",
-            "da Silveira ambiguous-name check: 2 (name, ORF) pairs, pinned names {}",
-        ),
-        ("INFO", "Wrote 2 da Silveira lipidome experiments to LMDB"),
+        ("INFO", "Wrote 3 da Silveira lipidome experiments to LMDB"),
     ]
 
 
@@ -390,7 +381,7 @@ def _refused_twice(root: Path, message: str) -> None:
     """
     for _ in range(2):
         with pytest.raises(RuntimeError) as info:
-            m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
+            m.MetaboliteDaSilveira2014Dataset(root=str(root))
         assert str(info.value) == message
         assert not (root / "preprocess" / "lipid_chebi.csv").exists()
         assert not (root / "preprocess" / "data.csv").exists()
@@ -418,23 +409,20 @@ def test_a_lipid_no_wt_row_measured_is_refused_before_anything_is_written(
     )
 
 
-def test_padded_and_lowercase_systematic_names_resolve(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+def test_padded_and_lowercase_systematic_names_are_stored_stripped_and_upper(
+    tmp_path: Path,
 ) -> None:
-    """Contract (issue #537): ``gene_set`` membership is case-insensitive. The padded
-    `` YAL001C `` / `` TFC3 `` row is stripped and the lowercase ``ybr001c`` resolves
-    to YBR001C (it used to be logged as unresolved). The pinned Table S4 has 0
-    lowercase or padded names of 127, so the built records do not change.
+    """Contract (issue #537): the padded `` YAL001C `` / `` TFC3 `` row is stripped and
+    the lowercase ``ybr001c`` is stored as YBR001C, the case the perturbation schema's
+    systematic-name format requires; neither is looked up in a genome. The pinned Table
+    S4 has 0 lowercase or padded names of 127, so the built records do not change.
     """
     rows: list[list[Any]] = [
         *[row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}],
         [" YAL001C ", " TFC3 ", 1.5, 2.5, 3.5],
         ["ybr001c", "NTH1", 1, 2, 3],
     ]
-    with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.MetaboliteDaSilveira2014Dataset(
-            root=str(_root(tmp_path, rows)), genome=_genome()
-        )
+    dataset = m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path, rows)))
     reference = _reference(
         {"PC 32:1": 12.0, "PE 34:2": 21.0, "Erg": 6.0},
         {"PC 32:1": 3, "PE 34:2": 2, "Erg": 2},
@@ -448,37 +436,6 @@ def test_padded_and_lowercase_systematic_names_resolve(
     )
     assert dataset[0]["reference"] == reference
     assert dataset[1]["reference"] == reference
-    summaries = [
-        r.getMessage()
-        for r in caplog.records
-        if r.name == m.log.name and "mutant records" in r.getMessage()
-    ]
-    assert summaries == [
-        "da Silveira: 2 mutant records, 3 WT control rows -> measured reference "
-        "(3 lipids), 0 unresolved ORFs"
-    ]
-    dataset.close_lmdb()
-
-
-def test_clean_matrix_logs_no_unresolved_suffix(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
-) -> None:
-    """With every mutant resolved the summary ends at "0 unresolved ORFs", no list."""
-    rows = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
-    rows.append(["YAL001C", "TFC3", 1.5, 2.5, 3.5])
-    with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.MetaboliteDaSilveira2014Dataset(
-            root=str(_root(tmp_path, rows)), genome=_genome()
-        )
-    summaries = [
-        r.getMessage()
-        for r in caplog.records
-        if r.name == m.log.name and "mutant records" in r.getMessage()
-    ]
-    assert summaries == [
-        "da Silveira: 1 mutant records, 3 WT control rows -> measured reference "
-        "(3 lipids), 0 unresolved ORFs"
-    ]
     dataset.close_lmdb()
 
 
@@ -498,19 +455,28 @@ def test_an_all_blank_mutant_row_is_refused_before_anything_is_written(
     )
 
 
-def test_two_rows_resolving_to_one_orf_are_refused_before_anything_is_written(
+def test_two_rows_naming_one_orf_are_refused_before_anything_is_written(
     tmp_path: Path,
 ) -> None:
-    """Contract (2026.10.01 review of PR #591): YAL003W resolves through the alias table
-    to YAL001C, already seen, so the build refuses naming both source rows (it used to
-    keep the first with a warning). The pinned Table S4 has 0 such pairs of 127.
+    """Contract (2026.10.01 review of PR #591): two mutant rows whose ``Systematic Name``
+    is the same ORF would be two records of one strain, so the build refuses naming it
+    (it used to keep the first with a warning). A row whose name a genome would map onto
+    YAL001C (``YAL003W``) is a different released name and is stored as its own record.
+    The pinned Table S4 has 0 such pairs of 127.
     """
     rows = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
-    rows += [["YAL001C", "TFC3", 1.5, 2.5, 3.5], ["YAL003W", "OLD", 9, 9, 9]]
-    _refused_twice(
-        _root(tmp_path, rows),
-        "da Silveira: mutant rows 'YAL001C' and 'YAL003W' both resolve to YAL001C",
+    rows += [["YAL001C", "TFC3", 1.5, 2.5, 3.5], [" YAL001C", "TFC3", 9, 9, 9]]
+    _refused_twice(_root(tmp_path, rows), "da Silveira: two mutant rows name 'YAL001C'")
+    renamed = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
+    renamed += [["YAL001C", "TFC3", 1.5, 2.5, 3.5], ["YAL003W", "OLD", 9, 9, 9]]
+    dataset = m.MetaboliteDaSilveira2014Dataset(
+        root=str(_root(tmp_path / "renamed", renamed))
     )
+    assert [
+        dataset[i]["experiment"]["genotype"]["perturbations"][0]["systematic_gene_name"]
+        for i in range(len(dataset))
+    ] == ["YAL001C", "YAL003W"]
+    dataset.close_lmdb()
 
 
 def test_a_failure_inside_create_experiment_leaves_nothing_behind(
@@ -526,12 +492,12 @@ def test_a_failure_inside_create_experiment_leaves_nothing_behind(
     def failing(
         self: m.MetaboliteDaSilveira2014Dataset, row: dict[str, Any]
     ) -> tuple[MetaboliteExperiment, MetaboliteExperimentReference, Publication]:
-        if row["orf"] == "YBR001C":
-            raise RuntimeError("synthetic failure for YBR001C")
+        if row["orf"] == "YBR002C":
+            raise RuntimeError("synthetic failure for YBR002C")
         return original(self, row)
 
     monkeypatch.setattr(m.MetaboliteDaSilveira2014Dataset, "create_experiment", failing)
-    _refused_twice(_root(tmp_path), "synthetic failure for YBR001C")
+    _refused_twice(_root(tmp_path), "synthetic failure for YBR002C")
 
 
 def test_download_copies_both_verified_mirror_workbooks(
@@ -539,7 +505,7 @@ def test_download_copies_both_verified_mirror_workbooks(
 ) -> None:
     """With both pins set to the synthetic workbooks' digests, an empty root copies
     Table S4 then Table S10 from ``<DATA_ROOT>/torchcell-library/<key>/data/``, logs one
-    "Verified" line per file and builds the two records.
+    "Verified" line per file and builds the three records.
     """
     source = tmp_path / "source"
     source.mkdir()
@@ -557,9 +523,7 @@ def test_download_copies_both_verified_mirror_workbooks(
     monkeypatch.setenv("DATA_ROOT", str(data_root))
     monkeypatch.delenv("TC_DATA_URL", raising=False)
     with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.MetaboliteDaSilveira2014Dataset(
-            root=str(tmp_path / "fresh"), genome=_genome()
-        )
+        dataset = m.MetaboliteDaSilveira2014Dataset(root=str(tmp_path / "fresh"))
     raw = tmp_path / "fresh" / "raw"
     assert {name: (raw / name).read_bytes() for name in content} == content
     verified = [
@@ -571,28 +535,23 @@ def test_download_copies_both_verified_mirror_workbooks(
         f"Verified {raw / name} (sha256 {pins[name]})"
         for name in (m.DATA_FILENAME, m.CHEBI_FILENAME)
     ]
-    assert len(dataset) == 2
+    assert len(dataset) == 3
 
 
-def test_main_builds_genome_and_dataset_under_data_root(
+def test_main_builds_the_dataset_under_data_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    """``main`` builds the genome from ``$DATA_ROOT/data/sgd/genome`` and ``data/go`` with
-    ``overwrite=False``, then the dataset at
-    ``$DATA_ROOT/data/torchcell/metabolite_dasilveira2014`` with that genome, and prints
-    its length and first item. Both classes are recorders.
+    """``main`` builds the dataset at
+    ``$DATA_ROOT/data/torchcell/metabolite_dasilveira2014`` with no genome, and prints
+    its length and first item. The dataset class is a recorder.
     """
     monkeypatch.setenv("DATA_ROOT", str(tmp_path))
     monkeypatch.setattr("dotenv.load_dotenv", lambda *a, **k: False)
-    calls: list[tuple[str, dict[str, Any]]] = []
-
-    class _Genome:
-        def __init__(self, **kwargs: Any) -> None:
-            calls.append(("genome", kwargs))
+    calls: list[dict[str, Any]] = []
 
     class _Dataset:
         def __init__(self, **kwargs: Any) -> None:
-            calls.append(("dataset", kwargs))
+            calls.append(kwargs)
 
         def __len__(self) -> int:
             return 127
@@ -600,77 +559,27 @@ def test_main_builds_genome_and_dataset_under_data_root(
         def __getitem__(self, index: int) -> str:
             return f"item[{index}]"
 
-    monkeypatch.setattr(m, "SCerevisiaeGenome", _Genome)
     monkeypatch.setattr(m, "MetaboliteDaSilveira2014Dataset", _Dataset)
     m.main()
-    assert [name for name, _ in calls] == ["genome", "dataset"]
-    assert calls[0][1] == {
-        "genome_root": f"{tmp_path}/data/sgd/genome",
-        "go_root": f"{tmp_path}/data/go",
-        "overwrite": False,
-    }
-    assert list(calls[1][1]) == ["root", "genome"]
-    assert calls[1][1]["root"] == f"{tmp_path}/data/torchcell/metabolite_dasilveira2014"
-    assert type(calls[1][1]["genome"]) is _Genome
+    assert calls == [{"root": f"{tmp_path}/data/torchcell/metabolite_dasilveira2014"}]
     assert capsys.readouterr().out == "len = 127\nitem[0]\n"
 
 
-def test_an_ambiguous_standard_name_is_stored_only_with_its_pinned_orf(
-    tmp_path: Path, caplog: pytest.LogCaptureFixture
+def test_an_ambiguous_standard_name_is_stored_with_the_orf_its_row_gives(
+    tmp_path: Path,
 ) -> None:
-    """#886: ``YPK1`` has two candidate ORFs. The row ``YKL126W | YPK1`` matches the pin
-    (rule ``paper_gene_list``, the table's own row), so the build stores it and the
-    check reports the pinned name. A row pairing YPK1 with the other candidate is
-    refused before anything is written, because the table's own pairing then
-    contradicts the pin.
+    """#886, owner 2026-10-12: ``YPK1`` is a name R64 gives two candidate ORFs. Each
+    row is stored with the ORF its own ``Systematic Name`` cell gives, whichever
+    candidate that is, and nothing is refused: the released pairing is the data, and
+    comparing it with the annotation is a downstream step.
     """
     wt = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
-    good = [*wt, ["YKL126W", "YPK1", 1.5, 2.5, 3.5]]
-    with caplog.at_level(logging.INFO, logger=m.log.name):
-        dataset = m.MetaboliteDaSilveira2014Dataset(
-            root=str(_root(tmp_path / "good", good)), genome=_genome()
-        )
+    rows = [*wt, ["YKL126W", "YPK1", 1.5, 2.5, 3.5], ["YJL093C", "YPK1", 1, 1, 1]]
+    dataset = m.MetaboliteDaSilveira2014Dataset(root=str(_root(tmp_path, rows)))
     assert dataset[0]["experiment"] == _experiment(
         "YKL126W", "YPK1", {"PC 32:1": 1.5, "PE 34:2": 2.5, "Erg": 3.5}
     )
-    assert (
-        "da Silveira ambiguous-name check: 1 (name, ORF) pairs, pinned names "
-        "{'YPK1': 'YKL126W'}" in [r.getMessage() for r in caplog.records]
+    assert dataset[1]["experiment"] == _experiment(
+        "YJL093C", "YPK1", {"PC 32:1": 1.0, "PE 34:2": 1.0, "Erg": 1.0}
     )
     dataset.close_lmdb()
-    bad_root = _root(tmp_path / "bad", [*wt, ["YJL093C", "YPK1", 1, 1, 1]])
-    with pytest.raises(GeneNameRefused) as info:
-        m.MetaboliteDaSilveira2014Dataset(root=str(bad_root), genome=_genome())
-    assert info.value.refusal.reason is GeneNameRefusalReason.PIN_RULE_CONTRADICTED
-    assert info.value.refusal.candidates == ["YJL093C", "YKL126W"]
-    assert not (bad_root / "preprocess" / "data.csv").exists()
-    assert not (bad_root / "processed" / "lmdb").exists()
-
-
-def test_an_ambiguous_orf_cell_without_a_pin_is_refused(tmp_path: Path) -> None:
-    """#886: an ORF cell that is an ambiguous name with no pin raises a typed refusal
-    naming both candidates; it used to resolve to the first one. The pinned Table S4
-    has 0 such cells of 127 (every one is a live R64 ORF).
-    """
-    wt = [row for row in _QUANT_ROWS if row[0] in {"Y7092", "Y7220", "BY4741"}]
-    root = _root(tmp_path, [*wt, ["AMB1", "X", 1, 1, 1]])
-    with pytest.raises(GeneNameRefused) as info:
-        m.MetaboliteDaSilveira2014Dataset(root=str(root), genome=_genome())
-    assert info.value.refusal.model_dump() == {
-        "name": "AMB1",
-        "reason": GeneNameRefusalReason.AMBIGUOUS_ALIAS_UNPINNED,
-        "candidates": ["YAL001C", "YBR001C"],
-        "detail": "ambiguous name with no pinned resolution in the loader",
-    }
-    assert not (root / "processed" / "lmdb").exists()
-
-
-def test_the_two_pins_quote_their_own_table_rows() -> None:
-    """The pins are ``paper_gene_list`` rows of the pinned Table S4 Quant sheet."""
-    assert {
-        alias: (pin.systematic_name, pin.rule.value, pin.quote, pin.provenance.sha256)
-        for alias, pin in m.AMBIGUOUS_ALIAS_PINS.items()
-    } == {
-        "YPK1": ("YKL126W", "paper_gene_list", "YKL126W | YPK1", m.DATA_SHA256),
-        "SLT2": ("YHR030C", "paper_gene_list", "YHR030C | SLT2", m.DATA_SHA256),
-    }

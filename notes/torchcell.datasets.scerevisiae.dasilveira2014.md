@@ -82,3 +82,9 @@ L0-L4 on the dev store (`run_metabolite`, narrowed to this store; report `data/t
 | L3 | `reference_finite` | PASS | reference level finite + key-subset for all 17638 values |
 | L3 | `measurement_type_consistent` | PASS | single measurement_type: 'lipidomics_ms_relative_abundance_au' |
 | L4 | `gene_containment_scmd_ohya2005` | PASS | 0.992 of scmd_ohya2005's 127 deletion genes are in Ohya (>= 0.9) |
+
+## 2026.10.12 - Names stored as released; the loader reads no genome
+
+Owner, 2026-10-12: "the data is the data!!!! it is what they reported". A mutant row is stored under its `Systematic Name` cell (stripped and upper-cased, the case the perturbation schema's systematic-name format requires) and its `Standard Name` cell (the systematic name when blank). The loader no longer calls `gene_alias_resolution`, no longer drops a row whose ORF R64 does not know, no longer refuses an ambiguous standard name without a pin, and no longer takes a `genome`. Two rows naming one ORF are still refused (one strain, one record); a lipid no WT row measured and an all-blank mutant row are still refused.
+
+Measured 2026-10-12 against the built dev store (`$DATA_ROOT/data/torchcell/metabolite_dasilveira2014`): its 127 stored (systematic, standard) pairs equal the 127 released (`Systematic Name`, `Standard Name`) pairs of the pinned Table S4, so the change moves no stored record and the store is not rebuilt. Comparing those names with R64 is now the reported `canonical_gene_names` / `current_genome_genes` findings of its verification ([[torchcell.verification.report]]).

@@ -259,25 +259,18 @@ The records are therefore wrong as stored: their blocks name S288C coordinates (
 2. The k-th posterior of a geno row is `snp<k>`: the only reading the counts allow, recorded as an inference in the loader and tested by L4.
 3. The class is not registered, mapped or in the runner registry while its store fails L4; the coordinate fix is #1050's, not this branch's, because it needs a new raw artifact and a choice of coordinate system.
 
-## 2026.10.12 - Registered and mapped as released; the SNP lift is a derived artifact (#1050)
+## 2026.10.12 - Registered and mapped with the Dryad genotypes as released (#1050)
 
-Owner's rule, stated 2026-10-12: "the data is the data ... the genome is separate.. it doesn't gate anything... we do that at modeling time." The class is therefore registered and mapped with its records exactly as released, and the two L4 genome-reference rules that the released coordinates fail are findings about the release, not a failed store. Branch `fix/nguessan2025-register-1050`; the unregistered hold of the previous section is lifted.
+Owner's rule, stated 2026-10-12: "the data is the data ... the genome is separate.. it doesn't gate anything... we do that at modeling time", then, on a draft that carried a coordinate finding and a lifted table with the dataset: "again you are doing this sort of cross reference thing... the data is the data!" The class is registered and mapped, and its records store the Dryad genotypes exactly as released. The unregistered hold of the previous section is lifted. Branch `fix/nguessan2025-register-1050`.
 
 ### What the records carry
 
-- **Blocks on the released SNP positions** (`SNP_list.txt` as Dryad gives it), with parent 1 on `sgd_S288C_R64-4-1_20230830` as before; the Dryad README names `S288C_reference_genome_R64-3-1_20210421`.
-- **The finding on every record.** `SegregantGenotype.call_method` (the genotype's own derivation statement, serialized on each record) now ends: "Block coordinates are the released SNP positions (SNP_list.txt), whose Dryad README names S288C_reference_genome_R64-3-1_20210421; measured (#1050, nguessan2025_snp_coordinate_audit.py): the BY allele is the base of BY4742_fixed.fasta (arturrc/bbqtl_inference @ 2b1c89d6) at all 41,594 positions and the S288C R64-4-1 base at 27,221 (0.654), so they are BY4742_fixed coordinates; a lift to S288C R64-4-1 is the derived table derived/SNP_list_lifted_S288C_R64-4-1.tsv in the raw mirror". The schema has no typed note field on `SegregantGenotype` or on the Dataset node (whose node carries no properties), and adding one would change the `SegregantGenotype` contract that Bloom 2019, Boocock 2025 and Hale 2024 share, so the statement rides in `call_method`; a typed field is the owner's call.
+- Blocks on the SNP positions as released (`SNP_list.txt`), with no liftover, no status field and no comparison to S288C. `CALL_METHOD` ends by naming them and the reference the Dryad README names: "Block coordinates are the SNP positions as released (SNP_list.txt), on the reference the Dryad README names: S288C_reference_genome_R64-3-1_20210421".
+- The raw mirror holds the release only: the GitHub files and code, the Dryad metadata, the four Dryad files and the zip they arrived in (13 files, `provenance_complete` true, rewritten by `deposit_raw_mirror` in job 4335). A `BY4742_fixed.fasta` and a lifted table that an earlier draft deposited there were moved to the deprecation graveyard (`/scratch/projects/torchcell-deprecated/2026-10-12_094546__bbqtl`, `..._derived`).
 
-### The derived lift (for modeling; the records do not read it)
+### Build and L0-L4 (slurm job 4335)
 
-- `BY4742_fixed.fasta` is in the raw mirror at `data/bbqtl/BY4742_fixed.fasta`: a `direct_url` record of `https://raw.githubusercontent.com/arturrc/bbqtl_inference/2b1c89d6a602a8001b3b18dd00e75a8c97950d9d/1_genotype_inference/indexes/BY4742_fixed.fasta`, retrieved 2026-10-12 (job 4307), 12,349,796 B, sha256 `c2e18c61d0529cf44d5991702f7ee50a3d968b2fa8e97bbc65a35d90b83c6f4e`.
-- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_liftover]] lifts every SNP by the unique exact match of its flanks: 41,587 of 41,594 lifted, 7 `no_match`, none dropped from the table (`derived/SNP_list_lifted_S288C_R64-4-1.tsv`, sha256 `18c768d3...`). The manifest records it as a derived artifact with its `ProcessingRecord` (script, commit `2a6c9bcfb`, flanks and seed, the digests of `SNP_list.txt`, `BY4742_fixed.fasta` and the S288C FASTA). `read_lifted_markers` reads it as S288C `Marker`s for a model.
-- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_lifted_marker_check]]: on the lifted SNPs `marker_reference` reads 41,578 of 41,587 (0.9998) and `mat_fixation` 0.0438 at the lifted SNP nearest S288C MAT, so on S288C coordinates both rules pass.
-- The raw-mirror manifest now lists 15 files with `provenance_complete` true (the GitHub release and code, the Dryad metadata, the four Dryad files and their zip, `BY4742_fixed.fasta`, the lifted table); earlier manifests are kept as `manifest.superseded.<stamp>.json`.
-
-### Build and L0-L4 (slurm job 4320)
-
-`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `bfa20d79a` (clean): **2,951 records** in 100 s, gene set 6,326, one reference; the job ran 4 min 5 s at 4.35 GB peak RSS (asked 12 GB, sized from job 4199). Every rule passes except the two genome-reference ones, which are findings:
+`build_dataset_lmdb --dataset Nguessan2025Dataset --retire-existing --verify` from the worktree at `a53c938f2` (clean): **2,951 records** in 117 s, gene set 6,326, one reference; 3 min 53 s, 4.33 GB peak RSS (asked 12 GB, sized from job 4320). The two L4 genome-reference rules do not gate; their numbers:
 
 | level | rule | result |
 |---|---|---|
@@ -286,15 +279,22 @@ Owner's rule, stated 2026-10-12: "the data is the data ... the genome is separat
 | L2 | `uncertainty_sanity`, `value_fidelity`, `mosaic_round_trip` (worst 0.0250), `reference_pseudobulk` (14,263 cells) | ok |
 | L3 | `compound_identity`, `media_compound_identity`, `media_membership`, `release_numbers`, `sourced_values` (28/28) | ok |
 | L4 | `parents_pinned`, `gene_containment_sgd` (6,239/6,240), `cis_concordance` (0.2329 of 2,460 genes against a 0.05 bar) | ok |
-| L4 | `marker_reference` | **finding**: 0.6740 of 500 sampled SNPs carry the S288C base as their BY allele (the positions are BY4742_fixed coordinates) |
-| L4 | `mat_fixation` | **finding**: mean P(RM) 0.1097 at the released SNP nearest chrIII:200,000 (MAT sits about 10 kb away in BY4742_fixed coordinates; 0.0438 on the lifted SNPs) |
+| L4 | `marker_reference` (reported, not gating) | 0.6740 of 500 sampled released SNPs carry the S288C base as their BY allele |
+| L4 | `mat_fixation` (reported, not gating) | mean P(RM) 0.1097 at the released SNP nearest chrIII:200,000 |
 
-The verifier still scores the two findings as failures, so `--verify` retired the build manifest (`build_manifest.json.unverified.20261012-090530`) and the store reads `no_manifest` until it is rebuilt under the verifier change another agent is making (L4 genome rules report instead of fail). Per the coordinator's instruction the store is treated as built: its only failures are those two rules.
+The current verifier still scores those two rules as failures, so `--verify` retired the build manifest (`build_manifest.json.unverified.20261012-095110`) and the store reads `no_manifest`; another agent is changing the verifier so L4 genome rules report instead of fail. The store is built: those two rules are its only failures. It needs one rebuild (or re-verification) under that change to read fresh.
+
+### Modeling-time: the coordinate audit and the SNP lift (experiment 036, not the dataset)
+
+Measured on the released positions (these numbers describe the release and are not stored on any record):
+
+- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_coordinate_audit]] (job 4233): the BY allele is the base of `BY4742_fixed.fasta` (the reference the BB-QTL genotyping code indexes, `arturrc/bbqtl_inference` @ `2b1c89d6`) at all 41,594 released positions and the S288C R64-4-1 base at 27,221 (0.6544). The positions are BY4742_fixed coordinates.
+- [[experiments.036-dataset-fixes-before-kg-build.scripts.nguessan2025_snp_liftover]] (job 4335) lifts every SNP to S288C R64-4-1 by the unique exact match of its flanks, outside the dataset (`$DATA_ROOT/experiments/036-dataset-fixes-before-kg-build/nguessan2025_coordinates/`): 41,587 of 41,594 lifted, 7 `no_match`. On the lifted SNPs `marker_reference` reads 41,578 of 41,587 (0.9998) and `mat_fixation` 0.0438, so on S288C coordinates both rules pass. A model that needs S288C coordinates can read that table; the loader reads nothing from it.
 
 ### Registration, map, runner, pins
 
 - `@register_dataset`, the package export, `dataset_adapter_map` (`Nguessan2025Adapter`, after Boocock 2025), `organism = Organism.scerevisiae`.
 - `runners.SEGREGANT_EXPRESSION_DATASETS["nguessan2025"]` (2,951, `verify_build_module`); `verify_build` reads it.
 - Pins on `007cd23b0`: `dataset_adapter_map` total 154 and the served set names the class (`test_build_time_projection.py`); registry roots 75 (`SEGREGANT_EXPRESSION_DATASETS` addend 2; `test_runners.py`); the bacterial pins stay 86 (`test_bacterial_adapters.py` three asserts, `_bacterial_adapter_cases.py`). `browser_style --check` and the ontology figure: no drift.
-- Candidate gate (job 4320): G1 to G5 pass (G3 38 files intact), **admissible**.
+- Candidate gate (job 4335): G1 to G5 pass (G3 37 files intact), **admissible**.
 - `scripts/schema_impact_check.py --base origin/main`: "No schema contract changes vs origin/main."

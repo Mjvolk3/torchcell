@@ -121,3 +121,10 @@ created: 1791255604174
 - [x] 11:30 sync of every finished cabbi task (46 raw ids): the expression contrast is complete, CMP_expr 0.122 vs CMP_exprperm 0.030, +0.092 over 12 split seeds, 12 of 12 positive; proteome 3 of 12 seeds, CM_prot 0.133 vs MP_cls 0.070 (+0.066, 3 of 3); MP_cls complete 12/12 at 0.070 ± 0.029
 - [x] Inductive diagnostic: 21 of 23 genotype-only runs never fit the training set (train Pearson 0.04 to 0.12, flat for 1,200 epochs); the two that broke out of the plateau (MP_cls s6, M_pool s1) reached train 0.57 and 0.64 and the best genotype-only validation on file (0.152 window, 0.19 roll max); sequence baselines on the moving set (job 3920) 0.08 to 0.14, so the bar is about 0.10 and the CGT is under it
 - [x] Input screen rerun under slurm (job 3919; needs PYTHONPATH unset to unpickle main's schema): values within 0.02 of the scratch run; section 11 and the memory updated
+
+## 2026.10.12
+
+- [x] v25 budget cut to 500 epochs (the loss stops learning by epoch 50, escapes by 400, escaped runs peak at 400 to 600 then overfit); registered window epochs 400 to 499 declared before any read; cabbi 2428289/2428290/2428291 and Delta 22842101 to 22842108 resubmitted [[experiments.019-simb-multimodal.scripts.morph_v25_readout]]
+- [x] Latent alignment term for the inductive case [[torchcell.losses.latent_align]]: the cosine of two strains' latents pulled toward the Pearson correlation of their label vectors; stage `morph_v26` on cabbi (2428295, 24 tasks) and the knockout proteome `prot_v26` (2428296, 12 tasks, full fig3_proteome store, window epochs 500 to 599 declared before any read)
+- [ ] Delta stage `morph_v26d` prepared in `delta_morph_v25_small.slurm`, not submitted (needs the go)
+- [ ] As v25 and v26 cells land: sync by raw id, `morph_v25_readout.py`, `wandb_v13_report.py --round morph_v25` and `--round prot_v26`; a proteome readout script for `torchcell_019_prot_v26`
